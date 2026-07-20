@@ -1,1 +1,4 @@
 /.lake
+
+# Paper PDFs stay on disk, never in history (also in the global ignore - belt and braces)
+*.pdf
