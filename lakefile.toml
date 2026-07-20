@@ -1,0 +1,18 @@
+name = "CollatzMoonshot"
+defaultTargets = ["CollatzMoonshot"]
+
+# Birth-time switch (cheapest at repo birth - flipping later forces a full rebuild):
+# machine-authored binders must be declared, never hallucinated into existence.
+# Dev-tier repo: warnings stay visible as in-flight signal (no warningAsError yet).
+[leanOptions]
+autoImplicit = false
+
+# Mathlib pinned as a DIRECT require at v4.31.0 (matches the ~/.lake-base/4.31.0 universe
+# store, so `lake-base link` CoW-clones the prebuilt oleans in — no 40-min cold build).
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "v4.31.0"
+
+[[lean_lib]]
+name = "CollatzMoonshot"
