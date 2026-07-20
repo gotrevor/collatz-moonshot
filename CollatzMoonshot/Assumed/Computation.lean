@@ -14,9 +14,10 @@ namespace CollatzMoonshot.Assumed
 
 /-- **[ASSUMED - computation]** Every `n ≤ 2⁶⁸` reaches `1`.
 
-Provenance: Barina's distributed convergence verification (~2020) reached `2⁶⁸`;
-the frontier has moved further since.  `2⁶⁸` is a conservative floor - verify the
-current record before citing a sharper number externally.
+Provenance: Bařina's distributed convergence verification (~2020) reached `2⁶⁸`;
+per the `papers/eliahou-1993-summary.md` fact-check (2026-07-20), the frontier is
+now `2⁷¹` (Bařina, J. Supercomputing 2025).  `2⁶⁸` stays as the conservative
+floor here - bump only with firsthand verification.
 
 This is exactly the kind of fact an investigatory repo assumes: replicated,
 believed by everyone, and formalizing it honestly would mean certifying a

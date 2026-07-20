@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import CollatzMoonshot.Assumed.Computation
 import CollatzMoonshot.Assumed.Cycles
 import CollatzMoonshot.Assumed.Tao2019
+import CollatzMoonshot.Assumed.Furstenberg
 
 /-!
 # Assumed - the axiom layer 🧨
