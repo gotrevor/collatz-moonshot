@@ -146,4 +146,33 @@ theorem continuous_T2 : Continuous T2 := by
     exact continuousOn_half
   · exact Continuous.continuousOn (by fun_prop)
 
+/-! ## The negative 2-cycle: a live witness against unconditioned rigidity
+
+`-1 = …1111` is a unit of `ℤ_[2]`, so `T2` sends it to `-2` and back.  One odd
+step, one even step: **odd frequency 1/2**, well above the sharp drift threshold
+`log 2 / log 6`.  This 2-cycle carries an invariant measure, so any parity
+statement quantified over *all* `T2`-invariant measures is false.  Whatever the
+lane keystone says, the arithmetic conditioning has to be load-bearing.
+(Downstairs this is the `3n+1` cycle on the negative integers.) -/
+
+theorem not_two_dvd_neg_one : ¬ (2 : ℤ_[2]) ∣ (-1) := by
+  intro h
+  have h1 : (2 : ℤ_[2]) ∣ 1 := dvd_neg.mp h
+  exact (PadicInt.prime_p (p := 2)).not_unit (isUnit_of_dvd_one h1)
+
+theorem T2_neg_one : T2 (-1) = -2 := by
+  unfold T2
+  rw [if_neg not_two_dvd_neg_one]
+  ring
+
+theorem T2_neg_two : T2 (-2) = -1 := by
+  have hdvd : (2 : ℤ_[2]) ∣ (-2) := ⟨-1, by ring⟩
+  unfold T2
+  rw [if_pos hdvd]
+  exact half_eq (by ring)
+
+/-- The negative 2-cycle, closed. -/
+theorem T2_neg_cycle : T2 (T2 (-1)) = -1 := by rw [T2_neg_one, T2_neg_two]
+
+
 end CollatzMoonshot
