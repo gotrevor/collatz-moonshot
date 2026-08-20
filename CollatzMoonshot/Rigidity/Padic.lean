@@ -86,4 +86,64 @@ theorem T2_four : T2 4 = 2 := by simpa using T2_natCast 4
 
 theorem T2_two : T2 2 = 1 := by simpa using T2_natCast 2
 
+/-!
+## Regularity of `T2` (milestone M2 prerequisites)
+
+Every transfer statement in this lane - Krylov-Bogolyubov above all - needs `T2`
+continuous on the compact space `ℤ_[2]`.  Both halves are ultrametric facts: the
+even set is the open unit ball, hence **clopen**, so the gluing frontier is empty
+and no matching condition is owed; and halving is exactly `2`-Lipschitz there
+because `‖2‖ = 1/2` scales every distance by two.
+-/
+
+/-- `‖2‖ = 1/2` in `ℤ_[2]`. -/
+theorem norm_two_z2 : ‖(2 : ℤ_[2])‖ = 2⁻¹ := by
+  simpa using PadicInt.norm_p (p := 2)
+
+/-- The even set **is** the open unit ball: the arithmetic parity condition is a
+metric condition upstairs.  That is why it is clopen. -/
+theorem evenSet_eq_ball : {x : ℤ_[2] | (2 : ℤ_[2]) ∣ x} = Metric.ball 0 1 := by
+  ext x
+  simp only [Set.mem_setOf_eq, Metric.mem_ball, dist_zero_right]
+  exact_mod_cast (PadicInt.norm_lt_one_iff_dvd x).symm
+
+/-- The even set is clopen, so `frontier {x | 2 ∣ x} = ∅` and the two branches of
+`T2` never have to agree anywhere. -/
+theorem isClopen_evenSet : IsClopen {x : ℤ_[2] | (2 : ℤ_[2]) ∣ x} := by
+  rw [evenSet_eq_ball]
+  exact IsUltrametricDist.isClopen_ball 0 1
+
+/-- Halving **doubles** 2-adic distance. -/
+theorem norm_half_sub {x y : ℤ_[2]} (hx : (2 : ℤ_[2]) ∣ x) (hy : (2 : ℤ_[2]) ∣ y) :
+    ‖half x - half y‖ = 2 * ‖x - y‖ := by
+  have h : (2 : ℤ_[2]) * (half x - half y) = x - y := by
+    rw [mul_sub, two_mul_half hx, two_mul_half hy]
+  have h' := congrArg norm h
+  rw [norm_mul, norm_two_z2] at h'
+  rw [← h']
+  ring
+
+theorem lipschitzOnWith_half :
+    LipschitzOnWith 2 half {x : ℤ_[2] | (2 : ℤ_[2]) ∣ x} := by
+  rw [lipschitzOnWith_iff_dist_le_mul]
+  intro x hx y hy
+  rw [dist_eq_norm, dist_eq_norm, norm_half_sub hx hy]
+  norm_num
+
+theorem continuousOn_half : ContinuousOn half {x : ℤ_[2] | (2 : ℤ_[2]) ∣ x} :=
+  lipschitzOnWith_half.continuousOn
+
+open scoped Classical in
+/-- **`T2` is continuous.**  The prerequisite for Krylov-Bogolyubov transfer (M2):
+a continuous self-map of the compact space `ℤ_[2]` admits invariant measures, and
+every orbit-empirical limit is one of them. -/
+theorem continuous_T2 : Continuous T2 := by
+  unfold T2
+  refine continuous_if ?_ ?_ ?_
+  · intro a ha
+    simp [isClopen_evenSet.frontier_eq] at ha
+  · rw [isClopen_evenSet.isClosed.closure_eq]
+    exact continuousOn_half
+  · exact Continuous.continuousOn (by fun_prop)
+
 end CollatzMoonshot

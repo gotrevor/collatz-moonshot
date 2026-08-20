@@ -34,6 +34,16 @@ instance : BorelSpace ℤ_[2] := ⟨rfl⟩
 /-- `T2`-invariance of a measure on `ℤ_[2]` (bundles measurability of `T2`). -/
 def IsT2Invariant (μ : Measure ℤ_[2]) : Prop := MeasurePreserving T2 μ μ
 
+/-- `T2` is Borel measurable - immediate from `continuous_T2`, and exactly the
+measurability half of `IsT2Invariant`. -/
+theorem measurable_T2 : Measurable T2 := continuous_T2.measurable
+
+/-- With measurability discharged once and for all, `T2`-invariance is *only*
+push-forward equality - the form every transfer argument (M2) actually uses. -/
+theorem isT2Invariant_iff_map_eq {μ : Measure ℤ_[2]} :
+    IsT2Invariant μ ↔ Measure.map T2 μ = μ :=
+  ⟨fun h => h.map_eq, fun h => ⟨measurable_T2, h⟩⟩
+
 /-- The embedded trivial cycle `{1, 2, 4} ⊆ ℤ_[2]`. -/
 def trivialCycleZ2 : Set ℤ_[2] := {1, 2, 4}
 
