@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import CollatzMoonshot.Basic
+import CollatzMoonshot.Conjecture
+import CollatzMoonshot.Descent
 
 /-!
 # Drift: exact size bookkeeping along a Collatz orbit
@@ -271,5 +273,91 @@ theorem tendsto_freqThreshold :
     (Real.continuousAt_log (by norm_num)).tendsto.comp hg
   have hne : Real.log 6 ≠ 0 := ne_of_gt (Real.log_pos (by norm_num))
   exact Filter.Tendsto.div tendsto_const_nhds hlog hne
+
+/-! ## The floor is free
+
+The drift estimate is conditioned on a floor `N` the orbit stays above.  Front A
+supplies it at no cost: an unbounded orbit can never repeat a value (a repeat
+makes it eventually periodic, hence bounded), so the map `k ↦ n_k` is injective
+and each of the finitely many values below `N` is visited at most once.  Past the
+last such visit the orbit is above `N` forever.
+
+This is why `lt_of_oddSteps_freq_lt` is usable against divergence with the *sharp*
+constant rather than the crude one: a divergent orbit admits every floor, so it
+must respect `freqThreshold N` for every `N`, and `tendsto_freqThreshold` pushes
+that to `log 2 / log 6`. -/
+
+/-- Shifting by the period, above the repeat point. -/
+theorem iterate_add_period_eq {n i j : ℕ} (hij : i < j) (h : step^[i] n = step^[j] n)
+    {a : ℕ} (ha : i ≤ a) : step^[a + (j - i)] n = step^[a] n := by
+  have hj : i + (j - i) = j := by omega
+  calc step^[a + (j - i)] n
+      = step^[(a - i) + (i + (j - i))] n := by
+        rw [show (a - i) + (i + (j - i)) = a + (j - i) by omega]
+    _ = step^[a - i] (step^[i + (j - i)] n) := Function.iterate_add_apply _ _ _ _
+    _ = step^[a - i] (step^[i] n) := by rw [hj, ← h]
+    _ = step^[(a - i) + i] n := (Function.iterate_add_apply _ _ _ _).symm
+    _ = step^[a] n := by rw [show (a - i) + i = a by omega]
+
+/-- After a repeat, every orbit value is already among the first `j`. -/
+theorem exists_lt_of_repeat {n i j : ℕ} (hij : i < j) (h : step^[i] n = step^[j] n) (k : ℕ) :
+    ∃ t < j, step^[k] n = step^[t] n := by
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    by_cases hk : k < j
+    · exact ⟨k, hk, rfl⟩
+    · have hai : i ≤ k - (j - i) := by omega
+      have hlt : k - (j - i) < k := by omega
+      have hshift := iterate_add_period_eq hij h hai
+      rw [show k - (j - i) + (j - i) = k by omega] at hshift
+      obtain ⟨t, ht, hteq⟩ := ih _ hlt
+      exact ⟨t, ht, by rw [hshift, hteq]⟩
+
+/-- **A repeat kills divergence**: an eventually periodic orbit is bounded. -/
+theorem not_diverges_of_repeat {n i j : ℕ} (hij : i < j) (h : step^[i] n = step^[j] n) :
+    ¬ Diverges n := by
+  intro hdiv
+  obtain ⟨k, hk⟩ := hdiv ((Finset.range j).sup (fun t => step^[t] n) + 1)
+  obtain ⟨t, ht, hteq⟩ := exists_lt_of_repeat hij h k
+  have hle : step^[t] n ≤ (Finset.range j).sup (fun t => step^[t] n) :=
+    Finset.le_sup (f := fun t => step^[t] n) (Finset.mem_range.mpr ht)
+  rw [hteq] at hk
+  omega
+
+/-- A divergent orbit visits every value at most once. -/
+theorem injective_of_diverges {n : ℕ} (hdiv : Diverges n) :
+    Function.Injective (fun k => step^[k] n) := by
+  intro a b hab
+  by_contra hne
+  rcases Nat.lt_or_ge a b with hlt | hge
+  · exact not_diverges_of_repeat hlt hab hdiv
+  · exact not_diverges_of_repeat (by omega : b < a) hab.symm hdiv
+
+/-- **Divergence supplies its own floor**: for every `N`, a divergent orbit is
+eventually above `N`. -/
+theorem exists_floor_of_diverges {n : ℕ} (hdiv : Diverges n) (N : ℕ) :
+    ∃ K, ∀ k, K ≤ k → N ≤ step^[k] n := by
+  have hinj := injective_of_diverges hdiv
+  have hpre : ((fun k => step^[k] n) ⁻¹' (Set.Iio N)).Finite :=
+    Set.Finite.preimage hinj.injOn (Set.finite_Iio N)
+  obtain ⟨M, hM⟩ := hpre.bddAbove
+  refine ⟨M + 1, fun k hk => ?_⟩
+  by_contra hlt
+  have hmem : k ∈ (fun k => step^[k] n) ⁻¹' (Set.Iio N) := Nat.not_le.mp hlt
+  have := hM hmem
+  omega
+
+/-- **The consumption form.**  A drift-frequency bound available at *every*
+starting point is already the Collatz conjecture - via `conjecture_iff_descent`,
+which needs no cycle argument.  This is the precise statement the ergodic side
+(M2′) has to deliver: for each `n`, some floor the orbit respects and some
+window over which the odd-step frequency sits below that floor's threshold. -/
+theorem conjecture_of_freq_descent
+    (h : ∀ n, 2 ≤ n → ∃ N k, 1 ≤ N ∧ 0 < k ∧ (∀ j < k, N ≤ step^[j] n) ∧
+      (oddSteps n k : ℝ) / k < freqThreshold N) : Conjecture := by
+  apply conjecture_of_descent
+  intro n hn
+  obtain ⟨N, k, hN, hk, hfloor, hfreq⟩ := h n hn
+  exact ⟨k, lt_of_oddSteps_freq_lt (by omega) hN hk hfloor hfreq⟩
 
 end CollatzMoonshot
