@@ -8,4 +8,7 @@ import CollatzMoonshot.Descent
 import CollatzMoonshot.Rigidity
 import CollatzMoonshot.Assumed
 import CollatzMoonshot.CycleDiophantine
+import CollatzMoonshot.FrontB.Words
+import CollatzMoonshot.FrontB.Negative
+import CollatzMoonshot.FrontB.Threads
 import CollatzMoonshot.Conditional

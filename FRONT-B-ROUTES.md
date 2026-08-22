@@ -1,5 +1,9 @@
 # Front B route map: how a cycle proof could actually close 🔒
 
+> 🧾 **The board is also Lean.**  `CollatzMoonshot/FrontB/Threads.lean` states every thread
+> below as a `Prop`, so "killed" is a theorem and "open" is an uninhabited statement.  Prose
+> and Lean are kept in sync deliberately; if they drift, **the Lean file wins**.
+
 *Companion to `APPROACHES.md`, which ranks the three lanes for the conjecture as a whole.
 This file is only about **Front B**, the nonexistence of a nontrivial cycle, and its job is
 to say which ideas are structurally capable of finishing and which are not.*
