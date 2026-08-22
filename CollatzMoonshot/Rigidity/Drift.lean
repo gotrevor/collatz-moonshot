@@ -360,4 +360,30 @@ theorem conjecture_of_freq_descent
   obtain ⟨N, k, hN, hk, hfloor, hfreq⟩ := h n hn
   exact ⟨k, lt_of_oddSteps_freq_lt (by omega) hN hk hfloor hfreq⟩
 
+/-- **The mirror of the drift estimate.**  Dropping the `+1` can only *under*count,
+so the ideal ratio `3^a / 2^b` is a genuine lower bound.  This direction needs no
+floor, no `growth` constant and no reals - it is pure `ℕ`. -/
+theorem mul_three_pow_le (n : ℕ) :
+    ∀ k, n * 3 ^ oddSteps n k ≤ step^[k] n * 2 ^ evenSteps n k := by
+  intro k
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [Function.iterate_succ_apply']
+    rcases (by omega : step^[k] n % 2 = 0 ∨ step^[k] n % 2 = 1) with h | h
+    · rw [step_of_even h, oddSteps_succ_of_even h, evenSteps_succ_of_even h, pow_succ]
+      have hdvd : 2 ∣ step^[k] n := by omega
+      have hd : step^[k] n / 2 * 2 = step^[k] n := Nat.div_mul_cancel hdvd
+      calc n * 3 ^ oddSteps n k
+          ≤ step^[k] n * 2 ^ evenSteps n k := ih
+        _ = step^[k] n / 2 * 2 * 2 ^ evenSteps n k := by rw [hd]
+        _ = step^[k] n / 2 * (2 ^ evenSteps n k * 2) := by ring
+    · rw [step_of_odd h, oddSteps_succ_of_odd h, evenSteps_succ_of_odd h, pow_succ]
+      calc n * (3 ^ oddSteps n k * 3)
+          = n * 3 ^ oddSteps n k * 3 := by ring
+        _ ≤ step^[k] n * 2 ^ evenSteps n k * 3 := Nat.mul_le_mul_right 3 ih
+        _ = 3 * step^[k] n * 2 ^ evenSteps n k := by ring
+        _ ≤ (3 * step^[k] n + 1) * 2 ^ evenSteps n k :=
+            Nat.mul_le_mul_right _ (by omega)
+
 end CollatzMoonshot

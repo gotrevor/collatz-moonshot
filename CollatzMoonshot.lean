@@ -7,4 +7,5 @@ import CollatzMoonshot.Conjecture
 import CollatzMoonshot.Descent
 import CollatzMoonshot.Rigidity
 import CollatzMoonshot.Assumed
+import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.Conditional
