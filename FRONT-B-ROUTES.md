@@ -188,3 +188,36 @@ so they can output "zero" after a finite check.  Size arguments point the wrong 
 counting arguments cannot reach zero, and integrality identities reach only Christoffel
 words.  Revised: Route 2 ~70%, exact-identity families (Knight-style, new word classes)
 ~15%, Route 3 ~10%, unnamed ~5% - all conditional on the front being resolvable at all.
+
+## Fourth thread: "near-integer cycle" has no usable proxy 🧪
+
+Route 2 assumes integer cycles want **few circuits** (maximal runs of odd steps), which is
+why bounding the circuit count would finish.  Testable: do the necklaces closest to being
+integer cycles have low circuit count?
+
+Measured with `gcd(W, D)` as the nearness proxy, over every necklace for `x = 10, 12, 15`
+(`experiments/circuits3.py`).  Result: **inconclusive, and the proxy is the reason.**
+
+- Deduplication matters twice over.  `gcd` and circuit count are both rotation-invariant, so
+  a word-level tally inflates every sample by a factor of `k`; an uncorrected run showed a
+  clean "near-misses have MORE circuits" signal that was one necklace counted 24 times.
+- After deduplication `x = 10` and `x = 12` show no signal (`|z| ≤ 1`).  `x = 15` shows
+  `z = −11` for the top 50, but that group is the `gcd = 13` tier: `D = 13 × 186793`, so the
+  gcd takes only four values and "top 50" means "divisible by 13".  The signal is
+  small-prime divisibility structure correlating with word combinatorics, not proximity to
+  cyclehood.
+- **Divisibility is not a metric.**  A necklace with `gcd = D/13` is not "close" to one with
+  `gcd = D` in any sense that respects the dynamics.  So numerical exploration cannot guide
+  the compression lemma, which is presumably why the literature proceeds by proof (Steiner,
+  Knight) rather than by experiment.
+
+Consequence: Route 2's missing lemma has to be attacked directly, and **we should not expect
+data to suggest its statement.**  That lowers the value of further numerics on this front.
+
+## The negative side is a falsification test worth building 🚨
+
+The `3n+1` map on negative integers has three nontrivial cycles (`−1`, `−5`, `−17`), and the
+whole formalism carries over with `D = 2^k − 3^x < 0`.  **Any argument that would also rule
+those out is wrong.**  That makes the negative side a unit test for candidate proofs, and it
+operationalises the 3x−1 barrier from `APPROACHES.md`: every lemma we prove should be run
+against `(k,x) = (1,1)`, `(3,2)` and `(11,7)` before we believe it.
