@@ -6,6 +6,7 @@ import CollatzMoonshot.Assumed.Computation
 import CollatzMoonshot.Assumed.Cycles
 import CollatzMoonshot.Assumed.Tao2019
 import CollatzMoonshot.Assumed.Furstenberg
+import CollatzMoonshot.Assumed.ABC
 
 /-!
 # Assumed - the axiom layer 🧨

@@ -138,10 +138,12 @@ linear form.  Baker plus the continued fraction of log₂3 already killed all cy
 few circuits (Steiner 1977 for 1-cycles; Simons-de Weger 2005 out to 68 circuits;
 extended since - verify the exact frontier before citing it).  The wall is
 irrationality-measure quality for log₂3 far beyond what is known.  An effective S-unit
-or abc-strength input finishes cycles **entirely**.  ⚠️ **This last claim is
-disputed** - see [FRONT-B-ROUTES.md](FRONT-B-ROUTES.md), whose filter argues every
-Diophantine input bounds `2^b - 3^a` from *below*, which can only lower-bound cycle
-length.  Resolve before leaning on it.  `Effectivity.lean` in
+or abc-strength input finishes cycles **entirely**.  ❌ **RESOLVED 2026-08-22: that claim is
+wrong.**  `Assumed/ABC.lean` takes abc as an axiom and derives what it actually gives for a
+cycle - `2^k ≤ C · den²`, a *lower* bound on the denominator.  `FrontB/Threads.lean`'s
+`length_bounded_of_abc_and_boundedDen` shows abc is one blade of a scissors: paired with an
+*upper* bound it closes the front at once, alone it closes nothing, and every Diophantine
+input supplies the same blade.  `Effectivity.lean` in
 collatz-cryptid is already the Lean skeleton of that endgame: one constant, μ(log₂3),
 routes to everything.
 

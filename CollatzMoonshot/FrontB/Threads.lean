@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Negative
+import CollatzMoonshot.Basic
+import CollatzMoonshot.Assumed.ABC
 
 /-!
 # The Front B thread board, as Lean 🎲
@@ -129,6 +131,73 @@ positive cycles has a proof that never uses positivity, `exists_nontrivial_cycle
 it.  Run new lemmas against `-1`, `-5`, `-17` before believing them. -/
 theorem barrier_negative_cycles_exist : ∃ n : ℤ, n < 0 ∧ OnCycleZ n :=
   exists_nontrivial_cycleZ
+
+/-! ## Thread 6 - abc.  **Assumed, and it is the WRONG HALF** ⚖️
+
+`Assumed/ABC.lean` takes the abc conjecture as a CONJECTURE-grade axiom and derives what it
+actually gives for a cycle: `2^k ≤ C · den²`, a **lower** bound on the denominator.  The
+theorem below shows abc is one half of a scissors - paired with an *upper* bound it closes
+the front immediately, and alone it closes nothing.
+
+This settles the disputed line in `APPROACHES.md` ("an effective S-unit or abc-strength
+input finishes cycles entirely"): as stated, it is an overclaim. -/
+
+/-- **abc is one blade of the scissors.**  Its lower bound on `den`, together with any upper
+bound, bounds the word length - so only finitely many shapes survive.  Neither blade cuts
+alone, and every Diophantine input supplies the same blade abc does. -/
+theorem length_bounded_of_abc_and_boundedDen (habc : AbcConjecture) (hbd : BoundedDen) :
+    ∃ L : ℕ, ∀ v : List Bool, IntegerCycle v → ¬ IsTrivial v → v.length ≤ L := by
+  obtain ⟨C, hCpos, hlow⟩ := den_lower_bound_of_abc habc
+  obtain ⟨B, hB⟩ := hbd
+  refine ⟨⌈C * (B : ℝ) ^ 2⌉₊, fun v hcyc hnt => ?_⟩
+  have hden := hB v hcyc hnt
+  have h1 : (2:ℝ) ^ v.length ≤ C * ((den v).natAbs : ℝ) ^ 2 :=
+    hlow v hcyc.2.1 hcyc.2.2.1
+  have h2 : ((den v).natAbs : ℝ) ≤ (B : ℝ) := by exact_mod_cast hden
+  have h3 : (2:ℝ) ^ v.length ≤ C * (B : ℝ) ^ 2 := by
+    refine le_trans h1 ?_
+    have : ((den v).natAbs : ℝ) ^ 2 ≤ (B : ℝ) ^ 2 :=
+      pow_le_pow_left₀ (by positivity) h2 2
+    nlinarith [sq_nonneg ((den v).natAbs : ℝ)]
+  have h4 : (v.length : ℝ) < (2:ℝ) ^ v.length := by
+    have := Nat.lt_two_pow_self (n := v.length)
+    exact_mod_cast this
+  have h5 : (v.length : ℝ) ≤ (⌈C * (B : ℝ) ^ 2⌉₊ : ℝ) :=
+    le_trans (le_of_lt (lt_of_lt_of_le h4 h3)) (Nat.le_ceil _)
+  exact_mod_cast h5
+
+/-! ## Thread 21 - Conway unsettleability.  **Aimed at the other front** 🎭
+
+Conway, *On Unsettleable Arithmetical Problems*, Amer. Math. Monthly **120** (3), March 2013,
+192-198.  What he actually does, separated carefully:
+
+* **Proved**: an explicit 24-fraction Collatzian game (reduced to 7 fractions by John
+  Rickard) has a starting number whose orbit never stops, and that fact is not provable from
+  any given consistent axiom system.  The engine is his own 1972 universality result plus
+  Gödel.  "Unsettleable" means unprovable *and* unrefutable from set theory, not merely PA.
+* **Speculated**, in his words: "There is a slight chance that this problem itself is
+  unsettleable - some very similar problems certainly are."  His candidate for the simplest
+  unsettleable statement is not `3n+1` at all but the **amusical permutation**
+  `2k ↦ 3k, 4k+1 ↦ 3k+1, 4k−1 ↦ 3k−1`, and the assertion that `8` lies on an infinite cycle.
+* **His own hedge on `3n+1`** (Appendix 1): its probabilistic drift points *down*, unlike the
+  amusical permutation, so "if this were provable, the conjecture would be settled by being
+  provable", and he names the Hardy-Littlewood circle method as the slight hope - while
+  adding "However, I don't really believe it."
+* He coins **"probvious"** for probabilistically obvious, which is exactly the epistemic
+  status of the entropy-margin count in `FRONT-B-ROUTES.md`.
+
+**Why this front is different.**  Conway's pessimism targets *non-termination*, which is
+`Π⁰₂` and has no finite certificate.  "No nontrivial cycle" is `Π⁰₁`: a counterexample is a
+pair `(n, m)` that can be checked.  So a false Front B would be refutable in any
+`Σ₁`-complete theory, and **unsettleable-and-false is impossible here** - if Front B were
+unsettleable it would be *true*.  That asymmetry is the KB's
+`arithmetical-hierarchy-independence-asymmetry` note; it does not rescue provability, but it
+does mean Conway's argument is not evidence against *this* front. -/
+
+/-- The refutation of Front B is a finite, checkable certificate - the formal shadow of its
+being `Π⁰₁`.  Divergence admits no such statement, which is where Conway's pessimism bites. -/
+instance frontB_refutation_decidable (n m : ℕ) :
+    Decidable (step^[m] n = n ∧ n ≠ 1 ∧ n ≠ 2 ∧ n ≠ 4) := by infer_instance
 
 /-! ## Threads with no formal content yet
 
