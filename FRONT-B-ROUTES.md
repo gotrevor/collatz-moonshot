@@ -1,0 +1,125 @@
+# Front B route map: how a cycle proof could actually close 🔒
+
+*Companion to `APPROACHES.md`, which ranks the three lanes for the conjecture as a whole.
+This file is only about **Front B**, the nonexistence of a nontrivial cycle, and its job is
+to say which ideas are structurally capable of finishing and which are not.*
+
+## Notation
+
+A cycle has `a` odd steps, `b` even steps, minimum element `N`, and
+
+* `D := 2^b − 3^a > 0`, an **odd** integer;
+* each cycle member is `M(v')/D` where `v'` ranges over the rotations of the cycle's parity
+  word and `M` is a positive integer combination of monomials `2^i 3^j`.
+
+From `CycleDiophantine.lean` (proved, axiom-clean):
+
+```
+3^a < 2^b ≤ (3 + 1/N)^a       equivalently      0 < b·log 2 − a·log 3 ≤ a/(3N)
+```
+
+and from the product identity `2^b = 3^a ∏(1 + 1/(3mᵢ))`, the size relation
+
+```
+D ≈ 3^a · a / (3 · m̄)          m̄ = harmonic mean of the cycle's odd elements
+```
+
+## 🚩 The filter: which direction does your tool bound `D`?
+
+**Everything that says "2 and 3 are far apart" bounds `D` from BELOW.**  Baker linear forms,
+effective irrationality measures for `log₂3`, S-unit lower bounds, `abc` applied to
+`3^a + D = 2^b`, Stewart-type digit bounds - all of them say `D` cannot be too small.  By the
+size relation a lower bound on `D` is an **upper** bound on `m̄`, which excludes only *short*
+cycles.  It converts "verified up to `N`" into "no cycle shorter than about `√N`".  **It can
+never finish**, because `log₂3` is irrational and therefore admits arbitrarily good rational
+approximations: for large `a` the Diophantine constraint is slack by miles.
+
+**Finishing requires an UPPER bound on `D`.**  Once `D` is bounded by a constant, `2^b − 3^a`
+bounded means finitely many `(a,b)` **effectively**, by Baker - and every surviving pair dies
+against the Eliahou length bound.  An upper bound on `D` is an *integrality* statement, not a
+Diophantine one: `D` divides things, and divisibility is where the additive and multiplicative
+structures actually collide.
+
+**The transcendence is the closer, never the opener.**  This is confirmed by both known
+theorems: Knight (2026) closes the high-cycle case with an upper bound (`D | 2^{k−2}`, `D` odd,
+so `D = 1`) and needs no transcendence at all; Steiner (1977) closes the circuit case because
+circuits make the exponent structure rigid enough for Baker to finish a *bounded* problem.
+
+⚠️ **Conflict to resolve**: `APPROACHES.md` Approach 3 asserts "an effective S-unit or
+abc-strength input finishes cycles **entirely**."  The filter above says the opposite - `abc`
+applied to `3^a + D = 2^b` gives `D ≳ 2^{b/(1+ε)}`, a lower bound, hence only `m̄ ≲ a·3^{εa}`,
+which excludes no large `a`.  Either that line is an overclaim or it uses `abc` on a triple I
+have not found.  **Verify before leaning on it.**  Confidence the line as written is an
+overclaim: ~80%.
+
+## Route 1 - The integrality lattice (bound `D` above by divisibility) 🔢
+
+**The 2-vs-3 mechanism.**  `D` is odd, while the numerators `M(v')` are additive combinations
+of the multiplicative monomials `2^i 3^j`.  Whether an odd number can divide all of them is a
+question about how the 3-adic and 2-adic structures sit inside one additive span.
+
+**The missing theorem.**  Integrality forces `D | M(v')` for *every* rotation, so
+`D | G` where `G = gcd_{v'} M(v')`.  Bound the **odd part of `G`** by a constant and `D` is
+bounded and Baker closes.  Knight's proof is the special case where a rotation *difference*
+has numerator `2^{k−2}`, whose odd part is 1; his cancellation of the 3-parts needs two
+rotations sharing a prefix of length `k−2`, which forces a Christoffel word, which is exactly
+why he only reaches the extremal cycle.
+
+**What we would see in their library.**  A structure theorem for the lattice spanned by the
+rotations of a binary necklace evaluated at `(2,3)`.  Pure algebra and combinatorics on words;
+no analysis anywhere.
+
+**First step available to us.**  Compute `G` for random aperiodic words and see whether its odd
+part is bounded, growing, or wild.  This is a **cheap numerical experiment that can refute the
+route in an afternoon**, and it is a genuinely CDC-shaped target for a fan-out.
+⚠️ Literature check first: Steiner / Simons-de Weger / Hercher have ground on the exponent
+vector for decades and may have this, possibly with a known reason it fails.
+
+## Route 2 - Compression to boundedly many circuits 🗜️
+
+**The 2-vs-3 mechanism.**  The cycle equation is an S-unit equation over `S = {2,3}`:
+`Σ 3^{a−1−i} 2^{E_i} = N·D`.  The subspace theorem (Evertse-Schlickewei-Schmidt) bounds the
+number of nondegenerate solutions by a function of the **number of terms** and `|S|` alone -
+not of the coefficients.  That is the deepest known statement of "additive relations among
+multiplicatively independent quantities are rare."
+
+**The missing theorem.**  The term count here is `a`, the cycle length, which is unbounded, so
+the ESS bound is vacuous.  What is needed is a **compression**: show that an integral cycle
+with many circuits reduces to one with boundedly many, or that the many-circuit case
+degenerates.  Then Simons-de Weger's machinery finishes, since it already handles every
+bounded circuit count.
+
+**What we would see in their library.**  A theorem of the form "every integral cycle has at
+most `C` circuits", proved by a rearrangement or extremal argument on parity words.
+
+**Honest read.**  This is the most conservative route: every tool except the compression lemma
+already exists, and the whole frontier of the literature is exactly the slow march up the
+circuit count (68, then 91, ...).  A civilization that got there probably got there here.
+
+## Route 3 - Classification, not rigidity, for the joint action 🌀
+
+**The 2-vs-3 mechanism.**  Furstenberg's ×2×3 phenomenon: the joint action of two
+multiplicatively independent maps is stiff, so invariant objects are forced to be trivial.
+
+**The missing theorem.**  Current rigidity (Rudolph-Johnson, EKL) is about **positive-entropy
+measures**, and a cycle is a finite orbit with entropy zero, so today's theorems say nothing.
+What is needed is entropy-free rigidity for the Collatz skew product on `ℤ_2 × ℝ` - a
+**classification of finite invariant sets**, which is an upper-bound-flavoured statement and
+therefore *not* killed by the filter above.
+
+**What we would see in their library.**  An entropy-free ×2×3 rigidity theorem, i.e. the hard
+part of Furstenberg's conjecture.  The most beautiful and the least likely to be in reach; if
+they had it, they would have proved a great deal more than Collatz.
+
+## Where the odds sit
+
+- Route 2 (compression) - most likely to be how it is actually done, ~55% conditional on the
+  cycle front being resolvable at all.
+- Route 1 (integrality lattice) - ~20%, and the only one with a same-day refutable experiment.
+- Route 3 (classification) - ~10%, and it would be a much larger event than Collatz.
+- Something none of these names - ~15%.
+
+None of the three is in reach.  The value of this map is the **filter**: it tells us in advance
+that any idea whose content is "2 and 3 are far apart" is structurally incapable of closing
+Front B, no matter how strong the input.  That disqualifies most of what looks attractive,
+including the `abc` line currently in `APPROACHES.md`.
