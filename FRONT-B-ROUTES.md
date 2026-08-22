@@ -123,3 +123,68 @@ None of the three is in reach.  The value of this map is the **filter**: it tell
 that any idea whose content is "2 and 3 are far apart" is structurally incapable of closing
 Front B, no matter how strong the input.  That disqualifies most of what looks attractive,
 including the `abc` line currently in `APPROACHES.md`.
+
+---
+
+# Ruled out on 2026-08-22 🔪
+
+Three threads pulled, all with reproducible evidence in `experiments/`.  Two died, and
+the third narrowed enough to change the ranking.
+
+## Route 1 (integrality lattice) **collapses** - do not revisit
+
+Rotating the parity word acts on numerators by `M ↦ M/2` (leading 0) or
+`M ↦ (3M + D)/2` (leading 1).  Since `D` is odd, `2` is invertible mod `D`, so
+
+> `M(σʲ v) ≡ M(v) · 3^{xⱼ} · 2^{−j}  (mod D)`,  `xⱼ` = ones in the first `j` letters
+
+**Every rotation is a unit multiple of every other, mod `D`.**  Hence `D | M(v')` for all
+rotations is *equivalent* to `D | M(v)` for one, and `gcd` over rotations carries no
+information the single condition did not.  Verified for every word tested
+(`experiments/probe.py`, `unit_multiple_law=True` throughout).
+
+The same law explains why Knight needs a *difference*: differences of unit multiples are
+not unit multiples.  Generalising it needs two rotations agreeing outside a bounded window,
+which by Morse-Hedlund forces low factor complexity, i.e. a Sturmian/Christoffel word.  The
+extremal case is the only case the trick reaches.  `experiments/oddpart.py` measures the odd
+part of the gcd of rotation-differences: tiny (1 to 893) for random words, but that is
+genericity of large integers, not structure - it cannot see the vanishingly rare words that
+would be cycles.
+
+## The counting route: the Diophantine half is already DONE, and it still cannot close
+
+Every word is the parity word of exactly one rational cycle; it is an *integer* cycle iff
+`D | W(v)`.  Naive count: `C(k,x) / (k·D)` cycles per `(k,x)`.
+
+- The bulk of that mass sits at `x/k ≈ 1/2`, where `D ≈ 2^k` and the predicted cycles have
+  **bounded elements** - killed outright by the computational verification bound.
+- Cycles with *large* elements live only in the band `k = ⌈x·log₂3⌉`, where the word entropy
+  is `H(log 2 / log 3) = 0.9500`, so the expected count is `≈ 2^{−0.05k}`.  Measured
+  convergence to that exponent in `experiments/margin.py`.
+- **The margin is exponential while Baker's loss on `D` is only quasi-polynomial**
+  (`D > 2^k·exp(−C log²k)`).  The entropy budget overtakes it around `k ≈ 10⁴`, and Eliahou
+  already forces `k > 1.7 × 10⁷`.  So the Diophantine input needed here **already exists,
+  with room to spare** - this is the one place a lower bound on `D` is used in the *right*
+  direction, which corrects the filter above: the filter kills Diophantine input used
+  through the SIZE relation, not through counting.
+
+**Why it still cannot finish**: a counting argument proves "few", and we need "none".  With
+a main term below 1, the error term would have to be below 1 as well - full cancellation in
+a sum of `2^{0.95k}` terms, far past square-root cancellation.  Heuristics of this shape
+explain the absence of cycles; they cannot witness it.
+
+## Control that validates the machinery 🧪
+
+Run the same count with `D < 0` (the `3n+1` map on negative integers) and the `−17` cycle
+appears at exactly `(k,x) = (11,7)`, contributing precisely its 11 rotations
+(`experiments/hist.py`).  The method sees cycles when cycles exist.  The sign asymmetry is
+the 3x−1 barrier showing up in the counting picture, and any proof must consume it.
+
+## Consequence for the ranking
+
+**Route 2 (compression to boundedly many circuits) is now the only survivor, and for a
+sharp reason**: the subspace theorem and Baker produce **exact finiteness**, not estimates,
+so they can output "zero" after a finite check.  Size arguments point the wrong way,
+counting arguments cannot reach zero, and integrality identities reach only Christoffel
+words.  Revised: Route 2 ~70%, exact-identity families (Knight-style, new word classes)
+~15%, Route 3 ~10%, unnamed ~5% - all conditional on the front being resolvable at all.
