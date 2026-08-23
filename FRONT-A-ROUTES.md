@@ -412,9 +412,18 @@ The chippable mathematical ladder is now:
    `(H, 2^23 H)` reached inside `[d, 2^25 H]`;
 5. ~~formalize the exact shared-lift 270-state local certificate~~ — DONE in
    `BackwardTwoThirds.lean`, including the modulo-`243` interpretation, five height
-   transitions, and actual-child expansion.  The remaining upgrade from `1/2` to `2/3` is
-   analytic/recursive: prove the exact real `2/3` edge comparison and telescope, then port
-   the stopping frontier and its cardinality estimate;
+   transitions, and actual-child expansion.  The analytic half of the `1/2`→`2/3` upgrade is
+   now also DONE in `BackwardTwoThirdsRenewal.lean`: the exact real edge weight
+   `(x/y)^(2/3)` (`Real.rpow`), its strict rational underweight on actual blocks
+   (`twoThirdsRationalWeight_lt_edgeWeight`, cube comparison `(52/25)^3 < 9`,
+   `4·(629/1000)^3 < 1`), exact telescoping through positive endpoints
+   (`twoThirdsEdgeWeight_mul`), the finite value-injective child set with real-weight
+   expansion (`exists_twoThirdsChildFinset`), potential positivity/ceiling `1051827`, the
+   `TwoThirdsStoppingFrontier`/`TwoThirdsRepeatOrStoppingGrowth` objects, and the stopping
+   cardinal bound `V(0,d) < card(S)·(1051827·(d/H)^(2/3))`.  **Remaining**: the recursive
+   `TwoThirdsRepeatOrStoppingGrowth` itself (fuel-`H+1` frontier recursion ported from
+   `BackwardStopping.lean` onto `Fin 5` nodes) — the exact analogue of the discharged
+   `NetHalfRepeatOrStoppingGrowth`;
 6. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 7. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular

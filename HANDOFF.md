@@ -1,5 +1,36 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, later lap): the 2/3-exponent renewal layer is Lean-checked
+
+- Added `CollatzMoonshot/FrontA/BackwardTwoThirdsRenewal.lean`, **`sorry`-free**, the exact
+  real telescoping layer that upgrades the rational 270-state certificate to the exponent-`2/3`
+  edge weight.  Imported from `CollatzMoonshot.lean`; full `lake build` green (8,738 jobs).
+  Axiom audit (real output): every headline theorem depends only on
+  `[propext, Classical.choice, Quot.sound]`; no `native_decide`.
+  * `twoThirdsEdgeWeight x y := ((x:ℝ)/(y:ℝ)) ^ (2/3:ℝ)` (`Real.rpow`), and
+    `twoThirdsRationalWeight j := (52/25)·(629/1000)^j`.
+  * `twoThirdsRationalWeight_lt_edgeWeight`: on every actual positive odd block
+    `3y+1 = 2^j x` the rational weight is strictly below the exact edge weight.  Proved via
+    the cube comparison `twoThirdsRationalWeight_cube_lt` (`(52/25)^3 < 9`,
+    `4·(629/1000)^3 < 1`) plus `3/2^j < x/y` and `Real.rpow` monotonicity; the cube-root step
+    uses `lt_of_pow_lt_pow_left₀` after `((3/2^j)^(2/3))^3 = (3/2^j)^2` from `Real.rpow_mul`.
+  * `twoThirdsEdgeWeight_mul`: exact telescoping through positive endpoints via
+    `Real.mul_rpow` + `field_simp`.
+  * `twoThirdsPotential_pos` (unit residues, every floor) and `twoThirdsPotential_le_max`
+    (uniform ceiling `1051827`, `decide +kernel` over `Fin 5 × Fin 81`).
+  * `exists_twoThirdsChildFinset`: upgrades `exists_twoThirdsExpansion` to a nonempty,
+    value-injective finite child set of `Fin 5 × ℕ` (`TwoThirdsChildAt`,
+    `TwoThirdsValuesInjective`) — actual reusable edges, floor-safe five-height states,
+    `3 c < 2^23 x`, and strict expansion under the exact real edge weight.
+  * `TwoThirdsStoppingFrontier` / `TwoThirdsRepeatOrStoppingGrowth` defined exactly analogous
+    to the half-exponent objects, and the cardinal bound
+    `TwoThirdsStoppingFrontier.card_bound`:
+    `V(0,d) < card(S)·(1051827·(d/H)^(2/3))`.
+- **Next**: prove the recursive `TwoThirdsRepeatOrStoppingGrowth` (port the fuel-`H+1`
+  frontier recursion from `BackwardStopping.lean`, replacing `InHeightState`/`Bool` nodes by
+  `InFiveHeightState`/`Fin 5` nodes, carrying `d ≥ 2`; reuse `weighted_biUnion_expands` with
+  `twoThirdsEdgeWeight` telescoping).  This is the analogue of `NetHalfRepeatOrStoppingGrowth`.
+
 ## Update (2026-08-23, late lap): the 2/3-exponent certificate is Lean-checked
 
 - Added `CollatzMoonshot/FrontA/BackwardTwoThirds.lean`, **`sorry`-free**, formalizing the
