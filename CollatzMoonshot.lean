@@ -10,6 +10,7 @@ import CollatzMoonshot.Assumed
 import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.FrontA.Threads
 import CollatzMoonshot.FrontB.Words
+import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative
 import CollatzMoonshot.FrontB.Threads
 import CollatzMoonshot.FrontB.Dictionary

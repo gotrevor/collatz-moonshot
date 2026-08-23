@@ -178,4 +178,27 @@ theorem dvd_numer_rot_iff {v : List Bool} (hv : v ≠ []) (hx : 1 ≤ ones v) :
         simpa using this
       exact c3.dvd_of_dvd_mul_left h3
 
+/-! ## Cycle vocabulary
+
+The three definitions the Front B board (`Threads.lean`) states its threads with.  They
+live here so that `Powers.lean` can prove transfer lemmas about them without importing
+the board. -/
+
+/-- Maximal cyclic runs of odd steps, counted by their trailing edges.  (An all-`true` word
+has zero edges and one circuit; it is excluded by `0 < den` anyway.) -/
+def circuits (v : List Bool) : ℕ := (v.zip (rot v)).countP (fun p => p.1 && !p.2)
+
+/-- The word encodes a cycle of positive **integers**. -/
+def IntegerCycle (v : List Bool) : Prop :=
+  v ≠ [] ∧ 1 ≤ ones v ∧ 0 < den v ∧ den v ∣ (numer v : ℤ)
+
+/-- The word encodes the trivial cycle `{1, 2}` (or a rotation/repetition of it): its
+member `numer v / den v` is `1` or `2`.  Both residues are needed: the trace of the
+trivial accelerated cycle rooted at `2` is `[false, true]` with `numer = 2`, `den = 1`,
+a perfectly good `IntegerCycle` whose member is `2`, not `1`.  (With the member-is-`1`
+definition `FrontB` would be *refutably false* on that very word, and the dictionary
+`noNontrivialCycle_iff_frontB` would be false with it.) -/
+def IsTrivial (v : List Bool) : Prop :=
+  (numer v : ℤ) = den v ∨ (numer v : ℤ) = 2 * den v
+
 end CollatzMoonshot.FrontB

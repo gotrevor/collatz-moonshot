@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import CollatzMoonshot.FrontB.Words
+import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative
 import CollatzMoonshot.Basic
 import CollatzMoonshot.Assumed.ABC
@@ -24,27 +25,17 @@ them distinguishable.
 Bernstein-Lagarias correspondence - is proved sorry- and axiom-free in
 `FrontB/Dictionary.lean` (`noNontrivialCycle_iff_frontB`).  Every result in this file is
 now a genuine statement about Collatz on `ℕ`.  (Landing it required correcting
-`IsTrivial`: see its docstring.)
+`IsTrivial`: see its docstring in `Words.lean`.)
+
+🧨 **Degeneracy repair** (2026-08-23): the boards' original `Compression` and `BoundedDen`
+quantified over ALL nontrivial integral words - and word **powers** (`Powers.lean`) make
+each of them *equivalent to `FrontB` itself*, i.e. zero reduction (`wpow v j` keeps the
+member value while `circuits` telescopes and `den` explodes).  Both threads now quantify
+over `Primitive` words, which is what an `m`-cycle in the literature is; the naive
+statements stay below as killed threads with their degeneracy theorems.
 -/
 
 namespace CollatzMoonshot.FrontB
-
-/-- Maximal cyclic runs of odd steps, counted by their trailing edges.  (An all-`true` word
-has zero edges and one circuit; it is excluded by `0 < den` anyway.) -/
-def circuits (v : List Bool) : ℕ := (v.zip (rot v)).countP (fun p => p.1 && !p.2)
-
-/-- The word encodes a cycle of positive **integers**. -/
-def IntegerCycle (v : List Bool) : Prop :=
-  v ≠ [] ∧ 1 ≤ ones v ∧ 0 < den v ∧ den v ∣ (numer v : ℤ)
-
-/-- The word encodes the trivial cycle `{1, 2}` (or a rotation/repetition of it): its
-member `numer v / den v` is `1` or `2`.  Both residues are needed: the trace of the
-trivial accelerated cycle rooted at `2` is `[false, true]` with `numer = 2`, `den = 1`,
-a perfectly good `IntegerCycle` whose member is `2`, not `1`.  (With the member-is-`1`
-definition `FrontB` would be *refutably false* on that very word, and the dictionary
-`noNontrivialCycle_iff_frontB` would be false with it.) -/
-def IsTrivial (v : List Bool) : Prop :=
-  (numer v : ℤ) = den v ∨ (numer v : ℤ) = 2 * den v
 
 /-- **Front B in word form**: every integral positive cycle is the trivial one. -/
 def FrontB : Prop := ∀ v, IntegerCycle v → IsTrivial v
@@ -74,45 +65,157 @@ theorem route1_gcdHarvest_false : ¬ Route1_GcdHarvest := by
   rintro ⟨v, hv, hx, h1, h2⟩
   exact h2 ((dvd_numer_rot_iff hv hx).mpr h1)
 
-/-! ## Thread 1 - compression to boundedly many circuits.  **OPEN, ~55%** -/
+/-! ## Thread 1 - compression to boundedly many circuits.  **OPEN, ~55%**
 
-/-- **The compression lemma** (ours, hence a `def`): a nontrivial integral cycle cannot have
-arbitrarily many circuits.  Route 2's entire missing ingredient.
+⚠️ **The original statement of this thread was killed on 2026-08-23** - not because it is
+false, but because it is `FrontB` in disguise.  `NaiveCompression` below quantifies over
+all nontrivial integral words; one counterexample cycle `v` manufactures the family
+`wpow v j` with `circuits = j * circuits v → ∞`, so bounding circuits over all words IS
+asserting no counterexample exists.  Anyone attacking it is attacking Front B with zero
+reduction.  The honest target - what an "`m`-cycle" in Simons-de Weger/Hercher actually
+is - quantifies over `Primitive` words. -/
+
+/-- The naive compression statement, kept so its degeneracy is on the record.  **Do not
+attack this**: `naiveCompression_iff_frontB` shows it is Front B verbatim. -/
+def NaiveCompression : Prop := ∃ C, ∀ v, IntegerCycle v → ¬ IsTrivial v → circuits v ≤ C
+
+/-- **The degeneracy, as a theorem** (axiom-free): the naive bound is *equivalent* to
+Front B.  Forward: a counterexample's powers have unboundedly many circuits.  Backward:
+no counterexamples, so any bound works vacuously.  A statement equivalent to the target
+is not a reduction of it. -/
+theorem naiveCompression_iff_frontB : NaiveCompression ↔ FrontB := by
+  constructor
+  · rintro ⟨C, hC⟩ v hv
+    by_contra hnt
+    have hc1 : 1 ≤ circuits v := circuits_pos_of_integerCycle hv
+    have hdv : 0 < den v := hv.2.2.1
+    obtain ⟨b, t, rfl⟩ : ∃ b t, v = b :: t := by
+      cases v with
+      | nil => exact absurd rfl hv.1
+      | cons b t => exact ⟨b, t, rfl⟩
+    have hIC : IntegerCycle (wpow (b :: t) (C + 1)) :=
+      (integerCycle_wpow_iff (by omega)).mpr hv
+    have hNT : ¬ IsTrivial (wpow (b :: t) (C + 1)) := fun h =>
+      hnt ((isTrivial_wpow_iff (ne_of_gt hdv) (by omega)).mp h)
+    have hle := hC _ hIC hNT
+    rw [circuits_wpow] at hle
+    nlinarith [hle, hc1]
+  · intro h
+    exact ⟨0, fun v hv hnt => absurd (h v hv) hnt⟩
+
+/-- **The compression lemma** (ours, hence a `def`): a nontrivial **primitive** integral
+cycle cannot have arbitrarily many circuits.  Route 2's entire missing ingredient, now
+stated with the primitivity the literature's "`m`-cycle" always meant.
 ⚠️ `experiments/circuits3.py` shows numerics cannot guide this: `gcd(W,D)` is not a metric
-on "nearness to being a cycle", so the statement must be attacked directly. -/
-def Compression : Prop := ∃ C, ∀ v, IntegerCycle v → ¬ IsTrivial v → circuits v ≤ C
+on "nearness to being a cycle", so the statement must be attacked directly.
+🧪 Negative-harness note: this statement is compatible with the negative cycles' existence
+(`−17`'s word is primitive with 2 circuits) - the sign-asymmetry of Front B must be
+consumed by the *ladder*, not by compression. -/
+def Compression : Prop :=
+  ∃ C, ∀ v, Primitive v → IntegerCycle v → ¬ IsTrivial v → circuits v ≤ C
 
 /-- The Simons-de Weger ladder completing at every fixed circuit count.  Their published
-theorems cover specific small counts by computation; this is the *extrapolation*, so it is a
-`def` and not an axiom. -/
-def LadderCompletes : Prop := ∀ C v, IntegerCycle v → circuits v ≤ C → IsTrivial v
+theorems cover specific small counts by computation; this is the *extrapolation*, so it is
+a `def` and not an axiom.  (`hercher_min_circuit_count` below IS the proved part of the
+ladder: rungs `≤ 91` hold, vacuously - no primitive nontrivial cycle lives there.) -/
+def LadderCompletes : Prop :=
+  ∀ C v, Primitive v → IntegerCycle v → circuits v ≤ C → IsTrivial v
 
-/-- **Route 2's wiring**, provable now: compression plus the ladder gives Front B. -/
+/-- **Route 2's wiring**, provable now: compression plus the ladder gives Front B.  The
+decomposition `exists_primitive_root` is what lets the primitive-only hypotheses cover
+every word. -/
 theorem frontB_of_compression (h1 : Compression) (h2 : LadderCompletes) : FrontB := by
   intro v hv
   by_contra hnt
   obtain ⟨C, hC⟩ := h1
-  exact hnt (h2 C v hv (hC v hv hnt))
+  obtain ⟨u, j, hu, hj, rfl⟩ := exists_primitive_root v hv.1
+  have hICu : IntegerCycle u := (integerCycle_wpow_iff hj).mp hv
+  have hdu : 0 < den u := hICu.2.2.1
+  have hNTu : ¬ IsTrivial u := fun h =>
+    hnt ((isTrivial_wpow_iff (ne_of_gt hdu) hj).mpr h)
+  exact hNTu (h2 C u hu hICu (hC u hu hICu hNTu))
+
+/-- **[ASSUMED - published theorem]** No nontrivial primitive integral cycle has fewer
+than 92 circuits.
+
+Provenance: Hercher 2023 (*J. Integer Seq.* **26**, Article 23.3.5; verified firsthand
+2026-08-22, summary in `papers/`): "there are no `m`-cycles for `m ≤ 91`".  His *m*
+(local minima = maximal odd-runs of a genuine, single-traversal cycle of the shortened
+map) is exactly `circuits v` on a `Primitive` word under the convention here.  Engine:
+continued-fraction denominators of `log₂ 3` + reciprocal sums + the verification bound -
+**no transcendence input** (method-checked against the full PDF).  The ladder this crowns:
+Simons-de Weger 2005 (`m ≤ 68`) → 2010 (`76`) → Hercher 2018 (`77`) → 2023 (`91`). -/
+axiom hercher_min_circuit_count :
+    ∀ v, Primitive v → IntegerCycle v → ¬ IsTrivial v → 92 ≤ circuits v
+
+/-- **The sharpened target** (2026-08-23): with Hercher's floor adopted, compression with
+any constant `≤ 91` closes Front B outright - no ladder extrapolation needed.  This is
+Route 2's whole remaining content in one sentence: *show a primitive nontrivial integral
+cycle cannot have 92 circuits' worth of structure*. -/
+theorem frontB_of_compression_le_91
+    (h : ∀ v, Primitive v → IntegerCycle v → ¬ IsTrivial v → circuits v ≤ 91) :
+    FrontB := by
+  intro v hv
+  by_contra hnt
+  obtain ⟨u, j, hu, hj, rfl⟩ := exists_primitive_root v hv.1
+  have hICu : IntegerCycle u := (integerCycle_wpow_iff hj).mp hv
+  have hdu : 0 < den u := hICu.2.2.1
+  have hNTu : ¬ IsTrivial u := fun h' =>
+    hnt ((isTrivial_wpow_iff (ne_of_gt hdu) hj).mpr h')
+  have h92 := hercher_min_circuit_count u hu hICu hNTu
+  have h91 := h u hu hICu hNTu
+  omega
 
 /-! ## Thread 2 - bound the denominator from above.  **OPEN, ~12%**
 
 The filter of `FRONT-B-ROUTES.md`, formalized: an *upper* bound on `|den|` closes the front
-via Baker, whereas every Diophantine input bounds it from below and closes nothing. -/
+via Baker, whereas every Diophantine input bounds it from below and closes nothing.
 
-/-- Some uniform bound on the denominator of a nontrivial integral cycle.  Knight (2026)
-proves the special case `den = 1` for high cycles. -/
-def BoundedDen : Prop := ∃ C, ∀ v, IntegerCycle v → ¬ IsTrivial v → (den v).natAbs ≤ C
+⚠️ Same 2026-08-23 degeneracy repair as Thread 1: over all words, `den (wpow v j)`
+explodes (`le_den_wpow`), so the naive bound was Front B in disguise too. -/
+
+/-- The naive statement, kept for the record.  **Do not attack this**:
+`naiveBoundedDen_iff_frontB` shows it is Front B verbatim. -/
+def NaiveBoundedDen : Prop :=
+  ∃ C, ∀ v, IntegerCycle v → ¬ IsTrivial v → (den v).natAbs ≤ C
+
+/-- The degeneracy theorem for Thread 2 (axiom-free): a counterexample's powers have
+unboundedly large denominators, so the naive bound is *equivalent* to Front B. -/
+theorem naiveBoundedDen_iff_frontB : NaiveBoundedDen ↔ FrontB := by
+  constructor
+  · rintro ⟨C, hC⟩ v hv
+    by_contra hnt
+    have hdv : 0 < den v := hv.2.2.1
+    have hIC : IntegerCycle (wpow v (C + 1)) :=
+      (integerCycle_wpow_iff (by omega)).mpr hv
+    have hNT : ¬ IsTrivial (wpow v (C + 1)) := fun h =>
+      hnt ((isTrivial_wpow_iff (ne_of_gt hdv) (by omega)).mp h)
+    have hbound := hC _ hIC hNT
+    have hgrow : ((C : ℤ) + 1) ≤ den (wpow v (C + 1)) := by
+      have := le_den_wpow (v := v) (by omega) (C + 1)
+      push_cast at this
+      linarith
+    have h3 : (den (wpow v (C + 1)) : ℤ) ≤ (C : ℤ) :=
+      le_trans Int.le_natAbs (by exact_mod_cast hbound)
+    linarith
+  · intro h
+    exact ⟨0, fun v hv hnt => absurd (h v hv) hnt⟩
+
+/-- Some uniform bound on the denominator of a nontrivial **primitive** integral cycle.
+Knight (2026) proves the special case `den = 1` for high cycles. -/
+def BoundedDen : Prop :=
+  ∃ C, ∀ v, Primitive v → IntegerCycle v → ¬ IsTrivial v → (den v).natAbs ≤ C
 
 /-- **The filter, as a theorem.**  Bounding the denominator above leaves only finitely many
 exponent shapes - this is why an upper bound closes and a lower bound never can. -/
 theorem finite_shapes_of_boundedDen (h : BoundedDen) :
     {p : ℕ × ℕ | ∃ v : List Bool, v.length = p.1 ∧ ones v = p.2 ∧
-      IntegerCycle v ∧ ¬ IsTrivial v}.Finite := by
+      Primitive v ∧ IntegerCycle v ∧ ¬ IsTrivial v}.Finite := by
   obtain ⟨C, hC⟩ := h
   refine Set.Finite.subset (baker_bounded_difference C) ?_
-  rintro ⟨k, x⟩ ⟨v, hk, hx, hcyc, hnt⟩
+  rintro ⟨k, x⟩ ⟨v, hk, hx, hprim, hcyc, hnt⟩
   refine ⟨by rw [← hx]; exact hcyc.2.1, ?_⟩
-  have := hC v hcyc hnt
+  have := hC v hprim hcyc hnt
   rwa [den, hk, hx] at this
 
 /-! ## Thread 4 - counting / equidistribution.  **KILLED as a method, ~2%** ☠️
@@ -152,13 +255,15 @@ input finishes cycles entirely"): as stated, it is an overclaim. -/
 
 /-- **abc is one blade of the scissors.**  Its lower bound on `den`, together with any upper
 bound, bounds the word length - so only finitely many shapes survive.  Neither blade cuts
-alone, and every Diophantine input supplies the same blade abc does. -/
+alone, and every Diophantine input supplies the same blade abc does.  (Primitive words
+only, after the 2026-08-23 repair - powers of course have unbounded length.) -/
 theorem length_bounded_of_abc_and_boundedDen (habc : AbcConjecture) (hbd : BoundedDen) :
-    ∃ L : ℕ, ∀ v : List Bool, IntegerCycle v → ¬ IsTrivial v → v.length ≤ L := by
+    ∃ L : ℕ, ∀ v : List Bool, Primitive v → IntegerCycle v → ¬ IsTrivial v →
+      v.length ≤ L := by
   obtain ⟨C, hCpos, hlow⟩ := den_lower_bound_of_abc habc
   obtain ⟨B, hB⟩ := hbd
-  refine ⟨⌈C * (B : ℝ) ^ 2⌉₊, fun v hcyc hnt => ?_⟩
-  have hden := hB v hcyc hnt
+  refine ⟨⌈C * (B : ℝ) ^ 2⌉₊, fun v hprim hcyc hnt => ?_⟩
+  have hden := hB v hprim hcyc hnt
   have h1 : (2:ℝ) ^ v.length ≤ C * ((den v).natAbs : ℝ) ^ 2 :=
     hlow v hcyc.2.1 hcyc.2.2.1
   have h2 : ((den v).natAbs : ℝ) ≤ (B : ℝ) := by exact_mod_cast hden
