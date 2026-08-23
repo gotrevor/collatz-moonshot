@@ -269,11 +269,58 @@ pointwise-versus-uniform split: every fixed unit seed might have positive basin 
 the infimum over seeds tends to zero along a 3-adic adversary.  That would be especially bad
 for moving-tail saturation, whose seeds are not fixed.
 
+The first variable-height transfer chip is now exact.  `experiments/barrier_transfer.py`
+derives the reusable growing odd-child costs in all six unit classes modulo `9`; their
+coordinatewise worst stream begins
+
+```
+5, 7, 11, 13, 17, 19, 23, 25, ...
+```
+
+`FrontA/BackwardTransfer.lean` proves the finite Collatz-specific part: every unit parent
+`x ≥ 2` has seven distinct reusable growing children with individual costs bounded by
+`5,7,11,13,17,19,23`, their band witnesses have exact ceiling `2^j x`, and children of
+distinct odd parents cannot collide for arbitrary costs.  It also proves the exact rational
+transfer inequality
+
+```
+sum_{j in {5,7,11,13,17,19,23}} (5/6)^j > 1.
+```
+
+The standard variable-length tree recurrence therefore has certified exponent
+`log_2(6/5) = 0.263034...`; the infinite periodic envelope has critical exponent
+`0.266895...`.  This substantially improves the crude `1/7 = 0.142857...` bookkeeping,
+without using the shrinking branch.  The generic renewal/tree-growth consequence has not
+been formalized in Lean: the theorem-grade new Collatz input and its exact weight inequality
+are formalized, while the experiment prints prefix-free finite-budget checks (for example
+`15` leaves by cost `19`).  No axiom was added.
+
+The shrinking branch now has a finite exact computational certificate as well.  The two
+height states are `x ≥ d` and `4x ≥ 7d`.  A high node in classes `2,8 mod 9` may use
+`j=1`: its child stays above `d` and returns to the low state.  Every growing child of a
+high node remains high; from a low node, every `j ≥ 3` child becomes high.  Tracking unit
+residues modulo `27` leaves one unknown ternary digit after division, so each edge is sent
+adversarially to the least potential among its three possible lifts.  Despite that loss,
+`barrier_transfer.py` exactly verifies all `36` rational inequalities for a small integer
+potential at `q=7/9`:
+
+```
+T_q w ≥ w,       min_s (T_q w)_s / w_s = 1.024251823784... > 1.
+```
+
+This yields the candidate transfer exponent `log_2(9/7) = 0.362570...`; the numerical
+critical exponent for the same finite state system is `0.369354...`.  “Candidate” here
+marks the remaining trust boundary: the weights and inequalities are checked with exact
+integer/rational arithmetic, but the Collatz-to-state transition interpretation and the
+generic weighted-tree implication are not yet Lean-checked.
+
 The chippable mathematical ladder is now:
 
 1. ~~finish the binary-subtree iteration~~ — DONE (`binaryBarrierSubtreeGrowth`);
-2. replace the crude `2 children / ×128` certificate by a residue-and-height transfer
-   certificate that includes the shrinking `j=1` branch above the floor;
+2. ~~replace the uniform `2 children / ×128` charge by individual reusable-child costs~~ —
+   DONE locally (`sevenCostTransferAt`, exponent certificate `log_2(6/5)`); an exact
+   36-state `j=1` height certificate at `q=7/9` is FOUND, with Lean checking of the state
+   interpretation now the scoped formalization target;
 3. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 4. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular

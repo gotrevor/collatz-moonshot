@@ -11,6 +11,7 @@ import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.FrontA.Threads
 import CollatzMoonshot.FrontA.BackwardTree
 import CollatzMoonshot.FrontA.BackwardBranching
+import CollatzMoonshot.FrontA.BackwardTransfer
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative

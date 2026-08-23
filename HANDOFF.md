@@ -21,7 +21,27 @@
   by 2-adic valuation of `3y+1`), and `exists_binary_level` (`Nat.le_induction` +
   choice-function `biUnion` with `Finset.card_biUnion`).  Axiom audit (observed in real
   output, 2026-08-23): `[propext, Classical.choice, Quot.sound]` — base three only.
-- Both FrontA files are imported from `CollatzMoonshot.lean`; `lake build` green.
+- Added `experiments/barrier_transfer.py` and
+  `CollatzMoonshot/FrontA/BackwardTransfer.lean`.  The exact modulo-`9` transfer search found
+  the coordinatewise worst reusable-child costs `5,7,11,13,17,19,23,...`.  Lean proves the
+  first seven labeled children exist and are distinct at every unit parent, records their
+  exact band costs, generalizes cross-parent non-collision to arbitrary exponents, and proves
+  `sum (5/6)^j > 1` over those seven costs.  Thus the standard variable-length recurrence has
+  counting exponent `log_2(6/5) = 0.263034...`, versus the old crude `1/7`; no axiom was
+  added.  The Python checker exhaustively verified `799,992` blocks through `x = 100,000`
+  and reports the limiting periodic-envelope exponent `0.266895...`.  Axiom audit (observed
+  in real output): `sevenCostTransferAt` and `sevenCostWeightCertificate` use only
+  `[propext, Classical.choice, Quot.sound]`; the generalized collision theorem uses only
+  `[propext, Quot.sound]`.
+- The same transfer script now contains a frozen, exact `36`-state certificate for the
+  shrinking `j=1` branch.  States are unit residues modulo `27` times height floors
+  `{1,7/4}`; the unknown next ternary digit is treated adversarially.  At `q=7/9`, all
+  integer/rational potential inequalities pass strictly (minimum ratio
+  `1.024251823784...`), giving candidate exponent `log_2(9/7) = 0.362570...`; the numerical
+  critical exponent of this state system is `0.369354...`.  This certificate is exact
+  Python arithmetic but is **not yet Lean-checked**.
+- All three barrier-tree FrontA files are imported from `CollatzMoonshot.lean`; `lake build`
+  green.
 
 ## Result
 
@@ -54,9 +74,12 @@ coefficient substitute) and an **annular overlap/packing lemma**.  That is enoug
 mathematics to downgrade A2 relative to A1; do not spend a treadmill merely formalizing the
 finite proxy.
 
-The treadmill job is DONE: `binaryBarrierSubtreeGrowth` is proved axiom-clean.  The next
-genuine-math attack is a finite residue-plus-height transfer certificate improving the
-crude `2 / 128` branching constant (ladder step 2 in `FRONT-A-ROUTES.md`).
+The treadmill job is DONE: `binaryBarrierSubtreeGrowth` is proved axiom-clean.  The growing
+branch's variable-cost transfer certificate is now also proved, and the finite `j=1`
+height-state search has produced an exact rational certificate.  The next scoped task is no
+longer open-ended search: Lean-check the modulo-`27` transition interpretation and the two
+height lemmas, then connect the finite weighted certificate to a standard variable-length
+tree-growth lemma.  Do not claim harmonic growth: exponent `0.362570...` is still below `1`.
 
 ---
 

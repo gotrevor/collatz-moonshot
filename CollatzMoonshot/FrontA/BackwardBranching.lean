@@ -12,10 +12,10 @@ barrier-tree census.  Every `x ≥ 2` that is a unit modulo `3` has two distinct
 larger unit predecessors.  Each uses one odd inverse followed by at most seven
 doublings, so its complete forward block back to `x` stays in `[x, 128x]`.
 
-The arithmetic branching kernel is proved below.  Iterating it into a finite
-`2^r`-node level is deliberately left as one scoped Lean-plumbing target; it
-requires composing band witnesses and proving children of distinct odd parents
-cannot collide.  No new Collatz hypothesis is involved.
+The arithmetic branching kernel and its finite `2^r`-node iteration are proved
+below.  The iteration composes band witnesses and uses uniqueness of the
+2-adic factorization to prevent children of distinct odd parents from
+colliding.  No new Collatz hypothesis is involved.
 -/
 
 namespace CollatzMoonshot.FrontA
@@ -179,7 +179,7 @@ theorem reachesInBand_trans {d X m Y y Z : ℕ}
     · obtain ⟨hlo, hhi⟩ := hb1 t hle
       exact ⟨hdm.trans hlo, hhi.trans hYZ⟩
 
-private theorem parent_eq_of_exp_le {x x' : ℕ} {j j' : ℕ} (hx : x % 2 = 1)
+theorem parent_eq_of_exp_le {x x' : ℕ} {j j' : ℕ} (hx : x % 2 = 1)
     (hle : j ≤ j') (heq : 2 ^ j * x = 2 ^ j' * x') : x = x' := by
   have hsplit : 2 ^ j' = 2 ^ j * 2 ^ (j' - j) := by
     rw [← pow_add]
