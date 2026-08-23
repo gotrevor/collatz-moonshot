@@ -1,5 +1,50 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, late lap): the 2/3-exponent certificate is Lean-checked
+
+- Added `CollatzMoonshot/FrontA/BackwardTwoThirds.lean`, **`sorry`-free**, formalizing the
+  correlated 270-state local transfer at endpoint-height exponent `2/3` exactly as frozen in
+  `experiments/barrier_transfer.py`:
+  * the five height floors `{1, 7/4, 5/2, 3, 4}` as `InFiveHeightState` (numerator/denominator
+    inequalities, no division), with floor-safe growing (`fiveHeightStep_growing`, cases
+    `j = 2`, `j = 3`, `j ≥ 4`) and shrinking (`fiveHeightStep_shrinking`) five-state
+    transitions proved by `omega` from the actual block equation and `d ≥ 2`;
+  * the shared next ternary digit: `oddBlockChild_mod_eightyOne` proves an actual odd block
+    `3y + 1 = 2^j x` has `y % 81 = ((2^j (x % 243) - 1) / 3) % 81` — the *correct* child
+    formula including the fixed carry digit produced by the division — and
+    `oddBlockChild_sharedLift` shows the single digit `t = x / 81 % 3` steers every child of
+    one source at once;
+  * the frozen 270-entry integer potential, copied in documented order, and **all 810**
+    source-state/lift inequalities for factor `52/25` and `q = 629/1000`, kernel-checked in
+    integer-scaled form (scale `25·1000^23`) by one `decide +kernel`
+    (`twoThirdsNatCertificate`); a generic bridge (`qpow_scale`, `twoThirdsNatImage_eq`)
+    transfers it to the exact rational statement `twoThirdsPotentialCertificateAt`.
+  * The acceptance theorem `exists_twoThirdsExpansion` quantifies arbitrary `d ≥ 2` and
+    actual reusable `x` in any of the five states: the exact seven growing children (plus the
+    actual `j = 1` child precisely when `fiveHasShrink` enables it) exist, are distinct,
+    satisfy their Collatz block equations, floor-safe five-state transitions, the size bound
+    `3y < 2^23 x`, and the strict rational weighted expansion
+    `(52/25)·Σ (629/1000)^j · potential(child)` over the actual child state potentials.  The
+    correlation makes each table entry *equal* to the actual child's potential (no
+    adversarial three-lift minimum anywhere).
+- Axiom audit (observed in real output, 2026-08-23): `twoThirdsNatCertificate` uses only
+  `[propext]`; `twoThirdsPotentialCertificateAt` and `exists_twoThirdsExpansion` use the base
+  three `[propext, Classical.choice, Quot.sound]`; `twoThirdsPotential_pos_of_unit` uses no
+  axioms.  No `native_decide`, no new axiom, no `sorry`.  Full `lake build` green (8,737
+  jobs) with the module imported from `CollatzMoonshot.lean`.
+- The rational edge underweight is safe for exponent `2/3` because `(52/25)^3 < 9` and
+  `4·(629/1000)^3 < 1` (`twoThirdsRationalUnderestimate`).  Exact minimum certificate ratio
+  (Python, exact `Fraction`): `1.016618220460`.
+- **Next Lean target**: generalize the telescoping/stopping renewal layer
+  (`BackwardRenewal` → `BackwardStopping`) from edge weight `sqrt(x/y)` to `(x/y)^(2/3)`,
+  driven by `exists_twoThirdsExpansion` in place of
+  `exists_netHalfGrowingExpansion`/`exists_netHalfShrinkingExpansion`.  The needed real-edge
+  comparison is `(52/25)·(629/1000)^j < (3/2^j)^(2/3)`, the cube-root analogue of the
+  existing square-root underweight lemma; the frontier recursion, collision/cycle wiring,
+  and cardinality layer should port with the five-state `InFiveHeightState` replacing the
+  two-state `InHeightState`.  Note the five-state machine needs `d ≥ 2` in the transition
+  lemmas (the old two-state one did not).
+
 ## Update (2026-08-23, post-stopping audit): shared ternary lift gives exponent `2/3`
 
 - Independently rebuilt `BackwardStopping`: full `lake build` green (8,736 jobs), and
