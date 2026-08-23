@@ -350,10 +350,10 @@ frontier with the telescoping mass has
 potential(low,d) < card(S) * 200 * sqrt(d/H).
 ```
 
-Thus it has order `sqrt(H/d)` distinct barriered preimages.  Lean proves this implication;
-only the recursive existence disjunction remains: either the finite expansion terminates in
-such a frontier, or a bounded endpoint repeats and supplies the Front-B cycle alternative.
-This statement is pinned as `NetHalfRepeatOrStoppingGrowth`.
+Thus it has order `sqrt(H/d)` distinct barriered preimages.  `BackwardStopping.lean` now
+proves the recursive existence disjunction too: finite expansion either terminates in such a
+frontier, or a bounded endpoint collision supplies an explicit cycle.  Its ancestor-chain
+fuel argument is axiom-clean, so `NetHalfRepeatOrStoppingGrowth` is fully discharged.
 
 `experiments/barrier_stopping.py` runs the exact first-exit construction.  It found no repeat
 on the tested odd unit roots.  At `H/d = 2^18`, seeds `5,13,17` produced `36,194`, `14,892`,
@@ -368,6 +368,23 @@ Using the stable rich height grid, depths `2..7` give approximately
 value, so residue depth—not height discretization—is presently the main limitation.  This is
 encouraging genuine structure, but it still points below the harmonic exponent `1` needed by
 the original saturation route.
+
+There is one correlation the preceding conservative operator deliberately discarded.  Given
+`x mod 3^k`, the next digit `t` of `x mod 3^(k+1)` is shared by every child.  Its exact
+contribution to the cost-`j` child is `2^j t·3^(k-1)` modulo `3^k`, in addition to the fixed
+carry digit in `(2^j r-1)/3`.  Replacing the sum of three-lift minima by the minimum of the
+three **joint child sums** gives a stronger universal operator.  With residues modulo
+`81` and only five height floors `{1,7/4,5/2,3,4}`, its numerical critical exponent is
+`0.683819575608`.  More usefully, `barrier_transfer.py` now checks an exact 270-state integer
+potential at exponent `2/3`, using the rational underweight
+
+```
+(52/25) * (629/1000)^j < (3/2^j)^(2/3).
+```
+
+All 810 source-state/lift inequalities are strict (minimum ratio `1.016618220460`).  This is
+a concrete, reproducible upgrade path from square-root growth to `2/3` growth, but remains
+certificate-grade Python rather than a Lean theorem.
 
 The chippable mathematical ladder is now:
 
@@ -392,9 +409,13 @@ The chippable mathematical ladder is now:
    `NetHalfStoppingFrontier.card_bound`, every odd unit root `d ≤ H` now unconditionally
    has either a cycle above `d` or `> V(d)·sqrt(H/d)/200` distinct first exits in
    `(H, 2^23 H)` reached inside `[d, 2^25 H]`;
-5. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+5. formalize the exact shared-lift 270-state certificate and upgrade the renewal exponent
+   from `1/2` to `2/3`; the finite arithmetic is DONE experimentally, while the modulo-`243`
+   interpretation, five height transitions, real `2/3` edge comparison, and generalized
+   stopping layer remain;
+6. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-6. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+7. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 

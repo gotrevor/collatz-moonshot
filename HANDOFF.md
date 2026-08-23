@@ -1,5 +1,40 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, post-stopping audit): shared ternary lift gives exponent `2/3`
+
+- Independently rebuilt `BackwardStopping`: full `lake build` green (8,736 jobs), and
+  `#print axioms` for both `netHalfRepeatOrStoppingGrowth` and
+  `NetHalfStoppingFrontier.card_bound` reports exactly
+  `[propext, Classical.choice, Quot.sound]`.  The proof's collision splice and fuel bound
+  were manually audited; no hidden global-injectivity or termination assumption was found.
+- Found a real strengthening in `experiments/barrier_transfer.py`.  The old conservative
+  operator minimizes the unknown modulo-`3` lift separately for every child.  Actual
+  children of one parent share a **single** next ternary digit: if
+  `x = r + t·3^k (mod 3^(k+1))`, then the cost-`j` child is
+  `(2^j r-1)/3 + 2^j t·3^(k-1) (mod 3^k)`.  The new operator takes the minimum over the
+  three *joint child sums*, preserving this correlation (including the fixed carry digit in
+  `(2^j r-1)/3`).
+- A compact search using unit residues modulo `81` and height floors
+  `{1, 7/4, 5/2, 3, 4}` has 270 states and numerical critical endpoint exponent
+  `0.683819575608`.  More importantly, the script now freezes and checks an integer
+  potential with the fully rational edge underweight
+
+  ```
+  (52/25) * (629/1000)^j < (3/2^j)^(2/3).
+  ```
+
+  The comparison is exact because `(52/25)^3 < 9` and
+  `4*(629/1000)^3 < 1`.  All `270 × 3 = 810` joint-lift inequalities pass in exact
+  `Fraction` arithmetic; minimum ratio `1.016618220460`.  The shared-lift residue formula is
+  also checked directly on all 79,992 growing blocks (and every applicable shrinking block)
+  through parent `10,000`.  This is certificate-grade computational evidence for replacing
+  the proved square-root frontier by a uniform `2/3`-exponent frontier.  It is **not yet
+  Lean-checked**.
+- Next Lean target: create `FrontA/BackwardTwoThirds.lean`, formalize the five height states,
+  the shared modulo-`243` source digit / modulo-`81` child calculation, and the frozen
+  270-state table.  Then generalize the exact telescoping/stopping layer from `sqrt(x/y)` to
+  `(x/y)^(2/3)`.  Do not spend effort on the old independent-lift operator first.
+
 ## Update (2026-08-23, later lap): `NetHalfRepeatOrStoppingGrowth` is now a THEOREM
 
 - Added `CollatzMoonshot/FrontA/BackwardStopping.lean`, **`sorry`-free**, proving
@@ -100,10 +135,11 @@
   Axiom audit (observed in real output): all real-weight, finite-frontier, exact-expansion,
   and cardinality theorems use only `[propext, Classical.choice, Quot.sound]`; the direct
   ancestor-repeat-to-cycle theorem uses only `[propext, Quot.sound]`.
-- The finite target `NetHalfStoppingFrontier` is pinned.  Lean proves any such frontier has
-  square-root-many distinct endpoints in the exact form
-  `V(d) < card(S) * 200 * sqrt(d/H)`.  `NetHalfRepeatOrStoppingGrowth` is the one remaining
-  `def`: recursively construct that first-exit frontier, or return the cycle alternative.
+- The finite target `NetHalfStoppingFrontier` is realized by the axiom-clean theorem
+  `netHalfRepeatOrStoppingGrowth`.  Lean proves any such frontier has square-root-many
+  distinct endpoints in the exact form
+  `V(d) < card(S) * 200 * sqrt(d/H)`; bounded recursion either constructs it or returns an
+  explicit cycle alternative.
 - Added `experiments/barrier_stopping.py`.  It performs exactly that first-exit construction
   on odd unit roots and aborts on any repeat.  No repeat occurred in the tested trees.  At
   height ratio `2^18`, seeds `5,13,17` produced respectively `36,194`, `14,892`, and `12,030`
@@ -143,14 +179,12 @@ coefficient substitute) and an **annular overlap/packing lemma**.  That is enoug
 mathematics to downgrade A2 relative to A1; do not spend a treadmill merely formalizing the
 finite proxy.
 
-The local renewal mathematics is now Lean-checked through exact telescoping, finite child
-sets, collision/cycle wiring, generalized band composition, and the final square-root
-cardinality estimate.  The next treadmill-sized task is narrowly recursive: prove
-`NetHalfRepeatOrStoppingGrowth` by expanding all endpoints `≤ H`, freezing first exits, and
-using finiteness of the `2(H-d+1)` low/high endpoint states to force either termination or an
-ancestor repeat.  Cross-parent and within-parent non-collision are already available.  Do
-not claim harmonic growth: the resulting exponent is `1/2`, and deeper numerical candidates
-still sit below `1`.
+The complete square-root renewal theorem is now Lean-checked through exact telescoping,
+finite child sets, collision/cycle wiring, generalized band composition, recursive stopping,
+and cardinality.  The next treadmill-sized task is the correlated 270-state local transfer
+at exponent `2/3`; reuse the stopping proof only after that local certificate and its exact
+edge comparison are kernel-checked.  Do not claim harmonic growth: `2/3 < 1`, and even the
+correlated numerical critical exponent is only about `0.687` on this compact state space.
 
 ---
 

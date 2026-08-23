@@ -232,7 +232,7 @@ theorem stoppingFront_init {d H : ℕ} (hd : 2 ≤ d) (hdodd : d % 2 = 1)
 live frontier value or with its own ancestry, yielding an explicit positive
 cycle above the floor, or the frontier advances one round with all invariants
 intact. -/
-theorem stoppingFront_step {d H m : ℕ} (hd : 2 ≤ d) (hdH : d ≤ H)
+theorem stoppingFront_step {d H m : ℕ} (hd : 2 ≤ d) (_hdH : d ≤ H)
     {F : Finset NetHalfNode} (hF : StoppingFront d H m F)
     (hL : (F.filter fun s => s.2 ≤ H).Nonempty) :
     (∃ n, d ≤ n ∧ OnCycle n) ∨ ∃ F', StoppingFront d H (m + 1) F' := by

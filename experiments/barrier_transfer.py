@@ -30,9 +30,16 @@ ternary digit is handled adversarially.  A frozen 36-state integer potential
 ``q = 7/9``.  The optional nonlinear search explains where that certificate
 came from, but is explicitly diagnostic rather than part of the exact check.
 
+The stronger 270-state certificate keeps a correlation discarded by that
+first search.  All children of one source share its single unknown next ternary
+digit; their lift choices cannot be minimized independently.  Tracking the
+three joint alternatives modulo 81 yields an exact rational certificate for
+endpoint-height exponent ``2/3``.
+
 Examples:
     uv run --quiet python3 experiments/barrier_transfer.py
     uv run --quiet python3 experiments/barrier_transfer.py --verify-up-to 100000
+    uv run --quiet python3 experiments/barrier_transfer.py --correlated-net-search
 """
 
 from __future__ import annotations
@@ -73,6 +80,54 @@ NET_HALF_WEIGHTS = (
     111, 69, 55, 132, 77, 99, 92, 65, 45,
     159, 200, 108, 99, 78, 154, 141, 188, 110,
     111, 69, 141, 132, 155, 163, 92, 65, 97,
+)
+
+# A stronger exact candidate which keeps the next ternary digit correlated
+# across all children of one parent.  States are unit residues modulo 81 times
+# the five height floors below.  The rational edge underweight targets endpoint
+# exponent 2/3:
+#
+#   (52/25) * (629/1000)^j < (3 / 2^j)^(2/3),
+#
+# because (52/25)^3 < 9 and 4*(629/1000)^3 < 1.  The integer potential was
+# found numerically and is checked exactly by `verify_exact_correlated_two_thirds_certificate`.
+CORRELATED_TWO_THIRDS_FACTOR = Fraction(52, 25)
+CORRELATED_TWO_THIRDS_Q = Fraction(629, 1000)
+CORRELATED_TWO_THIRDS_DEPTH = 4
+CORRELATED_TWO_THIRDS_HEIGHT_BINS = (
+    Fraction(1), Fraction(7, 4), Fraction(5, 2), Fraction(3), Fraction(4)
+)
+CORRELATED_TWO_THIRDS_WEIGHTS = (
+    461753, 223157, 354780, 319087, 225411, 131094, 290624, 375318, 166953,
+    358364, 208416, 114782, 432633, 170055, 249164, 284972, 171167, 112746,
+    394347, 203733, 314233, 331345, 182484, 167449, 371464, 292251, 153316,
+    340602, 200706, 141783, 453055, 229355, 314767, 272126, 179247, 107664,
+    461235, 197653, 323900, 416101, 214239, 126244, 526780, 370729, 169907,
+    290117, 266215, 134756, 401835, 296972, 228221, 252754, 158983, 100000,
+    523834, 734142, 354780, 319087, 225411, 564071, 385367, 720355, 364635,
+    358364, 208416, 500446, 432633, 462104, 596690, 284972, 171167, 265436,
+    471039, 733322, 314233, 331345, 182484, 514959, 562831, 687920, 270357,
+    340602, 200706, 396148, 453055, 837558, 589394, 272126, 179247, 270131,
+    461235, 626973, 323900, 423235, 214239, 499604, 526780, 638945, 472134,
+    290117, 266215, 362855, 401835, 590676, 464628, 252754, 158983, 243754,
+    541497, 734142, 354780, 319087, 225411, 564071, 507293, 720355, 668875,
+    358364, 208416, 500446, 432633, 462104, 684050, 284972, 171167, 265436,
+    569735, 733322, 314233, 331345, 182484, 514959, 661528, 687920, 420981,
+    340602, 200706, 396148, 453055, 837558, 589394, 272126, 179247, 270131,
+    461235, 626973, 323900, 423235, 214239, 499604, 526780, 638945, 472134,
+    290117, 266215, 362855, 401835, 590676, 586555, 252754, 158983, 243754,
+    541497, 832839, 354780, 319087, 225411, 564071, 507293, 720355, 668875,
+    358364, 208416, 937060, 432633, 612728, 684050, 284972, 171167, 579716,
+    569735, 733322, 314233, 331345, 182484, 514959, 661528, 687920, 420981,
+    340602, 200706, 948653, 453055, 837558, 589394, 272126, 179247, 750619,
+    461235, 748900, 323900, 423235, 214239, 499604, 526780, 638945, 472134,
+    290117, 266215, 738702, 401835, 894916, 586555, 252754, 158983, 429829,
+    541497, 860930, 354780, 319087, 225411, 564071, 507293, 720355, 668875,
+    358364, 208416, 937060, 432633, 806569, 684050, 284972, 171167, 579716,
+    569735, 733322, 314233, 331345, 182484, 514959, 672870, 687920, 420981,
+    340602, 200706, 948653, 453055, 837558, 589394, 272126, 179247, 750619,
+    461235, 905810, 323900, 423235, 214239, 499604, 526780, 638945, 472134,
+    290117, 266215, 738702, 401835, 1051827, 743466, 252754, 158983, 429829,
 )
 
 
@@ -182,9 +237,29 @@ def verify_arithmetic(rows: dict[int, tuple[int, ...]], limit: int) -> int:
             assert child % 2 == 1
             assert child % 3 != 0
             assert 3 * child + 1 == 2**cost * x
+            source_lift_digit = (x // 3**CORRELATED_TWO_THIRDS_DEPTH) % 3
+            assert child % 3**CORRELATED_TWO_THIRDS_DEPTH == (
+                child_residue_for_shared_lift(
+                    x % 3**CORRELATED_TWO_THIRDS_DEPTH,
+                    cost,
+                    CORRELATED_TWO_THIRDS_DEPTH,
+                    source_lift_digit,
+                )
+            )
             verify_forward_block(x, child, cost)
             children.append(child)
             checked += 1
+        shrinking_child = odd_macro_child(x, 1)
+        if shrinking_child is not None and shrinking_child % 3 != 0:
+            source_lift_digit = (x // 3**CORRELATED_TWO_THIRDS_DEPTH) % 3
+            assert shrinking_child % 3**CORRELATED_TWO_THIRDS_DEPTH == (
+                child_residue_for_shared_lift(
+                    x % 3**CORRELATED_TWO_THIRDS_DEPTH,
+                    1,
+                    CORRELATED_TWO_THIRDS_DEPTH,
+                    source_lift_digit,
+                )
+            )
         assert len(set(children)) == width
 
         # The collision theorem used by iteration assumes distinct odd parents.
@@ -221,6 +296,36 @@ def child_residue_possibilities(residue: int, cost: int, ternary_depth: int) -> 
     possibilities = tuple(base + digit * lower_modulus for digit in range(3))
     assert all(value % 3 != 0 for value in possibilities)
     return possibilities
+
+
+def child_residue_for_shared_lift(
+    residue: int, cost: int, ternary_depth: int, source_lift_digit: int
+) -> int:
+    """Child residue for one shared next digit of the source.
+
+    Write ``x = residue + t*3^k (mod 3^(k+1))`` and
+    ``Q = (2^cost*residue - 1)/3``.  Division by three gives
+
+        child = Q + 2^cost*t*3^(k-1) (mod 3^k).
+
+    Thus the fixed high digit already present in ``Q`` must be retained, while
+    the same ``t`` controls every child of ``x``; only the parity of ``cost``
+    changes its multiplier modulo three.  Treating these lift choices
+    independently throws away this genuine correlation.
+    """
+    if source_lift_digit not in range(3):
+        raise ValueError("a ternary lift digit must be 0, 1, or 2")
+    modulus = 3**ternary_depth
+    lower_modulus = modulus // 3
+    numerator = 2**cost * residue - 1
+    assert numerator % 3 == 0
+    quotient = numerator // 3
+    base = quotient % lower_modulus
+    base_digit = (quotient // lower_modulus) % 3
+    child_digit = (base_digit + pow(2, cost, 3) * source_lift_digit) % 3
+    child_residue = base + child_digit * lower_modulus
+    assert child_residue in child_residue_possibilities(residue, cost, ternary_depth)
+    return child_residue
 
 
 def next_height_lower_bound(height: Fraction, cost: int) -> Fraction:
@@ -276,6 +381,56 @@ def build_height_transitions(
     return tuple(transitions)
 
 
+def build_correlated_height_transitions(
+    ternary_depth: int,
+    heights: tuple[Fraction, ...],
+    growing_children: int,
+    include_shrinking: bool,
+) -> tuple[tuple[tuple[tuple[int, int], ...], ...], ...]:
+    """Build the shared-lift operator.
+
+    Each source state has three alternatives, one per possible next ternary
+    digit.  An alternative contains all child edges together.  A universal
+    certificate must expand for each alternative, but is allowed to use the
+    correlation among its children.
+    """
+    if ternary_depth < 2:
+        raise ValueError("the height-state search needs ternary depth at least 2")
+    modulus = 3**ternary_depth
+    residues = tuple(value for value in range(modulus) if value % 3 != 0)
+    state_index = {
+        (residue, height_index): height_index * len(residues) + residue_index
+        for height_index in range(len(heights))
+        for residue_index, residue in enumerate(residues)
+    }
+
+    transitions: list[tuple[tuple[tuple[int, int], ...], ...]] = []
+    for height_index, height in enumerate(heights):
+        for residue in residues:
+            costs = list(first_reusable_costs(residue % 9, growing_children))
+            if include_shrinking and shrinking_child_class(residue % 9) == "unit":
+                if next_height_lower_bound(height, 1) >= 1:
+                    costs.insert(0, 1)
+
+            alternatives: list[tuple[tuple[int, int], ...]] = []
+            for source_lift_digit in range(3):
+                edges: list[tuple[int, int]] = []
+                for cost in costs:
+                    child_height = next_height_lower_bound(height, cost)
+                    if child_height < 1:
+                        continue
+                    child_height_index = bisect_right(heights, child_height) - 1
+                    child_height_index = min(child_height_index, len(heights) - 1)
+                    child_residue = child_residue_for_shared_lift(
+                        residue, cost, ternary_depth, source_lift_digit
+                    )
+                    edges.append((cost, state_index[(child_residue, child_height_index)]))
+                assert edges
+                alternatives.append(tuple(edges))
+            transitions.append(tuple(alternatives))
+    return tuple(transitions)
+
+
 def nonlinear_radius(
     transitions: tuple[tuple[tuple[int, tuple[int, ...]], ...], ...],
     q: float,
@@ -296,6 +451,37 @@ def nonlinear_radius(
         lower, upper = min(ratios), max(ratios)
 
         # Normalize in log space, with damping for the nonsmooth min operator.
+        scale = exp(sum(log(value) for value in image) / len(image))
+        normalized = [value / scale for value in image]
+        updated = [(old * new) ** 0.5 for old, new in zip(weights, normalized)]
+        delta = max(abs(log(new / old)) for new, old in zip(updated, weights))
+        weights = updated
+        if delta < 1e-13 and upper - lower < 1e-11:
+            return lower, upper, iteration
+    return lower, upper, iterations
+
+
+def correlated_nonlinear_radius(
+    transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+    q: float,
+    iterations: int,
+    edge_factor: float = 1.0,
+) -> tuple[float, float, int]:
+    """Collatz bounds for the min-of-correlated-sums transfer operator."""
+    weights = [1.0] * len(transitions)
+    lower = upper = 0.0
+    for iteration in range(1, iterations + 1):
+        image = [
+            edge_factor
+            * min(
+                sum(q**cost * weights[target] for cost, target in edges)
+                for edges in alternatives
+            )
+            for alternatives in transitions
+        ]
+        ratios = [new / old for new, old in zip(image, weights)]
+        lower, upper = min(ratios), max(ratios)
+
         scale = exp(sum(log(value) for value in image) / len(image))
         normalized = [value / scale for value in image]
         updated = [(old * new) ** 0.5 for old, new in zip(weights, normalized)]
@@ -376,6 +562,35 @@ def verify_exact_net_half_certificate() -> tuple[Fraction, Fraction]:
     return min(margins), min(ratios)
 
 
+def verify_exact_correlated_two_thirds_certificate() -> tuple[Fraction, Fraction]:
+    """Check the 270-state shared-lift exponent-2/3 certificate exactly."""
+    assert CORRELATED_TWO_THIRDS_FACTOR**3 < 9
+    assert 4 * CORRELATED_TWO_THIRDS_Q**3 < 1
+    transitions = build_correlated_height_transitions(
+        ternary_depth=CORRELATED_TWO_THIRDS_DEPTH,
+        heights=CORRELATED_TWO_THIRDS_HEIGHT_BINS,
+        growing_children=7,
+        include_shrinking=True,
+    )
+    weights = CORRELATED_TWO_THIRDS_WEIGHTS
+    assert len(transitions) == len(weights) == 270
+    margins: list[Fraction] = []
+    ratios: list[Fraction] = []
+    for weight, alternatives in zip(weights, transitions):
+        assert len(alternatives) == 3
+        for edges in alternatives:
+            image = CORRELATED_TWO_THIRDS_FACTOR * sum(
+                CORRELATED_TWO_THIRDS_Q**cost * weights[target]
+                for cost, target in edges
+            )
+            margins.append(image - weight)
+            ratios.append(image / weight)
+    assert len(margins) == 810
+    assert min(margins) > 0
+    assert min(ratios) > 1
+    return min(margins), min(ratios)
+
+
 def search_net_critical_exponent(
     transitions: tuple[tuple[tuple[int, tuple[int, ...]], ...], ...],
     iterations: int,
@@ -397,6 +612,32 @@ def search_net_critical_exponent(
     exponent = (low + high) / 2
     q = 2.0 ** (-exponent)
     lower, upper, last_iterations = nonlinear_radius(
+        transitions, q, iterations, edge_factor=3.0**exponent
+    )
+    return exponent, lower, upper, last_iterations
+
+
+def search_correlated_net_critical_exponent(
+    transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+    iterations: int,
+) -> tuple[float, float, float, int]:
+    """Numerically solve the shared-lift endpoint-height critical exponent."""
+    low, high = 0.0, 1.5
+    last_iterations = 0
+    for _ in range(42):
+        exponent = (low + high) / 2
+        q = 2.0 ** (-exponent)
+        lower, upper, last_iterations = correlated_nonlinear_radius(
+            transitions, q, iterations, edge_factor=3.0**exponent
+        )
+        estimate = (lower * upper) ** 0.5
+        if estimate > 1:
+            low = exponent
+        else:
+            high = exponent
+    exponent = (low + high) / 2
+    q = 2.0 ** (-exponent)
+    lower, upper, last_iterations = correlated_nonlinear_radius(
         transitions, q, iterations, edge_factor=3.0**exponent
     )
     return exponent, lower, upper, last_iterations
@@ -448,6 +689,28 @@ def run_net_search(args: argparse.Namespace) -> None:
         )
 
 
+def run_correlated_net_search(args: argparse.Namespace) -> None:
+    transitions = build_correlated_height_transitions(
+        CORRELATED_TWO_THIRDS_DEPTH,
+        CORRELATED_TWO_THIRDS_HEIGHT_BINS,
+        7,
+        True,
+    )
+    exponent, lower, upper, iterations = search_correlated_net_critical_exponent(
+        transitions, args.height_iterations
+    )
+    print()
+    print("shared-lift net-height transfer search (numerical candidate)")
+    print(
+        "  states=270 (unit residues mod 81 x height floors "
+        "{1,7/4,5/2,3,4}); three correlated source lifts"
+    )
+    print(
+        f"  exponent~{exponent:.12f}, ratio=[{lower:.12f},{upper:.12f}], "
+        f"iterations={iterations}"
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -478,6 +741,11 @@ def parse_args() -> argparse.Namespace:
         "--net-search",
         action="store_true",
         help="search after refunding the factor 3 between odd endpoints",
+    )
+    parser.add_argument(
+        "--correlated-net-search",
+        action="store_true",
+        help="reproduce the shared-next-ternary-digit 270-state search",
     )
     parser.add_argument("--ternary-depth", type=int, default=3)
     parser.add_argument("--height-children", type=int, default=7)
@@ -589,10 +857,30 @@ def main() -> None:
         f"minimum margin={float(net_margin):.12f}"
     )
 
+    two_thirds_margin, two_thirds_ratio = (
+        verify_exact_correlated_two_thirds_certificate()
+    )
+    print()
+    print("exact shared-lift net-height exponent-2/3 certificate")
+    print(
+        "  states=270 (unit residues mod 81 x five height floors); "
+        "one next ternary digit shared across every child"
+    )
+    print(
+        "  rational edge under-bound: (52/25)*(629/1000)^j; "
+        "valid because (52/25)^3 < 9 and 4*(629/1000)^3 < 1"
+    )
+    print(
+        f"  all 810 inequalities strict; minimum ratio={float(two_thirds_ratio):.12f}; "
+        f"minimum margin={float(two_thirds_margin):.12f}"
+    )
+
     if args.height_search:
         run_height_search(args)
     if args.net_search:
         run_net_search(args)
+    if args.correlated_net_search:
+        run_correlated_net_search(args)
 
 
 if __name__ == "__main__":
