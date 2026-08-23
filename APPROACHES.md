@@ -107,10 +107,13 @@ and `n`).  For the Kurtz-Simon forall-form: their Theorem 2.3
 (verified from the draft, 2026-08-22) converts `M` into `M'` with `M` total iff `M'` halts
 from EVERY configuration - and the non-totality witness is a clean configuration encoding,
 smooth over the machine's primes, hence coprime to the shrink primes.  So padded garbage
-funnels to `Q`-free numbers and the reduction closes (~90%).  Residual gap: how the composed
-`g` treats non-configuration garbage integers - that is the published Sec. 3, which is
-paywalled (Springer TAMC 2007; the only open copy, people.cs.uchicago.edu/~simon/RES/
-collatz.pdf, has Sec. 3 empty).  Cornell EZproxy likely reaches the chapter for the last 10%.  Not yet machine-checked; the argument is elementary enough that Lean-ing it
+funnels to `Q`-free numbers and the reduction closes.  ✅ 2026-08-23: the published Sec. 3
+(obtained via Cornell institutional access; summary in `papers/kurtz-simon-2007-gcp-summary.md`)
+verifies every joint: universal totality handles garbage configurations, and the
+impossible-residue rule (`a_r = 1/m`, strictly decreasing) handles invalid integers - both
+compose with the shrink primes (~97%; residual = not machine-checked).  💡 Bonus: the KS
+construction already carries built-in contraction (every impossible residue gets `1/m`), so
+the canonical undecidable instances are plausibly negative-drift even without padding.  Not yet machine-checked; the argument is elementary enough that Lean-ing it
 would be a pleasant afternoon, not a campaign.
 
 Related: Conway 2013 ("unsettleable") in `papers/2013-conway-unsettleable-summary.md` - the
