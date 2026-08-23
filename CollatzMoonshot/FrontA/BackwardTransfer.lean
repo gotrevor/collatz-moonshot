@@ -55,29 +55,49 @@ theorem growingUnitOddBlockChild_parent_eq {x x' y j j' : ℕ}
 over the six unit residue classes modulo `9`. -/
 def sevenTransferCost : Fin 7 → ℕ := ![5, 7, 11, 13, 17, 19, 23]
 
+/-- Exact first seven reusable growing costs, selected by the parent modulo
+`9`.  The other three rows are irrelevant for reusable parents. -/
+def sevenCostsAt (x : ℕ) : Fin 7 → ℕ :=
+  match x % 9 with
+  | 1 => ![2, 4, 8, 10, 14, 16, 20]
+  | 2 => ![3, 7, 9, 13, 15, 19, 21]
+  | 4 => ![2, 6, 8, 12, 14, 18, 20]
+  | 5 => ![3, 5, 9, 11, 15, 17, 21]
+  | 7 => ![4, 6, 10, 12, 16, 18, 22]
+  | 8 => ![5, 7, 11, 13, 17, 19, 23]
+  | _ => ![0, 0, 0, 0, 0, 0, 0]
+
 /-- A labeled seven-child variable-cost certificate at one parent. -/
 def SevenCostTransferAt (x : ℕ) : Prop :=
   ∃ ys js : Fin 7 → ℕ, Function.Injective ys ∧
     (∀ i, GrowingUnitOddBlockChild x (ys i) (js i)) ∧
     ∀ i, js i ≤ sevenTransferCost i
 
-private theorem makeSevenCostTransfer {x : ℕ} (hx : 0 < x)
+/-- A seven-child certificate retaining the exact residue-dependent costs. -/
+def ExactSevenCostTransferAt (x : ℕ) : Prop :=
+  ∃ ys : Fin 7 → ℕ, Function.Injective ys ∧
+    ∀ i, GrowingUnitOddBlockChild x (ys i) (sevenCostsAt x i)
+
+private theorem makeExactSevenCostTransfer {x : ℕ} (hx : 0 < x)
     (ys js : Fin 7 → ℕ) (hjs : Function.Injective js)
     (hchildren : ∀ i, GrowingUnitOddBlockChild x (ys i) (js i))
-    (hcost : ∀ i, js i ≤ sevenTransferCost i) : SevenCostTransferAt x := by
-  refine ⟨ys, js, ?_, hchildren, hcost⟩
-  intro i i' hii'
-  apply hjs
-  exact growingUnitOddBlockChild_cost_eq_of_child_eq hx
-    (hchildren i) (hchildren i') hii'
+    (hcost : ∀ i, js i = sevenCostsAt x i) : ExactSevenCostTransferAt x := by
+  refine ⟨ys, ?_, ?_⟩
+  · intro i i' hii'
+    apply hjs
+    exact growingUnitOddBlockChild_cost_eq_of_child_eq hx
+      (hchildren i) (hchildren i') hii'
+  · intro i
+    rw [← hcost i]
+    exact hchildren i
 
 private theorem sevenCostTransfer_mod9_one (q : ℕ) (hx : 2 ≤ 9 * q + 1) :
-    SevenCostTransferAt (9 * q + 1) := by
+    ExactSevenCostTransferAt (9 * q + 1) := by
   let ys : Fin 7 → ℕ :=
     ![12 * q + 1, 48 * q + 5, 768 * q + 85, 3072 * q + 341,
       49152 * q + 5461, 196608 * q + 21845, 3145728 * q + 349525]
   let js : Fin 7 → ℕ := ![2, 4, 8, 10, 14, 16, 20]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -88,15 +108,15 @@ private theorem sevenCostTransfer_mod9_one (q : ℕ) (hx : 2 ≤ 9 * q + 1) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 private theorem sevenCostTransfer_mod9_two (q : ℕ) (hx : 2 ≤ 9 * q + 2) :
-    SevenCostTransferAt (9 * q + 2) := by
+    ExactSevenCostTransferAt (9 * q + 2) := by
   let ys : Fin 7 → ℕ :=
     ![24 * q + 5, 384 * q + 85, 1536 * q + 341, 24576 * q + 5461,
       98304 * q + 21845, 1572864 * q + 349525, 6291456 * q + 1398101]
   let js : Fin 7 → ℕ := ![3, 7, 9, 13, 15, 19, 21]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -107,15 +127,15 @@ private theorem sevenCostTransfer_mod9_two (q : ℕ) (hx : 2 ≤ 9 * q + 2) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 private theorem sevenCostTransfer_mod9_four (q : ℕ) (hx : 2 ≤ 9 * q + 4) :
-    SevenCostTransferAt (9 * q + 4) := by
+    ExactSevenCostTransferAt (9 * q + 4) := by
   let ys : Fin 7 → ℕ :=
     ![12 * q + 5, 192 * q + 85, 768 * q + 341, 12288 * q + 5461,
       49152 * q + 21845, 786432 * q + 349525, 3145728 * q + 1398101]
   let js : Fin 7 → ℕ := ![2, 6, 8, 12, 14, 18, 20]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -126,15 +146,15 @@ private theorem sevenCostTransfer_mod9_four (q : ℕ) (hx : 2 ≤ 9 * q + 4) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 private theorem sevenCostTransfer_mod9_five (q : ℕ) (hx : 2 ≤ 9 * q + 5) :
-    SevenCostTransferAt (9 * q + 5) := by
+    ExactSevenCostTransferAt (9 * q + 5) := by
   let ys : Fin 7 → ℕ :=
     ![24 * q + 13, 96 * q + 53, 1536 * q + 853, 6144 * q + 3413,
       98304 * q + 54613, 393216 * q + 218453, 6291456 * q + 3495253]
   let js : Fin 7 → ℕ := ![3, 5, 9, 11, 15, 17, 21]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -145,15 +165,15 @@ private theorem sevenCostTransfer_mod9_five (q : ℕ) (hx : 2 ≤ 9 * q + 5) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 private theorem sevenCostTransfer_mod9_seven (q : ℕ) (hx : 2 ≤ 9 * q + 7) :
-    SevenCostTransferAt (9 * q + 7) := by
+    ExactSevenCostTransferAt (9 * q + 7) := by
   let ys : Fin 7 → ℕ :=
     ![48 * q + 37, 192 * q + 149, 3072 * q + 2389, 12288 * q + 9557,
       196608 * q + 152917, 786432 * q + 611669, 12582912 * q + 9786709]
   let js : Fin 7 → ℕ := ![4, 6, 10, 12, 16, 18, 22]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -164,15 +184,15 @@ private theorem sevenCostTransfer_mod9_seven (q : ℕ) (hx : 2 ≤ 9 * q + 7) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 private theorem sevenCostTransfer_mod9_eight (q : ℕ) (hx : 2 ≤ 9 * q + 8) :
-    SevenCostTransferAt (9 * q + 8) := by
+    ExactSevenCostTransferAt (9 * q + 8) := by
   let ys : Fin 7 → ℕ :=
     ![96 * q + 85, 384 * q + 341, 6144 * q + 5461, 24576 * q + 21845,
       393216 * q + 349525, 1572864 * q + 1398101, 25165824 * q + 22369621]
   let js : Fin 7 → ℕ := ![5, 7, 11, 13, 17, 19, 23]
-  apply makeSevenCostTransfer (by omega) ys js
+  apply makeExactSevenCostTransfer (by omega) ys js
   · dsimp [js]
     decide
   · intro i
@@ -183,13 +203,12 @@ private theorem sevenCostTransfer_mod9_eight (q : ℕ) (hx : 2 ≤ 9 * q + 8) :
       norm_num
       ring
   · intro i
-    fin_cases i <;> norm_num [js, sevenTransferCost]
+    fin_cases i <;> norm_num [js, sevenCostsAt, Nat.add_mod]
 
 /-- Every unit modulo `3` above `1` has seven distinct reusable growing odd
-children with individual height costs bounded by `5,7,11,13,17,19,23`.
-The bounds are sharp coordinatewise: the class `x = 8 mod 9` attains them. -/
-theorem sevenCostTransferAt {x : ℕ} (hx : 2 ≤ x) (h3 : ¬3 ∣ x) :
-    SevenCostTransferAt x := by
+children with the exact costs in `sevenCostsAt`. -/
+theorem exactSevenCostTransferAt {x : ℕ} (hx : 2 ≤ x) (h3 : ¬3 ∣ x) :
+    ExactSevenCostTransferAt x := by
   have hlt : x % 9 < 9 := Nat.mod_lt x (by norm_num)
   have hrepr : x % 9 + 9 * (x / 9) = x := Nat.mod_add_div x 9
   interval_cases hrem : x % 9
@@ -217,6 +236,28 @@ theorem sevenCostTransferAt {x : ℕ} (hx : 2 ≤ x) (h3 : ¬3 ∣ x) :
     simpa [Nat.add_comm] using sevenCostTransfer_mod9_seven (x / 9) (by omega)
   · rw [← hrepr]
     simpa [Nat.add_comm] using sevenCostTransfer_mod9_eight (x / 9) (by omega)
+
+/-- Every exact residue-dependent cost is bounded by the coordinatewise
+envelope `5,7,11,13,17,19,23`. -/
+theorem sevenCostsAt_le_sevenTransferCost (x : ℕ) (i : Fin 7) :
+    sevenCostsAt x i ≤ sevenTransferCost i := by
+  have hlt : x % 9 < 9 := Nat.mod_lt x (by norm_num)
+  interval_cases hrem : x % 9 <;> fin_cases i <;>
+    norm_num [sevenCostsAt, sevenTransferCost, hrem]
+
+/-- Forgetting the exact costs recovers the earlier envelope certificate. -/
+theorem ExactSevenCostTransferAt.toSevenCostTransferAt {x : ℕ}
+    (h : ExactSevenCostTransferAt x) : SevenCostTransferAt x := by
+  obtain ⟨ys, hys, hchildren⟩ := h
+  exact ⟨ys, sevenCostsAt x, hys, hchildren,
+    sevenCostsAt_le_sevenTransferCost x⟩
+
+/-- Every unit modulo `3` above `1` has seven distinct reusable growing odd
+children with individual height costs bounded by `5,7,11,13,17,19,23`.
+The bounds are sharp coordinatewise: the class `x = 8 mod 9` attains them. -/
+theorem sevenCostTransferAt {x : ℕ} (hx : 2 ≤ x) (h3 : ¬3 ∣ x) :
+    SevenCostTransferAt x :=
+  (exactSevenCostTransferAt hx h3).toSevenCostTransferAt
 
 /-- The exact rational inequality behind the finite transfer certificate. -/
 theorem sevenCostWeightCertificate :

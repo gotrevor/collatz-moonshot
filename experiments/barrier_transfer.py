@@ -59,6 +59,22 @@ HEIGHT_CERTIFICATE_WEIGHTS = (
     1055, 756, 1245, 1254, 1441, 1344, 975, 758, 1036,
 )
 
+# A stronger certificate after refunding the factor 3 between successive odd
+# endpoints.  For target exponent 1/2,
+#
+#   (5/3) * (7/10)^j < sqrt(3) * (1/sqrt(2))^j = (3/2^j)^(1/2).
+#
+# The two strict comparisons reduce to 25 < 27 and 98 < 100.  Thus this fully
+# rational transfer is a safe under-approximation of the net-height operator.
+NET_HALF_FACTOR = Fraction(5, 3)
+NET_HALF_Q = Fraction(7, 10)
+NET_HALF_WEIGHTS = (
+    140, 76, 108, 99, 78, 48, 109, 114, 68,
+    111, 69, 55, 132, 77, 99, 92, 65, 45,
+    159, 200, 108, 99, 78, 154, 141, 188, 110,
+    111, 69, 141, 132, 155, 163, 92, 65, 97,
+)
+
 
 def step(n: int) -> int:
     return n // 2 if n % 2 == 0 else 3 * n + 1
@@ -264,14 +280,16 @@ def nonlinear_radius(
     transitions: tuple[tuple[tuple[int, tuple[int, ...]], ...], ...],
     q: float,
     iterations: int,
+    edge_factor: float = 1.0,
 ) -> tuple[float, float, int]:
     """Collatz bounds for the monotone min-over-lifts transfer operator."""
     weights = [1.0] * len(transitions)
     lower = upper = 0.0
     for iteration in range(1, iterations + 1):
         image = [
-            sum(q**cost * min(weights[target] for target in targets)
-                for cost, targets in edges)
+            edge_factor
+            * sum(q**cost * min(weights[target] for target in targets)
+                  for cost, targets in edges)
             for edges in transitions
         ]
         ratios = [new / old for new, old in zip(image, weights)]
@@ -332,6 +350,58 @@ def verify_exact_height_certificate() -> tuple[Fraction, Fraction]:
     return min(margins), min(ratios)
 
 
+def verify_exact_net_half_certificate() -> tuple[Fraction, Fraction]:
+    """Check the rational net-height exponent-1/2 certificate exactly."""
+    assert NET_HALF_FACTOR**2 < 3
+    assert 2 * NET_HALF_Q**2 < 1
+    transitions = build_height_transitions(
+        ternary_depth=3,
+        heights=HEIGHT_CERTIFICATE_BINS,
+        growing_children=7,
+        include_shrinking=True,
+    )
+    weights = NET_HALF_WEIGHTS
+    assert len(transitions) == len(weights) == 2 * len(UNITS_MOD_27)
+    margins: list[Fraction] = []
+    ratios: list[Fraction] = []
+    for weight, edges in zip(weights, transitions):
+        image = NET_HALF_FACTOR * sum(
+            NET_HALF_Q**cost * min(weights[target] for target in targets)
+            for cost, targets in edges
+        )
+        margins.append(image - weight)
+        ratios.append(image / weight)
+    assert min(margins) > 0
+    assert min(ratios) > 1
+    return min(margins), min(ratios)
+
+
+def search_net_critical_exponent(
+    transitions: tuple[tuple[tuple[int, tuple[int, ...]], ...], ...],
+    iterations: int,
+) -> tuple[float, float, float, int]:
+    """Numerically solve rho(3^a T_(2^-a)) = 1."""
+    low, high = 0.0, 1.5
+    last_iterations = 0
+    for _ in range(42):
+        exponent = (low + high) / 2
+        q = 2.0 ** (-exponent)
+        lower, upper, last_iterations = nonlinear_radius(
+            transitions, q, iterations, edge_factor=3.0**exponent
+        )
+        estimate = (lower * upper) ** 0.5
+        if estimate > 1:
+            low = exponent
+        else:
+            high = exponent
+    exponent = (low + high) / 2
+    q = 2.0 ** (-exponent)
+    lower, upper, last_iterations = nonlinear_radius(
+        transitions, q, iterations, edge_factor=3.0**exponent
+    )
+    return exponent, lower, upper, last_iterations
+
+
 def run_height_search(args: argparse.Namespace) -> None:
     heights = tuple(parse_fraction(value) for value in args.height_bins.split(",") if value)
     if not heights or heights[0] != 1 or any(a >= b for a, b in zip(heights, heights[1:])):
@@ -352,6 +422,28 @@ def run_height_search(args: argparse.Namespace) -> None:
         print(
             f"  {label:15s}: states={len(transitions)}, edges={edge_count}, "
             f"q~{q:.12f}, exponent~{-log2(q):.12f}, "
+            f"ratio=[{lower:.12f},{upper:.12f}], iterations={iterations}"
+        )
+
+
+def run_net_search(args: argparse.Namespace) -> None:
+    heights = tuple(parse_fraction(value) for value in args.height_bins.split(",") if value)
+    if not heights or heights[0] != 1 or any(a >= b for a, b in zip(heights, heights[1:])):
+        raise ValueError("--height-bins must increase strictly and start at 1")
+
+    print()
+    print("net-height transfer search (numerical candidate, not a proof)")
+    print("  edge scale: (3 / 2^j)^alpha; bins: " + ",".join(map(str, heights)))
+    for include_shrinking in (False, True):
+        transitions = build_height_transitions(
+            args.ternary_depth, heights, args.height_children, include_shrinking
+        )
+        exponent, lower, upper, iterations = search_net_critical_exponent(
+            transitions, args.height_iterations
+        )
+        label = "growing+j=1" if include_shrinking else "growing control"
+        print(
+            f"  {label:15s}: states={len(transitions)}, exponent~{exponent:.12f}, "
             f"ratio=[{lower:.12f},{upper:.12f}], iterations={iterations}"
         )
 
@@ -381,6 +473,11 @@ def parse_args() -> argparse.Namespace:
         "--height-search",
         action="store_true",
         help="run the conservative residue-plus-height j=1 transfer search",
+    )
+    parser.add_argument(
+        "--net-search",
+        action="store_true",
+        help="search after refunding the factor 3 between odd endpoints",
     )
     parser.add_argument("--ternary-depth", type=int, default=3)
     parser.add_argument("--height-children", type=int, default=7)
@@ -480,8 +577,22 @@ def main() -> None:
     )
     print(f"  transfer exponent: log2(9/7)={log2(9 / 7):.12f}")
 
+    net_margin, net_ratio = verify_exact_net_half_certificate()
+    print()
+    print("exact net-height exponent-1/2 certificate")
+    print(
+        "  rational edge under-bound: (5/3)*(7/10)^j; "
+        "valid because (5/3)^2 < 3 and 2*(7/10)^2 < 1"
+    )
+    print(
+        f"  all 36 inequalities strict; minimum ratio={float(net_ratio):.12f}; "
+        f"minimum margin={float(net_margin):.12f}"
+    )
+
     if args.height_search:
         run_height_search(args)
+    if args.net_search:
+        run_net_search(args)
 
 
 if __name__ == "__main__":

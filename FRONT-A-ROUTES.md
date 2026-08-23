@@ -295,35 +295,64 @@ been formalized in Lean: the theorem-grade new Collatz input and its exact weigh
 are formalized, while the experiment prints prefix-free finite-budget checks (for example
 `15` leaves by cost `19`).  No axiom was added.
 
-The shrinking branch now has a finite exact computational certificate as well.  The two
-height states are `x ≥ d` and `4x ≥ 7d`.  A high node in classes `2,8 mod 9` may use
-`j=1`: its child stays above `d` and returns to the low state.  Every growing child of a
-high node remains high; from a low node, every `j ≥ 3` child becomes high.  Tracking unit
-residues modulo `27` leaves one unknown ternary digit after division, so each edge is sent
-adversarially to the least potential among its three possible lifts.  Despite that loss,
-`barrier_transfer.py` exactly verifies all `36` rational inequalities for a small integer
-potential at `q=7/9`:
+The shrinking branch now has a Lean-checked finite certificate as well.  The two height
+states are `x ≥ d` and `4x ≥ 7d`.  A high node in classes `2,8 mod 9` may use `j=1`: its
+child stays above `d` and returns to the low state.  Every growing child of a high node
+remains high; from a low node, every `j ≥ 3` child becomes high.  Tracking unit residues
+modulo `27` leaves one unknown ternary digit after division, so each edge is sent
+adversarially to the least potential among its three possible lifts.
+
+The first calculation charged each macro edge its gross peak factor `2^j`.  That is safe but
+systematically overcharges successive odd endpoints, which satisfy
 
 ```
-T_q w ≥ w,       min_s (T_q w)_s / w_s = 1.024251823784... > 1.
+y = (2^j x - 1)/3.
 ```
 
-This yields the candidate transfer exponent `log_2(9/7) = 0.362570...`; the numerical
-critical exponent for the same finite state system is `0.369354...`.  “Candidate” here
-marks the remaining trust boundary: the weights and inequalities are checked with exact
-integer/rational arithmetic, but the Collatz-to-state transition interpretation and the
-generic weighted-tree implication are not yet Lean-checked.
+For endpoint-height exponent `α`, the correct asymptotic edge weight is therefore
+`(3/2^j)^α`.  At `α=1/2`, the completely rational underweight
+
+```
+(5/3)(7/10)^j < sqrt(3)(1/sqrt(2))^j = (3/2^j)^(1/2)
+```
+
+follows from `25 < 27` and `98 < 100`.  `barrier_transfer.py` exactly verifies the resulting
+`36` inequalities (minimum ratio `1.006096707253...`, minimum margin
+`0.335318898903...`).  `FrontA/BackwardHeightTransfer.lean` then kernel-checks the same
+table without `native_decide` and proves every interpretation bridge: exact seven-child
+costs, the two height transitions, the child residue modulo `9`, all three modulo-`27`
+lifts, and the local potential expansion for the actual children in both the growing-only
+and shrinking-enabled cases.  The shrinking child is proved distinct from every growing
+child, and a single odd-block collision lemma handles different odd parents at arbitrary
+exponents.
+
+This certifies the Collatz-specific **one-generation** input at endpoint exponent `1/2`.
+The remaining trust boundary is now only the generic repeat-or-growth renewal theorem and
+the conversion from endpoint height to a full barrier ceiling; the latter loses only a
+constant because the edge peak is `3y+1 ≤ 4y`.  An ancestor repeat must be retained as a
+Front-B cycle alternative rather than silently discarded.
+
+Numerically, the net-height critical exponent keeps rising as more ternary memory is added.
+Using the stable rich height grid, depths `2..7` give approximately
+`.436,.611,.689,.734,.761,.780` with the shrinking branch.  Growing-only controls give
+`.370,.416,.435,.449,.460` through depth `6`.  Denser height grids do not move the depth-4
+value, so residue depth—not height discretization—is presently the main limitation.  This is
+encouraging genuine structure, but it still points below the harmonic exponent `1` needed by
+the original saturation route.
 
 The chippable mathematical ladder is now:
 
 1. ~~finish the binary-subtree iteration~~ — DONE (`binaryBarrierSubtreeGrowth`);
 2. ~~replace the uniform `2 children / ×128` charge by individual reusable-child costs~~ —
-   DONE locally (`sevenCostTransferAt`, exponent certificate `log_2(6/5)`); an exact
-   36-state `j=1` height certificate at `q=7/9` is FOUND, with Lean checking of the state
-   interpretation now the scoped formalization target;
-3. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+   DONE locally (`sevenCostTransferAt`, exponent certificate `log_2(6/5)`); the stronger
+   exact 36-state net-height certificate at exponent `1/2`, its state interpretation, and
+   its application to actual children are also DONE in Lean;
+3. prove the generic repeat-or-growth renewal consequence and endpoint-to-peak conversion;
+   this is plumbing plus careful handling of the negative-cost `j=1` edge, not another
+   Collatz residue search;
+4. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-4. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+5. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 

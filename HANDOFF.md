@@ -35,13 +35,28 @@
   `[propext, Quot.sound]`.
 - The same transfer script now contains a frozen, exact `36`-state certificate for the
   shrinking `j=1` branch.  States are unit residues modulo `27` times height floors
-  `{1,7/4}`; the unknown next ternary digit is treated adversarially.  At `q=7/9`, all
-  integer/rational potential inequalities pass strictly (minimum ratio
-  `1.024251823784...`), giving candidate exponent `log_2(9/7) = 0.362570...`; the numerical
-  critical exponent of this state system is `0.369354...`.  This certificate is exact
-  Python arithmetic but is **not yet Lean-checked**.
-- All three barrier-tree FrontA files are imported from `CollatzMoonshot.lean`; `lake build`
-  green.
+  `{1,7/4}`; the unknown next ternary digit is treated adversarially.  The earlier `q=7/9`
+  calculation charged the gross peak `2^j x`.  Successive odd endpoints instead have scale
+  `(2^j x-1)/3`, so the correct asymptotic edge weight refunds the factor `3`.
+- Added `CollatzMoonshot/FrontA/BackwardHeightTransfer.lean`, **`sorry`-free**.  It proves
+  the two height transitions, the `j=1` source classes, the exact modulo-`9` seven-child
+  selectors, the modulo-`9` child formula and its three modulo-`27` lifts, and a general
+  odd-parent non-collision lemma covering growing and shrinking edges.  Lean kernel-checks
+  all `36` inequalities for exponent `1/2` using the rational underweight
+  `(5/3)(7/10)^j < (3/2^j)^(1/2)` (the two checks are just `25 < 27` and `98 < 100`).
+  The exact minimum ratio is `1.006096707253...`.  The theorems
+  `exists_netHalfGrowingExpansion` and `exists_netHalfShrinkingExpansion` connect the table
+  to actual, distinct, floor-safe Collatz children; no `native_decide` or new axiom is used.
+  Axiom audit (observed in real output): the table and both expansion theorems use only
+  `[propext, Classical.choice, Quot.sound]`; the generalized collision theorem uses only
+  `[propext, Quot.sound]`.
+- The net-height numerical critical exponent rises with ternary memory: with a stable rich
+  height grid, depths `2..7` give about `.436,.611,.689,.734,.761,.780` with `j=1`, versus
+  `.370,.416,.435,.449,.460` for the growing-only control through depth `6`.  The exact
+  half-exponent certificate is conservative but robust; the trend remains below harmonic
+  exponent `1`.
+- All four barrier-tree FrontA files are imported from `CollatzMoonshot.lean`; targeted
+  builds are green.
 
 ## Result
 
@@ -74,12 +89,14 @@ coefficient substitute) and an **annular overlap/packing lemma**.  That is enoug
 mathematics to downgrade A2 relative to A1; do not spend a treadmill merely formalizing the
 finite proxy.
 
-The treadmill job is DONE: `binaryBarrierSubtreeGrowth` is proved axiom-clean.  The growing
-branch's variable-cost transfer certificate is now also proved, and the finite `j=1`
-height-state search has produced an exact rational certificate.  The next scoped task is no
-longer open-ended search: Lean-check the modulo-`27` transition interpretation and the two
-height lemmas, then connect the finite weighted certificate to a standard variable-length
-tree-growth lemma.  Do not claim harmonic growth: exponent `0.362570...` is still below `1`.
+The treadmill job is DONE: `binaryBarrierSubtreeGrowth` is proved axiom-clean.  The exact
+children, height transitions, residue interpretation, rational half-exponent table, and its
+one-generation application to actual Collatz children are now also Lean-checked.  The next
+scoped task is a generic **repeat-or-growth renewal theorem**: iterate the local weighted
+expansion while preserving distinctness; an ancestor repeat is handed to Front B as a cycle,
+and otherwise convert odd-endpoint height to a band ceiling using `3y+1 ≤ 4y`.  Do not claim
+harmonic growth: the certified exponent is only `1/2`, and deeper numerical candidates still
+sit below `1`.
 
 ---
 
