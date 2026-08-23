@@ -55,7 +55,27 @@
   `.370,.416,.435,.449,.460` for the growing-only control through depth `6`.  The exact
   half-exponent certificate is conservative but robust; the trend remains below harmonic
   exponent `1`.
-- All four barrier-tree FrontA files are imported from `CollatzMoonshot.lean`; targeted
+- Added `CollatzMoonshot/FrontA/BackwardRenewal.lean`, **`sorry`-free**.  The crucial repair
+  is to replace the non-telescoping rational search weights by the exact real edge weight
+  `sqrt(x/y)`.  Lean proves the rational weight is strictly smaller on every actual odd
+  block and that exact weights telescope.  Both local child regimes therefore expand exact
+  root-to-endpoint mass.  The module also proves positive macro-reachability and the explicit
+  `OnCycle` ancestor-repeat alternative, packages every state into a value-injective finite
+  child set, introduces the floor/destination-separated `ReachesToInBand` needed by `j=1`,
+  and proves endpoint-to-block ceiling bounds.
+  Axiom audit (observed in real output): all real-weight, finite-frontier, exact-expansion,
+  and cardinality theorems use only `[propext, Classical.choice, Quot.sound]`; the direct
+  ancestor-repeat-to-cycle theorem uses only `[propext, Quot.sound]`.
+- The finite target `NetHalfStoppingFrontier` is pinned.  Lean proves any such frontier has
+  square-root-many distinct endpoints in the exact form
+  `V(d) < card(S) * 200 * sqrt(d/H)`.  `NetHalfRepeatOrStoppingGrowth` is the one remaining
+  `def`: recursively construct that first-exit frontier, or return the cycle alternative.
+- Added `experiments/barrier_stopping.py`.  It performs exactly that first-exit construction
+  on odd unit roots and aborts on any repeat.  No repeat occurred in the tested trees.  At
+  height ratio `2^18`, seeds `5,13,17` produced respectively `36,194`, `14,892`, and `12,030`
+  leaves; their rigorous square-root count floors were only `253.44`, `174.08`, and `140.8`.
+  Exact telescoping mass/root ratios were `13.88`, `8.25`, and `8.21`.
+- All five barrier-tree FrontA files are imported from `CollatzMoonshot.lean`; targeted
   builds are green.
 
 ## Result
@@ -89,14 +109,14 @@ coefficient substitute) and an **annular overlap/packing lemma**.  That is enoug
 mathematics to downgrade A2 relative to A1; do not spend a treadmill merely formalizing the
 finite proxy.
 
-The treadmill job is DONE: `binaryBarrierSubtreeGrowth` is proved axiom-clean.  The exact
-children, height transitions, residue interpretation, rational half-exponent table, and its
-one-generation application to actual Collatz children are now also Lean-checked.  The next
-scoped task is a generic **repeat-or-growth renewal theorem**: iterate the local weighted
-expansion while preserving distinctness; an ancestor repeat is handed to Front B as a cycle,
-and otherwise convert odd-endpoint height to a band ceiling using `3y+1 ≤ 4y`.  Do not claim
-harmonic growth: the certified exponent is only `1/2`, and deeper numerical candidates still
-sit below `1`.
+The local renewal mathematics is now Lean-checked through exact telescoping, finite child
+sets, collision/cycle wiring, generalized band composition, and the final square-root
+cardinality estimate.  The next treadmill-sized task is narrowly recursive: prove
+`NetHalfRepeatOrStoppingGrowth` by expanding all endpoints `≤ H`, freezing first exits, and
+using finiteness of the `2(H-d+1)` low/high endpoint states to force either termination or an
+ancestor repeat.  Cross-parent and within-parent non-collision are already available.  Do
+not claim harmonic growth: the resulting exponent is `1/2`, and deeper numerical candidates
+still sit below `1`.
 
 ---
 

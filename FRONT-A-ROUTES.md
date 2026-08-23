@@ -326,11 +326,40 @@ and shrinking-enabled cases.  The shrinking child is proved distinct from every 
 child, and a single odd-block collision lemma handles different odd parents at arbitrary
 exponents.
 
-This certifies the Collatz-specific **one-generation** input at endpoint exponent `1/2`.
-The remaining trust boundary is now only the generic repeat-or-growth renewal theorem and
-the conversion from endpoint height to a full barrier ceiling; the latter loses only a
-constant because the edge peak is `3y+1 ≤ 4y`.  An ancestor repeat must be retained as a
-Front-B cycle alternative rather than silently discarded.
+`FrontA/BackwardRenewal.lean` closes the analytic bridge that the rational table alone did
+not.  Rational search weights do **not** telescope, so iterating them would not justify the
+claimed exponent.  The exact edge weight
+
+```
+sqrt(parent / child)
+```
+
+does telescope.  Lean proves the certified rational weight is strictly smaller on every
+actual Collatz edge, then upgrades both local expansion theorems to these exact weights.
+It also separates path destination from path floor (`ReachesToInBand`), proves the generalized
+band composition needed by a shrinking child, packages both child regimes into one finite
+value-injective interface, and turns an ancestor collision into an explicit `OnCycle`
+witness.  Growing-edge peaks are at most `4` times their child endpoint; shrinking-edge peaks
+are at most `2` times their parent endpoint.
+
+The finite stopping target is now exact.  Freeze each branch when its endpoint first exceeds
+`H`.  Every exit is below `2^23 H`, every complete path is below `2^25 H`, and a stopping
+frontier with the telescoping mass has
+
+```
+potential(low,d) < card(S) * 200 * sqrt(d/H).
+```
+
+Thus it has order `sqrt(H/d)` distinct barriered preimages.  Lean proves this implication;
+only the recursive existence disjunction remains: either the finite expansion terminates in
+such a frontier, or a bounded endpoint repeats and supplies the Front-B cycle alternative.
+This statement is pinned as `NetHalfRepeatOrStoppingGrowth`.
+
+`experiments/barrier_stopping.py` runs the exact first-exit construction.  It found no repeat
+on the tested odd unit roots.  At `H/d = 2^18`, seeds `5,13,17` produced `36,194`, `14,892`,
+and `12,030` first-exit leaves, against rigorous square-root floors `253.44`, `174.08`, and
+`140.8`; exact mass/root ratios were `13.88`, `8.25`, and `8.21`.  This validates the finite
+object and shows that the half-exponent certificate is very conservative.
 
 Numerically, the net-height critical exponent keeps rising as more ternary memory is added.
 Using the stable rich height grid, depths `2..7` give approximately
@@ -347,12 +376,14 @@ The chippable mathematical ladder is now:
    DONE locally (`sevenCostTransferAt`, exponent certificate `log_2(6/5)`); the stronger
    exact 36-state net-height certificate at exponent `1/2`, its state interpretation, and
    its application to actual children are also DONE in Lean;
-3. prove the generic repeat-or-growth renewal consequence and endpoint-to-peak conversion;
-   this is plumbing plus careful handling of the negative-cost `j=1` edge, not another
-   Collatz residue search;
-4. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+3. ~~replace rational path weights by exact telescoping weights; prove endpoint-to-peak,
+   generalized-band, finite-child, cycle-alternative, and square-root frontier lemmas~~ —
+   DONE in `BackwardRenewal.lean`;
+4. prove the remaining recursive statement `NetHalfRepeatOrStoppingGrowth`: bounded expansion
+   either exhausts into the pinned first-exit frontier or repeats an ancestor;
+5. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-5. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+6. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 

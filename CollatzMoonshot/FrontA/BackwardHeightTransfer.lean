@@ -168,6 +168,27 @@ theorem netHalfStatePotential_mod_twentySeven (high : Bool) (x : ℕ) :
   cases high <;>
     simp [netHalfStatePotential, lowPotential, highPotential]
 
+/-- Every reusable residue has strictly positive potential in either height
+state. -/
+theorem netHalfStatePotential_pos (high : Bool) {x : ℕ} (h3 : ¬3 ∣ x) :
+    0 < netHalfStatePotential high x := by
+  have hx3 : x % 3 ≠ 0 := fun hx0 => h3 (Nat.dvd_of_mod_eq_zero hx0)
+  have hr : (x % 27) % 3 ≠ 0 := by
+    rwa [Nat.mod_mod_of_dvd x (by norm_num : 3 ∣ 27)]
+  rw [← netHalfStatePotential_mod_twentySeven high x]
+  have hlt : x % 27 < 27 := Nat.mod_lt x (by norm_num)
+  cases high <;> interval_cases hrem : x % 27 <;>
+    norm_num [hrem] at hr <;>
+    norm_num [netHalfStatePotential, lowPotential, highPotential, hrem]
+
+/-- Every entry of the frozen potential table is at most `200`. -/
+theorem netHalfStatePotential_le_twoHundred (high : Bool) (x : ℕ) :
+    netHalfStatePotential high x ≤ 200 := by
+  rw [← netHalfStatePotential_mod_twentySeven high x]
+  have hlt : x % 27 < 27 := Nat.mod_lt x (by norm_num)
+  cases high <;> interval_cases hrem : x % 27 <;>
+    norm_num [netHalfStatePotential, lowPotential, highPotential, hrem]
+
 /-- The child is determined modulo `9`; modulo `27` its forgotten next
 ternary digit gives these three possible lifts. -/
 def oddBlockChildResidueBase (r j : ℕ) : ℕ :=
