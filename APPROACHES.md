@@ -54,14 +54,41 @@ across all scales - it is not an initial segment, so "verify below X, prove the 
 cannot work.  Whatever kills divergence must see **individual orbits**, not measures of
 sets.
 
-### 3. Conway's undecidability (there is no general method)
+### 3. Conway's undecidability (there is no *general* method)
 
-Generalized Collatz maps are Turing-complete (Conway 1972: Minsky machine → FRACTRAN),
-and the family's halting problem is Π⁰₂-complete (Kurtz-Simon).  Any proof must exploit
-structure specific to 3n+1.  This is a *positive* design constraint: it tells you a
-winning approach must consume a concrete arithmetic input (the actual residues, the
-actual carry process, the actual continued fraction of log₂3), never just the shape of
-the dynamics.
+Generalized Collatz maps are Turing-complete: Conway 1972 simulates any Minsky (counter)
+machine by a rational game, even with all `b_i = 0`, and his COROLLARY is that no algorithm
+decides, **given** such a `g` **and** a starting `n`, whether some `g^k(n) = 1`.  Kurtz-Simon
+2007 strengthen this to the universally quantified version ("does `g` reach 1 from *every*
+`x`?") and show that problem is **Pi^0_2-complete**.  (Note: it is the *totality* question that
+is Pi^0_2-complete; the halting-style question is only Sigma^0_1.)
+
+WARNING: **this is a heuristic filter, not a barrier theorem, and the primary sources say so
+themselves.**  Both results quantify over `g`: they deny a *uniform* method for the family.
+Neither says anything about the single instance `3n+1`, whose truth value is determinate and
+whose ZFC-provability is untouched.  Conway, in the 1972 paper itself:
+
+> "Of course, particular games of this type can still have predictable properties, so that
+> (for instance) **our theorem says nothing about the Collatz game.**  But it does prohibit any
+> general solution to games of this type, and also shows that there exist special cases for
+> which the prediction problem is unsolvable."
+
+And Kurtz-Simon describe their own contribution as "a good heuristic explanation for the
+apparent difficulty of the problem."
+
+**What it licenses**: "no method uniform across generalized Collatz maps can work."
+**What it does NOT license**: "any proof must consume 3n+1-specific structure."  The second is
+a good design instinct and we go on using it, but it is *our* heuristic, not Conway's theorem.
+Do not price a route down for failing this filter - doing so once wrongly penalised the
+transducer / certificate-search lane, whose matrix interpretations consume the actual
+coefficients and so pass the filter anyway.
+
+**Open sub-question**: can the undecidable instances be constrained to **negative drift**
+(geometric mean of the `a_i` below 1)?  If not, the filter is weaker still, since the whole
+Collatz heuristic lives on negative drift.  Unresolved.
+
+Related: Conway 2013 ("unsettleable") in `papers/2013-conway-unsettleable-summary.md` - the
+folklore overstates that one in exactly the same direction.
 
 ## Approach 1 - Measure rigidity: the ×2×3 route 🏔️
 
