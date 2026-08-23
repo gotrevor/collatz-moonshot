@@ -420,10 +420,22 @@ The chippable mathematical ladder is now:
    (`twoThirdsEdgeWeight_mul`), the finite value-injective child set with real-weight
    expansion (`exists_twoThirdsChildFinset`), potential positivity/ceiling `1051827`, the
    `TwoThirdsStoppingFrontier`/`TwoThirdsRepeatOrStoppingGrowth` objects, and the stopping
-   cardinal bound `V(0,d) < card(S)·(1051827·(d/H)^(2/3))`.  **Remaining**: the recursive
-   `TwoThirdsRepeatOrStoppingGrowth` itself (fuel-`H+1` frontier recursion ported from
-   `BackwardStopping.lean` onto `Fin 5` nodes) — the exact analogue of the discharged
-   `NetHalfRepeatOrStoppingGrowth`;
+   cardinal bound `V(0,d) < card(S)·(1051827·(d/H)^(2/3))`.  The recursive
+   `TwoThirdsRepeatOrStoppingGrowth` is now also DONE (as a THEOREM) in
+   `BackwardTwoThirdsStopping.lean`: the fuel-`H+1` frontier recursion ported from
+   `BackwardStopping.lean` onto `Fin 5`/`InFiveHeightState` nodes, reusing verbatim the
+   value-based `StoppingChain`, `chain_agree`, `chain_reachesValuePos`,
+   `StoppingChain.round_add_le`, `reusable_band_step`, and `reachesValuePos_self_iff_onCycle`,
+   with strict mass via `weighted_biUnion_expands` under the exact `(x/y)^(2/3)` telescoping
+   (`twoThirdsEdgeWeight_mul`).  The `NoNontrivialCycle` wiring
+   (`twoThirdsStoppingFrontier_of_noCycle`) eliminates the cycle alternative, a kernel-checked
+   uniform lower bound `100000 ≤ twoThirdsPotential i x` on unit residues
+   (`twoThirdsPotential_ge_min`) is added, and the explicit corollary
+   `twoThirds_stopping_card_bound` gives, for every odd unit `2 ≤ d ≤ H`, a value-injective
+   first-exit frontier `S` with `100000 < card(S)·1051827·(d/H)^(2/3)`, endpoints in
+   `(H, 2^23 H)` reached inside `[d, 2^25 H]`.  Axiom audit: base three
+   `[propext, Classical.choice, Quot.sound]`, no `native_decide`.  Thus the exponent-`2/3`
+   frontier is now unconditional exactly as the `1/2` frontier was;
 6. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 7. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular

@@ -1,5 +1,41 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, newest lap): `TwoThirdsRepeatOrStoppingGrowth` is now a THEOREM
+
+- Added `CollatzMoonshot/FrontA/BackwardTwoThirdsStopping.lean`, **`sorry`-free**, proving
+  `twoThirdsRepeatOrStoppingGrowth : TwoThirdsRepeatOrStoppingGrowth` exactly as pinned (the
+  target `def` in `BackwardTwoThirdsRenewal.lean` was untouched).  Full `lake build` green
+  (8,739 jobs), module imported from `CollatzMoonshot.lean`.  Axiom audit (real output):
+  `twoThirdsRepeatOrStoppingGrowth`, `twoThirdsStoppingFrontier_of_noCycle`,
+  `twoThirds_stopping_card_bound`, `twoThirdsPotential_ge_min` each depend only on
+  `[propext, Classical.choice, Quot.sound]` — base three, no `native_decide`, no new axiom.
+- The construction is the five-state analogue of `netHalfRepeatOrStoppingGrowth`: a fuel-`H+1`
+  frontier recursion over `TwoThirdsNode = Fin 5 × ℕ`, expanding every node `≤ H` through
+  `exists_twoThirdsChildFinset` and freezing first exits.  It **reuses verbatim** the
+  state-independent value machinery from `BackwardStopping.lean` (`StoppingChain`, `consChain`,
+  `chain_agree`, `chain_reachesValuePos`, `StoppingChain.round_add_le`, `reusable_band_step`,
+  `ReusableOddBlockChild.lt_of_le`, `reachesValuePos_self_iff_onCycle`, `weighted_biUnion_expands`);
+  only the state wrappers `TwoThirdsStoppingNode`/`TwoThirdsStoppingFront` and the three round
+  lemmas (`twoThirdsFront_init`, `twoThirdsFront_step`, `twoThirdsStoppingFrontier_of_no_low`)
+  are re-derived over `InFiveHeightState`/`Fin 5` and the exact real edge weight
+  `(x/y)^(2/3)` telescoped by `twoThirdsEdgeWeight_mul`.  The potential is `ℕ`-valued so all
+  real sums carry an explicit `(· : ℝ)` cast; `InFiveHeightState.le` replaces the two-state
+  `.1`; the child-finset call takes the extra `d ≥ 2` argument.
+- **Cycle branch**: a new endpoint colliding with a live frontier value or its own ancestry
+  splices via `chain_reachesValuePos` into `ReachesValuePos n n`, i.e. `OnCycle n` with `d ≤ n`.
+  **Termination**: `StoppingChain.round_add_le` — a low node at round `m` has `m` distinct
+  chain values in `[d, H]`, so fuel `H + 1` suffices.  **Mass**: exact `(x/y)^(2/3)`
+  telescoping, exits frozen by `filter (· ≤ H)` sum splitting.
+- Also added: `twoThirdsStoppingFrontier_of_noCycle` (NoNontrivialCycle wiring eliminating the
+  cycle alternative), the kernel-checked `twoThirdsPotential_ge_min` (`100000 ≤ potential` on
+  unit residues, `decide +kernel` over `Fin 5 × Fin 81`), and the explicit corollary
+  `twoThirds_stopping_card_bound`: assuming no nontrivial cycle, every odd unit `2 ≤ d ≤ H`
+  has a value-injective first-exit frontier `S` with
+  `100000 < card(S)·1051827·(d/H)^(2/3)`, endpoints in `(H, 2^23 H)`, paths in `[d, 2^25 H]`.
+- **Next**: the exponent-`2/3` frontier is now unconditional (matching the `1/2` frontier).
+  The open mathematics is step 5 of the `FRONT-A-ROUTES.md` ladder (pointwise vs. uniform
+  harmonic growth — the 3-adic adversary) and step 6's overlap/packing question.
+
 ## Update (2026-08-23, later lap): the 2/3-exponent renewal layer is Lean-checked
 
 - Added `CollatzMoonshot/FrontA/BackwardTwoThirdsRenewal.lean`, **`sorry`-free**, the exact
