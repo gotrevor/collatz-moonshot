@@ -1,42 +1,41 @@
-# HANDOFF: the Front B dictionary 📖
+# HANDOFF: the Front B dictionary 📖 — DONE (2026-08-23)
 
-**Objective**: make `CollatzMoonshot/FrontB/Dictionary.lean` sorry-free.  That file IS the
-task - its module docstring carries the full plan, the two-layer structure, and the
-hand-checked sanity anchors.  Nothing else in the repo is in scope for this run.
+**Objective met.** `CollatzMoonshot/FrontB/Dictionary.lean` is sorry-free, both frozen
+headlines (`noNontrivialCycle_of_frontB`, `noNontrivialCycle_iff_frontB`) are proved, and
+`#print axioms noNontrivialCycle_iff_frontB` shows exactly
+`[propext, Classical.choice, Quot.sound]`.  Full `lake build` green.
 
-## The contract (also in the file - it wins if we drift)
+## What happened this lap
 
-- **Frozen**: `noNontrivialCycle_of_frontB` and `noNontrivialCycle_iff_frontB` keep their
-  exact statements.  Guard by name.
-- **Adjustable**: every lemma marked MILESTONE - restate, split, reorient, or replace them
-  freely if a cleaner path appears.  They are scaffolding, not deliverables.
-- **No new axioms.**  This is our own target (repo doctrine: our targets are never
-  axioms).  Endgame check: `#print axioms noNontrivialCycle_iff_frontB` shows at most
-  `[propext, Classical.choice, Quot.sound]`.
-- Zero sorries anywhere in the file at the end; the treadmill's `--done-when` watches
-  exactly this file.
+1. **The target as handed off was false.**  `IsTrivial v := numer v = den v` (member = 1)
+   made `FrontB` refutably false: `[false, true]` - the trace of the trivial accelerated
+   cycle rooted at `2` - is an `IntegerCycle` with `numer = 2`, `den = 1`.  The iff
+   headline was therefore unprovable as stated.  Fix (in `Threads.lean`): `IsTrivial v :=
+   numer v = den v ∨ numer v = 2 * den v` (member ∈ {1, 2} = the trivial `tstep`-cycle's
+   membership).  All other uses of `IsTrivial` are opaque hypotheses, so nothing else moved.
 
-## What is already proved and load-bearing (use, don't re-derive)
+2. **A cleaner Layer-1 engine than the suggested rotation-invariant route**: the
+   unconditional iterate identity (`tstep_iterate_identity`, one induction over ℕ)
+   `2^m · tstep^[m] n = 3^(ones v) · n + numer v`, `v = traceWord n m`.
+   On a cycle it gives `member_identity` by `linear_combination`.  The rotation
+   identities were still the per-step engine of the converse (`realize_head_false/true`,
+   `realize_iterate`), via `rot = List.rotate 1` and `List.rotate_length`.
 
-- `FrontB/Words.lean`: `numer` prepend recursion (the ONLY usable induction handle -
-  do not fall back to the Σ-of-monomials form), `two_mul_numer_rot_false/true` (the exact
-  rotation identity over ℤ - one orbit step = one word rotation; this is the engine of
-  `member_identity`), `not_two_dvd_den`, `not_three_dvd_den`, append lemmas.
-- `Conjecture.lean`: `OnCycle`, `NoNontrivialCycle`, `step_pos`, orbit lemmas.
-- `FrontB/Threads.lean`: `IntegerCycle`, `IsTrivial`, `FrontB`.
+3. **Layer 2** is the `walk` lemma: chase a `step`-cycle with `tstep`, hit-or-overshoot
+   invariant with the bound `d ≤ 2j` forcing a positive accelerated period; the only
+   missable members are `3w+1`-intermediates of odd members, and an intermediate of an
+   intermediate is parity-impossible.
 
-## Working notes
+## Consequence
 
-- The suggested proof of `member_identity`: strengthen to an invariant along the orbit
-  relating `tstep^[i] n` to `numer`/`den` of the i-th rotation of the trace, using that
-  `traceWord (tstep n) m` relates to `rot (traceWord n (m+1))` on a cycle.  Expect to need
-  a `traceWord`-vs-`rot` commuting lemma on cyclic words - state it as a new MILESTONE.
-- Layer 2 (`step` ↔ `tstep`) is fiddly bookkeeping, not deep: in a `step`-cycle an odd
-  member's successor `3n+1` is even.  Take the accelerated members to be the non-`3n+1`-
-  intermediate members.
-- `frontB_of_noNontrivialCycle` (the converse) is the harder half and is a MILESTONE, not
-  a headline: realize an `IntegerCycle` word by `n' := (numer v / den v).toNat` and walk
-  the word.  If it resists, prioritize finishing `noNontrivialCycle_of_frontB` cleanly -
-  the iff headline needs both, but a lap that lands the forward direction sorry-free has
-  earned its keep even if the converse rolls to the next lap.
-- Commit green early and often; small commits per milestone.
+Every theorem in `FrontB/Threads.lean` is now a genuine statement about Collatz on ℕ
+(docstring warning there replaced).  Both fronts' boards remain: Front B open threads
+(Compression ~55%, BoundedDen ~12%), Front A (`FrontA/`, Rigidity) untouched this lap.
+
+## Next attack
+
+- The hardest open obligation on the Front B board is **`Compression`**
+  (`Threads.lean`): a nontrivial integral cycle has boundedly many circuits.  Nothing
+  formal exists toward it; `FRONT-B-ROUTES.md` thread 1 has the prose.
+- Uncommitted changes from a *previous* session sit in `Rigidity*`, `FrontA/`, README and
+  notes files - not mine to judge; left uncommitted deliberately.

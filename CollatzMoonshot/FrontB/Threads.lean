@@ -19,10 +19,12 @@ House doctrine (`Assumed.lean`) applies: **our own conjectures are `def`s, never
 Only community-settled results become axioms, and each is named so `#print axioms` keeps
 them distinguishable.
 
-⚠️ **Owed lemma**: the dictionary between `Conjecture.lean`'s `NoNontrivialCycle` (on `ℕ`)
-and `FrontB` below (on words) is the Halbeisen-Hungerbühler / Bernstein-Lagarias
-correspondence.  It is provable and **not proved here**, so every result in this file is a
-statement about words until that bridge lands.  Do not quote them as results about `ℕ`.
+✅ **Bridge landed** (2026-08-23): the dictionary between `Conjecture.lean`'s
+`NoNontrivialCycle` (on `ℕ`) and `FrontB` below (on words) - the Halbeisen-Hungerbühler /
+Bernstein-Lagarias correspondence - is proved sorry- and axiom-free in
+`FrontB/Dictionary.lean` (`noNontrivialCycle_iff_frontB`).  Every result in this file is
+now a genuine statement about Collatz on `ℕ`.  (Landing it required correcting
+`IsTrivial`: see its docstring.)
 -/
 
 namespace CollatzMoonshot.FrontB
@@ -35,8 +37,14 @@ def circuits (v : List Bool) : ℕ := (v.zip (rot v)).countP (fun p => p.1 && !p
 def IntegerCycle (v : List Bool) : Prop :=
   v ≠ [] ∧ 1 ≤ ones v ∧ 0 < den v ∧ den v ∣ (numer v : ℤ)
 
-/-- The word encodes the trivial cycle (or a repetition of it): its member is `1`. -/
-def IsTrivial (v : List Bool) : Prop := (numer v : ℤ) = den v
+/-- The word encodes the trivial cycle `{1, 2}` (or a rotation/repetition of it): its
+member `numer v / den v` is `1` or `2`.  Both residues are needed: the trace of the
+trivial accelerated cycle rooted at `2` is `[false, true]` with `numer = 2`, `den = 1`,
+a perfectly good `IntegerCycle` whose member is `2`, not `1`.  (With the member-is-`1`
+definition `FrontB` would be *refutably false* on that very word, and the dictionary
+`noNontrivialCycle_iff_frontB` would be false with it.) -/
+def IsTrivial (v : List Bool) : Prop :=
+  (numer v : ℤ) = den v ∨ (numer v : ℤ) = 2 * den v
 
 /-- **Front B in word form**: every integral positive cycle is the trivial one. -/
 def FrontB : Prop := ∀ v, IntegerCycle v → IsTrivial v
