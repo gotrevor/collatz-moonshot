@@ -148,6 +148,138 @@ Krasikov-Lagarias-type backward-tree lower bounds.
 **Missing new mathematics**: quantitative control of the *minimum along the backward branch*.
 Counting preimages without this height condition is now ruled out, not merely viewed as weak.
 
+### 2026-08-23 pull: the barriered tree has a measurable signal
+
+The first concrete probe is `experiments/barrier_tree.py`.  For a seed `d` and `p ≥ 0`, it
+enumerates the finite tree
+
+```
+B_d(p) = {m | m reaches d along a path contained in [d, 2^p d]}.
+```
+
+The ceiling matters: an endpoint below `2^p d` can otherwise reach `d` through a much larger
+intermediate value.  These band-truncated trees increase with `p` and exhaust the full basin
+whose path never falls below `d`.  The experiment records
+
+```
+H_d(p) = d · ∑_{m ∈ B_d(p)} 1/m,
+c_d(p) = (H_d(p) - (2 - 2^-p)) / log(2^p),
+```
+
+where `2 - 2^-p` is the exact harmonic contribution of the unavoidable doubling spine.
+
+There is one exact, Lean-checked residue obstruction.  The inverse branches of `x` are `2x`
+and, only for `x ≡ 4 (mod 6)`, `(x-1)/3`.  Consequently, if `3 ∣ d`, the *entire* backward
+basin of `d` is just `2^k d`; no barrier hypothesis is needed.  See
+`FrontA/BackwardTree.lean`.  This does not kill the moving-tail plan: after an orbit takes an
+odd step it is a unit modulo `3` forever, so a hypothetical divergent orbit supplies arbitrarily
+high tail seeds with `3 ∤ d`.
+
+For units modulo `3`, the initial census found a real signal rather than spine noise:
+
+| seeds | unit seeds | ceiling | min `c_d(p)` | 10% | median | 90% | max |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `10000..10179` | 120 | `2^18 d` | 0.2049 | 0.5004 | 1.6700 | 6.4783 | 15.7598 |
+| `1000000..1000179` | 120 | `2^18 d` | 0.2213 | 0.4928 | 1.7498 | 5.6077 | 9.4708 |
+| `2000000..2000999` | 667 | `2^15 d` | 0.2213 | 0.4588 | 1.5459 | 5.3054 | 36.0056 |
+
+The worst seed in the million-scale sample, `d = 1000052`, remained stable under a deeper
+safe-only run:
+
+| `p` | 12 | 15 | 18 | 21 | 24 |
+|---|---:|---:|---:|---:|---:|
+| `c_d(p)` | 0.2254 | 0.2225 | 0.2213 | 0.2198 | 0.2195 |
+| `#B_d(p)` | 412 | 3,149 | 24,223 | 186,303 | 1,475,492 |
+
+The near factor `8` in node count every three increments of `p` suggests linear growth in
+`2^p`, while the scaled harmonic mass grows roughly linearly in `p`.  Raw-versus-safe controls
+are highly nonuniform: among 36 seeds at `p = 15`, safe harmonic mass ranged from about `2%`
+to `100%` of the basin obtained when dips below `d` are allowed.  Floor preservation is not a
+harmless constant loss.
+
+**What this buys.**  `UniformBarrierHarmonicGrowth` is now a precise new subtarget, with the
+weaker pointwise form beside it.  The census makes this inequality worth attacking; it does
+not make it true.
+
+**What it does not buy.**  Undoing the scaling gives only
+`∑ 1/m ≍ c_d log R / d` for one seed.  A moving floor requires `d → ∞`, and backward basins of
+successive points on one orbit overlap heavily.  Thus even a uniform positive lower bound on
+`c_d` does not yet contradict Tao.  The next mathematical pull is an **annular moving-seed
+aggregation lemma**: extract disjoint new harmonic mass from successively higher tail seeds
+without losing the result to the `1/d` factor or to nesting of their backward basins.
+
+That next pull was tested immediately in `experiments/barrier_tail.py`.  Since no divergent
+orbit is known, the proxy takes an ordinary orbit up to its global peak and keeps the strict
+future-minimum records: each selected `d_i` has a forward path to the peak staying above
+`d_i`, exactly the finite high-floor condition.  Ignoring overlap entirely, the optimistic
+additive budget is `∑ c_{d_i}(15)/d_i`:
+
+| excursion start | unit future-minimum records | peak | naive total budget |
+|---:|---:|---:|---:|
+| 27 | 17 | 9,232 | 0.293888 |
+| 77,031 | 14 | 21,933,016 | 0.000154908 |
+| 837,799 | 23 | 2,974,984,576 | 0.000006849 |
+
+The product `(starting floor) × (total budget)` stays order one; later-record tail budgets
+collapse still faster.  This is a **negative result for naive aggregation**, not a theorem
+about a hypothetical divergent orbit, but it exposes the missing input more sharply.  One
+needs something like `DivergentTailHarmonicBudget` (`∑_k 1/T^k(n) = ∞` on every divergent
+orbit), or coefficients growing strongly enough to replace it, *plus* an overlap/packing
+lemma.  Neither follows from divergence alone by an evident argument: an exponentially
+escaping orbit would have finite reciprocal budget.  Route A2 therefore remains alive but
+is less attractive than the single-tree census initially makes it look.
+
+### The first genuine chip: binary safe branching, and a 3-adic stress test
+
+`FrontA/BackwardBranching.lean` now proves the arithmetic kernel of a uniform pruned tree.
+For every `x ≥ 2` with `3 ∤ x`, there are two distinct `y₁,y₂ > x`, still units modulo `3`,
+such that each `yᵢ` reaches `x` through a path contained in `[x,128x]`.  The proof is an
+exhaustive six-unit-class calculation modulo `9`: among the three admissible odd-inverse
+exponents
+
+```
+x = 1 mod 3:  j = 2,4,6
+x = 2 mod 3:  j = 3,5,7,
+```
+
+exactly one child is divisible by `3`, leaving two reusable unit children.  Iterating gives a
+binary floor-preserving subtree: at depth `r`, at least `2^r` distinct predecessors fit below
+the crude ceiling `128^r d`.  This is now fully proved: `binaryBarrierSubtreeGrowth` produces
+the `2^r`-element `Finset` for every unit seed, axiom-clean.  Collisions between children of
+distinct odd parents are excluded by the 2-adic valuation of `3y + 1`
+(`unitOddBlockChild_parent_eq`), and band witnesses compose (`reachesInBand_trans`).  This is
+genuine unconditional progress, but only a counting exponent `1/7`.  It does **not** approach
+linear harmonic mass.
+
+The stronger uniform harmonic target was also attacked rather than admired.  The odd-branch
+integrality pattern is controlled by increasingly deep 3-adic digits of `d`.  A deterministic
+random/prefix search (`experiments/barrier_adversary.py`) found nested low-ternary prefixes
+whose normalized slopes decrease:
+
+| seed | `c_d(15)` | `c_d(18)` | `c_d(21)` | `c_d(24)` | `c_d(30)` |
+|---:|---:|---:|---:|---:|---:|
+| 1,000,052 | 0.2225 | 0.2213 | 0.2198 | 0.2195 | 0.2199 |
+| 359,421,848,168,309 | 0.1993 | 0.1909 | 0.1854 | 0.1829 | 0.1789 |
+| 798,338,741,946,713 | 0.1914 | 0.1830 | 0.1743 | 0.1696 | 0.1630 |
+| 10,205,741,556,338,552 | 0.1914 | 0.1803 | 0.1698 | 0.1639 | 0.1555 |
+
+The last `p=30` run enumerated `52,327,889` safe nodes.  The slope still looks positive for
+each fixed seed, but the apparent uniform `0.2` floor is gone.  This suggests a real
+pointwise-versus-uniform split: every fixed unit seed might have positive basin density while
+the infimum over seeds tends to zero along a 3-adic adversary.  That would be especially bad
+for moving-tail saturation, whose seeds are not fixed.
+
+The chippable mathematical ladder is now:
+
+1. ~~finish the binary-subtree iteration~~ — DONE (`binaryBarrierSubtreeGrowth`);
+2. replace the crude `2 children / ×128` certificate by a residue-and-height transfer
+   certificate that includes the shrinking `j=1` branch above the floor;
+3. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+   growth or a uniform bound—the 3-adic adversary is the falsification side;
+4. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+   packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
+   problem of Routes A1/A3.
+
 ## Route A3 - Symbolic/carry certificates 🤖
 
 The Bernstein-Lagarias conjugacy turns the parity itinerary into a shift sequence, while
