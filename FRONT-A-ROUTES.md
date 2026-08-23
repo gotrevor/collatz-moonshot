@@ -382,9 +382,10 @@ potential at exponent `2/3`, using the rational underweight
 (52/25) * (629/1000)^j < (3/2^j)^(2/3).
 ```
 
-All 810 source-state/lift inequalities are strict (minimum ratio `1.016618220460`).  This is
-a concrete, reproducible upgrade path from square-root growth to `2/3` growth, but remains
-certificate-grade Python rather than a Lean theorem.
+All 810 source-state/lift inequalities are strict (minimum ratio `1.016618220460`).
+`BackwardTwoThirds.lean` now kernel-checks this exact table, proves the shared-lift/carry and
+five-height interpretation lemmas, and packages the result as `exists_twoThirdsExpansion`
+over actual distinct Collatz children.  Its axiom footprint is only the base three.
 
 The chippable mathematical ladder is now:
 
@@ -409,10 +410,11 @@ The chippable mathematical ladder is now:
    `NetHalfStoppingFrontier.card_bound`, every odd unit root `d ≤ H` now unconditionally
    has either a cycle above `d` or `> V(d)·sqrt(H/d)/200` distinct first exits in
    `(H, 2^23 H)` reached inside `[d, 2^25 H]`;
-5. formalize the exact shared-lift 270-state certificate and upgrade the renewal exponent
-   from `1/2` to `2/3`; the finite arithmetic is DONE experimentally, while the modulo-`243`
-   interpretation, five height transitions, real `2/3` edge comparison, and generalized
-   stopping layer remain;
+5. ~~formalize the exact shared-lift 270-state local certificate~~ — DONE in
+   `BackwardTwoThirds.lean`, including the modulo-`243` interpretation, five height
+   transitions, and actual-child expansion.  The remaining upgrade from `1/2` to `2/3` is
+   analytic/recursive: prove the exact real `2/3` edge comparison and telescope, then port
+   the stopping frontier and its cardinality estimate;
 6. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 7. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
