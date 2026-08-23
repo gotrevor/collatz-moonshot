@@ -7,8 +7,8 @@ defaultTargets = ["CollatzMoonshot"]
 [leanOptions]
 autoImplicit = false
 
-# Mathlib pinned as a DIRECT require at v4.31.0 (matches the ~/.lake-base/4.31.0 universe
-# store, so `lake-base link` CoW-clones the prebuilt oleans in — no 40-min cold build).
+# Mathlib pinned as a DIRECT require at the same tag as the ~/.lake-base universe store
+# for this toolchain, so `lake-base link` CoW-clones the prebuilt oleans in — no cold build.
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4.git"
