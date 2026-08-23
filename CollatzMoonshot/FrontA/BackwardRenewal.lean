@@ -419,11 +419,18 @@ different state labels. -/
 def NetHalfValuesInjective (C : Finset NetHalfNode) : Prop :=
   ∀ a ∈ C, ∀ b ∈ C, a.2 = b.2 → a = b
 
+/-- Every exact residue-dependent growing cost is at most `23`. -/
+theorem sevenCostsAt_le_twentyThree (x : ℕ) (i : Fin 7) :
+    sevenCostsAt x i ≤ 23 :=
+  (sevenCostsAt_le_sevenTransferCost x i).trans
+    (by fin_cases i <;> decide)
+
 private theorem exists_growingChildFinset {d x : ℕ} (high : Bool)
     (hx : 2 ≤ x) (h3 : ¬3 ∣ x) (hstate : InHeightState d high x)
     (hn : netHalfHasShrinkingChild high x = false) :
     ∃ C : Finset NetHalfNode, C.Nonempty ∧ NetHalfValuesInjective C ∧
       (∀ c ∈ C, NetHalfChildAt d (high, x) c) ∧
+      (∀ c ∈ C, 3 * c.2 < 2 ^ 23 * x) ∧
       (netHalfStatePotential high x : ℝ) <
         ∑ c ∈ C, netHalfEdgeWeight x c.2 *
           netHalfStatePotential c.1 c.2 := by
@@ -436,7 +443,7 @@ private theorem exists_growingChildFinset {d x : ℕ} (high : Bool)
     apply hys
     exact congrArg Prod.snd hii'
   let C : Finset NetHalfNode := Finset.univ.image f
-  refine ⟨C, ?_, ?_, ?_, ?_⟩
+  refine ⟨C, ?_, ?_, ?_, ?_, ?_⟩
   · exact Finset.Nonempty.image Finset.univ_nonempty f
   · intro a ha b hb hab
     obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp ha
@@ -447,6 +454,15 @@ private theorem exists_growingChildFinset {d x : ℕ} (high : Bool)
   · intro c hc
     obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hc
     exact ⟨(hchildren i).1.toReusable, (hchildren i).2⟩
+  · intro c hc
+    obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hc
+    show 3 * ys i < 2 ^ 23 * x
+    have hblock := (hchildren i).1.2.2.2.2
+    have hpow : 2 ^ sevenCostsAt x i ≤ 2 ^ 23 :=
+      Nat.pow_le_pow_right (by norm_num) (sevenCostsAt_le_twentyThree x i)
+    have hmul : 2 ^ sevenCostsAt x i * x ≤ 2 ^ 23 * x :=
+      Nat.mul_le_mul_right x hpow
+    omega
   · rw [show (∑ c ∈ C, netHalfEdgeWeight x c.2 *
         netHalfStatePotential c.1 c.2) =
       ∑ i : Fin 7, netHalfEdgeWeight x (ys i) *
@@ -462,6 +478,7 @@ private theorem exists_shrinkingChildFinset {d x : ℕ}
     (hrem : x % 9 = 2 ∨ x % 9 = 8) :
     ∃ C : Finset NetHalfNode, C.Nonempty ∧ NetHalfValuesInjective C ∧
       (∀ c ∈ C, NetHalfChildAt d (true, x) c) ∧
+      (∀ c ∈ C, 3 * c.2 < 2 ^ 23 * x) ∧
       (netHalfStatePotential true x : ℝ) <
         ∑ c ∈ C, netHalfEdgeWeight x c.2 *
           netHalfStatePotential c.1 c.2 := by
@@ -479,7 +496,7 @@ private theorem exists_shrinkingChildFinset {d x : ℕ}
     obtain ⟨i, _, hi⟩ := Finset.mem_image.mp hzmem
     exact hdisj i (congrArg Prod.snd hi).symm
   let C : Finset NetHalfNode := insert (false, z) G
-  refine ⟨C, ⟨(false, z), by simp [C]⟩, ?_, ?_, ?_⟩
+  refine ⟨C, ⟨(false, z), by simp [C]⟩, ?_, ?_, ?_, ?_⟩
   · intro a ha b hb hab
     rcases Finset.mem_insert.mp ha with rfl | ha
     · rcases Finset.mem_insert.mp hb with rfl | hb
@@ -498,6 +515,21 @@ private theorem exists_shrinkingChildFinset {d x : ℕ}
     · exact ⟨hz.toReusable, hzstate⟩
     · obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hc
       exact ⟨(hchildren i).1.toReusable, (hchildren i).2⟩
+  · intro c hc
+    rcases Finset.mem_insert.mp hc with rfl | hc
+    · show 3 * z < 2 ^ 23 * x
+      have hblock := hz.2.2.2
+      have hmul : 2 * x ≤ 2 ^ 23 * x :=
+        Nat.mul_le_mul_right x (by norm_num)
+      omega
+    · obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hc
+      show 3 * ys i < 2 ^ 23 * x
+      have hblock := (hchildren i).1.2.2.2.2
+      have hpow : 2 ^ sevenCostsAt x i ≤ 2 ^ 23 :=
+        Nat.pow_le_pow_right (by norm_num) (sevenCostsAt_le_twentyThree x i)
+      have hmul : 2 ^ sevenCostsAt x i * x ≤ 2 ^ 23 * x :=
+        Nat.mul_le_mul_right x hpow
+      omega
   · rw [show (∑ c ∈ C, netHalfEdgeWeight x c.2 *
         netHalfStatePotential c.1 c.2) =
       (∑ i : Fin 7, netHalfEdgeWeight x (ys i) *
@@ -513,11 +545,14 @@ private theorem exists_shrinkingChildFinset {d x : ℕ}
     exact hexpand
 
 /-- Every reusable parent state has a nonempty, value-injective finite child
-set with exact telescoping-weight expansion. -/
+set with exact telescoping-weight expansion.  Every child is additionally
+bounded by `3 c < 2^23 x`, because the exact growing costs are at most `23`
+and the shrinking cost is `1`. -/
 theorem exists_netHalfChildFinset {d x : ℕ} (high : Bool)
     (hx : 2 ≤ x) (h3 : ¬3 ∣ x) (hstate : InHeightState d high x) :
     ∃ C : Finset NetHalfNode, C.Nonempty ∧ NetHalfValuesInjective C ∧
       (∀ c ∈ C, NetHalfChildAt d (high, x) c) ∧
+      (∀ c ∈ C, 3 * c.2 < 2 ^ 23 * x) ∧
       (netHalfStatePotential high x : ℝ) <
         ∑ c ∈ C, netHalfEdgeWeight x c.2 *
           netHalfStatePotential c.1 c.2 := by

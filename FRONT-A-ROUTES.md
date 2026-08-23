@@ -379,8 +379,19 @@ The chippable mathematical ladder is now:
 3. ~~replace rational path weights by exact telescoping weights; prove endpoint-to-peak,
    generalized-band, finite-child, cycle-alternative, and square-root frontier lemmas~~ —
    DONE in `BackwardRenewal.lean`;
-4. prove the remaining recursive statement `NetHalfRepeatOrStoppingGrowth`: bounded expansion
-   either exhausts into the pinned first-exit frontier or repeats an ancestor;
+4. ~~prove the remaining recursive statement `NetHalfRepeatOrStoppingGrowth`~~ — DONE
+   (`FrontA/BackwardStopping.lean`, 2026-08-23, axiom-clean).  The proof runs a fuel-`H+1`
+   frontier recursion from `(false, d)`: every node carries an odd-parent ancestor chain
+   whose length equals its creation round; uniqueness of the odd parent of `3y+1 = 2^j x`
+   makes two chains from a common value agree step by step, so **any** collision of a new
+   endpoint value with a live frontier value or its own ancestry splices into an explicit
+   positive cycle at or above `d`.  In the no-collision branch the chain of a round-`m` low
+   node is a set of `m` distinct values in `[d, H]`, so `m + d ≤ H + 1` and the recursion
+   terminates in the pinned first-exit frontier.  Mass strictly grows each round by
+   `weighted_biUnion_expands` with exact `sqrt(parent/child)` telescoping.  Combined with
+   `NetHalfStoppingFrontier.card_bound`, every odd unit root `d ≤ H` now unconditionally
+   has either a cycle above `d` or `> V(d)·sqrt(H/d)/200` distinct first exits in
+   `(H, 2^23 H)` reached inside `[d, 2^25 H]`;
 5. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 6. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular

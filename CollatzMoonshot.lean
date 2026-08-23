@@ -14,6 +14,7 @@ import CollatzMoonshot.FrontA.BackwardBranching
 import CollatzMoonshot.FrontA.BackwardTransfer
 import CollatzMoonshot.FrontA.BackwardHeightTransfer
 import CollatzMoonshot.FrontA.BackwardRenewal
+import CollatzMoonshot.FrontA.BackwardStopping
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative

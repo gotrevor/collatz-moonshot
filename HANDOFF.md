@@ -1,5 +1,39 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, later lap): `NetHalfRepeatOrStoppingGrowth` is now a THEOREM
+
+- Added `CollatzMoonshot/FrontA/BackwardStopping.lean`, **`sorry`-free**, proving
+  `netHalfRepeatOrStoppingGrowth : NetHalfRepeatOrStoppingGrowth` exactly as pinned (the
+  target `def` in `BackwardRenewal.lean` was not touched).  Axiom audit (observed in real
+  output, 2026-08-23): `[propext, Classical.choice, Quot.sound]` — base three only.
+- Proof architecture: a fuel-`H+1` frontier recursion.  `StoppingFront d H m F` bundles
+  value injectivity, per-node height/band/size invariants, strict telescoping mass above
+  `netHalfStatePotential false d`, and a per-node `StoppingChain`: an odd-parent ancestor
+  chain of length = creation round, with pairwise-distinct values in `[d, H]` (proper
+  ancestors were expanded low nodes).  Each round expands every node `≤ H` through the
+  strengthened `exists_netHalfChildFinset`.
+  * **Cycle branch**: `3y+1 = 2^j·(odd)` determines the odd parent, so `chain_agree` forces
+    two ancestor chains from a common value to coincide while both last; a new endpoint
+    value colliding with any live frontier value (chains of different lengths ⇒ `d` recurs
+    mid-chain) or with its own ancestry splices, via `chain_reachesValuePos`, into
+    `ReachesValuePos n n`, i.e. `OnCycle n` with `d ≤ n`.
+  * **Termination**: `StoppingChain.round_add_le` — a low node at round `m` has `m`
+    distinct chain values in `Icc d H`, so `m + d ≤ H + 1`; fuel `H + 1` from round `1`
+    suffices, and a frontier with no low node is literally `NetHalfStoppingFrontier`.
+  * **Mass**: `weighted_biUnion_expands` with root weight `sqrt(d/x)` and edge weight
+    `sqrt(x/y)`; exits frozen by sum splitting over `filter (· ≤ H)`.
+- `exists_netHalfChildFinset` (and its two private constructors) strengthened with the
+  child-size clause `3c < 2^23·x`, recovering the cost bound (`sevenCostsAt ≤ 23`, `j=1`)
+  that the packaged interface had forgotten; this feeds the `2^23 H` exit bound and, via
+  `reusable_band_step` band composition, the `2^25 H` path ceiling.
+- Downstream, now unconditional: composing with `NetHalfStoppingFrontier.card_bound`,
+  every odd unit `2 ≤ d ≤ H` has either a positive cycle at/above `d` or more than
+  `V(d)·sqrt(H/d)/200` distinct first-exit preimages in `(H, 2^23 H)` with paths in
+  `[d, 2^25 H]`.  Step 4 of the chippable ladder in `FRONT-A-ROUTES.md` is closed; the
+  open mathematics is now step 5 (pointwise vs. uniform, the 3-adic adversary) and the
+  overlap/packing question of step 6.
+- `lake build` green with `BackwardStopping` imported from `CollatzMoonshot.lean`.
+
 ## State
 
 - Added `experiments/barrier_tree.py`: exact inverse-tree census with every path confined to
