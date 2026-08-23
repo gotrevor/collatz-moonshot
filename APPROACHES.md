@@ -103,10 +103,14 @@ Two honest caveats.  (1) This kills the *class-averaged* drift filter (the naive
 heuristic notion).  A *visit-weighted* drift hypothesis is a different, dynamical condition -
 but that can't be read off the map's syntax, so it is useless as a decidability criterion
 (checking it is as hard as the dynamics).  (2) Scope is Conway's instance form (given `g`
-and `n`).  For the Kurtz-Simon forall-form, padded garbage states funnel to `Q`-free numbers
-in finitely many strictly-decreasing steps, reducing to `g` on `Q`-free starts - whether KS's
-completeness survives that restriction needs their double-simulation details (~75%,
-unverified).  Not yet machine-checked; the argument is elementary enough that Lean-ing it
+and `n`).  For the Kurtz-Simon forall-form: their Theorem 2.3
+(verified from the draft, 2026-08-22) converts `M` into `M'` with `M` total iff `M'` halts
+from EVERY configuration - and the non-totality witness is a clean configuration encoding,
+smooth over the machine's primes, hence coprime to the shrink primes.  So padded garbage
+funnels to `Q`-free numbers and the reduction closes (~90%).  Residual gap: how the composed
+`g` treats non-configuration garbage integers - that is the published Sec. 3, which is
+paywalled (Springer TAMC 2007; the only open copy, people.cs.uchicago.edu/~simon/RES/
+collatz.pdf, has Sec. 3 empty).  Cornell EZproxy likely reaches the chapter for the last 10%.  Not yet machine-checked; the argument is elementary enough that Lean-ing it
 would be a pleasant afternoon, not a campaign.
 
 Related: Conway 2013 ("unsettleable") in `papers/2013-conway-unsettleable-summary.md` - the
