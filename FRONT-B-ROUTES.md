@@ -218,6 +218,54 @@ Measured with `gcd(W, D)` as the nearness proxy, over every necklace for `x = 10
 Consequence: Route 2's missing lemma has to be attacked directly, and **we should not expect
 data to suggest its statement.**  That lowers the value of further numerics on this front.
 
+## 2026-08-23: the boarded targets were FrontB in disguise - the power degeneracy 🧨
+
+First contact with "attack Compression by proof" found a hole in the *statement*, not the
+mathematics.  A parity word **traversed `j` times** - the power `wpow v j = v ++ ⋯ ++ v` -
+encodes the same rational cycle as `v` (the value `numer/den` is invariant;
+`numer_wpow_mul_den` in `Powers.lean`), while
+
+* `circuits (wpow v j) = j · circuits v` (the falling edges telescope), and
+* `den (wpow v j) ≥ j` once `den v ≥ 1` (the denominator explodes).
+
+So ONE nontrivial integral word manufactures nontrivial integral words of arbitrarily many
+circuits and arbitrarily large denominator.  Both open threads quantified over *all* words,
+hence (proved axiom-free in `Threads.lean`):
+
+> `NaiveCompression ↔ FrontB` and `NaiveBoundedDen ↔ FrontB`.
+
+The boarded "missing lemma" was the whole conjecture wearing a costume - attacking it was
+attacking Front B with **zero reduction**.  (Numerically probed before proving, exhaustive
+`k ≤ 8` plus the `−17` mirror; the degeneracy is sign-blind.)
+
+**The repair**: quantify over `Primitive` words (not a proper power) - which is what an
+"`m`-cycle" in Simons-de Weger/Hercher always meant, since a genuine cycle is traversed
+once.  `Powers.lean` supplies `Primitive`, the decomposition `exists_primitive_root`
+(every nonempty word is a power of a primitive one), and the transfer lemmas that let the
+wiring `frontB_of_compression` survive the restatement.
+
+**Two upgrades came free**:
+
+1. **Hercher's floor adopted in word form** (`hercher_min_circuit_count`, THEOREM-grade
+   axiom): a nontrivial primitive integral cycle has `≥ 92` circuits.  With it,
+   `frontB_of_compression_le_91`: **compression with any constant `≤ 91` closes Front B
+   outright** - no ladder extrapolation.  `#print axioms` footprints to exactly the one
+   Hercher axiom.  Route 2's remaining content in one sentence: *show a primitive
+   nontrivial integral cycle cannot support 92 circuits' worth of structure*.
+2. **The 3x−1 barrier is located within Route 2.**  The compression lemma is compatible
+   with the negative cycles' existence (`−17`'s word is primitive, 2 circuits), so
+   compression itself must be provable sign-blind; **positivity is consumed by the ladder**
+   (verification bound + positive-side constants).  A candidate compression proof that
+   would also bound negative-side circuits is *fine*; one that proves negative
+   *nonexistence* is wrong.  This sharpens the falsification harness for this route: run
+   candidate lemmas against `(k, x) = (11, 7)` expecting *compatibility*, and save the
+   sign-asymmetry scrutiny for ladder-side arguments.
+
+⚠️ Statement-hygiene lesson (same family as the `IsTrivial` catch): a board Prop about
+"all cycles" must decide what a *repetition* is before it means what the prose means.
+Both degeneracies were invisible to build/axioms/sorry-census - only quantifier probing
+(tiny witnesses, powers, mirrors) sees them.
+
 ## The negative side is a falsification test worth building 🚨
 
 The `3n+1` map on negative integers has three nontrivial cycles (`−1`, `−5`, `−17`), and the
