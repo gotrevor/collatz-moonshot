@@ -347,11 +347,59 @@ theorem exists_floor_of_diverges {n : ℕ} (hdiv : Diverges n) (N : ℕ) :
   have := hM hmem
   omega
 
-/-- **The consumption form.**  A drift-frequency bound available at *every*
-starting point is already the Collatz conjecture - via `conjecture_iff_descent`,
-which needs no cycle argument.  This is the precise statement the ergodic side
-(M2′) has to deliver: for each `n`, some floor the orbit respects and some
-window over which the odd-step frequency sits below that floor's threshold. -/
+/-- Removing a finite prefix does not change whether a Collatz orbit is
+unbounded.  The reverse implication uses `exists_floor_of_diverges`: an
+unbounded orbit is eventually past both the requested height and the removed
+prefix. -/
+theorem diverges_iterate_iff {n K : ℕ} : Diverges (step^[K] n) ↔ Diverges n := by
+  constructor
+  · intro hdiv M
+    obtain ⟨j, hj⟩ := hdiv M
+    refine ⟨j + K, ?_⟩
+    rwa [Function.iterate_add_apply]
+  · intro hdiv M
+    obtain ⟨J, hJ⟩ := exists_floor_of_diverges hdiv M
+    let j := max J K
+    have hJj : J ≤ j := Nat.le_max_left _ _
+    have hKj : K ≤ j := Nat.le_max_right _ _
+    refine ⟨j - K, ?_⟩
+    calc
+      M ≤ step^[j] n := hJ j hJj
+      _ = step^[j - K + K] n := by rw [Nat.sub_add_cancel hKj]
+      _ = step^[j - K] (step^[K] n) := Function.iterate_add_apply step _ _ n
+
+/-- **Front-A descent consumption.**  To rule out divergence it is enough to
+make every *divergent* starting value dip below itself.  Unlike `DescentAll`,
+this hypothesis says nothing about points on bounded nontrivial cycles, so it
+respects the two-front architecture. -/
+theorem noDivergent_of_descends_if_diverges
+    (h : ∀ n, 1 ≤ n → Diverges n → ∃ k, step^[k] n < n) : NoDivergentOrbit := by
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+      intro hn hdiv
+      obtain ⟨k, hk⟩ := h n hn hdiv
+      have hpos : 1 ≤ step^[k] n := iterate_step_pos hn k
+      have htail : Diverges (step^[k] n) := (diverges_iterate_iff (n := n) (K := k)).2 hdiv
+      exact ih _ hk hpos htail
+
+/-- Frequency-specialized Front-A consumption.  This is the condition the
+rigidity lane actually needs: a drift-winning window only for starts already
+assumed divergent.  Cyclic starts are deliberately outside the hypothesis. -/
+theorem noDivergent_of_freq_descent_if_diverges
+    (h : ∀ n, 1 ≤ n → Diverges n → ∃ N k, 1 ≤ N ∧ 0 < k ∧
+      (∀ j < k, N ≤ step^[j] n) ∧
+      (oddSteps n k : ℝ) / k < freqThreshold N) : NoDivergentOrbit := by
+  apply noDivergent_of_descends_if_diverges
+  intro n hn hdiv
+  obtain ⟨N, k, hN, hk, hfloor, hfreq⟩ := h n hn hdiv
+  exact ⟨k, lt_of_oddSteps_freq_lt hn hN hk hfloor hfreq⟩
+
+/-- **The full-conjecture consumption form.**  A drift-frequency bound available
+at *every* starting point is already the Collatz conjecture via
+`conjecture_iff_descent`.  This is intentionally stronger than the Front-A-only
+form `noDivergent_of_freq_descent_if_diverges` above: it also forces descent from
+points on hypothetical bounded nontrivial cycles. -/
 theorem conjecture_of_freq_descent
     (h : ∀ n, 2 ≤ n → ∃ N k, 1 ≤ N ∧ 0 < k ∧ (∀ j < k, N ≤ step^[j] n) ∧
       (oddSteps n k : ℝ) / k < freqThreshold N) : Conjecture := by

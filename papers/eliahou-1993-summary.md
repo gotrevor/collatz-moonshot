@@ -4,6 +4,10 @@
 
 Shalom Eliahou, “The 3x + 1 problem: new lower bounds on nontrivial cycle lengths,” *Discrete Mathematics* 118 (1993), 45–56. DOI: [10.1016/0012-365X(93)90052-U](https://doi.org/10.1016/0012-365X(93)90052-U).
 
+## Elevator pitch
+
+Eliahou turns a hypothetical Collatz loop into an exceptionally precise rational approximation to \(\log_2 3\). Continued fractions then show that no small cycle can supply such an approximation. Combined with the computational verification available in 1993, this forces every nontrivial cycle to contain at least 17,087,915 shortcut-map steps. More importantly, the method scales: as computation raises the smallest possible cycle element, the cycle-length bound jumps to successive continued-fraction thresholds.
+
 ## Executive summary
 
 Eliahou proves that any nontrivial periodic orbit of the shortcut Collatz map
@@ -95,6 +99,12 @@ where \(a,b,c\) are nonnegative integers, \(b>0\), and \(ac=0\). The first admis
 - It does **not** prove the Collatz conjecture: an orbit might still diverge, or a much longer cycle might exist.
 - The number 17,087,915 is not intrinsic to the Collatz map. It results from combining the proof with the 1993 computational cutoff. Better verified cutoffs produce larger bounds, in discontinuous jumps governed by continued-fraction convergents.
 - The paper counts iterations of the shortcut map \(T\). Under the original map, where an odd step \(n\mapsto3n+1\) is counted separately from the following halving, the corresponding historical bound is 27,869,189 steps.
+
+## Claimed Lean formalization
+
+The public repository [tangentstorm/eliahou-collatz-bounds](https://github.com/tangentstorm/eliahou-collatz-bounds) presents a Lean 4/Mathlib formalization of Eliahou’s argument. Its documentation claims that the headline theorem `eliahou_bound`—every shortcut-map cycle with minimum element greater than \(2^{40}\) has at least 17,087,915 elements—is fully proved with no `sorry`, using only standard axioms.
+
+The repository also explicitly marks `eliahou_precise`, intended to formalize Eliahou’s stronger linear-combination description of possible periods, as still containing a `sorry`. Accordingly, the repository claims machine-checked coverage of the main numerical lower bound, not a complete formalization of every result in the paper. This note records the repository’s stated status as of July 20, 2026; the build and proof dependency chain have not been independently reproduced or audited here.
 
 ## Current status (checked July 20, 2026)
 

@@ -1,9 +1,9 @@
 # collatz-moonshot 🌙
 
 Strategy layer for an attack on the Collatz conjecture itself - the root conjecture, not
-a neighbor.  The map lives in **[APPROACHES.md](APPROACHES.md)**: three most-likely
-routes, the three barriers any route must survive, the overlooked combinations, and the
-Lean formalization program.
+a neighbor.  The global map lives in **[APPROACHES.md](APPROACHES.md)**; the pruned,
+front-specific thread boards are **[FRONT-A-ROUTES.md](FRONT-A-ROUTES.md)** (divergence)
+and **[FRONT-B-ROUTES.md](FRONT-B-ROUTES.md)** (cycles).
 
 Siblings: [tao-collatz](https://github.com/gotrevor/tao-collatz) (formalized statistical
 frontier), collatz-cryptid (cycles, carries, BB bridge - local).
@@ -29,6 +29,13 @@ Lean 4 + mathlib (pinned v4.31.0, CoW-linked off the `~/.lake-base` universe sto
   distinguishable there, unlike `sorry`s, which all collapse into `sorryAx`).
 - `CollatzMoonshot/Descent.lean` - `DescentAll` ⟺ `Conjecture` (proved, strong
   induction) + `conjecture_of_fronts`, the two lane consumption forms.
+- `CollatzMoonshot/FrontA/Threads.lean` - **Front A board**: finite-prefix invariance of
+  divergence, divergence-only descent/frequency consumption, the fixed-seed obstruction
+  to naive Tao/backward amplification, floor-preserving saturation, W1/W1′ strength pins,
+  and repeat-or-descend certificates.
+- `CollatzMoonshot/FrontB/` - **Front B board**: parity-word numerators, rotation
+  identities, the negative-cycle falsification harness, killed routes, and the live
+  bounded-circuit compression pin.
 - `CollatzMoonshot/Rigidity/` - **Lane 1 (×2×3 measure rigidity)**, roadmap in
   `Rigidity.lean`.  Proved: the 2-adic extension `T2` with the base intertwining
   `T2_natCast`, and the **funnel** (`v ≡ 1 mod 4^s` crashes by `(3/4)^s` in `3s`

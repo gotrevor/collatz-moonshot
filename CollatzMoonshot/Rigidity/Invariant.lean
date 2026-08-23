@@ -69,6 +69,12 @@ Status and honesty ledger:
   (THEOREM-grade, axiomatizable when needed) plus the frequency/all-scales
   upgrade of the funnel.  Then `conjecture_of_fronts` closes the loop:
   rigidity + no-cycles ⟹ Collatz.
+* **Strength audit (2026-08-22): W1 is not Front-A-only.**  The uniform invariant
+  probability on a hypothetical positive nontrivial cycle is supported on its
+  orbit closure and gives `trivialCycleZ2` mass zero.  Thus W1 already implies
+  `NoNontrivialCycle`; it does not permit atomic cycles for the arithmetic lane
+  to classify.  `FrontA/Threads.lean` pins this implication as
+  `W1AlreadyOwnsFrontB` pending the finite uniform-measure plumbing.
 * The statement may evolve as the lane learns; it is a pin, not a claim. -/
 def MeasureRigidityW1 : Prop :=
   ∀ n : ℕ, 1 ≤ n → ∀ μ : Measure ℤ_[2], IsProbabilityMeasure μ →
@@ -117,6 +123,16 @@ Status and honesty ledger:
   clopen parity set + `lt_of_oddSteps_freq_lt`.  The floor `N` in the drift
   estimate is supplied by the divergence itself, and `tendsto_freqThreshold` is
   what makes the sharp constant the right target.
+* **Calibration:** the converse should also be theorem-grade.  If Front A holds,
+  every positive orbit is eventually periodic; its orbit closure has the uniform
+  measure on the eventual cycle as its only invariant probability, and
+  `3^a < 2^b` puts that cycle's odd mass below `sharpThreshold`.  Thus W1′ should
+  be exactly equivalent to `NoDivergentOrbit`, a change of language rather than
+  a weakening.  `FrontA.W1PrimeIffFrontA` records the target.
+* **Quantifier audit:** M2′ directly observes empirical orbit limits, whereas W1′
+  quantifies over every invariant measure supported on the closure, including
+  measures the orbit may never sample.  `FrontA.EmpiricalParityRigidity` records
+  the weaker scalar empirical pin so the gap can be tested explicitly.
 * **W1 is not retired.**  It carries a mechanism (the funnel) that W1′ does not,
   and M3 may want it.  Both are pins, not claims. -/
 def ParityRigidityW1' : Prop :=

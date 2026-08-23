@@ -32,6 +32,10 @@ lives where, and the roadmap.
   archimedean `(3/4)^s` crash: the concrete mechanism giving W1 teeth.
 * `conjecture_of_fronts`, `conjecture_iff_descent` (`../Descent.lean`) - the
   consumption forms: Front A + Front B ⟹ Collatz, and descent alone ⟹ Collatz.
+* `diverges_iterate_iff`, `noDivergent_of_descends_if_diverges`,
+  `noDivergent_of_freq_descent_if_diverges` (`Drift.lean`) - the correctly scoped
+  Front-A consumption forms: only starts already assumed divergent must descend;
+  hypothetical bounded cycles remain Front B's responsibility.
 
 ## Pinned
 * **W1′** (`Invariant.lean`) - invariant measures on a positive orbit's 2-adic
@@ -40,7 +44,9 @@ lives where, and the roadmap.
   cashes out through `Drift.lean` with no funnel upgrade owed.
 * **W1** (`Invariant.lean`) - invariant measures on a positive orbit's 2-adic
   closure charge the trivial cycle.  Retained, not retired: it carries the funnel
-  mechanism and M3 may want it.  Both PROGRAM-grade, `def`s by doctrine.
+  mechanism and M3 may want it.  Strength audit: W1 already excludes every
+  positive nontrivial atomic cycle, so unlike W1′ it is not a Front-A-only pin.
+  Both are PROGRAM-grade, `def`s by doctrine.
 * `RudolphJohnsonStatement` (`Circle.lean`) - parameterized by an entropy
   functional; blocker: KS entropy missing from mathlib.
 * `furstenberg_topological_rigidity` (`../Assumed/Furstenberg.lean`) - the
@@ -55,6 +61,9 @@ lives where, and the roadmap.
   limiting odd-step frequency; (d) `lt_of_oddSteps_freq_lt` ✅ to convert that
   frequency into descent, with the floor `N` supplied by the divergence itself.
   Only (b) and (c) remain.
+  `FrontA/Threads.lean` additionally pins the weaker empirical-limit version and
+  the expected calibration `ParityRigidityW1' ↔ NoDivergentOrbit`, so proving
+  measure plumbing cannot be mistaken for proving the rigidity input itself.
 * **M2** (superseded, kept as the alternate route): `MeasureRigidityW1 →
   NoDivergentOrbit` via the frequency/all-scales upgrade of the funnel.  Harder:
   deep 2-adic returns are rare enough that the counting does not obviously close.

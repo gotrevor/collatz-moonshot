@@ -49,12 +49,12 @@ theorems: Knight (2026) closes the high-cycle case with an upper bound (`D | 2^{
 so `D = 1`) and needs no transcendence at all; Steiner (1977) closes the circuit case because
 circuits make the exponent structure rigid enough for Baker to finish a *bounded* problem.
 
-⚠️ **Conflict to resolve**: `APPROACHES.md` Approach 3 asserts "an effective S-unit or
-abc-strength input finishes cycles **entirely**."  The filter above says the opposite - `abc`
-applied to `3^a + D = 2^b` gives `D ≳ 2^{b/(1+ε)}`, a lower bound, hence only `m̄ ≲ a·3^{εa}`,
-which excludes no large `a`.  Either that line is an overclaim or it uses `abc` on a triple I
-have not found.  **Verify before leaning on it.**  Confidence the line as written is an
-overclaim: ~80%.
+✅ **Resolved 2026-08-22**: the old `APPROACHES.md` claim that an effective S-unit or
+abc-strength input finishes cycles entirely was an overclaim and has been removed.  Applying
+abc to `3^a + D = 2^b` gives `D ≳ 2^{b/(1+ε)}`, a lower bound, hence only
+`m̄ ≲ a·3^{εa}`, which excludes no large `a`.  `Assumed/ABC.lean` and
+`length_bounded_of_abc_and_boundedDen` record the corrected scissors: abc closes only when an
+independent upper bound on `D` supplies the other blade.
 
 ## Route 1 - The integrality lattice (bound `D` above by divisibility) 🔢
 
