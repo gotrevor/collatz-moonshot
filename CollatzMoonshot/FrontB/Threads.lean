@@ -166,7 +166,13 @@ theorem frontB_of_compression_le_91
   have h91 := h u hu hICu hNTu
   omega
 
-/-! ## Thread 2 - bound the denominator from above.  **OPEN, ~12%**
+/-! ## Thread 2 - bound the denominator from above.  **OPEN, ~5%** (was ~12%)
+
+Re-priced 2026-08-23 by the Knight-reach census (`experiments/knight_reach.py`): the
+exact-identity mechanism fires sporadically beyond the balanced class, but the sporadic
+reach is a chance floor (`≈ k²` expected hits, thinning density) with no parametrizable
+word structure through `k ≤ 16` - the only uniform locus is Knight's own `2^(k−2)` on
+mechanical words.  A second family needs new combinatorial input.
 
 The filter of `FRONT-B-ROUTES.md`, formalized: an *upper* bound on `|den|` closes the front
 via Baker, whereas every Diophantine input bounds it from below and closes nothing.

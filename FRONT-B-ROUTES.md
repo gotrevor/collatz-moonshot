@@ -266,6 +266,41 @@ wiring `frontB_of_compression` survive the restatement.
 Both degeneracies were invisible to build/axioms/sorry-census - only quantifier probing
 (tiny witnesses, powers, mirrors) sees them.
 
+## 2026-08-23 (later): the Knight-trick census - no second exact-identity family 🔬
+
+`experiments/knight_reach.py` measures the full reach of Knight's mechanism: the trick
+fires on any word where some rotation pair's numerator difference is exactly `±2^s·3^t`
+(then `D | diff`, `D` coprime to 6, so `D = ±1` and elementary arithmetic finishes;
+notably `D = −1` is *realized* by the `−1`/`−5` cycles, so the sign-asymmetry enters
+exactly at "which `(k,x)` give `D = ±1`").  Census of every primitive necklace, `k ≤ 16`
+(8,798 words, both signs of `D`; recurrence verified against `numer` exhaustively to
+`k ≤ 10`, Knight's own class confirmed in-family):
+
+- **The reach is broader than the balanced class**: 436 of 515 firing words are
+  unbalanced.  The route map's earlier Morse-Hedlund argument bounds only the
+  *uniform-mechanism* reach (two rotations sharing a long window); sporadic exact
+  `2^s·3^t` differences occur everywhere.
+- **But the sporadic reach is a chance floor, not a family.**  Expected coincidences grow
+  like `#pairs × P(pure) ≈ (2^k/k · k²) · (k·2^{−k}) ≈ k²` - polynomial growth of hits
+  with *thinning density*, matching the data (12% of words at `k = 13` → 2.2% at
+  `k = 16`).  Per-signature persistence therefore cannot distinguish family from chance
+  here; word *structure* can.
+- **Structure verdict: negative.**  The only sharp parametric locus is Knight's own
+  `diff = 2^{k−2}` on mechanical (Christoffel/balanced) words - all slopes, which is
+  Knight's combinatorics.  The persistent mixed cells (e.g. `2^{b−2}3^{x−2}`) contain
+  unstructured words with no visible parametrization through `k = 16`; the only regular
+  words inside them are again mechanical.  Worked micro-example of sporadicity: the
+  2-run words `1^x 0^b` fire iff `2^b + 1` is a 3-power, i.e. `b ∈ {1, 3}` only.
+- Bonus datum: **no two distinct rotations of a primitive word share a numerator**
+  (`k ≤ 16`; provable in general - a repeated member value would close the orbit early,
+  contradicting primitivity).
+
+**Consequence for the ranking**: the "second extremal word family" hope of Thread 2 is
+re-priced ~12% → **~5%**.  A new family needs genuinely new *combinatorial* input (a
+uniform identity on a non-Sturmian class), and none exists through `k ≤ 16`.  Route 2
+(compression, on the repaired primitive statement) remains the survivor, and its target
+is now the sharpened `frontB_of_compression_le_91`.
+
 ## The negative side is a falsification test worth building 🚨
 
 The `3n+1` map on negative integers has three nontrivial cycles (`−1`, `−5`, `−17`), and the
