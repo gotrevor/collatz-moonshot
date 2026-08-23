@@ -83,9 +83,31 @@ Do not price a route down for failing this filter - doing so once wrongly penali
 transducer / certificate-search lane, whose matrix interpretations consume the actual
 coefficients and so pass the filter anyway.
 
-**Open sub-question**: can the undecidable instances be constrained to **negative drift**
-(geometric mean of the `a_i` below 1)?  If not, the filter is weaker still, since the whole
-Collatz heuristic lives on negative drift.  Unresolved.
+**Sub-question RESOLVED (2026-08-22, ~85%): yes - undecidable instances CAN have negative
+drift**, so "Collatz has negative drift" does not move 3n+1 out of the undecidable family's
+shadow.  Shrink-prime padding argument:
+
+Given Conway's `g` (modulus `P`, multipliers `a_i`, simulation states and multipliers all
+smooth over the machine's finite prime set `S0`), pick fresh primes `Q_1 < ... < Q_t`
+outside `S0` and coprime to `P`.  New modulus `P' = P*Q_1*...*Q_t`; on a residue class
+divisible by some `Q_j` (least such `j`) set `g'(n) = n/Q_j`; elsewhere `g' = g`.  Then:
+(a) *simulation untouched* - every orbit from a start state `2^k` is `S0`-smooth, so no
+shrink rule ever fires on it, and `(g', 2^k)` answers exactly as `(g, 2^k)`: the instance
+problem stays undecidable; (b) *drift goes negative* - the class-averaged
+`log GM = delta_t*A - (shrink mass)`, where `A` is `g`'s old average and
+`delta_t = prod(1 - 1/Q_j)`.  Since the tail of `sum 1/p` over primes diverges, `delta_t -> 0`
+(Mertens), while the shrink mass stays bounded away from 0 (at least `(log Q_1)/Q_1`), so for
+`t` large the geometric mean is `< 1` - indeed arbitrarily small.
+
+Two honest caveats.  (1) This kills the *class-averaged* drift filter (the naive/Collatz-
+heuristic notion).  A *visit-weighted* drift hypothesis is a different, dynamical condition -
+but that can't be read off the map's syntax, so it is useless as a decidability criterion
+(checking it is as hard as the dynamics).  (2) Scope is Conway's instance form (given `g`
+and `n`).  For the Kurtz-Simon forall-form, padded garbage states funnel to `Q`-free numbers
+in finitely many strictly-decreasing steps, reducing to `g` on `Q`-free starts - whether KS's
+completeness survives that restriction needs their double-simulation details (~75%,
+unverified).  Not yet machine-checked; the argument is elementary enough that Lean-ing it
+would be a pleasant afternoon, not a campaign.
 
 Related: Conway 2013 ("unsettleable") in `papers/2013-conway-unsettleable-summary.md` - the
 folklore overstates that one in exactly the same direction.
@@ -142,15 +164,20 @@ Sturmian, hence non-automatic (`Sturmian.lean`, Cobham applied).
 
 **The bet**: a **Cobham theorem for iterated transducers** - no finite machine can track
 both the ×3 and ÷2 structure of an orbit unless the orbit is eventually trivial.  A
-divergent orbit needs odd-step density above log 2 / log 3 ≈ 0.6309 *forever* - a highly
-structured infinite word.  Transducer rigidity is the right kind of hammer for
-"structured forever is impossible."
+divergent orbit must sustain near-critical odd-step density (shortcut threshold
+`log 2 / log 3 ≈ 0.6309`) often enough to defeat every tail-descent argument - a highly
+structured infinite word.  The exact quantifiers are subtler than "above the threshold
+forever" because an escaping orbit may still make temporary descents; see
+`FRONT-A-ROUTES.md`.  Transducer rigidity is the right kind of hammer for "structured
+forever is impossible."
 
 **The second wing - machine-found certificates**: Yolcu-Aaronson-Heule recast Collatz as
 string-rewriting termination and SAT-searched matrix interpretations.  They failed at
 small certificate sizes, but the ceiling is compute and certificate-class richness, not
 insight: weighted automata, SOS-over-parity-features, neural-guided search - all
-kernel-checkable in Lean afterward.  This is the one approach where the fleet is a
+kernel-checkable in Lean afterward.  For the two-front architecture the clean target is a
+**repeat-or-descend** certificate: a repeat is handed to Front B rather than treated as
+certificate failure.  This is the one approach where the fleet is a
 genuine force multiplier rather than a spectator.  It passes the 3x−1 test by nature:
 a certificate is an instance-specific object; the certificate *is* the +1-specific input.
 
@@ -161,18 +188,19 @@ a certificate is an instance-specific object; the certificate *is* the +1-specif
 **Core move**: revive two dormant literatures with modern tools.
 
 **Cycles**: a nontrivial cycle forces |k·log 3 − n·log 2| to be absurdly small - a Baker
-linear form.  Baker plus the continued fraction of log₂3 already killed all cycles with
-few circuits (Steiner 1977 for 1-cycles; Simons-de Weger 2005 out to 68 circuits;
-extended since - verify the exact frontier before citing it).  The wall is
-irrationality-measure quality for log₂3 far beyond what is known.  An effective S-unit
-or abc-strength input finishes cycles **entirely**.  ❌ **RESOLVED 2026-08-22: that claim is
-wrong.**  `Assumed/ABC.lean` takes abc as an axiom and derives what it actually gives for a
-cycle - `2^k ≤ C · den²`, a *lower* bound on the denominator.  `FrontB/Threads.lean`'s
-`length_bounded_of_abc_and_boundedDen` shows abc is one blade of a scissors: paired with an
-*upper* bound it closes the front at once, alone it closes nothing, and every Diophantine
-input supplies the same blade.  `Effectivity.lean` in
-collatz-cryptid is already the Lean skeleton of that endgame: one constant, μ(log₂3),
-routes to everything.
+linear form.  Baker plus the continued fraction of log₂3 already kills cycles with few
+circuits (Steiner 1977 for 1-cycles; Simons-de Weger 2005 out to 68 circuits; extended
+since - verify the exact frontier before citing it).  But transcendence is the **closer,
+not the opener**.  Baker, effective irrationality measures, S-unit lower bounds, and abc
+all bound `D = 2^k - 3^x` from below.  `Assumed/ABC.lean` makes this direction explicit:
+abc gives `2^k ≤ C · D²`.  Such bounds exclude short cycles but cannot finish the front.
+
+The missing opener is an integrality/word theorem that compresses an integral cycle to
+boundedly many circuits, bounds `D` from above, or supplies another exact finite
+classification.  Then Baker/subspace machinery and finite checking close.  The live and
+killed versions of this program are separated in `FRONT-B-ROUTES.md` and
+`FrontB/Threads.lean`; the earlier claim that abc or an effective S-unit input alone
+finishes cycles was wrong.
 
 **Divergence**: Berg-Meinardus proved Collatz equivalent to a uniqueness statement for
 solutions of an explicit functional equation for holomorphic functions on the unit disk,
@@ -205,6 +233,13 @@ unused corner.  The missing piece is a **saturation theorem**: backward-tree den
 invariance forcing totality.  That missing piece is itself a rigidity claim, so this
 folds into Approach 1 - but with concrete, already-proven inputs on both sides, which is
 exactly what a rigidity program wants as its first consumers.
+
+**Strengthened 2026-08-22:** raw backward density is not enough.  If all those preimages
+enter one fixed divergent seed `d`, then their orbit minima are at most `d`, so they are
+eventually Tao-good for every `f(n) → ∞`.  Saturation must be **floor-preserving**: amplify
+moving tails whose forward floors tend to infinity and control every intermediate value
+on each backward branch.  The exact contradiction target and its Lean consumption theorem
+now live in `FRONT-A-ROUTES.md` and `FrontA/Threads.lean`.
 
 ### C. The carry thesis, with a control experiment 🧬
 
