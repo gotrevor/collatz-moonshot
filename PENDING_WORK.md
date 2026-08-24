@@ -1,5 +1,54 @@
 # PENDING_WORK
 
+## ★ Parity-reconstruction pull — CLASSIFIED (2026-08-24, this session) ★
+
+Executed `FRONT-A-PARITY-RECONSTRUCTION.md` (experiment + Lean kernel + strength audit).
+New module `CollatzMoonshot/FrontA/ParityReconstruction.lean` (all trust-base clean
+`[propext, Classical.choice, Quot.sound]`, full build green 8749 jobs) and
+`experiments/parity_reconstruction.py` (exact, exhaustive to depth 16).
+
+**What was PROVED (Lean, sorry-free):**
+- `tstep_iterate_lt` — the **carry invariant**: `tstep^[m] n < 3^(ones(traceWord n m))·(n/2^m+1)`
+  for ALL n (strengthened form absorbing the odd step where the naive induction breaks).
+- `tstep_iterate_lt_pow_ones` — for `n < 2^m`, `tstep^[m] n < 3^(ones)` (normalized endpoint
+  `q/3^a < 1`, tight at all-ones). First rigorous archimedean word↔size coupling here.
+- `two_pow_mul_gap` — exact carry-gap identity `2^m(3^a−q) = 3^a(2^m−n) − numer`.
+- `pow_ones_mul_le` — matching lower bound `3^a·n ≤ 2^m·tstep^[m] n` (the drift bracket).
+- `traceWord_eq_imp_modEq`, `eq_of_forall_traceWord_eq` — residue determinacy (a natural is
+  determined by its parity itinerary).
+- `tstep_repeat_of_eventually_periodic_parity` + `..._periodic_...` — eventually-periodic
+  parity ⇒ the accelerated orbit repeats/is bounded (restricted no-divergence baseline).
+
+**Strength-audit findings (experiment, exhaustive):**
+- Exact gap `3^a − q` bottoms out at **1** for every depth ⇒ `q < 3^a` is the SHARPEST
+  uniform bound; no depth-independent inequality strictly tighter exists.
+- **Bounded-suffix Lyapunov NO-GO** (the load-bearing negative result): at depth 16 there
+  are two words sharing their last 3 bits with `q/3^a` spread `≈ 0.9997` (nearly the full
+  range). Any potential reading only a bounded parity suffix cannot separate them. This is
+  the forward analogue of the 3-adic adversary that capped the backward local-potential lane
+  — a working carry Lyapunov function MUST read unbounded archimedean state (`q` itself).
+- **Positivity is genuinely asymptotic**: restricting to small-start words (top output bit
+  zero, `r < 2^{m-1}`) still admits odd density `(m−1)/m → 1`, well above critical
+  `log2/log3 ≈ 0.6309`. No finite-prefix output condition forces sub-critical density; the
+  positivity constraint (output bits *eventually* zero) is irreducibly a tail statement.
+
+**CLASSIFICATION: BASELINE / REDIRECT (honest).**
+The reconstruction API is complete and one certified depth-independent carry invariant was
+found (`q < 3^a`), but it is the KNOWN critical-drift envelope, not a new divergence
+obstruction; combined with the lower bound it only re-derives "divergence ⇒ odd density
+> log2/log3". No invariant strictly stronger than eventual-periodicity kills divergence.
+The audit turned DIRECTION.md's guardrail from conjecture into a proved obstruction:
+bounded carry/memory potentials provably FAIL (explicit adversarial pair), so `ParityRigidityW1'`
+cannot be reached by any finite-state / bounded-suffix certificate — success must be
+asymptotic (control eventual-output-zero jointly with critical density) or use the unbounded
+endpoint `q` as archimedean state. **Do not manufacture more Lean plumbing on this coordinate
+(e.g. the full online R-recurrence is API-complete in Python and would be routine in Lean —
+not load-bearing given this verdict).** Next mathematical re-scope: a *tail* statement
+coupling `q`'s growth to output-bit-zero, i.e. an asymptotic density/aperiodicity argument,
+not a bounded certificate. Front B `Compression` remains blocked on the SdW source.
+
+---
+
 ## ★ M2′ COMPLETE (2026-08-24) ★
 
 **`parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` is PROVED,

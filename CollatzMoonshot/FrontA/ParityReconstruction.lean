@@ -139,6 +139,21 @@ theorem pow_ones_mul_le (m n : ℕ) :
     3 ^ ones (traceWord n m) * n ≤ 2 ^ m * tstep^[m] n := by
   rw [tstep_iterate_identity]; exact Nat.le_add_right _ _
 
+/-- **The exact carry-gap identity.**  Rearranging the iterate identity gives the exact size
+of the gap below the `3^a` cap: for `n ≤ 2^m` (so both subtractions are honest),
+
+    `2^m · (3^a − tstep^[m] n) = 3^a · (2^m − n) − numer (traceWord n m)`.
+
+The experiment confirms this holds on all words and that the gap `3^a − tstep^[m] n` bottoms
+out at exactly `1` (the all-ones word), so `tstep_iterate_lt_pow_ones` is the sharpest
+uniform bound — no depth-independent inequality strictly tighter than `q < 3^a` exists. -/
+theorem two_pow_mul_gap (m n : ℕ) (hn : n ≤ 2 ^ m) :
+    2 ^ m * (3 ^ ones (traceWord n m) - tstep^[m] n)
+      = 3 ^ ones (traceWord n m) * (2 ^ m - n) - numer (traceWord n m) := by
+  have hid := tstep_iterate_identity m n
+  rw [Nat.mul_sub, hid, Nat.mul_sub, Nat.mul_comm (2 ^ m) (3 ^ ones (traceWord n m)),
+    Nat.sub_sub]
+
 /-!
 ## The reconstruction dictionary (residue determinacy)
 

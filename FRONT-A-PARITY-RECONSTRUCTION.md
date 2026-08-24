@@ -155,3 +155,36 @@ At the end, classify the pull honestly:
   not manufacture more Lean plumbing.  Return for a mathematical re-scope.
 
 Do not claim `ParityRigidityW1'`, `EmpiricalParityRigidity`, or Collatz from finite data.
+
+---
+
+## RESULTS (2026-08-24, executed) — CLASSIFICATION: BASELINE / REDIRECT
+
+Executed: `experiments/parity_reconstruction.py` (exact, exhaustive to depth 16) and the
+Lean kernel `CollatzMoonshot/FrontA/ParityReconstruction.lean` (sorry-free, trust-base
+clean, full build green).
+
+**Proved (Lean):** the carry invariant `tstep^[m] n < 3^(ones(traceWord n m))` for `n<2^m`
+(equivalently normalized endpoint `q/3^a<1`, tight at all-ones) via the strengthened form
+`tstep^[m] n < 3^ones·(n/2^m+1)`; the exact gap identity `2^m(3^a−q)=3^a(2^m−n)−numer`;
+the drift lower bound; residue determinacy (`traceWord_eq_imp_modEq`,
+`eq_of_forall_traceWord_eq`); and the eventually-periodic no-divergence baseline
+(`tstep_repeat_of_eventually_periodic_parity`).
+
+**Strength audit (exhaustive):**
+- `q < 3^a` is the *sharpest uniform* bound — the exact gap `3^a−q` is `1` at every depth.
+- **Bounded-suffix Lyapunov NO-GO:** two words sharing their last 3 bits realize `q/3^a`
+  spanning nearly `[0,1)` (spread `≈0.9997` at depth 16). No bounded-parity-suffix potential
+  separates them — the forward analogue of the 3-adic backward adversary. A working carry
+  Lyapunov function must read the *unbounded* endpoint `q`, not a finite suffix.
+- **Positivity is asymptotic:** small-start words (top output bit zero) still reach odd
+  density `(m−1)/m → 1 > log2/log3`. No finite-prefix output condition forces sub-critical
+  density.
+
+**Verdict:** BASELINE with a REDIRECT no-go. The reconstruction machine and one certified
+depth-independent invariant are in hand, but the invariant is the known critical envelope,
+not a divergence obstruction, and bounded carry/memory certificates are *proved* to fail.
+Per §C this is precisely the "do not manufacture more Lean plumbing" case: the next move is
+a mathematical re-scope to a genuine *tail* theorem (coupling `q`-growth to eventual
+output-zero and aperiodicity), not further finite-state vocabulary. `ParityRigidityW1'`
+cannot be reached by any bounded-suffix / finite-table certificate.

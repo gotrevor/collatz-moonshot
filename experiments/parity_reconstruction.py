@@ -306,5 +306,122 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] == "deep"):
     main()
+
+
+# ---------------------------------------------------------------------------
+# deeper probes (strength audit + invariant search), appended lap 2
+# ---------------------------------------------------------------------------
+
+def output_bits_of_high_density(max_depth, dens_floor=None):
+    """Positivity condition = reconstructed output bits c_m eventually zero.  For a genuine
+    natural n < 2^depth, R(v)=n so the HIGH output bits are zero.  We ask the load-bearing
+    question: can a word sustain odd density >= critical AND have its top output bit zero
+    (i.e. r < 2^{m-1}, so the word is realized by a *small* start)?  We tabulate, per depth,
+    the maximum odd count among words whose reconstructed start r < 2^{m-1} (top bit 0),
+    versus the max odd count overall.  If sustaining density forces the top bits nonzero,
+    the two diverge -- an empirical signature that critical density is incompatible with
+    'output eventually zero' (the positivity/divergence tension)."""
+    import math
+    crit = math.log(2) / math.log(3)   # critical shortcut odd density
+    rows = []
+    for m in range(2, max_depth + 1):
+        half = 1 << (m - 1)
+        max_ones_all = 0
+        max_ones_smallstart = 0     # r < 2^{m-1}: top output bit zero
+        for bits in product([False, True], repeat=m):
+            v = list(bits)
+            a = ones(v)
+            if a > max_ones_all:
+                max_ones_all = a
+            r = R_modular(v)
+            if r < half and a > max_ones_smallstart:
+                max_ones_smallstart = a
+        rows.append((m, max_ones_all / m, max_ones_smallstart / m, crit))
+    return rows
+
+
+def bounded_memory_nogo(max_depth, window=3):
+    """Rigorous no-go signature for bounded-suffix Lyapunov potentials: find, at each depth,
+    two words sharing their last-`window` bits but with q/3^a differing by a large margin.
+    Such a pair defeats ANY potential Phi(last w bits): it cannot separate the two endpoints.
+    Preserve the extremal adversarial pair."""
+    best = None
+    for m in range(window + 2, max_depth + 1):
+        classes = {}
+        for bits in product([False, True], repeat=m):
+            v = list(bits)
+            a = ones(v)
+            r = R_modular(v)
+            q = tstep_iter(r, m)
+            norm = q / (3 ** a) if a else float(q)
+            key = tuple(v[-window:])
+            classes.setdefault(key, []).append((norm, v))
+        for key, lst in classes.items():
+            lst.sort()
+            lo, hi = lst[0], lst[-1]
+            spread = hi[0] - lo[0]
+            if best is None or spread > best[0]:
+                best = (spread, m, key, lo, hi)
+    return best
+
+
+def sharper_invariant_search(max_depth):
+    """Hunt for an inequality sharper than q < 3^a.  Candidates keyed on the reconstruction:
+    (i) is q + (2^m - r) related to 3^a?   (ii) does 3^a - q (the gap) admit a lower bound
+    growing with anything?  We compute, per depth, the min over ALL words of the gap
+    (3^a - q) and of the normalized gap (3^a - q)/3^a, and where they are attained."""
+    rows = []
+    for m in range(1, max_depth + 1):
+        min_gap = None
+        min_gap_word = None
+        # also test candidate identity: 2^m*(3^a - q) == 3^a*(2^m - r) - numer  (should be exact)
+        identity_ok = True
+        for bits in product([False, True], repeat=m):
+            v = list(bits)
+            a = ones(v)
+            p = 3 ** a
+            r = R_modular(v)
+            q = tstep_iter(r, m)
+            gap = p - q
+            if (1 << m) * gap != p * ((1 << m) - r) - numer(v):
+                identity_ok = False
+            if min_gap is None or gap < min_gap:
+                min_gap = gap
+                min_gap_word = (a, r, q, v)
+        rows.append((m, min_gap, identity_ok, min_gap_word))
+    return rows
+
+
+def deeper_main():
+    depth = int(sys.argv[2]) if len(sys.argv) > 2 else 16
+    print(f"# Deeper probes to depth {depth}")
+    print()
+    print("## Positivity tension: max odd density, all words vs. small-start (top output bit 0)")
+    print("  depth   max dens (all)   max dens (r<2^{m-1})   critical")
+    for m, da, ds, crit in output_bits_of_high_density(min(depth, 18)):
+        print(f"   {m:3d}     {da:.4f}          {ds:.4f}            {crit:.4f}")
+    print()
+    print("## Bounded-suffix Lyapunov no-go (extremal adversarial pair, window=3)")
+    best = bounded_memory_nogo(min(depth, 16), window=3)
+    if best:
+        spread, m, key, lo, hi = best
+        w = lambda v: ''.join('1' if b else '0' for b in v)
+        print(f"  depth {m}: last-3 bits {w(list(key))} shared, q/3^a spread = {spread:.4f}")
+        print(f"    low  q/3^a={lo[0]:.4f} word={w(lo[1])}")
+        print(f"    high q/3^a={hi[0]:.4f} word={w(hi[1])}")
+        print("  => no potential depending only on a bounded parity suffix separates these;")
+        print("     any carry Lyapunov function must read unbounded (archimedean) state.")
+    print()
+    print("## Sharper-invariant search: min gap (3^a - q) and exact gap identity")
+    print("  depth   min(3^a - q)   gap-identity-holds   attained-at (a,r,q)")
+    for m, g, ok, w in sharper_invariant_search(min(depth, 16)):
+        a, r, q, word = w
+        print(f"   {m:3d}     {g:6d}         {ok}              a={a} r={r} q={q}")
+    print()
+    print("# deeper done")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "deep":
+    deeper_main()
