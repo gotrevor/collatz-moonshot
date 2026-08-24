@@ -146,6 +146,18 @@ plumbing** (a `T2`-invariant probability on a finite orbit closure is the unifor
 measure; then `μ(odd) = oddFreq`), plus Krylov–Bogolyubov for the forward M2′ direction. That
 plumbing is genuine ℤ₂ measure theory (likely mathlib-gappy) — a multi-lap build, not a probe.
 
+**Arithmetic side FULLY ASSEMBLED (later same lap):** `step_zero`/`iterate_step_zero`
+(0 absorbing), `periodic_point_of_repeat` (a repeat → genuine periodic point of period `j-i`),
+`oddSteps_pos_of_cycle` (a positive cycle takes ≥1 odd step — all-even would force `m·2^p≤m ⇒
+p=0` via the drift bound), and **`repeat_cycle_oddFreq_lt_sharp`**: every eventual cycle of a
+positive orbit has odd frequency `< log2/log6 = sharpThreshold`. So the ENTIRE arithmetic side
+of the W1′ converse is done. **The sole remaining gap is the ℤ₂ measure identification**: a
+`T2`-invariant probability on the finite orbit closure of an eventually-periodic orbit is the
+uniform measure on the cycle, and its `oddSetZ2`-mass equals `oddSteps/period`. Next Front A
+lap: attack THAT (needs `orbitClosure` of an eventually-periodic point = finite cycle set in
+ℤ₂ + invariant-measure-on-finite-set = weighted-by-visit; check mathlib for
+`MeasurePreserving` on finite sets / periodic points).
+
 ## Alternate crux: Front A itinerary-rigidity
 
 `NoDivergentOrbit` needs a `DivergentDescentCertificate` (`FrontA/Threads.lean`
