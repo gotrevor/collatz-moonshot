@@ -187,3 +187,66 @@ Add `CollatzMoonshot/FrontA/Paradoxical.lean` only after the conventions are loc
 At the end, update `DIRECTION.md`, `STATUS.md`, `PENDING_WORK.md`, and a new handoff. Commit
 coherent green checkpoints. Never claim global finiteness, Front A, W1′, or Collatz from a
 finite search.
+
+---
+
+## RESULTS — end-of-project classification (2026-08-24)
+
+**Classification: PROMISING EVIDENCE.**
+
+### Delivered (all builds green, ledgers audited)
+
+**A. Source lock** (`experiments/paradoxical.py`, exact integers). Cross-checked exhaustively:
+the iterate identity `2^m y = 3^a n + numer`, the two `numer` definitions, criterion **(P)**
+`d·n ≤ numer ⇔ n ≤ y`, slack **(S)** `numer − d·n = 2^m(y−n)`, and the `7→8` example (8
+shortcut steps). Paradoxical-start census `n ≤ 200000`: ratios `5/8, 17/27, 29/46`, all left
+convergents/semiconvergents of `log₃2` — consistent with Niu, **no counterexample in range**
+(finite confirmation, not a falsification).
+
+**B. Discovery — the ≥ 3 odd-blocks restriction.** Every acyclic paradoxical word has at least
+three odd blocks. Verified two independent ways: (i) word/residue enumerator — all `≤2`-block
+front-normalized words to length 30, two-block words to length 38, **zero** admit a paradoxical
+start; (ii) an independent orbit-based verifier (no `numer`, no residue reconstruction) over
+*all* window lengths — min odd-block count = 3 for starts `≤ 100000`. This strictly generalizes
+Rozier–Terracol Appendix A (single odd block only).
+
+**C. Lean kernel + wiring** (`FrontA/Paradoxical.lean`, `Assumed/Paradoxical.lean`).
+Sorry-free: `Paradoxical`/`AcyclicParadoxical`, `slack_identity`, `paradoxical_criterion`,
+`acyclicParadoxical_criterion`, `numer_singleBlock`/`numer_twoBlock`, and **RT Appendix A**
+(`headBlock_not_acyclicParadoxical`). The Front-A consumption
+`finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical → NoDivergentOrbit` is
+machine-checked with ledger `[propext, Classical.choice, Quot.sound, rozier_terracol_3_2]` —
+the entire divergence→infinite-acyclic bridge (running minimum, shortcut embedding, acyclicity
+via the standard↔shortcut peak invariant) is discharged sorry-free. The RT axiom is the
+faithful constructive form (unbounded `2^k n` starts).
+
+### What is new vs. the two sources
+
+- Rozier–Terracol prove only the single-odd-block exclusion (Appendix A). The **≥ 3 odd-blocks**
+  restriction (in particular the *two*-block exclusion) is new, exhaustively verified well
+  beyond the sources, and now backed by the proved `numer` closed forms and the 2-adic
+  foundational lemma `headBlock_dvd_succ` (`[T]^b` head ⇒ `2^b ∣ n+1`).
+- Niu's continued-fraction pattern is **not** falsified: every observed ratio in range is in the
+  CF family. This is corroboration, not a new theorem.
+
+### Why not GO, and the precise open conjecture
+
+The general ≥ 3-blocks theorem is **not** proved. The interior two-block exclusion
+(`le_two_blocks_not_acyclicParadoxical`, the sole disclosed `src/` sorry) reduces, via criterion
+(P) and `numer_twoBlock`, to a lower bound on the realizing start `n`. The 2-adic half is proved
+(`headBlock_dvd_succ`); the obstruction is the **joint 2-adic/3-adic residue constraint**
+`3^b ∣ 2^c X + 1` on the interior odd value `X = x_{b+c} ≥ 2^d − 1` — simple 2-adic propagated
+bounds are provably insufficient (tested: 318–1457 `(b,c,d,e)` violations). This is a genuine
+deep sub-problem to be narrowed lap by lap, not cleared in one.
+
+**Smallest precise conjecture (held out for the next attack):** for every front-normalized
+two-block word `[T]^b[F]^c[T]^d[F]^e` with `3^{b+d} < 2^{b+c+d+e}`, the least realizing start
+`n` satisfies `(2^{b+c+d+e} − 3^{b+d})·n ≥ 3^d(3^b−2^b) + 2^{b+c}(3^d−2^d)`, equivalently
+`tstep^{[b+c+d+e]} n ≤ n`.
+
+### Caveats honored
+
+No claim of global finiteness, Front A, W1′, or Collatz from any finite search. The consumption
+wiring is a conditional reduction whose hypothesis (`FiniteAcyclicParadoxical`, i.e. RT
+Conjecture 6.1) is *stronger* than Collatz — BASELINE plumbing, explicitly labeled, not an
+easier route.

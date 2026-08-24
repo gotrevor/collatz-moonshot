@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8749 jobs) · **Updated**: 2026-08-24 · paradoxical-window pull
+lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-24 · paradoxical-window project (PROMISING EVIDENCE)
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -16,12 +16,35 @@ complete**: `ParityRigidityW1' → NoDivergentOrbit` is sorry-free and trust-bas
 all Krylov–Bogolyubov/Portmanteau/frequency/drift plumbing. The remaining Front-A crux is
 `ParityRigidityW1'` itself—the arithmetic restriction distinguishing positive-integer parity
 itineraries from the unrestricted 2-adic shift. The inverse-parity reconstruction pull is
-complete and classified BASELINE / RE-SCOPE. The live probe is now the exact finite
-paradoxical-window project in `FRONT-A-PARADOXICAL.md`: make the additive remainder
-load-bearing and seek new structural restrictions beyond the 2026 sources. The
-local-certificate lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
+complete and classified BASELINE / RE-SCOPE. The
+local-certificate lane is harmonic-capped below α=1 (proved, complete).
+
+**Paradoxical-window project (`FRONT-A-PARADOXICAL.md`) — delivered, classified PROMISING
+EVIDENCE.** Parts A/B/C complete: exact source lock (identity, criterion (P), slack (S), the
+`7→8` example); **Rozier–Terracol Appendix A formalized sorry-free** (`headBlock_not_
+acyclicParadoxical`); the exact few-block `numer` closed forms; and the full Front-A
+consumption `finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical →
+NoDivergentOrbit`, machine-checked with ledger `[propext, Classical.choice, Quot.sound,
+rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged sorry-free).
+New discovery: **every acyclic paradoxical word has ≥ 3 odd blocks** — exhaustively verified
+two ways (word-based to length 38; independent orbit-based to start 100000), strictly
+generalizing Appendix A. Its general proof is an open deep sub-problem (joint 2-adic/3-adic
+residue control); the 2-adic foundational lemma `headBlock_dvd_succ` (`2^b ∣ n+1`) is proved,
+and the interior two-block exclusion is the one disclosed `src/` sorry
+(`le_two_blocks_not_acyclicParadoxical`) — the active-crux decomposition, not off-path.
 
 ## What's happened (newest first)
+- **2026-08-24 (paradoxical-window project delivered → PROMISING EVIDENCE):** Executed
+  `FRONT-A-PARADOXICAL.md` end to end. Landed `experiments/paradoxical.py` (exact source lock +
+  two independent enumerators) and `CollatzMoonshot/FrontA/Paradoxical.lean` +
+  `CollatzMoonshot/Assumed/Paradoxical.lean`. Formalized RT Appendix A sorry-free; proved the
+  exact criterion (P)/slack (S) and few-block `numer` closed forms; discharged the entire
+  Front-A consumption `finite_acyclicParadoxical_imp_noDivergent` down to the single cited RT
+  Theorem 3.2 axiom (no `sorryAx`). New exhaustively-verified restriction: **≥ 3 odd blocks**
+  for every acyclic paradoxical word (two independent implementations). Its full proof is a
+  deep open sub-problem (2/3-adic residue interplay); proved the 2-adic foundation
+  `headBlock_dvd_succ`. One disclosed active-crux `src/` sorry remains
+  (`le_two_blocks_not_acyclicParadoxical`). Build 🟢 8751 jobs.
 - **2026-08-24 (parity reconstruction complete + audited):** Landed the exact reconstruction
   experiment and the sorry-free cylinder-envelope/residue/eventual-periodicity Lean kernel.
   Added `normalized_endpoint_ne_start_one`, a permanent kernel-checked counterexample to a
