@@ -297,6 +297,38 @@ theorem headBlock_dvd_succ (n b : ℕ)
     rw [hu, pow_succ, mul_comm (2 ^ k) 2]
     exact mul_dvd_mul_left 2 hu2
 
+/-- **Near-critical window contains at most one power of 2.**  If `3^k < 2^m` and
+`2^m·(2^d − 1) < 3^k·2^d` (the near-critical bracket, `d ≥ 1`), then `m` is *determined* by
+`(k,d)`: any other `m'` in the same window equals `m`.  Proof: the bracket forces
+`2^m < 2·3^k` (since `2^d ≤ 2(2^d − 1)` for `d ≥ 1`), and `3^k < 2^m'` gives
+`2·3^k < 2^(m'+1)`, so `2^m < 2^(m'+1)`, i.e. `m ≤ m'`; symmetric.  This collapses the
+`(b,d,m)` search of the two-block containment to `(b,d)` — a dimension reduction any attack
+(elementary or effective-irrationality) reuses. -/
+theorem window_unique_m (k d m m' : ℕ) (hd : 1 ≤ d)
+    (hlo : 3 ^ k < 2 ^ m) (hbr : 2 ^ m * (2 ^ d - 1) < 3 ^ k * 2 ^ d)
+    (hlo' : 3 ^ k < 2 ^ m') (hbr' : 2 ^ m' * (2 ^ d - 1) < 3 ^ k * 2 ^ d) :
+    m = m' := by
+  have hpos : 0 < 2 ^ d - 1 := by
+    have : 2 ≤ 2 ^ d := by calc 2 = 2 ^ 1 := (pow_one 2).symm
+                                _ ≤ 2 ^ d := Nat.pow_le_pow_right (by norm_num) hd
+    omega
+  have hdle : 2 ^ d ≤ 2 * (2 ^ d - 1) := by omega
+  -- From the bracket:  2^m < 2·3^k  (and likewise for m').
+  have hup : ∀ p : ℕ, 2 ^ p * (2 ^ d - 1) < 3 ^ k * 2 ^ d → 2 ^ p < 2 * 3 ^ k := by
+    intro p hbrp
+    have h1 : 2 ^ p * (2 ^ d - 1) < 3 ^ k * (2 * (2 ^ d - 1)) :=
+      lt_of_lt_of_le hbrp (Nat.mul_le_mul_left _ hdle)
+    have h2 : 2 ^ p * (2 ^ d - 1) < (2 * 3 ^ k) * (2 ^ d - 1) := by ring_nf; ring_nf at h1; omega
+    exact Nat.lt_of_mul_lt_mul_right h2
+  have hm : 2 ^ m < 2 * 3 ^ k := hup m hbr
+  have hm' : 2 ^ m' < 2 * 3 ^ k := hup m' hbr'
+  -- 2^m < 2·3^k < 2·2^m' = 2^(m'+1)  ⇒  m ≤ m'; symmetric.
+  have e1 : 2 ^ m < 2 ^ (m' + 1) := by rw [pow_succ]; omega
+  have e2 : 2 ^ m' < 2 ^ (m + 1) := by rw [pow_succ]; omega
+  have i1 : m < m' + 1 := (Nat.pow_lt_pow_iff_right (by norm_num)).mp e1
+  have i2 : m' < m + 1 := (Nat.pow_lt_pow_iff_right (by norm_num)).mp e2
+  omega
+
 set_option maxHeartbeats 800000 in
 /-- **Sharp elementary regime of the residue core (integer ceiling, no least residue).**
 The "gap" is stated in a division-free `∀`-form: *for every* `w` with `2^(c+d) − 2^c + 1 ≤
@@ -464,6 +496,13 @@ theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d
     have hmul : D * (2 ^ d - 1) * 2 ^ c < 3 ^ (b + d) * 2 ^ c := by
       rw [h3bd]; nlinarith [a1, a2, s1]
     exact lt_of_mul_lt_mul_right hmul h2cpos.le
+  -- Tight two-sided bracket:  `3^(b+d) < 2^m < 2·3^(b+d)`  (`m` pinned; cf. `window_unique_m`).
+  have h2dge : (2 : ℤ) ≤ 2 ^ d := by
+    calc (2 : ℤ) = 2 ^ 1 := (pow_one 2).symm
+      _ ≤ 2 ^ d := pow_le_pow_right₀ (by norm_num) hd
+  have hupper : (2 : ℤ) ^ (b + c + d + e) < 2 * 3 ^ (b + d) := by
+    have hDlt : D < 3 ^ (b + d) := by nlinarith [hsqueeze, h2dge, hDpos]
+    rw [hDdef] at hDlt; linarith
   -- Clean power bracket:  `2^m·(2^d − 1) < 3^(b+d)·2^d`  (⇔ `2^m/3^(b+d) < 2^d/(2^d−1)`).
   have hbracket : (2 : ℤ) ^ (b + c + d + e) * (2 ^ d - 1) < 3 ^ (b + d) * 2 ^ d := by
     rw [hDdef] at hsqueeze; nlinarith [hsqueeze]

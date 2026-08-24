@@ -138,6 +138,15 @@ essential. Also proved sorry-free the clean power bracket `hbracket : 2^m·(2^d�
 `src/` sorry is unchanged in location (`near_critical_containment:418`) but its target is now the
 sharp separation: a `2^m` vs `3^k` window that ONLY integrality closes.
 
+**DONE (lap 2026-08-25-0930): dimension reduction — `window_unique_m` (sorry-free) + tight bracket.**
+Proved sorry-free `window_unique_m`: the near-critical window `(3^k, 3^k·2^d/(2^d−1))` contains
+**at most one** power of 2 (from `2^d ≤ 2(2^d−1)` for `d≥1` ⇒ `2^m < 2·3^k`, then `2·3^k < 2^(m'+1)`).
+So `m` is a *function of* `(b,d)` — collapsing the containment search `(b,d,m) → (b,d)`, a reduction
+ANY attack reuses. Also added to `near_critical_containment`'s context the tight two-sided bracket
+`hupper : 2^m < 2·3^(b+d)` (with `hsub`: `3^(b+d) < 2^m < 2·3^(b+d)`). Mathlib confirmed to have NO
+effective irrationality of `log₂3` / Baker / linear-forms-in-logs (only `LiouvilleWith` framework,
+no specific measure) — so route (a) needs building that infrastructure, genuinely multi-lap.
+
 **Attack on the containment (next lap):** The remaining obligation is now provably NOT elementary
 in `(b,d,m)` alone — it needs effective irrationality of `log₂3` (Baker). Two honest routes:
 (a) **discharge attempt**: formalize/derive from an explicit irrationality measure `μ(log₂3)` (or
