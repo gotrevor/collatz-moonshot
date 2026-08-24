@@ -489,4 +489,56 @@ theorem cycle_oddFreq_lt_sharp {n p : ℕ} (hn : 1 ≤ n)
   have hpr : (p : ℝ) = a + b := by rw [← hab]; push_cast; ring
   rw [hpr]; nlinarith [hlog]
 
+/-- `0` is a fixed point of `step` (it is even, `0/2 = 0`). -/
+theorem step_zero : step 0 = 0 := by rw [step_of_even (by norm_num)]
+
+/-- `0` is absorbing under iteration. -/
+theorem iterate_step_zero (k : ℕ) : step^[k] 0 = 0 := by
+  induction k with
+  | zero => rfl
+  | succ k ih => rw [Function.iterate_succ_apply', ih, step_zero]
+
+/-- A repeat `step^[i] n = step^[j] n` (`i < j`) makes `step^[i] n` a genuine periodic point
+of period `j - i`. -/
+theorem periodic_point_of_repeat {n i j : ℕ} (hij : i < j) (h : step^[i] n = step^[j] n) :
+    step^[j - i] (step^[i] n) = step^[i] n := by
+  rw [← Function.iterate_add_apply, show (j - i) + i = j by omega, ← h]
+
+/-- **A positive cycle takes at least one odd step.**  An all-even cycle strictly halves and
+so could only fix `0`; a periodic point `m ≥ 1` therefore has `1 ≤ oddSteps`.  (Proof: the
+drift bound with no odd steps gives `m·2^p ≤ m`, forcing `p = 0`.) -/
+theorem oddSteps_pos_of_cycle {m p : ℕ} (hm : 1 ≤ m) (hp : 1 ≤ p)
+    (hcyc : step^[p] m = m) : 1 ≤ oddSteps m p := by
+  by_contra hodd
+  have ha0 : oddSteps m p = 0 := by omega
+  have hfloor : ∀ j < p, 1 ≤ step^[j] m := by
+    intro j hj
+    by_contra hj0
+    have hjz : step^[j] m = 0 := by omega
+    have : step^[p] m = 0 := by
+      rw [show p = (p - j) + j by omega, Function.iterate_add_apply, hjz, iterate_step_zero]
+    omega
+  have hdrift := iterate_mul_two_pow_le (n := m) (N := 1) le_rfl p hfloor
+  rw [ha0] at hdrift
+  have heven : evenSteps m p = p := by
+    have := oddSteps_add_evenSteps m p; omega
+  rw [heven, hcyc, pow_zero, mul_one] at hdrift
+  have hmr : (1 : ℝ) ≤ m := by exact_mod_cast hm
+  have h2p : (2 : ℝ) ^ p ≤ 1 := by nlinarith [hdrift, hmr, (by positivity : (0:ℝ) < (2:ℝ)^p)]
+  have : (2 : ℝ) ≤ 2 ^ p :=
+    le_trans (by norm_num) (pow_le_pow_right₀ (by norm_num) hp)
+  linarith
+
+/-- **Every eventual cycle of a positive orbit sits below the drift ceiling.**  Combining a
+repeat into a periodic point, the resulting cycle has odd-step frequency `< log 2 / log 6`.
+This is the fully-assembled arithmetic side of the `W1′ ↔ NoDivergentOrbit` converse: it says
+the only invariant behaviour a non-divergent positive orbit can settle into already respects
+the sharp threshold.  The remaining gap is purely the ℤ₂ measure identification. -/
+theorem repeat_cycle_oddFreq_lt_sharp {n i j : ℕ} (hij : i < j)
+    (h : step^[i] n = step^[j] n) (hpos : 1 ≤ step^[i] n) :
+    (oddSteps (step^[i] n) (j - i) : ℝ) / ((j - i : ℕ) : ℝ) < sharpThreshold := by
+  have hp : 1 ≤ j - i := by omega
+  have hcyc := periodic_point_of_repeat hij h
+  exact cycle_oddFreq_lt_sharp hpos hcyc (oddSteps_pos_of_cycle hpos hp hcyc)
+
 end CollatzMoonshot
