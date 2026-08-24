@@ -1,11 +1,39 @@
 # PENDING_WORK
 
-## Status (2026-08-24, review lap — RE-SCOPED)
+## ★ M2′ COMPLETE (2026-08-24) ★
+
+**`parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` is PROVED,
+sorry-free, `#print axioms = [propext, Classical.choice, Quot.sound]`** (trust base only),
+in `Rigidity/Empirical.lean`. Full `lake build` green (8748 jobs). The Krylov–Bogolyubov
+measure-rigidity crux DIRECTION.md mandated is discharged: the entire chain (empirical
+Cesàro measures → weak-* cluster invariance + orbit-closure support → clopen/closed
+Portmanteau → uniform sub-sharp `limsup` of the odd-frequency → drift descent of the
+divergent tail → contradiction) is machine-checked. This means **Front A now reduces to the
+single keystone conjecture `ParityRigidityW1'`** (a `def`, honestly a working conjecture):
+if W1′ holds, `NoDivergentOrbit` follows, and with `NoNontrivialCycle` the headline closes.
+
+Landed pieces (all `Rigidity/Empirical.lean`, all trust-base clean):
+- `cluster_isT2Invariant_orbitClosure` — KB invariance + orbit-closure support for ANY
+  convergent empirical subsequence φ→∞;
+- `exists_isT2Invariant_orbitClosure` — the existence corollary;
+- `empiricalMeasure_oddSetZ2` / `empiricalPM_oddSetZ2_real` — frequency link (odd-mass =
+  odd-step count / N);
+- `limsup_oddFreq_lt_sharp` — the uniform measure-theory crux (every subsequential limit
+  is an invariant measure's odd-mass, W1′-bounded);
+- `oddSteps_iterate_add` — tail odd-step additivity;
+- `parityRigidityW1'_imp_noDivergent` — the assembly.
+
+**Next-value work now (Front A is measure-side-complete):** the remaining Front-A obligation
+is `ParityRigidityW1'` ITSELF (the keystone working conjecture) — genuinely open research;
+its converse arithmetic is done (`repeat_cycle_oddFreq_lt_sharp`). Or return to Front B
+`Compression` (blocked on SdW source). See below.
+
+## Status (2026-08-24, review lap — RE-SCOPED) [SUPERSEDED by M2′ completion above]
 
 - **Direction changed (see `DIRECTION.md`).** Front B `Compression` is BLOCKED and was
   mis-scoped as tractable; the binding crux is now **Front A M2′**
   (`ParityRigidityW1' → NoDivergentOrbit`), whose sole gap is a Krylov–Bogolyubov measure
-  module. Decomposition below.
+  module. Decomposition below. **[M2′ NOW COMPLETE — see top of file.]**
 - **Harmonic-dual obstruction project: COMPLETE** (`no_positive_harmonic_local_certificate`,
   sorry-free, axiom-clean). Do not re-run/port. See `FRONT-A-HARMONIC-DUAL.md`.
 - **This lap landed** the two pure M2′ endpoints in `Rigidity/Drift.lean`

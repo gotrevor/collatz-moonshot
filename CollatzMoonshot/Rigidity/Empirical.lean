@@ -381,4 +381,104 @@ theorem limsup_oddFreq_lt_sharp (hW1 : ParityRigidityW1') (n : ℕ) (hn : 1 ≤ 
   rw [hLeq, hcoe]
   exact hWbound
 
+/-- Odd-step count is additive along an orbit shift: the odd steps over `[0, K+k)` split into
+those in the prefix `[0,K)` and those of the tail `step^[K] n` over its first `k` steps. -/
+theorem oddSteps_iterate_add (n K k : ℕ) :
+    oddSteps n (K + k) = oddSteps n K + oddSteps (step^[K] n) k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [show K + (k + 1) = (K + k) + 1 by omega, oddSteps, oddSteps, ih]
+    have hstep : step^[K + k] n = step^[k] (step^[K] n) := by
+      rw [Nat.add_comm K k, Function.iterate_add_apply]
+    rw [hstep]; ring
+
+/-- **Milestone M2′: parity rigidity forces no divergence.**  `ParityRigidityW1' →
+NoDivergentOrbit`.  Assuming a divergent orbit, its odd-step frequency has `limsup`
+`< sharpThreshold` (`limsup_oddFreq_lt_sharp`), so a finite floor `N₀` still admits a strictly
+larger frequency `freqThreshold N₀` (`exists_freqThreshold_gt`).  The divergent tail
+`m = step^[K] n` stays above `N₀` forever (`exists_floor_of_diverges`) and, for all large `k`,
+its window frequency stays below `freqThreshold N₀` (the tail frequency is dominated by the
+start's, whose limsup is `< freqThreshold N₀`).  The drift estimate `lt_of_oddSteps_freq_lt`
+then forces `step^[k] m < m` for all large `k`, so `not_diverges_of_eventually_lt` contradicts
+the tail's divergence. -/
+theorem parityRigidityW1'_imp_noDivergent :
+    ParityRigidityW1' → NoDivergentOrbit := by
+  intro hW1 n hn hdiv
+  -- Sub-sharp limsup of the odd frequency.
+  have hlim := limsup_oddFreq_lt_sharp hW1 n hn
+  set L : ℝ := Filter.limsup (fun i => (oddSteps n (i + 1) : ℝ) / (i + 1)) atTop with hLdef
+  obtain ⟨N₀, hN₀1, hN₀gt⟩ := exists_freqThreshold_gt hlim
+  set c : ℝ := (L + freqThreshold N₀) / 2 with hc
+  have hLc : L < c := by rw [hc]; linarith
+  have hcf : c < freqThreshold N₀ := by rw [hc]; linarith
+  -- Eventually the start-frequency (over all N) is below c.
+  have hg01 : ∀ i, (oddSteps n (i + 1) : ℝ) / (i + 1) ≤ 1 := by
+    intro i; rw [div_le_one (by positivity)]
+    have : oddSteps n (i + 1) ≤ i + 1 := by have := oddSteps_add_evenSteps n (i + 1); omega
+    exact_mod_cast this
+  have hbdd : IsBoundedUnder (· ≤ ·) atTop (fun i => (oddSteps n (i + 1) : ℝ) / (i + 1)) :=
+    ⟨1, Filter.eventually_map.mpr (Filter.Eventually.of_forall hg01)⟩
+  have hev1 : ∀ᶠ i in atTop, (oddSteps n (i + 1) : ℝ) / (i + 1) < c :=
+    Filter.eventually_lt_of_limsup_lt (hLdef ▸ hLc) hbdd
+  obtain ⟨I, hI⟩ := Filter.eventually_atTop.mp hev1
+  have hev2 : ∀ᶠ N in atTop, 1 ≤ N ∧ (oddSteps n N : ℝ) / N < c := by
+    refine Filter.eventually_atTop.mpr ⟨I + 1, fun N hN => ⟨by omega, ?_⟩⟩
+    have hb := hI (N - 1) (by omega)
+    have harg : (N - 1) + 1 = N := Nat.sub_add_cancel (by omega)
+    have hd : ((N - 1 : ℕ) : ℝ) + 1 = (N : ℝ) := by
+      rw [← Nat.cast_add_one, harg]
+    rw [harg, hd] at hb
+    exact hb
+  -- Tail floor: past K the orbit stays ≥ N₀.
+  obtain ⟨K, hK⟩ := exists_floor_of_diverges hdiv N₀
+  set m : ℕ := step^[K] n with hm
+  have hmpos : 1 ≤ m := iterate_step_pos hn K
+  have hmdiv : Diverges m := (diverges_iterate_iff (n := n) (K := K)).2 hdiv
+  -- Tail window frequency eventually below freqThreshold N₀.
+  have htail : ∀ᶠ k in atTop, (oddSteps m k : ℝ) / k < freqThreshold N₀ := by
+    -- start-frequency at N = K + k is < c, eventually in k
+    have hKk : ∀ᶠ k in atTop, 1 ≤ K + k ∧ (oddSteps n (K + k) : ℝ) / ((K + k : ℕ) : ℝ) < c :=
+      (tendsto_atTop_mono (fun k => Nat.le_add_left k K) tendsto_id).eventually hev2
+    -- c·(K+k)/k → c < freqThreshold N₀
+    have hratio : Tendsto (fun k : ℕ => c * (((K : ℝ) + k) / k)) atTop (𝓝 c) := by
+      have h1 : Tendsto (fun k : ℕ => ((K : ℝ) + k) / k) atTop (𝓝 1) := by
+        have : (fun k : ℕ => ((K : ℝ) + k) / k) =ᶠ[atTop] (fun k : ℕ => (K : ℝ) / k + 1) := by
+          filter_upwards [eventually_gt_atTop 0] with k hk
+          have : (k : ℝ) ≠ 0 := by positivity
+          field_simp
+        rw [tendsto_congr' this]
+        simpa using (tendsto_const_div_atTop_nhds_zero_nat (K : ℝ)).add
+          (tendsto_const_nhds (x := (1 : ℝ)))
+      simpa using (tendsto_const_nhds (x := c)).mul h1
+    have hlt : ∀ᶠ (k : ℕ) in atTop, c * (((K : ℝ) + k) / k) < freqThreshold N₀ :=
+      hratio.eventually (eventually_lt_nhds hcf)
+    filter_upwards [hKk, hlt, eventually_gt_atTop 0] with k hk hlt' hk0
+    have hkR : (0 : ℝ) < k := by exact_mod_cast hk0
+    have hle : (oddSteps m k : ℝ) ≤ (oddSteps n (K + k) : ℝ) := by
+      have : oddSteps n (K + k) = oddSteps n K + oddSteps m k := oddSteps_iterate_add n K k
+      have h2 : oddSteps m k ≤ oddSteps n (K + k) := by omega
+      exact_mod_cast h2
+    calc (oddSteps m k : ℝ) / k ≤ (oddSteps n (K + k) : ℝ) / k := by
+            gcongr
+      _ = (oddSteps n (K + k) : ℝ) / ((K + k : ℕ) : ℝ) * (((K : ℝ) + k) / k) := by
+            have hk0' : (k : ℝ) ≠ 0 := by positivity
+            have hKk0 : ((K + k : ℕ) : ℝ) ≠ 0 := by positivity
+            push_cast
+            field_simp
+      _ < c * (((K : ℝ) + k) / k) := by
+            apply mul_lt_mul_of_pos_right hk.2
+            positivity
+      _ < freqThreshold N₀ := hlt'
+  -- Combine floor + frequency into eventual descent of the tail.
+  have hdesc : ∀ᶠ k in atTop, step^[k] m < m := by
+    filter_upwards [htail, eventually_gt_atTop 0] with k hfreq hk0
+    have hfloor : ∀ j < k, N₀ ≤ step^[j] m := by
+      intro j _
+      rw [hm, ← Function.iterate_add_apply]
+      exact hK (j + K) (by omega)
+    exact lt_of_oddSteps_freq_lt hmpos hN₀1 hk0 hfloor hfreq
+  obtain ⟨K', hK'⟩ := Filter.eventually_atTop.mp hdesc
+  exact not_diverges_of_eventually_lt ⟨K', hK'⟩ hmdiv
+
 end CollatzMoonshot
