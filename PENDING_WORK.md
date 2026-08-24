@@ -28,10 +28,19 @@ Front B outright via `frontB_of_compression_le_91` (any `C ≤ 91` suffices).
   ingredient. It is an integrality/divisibility statement (pure combinatorics on words +
   `2^i 3^j` lattice), no analysis. Route 2 in `FRONT-B-ROUTES.md`.
 
+**Progress (2026-08-24):** source request filed (`ON-LINE-REQUEST.md`, SdW method).
+Started the circuit-block normal form the compression argument will run on:
+`circuits_oneCircuitWord : circuits (oneCircuitWord a b) = 1` proved
+(`OneCircuit.lean`, `[propext, Quot.sound]`) via `cpairs`/`countP` helpers
+(`countP_falls_cpairs_replicate_{true,false}`). **Next block-form step:** define
+`blockWord [(a₁,b₁),…,(a_m,b_m)] = trueᵃ¹falseᵇ¹…` and prove
+`circuits (blockWord L) = L.length` (all `aᵢ,bᵢ ≥ 1`), then that every word is a
+rotation of a `blockWord` with `m = circuits` blocks — the vocabulary any circuit-count
+bound needs.
+
 **Attack paths (each lap: the smallest source-/compiler-grounded probe):**
-1. **Source read (do first):** Simons–de Weger 2005/2010 — do they bound circuit count
-   above for any cycle family, or only rung-by-rung? The PDF is NOT on-box; append a
-   dated request to `ON-LINE-REQUEST.md` (check `archive/findings/` first).
+1. **Source read (filed):** Simons–de Weger 2005/2010 — do they bound circuit count
+   above for any cycle family, or only rung-by-rung? Awaiting `ON-LINE-FINDINGS-*`.
 2. **Decompose in Lean:** state `Compression` via the S-unit equation
    `Σ 3^{a−1−i} 2^{E_i} = N·D` (ESS/subspace theorem bounds solution count by term count
    `= a` — vacuous unless `a` compresses). Name the missing "few circuits" sub-lemma as a

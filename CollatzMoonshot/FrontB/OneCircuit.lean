@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontB.Words
+import CollatzMoonshot.FrontB.Powers
 
 /-!
 # The one-circuit (base of the ladder): a canonical 1-circuit cycle is trivial
@@ -55,11 +56,6 @@ namespace CollatzMoonshot.FrontB
 /-- The canonical one-circuit word: `a` odd steps then `b` halvings. -/
 def oneCircuitWord (a b : ℕ) : List Bool :=
   List.replicate a true ++ List.replicate b false
-
-theorem ones_append (l1 l2 : List Bool) : ones (l1 ++ l2) = ones l1 + ones l2 := by
-  induction l1 with
-  | nil => simp [ones]
-  | cons b t ih => cases b <;> simp [ones, ih] <;> omega
 
 @[simp] theorem ones_replicate_true (n : ℕ) : ones (List.replicate n true) = n := by
   induction n with
@@ -115,6 +111,61 @@ theorem numer_add_den_oneCircuitWord (a b : ℕ) (hpos : 0 < den (oneCircuitWord
   rw [hnumZ, hden]
   have : (2 : ℤ) ^ (a + b) = 2 ^ a * 2 ^ b := by rw [pow_add]
   rw [this]; ring
+
+/-! ## The concrete family really has one circuit
+
+Connecting `oneCircuitWord` to the abstract `circuits` counter that the board's ladder
+(`Compression`/`LadderCompletes`) is stated over: the canonical one-circuit word has
+exactly one falling edge (`true`→`false`), cyclically.  This is the base of the
+circuit-block normal form any circuit-count (compression) argument works with. -/
+
+/-- Over the linearized cyclic pairs of an all-`false` word, no pair is a falling edge:
+every first component is `false`, for any sentinel. -/
+theorem countP_falls_cpairs_replicate_false :
+    ∀ (n : ℕ) (f : Bool),
+      ((cpairs (List.replicate n false) f).countP fun q => q.1 && !q.2) = 0
+  | 0, _ => by simp [cpairs]
+  | 1, _ => by simp [cpairs]
+  | (n + 2), f => by
+    rw [show List.replicate (n + 2) false
+          = false :: (false :: List.replicate n false) from by
+        rw [List.replicate_succ, List.replicate_succ], cpairs, List.countP_cons,
+      show (false :: List.replicate n false) = List.replicate (n + 1) false from
+        (List.replicate_succ).symm, countP_falls_cpairs_replicate_false (n + 1) f]
+    decide
+
+/-- All-`true` word with sentinel `false`: exactly one falling edge — the final pair
+`(true, false[sentinel])`; the internal `(true, true)` pairs are not falls. -/
+theorem countP_falls_cpairs_replicate_true :
+    ∀ (a : ℕ),
+      ((cpairs (List.replicate (a + 1) true) false).countP fun q => q.1 && !q.2) = 1
+  | 0 => by simp [cpairs]
+  | (a + 1) => by
+    rw [show List.replicate (a + 2) true = true :: (true :: List.replicate a true) from by
+        rw [List.replicate_succ, List.replicate_succ], cpairs, List.countP_cons,
+      show (true :: List.replicate a true) = List.replicate (a + 1) true from
+        (List.replicate_succ).symm, countP_falls_cpairs_replicate_true a]
+    decide
+
+/-- **The canonical one-circuit word has exactly one circuit.**  Ties `oneCircuitWord`
+(and hence `oneCircuitCanonical_trivial`) to the abstract `circuits` counter the ladder
+uses: this is the `C = 1` shape of the circuit-block normal form. -/
+theorem circuits_oneCircuitWord (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
+    circuits (oneCircuitWord a b) = 1 := by
+  obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+  obtain ⟨b', rfl⟩ : ∃ b', b = b' + 1 := ⟨b - 1, by omega⟩
+  have hword : oneCircuitWord (a' + 1) (b' + 1)
+      = true :: (List.replicate a' true ++ List.replicate (b' + 1) false) := by
+    unfold oneCircuitWord; rw [List.replicate_succ, List.cons_append]
+  have hsplit : oneCircuitWord (a' + 1) (b' + 1)
+      = List.replicate (a' + 1) true ++ false :: List.replicate b' false := by
+    unfold oneCircuitWord; rw [show List.replicate (b' + 1) false
+      = false :: List.replicate b' false from List.replicate_succ]
+  rw [hword, circuits_cons, ← hword, hsplit,
+    cpairs_append false (List.replicate b' false) true (List.replicate (a' + 1) true),
+    List.countP_append, countP_falls_cpairs_replicate_true a',
+    show (false :: List.replicate b' false) = List.replicate (b' + 1) false from
+      (List.replicate_succ).symm, countP_falls_cpairs_replicate_false (b' + 1) true]
 
 /-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
 Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
