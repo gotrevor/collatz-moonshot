@@ -682,4 +682,36 @@ theorem blockWord_cycle_diophantine {L : List (ℕ × ℕ)}
     omega
   · rw [← numer_blockWord_explicit, ← den_blockWord, hN, mul_comm]
 
+/-! ### Faithfulness anchors (native-checked)
+
+Concrete `native_decide` sanity checks that the block/S-unit apparatus *computes* what the
+general theorems claim — guarding `blockWord`, `circuits_blockWord`, `numer_blockWord_explicit`,
+and `den_blockWord` against a silently mis-stated exponent (the `Statement.lean` audit-surface
+discipline).  These are anonymous `example`s; their `native_decide.ax` footprint stays off
+every named theorem. -/
+
+/-- `blockWord [(1,1)]` is the trivial-cycle word `[true, false]`. -/
+example : blockWord [(1, 1)] = [true, false] := by native_decide
+
+/-- The trivial-cycle word is a genuine `IntegerCycle` datum (`den = 1 ∣ numer = 1`). -/
+example : (numer [true, false] : ℤ) = 1 ∧ den [true, false] = 1 ∧ ones [true, false] = 1 := by
+  native_decide
+
+/-- `circuits (blockWord L) = L.length` on a concrete 3-block word (guards `circuits_blockWord`). -/
+example : circuits (blockWord [(3, 2), (1, 1), (2, 4)]) = 3 := by native_decide
+
+open scoped BigOperators in
+/-- The explicit S-unit sum equals `numer` on a concrete 2-block word — a computational
+witness of `numer_blockWord_explicit`. -/
+example :
+    (∑ j ∈ Finset.range ([(2, 1), (1, 2)] : List (ℕ × ℕ)).length,
+      2 ^ ((([(2, 1), (1, 2)] : List (ℕ × ℕ)).take j).map (fun c => c.1 + c.2)).sum
+      * 3 ^ ((([(2, 1), (1, 2)] : List (ℕ × ℕ)).drop (j + 1)).map Prod.fst).sum
+      * (3 ^ (([(2, 1), (1, 2)] : List (ℕ × ℕ)).getD j (0, 0)).1
+         - 2 ^ (([(2, 1), (1, 2)] : List (ℕ × ℕ)).getD j (0, 0)).1))
+    = (numer (blockWord [(2, 1), (1, 2)]) : ℤ) := by native_decide
+
+/-- `den (blockWord L) = 2^{Σ(aᵢ+bᵢ)} − 3^{Σaᵢ}` on a concrete word (guards `den_blockWord`). -/
+example : den (blockWord [(2, 1), (1, 2)]) = 2 ^ 6 - 3 ^ 3 := by native_decide
+
 end CollatzMoonshot.FrontB
