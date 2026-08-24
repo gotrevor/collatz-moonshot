@@ -51,17 +51,33 @@ Suppose `Diverges n` (`1 ≤ n`).
   `∫ f∘T2 dμ_N − ∫ f dμ_N = N⁻¹ (f (T2^[N] x) − f x)` (the `O(1/N)` that forces cluster-point
   invariance).
 
-**Smallest next probe (grind lap):** wrap `empiricalMeasure x (N+1)` as a
-`ProbabilityMeasure ℤ_[2]`; take a weak-* cluster point `μ` along `atTop` (mathlib:
-`CompactSpace (ProbabilityMeasure ℤ_[2])`, Prokhorov). Show `μ.map T2 = μ`: along the
-cluster subnet `μ_{φ} → μ`, `ProbabilityMeasure.continuous_map continuous_T2` gives
-`(μ_φ).map T2 → μ.map T2`, and `integral_empiricalMeasure_comp_T2_sub` + boundedness of the
-BCF forces `∫ f d((μ_φ).map T2) − ∫ f dμ_φ → 0`; conclude via
-`ProbabilityMeasure.tendsto_iff_forall_integral_tendsto` that `∫ f d(μ.map T2) = ∫ f dμ` for
-all `f : ℤ_[2] →ᵇ ℝ`, hence `μ.map T2 = μ` (= `IsT2Invariant`). Then support on `orbitClosure`
-(closed-set Portmanteau) and step 2's uniformity. Key mathlib API confirmed present:
-`ProbabilityMeasure.map` (`.map ν f_aemble`), `ProbabilityMeasure.continuous_map`,
-`tendsto_iff_forall_integral_tendsto`, `tendsto_measure_of_isClopen_of_tendsto`.
+**Krylov–Bogolyubov DONE (2026-08-24):** `exists_isT2Invariant_of_empirical`
+(`Rigidity/Empirical.lean`, `[propext, choice, Quot.sound]`): **every `x : ℤ_[2]` admits a
+`T2`-invariant probability measure**, obtained as a weak-* cluster point of the empirical
+`empiricalPM x`. Proof = subsequence (Prokhorov compactness + `MapClusterPt.tendsto_subseq`,
+`ProbabilityMeasure ℤ_[2]` metrizable) with `(empiricalPM x (ψk)).map T2 → μ.map T2`
+(`tendsto_map_of_tendsto_of_continuous`) and `→ μ` (telescoping
+`integral_empiricalMeasure_comp_T2_sub` + `tendsto_iff_forall_integral_tendsto`), then
+`tendsto_nhds_unique`. This is milestone M2′ piece **(b)** (the invariance transfer).
+
+**Remaining M2′ pieces (grind laps), in order:**
+1. **Support on the orbit closure.** Strengthen `exists_isT2Invariant_of_empirical` to also
+   deliver `μ (orbitClosure n) = 1` (for `1 ≤ n`, `x = (n : ℤ_[2])`): each empirical is
+   supported on the orbit `⊆ orbitClosure n` (closed), so by Portmanteau on the closed set
+   `limsup (empiricalPM (ψk)) (orbitClosure n) ≤ μ (orbitClosure n)` gives `= 1`. Needs the
+   `≥ 1` half via `le_liminf`/closed-set Portmanteau (`tendsto_measure_of_isClopen…` variant
+   for closed sets, or directly since orbit points are IN the closure). Track that
+   `T2 (↑n) = ↑(step n)` (`T2_natCast`) so the orbit closure is the ℕ-orbit's closure.
+2. **Frequency link + uniformity.** `(empiricalPM x N) oddSetZ2 = oddSteps? / (N+1)` via
+   Portmanteau on the clopen `oddSetZ2`; the invariant-measure set is weak-* compact and
+   `ν ↦ ν oddSetZ2` continuous, so W1′ ⟹ uniform `M* < sharpThreshold`, hence
+   `limsup (oddSteps n · / ·) ≤ M*`.
+3. **Assemble** with `exists_freqThreshold_gt` + `not_diverges_of_eventually_lt` +
+   `lt_of_oddSteps_freq_lt` ⟹ `parityRigidityW1'_imp_noDivergent`.
+
+Key mathlib API confirmed present: `ProbabilityMeasure.map`, `.continuous_map`,
+`tendsto_map_of_tendsto_of_continuous`, `tendsto_iff_forall_integral_tendsto`,
+`tendsto_measure_of_isClopen_of_tendsto`, `MetrizableSpace (ProbabilityMeasure ℤ_[2])`.
 
 **Note (converse calibration, lower value):** `NoDivergentOrbit → ParityRigidityW1'` has its
 arithmetic done (`repeat_cycle_oddFreq_lt_sharp`); its gap is "invariant measure on a *finite*
