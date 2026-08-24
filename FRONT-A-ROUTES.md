@@ -460,7 +460,22 @@ The chippable mathematical ladder is now:
    frontier is now unconditional exactly as the `1/2` frontier was;
 6. formalize the frozen exponent-`3/4` local certificate: modulo-`729` shared source lift,
    modulo-`243` child state, floors `{1,7/4,3,6,12}`, and the 810-state potential; then port
-   the already-proved real-rpow renewal/stopping layer from exponent `2/3` to `3/4`;
+   the already-proved real-rpow renewal/stopping layer from exponent `2/3` to `3/4`.
+   **DONE (2026-08-24).**  Certificate `exists_threeQuartersExpansion`
+   (`BackwardThreeQuarters.lean`); renewal layer `BackwardThreeQuartersRenewal.lean` with the
+   real edge weight `((x)/(y))^(3/4)`, the fourth-power underweight
+   `(2279/1000)(2973/5000)^j < (3/2^j)^(3/4)` (from `(2279/1000)^4<27`, `8(2973/5000)^4<1`),
+   exact telescoping, value-injective `exists_threeQuartersChildFinset`, potential ceiling
+   `19334101`, and `ThreeQuartersStoppingFrontier.card_bound`; stopping layer
+   `BackwardThreeQuartersStopping.lean` with the fuel-`H+1` recursion
+   `threeQuartersRepeatOrStoppingGrowth`, cycle elimination
+   `threeQuartersStoppingFrontier_of_noCycle`, uniform potential minimum `1000000`, and the
+   discharged pinned corollary `threeQuarters_stopping_card_bound`:
+   `1000000 < card(S)·19334101·(d/H)^(3/4)`, endpoints in `(H, 2^23 H)` reached inside
+   `[d, 2^25 H]`.  Axiom audit: base three plus the allowed native_decide certificate axioms
+   (810-entry array, scale `1000·5000^23`).  The full ladder step (certificate → renewal →
+   stopping) is now a mechanical port at any exponent; `3/4 < 1` still, so this is a rung, not
+   the harmonic target;
 7. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 8. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular

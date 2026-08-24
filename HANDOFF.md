@@ -1,5 +1,54 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-24, newest): the exponent-3/4 renewal+stopping pipeline is COMPLETE
+
+- Added `CollatzMoonshot/FrontA/BackwardThreeQuartersRenewal.lean` and completed
+  `CollatzMoonshot/FrontA/BackwardThreeQuartersStopping.lean`, both **sorry-free**
+  and both imported from `CollatzMoonshot.lean`.  Full `lake build` green
+  (8,742 jobs).  The two files are direct structural ports of
+  `BackwardTwoThirdsRenewal.lean` / `BackwardTwoThirdsStopping.lean` at
+  exponent `3/4` (scale-up map from the 0046 handoff below).
+- **Renewal layer** (`...Renewal.lean`): the exact real edge weight
+  `threeQuartersEdgeWeight x y = ((x)/(y))^(3/4)` and rational underweight
+  `threeQuartersRationalWeight j = (2279/1000)(2973/5000)^j`; the fourth-power
+  comparison `threeQuartersRationalWeight_fourth_lt`
+  (`w^4 < (3/2^j)^3` from `(2279/1000)^4<27`, `8(2973/5000)^4<1`) and its
+  rpow consequence `threeQuartersRationalWeight_lt_edgeWeight`; exact
+  telescoping `threeQuartersEdgeWeight_mul`; potential positivity
+  (`threeQuartersPotential_pos`) and uniform max `19334101`
+  (`threeQuartersPotential_le_max`, native_decide over `Fin 5 × Fin 243`);
+  the value-injective finite child set `exists_threeQuartersChildFinset`;
+  and the `ThreeQuartersStoppingFrontier` object with its
+  `.card_bound` (`V(0,d) < card·(19334101·(d/H)^(3/4))`).
+  `ThreeQuartersNode` was relocated here from the stopping module.  Note
+  `set_option maxRecDepth 10000` is needed file-wide (the 810-entry array trips
+  the default depth in `simp`/`exact_mod_cast`).
+- **Stopping layer** (`...Stopping.lean`): the fuel-`H+1` frontier recursion
+  (`ThreeQuartersStoppingNode`/`ThreeQuartersStoppingFront`,
+  `threeQuartersFront_init`/`threeQuartersFront_step`/`..._of_no_low`),
+  collision-to-cycle branch, no-low termination, exact mass growth,
+  `threeQuartersRepeatOrStoppingGrowth`, `NoNontrivialCycle` elimination
+  (`threeQuartersStoppingFrontier_of_noCycle`), the uniform potential minimum
+  `1000000` (`threeQuartersPotential_ge_min`, native_decide over `Fin 5 × Fin 243`),
+  and the discharged pinned target `threeQuarters_stopping_card_bound` with the
+  constants `1000000`/`19334101` preserved verbatim.  The state-independent
+  value machinery (`StoppingChain`, `chain_agree`, `chain_reachesValuePos`,
+  `round_add_le`, `reusable_band_step`, `weighted_biUnion_expands`,
+  `reachesValuePos_self_iff_onCycle`) is reused verbatim from
+  `BackwardStopping.lean`.
+- No project axioms added, no `sorry`.  Axiom audit (real output, 2026-08-24):
+  `exists_threeQuartersChildFinset`, `threeQuartersRepeatOrStoppingGrowth`,
+  `threeQuartersStoppingFrontier_of_noCycle` each depend on
+  `[propext, Classical.choice, Quot.sound]` + the allowed native cert axioms
+  `threeQuartersNatCertificate._native…`, `threeQuartersPotential_pos_of_unit._native…`;
+  `threeQuarters_stopping_card_bound` additionally on
+  `threeQuartersPotential_ge_min_fin._native…` and
+  `threeQuartersPotential_le_max_fin._native…`.
+- **Next rung**: exponent `3/4 → …` toward harmonic `1`.  The whole ladder step
+  (certificate → renewal → stopping) is now mechanical to port; the open
+  mathematics remains step 5 of `FRONT-A-ROUTES.md` (uniform vs. pointwise
+  harmonic growth, the 3-adic adversary) and step 6's overlap/packing.
+
 ## Update (2026-08-24): `exists_threeQuartersExpansion` is now a THEOREM
 
 - Discharged the single pinned `sorry` in
