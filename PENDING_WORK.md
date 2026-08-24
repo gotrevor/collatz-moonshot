@@ -33,6 +33,32 @@ constructive lane; the harmonic no-go proved this session shows the uniform
 local-certificate ladder **cannot** reach `α=1`, so Route A2 does not close the
 divergence front alone — redirect to A1/A3 itinerary-rigidity.
 
+## ACTIVE crux probe: Front B ladder base (`FrontB/OneCircuit.lean`, 1 sorry)
+
+Special-case-first on the `Compression`/`LadderCompletes` crux: **a canonical
+one-circuit integer cycle `trueᵃ falseᵇ` is trivial**.  Proved this lap
+(machine-checked): the closed forms `ones=a`, `numer = 3ᵃ−2ᵃ` (b-independent),
+`den = 2^(a+b)−3ᵃ`; the identity `numer+den = 2ᵃ(2ᵇ−1)`; the reduction
+`den ∣ numer ↔ den ∣ 2ᵇ−1` (den odd); and the **a=1 slice** in full (den∣1 ⟹
+den=1 ⟹ b=1).  Numerically the sole solution through a≤8 is (1,1).
+
+**Open (the one `sorry`): a≥2 has no solution.**  Established facts in context:
+`den ∣ 2ᵇ−1`, `0 < den = 2^(a+b)−3ᵃ`, `2 ≤ a`.  These force
+`(3ᵃ+1)/2ᵃ ≤ 2ᵇ ≤ (3ᵃ−1)/(2ᵃ−1)` — a real interval of width-ratio `→1`, and it
+contains **no power of 2** for a≥2.  Three attack paths:
+1. **Interval-misses-power-of-2** (most concrete): from `den ∣ 2ᵇ−1` ⟹ `den ≤ 2ᵇ−1`
+   and `den>0`, derive the two-sided bound on `2ᵇ`; show the endpoint ratio is `<2`
+   so at most one power of 2 could fit, and the candidate makes `den ≤ 0` — a clean
+   `omega`-after-`Nat.lt_pow`/`pow` monotonicity argument once the interval is set up.
+2. **2-adic valuation**: reduce the surviving cases to `numer = den` (quotient 1),
+   then `2^(a+b)+2ᵃ = 2·3ᵃ` ⟹ `2ᵃ(2ᵇ+1)=2·3ᵃ`, and `v₂(LHS)=a`, `v₂(RHS)=1` ⟹ a=1.
+   (Blocker: showing quotient=1 needs a size bound that only path 1 supplies.)
+3. **LTE / order of 2 mod den**: `2ᵇ ≡ 1 (mod den)` ⟹ `ord_den(2) ∣ b`; combine with
+   `den ∣ 3ᵃ−2ᵃ` to bound `den`.  Heavier machinery; last resort.
+Path 1 is the recommended attack.  Then: prove `circuits v = 1 → v` is a rotation
+of `oneCircuitWord a b` to lift from the canonical rep to all one-circuit words,
+and wire into the ladder base.
+
 ## Note for the next operator
 The scoped harmonic project is finished. Picking up a Front A/B axiom-narrowing
 task is a deliberate refocus (deep, multi-lap) that should be operator-directed
