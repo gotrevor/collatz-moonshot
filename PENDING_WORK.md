@@ -157,6 +157,21 @@ exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite case
 exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
 `b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
 
+**REFRAMED (lap 2026-08-25-1130) — the crux is a 3-adic residue fact, NOT `log₂3` irrationality.**
+Exact restatement (containment ⟺ integer `w` in `[⌈L/3^b⌉, U₁/D]`, nonempty since `D·L ≤ 3^b·U₁`
+whenever `w` exists): with `t := L mod 3^b` and `r := (−L) mod 3^b = 3^b − t` (for `t>0`),
+  **containment ⟺ `D·r ≤ 3^b·U₁ − D·L`**  ⟺  **`D·⌈L/3^b⌉ ≤ U₁`**.
+So the b+d≥6 elimination is exactly **`b+d ≥ 6 ⟹ D·⌈L/3^b⌉ > U₁`**, a statement about `L mod 3^b`
+(= `(2^c(2^d−1)+1) mod 3^b`, a power-of-2 residue mod `3^b`) — the order of 2 mod `3^b` is the
+natural tool, NOT effective irrationality of `log₂3`. Numerics (`scratchpad/reframe.py,tadic.py`):
+in the b+d≥6 failure region `r/3^b ∈ [0.971, 1.0]` (mean 0.999, i.e. `L mod 3^b` is tiny) and
+`t < D` holds throughout (99/99). CAVEAT: `t < D` also holds for the WINNING `b+d=5` tuples
+(e.g. `(2,3,3,0)`: `t=3 < D=13`), so `t<D` is necessary-ish but NOT the discriminator; the flip
+at `b+d: 5→6` is genuinely quantitative in `D·⌈L/3^b⌉` vs `U₁`. Next: bound `L mod 3^b` from
+below/above in the near-critical regime via `orderOf (2 : ZMod (3^b)) = 2·3^(b-1)` (mathlib HAS
+`ZMod`, `orderOf`, and lifting-the-exponent) — a potentially-elementary 3-adic route worth a real
+attempt before conceding Baker. This supersedes the "effective irrationality of log₂3" framing.
+
 **REFUTED (lap 2026-08-25-1030) — three elementary bounds for `b+d ≤ 5`, all fail (do NOT retry):**
 Exhaustive scan (`scratchpad/elem.py`,`elem2.py`,`hard.py`, ranges to 80):
 - `D > U₁` for `b+d ≥ 6`? NO — `D ≤ U₁` holds for 84914 tuples with `b+d ≥ 6` (`w=1` is feasible).
