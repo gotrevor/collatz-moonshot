@@ -23,13 +23,16 @@ axiom — the Front-A consumption is derived separately below.
 
 ## The Front-A wiring
 
-`finite_acyclicParadoxical_imp_noDivergent` is the intended derived implication
-`FiniteAcyclicParadoxical → NoDivergentOrbit`.  It routes through one disclosed intermediate,
-`diverges_imp_infinite_acyclicParadoxical`, which is the Front-A *specialization* the project
-doc flags as owed: a divergent standard orbit is nonrepeating, has a tail value of infinite
-shortcut stopping time, and its constructed segments cannot close cyclically, so they are
-*acyclic* — this last step is a derived specialization of the paper, not its verbatim
-statement, and is left as a scoped `sorry` (standard/shortcut bridge + acyclicity).
+`finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical → NoDivergentOrbit` is
+the intended derived implication, now **fully proved** modulo the single cited axiom
+(`#print axioms` = trust base + `rozier_terracol_3_2`, no `sorry`).  It routes through
+`diverges_imp_infinite_acyclicParadoxical`, the Front-A specialization the project doc flags as
+owed, assembled here from: the running-minimum lemma (`exists_standardStop_of_diverges`), the
+shortcut embedding (`tstep_iterate_eq_step_iterate`, `infiniteStoppingTime_of_diverges`), and
+acyclicity (`not_tstep_fixed_of_diverges` via the standard↔shortcut peak invariant
+`step_le_shortcut`): a divergent orbit's blow-ups `2^k m₀` still diverge, hence cannot close a
+shortcut cycle, so each paradoxical segment is strictly acyclic; unboundedly large distinct
+starts give an infinite set.
 
 **Strength caveat (mandatory).** `FiniteAcyclicParadoxical` is a *sufficient* hypothesis for
 Front A, and its own truth (global finiteness of paradoxical segments, Rozier--Terracol
@@ -55,14 +58,20 @@ def FiniteAcyclicParadoxical : Prop :=
 
 namespace Assumed
 
-/-- **[ASSUMED — THEOREM-grade]** Rozier--Terracol 2026, Theorem 3.2.  An integer `n ≥ 2` of
-infinite shortcut stopping time yields infinitely many paradoxical segments.
+/-- **[ASSUMED — THEOREM-grade]** Rozier--Terracol 2026, Theorem 3.2 (constructive form).  An
+integer `n ≥ 2` of infinite shortcut stopping time yields, for every bound `K`, a paradoxical
+segment whose start `2^k n` exceeds `K` — i.e. *unboundedly large* paradoxical starts of the
+form `2^k n`.  This is the paper's actual construction (starts `2^k n`, using infinitely many
+left approximations `3^a/2^b < 1` of `1`), not merely "infinitely many somewhere".
 
 Provenance: Rozier & Terracol, *Paradoxical behavior in Collatz sequences*, Discrete
 Mathematics 349 (2026), 115167 (arXiv:2502.00948v5), Theorem 3.2 and Corollary 3.3.  Stated in
-repository notation; the paper's `Paradoxical` definition matches `FrontA.Paradoxical`. -/
+repository notation; the paper's `Paradoxical` definition matches `FrontA.Paradoxical`.
+`NoDivergentOrbit` is not packaged in; acyclicity is derived below from the extra `Diverges`
+hypothesis (a cycle minimum also has infinite stopping time, so infinite stopping alone would
+give *cyclic* segments). -/
 axiom rozier_terracol_3_2 (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n) :
-    {p : ℕ × ℕ | Paradoxical p.1 p.2}.Infinite
+    ∀ K, ∃ k m, K < 2 ^ k * n ∧ Paradoxical (2 ^ k * n) m
 
 end Assumed
 
@@ -145,15 +154,97 @@ theorem infiniteStoppingTime_of_diverges {n : ℕ} (hn : 1 ≤ n) (hdiv : Diverg
   obtain ⟨k, hk⟩ := tstep_iterate_eq_step_iterate m₀ j
   rw [hk]; exact hstop k
 
-/-- **Front-A specialization (owed).**  A divergent standard-step orbit yields infinitely many
-*acyclic* paradoxical segments.  This combines `Assumed.rozier_terracol_3_2` with (i) the
-standard/shortcut iterate bridge that turns divergence into a tail value of infinite shortcut
-stopping time, and (ii) the observation that a divergent (hence acyclic) orbit's constructed
-segments cannot close cyclically.  Disclosed `sorry`: this derived specialization is the scoped
-arithmetic bridge, not the cited axiom. -/
+/-- Halving `k` times reaches the base: `step^[k] (2^k * x) = x`. -/
+theorem step_iterate_two_pow_mul (x k : ℕ) : step^[k] (2 ^ k * x) = x := by
+  induction k with
+  | zero => simp
+  | succ i ih =>
+    have hstep : step (2 ^ (i + 1) * x) = 2 ^ i * x := by
+      have h2 : 2 ^ (i + 1) * x = 2 * (2 ^ i * x) := by rw [pow_succ]; ring
+      rw [h2]; unfold step
+      rw [if_pos (by omega), Nat.mul_div_cancel_left _ (by norm_num)]
+    rw [Function.iterate_succ_apply, hstep, ih]
+
+/-- A divergent orbit's `2^k`-fold blow-up still diverges. -/
+theorem diverges_two_pow_mul {x : ℕ} (hx : Diverges x) (k : ℕ) : Diverges (2 ^ k * x) := by
+  intro M
+  obtain ⟨i, hi⟩ := hx M
+  refine ⟨i + k, ?_⟩
+  rw [Function.iterate_add_apply, step_iterate_two_pow_mul]
+  exact hi
+
+/-- **Standard ↔ shortcut invariant.**  Every standard iterate is either a shortcut iterate or
+the odd peak `3·(shortcut iterate)+1` sitting just before its halving; in particular it is
+`≤ 3·(some shortcut iterate) + 1`. -/
+theorem step_le_shortcut (s i : ℕ) : ∃ j, step^[i] s ≤ 3 * tstep^[j] s + 1 := by
+  have epeak : ∀ x : ℕ, x % 2 = 1 → step (3 * x + 1) = tstep x := by
+    intro x hx
+    unfold step tstep
+    rw [if_pos (by omega), if_neg (by omega)]
+  suffices h : ∀ i, ∃ j,
+      step^[i] s = tstep^[j] s ∨ (tstep^[j] s % 2 = 1 ∧ step^[i] s = 3 * tstep^[j] s + 1) by
+    obtain ⟨j, hj⟩ := h i
+    exact ⟨j, by rcases hj with h | ⟨_, h⟩ <;> omega⟩
+  intro i
+  induction i with
+  | zero => exact ⟨0, Or.inl rfl⟩
+  | succ p ih =>
+    obtain ⟨j, hj⟩ := ih
+    rcases hj with h | ⟨hodd, h⟩
+    · rcases Nat.even_or_odd (tstep^[j] s) with he | ho
+      · -- x even: step x = x/2 = tstep x
+        refine ⟨j + 1, Or.inl ?_⟩
+        rw [Function.iterate_succ_apply', h, Function.iterate_succ_apply',
+          ← tstep_eq_step (Nat.even_iff.mp he)]
+      · -- x odd: step x = 3x+1 (the peak)
+        refine ⟨j, Or.inr ⟨Nat.odd_iff.mp ho, ?_⟩⟩
+        rw [Function.iterate_succ_apply', h]
+        unfold step; rw [if_neg (by simp [Nat.odd_iff.mp ho])]
+    · -- step^[p] s = 3x+1 with x odd; step(3x+1) = tstep x = tstep^[j+1] s
+      refine ⟨j + 1, Or.inl ?_⟩
+      rw [Function.iterate_succ_apply', h, epeak _ hodd, Function.iterate_succ_apply']
+
+/-- A divergent orbit is not eventually shortcut-periodic: `tstep^[m] s ≠ s` for `m > 0`. -/
+theorem not_tstep_fixed_of_diverges {s : ℕ} (hdiv : Diverges s) {m : ℕ} (hm : 0 < m)
+    (hfix : tstep^[m] s = s) : False := by
+  -- shortcut orbit is periodic with period m, hence bounded by `Mc`
+  set Mc : ℕ := (Finset.range m).sup (fun l => tstep^[l] s) with hMc
+  have hper : ∀ j, tstep^[j] s ≤ Mc := by
+    intro j
+    induction j using Nat.strong_induction_on with
+    | _ j ih =>
+      rcases lt_or_ge j m with hlt | hge
+      · exact Finset.le_sup (f := fun l => tstep^[l] s) (Finset.mem_range.mpr hlt)
+      · have : tstep^[j] s = tstep^[j - m] s := by
+          conv_lhs => rw [← Nat.sub_add_cancel hge, Function.iterate_add_apply, hfix]
+        rw [this]; exact ih _ (by omega)
+  -- then the standard orbit is bounded by 3*Mc+1, contradicting divergence
+  obtain ⟨i, hi⟩ := hdiv (3 * Mc + 2)
+  obtain ⟨j, hj⟩ := step_le_shortcut s i
+  have := hper j
+  omega
+
+/-- **Front-A specialization (proved).**  A divergent standard-step orbit yields infinitely many
+*acyclic* paradoxical segments: apply `Assumed.rozier_terracol_3_2` to the infinite-stopping
+value `m₀`, then upgrade each paradoxical `2^k m₀` to acyclic — its orbit still diverges, so it
+cannot close a shortcut cycle. -/
 theorem diverges_imp_infinite_acyclicParadoxical (n : ℕ) (hn : 1 ≤ n) (hdiv : Diverges n) :
     {p : ℕ × ℕ | AcyclicParadoxical p.1 p.2}.Infinite := by
-  sorry
+  obtain ⟨m₀, h2, hstop, hdivm⟩ := infiniteStoppingTime_of_diverges hn hdiv
+  have himg : (Prod.fst '' {p : ℕ × ℕ | AcyclicParadoxical p.1 p.2}).Infinite := by
+    apply Set.infinite_of_not_bddAbove
+    rintro ⟨B, hB⟩
+    obtain ⟨k, m, hlt, hpar⟩ := Assumed.rozier_terracol_3_2 m₀ h2 hstop B
+    obtain ⟨hs2, hm, hsub, hle⟩ := hpar
+    have hdivs : Diverges (2 ^ k * m₀) := diverges_two_pow_mul hdivm k
+    have hne : tstep^[m] (2 ^ k * m₀) ≠ 2 ^ k * m₀ := fun h =>
+      not_tstep_fixed_of_diverges hdivs hm h
+    have hacyc : AcyclicParadoxical (2 ^ k * m₀) m :=
+      ⟨hs2, hm, hsub, lt_of_le_of_ne hle (fun h => hne h.symm)⟩
+    have hmem : 2 ^ k * m₀ ∈ Prod.fst '' {p : ℕ × ℕ | AcyclicParadoxical p.1 p.2} :=
+      ⟨(2 ^ k * m₀, m), hacyc, rfl⟩
+    exact absurd (hB hmem) (by omega)
+  exact himg.of_image
 
 /-- **The Front-A consumption theorem**: only finitely many acyclic paradoxical segments
 implies no divergent orbit.  (Conditional reduction — see the strength caveat in the module

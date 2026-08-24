@@ -29,23 +29,17 @@ no counterexample in range).
   standard/shortcut + acyclicity specialization). Ledger `[propext, sorryAx]`. This is BASELINE
   Front-A plumbing (the hypothesis is stronger than Collatz), not the novel content.
 
-**Open obligations / next attacks:**
-- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry). PROVED this lap the whole
-  "produce RT's hypothesis value" half (all trust-base clean):
-  `exists_standardStop_of_diverges` (running-min ⇒ infinite STANDARD stopping, `m₀≥2`,
-  `Diverges m₀`), `tstep_iterate_eq_step_iterate` (shortcut embedding), and
-  `infiniteStoppingTime_of_diverges` (⇒ `∃ m₀≥2, InfiniteStoppingTime m₀ ∧ Diverges m₀`).
-  Remaining assembly (next lap):
-  (a) restate `Assumed.rozier_terracol_3_2` to the constructive form
-      `∀ K, ∃ k m, K < 2^k·n ∧ Paradoxical (2^k·n) m` (faithful: RT constructs starts `2^k n`,
-      unbounded). NOTE: acyclicity is NOT derivable from infinite-stopping alone — a cycle
-      minimum also has infinite stopping and yields CYCLIC segments — so the extra
-      `Diverges` hypothesis is essential here.
-  (b) acyclicity: `Diverges m₀ ⇒ Diverges (2^k m₀) ⇒` shortcut orbit unbounded (standard
-      unbounded ⇒ shortcut unbounded, within a factor 2) `⇒ 2^k m₀` not on a shortcut cycle
-      `⇒ tstep^[m] s ≠ s ⇒ AcyclicParadoxical s m`.
-  (c) infinitude: arbitrarily large distinct starts `s` ⇒ the acyclic-pair set is infinite.
-- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED this lap: the head-block
+**Part C COMPLETE (modulo the one cited axiom).** `finite_acyclicParadoxical_imp_noDivergent`
+`#print axioms` = `[propext, Classical.choice, Quot.sound, rozier_terracol_3_2]` — NO `sorryAx`.
+The full consumption chain is machine-checked: `diverges_imp_infinite_acyclicParadoxical`
+(running-min `exists_standardStop_of_diverges` + shortcut embedding
+`tstep_iterate_eq_step_iterate`/`infiniteStoppingTime_of_diverges` + acyclicity
+`not_tstep_fixed_of_diverges` via the standard↔shortcut peak invariant `step_le_shortcut`,
+plus `diverges_two_pow_mul`/`step_iterate_two_pow_mul`). RT axiom is the faithful constructive
+form `∀ K, ∃ k m, K < 2^k·n ∧ Paradoxical (2^k·n) m`.
+
+**Only remaining open obligation on this front:**
+- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED earlier: the head-block
   trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
   violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It
   genuinely needs the full realizing-residue reconstruction mod `2^(b+c+d)`. Deprioritized as
