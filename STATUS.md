@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-24 · paradoxical-window project (PROMISING EVIDENCE)
+lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-25 · two-block exclusion decomposed, Case A proved
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -28,12 +28,22 @@ NoDivergentOrbit`, machine-checked with ledger `[propext, Classical.choice, Quot
 rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged sorry-free).
 New discovery: **every acyclic paradoxical word has ≥ 3 odd blocks** — exhaustively verified
 two ways (word-based to length 38; independent orbit-based to start 100000), strictly
-generalizing Appendix A. Its general proof is an open deep sub-problem (joint 2-adic/3-adic
-residue control); the 2-adic foundational lemma `headBlock_dvd_succ` (`2^b ∣ n+1`) is proved,
-and the interior two-block exclusion is the one disclosed `src/` sorry
-(`le_two_blocks_not_acyclicParadoxical`) — the active-crux decomposition, not off-path.
+generalizing Appendix A. The interior two-block exclusion
+(`le_two_blocks_not_acyclicParadoxical`) is now **decomposed with Case A (both blocks
+subcritical) proved sorry-free**; the residual (Cases B/C, exactly one block supercritical)
+reduces to one joint 2-adic/3-adic arithmetic core (`GOAL2'`). This is the active-crux
+decomposition, not off-path — it carries two disclosed `src/` sorries by design.
 
 ## What's happened (newest first)
+- **2026-08-25 (review lap — two-block crux decomposed, Case A proved):** Made real crux
+  progress on the sole `src/` sorry `le_two_blocks_not_acyclicParadoxical`. Split the
+  `[T]^b[F]^c[T]^d[F]^e` itinerary at step `b+c` (`traceWord_add` + `List.append_inj`) into two
+  head-block segments, then case-split on criticality. **Case A (both blocks subcritical) is now
+  PROVED sorry-free** (`headBlock_endpoint_le` twice ⇒ `y ≤ X ≤ n`), and whole-word
+  subcriticality is shown to forbid both-supercritical. The two residual cases B/C are reduced
+  to ONE arithmetic core (`GOAL2'`, the joint 2-adic/3-adic residue force via relation (★)
+  `3^b w₁ = 2^(c+d) w₂ − 2^c + 1`) with the reconstruction route + refuted simple bounds written
+  into PENDING_WORK. Build 🟢 8751 jobs.
 - **2026-08-24 (paradoxical-window project delivered → PROMISING EVIDENCE):** Executed
   `FRONT-A-PARADOXICAL.md` end to end. Landed `experiments/paradoxical.py` (exact source lock +
   two independent enumerators) and `CollatzMoonshot/FrontA/Paradoxical.lean` +
@@ -92,10 +102,11 @@ and the interior two-block exclusion is the one disclosed `src/` sorry
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **Front A paradoxical-window probe** (binding): reproduce the exact word criterion and
-  published fixed-length checks, then seek a new word-shape theorem, continued-fraction
-  restriction/counterexample, or exact branch-and-bound pruning lemma. The literature wiring
-  and a finite census are baseline; formalize only load-bearing mathematics.
+- **Front A two-block exclusion** (binding): prove the residue core `GOAL2'` shared by Cases
+  B/C. Route: formalize the `w₁/w₂` reconstruction (relation (★)), state
+  `two_block_residue_bound` (which also re-proves Case A), and attack the joint 2-adic/3-adic
+  minimum via `ZMod (3^b)` / least-residue. Proving it = new infinite-family theorem → project
+  GO. Refuted: `w₁≥1`-only bounds are insufficient (see PENDING_WORK).
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the

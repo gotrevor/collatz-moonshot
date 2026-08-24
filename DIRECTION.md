@@ -16,13 +16,17 @@
   uniformly approximate the normalized endpoint; it does **not** prove a universal
   finite-state no-go. Do not add routine reconstruction plumbing or repeat that experiment.
 
-- **MANDATED next move:** Execute `FRONT-A-PARADOXICAL.md`. Rozier--Terracol's 2026 theorem
-  turns an infinite-stopping-time orbit into infinitely many exact finite segments whose
-  coefficient `3^q/2^m` is subcritical but whose additive remainder still produces growth.
-  Use that theorem as cited literature (formalize only cheap wiring), reproduce the known
-  counts/inequalities, then spend the project on new mathematics: exact pruning, word-shape
-  restrictions, or the continued-fraction pattern highlighted by Niu. A cited implication or
-  a larger census is BASELINE, not progress. Stop/go is pinned in the project doc.
+- **MANDATED next move:** Continue the paradoxical project's NEW mathematics — the two-block
+  exclusion `le_two_blocks_not_acyclicParadoxical` (strictly generalizes RT Appendix A). It is
+  now DECOMPOSED: **Case A (both blocks subcritical) is PROVED sorry-free** via two head-block
+  applications; the residual is **Cases B/C (exactly one block supercritical)**, which both
+  reduce to the single arithmetic core **GOAL2'** = "the minimal `w₂` in its residue class mod
+  `3^b` satisfies `(2^m−3^(b+d))·w₂ ≥ 3^b·2^e − 3^b + 2^(b+e)(2^c−1)`", a genuine joint
+  2-adic/3-adic statement (relation (★): `3^b w₁ = 2^(c+d) w₂ − 2^c + 1`). Next lap:
+  formalize the `w₁/w₂` reconstruction, state `two_block_residue_bound` as the shared core,
+  and attack it (route + failed simple bounds in PENDING_WORK). Proving it upgrades the
+  project classification PROMISING EVIDENCE → GO (a new infinite-family theorem). A cited
+  implication or larger census remains BASELINE, not progress.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -73,6 +77,12 @@
   experiment and sorry-free Lean baseline. Corrected the run's overclaim: endpoint spread
   within a suffix class is not a universal finite-state obstruction. Classified the pull
   BASELINE / RE-SCOPE and redirected to `FRONT-A-PARADOXICAL.md`.
+- 2026-08-25 (review lap): paradoxical project executed → PROMISING EVIDENCE confirmed. Made
+  real crux progress: DECOMPOSED `le_two_blocks_not_acyclicParadoxical` and PROVED Case A
+  (both blocks subcritical) sorry-free via two head-block applications + word-split. Isolated
+  the residual to one arithmetic core (GOAL2', joint 2-adic/3-adic residue force) shared by
+  Cases B/C; wrote the reconstruction route + failed simple bounds into PENDING_WORK. Kept
+  the objective on this new-mathematics crux (proving it = GO).
 
 ---
 

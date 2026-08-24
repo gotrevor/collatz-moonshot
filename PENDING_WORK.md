@@ -38,23 +38,47 @@ The full consumption chain is machine-checked: `diverges_imp_infinite_acyclicPar
 plus `diverges_two_pow_mul`/`step_iterate_two_pow_mul`). RT axiom is the faithful constructive
 form `∀ K, ∃ k m, K < 2^k·n ∧ Paradoxical (2^k·n) m`.
 
-**Only remaining open obligation on this front:**
-- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). Foundational residue piece now
-  PROVED: `headBlock_dvd_succ` — a `[T]^b` head forces `2^b ∣ (n+1)` (via the `u=x+1`
-  conjugation, `[propext, Quot.sound]`). Next: propagate through the interior block —
-  `x_{b+c} = (3^b(n+1)/2^b − 1)/2^c` is odd with `2^d ∣ (x_{b+c}+1)`, giving the sharp lower
-  bound on `n` (via the intermediate odd value `X ≥ 2^d−1`, `3^b ∣ 2^c X+1`) that closes (P)
-  with `numer_twoBlock`. CONFIRMED earlier: the head-block
-  trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
-  violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It
-  genuinely needs the full realizing-residue reconstruction mod `2^(b+c+d)`. Deprioritized as
-  the hard arithmetic core; the head-block (Appendix A) case is done.
-The head-block trick fails for a genuine interior gap because the second block adds remainder
-`2^(b+c)(3^d−2^d)`, so the exclusion needs a LOWER BOUND on the realizing start `n` (the
-residue making the prefix `[T]^b` do `b` odd steps). Smallest concrete probe: prove
-`2^b ∣ (n+1)` (or the sharper `n ≥ 2^b − 1`) for any `n` realizing a word with head block
-`[T]^b`, then feed it into criterion (P) with `numer_twoBlock`. Also: extend the ratio census
-past `41/65` (needs word-BnB or n≳10^8) to harden the Niu falsification test.
+**Only remaining open obligation on this front:** `le_two_blocks_not_acyclicParadoxical`.
+
+**DECOMPOSED + Case A PROVED (lap 2026-08-25-0400).** The proof now splits the itinerary at
+step `b+c` into two head-block segments (`traceWord_add` + `List.append_inj`), and case-splits
+on which block is subcritical. Whole-word subcriticality `3^(b+d)<2^m` forbids both blocks
+supercritical. Three cases:
+- **Case A (both subcritical): PROVED, sorry-free.** `headBlock_endpoint_le` twice ⇒
+  `y ≤ X ≤ n`. No residue needed. (`X := tstep^[b+c] n`.)
+- **Case B (first super, second sub) / Case C (first sub, second super): 2 disclosed sorries.**
+  Single-block bound closes one side (`y≤X` in B, `X≤n` in C) but NOT `y≤n`.
+
+**The residue core (what B and C both reduce to).** Set `n+1 = 2^b w₁` (w₁ odd, from
+`headBlock_dvd_succ`), interior odd `X = x_{b+c}` with `X+1 = 2^d w₂`, endpoint `2^e y =
+3^d w₂ − 1`. The single relation linking them is
+  **(★)  `3^b w₁ = 2^(c+d) w₂ − 2^c + 1`**  (from `3^b w₁ − 1 = 2^c X = 2^c(2^d w₂ − 1)`).
+`y ≤ n` is then *equivalent* to either of the dual bounds (both ⟺ criterion (P)):
+  **GOAL'  `(2^m − 3^(b+d))·w₁ ≥ 3^d·2^c − 3^d + 2^(c+d)(2^e − 1)`**
+  **GOAL2' `(2^m − 3^(b+d))·w₂ ≥ 3^b·2^e − 3^b + 2^(b+e)(2^c − 1)`**.
+The obstruction: `w₁ ≥ 1` (equiv `w₂ ≥ (3^b+2^c−1)/2^(c+d)`) is INSUFFICIENT — verified: for
+`b=2,c=1,d=1,e=1` (barely subcritical 27<32, d_def=5) GOAL2' needs `w₂ ≥ 4` but `w₁≥1` only
+forces `w₂ ≥ 3`; the true minimum `w₂=7` comes from the **3-adic congruence** `2^(c+d) w₂ ≡
+2^c−1 (mod 3^b)` (unique class since `gcd(2,3)=1`). Same for Case C (`b=1,c=1,d=2,e=1`:
+needs `w₁≥4`, forced by min `w₂=2`). So the crux = **the minimal `w₂` in its residue class mod
+`3^b` satisfies GOAL2'** — a genuine joint 2-adic/3-adic statement. Monotonicity note: larger
+realizing `n` in the class only make `y−n` MORE negative (`Δ(y−n)=−d_def` per `+2^m`), so it
+suffices to prove GOAL2' at the class-minimal `w₂`.
+
+**Next concrete attack (next lap):**
+1. Formalize the reconstruction: from `hsegA`/`hsegB` extract `w₁` odd with `n+1=2^b w₁`
+   (`headBlock_dvd_succ`), `w₂` with `X+1=2^d w₂` (`headBlock_dvd_succ` at `X`), and relation
+   (★) via `x_b = 2^c X` (the interior even-run: `2^c ∣ x_b`, `x_b/2^c = X` odd).
+2. State the pure arithmetic lemma `two_block_residue_bound` = GOAL2' given (★) + `w₂≥1` +
+   `3^(b+d)<2^m` + the 3-adic congruence, and reduce BOTH B and C to it (it also re-proves A,
+   so once proved the case split collapses).
+3. Prove the arithmetic core. Likely route: bound the minimal `w₂` from below using that
+   `3^b ∣ 2^c(2^d w₂ − 1) + 1`; the deficit `d_def = 2^m − 3^(b+d)` and the RHS of GOAL2' are
+   both `Θ(3^b·…)`, and the 3-adic minimal `w₂ ≈ (residue)/1` supplies the missing factor.
+   Consider `ZMod (3^b)` for the congruence and `Nat.find`/least-residue for the minimum.
+
+Also (lower priority): extend the ratio census past `41/65` (word-BnB or n≳10^8) to harden the
+Niu CF falsification test.
 
 ## ★ NEXT: paradoxical finite trajectories (2026-08-24) ★
 
