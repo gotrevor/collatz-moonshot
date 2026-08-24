@@ -110,6 +110,24 @@ hold for EVERY subcritical `(b,c,d,e)` except exactly `(2,3,3,0)` and `(3,3,2,0)
 `¬gap ∧ U₁>0 → (b,c,d,e) ∈ {(2,3,3,0),(3,3,2,0)}`; then the residual branch closes by
 `exact residue_core_exc1/2`.
 
+**DONE (lap 2026-08-25-0830): crux decomposed into `near_critical_containment` + squeeze PROVED
+sorry-free.** The opaque residual `sorry` inside `two_block_residue_core` is gone; that branch now
+`push_neg`s `¬gap` to a witness `w` (`L ≤ 3^b·w`, `D·w ≤ U₁`) and calls the new self-contained
+lemma `near_critical_containment (b c d e w …)`, then `residue_core_exc1/2`. Inside the new lemma
+the **elementary squeeze is proved sorry-free**: from the two bounds (×D, ×3^b, cancel 2^c>0) we
+get the division-free near-critical window `(2^m − 3^(b+d))·(2^d − 1) < 3^(b+d)` [`hsqueeze`] plus
+the real bound `D·L ≤ 3^b·U₁`. The SOLE `src/` sorry is now `near_critical_containment:461` — the
+finiteness *containment* with clean hyps `{hsub, hlo, hhi, hsqueeze}` (much more attackable).
+Verified (`scratchpad/squeeze.py`, `<45`): tuples admitting such a `w` = exactly `(2,3,3,0)`,`(3,3,2,0)`.
+
+**Why the window alone is infinite (why integrality is essential):** `hsqueeze` squeezes
+`2^m/3^(b+d) ∈ (1, 2^d/(2^d−1))`, width `→1` as `d↑`; the real bound `D·L ≤ 3^b·U₁` fails on 883+
+tuples with UNBOUNDED `b,e` (`scratchpad/contain.py`, LIM=60). Finiteness comes only from
+`w ∈ ℕ` (`⌈L/3^b⌉ ≤ U₁/D`): a `3^b mod 2^(c+d)` least-residue growth = a `2^m` vs `3^k` separation
+(effective irrationality of `log₂3`). Note both winning tuples sit on the SAME best approximation
+`2^8/3^5` (b+d=5, m=8). Next: bound `b+d` via an explicit `|2^m−3^k|` separation (Baker-type,
+likely a cited effective-irrationality lemma) → `interval_cases` + `decide` on the finite box.
+
 **Attack on the containment (next lap):** quantitative near-critical bound. Crude inequalities
 only give `2^(m-1) < 3^(b+d) < 2^m` (infinite strip, `c+e ≈ 0.585(b+d)`); the reason only 2
 tuples fail is that `⌈t/3^b⌉` grows along the strip — a `3^b mod 2^(c+d)` least-residue fact,

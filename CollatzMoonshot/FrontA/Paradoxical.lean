@@ -384,6 +384,82 @@ theorem residue_core_exc2 (n X y : ℕ)
     (hII : 2 ^ (2 + 0) * y + 2 ^ 2 = 3 ^ 2 * (X + 1)) :
     y ≤ n := by norm_num at hI hII ⊢; omega
 
+/-- **Near-critical containment (the sharpened crux).**  This isolates *exactly* what remains
+open in the two-block exclusion, as a self-contained arithmetic statement with clean
+hypotheses.  Suppose the sharp gap of `core_of_gap` fails: there is a natural `w` with
+`2^(c+d) − 2^c + 1 ≤ 3^b·w` (the lower bound `w ≥ ⌈L/3^b⌉`, forced by `w₂ ≥ 1 ⇒ X ≥ 2^d − 1`)
+yet `(2^m − 3^(b+d))·w ≤ 3^d(2^c − 1) − 2^(c+d)` (the contrapositive upper bound `w ≤ U₁/D`).
+Under whole-word subcriticality this **forces** `(b,c,d,e)` to be one of the two near-critical
+tuples `(2,3,3,0)` or `(3,3,2,0)`.
+
+Exhaustively verified: the set of tuples admitting such a `w` is *exactly* those two
+(`scratchpad/squeeze.py`, checked `b,c,d,e < 45`).
+
+**What this lap proved sorry-free (the elementary squeeze):** from the two bounds one gets, by
+one multiplication each and cancelling `2^c > 0`, the division-free near-critical inequality
+  `(2^m − 3^(b+d))·(2^d − 1) < 3^(b+d)`  `[hsqueeze]`
+together with the "real bound" `(2^m − 3^(b+d))·L ≤ 3^b·U₁`.  These squeeze `2^m/3^(b+d)` into
+the multiplicative window `(1, 2^d/(2^d−1))`, whose width `→ 1` as `d` grows.
+
+**What remains (the sole open obligation):** the containment itself — that this near-critical
+window, intersected with the *integrality* of `w` (equivalently `⌈L/3^b⌉ ≤ U₁/D`), admits only
+the two listed tuples.  The window alone is an *infinite* strip (the real bound
+`D·L ≤ 3^b·U₁` fails on 883+ tuples with unbounded `b,e`); finiteness needs `w ∈ ℕ`, i.e. a
+`3^b mod 2^(c+d)` least-residue growth fact — a genuine `2^m` vs `3^k` separation statement
+(effective irrationality of `log₂ 3`).  Narrow lap by lap; see `PENDING_WORK.md`. -/
+theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
+    (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
+    (hlo : 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w)
+    (hhi : ((2 ^ (b + c + d + e) - 3 ^ (b + d) : ℤ)) * w
+        ≤ 3 ^ d * (2 ^ c - 1) - 2 ^ (c + d)) :
+    (b = 2 ∧ c = 3 ∧ d = 3 ∧ e = 0) ∨ (b = 3 ∧ c = 3 ∧ d = 2 ∧ e = 0) := by
+  -- Work in ℤ.  Abbreviations: D = 2^m − 3^(b+d) > 0, U₁ = 3^d(2^c−1) − 2^(c+d), L = 2^(c+d)−2^c+1.
+  have hle : (2 : ℕ) ^ c ≤ 2 ^ (c + d) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hsubz : (3 : ℤ) ^ (b + d) < 2 ^ (b + c + d + e) := by exact_mod_cast hsub
+  have hloz : (2 : ℤ) ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w := by
+    have := hlo; zify [hle] at this; linarith
+  set D : ℤ := 2 ^ (b + c + d + e) - 3 ^ (b + d) with hDdef
+  set U1 : ℤ := 3 ^ d * (2 ^ c - 1) - 2 ^ (c + d) with hU1def
+  set L : ℤ := 2 ^ (c + d) - 2 ^ c + 1 with hLdef
+  have hDpos : (0 : ℤ) < D := by rw [hDdef]; linarith
+  -- `w ≥ 1`.
+  have hLpos : (1 : ℤ) ≤ L := by
+    have : (2 : ℤ) ^ c ≤ 2 ^ (c + d) := by exact_mod_cast hle
+    rw [hLdef]; linarith
+  have hwpos : (1 : ℤ) ≤ (w : ℤ) := by
+    have h3b : (1 : ℤ) ≤ 3 ^ b := one_le_pow₀ (by norm_num)
+    nlinarith [hloz, hLpos, h3b]
+  -- Squeeze 1 (the "real bound"):  D·L ≤ 3^b·U₁.
+  have h3bpos : (0 : ℤ) < 3 ^ b := by positivity
+  have s1 : D * L ≤ 3 ^ b * U1 := by
+    have t1 : D * L ≤ D * (3 ^ b * w) := by
+      have := mul_le_mul_of_nonneg_left hloz hDpos.le; linarith
+    have t3 : (3 : ℤ) ^ b * (D * w) ≤ 3 ^ b * U1 :=
+      mul_le_mul_of_nonneg_left hhi h3bpos.le
+    nlinarith [t1, t3]
+  -- L ≥ 2^c·(2^d − 1)  and  U₁ < 3^d·2^c.
+  have hpcd : (2 : ℤ) ^ (c + d) = 2 ^ c * 2 ^ d := by rw [pow_add]
+  have hLge : (2 : ℤ) ^ c * (2 ^ d - 1) ≤ L := by rw [hLdef, hpcd]; ring_nf; linarith
+  have hU1lt : U1 < 3 ^ d * 2 ^ c := by
+    have h3d : (0 : ℤ) < 3 ^ d := by positivity
+    have h2cd : (0 : ℤ) < 2 ^ (c + d) := by positivity
+    rw [hU1def]; nlinarith [h3d, h2cd]
+  -- Squeeze 2 (the near-critical window):  D·(2^d − 1) < 3^(b+d).
+  have h2cpos : (0 : ℤ) < 2 ^ c := by positivity
+  have h3bd : (3 : ℤ) ^ (b + d) = 3 ^ b * 3 ^ d := by rw [pow_add]
+  have hsqueeze : D * (2 ^ d - 1) < 3 ^ (b + d) := by
+    have a1 : D * (2 ^ c * (2 ^ d - 1)) ≤ D * L :=
+      mul_le_mul_of_nonneg_left hLge hDpos.le
+    have a2 : (3 : ℤ) ^ b * U1 < 3 ^ b * (3 ^ d * 2 ^ c) :=
+      mul_lt_mul_of_pos_left hU1lt h3bpos
+    -- ⇒ D·(2^d−1)·2^c < 3^(b+d)·2^c, then cancel 2^c.
+    have hmul : D * (2 ^ d - 1) * 2 ^ c < 3 ^ (b + d) * 2 ^ c := by
+      rw [h3bd]; nlinarith [a1, a2, s1]
+    exact lt_of_mul_lt_mul_right hmul h2cpos.le
+  -- The residual finiteness containment.  Window is near-critical; integrality of `w` selects
+  -- the two tuples.  Genuine `2^m` vs `3^k` separation content — disclosed, narrowed lap by lap.
+  sorry
+
 /-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about
 naturals: given the two exact head-block segment identities
 `2^(b+c)·X + 2^b = 3^b·(n+1)` (segment `[T]^b[F]^c`, start `n`, interior odd value `X`) and
@@ -410,12 +486,15 @@ theorem two_block_residue_core (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ 
         < (2 ^ (b + c + d + e) - 3 ^ (b + d)) * w
   · -- Sharp elementary regime: closed without any least-residue argument.
     exact core_of_gap b c d e n X y hb hd hI hII hsub hgap
-  · -- Residual: the sharp gap fails on **exactly** two near-critical tuples, `(2,3,3,0)` and
-    -- `(3,3,2,0)` (checked to `b,c,d,e < 34`); both are closable directly (`residue_core_exc1`,
-    -- `residue_core_exc2`, by `omega`).  What remains open is only the finiteness *containment*
-    -- `¬gap ∧ U₁ > 0 → (b,c,d,e) ∈ {(2,3,3,0),(3,3,2,0)}` (a quantitative near-critical bound),
-    -- after which this branch closes.  Disclosed as the sole remaining `src/` sorry.
-    sorry
+  · -- Residual: the sharp gap fails.  Negation gives a witness `w` with `L ≤ 3^b·w` and
+    -- `D·w ≤ U₁`; `near_critical_containment` forces `(b,c,d,e) ∈ {(2,3,3,0),(3,3,2,0)}`, then
+    -- the concrete tuples close by `residue_core_exc1`/`exc2`.
+    push_neg at hgap
+    obtain ⟨w, hlo, hhi⟩ := hgap
+    rcases near_critical_containment b c d e w hb hd hsub hlo hhi with
+      ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
+    · exact residue_core_exc1 n X y hI hII
+    · exact residue_core_exc2 n X y hI hII
 
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
