@@ -450,3 +450,43 @@ if __name__ == "__main__":
 # (verified below). A word v of length j, q ones, subcritical (3^q<2^j) admits an acyclic
 # paradoxical start iff its realizing residue r (taken >2) satisfies  d*r <= numer(v)  with
 # strict endpoint, i.e. r <= numer(v)/d and start value r' = r (or r+2^j) is < y.
+
+# ============ Independent second implementation (orbit-based) of the >=3-blocks claim ============
+# The word/residue enumerator above builds words and reconstructs residues. This one is fully
+# independent: it iterates ACTUAL starts n, reads the parity itinerary straight off the orbit,
+# and counts odd blocks of any acyclic paradoxical window. No numer, no residue reconstruction.
+
+def orbit_min_blocks_of_paradoxical(nmax, mmax=80):
+    """For every start n<=nmax, over EVERY window length m (not just smallest), whenever the
+    window is acyclic paradoxical, record the number of odd blocks of its parity itinerary.
+    Returns the minimum odd-block count seen (and a witness). Pure orbit iteration."""
+    min_blocks = None
+    witness = None
+    for n in range(3, nmax + 1):
+        # parity itinerary and running orbit
+        x = n
+        parity = []
+        vals = [n]
+        for _ in range(mmax):
+            parity.append(x % 2 == 1)
+            x = tstep(x)
+            vals.append(x)
+        # check each window length m: subcritical (ones< m*log3/... via 3^ones<2^m) and n<y
+        ones_pref = 0
+        for m in range(1, mmax + 1):
+            if parity[m - 1]:
+                ones_pref += 1
+            y = vals[m]
+            if 3 ** ones_pref < 2 ** m and n < y:  # acyclic paradoxical window
+                # count odd blocks in parity[:m]
+                nb = sum(1 for i in range(m) if parity[i] and (i == 0 or not parity[i - 1]))
+                if min_blocks is None or nb < min_blocks:
+                    min_blocks = nb
+                    witness = (n, m, nb)
+    return min_blocks, witness
+
+if __name__ == "__main__" and "--secondimpl" in sys.argv:
+    for N in (2000, 20000, 100000):
+        mb, w = orbit_min_blocks_of_paradoxical(N)
+        print(f"orbit-based: starts<= {N:>6}: min odd-blocks over ALL acyclic paradoxical "
+              f"windows = {mb}  witness(n,m,blocks)={w}")
