@@ -480,4 +480,100 @@ theorem oneCircuitCanonical_trivial (hSteiner : SteinerOneCircuit)
     -- contradictory — this is exactly the isolated transcendence input.
     exact absurd hdvd_pow (hSteiner a b haa hb hpos)
 
+/-! ### Rotation to canonical form — the block reduction applies to ALL integer cycles
+
+`exists_blockWord_canonical_circuits` only covers words already in `head=true, last=false`
+form.  A general integer-cycle word need not start/end that way, but `circuits` is
+rotation-invariant and every integer cycle contains both a `true` (odd step, `ones ≥ 1`)
+and a `false` (else `den = 2ⁿ − 3ⁿ ≤ 0`), so some rotation reaches the canonical form.
+This closes the reduction: **for any integer-cycle word, bounding `circuits` is literally
+bounding the block count `L.length` of a genuine block normal form.** -/
+
+/-- `circuits` is invariant under a single rotation `rot`.  The cyclic-adjacency pair list
+(`cpairs`, sentinel = head) merely cycles by one entry under `rot`, so its falling-edge
+count is unchanged.  Proof: peel the head pair off both sides via `cpairs_append`. -/
+theorem circuits_rot (v : List Bool) : circuits (rot v) = circuits v := by
+  match v with
+  | [] => rfl
+  | [b] => cases b <;> rfl
+  | b :: c :: s =>
+    rw [show rot (b :: c :: s) = c :: (s ++ [b]) from rfl, circuits_cons c (s ++ [b]),
+      show c :: (s ++ [b]) = (c :: s) ++ [b] from rfl,
+      cpairs_append b [] c (c :: s), List.countP_append, circuits_cons b (c :: s)]
+    simp only [cpairs, List.countP_cons, List.countP_nil]; omega
+
+private theorem rot_eq_rotate_aux (v : List Bool) : rot v = v.rotate 1 := by
+  cases v with
+  | nil => rfl
+  | cons b t => rw [List.rotate_cons_succ, List.rotate_zero]; rfl
+
+/-- `circuits` is invariant under any rotation `List.rotate k`. -/
+theorem circuits_rotate (v : List Bool) (k : ℕ) : circuits (v.rotate k) = circuits v := by
+  induction k with
+  | zero => simp
+  | succ n ih =>
+    rw [show v.rotate (n + 1) = (v.rotate n).rotate 1 from by rw [List.rotate_rotate],
+      ← rot_eq_rotate_aux, circuits_rot, ih]
+
+/-- A word whose head is `false` and which contains a `true` can be rotated to canonical
+form (`head = true, last = false`): rotate to the first `true`; its predecessor lies before
+the first `true` so it is `false`, giving the required trailing `false`. -/
+theorem rotate_canonical_of_head_false {u : List Bool}
+    (h0 : u.head? = some false) (ht : true ∈ u) :
+    ∃ k, (u.rotate k).head? = some true ∧ (u.rotate k).getLast? = some false := by
+  set i := u.findIdx (· == true) with hi
+  have hilt : i < u.length := List.findIdx_lt_length_of_exists ⟨true, ht, by simp⟩
+  have hui : u[i] = true := by
+    have h := @List.findIdx_getElem _ (· == true) u hilt
+    rwa [beq_iff_eq] at h
+  have huiq : u[i]? = some true := by rw [List.getElem?_eq_getElem hilt, hui]
+  have hu0 : u[0]? = some false := by rw [← List.head?_eq_getElem?]; exact h0
+  have hipos : 1 ≤ i := by
+    rcases Nat.eq_zero_or_pos i with h | h
+    · exfalso; rw [h] at huiq; rw [hu0] at huiq; simp at huiq
+    · exact h
+  have hui1 : u[i - 1]? = some false := by
+    obtain ⟨hbound, hall⟩ := (List.lt_findIdx_iff u (· == true) (i - 1)).mp (by rw [← hi]; omega)
+    have hpred := hall (i - 1) (le_refl _)
+    have hval : u[i - 1] = false := by revert hpred; cases u[i - 1] <;> simp
+    rw [List.getElem?_eq_getElem hbound, hval]
+  refine ⟨i, ?_, ?_⟩
+  · rw [List.head?_rotate hilt]; exact huiq
+  · rw [List.rotate_eq_drop_append_take (le_of_lt hilt),
+      List.getLast?_append_of_ne_nil, List.getLast?_take]
+    · simp only [show i ≠ 0 from by omega, if_false]; rw [hui1]; rfl
+    · intro hcon
+      have : (List.take i u).length = 0 := by rw [hcon]; rfl
+      rw [List.length_take] at this; omega
+
+/-- **Any word containing both a `true` and a `false` rotates to canonical form.**  Rotate
+to the first `false`, then apply `rotate_canonical_of_head_false`. -/
+theorem exists_rotate_canonical {v : List Bool} (hf : false ∈ v) (ht : true ∈ v) :
+    ∃ k, (v.rotate k).head? = some true ∧ (v.rotate k).getLast? = some false := by
+  set jf := v.findIdx (· == false) with hjf
+  have hjflt : jf < v.length := List.findIdx_lt_length_of_exists ⟨false, hf, by simp⟩
+  have hu0 : (v.rotate jf).head? = some false := by
+    rw [List.head?_rotate hjflt]
+    have hval : v[jf] = false := by
+      have h := @List.findIdx_getElem _ (· == false) v hjflt
+      rwa [beq_iff_eq] at h
+    rw [List.getElem?_eq_getElem hjflt, hval]
+  have hut : true ∈ v.rotate jf := by rw [List.mem_rotate]; exact ht
+  obtain ⟨k, hk1, hk2⟩ := rotate_canonical_of_head_false hu0 hut
+  exact ⟨jf + k, by rw [← List.rotate_rotate]; exact hk1,
+    by rw [← List.rotate_rotate]; exact hk2⟩
+
+/-- **The block reduction for arbitrary integer cycles.**  Every integer-cycle word — after
+a rotation `v.rotate k` — is a genuine block normal form `blockWord L` (all blocks nonempty)
+with `circuits v = L.length`.  So bounding the circuit count of an integer cycle (the
+content of `Compression`) is exactly bounding its block count, the `m`-term S-unit datum. -/
+theorem exists_blockWord_of_integerCycle {v : List Bool} (hv : IntegerCycle v) :
+    ∃ (L : List (ℕ × ℕ)) (k : ℕ), (∀ blk ∈ L, 1 ≤ blk.1 ∧ 1 ≤ blk.2) ∧
+      v.rotate k = blockWord L ∧ circuits v = L.length := by
+  obtain ⟨-, hones, hden, -⟩ := hv
+  obtain ⟨k, hh, hl⟩ := exists_rotate_canonical (false_mem_of_den_pos hden)
+    (true_mem_of_ones_pos hones)
+  obtain ⟨L, hL, hvk, hcirc⟩ := exists_blockWord_canonical_circuits (v.rotate k) hh hl
+  exact ⟨L, k, hL, hvk, by rw [← hcirc, circuits_rotate]⟩
+
 end CollatzMoonshot.FrontB

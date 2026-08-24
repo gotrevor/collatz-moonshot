@@ -65,10 +65,24 @@ vocabulary should wait for SdW's actual method, lest we build the wrong reductio
 strong induction. So "bound `circuits v`" (for canonical cycle words) is literally "bound
 the block count `L.length`" — exactly the `Compression` shape. `[propext, choice, Quot.sound]`.
 
-**Next lap options:** (a) the small remaining reduction piece — **rotate an arbitrary
-integer-cycle word to canonical form** (a nontrivial cycle has both a `true` and a `false`;
-rotate to a `false→true` boundary), then transfer via rotation-invariance of `circuits`;
-this makes the block reduction apply to ALL cycles. (b) if SdW findings landed, formalize
+**Reduction to ALL cycles DONE (2026-08-24, this lap):** the canonical restriction is now
+removed. New in `OneCircuit.lean` (all `[propext,(choice,)Quot.sound]`):
+- `circuits_rot`/`circuits_rotate` — `circuits` is rotation-invariant (the `cpairs`
+  cyclic-adjacency list merely cycles by one entry under `rot`; falling-edge count fixed,
+  proved by peeling the head pair via `cpairs_append`).
+- `rotate_canonical_of_head_false` — a `false`-headed word containing a `true` rotates to
+  canonical form (rotate to first `true`; its predecessor precedes the first `true`, hence
+  is `false`). Uses `findIdx`/`lt_findIdx_iff` + `head?_rotate`/`getLast?_take`.
+- `exists_rotate_canonical` — ANY word with both a `true` and a `false` rotates to canonical.
+- **`exists_blockWord_of_integerCycle`** — every integer-cycle word, after a rotation
+  `v.rotate k`, IS a genuine `blockWord L` (all blocks nonempty) with `circuits v = L.length`.
+  Membership from `true_mem_of_ones_pos` (`ones≥1`) + `false_mem_of_den_pos` (`0<den` rules
+  out all-`true` since `2ⁿ<3ⁿ`). **So "bound `circuits` for integer cycles" ⟺ "bound the
+  block count" is now fully machine-checked for ALL cycles** — the reduction plumbing for
+  `Compression` is complete. What remains is the SUMMIT: bound the block count by a constant.
+
+**Next lap options:** (a) ~~rotate arbitrary integer-cycle word to canonical form~~ —
+**DONE this lap** (`exists_blockWord_of_integerCycle`). (b) if SdW findings landed, formalize
 their fixed-`m` reduction on the block datum. (c) **pivot to the alternate crux, Front A
 itinerary-rigidity** (per `DIRECTION.md`) — both fronts' SUMMITS (bound `m`; build a
 divergence certificate) are open research, so weigh whether more Front B reduction-plumbing
