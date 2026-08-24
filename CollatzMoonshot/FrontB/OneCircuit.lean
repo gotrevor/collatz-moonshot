@@ -244,6 +244,98 @@ theorem circuits_blockWord :
       circuits_blockWord L' hL', List.length_cons]
     omega
 
+/-! ### The converse: every canonical word IS a block form
+
+The reduction that makes the block dictionary usable on real cycles: peel the leading
+odd-run then even-run, recurse.  A word with `head = true` and `last = false` equals
+`blockWord` of its run-length data. -/
+
+/-- Peel the leading maximal `true`-run. -/
+theorem peel_true_run : ∀ (v : List Bool), v.head? = some true →
+    ∃ a r, 1 ≤ a ∧ v = List.replicate a true ++ r ∧ (r = [] ∨ r.head? = some false)
+  | [], h => by simp at h
+  | false :: _, h => by simp at h
+  | true :: t, _ => by
+    cases t with
+    | nil => exact ⟨1, [], le_refl 1, by simp, Or.inl rfl⟩
+    | cons x t' =>
+      cases x with
+      | false => exact ⟨1, false :: t', le_refl 1, by simp, Or.inr rfl⟩
+      | true =>
+        obtain ⟨a, r, ha, hval, hr⟩ := peel_true_run (true :: t') (by simp)
+        exact ⟨a + 1, r, by omega, by rw [hval, List.replicate_succ, List.cons_append], hr⟩
+
+/-- Peel the leading maximal `false`-run. -/
+theorem peel_false_run : ∀ (v : List Bool), v.head? = some false →
+    ∃ b r, 1 ≤ b ∧ v = List.replicate b false ++ r ∧ (r = [] ∨ r.head? = some true)
+  | [], h => by simp at h
+  | true :: _, h => by simp at h
+  | false :: t, _ => by
+    cases t with
+    | nil => exact ⟨1, [], le_refl 1, by simp, Or.inl rfl⟩
+    | cons x t' =>
+      cases x with
+      | true => exact ⟨1, true :: t', le_refl 1, by simp, Or.inr rfl⟩
+      | false =>
+        obtain ⟨b, r, hb, hval, hr⟩ := peel_false_run (false :: t') (by simp)
+        exact ⟨b + 1, r, by omega, by rw [hval, List.replicate_succ, List.cons_append], hr⟩
+
+/-- **The block normal form exists.** A word with `head = true` and `last = false` is
+`blockWord` of its run data, all blocks nonempty. -/
+theorem exists_blockWord_canonical : ∀ (v : List Bool),
+    v.head? = some true → v.getLast? = some false →
+      ∃ L, (∀ blk ∈ L, 1 ≤ blk.1 ∧ 1 ≤ blk.2) ∧ v = blockWord L
+  | v, hhead, hlast => by
+    obtain ⟨a, r, ha, hv, hr⟩ := peel_true_run v hhead
+    have hrne : r ≠ [] := by
+      rintro rfl
+      rw [hv, List.append_nil] at hlast
+      obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+      rw [List.replicate_succ', List.getLast?_append_of_ne_nil _ (by simp)] at hlast
+      simp at hlast
+    have hrhead : r.head? = some false := hr.resolve_left hrne
+    obtain ⟨b, s, hb, hr2, hs⟩ := peel_false_run r hrhead
+    have hvfull : v = List.replicate a true ++ (List.replicate b false ++ s) := by
+      rw [hv, hr2]
+    cases hsc : s with
+    | nil =>
+      refine ⟨[(a, b)], ?_, ?_⟩
+      · intro blk hblk
+        rw [List.mem_singleton] at hblk; subst hblk; exact ⟨ha, hb⟩
+      · rw [hvfull, hsc]; simp [blockWord]
+    | cons y s' =>
+      have hsne : s ≠ [] := by rw [hsc]; simp
+      have hne1 : List.replicate b false ++ s ≠ [] := by rw [hsc]; simp
+      have hshead : s.head? = some true := hs.resolve_left hsne
+      have hslast : s.getLast? = some false := by
+        rw [hvfull, List.getLast?_append_of_ne_nil _ hne1,
+          List.getLast?_append_of_ne_nil _ hsne] at hlast
+        exact hlast
+      have hlen : s.length < v.length := by
+        rw [hvfull]
+        simp only [List.length_append, List.length_replicate]
+        omega
+      obtain ⟨L', hL', hsblock⟩ := exists_blockWord_canonical s hshead hslast
+      refine ⟨(a, b) :: L', ?_, ?_⟩
+      · intro blk hblk
+        rcases List.mem_cons.mp hblk with h | h
+        · subst h; exact ⟨ha, hb⟩
+        · exact hL' blk h
+      · rw [hvfull, hsblock]; simp [blockWord, List.append_assoc]
+  termination_by v => v.length
+  decreasing_by exact hlen
+
+/-- **The reduction, with the circuit count.** A canonical word decomposes into exactly
+`circuits v` nonempty blocks.  So "bound `circuits v`" (for canonical cycle words) is
+literally "bound the block count of the normal form" — the shape `Compression` needs.
+(For an arbitrary integer-cycle word, rotate to a run boundary first: `circuits` is
+rotation-invariant.) -/
+theorem exists_blockWord_canonical_circuits (v : List Bool)
+    (hh : v.head? = some true) (hl : v.getLast? = some false) :
+    ∃ L, (∀ blk ∈ L, 1 ≤ blk.1 ∧ 1 ≤ blk.2) ∧ v = blockWord L ∧ circuits v = L.length := by
+  obtain ⟨L, hL, hv⟩ := exists_blockWord_canonical v hh hl
+  exact ⟨L, hL, hv, by rw [hv, circuits_blockWord L hL]⟩
+
 /-! ### The S-unit structure of `numer` on the block normal form
 
 The Route-2 leverage: the cycle equation `numer v = N · den v` is an S-unit relation over

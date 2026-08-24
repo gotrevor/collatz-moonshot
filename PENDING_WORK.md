@@ -59,11 +59,20 @@ is genuinely open (no known handle; ESS not in mathlib) and **blocked on the SdW
 read** (`ON-LINE-REQUEST.md`, awaiting `ON-LINE-FINDINGS-*`). Further speculative
 vocabulary should wait for SdW's actual method, lest we build the wrong reduction.
 
-**Next lap options:** (a) if SdW findings landed, formalize their fixed-`m` reduction;
-(b) the block-form CONVERSE (every nonempty mixed word is a rotation of a `blockWord` with
-`L.length = circuits`) — the last piece of the reduction, provable but heavy; (c) **pivot
-to the alternate crux, Front A itinerary-rigidity** (per `DIRECTION.md`), since Front B's
-summit is source-blocked.
+**Converse DONE (canonical case):** `exists_blockWord_canonical_circuits` — a word with
+`head = true`, `last = false` decomposes as `v = blockWord L` with `circuits v = L.length`
+(all blocks nonempty), via structural run-peeling (`peel_true_run`/`peel_false_run`) +
+strong induction. So "bound `circuits v`" (for canonical cycle words) is literally "bound
+the block count `L.length`" — exactly the `Compression` shape. `[propext, choice, Quot.sound]`.
+
+**Next lap options:** (a) the small remaining reduction piece — **rotate an arbitrary
+integer-cycle word to canonical form** (a nontrivial cycle has both a `true` and a `false`;
+rotate to a `false→true` boundary), then transfer via rotation-invariance of `circuits`;
+this makes the block reduction apply to ALL cycles. (b) if SdW findings landed, formalize
+their fixed-`m` reduction on the block datum. (c) **pivot to the alternate crux, Front A
+itinerary-rigidity** (per `DIRECTION.md`) — both fronts' SUMMITS (bound `m`; build a
+divergence certificate) are open research, so weigh whether more Front B reduction-plumbing
+or a Front A prerequisite is the higher-value next advance.
 
 **Attack paths (each lap: the smallest source-/compiler-grounded probe):**
 1. **Source read (filed):** Simons–de Weger 2005/2010 — do they bound circuit count
