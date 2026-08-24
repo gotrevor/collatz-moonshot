@@ -244,6 +244,55 @@ theorem circuits_blockWord :
       circuits_blockWord L' hL', List.length_cons]
     omega
 
+/-! ### The S-unit structure of `numer` on the block normal form
+
+The Route-2 leverage: the cycle equation `numer v = N · den v` is an S-unit relation over
+`{2,3}`.  On the block normal form its terms collapse to **one per circuit** — the odd-run
+of length `aⱼ` telescopes to the single monomial-difference `3^{aⱼ} − 2^{aⱼ}` (exactly the
+one-circuit numerator).  So the term count is `m = circuits`, not the cycle length; that is
+why a bound on `m` (Compression) would make the subspace/Baker machinery apply. -/
+
+/-- Prepending a `false`-block multiplies the numerator by `2^b`. -/
+theorem numer_replicate_false_prefix (b : ℕ) (Y : List Bool) :
+    (numer (List.replicate b false ++ Y) : ℤ) = 2 ^ b * numer Y := by
+  induction b with
+  | zero => simp
+  | succ k ih =>
+    rw [List.replicate_succ, List.cons_append]
+    simp only [numer]
+    push_cast [ih]
+    ring
+
+/-- Prepending a `true`-block of length `a`: `2^a`-scaling plus the collapsed odd-run term
+`3^{ones Y}·(3^a − 2^a)`. -/
+theorem numer_replicate_true_prefix (a : ℕ) (Y : List Bool) :
+    (numer (List.replicate a true ++ Y) : ℤ)
+      = 2 ^ a * numer Y + 3 ^ ones Y * (3 ^ a - 2 ^ a) := by
+  induction a with
+  | zero => simp
+  | succ k ih =>
+    rw [List.replicate_succ, List.cons_append]
+    simp only [numer]
+    have hones : ones (List.replicate k true ++ Y) = k + ones Y := by
+      rw [ones_append, ones_replicate_true]
+    rw [hones]
+    push_cast [ih]
+    ring
+
+/-- **The block-normal-form cycle equation, one S-unit term per circuit.**  `numer` of an
+`m`-block word is `2^{a+b}`-scaled recursion plus the collapsed odd-run term of the head
+block — the `m`-term S-unit structure that makes circuit count the term count. -/
+theorem numer_blockWord_cons (a b : ℕ) (L : List (ℕ × ℕ)) :
+    (numer (blockWord ((a, b) :: L)) : ℤ)
+      = 2 ^ (a + b) * numer (blockWord L)
+        + 3 ^ ones (blockWord L) * (3 ^ a - 2 ^ a) := by
+  have hbw : blockWord ((a, b) :: L)
+      = List.replicate a true ++ (List.replicate b false ++ blockWord L) := by
+    simp only [blockWord, List.append_assoc]
+  rw [hbw, numer_replicate_true_prefix, numer_replicate_false_prefix,
+    ones_append, ones_replicate_false, Nat.zero_add, pow_add]
+  ring
+
 /-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
 Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
 targets `Compression`/`LadderCompletes` — so that `OneCircuit.lean` stays

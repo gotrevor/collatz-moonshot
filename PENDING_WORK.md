@@ -38,12 +38,25 @@ Built the circuit-block normal form the compression argument runs on
   `cpairs`/`countP` peeling helpers `countP_falls_cpairs_{replicate_true, replicate_false,
   false_cons, false_prefix}` and `cpairs_true_falls_blockWord`.
 
-**Next block-form step (the useful reduction):** the CONVERSE — every nonempty word `v`
-is a *rotation* of some `blockWord L` with `L.length = circuits v` (group `v`'s maximal
-true-runs into blocks; rotate so it starts at a run boundary). This turns "bound
-`circuits v` for integer cycles" into "bound `L.length` for the block normal form of a
-cycle", the shape SdW/Route-2 arguments use. Then wire `numer (blockWord L)` into the
-S-unit sum `Σ 3^… 2^…` indexed by the `m` blocks.
+Also proved the **S-unit structure of `numer`** on the normal form:
+`numer_blockWord_cons : numer(blockWord ((a,b)::L)) = 2^(a+b)·numer(blockWord L)
++ 3^(ones (blockWord L))·(3^a − 2^a)` (ℤ), via `numer_replicate_{true,false}_prefix`.
+Each block contributes exactly one collapsed odd-run term `3^{aⱼ}−2^{aⱼ}` — so the cycle
+equation `numer = N·den` has **`m = circuits` S-unit terms**, not cycle-length-many. This
+is the Route-2 leverage made precise: bounding `m` bounds the term count, which is what
+would let ESS/Baker apply.
+
+**State of the Front B block vocabulary:** coherent — `blockWord`, `circuits = m`,
+`numer = m`-term S-unit recurrence. The SUMMIT (bound `m` by a constant = `Compression`)
+is genuinely open (no known handle; ESS not in mathlib) and **blocked on the SdW source
+read** (`ON-LINE-REQUEST.md`, awaiting `ON-LINE-FINDINGS-*`). Further speculative
+vocabulary should wait for SdW's actual method, lest we build the wrong reduction.
+
+**Next lap options:** (a) if SdW findings landed, formalize their fixed-`m` reduction;
+(b) the block-form CONVERSE (every nonempty mixed word is a rotation of a `blockWord` with
+`L.length = circuits`) — the last piece of the reduction, provable but heavy; (c) **pivot
+to the alternate crux, Front A itinerary-rigidity** (per `DIRECTION.md`), since Front B's
+summit is source-blocked.
 
 **Attack paths (each lap: the smallest source-/compiler-grounded probe):**
 1. **Source read (filed):** Simons–de Weger 2005/2010 — do they bound circuit count
