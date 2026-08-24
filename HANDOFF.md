@@ -26,10 +26,12 @@
   `1.005333383627`; weights range from `1,000,000` to `19,334,101`.  The table and checker
   are frozen in the experiment.  This is certificate-grade computational evidence, **not
   yet Lean-checked**.
-- **Next Lean target**: `FrontA/BackwardThreeQuarters.lean`, porting the local layer of
-  `BackwardTwoThirds.lean` to source residues modulo `729`, child residues modulo `243`, the
-  five floors `{1,7/4,3,6,12}`, and the frozen 810-state table.  First prove an
-  `exists_threeQuartersExpansion` analogue only; after that, port the real-rpow renewal and
+- **Next Lean target is pinned** in `FrontA/BackwardThreeQuarters.lean`: source residues
+  modulo `729`, child residues modulo `243`, the five floors `{1,7/4,3,6,12}`, the frozen
+  810-state array, the exact rational comparisons, and the full
+  `exists_threeQuartersExpansion` acceptance statement.  It builds and contains exactly one
+  `sorry`, is deliberately not root-imported yet, and its generated table has Lean-checked
+  size `810`.  Discharge this local theorem only; afterward port the real-rpow renewal and
   stopping layers from exponent `2/3` to `3/4`.  `native_decide` is allowed for the initial
   2,430-inequality table check.
 
