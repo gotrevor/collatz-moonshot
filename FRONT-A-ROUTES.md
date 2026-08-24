@@ -484,7 +484,18 @@ The chippable mathematical ladder is now:
    shared next source digit lifts to modulo `19683`, and all five height floors are needed by
    the tested exact certificate.  The final end-to-end corollary is pinned in
    `BackwardFourFifthsStopping.lean`; complete local certificate, renewal, and stopping in
-   one project;
+   one project.
+   **DONE (2026-08-24).**  `BackwardFourFifths.lean`, `BackwardFourFifthsRenewal.lean`,
+   `BackwardFourFifthsStopping.lean` are all `sorry`-free, imported from `CollatzMoonshot.lean`,
+   full `lake build` green (8745 jobs).  The 21,870-entry potential and all 65,610 inequalities
+   are native-checked (scale `31250·1000000^23`); renewal uses the fifth-power underweight
+   (`(75257/31250)^5 < 81`, `16(574349/1000000)^5 < 1`); `fourFifths_stopping_card_bound`
+   gives `1000000 < card(S)·41080952·(d/H)^(4/5)`, endpoints in `(H, 2^23 H)` reached inside
+   `[d, 2^25 H]`.  Height geometry reused verbatim from the `3/4` module.  Axiom footprint =
+   base three + the allowed native cert/positivity/min/max checks.  The port is doubly
+   mechanical now (`2/3 → 3/4 → 4/5`); `4/5 < 1`, so this is a rung.  Next local probe: a
+   depth-9+ search for an exponent strictly above `4/5`; whether any fixed finite floor set can
+   reach `1` remains the open question the 3-adic adversary casts doubt on;
 8. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
 9. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
