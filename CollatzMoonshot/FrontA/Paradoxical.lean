@@ -297,6 +297,29 @@ theorem headBlock_dvd_succ (n b : ℕ)
     rw [hu, pow_succ, mul_comm (2 ^ k) 2]
     exact mul_dvd_mul_left 2 hu2
 
+/-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about
+naturals: given the two exact head-block segment identities
+`2^(b+c)·X + 2^b = 3^b·(n+1)` (segment `[T]^b[F]^c`, start `n`, interior odd value `X`) and
+`2^(d+e)·y + 2^d = 3^d·(X+1)` (segment `[T]^d[F]^e`, start `X`, endpoint `y`), together with
+whole-word subcriticality `3^(b+d) < 2^m` and `n > 2`, the endpoint satisfies `y ≤ n`.
+
+This is **equivalent** to the two-block exclusion (the segment identities exactly encode the
+realizing residue: `X` natural ⟺ `2^(b+c) ∣ 3^b(n+1) − 2^b`, and `y` natural adds the second
+2-adic constraint).  It is verified true over a large exact range
+(`experiments/paradoxical.py`: 1893 solutions, 0 violations) but is **not** closable from
+`w₁ ≥ 1`/`w₂ ≥ 1` alone — it requires the joint 2-adic/3-adic force selecting the minimal
+realizing residue.  Disclosed as the single remaining `src/` obligation on this front.  The
+next attack (linear-Diophantine `3^b w₁ − 2^(c+d) w₂ = 1 − 2^c`; least-residue bound via
+`ZMod (3^b)`) is written in `PENDING_WORK.md`.  Because the statement is self-contained
+arithmetic, it is a clean candidate for an independent formal attack. -/
+theorem two_block_residue_core (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
+    (hI : 2 ^ (b + c) * X + 2 ^ b = 3 ^ b * (n + 1))
+    (hII : 2 ^ (d + e) * y + 2 ^ d = 3 ^ d * (X + 1))
+    (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
+    (hn : 2 < n) :
+    y ≤ n := by
+  sorry
+
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
 word whose ones form at most two contiguous blocks realizes **no** acyclic paradoxical start.
@@ -348,41 +371,43 @@ theorem le_two_blocks_not_acyclicParadoxical
   have hy_eq : tstep^[b + c + d + e] n = tstep^[d + e] X := by
     rw [hX, show b + c + d + e = (d + e) + (b + c) from by ring, Function.iterate_add_apply]
   rw [hy_eq] at hlt
+  -- Extract the two exact head-block segment identities from `tstep_iterate_identity`.
+  have h2b : (2 : ℕ) ^ b ≤ 3 ^ b := Nat.pow_le_pow_left (by norm_num) b
+  have h2d : (2 : ℕ) ^ d ≤ 3 ^ d := Nat.pow_le_pow_left (by norm_num) d
+  have hnumA : numer (List.replicate b true ++ List.replicate c false) = 3 ^ b - 2 ^ b := by
+    have := numer_singleBlock 0 b c; simpa using this
+  have hnumB : numer (List.replicate d true ++ List.replicate e false) = 3 ^ d - 2 ^ d := by
+    have := numer_singleBlock 0 d e; simpa using this
+  have hI : 2 ^ (b + c) * X + 2 ^ b = 3 ^ b * (n + 1) := by
+    have hid := tstep_iterate_identity (b + c) n
+    rw [hsegA, ← hX] at hid
+    simp only [ones_append, ones_replicate_true, ones_replicate_false, add_zero, hnumA] at hid
+    -- hid : 2^(b+c) * X = 3^b * n + (3^b - 2^b)
+    rw [Nat.mul_add, Nat.mul_one]; omega
+  have hII : 2 ^ (d + e) * (tstep^[d + e] X) + 2 ^ d = 3 ^ d * (X + 1) := by
+    have hid := tstep_iterate_identity (d + e) X
+    rw [hsegB] at hid
+    simp only [ones_append, ones_replicate_true, ones_replicate_false, add_zero, hnumB] at hid
+    rw [Nat.mul_add, Nat.mul_one]; omega
   -- Case split on the criticality of the first block.  Subcriticality of the *whole* word
   -- forbids both blocks from being supercritical simultaneously.
   by_cases hbc : 3 ^ b < 2 ^ (b + c)
   · -- First block subcritical: `X ≤ n` by the head-block lemma (Appendix A).
     have hXn : X ≤ n := headBlock_endpoint_le n b c hsegA hbc
     by_cases hde : 3 ^ d < 2 ^ (d + e)
-    · -- **Case A (both blocks subcritical).**  Second head-block lemma gives the endpoint
-      -- `tstep^[d+e] X ≤ X ≤ n`, contradicting `n < endpoint`.  Fully proved, no residue needed.
+    · -- **Case A (both blocks subcritical): PROVED, no residue.**  Second head-block lemma
+      -- gives `tstep^[d+e] X ≤ X ≤ n`, contradicting `n < endpoint`.
       have hyX : tstep^[d + e] X ≤ X := headBlock_endpoint_le X d e hsegB hde
       omega
-    · -- **Case C (first sub, second supercritical).**  Here `X ≤ n` alone is insufficient:
-      -- the supercritical second block can grow past `X`.  Excluding a paradoxical endpoint
-      -- requires the joint 2-adic/3-adic residue force on the realizing start (`3^b ∣ 2^c X + 1`
-      -- selecting the minimal interior value), which is the open arithmetic core.  Disclosed.
+    · -- **Case C (first sub, second supercritical).**  `X ≤ n` alone is insufficient; close via
+      -- the isolated arithmetic core `two_block_residue_core`.
       exact absurd hlt (by
-        -- TODO(crux): residue lower bound on `X`/`n` closing criterion (P) for this subcase.
-        sorry)
-  · -- First block supercritical (`2^(b+c) ≤ 3^b`).  Then the second block must be subcritical,
-    -- otherwise `3^(b+d) = 3^b·3^d ≥ 2^(b+c)·2^(d+e) = 2^m` contradicts `hsub`.
-    have hbc' : 2 ^ (b + c) ≤ 3 ^ b := not_lt.mp hbc
-    have hde : 3 ^ d < 2 ^ (d + e) := by
-      by_contra h
-      rw [not_lt] at h
-      have h1 : (3 : ℕ) ^ (b + d) = 3 ^ b * 3 ^ d := by rw [pow_add]
-      have h2 : (2 : ℕ) ^ (b + c + d + e) = 2 ^ (b + c) * 2 ^ (d + e) := by
-        rw [show b + c + d + e = (b + c) + (d + e) from by ring, pow_add]
-      have hmul : (2 : ℕ) ^ (b + c) * 2 ^ (d + e) ≤ 3 ^ b * 3 ^ d := Nat.mul_le_mul hbc' h
-      rw [← h2, ← h1] at hmul
-      omega
-    -- **Case B (first supercritical, second subcritical).**  Second head-block lemma gives
-    -- `tstep^[d+e] X ≤ X`, but the supercritical first block makes `X ≥ n`, so this does not
-    -- close `endpoint ≤ n`.  Same residue-force obstruction as Case C.  Disclosed.
-    have hyX : tstep^[d + e] X ≤ X := headBlock_endpoint_le X d e hsegB hde
+        have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub hn
+        omega)
+  · -- **Case B (first block supercritical).**  The single-block bound gives no help toward
+    -- `endpoint ≤ n` (the supercritical first block makes `X ≥ n`); close via the core.
     exact absurd hlt (by
-      -- TODO(crux): residue lower bound on the realizing start closing criterion (P).
-      sorry)
+      have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub hn
+      omega)
 
 end CollatzMoonshot.FrontA
