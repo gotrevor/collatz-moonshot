@@ -157,6 +157,19 @@ exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite case
 exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
 `b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
 
+**REFUTED (lap 2026-08-25-1030) — three elementary bounds for `b+d ≤ 5`, all fail (do NOT retry):**
+Exhaustive scan (`scratchpad/elem.py`,`elem2.py`,`hard.py`, ranges to 80):
+- `D > U₁` for `b+d ≥ 6`? NO — `D ≤ U₁` holds for 84914 tuples with `b+d ≥ 6` (`w=1` is feasible).
+  So a `|2^m−3^k|` separation *lower bound* on `D` cannot force `b+d ≤ 5`.
+- `2D > U₁` (with `⌈L/3^b⌉ ≥ 2`) for `b+d ≥ 6, D ≤ U₁`? NO — 397604 counterexamples; the ceiling is
+  often huge (`⌈L/3^b⌉` up to `10^35`), so containment fails by ceiling *size*, not a factor of 2.
+- real bound `D·L > 3^b·U₁` for `b+d ≥ 6`? NO — fails on the same infinite strip.
+- **Positive structural fact:** for `b+d ≥ 6, subcritical, U₁>0, D ≤ U₁`, the ceiling `⌈L/3^b⌉` is
+  NEVER `≤ 3` (0 cases with `ceil ≤ 3`) — it is always `≥ 4` and grows. The hard region (small
+  ceiling ≈ near-critical large `b`) is *empty* for `b+d ≥ 6`. This is the cleanest elementary
+  handle found; whether `⌈L/3^b⌉·D > U₁` admits an elementary proof from it is the open question.
+Net: `b+d ≤ 5` is genuinely the least-residue/Baker content; every one-inequality shortcut is dead.
+
 **Attack on `b + d ≤ 5` (next lap):** This is exactly: for which `(k,d)` (k=b+d≥2, 1≤d<k) does the
 near-critical window `3^k < 2^m < 3^k·2^d/(2^d−1)` admit an integer `w` with `L ≤ 3^b w ≤ …`? The
 answer (k=5 only) is a linear-form-in-logs bound. Routes: (a) DISCHARGE via building an explicit
