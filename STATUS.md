@@ -35,6 +35,12 @@ reduces to one joint 2-adic/3-adic arithmetic core (`GOAL2'`). This is the activ
 decomposition, not off-path — it carries two disclosed `src/` sorries by design.
 
 ## What's happened (newest first)
+- **2026-08-25 (crux reduced to a FINITE containment — sharp gap closes all but 2 configs):**
+  Sharpened `core_of_gap` to a division-free integer-ceiling `∀`-gap instantiated at the true
+  `w₁`. Census (`b,c,d,e<34`): the sharp gap holds for EVERY subcritical tuple except exactly
+  `(2,3,3,0)` and `(3,3,2,0)`, both proved closable by `omega` (`residue_core_exc1/2`). The
+  sole `src/` sorry is now just the finiteness **containment** `¬gap ∧ U₁>0 → tuple ∈ {those 2}`.
+  Aristotle working the full core async. Build 🟢 8751 jobs.
 - **2026-08-25 (crux narrowed hard — elementary regime of the residue core PROVED):** Reduced
   the whole two-block exclusion to one self-contained ℕ lemma `two_block_residue_core`
   (submitted to Aristotle, job `4006e40e`), then PROVED its **elementary regime `core_of_gap`

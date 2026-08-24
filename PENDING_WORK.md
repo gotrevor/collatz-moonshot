@@ -100,20 +100,25 @@ normalized to atoms `{2^b,2^c,2^d,2^e,3^b,3^d}` via `simp only [pow_add]`; needs
 `maxHeartbeats 1200000`). `two_block_residue_core` now `by_cases` on the gap → `core_of_gap`
 (elementary, ~99%) or the residual `sorry`. **The residual is the SOLE remaining `src/` sorry.**
 
-**Next concrete attack (next lap) — the residual (gap fails) is now the whole crux:**
-1. It needs the 3-adic least-residue lower bound on `w₂` from `3^b ∣ 2^(c+d) w₂ − 2^c + 1`
-   (equivalently on `w₁` from `2^(c+d) ∣ 3^b w₁ + 2^c − 1`). Route via `ZMod (3^b)` /
-   `Nat.find` least positive residue. `w₂=1` is excluded on the residual (checked 0/56) but
-   the needed bound `k` GROWS with `b` (up to 4 at b=15), so no fixed finite bound works.
-   Concretely: in the gap-fails branch we have (from `core_of_gap`'s derivation, reusable)
-   `d_def·w₁ ≤ U₁·... ` under `n<y`; combine with a PROVEN lower bound `w₂ ≥ w₂_min(b,c,d)`.
-   Investigate whether `w₂_min ≥ 3^b / 2^(c+d)`-type bound (the residue is `Θ(3^b)`) suffices —
-   script the exact `w₂_min` vs the needed `k` to find the provable inequality shape FIRST.
-2. Alternative: strengthen the gap. The current gap uses `w₂ ≥ 1`. A gap using `w₂ ≥ 2`
-   (justified by `2^(c+d)·1 − 2^c + 1 ≢ 0 mod 3^b` on the residual) closes 14/16 of the
-   in-range residual; a 3-adic `w₂ ≥ v_min` closes all. Layered gaps may avoid full ZMod.
-3. If Aristotle (`4006e40e-9588-4e7a-979e-ab1c7586cda8`) returns a clean full-core proof,
-   kernel-verify (`#print axioms`) + inline it, superseding the residual sorry entirely.
+**DONE (lap 2026-08-25-0700): SHARPENED to the integer-ceiling gap → residual = exactly 2
+configs.** `core_of_gap` now takes a division-free forall-form gap
+`∀ w, 2^(c+d)-2^c+1 ≤ 3^b·w → U₁ < D·w` and instantiates it at the TRUE `w₁`
+(`3^b·w₁ = 2^c·X+1`, `2^b ∣ n+1`). Using the integer `w₁` (vs real `t/3^b`) makes the gap
+hold for EVERY subcritical `(b,c,d,e)` except exactly `(2,3,3,0)` and `(3,3,2,0)` (checked
+`b,c,d,e<34`, `scratchpad/bigcheck.py`). Both proved closable by `omega`
+(`residue_core_exc1/2`). **SOLE remaining `src/` sorry = the finiteness CONTAINMENT**
+`¬gap ∧ U₁>0 → (b,c,d,e) ∈ {(2,3,3,0),(3,3,2,0)}`; then the residual branch closes by
+`exact residue_core_exc1/2`.
+
+**Attack on the containment (next lap):** quantitative near-critical bound. Crude inequalities
+only give `2^(m-1) < 3^(b+d) < 2^m` (infinite strip, `c+e ≈ 0.585(b+d)`); the reason only 2
+tuples fail is that `⌈t/3^b⌉` grows along the strip — a `3^b mod 2^(c+d)` least-residue fact,
+same hardness as before but now a FINITE target. Options:
+1. Prove `¬gap → b+d ≤ 5` via ceiling discreteness (`3^b·⌈t/3^b⌉ < t + 3^b`) + a least-residue
+   growth bound, then `interval_cases`/`decide`.
+2. `ZMod (3^b)` least-residue lemma: min `w₁` with `3^b w₁ ≡ 1-2^c (mod 2^(c+d))` is large.
+3. Aristotle (`4006e40e-9588-4e7a-979e-ab1c7586cda8`, ~7% at 32min, same structure numerically)
+   — if a clean full-core proof returns, kernel-verify (`#print axioms`) + inline it.
 
 Also (lower priority): extend the ratio census past `41/65` (word-BnB or n≳10^8) to harden the
 Niu CF falsification test.
