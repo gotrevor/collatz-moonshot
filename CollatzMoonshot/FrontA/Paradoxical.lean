@@ -218,12 +218,57 @@ theorem numer_twoBlock (b c d e : ℕ) :
     rw [hz]; push_cast [Nat.cast_sub hb, Nat.cast_sub hd]; ring
   exact_mod_cast this
 
+/-! ## The single odd-block exclusion (Rozier--Terracol Appendix A, proved sorry-free)
+
+The head-block case `[T]^q [F]^t` needs **no** residue bound: with a subcritical coefficient
+the additive remainder `3^q − 2^q` is too small to overcome the multiplicative shortfall, for
+*every* start realizing the word.  From the identity `2^m y + 2^q = 3^q (n+1)` and `3^q < 2^m`
+one gets `2^m y < 2^m (n+1)`, hence `y ≤ n`. -/
+
+/-- Endpoint bound for a **head odd-block** word `[T]^q [F]^t`: `tstep^[q+t] n ≤ n` for every
+`n` realizing the word with subcritical coefficient.  (Contains RT Appendix A: no such
+segment is paradoxical.) -/
+theorem headBlock_endpoint_le (n q t : ℕ)
+    (hword : traceWord n (q + t) = List.replicate q true ++ List.replicate t false)
+    (hsub : 3 ^ q < 2 ^ (q + t)) :
+    tstep^[q + t] n ≤ n := by
+  have hm : (2 : ℕ) ^ q ≤ 3 ^ q := Nat.pow_le_pow_left (by norm_num) q
+  have hid := tstep_iterate_identity (q + t) n
+  rw [hword] at hid
+  have hones : ones (List.replicate q true ++ List.replicate t false) = q := by
+    rw [ones_append]; simp
+  have hnum : numer (List.replicate q true ++ List.replicate t false) = 3 ^ q - 2 ^ q := by
+    have := numer_singleBlock 0 q t; simpa using this
+  rw [hones, hnum] at hid
+  -- hid : 2^(q+t) * tstep^[q+t] n = 3^q * n + (3^q - 2^q)
+  have key : 2 ^ (q + t) * tstep^[q + t] n + 2 ^ q = 3 ^ q * (n + 1) := by
+    rw [Nat.mul_add, Nat.mul_one]; omega
+  have hlt : 3 ^ q * (n + 1) < 2 ^ (q + t) * (n + 1) :=
+    Nat.mul_lt_mul_of_pos_right hsub (Nat.succ_pos n)
+  have h2q : 1 ≤ 2 ^ q := Nat.one_le_two_pow
+  have hy : 2 ^ (q + t) * tstep^[q + t] n < 2 ^ (q + t) * (n + 1) := by omega
+  have := Nat.lt_of_mul_lt_mul_left hy
+  omega
+
+/-- **Rozier--Terracol Appendix A (formalized)**: a head odd-block word `[T]^q [F]^t` is never
+acyclic paradoxical. -/
+theorem headBlock_not_acyclicParadoxical (n q t : ℕ)
+    (hword : traceWord n (q + t) = List.replicate q true ++ List.replicate t false) :
+    ¬ AcyclicParadoxical n (q + t) := by
+  rintro ⟨-, -, hsub, hlt⟩
+  rw [hword, ones_append] at hsub
+  simp only [ones_replicate_true, ones_replicate_false, add_zero] at hsub
+  exact absurd (headBlock_endpoint_le n q t hword hsub) (by omega)
+
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
 word whose ones form at most two contiguous blocks realizes **no** acyclic paradoxical start.
-This strictly generalizes Rozier--Terracol Appendix A.  The `numer` closed forms above are the
-proved kernel; the open arithmetic core is a lower bound on the realizing residue that closes
-criterion (P).  Stated here as the next formal obligation. -/
+This strictly generalizes Rozier--Terracol Appendix A (now proved sorry-free as
+`headBlock_not_acyclicParadoxical`, the `b`-only head-block, `c = ∞` degenerate case).  The
+`numer` closed forms above are the proved kernel; the open arithmetic core for a genuine
+*interior* gap (`c ≥ 1` with a second block) is a lower bound on the realizing residue that
+closes criterion (P) — the head-block proof avoids it because a pure head block has remainder
+only `3^q − 2^q`, too small on its own.  Stated here as the next formal obligation. -/
 theorem le_two_blocks_not_acyclicParadoxical
     (b c d e n : ℕ)
     (hb : 1 ≤ b) (hd : 1 ≤ d)

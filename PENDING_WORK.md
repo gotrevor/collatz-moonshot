@@ -1,5 +1,33 @@
 # PENDING_WORK
 
+## ★ IN PROGRESS: paradoxical finite trajectories (2026-08-24) ★
+
+Executing `FRONT-A-PARADOXICAL.md`. `experiments/paradoxical.py` (exact integers) +
+`CollatzMoonshot/FrontA/Paradoxical.lean` (trust-base clean, full build green 8750).
+
+**Landed (sorry-free):**
+- Source lock: iterate identity, `numer` defs, criterion (P), slack (S), `7→8` — all exact.
+- `slack_identity`, `paradoxical_criterion`, `acyclicParadoxical_criterion`: endpoint `n≤y`
+  ⟺ pure word inequality `d·n ≤ numer`.
+- `numer_singleBlock = 2^s(3^q−2^q)`, `numer_twoBlock = 3^d(3^b−2^b)+2^(b+c)(3^d−2^d)` via a
+  ℤ true-prefix recursion.
+- **`headBlock_not_acyclicParadoxical` = Rozier–Terracol Appendix A, now formal.** The pure
+  head block `[T]^q[F]^t` is never acyclic paradoxical, from `2^m y + 2^q = 3^q(n+1)` and
+  `3^q<2^m` ⇒ `y ≤ n`. Needs NO residue bound.
+
+**Discovery (experiment, exhaustive):** every acyclic paradoxical word has **≥3 odd blocks**
+(all ≤2-block front-normalized words to length 30; two-block to 38 — zero paradoxical). Ratios
+`5/8,17/27,29/46` (n≤200000) are all left convergents/semiconvergents of `log_3 2` (Niu,
+no counterexample in range).
+
+**Open obligation / next attack:** `le_two_blocks_not_acyclicParadoxical` (disclosed sorry).
+The head-block trick fails for a genuine interior gap because the second block adds remainder
+`2^(b+c)(3^d−2^d)`, so the exclusion needs a LOWER BOUND on the realizing start `n` (the
+residue making the prefix `[T]^b` do `b` odd steps). Smallest concrete probe: prove
+`2^b ∣ (n+1)` (or the sharper `n ≥ 2^b − 1`) for any `n` realizing a word with head block
+`[T]^b`, then feed it into criterion (P) with `numer_twoBlock`. Also: extend the ratio census
+past `41/65` (needs word-BnB or n≳10^8) to harden the Niu falsification test.
+
 ## ★ NEXT: paradoxical finite trajectories (2026-08-24) ★
 
 The parity-reconstruction pull below is complete and classified **BASELINE / RE-SCOPE**.
