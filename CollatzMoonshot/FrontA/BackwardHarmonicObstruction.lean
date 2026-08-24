@@ -7429,4 +7429,45 @@ theorem harmonicNatCertificate :
       harmonicNatImage i r.1 < 2 ^ 23 * harmonicPotential i r.1 := by
   native_decide
 
+/-! ## The elementary dual obstruction
+
+The finite-dimensional Farkas/Perron content, stated abstractly: on a finite
+nonempty state space with a nonnegative transition operator `M`, a positive
+strict *supersolution* `W` (with `M W < W`) rules out every positive strict
+*subsolution* `V` (with `V < M V`).  The proof is the one-line maximizer
+argument — pick `s₀` maximizing `V/W`, set `λ = V s₀ / W s₀`, then
+`V s₀ < (M V) s₀ ≤ λ (M W) s₀ < λ W s₀ = V s₀`.  No spectral theory. -/
+
+theorem no_positive_subsolution_of_supersolution
+    {S : Type*} [Fintype S] [Nonempty S] (M : S → S → ℚ)
+    (hM : ∀ s t, 0 ≤ M s t) (V W : S → ℚ)
+    (hV : ∀ s, 0 < V s) (hW : ∀ s, 0 < W s)
+    (hsuper : ∀ s, ∑ t, M s t * W t < W s)
+    (hsub : ∀ s, V s < ∑ t, M s t * V t) : False := by
+  obtain ⟨s₀, hs₀⟩ := Finite.exists_max (fun s => V s / W s)
+  set lam : ℚ := V s₀ / W s₀ with hlam
+  have hlampos : 0 < lam := div_pos (hV s₀) (hW s₀)
+  -- V t ≤ lam * W t everywhere, from maximality of the ratio at s₀.
+  have hle : ∀ t, V t ≤ lam * W t := by
+    intro t
+    exact (div_le_iff₀ (hW t)).mp (hs₀ t)
+  -- image of V at s₀ dominated by lam * image of W at s₀.
+  have himg : ∑ t, M s₀ t * V t ≤ lam * ∑ t, M s₀ t * W t := by
+    rw [Finset.mul_sum]
+    apply Finset.sum_le_sum
+    intro t _
+    calc M s₀ t * V t ≤ M s₀ t * (lam * W t) :=
+          mul_le_mul_of_nonneg_left (hle t) (hM s₀ t)
+      _ = lam * (M s₀ t * W t) := by ring
+  have hlast : lam * ∑ t, M s₀ t * W t < lam * W s₀ :=
+    mul_lt_mul_of_pos_left (hsuper s₀) hlampos
+  have hfix : lam * W s₀ = V s₀ := by
+    rw [hlam, div_mul_cancel₀ _ (ne_of_gt (hW s₀))]
+  have : V s₀ < V s₀ := by
+    calc V s₀ < ∑ t, M s₀ t * V t := hsub s₀
+      _ ≤ lam * ∑ t, M s₀ t * W t := himg
+      _ < lam * W s₀ := hlast
+      _ = V s₀ := hfix
+  exact lt_irrefl _ this
+
 end CollatzMoonshot.FrontA
