@@ -157,6 +157,27 @@ exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite case
 exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
 `b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
 
+**INDEPENDENT CORROBORATION (Aristotle, job `4006e40e…`, COMPLETE_WITH_ERRORS, ~1h30m).** Handed
+the `two_block_residue_core` statement, Aristotle independently reproduced the ENTIRE reduction and
+hit the identical wall — strong faithfulness evidence for our reduction:
+- It proved (sorry-free) the same criteria: `key_identity` (eliminating `X`), the forced
+  divisibilities, criterion A (`3^(b+d)+2^c·3^d < 2^m ⇒ y≤n`), criterion B (= our `hsqueeze`
+  region, subtraction-free), and "neither block expands ⇒ y≤X≤n" (= our Case A). Its
+  `two_block_residue_core` is a sorry-free case split onto A ∨ B ∨ C leaving ONE residual lemma.
+- Its residual (`le_in_residual_region`) is EXACTLY ours: it states the conclusion as
+  `D·w₁ ≥ 3^d(2^c−1) + 2^(c+d)(2^e−1)` and concludes it "is an effective lower bound for the
+  linear form `|m·log2 − g·log3|` (Baker-type); … no effective theory of linear forms in
+  logarithms is available in Mathlib." Matches our `b+d ≤ 5` diagnosis.
+- Independent evidence (unverified, exact-int): criteria A/B/C settle all `b,d≤30, c,e≤45` except
+  the same ten tuples (all at `2^5>3^3` / `2^8>3^5`); near-equality band `3^g<2^m≤2·3^g` swept to
+  `g ≤ 119` with NO failure; 1,353,014 genuine two-block solutions enumerated, NO counterexample.
+- **Faithfulness note:** Aristotle reports the hypothesis `2 < n` "appears unnecessary" — worth
+  removing `hn` from `two_block_residue_core` on a cleanup lap (minor; does not affect the crux).
+Do NOT resubmit (job done, reached the wall). Our 3-adic reframing (below) is a DIFFERENT angle
+(`L mod 3^b` via `orderOf 2 mod 3^b`) than Aristotle's log-form view — possibly more mathlib-reachable,
+but note the hard set has UNBOUNDED `b,d` (checked to 19/29), so it is a uniform 3-adic theorem, not
+a finite `decide`. Both views agree the missing input is genuinely Baker-grade.
+
 **REFRAMED (lap 2026-08-25-1130) — the crux is a 3-adic residue fact, NOT `log₂3` irrationality.**
 Exact restatement (containment ⟺ integer `w` in `[⌈L/3^b⌉, U₁/D]`, nonempty since `D·L ≤ 3^b·U₁`
 whenever `w` exists): with `t := L mod 3^b` and `r := (−L) mod 3^b = 3^b − t` (for `t>0`),

@@ -548,8 +548,7 @@ arithmetic, it is a clean candidate for an independent formal attack. -/
 theorem two_block_residue_core (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
     (hI : 2 ^ (b + c) * X + 2 ^ b = 3 ^ b * (n + 1))
     (hII : 2 ^ (d + e) * y + 2 ^ d = 3 ^ d * (X + 1))
-    (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
-    (hn : 2 < n) :
+    (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e)) :
     y ≤ n := by
   by_cases hgap : ∀ w : ℕ, 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w →
       (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d) : ℤ)
@@ -648,12 +647,12 @@ theorem le_two_blocks_not_acyclicParadoxical
     · -- **Case C (first sub, second supercritical).**  `X ≤ n` alone is insufficient; close via
       -- the isolated arithmetic core `two_block_residue_core`.
       exact absurd hlt (by
-        have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub hn
+        have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub
         omega)
   · -- **Case B (first block supercritical).**  The single-block bound gives no help toward
     -- `endpoint ≤ n` (the supercritical first block makes `X ≥ n`); close via the core.
     exact absurd hlt (by
-      have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub hn
+      have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub
       omega)
 
 end CollatzMoonshot.FrontA
