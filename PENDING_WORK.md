@@ -1,6 +1,18 @@
 # PENDING_WORK
 
-## ★ Parity-reconstruction pull — CLASSIFIED (2026-08-24, this session) ★
+## ★ NEXT: paradoxical finite trajectories (2026-08-24) ★
+
+The parity-reconstruction pull below is complete and classified **BASELINE / RE-SCOPE**.
+The next funded mathematical project is `FRONT-A-PARADOXICAL.md`, based on Rozier--Terracol
+(Discrete Mathematics 2026) and Niu (arXiv 2026). A paradoxical segment has multiplicative
+coefficient `3^q/2^m < 1` but nevertheless ends at or above its start because the exact
+additive numerator wins. The literature proves that an infinite-stopping-time orbit creates
+infinitely many such finite witnesses. The project must reproduce the known fixed-length
+facts, then seek genuinely new restrictions (word shape, continued-fraction ratios, or exact
+branch-and-bound pruning). The cited theorem/wiring is BASELINE; finite computation alone is
+not a Collatz advance. See the project doc for the strength audit and stop/go bars.
+
+## ★ Parity-reconstruction pull — CLASSIFIED BASELINE / RE-SCOPE (2026-08-24) ★
 
 Executed `FRONT-A-PARITY-RECONSTRUCTION.md` (experiment + Lean kernel + strength audit).
 New module `CollatzMoonshot/FrontA/ParityReconstruction.lean` (all trust-base clean
@@ -11,7 +23,10 @@ New module `CollatzMoonshot/FrontA/ParityReconstruction.lean` (all trust-base cl
 - `tstep_iterate_lt` — the **carry invariant**: `tstep^[m] n < 3^(ones(traceWord n m))·(n/2^m+1)`
   for ALL n (strengthened form absorbing the odd step where the naive induction breaks).
 - `tstep_iterate_lt_pow_ones` — for `n < 2^m`, `tstep^[m] n < 3^(ones)` (normalized endpoint
-  `q/3^a < 1`, tight at all-ones). First rigorous archimedean word↔size coupling here.
+  `q/3^a < 1`, tight at all-ones). First such archimedean word↔size theorem in this repo.
+- `normalized_endpoint_ne_start_one` — a permanent counterexample to the false claim that
+  `q/3^a` stabilizes to the natural start when reconstruction output stabilizes. For `n=1`
+  and every positive depth, the denominator-free equality already fails.
 - `two_pow_mul_gap` — exact carry-gap identity `2^m(3^a−q) = 3^a(2^m−n) − numer`.
 - `pow_ones_mul_le` — matching lower bound `3^a·n ≤ 2^m·tstep^[m] n` (the drift bracket).
 - `traceWord_eq_imp_modEq`, `eq_of_forall_traceWord_eq` — residue determinacy (a natural is
@@ -22,30 +37,23 @@ New module `CollatzMoonshot/FrontA/ParityReconstruction.lean` (all trust-base cl
 **Strength-audit findings (experiment, exhaustive):**
 - Exact gap `3^a − q` bottoms out at **1** for every depth ⇒ `q < 3^a` is the SHARPEST
   uniform bound; no depth-independent inequality strictly tighter exists.
-- **Bounded-suffix Lyapunov NO-GO** (the load-bearing negative result): at depth 16 there
-  are two words sharing their last 3 bits with `q/3^a` spread `≈ 0.9997` (nearly the full
-  range). Any potential reading only a bounded parity suffix cannot separate them. This is
-  the forward analogue of the 3-adic adversary that capped the backward local-potential lane
-  — a working carry Lyapunov function MUST read unbounded archimedean state (`q` itself).
-- **Positivity is genuinely asymptotic**: restricting to small-start words (top output bit
-  zero, `r < 2^{m-1}`) still admits odd density `(m−1)/m → 1`, well above critical
-  `log2/log3 ≈ 0.6309`. No finite-prefix output condition forces sub-critical density; the
-  positivity constraint (output bits *eventually* zero) is irreducibly a tail statement.
+- **Bounded-suffix endpoint collision:** at depth 16 two words sharing their last 3 bits
+  have `q/3^a` spread `≈ 0.9997`. This proves that the suffix alone neither determines nor
+  uniformly approximates the endpoint. It does **not** rule out every finite-state
+  Lyapunov certificate, which may prove aggregate transition inequalities.
+- **A particular positivity proxy fails:** restricting to words with top output bit zero
+  (`r < 2^{m-1}`) still admits odd density `(m−1)/m`, above `log2/log3`. This establishes
+  the failure of that proxy, not a universal theorem about every finite-prefix condition.
 
-**CLASSIFICATION: BASELINE / REDIRECT (honest).**
-The reconstruction API is complete and one certified depth-independent carry invariant was
-found (`q < 3^a`), but it is the KNOWN critical-drift envelope, not a new divergence
-obstruction; combined with the lower bound it only re-derives "divergence ⇒ odd density
-> log2/log3". No invariant strictly stronger than eventual-periodicity kills divergence.
-The audit turned DIRECTION.md's guardrail from conjecture into a proved obstruction:
-bounded carry/memory potentials provably FAIL (explicit adversarial pair), so `ParityRigidityW1'`
-cannot be reached by any finite-state / bounded-suffix certificate — success must be
-asymptotic (control eventual-output-zero jointly with critical density) or use the unbounded
-endpoint `q` as archimedean state. **Do not manufacture more Lean plumbing on this coordinate
-(e.g. the full online R-recurrence is API-complete in Python and would be routine in Lean —
-not load-bearing given this verdict).** Next mathematical re-scope: a *tail* statement
-coupling `q`'s growth to output-bit-zero, i.e. an asymptotic density/aperiodicity argument,
-not a bounded certificate. Front B `Compression` remains blocked on the SdW source.
+**CLASSIFICATION: BASELINE / RE-SCOPE (corrected strength audit).**
+The exact reconstruction API is complete in Python; Lean contains the load-bearing forward
+residue and orbit consequences, not an explicit `R(v)` construction. The certified
+depth-independent inequality `q < 3^a` is the known critical envelope, not a divergence
+obstruction, and no invariant stronger than eventual-periodicity appeared. The adversarial
+pair is a precise endpoint-prediction collision, not a universal finite-state no-go.
+**Do not manufacture more routine Lean plumbing on this coordinate.** Move to the finite
+paradoxical-window project above, where the same additive numerator is load-bearing and
+the outputs are exact, falsifiable structural claims. Front B `Compression` remains blocked.
 
 ---
 

@@ -1,5 +1,9 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+> **Current pointer (2026-08-24):** this file is historical. Read `DIRECTION.md` first.
+> The parity-reconstruction project is complete (BASELINE / RE-SCOPE), and the live project
+> is `FRONT-A-PARADOXICAL.md`.
+
 ## Update (2026-08-24, newest): two-generation correlation tested; harmonic dual is next
 
 - Independently audited the completed exponent-`4/5` pipeline: the generated

@@ -9,22 +9,20 @@
   `limsup` → high-tail drift contradiction, and its axiom footprint is exactly
   `[propext, Classical.choice, Quot.sound]`.  Do not rebuild that measure plumbing.
 
-- **The remaining Front-A crux is arithmetic.**  `ParityRigidityW1'` itself must
-  distinguish parity itineraries of ordinary positive integers from the unrestricted
-  2-adic full shift.  The next funded pull is the exact inverse-parity reconstruction/carry
-  machine in `FRONT-A-PARITY-RECONSTRUCTION.md`: a shortcut parity prefix determines a
-  unique residue modulo `2^m`; extending the prefix emits one binary digit of the starting
-  integer and updates an exact unbounded carry/endpoint.  A positive integer is precisely
-  the asymptotic case where those output bits are eventually zero.  A divergent orbit would
-  have to combine that condition with critical odd density and aperiodicity.
+- **The parity-reconstruction pull is COMPLETE and classified BASELINE / RE-SCOPE.** It
+  landed a sorry-free cylinder envelope, forward residue determinacy, and the genuine
+  eventually-periodic `¬Diverges` baseline. The exact reconstruction API is complete in the
+  experiment. The same-suffix spread proves only that a suffix does not determine or
+  uniformly approximate the normalized endpoint; it does **not** prove a universal
+  finite-state no-go. Do not add routine reconstruction plumbing or repeat that experiment.
 
-- **MANDATED next move:** Execute the experiment-first project in
-  `FRONT-A-PARITY-RECONSTRUCTION.md`.  Build and exhaustively validate the exact online
-  reconstruction recurrence; search for a depth-independent carry invariant or a precise
-  obstruction to bounded-memory potentials; formalize the small residue/carry kernel and
-  the eventual-periodicity no-divergence baseline in Lean.  This is a research probe, not a
-  directive to claim W1′.  Stop and re-scope if the result is only the known prefix bijection
-  plus routine plumbing—do not extend vocabulary indefinitely.
+- **MANDATED next move:** Execute `FRONT-A-PARADOXICAL.md`. Rozier--Terracol's 2026 theorem
+  turns an infinite-stopping-time orbit into infinitely many exact finite segments whose
+  coefficient `3^q/2^m` is subcritical but whose additive remainder still produces growth.
+  Use that theorem as cited literature (formalize only cheap wiring), reproduce the known
+  counts/inequalities, then spend the project on new mathematics: exact pruning, word-shape
+  restrictions, or the continued-fraction pattern highlighted by Niu. A cited implication or
+  a larger census is BASELINE, not progress. Stop/go is pinned in the project doc.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -41,16 +39,18 @@
   - Porting another harmonic/subharmonic exponent — that project is COMPLETE.
   - Rebuilding M2′, proving only its converse calibration, or adding more empirical-measure
     plumbing — M2′ is COMPLETE; the converse is useful calibration but not the live crux.
-  - A bounded-suffix parity automaton or finite forbidden-word search: every finite parity
-    word is realized by a residue class.  Carry/height information must be load-bearing.
+  - A prefix-local forbidden-word search: every finite parity word is realized by a residue
+    class. A finite-state argument is admissible only when its global transition inequality
+    or carry/height content is load-bearing; suffix collisions alone are not a no-go theorem.
   - Route-1 gcd-harvest (`Threads.lean` Thread 7) — KILLED; rotations give one condition.
   - Off-path leaf sorries, docs-only laps, or freezing a finite table as a headline.
 
-- **WHY:** M2′ compressed Front A to a single honest statement and thereby exposed exactly
-  what remains: positive-integer conditioning.  Prefix reconstruction turns that vague
-  phrase into an exact input/output machine and supplies a falsifiable place to seek new
-  mathematics.  The finite-prefix surjectivity is also a guardrail: successful rigidity
-  must be asymptotic or use unbounded carry/archimedean state.
+- **WHY:** Paradoxical segments make the additive remainder—the information discarded by
+  density heuristics—exactly load-bearing. They are finite, enumerable, and admit a clean
+  word criterion, while the literature proves that a divergent/infinite-stopping orbit would
+  force infinitely many of them. This does not make the route easy: global finiteness is
+  stronger than Collatz. It does give a current, falsifiable place to discover structural
+  lemmas rather than extending formal vocabulary.
 
 ### Directive history
 - 2026-08-24 (review lap): harmonic-dual project certified COMPLETE. Diagnosed
@@ -69,6 +69,10 @@
   full KB/support/frequency/drift chain and independently rebuilt/audited at the trust base.
   Redirected the live Front-A pull to the parity-reconstruction/carry barrier; see
   `FRONT-A-PARITY-RECONSTRUCTION.md`.
+- 2026-08-24 (parity reconstruction completion + post-run audit): landed the exact
+  experiment and sorry-free Lean baseline. Corrected the run's overclaim: endpoint spread
+  within a suffix class is not a universal finite-state obstruction. Classified the pull
+  BASELINE / RE-SCOPE and redirected to `FRONT-A-PARADOXICAL.md`.
 
 ---
 

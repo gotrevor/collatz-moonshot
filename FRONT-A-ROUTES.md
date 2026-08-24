@@ -557,10 +557,32 @@ Transfer-operator/spectral methods from `APPROACHES.md` fit here as an analytic 
 variant: the desired spectral inequality must ultimately imply either empirical parity
 rigidity or repeat-or-descend.
 
+### 2026-08-24 audit and redirect: paradoxical windows
+
+The reconstruction project is complete and classified BASELINE / RE-SCOPE. It supplied an
+exact cylinder envelope and residue determinacy, but no new tail invariant. Its same-suffix
+endpoint spread is only an obstruction to predicting that endpoint from the suffix; it does
+not exclude every finite-state transition certificate.
+
+`FRONT-A-PARADOXICAL.md` is the live continuation. For a length-`m` parity word with `a`
+ones, the iterate identity makes a paradoxical segment exactly
+
+```text
+3^a < 2^m                    (the multiplicative coefficient predicts descent),
+(2^m - 3^a) n ≤ numer(v)     (the additive remainder nevertheless gives endpoint ≥ n).
+```
+
+Rozier--Terracol prove that an infinite-stopping-time orbit creates infinitely many such
+segments, while also conjecturing a global finiteness statement stronger than Collatz.
+Thus the published implication is a useful Front-A interface but not an easier theorem in
+disguise. The research target is new internal structure: exact branch-and-bound pruning,
+restrictions by odd-block shape, or the continued-fraction pattern in the observed ratios.
+See the project doc for sources, strength audit, and stop/go criteria.
+
 ## Current priority order
 
-1. **Positive-integer parity reconstruction/carry rigidity**, now that M2′ has completed the
-   measure-to-drift bridge. Seek a stable asymptotic invariant, not another finite census.
+1. **Paradoxical finite windows**, using the exact remainder criterion to seek a new
+   structural restriction or certified pruning theorem; do not count cited wiring as progress.
 2. **Floor-preserving saturation**, beginning with inequalities for backward branches of the
    high-floor tails supplied by a hypothetical divergent orbit.
 3. **Orbit-limit parity rigidity / repeat-or-descend certificates**, using reconstruction

@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8748 jobs) · **Updated**: 2026-08-24 · M2′ complete; parity/carry pull
+lap by lap.** · **Build**: 🟢 green (8749 jobs) · **Updated**: 2026-08-24 · paradoxical-window pull
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -15,11 +15,19 @@ on box); its Lean apparatus is feature-complete and **on hold**. Front A milesto
 complete**: `ParityRigidityW1' → NoDivergentOrbit` is sorry-free and trust-base clean, including
 all Krylov–Bogolyubov/Portmanteau/frequency/drift plumbing. The remaining Front-A crux is
 `ParityRigidityW1'` itself—the arithmetic restriction distinguishing positive-integer parity
-itineraries from the unrestricted 2-adic shift. The live probe is the exact inverse-parity
-reconstruction/carry machine in `FRONT-A-PARITY-RECONSTRUCTION.md`. The local-certificate
-lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
+itineraries from the unrestricted 2-adic shift. The inverse-parity reconstruction pull is
+complete and classified BASELINE / RE-SCOPE. The live probe is now the exact finite
+paradoxical-window project in `FRONT-A-PARADOXICAL.md`: make the additive remainder
+load-bearing and seek new structural restrictions beyond the 2026 sources. The
+local-certificate lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
 
 ## What's happened (newest first)
+- **2026-08-24 (parity reconstruction complete + audited):** Landed the exact reconstruction
+  experiment and the sorry-free cylinder-envelope/residue/eventual-periodicity Lean kernel.
+  Added `normalized_endpoint_ne_start_one`, a permanent kernel-checked counterexample to a
+  false normalized-endpoint claim. Corrected the broader overclaim too: same-suffix endpoint
+  spread refutes suffix-only endpoint prediction, not every finite-state Lyapunov proof.
+  Classified the result BASELINE / RE-SCOPE and opened `FRONT-A-PARADOXICAL.md`.
 - **2026-08-24 (M2′ complete):** Proved
   `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit`, including
   arbitrary empirical cluster invariance/support, exact odd-frequency transport, the uniform
@@ -61,10 +69,10 @@ lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **Front A parity reconstruction/carry probe** (binding): build the exact online machine
-  mapping shortcut parity prefixes to the binary digits of their unique realizing residue;
-  search for a depth-independent carry invariant or certify why bounded-memory potentials
-  fail. Formalize only the reusable residue/carry kernel and genuine restricted rigidity.
+- **Front A paradoxical-window probe** (binding): reproduce the exact word criterion and
+  published fixed-length checks, then seek a new word-shape theorem, continued-fraction
+  restriction/counterexample, or exact branch-and-bound pruning lemma. The literature wiring
+  and a finite census are baseline; formalize only load-bearing mathematics.
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
@@ -106,6 +114,7 @@ headline.
 
 ## Pointers
 - Binding directive: `DIRECTION.md` → CURRENT DIRECTIVE
-- Routes: `FRONT-A-PARITY-RECONSTRUCTION.md` (live), `FRONT-A-ROUTES.md`,
+- Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
+  `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
 - M2′ completion baton: `HANDOFF-2026-08-24-1730.md` · scratchpad: `PENDING_WORK.md`

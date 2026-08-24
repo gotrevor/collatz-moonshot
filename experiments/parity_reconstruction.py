@@ -208,9 +208,9 @@ def density_probe(depth):
 def carry_boundedness_probe(max_depth):
     """The key structural question: is q/3^a (normalized endpoint of the canonical
     representative) bounded independent of depth, or can it be driven arbitrarily large
-    by choosing the parity word?  For a genuine natural n it equals n (once output bits
-    stabilize).  We track, per depth, the max and min normalized endpoint over ALL words,
-    and the max over high-odd-density words only."""
+    by choosing the parity word?  For a fixed natural start, the reconstruction residue
+    R_m -- not q/3^a -- eventually stabilizes to n.  We track, per depth, the max and min
+    normalized endpoint over ALL words, and the max over high-odd-density words only."""
     import math
     crit = math.log(2) / math.log(3)
     rows = []
@@ -235,11 +235,11 @@ def carry_boundedness_probe(max_depth):
 
 
 def bounded_memory_potential_probe(max_depth):
-    """Strength audit: try to defeat any potential that depends only on a bounded parity
-    suffix.  For window w, group words by their last-w bits; a bounded-suffix potential
-    would predict the normalized endpoint (or its increment) from the suffix alone.  We
-    measure the SPREAD of q/3^a within each suffix class: if it grows with depth, no
-    bounded-suffix statistic can be a depth-independent Lyapunov function."""
+    """Strength audit: test whether a bounded parity suffix determines or uniformly
+    approximates the normalized endpoint.  For window w, group words by their last-w bits
+    and measure the spread of q/3^a in each class.  Large spread refutes endpoint prediction
+    from the suffix alone.  It does *not* rule out every finite-state Lyapunov certificate,
+    which may use aggregate transition inequalities rather than reconstructing q/3^a."""
     rows = []
     for w in (2, 3, 4):
         depth_rows = []
@@ -342,11 +342,10 @@ def output_bits_of_high_density(max_depth, dens_floor=None):
     return rows
 
 
-def bounded_memory_nogo(max_depth, window=3):
-    """Rigorous no-go signature for bounded-suffix Lyapunov potentials: find, at each depth,
-    two words sharing their last-`window` bits but with q/3^a differing by a large margin.
-    Such a pair defeats ANY potential Phi(last w bits): it cannot separate the two endpoints.
-    Preserve the extremal adversarial pair."""
+def bounded_suffix_collision_probe(max_depth, window=3):
+    """Find two words sharing their last-`window` bits but with q/3^a differing by a
+    large margin.  This is an exact collision witness for suffix-only endpoint prediction,
+    not a universal no-go theorem for finite-state or suffix-state Lyapunov arguments."""
     best = None
     for m in range(window + 2, max_depth + 1):
         classes = {}
@@ -403,16 +402,16 @@ def deeper_main():
     for m, da, ds, crit in output_bits_of_high_density(min(depth, 18)):
         print(f"   {m:3d}     {da:.4f}          {ds:.4f}            {crit:.4f}")
     print()
-    print("## Bounded-suffix Lyapunov no-go (extremal adversarial pair, window=3)")
-    best = bounded_memory_nogo(min(depth, 16), window=3)
+    print("## Bounded-suffix endpoint collision (extremal pair, window=3)")
+    best = bounded_suffix_collision_probe(min(depth, 16), window=3)
     if best:
         spread, m, key, lo, hi = best
         w = lambda v: ''.join('1' if b else '0' for b in v)
         print(f"  depth {m}: last-3 bits {w(list(key))} shared, q/3^a spread = {spread:.4f}")
         print(f"    low  q/3^a={lo[0]:.4f} word={w(lo[1])}")
         print(f"    high q/3^a={hi[0]:.4f} word={w(hi[1])}")
-        print("  => no potential depending only on a bounded parity suffix separates these;")
-        print("     any carry Lyapunov function must read unbounded (archimedean) state.")
+        print("  => q/3^a is neither determined nor uniformly approximated by this suffix;")
+        print("     this does not exclude aggregate finite-state Lyapunov certificates.")
     print()
     print("## Sharper-invariant search: min gap (3^a - q) and exact gap identity")
     print("  depth   min(3^a - q)   gap-identity-holds   attained-at (a,r,q)")

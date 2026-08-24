@@ -97,10 +97,12 @@ repeat-or-descend certificate.
 
 Every finite parity word is realized by one residue class modulo `2^m`.  Therefore:
 
-- no finite forbidden-word argument can prove Front A;
-- no automaton whose state remembers only a bounded parity suffix can prove Front A;
+- no prefix-local argument that rejects a candidate solely by finding a forbidden finite
+  parity word can prove Front A;
+- a bounded parity suffix cannot by itself reconstruct the unbounded endpoint/carry;
 - a frozen finite table is meaningful only if its state also carries a rigorously controlled
-  archimedean/carry quantity and yields a depth-independent inequality;
+  archimedean/carry quantity, or if its transition inequalities yield a genuine global
+  invariant; finite-state Lyapunov arguments are not ruled out merely by suffix collisions;
 - increasing memory and observing fewer survivors is not by itself a theorem.
 
 This is the forward analogue of the 3-adic adversary that capped the backward local-potential
@@ -158,7 +160,7 @@ Do not claim `ParityRigidityW1'`, `EmpiricalParityRigidity`, or Collatz from fin
 
 ---
 
-## RESULTS (2026-08-24, executed) — CLASSIFICATION: BASELINE / REDIRECT
+## RESULTS (2026-08-24, executed) — CLASSIFICATION: BASELINE / RE-SCOPE
 
 Executed: `experiments/parity_reconstruction.py` (exact, exhaustive to depth 16) and the
 Lean kernel `CollatzMoonshot/FrontA/ParityReconstruction.lean` (sorry-free, trust-base
@@ -169,22 +171,26 @@ clean, full build green).
 `tstep^[m] n < 3^ones·(n/2^m+1)`; the exact gap identity `2^m(3^a−q)=3^a(2^m−n)−numer`;
 the drift lower bound; residue determinacy (`traceWord_eq_imp_modEq`,
 `eq_of_forall_traceWord_eq`); and the eventually-periodic no-divergence baseline
-(`tstep_repeat_of_eventually_periodic_parity`).
+(`tstep_repeat_of_eventually_periodic_parity`). The signpost theorem
+`normalized_endpoint_ne_start_one` proves that, even after the start residue stabilizes at
+`1`, the normalized endpoint does not stabilize to the start.
 
-**Strength audit (exhaustive):**
+**Strength audit (exhaustive, with the logical scope stated precisely):**
 - `q < 3^a` is the *sharpest uniform* bound — the exact gap `3^a−q` is `1` at every depth.
-- **Bounded-suffix Lyapunov NO-GO:** two words sharing their last 3 bits realize `q/3^a`
-  spanning nearly `[0,1)` (spread `≈0.9997` at depth 16). No bounded-parity-suffix potential
-  separates them — the forward analogue of the 3-adic backward adversary. A working carry
-  Lyapunov function must read the *unbounded* endpoint `q`, not a finite suffix.
-- **Positivity is asymptotic:** small-start words (top output bit zero) still reach odd
-  density `(m−1)/m → 1 > log2/log3`. No finite-prefix output condition forces sub-critical
-  density.
+- **Bounded-suffix endpoint collision:** two words sharing their last 3 bits realize
+  `q/3^a` spanning nearly `[0,1)` (spread `≈0.9997` at depth 16). Thus that normalized
+  endpoint is neither determined nor uniformly approximated by the suffix alone. This is
+  evidence that endpoint-aware certificates need more state; it is **not** a proof that all
+  finite-state or suffix-state Lyapunov certificates fail.
+- **One prefix positivity test fails:** among words whose top reconstruction-output bit is
+  zero, odd density still reaches `(m−1)/m → 1 > log2/log3`. This specific finite-prefix
+  condition cannot force subcritical density; the experiment does not classify every
+  possible finite-prefix condition.
 
-**Verdict:** BASELINE with a REDIRECT no-go. The reconstruction machine and one certified
-depth-independent invariant are in hand, but the invariant is the known critical envelope,
-not a divergence obstruction, and bounded carry/memory certificates are *proved* to fail.
-Per §C this is precisely the "do not manufacture more Lean plumbing" case: the next move is
-a mathematical re-scope to a genuine *tail* theorem (coupling `q`-growth to eventual
-output-zero and aperiodicity), not further finite-state vocabulary. `ParityRigidityW1'`
-cannot be reached by any bounded-suffix / finite-table certificate.
+**Verdict:** BASELINE / RE-SCOPE. The exact reconstruction API is complete in the experiment;
+the Lean module deliberately formalizes only the load-bearing forward residue determinacy,
+cylinder envelope, and eventual-periodicity baseline (not an explicit `R(v)` API). The
+invariant is the known critical envelope, not a divergence obstruction, and no stronger
+certificate emerged. Per §C, do not manufacture more routine Lean plumbing here. The next
+move should study a genuine tail phenomenon. The endpoint-collision data is a useful warning,
+not a theorem excluding every finite-state architecture.

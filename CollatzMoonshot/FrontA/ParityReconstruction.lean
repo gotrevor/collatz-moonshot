@@ -24,7 +24,7 @@ Because `3^a` is a unit modulo `2^m`, each word `v` has a unique **reconstructio
 `R(v) < 2^m` with `2^m ∣ 3^(ones v)·R(v) + numer v`, and `traceWord n m = v ↔ n ≡ R(v)`.
 The canonical representative's endpoint is `q = tstep^[m](R(v))`.
 
-## The carry invariant (the new content of this lap)
+## The carry invariant (the exact cylinder envelope proved in this module)
 
 The experiment (`experiments/parity_reconstruction.py`, exhaustive to depth 14) exposed a
 **depth-independent** inequality: the normalized endpoint `q / 3^a` is always `< 1`, tight
@@ -43,11 +43,12 @@ below `3^(#odd steps so far)` — the precise upper envelope of the critical-dri
 (the matching lower bound `3^a · n / 2^m ≤ tstep^[m] n` is immediate from the identity).
 
 Strength note (per the mandatory audit in the project doc): this is an upper envelope, not
-by itself a no-divergence theorem — combined with the identity's lower bound it reproduces
-the standard critical-density bracket `3^a n / 2^m ≤ tstep^[m] n < 3^a`, i.e. divergence
-still requires odd density `> log 2 / log 3`.  It IS a certified, depth-independent carry
-inequality (the project's "GO" bar for a stable invariant), and it is the first rigorous
-archimedean constraint coupling the parity word to size in this project.
+by itself a no-divergence theorem.  Together with the identity's lower bound it gives the
+standard cylinder bracket `3^a n / 2^m ≤ tstep^[m] n < 3^a`.  The critical-density
+necessity for a divergent high tail uses the separate drift lemmas; it does not follow from
+this bracket alone.  This is a certified, depth-independent carry inequality and the first
+archimedean parity-word/size constraint formalized in this repository, not a literature
+novelty claim.
 -/
 
 namespace CollatzMoonshot.FrontA
@@ -132,6 +133,18 @@ theorem tstep_iterate_lt_pow_ones {m n : ℕ} (hn : n < 2 ^ m) :
   have h := tstep_iterate_lt m n
   have h0 : n / 2 ^ m = 0 := Nat.div_eq_of_lt hn
   simpa [h0] using h
+
+/-- **Permanent counterexample to a tempting but false reconstruction claim.**
+
+For the fixed natural start `n = 1`, the reconstruction residues have already stabilized
+once `m > 0`, but the normalized canonical endpoint is never the start: in denominator-free
+form, `tstep^[m] 1 ≠ 3^(ones (traceWord 1 m))`. Thus it is `R(traceWord n m)` that
+eventually stabilizes to `n`, not `tstep^[m] n / 3^ones`. Keep this theorem as a signpost
+for future carry experiments. -/
+theorem normalized_endpoint_ne_start_one {m : ℕ} (hm : 0 < m) :
+    tstep^[m] 1 ≠ 3 ^ ones (traceWord 1 m) := by
+  have hpow : 1 < 2 ^ m := Nat.one_lt_pow (by omega) (by omega)
+  exact Nat.ne_of_lt (tstep_iterate_lt_pow_ones (m := m) (n := 1) hpow)
 
 /-- The matching lower bound, immediate from the exact identity (`numer ≥ 0`):
 `3^a · n ≤ 2^m · tstep^[m] n`.  Together with `tstep_iterate_lt_pow_ones` this is the
