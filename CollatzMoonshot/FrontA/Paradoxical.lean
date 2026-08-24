@@ -403,10 +403,18 @@ the multiplicative window `(1, 2^d/(2^d−1))`, whose width `→ 1` as `d` grows
 
 **What remains (the sole open obligation):** the containment itself — that this near-critical
 window, intersected with the *integrality* of `w` (equivalently `⌈L/3^b⌉ ≤ U₁/D`), admits only
-the two listed tuples.  The window alone is an *infinite* strip (the real bound
-`D·L ≤ 3^b·U₁` fails on 883+ tuples with unbounded `b,e`); finiteness needs `w ∈ ℕ`, i.e. a
-`3^b mod 2^(c+d)` least-residue growth fact — a genuine `2^m` vs `3^k` separation statement
-(effective irrationality of `log₂ 3`).  Narrow lap by lap; see `PENDING_WORK.md`. -/
+the two listed tuples.
+
+**REFUTED this lap (attack #1 is dead):** one cannot bound `b+d` (nor `d`) from the real bound
+`D·L ≤ 3^b·U₁` alone.  Exhaustively (`scratchpad/dbig.py`, `b+d ≤ 306`), the real-bound set is
+genuinely *infinite* in every parameter: `d` reaches `9` (first witness `b+d = 306`, tracking the
+good rational approximations `2^m/3^k` at continued-fraction denominators `k = 5,17,29,41,147,…`),
+and `b,c,e` are unbounded.  So ceiling-discreteness + the real bound will NEVER give a finite box;
+the *integrality* of `w` (`⌈L/3^b⌉ ≤ U₁/D`) is strictly essential.
+
+Concretely the bracket is `3^(b+d) < 2^m` and `2^m·(2^d − 1) < 3^(b+d)·2^d` (from `hsqueeze`),
+i.e. `2^m/3^(b+d) ∈ (1, 2^d/(2^d−1))`; the residual finiteness is a genuine `2^m` vs `3^k`
+separation (effective irrationality of `log₂ 3`, Baker).  Narrow lap by lap; see `PENDING_WORK.md`. -/
 theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
     (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
     (hlo : 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w)
@@ -456,8 +464,12 @@ theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d
     have hmul : D * (2 ^ d - 1) * 2 ^ c < 3 ^ (b + d) * 2 ^ c := by
       rw [h3bd]; nlinarith [a1, a2, s1]
     exact lt_of_mul_lt_mul_right hmul h2cpos.le
-  -- The residual finiteness containment.  Window is near-critical; integrality of `w` selects
-  -- the two tuples.  Genuine `2^m` vs `3^k` separation content — disclosed, narrowed lap by lap.
+  -- Clean power bracket:  `2^m·(2^d − 1) < 3^(b+d)·2^d`  (⇔ `2^m/3^(b+d) < 2^d/(2^d−1)`).
+  have hbracket : (2 : ℤ) ^ (b + c + d + e) * (2 ^ d - 1) < 3 ^ (b + d) * 2 ^ d := by
+    rw [hDdef] at hsqueeze; nlinarith [hsqueeze]
+  -- The residual finiteness containment.  With `3^(b+d) < 2^m` (hsub) this pins
+  -- `2^m/3^(b+d) ∈ (1, 2^d/(2^d−1))`; integrality of `w` (hlo/hhi) then selects the two tuples.
+  -- Genuine `2^m` vs `3^k` separation content — disclosed, narrowed lap by lap.
   sorry
 
 /-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about

@@ -128,7 +128,25 @@ tuples with UNBOUNDED `b,e` (`scratchpad/contain.py`, LIM=60). Finiteness comes 
 `2^8/3^5` (b+d=5, m=8). Next: bound `b+d` via an explicit `|2^m−3^k|` separation (Baker-type,
 likely a cited effective-irrationality lemma) → `interval_cases` + `decide` on the finite box.
 
-**Attack on the containment (next lap):** quantitative near-critical bound. Crude inequalities
+**DONE (lap 2026-08-25-0900): REFUTED attack #1 + proved the clean power bracket.** Exhaustive
+scan (`scratchpad/dbig.py`, `b+d ≤ 306`) shows the real-bound set `{D·L ≤ 3^b·U₁}` is infinite in
+EVERY parameter: `d` grows to `9` (first at `b+d = 306`, tracking CF denominators of `log₂3`:
+`k = 5,17,29,41,147,253,306` for `d = 3..9`); `b,c,e` unbounded. ⇒ **attack #1 (bound `b+d` via
+ceiling-discreteness + the real bound) is DEAD**; the integrality `⌈L/3^b⌉ ≤ U₁/D` is strictly
+essential. Also proved sorry-free the clean power bracket `hbracket : 2^m·(2^d−1) < 3^(b+d)·2^d`
+(inside `near_critical_containment`), i.e. `2^m/3^(b+d) ∈ (1, 2^d/(2^d−1))` with `hsub`. The sole
+`src/` sorry is unchanged in location (`near_critical_containment:418`) but its target is now the
+sharp separation: a `2^m` vs `3^k` window that ONLY integrality closes.
+
+**Attack on the containment (next lap):** The remaining obligation is now provably NOT elementary
+in `(b,d,m)` alone — it needs effective irrationality of `log₂3` (Baker). Two honest routes:
+(a) **discharge attempt**: formalize/derive from an explicit irrationality measure `μ(log₂3)` (or
+an explicit `|2^m − 3^k|` gap) that the window `(1, 2^d/(2^d−1))` admits an integer `w` only for
+`b+d = 5` — large but real Lean work via mathlib's `Nat.log`/rpow-irrationality API; (b) **cited
+route** (BASELINE, like `rozier_terracol_3_2`): state the effective-gap fact as a named axiom and
+derive the containment, closing the src sorry into an auditable axiom. GO upgrade requires (a).
+
+**Attack on the containment (superseded — see above):** quantitative near-critical bound. Crude inequalities
 only give `2^(m-1) < 3^(b+d) < 2^m` (infinite strip, `c+e ≈ 0.585(b+d)`); the reason only 2
 tuples fail is that `⌈t/3^b⌉` grows along the strip — a `3^b mod 2^(c+d)` least-residue fact,
 same hardness as before but now a FINITE target. Options:
