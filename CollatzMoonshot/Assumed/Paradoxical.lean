@@ -120,6 +120,31 @@ theorem exists_standardStop_of_diverges {n : ℕ} (hn : 1 ≤ n) (hdiv : Diverge
     rcases hb k with h | h | h <;> rw [h] at hk <;> omega
   exact ⟨m₀, by omega, hstop, hdivm⟩
 
+/-- **Shortcut embedding.**  Each accelerated iterate is some standard iterate: one `tstep` is
+either one `step` (even) or two `step`s (odd). -/
+theorem tstep_iterate_eq_step_iterate (x j : ℕ) : ∃ k, tstep^[j] x = step^[k] x := by
+  induction j with
+  | zero => exact ⟨0, rfl⟩
+  | succ i ih =>
+    obtain ⟨k, hk⟩ := ih
+    rw [Function.iterate_succ_apply', hk]
+    rcases Nat.even_or_odd (step^[k] x) with he | ho
+    · exact ⟨k + 1, by rw [tstep_eq_step (Nat.even_iff.mp he), Function.iterate_succ_apply']⟩
+    · exact ⟨k + 2, by
+        rw [tstep_eq_step_step (Nat.odd_iff.mp ho), Function.iterate_succ_apply',
+          Function.iterate_succ_apply']⟩
+
+/-- **Second half of the bridge (proved).**  A divergent orbit yields a value `m₀ ≥ 2` of
+infinite *shortcut* stopping time that still diverges — exactly Rozier--Terracol's hypothesis.
+Combines `exists_standardStop_of_diverges` with the shortcut embedding. -/
+theorem infiniteStoppingTime_of_diverges {n : ℕ} (hn : 1 ≤ n) (hdiv : Diverges n) :
+    ∃ m₀, 2 ≤ m₀ ∧ InfiniteStoppingTime m₀ ∧ Diverges m₀ := by
+  obtain ⟨m₀, h2, hstop, hdivm⟩ := exists_standardStop_of_diverges hn hdiv
+  refine ⟨m₀, h2, ?_, hdivm⟩
+  intro j
+  obtain ⟨k, hk⟩ := tstep_iterate_eq_step_iterate m₀ j
+  rw [hk]; exact hstop k
+
 /-- **Front-A specialization (owed).**  A divergent standard-step orbit yields infinitely many
 *acyclic* paradoxical segments.  This combines `Assumed.rozier_terracol_3_2` with (i) the
 standard/shortcut iterate bridge that turns divergence into a tail value of infinite shortcut

@@ -30,13 +30,21 @@ no counterexample in range).
   Front-A plumbing (the hypothesis is stronger than Collatz), not the novel content.
 
 **Open obligations / next attacks:**
-- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry). PROVED this lap the first half:
-  `exists_standardStop_of_diverges` (trust-base clean) — a divergent orbit's least value `m₀`
-  satisfies `∀ j, m₀ ≤ step^[j] m₀` (infinite STANDARD stopping), `m₀ ≥ 2`, `Diverges m₀`.
-  Remaining: (a) shortcut embedding `∀ j, ∃ k, tstep^[j] m₀ = step^[k] m₀` (from
-  `tstep = step`/`step∘step`) to upgrade standard stopping to `InfiniteStoppingTime m₀`;
-  (b) restate the RT axiom to the constructive `2^k·m₀`-start form and derive acyclicity from
-  `Diverges (2^k m₀)` ⇒ start not on a shortcut cycle ⇒ `n < y`.
+- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry). PROVED this lap the whole
+  "produce RT's hypothesis value" half (all trust-base clean):
+  `exists_standardStop_of_diverges` (running-min ⇒ infinite STANDARD stopping, `m₀≥2`,
+  `Diverges m₀`), `tstep_iterate_eq_step_iterate` (shortcut embedding), and
+  `infiniteStoppingTime_of_diverges` (⇒ `∃ m₀≥2, InfiniteStoppingTime m₀ ∧ Diverges m₀`).
+  Remaining assembly (next lap):
+  (a) restate `Assumed.rozier_terracol_3_2` to the constructive form
+      `∀ K, ∃ k m, K < 2^k·n ∧ Paradoxical (2^k·n) m` (faithful: RT constructs starts `2^k n`,
+      unbounded). NOTE: acyclicity is NOT derivable from infinite-stopping alone — a cycle
+      minimum also has infinite stopping and yields CYCLIC segments — so the extra
+      `Diverges` hypothesis is essential here.
+  (b) acyclicity: `Diverges m₀ ⇒ Diverges (2^k m₀) ⇒` shortcut orbit unbounded (standard
+      unbounded ⇒ shortcut unbounded, within a factor 2) `⇒ 2^k m₀` not on a shortcut cycle
+      `⇒ tstep^[m] s ≠ s ⇒ AcyclicParadoxical s m`.
+  (c) infinitude: arbitrarily large distinct starts `s` ⇒ the acyclic-pair set is infinite.
 - `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED this lap: the head-block
   trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
   violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It
