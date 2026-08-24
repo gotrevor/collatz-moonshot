@@ -29,7 +29,7 @@ See `PENDING_WORK.md` for the full M2′ decomposition.
 -/
 
 open MeasureTheory Filter Topology
-open scoped ENNReal BoundedContinuousFunction
+open scoped ENNReal NNReal BoundedContinuousFunction
 
 namespace CollatzMoonshot
 
@@ -192,46 +192,47 @@ theorem empiricalMeasure_orbitClosure (n : ℕ) {N : ℕ} (hN : 1 ≤ N) :
   refine ENNReal.inv_mul_cancel ?_ (ENNReal.natCast_ne_top N)
   exact_mod_cast Nat.one_le_iff_ne_zero.mp hN
 
-/-- **Krylov–Bogolyubov with support control (M2′).**  Every positive `n` admits a
-`T2`-invariant probability measure supported on `orbitClosure n` (mass `1`).  Obtained as a
-weak-* cluster point of the empirical measures of the embedded orbit `↑n`, whose support lies
-in the closed set `orbitClosure n`; the closed-set Portmanteau bound carries the full mass. -/
-theorem exists_isT2Invariant_orbitClosure (n : ℕ) :
-    ∃ μ : ProbabilityMeasure ℤ_[2],
-      IsT2Invariant (μ : Measure ℤ_[2]) ∧ (μ : Measure ℤ_[2]) (orbitClosure n) = 1 := by
+set_option maxHeartbeats 800000 in
+/-- **Cluster measures of the empirical sequence are invariant and orbit-supported.**  If a
+subsequence `empiricalPM (↑n) (φ j)` (with `φ → ∞`) converges weak-* to `μ`, then `μ` is
+`T2`-invariant *and* supported on `orbitClosure n` (mass `1`).  The invariance is the
+Krylov–Bogolyubov telescoping argument (`integral_empiricalMeasure_comp_T2_sub` is `O(1/φ j)`);
+the support is the closed-set Portmanteau bound on the (closed) orbit closure.  Stated for an
+arbitrary subsequence so that *every* subsequential limit of the odd-frequency is realised as
+some invariant measure's odd-mass — the uniformity M2′ piece 2 needs. -/
+theorem cluster_isT2Invariant_orbitClosure (n : ℕ) {φ : ℕ → ℕ}
+    (hφ : Tendsto φ atTop atTop) {μ : ProbabilityMeasure ℤ_[2]}
+    (hconv : Tendsto (fun j => empiricalPM (n : ℤ_[2]) (φ j)) atTop (𝓝 μ)) :
+    IsT2Invariant (μ : Measure ℤ_[2]) ∧ (μ : Measure ℤ_[2]) (orbitClosure n) = 1 := by
   set x : ℤ_[2] := (n : ℤ_[2]) with hx
-  obtain ⟨μ, -, hcl⟩ :=
-    isCompact_univ.exists_mapClusterPt (f := (atTop : Filter ℕ))
-      (u := fun N => empiricalPM x N) (by simp)
-  obtain ⟨ψ, hψ_mono, hψ_tendsto⟩ := hcl.tendsto_subseq
-  refine ⟨μ, ?_, ?_⟩
-  · -- Invariance: same argument as `exists_isT2Invariant_of_empirical`.
+  refine ⟨?_, ?_⟩
+  · -- Invariance via the Krylov–Bogolyubov telescoping.
     rw [isT2Invariant_iff_map_eq]
-    have hmap_cont : Tendsto (fun k => (empiricalPM x (ψ k)).map
+    have hmap_cont : Tendsto (fun k => (empiricalPM x (φ k)).map
         (continuous_T2.measurable.aemeasurable)) atTop
         (𝓝 (μ.map (continuous_T2.measurable.aemeasurable))) :=
-      ProbabilityMeasure.tendsto_map_of_tendsto_of_continuous _ _ hψ_tendsto continuous_T2
-    have hmap_int : Tendsto (fun k => (empiricalPM x (ψ k)).map
+      ProbabilityMeasure.tendsto_map_of_tendsto_of_continuous _ _ hconv continuous_T2
+    have hmap_int : Tendsto (fun k => (empiricalPM x (φ k)).map
         (continuous_T2.measurable.aemeasurable)) atTop (𝓝 μ) := by
       rw [ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
       intro f
-      have hchange : ∀ k, ∫ ω, f ω ∂((empiricalPM x (ψ k)).map
+      have hchange : ∀ k, ∫ ω, f ω ∂((empiricalPM x (φ k)).map
           (continuous_T2.measurable.aemeasurable) : Measure ℤ_[2])
-          = ∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]) := by
+          = ∫ ω, f (T2 ω) ∂(empiricalPM x (φ k) : Measure ℤ_[2]) := by
         intro k
         rw [ProbabilityMeasure.toMeasure_map]
         exact integral_map continuous_T2.measurable.aemeasurable f.continuous.aestronglyMeasurable
       simp_rw [hchange]
-      have ha : Tendsto (fun k => ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])) atTop
+      have ha : Tendsto (fun k => ∫ ω, f ω ∂(empiricalPM x (φ k) : Measure ℤ_[2])) atTop
           (𝓝 (∫ ω, f ω ∂(μ : Measure ℤ_[2]))) :=
-        ((ProbabilityMeasure.continuous_integral_continuousMap f).tendsto μ).comp hψ_tendsto
-      have hd : Tendsto (fun k => (∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]))
-          - ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])) atTop (𝓝 0) := by
-        have hform : ∀ k, (∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]))
-            - ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])
-            = (↑(ψ k + 1) : ℝ)⁻¹ * (f (T2^[ψ k + 1] x) - f x) := by
+        ((ProbabilityMeasure.continuous_integral_continuousMap f).tendsto μ).comp hconv
+      have hd : Tendsto (fun k => (∫ ω, f (T2 ω) ∂(empiricalPM x (φ k) : Measure ℤ_[2]))
+          - ∫ ω, f ω ∂(empiricalPM x (φ k) : Measure ℤ_[2])) atTop (𝓝 0) := by
+        have hform : ∀ k, (∫ ω, f (T2 ω) ∂(empiricalPM x (φ k) : Measure ℤ_[2]))
+            - ∫ ω, f ω ∂(empiricalPM x (φ k) : Measure ℤ_[2])
+            = (↑(φ k + 1) : ℝ)⁻¹ * (f (T2^[φ k + 1] x) - f x) := by
           intro k
-          simpa using integral_empiricalMeasure_comp_T2_sub x (ψ k + 1) (⇑f)
+          simpa using integral_empiricalMeasure_comp_T2_sub x (φ k + 1) (⇑f)
         simp_rw [hform, Nat.cast_add, Nat.cast_one]
         have hnull : Tendsto (fun N : ℕ => ((N : ℝ) + 1)⁻¹ * (f (T2^[N + 1] x) - f x)) atTop
             (𝓝 0) := by
@@ -247,24 +248,36 @@ theorem exists_isT2Invariant_orbitClosure (n : ℕ) :
             have hinv : Tendsto (fun N : ℕ => ((N : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
               tendsto_inv_atTop_zero.comp hstep
             simpa using hinv.mul_const (2 * ‖f‖)
-        exact hnull.comp hψ_mono.tendsto_atTop
+        exact hnull.comp hφ
       simpa using ha.add hd
     have huniq : μ.map (continuous_T2.measurable.aemeasurable) = μ :=
       tendsto_nhds_unique hmap_cont hmap_int
     rw [← ProbabilityMeasure.toMeasure_map μ (continuous_T2.measurable.aemeasurable), huniq]
   · -- Support: closed-set Portmanteau carries the full empirical mass to the limit.
     have hclosed : IsClosed (orbitClosure n) := isClosed_closure
-    have hlimsup := ProbabilityMeasure.limsup_measure_closed_le_of_tendsto hψ_tendsto hclosed
-    have hone : ∀ k, (empiricalPM x (ψ k) : Measure ℤ_[2]) (orbitClosure n) = 1 := by
+    have hlimsup := ProbabilityMeasure.limsup_measure_closed_le_of_tendsto hconv hclosed
+    have hone : ∀ k, (empiricalPM x (φ k) : Measure ℤ_[2]) (orbitClosure n) = 1 := by
       intro k
       rw [empiricalPM_toMeasure, hx]
       exact empiricalMeasure_orbitClosure n (by omega)
     refine le_antisymm prob_le_one ?_
     calc (1 : ℝ≥0∞)
         = atTop.limsup
-            (fun i => (empiricalPM x (ψ i) : Measure ℤ_[2]) (orbitClosure n)) := by
+            (fun i => (empiricalPM x (φ i) : Measure ℤ_[2]) (orbitClosure n)) := by
           rw [funext hone]; exact (limsup_const 1).symm
       _ ≤ (μ : Measure ℤ_[2]) (orbitClosure n) := hlimsup
+
+/-- **Krylov–Bogolyubov with support control (M2′).**  Every positive `n` admits a
+`T2`-invariant probability measure supported on `orbitClosure n` (mass `1`), as a weak-*
+cluster point of the empirical measures of the embedded orbit `↑n`. -/
+theorem exists_isT2Invariant_orbitClosure (n : ℕ) :
+    ∃ μ : ProbabilityMeasure ℤ_[2],
+      IsT2Invariant (μ : Measure ℤ_[2]) ∧ (μ : Measure ℤ_[2]) (orbitClosure n) = 1 := by
+  obtain ⟨μ, -, hcl⟩ :=
+    isCompact_univ.exists_mapClusterPt (f := (atTop : Filter ℕ))
+      (u := fun N => empiricalPM (n : ℤ_[2]) N) (by simp)
+  obtain ⟨ψ, hψ_mono, hψ_tendsto⟩ := hcl.tendsto_subseq
+  exact ⟨μ, cluster_isT2Invariant_orbitClosure n hψ_mono.tendsto_atTop hψ_tendsto⟩
 
 /-! ## Frequency link: empirical odd-mass = odd-step frequency (M2′ piece 2) -/
 
@@ -298,5 +311,74 @@ theorem empiricalMeasure_oddSetZ2 (n : ℕ) (N : ℕ) :
   induction N with
   | zero => simp
   | succ N ih => rw [Finset.sum_range_succ, ih, oddSteps]; push_cast; ring
+
+/-- The empirical odd-mass of `empiricalPM (↑n) i`, as a real number, is the odd-step
+frequency over the first `i+1` orbit points. -/
+theorem empiricalPM_oddSetZ2_real (n i : ℕ) :
+    (((empiricalPM (n : ℤ_[2]) i) oddSetZ2 : ℝ≥0) : ℝ) = (oddSteps n (i + 1) : ℝ) / (i + 1) := by
+  have h1 : ((empiricalPM (n : ℤ_[2]) i) oddSetZ2 : ℝ≥0∞)
+      = (i + 1 : ℝ≥0∞)⁻¹ * (oddSteps n (i + 1) : ℝ≥0∞) := by
+    rw [ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, empiricalPM_toMeasure,
+      empiricalMeasure_oddSetZ2]
+    push_cast; ring_nf
+  have h2 : (((empiricalPM (n : ℤ_[2]) i) oddSetZ2 : ℝ≥0) : ℝ)
+      = ((empiricalPM (n : ℤ_[2]) i) oddSetZ2 : ℝ≥0∞).toReal := by
+    rw [ENNReal.coe_toReal]
+  rw [h2, h1, ENNReal.toReal_mul, ENNReal.toReal_inv]
+  simp only [ENNReal.toReal_natCast, ← Nat.cast_add_one]
+  rw [div_eq_inv_mul]
+
+/-- **The uniform sub-sharp frequency bound (M2′ piece 2).**  Under `ParityRigidityW1'`, the
+`limsup` of the odd-step frequency of any positive orbit is strictly below the sharp drift
+threshold.  Every subsequential limit of the frequency is, by Prokhorov + clopen Portmanteau,
+realised as the odd-mass of some `T2`-invariant measure supported on `orbitClosure n`, which
+W1′ bounds `< sharpThreshold`; `limsup` is such a subsequential limit. -/
+theorem limsup_oddFreq_lt_sharp (hW1 : ParityRigidityW1') (n : ℕ) (hn : 1 ≤ n) :
+    Filter.limsup (fun i => (oddSteps n (i + 1) : ℝ) / (i + 1)) atTop < sharpThreshold := by
+  set g : ℕ → ℝ := fun i => (oddSteps n (i + 1) : ℝ) / (i + 1) with hg
+  -- g is bounded in [0,1].
+  have hg01 : ∀ i, g i ∈ Set.Icc (0 : ℝ) 1 := by
+    intro i
+    refine ⟨by positivity, ?_⟩
+    rw [hg, div_le_one (by positivity)]
+    have : oddSteps n (i + 1) ≤ i + 1 := by
+      have := oddSteps_add_evenSteps n (i + 1); omega
+    exact_mod_cast this
+  have hbdd : IsBoundedUnder (· ≤ ·) atTop g :=
+    ⟨1, Filter.eventually_map.mpr (Filter.Eventually.of_forall fun i => (hg01 i).2)⟩
+  have hcobdd : IsCoboundedUnder (· ≤ ·) atTop g :=
+    IsBounded.isCobounded_le
+      ⟨0, Filter.eventually_map.mpr (Filter.Eventually.of_forall fun i => (hg01 i).1)⟩
+  set L : ℝ := Filter.limsup g atTop with hL
+  -- L is realised by a subsequence x with x → ∞.
+  obtain ⟨x, hxg, hx_top⟩ := exists_seq_tendsto_limsup hcobdd hbdd
+  -- Extract a Prokhorov-convergent sub-subsequence of the empiricals along x.
+  obtain ⟨μ, -, hcl⟩ :=
+    isCompact_univ.exists_mapClusterPt (f := (atTop : Filter ℕ))
+      (u := fun j => empiricalPM (n : ℤ_[2]) (x j)) (by simp)
+  obtain ⟨σ, hσ_mono, hσ_tendsto⟩ := hcl.tendsto_subseq
+  set φ : ℕ → ℕ := fun k => x (σ k) with hφ
+  have hφ_top : Tendsto φ atTop atTop := hx_top.comp hσ_mono.tendsto_atTop
+  have hconv : Tendsto (fun k => empiricalPM (n : ℤ_[2]) (φ k)) atTop (𝓝 μ) := hσ_tendsto
+  obtain ⟨hinv, hsupp⟩ := cluster_isT2Invariant_orbitClosure n hφ_top hconv
+  -- W1′ bounds the cluster measure's odd-mass below the sharp threshold.
+  have hWbound : ((μ : Measure ℤ_[2]) oddSetZ2).toReal < sharpThreshold :=
+    hW1 n hn (μ : Measure ℤ_[2]) inferInstance hinv hsupp
+  -- Clopen Portmanteau: empirical odd-mass along φ → μ oddSetZ2 (in ℝ).
+  have hport : Tendsto (fun k => ((empiricalPM (n : ℤ_[2]) (φ k)) oddSetZ2 : ℝ))
+      atTop (𝓝 ((μ oddSetZ2 : ℝ≥0) : ℝ)) :=
+    (NNReal.continuous_coe.tendsto _).comp
+      (ProbabilityMeasure.tendsto_measure_of_isClopen_of_tendsto hconv isClopen_oddSetZ2)
+  -- That real limit equals the odd-frequency along φ, whose limit is L.
+  have hgφ : Tendsto (fun k => g (φ k)) atTop (𝓝 L) := hxg.comp hσ_mono.tendsto_atTop
+  have heq : ∀ k, ((empiricalPM (n : ℤ_[2]) (φ k)) oddSetZ2 : ℝ) = g (φ k) := by
+    intro k; rw [empiricalPM_oddSetZ2_real]
+  have hport' : Tendsto (fun k => g (φ k)) atTop (𝓝 ((μ oddSetZ2 : ℝ≥0) : ℝ)) := by
+    simpa only [heq] using hport
+  have hLeq : L = ((μ oddSetZ2 : ℝ≥0) : ℝ) := tendsto_nhds_unique hgφ hport'
+  have hcoe : ((μ oddSetZ2 : ℝ≥0) : ℝ) = ((μ : Measure ℤ_[2]) oddSetZ2).toReal := by
+    rw [← ProbabilityMeasure.ennreal_coeFn_eq_coeFn_toMeasure, ENNReal.coe_toReal]
+  rw [hLeq, hcoe]
+  exact hWbound
 
 end CollatzMoonshot

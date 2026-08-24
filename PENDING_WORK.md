@@ -78,6 +78,17 @@ Suppose `Diverges n` (`1 ≤ n`).
    `(μ_N oddSetZ2) = oddSteps n N / N` piece 2 needs; the empirical odd-mass IS the odd-step
    count. Remaining in piece 2: clopen Portmanteau `(empiricalPM (↑n)(ψk)) oddSetZ2 →
    μ oddSetZ2` + W1′ to bound the limit `< sharpThreshold`.
+   **Uniformity DONE (2026-08-24, this lap):** `limsup_oddFreq_lt_sharp (hW1) (n) (hn) :
+   Filter.limsup (fun i => oddSteps n (i+1)/(i+1)) atTop < sharpThreshold`
+   (`Rigidity/Empirical.lean`, `[propext, choice, Quot.sound]`). Every subsequential limit
+   of the odd-frequency is realised — via a Prokhorov sub-subsequence of the empiricals +
+   clopen Portmanteau (`tendsto_measure_of_isClopen_of_tendsto`) — as the odd-mass of a
+   `T2`-invariant measure supported on `orbitClosure n`, which W1′ bounds `< sharpThreshold`;
+   `limsup` is such a subsequential limit (`exists_seq_tendsto_limsup`). Supporting refactor:
+   `cluster_isT2Invariant_orbitClosure` (KB invariance+support for an ARBITRARY convergent
+   subsequence φ→∞) and `empiricalPM_oddSetZ2_real` (empirical odd-mass in ℝ = odd-freq).
+   **This is the load-bearing measure-theory crux of M2′.** Remaining: the tail assembly
+   (piece 3) into `parityRigidityW1'_imp_noDivergent`.
 2. **Frequency link + uniformity.** `(empiricalPM x N) oddSetZ2 = oddSteps? / (N+1)` via
    Portmanteau on the clopen `oddSetZ2`; the invariant-measure set is weak-* compact and
    `ν ↦ ν oddSetZ2` continuous, so W1′ ⟹ uniform `M* < sharpThreshold`, hence
