@@ -387,6 +387,28 @@ All 810 source-state/lift inequalities are strict (minimum ratio `1.016618220460
 five-height interpretation lemmas, and packages the result as `exists_twoThirdsExpansion`
 over actual distinct Collatz children.  Its axiom footprint is only the base three.
 
+The completed `2/3` stopping theorem made a deeper correlated search worthwhile.  After
+parameterizing that search, the old five-floor grid at ternary depths `3..7` gives critical
+exponents `.661695,.683820,.706968,.727160,.740806`.  Unlike the earlier independent-lift
+operator, the correlated operator also gains materially from tracking larger endpoint/floor
+ratios.  At depth `5`, a rich 21-floor diagnostic reaches `.760516`; the target compresses to
+only five floors `{1,7/4,3,6,12}` with critical exponent `.755567122828`.
+
+This yields a new exact candidate.  On unit residues modulo `243`, with the next source digit
+tracked modulo `729`, an 810-entry integer potential satisfies all 2,430 shared-lift
+inequalities for the rational edge underweight
+
+```
+(2279/1000) * (2973/5000)^j < (3/2^j)^(3/4).
+```
+
+The comparison follows from `(2279/1000)^4 < 27` and
+`8*(2973/5000)^4 < 1`.  The exact common-denominator checker reports minimum ratio
+`1.005333383627`; the frozen potential lies in `[1,000,000, 19,334,101]`.  Thus a uniform
+exponent-`3/4` first-exit theorem is now a concrete finite Lean target, not merely a spectral
+guess.  It still falls short of the harmonic exponent `1`, so even after formalization the
+packing/overlap bottleneck remains.
+
 The chippable mathematical ladder is now:
 
 1. ~~finish the binary-subtree iteration~~ — DONE (`binaryBarrierSubtreeGrowth`);
@@ -436,9 +458,12 @@ The chippable mathematical ladder is now:
    `(H, 2^23 H)` reached inside `[d, 2^25 H]`.  Axiom audit: base three
    `[propext, Classical.choice, Quot.sound]`, no `native_decide`.  Thus the exponent-`2/3`
    frontier is now unconditional exactly as the `1/2` frontier was;
-6. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+6. formalize the frozen exponent-`3/4` local certificate: modulo-`729` shared source lift,
+   modulo-`243` child state, floors `{1,7/4,3,6,12}`, and the 810-state potential; then port
+   the already-proved real-rpow renewal/stopping layer from exponent `2/3` to `3/4`;
+7. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-7. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+8. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 

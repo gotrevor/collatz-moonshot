@@ -30,16 +30,18 @@ ternary digit is handled adversarially.  A frozen 36-state integer potential
 ``q = 7/9``.  The optional nonlinear search explains where that certificate
 came from, but is explicitly diagnostic rather than part of the exact check.
 
-The stronger 270-state certificate keeps a correlation discarded by that
+The stronger correlated certificates keep a correlation discarded by that
 first search.  All children of one source share its single unknown next ternary
 digit; their lift choices cannot be minimized independently.  Tracking the
-three joint alternatives modulo 81 yields an exact rational certificate for
-endpoint-height exponent ``2/3``.
+three joint alternatives modulo 81 yields the Lean-checked exponent ``2/3``
+certificate.  Modulo 243 with five height floors yields an exactly checked
+candidate at exponent ``3/4``.
 
 Examples:
     uv run --quiet python3 experiments/barrier_transfer.py
     uv run --quiet python3 experiments/barrier_transfer.py --verify-up-to 100000
-    uv run --quiet python3 experiments/barrier_transfer.py --correlated-net-search
+    uv run --quiet python3 experiments/barrier_transfer.py --correlated-net-search-only
+    uv run --quiet python3 experiments/barrier_transfer.py --correlated-three-quarters-certificate
 """
 
 from __future__ import annotations
@@ -128,6 +130,113 @@ CORRELATED_TWO_THIRDS_WEIGHTS = (
     340602, 200706, 948653, 453055, 837558, 589394, 272126, 179247, 750619,
     461235, 905810, 323900, 423235, 214239, 499604, 526780, 638945, 472134,
     290117, 266215, 738702, 401835, 1051827, 743466, 252754, 158983, 429829,
+)
+
+# Candidate rational underweight for endpoint exponent 3/4.  Positivity plus
+# these two fourth-power comparisons imply
+#
+#   (2279/1000) * (2973/5000)^j < (3 / 2^j)^(3/4).
+#
+# The table below was generated from the nonlinear eigenvector and is checked
+# by an exact common-denominator integer calculation.
+CORRELATED_THREE_QUARTERS_FACTOR = Fraction(2279, 1000)
+CORRELATED_THREE_QUARTERS_Q = Fraction(2973, 5000)
+CORRELATED_THREE_QUARTERS_DEPTH = 5
+CORRELATED_THREE_QUARTERS_HEIGHT_BINS = (
+    Fraction(1), Fraction(7, 4), Fraction(3), Fraction(6), Fraction(12)
+)
+CORRELATED_THREE_QUARTERS_WEIGHTS = (
+  5620241, 2507527, 3120869, 3594000, 2733565, 1519851, 3988049, 4200861, 1575034,
+  3728847, 2556089, 1151736, 3957839, 1982248, 2633593, 3244528, 1837253, 1166946,
+  4669019, 2209771, 4393798, 4265757, 1936993, 1632640, 4346694, 2774639, 1611259,
+  3417814, 3231598, 1592286, 4786053, 2537186, 3552608, 3089897, 1962573, 1116127,
+  5230181, 2318676, 3621694, 3629770, 2437381, 2312784, 5989602, 4019530, 1924277,
+  3191331, 2745779, 1628117, 4756914, 3085015, 2172146, 3129179, 1681803, 1151424,
+  4664483, 2835167, 4250585, 4566439, 2677912, 1688767, 2747974, 4373230, 1993314,
+  3093145, 2783384, 1099490, 5141104, 1635142, 2968143, 3202303, 1877105, 1045486,
+  6084338, 2333835, 3899557, 3972764, 1855553, 1873211, 4105507, 3782885, 1537297,
+  3858188, 3089640, 1634936, 4862954, 2722793, 3799060, 3005190, 1929196, 1092430,
+  4488548, 2612552, 3356852, 4067300, 2554673, 1921508, 6480411, 4215861, 1972128,
+  3109866, 2802573, 1449267, 4774924, 2921251, 2790263, 2828461, 1936469, 1000000,
+  5620973, 2655402, 3928948, 2637009, 2491042, 1655000, 3499971, 3885783, 1614337,
+  4182946, 2840173, 1103312, 4684206, 1602291, 2981782, 2957116, 2076895, 1147100,
+  3850026, 1995984, 3797237, 4369645, 1849126, 2188851, 4612354, 5050888, 1449099,
+  3503410, 2381301, 1771183, 4507000, 2125448, 2879756, 3156921, 1758301, 1234922,
+  4910136, 2780278, 3797265, 4531573, 2083128, 1777770, 5495385, 3562362, 2274287,
+  3120674, 3150372, 1238628, 4840945, 3480021, 3097188, 3110857, 1849716, 1099841,
+  6488712, 9452282, 4217166, 5196165, 2749641, 5248892, 6044400, 8178893, 4579202,
+  4597318, 2556089, 6389398, 5054137, 6707481, 7065021, 3244528, 1837253, 2648953,
+  6271185, 7549045, 4393798, 4298839, 1936993, 5645621, 6840397, 6656830, 3333751,
+  4296456, 3231598, 4429260, 5456657, 10899463, 7090247, 3089897, 1962573, 3316769,
+  5230181, 7852505, 3716400, 4713376, 2437381, 7389619, 7174162, 8030982, 4912969,
+  3257640, 2745779, 4692785, 4756914, 7311024, 4666395, 3256759, 1681803, 2709848,
+  5748089, 9453559, 4465864, 5434910, 2677912, 6607792, 4434930, 8049557, 4267046,
+  4189442, 2783384, 5974900, 5196597, 5886565, 6535121, 3300661, 1877105, 2715037,
+  7034891, 8796398, 3899557, 4776612, 1855553, 6091044, 6104557, 7878291, 2694737,
+  4099194, 3889646, 5014842, 4973287, 10073757, 6760057, 3492928, 1929196, 3236295,
+  5367190, 6475113, 3356852, 4617860, 2738171, 6386366, 7348882, 8000776, 5188386,
+  3109866, 3681216, 3653281, 5262662, 7757623, 8494599, 2828461, 1936469, 2437126,
+  5892046, 7844869, 4768192, 4004878, 2978780, 7148759, 7679850, 7580270, 3574585,
+  4503719, 2840173, 4843258, 5309318, 4621823, 7354910, 2957116, 2076895, 3352408,
+  5202060, 8258099, 4675879, 4681104, 1849126, 6386316, 7621213, 8646801, 2749987,
+  3503410, 2989859, 4991917, 5385642, 9242846, 5991191, 3156921, 1758301, 3824930,
+  5248358, 10232784, 3925050, 5298305, 2083128, 6558398, 6681406, 8142052, 5852709,
+  3120674, 3150372, 5208974, 5231849, 6905165, 6362068, 3110857, 1849716, 2585457,
+  6894037, 10912879, 5037445, 6541619, 2749641, 7092648, 8738926, 8364417, 8773118,
+  4624354, 2556089, 11369212, 5874416, 10165798, 7996720, 3244528, 1837253, 7701370,
+  7731782, 9026748, 4393798, 4298839, 1936993, 5645621, 7766330, 8500586, 7362220,
+  4605064, 3231598, 11882041, 5456657, 12360060, 7146050, 3089897, 1962573, 8725882,
+  5230181, 10547033, 3716400, 6191079, 2437381, 7389619, 7229799, 8851261, 6390672,
+  3257640, 2745779, 14286354, 4756914, 11504940, 6940250, 3256759, 1681803, 5606738,
+  7225792, 9909450, 4465864, 5434910, 2677912, 8019248, 6735416, 9177388, 9490808,
+  5009721, 2783384, 11924483, 5196597, 12916299, 8357533, 3300661, 1877105, 6011785,
+  7574368, 8796398, 3899557, 4776612, 1855553, 6250316, 7926969, 8929589, 4288083,
+  4099194, 3889646, 12369589, 4973287, 12065953, 7402008, 3492928, 1929196, 8262685,
+  5478709, 8748968, 3356852, 4617860, 2738171, 7864070, 7872694, 8000776, 5188386,
+  3109866, 3928034, 7848114, 5477226, 12818016, 10093242, 2828461, 1936469, 4624966,
+  5892046, 9667280, 4768192, 5028354, 3139192, 7510907, 9140448, 9057973, 6936591,
+  4503719, 2840173, 10076079, 5309318, 7458950, 8815507, 2957116, 2076895, 7176377,
+  7045816, 8826894, 4751989, 4681104, 1849126, 6601230, 8910705, 8740188, 5429408,
+  3503410, 3810139, 10990861, 5551060, 11237500, 7468895, 3156921, 1758301, 9843131,
+  5248358, 11831427, 3925050, 5298305, 2083128, 6558398, 8033319, 8799476, 6164362,
+  3120674, 3150372, 10699860, 5231849, 10267174, 9056595, 3110857, 1849716, 4532044,
+  6894037, 11594601, 5322918, 6541619, 2749641, 8472195, 11001713, 8364417, 10326103,
+  4624354, 2556089, 12448831, 5874416, 14697460, 7996720, 3244528, 1837253, 14754711,
+  7777252, 9214286, 4393798, 4298839, 1936993, 5645621, 7766330, 9880133, 7710202,
+  4605064, 3231598, 13448986, 5456657, 13240765, 7146050, 3089897, 1962573, 8725882,
+  5230181, 13003470, 3716400, 6606180, 2437381, 7389619, 7229799, 9212171, 6742852,
+  3257640, 2745779, 16974956, 4756914, 13062211, 10041083, 3256759, 1681803, 12381828,
+  7744811, 9909450, 4465864, 5434910, 2677912, 8019248, 8456701, 9177388, 11496029,
+  5279502, 2783384, 12018348, 5196597, 15372735, 10842739, 3300661, 1877105, 11666016,
+  7574368, 8796398, 3899557, 4776612, 1855553, 6250316, 10412175, 8929589, 6435760,
+  4099194, 3889646, 14826025, 4973287, 12159456, 7402008, 3492928, 1929196, 10747890,
+  5478709, 11849802, 3356852, 4617860, 2738171, 7992089, 7872694, 8000776, 5188386,
+  3109866, 3928034, 11672289, 5477226, 14986603, 10713364, 2828461, 1936469, 9131220,
+  5892046, 12152486, 4768192, 6407902, 3139192, 7510907, 9140448, 9336133, 10001529,
+  4503719, 2840173, 12561285, 5309318, 11327913, 9227373, 2957116, 2076895, 15961726,
+  8425364, 8826894, 4751989, 4681104, 1849126, 6601230, 8910705, 8740188, 9961069,
+  3503410, 3810139, 14055799, 5551060, 13511174, 7699875, 3156921, 1758301, 10367269,
+  5248358, 12738738, 3925050, 5298305, 2083128, 6558398, 8033319, 8799476, 6164362,
+  3120674, 3150372, 15231525, 5231849, 13332111, 11205314, 3110857, 1849716, 7211738,
+  6894037, 11594601, 5322918, 6541619, 2749641, 8952266, 11001713, 8364417, 10326103,
+  4624354, 2556089, 12448831, 5874416, 18503081, 7996720, 3244528, 1837253, 17366526,
+  7777252, 9214286, 4393798, 4298839, 1936993, 5645621, 7766330, 9880133, 7710202,
+  4605064, 3231598, 13448986, 5456657, 13240765, 7146050, 3089897, 1962573, 8725882,
+  5230181, 13079938, 3716400, 6606180, 2437381, 7389619, 7229799, 9212171, 6742852,
+  3257640, 2745779, 18017896, 4756914, 13062211, 12361211, 3256759, 1681803, 12967068,
+  7744811, 9909450, 4465864, 5434910, 2677912, 8019248, 10776828, 9177388, 11496029,
+  5279502, 2783384, 12018348, 5196597, 15372735, 11495168, 3300661, 1877105, 16820637,
+  7574368, 8796398, 3899557, 4776612, 1855553, 6250316, 11110292, 8929589, 9330623,
+  4099194, 3889646, 15518704, 4973287, 12159456, 7402008, 3492928, 1929196, 11340183,
+  5478709, 14169929, 3356852, 4617860, 2738171, 7992089, 7872694, 8000776, 5188386,
+  3109866, 3928034, 16887280, 5477226, 14986603, 10713364, 2828461, 1936469, 16752581,
+  5892046, 13025379, 4768192, 6407902, 3139192, 7510907, 9140448, 9336133, 14181155,
+  4503719, 2840173, 12949752, 5309318, 14222775, 9227373, 2957116, 2076895, 19334101,
+  8879081, 8826894, 4751989, 4681104, 1849126, 6601230, 8910705, 8740188, 14092311,
+  3503410, 3810139, 18235425, 5551060, 13511174, 7699875, 3156921, 1758301, 10367269,
+  5248358, 12738738, 3925050, 5298305, 2083128, 6558398, 8033319, 8799476, 6164362,
+  3120674, 3150372, 18845234, 5231849, 17511738, 11205314, 3110857, 1849716, 10823707,
+
 )
 
 
@@ -461,13 +570,13 @@ def nonlinear_radius(
     return lower, upper, iterations
 
 
-def correlated_nonlinear_radius(
+def correlated_nonlinear_eigenvector(
     transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
     q: float,
     iterations: int,
     edge_factor: float = 1.0,
-) -> tuple[float, float, int]:
-    """Collatz bounds for the min-of-correlated-sums transfer operator."""
+) -> tuple[float, float, int, tuple[float, ...]]:
+    """Collatz bounds and a numerical potential for the correlated operator."""
     weights = [1.0] * len(transitions)
     lower = upper = 0.0
     for iteration in range(1, iterations + 1):
@@ -488,8 +597,89 @@ def correlated_nonlinear_radius(
         delta = max(abs(log(new / old)) for new, old in zip(updated, weights))
         weights = updated
         if delta < 1e-13 and upper - lower < 1e-11:
-            return lower, upper, iteration
-    return lower, upper, iterations
+            return lower, upper, iteration, tuple(weights)
+    return lower, upper, iterations, tuple(weights)
+
+
+def correlated_nonlinear_radius(
+    transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+    q: float,
+    iterations: int,
+    edge_factor: float = 1.0,
+) -> tuple[float, float, int]:
+    """Collatz bounds for the min-of-correlated-sums transfer operator."""
+    lower, upper, used_iterations, _ = correlated_nonlinear_eigenvector(
+        transitions, q, iterations, edge_factor
+    )
+    return lower, upper, used_iterations
+
+
+def exact_integer_correlated_certificate(
+    transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+    factor: Fraction,
+    q: Fraction,
+    iterations: int,
+    minimum_weight: int = 1_000_000,
+) -> tuple[tuple[int, ...], float, int, int]:
+    """Round a numerical potential and check every inequality exactly.
+
+    All edges have a bounded integral cost.  Multiplying by the common
+    denominator ``factor.denominator * q.denominator^max_cost`` turns every
+    certificate inequality into one integer comparison, avoiding slow repeated
+    normalization of very large ``Fraction`` values.
+    """
+    if minimum_weight < 1:
+        raise ValueError("minimum_weight must be positive")
+    _, _, _, numerical = correlated_nonlinear_eigenvector(
+        transitions, float(q), iterations, float(factor)
+    )
+    floor = min(numerical)
+    weights = tuple(round(minimum_weight * value / floor) for value in numerical)
+    ratio, margin, checked = verify_integer_correlated_certificate(
+        transitions, factor, q, weights
+    )
+    return weights, ratio, margin, checked
+
+
+def verify_integer_correlated_certificate(
+    transitions: tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+    factor: Fraction,
+    q: Fraction,
+    weights: tuple[int, ...],
+) -> tuple[float, int, int]:
+    """Check a supplied correlated potential by common-denominator integers."""
+    if len(weights) != len(transitions) or min(weights) < 1:
+        raise ValueError("the potential must have one positive weight per state")
+    max_cost = max(
+        cost
+        for alternatives in transitions
+        for edges in alternatives
+        for cost, _ in edges
+    )
+    common_q_denominator = q.denominator**max_cost
+    source_scale = factor.denominator * common_q_denominator
+    minimum_margin: int | None = None
+    minimum_ratio = float("inf")
+    checked = 0
+    for source_weight, alternatives in zip(weights, transitions):
+        for edges in alternatives:
+            image = factor.numerator * sum(
+                q.numerator**cost
+                * q.denominator ** (max_cost - cost)
+                * weights[target]
+                for cost, target in edges
+            )
+            source = source_scale * source_weight
+            margin = image - source
+            if margin <= 0:
+                raise ValueError(
+                    f"rounded potential is not a certificate: margin={margin}"
+                )
+            minimum_margin = margin if minimum_margin is None else min(minimum_margin, margin)
+            minimum_ratio = min(minimum_ratio, image / source)
+            checked += 1
+    assert minimum_margin is not None
+    return minimum_ratio, minimum_margin, checked
 
 
 def search_height_critical_q(
@@ -591,6 +781,29 @@ def verify_exact_correlated_two_thirds_certificate() -> tuple[Fraction, Fraction
     return min(margins), min(ratios)
 
 
+def verify_exact_correlated_three_quarters_certificate() -> tuple[float, int, int]:
+    """Check the frozen 810-state shared-lift exponent-3/4 certificate."""
+    factor = CORRELATED_THREE_QUARTERS_FACTOR
+    q = CORRELATED_THREE_QUARTERS_Q
+    assert factor**4 < 27
+    assert 8 * q**4 < 1
+    transitions = build_correlated_height_transitions(
+        ternary_depth=CORRELATED_THREE_QUARTERS_DEPTH,
+        heights=CORRELATED_THREE_QUARTERS_HEIGHT_BINS,
+        growing_children=7,
+        include_shrinking=True,
+    )
+    assert len(transitions) == len(CORRELATED_THREE_QUARTERS_WEIGHTS) == 810
+    ratio, margin, checked = verify_integer_correlated_certificate(
+        transitions,
+        factor,
+        q,
+        CORRELATED_THREE_QUARTERS_WEIGHTS,
+    )
+    assert checked == 2430
+    return ratio, margin, checked
+
+
 def search_net_critical_exponent(
     transitions: tuple[tuple[tuple[int, tuple[int, ...]], ...], ...],
     iterations: int,
@@ -645,7 +858,11 @@ def search_correlated_net_critical_exponent(
 
 def run_height_search(args: argparse.Namespace) -> None:
     heights = tuple(parse_fraction(value) for value in args.height_bins.split(",") if value)
-    if not heights or heights[0] != 1 or any(a >= b for a, b in zip(heights, heights[1:])):
+    if (
+        not heights
+        or heights[0] != 1
+        or any(a >= b for a, b in zip(heights, heights[1:]))
+    ):
         raise ValueError("--height-bins must increase strictly and start at 1")
 
     print()
@@ -689,26 +906,78 @@ def run_net_search(args: argparse.Namespace) -> None:
         )
 
 
-def run_correlated_net_search(args: argparse.Namespace) -> None:
+def correlated_search_configuration(
+    args: argparse.Namespace,
+) -> tuple[
+    tuple[Fraction, ...],
+    tuple[tuple[tuple[tuple[int, int], ...], ...], ...],
+]:
+    heights = tuple(
+        parse_fraction(value)
+        for value in args.correlated_height_bins.split(",")
+        if value
+    )
+    if not heights or heights[0] != 1 or any(a >= b for a, b in zip(heights, heights[1:])):
+        raise ValueError("--height-bins must increase strictly and start at 1")
     transitions = build_correlated_height_transitions(
-        CORRELATED_TWO_THIRDS_DEPTH,
-        CORRELATED_TWO_THIRDS_HEIGHT_BINS,
-        7,
+        args.correlated_depth,
+        heights,
+        args.height_children,
         True,
     )
+    return heights, transitions
+
+
+def run_correlated_net_search(args: argparse.Namespace) -> None:
+    heights, transitions = correlated_search_configuration(args)
     exponent, lower, upper, iterations = search_correlated_net_critical_exponent(
         transitions, args.height_iterations
     )
     print()
     print("shared-lift net-height transfer search (numerical candidate)")
     print(
-        "  states=270 (unit residues mod 81 x height floors "
-        "{1,7/4,5/2,3,4}); three correlated source lifts"
+        f"  states={len(transitions)} (unit residues mod {3**args.correlated_depth} "
+        f"x height floors {{{','.join(map(str, heights))}}}); "
+        "three correlated source lifts"
     )
     print(
         f"  exponent~{exponent:.12f}, ratio=[{lower:.12f},{upper:.12f}], "
         f"iterations={iterations}"
     )
+
+
+def run_correlated_three_quarters_certificate(args: argparse.Namespace) -> None:
+    heights, transitions = correlated_search_configuration(args)
+    factor = CORRELATED_THREE_QUARTERS_FACTOR
+    q = CORRELATED_THREE_QUARTERS_Q
+    assert factor**4 < 27
+    assert 8 * q**4 < 1
+    weights, ratio, margin, checked = exact_integer_correlated_certificate(
+        transitions,
+        factor,
+        q,
+        args.height_iterations,
+        args.certificate_minimum_weight,
+    )
+    print()
+    print("exact shared-lift net-height exponent-3/4 candidate")
+    print(
+        f"  states={len(transitions)} (unit residues mod {3**args.correlated_depth} "
+        f"x {len(heights)} height floors); inequalities={checked}"
+    )
+    print(
+        f"  rational edge under-bound: ({factor})*({q})^j; "
+        "valid because factor^4 < 27 and 8*q^4 < 1"
+    )
+    print(
+        f"  exact integer inequalities strict; minimum ratio={ratio:.12f}; "
+        f"minimum scaled margin={margin}; weights=[{min(weights)},{max(weights)}]"
+    )
+    if args.print_certificate:
+        print("  weights=(")
+        for offset in range(0, len(weights), 9):
+            print("    " + ", ".join(map(str, weights[offset : offset + 9])) + ",")
+        print("  )")
 
 
 def parse_args() -> argparse.Namespace:
@@ -745,8 +1014,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--correlated-net-search",
         action="store_true",
-        help="reproduce the shared-next-ternary-digit 270-state search",
+        help="run the shared-next-ternary-digit net-height search",
     )
+    parser.add_argument(
+        "--correlated-net-search-only",
+        action="store_true",
+        help="run only the shared-lift search, skipping the standard exact checks",
+    )
+    parser.add_argument(
+        "--correlated-three-quarters-certificate",
+        action="store_true",
+        help="generate and exactly check a 3/4 shared-lift integer certificate",
+    )
+    parser.add_argument(
+        "--correlated-depth",
+        type=int,
+        default=CORRELATED_THREE_QUARTERS_DEPTH,
+        help="ternary residue depth for --correlated-net-search",
+    )
+    parser.add_argument(
+        "--correlated-height-bins",
+        default=",".join(map(str, CORRELATED_THREE_QUARTERS_HEIGHT_BINS)),
+        help="height floors for --correlated-net-search",
+    )
+    parser.add_argument("--certificate-minimum-weight", type=int, default=1_000_000)
+    parser.add_argument("--print-certificate", action="store_true")
     parser.add_argument("--ternary-depth", type=int, default=3)
     parser.add_argument("--height-children", type=int, default=7)
     parser.add_argument("--height-iterations", type=int, default=4000)
@@ -759,6 +1051,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.correlated_net_search_only:
+        run_correlated_net_search(args)
+        return
+    if args.correlated_three_quarters_certificate:
+        run_correlated_three_quarters_certificate(args)
+        return
     if args.children < 1:
         raise ValueError("--children must be positive")
     if args.verify_up_to < 2:
@@ -873,6 +1171,25 @@ def main() -> None:
     print(
         f"  all 810 inequalities strict; minimum ratio={float(two_thirds_ratio):.12f}; "
         f"minimum margin={float(two_thirds_margin):.12f}"
+    )
+
+    three_quarters_ratio, three_quarters_margin, three_quarters_checked = (
+        verify_exact_correlated_three_quarters_certificate()
+    )
+    print()
+    print("exact shared-lift net-height exponent-3/4 candidate")
+    print(
+        "  states=810 (unit residues mod 243 x height floors {1,7/4,3,6,12}); "
+        "one next ternary digit shared across every child"
+    )
+    print(
+        "  rational edge under-bound: (2279/1000)*(2973/5000)^j; "
+        "valid because (2279/1000)^4 < 27 and 8*(2973/5000)^4 < 1"
+    )
+    print(
+        f"  all {three_quarters_checked} integer inequalities strict; "
+        f"minimum ratio={three_quarters_ratio:.12f}; "
+        f"minimum scaled margin={three_quarters_margin}"
     )
 
     if args.height_search:

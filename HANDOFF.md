@@ -1,5 +1,38 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-23, post-Opus audit): an exact exponent-`3/4` candidate is FOUND
+
+- Independently audited the completed recursive exponent-`2/3` lap: full `lake build` green
+  (8,739 jobs), clean worktree, and `#print axioms` for
+  `twoThirdsRepeatOrStoppingGrowth`, `twoThirdsStoppingFrontier_of_noCycle`,
+  `twoThirdsPotential_ge_min`, and `twoThirds_stopping_card_bound` reports exactly
+  `[propext, Classical.choice, Quot.sound]`.
+- Generalized the shared-lift numerical search in `experiments/barrier_transfer.py` to vary
+  ternary depth and height floors and added a fast search-only mode.  With the old five
+  floors, correlated depths `3..7` have critical endpoint exponents approximately
+  `.661695, .683820, .706968, .727160, .740806`.  More importantly, the correlated operator
+  *does* benefit from higher height floors: depth `5` on a richer grid reaches `.760516`.
+- The state space compresses without losing the target.  Unit residues modulo `243` and only
+  five height floors `{1, 7/4, 3, 6, 12}` give numerical critical exponent
+  `.755567122828`.  The frozen `810`-entry integer potential then passes all `810 × 3 = 2430`
+  source-state/shared-lift inequalities in exact common-denominator integer arithmetic for
+
+  ```
+  (2279/1000) * (2973/5000)^j < (3/2^j)^(3/4).
+  ```
+
+  The analytic underweight reduces to `(2279/1000)^4 < 27` and
+  `8*(2973/5000)^4 < 1`.  The exact minimum certificate ratio is
+  `1.005333383627`; weights range from `1,000,000` to `19,334,101`.  The table and checker
+  are frozen in the experiment.  This is certificate-grade computational evidence, **not
+  yet Lean-checked**.
+- **Next Lean target**: `FrontA/BackwardThreeQuarters.lean`, porting the local layer of
+  `BackwardTwoThirds.lean` to source residues modulo `729`, child residues modulo `243`, the
+  five floors `{1,7/4,3,6,12}`, and the frozen 810-state table.  First prove an
+  `exists_threeQuartersExpansion` analogue only; after that, port the real-rpow renewal and
+  stopping layers from exponent `2/3` to `3/4`.  `native_decide` is allowed for the initial
+  2,430-inequality table check.
+
 ## Update (2026-08-23, newest lap): `TwoThirdsRepeatOrStoppingGrowth` is now a THEOREM
 
 - Added `CollatzMoonshot/FrontA/BackwardTwoThirdsStopping.lean`, **`sorry`-free**, proving
