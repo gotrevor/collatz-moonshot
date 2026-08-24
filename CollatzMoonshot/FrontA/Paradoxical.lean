@@ -260,6 +260,17 @@ theorem headBlock_not_acyclicParadoxical (n q t : ℕ)
   simp only [ones_replicate_true, ones_replicate_false, add_zero] at hsub
   exact absurd (headBlock_endpoint_le n q t hword hsub) (by omega)
 
+/-- **Word decomposition.**  The parity itinerary of `i+j` steps splits at step `i`:
+`traceWord n (i+j) = traceWord n i ++ traceWord (tstep^[i] n) j`.  The reconstruction tool for
+extracting the individual blocks of a multi-block word. -/
+theorem traceWord_add (n i j : ℕ) :
+    traceWord n (i + j) = traceWord n i ++ traceWord (tstep^[i] n) j := by
+  induction i generalizing n with
+  | zero => simp [traceWord]
+  | succ k ih =>
+    rw [Nat.succ_add, traceWord, traceWord, List.cons_append, ih (tstep n),
+      Function.iterate_succ_apply]
+
 /-- **Head-block residue constraint.**  If the first `b` accelerated letters of `n` are all
 odd (`traceWord n b = [T]^b`), then `2^b ∣ (n+1)`.  Proof by the `u = x+1` conjugation: an odd
 step sends `x+1 = 2u` to `tstep x + 1 = 3u`, so each odd letter contributes one factor of `2`
