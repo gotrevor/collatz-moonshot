@@ -7429,6 +7429,30 @@ theorem harmonicNatCertificate :
       harmonicNatImage i r.1 < 2 ^ 23 * harmonicPotential i r.1 := by
   native_decide
 
+/-! ## Rational supersolution `M W < W`
+
+Dividing the integer certificate by `2^23` turns each scaled growing edge
+`3 * 2^(23-j) * W(child)` into the exact harmonic edge `(3 / 2^j) * W(child)`
+and the shrinking edge into `(3/2) * W(child)`, so the rational image below is
+literally `(M W)(i, r)` for the constant-lift harmonic operator `M`. -/
+
+/-- The exact rational harmonic image `(M W)(i, r)` at a source residue `r`
+(read modulo `3^10`): seven growing edges plus the safe shrinking edge. -/
+noncomputable def harmonicQImage (i : Fin 5) (r : ℕ) : ℚ :=
+  (harmonicNatImage i r : ℚ) / 2 ^ 23
+
+/-- **Rational supersolution.**  For every floor `i` and unit source residue `r`
+modulo `3^10`, `(M W)(i,r) < W(i,r)`: the harmonic operator strictly contracts
+the frozen weight.  This is `harmonicNatCertificate` cleared of the scale. -/
+theorem harmonicQImage_lt (i : Fin 5) (r : ℕ) (hr : r % 3 ≠ 0) (hlt : r < 59049) :
+    harmonicQImage i r < (harmonicPotential i r : ℚ) := by
+  have h := harmonicNatCertificate i ⟨r, hlt⟩ hr
+  have hcast : (harmonicNatImage i r : ℚ) < 2 ^ 23 * (harmonicPotential i r : ℚ) := by
+    exact_mod_cast h
+  unfold harmonicQImage
+  rw [div_lt_iff₀ (by positivity : (0:ℚ) < 2 ^ 23)]
+  linarith [hcast]
+
 /-! ## The elementary dual obstruction
 
 The finite-dimensional Farkas/Perron content, stated abstractly: on a finite
