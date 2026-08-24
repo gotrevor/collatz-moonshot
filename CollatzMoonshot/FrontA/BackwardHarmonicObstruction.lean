@@ -7453,6 +7453,55 @@ theorem harmonicQImage_lt (i : Fin 5) (r : ℕ) (hr : r % 3 ≠ 0) (hlt : r < 59
   rw [div_lt_iff₀ (by positivity : (0:ℚ) < 2 ^ 23)]
   linarith [hcast]
 
+/-! ## The harmonic image of an arbitrary weight
+
+`harmonicImageOfAt f i r` is the constant-lift harmonic operator applied to an
+arbitrary rational weight `f`, with the coefficients written in the cleared form
+`3 * 2^(23-j) / 2^23 = 3 / 2^j` so that the supersolution identity below is
+immediate. -/
+
+/-- One rational growing edge for an arbitrary weight `f`. -/
+noncomputable def harmonicQEdge (f : Fin 5 → ℕ → ℚ) (i : Fin 5) (r j : ℕ) : ℚ :=
+  (3 * 2 ^ (23 - j) : ℚ) / 2 ^ 23 *
+    f (nextThreeQuartersState i j) (harmonicChildResidue r j)
+
+/-- The harmonic operator applied to `f`: seven growing edges plus the safe
+shrinking edge (which drops one floor, `shrinkThreeQuartersState`). -/
+noncomputable def harmonicImageOfAt (f : Fin 5 → ℕ → ℚ) (i : Fin 5) (r : ℕ) : ℚ :=
+  harmonicQEdge f i r (sevenCostsAt r 0) +
+  harmonicQEdge f i r (sevenCostsAt r 1) +
+  harmonicQEdge f i r (sevenCostsAt r 2) +
+  harmonicQEdge f i r (sevenCostsAt r 3) +
+  harmonicQEdge f i r (sevenCostsAt r 4) +
+  harmonicQEdge f i r (sevenCostsAt r 5) +
+  harmonicQEdge f i r (sevenCostsAt r 6) +
+  (if threeQuartersHasShrink i r then
+    (3 * 2 ^ 22 : ℚ) / 2 ^ 23 *
+      f (shrinkThreeQuartersState i) (harmonicChildResidue r 1)
+   else 0)
+
+/-- `harmonicQImage` is the harmonic image of the frozen weight `W`. -/
+theorem harmonicQImage_eq_imageOf (i : Fin 5) (r : ℕ) :
+    harmonicQImage i r =
+      harmonicImageOfAt (fun i r => (harmonicPotential i r : ℚ)) i r := by
+  unfold harmonicQImage harmonicImageOfAt harmonicQEdge harmonicNatImage harmonicNatEdge
+  by_cases hs : threeQuartersHasShrink i r = true <;>
+    simp only [hs, if_true] <;> push_cast <;> ring
+
+/-- Every growing child residue is again a unit modulo `3` (so it stays in the
+state space).  Checked over all `59049` source residues by `native_decide`. -/
+theorem harmonicChildResidue_unit_growing :
+    ∀ r : Fin 59049, r.1 % 3 ≠ 0 →
+      ∀ k : Fin 7, harmonicChildResidue r.1 (sevenCostsAt r.1 k) % 3 ≠ 0 := by
+  native_decide
+
+/-- The shrinking child (cost `1`) is a unit modulo `3` exactly when the shrink
+edge is present (`r % 9 ∈ {2, 8}`). -/
+theorem harmonicChildResidue_unit_shrink :
+    ∀ r : Fin 59049, (r.1 % 9 = 2 ∨ r.1 % 9 = 8) →
+      harmonicChildResidue r.1 1 % 3 ≠ 0 := by
+  native_decide
+
 /-! ## The elementary dual obstruction
 
 The finite-dimensional Farkas/Perron content, stated abstractly: on a finite
