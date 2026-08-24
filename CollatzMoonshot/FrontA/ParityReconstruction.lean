@@ -139,4 +139,98 @@ theorem pow_ones_mul_le (m n : ℕ) :
     3 ^ ones (traceWord n m) * n ≤ 2 ^ m * tstep^[m] n := by
   rw [tstep_iterate_identity]; exact Nat.le_add_right _ _
 
+/-!
+## The reconstruction dictionary (residue determinacy)
+
+The parity trace of length `m` determines the starting value modulo `2^m`, and conversely
+(so the finite parity words biject with residues mod `2^m` — every word is realized, the
+strength-audit guardrail).  Only the forward direction is needed downstream; it follows
+directly from the exact identity and the fact that `3^a` is a unit mod `2^m`.
+-/
+
+/-- **Residue determinacy (forward dictionary).**  Equal length-`m` parity traces force the
+starting values equal modulo `2^m`.  Proof: both sides satisfy `3^a · · + numer ≡ 0`
+(mod `2^m`) with the *same* word data, and `3^a` is invertible mod `2^m`. -/
+theorem traceWord_eq_imp_modEq {a b m : ℕ} (h : traceWord a m = traceWord b m) :
+    a ≡ b [MOD 2 ^ m] := by
+  have hA : 3 ^ ones (traceWord a m) * a + numer (traceWord a m) ≡ 0 [MOD 2 ^ m] := by
+    rw [← tstep_iterate_identity m a]; exact (Nat.modEq_zero_iff_dvd).2 (dvd_mul_right _ _)
+  have hB : 3 ^ ones (traceWord a m) * b + numer (traceWord a m) ≡ 0 [MOD 2 ^ m] := by
+    rw [h, ← tstep_iterate_identity m b]; exact (Nat.modEq_zero_iff_dvd).2 (dvd_mul_right _ _)
+  have hcancel : 3 ^ ones (traceWord a m) * a ≡ 3 ^ ones (traceWord a m) * b [MOD 2 ^ m] :=
+    Nat.ModEq.add_right_cancel' _ (hA.trans hB.symm)
+  have hcop : Nat.Coprime (3 ^ ones (traceWord a m)) (2 ^ m) :=
+    Nat.Coprime.pow _ _ (by decide)
+  exact Nat.ModEq.cancel_left_of_coprime hcop.symm hcancel
+
+/-- **Equality from all finite traces.**  If two naturals have the same parity trace at
+every length, they are equal.  This is the positivity-side statement: a natural number's
+full parity itinerary determines it.  (Project item: "equality of naturals whose finite
+parity traces agree at every length.") -/
+theorem eq_of_forall_traceWord_eq {a b : ℕ}
+    (h : ∀ m, traceWord a m = traceWord b m) : a = b := by
+  have hmod : a ≡ b [MOD 2 ^ (a + b + 1)] := traceWord_eq_imp_modEq (h (a + b + 1))
+  have ha : a < 2 ^ (a + b + 1) :=
+    lt_of_lt_of_le (Nat.lt_two_pow_self) (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have hb : b < 2 ^ (a + b + 1) :=
+    lt_of_lt_of_le (Nat.lt_two_pow_self) (Nat.pow_le_pow_right (by norm_num) (by omega))
+  unfold Nat.ModEq at hmod
+  rwa [Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at hmod
+
+/-!
+## No-divergence baseline: eventually periodic parity trace forces an orbit repeat
+
+If the parity itinerary of the accelerated orbit is eventually periodic, two orbit states
+share their entire future trace, hence (by `eq_of_forall_traceWord_eq`) are equal, so the
+orbit cycles and cannot diverge.  This is the promised restricted rigidity baseline.
+-/
+
+/-- Two starting values with identical parity itineraries have identical traces of every
+length.  (Engine of the periodic baseline.) -/
+theorem traceWord_eq_of_parity_itinerary_eq {u w : ℕ}
+    (h : ∀ j, tstep^[j] u % 2 = tstep^[j] w % 2) (ℓ : ℕ) :
+    traceWord u ℓ = traceWord w ℓ := by
+  induction ℓ generalizing u w with
+  | zero => rfl
+  | succ ℓ ih =>
+    have h0 : u % 2 = w % 2 := by simpa using h 0
+    have htail : ∀ j, tstep^[j] (tstep u) % 2 = tstep^[j] (tstep w) % 2 := by
+      intro j
+      have := h (j + 1)
+      rwa [Function.iterate_succ_apply, Function.iterate_succ_apply] at this
+    rw [traceWord, traceWord, h0, ih htail]
+
+/-- **The periodic baseline.**  If the accelerated-orbit parity is eventually periodic with
+period `p` from index `M` (`p ≥ 1`), then `tstep^[M] n = tstep^[M + p] n`: the orbit
+repeats.  Consequently it is bounded and does not diverge. -/
+theorem tstep_repeat_of_eventually_periodic_parity {n M p : ℕ}
+    (hper : ∀ k, M ≤ k → tstep^[k] n % 2 = tstep^[k + p] n % 2) :
+    tstep^[M] n = tstep^[M + p] n := by
+  apply eq_of_forall_traceWord_eq
+  intro ℓ
+  apply traceWord_eq_of_parity_itinerary_eq
+  intro j
+  have e := hper (M + j) (Nat.le_add_right M j)
+  have lhs : tstep^[j] (tstep^[M] n) = tstep^[M + j] n := by
+    rw [← Function.iterate_add_apply, Nat.add_comm]
+  have rhs : tstep^[j] (tstep^[M + p] n) = tstep^[M + j + p] n := by
+    rw [← Function.iterate_add_apply]; congr 1; omega
+  rw [lhs, rhs, e]
+
+/-- The accelerated orbit of `n` visits only finitely many values once its parity is
+eventually periodic: every later state equals one within the first `M + p` steps.  (A
+bounded orbit cannot diverge; recorded as the restricted no-divergence result.) -/
+theorem tstep_periodic_of_eventually_periodic_parity {n M p : ℕ} (_hp : 1 ≤ p)
+    (hper : ∀ k, M ≤ k → tstep^[k] n % 2 = tstep^[k + p] n % 2) :
+    ∀ k, M ≤ k → tstep^[k] n = tstep^[k + p] n := by
+  intro k hk
+  obtain ⟨d, rfl⟩ : ∃ d, k = M + d := ⟨k - M, by omega⟩
+  have base := tstep_repeat_of_eventually_periodic_parity hper
+  have : tstep^[d] (tstep^[M] n) = tstep^[d] (tstep^[M + p] n) := by rw [base]
+  rw [← Function.iterate_add_apply, ← Function.iterate_add_apply] at this
+  have e1 : d + M = M + d := by omega
+  have e2 : d + (M + p) = M + d + p := by omega
+  rw [e1, e2] at this
+  exact this
+
 end CollatzMoonshot.FrontA
