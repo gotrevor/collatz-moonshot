@@ -154,4 +154,116 @@ theorem exists_isT2Invariant_of_empirical (x : ℤ_[2]) :
     tendsto_nhds_unique hmap_cont hmap_int
   rw [← ProbabilityMeasure.toMeasure_map μ (continuous_T2.measurable.aemeasurable), huniq]
 
+/-! ## Support of the empirical/cluster measure on the orbit closure (M2′ piece)
+
+For the parity-rigidity keystone W1′ we need the invariant measure to be supported on
+`orbitClosure n` (mass `1`).  The empirical measures of the embedded orbit of `↑n` are
+literally supported there, and the closed-set Portmanteau bound carries mass `1` to any
+weak-* cluster point. -/
+
+/-- Iterating the base intertwining: the `T2`-orbit of `↑n` is the embedded `step`-orbit. -/
+theorem T2_iterate_natCast (n : ℕ) (k : ℕ) :
+    T2^[k] (n : ℤ_[2]) = ((step^[k] n : ℕ) : ℤ_[2]) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [Function.iterate_succ_apply', ih, T2_natCast, Function.iterate_succ_apply']
+
+/-- Each empirical orbit point of `↑n` lies in the orbit closure of `n`. -/
+theorem T2_iterate_natCast_mem_orbitClosure (n : ℕ) (k : ℕ) :
+    T2^[k] (n : ℤ_[2]) ∈ orbitClosure n := by
+  apply subset_closure
+  exact ⟨k, by rw [T2_iterate_natCast]⟩
+
+/-- The Cesàro empirical measure of the embedded orbit of `↑n` gives the orbit closure full
+mass: every one of its Dirac points sits in the (closed) orbit closure. -/
+theorem empiricalMeasure_orbitClosure (n : ℕ) {N : ℕ} (hN : 1 ≤ N) :
+    empiricalMeasure (n : ℤ_[2]) N (orbitClosure n) = 1 := by
+  have hmeas : MeasurableSet (orbitClosure n) := isClosed_closure.measurableSet
+  unfold empiricalMeasure
+  rw [Measure.smul_apply, Measure.finsetSum_apply]
+  have hterm : ∀ k ∈ Finset.range N,
+      Measure.dirac (T2^[k] (n : ℤ_[2])) (orbitClosure n) = 1 := by
+    intro k _
+    rw [Measure.dirac_apply' _ hmeas,
+      Set.indicator_of_mem (T2_iterate_natCast_mem_orbitClosure n k), Pi.one_apply]
+  rw [Finset.sum_congr rfl hterm]
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one, smul_eq_mul]
+  refine ENNReal.inv_mul_cancel ?_ (ENNReal.natCast_ne_top N)
+  exact_mod_cast Nat.one_le_iff_ne_zero.mp hN
+
+/-- **Krylov–Bogolyubov with support control (M2′).**  Every positive `n` admits a
+`T2`-invariant probability measure supported on `orbitClosure n` (mass `1`).  Obtained as a
+weak-* cluster point of the empirical measures of the embedded orbit `↑n`, whose support lies
+in the closed set `orbitClosure n`; the closed-set Portmanteau bound carries the full mass. -/
+theorem exists_isT2Invariant_orbitClosure (n : ℕ) :
+    ∃ μ : ProbabilityMeasure ℤ_[2],
+      IsT2Invariant (μ : Measure ℤ_[2]) ∧ (μ : Measure ℤ_[2]) (orbitClosure n) = 1 := by
+  set x : ℤ_[2] := (n : ℤ_[2]) with hx
+  obtain ⟨μ, -, hcl⟩ :=
+    isCompact_univ.exists_mapClusterPt (f := (atTop : Filter ℕ))
+      (u := fun N => empiricalPM x N) (by simp)
+  obtain ⟨ψ, hψ_mono, hψ_tendsto⟩ := hcl.tendsto_subseq
+  refine ⟨μ, ?_, ?_⟩
+  · -- Invariance: same argument as `exists_isT2Invariant_of_empirical`.
+    rw [isT2Invariant_iff_map_eq]
+    have hmap_cont : Tendsto (fun k => (empiricalPM x (ψ k)).map
+        (continuous_T2.measurable.aemeasurable)) atTop
+        (𝓝 (μ.map (continuous_T2.measurable.aemeasurable))) :=
+      ProbabilityMeasure.tendsto_map_of_tendsto_of_continuous _ _ hψ_tendsto continuous_T2
+    have hmap_int : Tendsto (fun k => (empiricalPM x (ψ k)).map
+        (continuous_T2.measurable.aemeasurable)) atTop (𝓝 μ) := by
+      rw [ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
+      intro f
+      have hchange : ∀ k, ∫ ω, f ω ∂((empiricalPM x (ψ k)).map
+          (continuous_T2.measurable.aemeasurable) : Measure ℤ_[2])
+          = ∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]) := by
+        intro k
+        rw [ProbabilityMeasure.toMeasure_map]
+        exact integral_map continuous_T2.measurable.aemeasurable f.continuous.aestronglyMeasurable
+      simp_rw [hchange]
+      have ha : Tendsto (fun k => ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])) atTop
+          (𝓝 (∫ ω, f ω ∂(μ : Measure ℤ_[2]))) :=
+        ((ProbabilityMeasure.continuous_integral_continuousMap f).tendsto μ).comp hψ_tendsto
+      have hd : Tendsto (fun k => (∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]))
+          - ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])) atTop (𝓝 0) := by
+        have hform : ∀ k, (∫ ω, f (T2 ω) ∂(empiricalPM x (ψ k) : Measure ℤ_[2]))
+            - ∫ ω, f ω ∂(empiricalPM x (ψ k) : Measure ℤ_[2])
+            = (↑(ψ k + 1) : ℝ)⁻¹ * (f (T2^[ψ k + 1] x) - f x) := by
+          intro k
+          simpa using integral_empiricalMeasure_comp_T2_sub x (ψ k + 1) (⇑f)
+        simp_rw [hform, Nat.cast_add, Nat.cast_one]
+        have hnull : Tendsto (fun N : ℕ => ((N : ℝ) + 1)⁻¹ * (f (T2^[N + 1] x) - f x)) atTop
+            (𝓝 0) := by
+          apply squeeze_zero_norm (a := fun N : ℕ => ((N : ℝ) + 1)⁻¹ * (2 * ‖f‖))
+          · intro N
+            rw [norm_mul, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+            gcongr
+            calc ‖f (T2^[N + 1] x) - f x‖ ≤ ‖f (T2^[N + 1] x)‖ + ‖f x‖ := norm_sub_le _ _
+              _ ≤ ‖f‖ + ‖f‖ := add_le_add (f.norm_coe_le_norm _) (f.norm_coe_le_norm _)
+              _ = 2 * ‖f‖ := by ring
+          · have hstep : Tendsto (fun N : ℕ => ((N : ℝ) + 1)) atTop atTop :=
+              tendsto_atTop_add_const_right atTop 1 tendsto_natCast_atTop_atTop
+            have hinv : Tendsto (fun N : ℕ => ((N : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
+              tendsto_inv_atTop_zero.comp hstep
+            simpa using hinv.mul_const (2 * ‖f‖)
+        exact hnull.comp hψ_mono.tendsto_atTop
+      simpa using ha.add hd
+    have huniq : μ.map (continuous_T2.measurable.aemeasurable) = μ :=
+      tendsto_nhds_unique hmap_cont hmap_int
+    rw [← ProbabilityMeasure.toMeasure_map μ (continuous_T2.measurable.aemeasurable), huniq]
+  · -- Support: closed-set Portmanteau carries the full empirical mass to the limit.
+    have hclosed : IsClosed (orbitClosure n) := isClosed_closure
+    have hlimsup := ProbabilityMeasure.limsup_measure_closed_le_of_tendsto hψ_tendsto hclosed
+    have hone : ∀ k, (empiricalPM x (ψ k) : Measure ℤ_[2]) (orbitClosure n) = 1 := by
+      intro k
+      rw [empiricalPM_toMeasure, hx]
+      exact empiricalMeasure_orbitClosure n (by omega)
+    refine le_antisymm prob_le_one ?_
+    calc (1 : ℝ≥0∞)
+        = atTop.limsup
+            (fun i => (empiricalPM x (ψ i) : Measure ℤ_[2]) (orbitClosure n)) := by
+          rw [funext hone]; exact (limsup_const 1).symm
+      _ ≤ (μ : Measure ℤ_[2]) (orbitClosure n) := hlimsup
+
 end CollatzMoonshot

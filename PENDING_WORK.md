@@ -61,13 +61,16 @@ Suppose `Diverges n` (`1 ≤ n`).
 `tendsto_nhds_unique`. This is milestone M2′ piece **(b)** (the invariance transfer).
 
 **Remaining M2′ pieces (grind laps), in order:**
-1. **Support on the orbit closure.** Strengthen `exists_isT2Invariant_of_empirical` to also
-   deliver `μ (orbitClosure n) = 1` (for `1 ≤ n`, `x = (n : ℤ_[2])`): each empirical is
-   supported on the orbit `⊆ orbitClosure n` (closed), so by Portmanteau on the closed set
-   `limsup (empiricalPM (ψk)) (orbitClosure n) ≤ μ (orbitClosure n)` gives `= 1`. Needs the
-   `≥ 1` half via `le_liminf`/closed-set Portmanteau (`tendsto_measure_of_isClopen…` variant
-   for closed sets, or directly since orbit points are IN the closure). Track that
-   `T2 (↑n) = ↑(step n)` (`T2_natCast`) so the orbit closure is the ℕ-orbit's closure.
+1. **Support on the orbit closure. DONE (2026-08-24, this lap).**
+   `exists_isT2Invariant_orbitClosure (n : ℕ) : ∃ μ : ProbabilityMeasure ℤ_[2],
+   IsT2Invariant μ ∧ (μ : Measure) (orbitClosure n) = 1` (`Rigidity/Empirical.lean`,
+   `[propext, choice, Quot.sound]`). Supporting lemmas landed:
+   - `T2_iterate_natCast : T2^[k] (↑n) = ↑(step^[k] n)` (iterated base intertwining);
+   - `T2_iterate_natCast_mem_orbitClosure` (each orbit point ∈ closed `orbitClosure n`);
+   - `empiricalMeasure_orbitClosure : empiricalMeasure (↑n) N (orbitClosure n) = 1` (N≥1).
+   The invariance half reuses the KB argument; the support half is closed-set Portmanteau
+   (`ProbabilityMeasure.limsup_measure_closed_le_of_tendsto` on `isClosed_closure`): every
+   empirical gives the closed orbit closure mass `1`, so `1 = limsup ≤ μ(orbitClosure n) ≤ 1`.
 2. **Frequency link + uniformity.** `(empiricalPM x N) oddSetZ2 = oddSteps? / (N+1)` via
    Portmanteau on the clopen `oddSetZ2`; the invariant-measure set is weak-* compact and
    `ν ↦ ν oddSetZ2` continuous, so W1′ ⟹ uniform `M* < sharpThreshold`, hence
