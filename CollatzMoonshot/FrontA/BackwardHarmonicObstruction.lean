@@ -7543,4 +7543,56 @@ theorem no_positive_subsolution_of_supersolution
       _ = V s₀ := hfix
   exact lt_irrefl _ this
 
+/-! ## Assembling the headline harmonic obstruction -/
+
+/-- The frozen weight is strictly positive on every unit residue and floor. -/
+theorem harmonicPotential_pos :
+    ∀ i : Fin 5, ∀ r : Fin 19683, r.1 % 3 ≠ 0 → 0 < harmonicPotential i r.1 := by
+  native_decide
+
+/-- The harmonic operator is linear: scaling the weight scales the image. -/
+theorem harmonicImageOfAt_smul (lam : ℚ) (f : Fin 5 → ℕ → ℚ) (i : Fin 5) (r : ℕ) :
+    harmonicImageOfAt (fun a b => lam * f a b) i r
+      = lam * harmonicImageOfAt f i r := by
+  unfold harmonicImageOfAt harmonicQEdge
+  split_ifs <;> ring
+
+/-- Monotonicity of the harmonic operator in the weight, over unit children. -/
+theorem harmonicImageOfAt_mono {f g : Fin 5 → ℕ → ℚ} (i : Fin 5) (r : ℕ)
+    (hr3 : r % 3 ≠ 0) (hrlt : r < 59049)
+    (hfg : ∀ i' : Fin 5, ∀ c : ℕ, c < 19683 → c % 3 ≠ 0 → f i' c ≤ g i' c) :
+    harmonicImageOfAt f i r ≤ harmonicImageOfAt g i r := by
+  have hg : ∀ k : Fin 7, harmonicChildResidue r (sevenCostsAt r k) % 3 ≠ 0 :=
+    harmonicChildResidue_unit_growing ⟨r, hrlt⟩ hr3
+  have growE : ∀ cost : ℕ, harmonicChildResidue r cost % 3 ≠ 0 →
+      (3 * 2 ^ (23 - cost) : ℚ) / 2 ^ 23 *
+          f (nextThreeQuartersState i cost) (harmonicChildResidue r cost)
+        ≤ (3 * 2 ^ (23 - cost) : ℚ) / 2 ^ 23 *
+          g (nextThreeQuartersState i cost) (harmonicChildResidue r cost) := by
+    intro cost hcost
+    apply mul_le_mul_of_nonneg_left _ (by positivity)
+    exact hfg _ _ (Nat.mod_lt _ (by norm_num)) hcost
+  unfold harmonicImageOfAt harmonicQEdge
+  by_cases hs : threeQuartersHasShrink i r = true
+  · simp only [hs, if_true]
+    have hshrink3 : harmonicChildResidue r 1 % 3 ≠ 0 := by
+      apply harmonicChildResidue_unit_shrink ⟨r, hrlt⟩
+      unfold threeQuartersHasShrink at hs
+      simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
+        decide_eq_true_eq] at hs
+      exact hs.2
+    refine add_le_add
+      (add_le_add (add_le_add (add_le_add (add_le_add (add_le_add
+        (add_le_add (growE _ (hg 0)) (growE _ (hg 1))) (growE _ (hg 2)))
+        (growE _ (hg 3))) (growE _ (hg 4))) (growE _ (hg 5))) (growE _ (hg 6)))
+      ?_
+    apply mul_le_mul_of_nonneg_left _ (by positivity)
+    exact hfg _ _ (Nat.mod_lt _ (by norm_num)) hshrink3
+  · simp only [hs, if_false]
+    refine add_le_add
+      (add_le_add (add_le_add (add_le_add (add_le_add (add_le_add
+        (add_le_add (growE _ (hg 0)) (growE _ (hg 1))) (growE _ (hg 2)))
+        (growE _ (hg 3))) (growE _ (hg 4))) (growE _ (hg 5))) (growE _ (hg 6)))
+      (le_refl 0)
+
 end CollatzMoonshot.FrontA
