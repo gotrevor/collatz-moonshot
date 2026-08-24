@@ -39,7 +39,12 @@ plus `diverges_two_pow_mul`/`step_iterate_two_pow_mul`). RT axiom is the faithfu
 form `∀ K, ∃ k m, K < 2^k·n ∧ Paradoxical (2^k·n) m`.
 
 **Only remaining open obligation on this front:**
-- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED earlier: the head-block
+- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). Foundational residue piece now
+  PROVED: `headBlock_dvd_succ` — a `[T]^b` head forces `2^b ∣ (n+1)` (via the `u=x+1`
+  conjugation, `[propext, Quot.sound]`). Next: propagate through the interior block —
+  `x_{b+c} = (3^b(n+1)/2^b − 1)/2^c` is odd with `2^d ∣ (x_{b+c}+1)`, giving the sharp lower
+  bound on `n` (via the intermediate odd value `X ≥ 2^d−1`, `3^b ∣ 2^c X+1`) that closes (P)
+  with `numer_twoBlock`. CONFIRMED earlier: the head-block
   trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
   violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It
   genuinely needs the full realizing-residue reconstruction mod `2^(b+c+d)`. Deprioritized as

@@ -260,6 +260,32 @@ theorem headBlock_not_acyclicParadoxical (n q t : ℕ)
   simp only [ones_replicate_true, ones_replicate_false, add_zero] at hsub
   exact absurd (headBlock_endpoint_le n q t hword hsub) (by omega)
 
+/-- **Head-block residue constraint.**  If the first `b` accelerated letters of `n` are all
+odd (`traceWord n b = [T]^b`), then `2^b ∣ (n+1)`.  Proof by the `u = x+1` conjugation: an odd
+step sends `x+1 = 2u` to `tstep x + 1 = 3u`, so each odd letter contributes one factor of `2`
+to `n+1`.  This is the foundational piece of the realizing-residue reconstruction that the
+interior two-block exclusion needs. -/
+theorem headBlock_dvd_succ (n b : ℕ)
+    (hword : traceWord n b = List.replicate b true) : 2 ^ b ∣ (n + 1) := by
+  induction b generalizing n with
+  | zero => simp
+  | succ k ih =>
+    rw [traceWord, List.replicate_succ, List.cons.injEq] at hword
+    obtain ⟨hhead, htail⟩ := hword
+    have hodd : n % 2 = 1 := by
+      by_contra h
+      rw [decide_eq_true_eq] at hhead
+      exact h hhead
+    have hdvd : 2 ^ k ∣ (tstep n + 1) := ih (tstep n) htail
+    obtain ⟨u, hu⟩ : 2 ∣ (n + 1) := by omega
+    have hts : tstep n + 1 = 3 * u := by
+      unfold tstep; rw [if_neg (by omega)]; omega
+    rw [hts] at hdvd
+    have hcop : Nat.Coprime (2 ^ k) 3 := Nat.Coprime.pow_left _ (by decide)
+    have hu2 : 2 ^ k ∣ u := hcop.dvd_of_dvd_mul_left hdvd
+    rw [hu, pow_succ, mul_comm (2 ^ k) 2]
+    exact mul_dvd_mul_left 2 hu2
+
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
 word whose ones form at most two contiguous blocks realizes **no** acyclic paradoxical start.
