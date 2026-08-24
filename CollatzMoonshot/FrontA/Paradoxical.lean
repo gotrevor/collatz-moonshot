@@ -297,69 +297,92 @@ theorem headBlock_dvd_succ (n b : ℕ)
     rw [hu, pow_succ, mul_comm (2 ^ k) 2]
     exact mul_dvd_mul_left 2 hu2
 
-set_option maxHeartbeats 1200000 in
-/-- **Elementary regime of the residue core (no integrality needed).**  Under the "gap"
-inequality `(2^m − 3^(b+d))·(2^(c+d) − 2^c + 1) > 3^b·(3^d(2^c − 1) − 2^(c+d))` (over ℤ), the
-two-block endpoint satisfies `y ≤ n` using only the two segment identities and `w₂ ≥ 1`
-(i.e. `X ≥ 2^d − 1`), with NO least-residue argument.
+set_option maxHeartbeats 800000 in
+/-- **Sharp elementary regime of the residue core (integer ceiling, no least residue).**
+The "gap" is stated in a division-free `∀`-form: *for every* `w` with `2^(c+d) − 2^c + 1 ≤
+3^b·w`, the strict bound `3^d(2^c − 1) − 2^(c+d) < (2^m − 3^(b+d))·w` holds.  Instantiated at
+the actual `w₁ = (n+1)/2^b` (which satisfies the antecedent because `w₂ ≥ 1 ⇒ X ≥ 2^d − 1 ⇒
+3^b·w₁ = 2^c·X + 1 ≥ 2^(c+d) − 2^c + 1`), this contradicts the contrapositive upper bound
+`(2^m − 3^(b+d))·w₁ ≤ 3^d(2^c − 1) − 2^(c+d)` derived from the exact identity
+`2^m·y + 2^(b+c+d) = 3^(b+d)(n+1) + 3^d·2^b(2^c−1)` under `n < y`.
 
-Proof: the exact identity `2^m·y + 2^(b+c+d) = 3^(b+d)(n+1) + 3^d·2^b(2^c−1)` (MAIN, a linear
-combination of the two identities); assuming `n < y` yields the contrapositive bound
-`(2^m − 3^(b+d))(n+1) ≤ 2^b·(3^d(2^c−1) − 2^(c+d))` (UP) and, from `X ≥ 2^d − 1`,
-`2^b·(2^(c+d) − 2^c + 1) ≤ 3^b(n+1)` (LOW); chaining `UP·3^b` with `LOW·(2^m − 3^(b+d))` and
-cancelling `2^b` gives `(2^m − 3^(b+d))·(2^(c+d) − 2^c + 1) ≤ 3^b·(3^d(2^c−1) − 2^(c+d))`,
-contradicting the gap.  The exact census shows this covers all but a thin residual of
-`(b,c,d,e)`. -/
+Using the *integer* lower bound on `w₁` (rather than the real-valued `w₁ ≥ t/3^b`) makes the
+gap hold for **all** subcritical `(b,c,d,e)` except exactly two near-critical tuples,
+`(2,3,3,0)` and `(3,3,2,0)` (exhaustively checked to `b,c,d,e < 34`); both are closed
+separately (`residue_core_exc1`/`exc2`).  No least-residue argument is used here. -/
 theorem core_of_gap (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
     (hI : 2 ^ (b + c) * X + 2 ^ b = 3 ^ b * (n + 1))
     (hII : 2 ^ (d + e) * y + 2 ^ d = 3 ^ d * (X + 1))
     (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
-    (hgap : ((2 : ℤ) ^ (b + c + d + e) - 3 ^ (b + d)) * (2 ^ (c + d) - 2 ^ c + 1)
-              > 3 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d))) :
+    (hgap : ∀ w : ℕ, 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w →
+        (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d) : ℤ)
+          < (2 ^ (b + c + d + e) - 3 ^ (b + d)) * w) :
     y ≤ n := by
+  -- Extract `w₁` with `n+1 = 2^b·w₁` and `3^b·w₁ = 2^c·X + 1`.
+  have key : 3 ^ b * (n + 1) = 2 ^ b * (2 ^ c * X + 1) := by rw [← hI, pow_add]; ring
+  have hcop1 : Nat.Coprime (2 ^ b) (3 ^ b) :=
+    Nat.Coprime.pow_right b (Nat.Coprime.pow_left b (show Nat.Coprime 2 3 by decide))
+  obtain ⟨w1, hw1⟩ : (2 : ℕ) ^ b ∣ (n + 1) := hcop1.dvd_of_dvd_mul_left ⟨2 ^ c * X + 1, key⟩
+  have e1 : 3 ^ b * w1 = 2 ^ c * X + 1 := by
+    have h : 2 ^ b * (3 ^ b * w1) = 2 ^ b * (2 ^ c * X + 1) := by rw [← key, hw1]; ring
+    exact Nat.eq_of_mul_eq_mul_left (by positivity) h
   -- `X ≥ 2^d − 1` from `2^d ∣ (X+1)` (which follows from hII).
   have hXlb : 2 ^ d ≤ X + 1 := by
-    have h3 : 3 ^ d * (X + 1) = 2 ^ d * (2 ^ e * y + 1) := by
-      rw [← hII, pow_add]; ring
-    have hdvd : (2 : ℕ) ^ d ∣ 3 ^ d * (X + 1) := ⟨2 ^ e * y + 1, h3⟩
-    have hcop : Nat.Coprime (2 ^ d) (3 ^ d) :=
+    have h3 : 3 ^ d * (X + 1) = 2 ^ d * (2 ^ e * y + 1) := by rw [← hII, pow_add]; ring
+    have hcop2 : Nat.Coprime (2 ^ d) (3 ^ d) :=
       Nat.Coprime.pow_right d (Nat.Coprime.pow_left d (show Nat.Coprime 2 3 by decide))
-    exact Nat.le_of_dvd (Nat.succ_pos X) (hcop.dvd_of_dvd_mul_left hdvd)
-  -- Move to ℤ and normalise every exponent to the atom set {2^b,2^c,2^d,2^e,3^b,3^d}.
-  have hIz : (2 : ℤ) ^ (b + c) * X + 2 ^ b = 3 ^ b * ((n : ℤ) + 1) := by exact_mod_cast hI
-  have hIIz : (2 : ℤ) ^ (d + e) * y + 2 ^ d = 3 ^ d * ((X : ℤ) + 1) := by exact_mod_cast hII
-  have hXlbz : (2 : ℤ) ^ d ≤ (X : ℤ) + 1 := by exact_mod_cast hXlb
-  have hsubz : (3 : ℤ) ^ (b + d) < 2 ^ (b + c + d + e) := by exact_mod_cast hsub
-  simp only [pow_add] at hIz hIIz hsubz hgap
+    exact Nat.le_of_dvd (Nat.succ_pos X) (hcop2.dvd_of_dvd_mul_left ⟨2 ^ e * y + 1, h3⟩)
+  -- Antecedent of the gap for `w = w₁`.
+  have ht : 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w1 := by
+    rw [e1, pow_add]
+    have hmul : 2 ^ c * 2 ^ d ≤ 2 ^ c * (X + 1) := Nat.mul_le_mul (le_refl _) hXlb
+    rw [Nat.mul_add, Nat.mul_one] at hmul
+    omega
+  have hgw := hgap w1 ht
+  -- Contrapositive: under `n < y`, `(2^m − 3^(b+d))·w₁ ≤ 3^d(2^c−1) − 2^(c+d)`.
   by_contra hcon
   push_neg at hcon
   have hconz : (n : ℤ) + 1 ≤ y := by exact_mod_cast hcon
+  have hw1z : (n : ℤ) + 1 = 2 ^ b * w1 := by exact_mod_cast hw1
+  have hIz : (2 : ℤ) ^ (b + c) * X + 2 ^ b = 3 ^ b * ((n : ℤ) + 1) := by exact_mod_cast hI
+  have hIIz : (2 : ℤ) ^ (d + e) * y + 2 ^ d = 3 ^ d * ((X : ℤ) + 1) := by exact_mod_cast hII
+  have hsubz : (3 : ℤ) ^ (b + d) < 2 ^ (b + c + d + e) := by exact_mod_cast hsub
+  have hgwz : (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d) : ℤ)
+      < (2 ^ (b + c + d + e) - 3 ^ (b + d)) * w1 := by exact_mod_cast hgw
+  simp only [pow_add] at hIz hIIz hsubz hgwz hw1z
   -- MAIN identity.
   have hMAIN : (2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e * y + 2 ^ b * 2 ^ c * 2 ^ d
       = 3 ^ b * 3 ^ d * ((n : ℤ) + 1) + 3 ^ d * 2 ^ b * (2 ^ c - 1) := by
     linear_combination (3 : ℤ) ^ d * hIz + 2 ^ b * 2 ^ c * hIIz
-  -- Positivity of the atoms.
   have p2b : (0 : ℤ) < 2 ^ b := by positivity
-  have p2c : (0 : ℤ) < 2 ^ c := by positivity
-  have p2d : (0 : ℤ) < 2 ^ d := by positivity
-  have p2e : (0 : ℤ) < 2 ^ e := by positivity
-  have p3b : (0 : ℤ) < 3 ^ b := by positivity
-  have p3d : (0 : ℤ) < 3 ^ d := by positivity
-  have hDpos : (0 : ℤ) < 2 ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d := by linarith [hsubz]
-  -- UP: (2^m − 3^(b+d))·(n+1) ≤ 2^b·(3^d(2^c−1) − 2^(c+d)).
   have hy : (2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e * ((n : ℤ) + 1)
       ≤ 2 ^ b * 2 ^ c * 2 ^ d * 2 ^ e * y := by
     apply mul_le_mul_of_nonneg_left hconz; positivity
-  have hUP : ((2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d) * ((n : ℤ) + 1)
+  -- UP in `n`-form, then divide by `2^b` to the `w₁`-form.
+  have hUPn : ((2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d) * ((n : ℤ) + 1)
       ≤ 2 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ c * 2 ^ d) := by nlinarith [hMAIN, hy]
-  -- LOW: 2^b·(2^(c+d) − 2^c + 1) ≤ 3^b·(n+1).
-  have hLOW : (2 : ℤ) ^ b * (2 ^ c * 2 ^ d - 2 ^ c + 1) ≤ 3 ^ b * ((n : ℤ) + 1) := by
-    nlinarith [hIz, mul_le_mul_of_nonneg_left hXlbz p2c.le, p2b]
-  -- Chain UP·3^b and LOW·(2^m−3^(b+d)), cancel 2^b, contradict the gap.
-  have hA := mul_le_mul_of_nonneg_left hUP p3b.le
-  have hB := mul_le_mul_of_nonneg_left hLOW hDpos.le
-  have hC := mul_lt_mul_of_pos_left hgap p2b
-  nlinarith [hA, hB, hC]
+  have hUP : ((2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d) * w1
+      ≤ 3 ^ d * (2 ^ c - 1) - 2 ^ c * 2 ^ d := by
+    have hstep : (2 : ℤ) ^ b * (((2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d) * w1)
+        ≤ 2 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ c * 2 ^ d) := by
+      rw [hw1z] at hUPn; nlinarith [hUPn]
+    exact le_of_mul_le_mul_left hstep p2b
+  linarith [hUP, hgwz]
+
+/-- Exceptional tuple `(b,c,d,e) = (2,3,3,0)` of the residue core: the segment identities
+become the concrete linear system `32·X + 4 = 9·(n+1)`, `8·y + 8 = 27·(X+1)`, closed by
+`omega`.  (One of the only two tuples where the sharp gap `core_of_gap` fails.) -/
+theorem residue_core_exc1 (n X y : ℕ)
+    (hI : 2 ^ (2 + 3) * X + 2 ^ 2 = 3 ^ 2 * (n + 1))
+    (hII : 2 ^ (3 + 0) * y + 2 ^ 3 = 3 ^ 3 * (X + 1)) :
+    y ≤ n := by norm_num at hI hII ⊢; omega
+
+/-- Exceptional tuple `(b,c,d,e) = (3,3,2,0)` of the residue core: the concrete system
+`64·X + 8 = 27·(n+1)`, `4·y + 4 = 9·(X+1)`, closed by `omega`. -/
+theorem residue_core_exc2 (n X y : ℕ)
+    (hI : 2 ^ (3 + 3) * X + 2 ^ 3 = 3 ^ 3 * (n + 1))
+    (hII : 2 ^ (2 + 0) * y + 2 ^ 2 = 3 ^ 2 * (X + 1)) :
+    y ≤ n := by norm_num at hI hII ⊢; omega
 
 /-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about
 naturals: given the two exact head-block segment identities
@@ -382,12 +405,16 @@ theorem two_block_residue_core (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ 
     (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
     (hn : 2 < n) :
     y ≤ n := by
-  by_cases hgap : ((2 : ℤ) ^ (b + c + d + e) - 3 ^ (b + d)) * (2 ^ (c + d) - 2 ^ c + 1)
-      > 3 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d))
-  · -- Elementary regime (~99% of configs): closed without any integrality argument.
+  by_cases hgap : ∀ w : ℕ, 2 ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w →
+      (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d) : ℤ)
+        < (2 ^ (b + c + d + e) - 3 ^ (b + d)) * w
+  · -- Sharp elementary regime: closed without any least-residue argument.
     exact core_of_gap b c d e n X y hb hd hI hII hsub hgap
-  · -- Thin residual regime (`gap` fails): genuinely needs the 3-adic least-residue lower bound
-    -- on `w₂` from `3^b ∣ 2^(c+d) w₂ − 2^c + 1`.  This is the true hard kernel.  Disclosed.
+  · -- Residual: the sharp gap fails on **exactly** two near-critical tuples, `(2,3,3,0)` and
+    -- `(3,3,2,0)` (checked to `b,c,d,e < 34`); both are closable directly (`residue_core_exc1`,
+    -- `residue_core_exc2`, by `omega`).  What remains open is only the finiteness *containment*
+    -- `¬gap ∧ U₁ > 0 → (b,c,d,e) ∈ {(2,3,3,0),(3,3,2,0)}` (a quantitative near-critical bound),
+    -- after which this branch closes.  Disclosed as the sole remaining `src/` sorry.
     sorry
 
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
