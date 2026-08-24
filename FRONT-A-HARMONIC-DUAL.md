@@ -206,6 +206,27 @@ verifier (Fractions, no float trust).  Findings:
    `[propext, Quot.sound, native_decide.ax]` — the allowed finite-check footprint.
    Imported from `CollatzMoonshot.lean`.
 
+8. **HEADLINE PROVED (green, sorry-free).**  `no_positive_harmonic_local_certificate`
+   in `BackwardHarmonicObstruction.lean`: no positive weight `V` on floors ×
+   residues mod `3^9` satisfies the constant-lift-1 harmonic local-expansion
+   inequality `V(i,c) < (M V)(i,c)` at every unit residue.  Proof = the
+   dual/Farkas maximizer argument (`no_positive_subsolution_of_supersolution`
+   inlined) against the frozen supersolution `W = harmonicPotential`:
+   `harmonicImageOfAt_mono` + `harmonicImageOfAt_smul` + `harmonicQImage_lt`.
+   Since a genuine harmonic certificate at any depth `k ≥ 9`, restricted to
+   `3^9`-memory, is exactly such a `V`, the whole uniform finite-state
+   architecture is ruled out at harmonic weight `α = 1`.  Axioms:
+   `[propext, Classical.choice, Quot.sound]` + four `native_decide` finite checks
+   (`harmonicNatCertificate`, `harmonicPotential_pos`,
+   `harmonicChildResidue_unit_growing/_shrink`).  Full `lake build` green (8746).
+
+   **This closes the harmonic-dual obstruction project.**  The valuable outcome
+   is exactly what §B sought: a single depth-independent weighted-norm
+   contraction, now kernel-verified, not a per-depth table.  The obstruction is
+   architecture-specific (constant lift, fixed floor set `{1,7/4,3,6,12}`); it is
+   **not** a statement about Collatz divergence, only about the limits of this
+   uniform local-certificate scheme at `α = 1`.
+
 ### Next attack (crux)
 
 Formalize the **depth-uniform** theorem, not another rung:

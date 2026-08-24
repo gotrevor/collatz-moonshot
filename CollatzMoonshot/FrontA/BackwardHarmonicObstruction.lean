@@ -7595,4 +7595,75 @@ theorem harmonicImageOfAt_mono {f g : Fin 5 → ℕ → ℚ} (i : Fin 5) (r : �
         (growE _ (hg 3))) (growE _ (hg 4))) (growE _ (hg 5))) (growE _ (hg 6)))
       (le_refl 0)
 
+set_option maxRecDepth 4000 in
+/-- **Headline: the constant-lift-1 harmonic architecture has no positive
+certificate, uniformly in depth.**  No positive weight `V` (on floors and
+residues modulo `3^9`) can satisfy the harmonic local-expansion inequality
+`V(i,c) < (M V)(i,c)` for the constant-lift-1 policy at every unit residue.
+Because a genuine harmonic certificate at any ternary depth `k ≥ 9` would, after
+restriction to `3^9`-memory, be exactly such a `V`, this rules out the whole
+uniform finite-state architecture at harmonic weight `α = 1`.
+
+The proof is the dual/Farkas maximizer argument against the frozen supersolution
+`W = harmonicPotential`: at the residue `c₀` maximizing `V/W`, with
+`λ = V(c₀)/W(c₀)`,
+`V(c₀) < (M V)(c₀) ≤ λ (M W)(c₀) < λ W(c₀) = V(c₀)`. -/
+theorem no_positive_harmonic_local_certificate
+    (V : Fin 5 → ℕ → ℚ)
+    (hVpos : ∀ i c, c % 3 ≠ 0 → 0 < V i c)
+    (hsub : ∀ i : Fin 5, ∀ c : ℕ, c < 19683 → c % 3 ≠ 0 →
+        V i c < harmonicImageOfAt V i (c + 19683)) :
+    False := by
+  classical
+  set W : Fin 5 → ℕ → ℚ := fun i r => (harmonicPotential i r : ℚ) with hWdef
+  have hWpos : ∀ i c, c < 19683 → c % 3 ≠ 0 → 0 < W i c := by
+    intro i c h1 h2
+    have hpos : (0 : ℚ) < (harmonicPotential i c : ℚ) := by
+      exact_mod_cast harmonicPotential_pos i ⟨c, h1⟩ h2
+    exact hpos
+  set unitCls : Finset ℕ := (Finset.range 19683).filter (fun c => c % 3 ≠ 0) with huni
+  set ST : Finset (Fin 5 × ℕ) := Finset.univ ×ˢ unitCls with hST
+  have hmemST : ∀ p : Fin 5 × ℕ, p ∈ ST ↔ p.2 < 19683 ∧ p.2 % 3 ≠ 0 := by
+    intro p
+    rw [hST, Finset.mem_product, huni, Finset.mem_filter, Finset.mem_range]
+    exact ⟨fun h => h.2, fun h => ⟨Finset.mem_univ _, h⟩⟩
+  have hSTne : ST.Nonempty := ⟨(0, 1), by rw [hmemST]; exact ⟨by norm_num, by norm_num⟩⟩
+  obtain ⟨p, hp_mem, hp_max⟩ :=
+    Finset.exists_max_image ST (fun p => V p.1 p.2 / W p.1 p.2) hSTne
+  obtain ⟨hc0lt, hc03⟩ := (hmemST p).mp hp_mem
+  set i0 := p.1 with hi0
+  set c0 := p.2 with hc0
+  have hWi0 : 0 < W i0 c0 := hWpos i0 c0 hc0lt hc03
+  set lam : ℚ := V i0 c0 / W i0 c0 with hlam
+  have hlampos : 0 < lam := div_pos (hVpos i0 c0 hc03) hWi0
+  have le_scaled : ∀ i' c', c' < 19683 → c' % 3 ≠ 0 → V i' c' ≤ lam * W i' c' := by
+    intro i' c' h1 h2
+    have hmem : (i', c') ∈ ST := (hmemST (i', c')).mpr ⟨h1, h2⟩
+    have hrat : V i' c' / W i' c' ≤ lam := hp_max (i', c') hmem
+    exact (div_le_iff₀ (hWpos i' c' h1 h2)).mp hrat
+  have hslt : c0 + 19683 < 59049 := by omega
+  have hs3 : (c0 + 19683) % 3 ≠ 0 := by omega
+  have hmono : harmonicImageOfAt V i0 (c0 + 19683)
+      ≤ harmonicImageOfAt (fun a b => lam * W a b) i0 (c0 + 19683) :=
+    harmonicImageOfAt_mono i0 (c0 + 19683) hs3 hslt le_scaled
+  have hsmul := harmonicImageOfAt_smul lam W i0 (c0 + 19683)
+  have hsuper : harmonicImageOfAt W i0 (c0 + 19683) < W i0 (c0 + 19683) := by
+    rw [show harmonicImageOfAt W i0 (c0 + 19683) = harmonicQImage i0 (c0 + 19683) from
+      (harmonicQImage_eq_imageOf i0 (c0 + 19683)).symm]
+    exact harmonicQImage_lt i0 (c0 + 19683) hs3 hslt
+  have hWs : W i0 (c0 + 19683) = W i0 c0 := by
+    show ((harmonicPotential i0 (c0 + 19683) : ℚ)) = ((harmonicPotential i0 c0 : ℚ))
+    have hmod : (c0 + 19683) % 19683 = c0 := by omega
+    rw [← harmonicPotential_mod i0 (c0 + 19683), hmod]
+  have hfix : lam * W i0 c0 = V i0 c0 := by
+    rw [hlam, div_mul_cancel₀ _ (ne_of_gt hWi0)]
+  have contra : V i0 c0 < V i0 c0 :=
+    calc V i0 c0 < harmonicImageOfAt V i0 (c0 + 19683) := hsub i0 c0 hc0lt hc03
+      _ ≤ harmonicImageOfAt (fun a b => lam * W a b) i0 (c0 + 19683) := hmono
+      _ = lam * harmonicImageOfAt W i0 (c0 + 19683) := hsmul
+      _ < lam * W i0 (c0 + 19683) := mul_lt_mul_of_pos_left hsuper hlampos
+      _ = lam * W i0 c0 := by rw [hWs]
+      _ = V i0 c0 := hfix
+  exact lt_irrefl _ contra
+
 end CollatzMoonshot.FrontA
