@@ -1,5 +1,45 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-24): `exists_threeQuartersExpansion` is now a THEOREM
+
+- Discharged the single pinned `sorry` in
+  `CollatzMoonshot/FrontA/BackwardThreeQuarters.lean`.  The pinned definitions,
+  the frozen 810-entry `threeQuartersWeights` potential, and the acceptance
+  theorem statement were preserved verbatim (no def/weaken/rename); the module is
+  now imported from `CollatzMoonshot.lean` and full `lake build` is green
+  (8,740 jobs).
+- Ported the local proof architecture from `BackwardTwoThirds.lean` at
+  exponent `3/4`, source residues modulo `729`, child residues modulo `243`,
+  height floors `{1, 7/4, 3, 6, 12}`:
+  * `InThreeQuartersHeightState.le` and the two floor-safe transitions
+    `threeQuartersHeightStep_growing` (floor index advances by `j - 2`, capped
+    at `4`; small `j < 6` by `interval_cases`, `j ≥ 6` lands at the top state
+    with a `64 ≤ 2^j` bound) and `threeQuartersHeightStep_shrinking`.
+  * the shared-lift residue lemmas `threeQuartersChildResidue`,
+    `oddBlockChild_mod_243`, `threeQuartersSharedLift`,
+    `oddBlockChild_sharedLift_243` (child mod 243 steered by the single digit
+    `t = x / 243 % 3`), plus the mod-left/right/243 congruences.
+  * the integer-scaled `2430`-inequality certificate `threeQuartersNatCertificate`
+    at scale `1000 · 5000^23`, verified by `native_decide` (explicitly allowed);
+    its rational bridge `threeQuartersNatImage_eq` (via `qpow_scale_3q`) and the
+    per-source rational certificate `threeQuartersPotentialCertificateAt`.
+  * the actual-child acceptance theorem `exists_threeQuartersExpansion` wiring
+    `exactSevenCostTransferAt` / `exists_unitOddBlockChildAtOne` to the seven
+    distinct growing children plus the enabled shrinking child, floor-safe
+    transitions, `3y < 2^23 x`, and the strict rational weighted expansion with
+    edge underweight `(2279/1000)·(2973/5000)^j < (3/2^j)^(3/4)`
+    (`(2279/1000)^4 < 27`, `8·(2973/5000)^4 < 1`).
+- No project axioms added.  Axiom audit (real output, 2026-08-24):
+  `exists_threeQuartersExpansion` → `[propext, Classical.choice, Quot.sound,
+  threeQuartersNatCertificate._native.native_decide.ax_1_1]`;
+  `threeQuartersNatCertificate` → `[propext, Quot.sound, <same native axiom>]`.
+- **Next**: port the exponent-`3/4` renewal + stopping layers (the analogues of
+  `BackwardTwoThirdsRenewal` / `BackwardTwoThirdsStopping`): the exact
+  `Real.rpow` edge weight `((x/y):ℝ)^(3/4)`, the cube-root-style comparison
+  `(2279/1000)·(2973/5000)^j < (3/2^j)^(3/4)` via `((3/2^j)^(3/4))^4 = (3/2^j)^3`,
+  the finite child set `exists_threeQuartersChildFinset`, and the fuel-`H+1`
+  frontier recursion over the five `InThreeQuartersHeightState` nodes.
+
 ## Update (2026-08-23, post-Opus audit): an exact exponent-`3/4` candidate is FOUND
 
 - Independently audited the completed recursive exponent-`2/3` lap: full `lake build` green

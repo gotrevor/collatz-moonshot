@@ -151,6 +151,241 @@ theorem threeQuartersRationalUnderestimate :
       8 * (2973 / 5000 : ℚ) ^ 4 < 1 := by
   norm_num
 
+/-! ## Height-state helpers and floor-safe transitions -/
+
+/-- Every height floor is at least `1`, so every state stays above `d`. -/
+theorem InThreeQuartersHeightState.le {d x : ℕ} {i : Fin 5}
+    (h : InThreeQuartersHeightState d i x) : d ≤ x := by
+  unfold InThreeQuartersHeightState threeQuartersHeightNum threeQuartersHeightDen at h
+  fin_cases i <;> simp_all <;> omega
+
+/-- Floor-safe five-state transition for an actual growing odd block of cost
+`j ≥ 2`: the floor index advances by `j - 2`, capped at the top state. -/
+theorem threeQuartersHeightStep_growing {d x y j : ℕ} {i : Fin 5} (hd : 2 ≤ d)
+    (hj : 2 ≤ j) (hstate : InThreeQuartersHeightState d i x)
+    (hblock : 3 * y + 1 = 2 ^ j * x) :
+    InThreeQuartersHeightState d (nextThreeQuartersState i j) y := by
+  have hxd : d ≤ x := InThreeQuartersHeightState.le hstate
+  rcases Nat.lt_or_ge j 6 with hj6 | hj6
+  · simp only [InThreeQuartersHeightState, threeQuartersHeightNum,
+      threeQuartersHeightDen] at hstate
+    interval_cases j <;>
+      · norm_num at hblock
+        simp only [InThreeQuartersHeightState, nextThreeQuartersState,
+          threeQuartersHeightNum, threeQuartersHeightDen]
+        fin_cases i <;> simp_all <;> omega
+  · have hnext : nextThreeQuartersState i j = ⟨4, by omega⟩ := by
+      apply Fin.ext
+      simp only [nextThreeQuartersState]
+      omega
+    have h64 : (64 : ℕ) ≤ 2 ^ j := by
+      calc (64 : ℕ) = 2 ^ 6 := by norm_num
+      _ ≤ 2 ^ j := Nat.pow_le_pow_right (by norm_num) hj6
+    have h64x : 64 * x ≤ 3 * y + 1 := by
+      rw [hblock]; exact Nat.mul_le_mul_right x h64
+    rw [hnext]
+    unfold InThreeQuartersHeightState threeQuartersHeightNum threeQuartersHeightDen
+    norm_num
+    omega
+
+/-- Floor-safe five-state transition for the actual shrinking `j = 1` block,
+which drops exactly one floor state. -/
+theorem threeQuartersHeightStep_shrinking {d x y : ℕ} {i : Fin 5} (hd : 2 ≤ d)
+    (hi : 1 ≤ i.1) (hstate : InThreeQuartersHeightState d i x)
+    (hblock : 3 * y + 1 = 2 * x) :
+    InThreeQuartersHeightState d (shrinkThreeQuartersState i) y := by
+  simp only [InThreeQuartersHeightState, shrinkThreeQuartersState,
+    threeQuartersHeightNum, threeQuartersHeightDen] at hstate ⊢
+  fin_cases i <;> simp_all <;> omega
+
+/-! ## The shared next ternary digit (source mod 729, child mod 243) -/
+
+/-- The child residue modulo `243` determined by the source modulo `729`,
+including the fixed carry digit produced by the division `(2^j r - 1) / 3`. -/
+def threeQuartersChildResidue (r j : ℕ) : ℕ :=
+  ((2 ^ j * (r % 729) - 1) / 3) % 243
+
+/-- An actual odd inverse block has the child residue predicted by
+`threeQuartersChildResidue`. -/
+theorem oddBlockChild_mod_243 {x y j : ℕ}
+    (h : 3 * y + 1 = 2 ^ j * x) :
+    y % 243 = threeQuartersChildResidue x j := by
+  unfold threeQuartersChildResidue
+  have hx : x % 729 + 729 * (x / 729) = x := Nat.mod_add_div x 729
+  have hp : 0 < 2 ^ j := pow_pos (by omega) _
+  have heq :
+      3 * y + 1 =
+        2 ^ j * (x % 729) + 729 * (2 ^ j * (x / 729)) := by
+    calc
+      3 * y + 1 = 2 ^ j * x := h
+      _ = 2 ^ j * (x % 729 + 729 * (x / 729)) :=
+        congrArg (fun z => 2 ^ j * z) hx.symm
+      _ = 2 ^ j * (x % 729) + 729 * (2 ^ j * (x / 729)) := by ring
+  have hr : 0 < x % 729 := by
+    by_contra hz
+    have hz' : x % 729 = 0 := Nat.eq_zero_of_not_pos hz
+    rw [hz', mul_zero, zero_add] at heq
+    omega
+  have hpr : 0 < 2 ^ j * (x % 729) := Nat.mul_pos hp hr
+  let z := 2 ^ j * (x / 729)
+  have hzle : 243 * z ≤ y := by dsimp [z]; omega
+  have hnum : 2 ^ j * (x % 729) - 1 = 3 * (y - 243 * z) := by dsimp [z]; omega
+  have ha : (2 ^ j * (x % 729) - 1) / 3 = y - 243 * z := by rw [hnum]; omega
+  rw [ha]; omega
+
+/-- The child residue seen from a state residue modulo `243` together with one
+shared next ternary digit `t` of the source. -/
+def threeQuartersSharedLift (r j t : ℕ) : ℕ :=
+  threeQuartersChildResidue (r % 243 + 243 * (t % 3)) j
+
+/-- The single shared digit `t = x / 243 % 3` really controls every actual
+child: an odd block from `x` lands in the residue class it selects. -/
+theorem oddBlockChild_sharedLift_243 {x y j : ℕ}
+    (h : 3 * y + 1 = 2 ^ j * x) :
+    y % 243 = threeQuartersSharedLift x j (x / 243 % 3) := by
+  rw [oddBlockChild_mod_243 h]
+  unfold threeQuartersSharedLift threeQuartersChildResidue
+  have h729 : (x % 243 + 243 * (x / 243 % 3 % 3)) % 729 = x % 729 := by omega
+  rw [h729]
+
+theorem threeQuartersSharedLift_mod_left (x j t : ℕ) :
+    threeQuartersSharedLift (x % 243) j t = threeQuartersSharedLift x j t := by
+  unfold threeQuartersSharedLift
+  rw [Nat.mod_mod_of_dvd x dvd_rfl]
+
+theorem threeQuartersSharedLift_mod_right (x j t : ℕ) :
+    threeQuartersSharedLift x j (t % 3) = threeQuartersSharedLift x j t := by
+  unfold threeQuartersSharedLift
+  rw [Nat.mod_mod_of_dvd t dvd_rfl]
+
+/-! ## Potential helpers -/
+
+/-- The state potential depends only on the residue modulo `243`. -/
+theorem threeQuartersPotential_mod (i : Fin 5) (x : ℕ) :
+    threeQuartersPotential i (x % 243) = threeQuartersPotential i x := by
+  unfold threeQuartersPotential
+  rw [Nat.mod_mod_of_dvd x dvd_rfl]
+
+/-- Every reusable residue has strictly positive potential at every floor. -/
+theorem threeQuartersPotential_pos_of_unit :
+    ∀ i : Fin 5, ∀ r : Fin 243, r.1 % 3 ≠ 0 →
+      0 < threeQuartersPotential i r.1 := by
+  native_decide
+
+theorem sevenCostsAt_mod_243 (x : ℕ) :
+    sevenCostsAt (x % 243) = sevenCostsAt x := by
+  unfold sevenCostsAt
+  rw [Nat.mod_mod_of_dvd x (by norm_num : 9 ∣ 243)]
+
+theorem threeQuartersHasShrink_mod_243 (i : Fin 5) (x : ℕ) :
+    threeQuartersHasShrink i (x % 243) = threeQuartersHasShrink i x := by
+  unfold threeQuartersHasShrink
+  rw [Nat.mod_mod_of_dvd x (by norm_num : 9 ∣ 243)]
+
+/-! ## The kernel/native-checked integer certificate -/
+
+/-- One integer-scaled growing edge of the transfer image: the true edge
+weight `(2279/1000)·(2973/5000)^j` is cleared to scale `1000 · 5000^23`. -/
+def threeQuartersNatEdge (i : Fin 5) (r t j : ℕ) : ℕ :=
+  2973 ^ j * 5000 ^ (23 - j) *
+    threeQuartersPotential (nextThreeQuartersState i j)
+      (threeQuartersSharedLift r j t)
+
+/-- The integer-scaled one-generation transfer image at one source lift. -/
+def threeQuartersNatImage (i : Fin 5) (r t : ℕ) : ℕ :=
+  2279 * (threeQuartersNatEdge i r t (sevenCostsAt r 0) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 1) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 2) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 3) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 4) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 5) +
+    threeQuartersNatEdge i r t (sevenCostsAt r 6) +
+    if threeQuartersHasShrink i r then
+      2973 * 5000 ^ 22 *
+        threeQuartersPotential (shrinkThreeQuartersState i)
+          (threeQuartersSharedLift r 1 t)
+    else 0)
+
+/-- All `810 × 3 = 2430` source-state/lift inequalities of the frozen
+certificate, in integer form at scale `1000 · 5000^23`. -/
+theorem threeQuartersNatCertificate :
+    ∀ i : Fin 5, ∀ t : Fin 3, ∀ r : Fin 243, r.1 % 3 ≠ 0 →
+      1000 * 5000 ^ 23 * threeQuartersPotential i r.1 <
+        threeQuartersNatImage i r.1 t.1 := by
+  native_decide
+
+/-! ## The rational certificate -/
+
+/-- The rational one-generation transfer image at one source lift, with the
+exact edge underweight `(2279/1000) · (2973/5000)^j`. -/
+def threeQuartersImage (i : Fin 5) (r t : ℕ) : ℚ :=
+  (2279 / 1000 : ℚ) *
+    (∑ k : Fin 7, (2973 / 5000 : ℚ) ^ sevenCostsAt r k *
+        threeQuartersPotential (nextThreeQuartersState i (sevenCostsAt r k))
+          (threeQuartersSharedLift r (sevenCostsAt r k) t) +
+      if threeQuartersHasShrink i r then
+        (2973 / 5000 : ℚ) *
+          threeQuartersPotential (shrinkThreeQuartersState i)
+            (threeQuartersSharedLift r 1 t)
+      else 0)
+
+theorem threeQuartersImage_mod (i : Fin 5) (x t : ℕ) :
+    threeQuartersImage i (x % 243) (t % 3) = threeQuartersImage i x t := by
+  unfold threeQuartersImage
+  simp only [sevenCostsAt_mod_243, threeQuartersSharedLift_mod_left,
+    threeQuartersSharedLift_mod_right, threeQuartersHasShrink_mod_243]
+
+private theorem qpow_scale_3q {j : ℕ} (hj : j ≤ 23) :
+    ((2973 : ℚ) / 5000) ^ j * 5000 ^ 23 = 2973 ^ j * 5000 ^ (23 - j) := by
+  have hsplit : (5000 : ℚ) ^ 23 = 5000 ^ j * 5000 ^ (23 - j) := by
+    rw [← pow_add]; congr 1; omega
+  have hcancel : ((2973 : ℚ) / 5000) ^ j * 5000 ^ j = 2973 ^ j := by
+    rw [div_pow]; field_simp
+  rw [hsplit, ← mul_assoc, hcancel]
+
+/-- The integer-scaled image is exactly `1000 · 5000^23` times the rational
+image. -/
+theorem threeQuartersNatImage_eq (i : Fin 5) (r t : ℕ) :
+    (threeQuartersNatImage i r t : ℚ) =
+      1000 * 5000 ^ 23 * threeQuartersImage i r t := by
+  have h0 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 0)
+  have h1 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 1)
+  have h2 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 2)
+  have h3 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 3)
+  have h4 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 4)
+  have h5 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 5)
+  have h6 := qpow_scale_3q (sevenCostsAt_le_twentyThree r 6)
+  unfold threeQuartersNatImage threeQuartersNatEdge threeQuartersImage
+  rw [Fin.sum_univ_seven]
+  by_cases hs : threeQuartersHasShrink i r = true <;>
+    simp only [hs, if_true, Bool.false_eq_true, if_false] <;>
+    push_cast <;>
+    rw [← h0, ← h1, ← h2, ← h3, ← h4, ← h5, ← h6] <;>
+    ring
+
+/-- The rational certificate at an arbitrary reusable source and arbitrary
+shared lift digit. -/
+theorem threeQuartersPotentialCertificateAt (i : Fin 5) {x : ℕ} (h3 : ¬3 ∣ x)
+    (t : ℕ) : (threeQuartersPotential i x : ℚ) < threeQuartersImage i x t := by
+  have hr243 : x % 243 < 243 := Nat.mod_lt x (by norm_num)
+  have hru : (x % 243) % 3 ≠ 0 := by
+    rw [Nat.mod_mod_of_dvd x (by norm_num : 3 ∣ 243)]
+    exact fun h0 => h3 (Nat.dvd_of_mod_eq_zero h0)
+  have hnat := threeQuartersNatCertificate i ⟨t % 3, Nat.mod_lt t (by norm_num)⟩
+    ⟨x % 243, hr243⟩ hru
+  have hq : (threeQuartersPotential i (x % 243) : ℚ) <
+      threeQuartersImage i (x % 243) (t % 3) := by
+    have hcast :
+        ((1000 * 5000 ^ 23 * threeQuartersPotential i (x % 243) : ℕ) : ℚ) <
+        (threeQuartersNatImage i (x % 243) (t % 3) : ℚ) := by
+      exact_mod_cast hnat
+    rw [threeQuartersNatImage_eq] at hcast
+    push_cast at hcast
+    have hpos : (0 : ℚ) < 1000 * 5000 ^ 23 := by norm_num
+    exact lt_of_mul_lt_mul_left (by linarith) (le_of_lt hpos)
+  rw [threeQuartersPotential_mod, threeQuartersImage_mod] at hq
+  exact hq
+
 /-- Pinned correlated exponent-3/4 local expansion target.
 
 Every reusable source in one of the five height states has the exact seven
@@ -179,6 +414,81 @@ theorem exists_threeQuartersExpansion {d x : ℕ} (i : Fin 5) (hd : 2 ≤ d)
               (2973 / 5000 : ℚ) *
                 threeQuartersPotential (shrinkThreeQuartersState i) z
             else 0) := by
-  sorry
+  obtain ⟨ys, hys, hch⟩ := exactSevenCostTransferAt hx h3
+  have hcert := threeQuartersPotentialCertificateAt i h3 (x / 243 % 3)
+  have hgrow : ∀ k, GrowingUnitOddBlockChild x (ys k) (sevenCostsAt x k) ∧
+      InThreeQuartersHeightState d
+        (nextThreeQuartersState i (sevenCostsAt x k)) (ys k) ∧
+      3 * ys k < 2 ^ 23 * x := by
+    intro k
+    refine ⟨hch k,
+      threeQuartersHeightStep_growing hd (hch k).1 hstate (hch k).2.2.2.2, ?_⟩
+    have hc := sevenCostsAt_le_twentyThree x k
+    have hple : (2 : ℕ) ^ sevenCostsAt x k ≤ 2 ^ 23 :=
+      Nat.pow_le_pow_right (by norm_num) hc
+    have hmul : 2 ^ sevenCostsAt x k * x ≤ 2 ^ 23 * x :=
+      Nat.mul_le_mul_right x hple
+    have hb := (hch k).2.2.2.2
+    omega
+  have hpotEq : ∀ k : Fin 7,
+      threeQuartersPotential (nextThreeQuartersState i (sevenCostsAt x k))
+        (threeQuartersSharedLift x (sevenCostsAt x k) (x / 243 % 3)) =
+      threeQuartersPotential (nextThreeQuartersState i (sevenCostsAt x k))
+        (ys k) := by
+    intro k
+    rw [← oddBlockChild_sharedLift_243 (hch k).2.2.2.2, threeQuartersPotential_mod]
+  by_cases hs : threeQuartersHasShrink i x = true
+  · have hrem : x % 9 = 2 ∨ x % 9 = 8 := by
+      unfold threeQuartersHasShrink at hs
+      simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
+        decide_eq_true_eq] at hs
+      exact hs.2
+    have hi1 : 1 ≤ i.1 := by
+      unfold threeQuartersHasShrink at hs
+      simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
+        decide_eq_true_eq] at hs
+      exact hs.1
+    obtain ⟨z, hz⟩ := exists_unitOddBlockChildAtOne hrem
+    have hzblock : 3 * z + 1 = 2 ^ 1 * x := by
+      have := hz.2.2.2; norm_num; omega
+    have hz243 :
+        threeQuartersPotential (shrinkThreeQuartersState i)
+          (threeQuartersSharedLift x 1 (x / 243 % 3)) =
+        threeQuartersPotential (shrinkThreeQuartersState i) z := by
+      rw [← oddBlockChild_sharedLift_243 hzblock, threeQuartersPotential_mod]
+    refine ⟨ys, z, hys, hgrow, fun _ =>
+      ⟨hz, threeQuartersHeightStep_shrinking hd hi1 hstate hz.2.2.2,
+        fun k hzy => ?_⟩, ?_⟩
+    · have hzlt := hz.2.2.1
+      have hylt := (hch k).2.2.2.1
+      omega
+    · have himg : threeQuartersImage i x (x / 243 % 3) =
+          (2279 / 1000 : ℚ) *
+            (∑ k : Fin 7, (2973 / 5000 : ℚ) ^ sevenCostsAt x k *
+                threeQuartersPotential
+                  (nextThreeQuartersState i (sevenCostsAt x k)) (ys k) +
+              if threeQuartersHasShrink i x then
+                (2973 / 5000 : ℚ) *
+                  threeQuartersPotential (shrinkThreeQuartersState i) z
+              else 0) := by
+        unfold threeQuartersImage
+        rw [Finset.sum_congr rfl fun k _ => by rw [hpotEq k]]
+        simp only [hs, if_true, hz243]
+      exact himg ▸ hcert
+  · refine ⟨ys, 0, hys, hgrow, fun hcontra => absurd hcontra hs, ?_⟩
+    have himg : threeQuartersImage i x (x / 243 % 3) =
+        (2279 / 1000 : ℚ) *
+          (∑ k : Fin 7, (2973 / 5000 : ℚ) ^ sevenCostsAt x k *
+              threeQuartersPotential
+                (nextThreeQuartersState i (sevenCostsAt x k)) (ys k) +
+            if threeQuartersHasShrink i x then
+              (2973 / 5000 : ℚ) *
+                threeQuartersPotential (shrinkThreeQuartersState i) 0
+            else 0) := by
+      unfold threeQuartersImage
+      rw [Finset.sum_congr rfl fun k _ => by rw [hpotEq k]]
+      rw [Bool.not_eq_true] at hs
+      simp only [hs, Bool.false_eq_true, if_false]
+    exact himg ▸ hcert
 
 end CollatzMoonshot.FrontA

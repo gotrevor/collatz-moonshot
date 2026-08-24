@@ -18,6 +18,7 @@ import CollatzMoonshot.FrontA.BackwardStopping
 import CollatzMoonshot.FrontA.BackwardTwoThirds
 import CollatzMoonshot.FrontA.BackwardTwoThirdsRenewal
 import CollatzMoonshot.FrontA.BackwardTwoThirdsStopping
+import CollatzMoonshot.FrontA.BackwardThreeQuarters
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative
