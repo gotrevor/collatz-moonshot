@@ -90,6 +90,24 @@ not speculative reduction-vocabulary. `[propext, choice, Quot.sound]`. **It does
 `m`** — the summit (bound the S-unit rank = block count) remains the open Diophantine wall,
 source-blocked on the SdW method read (`ON-LINE-REQUEST.md`, unanswered).
 
+**Cycle predicate rotation-invariant (2026-08-24, this lap):** `integerCycle_rot` /
+`integerCycle_rotate` — `IntegerCycle` is preserved under rotation (`ones`/`den` invariant,
+`den∣numer` transfers via `dvd_numer_rot_iff`). `exists_blockWord_of_integerCycle` now
+delivers `IntegerCycle (blockWord L)` too, so a Diophantine argument on the block form has the
+**full cycle hypothesis** on the block word, not just the circuit count. `[propext,choice,Quot.sound]`.
+
+**Crux feasibility test (recorded — the wall is real, not a config artifact):** attempted
+the cheap version of the Compression summit. The per-`m` case needs transcendence, verified
+by inspection: `m=1` is Steiner 1977 (`SteinerOneCircuit`, effective irrationality of
+`log₂3`); `m=2` is also Baker/Steiner (2-circuit cycles ruled out via continued fractions,
+not elementary). The S-unit view confirms it: bounding the block count = bounding the S-unit
+RANK, and ESS/subspace bounds the number of *solutions* given the rank, never the rank — so
+there is no elementary handle; this is the cycles problem. The uniform bound over all `m` is
+the open Diophantine wall. **Concrete attack:** read SdW's per-`m` elimination method
+(source-blocked, `ON-LINE-REQUEST.md`) to formalize the cycle→Baker instance reduction that
+makes `baker_bounded_difference` (or a Steiner-type input) the single narrow cited input per
+`m`. Until the source lands, the block/S-unit/rotation apparatus is complete and correct.
+
 **Next lap options:** (a) ~~rotate arbitrary integer-cycle word to canonical form~~ —
 **DONE this lap** (`exists_blockWord_of_integerCycle`). (b) if SdW findings landed, formalize
 their fixed-`m` reduction on the block datum. (c) **pivot to the alternate crux, Front A

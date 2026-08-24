@@ -602,17 +602,48 @@ theorem exists_rotate_canonical {v : List Bool} (hf : false ∈ v) (ht : true �
   exact ⟨jf + k, by rw [← List.rotate_rotate]; exact hk1,
     by rw [← List.rotate_rotate]; exact hk2⟩
 
+/-- **The cycle predicate is rotation-invariant (single step).**  `ones`, `den` are
+rotation-invariant and `den ∣ numer` transfers by `dvd_numer_rot_iff`, so `IntegerCycle`
+is unchanged under `rot`.  This is what lets a Diophantine argument carry the *cycle
+hypothesis*, not merely the circuit count, onto the rotated canonical/block word. -/
+theorem integerCycle_rot {v : List Bool} : IntegerCycle (rot v) ↔ IntegerCycle v := by
+  unfold IntegerCycle
+  constructor
+  · rintro ⟨hne, hones, hden, hdvd⟩
+    have hvne : v ≠ [] := by intro h; subst h; simp [rot] at hne
+    rw [ones_rot] at hones
+    rw [den_rot] at hden hdvd
+    exact ⟨hvne, hones, hden, (dvd_numer_rot_iff hvne hones).mpr hdvd⟩
+  · rintro ⟨hne, hones, hden, hdvd⟩
+    have hrne : rot v ≠ [] := by
+      cases v with
+      | nil => exact absurd rfl hne
+      | cons b t => simp [rot]
+    exact ⟨hrne, by rw [ones_rot]; exact hones, by rw [den_rot]; exact hden,
+      by rw [den_rot]; exact (dvd_numer_rot_iff hne hones).mp hdvd⟩
+
+/-- `IntegerCycle` is invariant under any rotation `List.rotate k`. -/
+theorem integerCycle_rotate {v : List Bool} (k : ℕ) :
+    IntegerCycle (v.rotate k) ↔ IntegerCycle v := by
+  induction k with
+  | zero => simp
+  | succ n ih =>
+    rw [show v.rotate (n + 1) = (v.rotate n).rotate 1 from by rw [List.rotate_rotate],
+      ← rot_eq_rotate_aux, integerCycle_rot, ih]
+
 /-- **The block reduction for arbitrary integer cycles.**  Every integer-cycle word — after
 a rotation `v.rotate k` — is a genuine block normal form `blockWord L` (all blocks nonempty)
-with `circuits v = L.length`.  So bounding the circuit count of an integer cycle (the
-content of `Compression`) is exactly bounding its block count, the `m`-term S-unit datum. -/
+that is *itself an integer cycle* `IntegerCycle (blockWord L)` and has `circuits v = L.length`.
+So bounding the circuit count of an integer cycle (the content of `Compression`) is exactly
+bounding the block count of a block-form integer cycle — the `m`-term S-unit datum, with the
+full cycle hypothesis available on it. -/
 theorem exists_blockWord_of_integerCycle {v : List Bool} (hv : IntegerCycle v) :
     ∃ (L : List (ℕ × ℕ)) (k : ℕ), (∀ blk ∈ L, 1 ≤ blk.1 ∧ 1 ≤ blk.2) ∧
-      v.rotate k = blockWord L ∧ circuits v = L.length := by
-  obtain ⟨-, hones, hden, -⟩ := hv
-  obtain ⟨k, hh, hl⟩ := exists_rotate_canonical (false_mem_of_den_pos hden)
-    (true_mem_of_ones_pos hones)
+      v.rotate k = blockWord L ∧ IntegerCycle (blockWord L) ∧ circuits v = L.length := by
+  obtain ⟨k, hh, hl⟩ := exists_rotate_canonical (false_mem_of_den_pos hv.2.2.1)
+    (true_mem_of_ones_pos hv.2.1)
   obtain ⟨L, hL, hvk, hcirc⟩ := exists_blockWord_canonical_circuits (v.rotate k) hh hl
-  exact ⟨L, k, hL, hvk, by rw [← hcirc, circuits_rotate]⟩
+  refine ⟨L, k, hL, hvk, ?_, by rw [← hcirc, circuits_rotate]⟩
+  rw [← hvk]; exact (integerCycle_rotate k).mpr hv
 
 end CollatzMoonshot.FrontB
