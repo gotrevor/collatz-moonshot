@@ -541,4 +541,57 @@ theorem repeat_cycle_oddFreq_lt_sharp {n i j : ℕ} (hij : i < j)
   have hcyc := periodic_point_of_repeat hij h
   exact cycle_oddFreq_lt_sharp hpos hcyc (oddSteps_pos_of_cycle hpos hp hcyc)
 
+/-! ## M2′ consumption endpoints (the two ends of the measure→descent chain)
+
+The forward calibration milestone `ParityRigidityW1' → NoDivergentOrbit` (M2′,
+`Rigidity/Invariant.lean`) runs, on a hypothetically divergent orbit, through a
+Krylov–Bogolyubov empirical-measure argument whose *only* genuine mathlib gap is the
+production of an invariant limit measure (see `PENDING_WORK.md`).  Its two ENDPOINTS are
+pure and self-contained, and are proved here so the remaining build is exactly the measure
+module:
+
+* the **analytic floor-gap** `exists_freqThreshold_gt`: any value strictly below the sharp
+  threshold is beaten by *some* finite floor's admissible frequency, because
+  `freqThreshold N ↑ sharpThreshold` (`tendsto_freqThreshold`).  This is what turns the
+  strict bound `μ(odd) < sharpThreshold` supplied by W1′ into a *usable* floor `N` with
+  `freqThreshold N` above the empirical `limsup`;
+* the **final contradiction** `not_diverges_of_eventually_lt`: if a positive orbit is
+  eventually below its own start value it is bounded, hence does not diverge.  The drift
+  estimate applied to the high tail `m = step^[K] n` (which stays above the chosen floor `N`
+  forever) gives `step^[k] m < m` for every large `k` precisely when the empirical odd
+  frequency stays below `freqThreshold N`; this lemma converts that into `¬ Diverges m`,
+  contradicting `m`'s divergence.  No "descent below the *original* start" is needed — the
+  bound is against the tail's own start, which sidesteps the forward-minimal edge case. -/
+
+/-- **A finite floor beats any sub-sharp frequency.**  Since `freqThreshold N` rises to the
+sharp constant `log 2 / log 6`, every real `v < sharpThreshold` has a floor `N ≥ 1` whose
+admissible odd-step frequency `freqThreshold N` still exceeds `v`.  This is the bridge from
+the strict measure bound `μ(oddSet) < sharpThreshold` (W1′) to a concrete drift floor. -/
+theorem exists_freqThreshold_gt {v : ℝ} (hv : v < sharpThreshold) :
+    ∃ N, 1 ≤ N ∧ v < freqThreshold N := by
+  have hev : ∀ᶠ N in Filter.atTop, v < freqThreshold N :=
+    tendsto_freqThreshold.eventually (eventually_gt_nhds hv)
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp hev
+  exact ⟨N₀ + 1, by omega, hN₀ (N₀ + 1) (by omega)⟩
+
+/-- **An eventually-descending orbit is bounded, hence non-divergent.**  If `step^[k] m < m`
+for every `k` past some point `K`, the whole orbit is bounded by the maximum of `m` and its
+finite initial segment, so `¬ Diverges m`.  This is the closing contradiction of the M2′
+measure argument: the drift bound forces the high tail below its own start for all large `k`,
+and this lemma reads that as non-divergence of the (divergent) tail. -/
+theorem not_diverges_of_eventually_lt {m : ℕ}
+    (h : ∃ K, ∀ k, K ≤ k → step^[k] m < m) : ¬ Diverges m := by
+  obtain ⟨K, hK⟩ := h
+  intro hdiv
+  set B := max ((Finset.range K).sup (fun j => step^[j] m)) m with hB
+  obtain ⟨k, hk⟩ := hdiv (B + 1)
+  rcases lt_or_ge k K with hlt | hge
+  · have hle : step^[k] m ≤ (Finset.range K).sup (fun j => step^[j] m) :=
+      Finset.le_sup (f := fun j => step^[j] m) (Finset.mem_range.mpr hlt)
+    have hleB : step^[k] m ≤ B := le_trans hle (le_max_left _ _)
+    omega
+  · have hlt2 : step^[k] m < m := hK k hge
+    have hmB : m ≤ B := le_max_right _ _
+    omega
+
 end CollatzMoonshot

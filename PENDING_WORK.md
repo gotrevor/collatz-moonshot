@@ -1,24 +1,73 @@
 # PENDING_WORK
 
-## Status (2026-08-24, review lap)
+## Status (2026-08-24, review lap — RE-SCOPED)
 
-- **Harmonic-dual obstruction project: COMPLETE.**
-  `no_positive_harmonic_local_certificate` proved sorry-free, depth-uniform,
-  axiom-clean (trust base + 4 `native_decide`). See `FRONT-A-HARMONIC-DUAL.md`.
-- **`OneCircuit` a≥2 resolved honestly** (this lap): NOT an `omega` leaf — it is
-  **Steiner's theorem (1977) = Baker/effective-irrationality of `log₂3`**, and it is
-  **off the ladder's critical path** (`hercher_min_circuit_count` already covers every
-  circuit count ≤91, this rung included). Isolated as the explicit hypothesis
-  `SteinerOneCircuit` (a `def`, no new axiom); `sorry` removed; module imported from
-  root and green. `#print axioms oneCircuitCanonical_trivial = [propext, choice, Quot.sound]`.
-- `src/` root chain sorry-free; full `lake build` green (8747 jobs).
+- **Direction changed (see `DIRECTION.md`).** Front B `Compression` is BLOCKED and was
+  mis-scoped as tractable; the binding crux is now **Front A M2′**
+  (`ParityRigidityW1' → NoDivergentOrbit`), whose sole gap is a Krylov–Bogolyubov measure
+  module. Decomposition below.
+- **Harmonic-dual obstruction project: COMPLETE** (`no_positive_harmonic_local_certificate`,
+  sorry-free, axiom-clean). Do not re-run/port. See `FRONT-A-HARMONIC-DUAL.md`.
+- **This lap landed** the two pure M2′ endpoints in `Rigidity/Drift.lean`
+  (`exists_freqThreshold_gt`, `not_diverges_of_eventually_lt`; both trust-base clean) and
+  wrote the M2′ decomposition (below). `src/` sorry-free; full `lake build` green.
 
-## THE CRUX (binding, per `DIRECTION.md`): Front B `Compression`
+## THE CRUX (binding, per `DIRECTION.md`): Front A M2′ measure module
+
+**Goal:** `theorem parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit`
+(milestone M2′, `Rigidity/Invariant.lean`). This is the live Front-A route: the
+local-certificate lane is harmonic-capped below α=1 (proved, complete), so M2′ (turning the
+parity-rigidity keystone W1′ into `NoDivergentOrbit`) is how Front A would close.
+
+**The argument (worked out this lap; the contradiction is against the TAIL, not the start):**
+Suppose `Diverges n` (`1 ≤ n`).
+1. **[gap: Krylov–Bogolyubov]** The Cesàro empirical measures `μ_N = (1/N)Σ_{k<N} δ_{T2^k n}`
+   live in the weak-*-compact `ProbabilityMeasure ℤ₂` (mathlib: Prokhorov,
+   `CompactSpace (ProbabilityMeasure ℤ₂)`); any cluster point `μ` is `T2`-**invariant**
+   (telescoping `T2∗μ_N − μ_N = (1/N)(δ_{T2^N n} − δ_n)`, total mass `≤ 2/N → 0`, plus weak-*
+   continuity of pushforward under the continuous `T2`). `μ` is supported on `orbitClosure n`.
+   **This invariance step is the only piece absent from mathlib.**
+2. **[gap: uniformity]** The invariant-measure set on `orbitClosure n` is weak-* compact and
+   `ν ↦ ν oddSetZ2` is continuous (the parity set is clopen, `isClopen_oddSetZ2`), so W1′
+   (`ν oddSetZ2 < sharpThreshold` for *each* such `ν`) gives a **uniform** `M* < sharpThreshold`
+   bounding all of them, hence `limsup_N (μ_N oddSetZ2).toReal ≤ M*`. Via Portmanteau on the
+   clopen set (mathlib: `ProbabilityMeasure.tendsto_measure_of_isClopen_of_tendsto`) and the
+   identity `(μ_N oddSetZ2).toReal = oddSteps n N / N`, this reads
+   `limsup_N (oddSteps n N / N) ≤ M* < sharpThreshold`.
+3. **[DONE]** `exists_freqThreshold_gt`: pick floor `N₀ ≥ 1` with `freqThreshold N₀ > M*`.
+   `exists_floor_of_diverges` gives `K` with the orbit `≥ N₀` for indices `≥ K`; set the
+   high tail `m = step^[K] n` (divergent, orbit `≥ N₀` forever). Since
+   `limsup (oddSteps m k / k) = limsup (oddSteps n · / ·) ≤ M* < freqThreshold N₀`, for all
+   large `k` the window `[0,k)` from `m` stays `≥ N₀` and `oddSteps m k / k < freqThreshold N₀`,
+   so `lt_of_oddSteps_freq_lt` gives `step^[k] m < m`. Then **`not_diverges_of_eventually_lt`**
+   ⟹ `¬ Diverges m` — contradicting divergence of the tail `m`. ∎
+
+**State:** endpoints (step 3 machinery) DONE; steps 1–2 are the measure module to build.
+`freqThreshold_lt_sharp`, `tendsto_freqThreshold`, `isClopen_oddSetZ2`, `continuous_T2`,
+`IsT2Invariant`, `orbitClosure` all present. **Smallest next probe:** the empirical-measure
+invariance lemma — state `μ_N`, prove the `2/N` telescoping total-variation bound and
+`Continuous (ProbabilityMeasure.map continuous_T2)` weak-* continuity, then cluster-invariance.
+Check mathlib for `ProbabilityMeasure.map` / `MeasureTheory.Measure.map` weak-* continuity and
+the `boundedMul`/`tendsto_iff` weak-* API before hand-rolling.
+
+**Note (converse calibration, lower value):** `NoDivergentOrbit → ParityRigidityW1'` has its
+arithmetic done (`repeat_cycle_oddFreq_lt_sharp`); its gap is "invariant measure on a *finite*
+orbit closure = uniform cycle measure". It only calibrates that W1′ isn't too strong (change of
+language), so it is NOT the funded direction — M2′ (forward/consumption) is.
+
+---
+
+## Front B (ON HOLD — blocked + mis-scoped; do NOT extend)
 
 `Compression` (`FrontB/Threads.lean`): `∃ C, ∀ v, Primitive v → IntegerCycle v →
 ¬ IsTrivial v → circuits v ≤ C` — an **upper** bound on the circuit count of a
-primitive nontrivial integer cycle. With `hercher_min_circuit_count` (≥92) it closes
-Front B outright via `frontB_of_compression_le_91` (any `C ≤ 91` suffices).
+primitive nontrivial integer cycle. With `hercher_min_circuit_count` (≥92) any `C ≤ 91`
+closes Front B via `frontB_of_compression_le_91`. **Review finding (2026-08-24):** this is
+Front B *restated*, not a sub-lemma — an upper bound on `m` is as hard as the cycles problem,
+is **absent from the literature** (which bounds `m` only below), and is **source-blocked** (SdW
+2005 not on box, `ON-LINE-REQUEST.md` unanswered). The block apparatus below is feature-complete;
+**do not add more vocabulary.** Resume only when the SdW source lands or a genuinely new
+upper-bound idea appears. The completed apparatus (kept for that day):
 
 **Why this is the route-decisive blocker, not a leaf:**
 - Every literature tool bounds circuits (≡ `m`, local minima ≡ `D` proxy) **from

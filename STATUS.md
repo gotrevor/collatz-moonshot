@@ -1,21 +1,30 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8747 jobs) · **Updated**: review lap · 2026-08-24 · `eb3a51a`+wip
+lap by lap.** · **Build**: 🟢 green (8747 jobs) · **Updated**: review lap · 2026-08-24 · Front A M2′ redirect
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
 `conjecture_of_fronts` (`Conjecture.lean`, `Descent.lean`) reduce Collatz to two
 front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialCycle`
-(Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are genuinely
-open and rest on cited axioms. Front B's closer needs `Compression` (an *upper* bound
-on cycle circuit-count, **absent from the literature**) on top of the proved
-`hercher_min_circuit_count` (≥92). Front A needs a `DivergentDescentCertificate`; its
-local-certificate constructive lane was proved (last session) to be **capped below the
-harmonic exponent α=1**, so it redirects to Tao2019/Furstenberg itinerary-rigidity.
-`src/` root chain is sorry-free.
+(Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. **This
+review re-scoped the reachable frontier.** Front B's closer needs `Compression` (an *upper*
+bound on cycle circuit-count) — now diagnosed as Front B *restated* (no elementary/known
+upper bound; the literature bounds circuits only below) and **source-blocked** (SdW 2005 not
+on box); its Lean apparatus is feature-complete and **on hold**. Front A's live route is
+**M2′** — `ParityRigidityW1' → NoDivergentOrbit` — whose only gap is a Krylov–Bogolyubov
+measure module (mathlib has the surrounding Prokhorov + Portmanteau + drift plumbing). The
+local-certificate lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
 
 ## What's happened (newest first)
+- **2026-08-24 (review lap, later):** **RE-SCOPED direction.** Established Front B
+  `Compression` is Front B restated + source-blocked → on hold, no more block vocabulary.
+  Redirected the binding crux to **Front A M2′** (`ParityRigidityW1' → NoDivergentOrbit`):
+  confirmed mathlib has Prokhorov (`CompactSpace (ProbabilityMeasure ℤ₂)`) +
+  Portmanteau-on-clopen; isolated the sole gap as a Krylov–Bogolyubov invariant-measure
+  module; **landed the two pure M2′ endpoints** `exists_freqThreshold_gt` +
+  `not_diverges_of_eventually_lt` (`Rigidity/Drift.lean`, trust-base clean) and the precise
+  3-piece decomposition (`PENDING_WORK.md`, `DIRECTION.md`).
 - **2026-08-24 (review lap):** Certified the harmonic-dual project COMPLETE. Diagnosed
   the `OneCircuit` a≥2 case as **Steiner's theorem (Baker/transcendence), not an `omega`
   leaf**, and **off the critical path** (Hercher covers all rungs ≤91). Resolved it via
@@ -43,16 +52,21 @@ harmonic exponent α=1**, so it redirects to Tao2019/Furstenberg itinerary-rigid
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- Attack Front B `Compression` (upper bound on circuit count) — decompose into named
-  Lean sub-goals / read Simons–de Weger for a concrete decomposition (PDF not on-box:
-  request via `ON-LINE-REQUEST.md`).
-- (Optional) Prove `SteinerOneCircuit` — this is Steiner 1977; needs an effective
-  irrationality measure for `log₂3`. Multi-year; leave isolated for now.
+- **Front A M2′ measure module** (binding crux): build the Krylov–Bogolyubov step for
+  `ParityRigidityW1' → NoDivergentOrbit` — empirical Cesàro measures' cluster points are
+  `T2`-invariant (telescoping `2/N` bound + pushforward weak-* continuity), + the uniform
+  `limsup` bound from W1′ over the weak-*-compact invariant-measure set. Endpoints done.
+- Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
+  SdW source lands or a new upper-bound idea appears.
+- (Optional) Prove `SteinerOneCircuit` — Steiner 1977; needs an effective irrationality
+  measure for `log₂3`. Multi-year; leave isolated.
 ### Long-term
-- Front A itinerary-rigidity: build a `DivergentDescentCertificate` from Tao2019 +
-  Furstenberg topological rigidity (the constructive local-certificate lane is α-capped).
+- Prove `ParityRigidityW1'` itself — the arithmetic intertwining making positive-orbit
+  conditioning visible to ×2×3 rigidity (FRONT-A-ROUTES §A1, "no route close"). M2′ makes
+  W1′ a valid sufficient condition; this is the genuinely-open new mathematics behind it.
 - Discharge / narrow the Front B cited axioms (`baker_bounded_difference`, `eliahou`,
   `hercher_*`); consider adopting the stronger Hercher–Bařina unconditional bound.
+- Reopen Front B `Compression` if the SdW source or a new upper-bound idea arrives.
 ### To completion
 - Both fronts unconditional (or each conditional exactly where the mathematics is), all
   cited axioms discharged or reduced to trust base + `native_decide` + genuine citations.
@@ -80,5 +94,6 @@ headline.
 
 ## Pointers
 - Binding directive: `DIRECTION.md` → CURRENT DIRECTIVE
-- Routes: `FRONT-A-ROUTES.md`, `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-08-24-0610.md` · scratchpad: `PENDING_WORK.md`
+- Routes: `FRONT-A-ROUTES.md` (§A1 = M2′ route), `FRONT-B-ROUTES.md`,
+  `FRONT-A-HARMONIC-DUAL.md` (done)
+- Newest baton: `HANDOFF-2026-08-24-2330.md` · scratchpad: `PENDING_WORK.md`
