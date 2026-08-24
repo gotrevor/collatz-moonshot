@@ -434,4 +434,59 @@ theorem mul_three_pow_le (n : ℕ) :
         _ ≤ (3 * step^[k] n + 1) * 2 ^ evenSteps n k :=
             Nat.mul_le_mul_right _ (by omega)
 
+/-! ## A cycle cannot be all-growth (the W1′ converse arithmetic)
+
+The exact `ℕ` lower bound `mul_three_pow_le`, specialized to a genuine periodic orbit
+`step^[p] n = n`, forces `3^a < 2^b` (`a` odd steps, `b` even steps over one period): a cycle
+spends strictly more halving mass than tripling mass.  Hence its odd-step frequency
+`a / (a+b)` is strictly below `sharpThreshold = log 2 / log 6` — exactly the arithmetic the
+`ParityRigidityW1' ↔ NoDivergentOrbit` calibration's *converse* needs (`Rigidity/Invariant.lean`,
+milestone note): every eventual cycle of a non-divergent orbit sits below the drift ceiling.
+No floor, no `growth` constant, no transcendence. -/
+
+/-- **A nontrivial `step`-cycle spends strictly more halvings than triplings.**  For a periodic
+point `step^[p] n = n` (`n ≥ 1`) with at least one odd step, `3^(oddSteps) < 2^(evenSteps)`. -/
+theorem cycle_three_pow_lt_two_pow {n p : ℕ} (hn : 1 ≤ n)
+    (hcyc : step^[p] n = n) (hodd : 1 ≤ oddSteps n p) :
+    3 ^ oddSteps n p < 2 ^ evenSteps n p := by
+  have hle := mul_three_pow_le n p
+  rw [hcyc] at hle
+  have hle2 : 3 ^ oddSteps n p ≤ 2 ^ evenSteps n p :=
+    Nat.le_of_mul_le_mul_left hle hn
+  have hoddmod : 3 ^ oddSteps n p % 2 = 1 := Nat.odd_iff.mp (Odd.pow (by decide))
+  have hevenmod : 2 ^ evenSteps n p % 2 = 0 := by
+    have : 2 ∣ 2 ^ evenSteps n p := dvd_pow_self 2 (by
+      by_contra hb0
+      have hb : evenSteps n p = 0 := by omega
+      rw [hb] at hle2
+      have h3 : 3 ≤ 3 ^ oddSteps n p :=
+        le_trans (by norm_num) (Nat.pow_le_pow_right (by norm_num) hodd)
+      simp at hle2; omega)
+    omega
+  omega
+
+/-- **The odd-step frequency of a `step`-cycle is below the sharp drift threshold.**  The
+converse-direction arithmetic of `W1PrimeIffFrontA`: `oddSteps / period < log 2 / log 6`. -/
+theorem cycle_oddFreq_lt_sharp {n p : ℕ} (hn : 1 ≤ n)
+    (hcyc : step^[p] n = n) (hodd : 1 ≤ oddSteps n p) :
+    (oddSteps n p : ℝ) / p < sharpThreshold := by
+  have hlt := cycle_three_pow_lt_two_pow hn hcyc hodd
+  have hab : oddSteps n p + evenSteps n p = p := oddSteps_add_evenSteps n p
+  set a := oddSteps n p
+  set b := evenSteps n p
+  have hpp : (0 : ℝ) < p := by
+    have : 1 ≤ p := by omega
+    exact_mod_cast this
+  have hR : (3 : ℝ) ^ a < 2 ^ b := by exact_mod_cast hlt
+  have hlog : (a : ℝ) * Real.log 3 < b * Real.log 2 := by
+    have h1 : Real.log ((3 : ℝ) ^ a) < Real.log ((2 : ℝ) ^ b) :=
+      Real.log_lt_log (by positivity) hR
+    rwa [Real.log_pow, Real.log_pow] at h1
+  have hlog6 : Real.log 6 = Real.log 2 + Real.log 3 := by
+    rw [show (6 : ℝ) = 2 * 3 by norm_num, Real.log_mul (by norm_num) (by norm_num)]
+  have hlog6pos : (0 : ℝ) < Real.log 6 := Real.log_pos (by norm_num)
+  rw [sharpThreshold, div_lt_div_iff₀ hpp hlog6pos, hlog6]
+  have hpr : (p : ℝ) = a + b := by rw [← hab]; push_cast; ring
+  rw [hpr]; nlinarith [hlog]
+
 end CollatzMoonshot
