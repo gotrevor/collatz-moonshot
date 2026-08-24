@@ -180,6 +180,22 @@ verifier (Fractions, no float trust).  Findings:
    the honest uniform statement is the memory-9 certificate + the (clean) "each
    depth-`k` constraint is a depth-10 instance" reduction lemma.
 
+5. **The witness does not compress (refuted).**  The constant-lift-digit value
+   is *identical* for digits `0,1,2` (a residue-shift symmetry), so memory 9 is
+   intrinsic to the constant policy.  The memory-9 weight is **not** rank-1:
+   `w(r,f) = a(f)·g(r)` fails badly (the floor-ratio spread across residues is
+   up to `128×` at the top floor).  It is not floor-only (`c=1.51`) and not
+   low-memory (`c*(m)>1` for `m≤8`).  So there is no clean product/closed-form
+   certificate; the uniform gap is real but *structureless* — it needs the full
+   `mod 3^9` residue memory.
+
+6. **Integer certificate frozen and verified (Lean-ready).**
+   `experiments/harmonic_uniform_certificate.py` scales the weight to integers
+   over `2^30`, `cost_max = 23`, and checks all `196 830` inequalities in **pure
+   integer arithmetic** — exactly the `native_decide` shape
+   `Σ 3·2^(23−cost)·W[child] < 2^23·W[source]`.  Result: **0 violations**, exact
+   `c = 70013178530367/70560449036288 = 0.99224… < 1`.
+
 ### Next attack (crux)
 
 Formalize the **depth-uniform** theorem, not another rung:
