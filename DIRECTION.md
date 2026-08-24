@@ -2,42 +2,34 @@
 
 ## CURRENT DIRECTIVE  (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
 
-- **THE objective:** Advance the two genuinely-open headline cruxes of the repo,
-  hardest-first. The headline `conjecture_of_fronts (hA : NoDivergentOrbit)
-  (hB : NoNontrivialCycle) : Conjecture` is axiom-clean; all the real difficulty is
-  the two front hypotheses, both open. **This review re-scoped the reachable frontier:**
-  - **Front B `Compression` is BLOCKED and was mis-scoped as tractable.** It asks for an
-    *upper* bound `C` on the circuit count of a primitive nontrivial integer cycle. Three
-    facts, established this lap: (a) with `hercher_min_circuit_count` (≥92) any `C ≤ 91`
-    gives *no nontrivial cycle*, so `Compression` is **Front B restated**, not a sub-lemma
-    — an upper bound on `m` is as hard as the cycles problem; (b) the literature bounds `m`
-    only *below* (SdW 68→76, Hercher 77→91), because a small-`m` cycle over-approximates
-    `log₂3`; as `m` grows the constraint relaxes, so **no upper bound exists in the record
-    and none follows elementarily**; (c) it is source-blocked — Simons–de Weger 2005 is
-    **not on box** and the `ON-LINE-REQUEST.md` is unanswered. Its Lean apparatus
-    (block/S-unit/rotation) is feature-complete. **Building more Front B vocabulary is
-    forbidden drift.** Front B is on hold pending either the SdW source or a genuinely new
-    idea for an upper bound.
-  - **Front A M2′ is the reachable, on-path crux to fund.** `NoDivergentOrbit` follows
-    from the parity-rigidity keystone `ParityRigidityW1'` via the **owed** implication
-    `ParityRigidityW1' → NoDivergentOrbit` (milestone M2′, `Rigidity/Invariant.lean`). The
-    local-certificate lane is harmonic-capped below α=1 (proved, COMPLETE), so M2′ is the
-    live Front-A route. mathlib supplies the plumbing: Prokhorov weak-* compactness
-    (`CompactSpace (ProbabilityMeasure ℤ₂)`), Portmanteau on the clopen parity set
-    (`ProbabilityMeasure.tendsto_measure_of_isClopen_of_tendsto`), the drift consumption
-    (`lt_of_oddSteps_freq_lt`), and now the two M2′ endpoints (`exists_freqThreshold_gt`,
-    `not_diverges_of_eventually_lt`, `Rigidity/Drift.lean`, this lap). The **single genuine
-    gap** is a Krylov–Bogolyubov invariant-measure module (absent from mathlib): empirical
-    Cesàro cluster measures of the orbit are `T2`-invariant, and the invariant-measure set
-    is weak-* compact so W1′ bounds the empirical `limsup` *uniformly* below
-    `sharpThreshold`. See `PENDING_WORK.md` for the exact 3-piece decomposition.
+- **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
+  bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem
+  `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` now includes
+  the whole empirical-Cesàro → Krylov–Bogolyubov invariance/support → uniform parity
+  `limsup` → high-tail drift contradiction, and its axiom footprint is exactly
+  `[propext, Classical.choice, Quot.sound]`.  Do not rebuild that measure plumbing.
 
-- **MANDATED next move:** Build the Krylov–Bogolyubov measure module for M2′ (the smallest
-  compiler-grounded probe first: state the empirical-measure invariance lemma, prove the
-  telescoping bound `‖T∗μ_N − μ_N‖ ≤ 2/N` and pushforward weak-* continuity, then the
-  cluster-measure invariance). Each lap NARROWS it; record the advance (or refuted
-  sub-approach) in `PENDING_WORK.md`. Do NOT touch Front B `Compression` until the SdW
-  source lands or a genuinely new upper-bound idea appears.
+- **The remaining Front-A crux is arithmetic.**  `ParityRigidityW1'` itself must
+  distinguish parity itineraries of ordinary positive integers from the unrestricted
+  2-adic full shift.  The next funded pull is the exact inverse-parity reconstruction/carry
+  machine in `FRONT-A-PARITY-RECONSTRUCTION.md`: a shortcut parity prefix determines a
+  unique residue modulo `2^m`; extending the prefix emits one binary digit of the starting
+  integer and updates an exact unbounded carry/endpoint.  A positive integer is precisely
+  the asymptotic case where those output bits are eventually zero.  A divergent orbit would
+  have to combine that condition with critical odd density and aperiodicity.
+
+- **MANDATED next move:** Execute the experiment-first project in
+  `FRONT-A-PARITY-RECONSTRUCTION.md`.  Build and exhaustively validate the exact online
+  reconstruction recurrence; search for a depth-independent carry invariant or a precise
+  obstruction to bounded-memory potentials; formalize the small residue/carry kernel and
+  the eventual-periodicity no-divergence baseline in Lean.  This is a research probe, not a
+  directive to claim W1′.  Stop and re-scope if the result is only the known prefix bijection
+  plus routine plumbing—do not extend vocabulary indefinitely.
+
+- **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
+  of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
+  bound.  Its block/S-unit/rotation apparatus is feature-complete; resume only if the missing
+  Simons–de Weger source or a genuinely new upper-bound idea changes the mathematics.
 
 - **FORBIDDEN drift (do NOT spend a lap on):**
   - **Front B `Compression` / more block-word vocabulary** — blocked + mis-scoped (above);
@@ -47,14 +39,18 @@
     (`hercher_min_circuit_count` covers every rung ≤91). Resolved by the isolated
     `SteinerOneCircuit` hypothesis; leave it.
   - Porting another harmonic/subharmonic exponent — that project is COMPLETE.
+  - Rebuilding M2′, proving only its converse calibration, or adding more empirical-measure
+    plumbing — M2′ is COMPLETE; the converse is useful calibration but not the live crux.
+  - A bounded-suffix parity automaton or finite forbidden-word search: every finite parity
+    word is realized by a residue class.  Carry/height information must be load-bearing.
   - Route-1 gcd-harvest (`Threads.lean` Thread 7) — KILLED; rotations give one condition.
   - Off-path leaf sorries, docs-only laps, or freezing a finite table as a headline.
 
-- **WHY:** Recent laps built feature-complete Front B block vocabulary and Front A W1′
-  *arithmetic* leaves while both true summits stayed untouched — the crux-neglect pattern.
-  Front B's summit has no known/elementary handle and no on-box source, so it is not a
-  compiler probe this lap. Front A's M2′ is the reachable on-path measure-theory build the
-  headline genuinely reuses; its only gap (Krylov–Bogolyubov) is buildable in mathlib.
+- **WHY:** M2′ compressed Front A to a single honest statement and thereby exposed exactly
+  what remains: positive-integer conditioning.  Prefix reconstruction turns that vague
+  phrase into an exact input/output machine and supplies a falsifiable place to seek new
+  mathematics.  The finite-prefix surjectivity is also a guardrail: successful rigidity
+  must be asymptotic or use unbounded carry/archimedean state.
 
 ### Directive history
 - 2026-08-24 (review lap): harmonic-dual project certified COMPLETE. Diagnosed
@@ -69,6 +65,10 @@
   has Prokhorov + Portmanteau-on-clopen; isolated the sole gap as a Krylov–Bogolyubov
   module; landed the two pure M2′ endpoints (`exists_freqThreshold_gt`,
   `not_diverges_of_eventually_lt`) and the precise 3-piece decomposition in PENDING_WORK.
+- 2026-08-24 (M2′ completion + audit): `parityRigidityW1'_imp_noDivergent` proved with the
+  full KB/support/frequency/drift chain and independently rebuilt/audited at the trust base.
+  Redirected the live Front-A pull to the parity-reconstruction/carry barrier; see
+  `FRONT-A-PARITY-RECONSTRUCTION.md`.
 
 ---
 

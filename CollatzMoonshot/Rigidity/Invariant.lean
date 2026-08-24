@@ -118,11 +118,11 @@ Status and honesty ledger:
   `-1 → -2 → -1` (`T2_neg_cycle`) carries an invariant measure with odd mass
   `1/2`, above the threshold.  So the unconditioned statement is *false*, exactly
   as for W1 - the support hypothesis is where "arises from ℕ" enters.
-* **Owed (milestone M2′)**: `ParityRigidityW1' → NoDivergentOrbit`, via
-  Krylov-Bogolyubov transfer (THEOREM-grade, axiomatizable) + Portmanteau on the
-  clopen parity set + `lt_of_oddSteps_freq_lt`.  The floor `N` in the drift
-  estimate is supplied by the divergence itself, and `tendsto_freqThreshold` is
-  what makes the sharp constant the right target.
+* **Delivered (milestone M2′)**: `parityRigidityW1'_imp_noDivergent` in
+  `Rigidity/Empirical.lean` proves `ParityRigidityW1' → NoDivergentOrbit` through
+  Krylov-Bogolyubov transfer, orbit-closure support, clopen Portmanteau, uniform
+  odd-frequency control, and the high-tail drift estimate. It is sorry-free and
+  trust-base clean.
 * **Calibration:** the converse should also be theorem-grade.  If Front A holds,
   every positive orbit is eventually periodic; its orbit closure has the uniform
   measure on the eventual cycle as its only invariant probability, and

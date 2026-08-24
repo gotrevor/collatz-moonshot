@@ -524,6 +524,23 @@ multiplication by `3` is a base-2 transducer.  A successful theorem has to disti
 itineraries of ordinary positive integers from the unrestricted 2-adic full shift.  Carries
 are the concrete coupling between those two worlds.
 
+### 2026-08-24 pull: make the positive-integer condition explicit
+
+M2′ is now complete, so the measure side reduces Front A to its arithmetic conditioning.
+`FRONT-A-PARITY-RECONSTRUCTION.md` pins the next exact object. A shortcut parity word `v`
+of length `m` determines a unique realizing residue `R(v) mod 2^m` through
+
+```text
+2^m ∣ 3^(ones v) R(v) + numer(v).
+```
+
+Appending one parity bit lifts `R(v)` by either `0` or `2^m`; that lift is the next binary
+digit of the starting integer. The quotient endpoint supplies an exact unbounded carry
+recurrence. Thus an infinite itinerary comes from `ℕ` precisely when its reconstruction
+output is eventually zero. A divergent candidate must combine that output condition with
+critical odd density and aperiodicity. Every finite word is realized, which rules out finite
+forbidden words and bounded parity-suffix state before any compute is spent.
+
 There are two plausible output forms:
 
 1. a Cobham/transducer rigidity theorem showing that a positive-integer itinerary cannot
@@ -542,12 +559,13 @@ rigidity or repeat-or-descend.
 
 ## Current priority order
 
-1. **Orbit-limit parity rigidity**, but work with the weakest empirical pin that the drift
-   consumption actually needs; keep the all-supported-measures W1' as the stronger target.
+1. **Positive-integer parity reconstruction/carry rigidity**, now that M2′ has completed the
+   measure-to-drift bridge. Seek a stable asymptotic invariant, not another finite census.
 2. **Floor-preserving saturation**, beginning with inequalities for backward branches of the
    high-floor tails supplied by a hypothetical divergent orbit.
-3. **Repeat-or-descend certificates**, using the existing carry/transducer infrastructure and
-   treating a repeat as a permitted Front-B handoff rather than certificate failure.
+3. **Orbit-limit parity rigidity / repeat-or-descend certificates**, using reconstruction
+   carries to make the positive-integer conditioning load-bearing and treating a repeat as a
+   permitted Front-B handoff rather than certificate failure.
 
 No route is close.  The board's immediate value is negative and architectural: it prevents
 raw density amplification, pure 2-adic measure claims, and universal-descent requirements

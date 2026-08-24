@@ -9,7 +9,7 @@ import CollatzMoonshot.Rigidity.Invariant
 /-!
 # Cesàro empirical measures and the Krylov–Bogolyubov step (Front A M2′)
 
-This module builds toward the owed milestone `ParityRigidityW1' → NoDivergentOrbit`
+This module completes milestone `ParityRigidityW1' → NoDivergentOrbit`
 (M2′, `Rigidity/Invariant.lean`).  On a hypothetically divergent orbit the argument
 averages the orbit in the compact space `ℤ_[2]`, extracts a weak-* cluster measure, and
 uses its `T2`-invariance (Krylov–Bogolyubov) together with `ParityRigidityW1'`.
@@ -21,9 +21,9 @@ first `N` Dirac masses along the `T2`-orbit of `x` — and prove its two computa
   average `N⁻¹ · Σ_{k<N} f (T2^[k] x)`;
 * `integral_empiricalMeasure_comp_T2_sub` — the **telescoping** identity
   `∫ f∘T2 dμ_N − ∫ f dμ_N = N⁻¹ · (f (T2^[N] x) − f x)`.  Its right side is `O(1/N)`, which
-  is exactly what forces every weak-* cluster point of `μ_N` to be `T2`-invariant (the
-  Krylov–Bogolyubov conclusion, assembled next lap via Prokhorov compactness of
-  `ProbabilityMeasure ℤ_[2]` and weak-* continuity of `ProbabilityMeasure.map`).
+  is exactly what forces every weak-* cluster point of `μ_N` to be `T2`-invariant. The
+  module then proves orbit-closure support, exact parity-frequency transport, a uniform
+  sub-sharp `limsup`, and the final divergent-tail contradiction.
 
 See `PENDING_WORK.md` for the full M2′ decomposition.
 -/

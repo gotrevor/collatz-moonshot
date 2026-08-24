@@ -24,9 +24,12 @@ Landed pieces (all `Rigidity/Empirical.lean`, all trust-base clean):
 - `parityRigidityW1'_imp_noDivergent` — the assembly.
 
 **Next-value work now (Front A is measure-side-complete):** the remaining Front-A obligation
-is `ParityRigidityW1'` ITSELF (the keystone working conjecture) — genuinely open research;
-its converse arithmetic is done (`repeat_cycle_oddFreq_lt_sharp`). Or return to Front B
-`Compression` (blocked on SdW source). See below.
+is `ParityRigidityW1'` ITSELF (the keystone working conjecture) — genuinely open research.
+The funded concrete probe is `FRONT-A-PARITY-RECONSTRUCTION.md`: reconstruct the unique
+starting residue from each shortcut parity prefix, expose its next binary digit as an exact
+carry update, and test whether critical odd density is incompatible with eventually-zero
+output. Every finite parity word occurs, so bounded suffix memory / forbidden words alone
+cannot work. Front B `Compression` remains blocked on the SdW source.
 
 ## Status (2026-08-24, review lap — RE-SCOPED) [SUPERSEDED by M2′ completion above]
 

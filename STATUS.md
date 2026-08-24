@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8747 jobs) · **Updated**: review lap · 2026-08-24 · Front A M2′ redirect
+lap by lap.** · **Build**: 🟢 green (8748 jobs) · **Updated**: 2026-08-24 · M2′ complete; parity/carry pull
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -11,12 +11,21 @@ front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialC
 review re-scoped the reachable frontier.** Front B's closer needs `Compression` (an *upper*
 bound on cycle circuit-count) — now diagnosed as Front B *restated* (no elementary/known
 upper bound; the literature bounds circuits only below) and **source-blocked** (SdW 2005 not
-on box); its Lean apparatus is feature-complete and **on hold**. Front A's live route is
-**M2′** — `ParityRigidityW1' → NoDivergentOrbit` — whose only gap is a Krylov–Bogolyubov
-measure module (mathlib has the surrounding Prokhorov + Portmanteau + drift plumbing). The
-local-certificate lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
+on box); its Lean apparatus is feature-complete and **on hold**. Front A milestone **M2′ is
+complete**: `ParityRigidityW1' → NoDivergentOrbit` is sorry-free and trust-base clean, including
+all Krylov–Bogolyubov/Portmanteau/frequency/drift plumbing. The remaining Front-A crux is
+`ParityRigidityW1'` itself—the arithmetic restriction distinguishing positive-integer parity
+itineraries from the unrestricted 2-adic shift. The live probe is the exact inverse-parity
+reconstruction/carry machine in `FRONT-A-PARITY-RECONSTRUCTION.md`. The local-certificate
+lane is harmonic-capped below α=1 (proved, complete). `src/` is sorry-free.
 
 ## What's happened (newest first)
+- **2026-08-24 (M2′ complete):** Proved
+  `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit`, including
+  arbitrary empirical cluster invariance/support, exact odd-frequency transport, the uniform
+  sub-sharp `limsup`, and high-tail drift consumption. Full build green (8748 jobs); independent
+  targeted rebuild and axiom audit report exactly `[propext, Classical.choice, Quot.sound]`.
+  Re-pointed the live research pull to parity reconstruction/carries.
 - **2026-08-24 (review lap, later):** **RE-SCOPED direction.** Established Front B
   `Compression` is Front B restated + source-blocked → on hold, no more block vocabulary.
   Redirected the binding crux to **Front A M2′** (`ParityRigidityW1' → NoDivergentOrbit`):
@@ -52,10 +61,12 @@ local-certificate lane is harmonic-capped below α=1 (proved, complete). `src/` 
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **Front A M2′ measure module** (binding crux): build the Krylov–Bogolyubov step for
-  `ParityRigidityW1' → NoDivergentOrbit` — empirical Cesàro measures' cluster points are
-  `T2`-invariant (telescoping `2/N` bound + pushforward weak-* continuity), + the uniform
-  `limsup` bound from W1′ over the weak-*-compact invariant-measure set. Endpoints done.
+- **Front A parity reconstruction/carry probe** (binding): build the exact online machine
+  mapping shortcut parity prefixes to the binary digits of their unique realizing residue;
+  search for a depth-independent carry invariant or certify why bounded-memory potentials
+  fail. Formalize only the reusable residue/carry kernel and genuine restricted rigidity.
+- M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
+  the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
   SdW source lands or a new upper-bound idea appears.
 - (Optional) Prove `SteinerOneCircuit` — Steiner 1977; needs an effective irrationality
@@ -83,6 +94,7 @@ excluded from the math-axiom count below.
 | `frontB_of_compression_le_91` | Front B closer | `hercher_min_circuit_count` | 1 · 🟡 proved (Hercher 2023, no transcendence; `Compression` still an *open def*, not an axiom) |
 | `two_pow_68_lt_of_onCycle_nontrivial` | conditional demo | `collatz_verified_up_to_two_pow_68` | 1 · 🟢 finite computation |
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
+| `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
 headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,
@@ -94,6 +106,6 @@ headline.
 
 ## Pointers
 - Binding directive: `DIRECTION.md` → CURRENT DIRECTIVE
-- Routes: `FRONT-A-ROUTES.md` (§A1 = M2′ route), `FRONT-B-ROUTES.md`,
-  `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-08-24-2330.md` · scratchpad: `PENDING_WORK.md`
+- Routes: `FRONT-A-PARITY-RECONSTRUCTION.md` (live), `FRONT-A-ROUTES.md`,
+  `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
+- M2′ completion baton: `HANDOFF-2026-08-24-1730.md` · scratchpad: `PENDING_WORK.md`

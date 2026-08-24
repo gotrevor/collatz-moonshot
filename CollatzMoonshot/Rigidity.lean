@@ -55,16 +55,14 @@ lives where, and the roadmap.
 
 ## Milestones
 * **M1** (done): vocabulary + base intertwining + funnel + wiring forms.
-* **M2′** (live): `ParityRigidityW1' → NoDivergentOrbit`.  Ingredients:
-  (a) `continuous_T2` ✅; (b) Krylov-Bogolyubov transfer on the compact space
-  `ℤ_[2]` - THEOREM-grade axiom, quantified over the orbit closure; (c) empirical
-  measures + Portmanteau on the clopen parity set, turning `μ oddSetZ2` into the
-  limiting odd-step frequency; (d) `lt_of_oddSteps_freq_lt` ✅ to convert that
-  frequency into descent, with the floor `N` supplied by the divergence itself.
-  Only (b) and (c) remain.
+* **M2′** (done): `ParityRigidityW1' → NoDivergentOrbit`, proved in
+  `Rigidity/Empirical.lean`.  The theorem includes Krylov-Bogolyubov transfer on
+  compact `ℤ_[2]`, orbit-closure support, clopen Portmanteau, a uniform sub-sharp
+  empirical `limsup`, and high-tail drift consumption.  It is sorry-free and its
+  axiom footprint is the trust base only.
   `FrontA/Threads.lean` additionally pins the weaker empirical-limit version and
   the expected calibration `ParityRigidityW1' ↔ NoDivergentOrbit`, so proving
-  measure plumbing cannot be mistaken for proving the rigidity input itself.
+  the completed measure plumbing cannot be mistaken for proving the rigidity input itself.
 * **M2** (superseded, kept as the alternate route): `MeasureRigidityW1 →
   NoDivergentOrbit` via the frequency/all-scales upgrade of the funnel.  Harder:
   deep 2-adic returns are rare enough that the counting does not obviously close.
