@@ -30,4 +30,5 @@ import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative
 import CollatzMoonshot.FrontB.Threads
 import CollatzMoonshot.FrontB.Dictionary
+import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional

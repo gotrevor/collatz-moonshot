@@ -1,65 +1,57 @@
 # PENDING_WORK
 
-## Status (2026-08-24)
+## Status (2026-08-24, review lap)
 
-- **Harmonic-dual obstruction project: COMPLETE** (this session's scoped task).
+- **Harmonic-dual obstruction project: COMPLETE.**
   `no_positive_harmonic_local_certificate` proved sorry-free, depth-uniform,
-  axiom-clean (`[propext, Classical.choice, Quot.sound]` + 4 `native_decide`).
-  See `FRONT-A-HARMONIC-DUAL.md` §Results/§8 and `HANDOFF-2026-08-24-0530.md`.
-- `src/` is sorry-free; full `lake build` green (8746 jobs).
+  axiom-clean (trust base + 4 `native_decide`). See `FRONT-A-HARMONIC-DUAL.md`.
+- **`OneCircuit` a≥2 resolved honestly** (this lap): NOT an `omega` leaf — it is
+  **Steiner's theorem (1977) = Baker/effective-irrationality of `log₂3`**, and it is
+  **off the ladder's critical path** (`hercher_min_circuit_count` already covers every
+  circuit count ≤91, this rung included). Isolated as the explicit hypothesis
+  `SteinerOneCircuit` (a `def`, no new axiom); `sorry` removed; module imported from
+  root and green. `#print axioms oneCircuitCanonical_trivial = [propext, choice, Quot.sound]`.
+- `src/` root chain sorry-free; full `lake build` green (8747 jobs).
 
-## The repo's real headline cruxes (open, deep — narrow, don't clear in one lap)
+## THE CRUX (binding, per `DIRECTION.md`): Front B `Compression`
 
-The Collatz headline `Conjecture ↔ NoDivergentOrbit ∧ NoNontrivialCycle`
-(`Descent.lean`, `Conjecture.lean`) rests on two fronts, each behind cited
-axioms:
+`Compression` (`FrontB/Threads.lean`): `∃ C, ∀ v, Primitive v → IntegerCycle v →
+¬ IsTrivial v → circuits v ≤ C` — an **upper** bound on the circuit count of a
+primitive nontrivial integer cycle. With `hercher_min_circuit_count` (≥92) it closes
+Front B outright via `frontB_of_compression_le_91` (any `C ≤ 91` suffices).
 
-### Front B — `NoNontrivialCycle ↔ FrontB` (`FrontB/Dictionary.lean`)
-Arithmetic front; cited axioms in `Assumed/`:
-- `eliahou_min_cycle_length`, `hercher_odd_members_bound` (`Assumed/Cycles.lean`)
-  — Baker linear-forms + continued fraction of `log₂3` + large computation.
-- `baker_bounded_difference`, `hercher_min_circuit_count` (`FrontB/Threads.lean`).
-- `abc` (`Assumed/ABC.lean`), used by `length_bounded_of_abc_and_boundedDen`.
-- **Narrowing path** (not one lap): formalize the elementary cycle→S-unit/linear-
-  forms reduction, isolating Baker's theorem as the single narrow cited input;
-  or discharge the finite `hercher_*` circuit-count computations. See
-  `FRONT-B-ROUTES.md`.
+**Why this is the route-decisive blocker, not a leaf:**
+- Every literature tool bounds circuits (≡ `m`, local minima ≡ `D` proxy) **from
+  below** (Simons–de Weger 68→76, Hercher 77→91→"≥92"). That direction "never finishes"
+  (`FRONT-B-ROUTES.md` §filter: `log₂3` irrational ⇒ arbitrarily good approximations).
+- The *upper* bound is **absent from the published record** — it is the one missing
+  ingredient. It is an integrality/divisibility statement (pure combinatorics on words +
+  `2^i 3^j` lattice), no analysis. Route 2 in `FRONT-B-ROUTES.md`.
 
-### Front A — `NoDivergentOrbit`
-Rigidity front; rests on `tao_2019_almost_bounded` (`Assumed/Tao2019.lean`) and
-`furstenberg_topological_rigidity` (`Assumed/Furstenberg.lean`, flagged OPEN).
-The barriered backward-tree ladder (2/3→3/4→4/5 rungs, all green) is the
-constructive lane; the harmonic no-go proved this session shows the uniform
-local-certificate ladder **cannot** reach `α=1`, so Route A2 does not close the
-divergence front alone — redirect to A1/A3 itinerary-rigidity.
+**Attack paths (each lap: the smallest source-/compiler-grounded probe):**
+1. **Source read (do first):** Simons–de Weger 2005/2010 — do they bound circuit count
+   above for any cycle family, or only rung-by-rung? The PDF is NOT on-box; append a
+   dated request to `ON-LINE-REQUEST.md` (check `archive/findings/` first).
+2. **Decompose in Lean:** state `Compression` via the S-unit equation
+   `Σ 3^{a−1−i} 2^{E_i} = N·D` (ESS/subspace theorem bounds solution count by term count
+   `= a` — vacuous unless `a` compresses). Name the missing "few circuits" sub-lemma as a
+   `def`, prove the wiring around it. Do NOT manufacture vacuous sorries.
+3. **Refuted already — do not retry:** Route-1 gcd-harvest over rotations (Thread 7,
+   `route1_gcdHarvest_false`): all rotations give ONE divisibility condition mod `D`.
 
-## ACTIVE crux probe: Front B ladder base (`FrontB/OneCircuit.lean`, 1 sorry)
+## Alternate crux: Front A itinerary-rigidity
 
-Special-case-first on the `Compression`/`LadderCompletes` crux: **a canonical
-one-circuit integer cycle `trueᵃ falseᵇ` is trivial**.  Proved this lap
-(machine-checked): the closed forms `ones=a`, `numer = 3ᵃ−2ᵃ` (b-independent),
-`den = 2^(a+b)−3ᵃ`; the identity `numer+den = 2ᵃ(2ᵇ−1)`; the reduction
-`den ∣ numer ↔ den ∣ 2ᵇ−1` (den odd); and the **a=1 slice** in full (den∣1 ⟹
-den=1 ⟹ b=1).  Numerically the sole solution through a≤8 is (1,1).
+`NoDivergentOrbit` needs a `DivergentDescentCertificate` (`FrontA/Threads.lean`
+`noDivergent_of_certificate`). The local-certificate constructive ladder (2/3→3/4→4/5
+rungs green) is **capped below α=1** by the harmonic no-go, so it cannot complete the
+certificate alone. Redirect: build the certificate from `tao_2019_almost_bounded`
+(🟡 proved upstream) + `furstenberg_topological_rigidity` (🟠 proved 1967). See
+`FRONT-A-ROUTES.md` (A1/A3). Pick this if Front B `Compression` stalls.
 
-**Open (the one `sorry`): a≥2 has no solution.**  Established facts in context:
-`den ∣ 2ᵇ−1`, `0 < den = 2^(a+b)−3ᵃ`, `2 ≤ a`.  These force
-`(3ᵃ+1)/2ᵃ ≤ 2ᵇ ≤ (3ᵃ−1)/(2ᵃ−1)` — a real interval of width-ratio `→1`, and it
-contains **no power of 2** for a≥2.  Three attack paths:
-1. **Interval-misses-power-of-2** (most concrete): from `den ∣ 2ᵇ−1` ⟹ `den ≤ 2ᵇ−1`
-   and `den>0`, derive the two-sided bound on `2ᵇ`; show the endpoint ratio is `<2`
-   so at most one power of 2 could fit, and the candidate makes `den ≤ 0` — a clean
-   `omega`-after-`Nat.lt_pow`/`pow` monotonicity argument once the interval is set up.
-2. **2-adic valuation**: reduce the surviving cases to `numer = den` (quotient 1),
-   then `2^(a+b)+2ᵃ = 2·3ᵃ` ⟹ `2ᵃ(2ᵇ+1)=2·3ᵃ`, and `v₂(LHS)=a`, `v₂(RHS)=1` ⟹ a=1.
-   (Blocker: showing quotient=1 needs a size bound that only path 1 supplies.)
-3. **LTE / order of 2 mod den**: `2ᵇ ≡ 1 (mod den)` ⟹ `ord_den(2) ∣ b`; combine with
-   `den ∣ 3ᵃ−2ᵃ` to bound `den`.  Heavier machinery; last resort.
-Path 1 is the recommended attack.  Then: prove `circuits v = 1 → v` is a rotation
-of `oneCircuitWord a b` to lift from the canonical rep to all one-circuit words,
-and wire into the ladder base.
-
-## Note for the next operator
-The scoped harmonic project is finished. Picking up a Front A/B axiom-narrowing
-task is a deliberate refocus (deep, multi-lap) that should be operator-directed
-rather than started blind at a session boundary.
+## Longer horizon — narrow the cited axioms
+- `baker_bounded_difference` (🟠): formalize the elementary cycle→S-unit reduction so
+  Baker/Tijdeman is the single narrow cited input.
+- Adopt the Hercher–Bařina unconditional bound (`K > 1.375×10¹¹`, supersedes Eliahou by
+  4 orders) into `Assumed/Cycles.lean` — an axiom-strengthening, deliberate step.
+- `SteinerOneCircuit`: provable only via an effective irrationality measure for `log₂3`
+  (multi-year). Leave isolated.

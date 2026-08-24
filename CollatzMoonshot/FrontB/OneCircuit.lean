@@ -28,12 +28,26 @@ For `w = trueᵃ ++ falseᵇ`:
 then `a = 1 ∧ b = 1` (the trivial cycle `{1,2}`, member `1`).  Verified by
 `experiments`: the sole solution through `a ≤ 8` is `(1,1)`.
 
-Reduction (proved): `numer w + den w = 2ᵃ (2ᵇ − 1)` and `den w` is odd, so
-`den w ∣ numer w ↔ den w ∣ 2ᵇ − 1`.  The remaining core — that this forces
-`a = 1` — is the classical Böhm–Sontacchi circuit fact; the `a = 1` slice is
-closed here, the `a ≥ 2` slice is a disclosed `sorry` (see `PENDING_WORK.md` for
-the three attack paths).  This file is not imported by `CollatzMoonshot.lean`
-until it is sorry-free (the `BackwardThreeQuarters` convention).
+Reduction (proved, transcendence-free): `numer w + den w = 2ᵃ (2ᵇ − 1)` and
+`den w` is odd, so `den w ∣ numer w ↔ den w ∣ 2ᵇ − 1`.  The `a = 1` slice is then
+closed elementarily here.
+
+**The `a ≥ 2` slice is NOT elementary — it is Steiner's theorem (1977).**  After
+the reduction it asks: can `den w = 2^(a+b) − 3ᵃ` divide `2ᵇ − 1` with `a ≥ 2`?
+`den ∣ 2ᵇ−1` gives `den ≤ 2ᵇ−1`, which with `den > 0` pins `2ᵇ` to the interval
+`(3ᵃ/2ᵃ, 3ᵃ/(2ᵃ−1))` — width-ratio `2ᵃ/(2ᵃ−1) → 1`.  "No power of `2` in that
+interval for `a ≥ 2`" is exactly the statement `‖a·log₂3‖ ≳ 2^{−a}`, an **effective
+irrationality-measure / Baker** lower bound (Steiner used transcendence to close the
+one-circuit / one-cycle case; cf. `FRONT-B-ROUTES.md` §filter).  It is therefore
+**not** an `omega` argument (correcting the earlier `PENDING_WORK.md` "path 1"
+claim), and it is **off the ladder's critical path**: `hercher_min_circuit_count`
+(no-transcendence, in `Threads.lean`) already gives triviality for every circuit
+count `≤ 91`, this rung included.
+
+We therefore keep the file **transcendence-free** by isolating that single input as
+an explicit hypothesis `SteinerOneCircuit` (a `def`, in the style of the board's
+`Compression`/`LadderCompletes` open targets), NOT as a `sorry` and NOT as a new
+axiom.  The elementary reduction below is complete and sorry-free.
 -/
 
 namespace CollatzMoonshot.FrontB
@@ -102,12 +116,28 @@ theorem numer_add_den_oneCircuitWord (a b : ℕ) (hpos : 0 < den (oneCircuitWord
   have : (2 : ℤ) ^ (a + b) = 2 ^ a * 2 ^ b := by rw [pow_add]
   rw [this]; ring
 
+/-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
+Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
+targets `Compression`/`LadderCompletes` — so that `OneCircuit.lean` stays
+sorry-free and axiom-free while naming precisely what is not elementary.
+
+Content: for `a ≥ 2` there is no canonical one-circuit integer cycle, i.e. the odd
+denominator `den (trueᵃfalseᵇ) = 2^(a+b) − 3ᵃ` (when positive) never divides
+`2ᵇ − 1`.  Equivalently (via `den ∣ 2ᵇ−1 ⇒ den ≤ 2ᵇ−1`) the interval
+`(3ᵃ/2ᵃ, 3ᵃ/(2ᵃ−1))` contains no power of `2` — an effective irrationality-measure
+lower bound `‖a·log₂3‖ ≳ 2^{−a}` (Baker/Rhin). -/
+def SteinerOneCircuit : Prop :=
+  ∀ a b : ℕ, 2 ≤ a → 1 ≤ b → 0 < den (oneCircuitWord a b) →
+    ¬ (den (oneCircuitWord a b) ∣ (2 ^ b - 1 : ℤ))
+
 /-- **Base of the circuit ladder (arithmetic core).**  A canonical one-circuit
 integer cycle is the trivial one.
 
-The `a = 1` slice is proved; the `a ≥ 2` slice is the classical Böhm–Sontacchi
-fact, disclosed as `sorry` pending formalization (see `PENDING_WORK.md`). -/
-theorem oneCircuitCanonical_trivial (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
+Transcendence-free modulo the single explicit input `SteinerOneCircuit`: the `a = 1`
+slice is proved elementarily; the `a ≥ 2` slice is Steiner's theorem, discharged by
+the hypothesis (see its docstring and `PENDING_WORK.md`). -/
+theorem oneCircuitCanonical_trivial (hSteiner : SteinerOneCircuit)
+    (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
     (hpos : 0 < den (oneCircuitWord a b))
     (hdvd : den (oneCircuitWord a b) ∣ (numer (oneCircuitWord a b) : ℤ)) :
     a = 1 ∧ b = 1 := by
@@ -146,10 +176,9 @@ theorem oneCircuitCanonical_trivial (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b)
       omega
     have hb1 : 1 + b = 2 := Nat.pow_right_injective (by norm_num) hn4
     exact ⟨rfl, by omega⟩
-  · -- a ≥ 2: no canonical one-circuit integer cycle exists (Böhm–Sontacchi).
+  · -- a ≥ 2: no canonical one-circuit integer cycle exists (Steiner 1977).
     -- hpos (0 < 2^(a+b)−3^a), hdvd_pow (den ∣ 2^b−1), and haa (2 ≤ a) are jointly
-    -- contradictory.  Disclosed pending formalization; see PENDING_WORK.md.
-    exfalso
-    sorry
+    -- contradictory — this is exactly the isolated transcendence input.
+    exact absurd hdvd_pow (hSteiner a b haa hb hpos)
 
 end CollatzMoonshot.FrontB
