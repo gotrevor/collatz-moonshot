@@ -18,15 +18,20 @@
 
 - **MANDATED next move:** Continue the paradoxical project's NEW mathematics — the two-block
   exclusion `le_two_blocks_not_acyclicParadoxical` (strictly generalizes RT Appendix A). It is
-  now DECOMPOSED: **Case A (both blocks subcritical) is PROVED sorry-free** via two head-block
-  applications; the residual is **Cases B/C (exactly one block supercritical)**, which both
-  reduce to the single arithmetic core **GOAL2'** = "the minimal `w₂` in its residue class mod
-  `3^b` satisfies `(2^m−3^(b+d))·w₂ ≥ 3^b·2^e − 3^b + 2^(b+e)(2^c−1)`", a genuine joint
-  2-adic/3-adic statement (relation (★): `3^b w₁ = 2^(c+d) w₂ − 2^c + 1`). Next lap:
-  formalize the `w₁/w₂` reconstruction, state `two_block_residue_bound` as the shared core,
-  and attack it (route + failed simple bounds in PENDING_WORK). Proving it upgrades the
-  project classification PROMISING EVIDENCE → GO (a new infinite-family theorem). A cited
-  implication or larger census remains BASELINE, not progress.
+  machine-checked **modulo the single inequality `b + d ≤ 5`** (the sole `src/` `sorry`, in
+  `near_critical_containment`); everything else — the elementary squeeze, `window_unique_m`, the
+  power bracket, and the finite discharge once `b+d ≤ 5` — is sorry-free.
+  **`b + d ≤ 5` is now DEFINITIVELY Baker-grade** (effective irrationality of `log₂3`): the review
+  lap 2026-08-25-1500 REFUTED the last elementary hope by proving the real relaxation of
+  `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is FEASIBLE at unbounded `g` (fully-checked witness at `g=41`,
+  `experiments/two_block_relaxation.py`), so NO `nlinarith`/polynomial certificate can exist.
+  **Attack ONLY the GO route:** build an explicit effective irrationality / linear-forms-in-logs
+  lower bound `|2^m − 3^k| ≥ 3^k·c/k^κ` (or `|m·log2 − k·log3|` gap) for `log₂3` in Lean — mathlib
+  lacks it (only `LiouvilleWith`). This is genuinely multi-lap; narrow it each lap (find/port the
+  smallest sufficient effective bound; a `k ≥ 6 ⇒` finite-gap statement suffices here). Discharging
+  it → the sorry becomes a real proof → PROMISING EVIDENCE → GO. A cited effective-gap axiom or a
+  larger census remains BASELINE, not progress, and MUST NOT be used merely to clear the src-sorry
+  gate.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -47,6 +52,10 @@
     class. A finite-state argument is admissible only when its global transition inequality
     or carry/height content is load-bearing; suffix collisions alone are not a no-go theorem.
   - Route-1 gcd-harvest (`Threads.lean` Thread 7) — KILLED; rotations give one condition.
+  - **The "elementary A/B route" for `b+d ≤ 5`** (`¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` via nlinarith/omega
+    over exponent atoms) — REFUTED (real relaxation feasible at unbounded `g`; no certificate
+    exists). Also the `le_of_gap_A/B` decomposition of that plan, and any restart of "maybe some
+    clever elementary inequality bounds `b+d`/`d`" — all void; the finiteness is Baker-forced.
   - Off-path leaf sorries, docs-only laps, or freezing a finite table as a headline.
 
 - **WHY:** Paradoxical segments make the additive remainder—the information discarded by
@@ -83,6 +92,15 @@
   the residual to one arithmetic core (GOAL2', joint 2-adic/3-adic residue force) shared by
   Cases B/C; wrote the reconstruction route + failed simple bounds into PENDING_WORK. Kept
   the objective on this new-mathematics crux (proving it = GO).
+- 2026-08-25 (review lap, 1500): **REFUTED the "elementary A/B route" for the crux `b+d ≤ 5`.**
+  Proved (exact-rational witness at `g=41`, `experiments/two_block_relaxation.py`) that the real
+  relaxation of `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is feasible at unbounded `g`, so NO nlinarith/
+  polynomial certificate exists (verified in-Lean: couplings compile, nlinarith fails). The
+  integer-truth is Baker-forced. Redirected the MANDATED next move to the sole GO path: build
+  effective irrationality of `log₂3` (linear forms in logs) in Lean; forbade all further
+  elementary-inequality attempts on `b+d`. Axiom audit re-run: two headline consumption theorems
+  clean (trust base + faithful `rozier_terracol_3_2`); two-block exclusion carries the single
+  disclosed `sorryAx` (the `b+d≤5` crux).
 
 ---
 

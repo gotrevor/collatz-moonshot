@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-25 · two-block exclusion decomposed, Case A proved
+lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-25 (review 1500) · two-block crux = `b+d≤5`, confirmed Baker-grade (elementary route refuted)
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -29,12 +29,26 @@ rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged
 New discovery: **every acyclic paradoxical word has ≥ 3 odd blocks** — exhaustively verified
 two ways (word-based to length 38; independent orbit-based to start 100000), strictly
 generalizing Appendix A. The interior two-block exclusion
-(`le_two_blocks_not_acyclicParadoxical`) is now **decomposed with Case A (both blocks
-subcritical) proved sorry-free**; the residual (Cases B/C, exactly one block supercritical)
-reduces to one joint 2-adic/3-adic arithmetic core (`GOAL2'`). This is the active-crux
-decomposition, not off-path — it carries two disclosed `src/` sorries by design.
+(`le_two_blocks_not_acyclicParadoxical`) is machine-checked **modulo the single inequality
+`b + d ≤ 5`** — the sole `src/` `sorry` (in `near_critical_containment`). Case A (both blocks
+subcritical), the elementary squeeze, `window_unique_m`, the power bracket, and the finite
+discharge once `b+d ≤ 5` are all sorry-free. **`b + d ≤ 5` is now confirmed Baker-grade**
+(effective irrationality of `log₂3`): the 2026-08-25-1500 review lap REFUTED the last elementary
+hope by proving the real relaxation of `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is feasible at unbounded `g`
+(exact witness at `g=41`, `experiments/two_block_relaxation.py`), so no `nlinarith`/polynomial
+certificate can exist. The only GO path is building an explicit linear-forms-in-logs bound for
+`log₂3` in Lean (mathlib lacks it). This is the active crux, carrying one disclosed `src/` sorry.
 
 ## What's happened (newest first)
+- **2026-08-25 (review lap 1500 — elementary route for the crux REFUTED, Baker confirmed):**
+  The crux had been reduced (earlier laps) to the single inequality `b + d ≤ 5`, with a queued
+  "MAJOR LEAD" claiming it closes elementarily via Aristotle's criteria A/B. This lap REFUTED
+  that: proved (exact-rational witness at `g=41`, `experiments/two_block_relaxation.py`) that the
+  real relaxation of `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is feasible at unbounded `g`, so no nlinarith/
+  polynomial certificate exists (verified in-Lean: couplings compile, nlinarith fails). The
+  integer-truth (exactly 4 pairs, all `b+d≤5`, to `g≤200`) is Baker-forced. Redirected DIRECTION
+  to the sole GO path (build effective irrationality of `log₂3`); forbade further elementary
+  attempts. Axiom audit re-run (below). Build 🟢 8751 jobs.
 - **2026-08-25 (crux reduced to a FINITE containment — sharp gap closes all but 2 configs):**
   Sharpened `core_of_gap` to a division-free integer-ceiling `∀`-gap instantiated at the true
   `w₁`. Census (`b,c,d,e<34`): the sharp gap holds for EVERY subcritical tuple except exactly
@@ -116,11 +130,13 @@ decomposition, not off-path — it carries two disclosed `src/` sorries by desig
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **Front A two-block exclusion** (binding): prove the residue core `GOAL2'` shared by Cases
-  B/C. Route: formalize the `w₁/w₂` reconstruction (relation (★)), state
-  `two_block_residue_bound` (which also re-proves Case A), and attack the joint 2-adic/3-adic
-  minimum via `ZMod (3^b)` / least-residue. Proving it = new infinite-family theorem → project
-  GO. Refuted: `w₁≥1`-only bounds are insufficient (see PENDING_WORK).
+- **Front A two-block exclusion** (binding): discharge the sole `src/` sorry `b + d ≤ 5` inside
+  `near_critical_containment`. Now confirmed **Baker-grade** — the ONLY GO path is to build an
+  explicit effective irrationality / linear-forms-in-logs bound for `log₂3` in Lean
+  (`|2^m − 3^k| ≥ 3^k·c/k^κ`, or a `k ≥ 6 ⇒` finite-gap statement, which suffices here); mathlib
+  lacks it. Narrow lap by lap. **Refuted, do NOT retry:** any elementary `nlinarith`/`omega` bound
+  on `b+d`/`d` (real relaxation feasible at unbounded `g`, `experiments/two_block_relaxation.py`).
+  Fallback (BASELINE, not for gate-clearing): cite a narrow effective-gap axiom.
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
@@ -151,6 +167,8 @@ excluded from the math-axiom count below.
 | `two_pow_68_lt_of_onCycle_nontrivial` | conditional demo | `collatz_verified_up_to_two_pow_68` | 1 · 🟢 finite computation |
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
+| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, faithful constructive form; no `sorryAx`) |
+| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` | disclosed active-crux sorry = `b+d ≤ 5` (Baker-grade); everything else machine-checked |
 
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
 headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,

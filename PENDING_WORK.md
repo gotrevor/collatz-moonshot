@@ -157,20 +157,46 @@ exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite case
 exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
 `b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
 
-**★ MAJOR LEAD (lap 2026-08-25-1230): `b+d ≤ 5` may be ELEMENTARY via Aristotle's own criteria A/B.**
+**★ REFUTED (review lap 2026-08-25-1500): the "elementary A/B route" for `b+d ≤ 5` is DEAD.**
+The MAJOR LEAD below (2026-08-25-1230) conjectured `¬A ∧ ¬B ∧ subcritical ∧ U₁>0 ∧ b,d≥1 ⟹
+b+d ≤ 5` closes ELEMENTARILY (nlinarith over the exponent atoms). The implication IS true over
+integer powers (re-confirmed to `g=b+d ≤ 200`, exactly 4 pairs `(b,d)∈{(2,1),(2,3),(3,2),(4,1)}`),
+but it is **NOT provable by any `nlinarith`/polynomial certificate**, because such a certificate is
+a Positivstellensatz combination valid for all REAL atom values, and the **REAL RELAXATION is
+FEASIBLE at unbounded `g`.** Fully-checked witness (`experiments/two_block_relaxation.py`, exact
+rationals) at `b=18, d=23` (`g=41`): real `C=2^c ≈ 8.3·10⁶`, `V=2^m ≈ 3.647·10¹⁹` satisfy ALL of
+`{subcrit, ¬A, ¬B, U₁, lever 2^m ≥ 2^(b+d)·2^c, couplings 3^(3d)≤2^(5d) & 3^(3b)≤2^(5b), size
+2^g≥64 & 3^g≥729}`; feasible at every even `g∈[6,60]`. Confirmed in-Lean: the coupling `have`s all
+compile, `nlinarith` (with the full curated hint set) fails as predicted (`linarith failed`).
+**Why real-feasible but integer-empty:** the window `2^m/3^g ∈ (1, 2^d/(2^d−1))` has width `2^-d`;
+an integer solution needs a power of 2 within `~2^-d` of `3^g`, i.e. `|m·log2 − g·log3|` tiny — an
+effective irrationality of `log₂3` (Baker) lower bound. At `g=41` the closest is `2^65/3^41≈1.0117`,
+far outside the `~2^-23` window; only at `g=5` (`2^8/3^5≈1.0535`, small-`d` wide window `≤8/7`) does
+a power fit. **Diagnosis (final): `b+d ≤ 5` is genuinely Baker-grade** — matches Aristotle's
+independent linear-forms-in-logs verdict and the earlier `dbig.py` "real bound infinite" finding.
+The prior lead's error: conflating "true over integer powers" (integrality-forced) with "nlinarith-
+provable" (needs a real certificate). **DO NOT re-attempt an elementary `nlinarith`/`omega` bound on
+`b+d ≤ 5`, nor the `le_of_gap_A/B` + `¬A∧¬B⇒b+d≤5` plan below — refuted.**
+
+**Remaining honest routes for the crux (both leave everything else machine-checked):**
+- **(a) GO route — build effective irrationality of `log₂3` in Lean.** An explicit linear-forms-in-
+  logs / irrationality-measure bound `|2^m − 3^k| ≥ 3^k · c/k^κ` (or a direct `|m log2 − k log3|`
+  gap) discharges the window ⇒ `b+d ≤ 5` ⇒ the sorry becomes a real proof. Mathlib LACKS this
+  (only `LiouvilleWith`, no specific effective measure for `log₂3`). Genuinely multi-lap; THIS is
+  the GO prize. Narrow it lap by lap (see below).
+- **(b) BASELINE route — cite a narrow effective-gap axiom** (like `rozier_terracol_3_2`), stated
+  as `∀ m k, k ≥ 6 → <explicit gap>`, and derive `b+d ≤ 5`. Auditable, keeps the classification at
+  BASELINE for this step. Per DIRECTION, do NOT do this merely to clear the src-sorry gate.
+
+--- superseded lead (kept for provenance) ---
+**MAJOR LEAD (lap 2026-08-25-1230): `b+d ≤ 5` may be ELEMENTARY via Aristotle's own criteria A/B.**
 Aristotle proved (sorry-free) two ELEMENTARY sufficient conditions for `y ≤ n`:
   A: `3^(b+d) + 2^c·3^d < 2^m`   B: `(2^m − 3^(b+d))·(2^d − 1) ≥ 3^b·(3^d − 2^d)`
-then declared the residual `¬A ∧ ¬B` needs Baker — WITHOUT testing whether `¬A∧¬B` is itself
-bounded. **It is:** `¬A ∧ ¬B ∧ subcritical ∧ U₁>0 ∧ b,d≥1 ⟹ b+d ≤ 5` holds with ZERO exceptions
-(`scratchpad/resid2.py,elem_bound.py`, verified `b,d < 70`+`m` to `m0+45`; `H1` without `¬B` is
-unbounded — BOTH negations are essential). Key elementary lever: `2^m = 2^(b+d)·2^(c+e) ≥ 2^(b+d)·2^c`
-(`e≥0`), so `¬A` gives `2^c(2^(b+d) − 3^d) ≤ 3^(b+d)` — a `2^g` vs `3^g` growth inequality; combined
-with `¬B` and `U₁` it forces `b+d ≤ 5`. **If this implication is elementary (nlinarith/omega over the
-exponent atoms + the finite check on the 8 residual tuples), the crux closes with NO Baker input =
-the GO upgrade.** OPEN RISK: the contradiction may still need the tight `2^g` vs `3^g` relation
-(non-polynomial) — must try nlinarith to know. This is the #1 attack; supersedes the Baker framing
-IF it lands. Next: (1) prove `le_of_gap_A`/`le_of_gap_B` (elementary, from the segment identities);
-(2) prove `¬A∧¬B∧subcrit∧U₁ ⟹ b+d≤5`; (3) route `two_block_residue_core` through A∨B∨(finite check).
+then declared the residual `¬A ∧ ¬B` needs Baker. The lead observed `¬A∧¬B∧subcrit∧U₁>0∧b,d≥1
+⟹ b+d≤5` holds over integer powers with zero exceptions and hoped nlinarith could prove it.
+**REFUTED above** — the real relaxation is feasible at unbounded `g`, so no nlinarith certificate
+exists; the integer-truth is Baker-forced. Next was going to be: (1) `le_of_gap_A/B`; (2) the
+elementary `⇒ b+d≤5`; (3) route through A∨B∨finite. All void.
 
 **INDEPENDENT CORROBORATION (Aristotle, job `4006e40e…`, COMPLETE_WITH_ERRORS, ~1h30m).** Handed
 the `two_block_residue_core` statement, Aristotle independently reproduced the ENTIRE reduction and
