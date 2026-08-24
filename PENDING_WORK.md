@@ -30,9 +30,13 @@ no counterexample in range).
   Front-A plumbing (the hypothesis is stronger than Collatz), not the novel content.
 
 **Open obligations / next attacks:**
-- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry): divergent orbit ⇒ ∃ tail value
-  with `InfiniteStoppingTime` (running-min-of-tail argument + standard↔shortcut bridge), then
-  apply the RT axiom; acyclicity from no-cycle-on-divergent-orbit.
+- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry). PROVED this lap the first half:
+  `exists_standardStop_of_diverges` (trust-base clean) — a divergent orbit's least value `m₀`
+  satisfies `∀ j, m₀ ≤ step^[j] m₀` (infinite STANDARD stopping), `m₀ ≥ 2`, `Diverges m₀`.
+  Remaining: (a) shortcut embedding `∀ j, ∃ k, tstep^[j] m₀ = step^[k] m₀` (from
+  `tstep = step`/`step∘step`) to upgrade standard stopping to `InfiniteStoppingTime m₀`;
+  (b) restate the RT axiom to the constructive `2^k·m₀`-start form and derive acyclicity from
+  `Diverges (2^k m₀)` ⇒ start not on a shortcut cycle ⇒ `n < y`.
 - `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED this lap: the head-block
   trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
   violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It

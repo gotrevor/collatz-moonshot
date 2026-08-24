@@ -66,6 +66,60 @@ axiom rozier_terracol_3_2 (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime
 
 end Assumed
 
+/-- **Running-minimum lemma (proved).**  A divergent standard orbit has a least value `m₀`,
+and from `m₀` the orbit never drops below `m₀` (infinite *standard* stopping time); moreover
+`m₀ ≥ 2` and `m₀` itself diverges.  This is the first half of the standard/shortcut bridge:
+it produces the value Rozier--Terracol Theorem 3.2 is applied to. -/
+theorem exists_standardStop_of_diverges {n : ℕ} (hn : 1 ≤ n) (hdiv : Diverges n) :
+    ∃ m₀, 2 ≤ m₀ ∧ (∀ j, m₀ ≤ step^[j] m₀) ∧ Diverges m₀ := by
+  -- the orbit value set and its infimum
+  set S : Set ℕ := Set.range (fun k => step^[k] n) with hS
+  have hne : S.Nonempty := ⟨n, 0, rfl⟩
+  set m₀ := sInf S with hm₀
+  have hmem : m₀ ∈ S := Nat.sInf_mem hne
+  obtain ⟨k₀, hk₀⟩ := hmem
+  -- infinite standard stopping time at m₀
+  have hstop : ∀ j, m₀ ≤ step^[j] m₀ := by
+    intro j
+    have : step^[j] m₀ = step^[j + k₀] n := by
+      rw [← hk₀, Function.iterate_add_apply]
+    rw [this]
+    exact Nat.sInf_le ⟨j + k₀, rfl⟩
+  -- prefix bound
+  set B : ℕ := (Finset.range k₀).sup (fun i => step^[i] n) with hB
+  have hprefix : ∀ i, i < k₀ → step^[i] n ≤ B := by
+    intro i hi
+    exact Finset.le_sup (f := fun i => step^[i] n) (Finset.mem_range.mpr hi)
+  -- m₀ diverges (its tail inherits n's unbounded values)
+  have hdivm : Diverges m₀ := by
+    intro M
+    obtain ⟨k, hk⟩ := hdiv (max M (B + 1))
+    have hkge : k₀ ≤ k := by
+      by_contra hlt
+      push_neg at hlt
+      have := hprefix k hlt
+      omega
+    refine ⟨k - k₀, ?_⟩
+    have : step^[k - k₀] m₀ = step^[k] n := by
+      rw [← hk₀, ← Function.iterate_add_apply, Nat.sub_add_cancel hkge]
+    rw [this]; omega
+  -- m₀ ≥ 2: m₀ ≥ 1 (positivity) and m₀ ≠ 1 (a divergent orbit cannot sit at 1)
+  have hm1 : 1 ≤ m₀ := by rw [← hk₀]; exact iterate_step_pos hn k₀
+  have hne1 : m₀ ≠ 1 := by
+    intro h1
+    -- Diverges m₀ with m₀ = 1 is impossible: orbit of 1 is ≤ 4
+    obtain ⟨k, hk⟩ := hdivm 5
+    have hb : ∀ i, step^[i] (1 : ℕ) = 1 ∨ step^[i] (1 : ℕ) = 2 ∨ step^[i] (1 : ℕ) = 4 := by
+      intro i
+      induction i with
+      | zero => left; rfl
+      | succ j ih =>
+        rw [Function.iterate_succ_apply']
+        rcases ih with h | h | h <;> rw [h] <;> decide
+    rw [h1] at hk
+    rcases hb k with h | h | h <;> rw [h] at hk <;> omega
+  exact ⟨m₀, by omega, hstop, hdivm⟩
+
 /-- **Front-A specialization (owed).**  A divergent standard-step orbit yields infinitely many
 *acyclic* paradoxical segments.  This combines `Assumed.rozier_terracol_3_2` with (i) the
 standard/shortcut iterate bridge that turns divergence into a tail value of infinite shortcut
