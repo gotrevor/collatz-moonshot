@@ -65,17 +65,48 @@ needs `w₁≥4`, forced by min `w₂=2`). So the crux = **the minimal `w₂` in
 realizing `n` in the class only make `y−n` MORE negative (`Δ(y−n)=−d_def` per `+2^m`), so it
 suffices to prove GOAL2' at the class-minimal `w₂`.
 
-**Next concrete attack (next lap):**
-1. Formalize the reconstruction: from `hsegA`/`hsegB` extract `w₁` odd with `n+1=2^b w₁`
-   (`headBlock_dvd_succ`), `w₂` with `X+1=2^d w₂` (`headBlock_dvd_succ` at `X`), and relation
-   (★) via `x_b = 2^c X` (the interior even-run: `2^c ∣ x_b`, `x_b/2^c = X` odd).
-2. State the pure arithmetic lemma `two_block_residue_bound` = GOAL2' given (★) + `w₂≥1` +
-   `3^(b+d)<2^m` + the 3-adic congruence, and reduce BOTH B and C to it (it also re-proves A,
-   so once proved the case split collapses).
-3. Prove the arithmetic core. Likely route: bound the minimal `w₂` from below using that
-   `3^b ∣ 2^c(2^d w₂ − 1) + 1`; the deficit `d_def = 2^m − 3^(b+d)` and the RHS of GOAL2' are
-   both `Θ(3^b·…)`, and the 3-adic minimal `w₂ ≈ (residue)/1` supplies the missing factor.
-   Consider `ZMod (3^b)` for the congruence and `Nat.find`/least-residue for the minimum.
+### DONE (lap 2026-08-25-0500): reduced to ONE self-contained core + big elementary insight
+
+**`two_block_residue_core` (LANDED, `FrontA/Paradoxical.lean` ~line 300, the SOLE `src/`
+sorry).** Purely-ℕ statement: given the two exact segment identities
+  `hI : 2^(b+c)·X + 2^b = 3^b·(n+1)`,  `hII : 2^(d+e)·y + 2^d = 3^d·(X+1)`,
+`3^(b+d) < 2^m`, `n > 2`, then `y ≤ n`. Equivalent to the two-block claim (identities encode
+the realizing residue exactly). Both B and C route through it; Case A stays sorry-free.
+Validated on 1893 exact solutions. Submitted to **Aristotle** (project
+`4006e40e-9588-4e7a-979e-ab1c7586cda8`) — verify any returned proof with `#print axioms`.
+
+**KEY INSIGHT — the contrapositive lever (∗∗) closes ~99.7% ELEMENTARILY (no integrality).**
+Assume `y ≥ n+1`. Using hI, hII as *equalities* (substitute `X+1 = (3^b(n+1)+2^b(2^c−1))/2^(b+c)`
+into `3^d(X+1) ≥ 2^(d+e)(n+1)+2^d`) gives the exact upper bound
+  **(∗∗)  `d_def·w₁ ≤ 3^d(2^c−1) − 2^(c+d)  =: U₁`**  (`n+1 = 2^b w₁`, `d_def = 2^m − 3^(b+d)`).
+Meanwhile `w₂ ≥ 1` (from `2^d ∣ X+1`, `X ≥ 1`) gives via (★) the lower bound
+  **`3^b·w₁ ≥ 2^(c+d) − 2^c + 1 =: L`**.
+These CONTRADICT (⇒ `y ≤ n`) whenever  **`d_def·L > 3^b·U₁`  [NEEDED2]**. Brute-force
+(`scratchpad/needed2.py`, all subcritical `b,d∈[1,8], c,e∈[0,8]`, 3803 configs): **NEEDED2
+holds for 3791; only 12 fail** — `(b,c,d,e) ∈ {(2,2,3,1),(2,3,3,0),(3,2,2,1),(3,3,2,0),
+(4,2,1,1),(4,3,1,0),(7,4,1,1),(7,5,1,0),(8,3,2,3),(8,4,2,2), …}`. So the residue/integrality
+force is needed ONLY on this thin residual set (small `e`, moderate `b`, `U₁` large & positive).
+
+**Residual growth (checked `scratchpad/kgrow.py`, `b,d<16`, `c,e<16`, 56 residual configs):**
+the min-`w₂` bound `k` needed on the residual GROWS with `b` (2→3→4 up to `b=15`), so a fixed
+finite `w₂ ≥ K` will NOT close it — the residual genuinely needs a least-residue bound. BUT
+`w₂ = 1` is **never** a valid solution on the residual (0/56), consistent with `k ≥ 2` there.
+The exact identity behind (∗∗): `2^m·y + 2^(b+c+d) = 3^(b+d)(n+1) + 3^d·2^b(2^c−1)` (MAIN).
+
+**Next concrete attack (next lap), in priority order:**
+1. **Prove the elementary regime as a real sub-lemma `core_of_gap`.** Hypotheses: hI, hII,
+   `3^(b+d)<2^m`, and the gap `(2^m−3^(b+d))·(2^(c+d)−2^c+1) > 3^b·(3^d(2^c−1)−2^(c+d))` over ℤ.
+   Proof: `X ≥ 2^d−1` (from `2^d ∣ X+1`); MAIN via `linear_combination 3^d·hI + 2^(b+c)·hII`;
+   under `n<y` get UP `(2^m−3^(b+d))(n+1) ≤ 2^b·(3^d(2^c−1)−2^(c+d))` and LOW
+   `2^b(2^(c+d)−2^c+1) ≤ 3^b(n+1)`; multiply UP·3^b, LOW·(2^m−3^(b+d)), chain, cancel 2^b →
+   contradicts gap. Normalize all exponents to atoms `{2^b,2^c,2^d,2^e,3^b,3^d}` with
+   `simp only [pow_add]` so nlinarith sees consistent atoms. Closes ~99%.
+2. **Residual (gap fails):** needs the least-residue lower bound on `w₂` from
+   `3^b ∣ 2^(c+d) w₂ − 2^c + 1`. Route via `ZMod (3^b)`. This is the true hard kernel — the
+   part Aristotle is working. `w₂=1` excluded on residual is a foothold but insufficient
+   (k grows). Likely: show minimal `w₂ ≥ ⌈(something)/…⌉` from the 3-adic class.
+3. If Aristotle (`4006e40e-9588-4e7a-979e-ab1c7586cda8`) returns a clean proof of the full
+   core, kernel-verify (`#print axioms`) + inline it, superseding 1–2.
 
 Also (lower priority): extend the ratio census past `41/65` (word-BnB or n≳10^8) to harden the
 Niu CF falsification test.

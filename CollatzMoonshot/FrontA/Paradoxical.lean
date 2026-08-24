@@ -297,6 +297,70 @@ theorem headBlock_dvd_succ (n b : ℕ)
     rw [hu, pow_succ, mul_comm (2 ^ k) 2]
     exact mul_dvd_mul_left 2 hu2
 
+set_option maxHeartbeats 1200000 in
+/-- **Elementary regime of the residue core (no integrality needed).**  Under the "gap"
+inequality `(2^m − 3^(b+d))·(2^(c+d) − 2^c + 1) > 3^b·(3^d(2^c − 1) − 2^(c+d))` (over ℤ), the
+two-block endpoint satisfies `y ≤ n` using only the two segment identities and `w₂ ≥ 1`
+(i.e. `X ≥ 2^d − 1`), with NO least-residue argument.
+
+Proof: the exact identity `2^m·y + 2^(b+c+d) = 3^(b+d)(n+1) + 3^d·2^b(2^c−1)` (MAIN, a linear
+combination of the two identities); assuming `n < y` yields the contrapositive bound
+`(2^m − 3^(b+d))(n+1) ≤ 2^b·(3^d(2^c−1) − 2^(c+d))` (UP) and, from `X ≥ 2^d − 1`,
+`2^b·(2^(c+d) − 2^c + 1) ≤ 3^b(n+1)` (LOW); chaining `UP·3^b` with `LOW·(2^m − 3^(b+d))` and
+cancelling `2^b` gives `(2^m − 3^(b+d))·(2^(c+d) − 2^c + 1) ≤ 3^b·(3^d(2^c−1) − 2^(c+d))`,
+contradicting the gap.  The exact census shows this covers all but a thin residual of
+`(b,c,d,e)`. -/
+theorem core_of_gap (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
+    (hI : 2 ^ (b + c) * X + 2 ^ b = 3 ^ b * (n + 1))
+    (hII : 2 ^ (d + e) * y + 2 ^ d = 3 ^ d * (X + 1))
+    (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
+    (hgap : ((2 : ℤ) ^ (b + c + d + e) - 3 ^ (b + d)) * (2 ^ (c + d) - 2 ^ c + 1)
+              > 3 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d))) :
+    y ≤ n := by
+  -- `X ≥ 2^d − 1` from `2^d ∣ (X+1)` (which follows from hII).
+  have hXlb : 2 ^ d ≤ X + 1 := by
+    have h3 : 3 ^ d * (X + 1) = 2 ^ d * (2 ^ e * y + 1) := by
+      rw [← hII, pow_add]; ring
+    have hdvd : (2 : ℕ) ^ d ∣ 3 ^ d * (X + 1) := ⟨2 ^ e * y + 1, h3⟩
+    have hcop : Nat.Coprime (2 ^ d) (3 ^ d) :=
+      Nat.Coprime.pow_right d (Nat.Coprime.pow_left d (show Nat.Coprime 2 3 by decide))
+    exact Nat.le_of_dvd (Nat.succ_pos X) (hcop.dvd_of_dvd_mul_left hdvd)
+  -- Move to ℤ and normalise every exponent to the atom set {2^b,2^c,2^d,2^e,3^b,3^d}.
+  have hIz : (2 : ℤ) ^ (b + c) * X + 2 ^ b = 3 ^ b * ((n : ℤ) + 1) := by exact_mod_cast hI
+  have hIIz : (2 : ℤ) ^ (d + e) * y + 2 ^ d = 3 ^ d * ((X : ℤ) + 1) := by exact_mod_cast hII
+  have hXlbz : (2 : ℤ) ^ d ≤ (X : ℤ) + 1 := by exact_mod_cast hXlb
+  have hsubz : (3 : ℤ) ^ (b + d) < 2 ^ (b + c + d + e) := by exact_mod_cast hsub
+  simp only [pow_add] at hIz hIIz hsubz hgap
+  by_contra hcon
+  push_neg at hcon
+  have hconz : (n : ℤ) + 1 ≤ y := by exact_mod_cast hcon
+  -- MAIN identity.
+  have hMAIN : (2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e * y + 2 ^ b * 2 ^ c * 2 ^ d
+      = 3 ^ b * 3 ^ d * ((n : ℤ) + 1) + 3 ^ d * 2 ^ b * (2 ^ c - 1) := by
+    linear_combination (3 : ℤ) ^ d * hIz + 2 ^ b * 2 ^ c * hIIz
+  -- Positivity of the atoms.
+  have p2b : (0 : ℤ) < 2 ^ b := by positivity
+  have p2c : (0 : ℤ) < 2 ^ c := by positivity
+  have p2d : (0 : ℤ) < 2 ^ d := by positivity
+  have p2e : (0 : ℤ) < 2 ^ e := by positivity
+  have p3b : (0 : ℤ) < 3 ^ b := by positivity
+  have p3d : (0 : ℤ) < 3 ^ d := by positivity
+  have hDpos : (0 : ℤ) < 2 ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d := by linarith [hsubz]
+  -- UP: (2^m − 3^(b+d))·(n+1) ≤ 2^b·(3^d(2^c−1) − 2^(c+d)).
+  have hy : (2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e * ((n : ℤ) + 1)
+      ≤ 2 ^ b * 2 ^ c * 2 ^ d * 2 ^ e * y := by
+    apply mul_le_mul_of_nonneg_left hconz; positivity
+  have hUP : ((2 : ℤ) ^ b * 2 ^ c * 2 ^ d * 2 ^ e - 3 ^ b * 3 ^ d) * ((n : ℤ) + 1)
+      ≤ 2 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ c * 2 ^ d) := by nlinarith [hMAIN, hy]
+  -- LOW: 2^b·(2^(c+d) − 2^c + 1) ≤ 3^b·(n+1).
+  have hLOW : (2 : ℤ) ^ b * (2 ^ c * 2 ^ d - 2 ^ c + 1) ≤ 3 ^ b * ((n : ℤ) + 1) := by
+    nlinarith [hIz, mul_le_mul_of_nonneg_left hXlbz p2c.le, p2b]
+  -- Chain UP·3^b and LOW·(2^m−3^(b+d)), cancel 2^b, contradict the gap.
+  have hA := mul_le_mul_of_nonneg_left hUP p3b.le
+  have hB := mul_le_mul_of_nonneg_left hLOW hDpos.le
+  have hC := mul_lt_mul_of_pos_left hgap p2b
+  nlinarith [hA, hB, hC]
+
 /-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about
 naturals: given the two exact head-block segment identities
 `2^(b+c)·X + 2^b = 3^b·(n+1)` (segment `[T]^b[F]^c`, start `n`, interior odd value `X`) and
@@ -318,7 +382,13 @@ theorem two_block_residue_core (b c d e n X y : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ 
     (hsub : 3 ^ (b + d) < 2 ^ (b + c + d + e))
     (hn : 2 < n) :
     y ≤ n := by
-  sorry
+  by_cases hgap : ((2 : ℤ) ^ (b + c + d + e) - 3 ^ (b + d)) * (2 ^ (c + d) - 2 ^ c + 1)
+      > 3 ^ b * (3 ^ d * (2 ^ c - 1) - 2 ^ (c + d))
+  · -- Elementary regime (~99% of configs): closed without any integrality argument.
+    exact core_of_gap b c d e n X y hb hd hI hII hsub hgap
+  · -- Thin residual regime (`gap` fails): genuinely needs the 3-adic least-residue lower bound
+    -- on `w₂` from `3^b ∣ 2^(c+d) w₂ − 2^c + 1`.  This is the true hard kernel.  Disclosed.
+    sorry
 
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
