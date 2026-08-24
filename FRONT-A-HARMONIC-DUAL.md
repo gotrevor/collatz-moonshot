@@ -196,6 +196,16 @@ verifier (Fractions, no float trust).  Findings:
    `Σ 3·2^(23−cost)·W[child] < 2^23·W[source]`.  Result: **0 violations**, exact
    `c = 70013178530367/70560449036288 = 0.99224… < 1`.
 
+7. **Formalized (green).**  `CollatzMoonshot/FrontA/BackwardHarmonicObstruction.lean`
+   freezes the `65 610`-entry weight (integers over `2^30`) and proves the
+   depth-uniform integer supersolution `harmonicNatCertificate` by `native_decide`
+   over all `196 830` states `Fin 5 × Fin 59049` (source mod `3^10`).  The uniform
+   child-residue lemma `oddBlockChild_mod_19683` (child mod `3^9` from source mod
+   `3^10`, for arbitrary `x`) is fully proved (`[propext, Quot.sound]`).  Full
+   `lake build` green (8746 jobs).  Axioms of `harmonicNatCertificate`:
+   `[propext, Quot.sound, native_decide.ax]` — the allowed finite-check footprint.
+   Imported from `CollatzMoonshot.lean`.
+
 ### Next attack (crux)
 
 Formalize the **depth-uniform** theorem, not another rung:

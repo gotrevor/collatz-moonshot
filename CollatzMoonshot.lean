@@ -24,6 +24,7 @@ import CollatzMoonshot.FrontA.BackwardThreeQuartersStopping
 import CollatzMoonshot.FrontA.BackwardFourFifths
 import CollatzMoonshot.FrontA.BackwardFourFifthsRenewal
 import CollatzMoonshot.FrontA.BackwardFourFifthsStopping
+import CollatzMoonshot.FrontA.BackwardHarmonicObstruction
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
 import CollatzMoonshot.FrontB.Negative
