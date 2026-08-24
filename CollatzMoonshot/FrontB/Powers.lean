@@ -462,4 +462,39 @@ theorem exists_primitive_root (v : List Bool) (hv : v ≠ []) :
 termination_by v.length
 decreasing_by exact hlt
 
+/-! ## A positive cycle cannot be all-growth
+
+The archimedean shadow of `0 < den`: a positive integer cycle word has strictly more
+"halving mass" than "tripling mass", so its odd-step frequency is strictly below
+`log 2 / log 3`.  This is the exact sense in which every positive cycle — trivial or not —
+has odd frequency below the drift ceiling (the Route A1 strength audit's `3^a < 2^b`), stated
+inside the Front B word convention so no cross-map bridge is needed. -/
+
+/-- `0 < den v` unpacked: `3^(ones v) < 2^(v.length)` over `ℤ`. -/
+theorem cycle_three_pow_lt_two_pow {v : List Bool} (h : 0 < den v) :
+    (3 : ℤ) ^ ones v < 2 ^ v.length := by
+  have : (0 : ℤ) < 2 ^ v.length - 3 ^ ones v := h
+  linarith
+
+/-- The logarithmic form: `ones · log 3 < length · log 2` for a positive cycle word. -/
+theorem cycle_ones_log_lt {v : List Bool} (h : 0 < den v) :
+    (ones v : ℝ) * Real.log 3 < (v.length : ℝ) * Real.log 2 := by
+  have hlt : (3 : ℝ) ^ ones v < 2 ^ v.length := by
+    have h3 : ((3 : ℤ) ^ ones v : ℝ) < ((2 : ℤ) ^ v.length : ℝ) := by
+      exact_mod_cast cycle_three_pow_lt_two_pow h
+    push_cast at h3; exact h3
+  have hlog := Real.log_lt_log (by positivity) hlt
+  rwa [Real.log_pow, Real.log_pow] at hlog
+
+/-- **The odd-step frequency of a positive cycle is below `log 2 / log 3`.**  This is the
+archimedean ceiling every positive integer cycle respects, `Compression`-independent. -/
+theorem cycle_ones_freq_lt {v : List Bool} (h : 0 < den v) (hne : v ≠ []) :
+    (ones v : ℝ) / v.length < Real.log 2 / Real.log 3 := by
+  have hlen : (0 : ℝ) < v.length := by
+    have := List.length_pos_iff_ne_nil.mpr hne; exact_mod_cast this
+  have hlog3 : (0 : ℝ) < Real.log 3 := Real.log_pos (by norm_num)
+  rw [div_lt_div_iff₀ hlen hlog3]
+  have := cycle_ones_log_lt h
+  linarith
+
 end CollatzMoonshot.FrontB
