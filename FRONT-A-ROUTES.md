@@ -496,9 +496,24 @@ The chippable mathematical ladder is now:
    mechanical now (`2/3 → 3/4 → 4/5`); `4/5 < 1`, so this is a rung.  Next local probe: a
    depth-9+ search for an exponent strictly above `4/5`; whether any fixed finite floor set can
    reach `1` remains the open question the 3-adic adversary casts doubt on;
-8. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+8. ~~test whether retaining two correlated source digits for two complete backward
+   generations materially beats deeper one-generation memory~~ — **DONE (2026-08-24),
+   negative as a route.**  `experiments/barrier_two_step.py` computes all nine lifts modulo
+   `3^(k+2)` and all two-block grandchildren, retaining the exact intermediate height lower
+   bound.  Critical exponents at depths `2..7` are approximately
+   `.636190,.694721,.741497,.764596,.783796,.797050`.  The gain over the depth-`k`
+   one-step operator is real (mostly shared-digit correlation, not height rounding), but the
+   result remains below the ordinary depth-`k+1` operator throughout the tested range.  This
+   control should not be formalized as another ladder rung;
+9. at harmonic weight `alpha=1`, extract the adversarial digit policy and a rational left
+   dual contraction.  First certify finite-depth impossibility for the present potential
+   class, then look for a policy/dual pattern stable under increasing ternary depth.  A clean
+   depth-independent contraction would be genuine negative mathematics: this uniform
+   finite-state local-potential architecture could not reach harmonic expansion, regardless
+   of larger tables;
+10. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-9. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+11. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 

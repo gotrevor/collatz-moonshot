@@ -1,5 +1,41 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+## Update (2026-08-24, newest): two-generation correlation tested; harmonic dual is next
+
+- Independently audited the completed exponent-`4/5` pipeline: the generated
+  `21870` weights agree entry-for-entry with the frozen Lean table, all `65610`
+  integer inequalities pass with minimum ratio `1.001017912682`, full
+  `lake build` is green (8745 jobs), and real `#print axioms` output is exactly
+  the documented base three plus the explicitly allowed `native_decide`
+  certificate/positivity/min/max checks.
+- Added `experiments/barrier_two_step.py`, a stricter control on the discarded
+  correlations.  A source state modulo `3^k` is lifted through all **nine**
+  choices modulo `3^(k+2)`; every first-generation child is expanded again,
+  so all grandchildren share the same two source digits.  Heights use the
+  exact rational lower bound through the intermediate block by default.  The
+  measured two-generation critical exponents at depths `2..7` are
+  `.636190087, .694720729, .741497319, .764595756, .783795717,
+  .797050036`.  At depth `5`, rounding the intermediate height immediately
+  gives `.763166901`, so most of the gain is genuinely digit correlation.
+- This does **not** open a better ladder.  At every tested `k ≥ 2`, the
+  two-generation depth-`k` operator still loses to the ordinary one-generation
+  operator at depth `k+1`; examples are `.764596 < .772226` and
+  `.797050 < .801208`.  Do not spend a treadmill formalizing it.  It is useful
+  evidence that retaining another residue digit already captures more than
+  macro-expanding another generation.
+- **Next mathematical pull:** work at the harmonic weight itself (`alpha=1`).
+  Extract the minimizing ternary-digit policy from the nonlinear operator and
+  seek a positive rational **left dual contraction** for the corresponding
+  policy matrix.  Such a dual proves that no positive potential can satisfy
+  all harmonic local-expansion inequalities at that depth.  The valuable
+  outcome is not one more finite obstruction table, but a compressed policy
+  stable across depths which can be promoted to a depth-independent theorem
+  about the limits of this uniform finite-state architecture.  The sharper
+  project and guardrails are in `FRONT-A-HARMONIC-DUAL.md`.  A first probe found
+  that the **constant lift-1 policy** already has radii `.932160`, `.932889`,
+  and `.933090` at depths `8`, `9`, and `10`; this simplicity is more promising
+  than freezing the fully optimized policies.
+
 ## Update (2026-08-24, newest): the exponent-4/5 pipeline is COMPLETE end-to-end
 
 - Delivered the full depth-8 exponent-`4/5` certificate → renewal → stopping
