@@ -415,6 +415,45 @@ theorem den_blockWord (L : List (ℕ × ℕ)) :
       = 2 ^ (L.map fun p => p.1 + p.2).sum - 3 ^ (L.map Prod.fst).sum := by
   rw [den, length_blockWord, ones_blockWord]
 
+open scoped BigOperators in
+/-- **The explicit S-unit closed form.**  Unrolling `numer_blockWord_cons` all the way gives
+the cycle numerator as a sum of exactly `m = L.length` monomial-difference terms — one per
+circuit.  Block `j` contributes `2^{Σ_{i<j}(aᵢ+bᵢ)} · 3^{Σ_{i>j} aᵢ} · (3^{aⱼ} − 2^{aⱼ})`:
+a `{2,3}`-unit coefficient times the collapsed odd-run difference.  This is the exact S-unit
+datum a subspace-theorem/Baker bound on the number of terms would consume — the term count
+being `circuits`, so a bound on the block count would bound the S-unit rank.  (Any method —
+SdW, ESS, Baker — reads the cycle equation `numer = N·den` off this canonical form.) -/
+theorem numer_blockWord_explicit (L : List (ℕ × ℕ)) :
+    (numer (blockWord L) : ℤ) =
+      ∑ j ∈ Finset.range L.length,
+        2 ^ ((L.take j).map (fun c => c.1 + c.2)).sum
+        * 3 ^ ((L.drop (j + 1)).map Prod.fst).sum
+        * (3 ^ (L.getD j (0, 0)).1 - 2 ^ (L.getD j (0, 0)).1) := by
+  induction L with
+  | nil => simp [blockWord]
+  | cons c L' ih =>
+    obtain ⟨a, b⟩ := c
+    rw [List.length_cons, Finset.sum_range_succ']
+    have hzero : (2 : ℤ) ^ ((((a, b) :: L').take 0).map (fun c => c.1 + c.2)).sum
+        * 3 ^ ((((a, b) :: L').drop (0 + 1)).map Prod.fst).sum
+        * (3 ^ (((a, b) :: L').getD 0 (0, 0)).1 - 2 ^ (((a, b) :: L').getD 0 (0, 0)).1)
+        = 3 ^ ones (blockWord L') * (3 ^ a - 2 ^ a) := by
+      simp only [List.take_zero, List.map_nil, List.sum_nil, pow_zero, one_mul,
+        Nat.zero_add, List.drop_one, List.tail_cons, List.getD_cons_zero, ones_blockWord]
+    have hshift : ∀ j ∈ Finset.range L'.length,
+        (2 : ℤ) ^ ((((a, b) :: L').take (j + 1)).map (fun c => c.1 + c.2)).sum
+          * 3 ^ ((((a, b) :: L').drop (j + 1 + 1)).map Prod.fst).sum
+          * (3 ^ (((a, b) :: L').getD (j + 1) (0, 0)).1 - 2 ^ (((a, b) :: L').getD (j + 1) (0, 0)).1)
+        = 2 ^ (a + b) *
+          (2 ^ ((L'.take j).map (fun c => c.1 + c.2)).sum
+            * 3 ^ ((L'.drop (j + 1)).map Prod.fst).sum
+            * (3 ^ (L'.getD j (0, 0)).1 - 2 ^ (L'.getD j (0, 0)).1)) := by
+      intro j _
+      simp only [List.take_succ_cons, List.map_cons, List.sum_cons, List.drop_succ_cons,
+        List.getD_cons_succ, pow_add]
+      ring
+    rw [Finset.sum_congr rfl hshift, ← Finset.mul_sum, hzero, ← ih, numer_blockWord_cons]
+
 /-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
 Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
 targets `Compression`/`LadderCompletes` — so that `OneCircuit.lean` stays

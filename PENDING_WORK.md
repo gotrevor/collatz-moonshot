@@ -81,6 +81,15 @@ removed. New in `OneCircuit.lean` (all `[propext,(choice,)Quot.sound]`):
   block count" is now fully machine-checked for ALL cycles** — the reduction plumbing for
   `Compression` is complete. What remains is the SUMMIT: bound the block count by a constant.
 
+**Explicit S-unit closed form (2026-08-24, this lap):** `numer_blockWord_explicit` —
+`numer (blockWord L) = Σ_{j<m} 2^{Σ_{i<j}(aᵢ+bᵢ)}·3^{Σ_{i>j}aᵢ}·(3^{aⱼ}−2^{aⱼ})`, exactly `m`
+monomial-difference terms (one per circuit), each a `{2,3}`-unit coefficient times the
+collapsed odd-run difference. This is the canonical S-unit datum ANY Diophantine bound on `m`
+(subspace theorem / Baker / SdW) consumes — method-independent, so a genuine prerequisite,
+not speculative reduction-vocabulary. `[propext, choice, Quot.sound]`. **It does NOT bound
+`m`** — the summit (bound the S-unit rank = block count) remains the open Diophantine wall,
+source-blocked on the SdW method read (`ON-LINE-REQUEST.md`, unanswered).
+
 **Next lap options:** (a) ~~rotate arbitrary integer-cycle word to canonical form~~ —
 **DONE this lap** (`exists_blockWord_of_integerCycle`). (b) if SdW findings landed, formalize
 their fixed-`m` reduction on the block datum. (c) **pivot to the alternate crux, Front A
