@@ -20,7 +20,24 @@ Executing `FRONT-A-PARADOXICAL.md`. `experiments/paradoxical.py` (exact integers
 `5/8,17/27,29/46` (n≤200000) are all left convergents/semiconvergents of `log_3 2` (Niu,
 no counterexample in range).
 
-**Open obligation / next attack:** `le_two_blocks_not_acyclicParadoxical` (disclosed sorry).
+**Part C wiring landed (`CollatzMoonshot/Assumed/Paradoxical.lean`):**
+- `Assumed.rozier_terracol_3_2` — RT Theorem 3.2 as a faithful THEOREM-grade axiom
+  (infinite shortcut stopping time ⇒ infinitely many `Paradoxical` segments; NOT packaging
+  `NoDivergentOrbit`).
+- `finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical → NoDivergentOrbit`,
+  proved modulo one disclosed bridge `diverges_imp_infinite_acyclicParadoxical` (the
+  standard/shortcut + acyclicity specialization). Ledger `[propext, sorryAx]`. This is BASELINE
+  Front-A plumbing (the hypothesis is stronger than Collatz), not the novel content.
+
+**Open obligations / next attacks:**
+- `diverges_imp_infinite_acyclicParadoxical` (disclosed sorry): divergent orbit ⇒ ∃ tail value
+  with `InfiniteStoppingTime` (running-min-of-tail argument + standard↔shortcut bridge), then
+  apply the RT axiom; acyclicity from no-cycle-on-divergent-orbit.
+- `le_two_blocks_not_acyclicParadoxical` (disclosed sorry). CONFIRMED this lap: the head-block
+  trick + simple propagated lower bounds on `n` do NOT close (P) — tested `n≥2^b−1` (1457
+  violations) and the interior-block bound `3^b(n+1)≥2^(b+c)(2^d−1)+2^b` (318 violations). It
+  genuinely needs the full realizing-residue reconstruction mod `2^(b+c+d)`. Deprioritized as
+  the hard arithmetic core; the head-block (Appendix A) case is done.
 The head-block trick fails for a genuine interior gap because the second block adds remainder
 `2^(b+c)(3^d−2^d)`, so the exclusion needs a LOWER BOUND on the realizing start `n` (the
 residue making the prefix `[T]^b` do `b` odd steps). Smallest concrete probe: prove
