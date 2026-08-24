@@ -37,11 +37,17 @@ three joint alternatives modulo 81 yields the Lean-checked exponent ``2/3``
 certificate.  Modulo 243 with five height floors yields an exactly checked
 candidate at exponent ``3/4``.
 
+At ternary depth 8 the same five height floors cross exponent ``4/5``.  A
+close rational underweight and the generated 21,870-state integer potential
+pass 65,610 exact inequalities; this larger candidate is intended to be frozen
+by the next Lean formalization rather than duplicated below.
+
 Examples:
     uv run --quiet python3 experiments/barrier_transfer.py
     uv run --quiet python3 experiments/barrier_transfer.py --verify-up-to 100000
     uv run --quiet python3 experiments/barrier_transfer.py --correlated-net-search-only
     uv run --quiet python3 experiments/barrier_transfer.py --correlated-three-quarters-certificate
+    uv run --quiet python3 experiments/barrier_transfer.py --correlated-four-fifths-certificate
 """
 
 from __future__ import annotations
@@ -238,6 +244,18 @@ CORRELATED_THREE_QUARTERS_WEIGHTS = (
   3120674, 3150372, 18845234, 5231849, 17511738, 11205314, 3110857, 1849716, 10823707,
 
 )
+
+# Exact exponent-4/5 candidate found at ternary depth 8.  The two elementary
+# comparisons imply
+#
+#   (2408224/1000000) * (574349/1000000)^j < (3 / 2^j)^(4/5).
+#
+# Its potential is generated on demand: 21,870 states and 65,610 exact
+# shared-lift inequalities, with minimum ratio 1.001017912682.
+CORRELATED_FOUR_FIFTHS_FACTOR = Fraction(2_408_224, 1_000_000)
+CORRELATED_FOUR_FIFTHS_Q = Fraction(574_349, 1_000_000)
+CORRELATED_FOUR_FIFTHS_DEPTH = 8
+CORRELATED_FOUR_FIFTHS_HEIGHT_BINS = CORRELATED_THREE_QUARTERS_HEIGHT_BINS
 
 
 def step(n: int) -> int:
@@ -980,6 +998,47 @@ def run_correlated_three_quarters_certificate(args: argparse.Namespace) -> None:
         print("  )")
 
 
+def run_correlated_four_fifths_certificate(args: argparse.Namespace) -> None:
+    heights = CORRELATED_FOUR_FIFTHS_HEIGHT_BINS
+    transitions = build_correlated_height_transitions(
+        CORRELATED_FOUR_FIFTHS_DEPTH,
+        heights,
+        args.height_children,
+        True,
+    )
+    factor = CORRELATED_FOUR_FIFTHS_FACTOR
+    q = CORRELATED_FOUR_FIFTHS_Q
+    assert factor**5 < 81
+    assert 16 * q**5 < 1
+    weights, ratio, margin, checked = exact_integer_correlated_certificate(
+        transitions,
+        factor,
+        q,
+        args.height_iterations,
+        args.certificate_minimum_weight,
+    )
+    print()
+    print("exact shared-lift net-height exponent-4/5 candidate")
+    print(
+        f"  states={len(transitions)} (unit residues mod "
+        f"{3**CORRELATED_FOUR_FIFTHS_DEPTH} x {len(heights)} height floors); "
+        f"inequalities={checked}"
+    )
+    print(
+        f"  rational edge under-bound: ({factor})*({q})^j; "
+        "valid because factor^5 < 81 and 16*q^5 < 1"
+    )
+    print(
+        f"  exact integer inequalities strict; minimum ratio={ratio:.12f}; "
+        f"minimum scaled margin={margin}; weights=[{min(weights)},{max(weights)}]"
+    )
+    if args.print_certificate:
+        print("  weights=(")
+        for offset in range(0, len(weights), 9):
+            print("    " + ", ".join(map(str, weights[offset : offset + 9])) + ",")
+        print("  )")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1027,6 +1086,11 @@ def parse_args() -> argparse.Namespace:
         help="generate and exactly check a 3/4 shared-lift integer certificate",
     )
     parser.add_argument(
+        "--correlated-four-fifths-certificate",
+        action="store_true",
+        help="generate and exactly check the depth-8 4/5 integer certificate",
+    )
+    parser.add_argument(
         "--correlated-depth",
         type=int,
         default=CORRELATED_THREE_QUARTERS_DEPTH,
@@ -1056,6 +1120,9 @@ def main() -> None:
         return
     if args.correlated_three_quarters_certificate:
         run_correlated_three_quarters_certificate(args)
+        return
+    if args.correlated_four_fifths_certificate:
+        run_correlated_four_fifths_certificate(args)
         return
     if args.children < 1:
         raise ValueError("--children must be positive")

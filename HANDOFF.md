@@ -1,6 +1,39 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
-## Update (2026-08-24, newest): the exponent-3/4 renewal+stopping pipeline is COMPLETE
+## Update (2026-08-24, newest): an exact exponent-`4/5` candidate is FOUND
+
+- Independently rebuilt and audited the completed exponent-`3/4` pipeline: full
+  `lake build` green (8,742 jobs), no `sorry`, and the headline theorem axiom
+  footprints are exactly the base three plus the explicitly allowed finite
+  `native_decide` certificate/positivity/min/max checks documented below.
+- Deeper shared-lift searches on the same five height floors `{1,7/4,3,6,12}`
+  give critical exponents `.772226426038`, `.786911863953`, and
+  `.801207515868` at ternary depths `6`, `7`, and `8`.  Thus depth `8` crosses
+  the rational exponent `4/5`; this is not an extrapolation.
+- `experiments/barrier_transfer.py --correlated-four-fifths-certificate`
+  generates a 21,870-state potential (five floors × 4,374 unit residues modulo
+  `6561`) and checks all `21,870 × 3 = 65,610` shared-lift inequalities by an
+  exact common-denominator integer calculation for
+
+  ```
+  (75257/31250) * (574349/1000000)^j < (3/2^j)^(4/5).
+  ```
+
+  The analytic comparison reduces to `(75257/31250)^5 < 81` and
+  `16*(574349/1000000)^5 < 1`.  Minimum exact certificate ratio is
+  `1.001017912682`; generated weights range from `1,000,000` to `41,080,952`.
+  Deleting any one of the five height states makes this exact `4/5` check fail,
+  so the five-state grid is not carrying an obvious redundant floor.  This is
+  exact certificate-grade computation, **not yet Lean-checked**.
+- **Next large milestone is pinned** in
+  `FrontA/BackwardFourFifthsStopping.lean`: freeze/formalize the local table at
+  child residues modulo `6561` and source residues modulo `19683`, prove the
+  actual-child `4/5` expansion, then deliver the exact-real renewal and full
+  recursive stopping pipeline in the same treadmill project.  The final pinned
+  corollary uses potential constants `1000000`/`41080952` and contains exactly
+  one unresolved proof; it is deliberately not root-imported yet.
+
+## Update (2026-08-24): the exponent-3/4 renewal+stopping pipeline is COMPLETE
 
 - Added `CollatzMoonshot/FrontA/BackwardThreeQuartersRenewal.lean` and completed
   `CollatzMoonshot/FrontA/BackwardThreeQuartersStopping.lean`, both **sorry-free**

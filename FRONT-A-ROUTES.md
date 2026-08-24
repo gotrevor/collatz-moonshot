@@ -476,9 +476,18 @@ The chippable mathematical ladder is now:
    (810-entry array, scale `1000·5000^23`).  The full ladder step (certificate → renewal →
    stopping) is now a mechanical port at any exponent; `3/4 < 1` still, so this is a rung, not
    the harmonic target;
-7. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
+7. formalize the exact depth-8 exponent-`4/5` candidate.  The shared-lift search on floors
+   `{1,7/4,3,6,12}` has numerical critical exponent `.801207515868`; more importantly, the
+   generated 21,870-state potential exactly passes all 65,610 inequalities for
+   `(75257/31250)(574349/1000000)^j < (3/2^j)^(4/5)`, with minimum ratio
+   `1.001017912682` and weights in `[1000000,41080952]`.  Child state is modulo `6561`, the
+   shared next source digit lifts to modulo `19683`, and all five height floors are needed by
+   the tested exact certificate.  The final end-to-end corollary is pinned in
+   `BackwardFourFifthsStopping.lean`; complete local certificate, renewal, and stopping in
+   one project;
+8. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-8. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
+9. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
    packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
    problem of Routes A1/A3.
 
