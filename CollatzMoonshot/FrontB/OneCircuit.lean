@@ -293,6 +293,36 @@ theorem numer_blockWord_cons (a b : ℕ) (L : List (ℕ × ℕ)) :
     ones_append, ones_replicate_false, Nat.zero_add, pow_add]
   ring
 
+/-- The odd-step count of a block form is the sum of the odd-run lengths `Σ aⱼ`. -/
+@[simp] theorem ones_blockWord (L : List (ℕ × ℕ)) :
+    ones (blockWord L) = (L.map Prod.fst).sum := by
+  induction L with
+  | nil => simp [blockWord]
+  | cons ab L' ih =>
+    obtain ⟨a, b⟩ := ab
+    simp only [blockWord, ones_append, ones_replicate_true, ones_replicate_false, ih,
+      List.map_cons, List.sum_cons]
+    omega
+
+/-- The length of a block form is `Σ (aⱼ + bⱼ)`. -/
+@[simp] theorem length_blockWord (L : List (ℕ × ℕ)) :
+    (blockWord L).length = (L.map fun p => p.1 + p.2).sum := by
+  induction L with
+  | nil => simp [blockWord]
+  | cons ab L' ih =>
+    obtain ⟨a, b⟩ := ab
+    simp only [blockWord, List.length_append, List.length_replicate, ih,
+      List.map_cons, List.sum_cons]
+
+/-- The denominator of a block form, exponents explicit:
+`den = 2^{Σ(aⱼ+bⱼ)} − 3^{Σ aⱼ}`.  Together with `numer_blockWord_cons` this gives the
+whole cycle equation `numer = N·den` with its exponent vectors read off the `m` blocks —
+the bounded S-unit datum a fixed-`m` argument works from. -/
+theorem den_blockWord (L : List (ℕ × ℕ)) :
+    den (blockWord L)
+      = 2 ^ (L.map fun p => p.1 + p.2).sum - 3 ^ (L.map Prod.fst).sum := by
+  rw [den, length_blockWord, ones_blockWord]
+
 /-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
 Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
 targets `Compression`/`LadderCompletes` — so that `OneCircuit.lean` stays

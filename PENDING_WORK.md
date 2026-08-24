@@ -46,8 +46,15 @@ equation `numer = N·den` has **`m = circuits` S-unit terms**, not cycle-length-
 is the Route-2 leverage made precise: bounding `m` bounds the term count, which is what
 would let ESS/Baker apply.
 
-**State of the Front B block vocabulary:** coherent — `blockWord`, `circuits = m`,
-`numer = m`-term S-unit recurrence. The SUMMIT (bound `m` by a constant = `Compression`)
+Completed the block-form **arithmetic dictionary** (exponent vectors explicit):
+`ones_blockWord = Σ aⱼ`, `length_blockWord = Σ(aⱼ+bⱼ)`,
+`den_blockWord = 2^{Σ(aⱼ+bⱼ)} − 3^{Σ aⱼ}`. With `numer_blockWord_cons` the entire cycle
+equation `numer = N·den` is now read off the `m` blocks — the bounded S-unit datum a
+fixed-`m` argument works from.
+
+**State of the Front B block vocabulary:** coherent + complete for the block form —
+`blockWord`, `circuits = m`, `numer = m`-term S-unit recurrence, `ones/length/den`
+explicit. The SUMMIT (bound `m` by a constant = `Compression`)
 is genuinely open (no known handle; ESS not in mathlib) and **blocked on the SdW source
 read** (`ON-LINE-REQUEST.md`, awaiting `ON-LINE-FINDINGS-*`). Further speculative
 vocabulary should wait for SdW's actual method, lest we build the wrong reduction.
