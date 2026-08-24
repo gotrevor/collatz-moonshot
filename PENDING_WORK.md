@@ -157,6 +157,21 @@ exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite case
 exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
 `b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
 
+**★ MAJOR LEAD (lap 2026-08-25-1230): `b+d ≤ 5` may be ELEMENTARY via Aristotle's own criteria A/B.**
+Aristotle proved (sorry-free) two ELEMENTARY sufficient conditions for `y ≤ n`:
+  A: `3^(b+d) + 2^c·3^d < 2^m`   B: `(2^m − 3^(b+d))·(2^d − 1) ≥ 3^b·(3^d − 2^d)`
+then declared the residual `¬A ∧ ¬B` needs Baker — WITHOUT testing whether `¬A∧¬B` is itself
+bounded. **It is:** `¬A ∧ ¬B ∧ subcritical ∧ U₁>0 ∧ b,d≥1 ⟹ b+d ≤ 5` holds with ZERO exceptions
+(`scratchpad/resid2.py,elem_bound.py`, verified `b,d < 70`+`m` to `m0+45`; `H1` without `¬B` is
+unbounded — BOTH negations are essential). Key elementary lever: `2^m = 2^(b+d)·2^(c+e) ≥ 2^(b+d)·2^c`
+(`e≥0`), so `¬A` gives `2^c(2^(b+d) − 3^d) ≤ 3^(b+d)` — a `2^g` vs `3^g` growth inequality; combined
+with `¬B` and `U₁` it forces `b+d ≤ 5`. **If this implication is elementary (nlinarith/omega over the
+exponent atoms + the finite check on the 8 residual tuples), the crux closes with NO Baker input =
+the GO upgrade.** OPEN RISK: the contradiction may still need the tight `2^g` vs `3^g` relation
+(non-polynomial) — must try nlinarith to know. This is the #1 attack; supersedes the Baker framing
+IF it lands. Next: (1) prove `le_of_gap_A`/`le_of_gap_B` (elementary, from the segment identities);
+(2) prove `¬A∧¬B∧subcrit∧U₁ ⟹ b+d≤5`; (3) route `two_block_residue_core` through A∨B∨(finite check).
+
 **INDEPENDENT CORROBORATION (Aristotle, job `4006e40e…`, COMPLETE_WITH_ERRORS, ~1h30m).** Handed
 the `two_block_residue_core` statement, Aristotle independently reproduced the ENTIRE reduction and
 hit the identical wall — strong faithfulness evidence for our reduction:
