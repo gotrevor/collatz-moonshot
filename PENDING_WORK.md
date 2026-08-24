@@ -133,6 +133,19 @@ or a Front A prerequisite is the higher-value next advance.
 3. **Refuted already — do not retry:** Route-1 gcd-harvest over rotations (Thread 7,
    `route1_gcdHarvest_false`): all rotations give ONE divisibility condition mod `D`.
 
+## Front A progress (2026-08-24, this lap): W1′ converse arithmetic
+
+`cycle_three_pow_lt_two_pow` / `cycle_oddFreq_lt_sharp` (`Rigidity/Drift.lean`, axiom-clean):
+a genuine `step`-cycle `step^[p] n = n` (`n≥1`, `≥1` odd step) has `3^oddSteps < 2^evenSteps`
+(via the existing exact `mul_three_pow_le` + parity: `3^a` odd, `2^b` even), hence odd-step
+frequency `oddSteps/period < log2/log6 = sharpThreshold`. This is the **converse-direction
+arithmetic** of the `ParityRigidityW1' ↔ NoDivergentOrbit` calibration
+(`W1PrimeIffFrontA`, `Rigidity/Invariant.lean` milestone note): every eventual cycle of a
+non-divergent orbit sits below the drift ceiling. **Remaining converse gap = the MEASURE
+plumbing** (a `T2`-invariant probability on a finite orbit closure is the uniform cycle
+measure; then `μ(odd) = oddFreq`), plus Krylov–Bogolyubov for the forward M2′ direction. That
+plumbing is genuine ℤ₂ measure theory (likely mathlib-gappy) — a multi-lap build, not a probe.
+
 ## Alternate crux: Front A itinerary-rigidity
 
 `NoDivergentOrbit` needs a `DivergentDescentCertificate` (`FrontA/Threads.lean`
