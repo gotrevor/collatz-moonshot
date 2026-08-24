@@ -178,6 +178,48 @@ The prior lead's error: conflating "true over integer powers" (integrality-force
 provable" (needs a real certificate). **DO NOT re-attempt an elementary `nlinarith`/`omega` bound on
 `b+d ≤ 5`, nor the `le_of_gap_A/B` + `¬A∧¬B⇒b+d≤5` plan below — refuted.**
 
+### ★ GO ROUTE FULLY SCOPED (review lap 2026-08-25-1500) — the exact minimal effective input ★
+
+The crux `b+d ≤ 5` closes from a WEAK separation bound (far weaker than full Baker) plus a finite
+check plus an elementary reduction. All three parts verified numerically
+(`experiments/two_block_relaxation.py` + scratch `beta38.py`,`binding.py`,`sep.py`).
+
+**The reduction chain (elementary; formalizable now):** at `Paradoxical.lean:515`, set `k=b+d`,
+`D=2^m−3^k` (`m=b+c+d+e`). Already proved sorry-free in context: `window_unique_m` (⇒ `m` is the
+UNIQUE power in `(3^k, 2·3^k)`), `hupper : 2^m < 2·3^k`, `hbracket : 2^m(2^d−1)<3^k·2^d`. Two clean
+facts follow:
+  - **(W)** `2^d·D < 2^m`   (from `hbracket`; ⇒ `2^d·D < 2·3^k`).
+  - **(A)** `D·2^k ≤ 2^m·3^d`  (¬A `D ≤ 2^c·3^d` + `2^c ≤ 2^(c+e)=2^(m−k)` since `e≥0`;
+    ⇒ `D·2^k < 2·3^(k+d)`).
+`(W) ∧ (A) ∧ near-critical` is REAL-consistent (that is why the elementary route died), so the
+integrality of `2^m` (nearest power to `3^k`) is essential and enters ONLY via:
+
+**The separation lemma (THE disclosed effective input; β = 3/8, integer form):**
+  `∀ k m, 6 ≤ k → 3^k < 2^m → 2^m < 2·3^k → (2^m − 3^k)^8 · 2^(3k) ≥ 3^(8k)`.
+Equivalent to `D ≥ 3^k·2^(−3k/8)`. VERIFIED true for all near-critical `6 ≤ k < 500` (min `D/3^k`
+is `0.001` at `k=306`, hugely above `2^(−3k/8)`). β=3/8 is inside the feasible window
+`[0.319, 0.387)`: β≥0.319 needed for the bound to be TRUE (worst at `k=10`), β<log2/log6=0.3869
+needed for the reduction (asymptotic). NOTE: with β=3/8 the loose reduction only yields `k ≤ 83`
+(constants), so it must be paired with:
+
+**Finite check (native_decide) for `k ∈ [6, 83]`:** for each such `k`, the near-critical `m` and
+`D` are concrete; `¬((W) ∧ (A))` holds (verified). ~78 values; `3^83`≈40 digits — `native_decide`
+on a per-k table should handle it (or `interval_cases k` + `decide`/`omega` with the explicit `m`).
+
+**So the crux = [reduction: elementary, formalize] + [separation lemma: β=3/8, DISCLOSED] +
+[finite check k≤83: native_decide].** Everything except the separation lemma is machine-reachable now.
+
+**Proving the separation lemma (the multi-lap GO prize):** mathlib HAS the continued-fraction
+convergent-bound API — `Mathlib/Algebra/ContinuedFractions/` (`Determinant.lean` gives
+`|pₙqₙ₊₁ − pₙ₊₁qₙ| = 1`, `ContinuantsRecurrence.lean`, `ConvergentsEquiv.lean`), the standard tool
+for effective `|α − pₙ/qₙ| ≥ 1/(qₙ(qₙ+qₙ₊₁))` lower bounds. It has NO ready-made effective
+irrationality measure for `log₂3` (only the `LiouvilleWith` framework + a.e. results, no specific
+constant). Route: realize the relation `|k·log3 − m·log2|` as a CF-convergent gap for `log₂3` (or
+`log₃2`), extract an explicit lower bound `≥ c·2^(−3k/8)` (β=3/8 is weak, so even a crude convergent
+argument with a computed initial segment of the CF `[1;1,1,2,2,3,1,5,2,23,...]` of `log₂3` should
+suffice), yielding the separation. This is the genuine effective-irrationality build; narrow it lap
+by lap. Discharging it → `b+d≤5` is real-proved → PROMISING EVIDENCE → GO.
+
 **Remaining honest routes for the crux (both leave everything else machine-checked):**
 - **(a) GO route — build effective irrationality of `log₂3` in Lean.** An explicit linear-forms-in-
   logs / irrationality-measure bound `|2^m − 3^k| ≥ 3^k · c/k^κ` (or a direct `|m log2 − k log3|`
