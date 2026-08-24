@@ -42,13 +42,26 @@ Suppose `Diverges n` (`1 ≤ n`).
    so `lt_of_oddSteps_freq_lt` gives `step^[k] m < m`. Then **`not_diverges_of_eventually_lt`**
    ⟹ `¬ Diverges m` — contradicting divergence of the tail `m`. ∎
 
-**State:** endpoints (step 3 machinery) DONE; steps 1–2 are the measure module to build.
-`freqThreshold_lt_sharp`, `tendsto_freqThreshold`, `isClopen_oddSetZ2`, `continuous_T2`,
-`IsT2Invariant`, `orbitClosure` all present. **Smallest next probe:** the empirical-measure
-invariance lemma — state `μ_N`, prove the `2/N` telescoping total-variation bound and
-`Continuous (ProbabilityMeasure.map continuous_T2)` weak-* continuity, then cluster-invariance.
-Check mathlib for `ProbabilityMeasure.map` / `MeasureTheory.Measure.map` weak-* continuity and
-the `boundedMul`/`tendsto_iff` weak-* API before hand-rolling.
+**State:** step 3 endpoints DONE; step 1's **computational core is now landed** in
+`Rigidity/Empirical.lean` (all `[propext, choice, Quot.sound]`):
+- `empiricalMeasure x N := N⁻¹ • Σ_{k<N} dirac (T2^[k] x)` (Cesàro empirical measure);
+- `empiricalMeasure_isProbabilityMeasure` (N ≥ 1);
+- `integral_empiricalMeasure` — `∫ f dμ_N = N⁻¹ Σ_{k<N} f (T2^[k] x)` (Birkhoff average);
+- `integral_empiricalMeasure_comp_T2_sub` — the **telescoping identity**
+  `∫ f∘T2 dμ_N − ∫ f dμ_N = N⁻¹ (f (T2^[N] x) − f x)` (the `O(1/N)` that forces cluster-point
+  invariance).
+
+**Smallest next probe (grind lap):** wrap `empiricalMeasure x (N+1)` as a
+`ProbabilityMeasure ℤ_[2]`; take a weak-* cluster point `μ` along `atTop` (mathlib:
+`CompactSpace (ProbabilityMeasure ℤ_[2])`, Prokhorov). Show `μ.map T2 = μ`: along the
+cluster subnet `μ_{φ} → μ`, `ProbabilityMeasure.continuous_map continuous_T2` gives
+`(μ_φ).map T2 → μ.map T2`, and `integral_empiricalMeasure_comp_T2_sub` + boundedness of the
+BCF forces `∫ f d((μ_φ).map T2) − ∫ f dμ_φ → 0`; conclude via
+`ProbabilityMeasure.tendsto_iff_forall_integral_tendsto` that `∫ f d(μ.map T2) = ∫ f dμ` for
+all `f : ℤ_[2] →ᵇ ℝ`, hence `μ.map T2 = μ` (= `IsT2Invariant`). Then support on `orbitClosure`
+(closed-set Portmanteau) and step 2's uniformity. Key mathlib API confirmed present:
+`ProbabilityMeasure.map` (`.map ν f_aemble`), `ProbabilityMeasure.continuous_map`,
+`tendsto_iff_forall_integral_tendsto`, `tendsto_measure_of_isClopen_of_tendsto`.
 
 **Note (converse calibration, lower value):** `NoDivergentOrbit → ParityRigidityW1'` has its
 arithmetic done (`repeat_cycle_oddFreq_lt_sharp`); its gap is "invariant measure on a *finite*

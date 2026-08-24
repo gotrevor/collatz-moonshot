@@ -7,6 +7,7 @@ import CollatzMoonshot.Rigidity.Drift
 import CollatzMoonshot.Rigidity.Funnel
 import CollatzMoonshot.Rigidity.Circle
 import CollatzMoonshot.Rigidity.Invariant
+import CollatzMoonshot.Rigidity.Empirical
 
 /-!
 # Lane 1: ×2×3 measure rigidity 🏔️
