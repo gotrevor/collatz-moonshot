@@ -147,7 +147,25 @@ ANY attack reuses. Also added to `near_critical_containment`'s context the tight
 effective irrationality of `log₂3` / Baker / linear-forms-in-logs (only `LiouvilleWith` framework,
 no specific measure) — so route (a) needs building that infrastructure, genuinely multi-lap.
 
-**Attack on the containment (next lap):** The remaining obligation is now provably NOT elementary
+**DONE (lap 2026-08-25-1000): CRUX REDUCED TO ONE INEQUALITY `b + d ≤ 5`.** The sole `src/` sorry
+is now literally `have hbd : b + d ≤ 5 := by sorry` inside `near_critical_containment`. Everything
+else is machine-checked: given `b+d ≤ 5`, the window `hupper` forces `2^m < 2·3^5 < 2^9` ⇒ `m ≤ 8`,
+bounding `b,c,d,e` to a finite box; then `interval_cases b<;>d<;>c<;>e <;> norm_num <;> omega`
+discharges every case (the integrality constraints `hlo/hhi` are inconsistent off the two tuples,
+and true on them). Verified (`scratchpad/small.py`): under `b+d ≤ 5` the containment solutions are
+exactly `(2,3,3,0)`,`(3,3,2,0)`. Needs `maxHeartbeats 4000000` (~800 finite cases). So the two-block
+exclusion `le_two_blocks_not_acyclicParadoxical` is now PROVED modulo the single clean statement
+`b + d ≤ 5` — the pure `2^m` vs `3^k` separation (effective irrationality of `log₂3`, Baker).
+
+**Attack on `b + d ≤ 5` (next lap):** This is exactly: for which `(k,d)` (k=b+d≥2, 1≤d<k) does the
+near-critical window `3^k < 2^m < 3^k·2^d/(2^d−1)` admit an integer `w` with `L ≤ 3^b w ≤ …`? The
+answer (k=5 only) is a linear-form-in-logs bound. Routes: (a) DISCHARGE via building an explicit
+irrationality-measure/continued-fraction bound for `log₂3` in Lean (multi-lap; mathlib lacks it) —
+this is the GO upgrade; (b) cite an effective `|2^m − 3^k|` gap as a named axiom and derive `b+d≤5`
+(BASELINE). Note both winning tuples share `(k,m)=(5,8)`; the CF convergents of `log₂3` giving
+`2^m>3^k` closest are at `k = 5,17,29,41,…` and only `k=5` is loose enough for the window+integrality.
+
+**Attack on the containment (superseded):** The remaining obligation is now provably NOT elementary
 in `(b,d,m)` alone — it needs effective irrationality of `log₂3` (Baker). Two honest routes:
 (a) **discharge attempt**: formalize/derive from an explicit irrationality measure `μ(log₂3)` (or
 an explicit `|2^m − 3^k|` gap) that the window `(1, 2^d/(2^d−1))` admits an integer `w` only for

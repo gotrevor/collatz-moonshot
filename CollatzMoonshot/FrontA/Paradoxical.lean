@@ -416,6 +416,7 @@ theorem residue_core_exc2 (n X y : ℕ)
     (hII : 2 ^ (2 + 0) * y + 2 ^ 2 = 3 ^ 2 * (X + 1)) :
     y ≤ n := by norm_num at hI hII ⊢; omega
 
+set_option maxHeartbeats 4000000 in
 /-- **Near-critical containment (the sharpened crux).**  This isolates *exactly* what remains
 open in the two-block exclusion, as a self-contained arithmetic statement with clean
 hypotheses.  Suppose the sharp gap of `core_of_gap` fails: there is a natural `w` with
@@ -506,10 +507,28 @@ theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d
   -- Clean power bracket:  `2^m·(2^d − 1) < 3^(b+d)·2^d`  (⇔ `2^m/3^(b+d) < 2^d/(2^d−1)`).
   have hbracket : (2 : ℤ) ^ (b + c + d + e) * (2 ^ d - 1) < 3 ^ (b + d) * 2 ^ d := by
     rw [hDdef] at hsqueeze; nlinarith [hsqueeze]
-  -- The residual finiteness containment.  With `3^(b+d) < 2^m` (hsub) this pins
-  -- `2^m/3^(b+d) ∈ (1, 2^d/(2^d−1))`; integrality of `w` (hlo/hhi) then selects the two tuples.
-  -- Genuine `2^m` vs `3^k` separation content — disclosed, narrowed lap by lap.
-  sorry
+  -- **The entire deep content is now isolated to this one inequality** `b + d ≤ 5`: a `2^m`
+  -- vs `3^k` separation (effective irrationality of `log₂ 3`, Baker).  Everything below it is
+  -- machine-checked: `b+d ≤ 5` + the window `hupper` pin `m ≤ 8`, bounding all of `b,c,d,e` to a
+  -- finite box on which the integrality constraints `hlo/hhi` are discharged by `omega`.
+  have hbd : b + d ≤ 5 := by
+    sorry
+  -- Finite discharge.  `b+d ≤ 5` and `hupper` give `2^m < 2·3^5 < 2^9`, so `m = b+c+d+e ≤ 8`.
+  have hupperN : 2 ^ (b + c + d + e) < 2 * 3 ^ (b + d) := by exact_mod_cast hupper
+  have hm8 : b + c + d + e ≤ 8 := by
+    have key : (2 : ℕ) ^ (b + c + d + e) < 2 ^ 9 := by
+      calc 2 ^ (b + c + d + e) < 2 * 3 ^ (b + d) := hupperN
+        _ ≤ 2 * 3 ^ 5 := by gcongr <;> norm_num
+        _ < 2 ^ 9 := by norm_num
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).mp key
+    omega
+  rw [hDdef, hU1def] at hhi
+  have hbb : b ≤ 4 := by omega
+  have hdd : d ≤ 4 := by omega
+  have hcc : c ≤ 8 := by omega
+  have hee : e ≤ 8 := by omega
+  interval_cases b <;> interval_cases d <;> interval_cases c <;> interval_cases e <;>
+    (try norm_num at hlo hhi hsub ⊢) <;> (try omega)
 
 /-- **The isolated arithmetic crux of the two-block exclusion.**  Purely a statement about
 naturals: given the two exact head-block segment identities
