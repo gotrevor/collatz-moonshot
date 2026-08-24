@@ -167,6 +167,83 @@ theorem circuits_oneCircuitWord (a b : ℕ) (ha : 1 ≤ a) (hb : 1 ≤ b) :
     show (false :: List.replicate b' false) = List.replicate (b' + 1) false from
       (List.replicate_succ).symm, countP_falls_cpairs_replicate_false (b' + 1) true]
 
+/-! ### The circuit-block normal form (general `m`)
+
+Toward Front B `Compression`: assemble words from circuit blocks and read off the
+circuit count. `blockWord [(a₁,b₁),…,(aₘ,bₘ)] = trueᵃ¹falseᵇ¹ ⋯ trueᵃᵐfalseᵇᵐ`, and with
+every block nonempty (`aᵢ,bᵢ ≥ 1`) it has exactly `m` circuits — one falling edge per
+block. This is the vocabulary any circuit-count (compression) bound is stated in. -/
+
+/-- Prepending a single `false` to the argument of `cpairs` adds no falling edge (its
+first component is `false`), whatever follows and whatever the sentinel. -/
+theorem countP_falls_cpairs_false_cons (z : List Bool) (f : Bool) :
+    ((cpairs (false :: z) f).countP fun q => q.1 && !q.2)
+      = ((cpairs z f).countP fun q => q.1 && !q.2) := by
+  cases z with
+  | nil => simp [cpairs]
+  | cons y t => rw [cpairs, List.countP_cons]; simp
+
+/-- A whole `false`-block prefix adds no falling edge. -/
+theorem countP_falls_cpairs_false_prefix :
+    ∀ (n : ℕ) (rest : List Bool) (f : Bool),
+      ((cpairs (List.replicate n false ++ rest) f).countP fun q => q.1 && !q.2)
+        = ((cpairs rest f).countP fun q => q.1 && !q.2)
+  | 0, _, _ => by simp
+  | (n + 1), rest, f => by
+    rw [List.replicate_succ, List.cons_append, countP_falls_cpairs_false_cons,
+      countP_falls_cpairs_false_prefix n rest f]
+
+/-- Words assembled from circuit blocks: `trueᵃ¹falseᵇ¹ trueᵃ²falseᵇ² ⋯`. -/
+def blockWord : List (ℕ × ℕ) → List Bool
+  | [] => []
+  | (a, b) :: rest => List.replicate a true ++ List.replicate b false ++ blockWord rest
+
+/-- The head-`true` fall count of a block word agrees with `circuits` (both `0` when
+empty; when the first block is nonempty the head is `true`, the `circuits` sentinel). -/
+theorem cpairs_true_falls_blockWord (L : List (ℕ × ℕ)) (h : ∀ blk ∈ L, 1 ≤ blk.1) :
+    ((cpairs (blockWord L) true).countP fun q => q.1 && !q.2) = circuits (blockWord L) := by
+  cases L with
+  | nil => simp [blockWord, circuits, rot, cpairs]
+  | cons ab L' =>
+    obtain ⟨a, b⟩ := ab
+    have ha : 1 ≤ a := h (a, b) (by simp)
+    obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+    have hhead : blockWord ((a' + 1, b) :: L')
+        = true :: (List.replicate a' true ++ List.replicate b false ++ blockWord L') := by
+      show List.replicate (a' + 1) true ++ List.replicate b false ++ blockWord L' = _
+      rw [List.replicate_succ, List.cons_append, List.cons_append]
+    rw [hhead, circuits_cons]
+
+/-- **The circuit-block normal form counts circuits.** A word assembled from `m` nonempty
+circuit blocks has exactly `m` circuits — the base fact behind any bound on circuit count. -/
+theorem circuits_blockWord :
+    ∀ (L : List (ℕ × ℕ)), (∀ blk ∈ L, 1 ≤ blk.1 ∧ 1 ≤ blk.2) →
+      circuits (blockWord L) = L.length
+  | [], _ => by simp [blockWord, circuits, rot, cpairs]
+  | (a, b) :: L', h => by
+    obtain ⟨ha, hb⟩ := h (a, b) (by simp)
+    have hL' : ∀ blk ∈ L', 1 ≤ blk.1 ∧ 1 ≤ blk.2 :=
+      fun blk hmem => h blk (List.mem_cons_of_mem _ hmem)
+    obtain ⟨a', rfl⟩ : ∃ a', a = a' + 1 := ⟨a - 1, by omega⟩
+    obtain ⟨b', rfl⟩ : ∃ b', b = b' + 1 := ⟨b - 1, by omega⟩
+    have hsplit : blockWord ((a' + 1, b' + 1) :: L')
+        = List.replicate (a' + 1) true ++ false :: (List.replicate b' false ++ blockWord L') := by
+      have hb1 : List.replicate (b' + 1) false = false :: List.replicate b' false :=
+        List.replicate_succ
+      simp only [blockWord, hb1, List.append_assoc, List.cons_append]
+    have hcirc : circuits (blockWord ((a' + 1, b' + 1) :: L'))
+        = ((cpairs (blockWord ((a' + 1, b' + 1) :: L')) true).countP fun q => q.1 && !q.2) :=
+      (cpairs_true_falls_blockWord _ (fun blk hm => (h blk hm).1)).symm
+    rw [hcirc, hsplit,
+      cpairs_append false (List.replicate b' false ++ blockWord L') true
+        (List.replicate (a' + 1) true),
+      List.countP_append, countP_falls_cpairs_replicate_true a',
+      countP_falls_cpairs_false_cons,
+      countP_falls_cpairs_false_prefix b' (blockWord L') true,
+      cpairs_true_falls_blockWord L' (fun blk hm => (hL' blk hm).1),
+      circuits_blockWord L' hL', List.length_cons]
+    omega
+
 /-- **The single transcendence input for the one-circuit base rung** (Steiner 1977).
 Isolated as an explicit hypothesis — a `def`, exactly as the board states its open
 targets `Compression`/`LadderCompletes` — so that `OneCircuit.lean` stays

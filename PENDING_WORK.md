@@ -29,14 +29,21 @@ Front B outright via `frontB_of_compression_le_91` (any `C ≤ 91` suffices).
   `2^i 3^j` lattice), no analysis. Route 2 in `FRONT-B-ROUTES.md`.
 
 **Progress (2026-08-24):** source request filed (`ON-LINE-REQUEST.md`, SdW method).
-Started the circuit-block normal form the compression argument will run on:
-`circuits_oneCircuitWord : circuits (oneCircuitWord a b) = 1` proved
-(`OneCircuit.lean`, `[propext, Quot.sound]`) via `cpairs`/`countP` helpers
-(`countP_falls_cpairs_replicate_{true,false}`). **Next block-form step:** define
-`blockWord [(a₁,b₁),…,(a_m,b_m)] = trueᵃ¹falseᵇ¹…` and prove
-`circuits (blockWord L) = L.length` (all `aᵢ,bᵢ ≥ 1`), then that every word is a
-rotation of a `blockWord` with `m = circuits` blocks — the vocabulary any circuit-count
-bound needs.
+Built the circuit-block normal form the compression argument runs on
+(`OneCircuit.lean`, all `[propext, Quot.sound]`):
+- `circuits_oneCircuitWord : circuits (oneCircuitWord a b) = 1`;
+- `def blockWord [(a₁,b₁),…,(aₘ,bₘ)] = trueᵃ¹falseᵇ¹…` and
+  **`circuits_blockWord : (∀ blk∈L, 1≤blk.1 ∧ 1≤blk.2) → circuits (blockWord L) = L.length`**
+  — a block word has exactly `m` circuits (one falling edge per block), via the
+  `cpairs`/`countP` peeling helpers `countP_falls_cpairs_{replicate_true, replicate_false,
+  false_cons, false_prefix}` and `cpairs_true_falls_blockWord`.
+
+**Next block-form step (the useful reduction):** the CONVERSE — every nonempty word `v`
+is a *rotation* of some `blockWord L` with `L.length = circuits v` (group `v`'s maximal
+true-runs into blocks; rotate so it starts at a run boundary). This turns "bound
+`circuits v` for integer cycles" into "bound `L.length` for the block normal form of a
+cycle", the shape SdW/Route-2 arguments use. Then wire `numer (blockWord L)` into the
+S-unit sum `Σ 3^… 2^…` indexed by the `m` blocks.
 
 **Attack paths (each lap: the smallest source-/compiler-grounded probe):**
 1. **Source read (filed):** Simons–de Weger 2005/2010 — do they bound circuit count
