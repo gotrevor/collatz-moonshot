@@ -646,4 +646,40 @@ theorem exists_blockWord_of_integerCycle {v : List Bool} (hv : IntegerCycle v) :
   refine ⟨L, k, hL, hvk, ?_, by rw [← hcirc, circuits_rotate]⟩
   rw [← hvk]; exact (integerCycle_rotate k).mpr hv
 
+open scoped BigOperators in
+/-- **The explicit member-value Diophantine equation of a block-form integer cycle.**  Combining
+`numer_blockWord_explicit`, `den_blockWord`, and the integrality `den ∣ numer`, a block-form
+integer cycle satisfies, for its (positive integer) member `N`,
+`Σⱼ 2^{Σ_{i<j}(aᵢ+bᵢ)}·3^{Σ_{i>j}aᵢ}·(3^{aⱼ}−2^{aⱼ}) = N·(2^{Σ(aᵢ+bᵢ)} − 3^{Σaᵢ})`.
+This is *exactly* the `{2,3}`-S-unit equation a Diophantine method (SdW/Baker/subspace) must
+solve — `m = L.length = circuits` terms on the left, one linear form on the right.  Bounding
+`m` (`Compression`) is bounding the number of S-unit terms in this equation. -/
+theorem blockWord_cycle_diophantine {L : List (ℕ × ℕ)}
+    (hcyc : IntegerCycle (blockWord L)) :
+    ∃ N : ℤ, 1 ≤ N ∧
+      (∑ j ∈ Finset.range L.length,
+        2 ^ ((L.take j).map (fun c => c.1 + c.2)).sum
+        * 3 ^ ((L.drop (j + 1)).map Prod.fst).sum
+        * (3 ^ (L.getD j (0, 0)).1 - 2 ^ (L.getD j (0, 0)).1))
+      = N * (2 ^ (L.map (fun p => p.1 + p.2)).sum - 3 ^ (L.map Prod.fst).sum) := by
+  obtain ⟨-, hones, hden, hdvd⟩ := hcyc
+  obtain ⟨N, hN⟩ := hdvd
+  have hpos : 0 < (numer (blockWord L) : ℤ) := by
+    have key : ∀ w : List Bool, 1 ≤ ones w → 0 < numer w := by
+      intro w hw
+      induction w with
+      | nil => simp [ones] at hw
+      | cons b t ih =>
+        cases b
+        · simp only [ones] at hw
+          have := ih hw
+          simp only [numer]; omega
+        · have h3 : 0 < 3 ^ ones t := Nat.pow_pos (by norm_num)
+          simp only [numer]; omega
+    exact_mod_cast key (blockWord L) hones
+  refine ⟨N, ?_, ?_⟩
+  · have hNpos : 0 < N := by nlinarith [hN, hden, hpos]
+    omega
+  · rw [← numer_blockWord_explicit, ← den_blockWord, hN, mul_comm]
+
 end CollatzMoonshot.FrontB

@@ -96,6 +96,14 @@ source-blocked on the SdW method read (`ON-LINE-REQUEST.md`, unanswered).
 delivers `IntegerCycle (blockWord L)` too, so a Diophantine argument on the block form has the
 **full cycle hypothesis** on the block word, not just the circuit count. `[propext,choice,Quot.sound]`.
 
+**Member-value Diophantine equation (2026-08-24, this lap):** `blockWord_cycle_diophantine`
+— a block-form integer cycle satisfies `Σⱼ (S-unit term j) = N·(2^{Σ(aᵢ+bᵢ)} − 3^{Σaᵢ})` with
+member `N ≥ 1`. This is the EXACT `{2,3}`-S-unit equation any Diophantine method must solve:
+`m = circuits` terms on the left, one linear form on the right. `Compression` = bound the
+number of S-unit terms `m` in this equation. The Front B block/S-unit/rotation apparatus is
+now feature-complete: normal form, circuit count, explicit numer/den, cycle hypothesis
+transport, and the packaged Diophantine equation. `[propext,choice,Quot.sound]`.
+
 **Crux feasibility test (recorded — the wall is real, not a config artifact):** attempted
 the cheap version of the Compression summit. The per-`m` case needs transcendence, verified
 by inspection: `m=1` is Steiner 1977 (`SteinerOneCircuit`, effective irrationality of
