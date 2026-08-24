@@ -33,12 +33,16 @@
   `exists_threeQuartersExpansion` → `[propext, Classical.choice, Quot.sound,
   threeQuartersNatCertificate._native.native_decide.ax_1_1]`;
   `threeQuartersNatCertificate` → `[propext, Quot.sound, <same native axiom>]`.
-- **Next**: port the exponent-`3/4` renewal + stopping layers (the analogues of
-  `BackwardTwoThirdsRenewal` / `BackwardTwoThirdsStopping`): the exact
-  `Real.rpow` edge weight `((x/y):ℝ)^(3/4)`, the cube-root-style comparison
-  `(2279/1000)·(2973/5000)^j < (3/2^j)^(3/4)` via `((3/2^j)^(3/4))^4 = (3/2^j)^3`,
-  the finite child set `exists_threeQuartersChildFinset`, and the fuel-`H+1`
-  frontier recursion over the five `InThreeQuartersHeightState` nodes.
+- **Next end-to-end milestone is pinned** in
+  `FrontA/BackwardThreeQuartersStopping.lean`.  In one project, create the
+  exponent-`3/4` renewal layer and complete the stopping layer: exact `Real.rpow`
+  edge weight `((x/y):ℝ)^(3/4)`, fourth-power rational comparison, telescoping,
+  finite value-injective child sets, potential bounds, stopping-frontier/cardinality
+  objects, the fuel-`H+1` repeat-or-stopping recursion, cycle elimination, and the
+  final theorem `threeQuarters_stopping_card_bound` with explicit constants
+  `1000000` and `19334101`.  The pinned final file builds with exactly one unresolved
+  proof and must not be weakened.  This is intentionally one multi-file treadmill
+  project, not separate renewal and stopping laps.
 
 ## Update (2026-08-23, post-Opus audit): an exact exponent-`3/4` candidate is FOUND
 
