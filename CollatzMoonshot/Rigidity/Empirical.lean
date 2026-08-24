@@ -266,4 +266,37 @@ theorem exists_isT2Invariant_orbitClosure (n : ℕ) :
           rw [funext hone]; exact (limsup_const 1).symm
       _ ≤ (μ : Measure ℤ_[2]) (orbitClosure n) := hlimsup
 
+/-! ## Frequency link: empirical odd-mass = odd-step frequency (M2′ piece 2) -/
+
+/-- An embedded orbit point is odd (in `oddSetZ2`) exactly when the integer iterate is odd. -/
+theorem T2_iterate_natCast_mem_oddSetZ2 (n k : ℕ) :
+    T2^[k] (n : ℤ_[2]) ∈ oddSetZ2 ↔ step^[k] n % 2 = 1 := by
+  rw [T2_iterate_natCast]
+  unfold oddSetZ2
+  rw [Set.mem_compl_iff, Set.mem_setOf_eq, two_dvd_natCast_iff]
+  omega
+
+/-- **The frequency link.**  The empirical odd-mass is exactly the odd-step count over `N`
+Dirac points: `μ_N oddSetZ2 = oddSteps n N`.  Together with the total mass `N` this is the
+odd-step frequency `oddSteps n N / N`. -/
+theorem empiricalMeasure_oddSetZ2 (n : ℕ) (N : ℕ) :
+    empiricalMeasure (n : ℤ_[2]) N oddSetZ2 = (N : ℝ≥0∞)⁻¹ * (oddSteps n N : ℝ≥0∞) := by
+  have hmeas : MeasurableSet oddSetZ2 := isClopen_oddSetZ2.isClosed.measurableSet
+  unfold empiricalMeasure
+  rw [Measure.smul_apply, Measure.finsetSum_apply, smul_eq_mul]
+  congr 1
+  have hterm : ∀ k, Measure.dirac (T2^[k] (n : ℤ_[2])) oddSetZ2
+      = (if step^[k] n % 2 = 1 then (1 : ℝ≥0∞) else 0) := by
+    intro k
+    rw [Measure.dirac_apply' _ hmeas]
+    by_cases h : step^[k] n % 2 = 1
+    · rw [Set.indicator_of_mem ((T2_iterate_natCast_mem_oddSetZ2 n k).mpr h), Pi.one_apply,
+        if_pos h]
+    · rw [Set.indicator_of_notMem (fun hc => h ((T2_iterate_natCast_mem_oddSetZ2 n k).mp hc)),
+        if_neg h]
+  simp_rw [hterm]
+  induction N with
+  | zero => simp
+  | succ N ih => rw [Finset.sum_range_succ, ih, oddSteps]; push_cast; ring
+
 end CollatzMoonshot
