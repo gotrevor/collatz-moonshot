@@ -300,12 +300,22 @@ theorem headBlock_dvd_succ (n b : ℕ)
 /-- **Discovery (≥ 3 odd blocks).**  Exhaustively verified in `experiments/paradoxical.py`
 (all `≤2`-block front-normalized words to length `30`; two-block words to length `38`): a
 word whose ones form at most two contiguous blocks realizes **no** acyclic paradoxical start.
-This strictly generalizes Rozier--Terracol Appendix A (now proved sorry-free as
-`headBlock_not_acyclicParadoxical`, the `b`-only head-block, `c = ∞` degenerate case).  The
-`numer` closed forms above are the proved kernel; the open arithmetic core for a genuine
-*interior* gap (`c ≥ 1` with a second block) is a lower bound on the realizing residue that
-closes criterion (P) — the head-block proof avoids it because a pure head block has remainder
-only `3^q − 2^q`, too small on its own.  Stated here as the next formal obligation. -/
+This strictly generalizes Rozier--Terracol Appendix A (`headBlock_not_acyclicParadoxical`).
+
+**Proof decomposition (this lap).**  Split the itinerary at step `b+c` into two head-block
+segments `[T]^b[F]^c` (start `n`, endpoint `X`) and `[T]^d[F]^e` (start `X`, endpoint `y`).
+Subcriticality of the whole word `3^(b+d) < 2^m` forbids *both* blocks from being
+supercritical, leaving three cases:
+
+* **Case A — both blocks subcritical: PROVED sorry-free.**  Two applications of
+  `headBlock_endpoint_le` give `y ≤ X ≤ n`, so the segment is not acyclic paradoxical.
+* **Case B — first super, second subcritical / Case C — first subcritical, second super:**
+  the single-block bound closes one inequality (`X ≤ n` in C, `y ≤ X` in B) but not the
+  target `y ≤ n`.  Both reduce to the **joint 2-adic/3-adic residue force** on the realizing
+  start: the minimal interior odd value `X` selected by `3^b ∣ 2^c X + 1` is large enough to
+  close criterion (P).  Verified insufficient from `w₁ ≥ 1` alone (needs the true 3-adic
+  minimal `w₂`); disclosed as two `sorry`s.  See `FRONT-A-PARADOXICAL.md` RESULTS / `GOAL2'`
+  in `PENDING_WORK.md`. -/
 theorem le_two_blocks_not_acyclicParadoxical
     (b c d e n : ℕ)
     (hb : 1 ≤ b) (hd : 1 ≤ d)
@@ -313,6 +323,66 @@ theorem le_two_blocks_not_acyclicParadoxical
       = List.replicate b true ++ List.replicate c false
           ++ List.replicate d true ++ List.replicate e false) :
     ¬ AcyclicParadoxical n (b + c + d + e) := by
-  sorry
+  rintro ⟨hn, hm, hsub, hlt⟩
+  set X := tstep^[b + c] n with hX
+  -- The two-block word has exactly `b + d` odd letters, so subcriticality is `3^(b+d) < 2^m`.
+  have hones : ones (traceWord n (b + c + d + e)) = b + d := by
+    rw [hword, ones_append, ones_append, ones_append]
+    simp
+  rw [hones] at hsub
+  -- Split the itinerary at step `b + c` into the two head-block segments `[T]^b[F]^c`
+  -- (from `n`, reaching `X`) and `[T]^d[F]^e` (from `X`, reaching the endpoint).
+  have hadd : traceWord n (b + c + d + e)
+      = traceWord n (b + c) ++ traceWord X (d + e) := by
+    have h := traceWord_add n (b + c) (d + e)
+    rwa [show (b + c) + (d + e) = b + c + d + e from by ring, ← hX] at h
+  have hWeq : traceWord n (b + c) ++ traceWord X (d + e)
+      = (List.replicate b true ++ List.replicate c false)
+          ++ (List.replicate d true ++ List.replicate e false) := by
+    rw [← hadd, hword]; simp only [List.append_assoc]
+  have hlenA : (traceWord n (b + c)).length
+      = (List.replicate b true ++ List.replicate c false).length := by
+    simp
+  obtain ⟨hsegA, hsegB⟩ := List.append_inj hWeq hlenA
+  -- The endpoint of the whole word is the endpoint of the second segment applied to `X`.
+  have hy_eq : tstep^[b + c + d + e] n = tstep^[d + e] X := by
+    rw [hX, show b + c + d + e = (d + e) + (b + c) from by ring, Function.iterate_add_apply]
+  rw [hy_eq] at hlt
+  -- Case split on the criticality of the first block.  Subcriticality of the *whole* word
+  -- forbids both blocks from being supercritical simultaneously.
+  by_cases hbc : 3 ^ b < 2 ^ (b + c)
+  · -- First block subcritical: `X ≤ n` by the head-block lemma (Appendix A).
+    have hXn : X ≤ n := headBlock_endpoint_le n b c hsegA hbc
+    by_cases hde : 3 ^ d < 2 ^ (d + e)
+    · -- **Case A (both blocks subcritical).**  Second head-block lemma gives the endpoint
+      -- `tstep^[d+e] X ≤ X ≤ n`, contradicting `n < endpoint`.  Fully proved, no residue needed.
+      have hyX : tstep^[d + e] X ≤ X := headBlock_endpoint_le X d e hsegB hde
+      omega
+    · -- **Case C (first sub, second supercritical).**  Here `X ≤ n` alone is insufficient:
+      -- the supercritical second block can grow past `X`.  Excluding a paradoxical endpoint
+      -- requires the joint 2-adic/3-adic residue force on the realizing start (`3^b ∣ 2^c X + 1`
+      -- selecting the minimal interior value), which is the open arithmetic core.  Disclosed.
+      exact absurd hlt (by
+        -- TODO(crux): residue lower bound on `X`/`n` closing criterion (P) for this subcase.
+        sorry)
+  · -- First block supercritical (`2^(b+c) ≤ 3^b`).  Then the second block must be subcritical,
+    -- otherwise `3^(b+d) = 3^b·3^d ≥ 2^(b+c)·2^(d+e) = 2^m` contradicts `hsub`.
+    have hbc' : 2 ^ (b + c) ≤ 3 ^ b := not_lt.mp hbc
+    have hde : 3 ^ d < 2 ^ (d + e) := by
+      by_contra h
+      rw [not_lt] at h
+      have h1 : (3 : ℕ) ^ (b + d) = 3 ^ b * 3 ^ d := by rw [pow_add]
+      have h2 : (2 : ℕ) ^ (b + c + d + e) = 2 ^ (b + c) * 2 ^ (d + e) := by
+        rw [show b + c + d + e = (b + c) + (d + e) from by ring, pow_add]
+      have hmul : (2 : ℕ) ^ (b + c) * 2 ^ (d + e) ≤ 3 ^ b * 3 ^ d := Nat.mul_le_mul hbc' h
+      rw [← h2, ← h1] at hmul
+      omega
+    -- **Case B (first supercritical, second subcritical).**  Second head-block lemma gives
+    -- `tstep^[d+e] X ≤ X`, but the supercritical first block makes `X ≥ n`, so this does not
+    -- close `endpoint ≤ n`.  Same residue-force obstruction as Case C.  Disclosed.
+    have hyX : tstep^[d + e] X ≤ X := headBlock_endpoint_le X d e hsegB hde
+    exact absurd hlt (by
+      -- TODO(crux): residue lower bound on the realizing start closing criterion (P).
+      sorry)
 
 end CollatzMoonshot.FrontA
