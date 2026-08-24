@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontB.Dictionary
+import CollatzMoonshot.Rigidity.Drift
 
 /-!
 # Front A: parity reconstruction and the carry invariant
@@ -247,5 +248,69 @@ theorem tstep_periodic_of_eventually_periodic_parity {n M p : ℕ} (_hp : 1 ≤ 
   have e2 : d + (M + p) = M + d + p := by omega
   rw [e1, e2] at this
   exact this
+
+/-!
+## Bridge to the headline: the baseline as a genuine `¬ Diverges` statement
+
+The orbit-repeat above is in accelerated (`tstep`) terms.  Each `tstep` is one or two plain
+`step`s, so a `tstep`-repeat is a `step`-repeat, and `Rigidity/Drift`'s `not_diverges_of_repeat`
++ `diverges_iterate_iff` upgrade it to `¬ Diverges n` in the repo's own vocabulary — the
+restricted no-divergence theorem (project item 5) as a real Collatz statement.
+-/
+
+/-- The accelerated map preserves positivity along the orbit. -/
+theorem tstep_iterate_pos {n : ℕ} (hn : 1 ≤ n) (m : ℕ) : 1 ≤ tstep^[m] n := by
+  induction m with
+  | zero => simpa using hn
+  | succ k ih => rw [Function.iterate_succ_apply']; exact tstep_pos ih
+
+/-- One accelerated step is one or two plain steps. -/
+theorem exists_step_of_tstep (n : ℕ) : ∃ c, 1 ≤ c ∧ tstep n = step^[c] n := by
+  rcases Nat.even_or_odd n with h | h
+  · exact ⟨1, le_refl _, by simp [tstep_eq_step (Nat.even_iff.mp h)]⟩
+  · exact ⟨2, by norm_num, by
+      rw [tstep_eq_step_step (Nat.odd_iff.mp h)]
+      simp [Function.iterate_succ_apply]⟩
+
+/-- Every `tstep` iterate is a `step` iterate, and (for `n ≥ 1`) at a no-smaller index. -/
+theorem exists_step_count (m n : ℕ) :
+    ∃ K, tstep^[m] n = step^[K] n ∧ (1 ≤ n → m ≤ K) := by
+  induction m generalizing n with
+  | zero => exact ⟨0, rfl, fun _ => le_refl _⟩
+  | succ k ih =>
+    obtain ⟨c, hc1, hc⟩ := exists_step_of_tstep n
+    obtain ⟨K, hK, hKmono⟩ := ih (tstep n)
+    refine ⟨K + c, ?_, ?_⟩
+    · rw [Function.iterate_succ_apply, hK, hc, ← Function.iterate_add_apply]
+    · intro hn
+      have htn : 1 ≤ tstep n := tstep_pos hn
+      have := hKmono htn
+      omega
+
+/-- **Restricted no-divergence (project item 5, headline vocabulary).**  If the accelerated
+orbit parity of `n ≥ 1` is eventually periodic, then `n` does not diverge. -/
+theorem not_diverges_of_eventually_periodic_parity {n M p : ℕ} (hn : 1 ≤ n) (hp : 1 ≤ p)
+    (hper : ∀ k, M ≤ k → tstep^[k] n % 2 = tstep^[k + p] n % 2) :
+    ¬ Diverges n := by
+  -- the accelerated orbit repeats: `tstep^[p] x = x` for `x = tstep^[M] n`
+  set x := tstep^[M] n with hx
+  have hx1 : 1 ≤ x := by rw [hx]; exact tstep_iterate_pos hn M
+  have hrepeat : x = tstep^[p] x := by
+    have h := tstep_repeat_of_eventually_periodic_parity hper
+    calc x = tstep^[M] n := hx
+      _ = tstep^[M + p] n := h
+      _ = tstep^[p] (tstep^[M] n) := by rw [Nat.add_comm M p, Function.iterate_add_apply]
+      _ = tstep^[p] x := by rw [← hx]
+  -- turn the `tstep`-repeat of `x` into a `step`-repeat of `x`
+  obtain ⟨L, hL, hLmono⟩ := exists_step_count p x
+  have hstepx : x = step^[L] x := by rw [← hL, ← hrepeat]
+  have hL1 : 1 ≤ L := le_trans hp (hLmono hx1)
+  have hxnd : ¬ Diverges x := by
+    have : step^[0] x = step^[L] x := by simpa using hstepx
+    exact not_diverges_of_repeat (by omega : 0 < L) this
+  -- `x = step^[K] n`, so `¬ Diverges x ↔ ¬ Diverges n`
+  obtain ⟨K, hK, _⟩ := exists_step_count M n
+  rw [hx, hK] at hxnd
+  exact fun hdiv => hxnd (diverges_iterate_iff.mpr hdiv)
 
 end CollatzMoonshot.FrontA
