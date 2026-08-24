@@ -35,6 +35,14 @@ reduces to one joint 2-adic/3-adic arithmetic core (`GOAL2'`). This is the activ
 decomposition, not off-path — it carries two disclosed `src/` sorries by design.
 
 ## What's happened (newest first)
+- **2026-08-25 (crux narrowed hard — elementary regime of the residue core PROVED):** Reduced
+  the whole two-block exclusion to one self-contained ℕ lemma `two_block_residue_core`
+  (submitted to Aristotle, job `4006e40e`), then PROVED its **elementary regime `core_of_gap`
+  sorry-free**: a genuinely new contrapositive argument (exact identity `2^m·y + 2^(b+c+d) =
+  3^(b+d)(n+1) + 3^d·2^b(2^c−1)`, no integrality) that a census shows covers ~99.7% of
+  subcritical `(b,c,d,e)` (3791/3803 in range). The sole remaining `src/` sorry is the thin
+  **residual** where the gap fails and a 3-adic least-residue bound on `w₂` is genuinely
+  needed (the required bound grows with `b`). Build 🟢 8751 jobs.
 - **2026-08-25 (review lap — two-block crux decomposed, Case A proved):** Made real crux
   progress on the sole `src/` sorry `le_two_blocks_not_acyclicParadoxical`. Split the
   `[T]^b[F]^c[T]^d[F]^e` itinerary at step `b+c` (`traceWord_add` + `List.append_inj`) into two

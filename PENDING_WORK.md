@@ -93,20 +93,27 @@ finite `w₂ ≥ K` will NOT close it — the residual genuinely needs a least-r
 `w₂ = 1` is **never** a valid solution on the residual (0/56), consistent with `k ≥ 2` there.
 The exact identity behind (∗∗): `2^m·y + 2^(b+c+d) = 3^(b+d)(n+1) + 3^d·2^b(2^c−1)` (MAIN).
 
-**Next concrete attack (next lap), in priority order:**
-1. **Prove the elementary regime as a real sub-lemma `core_of_gap`.** Hypotheses: hI, hII,
-   `3^(b+d)<2^m`, and the gap `(2^m−3^(b+d))·(2^(c+d)−2^c+1) > 3^b·(3^d(2^c−1)−2^(c+d))` over ℤ.
-   Proof: `X ≥ 2^d−1` (from `2^d ∣ X+1`); MAIN via `linear_combination 3^d·hI + 2^(b+c)·hII`;
-   under `n<y` get UP `(2^m−3^(b+d))(n+1) ≤ 2^b·(3^d(2^c−1)−2^(c+d))` and LOW
-   `2^b(2^(c+d)−2^c+1) ≤ 3^b(n+1)`; multiply UP·3^b, LOW·(2^m−3^(b+d)), chain, cancel 2^b →
-   contradicts gap. Normalize all exponents to atoms `{2^b,2^c,2^d,2^e,3^b,3^d}` with
-   `simp only [pow_add]` so nlinarith sees consistent atoms. Closes ~99%.
-2. **Residual (gap fails):** needs the least-residue lower bound on `w₂` from
-   `3^b ∣ 2^(c+d) w₂ − 2^c + 1`. Route via `ZMod (3^b)`. This is the true hard kernel — the
-   part Aristotle is working. `w₂=1` excluded on residual is a foothold but insufficient
-   (k grows). Likely: show minimal `w₂ ≥ ⌈(something)/…⌉` from the 3-adic class.
-3. If Aristotle (`4006e40e-9588-4e7a-979e-ab1c7586cda8`) returns a clean proof of the full
-   core, kernel-verify (`#print axioms`) + inline it, superseding 1–2.
+**DONE (lap 2026-08-25-0600): `core_of_gap` LANDED sorry-free.** The elementary regime is
+proved exactly as planned (MAIN via `linear_combination 3^d·hI + 2^b·2^c·hII`, `X ≥ 2^d−1`
+from `2^d ∣ X+1`, UP/LOW chained + `2^b`-cancelled to contradict the gap; all exponents
+normalized to atoms `{2^b,2^c,2^d,2^e,3^b,3^d}` via `simp only [pow_add]`; needs
+`maxHeartbeats 1200000`). `two_block_residue_core` now `by_cases` on the gap → `core_of_gap`
+(elementary, ~99%) or the residual `sorry`. **The residual is the SOLE remaining `src/` sorry.**
+
+**Next concrete attack (next lap) — the residual (gap fails) is now the whole crux:**
+1. It needs the 3-adic least-residue lower bound on `w₂` from `3^b ∣ 2^(c+d) w₂ − 2^c + 1`
+   (equivalently on `w₁` from `2^(c+d) ∣ 3^b w₁ + 2^c − 1`). Route via `ZMod (3^b)` /
+   `Nat.find` least positive residue. `w₂=1` is excluded on the residual (checked 0/56) but
+   the needed bound `k` GROWS with `b` (up to 4 at b=15), so no fixed finite bound works.
+   Concretely: in the gap-fails branch we have (from `core_of_gap`'s derivation, reusable)
+   `d_def·w₁ ≤ U₁·... ` under `n<y`; combine with a PROVEN lower bound `w₂ ≥ w₂_min(b,c,d)`.
+   Investigate whether `w₂_min ≥ 3^b / 2^(c+d)`-type bound (the residue is `Θ(3^b)`) suffices —
+   script the exact `w₂_min` vs the needed `k` to find the provable inequality shape FIRST.
+2. Alternative: strengthen the gap. The current gap uses `w₂ ≥ 1`. A gap using `w₂ ≥ 2`
+   (justified by `2^(c+d)·1 − 2^c + 1 ≢ 0 mod 3^b` on the residual) closes 14/16 of the
+   in-range residual; a 3-adic `w₂ ≥ v_min` closes all. Layered gaps may avoid full ZMod.
+3. If Aristotle (`4006e40e-9588-4e7a-979e-ab1c7586cda8`) returns a clean full-core proof,
+   kernel-verify (`#print axioms`) + inline it, superseding the residual sorry entirely.
 
 Also (lower priority): extend the ratio census past `41/65` (word-BnB or n≳10^8) to harden the
 Niu CF falsification test.
