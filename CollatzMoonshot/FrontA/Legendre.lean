@@ -309,4 +309,35 @@ theorem legendre_mobius_integral (a : ℝ) (n : ℕ) (ha : a < 1) :
         field_simp
         ring
 
+/-- **Remainder size bound (leg 2).**  For `0 ≤ a < 1`, the Padé remainder integral satisfies
+`∫₀¹ yⁿ(1-y)ⁿ/(1-a·y)^(n+1) dy ≤ (1/4)ⁿ / (1-a)^(n+1)`.  Since `y(1-y) ≤ 1/4` and `1-a·y ≥ 1-a`
+on `[0,1]`, the integrand is `≤ (1/4)ⁿ/(1-a)^(n+1)` pointwise.  Combined with
+`legendre_mobius_integral`, `|∫₀¹ P_n/(1-a·y)| ≤ |a|ⁿ·(1/4)ⁿ/(1-a)^(n+1) = (|a|/(4(1-a)))ⁿ/(1-a)`,
+which is `≤ ρⁿ` with `ρ = |a|/(4(1-a)) < 1` whenever `a < 4/5` — the geometric decay leg 2 needs. -/
+theorem legendre_mobius_remainder_bound (a : ℝ) (n : ℕ) (ha0 : 0 ≤ a) (ha1 : a < 1) :
+    ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1)
+      ≤ (1 / 4) ^ n / (1 - a) ^ (n + 1) := by
+  have hden : (0 : ℝ) < 1 - a := by linarith
+  have hbound : ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1) ≤ (1 / 4) ^ n / (1 - a) ^ (n + 1) := by
+    intro y hy
+    obtain ⟨hy0, hy1⟩ := hy
+    have hday : 1 - a ≤ 1 - a * y := by nlinarith
+    rw [← mul_pow]
+    gcongr
+    nlinarith [sq_nonneg (y - 1 / 2)]
+  have hint : IntervalIntegrable (fun y => (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1))
+      MeasureTheory.volume 0 1 := by
+    apply ContinuousOn.intervalIntegrable
+    rw [Set.uIcc_of_le (by norm_num)]
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    intro y hy
+    obtain ⟨hy0, hy1⟩ := hy
+    exact pow_ne_zero _ (ne_of_gt (by nlinarith))
+  calc ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1)
+      ≤ ∫ _ in (0 : ℝ)..1, (1 / 4) ^ n / (1 - a) ^ (n + 1) :=
+        intervalIntegral.integral_mono_on (by norm_num) hint
+          (intervalIntegrable_const) hbound
+    _ = (1 / 4) ^ n / (1 - a) ^ (n + 1) := by simp
+
 end CollatzMoonshot.FrontA
