@@ -30,11 +30,20 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
    either (a) formalize leg 2 (the remainder integral bound) or (b) instantiate a concrete honest
    flagship `sep_two_three_of_gelfond_measure_C⟨τ⟩` with the tight per-C crossover (crossover_130-style
    ratio induction) and the extended finite check.
-2. **Meanwhile (source-independent):** port the Legendre/Beukers integral infra from
-   `~/src/reservoir/ahhwuhu/zeta_3_irrational` (`LegendrePoly.lean`, `Integral.lean`, `d.lean` = the
-   lcm denominator, `Bound.lean`) and set up the analog for the log linear form. NOTE the ζ(3) proof is
-   a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a Legendre-type kernel giving
-   `A_n + B_n log 2` — reuse the denominator/Legendre lemmas, not the cube geometry.
+2. **Meanwhile (source-independent) — STARTED this lap.** `FrontA/Legendre.lean` now ports the
+   polynomial-approximant backbone from `~/src/reservoir/ahhwuhu/zeta_3_irrational/LegendrePoly.lean`:
+   `shiftedLegendre n = (n!)⁻¹·(d/dx)^n(x^n(1-x)^n)`, with `shiftedLegendre_eq_sum` and
+   `shiftedLegendre_eq_int_poly` (integer coeffs `(-1)^k·C(n,k)·C(n+k,n)`) — both trust-base clean.
+   Integrality + `Gelfond.lcmUpto_le` (leg 1) = the denominator control. **Remaining leg-2 bricks to
+   port/adapt next** (all in the same source file, toolchain-adapt v4.18→v4.33 as done here):
+   `shiftedLegendre_poly_eval_zero_eq_zero` / `_one_eq_zero` (vanishing to order n — gives the Padé
+   contact condition), `integral_legendre_mul_smooth_eq` / `legendre_integral_special` (the
+   integration-by-parts identity turning `∫₀¹ P_n(x)·f(x) dx` into the linear form `A_n + B_n·log(·)`).
+   NOTE the ζ(3) proof is a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a
+   Legendre kernel `∫₀¹ P_n(x)/(1-(1-c)x) dx = A_n + B_n·log c` — reuse the 1-var Legendre + IBP
+   lemmas, not the cube geometry. The exact kernel weights (which `c`'s, to hit log2 AND log3
+   simultaneously) still need Rhin's paper (request filed) — that fixes leg 3 (non-vanishing/
+   independence) and the final constant.
 
 ## ★ REVIEW LAP 2026-08-25-2100 — crux core reclassified 🟡 (Gelfond), reduced to ONE uniform measure ★
 
