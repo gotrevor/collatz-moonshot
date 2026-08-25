@@ -26,12 +26,19 @@
   `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is FEASIBLE at unbounded `g` (fully-checked witness at `g=41`,
   `experiments/two_block_relaxation.py`), so NO `nlinarith`/polynomial certificate can exist.
   **Attack ONLY the GO route:** build an explicit effective irrationality / linear-forms-in-logs
-  lower bound `|2^m − 3^k| ≥ 3^k·c/k^κ` (or `|m·log2 − k·log3|` gap) for `log₂3` in Lean — mathlib
-  lacks it (only `LiouvilleWith`). This is genuinely multi-lap; narrow it each lap (find/port the
-  smallest sufficient effective bound; a `k ≥ 6 ⇒` finite-gap statement suffices here). Discharging
-  it → the sorry becomes a real proof → PROMISING EVIDENCE → GO. A cited effective-gap axiom or a
-  larger census remains BASELINE, not progress, and MUST NOT be used merely to clear the src-sorry
-  gate.
+  lower bound for `log₂3` in Lean — mathlib lacks it (only `LiouvilleWith`).
+  **Target sharpened (review lap 2026-08-25-2100).** `sep_two_three` is now reduced *sorry-free*
+  (`sep_of_uniform_measure`, using `poly_le_two_pow`) to ONE uniform pure-ℕ bound
+  `∀ near-critical k ≥ K:  3^k ≤ (2^m − 3^k)·k^C`. That is exactly the **classical Gelfond 1935
+  effective bound on `|2ⁿ − 3ᵐ|`** (linear forms in *two* logs; explicit constants in
+  **Bennett–Bugeaud, Acta Arith. 155 (2012)** and Bugeaud's monograph §3.1) — a *polynomial*
+  irrationality measure, exponentially stronger than the `2^(−k/3)` this crux needs. So the core is
+  🟡 project-scale (explicit hypergeometric/Padé/interpolation constructions, formalizable), **not**
+  🟠 generational: the "multi-month, near-hopeless Baker" framing was too pessimistic.
+  Narrow each lap: (a) discharge the finite residual `hfin` via `native_decide` at a concrete small
+  `C` so the crux collapses to the pure measure; (b) port/build the Padé-to-`(1−z)^ν` core toward the
+  Gelfond bound. Discharging it → the sorry becomes a real proof → GO. A cited Gelfond/Bennett–Bugeaud
+  axiom or a larger census remains BASELINE, not progress, and MUST NOT clear the src-sorry gate.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -101,6 +108,13 @@
   elementary-inequality attempts on `b+d`. Axiom audit re-run: two headline consumption theorems
   clean (trust base + faithful `rozier_terracol_3_2`); two-block exclusion carries the single
   disclosed `sorryAx` (the `b+d≤5` crux).
+- 2026-08-25 (review lap, 2100): **Route-decisive source read — crux core reclassified 🟡, target
+  sharpened.** Identified `sep_two_three`'s residual as the classical **Gelfond 1935 / Bennett–Bugeaud**
+  effective `|2ⁿ−3ᵐ|` bound (polynomial measure ≫ the exponential needed) — 🟡 project-scale, not the
+  pessimistic 🟠. Landed sorry-free (trust base) `poly_le_two_pow` + `sep_of_uniform_measure`,
+  machine-checking that ONE uniform measure `3^k ≤ (2^m−3^k)·k^C` (large k) + finite check ⇒ the full
+  crux. Kept GO on the effective bound; next narrowing = discharge finite check at concrete `C`, then
+  build the Padé/Gelfond core. Build 🟢 8752 jobs.
 
 ---
 

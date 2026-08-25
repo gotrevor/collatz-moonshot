@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8752 jobs) · **Updated**: 2026-08-25 (lap 1600) · two-block crux decomposed: reduction PROVED, sole sorry = weak separation of 2ⁿ/3ⁿ (β=1/3)
+lap by lap.** · **Build**: 🟢 green (8752 jobs) · **Updated**: 2026-08-25 (review lap 2100) · sole crux `sep_two_three` reduced to ONE uniform Gelfond bound; core reclassified 🟡 (Gelfond 1935 / Bennett–Bugeaud), not 🟠
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -40,6 +40,16 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
 `log₂3` in Lean (mathlib lacks it). This is the active crux, carrying one disclosed `src/` sorry.
 
 ## What's happened (newest first)
+- **2026-08-25 (review lap 2100 — crux core reclassified 🟡 Gelfond; uniform-measure reduction proved):**
+  Route-decisive source read: the sole open input `sep_two_three` ≡ an effective irrationality measure
+  of `log₂3`, which is the classical **Gelfond 1935** effective bound on `|2ⁿ−3ᵐ|` (linear forms in
+  *two* logs; explicit in **Bennett–Bugeaud** *Acta Arith.* 155 (2012) & Bugeaud's monograph §3.1) —
+  a *polynomial* measure, exponentially stronger than the `2^(−k/3)` needed. So the core is 🟡
+  project-scale (explicit hypergeometric/interpolation; formalizable), NOT 🟠 generational; the prior
+  "multi-month, near-hopeless Baker" framing was too pessimistic. Landed (trust-base only): missing
+  connective `poly_le_two_pow` (∀C ∃K, k^C ≤ 2^k for k≥K) and **`sep_of_uniform_measure`** —
+  machine-checks that ONE uniform bound `3^k ≤ (2^m−3^k)·k^C` (large k) + crossover + finite check ⇒
+  `sep_two_three` for every near-critical `k ≥ 6`. Build 🟢 8752 jobs.
 - **2026-08-25 (lap 1600 — crux DECOMPOSED: reduction proved, one clean sorry isolated):** Replaced
   the bare `b+d ≤ 5` sorry with a machine-checked reduction. New module `FrontA/PowSeparation.lean`
   proves sorry-free `grow_two_three` (elementary induction), `finite_two_block_check` (k∈[6,14] via
@@ -137,13 +147,16 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **Front A two-block exclusion** (binding): discharge the sole `src/` sorry `b + d ≤ 5` inside
-  `near_critical_containment`. Now confirmed **Baker-grade** — the ONLY GO path is to build an
-  explicit effective irrationality / linear-forms-in-logs bound for `log₂3` in Lean
-  (`|2^m − 3^k| ≥ 3^k·c/k^κ`, or a `k ≥ 6 ⇒` finite-gap statement, which suffices here); mathlib
-  lacks it. Narrow lap by lap. **Refuted, do NOT retry:** any elementary `nlinarith`/`omega` bound
-  on `b+d`/`d` (real relaxation feasible at unbounded `g`, `experiments/two_block_relaxation.py`).
-  Fallback (BASELINE, not for gate-clearing): cite a narrow effective-gap axiom.
+- **Front A two-block exclusion** (binding): discharge the sole `src/` sorry `sep_two_three`
+  (`PowSeparation.lean`). Now reduced (sorry-free) to ONE **uniform Gelfond bound**
+  `3^k ≤ (2^m−3^k)·k^C` via `sep_of_uniform_measure`; that bound is the classical Gelfond 1935 /
+  Bennett–Bugeaud effective `|2ⁿ−3ᵐ|` estimate — 🟡, polynomial, ≫ what's needed. GO path (multi-lap):
+  formalize the explicit Gelfond/hypergeometric construction (no mathlib support). Concrete next
+  narrowing steps in PENDING_WORK: (a) discharge the finite check `hfin` via `native_decide` for a
+  concrete small `C` so the crux is the pure measure; (b) port/build the Padé-to-(1−z)^ν core.
+  **Refuted, do NOT retry:** any elementary `nlinarith`/`omega` bound on `b+d`/`d`
+  (`experiments/two_block_relaxation.py`). Fallback (BASELINE, not for gate-clearing): cite the
+  Gelfond/Bennett–Bugeaud bound as a narrow, provenance-documented axiom.
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
@@ -175,7 +188,7 @@ excluded from the math-axiom count below.
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, faithful constructive form; no `sorryAx`) |
-| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED: reduction+growth+finite-check PROVED; sole disclosed sorry = the weak separation `3^(3k)≤(2^m−3^k)³·2^k` (🟡, β=1/3, build via CF of log₂3); native_decide artifact 🟢 |
+| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED both ways; sole disclosed sorry `sep_two_three` now reduced (sorry-free, `sep_of_uniform_measure`) to ONE uniform measure `3^k≤(2^m−3^k)·k^C` = **🟡 Gelfond 1935 / Bennett–Bugeaud** effective `|2ⁿ−3ᵐ|` bound (polynomial, ≫ needed); native_decide artifact 🟢 |
 
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
 headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,

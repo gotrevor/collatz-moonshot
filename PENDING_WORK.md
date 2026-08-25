@@ -1,5 +1,50 @@
 # PENDING_WORK
 
+## ★ REVIEW LAP 2026-08-25-2100 — crux core reclassified 🟡 (Gelfond), reduced to ONE uniform measure ★
+
+**Route-decisive source read (WebSearch).** The sole open input `sep_two_three` ≡ an effective
+irrationality measure of `log₂3`. This is NOT a hopeless multi-year wall — it is the **classical
+Gelfond 1935** effective lower bound on the distance `|2ⁿ − 3ᵐ|` between powers of 2 and 3 (linear
+forms in *two* logarithms; predates Baker's general theorem), with explicit constants in
+**Bennett–Bugeaud, "Effective results for restricted rational approximation", Acta Arith. 155 (2012)**
+and **Bugeaud, *Linear Forms in Logarithms and Applications*, §3.1**. Gelfond/Baker give a
+*polynomial* irrationality measure `|log₂3 − m/k| ≥ c/k^μ` (finite μ; the proven value is small,
+certainly < ~6). We need only the vastly weaker *exponential* `|log₂3 − m/k| ≳ 2^(−k/3)/k`, so ANY
+finite measure suffices for all large k. ⟹ Core reclassified **🟡 project-scale** (explicit
+hypergeometric/Padé/interpolation constructions — formalizable, no mathlib support yet), **not 🟠
+generational**. The 2026-08-25-1900 handoff's "genuinely multi-month, no support, irreducible Baker"
+framing was over-pessimistic about tractability (the *route* was right; the *difficulty tier* wasn't).
+
+**Landed this lap (sorry-free, trust base only; `PowSeparation.lean`):**
+- `poly_le_two_pow (C) : ∃ K, ∀ k ≥ K, k^C ≤ 2^k` — the missing poly≤exp connective (from mathlib's
+  `tendsto_pow_const_div_const_pow_of_one_lt`).
+- **`sep_of_uniform_measure (C K)`** — machine-checks that a SINGLE uniform bound
+  `hmeas : ∀ near-critical k ≥ K, 3^k ≤ (2^m−3^k)·k^C`, plus the crossover `hK : ∀ k≥K, k^(3C)≤2^k`
+  (dischargeable by `poly_le_two_pow`) and a finite check `hfin` on `6 ≤ k < K`, yields `sep_two_three`
+  for EVERY near-critical `k ≥ 6`. So everything between the standard Gelfond object and the crux is
+  now elementary and machine-checked at the *uniform-measure* level (complementing the earlier
+  per-`k` `sep_of_measure` and bracket-level `sep_of_bracket_sharp`).
+
+**Concrete next attack (in priority order):**
+1. **Discharge `hfin` via `native_decide` at a concrete small `C`.** Pick `C` known-safe for the
+   measure (e.g. `C = 6`, i.e. μ < 7, comfortably above the proven measure). Then `poly_le_two_pow (18)`
+   gives a concrete crossover `K` (solve `k^18 ≤ 2^k` → `K ≈ 130`). Prove
+   `hfin : ∀ k m, 6 ≤ k → k < K → near-critical → 3^(3k) ≤ (2^m−3^k)^3·2^k` by `native_decide` over
+   `k ∈ range K, m ∈ range (⌈K·log₂3⌉+1)`. Risk: bignum `native_decide` (values up to ~2^(4.75K)) may
+   be heavy/fragile — see corpus `lean-native-decide-stack-overflow-tail-recursive-evaluator.md`; if it
+   blows up, shrink `K` by lowering `C` (needs a tighter but still-safe proven μ) or split the range.
+   Payoff: the crux collapses to the *pure* uniform measure `hmeas` (one clean disclosed obligation).
+2. **Build the Gelfond/hypergeometric core toward `hmeas`.** The formalizable entry point is Padé
+   approximation to `(1−z)^ν` / the interpolation-determinant estimate; port the smallest sufficient
+   piece. This is the true GO grind — genuinely multi-lap but 🟡, not 🟠.
+3. Fallback (BASELINE, not gate-clearing): cite Gelfond/Bennett–Bugeaud as a narrow,
+   provenance-documented axiom `gelfond_two_three_measure` in `Assumed/`, feeding `hmeas`.
+
+**Sources:** Bennett–Bugeaud, Acta Arith. 155 (2012) 259–269 (`personal.math.ubc.ca/~bennett/BeBu.pdf`);
+Bugeaud, *Linear Forms in Logarithms and Applications* §3.1; Gelfond (1935).
+
+---
+
 ## ★ LAP 2026-08-25-1730 — crux narrowed to the textbook Baker linear form ★
 
 **Advance (kernel-checked, NO new axiom):** added `sep_of_linear_form` to
