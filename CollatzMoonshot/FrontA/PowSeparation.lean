@@ -236,6 +236,22 @@ theorem sep_of_measure (k m C : ℕ) (hmeas : 3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ C)
     _ = D ^ 3 * k ^ (3 * C) := by rw [mul_pow, ← pow_mul, Nat.mul_comm C 3]
     _ ≤ D ^ 3 * 2 ^ k := by gcongr
 
+/-- **Scaled best-approximation bound (linear-form form).**  Multiplying `theta_dist_lower` by `k`:
+the linear form `|k·θ − p|` is at least `k·min(θ−a/b, c/d−θ)` for every `p`, when `1 ≤ k < b + d`.
+This is the `‖k·θ‖`-shaped quantity the crux pipeline consumes (`m − k·θ = |k·θ − m|` near-critical). -/
+theorem linForm_dist_lower (a b c d : ℕ) (θ : ℝ) (hb : 0 < b) (hd : 0 < d)
+    (huni : b * c = a * d + 1) (hlo : (a : ℝ) / b < θ) (hhi : θ < (c : ℝ) / d)
+    (k p : ℕ) (hk : 0 < k) (hklt : k < b + d) :
+    (k : ℝ) * min (θ - (a : ℝ) / b) ((c : ℝ) / d - θ) ≤ |(k : ℝ) * θ - p| := by
+  have hkR : (0 : ℝ) < k := by exact_mod_cast hk
+  have hbase := theta_dist_lower a b c d θ hb hd huni hlo hhi k p hk hklt
+  have hkne : (k : ℝ) ≠ 0 := ne_of_gt hkR
+  have heq : (k : ℝ) * θ - p = k * (θ - (p : ℝ) / k) := by field_simp
+  have hrw : |(k : ℝ) * θ - p| = (k : ℝ) * |θ - (p : ℝ) / k| := by
+    rw [heq, abs_mul, abs_of_pos hkR]
+  rw [hrw]
+  exact mul_le_mul_of_nonneg_left hbase (le_of_lt hkR)
+
 /-- **Connector: the linear form `Λ` in terms of `θ = log₂3`.**  `Λ = m·log2 − k·log3` equals
 `log2·(m − k·log₂3)`, i.e. `log2` times the signed distance `m − k·θ`.  This ties the output of the
 best-approximation engine `theta_dist_lower` (distances from `m/k` to `θ`) directly to the input of
