@@ -125,6 +125,72 @@ theorem denom_ge_of_between (a b c d p k : ℕ) (hb : 0 < b) (hd : 0 < d)
   have : (b : ℤ) + d ≤ k := by rw [key]; nlinarith [hbp, hck, hbZ, hdZ]
   exact_mod_cast this
 
+/-- **Sharp best-approximation lower bound.**  For a unimodular bracket `a/b < θ < c/d`
+(`b·c = a·d + 1`) and `1 ≤ k < b + d`, every `p` satisfies `|kθ − p| ≥ min(bθ − a, c − dθ)`.
+This is a factor `b` (resp. `d`) sharper than `theta_dist_lower`'s `min(θ−a/b, c/d−θ)`, and is the
+tight `‖q_nθ‖`-quality bound (at `k = b`, `p = a` it is exactly `bθ − a = ‖bθ‖`).  Key identity
+(pure `ring` given unimodularity): `kθ − p = (kc − pd)(bθ − a) + (ka − pb)(c − dθ)`. -/
+theorem theta_dist_lower_sharp (a b c d : ℕ) (θ : ℝ) (hb : 0 < b) (hd : 0 < d)
+    (huni : b * c = a * d + 1) (hlo : (a : ℝ) / b < θ) (hhi : θ < (c : ℝ) / d)
+    (k p : ℕ) (hk : 0 < k) (hklt : k < b + d) :
+    min ((b : ℝ) * θ - a) ((c : ℝ) - d * θ) ≤ |(k : ℝ) * θ - p| := by
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hkR : (0 : ℝ) < k := by exact_mod_cast hk
+  have hbθa : 0 < (b : ℝ) * θ - a := by rw [div_lt_iff₀ hbR] at hlo; linarith
+  have hcdθ : 0 < (c : ℝ) - d * θ := by rw [lt_div_iff₀ hdR] at hhi; linarith
+  have huniR : (b : ℝ) * c - a * d = 1 := by
+    have : (b * c : ℝ) = (a * d : ℝ) + 1 := by exact_mod_cast huni
+    push_cast at this ⊢; linarith
+  have hid : (k : ℝ) * θ - p
+      = ((k : ℝ) * c - p * d) * ((b : ℝ) * θ - a) + ((k : ℝ) * a - p * b) * ((c : ℝ) - d * θ) := by
+    have hpure : ((k : ℝ) * c - p * d) * ((b : ℝ) * θ - a)
+          + ((k : ℝ) * a - p * b) * ((c : ℝ) - d * θ)
+        = ((b : ℝ) * c - a * d) * ((k : ℝ) * θ - p) := by ring
+    rw [hpure, huniR, one_mul]
+  rcases lt_or_ge ((a : ℝ) / b) ((p : ℝ) / k) with hx | hx
+  · rcases lt_or_ge ((p : ℝ) / k) ((c : ℝ) / d) with hx2 | hx2
+    · -- strictly between → contradiction via denom_ge_of_between
+      exfalso
+      have h1 : a * k < b * p := by
+        have hr := (div_lt_div_iff₀ hbR hkR).mp hx
+        have : (a : ℝ) * k < b * p := by rw [mul_comm (b : ℝ) p]; exact hr
+        exact_mod_cast this
+      have h2 : p * d < c * k := by exact_mod_cast (div_lt_div_iff₀ hkR hdR).mp hx2
+      have := denom_ge_of_between a b c d p k hb hd huni h1 h2
+      omega
+    · -- p/k ≥ c/d: |kθ−p| = p − kθ ≥ c − dθ.  Here u = ka−pb ≤ 0, v = kc−pd ≤ 0.
+      have hck : (c : ℝ) * k ≤ p * d := (div_le_div_iff₀ hdR hkR).mp hx2
+      have hv : (k : ℝ) * c - p * d ≤ 0 := by nlinarith [hck]
+      have hu : (k : ℝ) * a - p * b ≤ -1 := by
+        have hac : (a : ℝ) / b < (c : ℝ) / d := lt_trans hlo hhi
+        have hlt : (a : ℝ) / b < (p : ℝ) / k := lt_of_lt_of_le hac hx2
+        have hr := (div_lt_div_iff₀ hbR hkR).mp hlt
+        have hnat : a * k < p * b := by exact_mod_cast hr
+        have : (a : ℝ) * k + 1 ≤ p * b := by exact_mod_cast hnat
+        nlinarith [this]
+      have hlow : (c : ℝ) - d * θ ≤ (p : ℝ) - k * θ := by
+        nlinarith [hbθa, hcdθ, hv, hu, hid]
+      rw [abs_of_nonpos (by nlinarith [hlow, hcdθ])]
+      calc min ((b : ℝ) * θ - a) ((c : ℝ) - d * θ) ≤ (c : ℝ) - d * θ := min_le_right _ _
+        _ ≤ (p : ℝ) - k * θ := hlow
+        _ = -((k : ℝ) * θ - p) := by ring
+  · -- p/k ≤ a/b: |kθ−p| = kθ − p ≥ bθ − a.  Here u = ka−pb ≥ 0, v = kc−pd ≥ 1.
+    have hu : 0 ≤ (k : ℝ) * a - p * b := by
+      have hpb : (p : ℝ) * b ≤ a * k := (div_le_div_iff₀ hkR hbR).mp hx
+      nlinarith [hpb]
+    have hv : (1 : ℝ) ≤ (k : ℝ) * c - p * d := by
+      have hac : (a : ℝ) / b < (c : ℝ) / d := lt_trans hlo hhi
+      have hlt : (p : ℝ) / k < (c : ℝ) / d := lt_of_le_of_lt hx hac
+      have hr := (div_lt_div_iff₀ hkR hdR).mp hlt
+      have hnat : p * d < c * k := by exact_mod_cast hr
+      have : p * d + 1 ≤ c * k := hnat
+      have : (p : ℝ) * d + 1 ≤ c * k := by exact_mod_cast this
+      nlinarith [this]
+    have hlow : (b : ℝ) * θ - a ≤ (k : ℝ) * θ - p := by rw [hid]; nlinarith [hbθa, hcdθ, hu, hv]
+    rw [abs_of_nonneg (by nlinarith [hlow, hbθa])]
+    exact le_trans (min_le_left _ _) hlow
+
 /-- **Determinant preservation for the convergent recurrence (pure ℤ).**  Consecutive convergents
 `p₋/q₋, p/q` with determinant `p·q₋ − p₋·q = e` produce the next convergent
 `p₊ = a·p + p₋, q₊ = a·q + q₋` with determinant `p₊·q − p·q₊ = p₋·q − p·q₋` (the sign of the
