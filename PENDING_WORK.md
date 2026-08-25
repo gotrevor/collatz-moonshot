@@ -36,9 +36,14 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
    `shiftedLegendre_eq_int_poly` (integer coeffs `(-1)^k·C(n,k)·C(n+k,n)`) — both trust-base clean.
    Integrality + `Gelfond.lcmUpto_le` (leg 1) = the denominator control. **Remaining leg-2 bricks to
    port/adapt next** (all in the same source file, toolchain-adapt v4.18→v4.33 as done here):
-   `shiftedLegendre_poly_eval_zero_eq_zero` / `_one_eq_zero` (vanishing to order n — gives the Padé
-   contact condition), `integral_legendre_mul_smooth_eq` / `legendre_integral_special` (the
-   integration-by-parts identity turning `∫₀¹ P_n(x)·f(x) dx` into the linear form `A_n + B_n·log(·)`).
+   `shiftedLegendre_poly_eval_zero_eq_zero` / `_one_eq_zero` (vanishing to order n — DONE this lap),
+   and the **n-fold IBP identity `integral_shiftedLegendre_mul_eq` — DONE this lap, proved from
+   scratch** (trust-base clean): `∫₀¹ P_n·f = ((-1)^n/n!)·∫₀¹ y^n(1-y)^n·f⁽ⁿ⁾` for any `f` with
+   `deriv^[k] f` cont (k≤n) / differentiable (k<n) on `[0,1]`. **Remaining leg-2 work:** specialize
+   `f` to the Möbius kernel `f(y)=1/(1-(1-c)y)` — needs its `n`-th derivative in closed form
+   (`n_derivative'` in the ζ(3) source, `= n!·(stuff)/(1-(1-c)y)^(n+1)`) and the resulting remainder
+   size bound `|∫₀¹ P_n/(1-(1-c)y)| ≤ ρ^n` (leg 2 proper). Then the linear form
+   `∫₀¹ P_n/(1-(1-c)y) = A_n + B_n·log c` (rational A_n,B_n with denominator | lcm(1..n)).
    NOTE the ζ(3) proof is a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a
    Legendre kernel `∫₀¹ P_n(x)/(1-(1-c)x) dx = A_n + B_n·log c` — reuse the 1-var Legendre + IBP
    lemmas, not the cube geometry. The exact kernel weights (which `c`'s, to hit log2 AND log3
