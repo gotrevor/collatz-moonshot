@@ -236,6 +236,27 @@ theorem sep_of_measure (k m C : ℕ) (hmeas : 3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ C)
     _ = D ^ 3 * k ^ (3 * C) := by rw [mul_pow, ← pow_mul, Nat.mul_comm C 3]
     _ ≤ D ^ 3 * 2 ^ k := by gcongr
 
+/-- **Connector: the linear form `Λ` in terms of `θ = log₂3`.**  `Λ = m·log2 − k·log3` equals
+`log2·(m − k·log₂3)`, i.e. `log2` times the signed distance `m − k·θ`.  This ties the output of the
+best-approximation engine `theta_dist_lower` (distances from `m/k` to `θ`) directly to the input of
+`sep_of_linear_form` (the linear form). -/
+theorem linear_form_eq_logb (k m : ℕ) :
+    (m : ℝ) * Real.log 2 - k * Real.log 3
+      = Real.log 2 * ((m : ℝ) - k * Real.logb 2 3) := by
+  have hlog2 : Real.log 2 ≠ 0 := ne_of_gt (Real.log_pos (by norm_num))
+  rw [Real.logb]; field_simp
+
+/-- **Pipeline endpoint (no new axioms).**  `sep_two_three` follows from a lower bound on the signed
+distance `m − k·log₂3` alone: if `log2·(m − k·θ) ≥ 2^(−k/3)` then `3^(3k) ≤ (2^m−3^k)^3·2^k`.  This is
+exactly `sep_of_linear_form` re-expressed through `θ = log₂3`, so the remaining obligation is now a
+pure statement about how close `m/k` can be to `log₂3` — the object `theta_dist_lower` bounds. -/
+theorem sep_of_logb_gap (k m : ℕ) (h1 : 3 ^ k < 2 ^ m)
+    (hgap : Real.exp (-(k : ℝ) / 3 * Real.log 2)
+              ≤ Real.log 2 * ((m : ℝ) - k * Real.logb 2 3)) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  apply sep_of_linear_form k m h1
+  rw [linear_form_eq_logb]; exact hgap
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with
