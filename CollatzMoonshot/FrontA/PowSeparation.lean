@@ -125,6 +125,37 @@ theorem denom_ge_of_between (a b c d p k : ℕ) (hb : 0 < b) (hd : 0 < d)
   have : (b : ℤ) + d ≤ k := by rw [key]; nlinarith [hbp, hck, hbZ, hdZ]
   exact_mod_cast this
 
+/-- **Best-approximation lower bound for a unimodular bracket.**  If `a/b < θ < c/d` is unimodular
+(`b·c = a·d + 1`), then every fraction `p/k` with denominator `1 ≤ k < b + d` stays at least the
+bracket-endpoint gap `min(θ − a/b, c/d − θ)` away from `θ`.  (No `p/k` can slip strictly inside the
+bracket, by `denom_ge_of_between`.)  This is the classical `‖kθ‖ ≥ ‖qₙθ‖` engine; iterating it over
+the convergent brackets of `log₂3` will yield the effective measure. -/
+theorem theta_dist_lower (a b c d : ℕ) (θ : ℝ) (hb : 0 < b) (hd : 0 < d)
+    (huni : b * c = a * d + 1) (hlo : (a : ℝ) / b < θ) (hhi : θ < (c : ℝ) / d)
+    (k p : ℕ) (hk : 0 < k) (hklt : k < b + d) :
+    min (θ - (a : ℝ) / b) ((c : ℝ) / d - θ) ≤ |θ - (p : ℝ) / k| := by
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hkR : (0 : ℝ) < k := by exact_mod_cast hk
+  rcases lt_or_ge ((a : ℝ) / b) ((p : ℝ) / k) with hx | hx
+  · rcases lt_or_ge ((p : ℝ) / k) ((c : ℝ) / d) with hx2 | hx2
+    · exfalso
+      have h1 : a * k < b * p := by
+        have hr := (div_lt_div_iff₀ hbR hkR).mp hx
+        have : (a : ℝ) * k < b * p := by rw [mul_comm (b : ℝ) p]; exact hr
+        exact_mod_cast this
+      have h2 : p * d < c * k := by
+        have hr := (div_lt_div_iff₀ hkR hdR).mp hx2
+        exact_mod_cast hr
+      have := denom_ge_of_between a b c d p k hb hd huni h1 h2
+      omega
+    · have habs : |θ - (p : ℝ) / k| = (p : ℝ) / k - θ := by
+        rw [abs_sub_comm, abs_of_pos (by linarith)]
+      rw [habs]; exact le_trans (min_le_right _ _) (by linarith)
+  · have habs : |θ - (p : ℝ) / k| = θ - (p : ℝ) / k := by
+        rw [abs_of_pos (by linarith)]
+    rw [habs]; exact le_trans (min_le_left _ _) (by linarith)
+
 /-- **Analytic bridge to the textbook Baker linear form (no new axioms).**  The weak separation
 `sep_two_three` reduces to the *standard* linear-forms-in-logarithms lower bound
 `Λ = m·log 2 − k·log 3 ≥ 2^(−k/3)` on the near-critical window, via nothing but the elementary
