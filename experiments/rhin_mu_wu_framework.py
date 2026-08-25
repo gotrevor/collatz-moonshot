@@ -16,7 +16,7 @@ QS = [np.array([1.0, -2.0]),              # x - 2
       np.array([1.0, -4.0]),              # x - 4
       np.array([5.0, -12.0]),             # 5x - 12
       np.array([17.0, -102.0, 144.0]),    # 17x^2 - 102x + 144
-      np.array([19.0, -104.0, 144.0])]    # 19x^2 - 104x + 144
+      np.array([19.0, -108.0, 144.0])]    # 19x^2 - 108x + 144  (Rhin p.162; Wu 2003 prints -104, a typo)
 DEGS = np.array([len(q) - 1 for q in QS], dtype=float)
 
 def g_real(b, x):

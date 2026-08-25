@@ -25,11 +25,19 @@ but at `a=−2` (log 3) `a^(n+1)=±2^(n+1)` swamps the remainder — **single sh
 give log 3**, that needs Rhin's kernel.  So the single-kernel route caps at `log 2` (and `log 3` needs
 the two-kernel leg 3 anyway, which is the crux).
 
+**LANDED (this lap, cont.):** the `lcm·cⁿ→0` limit brick — `Gelfond.log_div_sqrt_tendsto_zero`
+(`log n/√n → 0`, from `isLittleO_log_rpow_atTop`) and **`Gelfond.lcmUpto_mul_geom_tendsto_zero`**
+(`0≤c<1/4 ⇒ lcm(1..n)·cⁿ → 0`, trust-base clean).  This is exactly the "geometric remainder beats the
+`4ⁿ·o(1)` denominator" limit that turns `legendre_log_two_small` into irrationality, and it is reused
+verbatim (two-kernel-wise) by leg 3's final measure assembly.
+
 **NEXT chips (priority):**
-1. **Cap the log-2 story** (small, mechanical): from `legendre_log_two_small` + `Gelfond.lcmUpto_le`
-   (`lcm ≤ 4ⁿ·e^{2√n·log n}`) show `lcm·(1/5)ⁿ→0` (exponent `n·log(4/5)+2√n·log n → −∞`), giving a
-   sequence of nonzero `P+Q·log2 → 0` ⇒ `Irrational (Real.log 2)` (or effective μ with `Q_n` growth).
-   Nice-to-have milestone; NOT the crux.  Then STOP polishing single-kernel.
+1. **Cap the log-2 story** (small, ~15 lines): combine `legendre_log_two_small` (nonzero `P+Q·log2`,
+   `|·| ≤ lcm·(1/5)ⁿ`) with `lcmUpto_mul_geom_tendsto_zero` (c=1/5<1/4 ✅) to get `P+Q·log2 → 0`; then
+   if `log2 = p/q` the nonzero integer `q·P+p·Q` has `|·| ≥ 1` but `= q·(P+Q·log2) → 0`, contradiction
+   ⇒ `Irrational (Real.log 2)` (mathlib LACKS this).  All ingredients now in-repo.  Then STOP
+   single-kernel.
+2. **Leg 3 = the crux** (source-gated expedition): two-kernel Rhin determinant — see below / findings.
 2. **Leg 3 = the actual crux** (source-gated, expedition): the two-*kernel* Rhin determinant
    (`a₁=2/3, a₂=4/3, d=3`, the 6-factor `H_n`), giving a SIMULTANEOUS form in log2 AND log3.
    Findings `…-rhin-wu-explicit-construction.md` have the exact kernel/exponents/constants; the hard
