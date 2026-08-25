@@ -58,17 +58,26 @@ partial quotients forever is the effective-measure (Baker) content.
   only `‖q_nθ‖≥c·3^{−q_n}`; the needed base-`2^{1/3}` improvement is exactly Baker for `log₂3`).
   This is the minimal, precisely-pinned deep input; a cited Baker/linear-forms axiom stays BASELINE.
 
-**Sharpness finding (2026-08-25, tested against concrete brackets):** the current engine's output,
-the bracket *min-gap* `min(θ−a/b, c/d−θ)`, is LOOSER than the true best-approximation norm `‖kθ‖`.
-Concretely, for the convergent bracket `19/12 < log₂3 < 27/17` (unimodular, `12·27=19·17+1`, both
-endpoints verified via the bridge), at `k=15` it gives `log2·15·min-gap ≈ 0.017`, which does NOT
-clear the threshold `2^(−5) ≈ 0.031`.  So `sep_of_bracket` as stated needs a bracket whose min-gap
-is sharp, i.e. the refined bound `‖kθ‖ ≥ ‖q_nθ‖` for `q_n ≤ k < q_{n+1}` (not just the straddling
-min-gap).  **Next concrete step:** strengthen `theta_dist_lower`/`linForm_dist_lower` from the
-straddle min-gap to the sharp `‖q_nθ‖` bound — via the three-distance identity
-`‖q_{n-1}θ‖ = a_n·‖q_nθ‖ + ‖q_{n+1}θ‖`-style recurrence — before feeding `sep_of_bracket`.  The
-elementary pieces (`denom_ge_of_between`, `convergent_det_step`) are the ingredients; this is pure
-CF bookkeeping, NOT the Baker step (the Baker step remains bounding `q_{n+1} ≲ 2^{q_n/3}`).
+**Sharp best-approximation bound — DONE** (`theta_dist_lower_sharp`): `|kθ−p| ≥ min(bθ−a, c−dθ)`,
+a factor `b`/`d` sharper than the min-gap version, the tight `‖q_nθ‖`-quality bound (equality at
+`k=b,p=a`).  Proof via the pure-ring identity `kθ−p = (kc−pd)(bθ−a)+(ka−pb)(c−dθ)` + `denom_ge`.
+
+**Corrected diagnosis (2026-08-25):** the `k=15` "failure" is NOT an engine defect — it is a
+finite-range artifact.  `sep_two_three` is *decidable per `k`*, so small `k` are `native_decide`
+checks (`sep_two_three_below_500` already verifies every `k<500`, both here and via Aristotle).  The
+CF/best-approximation route is the **large-`k`** tool: for large `k` the threshold `2^(−k/3)` is
+super-tiny, and the floor `‖q_nθ‖·log2 ≥ 2^(−k/3)` (at `k≈q_{n+1}`, `‖q_{n+1}θ‖≈1/q_{n+2}`) reduces
+to `q_{n+2} ≲ 2^{q_{n+1}/3}`, i.e. **sub-exponential partial quotients `a_{n+1} ≲ 2^{q_n/3}`** — the
+sole irreducible Baker content.  (Elementary `|2^p−3^q|≥1` gives only `a_{n+1} ≲ 3^{q_n}`, base-3,
+short of base-`2^{1/3}`; that exponential gap is Baker.)
+
+**Structure of the finished proof (for a future lap that ports/proves the Baker input):**
+`sep_two_three` = (finite `native_decide` for `6≤k≤K₀`) ∪ (for `k>K₀`: pick the convergent bracket
+`(q_n,q_{n+1})` straddling `k`, apply `theta_dist_lower_sharp` + `sep_of_bracket`, with the gap
+clearing the threshold *because* `a_{n+1} ≲ 2^{q_n/3}`).  Remaining to build: (i) the `log₂3`
+convergent sequence as `native`-verified `2^a⋛3^b` data with the recurrence (`convergent_det_step`
+gives unimodularity), (ii) the "straddling convergent exists" selection lemma, (iii) the Baker
+partial-quotient bound (cite = BASELINE; prove = GO).
 
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
