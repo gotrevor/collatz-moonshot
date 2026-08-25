@@ -420,6 +420,18 @@ theorem sep_of_bracket_sharp (k m a b c d : ℕ) (hk : 0 < k)
   rw [← hθ]
   exact mul_le_mul_of_nonneg_left hdist (le_of_lt hlog2)
 
+/-- Concrete verified convergent bracket of `log₂3`: the consecutive principal convergents
+`19/12 < log₂3 < 65/41` (unimodular `12·65 = 19·41 − 1`, i.e. `det = −1`), straddling every
+`k < 12 + 41 = 53`.  Both bounds are decided by the integer bridge (`2^19 < 3^12`, `3^41 < 2^65`).
+A base data point for the `log₂3` convergent chain (item (i) of the finished-proof structure). -/
+theorem logb_bracket_19_12_65_41 :
+    (19 : ℝ) / 12 < Real.logb 2 3 ∧ Real.logb 2 3 < (65 : ℝ) / 41 ∧ 12 * 65 = 19 * 41 + 1 := by
+  refine ⟨?_, ?_, by norm_num⟩
+  · have h := (lt_logb_two_three_iff 19 12 (by norm_num)).mpr (by norm_num)
+    push_cast at h; linarith
+  · have h := (logb_two_three_lt_iff 65 41 (by norm_num)).mpr (by norm_num)
+    push_cast at h; linarith
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with
