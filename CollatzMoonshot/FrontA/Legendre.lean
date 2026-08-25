@@ -473,4 +473,37 @@ theorem legendre_mobius_linear_form (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (n : 
   rw [Finset.sum_congr rfl hterm, Finset.sum_sub_distrib, ← Finset.sum_mul]
   ring
 
+/-- **Non-vanishing `∫₀¹ P_n(y)/(1-a·y) dy ≠ 0`** (leg 3's source-independent half).  Via the Padé
+remainder form `= (-a)ⁿ·∫₀¹ (y(1-y))ⁿ/(1-a·y)^(n+1)`: the remainder integrand is strictly positive on
+`(0,1)` (for `a<1`), so the integral is positive, and `(-a)ⁿ ≠ 0`.  This is the `Λ_n ≠ 0` needed so the
+integer linear form `D_n·Λ_n = p_n + q_n·log(1-a)` is a *nonzero* integer combination — the last
+ingredient (besides the source-gated choice of `a`-pair) of the effective measure. -/
+theorem legendre_mobius_ne_zero (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (n : ℕ) :
+    ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - a * y) ≠ 0 := by
+  have hden : ∀ y ∈ Set.uIcc (0 : ℝ) 1, (0 : ℝ) < 1 - a * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases le_total a 0 with h | h
+    · nlinarith [hy.1]
+    · nlinarith [hy.2, mul_nonneg h (by linarith [hy.2] : (0 : ℝ) ≤ 1 - y)]
+  have hform : (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - a * y))
+      = ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) * (1 / (1 - a * y)) := by
+    apply intervalIntegral.integral_congr
+    intro y _; dsimp only; rw [mul_one_div]
+  rw [hform, legendre_mobius_integral a n ha]
+  apply mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr ha0))
+  have hpos : 0 < ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1) := by
+    apply intervalIntegral.intervalIntegral_pos_of_pos_on ?_ ?_ (by norm_num)
+    · apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.div (by fun_prop) (by fun_prop)
+      exact fun y hy => pow_ne_zero _ (ne_of_gt (hden y hy))
+    · intro y hy
+      obtain ⟨hy0, hy1⟩ := hy
+      have hd : (0 : ℝ) < 1 - a * y := hden y (by
+        rw [Set.uIcc_of_le (by norm_num)]; exact ⟨le_of_lt hy0, le_of_lt hy1⟩)
+      have hnum : 0 < y ^ n * (1 - y) ^ n :=
+        mul_pos (pow_pos hy0 n) (pow_pos (by linarith) n)
+      exact div_pos hnum (pow_pos hd _)
+  exact ne_of_gt hpos
+
 end CollatzMoonshot.FrontA
