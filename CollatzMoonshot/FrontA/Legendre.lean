@@ -102,4 +102,48 @@ lemma shiftedLegendre_eq_int_poly (n : ℕ) : ∃ a : ℕ → ℤ, shiftedLegend
   push_cast
   simp only [map_pow, map_neg, map_one]
 
+/-- **Vanishing at `0` to order `n` (Padé contact).**  For `m < n`, the `m`-th derivative of
+`x^n (1-x)^n` vanishes at `0`.  Makes the boundary terms of the integration-by-parts identity (that
+turns `∫₀¹ P_n·f` into the linear form) vanish. -/
+lemma shiftedLegendre_poly_eval_zero_eq_zero (n : ℕ) {m : ℕ} (h : m < n) :
+    eval 0 ((⇑derivative)^[m] (X ^ n * (1 - X) ^ n) : ℝ[X]) = 0 := by
+  rw [Polynomial.iterate_derivative_mul, Polynomial.eval_finset_sum]
+  apply Finset.sum_eq_zero
+  intro x hx
+  simp_all only [Nat.succ_eq_add_one, Finset.mem_range, nsmul_eq_mul, eval_mul, eval_natCast,
+    mul_eq_zero, Nat.cast_eq_zero]
+  right; left
+  simp only [Polynomial.iterate_derivative_X_pow_eq_smul, eval_smul, eval_pow, eval_X, smul_eq_mul,
+    mul_eq_zero, Nat.cast_eq_zero, Nat.descFactorial_eq_zero_iff_lt, pow_eq_zero_iff', ne_eq,
+    true_and]
+  right
+  suffices n - (m - x) > 0 by linarith
+  simp only [gt_iff_lt, tsub_pos_iff_lt]
+  rw [Nat.lt_add_one_iff] at hx
+  calc
+    m - x ≤ m := by simp
+    _ < n := h
+
+/-- **Vanishing at `1` to order `n` (Padé contact).**  For `m < n`, the `m`-th derivative of
+`x^n (1-x)^n` vanishes at `1`.  The companion boundary condition. -/
+lemma shiftedLegendre_poly_eval_one_eq_zero (n : ℕ) {m : ℕ} (h : m < n) :
+    eval 1 ((⇑derivative)^[m] (X ^ n * (1 - X) ^ n) : ℝ[X]) = 0 := by
+  rw [Polynomial.iterate_derivative_mul, Polynomial.eval_finset_sum]
+  apply Finset.sum_eq_zero
+  intro x hx
+  simp_all only [Nat.succ_eq_add_one, Finset.mem_range, nsmul_eq_mul, eval_mul, eval_natCast,
+    mul_eq_zero, Nat.cast_eq_zero]
+  right; right
+  rw [show (1 - X : ℝ[X]) ^ n = (X ^ n : ℝ[X]).comp (1 - X) by simp,
+    Polynomial.iterate_derivative_comp_one_sub_X (p := X ^ n),
+    Polynomial.iterate_derivative_X_pow_eq_smul]
+  simp only [smul_comp, pow_comp, X_comp, Algebra.mul_smul_comm, eval_smul, eval_mul, eval_pow,
+    eval_neg, eval_one, eval_sub, eval_X, sub_self, smul_eq_mul, mul_eq_zero, Nat.cast_eq_zero,
+    Nat.descFactorial_eq_zero_iff_lt, pow_eq_zero_iff', neg_eq_zero, one_ne_zero, ne_eq, false_and,
+    true_and, false_or]
+  right
+  suffices n - x > 0 by linarith
+  simp only [gt_iff_lt, tsub_pos_iff_lt]
+  linarith
+
 end CollatzMoonshot.FrontA

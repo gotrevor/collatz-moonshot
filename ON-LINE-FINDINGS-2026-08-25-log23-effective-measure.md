@@ -194,12 +194,15 @@ with the two integrals `∫₂³ Hₙ(x)/xⁿ dx/x` and `∫₃⁴ Hₙ(x)/xⁿ 
 Müntz-Legendre polynomials + LLL) for *finding* such factors, since *"Rhin did not give a theoretical
 justification for the use of `Q₄, Q₅, Q₆`."*
 
-⚠️ **The exponents `b₁..b₆` are NOT in Wu**, only in Rhin.  I set up Wu's `μ = (τ⁽⁰⁾+K)/(τ-K)` and
-searched numerically for a feasible exponent vector over those six factors and **found none**
-(every candidate had `τ ≤ K`, i.e. infeasible; the plain choice `(x-2)ⁿ(x-3)ⁿ(x-4)ⁿ` gives
-`τ = 1.830 < K = 2`).  So I have **not** reproduced `7.616`, and the `bᵢ` remain an unfetched datum.
-Script: `experiments/rhin_mu_wu_framework.py` (self-contained, uv shebang).  Treat any `bᵢ` you
-recover from it as unverified until it reproduces a published constant.
+✅ **The exponents `b₁..b₆` are not in Wu, but they ARE in Zudilin arXiv:math/0404523 §3.4** - found
+after this file was first written.  They are transcribed, cross-verified against Wu's factor list
+under `x = 3z`, and discussed (with the exact kernel and the explicit `H₀(ε)` machinery) in
+**`ON-LINE-FINDINGS-2026-08-25-rhin-wu-explicit-construction.md`**, which answers the sharpened
+request block.  Short version: `(0.552418, 0.704324, 0.447582, 0.109072, 0.038934, 0.054368)` for
+`(Q₁..Q₆)`, summing to `Σ bᵢ deg Qᵢ = 2.000000` exactly.  Feeding them into the `Δ = 1` reading of
+Wu's formula gives `ν ≈ 9.60` rather than the published `7.616`; that gap is a defect of the
+simplified model (it drops the `Δ`-divisibility gain), **not** a correction to Rhin.
+Script: `experiments/rhin_mu_wu_framework.py` (self-contained, uv shebang).
 
 ---
 
