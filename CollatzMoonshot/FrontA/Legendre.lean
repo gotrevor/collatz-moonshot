@@ -428,4 +428,49 @@ theorem mobius_moment_closed (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) : ∀ k : �
       field_simp
       ring
 
+/-- **Linear form: `∫₀¹ P_n(y)/(1-a·y) dy = A + B·log(1-a)`** (leg 2 assembled).  Expanding
+`P_n = ∑ c_k yᵏ` (integer coeffs, `shiftedLegendre_eq_int_poly`) and integrating termwise with the
+moment closed form (`mobius_moment_closed`) gives `A = ∑ c_k r_k`, `B = −∑ c_k/aᵏ⁺¹`.  This is the
+linear form in `1` and `log(1-a)` that, paired with the geometric remainder bound
+(`legendre_mobius_remainder_bound`), produces an effective irrationality measure of `log(1-a)`. -/
+theorem legendre_mobius_linear_form (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (n : ℕ) :
+    ∃ A B : ℝ, ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - a * y)
+      = A + B * Real.log (1 - a) := by
+  have hpos : ∀ y ∈ Set.uIcc (0 : ℝ) 1, (0 : ℝ) < 1 - a * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases le_total a 0 with h | h
+    · nlinarith [hy.1]
+    · nlinarith [hy.2, mul_nonneg h (by linarith [hy.2] : (0 : ℝ) ≤ 1 - y)]
+  choose r hr using mobius_moment_closed a ha ha0
+  obtain ⟨c, hc⟩ := shiftedLegendre_eq_int_poly n
+  have hInt : ∀ k ∈ Finset.range (n + 1),
+      IntervalIntegrable (fun y => (c k : ℝ) * (y ^ k / (1 - a * y)))
+        MeasureTheory.volume 0 1 := by
+    intro k _
+    apply IntervalIntegrable.const_mul
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    exact fun y hy => ne_of_gt (hpos y hy)
+  refine ⟨∑ k ∈ Finset.range (n + 1), (c k : ℝ) * r k,
+          -∑ k ∈ Finset.range (n + 1), (c k : ℝ) / a ^ (k + 1), ?_⟩
+  have hintegrand : ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+      eval y (shiftedLegendre n) / (1 - a * y)
+        = ∑ k ∈ Finset.range (n + 1), (c k : ℝ) * (y ^ k / (1 - a * y)) := by
+    intro y _
+    rw [hc, eval_finset_sum, Finset.sum_div]
+    apply Finset.sum_congr rfl
+    intro k _
+    simp only [eval_mul, eval_intCast, eval_pow, eval_X]
+    ring
+  rw [intervalIntegral.integral_congr hintegrand, intervalIntegral.integral_finset_sum hInt]
+  have hterm : ∀ k ∈ Finset.range (n + 1),
+      (∫ y in (0 : ℝ)..1, (c k : ℝ) * (y ^ k / (1 - a * y)))
+        = (c k : ℝ) * r k - (c k : ℝ) / a ^ (k + 1) * Real.log (1 - a) := by
+    intro k _
+    rw [intervalIntegral.integral_const_mul, hr k]
+    ring
+  rw [Finset.sum_congr rfl hterm, Finset.sum_sub_distrib, ← Finset.sum_mul]
+  ring
+
 end CollatzMoonshot.FrontA
