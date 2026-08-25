@@ -288,6 +288,44 @@ theorem sep_of_logb_gap (k m : ℕ) (h1 : 3 ^ k < 2 ^ m)
   apply sep_of_linear_form k m h1
   rw [linear_form_eq_logb]; exact hgap
 
+/-- **Per-`k` interface: `sep` from a single straddling unimodular bracket (no new axioms).**
+For near-critical `(k, m)`, given *any* unimodular bracket `a/b < θ < c/d` (`θ = log₂3`) that
+straddles `k` (`k < b + d`) and whose scaled gap clears the threshold
+`2^(−k/3) ≤ log2 · k · min(θ−a/b, c/d−θ)`, the separation `3^(3k) ≤ (2^m−3^k)^3·2^k` holds.
+
+This packages the whole elementary engine (`linForm_dist_lower` + `sep_of_logb_gap`) into one
+statement.  The **sole** remaining obligation is therefore: for every near-critical `k`, produce a
+convergent bracket of `log₂3` straddling `k` whose gap clears the threshold — i.e. the effective
+separation *at convergent denominators*, which is the irreducible Baker content. -/
+theorem sep_of_bracket (k m a b c d : ℕ) (hk : 0 < k)
+    (h1 : 3 ^ k < 2 ^ m) (hb : 0 < b) (hd : 0 < d) (huni : b * c = a * d + 1)
+    (hlo : (a : ℝ) / b < Real.logb 2 3) (hhi : Real.logb 2 3 < (c : ℝ) / d)
+    (hklt : k < b + d)
+    (hgap : Real.exp (-(k : ℝ) / 3 * Real.log 2)
+              ≤ Real.log 2 * ((k : ℝ) *
+                  min (Real.logb 2 3 - (a : ℝ) / b) ((c : ℝ) / d - Real.logb 2 3))) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  set θ := Real.logb 2 3 with hθ
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  -- k·θ < m, since 3^k < 2^m
+  have hkθ : (k : ℝ) * θ < m := by
+    have e1 : (k : ℝ) * θ = Real.logb 2 ((3 : ℝ) ^ k) := by rw [hθ, Real.logb_pow]
+    have e2 : (m : ℝ) = Real.logb 2 ((2 : ℝ) ^ m) := by
+      rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num)]; ring
+    rw [e1, e2]
+    apply Real.logb_lt_logb (by norm_num) (by positivity)
+    exact_mod_cast h1
+  -- the best-approximation bound, specialised to p = m
+  have hdist := linForm_dist_lower a b c d θ hb hd huni hlo hhi k m hk hklt
+  have habs : |(k : ℝ) * θ - m| = (m : ℝ) - k * θ := by
+    rw [abs_of_neg (by linarith)]; ring
+  rw [habs] at hdist
+  -- chain: exp(..) ≤ log2·k·ming ≤ log2·(m − kθ)
+  apply sep_of_logb_gap k m h1
+  refine le_trans hgap ?_
+  rw [← hθ]
+  exact mul_le_mul_of_nonneg_left hdist (le_of_lt hlog2)
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with
