@@ -26,15 +26,16 @@ framing was over-pessimistic about tractability (the *route* was right; the *dif
   per-`k` `sep_of_measure` and bracket-level `sep_of_bracket_sharp`).
 
 **Concrete next attack (in priority order):**
-1. **Discharge `hfin` via `native_decide` at a concrete small `C`.** Pick `C` known-safe for the
-   measure (e.g. `C = 6`, i.e. μ < 7, comfortably above the proven measure). Then `poly_le_two_pow (18)`
-   gives a concrete crossover `K` (solve `k^18 ≤ 2^k` → `K ≈ 130`). Prove
-   `hfin : ∀ k m, 6 ≤ k → k < K → near-critical → 3^(3k) ≤ (2^m−3^k)^3·2^k` by `native_decide` over
-   `k ∈ range K, m ∈ range (⌈K·log₂3⌉+1)`. Risk: bignum `native_decide` (values up to ~2^(4.75K)) may
-   be heavy/fragile — see corpus `lean-native-decide-stack-overflow-tail-recursive-evaluator.md`; if it
-   blows up, shrink `K` by lowering `C` (needs a tighter but still-safe proven μ) or split the range.
-   Payoff: the crux collapses to the *pure* uniform measure `hmeas` (one clean disclosed obligation).
-2. **Build the Gelfond/hypergeometric core toward `hmeas`.** The formalizable entry point is Padé
+1. ✅ **DONE this lap — `hfin` discharged.** `sep_two_three_finite_check` (`native_decide`, ~7s) +
+   `sep_two_three_small` prove `sep_two_three` outright for near-critical `6 ≤ k < 130` (m-range
+   bounded by `2^m < 2·3^129 < 2^208`). This is the `hfin` input of `sep_of_uniform_measure` for
+   `K = 130`, which pairs with any measure exponent `C ≤ 6` (then `k^(3C) ≤ k^18 ≤ 2^k` for `k ≥ 130`).
+   ⟹ The ENTIRE residual of `sep_two_three` beyond elementary/finite parts is now the **single uniform
+   Gelfond measure** `hmeas : ∀ near-critical k ≥ 130, 3^k ≤ (2^m−3^k)·k^6`. Axioms: trust base +
+   native_decide artifact 🟢. (One loose end for a fully-concrete end-to-end corollary: a *concrete*
+   crossover `∀ k ≥ 130, k^18 ≤ 2^k` — `poly_le_two_pow` gives only an existential threshold; the
+   induction step `(k+1)^18 ≤ 2·k^18` is a degree-18 nlinarith, deferred as low-value plumbing.)
+2. **Build the Gelfond/hypergeometric core toward `hmeas` (the true GO grind).** The formalizable entry point is Padé
    approximation to `(1−z)^ν` / the interpolation-determinant estimate; port the smallest sufficient
    piece. This is the true GO grind — genuinely multi-lap but 🟡, not 🟠.
 3. Fallback (BASELINE, not gate-clearing): cite Gelfond/Bennett–Bugeaud as a narrow,

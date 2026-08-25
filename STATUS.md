@@ -49,7 +49,10 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
   "multi-month, near-hopeless Baker" framing was too pessimistic. Landed (trust-base only): missing
   connective `poly_le_two_pow` (∀C ∃K, k^C ≤ 2^k for k≥K) and **`sep_of_uniform_measure`** —
   machine-checks that ONE uniform bound `3^k ≤ (2^m−3^k)·k^C` (large k) + crossover + finite check ⇒
-  `sep_two_three` for every near-critical `k ≥ 6`. Build 🟢 8752 jobs.
+  `sep_two_three` for every near-critical `k ≥ 6`. Then **discharged the finite check**:
+  `sep_two_three_small` (via `native_decide`, ~7s) proves `sep_two_three` outright for near-critical
+  `6 ≤ k < 130`. ⟹ The whole residual collapses to the pure uniform measure
+  `∀ near-critical k ≥ 130, 3^k ≤ (2^m−3^k)·k^6` = the Gelfond bound. Build 🟢 8752 jobs.
 - **2026-08-25 (lap 1600 — crux DECOMPOSED: reduction proved, one clean sorry isolated):** Replaced
   the bare `b+d ≤ 5` sorry with a machine-checked reduction. New module `FrontA/PowSeparation.lean`
   proves sorry-free `grow_two_three` (elementary induction), `finite_two_block_check` (k∈[6,14] via

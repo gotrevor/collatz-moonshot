@@ -361,6 +361,37 @@ theorem sep_of_uniform_measure (C K : ℕ)
   · exact sep_of_measure k m C (hmeas k m hkK h1 h2) (hK k hkK)
   · exact hfin k m hk (by omega) h1 h2
 
+/-- **Finite check for the residual `6 ≤ k < 130` (`native_decide`).**  For every near-critical
+`(k, m)` with `k < 130`, the separation `3^(3k) ≤ (2^m−3^k)^3·2^k` holds outright.  The `m`-range is
+bounded (`2^m < 2·3^k ≤ 2·3^129 < 2^208`), so the claim is a finite decidable table. -/
+theorem sep_two_three_finite_check :
+    ∀ k ∈ Finset.range 130, ∀ m ∈ Finset.range 208,
+      ¬ (6 ≤ k ∧ 3 ^ k < 2 ^ m ∧ 2 ^ m < 2 * 3 ^ k) ∨
+        3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  native_decide
+
+/-- **Discharged small-`k` case of `sep_two_three` (sorry-free).**  For near-critical `6 ≤ k < 130`
+the separation holds unconditionally.  This is exactly the `hfin` input of `sep_of_uniform_measure`
+for threshold `K = 130` (which pairs with any measure exponent `C ≤ 6`, since then the crossover
+`k^(3C) ≤ k^18 ≤ 2^k` holds for `k ≥ 130`).  So the ENTIRE residual of `sep_two_three` beyond the
+elementary/finite parts is the single uniform Gelfond measure `3^k ≤ (2^m−3^k)·k^C` for `k ≥ 130`. -/
+theorem sep_two_three_small (k m : ℕ) (hk : 6 ≤ k) (hklt : k < 130)
+    (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  have hmlt : m < 208 := by
+    have hlt : 2 ^ m < 2 ^ 208 := by
+      calc 2 ^ m < 2 * 3 ^ k := h2
+        _ ≤ 2 * 3 ^ 129 := by
+              have hk129 : k ≤ 129 := by omega
+              gcongr
+              norm_num
+        _ < 2 ^ 208 := by norm_num
+    exact (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).mp hlt
+  rcases sep_two_three_finite_check k (Finset.mem_range.mpr hklt) m (Finset.mem_range.mpr hmlt)
+    with h | h
+  · exact absurd ⟨hk, h1, h2⟩ h
+  · exact h
+
 /-- **Scaled best-approximation bound (linear-form form).**  Multiplying `theta_dist_lower` by `k`:
 the linear form `|k·θ − p|` is at least `k·min(θ−a/b, c/d−θ)` for every `p`, when `1 ≤ k < b + d`.
 This is the `‖k·θ‖`-shaped quantity the crux pipeline consumes (`m − k·θ = |k·θ − m|` near-critical). -/
