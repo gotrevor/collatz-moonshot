@@ -213,4 +213,33 @@ theorem integral_shiftedLegendre_mul_eq (n : ℕ) (f : ℝ → ℝ)
   rw [hLHS, intervalIntegral.integral_const_mul, H]
   ring
 
+/-- **`n`-th derivative of the Möbius kernel `1/(1-a·x)`** wherever the denominator is nonzero:
+`dⁿ/dxⁿ [1/(1-a·x)] = n!·aⁿ/(1-a·x)^(n+1)`.  Proved by neighborhood-congruence induction — the set
+`{x | 1-a·x ≠ 0}` is open, so no singular-point analysis is needed.  This is the kernel derivative the
+Legendre IBP identity (`integral_shiftedLegendre_mul_eq`) consumes to produce the linear form. -/
+lemma mobius_iterate_deriv (a : ℝ) (n : ℕ) :
+    ∀ x : ℝ, 1 - a * x ≠ 0 →
+      deriv^[n] (fun x => 1 / (1 - a * x)) x = (n ! : ℝ) * a ^ n / (1 - a * x) ^ (n + 1) := by
+  induction n with
+  | zero => intro x hx; simp
+  | succ n ih =>
+      intro x hx
+      have hopen : IsOpen {y : ℝ | 1 - a * y ≠ 0} := isOpen_ne.preimage (by fun_prop)
+      have hU : {y : ℝ | 1 - a * y ≠ 0} ∈ nhds x := hopen.mem_nhds hx
+      have hEq : deriv^[n] (fun x => 1 / (1 - a * x))
+          =ᶠ[nhds x] fun y => (n ! : ℝ) * a ^ n / (1 - a * y) ^ (n + 1) :=
+        Filter.eventually_of_mem hU (fun y hy => ih y hy)
+      have h1 : HasDerivAt (fun y => 1 - a * y) (-a) x := by
+        simpa using ((hasDerivAt_id x).const_mul a).const_sub 1
+      have hg := (hasDerivAt_const x ((n ! : ℝ) * a ^ n)).div (h1.pow (n + 1))
+        (pow_ne_zero _ hx)
+      have hfn := hg.congr_of_eventuallyEq hEq
+      rw [Function.iterate_succ_apply', hfn.deriv]
+      simp only [Pi.pow_apply, Nat.add_sub_cancel]
+      have hxp : (1 - a * x) ^ (n + 1) ≠ 0 := pow_ne_zero _ hx
+      field_simp
+      rw [Nat.factorial_succ]
+      push_cast
+      ring
+
 end CollatzMoonshot.FrontA
