@@ -39,6 +39,69 @@ theorem sep_two_three (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ 
     3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
   sorry
 
+/-- **Analytic bridge to the textbook Baker linear form (no new axioms).**  The weak separation
+`sep_two_three` reduces to the *standard* linear-forms-in-logarithms lower bound
+`Λ = m·log 2 − k·log 3 ≥ 2^(−k/3)` on the near-critical window, via nothing but the elementary
+convexity inequality `e^Λ − 1 ≥ Λ` and `2^k = e^{k log 2}`.
+
+This pins the sole deep obligation behind the two-block exclusion to exactly the classical
+effective-irrationality object `Λ = |m·log 2 − k·log 3|` (linear forms in logs / Baker), and
+machine-checks — sorry-free, axiom-free beyond the trust base — that *everything* between that
+bound and `sep_two_three` is elementary.  The residual disclosed target is therefore:
+
+> `linear_form_lower_log23`:  for near-critical `k ≥ 6`,
+> `Real.exp (−(k/3)·log 2) ≤ (m:ℝ)·log 2 − (k:ℝ)·log 3`,
+
+i.e. `|m·log 2 − k·log 3| ≥ 2^(−k/3)`, the β = 1/3 effective bound. -/
+theorem sep_of_linear_form (k m : ℕ) (h1 : 3 ^ k < 2 ^ m)
+    (hΛ : Real.exp (-(k : ℝ) / 3 * Real.log 2)
+            ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  set Λ : ℝ := (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 with hΛdef
+  -- powers as exponentials
+  have e2 : (2 : ℝ) ^ m = Real.exp ((m : ℝ) * Real.log 2) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e3 : (3 : ℝ) ^ k = Real.exp ((k : ℝ) * Real.log 3) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e2k : (2 : ℝ) ^ k = Real.exp ((k : ℝ) * Real.log 2) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  -- factor the real deficit
+  have hprod : (3 : ℝ) ^ k * Real.exp Λ = (2 : ℝ) ^ m := by
+    rw [e3, ← Real.exp_add, e2]; congr 1; rw [hΛdef]; ring
+  have hDfac : (3 : ℝ) ^ k * (Real.exp Λ - 1) = (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    rw [mul_sub, mul_one, hprod]
+  -- lower bound the deficit by 3^k · Λ, then by 3^k · exp(−k/3 log2)
+  have hL : (3 : ℝ) ^ k * Real.exp (-(k : ℝ) / 3 * Real.log 2) ≤ (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    rw [← hDfac]
+    refine le_trans (mul_le_mul_of_nonneg_left hΛ (by positivity)) ?_
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    have := Real.add_one_le_exp Λ; linarith
+  have hLnn : (0 : ℝ) ≤ (3 : ℝ) ^ k * Real.exp (-(k : ℝ) / 3 * Real.log 2) := by positivity
+  -- cube and multiply by 2^k: the LHS collapses to 3^(3k)
+  have hcollapse :
+      ((3 : ℝ) ^ k * Real.exp (-(k : ℝ) / 3 * Real.log 2)) ^ 3 * (2 : ℝ) ^ k = (3 : ℝ) ^ (3 * k) := by
+    have h3 : ((3 : ℝ) ^ k) ^ 3 = (3 : ℝ) ^ (3 * k) := by rw [← pow_mul, Nat.mul_comm]
+    rw [mul_pow, h3, ← Real.exp_nat_mul, e2k, mul_assoc, ← Real.exp_add]
+    rw [show (↑(3 : ℕ) : ℝ) * (-(k : ℝ) / 3 * Real.log 2) + (k : ℝ) * Real.log 2 = 0 by
+          push_cast; ring]
+    simp
+  -- combine
+  have hcube : ((3 : ℝ) ^ k * Real.exp (-(k : ℝ) / 3 * Real.log 2)) ^ 3
+      ≤ ((2 : ℝ) ^ m - (3 : ℝ) ^ k) ^ 3 := by
+    exact pow_le_pow_left₀ hLnn hL 3
+  have hreal : (3 : ℝ) ^ (3 * k) ≤ ((2 : ℝ) ^ m - (3 : ℝ) ^ k) ^ 3 * (2 : ℝ) ^ k := by
+    calc (3 : ℝ) ^ (3 * k)
+        = ((3 : ℝ) ^ k * Real.exp (-(k : ℝ) / 3 * Real.log 2)) ^ 3 * (2 : ℝ) ^ k := hcollapse.symm
+      _ ≤ ((2 : ℝ) ^ m - (3 : ℝ) ^ k) ^ 3 * (2 : ℝ) ^ k := by
+          apply mul_le_mul_of_nonneg_right hcube (by positivity)
+  -- descend to ℕ
+  have hcast : (((2 ^ m - 3 ^ k) ^ 3 * 2 ^ k : ℕ) : ℝ)
+      = ((2 : ℝ) ^ m - (3 : ℝ) ^ k) ^ 3 * (2 : ℝ) ^ k := by
+    push_cast [Nat.cast_sub (le_of_lt h1)]; ring
+  have : ((3 ^ (3 * k) : ℕ) : ℝ) ≤ (((2 ^ m - 3 ^ k) ^ 3 * 2 ^ k : ℕ) : ℝ) := by
+    rw [hcast]; push_cast; exact hreal
+  exact_mod_cast this
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with

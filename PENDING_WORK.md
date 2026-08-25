@@ -1,5 +1,28 @@
 # PENDING_WORK
 
+## ★ LAP 2026-08-25-1730 — crux narrowed to the textbook Baker linear form ★
+
+**Advance (kernel-checked, NO new axiom):** added `sep_of_linear_form` to
+`CollatzMoonshot/FrontA/PowSeparation.lean`, proving sorry-free that the deep obligation
+`sep_two_three` (`3^(3k) ≤ (2^m−3^k)^3·2^k`) follows from the **standard** linear-forms-in-logs
+lower bound
+> `linear_form_lower_log23`:  `Real.exp(−(k/3)·log 2) ≤ (m:ℝ)·log 2 − (k:ℝ)·log 3`  (near-critical `k≥6`),
+i.e. `Λ := |m·log 2 − k·log 3| ≥ 2^(−k/3)`.  The bridge is pure analysis: write
+`D = 2^m−3^k = 3^k·(e^Λ−1) ≥ 3^k·Λ ≥ 3^k·2^(−k/3)` (using `e^Λ−1 ≥ Λ` and `2^k=e^{k log2}`),
+cube, multiply by `2^k`; the LHS collapses to `3^(3k)` exactly.  So **everything between the
+classical Baker object `Λ` and the two-block crux is now machine-checked**; the sole remaining deep
+input is pinned to the textbook β=1/3 effective bound `Λ ≥ 2^(−k/3)`.
+
+`sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
+sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
+
+**Next attack on `linear_form_lower_log23`:** this is the classical effective irrationality of
+`log₂3`.  Concrete routes: (a) continued-fraction best-approximation `‖kθ‖ ≥ 1/(q_{n+1}+q_n)` for
+`θ=log₂3` — its convergents are decidable integer facts `2^a ⋛ 3^b`, but bounding all partial
+quotients forever needs an effective measure (Baker); (b) a hypergeometric/Padé construction giving
+a Liouville-then-improved bound; (c) Aristotle (job `7a593ec3`, isolated pure-ℕ `sep_two_three`,
+submitted this lap — verify `#print axioms` if it returns).  A cited Baker axiom stays BASELINE.
+
 ## ★ IN PROGRESS: paradoxical finite trajectories (2026-08-24) ★
 
 Executing `FRONT-A-PARADOXICAL.md`. `experiments/paradoxical.py` (exact integers) +
