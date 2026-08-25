@@ -47,6 +47,16 @@ partial quotients forever is the effective-measure (Baker) content.
   for the base-`2^{1/3}` threshold `2^{−k/3}`; the polynomial bound is the irreducible Baker step.
   Next lap: assemble the convergent recurrence `q_{n+1}=a_{n+1}q_n+q_{n-1}` and reduce the whole
   measure to the single clean hypothesis `a_{n+1} ≤ q_n^{C}` (polynomial partial quotients).
+- `linForm_dist_lower` — scaled bound `|kθ−p| ≥ k·min-gap`, the linear-form form the pipeline uses.
+- `linear_form_eq_logb` / `sep_of_logb_gap` — connect distance-to-θ to the linear form `Λ` and to sep.
+- `convergent_det_step` / `convergent_denom_grow` — unimodularity + denominator growth along the CF.
+- **`sep_of_bracket` (CAPSTONE, sorry-free):** for near-critical `(k,m)`, ANY unimodular bracket
+  `a/b<log₂3<c/d` straddling `k` (`k<b+d`) whose scaled gap clears `2^(−k/3)` gives the full
+  separation `3^(3k)≤(2^m−3^k)^3·2^k`.  **The crux is now reduced to producing, for each near-critical
+  `k`, one convergent bracket of `log₂3` with a good-enough gap** — the effective separation at
+  convergent denominators = the irreducible Baker core (base-3 elementary bound `|2^p−3^q|≥1` gives
+  only `‖q_nθ‖≥c·3^{−q_n}`; the needed base-`2^{1/3}` improvement is exactly Baker for `log₂3`).
+  This is the minimal, precisely-pinned deep input; a cited Baker/linear-forms axiom stays BASELINE.
 
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
