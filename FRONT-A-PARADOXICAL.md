@@ -244,6 +244,35 @@ two-block word `[T]^b[F]^c[T]^d[F]^e` with `3^{b+d} < 2^{b+c+d+e}`, the least re
 `n` satisfies `(2^{b+c+d+e} − 3^{b+d})·n ≥ 3^d(3^b−2^b) + 2^{b+c}(3^d−2^d)`, equivalently
 `tstep^{[b+c+d+e]} n ≤ n`.
 
+### Crux status addendum (2026-08-25, effective-separation lap)
+
+The two-block crux `le_two_blocks_not_acyclicParadoxical` is machine-checked modulo the single deep
+input `sep_two_three` (`3^(3k) ≤ (2^m−3^k)^3·2^k`, i.e. `|2^m−3^k| ≥ 3^k·2^(−k/3)` near-critical).
+This lap built, in `FrontA/PowSeparation.lean`, a **complete sorry-free elementary reduction of the
+general-`k` crux to the effective separation at continued-fraction convergent denominators of
+`log₂3`** (capstone `sep_of_bracket`; engine `denom_ge_of_between`, `theta_dist_lower`,
+`linForm_dist_lower`; wiring `sep_of_logb_gap`, `linear_form_eq_logb`; `irrational_logb_two_three`
+and the `2^a⋛3^b ⇄ a/b⋛log₂3` bridge).  Everything is axiom-free beyond the trust base; only
+`sep_two_three` is the disclosed `sorry`.
+
+**Independently corroborated (Aristotle, job `7a593ec3`, and the on-box analysis):** the residual
+core is irreducibly **Baker / effective linear forms in two logarithms** — the following alternative
+routes are *refuted*, not merely unattempted:
+- **Continued fractions alone**: at `k = qₙ` the target is *equivalent* to an upper bound on the
+  next partial quotient `qₙ₊₁ ≲ 2^(qₙ/3)`; each finite convergent check is itself an instance of the
+  target, giving no purchase on later partial quotients.
+- **Elementary `|2^p−3^q| ≥ 1`**: yields only the base-3 bound `‖qₙθ‖ ≥ c·3^(−qₙ)`; the needed
+  base-`2^{1/3}` improvement is exactly the Baker gap.
+- **Padé / hypergeometric for `√(1−z)`**: caps at `2^m−3^k ≳ 2^(m/2)` (exponent `< 1/2` uniformly),
+  short of the required `2^(0.790·m)`.
+- **Combining one-dimensional irrationality measures of `log 2`, `log 3`**: the determinant argument
+  closes only when `(μ₁−1)(μ₂−1) < 1`, impossible since each `μ ≥ 2`; genuinely *simultaneous*
+  approximation (Baker) is unavoidable.
+
+`sep_two_three` verified exactly for every near-critical `k < 500` (both here and independently).
+The classification is unchanged (**PROMISING EVIDENCE**): the crux remains open behind a precisely
+pinned, independently-corroborated Baker input; a cited effective-linear-forms axiom stays BASELINE.
+
 ### Caveats honored
 
 No claim of global finiteness, Front A, W1′, or Collatz from any finite search. The consumption
