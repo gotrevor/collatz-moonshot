@@ -29,16 +29,32 @@
   lower bound for `log₂3` in Lean — mathlib lacks it (only `LiouvilleWith`).
   **Target sharpened (review lap 2026-08-25-2100).** `sep_two_three` is now reduced *sorry-free*
   (`sep_of_uniform_measure`, using `poly_le_two_pow`) to ONE uniform pure-ℕ bound
-  `∀ near-critical k ≥ K:  3^k ≤ (2^m − 3^k)·k^C`. That is exactly the **classical Gelfond 1935
-  effective bound on `|2ⁿ − 3ᵐ|`** (linear forms in *two* logs; explicit constants in
-  **Bennett–Bugeaud, Acta Arith. 155 (2012)** and Bugeaud's monograph §3.1) — a *polynomial*
-  irrationality measure, exponentially stronger than the `2^(−k/3)` this crux needs. So the core is
-  🟡 project-scale (explicit hypergeometric/Padé/interpolation constructions, formalizable), **not**
-  🟠 generational: the "multi-month, near-hopeless Baker" framing was too pessimistic.
-  Narrow each lap: (a) discharge the finite residual `hfin` via `native_decide` at a concrete small
-  `C` so the crux collapses to the pure measure; (b) port/build the Padé-to-`(1−z)^ν` core toward the
-  Gelfond bound. Discharging it → the sorry becomes a real proof → GO. A cited Gelfond/Bennett–Bugeaud
-  axiom or a larger census remains BASELINE, not progress, and MUST NOT clear the src-sorry gate.
+  `∀ near-critical k ≥ K:  3^k ≤ (2^m − 3^k)·k^C`. That is exactly a **classical effective
+  irrationality measure of `log₂3`** (linear forms in *two* logs) — a *polynomial* measure,
+  exponentially stronger than the `2^(−k/3)` this crux needs. **Honest constants (findings
+  2026-08-25):** the proven object is **Rhin 1987**'s lin-indep measure of `{1,log2,log3}`;
+  the *fully explicit, threshold-free* exponent is `E = 13.3` ⇒ **`C = 15`, `k ≥ 400`** (exact
+  crossover `k^45 ≤ 2^k` at `k = 387`); the asymptotic `7.616+ε` carries an unpublished `H₀(ε)`.
+  Bennett–Bugeaud is OFF-path (quadratic irrationals). `C = 6/k ≥ 130`
+  (`sep_two_three_of_gelfond_measure`) is **illustrative only**; the honest interface is the
+  parametric `sep_of_uniform_measure` at the true `C`. Core is 🟡 project-scale, **not** 🟠
+  generational, but leg 3 (the two-*kernel* simultaneous form) is a genuine multi-lap expedition
+  (integer transfinite diameter of `[2,4]`, effective two-sided coefficient asymptotics `n(ε)`).
+
+  **MANDATED next chip = the single-log effective measure (leg 2 → real result).** `Legendre.lean`
+  now has, all trust-base-clean, the whole single-kernel toolkit: linear form
+  `∫₀¹ P_n/(1−a·y) = A + B·log(1−a)` (`legendre_mobius_linear_form`), geometric remainder bound,
+  and non-vanishing (`legendre_mobius_ne_zero`). The concrete next move — findings-blessed as the
+  warm-up that exercises **all three legs** — is **denominator/integrality tracking**: for `a : ℤ`,
+  `a ≤ −1` (so `1−a ∈ {2,3,…}`, giving `log 2` at `a=−1`, `log 3` at `a=−2`), prove
+  `∃ P Q : ℤ, lcm(1..n)·a^(n+1)·Λ_n = P + Q·log(1−a)` via the per-moment integrality
+  `∃ s:ℤ, lcm(1..k)·a^(k+1)·∫y^k/(1−a·y) = s − lcm(1..k)·log(1−a)` (induction on
+  `mobius_moment_rec`, using `k+1 ∣ lcm(1..k+1)` and `lcm(1..k) ∣ lcm(1..k+1)`). Combined with
+  `legendre_mobius_ne_zero` + the remainder bound + `Gelfond.lcmUpto_le`, this yields a **genuine
+  effective irrationality measure of a single log in Lean** (mathlib has none) — real novel content,
+  and the exact denominator machinery leg 3 reuses two-kernel-wise. Discharging `sep_two_three` →
+  GO. A cited Rhin/Gelfond axiom or a larger census stays BASELINE and MUST NOT clear the
+  src-sorry gate.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -115,6 +131,15 @@
   machine-checking that ONE uniform measure `3^k ≤ (2^m−3^k)·k^C` (large k) + finite check ⇒ the full
   crux. Kept GO on the effective bound; next narrowing = discharge finite check at concrete `C`, then
   build the Padé/Gelfond core. Build 🟢 8752 jobs.
+- 2026-08-25 (review lap, this one): **Direction KEPT (GO on effective measure), constants corrected,
+  next chip pinned.** Findings landed: the object is **Rhin 1987** (`{1,log2,log3}` measure), honest
+  explicit exponent `E=13.3 ⇒ C=15, k≥400`; `C=6` is unprovable from literature (illustrative only);
+  Bennett–Bugeaud is off-path. Confirmed leg 1 (`Gelfond.lcmUpto_le`) + full single-kernel leg 2
+  (`Legendre.lean`) are trust-base clean; leg 3 (two-*kernel* Rhin determinant) is a real multi-lap
+  expedition (transfinite diameter, effective `n(ε)` asymptotics). Set MANDATED next chip = single-log
+  denominator/integrality tracking (findings-blessed warm-up, exercises all 3 legs, yields the first
+  effective irrationality measure of a log in Lean). Build 🟢 8754 jobs; crux `sep_two_three` unchanged
+  disclosed sorry.
 
 ---
 

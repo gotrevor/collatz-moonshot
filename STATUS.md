@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8752 jobs) · **Updated**: 2026-08-25 (review lap 2100) · sole crux `sep_two_three` reduced to ONE uniform Gelfond bound; core reclassified 🟡 (Gelfond 1935 / Bennett–Bugeaud), not 🟠
+lap by lap.** · **Build**: 🟢 green (8754 jobs) · **Updated**: 2026-08-25 (review lap ~2330) · sole crux `sep_two_three` reduced to ONE uniform Rhin measure; full single-kernel Padé/Legendre toolkit built (leg 2); next chip = single-log integrality (leg 2→result)
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -40,6 +40,22 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
 `log₂3` in Lean (mathlib lacks it). This is the active crux, carrying one disclosed `src/` sorry.
 
 ## What's happened (newest first)
+- **2026-08-25 (review lap ~2330 — direction KEPT, constants corrected, single-kernel leg 2 audited):**
+  Reviewed the two GO-grind laps (2100 uniform-measure reduction; 2300 full single-kernel Legendre
+  toolkit). Confirmed leg 1 (`Gelfond.lcmUpto_le`) and the entire leg-2 machinery in `Legendre.lean`
+  — linear form `∫₀¹ P_n/(1−a·y)=A+B·log(1−a)`, geometric remainder bound, non-vanishing — are all
+  trust-base clean. Findings landed the honest object: **Rhin 1987** `{1,log2,log3}` measure, explicit
+  exponent `E=13.3 ⇒ C=15, k≥400` (`C=6` unprovable, illustrative only); leg 3 (two-*kernel* Rhin
+  determinant) is a genuine multi-lap expedition (transfinite diameter, effective `n(ε)` asymptotics).
+  Pinned the MANDATED next chip: single-log denominator/integrality tracking (findings-blessed warm-up;
+  gives the first effective irrationality measure of a log in Lean). Build 🟢 8754 jobs; crux unchanged.
+- **2026-08-25 (GO grind 2300 — full single-kernel effective-measure toolkit, `Legendre.lean`):**
+  Built from scratch / faithfully ported (v4.18→v4.33) the whole single-Möbius-kernel machinery, all
+  trust-base clean: `shiftedLegendre` + integer-coeff expansion; order-`n` Padé vanishing; the `n`-fold
+  IBP identity `∫₀¹ P_n·f = ((−1)^n/n!)∫₀¹ (y(1−y))^n f⁽ⁿ⁾`; the kernel derivative `dⁿ[1/(1−a·x)]`;
+  the Padé remainder form + geometric bound `|Λ_n| ≤ (|a|/4(1−a))^n/(1−a)`; moment closed form;
+  **linear form `Λ_n = A + B·log(1−a)`**; and **non-vanishing `Λ_n ≠ 0`**. ⟹ all three effective-measure
+  facts for a single kernel are machine-checked. Build 🟢 8754 jobs.
 - **2026-08-25 (review lap 2100 — crux core reclassified 🟡 Gelfond; uniform-measure reduction proved):**
   Route-decisive source read: the sole open input `sep_two_three` ≡ an effective irrationality measure
   of `log₂3`, which is the classical **Gelfond 1935** effective bound on `|2ⁿ−3ᵐ|` (linear forms in
@@ -151,15 +167,18 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
 - **Front A two-block exclusion** (binding): discharge the sole `src/` sorry `sep_two_three`
-  (`PowSeparation.lean`). Now reduced (sorry-free) to ONE **uniform Gelfond bound**
-  `3^k ≤ (2^m−3^k)·k^C` via `sep_of_uniform_measure`; that bound is the classical Gelfond 1935 /
-  Bennett–Bugeaud effective `|2ⁿ−3ᵐ|` estimate — 🟡, polynomial, ≫ what's needed. GO path (multi-lap):
-  formalize the explicit Gelfond/hypergeometric construction (no mathlib support). Concrete next
-  narrowing steps in PENDING_WORK: (a) discharge the finite check `hfin` via `native_decide` for a
-  concrete small `C` so the crux is the pure measure; (b) port/build the Padé-to-(1−z)^ν core.
+  (`PowSeparation.lean`). Reduced (sorry-free) to ONE **uniform Rhin measure**
+  `3^k ≤ (2^m−3^k)·k^C` via `sep_of_uniform_measure`; the honest object is **Rhin 1987**'s
+  `{1,log2,log3}` measure (explicit `E=13.3 ⇒ C=15, k≥400`; `C=6/k≥130` illustrative only).
+  Legs 1–2 built trust-base clean (`Gelfond.lcmUpto_le`, all of `Legendre.lean`).
+  **Concrete next chip = single-log integrality (leg 2 → result):** per-moment
+  `∃s:ℤ, lcm(1..k)·a^(k+1)·∫y^k/(1−a·y)=s−lcm(1..k)·log(1−a)` (a:ℤ, a≤−1) ⇒
+  `∃P Q:ℤ, lcm(1..n)·a^(n+1)·Λ_n=P+Q·log(1−a)`; with non-vanishing + remainder bound this is an
+  effective irrationality measure of `log 2` (a=−1) / `log 3` (a=−2) — novel Lean content, reused
+  two-kernel-wise by leg 3. Then leg 3 (source-gated Rhin two-kernel determinant; expedition).
   **Refuted, do NOT retry:** any elementary `nlinarith`/`omega` bound on `b+d`/`d`
   (`experiments/two_block_relaxation.py`). Fallback (BASELINE, not for gate-clearing): cite the
-  Gelfond/Bennett–Bugeaud bound as a narrow, provenance-documented axiom.
+  Rhin bound as a narrow, provenance-documented axiom.
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
 - Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
@@ -191,7 +210,9 @@ excluded from the math-axiom count below.
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, faithful constructive form; no `sorryAx`) |
-| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED both ways; sole disclosed sorry `sep_two_three` now reduced (sorry-free, `sep_of_uniform_measure`) to ONE uniform measure `3^k≤(2^m−3^k)·k^C` = **🟡 Gelfond 1935 / Bennett–Bugeaud** effective `|2ⁿ−3ᵐ|` bound (polynomial, ≫ needed); native_decide artifact 🟢 |
+| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED both ways; sole disclosed sorry `sep_two_three` reduced (sorry-free, `sep_of_uniform_measure`) to ONE uniform measure = **🟡 Rhin 1987** effective `{1,log2,log3}` measure (explicit `E=13.3`, polynomial ≫ needed); legs 1–2 of the Padé/Legendre construction built trust-base clean; native_decide artifact 🟢 |
+| `sep_two_three_of_gelfond_measure` | reduction (illustrative C=6) | 2× `native_decide.ax` only | 0 math · 🟢 (conditional on `hmeas` hypothesis; no sorry) |
+| `legendre_mobius_linear_form` / `_ne_zero` | leg-2 single-kernel facts | — | 0 ✅ trust base only |
 
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
 headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,
@@ -206,4 +227,5 @@ headline.
 - Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- M2′ completion baton: `HANDOFF-2026-08-24-1730.md` · scratchpad: `PENDING_WORK.md`
+- Newest baton: `HANDOFF-2026-08-25-2300.md` (single-kernel leg-2 toolkit) · scratchpad: `PENDING_WORK.md`
+- Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`
