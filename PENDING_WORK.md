@@ -33,9 +33,20 @@ partial quotients forever is the effective-measure (Baker) content.
 - `lt_logb_two_three_iff (a b) : a/b < logb 2 3 ↔ 2^a < 3^b` and companion
   `logb_two_three_lt_iff : logb 2 3 < a/b ↔ 3^b < 2^a` — the workhorse bridge letting every
   CF convergent/semiconvergent inequality for `log₂3` be discharged by `decide`/`norm_num` on ℕ,
-  with no real analysis in the loop.  Next: compute the CF `[1;1,1,2,2,3,1,5,2,23,…]` of `log₂3`
-  as verified `2^a ⋛ 3^b` facts, and build the best-approximation LOWER bound (the piece mathlib
-  omits) — then the effective-measure constant is the remaining Baker content.
+  with no real analysis in the loop.
+- `denom_ge_of_between` (pure ℤ) — unimodular `a/b<p/k<c/d`, `b·c=a·d+1` ⇒ `k≥b+d`.
+- `theta_dist_lower` (ℝ) — the best-approximation LOWER bound: for a unimodular bracket
+  `a/b<θ<c/d`, any `p/k` with `1≤k<b+d` has `|θ−p/k| ≥ min(θ−a/b, c/d−θ)`.  **The `‖kθ‖≥‖qₙθ‖`
+  engine is now built** (mathlib omits it).
+
+  **Remaining (Baker content):** iterate `theta_dist_lower` over a sequence of unimodular brackets
+  of `θ=log₂3` (convergents), each verified by `lt_logb_two_three_iff`/`logb_two_three_lt_iff` as
+  `decide`-able `2^a⋛3^b` facts.  The effective *polynomial* measure needs the bracket denominators
+  (convergent `q_n`) to grow controlled — i.e. partial quotients of `log₂3` polynomially bounded.
+  The elementary `|2^p−3^q|≥1` gives only the Liouville-quality `q_{n+1}≲3^{q_n}` (base-3), too weak
+  for the base-`2^{1/3}` threshold `2^{−k/3}`; the polynomial bound is the irreducible Baker step.
+  Next lap: assemble the convergent recurrence `q_{n+1}=a_{n+1}q_n+q_{n-1}` and reduce the whole
+  measure to the single clean hypothesis `a_{n+1} ≤ q_n^{C}` (polynomial partial quotients).
 
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
