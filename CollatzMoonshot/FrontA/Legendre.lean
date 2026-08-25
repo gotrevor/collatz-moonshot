@@ -340,4 +340,35 @@ theorem legendre_mobius_remainder_bound (a : ℝ) (n : ℕ) (ha0 : 0 ≤ a) (ha1
           (intervalIntegrable_const) hbound
     _ = (1 / 4) ^ n / (1 - a) ^ (n + 1) := by simp
 
+/-- **Base Möbius integral (source of the log term).**  For `a < 1`, `a ≠ 0`,
+`∫₀¹ 1/(1-a·y) dy = -log(1-a)/a`.  This is where the transcendental `log(1-a)` enters the linear
+form `A_n + B_n·log(1-a)` extracted from `∫₀¹ P_n/(1-a·y)` (the higher moments `∫₀¹ yᵏ/(1-a·y)`
+reduce to this one plus rationals).  Proved by FTC with antiderivative `-log(1-a·y)/a`. -/
+theorem mobius_base_integral (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) :
+    ∫ y in (0 : ℝ)..1, 1 / (1 - a * y) = -Real.log (1 - a) / a := by
+  have hpos : ∀ y ∈ Set.uIcc (0 : ℝ) 1, (0 : ℝ) < 1 - a * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases le_total a 0 with h | h
+    · nlinarith [hy.1]
+    · nlinarith [hy.2, mul_nonneg h (by linarith [hy.2] : (0 : ℝ) ≤ 1 - y)]
+  have hderiv : ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+      HasDerivAt (fun y => -Real.log (1 - a * y) / a) (1 / (1 - a * y)) y := by
+    intro y hy
+    have hyne : (1 : ℝ) - a * y ≠ 0 := ne_of_gt (hpos y hy)
+    have h1 : HasDerivAt (fun y => 1 - a * y) (-a) y := by
+      simpa using ((hasDerivAt_id y).const_mul a).const_sub 1
+    have hlog : HasDerivAt (fun y => Real.log (1 - a * y)) (-a / (1 - a * y)) y :=
+      h1.log hyne
+    have hval : -(-a / (1 - a * y)) / a = 1 / (1 - a * y) := by
+      field_simp
+    rw [← hval]
+    exact (hlog.neg).div_const a
+  have hint : IntervalIntegrable (fun y => 1 / (1 - a * y)) MeasureTheory.volume 0 1 := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    exact fun y hy => ne_of_gt (hpos y hy)
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint]
+  simp
+
 end CollatzMoonshot.FrontA
