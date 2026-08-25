@@ -39,11 +39,18 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
    `shiftedLegendre_poly_eval_zero_eq_zero` / `_one_eq_zero` (vanishing to order n — DONE this lap),
    and the **n-fold IBP identity `integral_shiftedLegendre_mul_eq` — DONE this lap, proved from
    scratch** (trust-base clean): `∫₀¹ P_n·f = ((-1)^n/n!)·∫₀¹ y^n(1-y)^n·f⁽ⁿ⁾` for any `f` with
-   `deriv^[k] f` cont (k≤n) / differentiable (k<n) on `[0,1]`. **Remaining leg-2 work:** specialize
-   `f` to the Möbius kernel `f(y)=1/(1-(1-c)y)` — needs its `n`-th derivative in closed form
-   (`n_derivative'` in the ζ(3) source, `= n!·(stuff)/(1-(1-c)y)^(n+1)`) and the resulting remainder
-   size bound `|∫₀¹ P_n/(1-(1-c)y)| ≤ ρ^n` (leg 2 proper). Then the linear form
-   `∫₀¹ P_n/(1-(1-c)y) = A_n + B_n·log c` (rational A_n,B_n with denominator | lcm(1..n)).
+   `deriv^[k] f` cont (k≤n) / differentiable (k<n) on `[0,1]`. **DONE this lap too:**
+   `mobius_iterate_deriv` (`dⁿ/dxⁿ[1/(1-a·x)] = n!·aⁿ/(1-a·x)^(n+1)`, neighborhood-congruence
+   induction) and the assembled **`legendre_mobius_integral`**: for `a<1`,
+   `∫₀¹ P_n(y)/(1-a·y) = (-a)ⁿ·∫₀¹ yⁿ(1-y)ⁿ/(1-a·y)^(n+1)` — the Padé remainder, all trust-base clean.
+   **⟹ leg 2's analytic core is COMPLETE.** Remaining leg-2 bricks (source-independent, next laps):
+   (i) **remainder size bound** `|∫₀¹ yⁿ(1-y)ⁿ/(1-a·y)^(n+1) dy| ≤ ρ(a)ⁿ` with `ρ(a)<1` — from
+   `y(1-y)/(1-a·y) ≤ M(a)` on `[0,1]` (maximize; `M(a)=` the max of `y(1-y)/(1-a·y)`), giving
+   `|remainder| ≤ M(a)ⁿ/(1-a)`; need `M(a)<1`, true for a range of `a`. (ii) **linear-form extraction**
+   `∫₀¹ P_n(y)/(1-a·y) = A_n + B_n·log(1-a)` with `A_n,B_n ∈ ℚ`, `lcm(1..n)·A_n, lcm(1..n)·B_n ∈ ℤ`
+   (from Legendre integer coeffs + `∫₀¹ yᵏ/(1-a·y) dy` = rational + log). Then leg 3
+   (non-vanishing/independence + which `a`-pair gives log2 & log3) — the only genuinely source-gated
+   piece (Rhin's exact kernel; ON-LINE-REQUEST.md).
    NOTE the ζ(3) proof is a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a
    Legendre kernel `∫₀¹ P_n(x)/(1-(1-c)x) dx = A_n + B_n·log c` — reuse the 1-var Legendre + IBP
    lemmas, not the cube geometry. The exact kernel weights (which `c`'s, to hit log2 AND log3
