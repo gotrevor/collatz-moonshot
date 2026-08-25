@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontA.PowSeparation
 import CollatzMoonshot.FrontA.Gelfond
+import CollatzMoonshot.FrontA.Legendre
 
 /-!
 # Front A: paradoxical finite trajectories
