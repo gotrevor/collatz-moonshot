@@ -403,4 +403,29 @@ theorem mobius_moment_rec (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (k : ℕ) :
     integral_pow]
   norm_num
 
+/-- **Closed form of the moments: `∫₀¹ yᵏ/(1-a·y) = rₖ − log(1-a)/aᵏ⁺¹`** for some real `rₖ`.
+Induction from `mobius_base_integral` (k=0) via `mobius_moment_rec`.  Exhibits the log coefficient
+explicitly (`−1/aᵏ⁺¹`); the remainder `rₖ` is a real number built from rationals (`rₖ₊₁ =
+(rₖ − 1/(k+1))/a`), so `∫₀¹ P_n/(1-a·y) = A_n + B_n·log(1-a)` with `B_n = −∑ c_k/aᵏ⁺¹` and `A_n = ∑
+c_k rₖ` (`c_k` = integer Legendre coeffs).  This packages leg 2's linear-form structure. -/
+theorem mobius_moment_closed (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) : ∀ k : ℕ,
+    ∃ r : ℝ, ∫ y in (0 : ℝ)..1, y ^ k / (1 - a * y) = r - Real.log (1 - a) / a ^ (k + 1) := by
+  intro k
+  induction k with
+  | zero =>
+      refine ⟨0, ?_⟩
+      simp only [pow_zero, pow_one]
+      rw [mobius_base_integral a ha ha0]
+      ring
+  | succ k ih =>
+      obtain ⟨r, hr⟩ := ih
+      refine ⟨(r - 1 / (k + 1)) / a, ?_⟩
+      have hrec := mobius_moment_rec a ha ha0 k
+      have hI1 : ∫ y in (0 : ℝ)..1, y ^ (k + 1) / (1 - a * y)
+          = ((∫ y in (0 : ℝ)..1, y ^ k / (1 - a * y)) - 1 / (k + 1)) / a := by
+        rw [eq_div_iff ha0]; linarith [hrec]
+      rw [hI1, hr]
+      field_simp
+      ring
+
 end CollatzMoonshot.FrontA
