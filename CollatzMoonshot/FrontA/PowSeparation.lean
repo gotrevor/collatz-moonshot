@@ -696,4 +696,67 @@ theorem sep_of_linear_form_poly (c : ℝ) (κ : ℕ)
     exact le_trans key (hLF k m hbig h1 h2)
   · exact sep_two_three_small k m hk (by omega) h1 h2
 
+/-- **`exp(1/2) < 2`** (auxiliary for the general crossover step). -/
+theorem exp_half_lt_two : Real.exp (1 / 2) < 2 := by
+  have h : Real.exp (1 / 2) * Real.exp (1 / 2) = Real.exp 1 := by
+    rw [← Real.exp_add]; norm_num
+  nlinarith [Real.exp_pos (1 / 2 : ℝ), Real.exp_one_lt_d9, h]
+
+/-- **`C^2 ≤ 2^C` for `C ≥ 4`** (pure ℕ induction).  Base for the general crossover. -/
+theorem nat_sq_le_two_pow (C : ℕ) (hC : 4 ≤ C) : C ^ 2 ≤ 2 ^ C := by
+  induction C, hC using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih =>
+      have hstep : (n + 1) ^ 2 ≤ 2 * n ^ 2 := by nlinarith [hn]
+      calc (n + 1) ^ 2 ≤ 2 * n ^ 2 := hstep
+        _ ≤ 2 * 2 ^ n := by gcongr
+        _ = 2 ^ (n + 1) := by rw [pow_succ]; ring
+
+/-- **General explicit crossover `k^C ≤ 2^k` for `C ≥ 4` and `k ≥ C^2`.**  Removes the
+non-explicit threshold of `poly_le_two_pow`: whatever measure exponent the source's effective
+Gelfond bound yields, the crossover feeding `sep_of_measure` (`k^(3C) ≤ 2^k`) holds from the
+*explicit* point `k ≥ (3C)^2` — so `sep_of_uniform_measure` becomes fully concrete at any exponent
+(only the finite residual `6 ≤ k < (3C)^2` remains for a per-`C` `native_decide` table).  Base
+`(C^2)^C ≤ 2^(C^2)` via `nat_sq_le_two_pow`; inductive step via `(1 + 1/k)^C ≤ exp(1/2) < 2`
+(from `k ≥ C^2 ≥ 2C`, using `Real.add_one_le_exp`). -/
+theorem pow_le_two_pow_gen (C k : ℕ) (hC : 4 ≤ C) (hk : C ^ 2 ≤ k) : k ^ C ≤ 2 ^ k := by
+  induction k, hk using Nat.le_induction with
+  | base =>
+      have hb : (2 ^ C) ^ C = 2 ^ (C ^ 2) := by rw [← pow_mul, pow_two]
+      calc (C ^ 2) ^ C ≤ (2 ^ C) ^ C := Nat.pow_le_pow_left (nat_sq_le_two_pow C hC) C
+        _ = 2 ^ (C ^ 2) := hb
+  | succ n hn ih =>
+      -- `n ≥ C^2 ≥ 2C`, so `C/n ≤ 1/2`
+      have h2C : 2 * C ≤ C ^ 2 := by nlinarith [hC]
+      have hn2C : 2 * C ≤ n := le_trans h2C hn
+      have hnpos : 0 < n := by nlinarith [hC, hn]
+      have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hnpos
+      have hstep : (n + 1) ^ C ≤ 2 * n ^ C := by
+        have hbase : (1 + 1 / (n : ℝ)) ≤ Real.exp (1 / (n : ℝ)) := by
+          have := Real.add_one_le_exp (1 / (n : ℝ)); linarith
+        have h0 : (0 : ℝ) ≤ 1 + 1 / (n : ℝ) := by positivity
+        have hpow : (1 + 1 / (n : ℝ)) ^ C ≤ (Real.exp (1 / (n : ℝ))) ^ C :=
+          pow_le_pow_left₀ h0 hbase C
+        have hexp : (Real.exp (1 / (n : ℝ))) ^ C = Real.exp ((C : ℝ) / n) := by
+          rw [← Real.exp_nat_mul]; congr 1; field_simp
+        have hCn : (C : ℝ) / n ≤ 1 / 2 := by
+          rw [div_le_div_iff₀ hnR (by norm_num)]
+          have : (2 * C : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2C
+          linarith
+        have hexple : Real.exp ((C : ℝ) / n) ≤ Real.exp (1 / 2) := Real.exp_le_exp.mpr hCn
+        have hlt2 : (1 + 1 / (n : ℝ)) ^ C ≤ 2 := by
+          calc (1 + 1 / (n : ℝ)) ^ C ≤ Real.exp ((C : ℝ) / n) := by rw [← hexp]; exact hpow
+            _ ≤ Real.exp (1 / 2) := hexple
+            _ ≤ 2 := le_of_lt exp_half_lt_two
+        have hratio : ((n : ℝ) + 1) / n = 1 + 1 / n := by field_simp
+        have hdiv : (((n : ℝ) + 1) / n) ^ C ≤ 2 := by rw [hratio]; exact hlt2
+        rw [div_pow, div_le_iff₀ (by positivity)] at hdiv
+        have hcast : ((n : ℝ) + 1) ^ C = (((n + 1) ^ C : ℕ) : ℝ) := by push_cast; ring
+        have hcast2 : 2 * (n : ℝ) ^ C = ((2 * n ^ C : ℕ) : ℝ) := by push_cast; ring
+        rw [hcast, hcast2] at hdiv
+        exact_mod_cast hdiv
+      calc (n + 1) ^ C ≤ 2 * n ^ C := hstep
+        _ ≤ 2 * 2 ^ n := by gcongr
+        _ = 2 ^ (n + 1) := by rw [pow_succ]; ring
+
 end CollatzMoonshot.FrontA
