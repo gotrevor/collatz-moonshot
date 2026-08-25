@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontB.Dictionary
+import CollatzMoonshot.FrontA.PowSeparation
 
 /-!
 # Front A: paradoxical finite trajectories
@@ -512,7 +513,25 @@ theorem near_critical_containment (b c d e w : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d
   -- machine-checked: `b+d ≤ 5` + the window `hupper` pin `m ≤ 8`, bounding all of `b,c,d,e` to a
   -- finite box on which the integrality constraints `hlo/hhi` are discharged by `omega`.
   have hbd : b + d ≤ 5 := by
-    sorry
+    -- ℕ near-critical window (from `hupper`).
+    have h2N : 2 ^ (b + c + d + e) < 2 * 3 ^ (b + d) := by exact_mod_cast hupper
+    -- (W) : 2^d·(2^m − 3^(b+d)) < 2^m   (from the proved bracket `hbracket`).
+    have hWn : 2 ^ d * (2 ^ (b + c + d + e) - 3 ^ (b + d)) < 2 ^ (b + c + d + e) := by
+      zify [hsub.le]; nlinarith [hbracket]
+    -- ℤ: `D ≤ 3^d·2^c`  (¬A, from `hhi`, `w ≥ 1`, `U₁ < 3^d·2^c`).
+    have hDleRaw : (2 : ℤ) ^ (b + c + d + e) - 3 ^ (b + d) ≤ 3 ^ d * 2 ^ c := by
+      have hle1 : D ≤ D * w := le_mul_of_one_le_right hDpos.le hwpos
+      have hDU1 : D ≤ U1 := le_trans hle1 hhi
+      rw [← hDdef]; linarith [hU1lt]
+    -- (A) : (2^m − 3^(b+d))·2^(b+d) ≤ 2^m·3^d   (¬A + `2^c ≤ 2^(c+e)`, i.e. `e ≥ 0`).
+    have hAn : (2 ^ (b + c + d + e) - 3 ^ (b + d)) * 2 ^ (b + d)
+        ≤ 2 ^ (b + c + d + e) * 3 ^ d := by
+      zify [hsub.le]
+      have h2c : (2 : ℤ) ^ c * 2 ^ (b + d) ≤ 2 ^ (b + c + d + e) := by
+        rw [← pow_add]; exact pow_le_pow_right₀ (by norm_num) (by omega)
+      nlinarith [hDleRaw, h2c, mul_le_mul_of_nonneg_right hDleRaw (by positivity : (0:ℤ) ≤ 2 ^ (b + d)),
+        mul_le_mul_of_nonneg_left h2c (by positivity : (0:ℤ) ≤ 3 ^ d)]
+    exact bd_reduction (b + d) (b + c + d + e) d hd (by omega) hsub h2N hWn hAn
   -- Finite discharge.  `b+d ≤ 5` and `hupper` give `2^m < 2·3^5 < 2^9`, so `m = b+c+d+e ≤ 8`.
   have hupperN : 2 ^ (b + c + d + e) < 2 * 3 ^ (b + d) := by exact_mod_cast hupper
   have hm8 : b + c + d + e ≤ 8 := by

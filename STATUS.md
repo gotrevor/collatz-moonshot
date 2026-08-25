@@ -1,7 +1,7 @@
 # STATUS — collatz-moonshot 📊
 **A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
 decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8751 jobs) · **Updated**: 2026-08-25 (review 1500) · two-block crux = `b+d≤5`, confirmed Baker-grade (elementary route refuted)
+lap by lap.** · **Build**: 🟢 green (8752 jobs) · **Updated**: 2026-08-25 (lap 1600) · two-block crux decomposed: reduction PROVED, sole sorry = weak separation of 2ⁿ/3ⁿ (β=1/3)
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
@@ -40,6 +40,13 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
 `log₂3` in Lean (mathlib lacks it). This is the active crux, carrying one disclosed `src/` sorry.
 
 ## What's happened (newest first)
+- **2026-08-25 (lap 1600 — crux DECOMPOSED: reduction proved, one clean sorry isolated):** Replaced
+  the bare `b+d ≤ 5` sorry with a machine-checked reduction. New module `FrontA/PowSeparation.lean`
+  proves sorry-free `grow_two_three` (elementary induction), `finite_two_block_check` (k∈[6,14] via
+  `native_decide`), and `bd_reduction` (β=1/3: window + (W) + (A) + separation ⇒ k≤5). In
+  `near_critical_containment`, `b+d≤5` now derives (W)/(A) from the proved `hbracket`/¬A and calls
+  `bd_reduction`. **Sole remaining `src/` sorry = `sep_two_three`**, the clean weak-Baker separation
+  `3^(3k) ≤ (2^m−3^k)^3·2^k` for near-critical k≥6. Build 🟢 8752 jobs.
 - **2026-08-25 (review lap 1500 — elementary route for the crux REFUTED, Baker confirmed):**
   The crux had been reduced (earlier laps) to the single inequality `b + d ≤ 5`, with a queued
   "MAJOR LEAD" claiming it closes elementarily via Aristotle's criteria A/B. This lap REFUTED
@@ -168,7 +175,7 @@ excluded from the math-axiom count below.
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, faithful constructive form; no `sorryAx`) |
-| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` | disclosed active-crux sorry = `b+d ≤ 5` (Baker-grade); everything else machine-checked |
+| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED: reduction+growth+finite-check PROVED; sole disclosed sorry = the weak separation `3^(3k)≤(2^m−3^k)³·2^k` (🟡, β=1/3, build via CF of log₂3); native_decide artifact 🟢 |
 
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
 headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,

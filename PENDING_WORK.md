@@ -178,6 +178,19 @@ The prior lead's error: conflating "true over integer powers" (integrality-force
 provable" (needs a real certificate). **DO NOT re-attempt an elementary `nlinarith`/`omega` bound on
 `b+d ≤ 5`, nor the `le_of_gap_A/B` + `¬A∧¬B⇒b+d≤5` plan below — refuted.**
 
+### ★ DONE (lap 2026-08-25-1600): crux DECOMPOSED — reduction PROVED, one clean sorry isolated ★
+The bare `have hbd : b+d ≤ 5 := sorry` is GONE. New module `CollatzMoonshot/FrontA/PowSeparation.lean`
+proves sorry-free: `grow_two_three` (3^(k+2)≤2^(2k−3) for k≥15, induction), `finite_two_block_check`
+(6≤k≤14 residue, `native_decide`), and `bd_reduction` (the β=1/3 reduction: window + (W) + (A) +
+`sep_two_three` ⇒ k≤5). In `near_critical_containment`, `hbd` now derives `(W) 2^d·(2^m−3^k)<2^m`
+(from `hbracket`) and `(A) (2^m−3^k)·2^k ≤ 2^m·3^d` (from ¬A `D≤3^d·2^c` via `hhi`/`w≥1`/`hU1lt`,
+plus `2^c ≤ 2^(c+e)`), then calls `bd_reduction`. Build 🟢 8752 jobs. **The SOLE remaining `src/`
+sorry is now `sep_two_three`** — the clean, weak, TRUE separation `3^(3k) ≤ (2^m−3^k)^3·2^k`
+(β=1/3) for near-critical k≥6. Axiom audit: `le_two_blocks_not_acyclicParadoxical` =
+`[propext, sorryAx (=sep_two_three), Classical.choice, Quot.sound, finite_two_block_check native_decide
+ax]` (the native_decide artifact is 🟢 finite). **NEXT = discharge `sep_two_three`** (the GO prize)
+via mathlib CF convergent bounds for `log₂3`; see scoping below.
+
 ### ★ GO ROUTE FULLY SCOPED (review lap 2026-08-25-1500) — the exact minimal effective input ★
 
 The crux `b+d ≤ 5` closes from a WEAK separation bound (far weaker than full Baker) plus a finite
