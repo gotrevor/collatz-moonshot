@@ -25,8 +25,8 @@ axioms here are a feature, not a smell.
   its axiom is a citation with an upgrade path).
 * **CONJECTURE-grade** (allowed, labeled): open statements the community broadly
   believes (abc, Furstenberg-stiffness, ...).  Anything built on one is honestly
-  conditional - say so in the docstring.  (collatz-cryptid's `Axioms.lean` has
-  precedent: abc/Pillai/Catalan, per the same directive.)
+  conditional - say so in the docstring. The private predecessor project used the
+  same policy for abc/Pillai/Catalan.
 * **NEVER**: this repo's own targets - `Conjecture`, `NoDivergentOrbit`,
   `NoNontrivialCycle` - or anything trivially equivalent to them.  Assuming the
   target proves nothing and poisons every `#print axioms` downstream.

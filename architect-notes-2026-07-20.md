@@ -1,13 +1,13 @@
 # Architect notes - 2026-07-20 🌙
 
 *Session handoff: what exists, why it's shaped this way, and where the next session
-picks up.  Written by Ren (founding session, sid 89534281).*
+picks up. Written by Ren during the founding session.*
 
 ## State at handoff
 
 - **History (3 commits + follow-ups from `23fbe84`)**: approach map → Lean layer →
-  Lane 1.  Build green (8573 jobs, mathlib Replays from the `~/.lake-base/4.31.0`
-  CoW store).  `main` was force-push rewritten 2026-07-20 to expunge an
+  Lane 1. Build green (8573 jobs, using a local shared mathlib cache for the then-current toolchain).
+  `main` was force-push rewritten 2026-07-20 to expunge an
   accidentally-committed paper PDF - don't resurrect old SHAs `d079362`/`4876a12`
   from reflogs or other clones.
 - **Doc spine**: `APPROACHES.md` (the 3-route map + barriers + overlooked

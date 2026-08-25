@@ -2,6 +2,10 @@
 
 ## CURRENT DIRECTIVE  (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
 
+> [!NOTE]
+> Public checkpoint, 2026-08-25: no treadmill is active. This section supersedes the
+> dated directive history below, which is retained as a research log.
+
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem
   `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` now includes
@@ -16,7 +20,7 @@
   uniformly approximate the normalized endpoint; it does **not** prove a universal
   finite-state no-go. Do not add routine reconstruction plumbing or repeat that experiment.
 
-- **MANDATED next move:** Continue the paradoxical project's NEW mathematics — the two-block
+- **Actual open obligation:** Continue the paradoxical project's two-block
   exclusion `le_two_blocks_not_acyclicParadoxical` (strictly generalizes RT Appendix A). It is
   machine-checked **modulo the single inequality `b + d ≤ 5`** (the sole `src/` `sorry`, in
   `near_critical_containment`); everything else — the elementary squeeze, `window_unique_m`, the
@@ -25,8 +29,7 @@
   lap 2026-08-25-1500 REFUTED the last elementary hope by proving the real relaxation of
   `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is FEASIBLE at unbounded `g` (fully-checked witness at `g=41`,
   `experiments/two_block_relaxation.py`), so NO `nlinarith`/polynomial certificate can exist.
-  **Attack ONLY the GO route:** build an explicit effective irrationality / linear-forms-in-logs
-  lower bound for `log₂3` in Lean — mathlib lacks it (only `LiouvilleWith`).
+  A proof needs an effective irrationality / linear-forms-in-logs lower bound for `log₂3`.
   **Target sharpened (review lap 2026-08-25-2100).** `sep_two_three` is now reduced *sorry-free*
   (`sep_of_uniform_measure`, using `poly_le_two_pow`) to ONE uniform pure-ℕ bound
   `∀ near-critical k ≥ K:  3^k ≤ (2^m − 3^k)·k^C`. That is exactly a **classical effective
@@ -37,24 +40,19 @@
   crossover `k^45 ≤ 2^k` at `k = 387`); the asymptotic `7.616+ε` carries an unpublished `H₀(ε)`.
   Bennett–Bugeaud is OFF-path (quadratic irrationals). `C = 6/k ≥ 130`
   (`sep_two_three_of_gelfond_measure`) is **illustrative only**; the honest interface is the
-  parametric `sep_of_uniform_measure` at the true `C`. Core is 🟡 project-scale, **not** 🟠
-  generational, but leg 3 (the two-*kernel* simultaneous form) is a genuine multi-lap expedition
+  parametric `sep_of_uniform_measure` at the true `C`. Formalizing that literature from first
+  principles is a substantial, source-sensitive project; leg 3 (the two-*kernel* simultaneous form)
+  is a genuine multi-lap expedition
   (integer transfinite diameter of `[2,4]`, effective two-sided coefficient asymptotics `n(ε)`).
 
-  **MANDATED next chip = the single-log effective measure (leg 2 → real result).** `Legendre.lean`
-  now has, all trust-base-clean, the whole single-kernel toolkit: linear form
-  `∫₀¹ P_n/(1−a·y) = A + B·log(1−a)` (`legendre_mobius_linear_form`), geometric remainder bound,
-  and non-vanishing (`legendre_mobius_ne_zero`). The concrete next move — findings-blessed as the
-  warm-up that exercises **all three legs** — is **denominator/integrality tracking**: for `a : ℤ`,
-  `a ≤ −1` (so `1−a ∈ {2,3,…}`, giving `log 2` at `a=−1`, `log 3` at `a=−2`), prove
-  `∃ P Q : ℤ, lcm(1..n)·a^(n+1)·Λ_n = P + Q·log(1−a)` via the per-moment integrality
-  `∃ s:ℤ, lcm(1..k)·a^(k+1)·∫y^k/(1−a·y) = s − lcm(1..k)·log(1−a)` (induction on
-  `mobius_moment_rec`, using `k+1 ∣ lcm(1..k+1)` and `lcm(1..k) ∣ lcm(1..k+1)`). Combined with
-  `legendre_mobius_ne_zero` + the remainder bound + `Gelfond.lcmUpto_le`, this yields a **genuine
-  effective irrationality measure of a single log in Lean** (mathlib has none) — real novel content,
-  and the exact denominator machinery leg 3 reuses two-kernel-wise. Discharging `sep_two_three` →
-  GO. A cited Rhin/Gelfond axiom or a larger census stays BASELINE and MUST NOT clear the
-  src-sorry gate.
+  **Do not continue the single-log detour merely to prove `Irrational (Real.log 2)`.**
+  `Legendre.lean` now has a useful, trust-base-clean single-kernel package: an integer
+  linear form, non-vanishing, and a geometric remainder for `log 2`. This is standard
+  auxiliary mathematics and does not give the simultaneous `log 2`/`log 3` estimate.
+  If work resumes, either (a) state the exact published Rhin-style input as a narrow,
+  provenance-audited named axiom, consistent with `Assumed.lean`, or (b) undertake the
+  two-kernel formalization as its own explicit objective. Do not imply that the single-log
+  package itself advances `sep_two_three`.
 
 - **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
   of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
@@ -96,7 +94,7 @@
   STATUS.md.
 - 2026-08-24 (review lap, later): **RE-SCOPED.** Established Front B `Compression` is
   Front B restated (no elementary/known upper bound on circuit count) AND source-blocked
-  (SdW not on box) → put on hold, forbid more block vocabulary. Redirected the binding
+  (the needed SdW source was unavailable) → put on hold, forbid more block vocabulary. Redirected the binding
   objective to **Front A M2′** (`ParityRigidityW1' → NoDivergentOrbit`): confirmed mathlib
   has Prokhorov + Portmanteau-on-clopen; isolated the sole gap as a Krylov–Bogolyubov
   module; landed the two pure M2′ endpoints (`exists_freqThreshold_gt`,
@@ -136,9 +134,9 @@
   explicit exponent `E=13.3 ⇒ C=15, k≥400`; `C=6` is unprovable from literature (illustrative only);
   Bennett–Bugeaud is off-path. Confirmed leg 1 (`Gelfond.lcmUpto_le`) + full single-kernel leg 2
   (`Legendre.lean`) are trust-base clean; leg 3 (two-*kernel* Rhin determinant) is a real multi-lap
-  expedition (transfinite diameter, effective `n(ε)` asymptotics). Set MANDATED next chip = single-log
-  denominator/integrality tracking (findings-blessed warm-up, exercises all 3 legs, yields the first
-  effective irrationality measure of a log in Lean). Build 🟢 8754 jobs; crux `sep_two_three` unchanged
+  expedition (transfinite diameter, effective `n(ε)` asymptotics). The run then set a single-log
+  denominator/integrality warm-up as its next chip; the public-readiness review later classified
+  that work as ancillary. Build 🟢 8754 jobs; crux `sep_two_three` unchanged
   disclosed sorry.
 
 ---

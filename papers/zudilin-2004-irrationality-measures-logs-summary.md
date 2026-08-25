@@ -5,7 +5,7 @@
 - **Local PDF**: `papers/zudilin-2004-irrationality-measures-logs.pdf` (gitignored).
   **Verified firsthand 2026-08-24** (host session).
 
-## Why it is on-box
+## Why it was reviewed
 It carries **the one datum that Wu 2003 omits**: Rhin's actual exponents.  §3.4 states Rhin's
 polynomial in full,
 

@@ -1,5 +1,13 @@
 /.lake
+.DS_Store
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
 
-# Paper PDFs stay on disk, never in history (also in the global ignore - belt and braces)
+# Source-paper PDFs stay local and are never redistributed from this repository.
 *.pdf
 __pycache__/

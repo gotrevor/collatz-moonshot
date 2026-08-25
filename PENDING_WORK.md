@@ -1,5 +1,9 @@
 # PENDING_WORK
 
+> [!CAUTION]
+> Chronological lab notebook. The public-readiness review in `README.md` and the current
+> directive in `DIRECTION.md` supersede older “next lap” instructions and novelty claims.
+
 ## ★ LAP 2026-08-25 (~2330, review + grind) — single-log INTEGER linear form LANDED ★
 
 **Advance on the crux (mandated next chip DONE).** `Legendre.lean` now closes the denominator/
@@ -11,10 +15,12 @@ integrality leg of the single-kernel effective measure — all trust-base clean:
   = P + Q·log(1−a)`, `Λ_n = ∫₀¹ P_n/(1−a·y)`.  Per-`k` cofactor `c_k·(lcm n/lcm k)·a^(n−k) ∈ ℤ`;
   assembled with the generic `sum_int_linear`.
 
-⟹ For a SINGLE Möbius kernel the effective-measure package is complete: integer linear form
+⟹ For a SINGLE Möbius kernel the small-linear-form package is complete: integer linear form
 (this lap) + non-vanishing (`legendre_mobius_ne_zero`) + geometric remainder
 (`legendre_mobius_remainder_bound` via `legendre_mobius_integral`) + `Gelfond.lcmUpto_le`.
-`a=−1 ⇒ log 2`, `a=−2 ⇒ log 3`.  This is the first effective irrationality measure of a log in Lean.
+`a=−1 ⇒ log 2`, `a=−2 ⇒ log 3`. This is useful auxiliary formalization, but no
+corpus-wide novelty claim is made, and these lemmas do not by themselves constitute an
+irrationality measure in the usual height-dependent sense.
 
 **Single-log SMALLNESS for `log 2` LANDED (this lap, cont.):** `Legendre.lean`,
 `legendre_log_two_small (n) : ∃ P Q:ℤ, (P+Q·log2 ≠ 0) ∧ |P+Q·log2| ≤ lcm(1..n)·(1/5)ⁿ`
@@ -31,14 +37,12 @@ the two-kernel leg 3 anyway, which is the crux).
 `4ⁿ·o(1)` denominator" limit that turns `legendre_log_two_small` into irrationality, and it is reused
 verbatim (two-kernel-wise) by leg 3's final measure assembly.
 
-**NEXT chips (priority):**
-1. **Cap the log-2 story** (small, ~15 lines): combine `legendre_log_two_small` (nonzero `P+Q·log2`,
-   `|·| ≤ lcm·(1/5)ⁿ`) with `lcmUpto_mul_geom_tendsto_zero` (c=1/5<1/4 ✅) to get `P+Q·log2 → 0`; then
-   if `log2 = p/q` the nonzero integer `q·P+p·Q` has `|·| ≥ 1` but `= q·(P+Q·log2) → 0`, contradiction
-   ⇒ `Irrational (Real.log 2)` (mathlib LACKS this).  All ingredients now in-repo.  Then STOP
-   single-kernel.
-2. **Leg 3 = the crux** (source-gated expedition): two-kernel Rhin determinant — see below / findings.
-2. **Leg 3 = the actual crux** (source-gated, expedition): the two-*kernel* Rhin determinant
+**Current disposition:**
+1. **Stop the single-log route.** Proving the well-known irrationality of `log 2` would be
+   mathematically valid but off the Collatz critical path.
+2. **Choose explicitly how to represent the literature input:** either add a narrow,
+   source-audited named axiom for the needed effective separation, following `Assumed.lean`,
+   or scope a separate project to formalize the two-kernel Rhin determinant
    (`a₁=2/3, a₂=4/3, d=3`, the 6-factor `H_n`), giving a SIMULTANEOUS form in log2 AND log3.
    Findings `…-rhin-wu-explicit-construction.md` have the exact kernel/exponents/constants; the hard
    part is effective two-sided coefficient asymptotics `n(ε)` + integer transfinite diameter.
@@ -46,7 +50,7 @@ verbatim (two-kernel-wise) by leg 3's final measure assembly.
 
 ## ★ LAP 2026-08-25 (later) — exponent correction (Rhin 7.616) + general explicit crossover ★
 
-**Route-decisive source read (WebSearch; WebFetch firewalled, no ON-LINE-FINDINGS landed yet).**
+**Historical source-search note (superseded by the later online findings).**
 Nailed the proven effective object behind `sep_two_three`:
 - **Rhin 1987**: linear-independence measure of `{1, log 2, log 3}` **< 7.616** (Rhin, *Approximants de
   Padé et mesures effectives d'irrationalité*). Later refinements exist (Wu, *Math. Comp.* 72 (2003),
@@ -75,7 +79,7 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
    flagship `sep_two_three_of_gelfond_measure_C⟨τ⟩` with the tight per-C crossover (crossover_130-style
    ratio induction) and the extended finite check.
 2. **Meanwhile (source-independent) — STARTED this lap.** `FrontA/Legendre.lean` now ports the
-   polynomial-approximant backbone from `~/src/reservoir/ahhwuhu/zeta_3_irrational/LegendrePoly.lean`:
+   polynomial-approximant backbone from [`ahhwuhu/zeta_3_irrational`](https://github.com/ahhwuhu/zeta_3_irrational), `Zeta3Irrational/LegendrePoly.lean`:
    `shiftedLegendre n = (n!)⁻¹·(d/dx)^n(x^n(1-x)^n)`, with `shiftedLegendre_eq_sum` and
    `shiftedLegendre_eq_int_poly` (integer coeffs `(-1)^k·C(n,k)·C(n+k,n)`) — both trust-base clean.
    Integrality + `Gelfond.lcmUpto_le` (leg 1) = the denominator control. **Remaining leg-2 bricks to
@@ -109,7 +113,7 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
 
 ## ★ REVIEW LAP 2026-08-25-2100 — crux core reclassified 🟡 (Gelfond), reduced to ONE uniform measure ★
 
-**Route-decisive source read (WebSearch).** The sole open input `sep_two_three` ≡ an effective
+**Historical source-search note.** The sole open input `sep_two_three` ≡ an effective
 irrationality measure of `log₂3`. This is NOT a hopeless multi-year wall — it is the **classical
 Gelfond 1935** effective lower bound on the distance `|2ⁿ − 3ᵐ|` between powers of 2 and 3 (linear
 forms in *two* logarithms; predates Baker's general theorem), with explicit constants in
@@ -264,7 +268,7 @@ sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full 
 `log₂3`.  Concrete routes: (a) continued-fraction best-approximation `‖kθ‖ ≥ 1/(q_{n+1}+q_n)` for
 `θ=log₂3` — its convergents are decidable integer facts `2^a ⋛ 3^b`, but bounding all partial
 quotients forever needs an effective measure (Baker); (b) a hypergeometric/Padé construction giving
-a Liouville-then-improved bound; (c) Aristotle (job `7a593ec3`, isolated pure-ℕ `sep_two_three`,
+a Liouville-then-improved bound; (c) an Aristotle attempt (isolated pure-ℕ `sep_two_three`,
 submitted this lap — verify `#print axioms` if it returns).  A cited Baker axiom stays BASELINE.
 
 ## ★ IN PROGRESS: paradoxical finite trajectories (2026-08-24) ★
@@ -801,7 +805,7 @@ primitive nontrivial integer cycle. With `hercher_min_circuit_count` (≥92) any
 closes Front B via `frontB_of_compression_le_91`. **Review finding (2026-08-24):** this is
 Front B *restated*, not a sub-lemma — an upper bound on `m` is as hard as the cycles problem,
 is **absent from the literature** (which bounds `m` only below), and is **source-blocked** (SdW
-2005 not on box, `ON-LINE-REQUEST.md` unanswered). The block apparatus below is feature-complete;
+2005 source then unavailable). The block apparatus below is feature-complete;
 **do not add more vocabulary.** Resume only when the SdW source lands or a genuinely new
 upper-bound idea appears. The completed apparatus (kept for that day):
 

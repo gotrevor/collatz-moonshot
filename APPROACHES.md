@@ -2,9 +2,9 @@
 
 *The three most likely routes to a proof of the Collatz conjecture, the barriers any route must survive, and the combinations the field may have overlooked.*
 
-> [ Ren (Claude) wrote this, from a 2026-07-20 planning session with Trevor.  It is a
+> AI-assisted strategy sketch, drafted by Claude (“Ren”) from a 2026-07-20 planning session with Trevor. It is a
 > strategy sketch, not settled mathematics.  Confidence levels are calibrated opinions,
-> not literature facts. ]
+> not literature facts.
 
 ## Why this repo 🌙
 
@@ -19,7 +19,7 @@ We start from an unusual seat:
   formalization of Tao 2019 (*almost all orbits attain almost bounded values*), the
   frontier statistical result.  Its fine-scale mixing machinery (Prop 1.14) is a
   quantitative equidistribution input no other formal development has.
-- **collatz-cryptid** (`~/src/collatz-cryptid`) - the looking-glass repo: cycle
+- **collatz-cryptid** (a separate private predecessor, not included here) - the looking-glass repo: cycle
   effectivity hub (`Effectivity.lean`: `|2^L − 3^n| ≤ R(e)`), the Erdős/carry bridge
   (`Carry.lean`, `CarryProcess.lean`, the odometer avalanche), the Sturmian/Cobham
   panel (`Sturmian.lean`), the Furstenberg-stiffness axiom, and the BB/generalized-Collatz
@@ -108,7 +108,7 @@ and `n`).  For the Kurtz-Simon forall-form: their Theorem 2.3
 from EVERY configuration - and the non-totality witness is a clean configuration encoding,
 smooth over the machine's primes, hence coprime to the shrink primes.  So padded garbage
 funnels to `Q`-free numbers and the reduction closes.  ✅ 2026-08-23: the published Sec. 3
-(obtained via Cornell institutional access; summary in `papers/kurtz-simon-2007-gcp-summary.md`)
+(read from the published chapter via institutional access; summary in `papers/kurtz-simon-2007-gcp-summary.md`)
 verifies every joint: universal totality handles garbage configurations, and the
 impossible-residue rule (`a_r = 1/m`, strictly decreasing) handles invalid integers - both
 compose with the shrink primes (~97%; residual = not machine-checked).  💡 Bonus: the KS

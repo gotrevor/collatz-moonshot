@@ -34,7 +34,7 @@ denominators, then combines three estimates:
 
 Assembling (1)+(2)+(3) gives `|m·log 2 − k·log 3| ≥ c·H^{-κ}` (polynomial), whence `hmeas`.  Legs 2–3
 are the genuine multi-lap GO grind (no mathlib support; source construction pending — see
-`ON-LINE-REQUEST.md`).  This file lands leg 1.
+`ON-LINE-FINDINGS-2026-08-25-rhin-wu-explicit-construction.md`). This file lands leg 1.
 -/
 
 open Chebyshev Real

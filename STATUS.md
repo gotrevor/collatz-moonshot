@@ -1,17 +1,26 @@
 # STATUS — collatz-moonshot 📊
-**A machine-checked scaffold for the Collatz conjecture: an axiom-clean two-front
-decomposition, with each front's deep inputs as honestly-cited axioms being narrowed
-lap by lap.** · **Build**: 🟢 green (8754 jobs) · **Updated**: 2026-08-25 (review lap ~2330) · sole crux `sep_two_three` reduced to ONE uniform Rhin measure; full single-kernel Padé/Legendre toolkit built (leg 2); next chip = single-log integrality (leg 2→result)
+
+> [!CAUTION]
+> This is a chronological research ledger, not a claim that Collatz or either open front
+> has been proved. Older entries preserve superseded plans and may overstate their likely
+> importance. Lean source and `#print axioms` are authoritative; see `README.md` for the
+> concise public status.
+
+**Public checkpoint (2026-08-25):** `lake build` is green (8754 jobs).
+Both headline fronts remain open. There is one declaration containing `sorry`,
+`FrontA.sep_two_three`; named literature and conjecture axioms are also used explicitly.
+The recently added single-kernel Legendre development produces useful small nonzero
+linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
+needed by `sep_two_three` nor constitutes progress on either Collatz front by itself.
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and
 `conjecture_of_fronts` (`Conjecture.lean`, `Descent.lean`) reduce Collatz to two
 front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialCycle`
-(Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. **This
-review re-scoped the reachable frontier.** Front B's closer needs `Compression` (an *upper*
+(Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. Front B's closer needs `Compression` (an *upper*
 bound on cycle circuit-count) — now diagnosed as Front B *restated* (no elementary/known
-upper bound; the literature bounds circuits only below) and **source-blocked** (SdW 2005 not
-on box); its Lean apparatus is feature-complete and **on hold**. Front A milestone **M2′ is
+upper bound; the literature bounds circuits only below) and **source-blocked** (the needed
+Simons–de Weger source is not included); its Lean apparatus is feature-complete and **on hold**. Front A milestone **M2′ is
 complete**: `ParityRigidityW1' → NoDivergentOrbit` is sorry-free and trust-base clean, including
 all Krylov–Bogolyubov/Portmanteau/frequency/drift plumbing. The remaining Front-A crux is
 `ParityRigidityW1'` itself—the arithmetic restriction distinguishing positive-integer parity
@@ -26,20 +35,26 @@ acyclicParadoxical`); the exact few-block `numer` closed forms; and the full Fro
 consumption `finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical →
 NoDivergentOrbit`, machine-checked with ledger `[propext, Classical.choice, Quot.sound,
 rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged sorry-free).
-New discovery: **every acyclic paradoxical word has ≥ 3 odd blocks** — exhaustively verified
-two ways (word-based to length 38; independent orbit-based to start 100000), strictly
-generalizing Appendix A. The interior two-block exclusion
+Computational evidence suggests that **every acyclic paradoxical word has ≥ 3 odd blocks**;
+this was checked two ways (word-based to length 38; independent orbit-based to start 100000).
+The corresponding general interior two-block exclusion
 (`le_two_blocks_not_acyclicParadoxical`) is machine-checked **modulo the single inequality
-`b + d ≤ 5`** — the sole `src/` `sorry` (in `near_critical_containment`). Case A (both blocks
+`b + d ≤ 5`** — ultimately dependent on the sole source `sorry`, `sep_two_three`. Case A (both blocks
 subcritical), the elementary squeeze, `window_unique_m`, the power bracket, and the finite
 discharge once `b+d ≤ 5` are all sorry-free. **`b + d ≤ 5` is now confirmed Baker-grade**
 (effective irrationality of `log₂3`): the 2026-08-25-1500 review lap REFUTED the last elementary
 hope by proving the real relaxation of `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is feasible at unbounded `g`
 (exact witness at `g=41`, `experiments/two_block_relaxation.py`), so no `nlinarith`/polynomial
-certificate can exist. The only GO path is building an explicit linear-forms-in-logs bound for
-`log₂3` in Lean (mathlib lacks it). This is the active crux, carrying one disclosed `src/` sorry.
+certificate can exist. The remaining route is to consume a faithfully stated published effective
+separation theorem as a named axiom or to formalize such a theorem. The former matches this
+repository's policy for established literature; neither choice would prove the much stronger
+global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-08-25 (public-readiness review):** stopped the treadmill and froze the release candidate.
+  Reclassified the single-log work as ancillary formalization, removed corpus-wide novelty claims,
+  and made the one `sorry`, named assumptions, computational evidence, and open fronts prominent.
+  This entry supersedes older “MANDATED next chip” language below.
 - **2026-08-25 (review lap ~2330 — direction KEPT, constants corrected, single-kernel leg 2 audited):**
   Reviewed the two GO-grind laps (2100 uniform-measure reduction; 2300 full single-kernel Legendre
   toolkit). Confirmed leg 1 (`Gelfond.lcmUpto_le`) and the entire leg-2 machinery in `Legendre.lean`
@@ -47,8 +62,8 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
   trust-base clean. Findings landed the honest object: **Rhin 1987** `{1,log2,log3}` measure, explicit
   exponent `E=13.3 ⇒ C=15, k≥400` (`C=6` unprovable, illustrative only); leg 3 (two-*kernel* Rhin
   determinant) is a genuine multi-lap expedition (transfinite diameter, effective `n(ε)` asymptotics).
-  Pinned the MANDATED next chip: single-log denominator/integrality tracking (findings-blessed warm-up;
-  gives the first effective irrationality measure of a log in Lean). Build 🟢 8754 jobs; crux unchanged.
+  Pinned the then-next chip: single-log denominator/integrality tracking. That auxiliary chip later
+  landed but was reclassified at the public-readiness review; the Collatz crux stayed unchanged.
 - **2026-08-25 (GO grind 2300 — full single-kernel effective-measure toolkit, `Legendre.lean`):**
   Built from scratch / faithfully ported (v4.18→v4.33) the whole single-Möbius-kernel machinery, all
   trust-base clean: `shiftedLegendre` + integer-coeff expansion; order-`n` Padé vanishing; the `n`-fold
@@ -171,11 +186,10 @@ certificate can exist. The only GO path is building an explicit linear-forms-in-
   `3^k ≤ (2^m−3^k)·k^C` via `sep_of_uniform_measure`; the honest object is **Rhin 1987**'s
   `{1,log2,log3}` measure (explicit `E=13.3 ⇒ C=15, k≥400`; `C=6/k≥130` illustrative only).
   Legs 1–2 built trust-base clean (`Gelfond.lcmUpto_le`, all of `Legendre.lean`).
-  **Concrete next chip = single-log integrality (leg 2 → result):** per-moment
-  `∃s:ℤ, lcm(1..k)·a^(k+1)·∫y^k/(1−a·y)=s−lcm(1..k)·log(1−a)` (a:ℤ, a≤−1) ⇒
-  `∃P Q:ℤ, lcm(1..n)·a^(n+1)·Λ_n=P+Q·log(1−a)`; with non-vanishing + remainder bound this is an
-  effective irrationality measure of `log 2` (a=−1) / `log 3` (a=−2) — novel Lean content, reused
-  two-kernel-wise by leg 3. Then leg 3 (source-gated Rhin two-kernel determinant; expedition).
+  The single-log denominator/integrality package has landed and is now classified ancillary:
+  it gives small nonzero forms for `log 2`, not the simultaneous estimate. A future run must
+  either consume a source-audited named literature axiom or explicitly scope the Rhin
+  two-kernel determinant as a separate formalization project.
   **Refuted, do NOT retry:** any elementary `nlinarith`/`omega` bound on `b+d`/`d`
   (`experiments/two_block_relaxation.py`). Fallback (BASELINE, not for gate-clearing): cite the
   Rhin bound as a narrow, provenance-documented axiom.

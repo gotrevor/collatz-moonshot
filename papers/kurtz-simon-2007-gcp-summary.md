@@ -3,8 +3,8 @@
 ## Provenance
 - **Authors**: Stuart A. Kurtz, Janos Simon (U. Chicago).
 - **Venue**: TAMC 2007, LNCS **4484**, pp. 542-553.  DOI 10.1007/978-3-540-72504-6_49.
-- **Local PDF**: `papers/kurtz-simon-2007-gcp.pdf` (gitignored - copyrighted; extracted from
-  the LNCS volume, obtained 2026-08-23 via Cornell institutional access, Trevor).  ⚠️ The
+- **Working PDF**: `papers/kurtz-simon-2007-gcp.pdf` (gitignored and not redistributed; extracted
+  from the LNCS volume and read via institutional access on 2026-08-23). ⚠️ The
   freely-hosted UChicago copy (`people.cs.uchicago.edu/~simon/RES/collatz.pdf`) is an
   UNFINISHED DRAFT: its Sec. 3 is empty and its bibliography is `[?]`s.  This summary is
   from the published chapter, read firsthand.

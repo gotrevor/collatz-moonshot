@@ -38,7 +38,7 @@ Answers the `2026-08-25` entry of `ON-LINE-REQUEST.md`.  Fulfilled by a networke
 | Zudilin, *An essay on irrationality measures of pi and other logarithms*, arXiv:math/0404523 | arXiv | ✅ read §3 (Rhin's construction, in Rhin's own linearised form) |
 | Waldschmidt, *Perfect Powers: Pillai's works and their developments* | author's site | ✅ read (Ellison's bound, §6) |
 | Bugeaud, *Linear Forms in Logarithms and Applications*, EMS 2018 | ❌ **paywalled**; only the table of contents is free | ⚠️ **not read** - see §6 |
-| Rhin, Progress in Math. **71** (1987) 155-164 | ✅ **obtained 2026-08-24** (Trevor, Cornell) | ✅ **read firsthand**; §7 RESOLVED |
+| Rhin, Progress in Math. **71** (1987) 155-164 | ✅ **obtained 2026-08-24** via institutional access | ✅ **read firsthand**; §7 RESOLVED |
 
 ---
 
@@ -239,8 +239,8 @@ What I can say without opening it: the book's engine is the LMN / Matveev two-lo
 (chapter 2), and Simons & de Weger state flatly that for the specific pair `(2,3)` **Rhin beats that
 family**.  So §3.1 is likely a `exp(-c (log n)²)`-shaped statement, which is not an irrationality
 measure and would not give `hmeas` at any fixed `C`.  Confidence 75%; the way to settle it is to read
-p. 23-26, which Cornell alumni EZproxy may or may not reach (EMS books are not in the licensed set
-per `preferences/cornell-library-access.md`, so expect a purchase or an ILL).  **Ask if you want me to
+p. 23-26; institutional library access may or may not include the EMS volume,
+so a purchase or interlibrary loan may be required). **Ask if you want me to
 chase it** - but on the evidence above it would be a confirmation exercise, not a source of a better
 constant.
 
@@ -248,7 +248,7 @@ constant.
 
 ## 7. ✅ RESOLVED - Rhin's threshold is `H ≥ 2`
 
-Trevor hand-downloaded the chapter on 2026-08-24 (Cornell institutional access) and it is now on-box
+The chapter was obtained via institutional access on 2026-08-24 and kept as an untracked working copy
 at `papers/rhin-1987-pade-mesures-effectives.pdf`.  The Proposition on p. 160 reads: *"Soient
 `u₀, u₁, u₂` trois entiers tels que `H = max(|u₁|,|u₂|) ≥ 2`.  Alors la forme `Λ = u₀ + u₁ log 2 +
 u₂ log 3` vérifie (7) `|Λ| ≥ H^{-13.3}`.  De plus pour `H ≥ H₀` (`H₀` effectivement calculable)

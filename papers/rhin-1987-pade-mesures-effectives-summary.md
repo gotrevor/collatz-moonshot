@@ -4,13 +4,13 @@
 - **Author**: Georges Rhin (Université de Metz).
 - **Venue**: *Séminaire de Théorie des Nombres, Paris 1985-86* (ed. Catherine Goldstein), **Progress
   in Mathematics 71**, Birkhäuser Boston 1987, **pp. 155-164**.  DOI `10.1007/978-1-4757-4267-1_11`.
-- **Local PDF**: `papers/rhin-1987-pade-mesures-effectives.pdf` (gitignored); whole volume at
-  `papers/seminaire-theorie-nombres-paris-1985-86.pdf`.  Obtained 2026-08-24 by Trevor via Cornell
-  institutional access on SpringerLink (paywalled otherwise).
+- **Working PDF**: `papers/rhin-1987-pade-mesures-effectives.pdf` (gitignored and not redistributed);
+  whole-volume working filename `papers/seminaire-theorie-nombres-paris-1985-86.pdf`. Read via
+  institutional access on SpringerLink on 2026-08-24.
 - ⚠️ The PDF is an **Acrobat Paper-Capture OCR scan** - its text layer mangles accents and math.
   **Read the rendered pages**, do not trust `pdftotext` here.
 
-## The Proposition (p. 160) - the whole reason this paper is on-box
+## The Proposition (p. 160) - why this paper was reviewed
 
 > Soient `u₀, u₁, u₂` trois entiers tels que `H = max(|u₁|, |u₂|) ≥ 2`.  Alors la forme
 > `Λ = u₀ + u₁ log 2 + u₂ log 3` vérifie **(7) `|Λ| ≥ H^{-13.3}`**.  De plus pour `H ≥ H₀`

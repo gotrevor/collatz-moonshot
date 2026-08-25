@@ -1,8 +1,10 @@
 #!/usr/bin/env -S uv run --quiet --with numpy --with scipy python3
 """Evaluate Wu (2003) Thm 2's mu at Rhin's ACTUAL exponents (Zudilin, arXiv:math/0404523 §3.4)."""
 import importlib.util
-BASE = "/Users/gotrevor/src/collatz-moonshot/experiments"
-spec = importlib.util.spec_from_file_location("rhinmod", BASE + "/rhin_mu_wu_framework.py")
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("rhinmod", BASE / "rhin_mu_wu_framework.py")
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 

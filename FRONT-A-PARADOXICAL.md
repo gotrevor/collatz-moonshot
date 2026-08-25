@@ -255,7 +255,7 @@ general-`k` crux to the effective separation at continued-fraction convergent de
 and the `2^a⋛3^b ⇄ a/b⋛log₂3` bridge).  Everything is axiom-free beyond the trust base; only
 `sep_two_three` is the disclosed `sorry`.
 
-**Independently corroborated (Aristotle, job `7a593ec3`, and the on-box analysis):** the residual
+**Independently corroborated (an Aristotle attempt and the local analysis):** the residual
 core is irreducibly **Baker / effective linear forms in two logarithms** — the following alternative
 routes are *refuted*, not merely unattempted:
 - **Continued fractions alone**: at `k = qₙ` the target is *equivalent* to an upper bound on the

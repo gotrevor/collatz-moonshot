@@ -14,11 +14,12 @@ approximants: integrals `∫₀¹ P_n(x)·(smooth) dx` where `P_n` is the shifte
 explicit sum form and (ii) **integer coefficients** (which control the denominator via `lcm(1..n)`,
 leg 1 = `Gelfond.lcmUpto_le`).
 
-This module ports those two facts (`shiftedLegendre_eq_sum`, `shiftedLegendre_eq_int_poly`) from the
-verified ζ(3)-irrationality development (`~/src/reservoir/ahhwuhu/zeta_3_irrational`), adapting to the
-current toolchain.  These are the correct, kernel-checked backbone of the log-measure construction;
-the analytic remainder-decay integral (leg 2 proper) and non-vanishing (leg 3) build on them once the
-exact Rhin kernel lands (see `ON-LINE-REQUEST.md`).
+This module adapts those facts, together with the endpoint-vanishing lemmas, from ahhwuhu's
+Apache-2.0 [`zeta_3_irrational`](https://github.com/ahhwuhu/zeta_3_irrational) development at commit
+`e8785315a01c8fbcddaa0fc03b3c8b29a61bc1f1`; see `THIRD_PARTY.md`.  The namespace, proof details,
+documentation, and toolchain compatibility were changed here.  These are a kernel-checked backbone;
+the analytic remainder-decay integral and non-vanishing arguments build on them. For the exact
+Rhin kernel, see `ON-LINE-FINDINGS-2026-08-25-rhin-wu-explicit-construction.md`.
 -/
 
 open scoped Nat
@@ -524,17 +525,18 @@ private lemma sum_int_linear {L : ℝ} (f : ℕ → ℝ) :
       obtain ⟨P, Q, hPQ⟩ := ih (fun k hk => h k (Finset.mem_insert_of_mem hk))
       exact ⟨px + P, qx + Q, by rw [Finset.sum_insert hx, hxeq, hPQ]; push_cast; ring⟩
 
-/-- **Integer linear form (single-log effective measure, leg 2 → result).**  For an integer
+/-- **Integer linear form (single-log denominator clearing).**  For an integer
 `a ≤ -1`, the Legendre–Möbius approximant, cleared by `D_n = lcm(1..n)·a^(n+1)`, is an **integer**
 combination of `1` and `log(1-a)`:
 `∃ P Q : ℤ, lcm(1..n)·a^(n+1)·∫₀¹ P_n(y)/(1-a·y) = P + Q·log(1-a)`.
 Expand `P_n = ∑ c_k yᵏ` (integer coeffs, `shiftedLegendre_eq_int_poly`) and clear each moment with
 `mobius_moment_int_cleared`; the per-`k` cofactor `c_k·(lcm(1..n)/lcm(1..k))·a^(n-k)` is an integer
-because `lcm(1..k) ∣ lcm(1..n)` (`lcmUpto_dvd_of_le`) and `k ≤ n`.  With `legendre_mobius_ne_zero`
-(so `P + Q·log(1-a) ≠ 0`) and the geometric remainder bound (`legendre_mobius_remainder_bound`,
-`legendre_mobius_integral`) plus `Gelfond.lcmUpto_le`, this is a genuine **effective irrationality
-measure of a single log** — `log 2` at `a = -1`, `log 3` at `a = -2` (mathlib has none).  It is the
-one-kernel prototype of leg 3's `D_n·Λ_n = p_n + q_n·log`. -/
+because `lcm(1..k) ∣ lcm(1..n)` (`lcmUpto_dvd_of_le`) and `k ≤ n`. With
+`legendre_mobius_ne_zero` and the geometric remainder bound, this supplies ingredients for
+small integer linear forms. It is not by itself an irrationality measure: that would require
+the appropriate decay and coefficient-height estimates. At `a = -2`, the clearing factor
+also overwhelms this kernel's remainder. It is the one-kernel prototype of leg 3's
+`D_n·Λ_n = p_n + q_n·log`. -/
 theorem legendre_mobius_int_linear_form (a : ℤ) (ha : a ≤ -1) (n : ℕ) :
     ∃ P Q : ℤ, (Nat.lcmUpto n : ℝ) * (a : ℝ) ^ (n + 1) *
         (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - (a : ℝ) * y))
@@ -682,13 +684,13 @@ theorem legendre_mobius_ne_zero (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (n : ℕ)
       exact div_pos hnum (pow_pos hd _)
   exact ne_of_gt hpos
 
-/-! ### The single-log effective smallness for `log 2` (`a = -1`)
+/-! ### Small integer linear forms in `log 2` (`a = -1`)
 
 At `a = -1` the clearing power `a^(n+1) = ±1` is harmless, so the geometric remainder genuinely beats
 the `lcm(1..n) ≤ 4ⁿ·o(1)` denominator: the sharp rational bound `y(1-y)/(1+y) ≤ 1/5` gives
 `|Λ_n| ≤ (1/5)ⁿ`, and `4·(1/5) < 1` makes `lcm(1..n)·(1/5)ⁿ → 0`.  This yields, for each `n`, a
-**nonzero** integer combination `P + Q·log 2` of size `≤ lcm(1..n)·(1/5)ⁿ` — the reusable core of an
-effective irrationality measure of `log 2` (the `a = -2`/`log 3` case needs Rhin's kernel, since there
+**nonzero** integer combination `P + Q·log 2` of size `≤ lcm(1..n)·(1/5)ⁿ` — enough for a standard
+irrationality argument for `log 2` (the `a = -2`/`log 3` case needs Rhin's kernel, since there
 `a^(n+1) = ±2^(n+1)` swamps the remainder — see `FRONT-A-PARADOXICAL.md`). -/
 
 /-- **Sharp rational remainder bound at `a = -1`.**  `∫₀¹ yⁿ(1-y)ⁿ/(1+y)^(n+1) ≤ (1/5)ⁿ`, from the
@@ -723,13 +725,13 @@ theorem legendre_remainder_neg_one_bound (n : ℕ) :
         intervalIntegral.integral_mono_on (by norm_num) hint intervalIntegrable_const hbound
     _ = (1 / 5 : ℝ) ^ n := by simp
 
-/-- **Single-log effective smallness for `log 2` (single-kernel measure, assembled).**  For every `n`
+/-- **Small nonzero integer linear forms in `log 2` (assembled).**  For every `n`
 there is a **nonzero** integer combination `P + Q·log 2` with
 `|P + Q·log 2| ≤ lcm(1..n)·(1/5)ⁿ`.  Assembles the integer linear form
 (`legendre_mobius_int_linear_form` at `a = -1`), non-vanishing (`legendre_mobius_ne_zero`), and the
 sharp remainder bound (`legendre_remainder_neg_one_bound` via `legendre_mobius_integral`).  Since
-`4·(1/5) < 1` while `lcm(1..n) ≤ 4ⁿ·e^{2√n·log n}` (`Gelfond.lcmUpto_le`), the bound `→ 0`, so this is
-the reusable heart of an effective irrationality measure of `log 2` — the first in Lean. -/
+`4·(1/5) < 1` while `lcm(1..n) ≤ 4ⁿ·e^{2√n·log n}` (`Gelfond.lcmUpto_le`), the bound tends to zero.
+No coefficient-height estimate or corpus-wide novelty claim is made here. -/
 theorem legendre_log_two_small (n : ℕ) :
     ∃ P Q : ℤ, ((P : ℝ) + (Q : ℝ) * Real.log 2 ≠ 0) ∧
       |(P : ℝ) + (Q : ℝ) * Real.log 2| ≤ (Nat.lcmUpto n : ℝ) * (1 / 5 : ℝ) ^ n := by

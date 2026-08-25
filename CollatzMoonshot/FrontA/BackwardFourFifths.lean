@@ -1,7 +1,11 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 import CollatzMoonshot.FrontA.BackwardThreeQuarters
 
 /-!
-# Pinned local target: correlated exponent 4/5 (depth-8 shared lift)
+# Pinned experimental target: correlated exponent 4/5 (depth-8 shared lift)
 
 Depth-8 analogue of `BackwardThreeQuarters`.  Source residues run modulo
 `19683 = 3^9`, child residues modulo `6561 = 3^8`, over the same five height

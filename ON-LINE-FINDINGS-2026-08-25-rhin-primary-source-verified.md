@@ -1,7 +1,7 @@
 # ON-LINE-FINDINGS 2026-08-25 - Rhin 1987 READ FIRSTHAND: threshold resolved, Wu typo found
 
-Trevor hand-downloaded the paywalled chapter (Cornell institutional access) on 2026-08-24.  **The
-primary source is now on-box**: `papers/rhin-1987-pade-mesures-effectives.pdf` (10 pp., pp. 155-164;
+The paywalled chapter was obtained via institutional access on 2026-08-24 and is not redistributed. **The
+primary source was read from an untracked working copy** (10 pp., pp. 155-164;
 gitignored), plus the whole volume as `papers/seminaire-theorie-nombres-paris-1985-86.pdf`.
 Read as rendered pages (the PDF is an Acrobat Paper-Capture OCR scan, so its text layer is not
 trustworthy for math).

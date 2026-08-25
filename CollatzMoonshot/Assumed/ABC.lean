@@ -9,8 +9,8 @@ import CollatzMoonshot.FrontB.Words
 # The abc conjecture, and what it actually buys Front B 🧨
 
 **CONJECTURE-grade** under the three-tier doctrine of `Assumed.lean`: open, widely believed,
-labelled.  The statement is copied verbatim from `collatz-cryptid`'s
-`Collatz/Erdos/Axioms.lean` so the two repos assume the *same* sentence.
+labelled. The statement matches the standard formulation used by this project's
+private predecessor; that repository is not a build dependency.
 
 ## Why it is here
 

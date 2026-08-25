@@ -6,7 +6,7 @@
 - **Source**: free AMS PDF.  **Local**: `papers/wu-2003-linear-independence-logs.pdf` (gitignored).
   **Verified firsthand 2026-08-24** (host session).
 
-## Why it is on-box
+## Why it was reviewed
 It is the **free, complete write-up of the Rhin/Padé machine** that produces effective lower bounds
 for `|u₀ + u₁ log 2 + u₂ log 3|`, i.e. the sole deep input behind Front A's `sep_two_three` (and,
 via `Λ = m log 2 - k log 3`, the effective irrationality measure of `log₂3`).

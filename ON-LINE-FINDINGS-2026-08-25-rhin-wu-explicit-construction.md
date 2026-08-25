@@ -111,7 +111,7 @@ for a Lean leg-2:
 ### 3.1 If you want a Beukers-shaped warm-up first
 
 For `log 2` alone the Beukers-style kernel does exist and is the exact analogue of the
-`zeta_3_irrational` integral you already have in `~/src/reservoir/ahhwuhu`:
+public [`ahhwuhu/zeta_3_irrational`](https://github.com/ahhwuhu/zeta_3_irrational) integral:
 
 ```
 D_n ∫₀¹ ( x(1−x)/(1+x) )ⁿ  dx/(1+x)  ∈  ℤ log 2 + ℤ,        D_n = lcm(1..n)
