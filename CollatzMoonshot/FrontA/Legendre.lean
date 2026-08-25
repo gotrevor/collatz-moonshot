@@ -146,4 +146,71 @@ lemma shiftedLegendre_poly_eval_one_eq_zero (n : ℕ) {m : ℕ} (h : m < n) :
   simp only [gt_iff_lt, tsub_pos_iff_lt]
   linarith
 
+/-- **Single integration-by-parts step against a Legendre-derivative polynomial.**  If a polynomial
+`p` vanishes at both endpoints, then `∫₀¹ (p')·g = −∫₀¹ p·g'` (the boundary term dies).  This is the
+inductive engine of the `n`-fold Legendre IBP identity. -/
+private lemma legendre_ibp_step (p : ℝ[X]) (g g' : ℝ → ℝ)
+    (hp0 : eval 0 p = 0) (hp1 : eval 1 p = 0)
+    (hg : ∀ y ∈ Set.uIcc (0 : ℝ) 1, HasDerivAt g (g' y) y)
+    (hg' : ContinuousOn g' (Set.uIcc (0 : ℝ) 1)) :
+    ∫ y in (0 : ℝ)..1, eval y (derivative p) * g y
+      = - ∫ y in (0 : ℝ)..1, eval y p * g' y := by
+  have key := intervalIntegral.integral_mul_deriv_eq_deriv_mul
+    (u := fun y => eval y p) (u' := fun y => eval y (derivative p)) (v := g) (v' := g')
+    (fun y _ => p.hasDerivAt y) hg
+    ((Polynomial.continuous (derivative p)).intervalIntegrable 0 1)
+    hg'.intervalIntegrable
+  rw [hp0, hp1] at key
+  simp only [zero_mul, sub_zero, zero_sub] at key
+  linarith [key]
+
+/-- **Legendre integration-by-parts identity (leg 2 core).**  For any `f` whose iterated derivatives
+`deriv^[k] f` (`k ≤ n`) are continuous on `[0,1]` and differentiable there (`k < n`),
+`∫₀¹ P_n(y)·f(y) dy = ((-1)^n / n!) · ∫₀¹ y^n(1-y)^n · f⁽ⁿ⁾(y) dy`, where `P_n = shiftedLegendre n`.
+Proof: `n`-fold integration by parts (`legendre_ibp_step`); every boundary term vanishes by
+`shiftedLegendre_poly_eval_{zero,one}_eq_zero`.  Specialized to a Möbius kernel `f(y)=1/(1−(1−c)y)`
+this yields the linear form `A_n + B_n·log c` with geometrically small remainder — the analytic heart
+of Rhin's effective measure of `log₂3` (see `Gelfond.lean`). -/
+theorem integral_shiftedLegendre_mul_eq (n : ℕ) (f : ℝ → ℝ)
+    (hcont : ∀ k, k ≤ n → ContinuousOn (deriv^[k] f) (Set.uIcc (0 : ℝ) 1))
+    (hderiv : ∀ k, k < n → ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+        HasDerivAt (deriv^[k] f) (deriv^[k + 1] f y) y) :
+    ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) * f y
+      = ((-1) ^ n / n !) * ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) * (deriv^[n] f) y := by
+  have aux : ∀ m, m ≤ n →
+      ∫ y in (0 : ℝ)..1, eval y (derivative^[n] ((X : ℝ[X]) ^ n * (1 - X) ^ n)) * f y
+        = (-1) ^ m * ∫ y in (0 : ℝ)..1,
+            eval y (derivative^[n - m] ((X : ℝ[X]) ^ n * (1 - X) ^ n)) * (deriv^[m] f) y := by
+    intro m
+    induction m with
+    | zero => intro _; simp
+    | succ j ih =>
+        intro hj
+        have hjn : j < n := hj
+        rw [ih (le_of_lt hjn)]
+        have hidx : derivative^[n - j] ((X : ℝ[X]) ^ n * (1 - X) ^ n)
+            = derivative (derivative^[n - (j + 1)] ((X : ℝ[X]) ^ n * (1 - X) ^ n)) := by
+          have hnj : n - j = (n - (j + 1)) + 1 := by omega
+          rw [hnj, Function.iterate_succ_apply']
+        have hp := legendre_ibp_step (derivative^[n - (j + 1)] ((X : ℝ[X]) ^ n * (1 - X) ^ n))
+          (deriv^[j] f) (deriv^[j + 1] f)
+          (shiftedLegendre_poly_eval_zero_eq_zero n (by omega))
+          (shiftedLegendre_poly_eval_one_eq_zero n (by omega))
+          (hderiv j hjn) (hcont (j + 1) hj)
+        rw [hidx, hp, pow_succ]
+        ring
+  have H := aux n le_rfl
+  rw [Nat.sub_self] at H
+  simp only [Function.iterate_zero, id_eq] at H
+  have hUval : (fun y : ℝ => eval y ((X : ℝ[X]) ^ n * (1 - X) ^ n) * (deriv^[n] f) y)
+      = fun y : ℝ => (y ^ n * (1 - y) ^ n) * (deriv^[n] f) y := by
+    funext y; simp [eval_mul, eval_pow]
+  rw [hUval] at H
+  -- pull the constant `(n!)⁻¹` out of the shiftedLegendre integral
+  have hLHS : (fun y : ℝ => eval y (shiftedLegendre n) * f y)
+      = fun y : ℝ => (n ! : ℝ)⁻¹ * (eval y (derivative^[n] ((X : ℝ[X]) ^ n * (1 - X) ^ n)) * f y) := by
+    funext y; simp only [shiftedLegendre, eval_mul, eval_C]; ring
+  rw [hLHS, intervalIntegral.integral_const_mul, H]
+  ring
+
 end CollatzMoonshot.FrontA
