@@ -1,5 +1,41 @@
 # PENDING_WORK
 
+## ★ LAP 2026-08-25 (later) — exponent correction (Rhin 7.616) + general explicit crossover ★
+
+**Route-decisive source read (WebSearch; WebFetch firewalled, no ON-LINE-FINDINGS landed yet).**
+Nailed the proven effective object behind `sep_two_three`:
+- **Rhin 1987**: linear-independence measure of `{1, log 2, log 3}` **< 7.616** (Rhin, *Approximants de
+  Padé et mesures effectives d'irrationalité*). Later refinements exist (Wu, *Math. Comp.* 72 (2003),
+  "on the linear independence measure of logarithms of rational numbers"). Also **μ(log 3) ≤ 5.125**
+  (Salikhov 2007) — but that is the SINGLE-log measure, not the two-log form we need.
+- **Consequence for the interface:** with the linear form `Λ = m log 2 − k log 3 > 0` near-critical,
+  `|2^m − 3^k| ≥ 3^k·Λ` and `Λ ≳ c·k^(−(τ−1))` with τ ≈ 7.616 ⇒ `(2^m−3^k)·k^C ≥ c·3^k·k^(C+1−τ)`.
+  So the honest provable exponent is **C ≈ 7** (need `C ≥ τ − 1 ≈ 6.6`, plus buffer for the constant),
+  NOT `C = 6`. ⟹ **`sep_two_three_of_gelfond_measure` (C=6) is illustrative, not honest**; the honest
+  interface is `sep_of_uniform_measure` instantiated at the true (C, K, constant).
+- **Voutier, arXiv:2111.01044 ("Improved Constants … Hypergeometric Functions"), MJCNT 11 (2022)** —
+  is about `(a/b)^(m/n)` (roots of rationals), NOT logs. Confirms the root/Padé-`(1−z)^s` route is
+  genuinely OFF-path for `log₂3` (consistent with the earlier refutation list). The log case needs
+  Rhin's contour-integral / Padé-to-`log` construction, not Voutier's.
+
+**Landed this lap (sorry-free, trust base; `PowSeparation.lean`):** `pow_le_two_pow_gen (C k)` —
+`k^C ≤ 2^k` for `C ≥ 4`, `k ≥ C²` (explicit threshold), plus `nat_sq_le_two_pow` and `exp_half_lt_two`.
+This removes the last non-explicit dependency (`poly_le_two_pow`) from the reduction: at ANY exponent C
+the crossover `k^(3C) ≤ 2^k` now holds explicitly from `k ≥ (3C)²`, so `sep_of_uniform_measure` is
+fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `native_decide` table.
+
+**Next lap (in priority order):**
+1. **If `ON-LINE-FINDINGS-*` for the sharpened request has landed** — read the exact Rhin/Wu construction
+   (the Padé-to-log approximant family + remainder bound + explicit constant `c` and threshold), then
+   either (a) formalize leg 2 (the remainder integral bound) or (b) instantiate a concrete honest
+   flagship `sep_two_three_of_gelfond_measure_C⟨τ⟩` with the tight per-C crossover (crossover_130-style
+   ratio induction) and the extended finite check.
+2. **Meanwhile (source-independent):** port the Legendre/Beukers integral infra from
+   `~/src/reservoir/ahhwuhu/zeta_3_irrational` (`LegendrePoly.lean`, `Integral.lean`, `d.lean` = the
+   lcm denominator, `Bound.lean`) and set up the analog for the log linear form. NOTE the ζ(3) proof is
+   a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a Legendre-type kernel giving
+   `A_n + B_n log 2` — reuse the denominator/Legendre lemmas, not the cube geometry.
+
 ## ★ REVIEW LAP 2026-08-25-2100 — crux core reclassified 🟡 (Gelfond), reduced to ONE uniform measure ★
 
 **Route-decisive source read (WebSearch).** The sole open input `sep_two_three` ≡ an effective

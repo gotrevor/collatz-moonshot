@@ -53,3 +53,24 @@ need the source.
    so I bump `C` and redo the concrete crossover/finite-check.
 
 Aim: enough of the explicit construction to formalize legs 2–3 faithfully next lap (no guessing).
+
+## 2026-08-25 (later) — SHARPENED: exact Rhin/Wu two-log construction + explicit constant
+
+WebSearch (server-side) has now pinned the proven object: the effective input behind `sep_two_three`
+is the **linear-independence measure of `{1, log 2, log 3}` < 7.616 (Rhin 1987)**, refined by **Wu,
+*Math. Comp.* 72 (2003) no. 242, "On the linear independence measure of logarithms of rational
+numbers"** (`ams.org/journals/mcom/2003-72-242/S0025-5718-02-01442-4/S0025-5718-02-01442-4.pdf`).
+NOT Voutier 2111.01044 (that is roots of rationals `(a/b)^{m/n}`, off-path for logs). Please fetch +
+summarize, PDFs ideal:
+
+1. **Rhin 1987** (*Approximants de Padé et mesures effectives d'irrationalité*, Séminaire
+   Delange–Pisot–Poitou / Progr. Math. 71) and/or **Wu 2003 (mcom link above)**: the explicit
+   Padé-to-`log(1−z)` (or contour-integral) approximant family `A_n + B_n·log2 + C_n·log3`, the
+   remainder size bound, the denominator (lcm/Chudnovsky) bound, and the FINAL explicit inequality
+   `|q₀ + q₁ log2 + q₂ log3| ≥ c·H^{−τ}` with the exact **constant `c`, exponent `τ` (≤7.616?), and
+   threshold `H₀`**. I need `c`, `τ`, `H₀` numerically to fix the honest exponent `C` and the
+   native_decide finite-check bound in `sep_of_uniform_measure`.
+2. The single-integral kernel Rhin uses (is it `∫₀¹ x^{αn}(1−x)^{βn}(…)^{γn} dx`? the exact exponents/
+   weights) — this is what I would formalize as "leg 2" (remainder decay) analogously to the
+   ζ(3) Beukers integral in `~/src/reservoir/ahhwuhu/zeta_3_irrational`.
+3. Best published `μ(log₂3)` (irrationality measure of the RATIO log3/log2), if it exists separately.
