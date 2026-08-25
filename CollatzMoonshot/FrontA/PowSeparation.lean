@@ -125,6 +125,21 @@ theorem denom_ge_of_between (a b c d p k : ℕ) (hb : 0 < b) (hd : 0 < d)
   have : (b : ℤ) + d ≤ k := by rw [key]; nlinarith [hbp, hck, hbZ, hdZ]
   exact_mod_cast this
 
+/-- **Determinant preservation for the convergent recurrence (pure ℤ).**  Consecutive convergents
+`p₋/q₋, p/q` with determinant `p·q₋ − p₋·q = e` produce the next convergent
+`p₊ = a·p + p₋, q₊ = a·q + q₋` with determinant `p₊·q − p·q₊ = p₋·q − p·q₋` (the sign of the
+`p·q₋ − p₋·q` determinant flips each step, so `|det|` is preserved).  This is the algebraic engine
+that propagates unimodularity (`|det| = 1`) along the continued-fraction chain of `log₂3`, so every
+convergent bracket fed to `theta_dist_lower` stays unimodular. -/
+theorem convergent_det_step (p' q' p q a : ℤ) :
+    (a * p + p') * q - p * (a * q + q') = p' * q - p * q' := by ring
+
+/-- The convergent denominators grow: `q₊ = a·q + q₋ ≥ q + q₋` for `a ≥ 1`, so the straddling
+range `[q, q₊)` of `theta_dist_lower` strictly advances each step. -/
+theorem convergent_denom_grow (q' q a : ℕ) (ha : 1 ≤ a) : q + q' ≤ a * q + q' := by
+  have : q ≤ a * q := by nlinarith [ha]
+  omega
+
 /-- **Best-approximation lower bound for a unimodular bracket.**  If `a/b < θ < c/d` is unimodular
 (`b·c = a·d + 1`), then every fraction `p/k` with denominator `1 ≤ k < b + d` stays at least the
 bracket-endpoint gap `min(θ − a/b, c/d − θ)` away from `θ`.  (No `p/k` can slip strictly inside the
