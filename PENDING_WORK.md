@@ -27,6 +27,16 @@ built from scratch (CF best-approx lower bound + effective partial-quotient cont
 cited.  The CF route's convergents ARE decidable integer facts `2^a ⋛ 3^b`, but bounding all
 partial quotients forever is the effective-measure (Baker) content.
 
+**CF-route foundation stones landed (sorry-free, trust base):**
+- `irrational_logb_two_three : Irrational (Real.logb 2 3)` — mathlib lacks it; the unavoidable
+  first lemma of any CF/effective-measure argument (rational ⇒ `2^a=3^b`, impossible).
+- `lt_logb_two_three_iff (a b) : a/b < logb 2 3 ↔ 2^a < 3^b` and companion
+  `logb_two_three_lt_iff : logb 2 3 < a/b ↔ 3^b < 2^a` — the workhorse bridge letting every
+  CF convergent/semiconvergent inequality for `log₂3` be discharged by `decide`/`norm_num` on ℕ,
+  with no real analysis in the loop.  Next: compute the CF `[1;1,1,2,2,3,1,5,2,23,…]` of `log₂3`
+  as verified `2^a ⋛ 3^b` facts, and build the best-approximation LOWER bound (the piece mathlib
+  omits) — then the effective-measure constant is the remaining Baker content.
+
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
 

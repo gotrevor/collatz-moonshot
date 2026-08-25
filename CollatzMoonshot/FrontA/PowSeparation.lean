@@ -83,6 +83,27 @@ theorem irrational_logb_two_three : Irrational (Real.logb 2 3) := by
   have : (2 : ℕ) ∣ 3 := (Nat.prime_two).dvd_of_dvd_pow hdvd
   norm_num at this
 
+/-- **Integer ⇄ real bridge for `θ = log₂ 3` (workhorse of the continued-fraction route).**
+A rational lower bound `a/b < log₂ 3` is *equivalent* to the decidable integer fact `2^a < 3^b`.
+This lets every continued-fraction convergent / semiconvergent inequality for `log₂ 3` be
+discharged by `decide`/`norm_num` on naturals, with no real-analysis in the loop. -/
+theorem lt_logb_two_three_iff (a b : ℕ) (hb : 0 < b) :
+    (a : ℝ) / b < Real.logb 2 3 ↔ 2 ^ a < 3 ^ b := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hbpos : (0 : ℝ) < b := by exact_mod_cast hb
+  rw [Real.logb, div_lt_div_iff₀ hbpos hlog2, mul_comm (Real.log 3) (b : ℝ),
+      ← Real.log_pow, ← Real.log_pow, Real.log_lt_log_iff (by positivity) (by positivity)]
+  exact_mod_cast Iff.rfl
+
+/-- Companion: `log₂ 3 < a/b ↔ 3^b < 2^a`. -/
+theorem logb_two_three_lt_iff (a b : ℕ) (hb : 0 < b) :
+    Real.logb 2 3 < (a : ℝ) / b ↔ 3 ^ b < 2 ^ a := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hbpos : (0 : ℝ) < b := by exact_mod_cast hb
+  rw [Real.logb, div_lt_div_iff₀ hlog2 hbpos, mul_comm (Real.log 3) (b : ℝ),
+      ← Real.log_pow, ← Real.log_pow, Real.log_lt_log_iff (by positivity) (by positivity)]
+  exact_mod_cast Iff.rfl
+
 /-- **Analytic bridge to the textbook Baker linear form (no new axioms).**  The weak separation
 `sep_two_three` reduces to the *standard* linear-forms-in-logarithms lower bound
 `Λ = m·log 2 − k·log 3 ≥ 2^(−k/3)` on the near-critical window, via nothing but the elementary
