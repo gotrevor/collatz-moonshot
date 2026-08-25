@@ -58,6 +58,18 @@ partial quotients forever is the effective-measure (Baker) content.
   only `‖q_nθ‖≥c·3^{−q_n}`; the needed base-`2^{1/3}` improvement is exactly Baker for `log₂3`).
   This is the minimal, precisely-pinned deep input; a cited Baker/linear-forms axiom stays BASELINE.
 
+**Sharpness finding (2026-08-25, tested against concrete brackets):** the current engine's output,
+the bracket *min-gap* `min(θ−a/b, c/d−θ)`, is LOOSER than the true best-approximation norm `‖kθ‖`.
+Concretely, for the convergent bracket `19/12 < log₂3 < 27/17` (unimodular, `12·27=19·17+1`, both
+endpoints verified via the bridge), at `k=15` it gives `log2·15·min-gap ≈ 0.017`, which does NOT
+clear the threshold `2^(−5) ≈ 0.031`.  So `sep_of_bracket` as stated needs a bracket whose min-gap
+is sharp, i.e. the refined bound `‖kθ‖ ≥ ‖q_nθ‖` for `q_n ≤ k < q_{n+1}` (not just the straddling
+min-gap).  **Next concrete step:** strengthen `theta_dist_lower`/`linForm_dist_lower` from the
+straddle min-gap to the sharp `‖q_nθ‖` bound — via the three-distance identity
+`‖q_{n-1}θ‖ = a_n·‖q_nθ‖ + ‖q_{n+1}θ‖`-style recurrence — before feeding `sep_of_bracket`.  The
+elementary pieces (`denom_ge_of_between`, `convergent_det_step`) are the ingredients; this is pure
+CF bookkeeping, NOT the Baker step (the Baker step remains bounding `q_{n+1} ≲ 2^{q_n/3}`).
+
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
 
