@@ -242,4 +242,71 @@ lemma mobius_iterate_deriv (a : ℝ) (n : ℕ) :
       push_cast
       ring
 
+/-- **Padé remainder form of the Legendre–Möbius integral (leg 2, assembled).**  For `a < 1` (so
+`1-a·y > 0` on `[0,1]`),
+`∫₀¹ P_n(y)/(1-a·y) dy = (-a)ⁿ · ∫₀¹ yⁿ(1-y)ⁿ/(1-a·y)^(n+1) dy`.
+Combines the `n`-fold IBP identity (`integral_shiftedLegendre_mul_eq`) with the kernel derivative
+(`mobius_iterate_deriv`).  The right side is the geometrically small remainder: its integrand is
+`(y(1-y)/(1-a·y))ⁿ · 1/(1-a·y)`, and `y(1-y)/(1-a·y) ≤ 1/4·(1/(1-a))` on `[0,1]`, so a suitable
+`a` makes it `≤ ρⁿ` with `ρ < 1`.  Specializing `a` to values with `log(1-a) ∈ {±log2, ±log3}`
+(from Rhin's kernel) turns the left side into the integer linear form `A_n + B_n·log c`. -/
+theorem legendre_mobius_integral (a : ℝ) (n : ℕ) (ha : a < 1) :
+    ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) * (1 / (1 - a * y))
+      = (-a) ^ n * ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1) := by
+  have hpos : ∀ y ∈ Set.uIcc (0 : ℝ) 1, 0 < 1 - a * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases eq_or_lt_of_le hy.1 with h | h
+    · simp [← h]
+    · nlinarith [mul_pos (sub_pos.2 ha) h, hy.2]
+  have hopen : IsOpen {y : ℝ | 1 - a * y ≠ 0} := isOpen_ne.preimage (by fun_prop)
+  -- continuity of each iterated derivative on `[0,1]`
+  have hcont : ∀ k, k ≤ n → ContinuousOn (deriv^[k] (fun x => 1 / (1 - a * x)))
+      (Set.uIcc (0 : ℝ) 1) := by
+    intro k _
+    have hgk : ContinuousOn (fun z => (k ! : ℝ) * a ^ k / (1 - a * z) ^ (k + 1))
+        (Set.uIcc (0 : ℝ) 1) :=
+      ContinuousOn.div (by fun_prop) (by fun_prop)
+        (fun z hz => pow_ne_zero _ (ne_of_gt (hpos z hz)))
+    exact hgk.congr (fun z hz => mobius_iterate_deriv a k z (ne_of_gt (hpos z hz)))
+  -- differentiability giving `HasDerivAt (deriv^[k] f) (deriv^[k+1] f y) y`
+  have hderiv : ∀ k, k < n → ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+      HasDerivAt (deriv^[k] (fun x => 1 / (1 - a * x)))
+        (deriv^[k + 1] (fun x => 1 / (1 - a * x)) y) y := by
+    intro k _ y hy
+    have hyne : (1 : ℝ) - a * y ≠ 0 := ne_of_gt (hpos y hy)
+    have hEqk : deriv^[k] (fun x => 1 / (1 - a * x))
+        =ᶠ[nhds y] fun z => (k ! : ℝ) * a ^ k / (1 - a * z) ^ (k + 1) :=
+      Filter.eventually_of_mem (hopen.mem_nhds hyne)
+        (fun z hz => mobius_iterate_deriv a k z hz)
+    have h1y : HasDerivAt (fun z => 1 - a * z) (-a) y := by
+      simpa using ((hasDerivAt_id y).const_mul a).const_sub 1
+    have hV := (hasDerivAt_const y ((k ! : ℝ) * a ^ k)).div (h1y.pow (k + 1))
+      (pow_ne_zero _ hyne)
+    have hdiff : DifferentiableAt ℝ (deriv^[k] (fun x => 1 / (1 - a * x))) y :=
+      (hV.congr_of_eventuallyEq hEqk).differentiableAt
+    have hh := hdiff.hasDerivAt
+    have hval : deriv^[k + 1] (fun x => 1 / (1 - a * x)) y
+        = deriv (deriv^[k] (fun x => 1 / (1 - a * x))) y := by
+      rw [Function.iterate_succ_apply']
+    rw [hval]; exact hh
+  calc ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) * (1 / (1 - a * y))
+      = ((-1) ^ n / n !) * ∫ y in (0 : ℝ)..1,
+          (y ^ n * (1 - y) ^ n) * (deriv^[n] (fun x => 1 / (1 - a * x)) y) :=
+        integral_shiftedLegendre_mul_eq n _ hcont hderiv
+    _ = ((-1) ^ n / n !) * ((n ! : ℝ) * a ^ n *
+          ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1)) := by
+        congr 1
+        rw [← intervalIntegral.integral_const_mul]
+        apply intervalIntegral.integral_congr
+        intro y hy
+        dsimp only
+        rw [mobius_iterate_deriv a n y (ne_of_gt (hpos y hy))]
+        ring
+    _ = (-a) ^ n * ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - a * y) ^ (n + 1) := by
+        have hfac : (n ! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero n
+        rw [neg_pow a n]
+        field_simp
+        ring
+
 end CollatzMoonshot.FrontA
