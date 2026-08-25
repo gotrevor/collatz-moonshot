@@ -135,9 +135,17 @@ H_n(z) = Σ_{ν=0}^{n} B_ν Δ^(n−ν) z^ν  +  Σ_{ν=n+1}^{2n} B_ν z^ν,    
 where `Δ` is a common multiple of the numerators `c_j` and the denominator `d` (here: of `2, 4, 3`).
 Term-by-term integration then gives `I(n; a_j) · D_n = −B_n log a_j + A_{n,j} ∈ ℤ log a_j + ℤ` with
 `D_n = lcm(1, …, n)`.  In Wu's Theorem 2 the same condition reads `H_n ∈ (Δ, x)ⁿ ℤ[x]` with
-`Δ = gcd(a₁,…,a_m)`.
+`Δ = gcd(a₁,…,a_m)` **as printed**.
 
-⚠️ **This `Δ`-divisibility is a real arithmetic gain and my quick reproduction misses it.**  Feeding
+⚠️ **Exact-audit correction (2026-08-26): Wu's printed `gcd` is untenable.**  The same theorem also
+prints `Dₙ=gcd(1,...,M)`, which would always equal one despite the subsequent claim `K>0`.  More
+importantly, negative endpoint powers in the displayed termwise integral are not integral with a
+gcd endpoint scale.  Both occurrences must be read as common multiples/LCMs.  Rhin's six weights
+confirm this internally: the contents of `Qᵢ(12x)` have exact weighted `(v₂,v₃)=(2,1)`, so the
+product lies in `(12,x)ⁿ`, with `12=lcm(2,3,4)` and the printed `12⁷` covering floor losses.  See
+`CollatzMoonshot/FrontA/RhinKernel.lean` and `FRONT-A-RHIN-LITE.md`.
+
+**Historical note (superseded by the correction above).**  Feeding
 Rhin's exponents into Wu's `μ = (τ⁽⁰⁾ + K)/(τ − K)` with `Δ = 1` gives
 
 ```
@@ -145,11 +153,10 @@ K = 1,   τ⁽¹⁾ = 1.4399,   τ⁽²⁾ = 1.4042,   τ = 1.4042,   τ⁽⁰�
 ```
 
 against Rhin's published `ν < 7.616`.  Feasible (`τ > K` ✅, so the construction is confirmed to work
-at these exponents), but **lossy by ≈ 2**.  The most likely home of the gap is the `Δ^(n−ν)`
-divisibility above (which lets the low half of `H_n` carry extra `Δ`-powers, shrinking `r_n`); a
-second candidate is my `min_ρ max_{|z|=ρ}` bound on `|B_n|` being weaker than the true coefficient
-growth.  **Do not treat `9.60` as a result** - it is the value of a deliberately simplified model, and
-it says my model is missing arithmetic, not that Rhin's constant is wrong.
+at these exponents), but **lossy by ≈ 2**.  This diagnosis was made before the `Q₆` typo was found;
+the gap was caused by `−104` versus Rhin's correct `−108`, not by a missing analytic gain.  The
+`Δ`-divisibility is nevertheless genuinely required for integrality and is supplied by the exact
+content balances.
 
 **The explicit `H₀(ε)`.**  Wu's Lemma 1 (pp. 903-904, read from the rendered PDF, not OCR) constructs
 it.  With `σ = lim (1/n) log|r_n|`, `τ = min_i τ⁽ⁱ⁾`, `m` the number of forms, and

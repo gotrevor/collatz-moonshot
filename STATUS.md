@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-08-25 live advance:** the independent Rhin-lite route has machine-checked exact content
+> balances and `17^n ≤ B_n ≤ 18^n`. It now also exhausts the degree-8 critical roots without
+> Sturm theory and proves the exact `(9/40)^1000` bound on every possible critical bracket. The
+> compact-maximum and integer-log-form wiring remain. See `FRONT-A-RHIN-LITE.md`. The source `sorry`
+> `sep_two_three` is not yet discharged.
+
 > [!CAUTION]
 > This is a chronological research ledger, not a claim that Collatz or either open front
 > has been proved. Older entries preserve superseded plans and may overstate their likely

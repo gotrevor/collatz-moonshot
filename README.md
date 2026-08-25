@@ -34,6 +34,13 @@ In particular, the single-log Legendre development is ancillary: it formalizes u
 approximant machinery for `log 2`, but it does **not** prove the simultaneous
 `log 2`/`log 3` estimate required by `sep_two_three`.
 
+The current independent two-log experiment is more direct: `FrontA/RhinLite.lean` proves exact
+arithmetic balances and a coarse central-coefficient band `17^n ≤ B_n ≤ 18^n` for a rationalized
+Rhin kernel. `FrontA/RhinLiteCritical.lean` exhausts the relevant roots of its degree-8 critical
+polynomial, and `FrontA/RhinLiteInterval.lean` proves the exact local `(9/40)^1000` remainder bound.
+The compact-maximum, integral, and simultaneous-approximation wiring remain. See
+[FRONT-A-RHIN-LITE.md](FRONT-A-RHIN-LITE.md); this progress does not discharge `sep_two_three` yet.
+
 Run `#print axioms <theorem>` to inspect a theorem's dependency ledger. A successful
 `lake build` means Lean accepted the files; it does not erase a `sorry`, validate the
 truth or fidelity of a declared axiom, or establish that an experimental reduction is
@@ -44,6 +51,7 @@ the axiom policy and [STATUS.md](STATUS.md) for the detailed research ledger.
 
 - [APPROACHES.md](APPROACHES.md) is the global strategy map.
 - [FRONT-A-ROUTES.md](FRONT-A-ROUTES.md) tracks the divergence front.
+- [FRONT-A-RHIN-LITE.md](FRONT-A-RHIN-LITE.md) tracks the independent coarse two-log proof.
 - [FRONT-B-ROUTES.md](FRONT-B-ROUTES.md) tracks the cycle front.
 - `CollatzMoonshot/Basic.lean`, `Conjecture.lean`, and `Descent.lean` define the map,
   conjecture, two-front split, and descent equivalence.

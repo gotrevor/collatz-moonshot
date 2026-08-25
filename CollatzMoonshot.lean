@@ -27,6 +27,10 @@ import CollatzMoonshot.FrontA.BackwardFourFifthsStopping
 import CollatzMoonshot.FrontA.BackwardHarmonicObstruction
 import CollatzMoonshot.FrontA.ParityReconstruction
 import CollatzMoonshot.FrontA.Paradoxical
+import CollatzMoonshot.FrontA.RhinKernel
+import CollatzMoonshot.FrontA.RhinLite
+import CollatzMoonshot.FrontA.RhinLiteCritical
+import CollatzMoonshot.FrontA.RhinLiteInterval
 import CollatzMoonshot.Assumed.Paradoxical
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers

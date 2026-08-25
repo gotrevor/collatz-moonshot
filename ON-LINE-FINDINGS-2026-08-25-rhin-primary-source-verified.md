@@ -89,11 +89,17 @@ K = 1                            (Dₙ = lcm(1..n))
 With Wu's typo'd `Q₆` the same script gives `τ⁽¹⁾ = 1.4399 ≠ τ⁽²⁾ = 1.4042` (unbalanced) and
 `μ = 9.602`.  The balance test alone would have caught the typo.
 
-**Consequences:**
+**Consequences (corrected again after an exact arithmetic audit, 2026-08-26):**
 
-- ⚠️ **Retract the `Δ`-divisibility hypothesis.**  The earlier doc guessed that the `9.60 vs 7.616`
-  gap came from dropping the ideal condition `Hₙ ∈ ((x,Δ)ℤ[x])ⁿ`.  That was wrong: the gap was
-  entirely the typo, and the plain `Δ = 1`, `K = 1` reading of Wu's Theorem 2 is **exactly right**.
+- ⚠️ The `9.60 vs 7.616` discrepancy was indeed caused by Wu's `Q₆` typo, but the earlier
+  conclusion that “plain `Δ=1` is exactly right” was false.  Wu's Theorem 2 literally prints `gcd`
+  both for `Δ` and for `Dₙ=gcd(1,...,M)`; taken literally, its termwise integrality claim fails and
+  `Dₙ` is always one.  The proof requires **common multiples**: `Δ=lcm(a₁,...,a_m)` and
+  `Dₙ=lcm(1,...,M)`.  For Rhin's endpoints the operative scale is `12=lcm(2,3,4)`.
+- ✅ Rhin's six weights satisfy the exact degree/v₂/v₃ balances `(2,2,1)`.  Equivalently, the
+  contents of `Qᵢ(12x)` put the product in `(12,x)ⁿ` (with the printed `12⁷` absorbing floor losses).
+  This independently repairs the source's integrality step without changing the reproduced
+  analytic value `7.61593`; see `FrontA/RhinKernel.lean` and `FRONT-A-RHIN-LITE.md`.
 - ✅ The `μ` model is now a **trusted instrument**, verified against a published constant.  It can be
   used to explore variants (different factor sets, different `bᵢ`) with confidence.
 - ✅ Legs 2 and 3 have a fully specified, reproducible target: integrand, exponents, denominators, and

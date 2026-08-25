@@ -6,6 +6,17 @@
 > Public checkpoint, 2026-08-25: no treadmill is active. This section supersedes the
 > dated directive history below, which is retained as a research log.
 
+- **Independent Rhin-lite route now active (2026-08-25).**  `FrontA/RhinKernel.lean` proves the
+  exact arithmetic/content balances of Rhin's published kernel.  `FrontA/RhinLite.lean` uses the
+  nearby denominator-1000 kernel `(705,551,449,109,39,54)/1000` and machine-checks the complete
+  central-coefficient band `17^n ≤ B_n ≤ 18^n` along its block subsequence.  No saddle-point or
+  coefficient asymptotic remains. `FrontA/RhinLiteCritical.lean` proves that eight disjoint
+  sign-changing brackets exhaust the real roots of the degree-8 critical polynomial (so no Sturm
+  theory was needed), and `FrontA/RhinLiteInterval.lean` proves the full rational target
+  `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets. **Next live theorem:**
+  the compact-maximum/derivative bridge, followed by the two LCM-cleared integral log forms. Read
+  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
+
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem
   `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` now includes

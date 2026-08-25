@@ -11,5 +11,9 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.conjecture_iff_descent
 #print axioms CollatzMoonshot.parityRigidityW1'_imp_noDivergent
 #print axioms CollatzMoonshot.finite_acyclicParadoxical_imp_noDivergent
+#print axioms CollatzMoonshot.FrontA.seventeen_pow_le_rhinLitePositive_coeff
+#print axioms CollatzMoonshot.FrontA.rhinLitePositive_coeff_le_eighteen_pow
+#print axioms CollatzMoonshot.FrontA.rhinLiteCriticalRoot_exhaustive_Icc
+#print axioms CollatzMoonshot.FrontA.rhinLiteKernelAbs_div_pow_le
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontB.frontB_of_compression_le_91

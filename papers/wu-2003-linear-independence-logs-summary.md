@@ -22,10 +22,17 @@ via `Λ = m log 2 - k log 3`, the effective irrationality measure of `log₂3`).
    `μ = (τ⁽⁰⁾ + K)/(τ - K)` provided `τ > K`.  **Lemma 1** is the generic criterion underneath and is
    where the effective `H₀(ε)` gets built.
 
+   **Source warning (exact audit 2026-08-26):** the PDF literally prints `gcd` for both the endpoint
+   scale `Δ` and `Dₙ=gcd(1,...,M)`.  Those statements cannot support the displayed proof (`Dₙ` would
+   be one); both must be common multiples/LCMs.  Rhin's own `ppcm` formula and the exact content
+   balances in `FrontA/RhinKernel.lean` confirm `Δ=lcm(2,3,4)=12` in this specialization.
+
 ## Rhin's explicit data for `(1, log 2, log 3)` (Wu eq. (1.4))
 `a = (2,3,4)`; `Hₙ = b₀ Π Qᵢ^{[bᵢn]}` with `Q₁ = x-2`, `Q₂ = x-3`, `Q₃ = x-4`, `Q₄ = 5x-12`,
-`Q₅ = 17x²-102x+144`, `Q₆ = 19x²-104x+144`; integrals over `[2,3]` and `[3,4]`.
-⚠️ **The exponents `bᵢ` are in Rhin's paper, not here** - the one datum still unfetched.
+`Q₅ = 17x²-102x+144`, `Q₆ = 19x²-108x+144`; integrals over `[2,3]` and `[3,4]`.
+Wu prints `−104` in `Q₆`; Rhin p. 162 and Zudilin agree that this is a typo for `−108`.  Rhin's
+verified weights are `(0.704324,0.552418,0.447582,0.109072,0.038934,0.054368)` in the factor order
+`(x−3,x−2,x−4,5x−12,Q₅,Q₆)`.
 
 **Full working notes, the `C = 15` bump, and the recommended Lean shape:**
 `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`.

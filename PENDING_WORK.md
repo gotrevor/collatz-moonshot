@@ -1,5 +1,22 @@
 # PENDING_WORK
 
+## ★ CURRENT — Rhin-lite finite-certificate route (2026-08-25) ★
+
+An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`.
+
+- ✅ exact published weight/content balances formalized in `FrontA/RhinKernel.lean`;
+- ✅ denominator-1000 rationalized kernel and the full central coefficient band
+  `17^n ≤ B_n ≤ 18^n` formalized in `FrontA/RhinLite.lean`;
+- ✅ `FrontA/RhinLiteCritical.lean` avoids a Sturm formalization entirely: eight exact sign
+  changes (seven in `(2,4)`, one in `(-3,-2)`) plus degree eight exhaust every real root;
+- ✅ `FrontA/RhinLiteInterval.lean` machine-checks all six factor bounds and proves
+  `|H(x)|/x^1000 ≤ (9/40)^1000` on every possible positive critical bracket;
+- **NEXT:** prove the compact-maximum/derivative bridge, lift it to the even block subsequence,
+  then extract the two LCM-cleared integer log forms. See `FRONT-A-RHIN-LITE-NEXT.md`.
+
+This route needs no sharp Rhin constant and no central coefficient asymptotics. Any finite measure
+closes the large-`k` part of `sep_two_three`; a larger `native_decide` range may finish the residue.
+
 > [!CAUTION]
 > Chronological lab notebook. The public-readiness review in `README.md` and the current
 > directive in `DIRECTION.md` supersede older “next lap” instructions and novelty claims.
