@@ -25,7 +25,23 @@ framing was over-pessimistic about tractability (the *route* was right; the *dif
   now elementary and machine-checked at the *uniform-measure* level (complementing the earlier
   per-`k` `sep_of_measure` and bracket-level `sep_of_bracket_sharp`).
 
-**Concrete next attack (in priority order):**
+**★ CRITICAL-PATH CRUX (the ONLY open `src/` obligation) = `hmeas`** — the uniform Gelfond measure
+`∀ k m, 130 ≤ k → 3^k < 2^m < 2·3^k → 3^k ≤ (2^m−3^k)·k^6`. Feasibility is NOT in doubt (Gelfond 1935
+proved it); it is *hard to formalize* (large hypergeometric construction, no mathlib support). Three
+attack paths (playbook §2):
+- **Path A — build the hypergeometric construction incrementally (the real GO grind).** 3 legs:
+  (1) denominator bound `lcm(1..n) ≤ 4^n·e^{o(n)}` — ✅ **LANDED** (`FrontA/Gelfond.lean` `lcmUpto_le`,
+  from mathlib Chebyshev `psi_eq_log_lcmUpto`+`psi_le`); (2) Padé remainder geometric decay; (3)
+  non-vanishing + two-log telescoping. Legs 2–3 need the exact source construction (Bugeaud §3.1 /
+  Bennett–Bugeaud) — requested in `ON-LINE-REQUEST.md` (2026-08-25). Next lap once source lands:
+  formalize leg 2 (remainder integral bound), the highest-value on-path brick.
+- **Path B — cite as a narrow provenance-documented axiom** `gelfond_two_three_measure` in `Assumed/`
+  feeding `hmeas` (BASELINE, does NOT clear the gate per DIRECTION; keeps the build honest meanwhile).
+- **Path C — Aristotle.** Reachable (egress OK). But `hmeas` is a research-hard theorem → auto-
+  formalizer returns a wrapper-sorry (corpus `aristotle-open-problem-returns-wrapper-sorry`); NOT a
+  good target. Skip unless decomposed into a genuinely tractable sub-lemma first.
+
+**Concrete next attack (finite-side, in priority order):**
 1. ✅ **DONE this lap — `hfin` discharged.** `sep_two_three_finite_check` (`native_decide`, ~7s) +
    `sep_two_three_small` prove `sep_two_three` outright for near-critical `6 ≤ k < 130` (m-range
    bounded by `2^m < 2·3^129 < 2^208`). This is the `hfin` input of `sep_of_uniform_measure` for
