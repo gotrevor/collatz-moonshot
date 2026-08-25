@@ -16,13 +16,20 @@ integrality leg of the single-kernel effective measure — all trust-base clean:
 (`legendre_mobius_remainder_bound` via `legendre_mobius_integral`) + `Gelfond.lcmUpto_le`.
 `a=−1 ⇒ log 2`, `a=−2 ⇒ log 3`.  This is the first effective irrationality measure of a log in Lean.
 
+**Single-log SMALLNESS for `log 2` LANDED (this lap, cont.):** `Legendre.lean`,
+`legendre_log_two_small (n) : ∃ P Q:ℤ, (P+Q·log2 ≠ 0) ∧ |P+Q·log2| ≤ lcm(1..n)·(1/5)ⁿ`
+(trust-base clean), plus the sharp rational remainder `legendre_remainder_neg_one_bound`
+(`∫₀¹ yⁿ(1−y)ⁿ/(1+y)^(n+1) ≤ (1/5)ⁿ`, from `y(1−y)/(1+y) ≤ 1/5`).  KEY finding recorded in the
+docstring: at `a=−1` the clearing power `a^(n+1)=±1` is harmless so `lcm·(1/5)ⁿ→0` (since `4·(1/5)<1`);
+but at `a=−2` (log 3) `a^(n+1)=±2^(n+1)` swamps the remainder — **single shifted-Legendre does NOT
+give log 3**, that needs Rhin's kernel.  So the single-kernel route caps at `log 2` (and `log 3` needs
+the two-kernel leg 3 anyway, which is the crux).
+
 **NEXT chips (priority):**
-1. **Finish the single-log measure inequality** (mechanical, source-independent, high value):
-   from `D_n·Λ_n = P + Q·log(1−a)` with `D_n = lcm(1..n)·a^(n+1)`, non-vanishing ⇒ `P+Q·log ≠ 0`,
-   and `|Λ_n| ≤ (|a|/(4(1−a)))ⁿ/(1−a)` (combine `legendre_mobius_integral` + `_remainder_bound`),
-   plus `|D_n| ≤ |a|^(n+1)·4ⁿ·e^{2√n log n}` (`Gelfond.lcmUpto_le`), derive the standard
-   irrationality-measure statement `|log(1−a) − P'/Q'| ≥ c/|Q'|^μ` for explicit `μ`.  Package as
-   `logb_effective_measure` (log 2 and log 3).  Milestone; NOT yet the two-log crux.
+1. **Cap the log-2 story** (small, mechanical): from `legendre_log_two_small` + `Gelfond.lcmUpto_le`
+   (`lcm ≤ 4ⁿ·e^{2√n·log n}`) show `lcm·(1/5)ⁿ→0` (exponent `n·log(4/5)+2√n·log n → −∞`), giving a
+   sequence of nonzero `P+Q·log2 → 0` ⇒ `Irrational (Real.log 2)` (or effective μ with `Q_n` growth).
+   Nice-to-have milestone; NOT the crux.  Then STOP polishing single-kernel.
 2. **Leg 3 = the actual crux** (source-gated, expedition): the two-*kernel* Rhin determinant
    (`a₁=2/3, a₂=4/3, d=3`, the 6-factor `H_n`), giving a SIMULTANEOUS form in log2 AND log3.
    Findings `…-rhin-wu-explicit-construction.md` have the exact kernel/exponents/constants; the hard

@@ -682,4 +682,100 @@ theorem legendre_mobius_ne_zero (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (n : ℕ)
       exact div_pos hnum (pow_pos hd _)
   exact ne_of_gt hpos
 
+/-! ### The single-log effective smallness for `log 2` (`a = -1`)
+
+At `a = -1` the clearing power `a^(n+1) = ±1` is harmless, so the geometric remainder genuinely beats
+the `lcm(1..n) ≤ 4ⁿ·o(1)` denominator: the sharp rational bound `y(1-y)/(1+y) ≤ 1/5` gives
+`|Λ_n| ≤ (1/5)ⁿ`, and `4·(1/5) < 1` makes `lcm(1..n)·(1/5)ⁿ → 0`.  This yields, for each `n`, a
+**nonzero** integer combination `P + Q·log 2` of size `≤ lcm(1..n)·(1/5)ⁿ` — the reusable core of an
+effective irrationality measure of `log 2` (the `a = -2`/`log 3` case needs Rhin's kernel, since there
+`a^(n+1) = ±2^(n+1)` swamps the remainder — see `FRONT-A-PARADOXICAL.md`). -/
+
+/-- **Sharp rational remainder bound at `a = -1`.**  `∫₀¹ yⁿ(1-y)ⁿ/(1+y)^(n+1) ≤ (1/5)ⁿ`, from the
+pointwise `y(1-y)/(1+y) ≤ 1/5` on `[0,1]` (`0 ≤ 5y²-4y+1 = ((5y-2)²+1)/5`) and `1+y ≥ 1`. -/
+theorem legendre_remainder_neg_one_bound (n : ℕ) :
+    (∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1)) ≤ (1 / 5 : ℝ) ^ n := by
+  have hbound : ∀ y ∈ Set.Icc (0 : ℝ) 1,
+      (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1) ≤ (1 / 5 : ℝ) ^ n := by
+    intro y hy
+    obtain ⟨hy0, hy1⟩ := hy
+    have h1y : (0 : ℝ) < 1 + y := by linarith
+    rw [div_le_iff₀ (by positivity)]
+    calc y ^ n * (1 - y) ^ n
+        = (y * (1 - y)) ^ n := by rw [mul_pow]
+      _ ≤ ((1 / 5 : ℝ) * (1 + y)) ^ n := by
+          apply pow_le_pow_left₀ (by nlinarith)
+          nlinarith [sq_nonneg (5 * y - 2)]
+      _ = (1 / 5 : ℝ) ^ n * (1 + y) ^ n := by rw [mul_pow]
+      _ ≤ (1 / 5 : ℝ) ^ n * (1 + y) ^ (n + 1) := by
+          apply mul_le_mul_of_nonneg_left _ (by positivity)
+          exact pow_le_pow_right₀ (by linarith) (by omega)
+  have hint : IntervalIntegrable (fun y => (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1))
+      MeasureTheory.volume 0 1 := by
+    apply ContinuousOn.intervalIntegrable
+    rw [Set.uIcc_of_le (by norm_num)]
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    intro y hy
+    obtain ⟨hy0, _⟩ := hy
+    exact pow_ne_zero _ (by positivity)
+  calc (∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1))
+      ≤ ∫ _ in (0 : ℝ)..1, (1 / 5 : ℝ) ^ n :=
+        intervalIntegral.integral_mono_on (by norm_num) hint intervalIntegrable_const hbound
+    _ = (1 / 5 : ℝ) ^ n := by simp
+
+/-- **Single-log effective smallness for `log 2` (single-kernel measure, assembled).**  For every `n`
+there is a **nonzero** integer combination `P + Q·log 2` with
+`|P + Q·log 2| ≤ lcm(1..n)·(1/5)ⁿ`.  Assembles the integer linear form
+(`legendre_mobius_int_linear_form` at `a = -1`), non-vanishing (`legendre_mobius_ne_zero`), and the
+sharp remainder bound (`legendre_remainder_neg_one_bound` via `legendre_mobius_integral`).  Since
+`4·(1/5) < 1` while `lcm(1..n) ≤ 4ⁿ·e^{2√n·log n}` (`Gelfond.lcmUpto_le`), the bound `→ 0`, so this is
+the reusable heart of an effective irrationality measure of `log 2` — the first in Lean. -/
+theorem legendre_log_two_small (n : ℕ) :
+    ∃ P Q : ℤ, ((P : ℝ) + (Q : ℝ) * Real.log 2 ≠ 0) ∧
+      |(P : ℝ) + (Q : ℝ) * Real.log 2| ≤ (Nat.lcmUpto n : ℝ) * (1 / 5 : ℝ) ^ n := by
+  set A : ℝ := ((-1 : ℤ) : ℝ) with hAdef
+  have hAlt : A < 1 := by rw [hAdef]; norm_num
+  have hA0 : A ≠ 0 := by rw [hAdef]; norm_num
+  have hA2 : (1 : ℝ) - A = 2 := by rw [hAdef]; norm_num
+  -- integer linear form at a = -1
+  obtain ⟨P, Q, heq⟩ := legendre_mobius_int_linear_form (-1) (by norm_num) n
+  rw [← hAdef, hA2] at heq
+  refine ⟨P, Q, ?_, ?_⟩
+  · -- non-vanishing: LHS = lcm·A^(n+1)·Λ ≠ 0
+    rw [← heq]
+    have hΛ := legendre_mobius_ne_zero A hAlt hA0 n
+    have hlcm : (Nat.lcmUpto n : ℝ) ≠ 0 := by
+      exact_mod_cast (Nat.lcmUpto_pos n).ne'
+    exact mul_ne_zero (mul_ne_zero hlcm (pow_ne_zero _ hA0)) hΛ
+  · -- size: |lcm·A^(n+1)·Λ| = lcm·|Λ| ≤ lcm·(1/5)^n
+    rw [← heq]
+    -- Λ = (-A)^n · R via the integral form
+    have hform : (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - A * y))
+        = (-A) ^ n * ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - A * y) ^ (n + 1) := by
+      have hcongr : (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - A * y))
+          = ∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) * (1 / (1 - A * y)) := by
+        apply intervalIntegral.integral_congr; intro y _; dsimp only; rw [mul_one_div]
+      rw [hcongr, legendre_mobius_integral A n hAlt]
+    -- the remainder integral equals the (1+y) form
+    have hden : ∀ y : ℝ, 1 - A * y = 1 + y := fun y => by rw [hAdef]; ring
+    have hReq : (∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 - A * y) ^ (n + 1))
+        = ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1) := by
+      apply intervalIntegral.integral_congr; intro y _; dsimp only; rw [hden]
+    have hRnn : 0 ≤ ∫ y in (0 : ℝ)..1, (y ^ n * (1 - y) ^ n) / (1 + y) ^ (n + 1) := by
+      apply intervalIntegral.integral_nonneg (by norm_num)
+      intro y hy; obtain ⟨hy0, hy1⟩ := hy; positivity
+    have hRbd := legendre_remainder_neg_one_bound n
+    -- |Λ| ≤ (1/5)^n
+    have hΛabs : |∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - A * y)| ≤ (1 / 5 : ℝ) ^ n := by
+      rw [hform, hReq, abs_mul]
+      have hone : |(-A) ^ n| = 1 := by rw [hAdef]; norm_num
+      rw [hone, one_mul, abs_of_nonneg hRnn]
+      exact hRbd
+    -- assemble: |lcm·A^(n+1)·Λ| = lcm·|Λ| ≤ lcm·(1/5)^n
+    rw [abs_mul, abs_mul, abs_pow]
+    have hlcmabs : |(Nat.lcmUpto n : ℝ)| = (Nat.lcmUpto n : ℝ) := abs_of_nonneg (by positivity)
+    have hAn1 : |A| ^ (n + 1) = 1 := by rw [hAdef]; norm_num
+    rw [hlcmabs, hAn1, mul_one]
+    exact mul_le_mul_of_nonneg_left hΛabs (by positivity)
+
 end CollatzMoonshot.FrontA
