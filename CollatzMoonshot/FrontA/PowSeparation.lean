@@ -392,6 +392,34 @@ theorem sep_of_bracket (k m a b c d : ℕ) (hk : 0 < k)
   rw [← hθ]
   exact mul_le_mul_of_nonneg_left hdist (le_of_lt hlog2)
 
+/-- **Sharp per-`k` interface (uses `theta_dist_lower_sharp`).**  Same as `sep_of_bracket` but with
+the tight bound, so the gap hypothesis has NO spurious factor of `k`: for near-critical `(k,m)` and a
+straddling unimodular bracket `a/b < θ < c/d` (`θ = log₂3`, `k < b+d`) with
+`2^(−k/3) ≤ log2 · min(bθ−a, c−dθ)`, the separation holds.  This is the interface the large-`k`
+convergent argument feeds: for `k ≈ q_{n+1}`, `min(bθ−a, c−dθ) ≈ 1/q_{n+2}`, so the hypothesis is
+`q_{n+2} ≲ 2^{k/3}` — the sub-exponential partial-quotient (Baker) bound. -/
+theorem sep_of_bracket_sharp (k m a b c d : ℕ) (hk : 0 < k)
+    (h1 : 3 ^ k < 2 ^ m) (hb : 0 < b) (hd : 0 < d) (huni : b * c = a * d + 1)
+    (hlo : (a : ℝ) / b < Real.logb 2 3) (hhi : Real.logb 2 3 < (c : ℝ) / d)
+    (hklt : k < b + d)
+    (hgap : Real.exp (-(k : ℝ) / 3 * Real.log 2)
+              ≤ Real.log 2 * min ((b : ℝ) * Real.logb 2 3 - a) ((c : ℝ) - d * Real.logb 2 3)) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  set θ := Real.logb 2 3 with hθ
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hkθ : (k : ℝ) * θ < m := by
+    have e1 : (k : ℝ) * θ = Real.logb 2 ((3 : ℝ) ^ k) := by rw [hθ, Real.logb_pow]
+    have e2 : (m : ℝ) = Real.logb 2 ((2 : ℝ) ^ m) := by
+      rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num)]; ring
+    rw [e1, e2]; apply Real.logb_lt_logb (by norm_num) (by positivity); exact_mod_cast h1
+  have hdist := theta_dist_lower_sharp a b c d θ hb hd huni hlo hhi k m hk hklt
+  have habs : |(k : ℝ) * θ - m| = (m : ℝ) - k * θ := by rw [abs_of_neg (by linarith)]; ring
+  rw [habs] at hdist
+  apply sep_of_logb_gap k m h1
+  refine le_trans hgap ?_
+  rw [← hθ]
+  exact mul_le_mul_of_nonneg_left hdist (le_of_lt hlog2)
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with
