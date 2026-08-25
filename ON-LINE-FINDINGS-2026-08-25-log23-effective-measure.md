@@ -2,6 +2,8 @@
 
 Answers the `2026-08-25` entry of `ON-LINE-REQUEST.md`.  Fulfilled by a networked host session on
 2026-08-24 (host clock).
+> 🔴 **SUPERSEDED IN PART (2026-08-25): the Rhin paper is now ON-BOX and read firsthand** (`papers/rhin-1987-pade-mesures-effectives.pdf`).  The threshold on the explicit bound is **`H ≥ 2`** (nothing hidden), `H = max(|u₁|,|u₂|)`, and Wu's `Q₆` is a typo.  Read **`ON-LINE-FINDINGS-2026-08-25-rhin-primary-source-verified.md` first**; where the two disagree, that one wins.
+
 
 ## 🔴 Bottom line, up front
 
@@ -36,7 +38,7 @@ Answers the `2026-08-25` entry of `ON-LINE-REQUEST.md`.  Fulfilled by a networke
 | Zudilin, *An essay on irrationality measures of pi and other logarithms*, arXiv:math/0404523 | arXiv | ✅ read §3 (Rhin's construction, in Rhin's own linearised form) |
 | Waldschmidt, *Perfect Powers: Pillai's works and their developments* | author's site | ✅ read (Ellison's bound, §6) |
 | Bugeaud, *Linear Forms in Logarithms and Applications*, EMS 2018 | ❌ **paywalled**; only the table of contents is free | ⚠️ **not read** - see §6 |
-| Rhin, Progress in Math. **71** (1987) 155-164 | ❌ **paywalled** Birkhäuser chapter | ⚠️ **not read** - see §7, this is the one gap that matters |
+| Rhin, Progress in Math. **71** (1987) 155-164 | ✅ **obtained 2026-08-24** (Trevor, Cornell) | ✅ **read firsthand**; §7 RESOLVED |
 
 ---
 
@@ -143,9 +145,8 @@ with `crossover_400 : 400 ≤ k → k ^ 45 ≤ 2 ^ k` replacing `crossover_130`,
 `sep_two_three_small` extended from `k < 130` to `k < 400`.  `window_unique_m` still gives one `m`
 per `k`, so that is 270 extra near-critical pairs; the largest numbers involved are `3^399 ≈ 10^190`.
 
-Keeping `C` and the threshold as *parameters* of the reduction (rather than baking in 15 / 400) is
-worth the small cost: if the Rhin threshold in §7 turns out to bite, the only thing that moves is the
-instantiation.
+Keeping `C` and the threshold as *parameters* of the reduction is still tidy, but §7 is now
+RESOLVED (`H ≥ 2`), so nothing is expected to move.
 
 ---
 
@@ -199,9 +200,9 @@ after this file was first written.  They are transcribed, cross-verified against
 under `x = 3z`, and discussed (with the exact kernel and the explicit `H₀(ε)` machinery) in
 **`ON-LINE-FINDINGS-2026-08-25-rhin-wu-explicit-construction.md`**, which answers the sharpened
 request block.  Short version: `(0.552418, 0.704324, 0.447582, 0.109072, 0.038934, 0.054368)` for
-`(Q₁..Q₆)`, summing to `Σ bᵢ deg Qᵢ = 2.000000` exactly.  Feeding them into the `Δ = 1` reading of
-Wu's formula gives `ν ≈ 9.60` rather than the published `7.616`; that gap is a defect of the
-simplified model (it drops the `Δ`-divisibility gain), **not** a correction to Rhin.
+`(Q₁..Q₆)`, summing to `Σ bᵢ deg Qᵢ = 2.000000` exactly.  ✅ The `Δ = 1` reading of Wu's formula reproduces Rhin **exactly** (`μ = 7.61593`) once Wu's `Q₆`
+typo is repaired to `19x² − 108x + 144`.  An earlier note here blamed a missing `Δ`-divisibility
+gain; that guess is **retracted**.
 Script: `experiments/rhin_mu_wu_framework.py` (self-contained, uv shebang).
 
 ---
@@ -245,26 +246,19 @@ constant.
 
 ---
 
-## 7. The one gap that matters: Rhin's threshold 🚨
+## 7. ✅ RESOLVED - Rhin's threshold is `H ≥ 2`
 
-Both published applications quote the Proposition as a bare `|Λ| ≥ H^{-13.3}` with **no stated range
-of validity**.  In both, `H ~ 10^17` or larger, so any hypothesis of the form `H ≥ H₀` would be
-invisible to them.  **Our application is different**: at `k = 400` we have `H = m ≈ 634`.  If Rhin's
-Proposition carries a threshold above ~600, the `C = 15 / k ≥ 400` instantiation is unsound as
-written, and the finite check has to swallow everything below the real threshold.
+Trevor hand-downloaded the chapter on 2026-08-24 (Cornell institutional access) and it is now on-box
+at `papers/rhin-1987-pade-mesures-effectives.pdf`.  The Proposition on p. 160 reads: *"Soient
+`u₀, u₁, u₂` trois entiers tels que `H = max(|u₁|,|u₂|) ≥ 2`.  Alors la forme `Λ = u₀ + u₁ log 2 +
+u₂ log 3` vérifie (7) `|Λ| ≥ H^{-13.3}`.  De plus pour `H ≥ H₀` (`H₀` effectivement calculable)
+(8) `|Λ| ≥ H^{-7.616}`."*
 
-So, in order:
-
-1. Treat `13.3` as **provenance-verified through two independent secondary uses**, and the
-   **threshold as unknown**.  Do not write "for all `H ≥ 2`" in a docstring.
-2. State the Lean hypothesis with its own explicit threshold parameter, exactly as in §3.3, and put
-   the unknown in the docstring where it cannot be summarised away.
-3. To close it: Rhin, *Approximants de Padé et mesures effectives d'irrationalité*, in *Séminaire de
-   Théorie des Nombres, Paris 1985-86* (ed. C. Goldstein), **Progress in Mathematics 71**, Birkhäuser
-   1987, pp. 155-164 - the Proposition is on **p. 160**.  Springer chapter DOI
-   `10.1007/978-1-4757-4267-1_11`, paywalled.  This is a hand-download ask for Trevor (Cornell
-   EZproxy, or ILL), not something a host session can fetch.  It is the single highest-value fetch
-   left on this front.
+So **the explicit bound holds from `H ≥ 2`**, `u₀` is not in the max, and the `C = 15 / k ≥ 400`
+instantiation is sound with no threshold worry.  The `H₀` in (8) is asserted effectively calculable
+but is **not stated**, so (8) stays unusable and (7) is the operative bound.  Full detail, plus the
+`Q₆` typo in Wu and the end-to-end reproduction of `7.616`, in
+**`ON-LINE-FINDINGS-2026-08-25-rhin-primary-source-verified.md`**.
 
 ---
 

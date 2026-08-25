@@ -10,7 +10,7 @@ on 2026-08-24 (host clock).
 | Simons & de Weger, *Theoretical and computational bounds for m-cycles of the 3n+1 problem*, **version 1.44, 31 Aug 2010** (v1.3 = Acta Arith. **117** (2005) 51-70) | `deweger.net/papers/[35a]SidW-3n+1-v1.44[2010].pdf` | ✅ full text read.  Local: `papers/simons-deweger-2010-m-cycles-v144.pdf` (gitignored) |
 | Simons, *On the nonexistence of 2-cycles for the 3x+1 problem*, Math. Comp. **74** (2005) 1565-1572 | AMS free PDF | ✅ full text read.  Local: `papers/simons-2005-two-cycles.pdf` |
 | Simons, *Cycles and divergent trajectories for a class of permutation sequences*, arXiv:2205.10582 | arXiv | ✅ read for the second, independent quotation of Rhin's Proposition |
-| Rhin, *Approximants de Pade et mesures effectives d'irrationalite*, Progress in Math. **71** (1987) 155-164 | ❌ **paywalled** (Birkhauser/Springer chapter), not read | see the caveat in the Front A findings |
+| Rhin, *Approximants de Pade et mesures effectives d'irrationalite*, Progress in Math. **71** (1987) 155-164 | ✅ **obtained 2026-08-24** (Trevor, Cornell institutional access) | ✅ **read firsthand**: `papers/rhin-1987-pade-mesures-effectives.pdf`; Prop. p. 160 holds from `H ≥ 2` |
 
 ⚠️ **The 2005 Acta Arith. paper is superseded by the authors' own v1.44.**  v1.3 (= the published
 paper) proves no nontrivial m-cycles for `m ≤ 68`; v1.44 proves `m ≤ 75` and improves every table.

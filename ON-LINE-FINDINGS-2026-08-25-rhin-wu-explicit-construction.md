@@ -5,6 +5,8 @@ Answers the `2026-08-25 (later) — SHARPENED` entry of `ON-LINE-REQUEST.md`.  H
 it answers items 1 and 3 of this block already (constants, `C`-bump, why Bennett-Bugeaud is off-path).
 This file adds the three things that one did not have: **Rhin's actual exponents**, the **exact
 kernel**, and the **explicit `H₀(ε)` machinery**.
+> 🔴 **SUPERSEDED IN PART (2026-08-25): the Rhin paper is now ON-BOX and read firsthand** (`papers/rhin-1987-pade-mesures-effectives.pdf`).  The threshold on the explicit bound is **`H ≥ 2`** (nothing hidden), `H = max(|u₁|,|u₂|)`, and Wu's `Q₆` is a typo.  Read **`ON-LINE-FINDINGS-2026-08-25-rhin-primary-source-verified.md` first**; where the two disagree, that one wins.
+
 
 Your read is confirmed on both counts: the proven object is Rhin's linear-independence measure of
 `{1, log 2, log 3}`, and **Voutier 2111.01044 is off-path** (roots of rationals, not logs).
@@ -18,7 +20,7 @@ Your read is confirmed on both counts: the proven object is Rhin's linear-indepe
 | `τ` (explicit form) | **13.3** | Rhin 1987, Proposition p. 160 |
 | `c` (explicit form) | **1** - the bound is a bare `H^{-13.3}`, no constant in front | quoted verbatim, twice: SdW v1.44 Lemma 12, Simons arXiv:2205.10582 Lemmas 10/13 |
 | `H` | `max(|u₀|, |u₁|, |u₂|)` | ditto |
-| `H₀` (explicit form) | ⚠️ **unknown / not stated in either citing paper** | see §5 |
+| `H₀` (explicit form) | ✅ **`H ≥ 2`** (Rhin p. 160, read firsthand 2026-08-25) | primary-source doc |
 | `τ` (asymptotic form) | **7.616 + ε** (`ν(1, log2, log3) < 7.616`) | Rhin 1987, reported in Wu 2003 §1 |
 | `H₀(ε)` (asymptotic form) | explicit formula exists, see §4 | Wu 2003, Lemma 1 proof, pp. 903-904 |
 
@@ -52,7 +54,8 @@ H_n(z) = 2^14 · 3^(2n+7)
 
 **Cross-verified against Wu's independent statement of the same construction.**  Wu eq. (1.4) lists
 the factors at the `x = 3z` scale: `Q₁ = x−2`, `Q₂ = x−3`, `Q₃ = x−4`, `Q₄ = 5x−12`,
-`Q₅ = 17x²−102x+144`, `Q₆ = 19x²−104x+144`.  Substituting `x = 3z` maps each of Zudilin's factors
+`Q₅ = 17x²−102x+144`, `Q₆ = 19x²−104x+144` ⚠️ **(Wu's `−104` is a TYPO; Rhin p. 162 has `−108`)**.
+Substituting `x = 3z` maps each of Zudilin's factors
 onto exactly one of Wu's, up to the powers of 3 that the `3^{2n}` prefactor absorbs:
 
 | Zudilin (z-scale) | Wu (x-scale) | exponent |
@@ -62,9 +65,11 @@ onto exactly one of Wu's, up to the powers of 3 that the `3^{2n}` prefactor abso
 | `z − 4/3` | `Q₃ = x − 4` | 0.447582 |
 | `5z − 4` | `Q₄ = 5x − 12` | 0.109072 |
 | `17z² − 34z + 16` | `Q₅ = 17x² − 102x + 144` | 0.038934 |
-| `19z² − 36z + 16` | `Q₆ = 19x² − 104x + 144` | 0.054368 |
+| `19z² − 36z + 16` | `Q₆ = 19x² − 108x + 144` ⚠️ (Wu prints `−104`; Rhin p. 162 confirms `−108`) | 0.054368 |
 
-and the exponents satisfy, **exactly**,
+⚠️ **Correction (2026-08-25)**: the `Q₆` row is where Wu and Rhin/Zudilin part company, and my
+original "all six match" claim was a mis-multiplication.  Rhin is the arbiter and Zudilin agrees with
+him.  Everything else below stands, and the exponents satisfy, **exactly**,
 
 ```
 Σ bᵢ · deg Qᵢ = 0.552418 + 0.704324 + 0.447582 + 0.109072 + 2(0.038934) + 2(0.054368) = 2.000000
