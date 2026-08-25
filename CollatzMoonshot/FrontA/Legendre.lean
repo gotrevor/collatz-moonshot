@@ -428,6 +428,182 @@ theorem mobius_moment_closed (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) : ∀ k : �
       field_simp
       ring
 
+/-! ### Single-log denominator/integrality tracking (leg 2 → a genuine effective measure)
+
+For an **integer** `a ≤ -1` (so `1 - a ∈ {2, 3, …}`, giving `log 2` at `a = -1`, `log 3` at `a = -2`),
+the linear form `Λ_n = A_n + B_n·log(1-a)` becomes an **integer** combination after clearing by
+`lcm(1..n)·a^(n+1)`.  This is the denominator leg of the effective irrationality measure (mathlib has
+no effective measure of a single log), and the exact bookkeeping leg 3 reuses two-kernel-wise. -/
+
+/-- `i ∣ lcmUpto n` whenever `1 ≤ i ≤ n`. -/
+lemma dvd_lcmUpto {i n : ℕ} (h1 : 1 ≤ i) (h2 : i ≤ n) : i ∣ Nat.lcmUpto n := by
+  have h := Finset.dvd_lcm (f := (id : ℕ → ℕ)) (Finset.mem_Icc.mpr ⟨h1, h2⟩)
+  simpa [Nat.lcmUpto] using h
+
+/-- `lcmUpto k ∣ lcmUpto (k+1)` (the range grows by one). -/
+lemma lcmUpto_dvd_succ (k : ℕ) : Nat.lcmUpto k ∣ Nat.lcmUpto (k + 1) := by
+  simp only [Nat.lcmUpto]
+  apply Finset.lcm_dvd
+  intro b hb
+  rw [Finset.mem_Icc] at hb
+  show b ∣ Nat.lcmUpto (k + 1)
+  exact dvd_lcmUpto hb.1 (by omega)
+
+/-- **Per-moment integrality (single-log denominator tracking).**  For an integer `a ≤ -1`, each
+Möbius moment cleared by `lcm(1..k)·a^(k+1)` is an *integer* plus an *integer* multiple of
+`log(1-a)`:
+`∃ s : ℤ, lcm(1..k)·a^(k+1)·∫₀¹ yᵏ/(1-a·y) = s − lcm(1..k)·log(1-a)`.
+Induction on `mobius_moment_rec`, from the base `∫₀¹ 1/(1-a·y) = −log(1-a)/a`.  The step stays
+integral because `lcm(1..k) ∣ lcm(1..k+1)` (`lcmUpto_dvd_succ`) and `(k+1) ∣ lcm(1..k+1)`
+(`dvd_lcmUpto`) clear, respectively, the recursion's remainder and its `1/(k+1)` term.  The log
+coefficient is *exactly* `−lcm(1..k)`, an integer — the source-independent core of leg 3's
+`D_n·Λ_n = p_n + q_n·log(1-a)`. -/
+theorem mobius_moment_int_cleared (a : ℤ) (ha : a ≤ -1) (k : ℕ) :
+    ∃ s : ℤ, (Nat.lcmUpto k : ℝ) * (a : ℝ) ^ (k + 1) *
+        (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y))
+      = (s : ℝ) - (Nat.lcmUpto k : ℝ) * Real.log (1 - (a : ℝ)) := by
+  have haR : (a : ℝ) < 1 := by exact_mod_cast (by omega : a < 1)
+  have ha0 : (a : ℝ) ≠ 0 := by exact_mod_cast (by omega : a ≠ 0)
+  induction k with
+  | zero =>
+      refine ⟨0, ?_⟩
+      have h0 : (Nat.lcmUpto 0 : ℝ) = 1 := by norm_num [Nat.lcmUpto]
+      simp only [pow_zero]
+      rw [mobius_base_integral (a : ℝ) haR ha0, h0]
+      simp only [zero_add, pow_one, one_mul, Int.cast_zero, zero_sub]
+      rw [← mul_div_assoc, mul_div_cancel_left₀ _ ha0]
+  | succ k ih =>
+      obtain ⟨s, hs⟩ := ih
+      obtain ⟨d, hd⟩ := lcmUpto_dvd_succ k
+      obtain ⟨e, he⟩ := dvd_lcmUpto (i := k + 1) (n := k + 1) (by omega) le_rfl
+      refine ⟨(d : ℤ) * s - (e : ℤ) * a ^ (k + 1), ?_⟩
+      have hrec := mobius_moment_rec (a : ℝ) haR ha0 k
+      have hk1 : ((k : ℝ) + 1) ≠ 0 := by positivity
+      have hdR : (Nat.lcmUpto (k + 1) : ℝ) = (Nat.lcmUpto k : ℝ) * (d : ℝ) := by
+        rw [hd]; push_cast; ring
+      have heR : (Nat.lcmUpto (k + 1) : ℝ) = ((k : ℝ) + 1) * (e : ℝ) := by
+        rw [he]; push_cast; ring
+      have E1 : (Nat.lcmUpto (k + 1) : ℝ) * (a : ℝ) ^ (k + 1) *
+            (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y))
+          = (d : ℝ) * (s : ℝ) - (Nat.lcmUpto (k + 1) : ℝ) * Real.log (1 - (a : ℝ)) := by
+        have hreassoc : (Nat.lcmUpto (k + 1) : ℝ) * (a : ℝ) ^ (k + 1) *
+              (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y))
+            = (d : ℝ) * ((Nat.lcmUpto k : ℝ) * (a : ℝ) ^ (k + 1) *
+              (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y))) := by
+          rw [hdR]; ring
+        rw [hreassoc, hs, hdR]; push_cast; ring
+      have E2 : (Nat.lcmUpto (k + 1) : ℝ) * (a : ℝ) ^ (k + 1) * (1 / ((k : ℝ) + 1))
+          = (e : ℝ) * (a : ℝ) ^ (k + 1) := by
+        rw [heR]; field_simp
+      rw [show (Nat.lcmUpto (k + 1) : ℝ) * (a : ℝ) ^ (k + 1 + 1) *
+            (∫ y in (0 : ℝ)..1, y ^ (k + 1) / (1 - (a : ℝ) * y))
+          = (Nat.lcmUpto (k + 1) : ℝ) * (a : ℝ) ^ (k + 1) *
+            ((a : ℝ) * (∫ y in (0 : ℝ)..1, y ^ (k + 1) / (1 - (a : ℝ) * y))) from by ring,
+        hrec, mul_sub, E1, E2]
+      push_cast; ring
+
+/-- `lcmUpto k ∣ lcmUpto n` whenever `k ≤ n`. -/
+lemma lcmUpto_dvd_of_le {k n : ℕ} (h : k ≤ n) : Nat.lcmUpto k ∣ Nat.lcmUpto n := by
+  simp only [Nat.lcmUpto]
+  apply Finset.lcm_dvd
+  intro b hb
+  rw [Finset.mem_Icc] at hb
+  show b ∣ Nat.lcmUpto n
+  exact dvd_lcmUpto hb.1 (by omega)
+
+/-- A finite sum of terms each of the shape `(integer) + (integer)·L` is again of that shape. -/
+private lemma sum_int_linear {L : ℝ} (f : ℕ → ℝ) :
+    ∀ (s : Finset ℕ), (∀ k ∈ s, ∃ p q : ℤ, f k = (p : ℝ) + (q : ℝ) * L) →
+      ∃ P Q : ℤ, ∑ k ∈ s, f k = (P : ℝ) + (Q : ℝ) * L := by
+  intro s
+  induction s using Finset.induction with
+  | empty => intro _; exact ⟨0, 0, by simp⟩
+  | @insert x s hx ih =>
+      intro h
+      obtain ⟨px, qx, hxeq⟩ := h x (Finset.mem_insert_self x s)
+      obtain ⟨P, Q, hPQ⟩ := ih (fun k hk => h k (Finset.mem_insert_of_mem hk))
+      exact ⟨px + P, qx + Q, by rw [Finset.sum_insert hx, hxeq, hPQ]; push_cast; ring⟩
+
+/-- **Integer linear form (single-log effective measure, leg 2 → result).**  For an integer
+`a ≤ -1`, the Legendre–Möbius approximant, cleared by `D_n = lcm(1..n)·a^(n+1)`, is an **integer**
+combination of `1` and `log(1-a)`:
+`∃ P Q : ℤ, lcm(1..n)·a^(n+1)·∫₀¹ P_n(y)/(1-a·y) = P + Q·log(1-a)`.
+Expand `P_n = ∑ c_k yᵏ` (integer coeffs, `shiftedLegendre_eq_int_poly`) and clear each moment with
+`mobius_moment_int_cleared`; the per-`k` cofactor `c_k·(lcm(1..n)/lcm(1..k))·a^(n-k)` is an integer
+because `lcm(1..k) ∣ lcm(1..n)` (`lcmUpto_dvd_of_le`) and `k ≤ n`.  With `legendre_mobius_ne_zero`
+(so `P + Q·log(1-a) ≠ 0`) and the geometric remainder bound (`legendre_mobius_remainder_bound`,
+`legendre_mobius_integral`) plus `Gelfond.lcmUpto_le`, this is a genuine **effective irrationality
+measure of a single log** — `log 2` at `a = -1`, `log 3` at `a = -2` (mathlib has none).  It is the
+one-kernel prototype of leg 3's `D_n·Λ_n = p_n + q_n·log`. -/
+theorem legendre_mobius_int_linear_form (a : ℤ) (ha : a ≤ -1) (n : ℕ) :
+    ∃ P Q : ℤ, (Nat.lcmUpto n : ℝ) * (a : ℝ) ^ (n + 1) *
+        (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - (a : ℝ) * y))
+      = (P : ℝ) + (Q : ℝ) * Real.log (1 - (a : ℝ)) := by
+  have haR : (a : ℝ) < 1 := by exact_mod_cast (by omega : a < 1)
+  have ha0 : (a : ℝ) ≠ 0 := by exact_mod_cast (by omega : a ≠ 0)
+  set L : ℝ := Real.log (1 - (a : ℝ)) with hLdef
+  have hpos : ∀ y ∈ Set.uIcc (0 : ℝ) 1, (0 : ℝ) < 1 - (a : ℝ) * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases le_total (a : ℝ) 0 with h | h
+    · nlinarith [hy.1]
+    · nlinarith [hy.2, mul_nonneg h (by linarith [hy.2] : (0 : ℝ) ≤ 1 - y)]
+  obtain ⟨c, hc⟩ := shiftedLegendre_eq_int_poly n
+  -- expand the integral into a sum of moments
+  have hInt : ∀ k ∈ Finset.range (n + 1),
+      IntervalIntegrable (fun y => (c k : ℝ) * (y ^ k / (1 - (a : ℝ) * y)))
+        MeasureTheory.volume 0 1 := by
+    intro k _
+    apply IntervalIntegrable.const_mul
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    exact fun y hy => ne_of_gt (hpos y hy)
+  have hΛ : (∫ y in (0 : ℝ)..1, eval y (shiftedLegendre n) / (1 - (a : ℝ) * y))
+      = ∑ k ∈ Finset.range (n + 1),
+          (c k : ℝ) * (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y)) := by
+    have hintegrand : ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+        eval y (shiftedLegendre n) / (1 - (a : ℝ) * y)
+          = ∑ k ∈ Finset.range (n + 1), (c k : ℝ) * (y ^ k / (1 - (a : ℝ) * y)) := by
+      intro y _
+      rw [hc, eval_finset_sum, Finset.sum_div]
+      apply Finset.sum_congr rfl
+      intro k _
+      simp only [eval_mul, eval_intCast, eval_pow, eval_X]
+      ring
+    rw [intervalIntegral.integral_congr hintegrand, intervalIntegral.integral_finset_sum hInt]
+    apply Finset.sum_congr rfl
+    intro k _
+    rw [intervalIntegral.integral_const_mul]
+  -- per-moment integrality
+  have per_k : ∀ k ∈ Finset.range (n + 1), ∃ p q : ℤ,
+      (Nat.lcmUpto n : ℝ) * (a : ℝ) ^ (n + 1) *
+          ((c k : ℝ) * (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y)))
+        = (p : ℝ) + (q : ℝ) * L := by
+    intro k hk
+    rw [Finset.mem_range] at hk
+    have hkn : k ≤ n := by omega
+    obtain ⟨s, hs⟩ := mobius_moment_int_cleared a ha k
+    obtain ⟨w, hw⟩ := lcmUpto_dvd_of_le hkn
+    refine ⟨c k * (w : ℤ) * a ^ (n - k) * s,
+            -(c k * (w : ℤ) * a ^ (n - k) * (Nat.lcmUpto k : ℤ)), ?_⟩
+    have hlcmR : (Nat.lcmUpto n : ℝ) = (Nat.lcmUpto k : ℝ) * (w : ℝ) := by
+      rw [hw]; push_cast; ring
+    have hpowR : (a : ℝ) ^ (n + 1) = (a : ℝ) ^ (n - k) * (a : ℝ) ^ (k + 1) := by
+      rw [← pow_add]; congr 1; omega
+    calc (Nat.lcmUpto n : ℝ) * (a : ℝ) ^ (n + 1) *
+            ((c k : ℝ) * (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y)))
+        = ((c k : ℝ) * (w : ℝ) * (a : ℝ) ^ (n - k)) *
+            ((Nat.lcmUpto k : ℝ) * (a : ℝ) ^ (k + 1) *
+              (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y))) := by
+          rw [hlcmR, hpowR]; ring
+      _ = ((c k : ℝ) * (w : ℝ) * (a : ℝ) ^ (n - k)) * ((s : ℝ) - (Nat.lcmUpto k : ℝ) * L) := by
+          rw [hs]
+      _ = _ := by push_cast; ring
+  rw [hΛ, Finset.mul_sum]
+  exact sum_int_linear (L := L)
+    (fun k => (Nat.lcmUpto n : ℝ) * (a : ℝ) ^ (n + 1) *
+      ((c k : ℝ) * (∫ y in (0 : ℝ)..1, y ^ k / (1 - (a : ℝ) * y)))) _ per_k
+
 /-- **Linear form: `∫₀¹ P_n(y)/(1-a·y) dy = A + B·log(1-a)`** (leg 2 assembled).  Expanding
 `P_n = ∑ c_k yᵏ` (integer coeffs, `shiftedLegendre_eq_int_poly`) and integrating termwise with the
 moment closed form (`mobius_moment_closed`) gives `A = ∑ c_k r_k`, `B = −∑ c_k/aᵏ⁺¹`.  This is the

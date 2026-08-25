@@ -1,5 +1,34 @@
 # PENDING_WORK
 
+## ★ LAP 2026-08-25 (~2330, review + grind) — single-log INTEGER linear form LANDED ★
+
+**Advance on the crux (mandated next chip DONE).** `Legendre.lean` now closes the denominator/
+integrality leg of the single-kernel effective measure — all trust-base clean:
+- `dvd_lcmUpto` / `lcmUpto_dvd_succ` / `lcmUpto_dvd_of_le` — the `Nat.lcmUpto` divisibility bricks.
+- **`mobius_moment_int_cleared (a:ℤ) (ha:a≤−1) (k)`**: `∃ s:ℤ, lcm(1..k)·a^(k+1)·∫₀¹ yᵏ/(1−a·y)
+  = s − lcm(1..k)·log(1−a)` (induction on `mobius_moment_rec`; base `mobius_base_integral`).
+- **`legendre_mobius_int_linear_form (a:ℤ) (ha:a≤−1) (n)`**: `∃ P Q:ℤ, lcm(1..n)·a^(n+1)·Λ_n
+  = P + Q·log(1−a)`, `Λ_n = ∫₀¹ P_n/(1−a·y)`.  Per-`k` cofactor `c_k·(lcm n/lcm k)·a^(n−k) ∈ ℤ`;
+  assembled with the generic `sum_int_linear`.
+
+⟹ For a SINGLE Möbius kernel the effective-measure package is complete: integer linear form
+(this lap) + non-vanishing (`legendre_mobius_ne_zero`) + geometric remainder
+(`legendre_mobius_remainder_bound` via `legendre_mobius_integral`) + `Gelfond.lcmUpto_le`.
+`a=−1 ⇒ log 2`, `a=−2 ⇒ log 3`.  This is the first effective irrationality measure of a log in Lean.
+
+**NEXT chips (priority):**
+1. **Finish the single-log measure inequality** (mechanical, source-independent, high value):
+   from `D_n·Λ_n = P + Q·log(1−a)` with `D_n = lcm(1..n)·a^(n+1)`, non-vanishing ⇒ `P+Q·log ≠ 0`,
+   and `|Λ_n| ≤ (|a|/(4(1−a)))ⁿ/(1−a)` (combine `legendre_mobius_integral` + `_remainder_bound`),
+   plus `|D_n| ≤ |a|^(n+1)·4ⁿ·e^{2√n log n}` (`Gelfond.lcmUpto_le`), derive the standard
+   irrationality-measure statement `|log(1−a) − P'/Q'| ≥ c/|Q'|^μ` for explicit `μ`.  Package as
+   `logb_effective_measure` (log 2 and log 3).  Milestone; NOT yet the two-log crux.
+2. **Leg 3 = the actual crux** (source-gated, expedition): the two-*kernel* Rhin determinant
+   (`a₁=2/3, a₂=4/3, d=3`, the 6-factor `H_n`), giving a SIMULTANEOUS form in log2 AND log3.
+   Findings `…-rhin-wu-explicit-construction.md` have the exact kernel/exponents/constants; the hard
+   part is effective two-sided coefficient asymptotics `n(ε)` + integer transfinite diameter.
+   Chaining the two single-log measures does NOT work (findings §5). This is the GO gate.
+
 ## ★ LAP 2026-08-25 (later) — exponent correction (Rhin 7.616) + general explicit crossover ★
 
 **Route-decisive source read (WebSearch; WebFetch firewalled, no ON-LINE-FINDINGS landed yet).**
