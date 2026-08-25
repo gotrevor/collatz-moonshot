@@ -371,4 +371,36 @@ theorem mobius_base_integral (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) :
   rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint]
   simp
 
+/-- **Moment recursion** `a·∫₀¹ yᵏ⁺¹/(1-a·y) = ∫₀¹ yᵏ/(1-a·y) − 1/(k+1)`.  Pointwise
+`a·yᵏ⁺¹/(1-a·y) = yᵏ/(1-a·y) − yᵏ` and `∫₀¹ yᵏ = 1/(k+1)`.  With `mobius_base_integral` (k=0), this
+recursion shows every moment `∫₀¹ yᵏ/(1-a·y)` is `rational + rational·log(1-a)`, so expanding
+`P_n` (integer coeffs) gives the linear form `A_n + B_n·log(1-a)` — the last analytic ingredient of
+leg 2's linear-form extraction. -/
+theorem mobius_moment_rec (a : ℝ) (ha : a < 1) (ha0 : a ≠ 0) (k : ℕ) :
+    a * ∫ y in (0 : ℝ)..1, y ^ (k + 1) / (1 - a * y)
+      = (∫ y in (0 : ℝ)..1, y ^ k / (1 - a * y)) - 1 / (k + 1) := by
+  have hpos : ∀ y ∈ Set.uIcc (0 : ℝ) 1, (0 : ℝ) < 1 - a * y := by
+    intro y hy
+    rw [Set.uIcc_of_le (by norm_num)] at hy
+    rcases le_total a 0 with h | h
+    · nlinarith [hy.1]
+    · nlinarith [hy.2, mul_nonneg h (by linarith [hy.2] : (0 : ℝ) ≤ 1 - y)]
+  have hI : ∀ j : ℕ, IntervalIntegrable (fun y => y ^ j / (1 - a * y))
+      MeasureTheory.volume 0 1 := by
+    intro j
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (by fun_prop) (by fun_prop)
+    exact fun y hy => ne_of_gt (hpos y hy)
+  rw [← intervalIntegral.integral_const_mul]
+  have hcongr : ∀ y ∈ Set.uIcc (0 : ℝ) 1,
+      a * (y ^ (k + 1) / (1 - a * y)) = y ^ k / (1 - a * y) - y ^ k := by
+    intro y hy
+    have hyne : (1 : ℝ) - a * y ≠ 0 := ne_of_gt (hpos y hy)
+    field_simp
+    ring
+  rw [intervalIntegral.integral_congr hcongr,
+    intervalIntegral.integral_sub (hI k) ((continuous_pow k).intervalIntegrable 0 1),
+    integral_pow]
+  norm_num
+
 end CollatzMoonshot.FrontA
