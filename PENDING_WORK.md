@@ -35,6 +35,12 @@ attack paths (playbook §2):
   non-vanishing + two-log telescoping. Legs 2–3 need the exact source construction (Bugeaud §3.1 /
   Bennett–Bugeaud) — requested in `ON-LINE-REQUEST.md` (2026-08-25). Next lap once source lands:
   formalize leg 2 (remainder integral bound), the highest-value on-path brick.
+  **The consumption interface is now COMPLETE in BOTH standard forms** (all sorry-free, so the source's
+  output plugs straight in): `sep_two_three_of_gelfond_measure` (integer measure `3^k ≤ (2^m−3^k)·k^6`)
+  and `sep_of_linear_form_poly` (linear form `|m log2 − k log3| ≥ c·k^(−κ)`, κ free) — both give
+  `sep_two_three` for every near-critical `k≥6`, with crossovers dischargeable by `poly_le_two_pow` /
+  `poly_le_pow` and small-`k` by `sep_two_three_small`. So the ONLY missing piece is the raw Gelfond
+  bound itself (legs 2–3).
 - **Path B — cite as a narrow provenance-documented axiom** `gelfond_two_three_measure` in `Assumed/`
   feeding `hmeas` (BASELINE, does NOT clear the gate per DIRECTION; keeps the build honest meanwhile).
 - **Path C — Aristotle.** Reachable (egress OK). But `hmeas` is a research-hard theorem → auto-
