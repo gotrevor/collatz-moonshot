@@ -48,9 +48,15 @@ fully concrete — only the finite residual `6 ≤ k < (3C)²` needs a per-C `na
    `y(1-y)/(1-a·y) ≤ M(a)` on `[0,1]` (maximize; `M(a)=` the max of `y(1-y)/(1-a·y)`), giving
    `|remainder| ≤ M(a)ⁿ/(1-a)`; need `M(a)<1`, true for a range of `a`. (ii) **linear-form extraction**
    `∫₀¹ P_n(y)/(1-a·y) = A_n + B_n·log(1-a)` with `A_n,B_n ∈ ℚ`, `lcm(1..n)·A_n, lcm(1..n)·B_n ∈ ℤ`
-   (from Legendre integer coeffs + `∫₀¹ yᵏ/(1-a·y) dy` = rational + log). Then leg 3
-   (non-vanishing/independence + which `a`-pair gives log2 & log3) — the only genuinely source-gated
-   piece (Rhin's exact kernel; ON-LINE-REQUEST.md).
+   (from Legendre integer coeffs + `∫₀¹ yᵏ/(1-a·y) dy` = rational + log).
+
+   **UPDATE (this run): leg-2 size bound + ALL linear-form analytic ingredients DONE**, trust-base:
+   `legendre_mobius_remainder_bound` (`≤ (1/4)ⁿ/(1-a)^(n+1)`), `mobius_base_integral`
+   (`∫₀¹1/(1-a·y)=-log(1-a)/a`), `mobius_moment_rec` (`a·∫yᵏ⁺¹=∫yᵏ-1/(k+1)`). Remaining leg-2
+   packaging (mechanical): induct the recursion from the base ⇒ `∫₀¹yᵏ/(1-a·y)=r_k+s_k·log(1-a)`;
+   sum against `shiftedLegendre_eq_int_poly` ⇒ `∫₀¹P_n/(1-a·y)=A_n+B_n·log(1-a)`; bound denom by
+   `lcm(1..n)`. Then leg 3 (non-vanishing/independence + which `a`-pair gives log2 & log3 jointly) —
+   the only genuinely source-gated piece (Rhin's exact kernel; ON-LINE-REQUEST.md).
    NOTE the ζ(3) proof is a triple-integral over the cube; the log measure is a SINGLE `∫₀¹` of a
    Legendre kernel `∫₀¹ P_n(x)/(1-(1-c)x) dx = A_n + B_n·log c` — reuse the 1-var Legendre + IBP
    lemmas, not the cube geometry. The exact kernel weights (which `c`'s, to hit log2 AND log3
