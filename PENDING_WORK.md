@@ -13,6 +13,20 @@ cube, multiply by `2^k`; the LHS collapses to `3^(3k)` exactly.  So **everything
 classical Baker object `Λ` and the two-block crux is now machine-checked**; the sole remaining deep
 input is pinned to the textbook β=1/3 effective bound `Λ ≥ 2^(−k/3)`.
 
+**Second narrowing (same lap, pure ℕ, no reals):** `sep_of_measure (k m C)` proves
+`sep_two_three` from the *integer* irrationality-measure `3^k ≤ (2^m−3^k)·k^C` plus the elementary
+`k^(3C) ≤ 2^k`, fully general in `C` (no committed constant), via a one-line cube.  So the deep
+obligation is now pinned TWO equivalent ways: the real linear form `Λ ≥ 2^(−k/3)`, or the classical
+Diophantine `|log₂3 − m/k| ≥ c/k^(C+1)` (finite irrationality measure of `log₂3`).
+
+**Mathlib-gap finding (this lap):** `Mathlib/Algebra/ContinuedFractions/Computation/`
+provides only convergence UPPER bounds (`of_convergence`), NOT the best-approximation LOWER bound
+`‖kθ‖ ≥ ‖qₙθ‖`; and `LiouvilleWith`/`Measure.lean` give only a.e./generic results, no effective
+irrationality measure for a specific number like `log₂3`.  So both routes' deep input must be
+built from scratch (CF best-approx lower bound + effective partial-quotient control ⇒ Baker) or
+cited.  The CF route's convergents ARE decidable integer facts `2^a ⋛ 3^b`, but bounding all
+partial quotients forever is the effective-measure (Baker) content.
+
 `sep_two_three` itself is deliberately LEFT as the disclosed `sorry` (ledger stays honest: an open
 sorry, not a hidden axiom) — `bd_reduction` still consumes it unchanged, full build green (8752).
 

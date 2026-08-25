@@ -102,6 +102,23 @@ theorem sep_of_linear_form (k m : ℕ) (h1 : 3 ^ k < 2 ^ m)
     rw [hcast]; push_cast; exact hreal
   exact_mod_cast this
 
+/-- **Pure-ℕ narrowing to the integer irrationality measure (no reals, fully general in `C`).**
+`sep_two_three` follows from *any* polynomial integer lower bound on the deficit
+`D = 2^m − 3^k`, namely `3^k ≤ D · k^C` (the standard effective-irrationality-measure form,
+`|log₂3 − m/k| ≥ c/k^{C+1}`), together with the elementary growth fact `k^(3C) ≤ 2^k`.
+
+Proof is a one-line cube: `3^(3k) = (3^k)^3 ≤ (D·k^C)^3 = D^3·k^(3C) ≤ D^3·2^k`.  This isolates
+the sole deep obligation as the classical Diophantine statement (finite irrationality measure of
+`log₂3`), completely elementarily, with no real-analysis bridge and no committed constant `C`. -/
+theorem sep_of_measure (k m C : ℕ) (hmeas : 3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ C)
+    (hgrow : k ^ (3 * C) ≤ 2 ^ k) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  set D := 2 ^ m - 3 ^ k with hD
+  calc 3 ^ (3 * k) = (3 ^ k) ^ 3 := by rw [← pow_mul, Nat.mul_comm]
+    _ ≤ (D * k ^ C) ^ 3 := Nat.pow_le_pow_left hmeas 3
+    _ = D ^ 3 * k ^ (3 * C) := by rw [mul_pow, ← pow_mul, Nat.mul_comm C 3]
+    _ ≤ D ^ 3 * 2 ^ k := by gcongr
+
 /-- Elementary growth lemma: for `k ≥ 15`, `3 ^ (k + 2) ≤ 2 ^ (2k − 3)`. -/
 theorem grow_two_three (k : ℕ) (hk : 15 ≤ k) : 3 ^ (k + 2) ≤ 2 ^ (2 * k - 3) := by
   induction k, hk using Nat.le_induction with
