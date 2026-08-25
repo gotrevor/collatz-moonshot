@@ -644,4 +644,56 @@ theorem bd_reduction (k m d : ℕ) (hk1 : 1 ≤ d) (hdk : d < k)
       (Finset.mem_range.mpr hmlt) d (Finset.mem_range.mpr (by omega))
       ⟨hk6, hk1, hdk, h1, h2, hW, hA⟩
 
+/-- **General-base poly ≤ exp (over ℝ).**  For any base `b > 1` and exponent `C`, `k^C ≤ b^k` for all
+large `k`.  The real-valued generalization of `poly_le_two_pow` (used to discharge the crossover of
+`sep_of_linear_form_poly`, whose base is `2^(1/3)`). -/
+theorem poly_le_pow (b : ℝ) (hb : 1 < b) (C : ℕ) :
+    ∃ K : ℕ, ∀ k : ℕ, K ≤ k → (k : ℝ) ^ C ≤ b ^ k := by
+  have hb0 : (0 : ℝ) < b := by linarith
+  have h := tendsto_pow_const_div_const_pow_of_one_lt C hb
+  have hev : ∀ᶠ n : ℕ in Filter.atTop, (n : ℝ) ^ C / b ^ n < 1 :=
+    h.eventually (Iio_mem_nhds (by norm_num))
+  rw [Filter.eventually_atTop] at hev
+  obtain ⟨K, hK⟩ := hev
+  refine ⟨K, fun k hk => ?_⟩
+  have hbpos : (0 : ℝ) < b ^ k := pow_pos hb0 k
+  have hlt := hK k hk
+  rw [div_lt_one hbpos] at hlt
+  exact hlt.le
+
+/-- **Literature-standard interface: `sep_two_three` from Gelfond's linear-forms lower bound.**
+The Gelfond 1935 / Baker theorem on the distance between powers of 2 and 3 is stated as a *linear
+form in two logarithms*: `|m·log 2 − k·log 3| ≥ c·k^(−κ)` for explicit `c > 0, κ`.  This is the exact
+shape a formalized Baker/Gelfond theorem produces (κ free — no pre-digestion to a fixed measure
+exponent).  Given that bound (`hLF`, for near-critical `k ≥ 130`) and the elementary crossover
+`hcross : k^κ ≤ c·2^(k/3)` (dischargeable by `poly_le_pow` at base `2^(1/3)`), `sep_two_three` holds
+for every near-critical `k ≥ 6` — large `k` via `sep_of_linear_form`, small `k` via the finite check
+`sep_two_three_small`.  Complements `sep_two_three_of_gelfond_measure` (which takes the digested
+integer measure `3^k ≤ (2^m−3^k)·k^6`); together they let the source's bound plug in in whichever of
+its two standard forms is more convenient. -/
+theorem sep_of_linear_form_poly (c : ℝ) (κ : ℕ)
+    (hLF : ∀ k m : ℕ, 130 ≤ k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
+             c / (k : ℝ) ^ κ ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3)
+    (hcross : ∀ k : ℕ, 130 ≤ k →
+             (k : ℝ) ^ κ ≤ c * Real.exp ((k : ℝ) / 3 * Real.log 2))
+    (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  by_cases hbig : 130 ≤ k
+  · apply sep_of_linear_form k m h1
+    have hkR : (0 : ℝ) < (k : ℝ) := by exact_mod_cast (by omega : 0 < k)
+    have hkpos : (0 : ℝ) < (k : ℝ) ^ κ := pow_pos hkR κ
+    have hexppos : (0 : ℝ) < Real.exp ((k : ℝ) / 3 * Real.log 2) := Real.exp_pos _
+    have hc2 := hcross k hbig
+    have key : Real.exp (-(k : ℝ) / 3 * Real.log 2) ≤ c / (k : ℝ) ^ κ := by
+      rw [show -(k : ℝ) / 3 * Real.log 2 = -((k : ℝ) / 3 * Real.log 2) by ring, Real.exp_neg,
+          le_div_iff₀ hkpos]
+      calc (Real.exp ((k : ℝ) / 3 * Real.log 2))⁻¹ * (k : ℝ) ^ κ
+          ≤ (Real.exp ((k : ℝ) / 3 * Real.log 2))⁻¹
+              * (c * Real.exp ((k : ℝ) / 3 * Real.log 2)) :=
+            mul_le_mul_of_nonneg_left hc2 (by positivity)
+        _ = c := by
+            rw [mul_comm c, ← mul_assoc, inv_mul_cancel₀ (ne_of_gt hexppos), one_mul]
+    exact le_trans key (hLF k m hbig h1 h2)
+  · exact sep_two_three_small k m hk (by omega) h1 h2
+
 end CollatzMoonshot.FrontA
