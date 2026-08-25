@@ -392,6 +392,51 @@ theorem sep_two_three_small (k m : ℕ) (hk : 6 ≤ k) (hklt : k < 130)
   · exact absurd ⟨hk, h1, h2⟩ h
   · exact h
 
+/-- **Concrete crossover `k^18 ≤ 2^k` for `k ≥ 130` (the `C = 6` threshold).**  `poly_le_two_pow`
+only gives a *non-explicit* threshold; this pins it to `130`, exactly matching `sep_two_three_small`'s
+finite range.  Induction: base `130^18 ≤ 2^130` (`native_decide`); step uses the tight real ratio
+bound `((k+1)/k)^18 ≤ (131/130)^18 ≤ 2` (so `(k+1)^18 ≤ 2·k^18 ≤ 2·2^k = 2^(k+1)`). -/
+theorem crossover_130 (k : ℕ) (hk : 130 ≤ k) : k ^ 18 ≤ 2 ^ k := by
+  induction k, hk using Nat.le_induction with
+  | base => native_decide
+  | succ n hn ih =>
+      have hstep : (n + 1) ^ 18 ≤ 2 * n ^ 18 := by
+        have hnR : (130 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+        have hn0 : (0 : ℝ) < (n : ℝ) := by linarith
+        have h1 : ((n : ℝ) + 1) / n ≤ 131 / 130 := by
+          rw [div_le_div_iff₀ hn0 (by norm_num)]; nlinarith [hnR]
+        have h0 : (0 : ℝ) ≤ ((n : ℝ) + 1) / n := by positivity
+        have h2 : (((n : ℝ) + 1) / n) ^ 18 ≤ (131 / 130 : ℝ) ^ 18 := pow_le_pow_left₀ h0 h1 18
+        have h3 : ((131 : ℝ) / 130) ^ 18 ≤ 2 := by norm_num
+        have hn18 : (0 : ℝ) < (n : ℝ) ^ 18 := by positivity
+        have h4 : ((n : ℝ) + 1) ^ 18 ≤ 2 * (n : ℝ) ^ 18 := by
+          have hdiv : ((n : ℝ) + 1) ^ 18 / (n : ℝ) ^ 18 ≤ 2 := by
+            rw [← div_pow]; exact le_trans h2 h3
+          rw [div_le_iff₀ hn18] at hdiv; linarith [hdiv]
+        have hcast : ((n : ℝ) + 1) ^ 18 = (((n + 1) ^ 18 : ℕ) : ℝ) := by push_cast; ring
+        have hcast2 : 2 * (n : ℝ) ^ 18 = ((2 * n ^ 18 : ℕ) : ℝ) := by push_cast; ring
+        rw [hcast, hcast2] at h4; exact_mod_cast h4
+      calc (n + 1) ^ 18 ≤ 2 * n ^ 18 := hstep
+        _ ≤ 2 * 2 ^ n := by gcongr
+        _ = 2 ^ (n + 1) := by rw [pow_succ]; ring
+
+/-- **End-to-end reduction: the crux `sep_two_three` from ONE concrete uniform Gelfond measure
+(fully machine-checked, no existential thresholds).**  Given the single classical input
+`hmeas : ∀ near-critical k ≥ 130, 3^k ≤ (2^m − 3^k)·k^6` — the **Gelfond 1935 / Bennett–Bugeaud**
+effective measure of `log₂3` at exponent `C = 6` (a *polynomial* bound, far weaker than proven) —
+`sep_two_three` holds for **every** near-critical `k ≥ 6`.  Large `k` (`≥ 130`): `sep_of_measure` with
+the concrete crossover `crossover_130`.  Small `k`: the finite check `sep_two_three_small`.  So the
+entire content of the crux is exactly this one hypothesis; everything else is elementary + finite. -/
+theorem sep_two_three_of_gelfond_measure
+    (hmeas : ∀ k m : ℕ, 130 ≤ k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
+        3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ 6)
+    (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  by_cases hbig : 130 ≤ k
+  · refine sep_of_measure k m 6 (hmeas k m hbig h1 h2) ?_
+    have := crossover_130 k hbig; norm_num; exact this
+  · exact sep_two_three_small k m hk (by omega) h1 h2
+
 /-- **Scaled best-approximation bound (linear-form form).**  Multiplying `theta_dist_lower` by `k`:
 the linear form `|k·θ − p|` is at least `k·min(θ−a/b, c/d−θ)` for every `p`, when `1 ≤ k < b + d`.
 This is the `‖k·θ‖`-shaped quantity the crux pipeline consumes (`m − k·θ = |k·θ − m|` near-critical). -/

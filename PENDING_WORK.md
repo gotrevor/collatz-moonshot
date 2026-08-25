@@ -32,9 +32,12 @@ framing was over-pessimistic about tractability (the *route* was right; the *dif
    `K = 130`, which pairs with any measure exponent `C ≤ 6` (then `k^(3C) ≤ k^18 ≤ 2^k` for `k ≥ 130`).
    ⟹ The ENTIRE residual of `sep_two_three` beyond elementary/finite parts is now the **single uniform
    Gelfond measure** `hmeas : ∀ near-critical k ≥ 130, 3^k ≤ (2^m−3^k)·k^6`. Axioms: trust base +
-   native_decide artifact 🟢. (One loose end for a fully-concrete end-to-end corollary: a *concrete*
-   crossover `∀ k ≥ 130, k^18 ≤ 2^k` — `poly_le_two_pow` gives only an existential threshold; the
-   induction step `(k+1)^18 ≤ 2·k^18` is a degree-18 nlinarith, deferred as low-value plumbing.)
+   native_decide artifact 🟢.
+   **Loose end also CLOSED (same lap):** `crossover_130 : ∀ k ≥ 130, k^18 ≤ 2^k` (induction; step via
+   the tight real ratio `((k+1)/k)^18 ≤ (131/130)^18 ≤ 2` — the degree-18 nlinarith is dodged by
+   working over ℝ with division). This gives the **fully-concrete end-to-end reduction**
+   `sep_two_three_of_gelfond_measure`: the single hypothesis `hmeas` (C=6, k≥130) ⇒ `sep_two_three`
+   for every near-critical k≥6, with NO existential thresholds. Trust base + 2 native_decide artifacts.
 2. **Build the Gelfond/hypergeometric core toward `hmeas` (the true GO grind).** The formalizable entry point is Padé
    approximation to `(1−z)^ν` / the interpolation-determinant estimate; port the smallest sufficient
    piece. This is the true GO grind — genuinely multi-lap but 🟡, not 🟠.
