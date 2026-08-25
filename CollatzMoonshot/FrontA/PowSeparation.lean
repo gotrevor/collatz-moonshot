@@ -39,6 +39,50 @@ theorem sep_two_three (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ 
     3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
   sorry
 
+/-- **Irrationality of `log₂ 3`** (mathlib lacks it).  The unavoidable first prerequisite of any
+continued-fraction / effective-measure attack on `linear_form_lower_log23`: a rational value
+`log₂ 3 = a/b` would force `2^a = 3^b` with `a, b ≥ 1`, contradicting `2 ∤ 3^b`. -/
+theorem irrational_logb_two_three : Irrational (Real.logb 2 3) := by
+  rintro ⟨q, hq⟩
+  -- `2 ^ (q:ℝ) = 3`
+  have h23 : (2 : ℝ) ^ (q : ℝ) = 3 := by
+    rw [hq]; exact Real.rpow_logb (by norm_num) (by norm_num) (by norm_num)
+  set n := q.num with hn
+  set d := q.den with hd
+  have hdpos : 0 < d := q.pos
+  -- raise to the `d`-th power: `2^(n:ℝ) = 3^(d:ℝ)`
+  have hqd : (q : ℝ) * (d : ℝ) = (n : ℝ) := by
+    have : (q : ℝ) = (n : ℝ) / (d : ℝ) := by
+      rw [hn, hd]; exact_mod_cast (Rat.num_div_den q).symm
+    rw [this]; field_simp
+  have hpow : (2 : ℝ) ^ (n : ℝ) = (3 : ℝ) ^ (d : ℝ) := by
+    have e : ((2 : ℝ) ^ (q : ℝ)) ^ (d : ℝ) = (3 : ℝ) ^ (d : ℝ) := by rw [h23]
+    rwa [← Real.rpow_mul (by norm_num), hqd] at e
+  -- `n > 0`
+  have h3d : (1 : ℝ) < (3 : ℝ) ^ (d : ℝ) := by
+    apply Real.one_lt_rpow_iff_of_pos (by norm_num) |>.mpr
+    exact Or.inl ⟨by norm_num, by exact_mod_cast hdpos⟩
+  have hnpos : 0 < n := by
+    by_contra hnn
+    push_neg at hnn
+    have : (2 : ℝ) ^ (n : ℝ) ≤ 1 := by
+      apply Real.rpow_le_one_of_one_le_of_nonpos (by norm_num)
+      exact_mod_cast hnn
+    linarith [hpow ▸ this]
+  -- descend to ℕ: `2 ^ n.toNat = 3 ^ d`
+  lift n to ℕ using hnpos.le with N hN
+  have hNpos : 0 < N := by exact_mod_cast hnpos
+  have hnat : (2 : ℕ) ^ N = 3 ^ d := by
+    have : ((2 ^ N : ℕ) : ℝ) = ((3 ^ d : ℕ) : ℝ) := by
+      push_cast
+      rw [← Real.rpow_natCast (2:ℝ) N, ← Real.rpow_natCast (3:ℝ) d]
+      exact_mod_cast hpow
+    exact_mod_cast this
+  -- contradiction: `2 ∣ 2^N = 3^d`, but `2 ∤ 3^d`
+  have hdvd : (2 : ℕ) ∣ 3 ^ d := hnat ▸ dvd_pow_self 2 hNpos.ne'
+  have : (2 : ℕ) ∣ 3 := (Nat.prime_two).dvd_of_dvd_pow hdvd
+  norm_num at this
+
 /-- **Analytic bridge to the textbook Baker linear form (no new axioms).**  The weak separation
 `sep_two_three` reduces to the *standard* linear-forms-in-logarithms lower bound
 `Λ = m·log 2 − k·log 3 ≥ 2^(−k/3)` on the near-critical window, via nothing but the elementary
