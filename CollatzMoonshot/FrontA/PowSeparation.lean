@@ -104,6 +104,27 @@ theorem logb_two_three_lt_iff (a b : ℕ) (hb : 0 < b) :
       ← Real.log_pow, ← Real.log_pow, Real.log_lt_log_iff (by positivity) (by positivity)]
   exact_mod_cast Iff.rfl
 
+/-- **Unimodular best-approximation core (pure integers).**  If `a/b < p/k < c/d` and the pair
+`a/b, c/d` is unimodular (`b·c = a·d + 1`), then `k ≥ b + d`.  This is the denominator gap behind
+the classical best-approximation lower bound `‖kθ‖ ≥ ‖q_n θ‖`, formalized with no continued-fraction
+theory (absent from mathlib) via the identity `k = (b·p − a·k)·d + (c·k − p·d)·b`.  Combined with the
+integer bridge `lt_logb_two_three_iff`, it will drive an effective lower bound on `‖k·log₂3‖`. -/
+theorem denom_ge_of_between (a b c d p k : ℕ) (hb : 0 < b) (hd : 0 < d)
+    (huni : b * c = a * d + 1) (h1 : a * k < b * p) (h2 : p * d < c * k) : b + d ≤ k := by
+  have huniZ : (b : ℤ) * c = a * d + 1 := by exact_mod_cast huni
+  have key : (k : ℤ) = ((b : ℤ) * p - a * k) * d + ((c : ℤ) * k - p * d) * b := by
+    linear_combination (-(k : ℤ)) * huniZ
+  have hbp : (1 : ℤ) ≤ (b : ℤ) * p - a * k := by
+    have h : (a : ℤ) * k < b * p := by exact_mod_cast h1
+    omega
+  have hck : (1 : ℤ) ≤ (c : ℤ) * k - p * d := by
+    have h : (p : ℤ) * d < c * k := by exact_mod_cast h2
+    omega
+  have hbZ : (1 : ℤ) ≤ b := by exact_mod_cast hb
+  have hdZ : (1 : ℤ) ≤ d := by exact_mod_cast hd
+  have : (b : ℤ) + d ≤ k := by rw [key]; nlinarith [hbp, hck, hbZ, hdZ]
+  exact_mod_cast this
+
 /-- **Analytic bridge to the textbook Baker linear form (no new axioms).**  The weak separation
 `sep_two_three` reduces to the *standard* linear-forms-in-logarithms lower bound
 `Λ = m·log 2 − k·log 3 ≥ 2^(−k/3)` on the near-critical window, via nothing but the elementary
