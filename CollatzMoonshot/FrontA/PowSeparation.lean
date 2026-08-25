@@ -317,6 +317,50 @@ theorem sep_of_measure (k m C : ℕ) (hmeas : 3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ C)
     _ = D ^ 3 * k ^ (3 * C) := by rw [mul_pow, ← pow_mul, Nat.mul_comm C 3]
     _ ≤ D ^ 3 * 2 ^ k := by gcongr
 
+/-- **Elementary growth: every fixed polynomial is eventually dominated by `2^k` (pure ℕ).**
+For each exponent `C` there is a threshold `K` with `k ^ C ≤ 2 ^ k` for all `k ≥ K`.  This is the
+missing connective that turns a *uniform* irrationality-measure input (`3^k ≤ (2^m−3^k)·k^C`) into
+the cube-and-clear step of `sep_of_measure` (which needs `k^(3C) ≤ 2^k`).  Proved from mathlib's
+`n^C / 2^n → 0`. -/
+theorem poly_le_two_pow (C : ℕ) : ∃ K : ℕ, ∀ k : ℕ, K ≤ k → k ^ C ≤ 2 ^ k := by
+  have h := tendsto_pow_const_div_const_pow_of_one_lt C (r := 2) (by norm_num)
+  have hev : ∀ᶠ n : ℕ in Filter.atTop, (n : ℝ) ^ C / 2 ^ n < 1 :=
+    h.eventually (Iio_mem_nhds (by norm_num))
+  rw [Filter.eventually_atTop] at hev
+  obtain ⟨K, hK⟩ := hev
+  refine ⟨K, fun k hk => ?_⟩
+  have hlt := hK k hk
+  have h2 : (0 : ℝ) < 2 ^ k := by positivity
+  rw [div_lt_one h2] at hlt
+  have hcast : ((k ^ C : ℕ) : ℝ) < ((2 ^ k : ℕ) : ℝ) := by push_cast; exact hlt
+  exact le_of_lt (by exact_mod_cast hcast)
+
+/-- **Uniform-measure reduction: the whole crux `sep_two_three` from ONE Gelfond-style bound.**
+The classical effective lower bound on the distance between powers of 2 and 3 (Gelfond 1935; Baker;
+explicit in Bennett–Bugeaud, *Acta Arith.* 155 (2012) and Bugeaud's monograph §3.1) provides, for
+`log₂3`, a *polynomial* irrationality measure — far stronger than the exponential `2^(−k/3)` this
+crux needs.  In the near-critical window it takes the pure-ℕ form `3^k ≤ (2^m−3^k)·k^C` for a fixed
+`C` and all large `k`.
+
+This theorem machine-checks (sorry-free, trust base only) that such a uniform measure `hmeas`
+(for `k ≥ K`), together with the elementary crossover `hK` (dischargeable by `poly_le_two_pow`) and a
+finite check `hfin` on the residual `6 ≤ k < K`, yields `sep_two_three` for **every** near-critical
+`k ≥ 6`.  So *everything* between the standard Gelfond object and the crux is elementary: the sole
+open input is the uniform measure `hmeas` (the Gelfond bound) — a well-defined, classical,
+🟡 project-scale target (explicit hypergeometric/interpolation constructions; no mathlib support yet),
+NOT a generational wall. -/
+theorem sep_of_uniform_measure (C K : ℕ)
+    (hK : ∀ k : ℕ, K ≤ k → k ^ (3 * C) ≤ 2 ^ k)
+    (hmeas : ∀ k m : ℕ, K ≤ k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
+        3 ^ k ≤ (2 ^ m - 3 ^ k) * k ^ C)
+    (hfin : ∀ k m : ℕ, 6 ≤ k → k < K → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
+        3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k)
+    (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
+    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
+  by_cases hkK : K ≤ k
+  · exact sep_of_measure k m C (hmeas k m hkK h1 h2) (hK k hkK)
+  · exact hfin k m hk (by omega) h1 h2
+
 /-- **Scaled best-approximation bound (linear-form form).**  Multiplying `theta_dist_lower` by `k`:
 the linear form `|k·θ − p|` is at least `k·min(θ−a/b, c/d−θ)` for every `p`, when `1 ≤ k < b + d`.
 This is the `‖k·θ‖`-shaped quantity the crux pipeline consumes (`m − k·θ = |k·θ − m|` near-critical). -/
