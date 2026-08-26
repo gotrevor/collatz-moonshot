@@ -15,7 +15,9 @@
   theory was needed), and `FrontA/RhinLiteInterval.lean` proves the full rational target
   `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets. **Next live theorem:**
   the compact-maximum/derivative bridge, followed by the two LCM-cleared integral log forms. Read
-  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
+  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`. The current implementation baton is
+  `HANDOFF-2026-08-26-maximum-log-square.md`: use the factorwise log of the squared kernel at the
+  nonzero maximizer, avoiding both absolute-value differentiation and large-power expansion.
 
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem

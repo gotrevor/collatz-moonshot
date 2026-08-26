@@ -114,6 +114,10 @@ rhinLiteKernelAbs_div_pow_le:
 What remains in the analytic step is only the continuous maximum argument and the derivative
 factorization: a nonzero interior extremum of `|P(x)|/x^1000` forces `S(x)=0`, while the endpoints
 `2,3,4` give zero. The root exhaustion and every local numerical estimate are already checked.
+The 2026-08-26 treadmill probe isolated the Lean-friendly implementation: maximize the square and
+differentiate `sum_i w_i * log (Q_i(x)^2) - 2000*log x` locally at its nonzero maximizer. This avoids
+both `abs` differentiability and expansion of the large powers; see
+`HANDOFF-2026-08-26-maximum-log-square.md`.
 
 ## What this yields when the remaining wiring is formalized
 

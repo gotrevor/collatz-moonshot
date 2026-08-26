@@ -13,6 +13,9 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
   `|H(x)|/x^1000 ≤ (9/40)^1000` on every possible positive critical bracket;
 - **NEXT:** prove the compact-maximum/derivative bridge, lift it to the even block subsequence,
   then extract the two LCM-cleared integer log forms. See `FRONT-A-RHIN-LITE-NEXT.md`.
+  The 2026-08-26 probe isolated the smallest calculus route: maximize the normalized square, then
+  differentiate the local log-square `sum w_i log(Q_i^2) - 2000 log x`; implementation details are
+  in `HANDOFF-2026-08-26-maximum-log-square.md`.
 
 This route needs no sharp Rhin constant and no central coefficient asymptotics. Any finite measure
 closes the large-`k` part of `sep_two_three`; a larger `native_decide` range may finish the residue.
