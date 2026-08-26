@@ -1,5 +1,9 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-08-26 (Lane 1):** Furstenberg's topological ×p×q rigidity (1967) is now **proved,
+> axiom-clean** in `Rigidity/Furstenberg.lean` — the `Assumed/Furstenberg.lean` axiom is
+> discharged, and the ⟨p,q⟩-orbit-density corollary comes with it.  See the ledger entry below.
+
 > **2026-08-26 live advance:** the independent Rhin-lite route has machine-checked exact content
 > balances and `17^n ≤ B_n ≤ 18^n`. It now also exhausts the degree-8 critical roots without
 > Sturm theory and proves the exact `(9/40)^1000` bound globally on `[2,4]` in
@@ -58,6 +62,21 @@ repository's policy for established literature; neither choice would prove the m
 global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-08-26 (Lane 1 — the Furstenberg axiom is DISCHARGED):** Furstenberg's 1967
+  topological ×p×q rigidity is now a **proved theorem**, axiom-clean
+  (`#print axioms` = `[propext, Classical.choice, Quot.sound]`, verified 2026-08-26):
+  `Furstenberg.isClosed_invariant_finite_or_univ` in `Rigidity/Furstenberg.lean`
+  (~900 lines, elementary — no measure theory, no entropy, no disjointness), plus the
+  density corollary `dense_orbit_of_not_isOfFinAddOrder` (the ⟨p,q⟩-orbit of any
+  non-torsion point is dense).  `Assumed/Furstenberg.lean` keeps the same name and
+  statement as a theorem, so the 2⊥3 rigidity trinity's topological member no longer
+  costs an axiom.  Route: Boshernitzan 1994 as presented in Manners arXiv:1305.1514 §4
+  (pin note + chink ledger: `papers/arxiv-1305.1514-manners-pyjama-furstenberg-pin.md`;
+  headline finding: the route survives formalization with zero errata — one glossed
+  detail, the rational-limit-point case with denominator sharing factors with `pq`,
+  filled by orbit-pigeonhole in `exists_fixed_in_orbit`).  Prior-art sweep says
+  apparently first in any prover (hedge: survey-based; the lean-eval "furstenberg"
+  problems are multiple recurrence, a naming trap).
 - **2026-08-25 (public-readiness review):** stopped the treadmill and froze the release candidate.
   Reclassified the single-log work as ancillary formalization, removed corpus-wide novelty claims,
   and made the one `sorry`, named assumptions, computational evidence, and open fronts prominent.

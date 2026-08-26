@@ -32,6 +32,12 @@ lives where, and the roadmap.
   false.
 * `funnel` / `funnel_crash` (`Funnel.lean`) - 2-adic proximity to `1` is an
   archimedean `(3/4)^s` crash: the concrete mechanism giving W1 teeth.
+* `Furstenberg.isClosed_invariant_finite_or_univ` (`Furstenberg.lean`) -
+  **Furstenberg's 1967 topological ×p×q rigidity, PROVED axiom-clean**
+  (2026-08-26, Boshernitzan's elementary route via Manners arXiv:1305.1514 §4),
+  with the density corollary `dense_orbit_of_not_isOfFinAddOrder`.  The former
+  THEOREM-grade axiom in `Assumed/Furstenberg.lean` is discharged: same name,
+  same statement, now a theorem.
 * `conjecture_of_fronts`, `conjecture_iff_descent` (`../Descent.lean`) - the
   consumption forms: Front A + Front B ⟹ Collatz, and descent alone ⟹ Collatz.
 * `diverges_iterate_iff`, `noDivergent_of_descends_if_diverges`,
@@ -50,9 +56,9 @@ lives where, and the roadmap.
   positive nontrivial atomic cycle, so unlike W1′ it is not a Front-A-only pin.
   Both are PROGRAM-grade, `def`s by doctrine.
 * `RudolphJohnsonStatement` (`Circle.lean`) - parameterized by an entropy
-  functional; blocker: KS entropy missing from mathlib.
-* `furstenberg_topological_rigidity` (`../Assumed/Furstenberg.lean`) - the
-  THEOREM-grade axiom anchoring the circle model.
+  functional; blocker: KS entropy missing from mathlib.  (Its topological
+  sibling, formerly the `furstenberg_topological_rigidity` axiom, is now a
+  proved theorem - see above.)
 
 ## Milestones
 * **M1** (done): vocabulary + base intertwining + funnel + wiring forms.
