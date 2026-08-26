@@ -13,11 +13,11 @@
   coefficient asymptotic remains. `FrontA/RhinLiteCritical.lean` proves that eight disjoint
   sign-changing brackets exhaust the real roots of the degree-8 critical polynomial (so no Sturm
   theory was needed), and `FrontA/RhinLiteInterval.lean` proves the full rational target
-  `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets. **Next live theorem:**
-  the compact-maximum/derivative bridge, followed by the two LCM-cleared integral log forms. Read
-  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`. The current implementation baton is
-  `HANDOFF-2026-08-26-maximum-log-square.md`: use the factorwise log of the squared kernel at the
-  nonzero maximizer, avoiding both absolute-value differentiation and large-power expansion.
+  `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets.
+  `FrontA/RhinLiteMaximum.lean` now closes the compact-maximum/derivative bridge globally on
+  `[2,4]`, sorry-free. **Next live theorem:** lift this base estimate to the actual even block
+  subsequence, followed by the two LCM-cleared integral log forms. Read `FRONT-A-RHIN-LITE.md`
+  and `FRONT-A-RHIN-LITE-NEXT.md`.
 
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem

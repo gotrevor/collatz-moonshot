@@ -111,13 +111,12 @@ rhinLiteKernelAbs_div_pow_le:
   x in bracket_i -> |P(x)| / x^1000 <= (9/40)^1000.
 ```
 
-What remains in the analytic step is only the continuous maximum argument and the derivative
-factorization: a nonzero interior extremum of `|P(x)|/x^1000` forces `S(x)=0`, while the endpoints
-`2,3,4` give zero. The root exhaustion and every local numerical estimate are already checked.
-The 2026-08-26 treadmill probe isolated the Lean-friendly implementation: maximize the square and
-differentiate `sum_i w_i * log (Q_i(x)^2) - 2000*log x` locally at its nonzero maximizer. This avoids
-both `abs` differentiability and expansion of the large powers; see
-`HANDOFF-2026-08-26-maximum-log-square.md`.
+`CollatzMoonshot/FrontA/RhinLiteMaximum.lean` completes the continuous maximum argument and
+derivative factorization. It maximizes the square, transfers the maximum locally through
+`sum_i w_i * log (Q_i(x)^2) - 2000*log x`, clears the six nonzero factors to `S`, applies root
+exhaustion, and passes from the squared bound back to the nonnegative absolute kernel. Thus
+`rhinLiteKernelAbs_div_pow_le_on_Icc` proves the target globally on `[2,4]` without differentiating
+`abs` or expanding the large powers.
 
 ## What this yields when the remaining wiring is formalized
 
@@ -136,8 +135,8 @@ Sharp `7.616` constants are irrelevant.
 
 The remaining Lean work is:
 
-1. prove the compact-maximum/derivative bridge and lift the base estimate to the even block
-   subsequence (the exact assignment is `FRONT-A-RHIN-LITE-NEXT.md`);
+1. lift the completed base estimate to the even block subsequence (the exact assignment is
+   `FRONT-A-RHIN-LITE-NEXT.md`);
 2. instantiate polynomial-integral/LCM machinery and prove the two integer linear
    forms for `log(3/2)` and `log(4/3)`;
 3. prove a coarse simultaneous-approximation criterion using the explicit lower/upper coefficient
