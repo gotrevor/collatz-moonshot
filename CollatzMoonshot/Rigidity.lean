@@ -6,6 +6,7 @@ import CollatzMoonshot.Rigidity.Padic
 import CollatzMoonshot.Rigidity.Drift
 import CollatzMoonshot.Rigidity.Funnel
 import CollatzMoonshot.Rigidity.Circle
+import CollatzMoonshot.Rigidity.Furstenberg
 import CollatzMoonshot.Rigidity.Invariant
 import CollatzMoonshot.Rigidity.Empirical
 
