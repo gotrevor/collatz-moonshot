@@ -69,6 +69,11 @@ findings are a chronological lab notebook. They preserve failed routes and chang
 judgments, so older entries may be stale or contradicted by later ones. The table above
 is the concise public status statement; Lean source and `#print axioms` are authoritative.
 
+`ON-LINE-FINDINGS-*.md` record answers to source requests filed while development ran
+without network access. The request queue itself was transient and has been retired, so
+lab notes that call a request “unanswered” describe the state at that time and are
+superseded by the findings files.
+
 ## Build
 
 The repository is pinned to Lean `v4.33.1` and the matching mathlib tag.
