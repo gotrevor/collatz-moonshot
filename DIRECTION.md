@@ -6,6 +6,19 @@
 > Public checkpoint, 2026-08-25: no treadmill is active. This section supersedes the
 > dated directive history below, which is retained as a research log.
 
+- **THE OBJECTIVE, restated (2026-08-29): this repo's product is a machine-checked conjecture
+  GRAPH, not a proof queue.**  A unit of progress = one green **node** (a named Prop - working
+  conjecture, axiom candidate, interface - kernel-elaborated, with provenance, odds, and a
+  refutation probe under `experiments/`), one green **edge** (sorry-free, axiom-audited wiring),
+  or one **probe-refuted node** (a kill is progress).  The FrontB thread board and `Assumed/`
+  tiers are the prior art; this generalizes them to the whole repo.  Sink: `Conjecture`
+  (via the two fronts).  Every lap answers: *what is the weakest open node on each path to the
+  sink - add a weaker node, add an edge, or kill one.*  Grinding known mathematics is only ever
+  *discharging a named node* (lane 2, KB two-lanes doctrine: phase 1 tolerates
+  warnings/`native_decide`/boosts; distribution prep is separate).  The Rhin-lite campaign
+  below is exactly that: lane-2 discharge of the single node `sep_two_three`.  A lap that
+  cannot advance a proof can ALWAYS advance the graph.
+
 - **Independent Rhin-lite route now active (2026-08-25).**  `FrontA/RhinKernel.lean` proves the
   exact arithmetic/content balances of Rhin's published kernel.  `FrontA/RhinLite.lean` uses the
   nearby denominator-1000 kernel `(705,551,449,109,39,54)/1000` and machine-checks the complete
