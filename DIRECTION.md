@@ -6,6 +6,12 @@
 > Public checkpoint, 2026-08-25: no treadmill is active. This section supersedes the
 > dated directive history below, which is retained as a research log.
 
+- 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
+  here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
+  from other lean repos, where formalization *is* the point.").  Same doctrine as normal-numbers.
+  Weigh every candidate move by its probability of producing new mathematics; "first in any
+  prover" carries no weight in prioritization.
+
 - **THE OBJECTIVE, restated (2026-08-29): this repo's product is a machine-checked conjecture
   GRAPH, not a proof queue.**  A unit of progress = one green **node** (a named Prop - working
   conjecture, axiom candidate, interface - kernel-elaborated, with provenance, odds, and a
