@@ -1320,13 +1320,84 @@ theorem rhinLiteI₂_step_decay16 (t : ℕ) : 16 * rhinLiteI₂ (t + 1) ≤ rhin
     rw [← hI t]; exact (rhinLiteI₂_pos t).le
   nlinarith [hstep, hpos, rhinLite_stepFactor_le_one_sixteenth]
 
-/-- **Sub-node (central per-step growth).**  The central coefficient `c_N = [x^N]H_N` grows by a
-factor `≥ 16` per step; the proved band `17^N ≤ c_N ≤ 18^N` gives `c_{t+1}/c_t ≈ 17^{2000} ≫ 16`.
-Disclosed sub-node — the loose absolute band cannot compare consecutive `c`'s (its slack
-`(18/17)^N` compounds), so this needs a genuine per-step ratio bound. -/
+/-- Power law for the positive transform: `rhinLitePositive (a+b) = rhinLitePositive a ·
+rhinLitePositive b` (each factor is `base ^ (w··)`, and `pow_add` splits the exponent). -/
+theorem rhinLitePositive_add (a b : ℕ) :
+    rhinLitePositive (a + b) = rhinLitePositive a * rhinLitePositive b := by
+  simp only [rhinLitePositive, mul_add, pow_add]
+  ring
+
+/-- The positive transform has nonnegative coefficients (product of nonneg-coeff factors). -/
+theorem rhinLitePositive_coeffNonneg (s : ℕ) : CoeffNonneg (rhinLitePositive s) := by
+  rw [rhinLitePositive]
+  exact (((((rhinLiteLinear_pow_coeff_nonneg 3 1 _).mul
+    (rhinLiteLinear_pow_coeff_nonneg 2 1 _)).mul
+    (rhinLiteLinear_pow_coeff_nonneg 4 1 _)).mul
+    (rhinLiteLinear_pow_coeff_nonneg 12 5 _)).mul
+    ((rhinLiteQuadratic_coeff_nonneg 144 102 17).pow _)).mul
+    ((rhinLiteQuadratic_coeff_nonneg 144 108 19).pow _)
+
+/-- Bridge: the integer central coefficient equals, over `ℚ`, the positive-transform central
+coefficient at parameter `2s`. -/
+theorem rhinLiteCentral_coeff_link (s : ℕ) :
+    ((rhinLiteEvenPolynomialZ s).coeff (rhinLiteEvenIndex s) : ℚ)
+      = (rhinLitePositive (2 * s)).coeff (rhinLiteEvenIndex s) := by
+  have hmap : ((rhinLiteEvenPolynomialZ s).coeff (rhinLiteEvenIndex s) : ℚ)
+      = (rhinLiteEvenPolynomial s).coeff (rhinLiteEvenIndex s) := by
+    rw [← rhinLiteEvenPolynomialZ_map_rat, coeff_map]; simp
+  rw [hmap, rhinLiteEvenPolynomial_centralCoeff]
+
+/-- **Sub-node (central per-step growth) — now PROVED** by convolution positivity.  Since
+`rhinLitePositive` has nonnegative coefficients and satisfies the power law `P(a+b)=P(a)·P(b)`, the
+central coefficient `c(t+1) = [x^{N+2000}](P_{2t}·P_2)` picks up the single convolution term
+`[x^N]P_{2t} · [x^{2000}]P_2 = c(t)·c(1)` with all other (nonneg) terms only adding, and
+`c(1) ≥ 17^{2000} ≥ 16`.  Hence `c(t+1) ≥ 16·c(t)`.  NO asymptotics — pure coefficient positivity. -/
 theorem rhinLiteCentral_step_growth16 (t : ℕ) :
     16 * rhinLiteCentral t ≤ rhinLiteCentral (t + 1) := by
-  sorry
+  -- ℚ-level: `16 · c(t) ≤ c(t+1)` for the positive-transform central coeffs
+  have hnn_t : CoeffNonneg (rhinLitePositive (2 * t)) := rhinLitePositive_coeffNonneg _
+  have hnn_2 : CoeffNonneg (rhinLitePositive 2) := rhinLitePositive_coeffNonneg _
+  have hcnn : 0 ≤ (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t) := hnn_t _
+  have hprod : rhinLitePositive (2 * (t + 1))
+      = rhinLitePositive (2 * t) * rhinLitePositive 2 := by
+    rw [show 2 * (t + 1) = 2 * t + 2 by ring, rhinLitePositive_add]
+  have hidx : rhinLiteEvenIndex (t + 1) = rhinLiteEvenIndex t + rhinLiteEvenIndex 1 := by
+    simp only [rhinLiteEvenIndex]; ring
+  have hconv : (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+        * (rhinLitePositive 2).coeff (rhinLiteEvenIndex 1)
+      ≤ (rhinLitePositive (2 * (t + 1))).coeff (rhinLiteEvenIndex (t + 1)) := by
+    rw [hprod, hidx]; exact coeff_mul_term_le hnn_t hnn_2 _ _
+  have hc1 : (16 : ℚ) ≤ (rhinLitePositive 2).coeff (rhinLiteEvenIndex 1) := by
+    have hidx1 : rhinLiteEvenIndex 1 = rhinLiteScale * 2 := by rw [rhinLiteEvenIndex]; ring
+    rw [hidx1]
+    have h17 := seventeen_pow_le_rhinLitePositive_coeff 2
+    have h16 : (16 : ℚ) ≤ 17 ^ (rhinLiteScale * 2) := by
+      calc (16 : ℚ) ≤ 17 := by norm_num
+        _ ≤ 17 ^ (rhinLiteScale * 2) :=
+          le_self_pow₀ (by norm_num) (by rw [rhinLiteScale]; norm_num)
+    linarith
+  have hmid : 16 * (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+      ≤ (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+        * (rhinLitePositive 2).coeff (rhinLiteEvenIndex 1) := by
+    calc 16 * (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+        = (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t) * 16 := by ring
+      _ ≤ (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+            * (rhinLitePositive 2).coeff (rhinLiteEvenIndex 1) :=
+          mul_le_mul_of_nonneg_left hc1 hcnn
+  have hQ : 16 * (rhinLitePositive (2 * t)).coeff (rhinLiteEvenIndex t)
+      ≤ (rhinLitePositive (2 * (t + 1))).coeff (rhinLiteEvenIndex (t + 1)) :=
+    le_trans hmid hconv
+  -- transport ℚ → ℤ → ℝ via the coefficient bridge
+  have hZ : 16 * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t)
+      ≤ (rhinLiteEvenPolynomialZ (t + 1)).coeff (rhinLiteEvenIndex (t + 1)) := by
+    have : (16 * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℚ)
+        ≤ ((rhinLiteEvenPolynomialZ (t + 1)).coeff (rhinLiteEvenIndex (t + 1)) : ℚ) := by
+      push_cast
+      rw [rhinLiteCentral_coeff_link t, rhinLiteCentral_coeff_link (t + 1)]
+      exact hQ
+    exact_mod_cast this
+  rw [rhinLiteCentral, rhinLiteCentral]
+  exact_mod_cast hZ
 
 /-- **Sub-node (the rate gap `μ₁ > M₂`).**  `I₁` decays strictly slower than `I₂`: per step the
 `I₁`-ratio exceeds twice the `I₂`-ratio, `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true

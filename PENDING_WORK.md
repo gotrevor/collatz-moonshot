@@ -24,11 +24,23 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
   envelope nodes were FALSE — Laplace gives `Iᵢ(t) ~ M^{2t}/√t`, so no constant `c` satisfies
   `c·rᵗ ≤ Iᵢ(t)` at the true rate.  The per-step RATIO facts are the honest form, and the pure-power
   factorization proves the decays directly.  Do NOT reintroduce absolute single-rate envelopes.**
-  3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  (true `≈ 17^2000`; the loose absolute
-     band `17^N≤c≤18^N` CANNOT compare consecutive `c`'s — its slack `(18/17)^N` compounds — so this
-     needs a genuine per-step ratio bound).
-  4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  (the `μ₁>M₂` separation, true gap
-     `exp 11 ≈ 6·10⁴`; the analytic HEART — separated maxima of `ψ` on `[2,3]` vs `[3,4]`).
+  3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  — **PROVED, trust-base clean** (only the
+     pre-existing central-band `native_decide` anchor).  By CONVOLUTION POSITIVITY: `rhinLitePositive`
+     has nonneg coeffs (`rhinLitePositive_coeffNonneg`) and satisfies the power law `P(a+b)=P(a)·P(b)`
+     (`rhinLitePositive_add`), so `c(t+1)=[x^{N+2000}](P_{2t}·P_2) ≥ [x^N]P_{2t}·[x^{2000}]P_2 =
+     c(t)·c(1)` (one convolution term via `coeff_mul_term_le`, others only add), and `c(1) ≥ 17^{2000}
+     ≥ 16`.  Bridge `rhinLiteCentral_coeff_link` identifies the ℤ central coeff with the
+     positive-transform coeff over ℚ.  NO asymptotics.
+  4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  — **the SOLE remaining sorry** (the
+     `μ₁>M₂` separation, true gap `exp 11 ≈ 6·10⁴`; the analytic HEART — separated maxima of `ψ` on
+     `[2,3]` vs `[3,4]`).  This is genuinely a concentration/Laplace statement and does NOT reduce to
+     the global bound: the pure-power trick gives only `Iᵢ(t+1) ≤ (9/40)²⁰⁰⁰·Iᵢ(t)` (an UPPER bound
+     for BOTH intervals), whereas the gap needs a LOWER bound on `I₁(t+1)/I₁(t)` exceeding twice the
+     `I₂` upper — i.e. the [2,3]-peak must beat the [3,4]-peak, requiring the mass of `φ^{2t}` to
+     concentrate near the higher peak (a Laplace lower bound).  NEXT: prove a per-interval peak
+     LOWER bound `∫_{[a,b]⊂[2,3]} φ^{2t}/x ≥ (peak sub-window)` vs a per-interval peak UPPER bound on
+     `[3,4]`, with the two peak values rationally separated — the `RhinLiteCritical`/`RhinLiteInterval`
+     bracket machinery localized to each interval.
 
 **KEY CORRECTION over the previous handoff's route.**  Independent two-sided *absolute* exponential
 envelopes on `I₁,I₂` do NOT yield the `|M(0,1)|` lower bound: the difference `I₁(t₀)I₂(t₀+1) −
