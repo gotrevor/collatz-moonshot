@@ -35,9 +35,13 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
   `j≤2N`, `j≠N`) and `endpoint_pow_dvd_twelve_pow` (`e^m ∣ 12^N` for `e ∣ 12`, `m≤N`), so
   `D_N := lcmUpto N · 12^N` clears both the `1/(j-N)` factor and the negative-exponent endpoint
   powers (`2,3,4 ∣ 12`) for both intervals at once.
-  Next: assemble the single-term integer-clearing lemma (`D_N · tail_j ∈ ℤ`, using zpow sign
-  cases), sum it, instantiate `p` at the integer `H_N`, and land `A₁ + B·log(3/2)`,
-  `A₂ + B·log(4/3)` with common `B = D_N · coeff_N` and clearing factor `D_N`.
+  The single-term integer-clearing lemma is proved: `twelve_pow_mul_zpow_isInt`
+  (`12^N·e^k ∈ ℤ` for `e ∣ 12`, `k ≥ -N`, via zpow sign cases) and `tail_term_cleared`
+  (`lcmUpto N · 12^N · (c·(eb^{j-N}-ea^{j-N})/(j-N)) ∈ ℤ` for endpoints `ea,eb ∣ 12`).
+  Next: sum `tail_term_cleared` over the tail indices (`Finset.sum` of integers), multiply the
+  split identity by `D_N = lcmUpto N · 12^N`, instantiate `p` at the integer `H_N` (whose real
+  eval = the even polynomial's), and land `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)` with common
+  `B = D_N · coeff_N` and clearing factor `D_N`.
 - **NEXT (objective 3):** the two LCM-cleared integer log forms `A₁ + B·log(3/2)`,
   `A₂ + B·log(4/3)` with common `B` and clearing factor `D_N`. See `FRONT-A-RHIN-LITE-NEXT.md`
   objective 3: the monomial integral identity `∫_a^b H_N/x^{N+1}` isolates the `x^N` term

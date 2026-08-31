@@ -119,4 +119,56 @@ theorem endpoint_pow_dvd_twelve_pow {e : ℤ} (he : e ∣ 12) {m N : ℕ} (hm : 
   calc e ^ m ∣ (12 : ℤ) ^ m := pow_dvd_pow_of_dvd he m
     _ ∣ (12 : ℤ) ^ N := pow_dvd_pow 12 hm
 
+/-- For a positive endpoint `e ∣ 12` and any exponent `k ≥ -N`, the real number
+`12^N · e^k` is an integer (negative powers are cleared by `12^N`). -/
+theorem twelve_pow_mul_zpow_isInt {e : ℤ} (he : e ∣ 12) (hepos : 0 < e) {k : ℤ} {N : ℕ}
+    (hk : -(N : ℤ) ≤ k) : ∃ z : ℤ, (12 : ℝ) ^ N * (e : ℝ) ^ k = (z : ℝ) := by
+  have hepos' : (0 : ℝ) < (e : ℝ) := by exact_mod_cast hepos
+  rcases le_total 0 k with hk0 | hk0
+  · refine ⟨12 ^ N * e ^ k.toNat, ?_⟩
+    push_cast
+    rw [← zpow_natCast (e : ℝ) k.toNat, Int.toNat_of_nonneg hk0]
+  · set m := (-k).toNat with hm_def
+    have hmk : (m : ℤ) = -k := Int.toNat_of_nonneg (by omega)
+    have hmN : m ≤ N := by omega
+    obtain ⟨w, hw⟩ := endpoint_pow_dvd_twelve_pow he hmN
+    refine ⟨w, ?_⟩
+    have hem : (e : ℝ) ^ m ≠ 0 := by positivity
+    have hk' : (e : ℝ) ^ k = ((e : ℝ) ^ m)⁻¹ := by
+      rw [show k = -(m : ℤ) by omega, zpow_neg, zpow_natCast]
+    have hwR : (12 : ℝ) ^ N = (e : ℝ) ^ m * (w : ℝ) := by
+      have := congrArg (fun n : ℤ => (n : ℝ)) hw
+      push_cast at this
+      rw [this]
+    rw [hk', hwR]
+    field_simp
+
+/-- **Single tail term is cleared to an integer** by `D_N = lcmUpto N · 12^N`.  Endpoints
+`ea, eb ∈ {2,3,4}` (positive divisors of `12`); `c` is the integer coefficient. -/
+theorem tail_term_cleared {ea eb : ℤ} (hea : ea ∣ 12) (heb : eb ∣ 12)
+    (heap : 0 < ea) (hebp : 0 < eb) (c : ℤ) {j N : ℕ} (hj : j ≤ 2 * N) (hjN : j ≠ N) :
+    ∃ m : ℤ, (Nat.lcmUpto N : ℝ) * 12 ^ N *
+        ((c : ℝ) * (((eb : ℝ) ^ ((j : ℤ) - N) - (ea : ℝ) ^ ((j : ℤ) - N)) /
+          ((j : ℤ) - N))) = (m : ℝ) := by
+  set k : ℤ := (j : ℤ) - N with hk_def
+  have hkz : k ≠ 0 := by rw [hk_def]; intro h; apply hjN; omega
+  have hkne : (k : ℝ) ≠ 0 := by exact_mod_cast hkz
+  have hkbound : -(N : ℤ) ≤ k := by rw [hk_def]; omega
+  obtain ⟨zb, hzb⟩ := twelve_pow_mul_zpow_isInt heb hebp (k := k) (N := N) hkbound
+  obtain ⟨za, hza⟩ := twelve_pow_mul_zpow_isInt hea heap (k := k) (N := N) hkbound
+  obtain ⟨q, hq⟩ := sub_natCast_dvd_lcmUpto hj hjN
+  refine ⟨c * q * (zb - za), ?_⟩
+  have hqR : (Nat.lcmUpto N : ℝ) = (k : ℝ) * (q : ℝ) := by rw [hk_def]; exact_mod_cast hq
+  have hdiv : (Nat.lcmUpto N : ℝ) / (k : ℝ) = (q : ℝ) := by
+    rw [hqR, mul_comm, mul_div_assoc, div_self hkne, mul_one]
+  rw [show ((j : ℤ) : ℝ) - (N : ℝ) = (k : ℝ) by rw [hk_def]; push_cast; ring]
+  calc (Nat.lcmUpto N : ℝ) * 12 ^ N *
+          ((c : ℝ) * (((eb : ℝ) ^ k - (ea : ℝ) ^ k) / k))
+      = 12 ^ N * (c : ℝ) * ((Nat.lcmUpto N : ℝ) / (k : ℝ)) * ((eb : ℝ) ^ k - (ea : ℝ) ^ k) := by
+        ring
+    _ = (c : ℝ) * q * (12 ^ N * (eb : ℝ) ^ k) - (c : ℝ) * q * (12 ^ N * (ea : ℝ) ^ k) := by
+        rw [hdiv]; ring
+    _ = (c : ℝ) * q * (zb : ℝ) - (c : ℝ) * q * (za : ℝ) := by rw [hzb, hza]
+    _ = ((c * q * (zb - za) : ℤ) : ℝ) := by push_cast; ring
+
 end CollatzMoonshot.FrontA
