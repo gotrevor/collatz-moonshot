@@ -806,6 +806,33 @@ theorem rhinLite_nonvanishing_triple (p q r : ℤ) (h : p ≠ 0 ∨ q ≠ 0 ∨ 
       p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t ≠ 0 := by
   sorry
 
+/-- **Pointwise lower bound (the proved assembly core).**  At any index `t` where the integer
+combination `n(t) = p·B(t) − q·A₁(t) − r·A₂(t)` is nonzero AND the remainder is small enough
+(`(|q|+|r|)·E_N ≤ 1/2`), the linear form is bounded below by `1/(2·B(t))`.  This is
+`logForm_conditional_lower` fed with the definite form data `rhinLiteFD_spec` and the `≥ 1/2`
+slack.  It is the fully-proved core; the crux `rhinLiteLIMeasure` then only needs the *selection*
+of such a `t` (small `E`, nonzero `n`) at a height-controlled index. -/
+theorem rhinLite_pointwise_lower (p q r : ℤ) (t : ℕ)
+    (hn : p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t ≠ 0)
+    (hsmall : ((|q| + |r| : ℤ) : ℝ) *
+        ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t) ≤ 1 / 2) :
+    1 / (2 * (rhinLiteB t : ℝ))
+      ≤ |(p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3)| := by
+  obtain ⟨hBpos, _, _, hL1pos, hL1le, hL2pos, hL2le⟩ := rhinLiteFD_spec t
+  have hlow := logForm_conditional_lower (rhinLiteA₁ t) (rhinLiteA₂ t) (rhinLiteB t) p q r
+    ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t)
+    hBpos hL1pos hL1le hL2pos hL2le hn
+  have hBRpos : (0 : ℝ) < (rhinLiteB t : ℝ) := by exact_mod_cast hBpos
+  have h1 : (1 : ℝ) / 2 ≤
+      1 - ((|q| + |r| : ℤ) : ℝ) *
+        ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t) := by
+    linarith [hsmall]
+  calc 1 / (2 * (rhinLiteB t : ℝ)) = (1 / 2) / (rhinLiteB t : ℝ) := by ring
+    _ ≤ (1 - ((|q| + |r| : ℤ) : ℝ) *
+          ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t))
+          / (rhinLiteB t : ℝ) := by gcongr
+    _ ≤ _ := hlow
+
 theorem rhinLiteLIMeasure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ p q r : ℤ, (p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) →
