@@ -29,6 +29,16 @@ genuine multi-lap analytic obligation, NOT a citation.  (Retired this lap: the `
 opacity — `rhinLite_forms_full` + `rhinLiteFD_eq` + `rhinLite_row_relations` make `B,A₁,A₂`
 explicit; `rhinLite_formMatrix_det_cast` reduces the integer det to the real integral det.)
 
+**Scaffolding landed (2026-08-31, second lap):** `rhinLite_integralMatrix_det_cofactor` (PROVED,
+trust-base clean) — `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)`, `M(a,b) = I₂(a)I₂(b)(ρ(a)−ρ(b))`,
+`ρ = I₁/I₂`; plus `rhinLiteCentral_pos/rhinLiteI₁_pos/rhinLiteI₂_pos` (all `>0`).  **KEY INSIGHT
+recorded:** `ρ`-strict-monotonicity ALONE does NOT give `det ≠ 0` — the three cofactor terms
+*alternate in sign* (`M(1,2),M(0,2),M(0,1)` share a sign if `ρ` monotone, but the `−c₁` middle sign
+flips it), so nonzero-ness genuinely needs the *magnitude* balance, i.e. the leading asymptotics
+`I_i(t) = γ_i N^{-1/2}(9/40)^N(1+O(1/N))`.  A coarse/sign-only argument is provably insufficient;
+this is the real obstruction and the next lap must produce the integral asymptotics (saddle-point on
+the normalized integrand, whose max is exactly `(9/40)^N`).
+
 **NOTE — Λ≠0 is FREE (no Baker needed).**  For `(p,q,r)≠0`, `Λ = p+q log(3/2)+r log(4/3) ≠ 0` by
 unique factorization: `q log(3/2)+r log(4/3) = p ∈ ℤ` ⟹ `(3/2)^q(4/3)^r = e^p` rational ⟹
 `2^{2r−q}3^{q−r} = 1` (with `p=0`) ⟹ `q=r=0`.  The determinant/window is needed ONLY to control

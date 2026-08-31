@@ -1144,9 +1144,51 @@ theorem rhinLite_formMatrix_det_cast (t₀ : ℕ) :
   rw [cA10, cA11, cA12, cA20, cA21, cA22, cB0, cB1, cB2]
   ring
 
+/-- Positivity of the central coefficient row entry: `c_N ≥ 17^N > 0`. -/
+theorem rhinLiteCentral_pos (t : ℕ) : 0 < rhinLiteCentral t := by
+  obtain ⟨hlo, _⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+  have : (0 : ℤ) < (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) :=
+    lt_of_lt_of_le (by positivity) hlo
+  rw [rhinLiteCentral]; exact_mod_cast this
+
+/-- Positivity of the first integral entry `I₁ = ∫₂³ H_N/x^{N+1} > 0`. -/
+theorem rhinLiteI₁_pos (t : ℕ) : 0 < rhinLiteI₁ t :=
+  (rhinLiteEven_logForm_small_23 t).1
+
+/-- Positivity of the second integral entry `I₂ = ∫₃⁴ H_N/x^{N+1} > 0`. -/
+theorem rhinLiteI₂_pos (t : ℕ) : 0 < rhinLiteI₂ t :=
+  (rhinLiteEven_logForm_small_34 t).1
+
+/-- **Cofactor expansion of the integral determinant (PROVED).**  Expanding along the central
+coefficient column: `det = c₀·M(1,2) − c₁·M(0,2) + c₂·M(0,1)`, where `M(a,b) = I₁(a)I₂(b) −
+I₂(a)I₁(b) = I₂(a)I₂(b)·(ρ(a) − ρ(b))` is the `2×2` minor and `ρ(t) = I₁(t)/I₂(t)`.  This exposes
+the analytic content: `det ≠ 0` is a statement about the ratio function `ρ` together with the
+central-coefficient weights — see `rhinLite_integralMatrix_det_ne_zero`. -/
+theorem rhinLite_integralMatrix_det_cofactor (t₀ : ℕ) :
+    (rhinLiteIntegralMatrix t₀).det
+      = rhinLiteCentral t₀
+          * (rhinLiteI₁ (t₀ + 1) * rhinLiteI₂ (t₀ + 2)
+              - rhinLiteI₂ (t₀ + 1) * rhinLiteI₁ (t₀ + 2))
+        - rhinLiteCentral (t₀ + 1)
+          * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 2))
+        + rhinLiteCentral (t₀ + 2)
+          * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 1)) := by
+  rw [rhinLiteIntegralMatrix, Matrix.det_fin_three]
+  simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.head_cons, Matrix.cons_val_two, Matrix.tail_cons, Matrix.head_fin_const,
+    Matrix.empty_val', Matrix.cons_val_fin_one]
+  ring
+
 /-- **THE deep node (perfect-system determinant, now over ℝ).**  The `3×3` *real* matrix of three
 consecutive integral triples `(c_N, I₁, I₂)` is nonsingular.  This is the genuine analytic core of
 Rhin's non-degeneracy for the block subsequence `N = 2000t`.
+
+By `rhinLite_integralMatrix_det_cofactor`, `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)` with minors
+`M(a,b) = I₂(a)I₂(b)(ρ(a)−ρ(b))`, `ρ(t) = I₁(t)/I₂(t)`, and all `c_N, I₁, I₂ > 0`
+(`rhinLiteCentral_pos`, `rhinLiteI₁_pos`, `rhinLiteI₂_pos`).  Note `ρ`-strict-monotonicity ALONE is
+insufficient: the three cofactor terms alternate in sign, so `det ≠ 0` needs the *magnitude* balance
+too (numerically a ~4000-order cancellation for `t₀=1`), i.e. the leading asymptotics
+`I_i(t) = γ_i·N^{-1/2}·(9/40)^N·(1 + O(1/N))` of the two integrals.
 
 Numerically confirmed nonzero (`experiments/rhin_lite_det_check.py`, exact integer arithmetic:
 `t₀ = 1` gives `log₁₀|det| ≈ 3570`), but it is *near-degenerate*: columns `I₁, I₂` satisfy
