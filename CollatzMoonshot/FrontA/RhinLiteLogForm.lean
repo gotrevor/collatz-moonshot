@@ -171,4 +171,53 @@ theorem tail_term_cleared {ea eb : ℤ} (hea : ea ∣ 12) (heb : eb ∣ 12)
     _ = (c : ℝ) * q * (zb : ℝ) - (c : ℝ) * q * (za : ℝ) := by rw [hzb, hza]
     _ = ((c * q * (zb - za) : ℤ) : ℝ) := by push_cast; ring
 
+/-- A finite sum of integer-valued reals is integer-valued. -/
+theorem isInt_finset_sum {α : Type*} (s : Finset α) (g : α → ℝ)
+    (h : ∀ a ∈ s, ∃ m : ℤ, g a = (m : ℝ)) : ∃ M : ℤ, ∑ a ∈ s, g a = (M : ℝ) := by
+  classical
+  induction s using Finset.induction with
+  | empty => exact ⟨0, by simp⟩
+  | @insert a t ha ih =>
+      obtain ⟨m, hm⟩ := h a (Finset.mem_insert_self a t)
+      obtain ⟨M, hM⟩ := ih (fun b hb => h b (Finset.mem_insert_of_mem hb))
+      exact ⟨m + M, by rw [Finset.sum_insert ha, hm, hM]; push_cast; ring⟩
+
+/-- **The `D_N`-cleared integer log form.**  For an integer polynomial `P` of degree `≤ 2N`
+(and `≥ N`), positive endpoints `ea ≤ eb` dividing `12`, there is an integer `A` with
+
+`D_N · ∫_{ea}^{eb} P(x)/x^{N+1} dx = A + B · log(eb/ea)`,
+
+where `D_N = lcmUpto N · 12^N` and `B = D_N · P.coeff N` is an explicit integer. -/
+theorem lcm_cleared_log_form (P : ℤ[X]) {ea eb : ℤ} (hea : ea ∣ 12) (heb : eb ∣ 12)
+    (heap : 0 < ea) (hebp : 0 < eb) (hab : ea ≤ eb) (N : ℕ)
+    (hdeg : (P.map (Int.castRingHom ℝ)).natDegree ≤ 2 * N)
+    (hN : N ≤ (P.map (Int.castRingHom ℝ)).natDegree) :
+    ∃ A : ℤ, (Nat.lcmUpto N : ℝ) * 12 ^ N *
+        (∫ x in (ea : ℝ)..(eb : ℝ),
+          (P.map (Int.castRingHom ℝ)).eval x / x ^ (N + 1))
+      = (A : ℝ) + ((Nat.lcmUpto N * 12 ^ N * P.coeff N : ℤ) : ℝ) *
+          Real.log ((eb : ℝ) / (ea : ℝ)) := by
+  classical
+  set p := P.map (Int.castRingHom ℝ) with hp
+  have ha : (0 : ℝ) < (ea : ℝ) := by exact_mod_cast heap
+  have hab' : (ea : ℝ) ≤ (eb : ℝ) := by exact_mod_cast hab
+  have hcoeff : ∀ j : ℕ, p.coeff j = ((P.coeff j : ℤ) : ℝ) := by
+    intro j; rw [hp, coeff_map]; simp
+  obtain ⟨A, hA⟩ := isInt_finset_sum ((range (p.natDegree + 1)).erase N)
+    (fun j => (Nat.lcmUpto N : ℝ) * 12 ^ N *
+      (p.coeff j * (((eb : ℝ) ^ ((j : ℤ) - N) - (ea : ℝ) ^ ((j : ℤ) - N)) / ((j : ℤ) - N))))
+    (by
+      intro j hj
+      have hjN : j ≠ N := (Finset.mem_erase.mp hj).1
+      have hjr : j < p.natDegree + 1 := Finset.mem_range.mp (Finset.mem_erase.mp hj).2
+      have hj2 : j ≤ 2 * N := by omega
+      rw [hcoeff j]
+      exact tail_term_cleared hea heb heap hebp (P.coeff j) hj2 hjN)
+  refine ⟨A, ?_⟩
+  rw [integral_poly_div_pow_split ha hab' p N hN, mul_add, Finset.mul_sum, hA, add_comm]
+  congr 1
+  rw [hcoeff N]
+  push_cast
+  ring
+
 end CollatzMoonshot.FrontA

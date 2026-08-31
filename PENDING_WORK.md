@@ -38,10 +38,15 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
   The single-term integer-clearing lemma is proved: `twelve_pow_mul_zpow_isInt`
   (`12^N·e^k ∈ ℤ` for `e ∣ 12`, `k ≥ -N`, via zpow sign cases) and `tail_term_cleared`
   (`lcmUpto N · 12^N · (c·(eb^{j-N}-ea^{j-N})/(j-N)) ∈ ℤ` for endpoints `ea,eb ∣ 12`).
-  Next: sum `tail_term_cleared` over the tail indices (`Finset.sum` of integers), multiply the
-  split identity by `D_N = lcmUpto N · 12^N`, instantiate `p` at the integer `H_N` (whose real
-  eval = the even polynomial's), and land `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)` with common
-  `B = D_N · coeff_N` and clearing factor `D_N`.
+  The general cleared form is proved: `isInt_finset_sum` (finite sum of integer-valued reals is
+  integer-valued) and `lcm_cleared_log_form` — for any integer polynomial `P` of degree in
+  `[N, 2N]` and positive endpoints `ea ≤ eb` dividing 12,
+  `D_N·∫_{ea}^{eb} P/x^{N+1} = A + B·log(eb/ea)` with `A : ℤ`, `B = D_N·P.coeff N : ℤ`, and
+  `D_N = lcmUpto N · 12^N`.
+  Next (final objective-3 assembly): define the integer even polynomial `H_N : ℤ[X]` with
+  `H_N.map (Int.cast) = ` the real even polynomial and `H_N.coeff N =` the central coefficient;
+  instantiate `lcm_cleared_log_form` at `(ea,eb)=(2,3)` and `(3,4)` to get `A₁ + B·log(3/2)`,
+  `A₂ + B·log(4/3)` with the SAME `B = D_N·(central coeff) ∈ [D_N·17^N, D_N·18^N]`.
 - **NEXT (objective 3):** the two LCM-cleared integer log forms `A₁ + B·log(3/2)`,
   `A₂ + B·log(4/3)` with common `B` and clearing factor `D_N`. See `FRONT-A-RHIN-LITE-NEXT.md`
   objective 3: the monomial integral identity `∫_a^b H_N/x^{N+1}` isolates the `x^N` term
