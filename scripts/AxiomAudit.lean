@@ -23,6 +23,7 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.rhinLiteEvenIntegral_le
 #print axioms CollatzMoonshot.FrontA.rhinLiteEvenIntegral_pos_23
 #print axioms CollatzMoonshot.FrontA.rhinLiteEvenIntegral_pos_34
+#print axioms CollatzMoonshot.FrontA.integral_monomial_div_pow
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontB.frontB_of_compression_le_91
 #print axioms CollatzMoonshot.Furstenberg.isClosed_invariant_finite_or_univ
