@@ -11,8 +11,19 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
   `16 c_k ≤ c_{k+1}`, each of the four RHS monomials is `≤ (c₂p₁q₀)/16`, so their sum is
   `≤ (c₂p₁q₀)/4 < (c₂p₁q₀)/2 ≤ c₂(p₁q₀−p₀q₁)` = |dominant term|.  Clean dominance, no cancellation.
 - **Four disclosed sub-nodes** (all TRUE with enormous room; each an honest analytic hole):
-  1. `rhinLiteI₁_step_decay16` : `16·I₁(t+1) ≤ I₁(t)`   (true rate `exp(−3014.5)`; need `≤ 1/16`).
-  2. `rhinLiteI₂_step_decay16` : `16·I₂(t+1) ≤ I₂(t)`   (true rate `exp(−3025.5)`).
+  1. `rhinLiteI₁_step_decay16` : `16·I₁(t+1) ≤ I₁(t)`  — **PROVED, trust-base clean.**
+  2. `rhinLiteI₂_step_decay16` : `16·I₂(t+1) ≤ I₂(t)`  — **PROVED, trust-base clean.**
+
+  ★ **KEY STRUCTURAL WIN (this lap):** the normalized integrand is a PURE POWER,
+  `rhinLiteEvenNormalized t x = (kernelAbs x / x¹⁰⁰⁰)^{2t} = φ(x)^{2t}` (`rhinLiteEvenNormalized_eq`).
+  So `normalized(t+1) x = φ(x)²·normalized(t) x` pointwise, and `φ ≤ (9/40)¹⁰⁰⁰` on `[2,4]` (the
+  existing global bound `rhinLiteKernelAbs_div_pow_le_on_Icc`), giving a FIXED per-step drop
+  `(9/40)²⁰⁰⁰ ≤ 1/16` at the integrand level — no Laplace/saddle-point, no envelope.  Lemma
+  `rhinLiteEven_logForm_step_le` (PROVED) turns this into the integral decay, closing both decays.
+  ⇒ **This RETIRES the "single-rate envelope" idea (commits 82af17c, c870c8a, REVERTED): those
+  envelope nodes were FALSE — Laplace gives `Iᵢ(t) ~ M^{2t}/√t`, so no constant `c` satisfies
+  `c·rᵗ ≤ Iᵢ(t)` at the true rate.  The per-step RATIO facts are the honest form, and the pure-power
+  factorization proves the decays directly.  Do NOT reintroduce absolute single-rate envelopes.**
   3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  (true `≈ 17^2000`; the loose absolute
      band `17^N≤c≤18^N` CANNOT compare consecutive `c`'s — its slack `(18/17)^N` compounds — so this
      needs a genuine per-step ratio bound).

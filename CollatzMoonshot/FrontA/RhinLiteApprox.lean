@@ -1236,18 +1236,89 @@ theorem det_dominance_of_step_bounds
     nlinarith [mul_le_mul_of_nonneg_left hsep hc2.le]
   linarith [hA, hB, ma, mb, mc, md, hsepc, K]
 
-/-- **Sub-node (I₁ per-step decay).**  The `[2,3]` integral `I₁(t) = ∫₂³ H_N/x^{N+1}` decays by a
-factor `≥ 16` when `t ↦ t+1` (i.e. `N ↦ N+2000`).  True with enormous room: the Laplace rate is
-`I₁(t+1)/I₁(t) ≈ exp(max_{[2,3]}ψ) ≈ exp(−3014.5)`; any rational bound `≤ 1/16` suffices here.
-Disclosed analytic sub-node (needs a two-sided exponential envelope for the integrand, e.g. via the
-`RhinLiteMaximum`/`RhinLiteCritical`/`RhinLiteInterval` bracket machinery). -/
-theorem rhinLiteI₁_step_decay16 (t : ℕ) : 16 * rhinLiteI₁ (t + 1) ≤ rhinLiteI₁ t := by
-  sorry
+/-- The absolute kernel (a product of `|·|^w` factors) is nonnegative. -/
+theorem rhinLiteKernelAbs_nonneg (x : ℝ) : 0 ≤ rhinLiteKernelAbs x := by
+  rw [rhinLiteKernelAbs]
+  exact mul_nonneg (mul_nonneg (mul_nonneg (mul_nonneg (mul_nonneg
+    (pow_nonneg (abs_nonneg _) _) (pow_nonneg (abs_nonneg _) _))
+    (pow_nonneg (abs_nonneg _) _)) (pow_nonneg (abs_nonneg _) _))
+    (pow_nonneg (abs_nonneg _) _)) (pow_nonneg (abs_nonneg _) _)
 
-/-- **Sub-node (I₂ per-step decay).**  The `[3,4]` integral `I₂(t) = ∫₃⁴ H_N/x^{N+1}` decays by a
-factor `≥ 16` per step (Laplace rate `≈ exp(−3025.5)`).  Disclosed analytic sub-node. -/
+/-- **Pure-power per-step drop (PROVED).**  Because `normalized t x = (kernelAbs x/x¹⁰⁰⁰)^{2t}` is a
+pure power (`rhinLiteEvenNormalized_eq`), one has pointwise `normalized (t+1) x = normalized t x ·
+φ(x)²` with `φ = kernelAbs/x¹⁰⁰⁰ ≤ (9/40)¹⁰⁰⁰` on `[2,4]` (`rhinLiteKernelAbs_div_pow_le_on_Icc`).
+Hence the log-form integrand — and therefore each interval integral over `[a,b] ⊆ [2,4]` — drops by
+the fixed factor `(9/40)²⁰⁰⁰` per step.  This is the honest, exact per-step decay: NO Laplace or
+saddle-point needed, the pure-power structure gives a pointwise factor bound. -/
+theorem rhinLiteEven_logForm_step_le (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) :
+    (∫ x in a..b, rhinLiteEvenNormalized (t + 1) x / x)
+      ≤ (9 / 40 : ℝ) ^ (2 * rhinLiteScale)
+          * ∫ x in a..b, rhinLiteEvenNormalized t x / x := by
+  have hg : IntervalIntegrable
+      (fun x => (9 / 40 : ℝ) ^ (2 * rhinLiteScale) * (rhinLiteEvenNormalized t x / x)) volume a b :=
+    (intervalIntegrable_rhinLiteEven_logForm t ha hb hab).const_mul _
+  have hf := intervalIntegrable_rhinLiteEven_logForm (t + 1) ha hb hab
+  have hpt : ∀ x ∈ Set.Icc a b,
+      rhinLiteEvenNormalized (t + 1) x / x
+        ≤ (9 / 40 : ℝ) ^ (2 * rhinLiteScale) * (rhinLiteEvenNormalized t x / x) := by
+    intro x hx
+    have hxmem : x ∈ Set.Icc (2 : ℝ) 4 := ⟨le_trans ha hx.1, le_trans hx.2 hb⟩
+    have hxpos : 0 < x := by linarith [hxmem.1]
+    have hφle : rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (9 / 40 : ℝ) ^ rhinLiteScale :=
+      rhinLiteKernelAbs_div_pow_le_on_Icc hxmem
+    have hφnn : 0 ≤ rhinLiteKernelAbs x / x ^ rhinLiteScale :=
+      div_nonneg (rhinLiteKernelAbs_nonneg x) (pow_nonneg hxpos.le _)
+    have hpow : ((9 / 40 : ℝ) ^ rhinLiteScale) ^ 2 = (9 / 40 : ℝ) ^ (2 * rhinLiteScale) := by
+      rw [← pow_mul, Nat.mul_comm rhinLiteScale 2]
+    have hstep : rhinLiteEvenNormalized (t + 1) x
+        ≤ (9 / 40 : ℝ) ^ (2 * rhinLiteScale) * rhinLiteEvenNormalized t x := by
+      rw [rhinLiteEvenNormalized_eq (t + 1) hxpos, rhinLiteEvenNormalized_eq t hxpos,
+        show 2 * (t + 1) = 2 * t + 2 by ring, pow_add]
+      have hsq : (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
+          ≤ ((9 / 40 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hφnn hφle 2
+      calc (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)
+              * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
+            ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)
+              * ((9 / 40 : ℝ) ^ rhinLiteScale) ^ 2 :=
+            mul_le_mul_of_nonneg_left hsq (pow_nonneg hφnn (2 * t))
+        _ = (9 / 40 : ℝ) ^ (2 * rhinLiteScale)
+              * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t) := by rw [hpow]; ring
+    rw [← mul_div_assoc]
+    exact (div_le_div_iff_of_pos_right hxpos).mpr hstep
+  have hmono := intervalIntegral.integral_mono_on hab hf hg hpt
+  rwa [intervalIntegral.integral_const_mul] at hmono
+
+/-- The fixed per-step drop `(9/40)²⁰⁰⁰` is `≤ 1/16`, so a step loses a factor `≥ 16`. -/
+theorem rhinLite_stepFactor_le_one_sixteenth :
+    (16 : ℝ) * (9 / 40 : ℝ) ^ (2 * rhinLiteScale) ≤ 1 := by
+  have h2 : (9 / 40 : ℝ) ^ (2 * rhinLiteScale) ≤ (9 / 40 : ℝ) ^ 2 := by
+    apply pow_le_pow_of_le_one (by norm_num) (by norm_num)
+    rw [rhinLiteScale]; omega
+  nlinarith [h2]
+
+/-- **Sub-node (I₁ per-step decay) — now PROVED** from the pure-power step drop.  `16·I₁(t+1) ≤
+I₁(t)`: the integrand drops by `(9/40)²⁰⁰⁰ ≤ 1/16` per step (`rhinLiteEven_logForm_step_le`). -/
+theorem rhinLiteI₁_step_decay16 (t : ℕ) : 16 * rhinLiteI₁ (t + 1) ≤ rhinLiteI₁ t := by
+  have hI : ∀ s : ℕ, rhinLiteI₁ s = ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized s x / x := by
+    intro s; rw [rhinLiteI₁]; exact intervalIntegral.integral_congr
+      (fun x _ => rhinLiteEven_logForm_integrand s x)
+  rw [hI (t + 1), hI t]
+  have hstep := rhinLiteEven_logForm_step_le t (a := 2) (b := 3) (by norm_num) (by norm_num) (by norm_num)
+  have hpos : 0 ≤ ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized t x / x := by
+    rw [← hI t]; exact (rhinLiteI₁_pos t).le
+  nlinarith [hstep, hpos, rhinLite_stepFactor_le_one_sixteenth, mul_nonneg hpos hpos]
+
+/-- **Sub-node (I₂ per-step decay) — now PROVED** from the pure-power step drop (on `[3,4]`). -/
 theorem rhinLiteI₂_step_decay16 (t : ℕ) : 16 * rhinLiteI₂ (t + 1) ≤ rhinLiteI₂ t := by
-  sorry
+  have hI : ∀ s : ℕ, rhinLiteI₂ s = ∫ x in (3 : ℝ)..4, rhinLiteEvenNormalized s x / x := by
+    intro s; rw [rhinLiteI₂]; exact intervalIntegral.integral_congr
+      (fun x _ => rhinLiteEven_logForm_integrand s x)
+  rw [hI (t + 1), hI t]
+  have hstep := rhinLiteEven_logForm_step_le t (a := 3) (b := 4) (by norm_num) (by norm_num) (by norm_num)
+  have hpos : 0 ≤ ∫ x in (3 : ℝ)..4, rhinLiteEvenNormalized t x / x := by
+    rw [← hI t]; exact (rhinLiteI₂_pos t).le
+  nlinarith [hstep, hpos, rhinLite_stepFactor_le_one_sixteenth]
 
 /-- **Sub-node (central per-step growth).**  The central coefficient `c_N = [x^N]H_N` grows by a
 factor `≥ 16` per step; the proved band `17^N ≤ c_N ≤ 18^N` gives `c_{t+1}/c_t ≈ 17^{2000} ≫ 16`.
