@@ -27,7 +27,14 @@
 > **⚠️ Course correction (2026-08-31):** the `12^N`-cleared log forms of `RhinLiteLogForm` CANNOT
 > prove `rhinLiteLIMeasure` — the clearing rate `K ≈ 3.49` exceeds the remainder decay `τ ≈ 1.49`
 > (Wu needs `τ > K`), so the cleared remainder does not decay (in-kernel witness
-> `overcleared_remainder_ge_one`). The elementary mechanism (`logForm_conditional_lower`,
+> `overcleared_remainder_ge_one`).
+> **Axiom-backed wiring (2026-08-31, DIRECTION option (a)):** `Assumed/Rhin1987.lean` states the
+> provenance-audited `rhin_1987_log_two_three_measure` (Rhin 1987, `|u₀+u₁log2+u₂log3| ≥ 1/H^14`,
+> `H ≥ 2`, read firsthand), and `log23_effective_measure` (the `log₂3` measure feeding
+> `sep_two_three`) is now PROVED from it (`κ=14`, `c=1/3^14`) — clean ledger, no `sorryAx`. Closing
+> `sep_two_three` now needs only the elementary crossover/finite-check step (`κ=14` pushes the
+> threshold to `k ≈ 360`); see `PENDING_WORK.md`.
+> The elementary mechanism (`logForm_conditional_lower`,
 > `rhinLite_forms_bounded`, the size bridge) is proved and correct; it needs forms with a *decaying*
 > remainder. Fix: structural clearing `H_N ∈ (12,x)^N ℤ[x]`, `D_N = lcmUpto N` (`K = 1 < τ`),
 > `μ ≈ 7.9`. See `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`, `PENDING_WORK.md`.

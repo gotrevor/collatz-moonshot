@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontA.RhinLiteLogForm
 import CollatzMoonshot.FrontA.PowSeparation
+import CollatzMoonshot.Assumed.Rhin1987
 
 /-!
 # Simultaneous-approximation criterion for the Rhin-lite log forms
@@ -378,20 +379,25 @@ theorem rhinLiteLIMeasure :
           ≤ |(p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3)| := by
   sorry
 
-/-- **Effective irrationality measure of `log₂ 3`, proved from the crux.**  There are `κ : ℕ` and
-`c > 0` such that on the near-critical window (`3^k < 2^m < 2·3^k`, `k ≥ 1`) the Baker linear form
-obeys `c / k^κ ≤ m·log2 − k·log3`.  This is exactly the `hLF` shape consumed by
-`sep_of_linear_form_poly`; it is derived from `rhinLiteLIMeasure` by the change of basis
-`linForm_eq_log23` (with `p = 0`, `q = m − 2k`, `r = m − k`, so the combination is homogeneous and
-equals `Λ`), the sign `Λ > 0` (from `3^k < 2^m`), and the crude height bound `H ≤ 2k`. -/
+/-- **Effective irrationality measure of `log₂ 3` (from the cited Rhin 1987 axiom).**  There are
+`κ : ℕ` and `c > 0` such that on the near-critical window (`3^k < 2^m < 2·3^k`, `k ≥ 1`) the Baker
+linear form obeys `c / k^κ ≤ m·log2 − k·log3`.  This is exactly the `hLF` shape consumed by
+`sep_of_linear_form_poly`.
+
+Proved from `Assumed.rhin_1987_log_two_three_measure` (`|u₀+u₁log2+u₂log3| ≥ 1/H^14`, `H ≥ 2`) at
+`(u₀,u₁,u₂) = (0, m, −k)`: then `Λ = m·log2 − k·log3 > 0`, `H = max(m,k) = m ≥ 2` (since `m > k ≥ 1`
+on the window), giving `Λ ≥ 1/m^14`, and `m < 3k` gives `1/m^14 ≥ (1/3^14)/k^14`.  So `κ = 14`,
+`c = 1/3^14`.
+
+The novel Rhin-lite construction (`rhinLiteLIMeasure`) aims to replace this axiom; until then this
+is the provenance-pinned literature input (see `Assumed/Rhin1987.lean`). -/
 theorem log23_effective_measure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ k m : ℕ, 1 ≤ k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
         c / (k : ℝ) ^ κ ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
-  obtain ⟨κ, c, hc, hmeas⟩ := rhinLiteLIMeasure
-  refine ⟨κ, c / 2 ^ κ, by positivity, ?_⟩
+  refine ⟨14, 1 / 3 ^ 14, by positivity, ?_⟩
   intro k m hk h1 h2
-  -- `m` sits in `[k, 3k)` on the near-critical window.
+  -- `m` sits in `(k, 3k)` on the near-critical window.
   have hkm : k < m := by
     have h2k : (2 : ℕ) ^ k ≤ 3 ^ k := Nat.pow_le_pow_left (by norm_num) k
     have : (2 : ℕ) ^ k < 2 ^ m := lt_of_le_of_lt h2k h1
@@ -406,63 +412,43 @@ theorem log23_effective_measure :
         _ = 2 ^ (3 * k) := by rw [← Nat.mul_pow]; norm_num [pow_mul]
     have : (2 : ℕ) ^ m < 2 ^ (3 * k) := lt_of_lt_of_le h2 hbnd
     exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp this
-  -- The homogeneous triple.
-  set q : ℤ := (m : ℤ) - 2 * k with hqdef
-  set r : ℤ := (m : ℤ) - k with hrdef
-  have hrpos : 0 < r := by
-    rw [hrdef]; have : (k : ℤ) < m := by exact_mod_cast hkm
-    omega
-  have hrne : r ≠ 0 := ne_of_gt hrpos
-  have hnz : ((0 : ℤ) ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) := Or.inr (Or.inr hrne)
-  have hkey := hmeas 0 q r hnz
-  -- The combination equals `Λ`.
+  -- `Λ > 0`.
   have hΛpos : (0 : ℝ) < (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
     have h3lt : (3 : ℝ) ^ k < (2 : ℝ) ^ m := by exact_mod_cast h1
     have hlog : Real.log ((3 : ℝ) ^ k) < Real.log ((2 : ℝ) ^ m) :=
       Real.log_lt_log (by positivity) h3lt
     rw [Real.log_pow, Real.log_pow] at hlog
     linarith
-  have hval : ((0 : ℤ) : ℝ) + (q : ℝ) * Real.log (3 / 2) + (r : ℝ) * Real.log (4 / 3)
-      = (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
-    rw [hqdef, hrdef]; push_cast
-    rw [zero_add]
-    have := linForm_eq_log23 (k : ℝ) (m : ℝ)
-    linarith [this]
-  rw [hval] at hkey
-  rw [abs_of_pos hΛpos] at hkey
-  -- Bound the height `H ≤ 2k` and monotonize.
-  set H : ℝ := max |((0 : ℤ) : ℝ)| (max |(q : ℝ)| |(r : ℝ)|) with hHdef
-  have hqbound : |(q : ℝ)| ≤ 2 * k := by
-    rw [hqdef]; push_cast; rw [abs_le]
-    refine ⟨by nlinarith [(show (k : ℝ) ≤ m by exact_mod_cast hkm.le),
-             (show (0 : ℝ) ≤ k by positivity)], by nlinarith
-             [(show (m : ℝ) ≤ 3 * k by exact_mod_cast hm3k.le),
-              (show (0 : ℝ) ≤ k by positivity)]⟩
-  have hrbound : |(r : ℝ)| ≤ 2 * k := by
-    rw [hrdef]; push_cast; rw [abs_le]; constructor <;> nlinarith
-      [(show (m : ℝ) ≤ 3 * k by exact_mod_cast hm3k.le),
-       (show (k : ℝ) ≤ m by exact_mod_cast hkm.le),
-       (show (0 : ℝ) ≤ k by positivity)]
-  have hHle : H ≤ 2 * k := by
-    rw [hHdef]
-    simp only [Int.cast_zero, abs_zero]
-    refine max_le (by positivity) (max_le hqbound hrbound)
-  have hHpos : 0 < H := by
-    rw [hHdef]
-    have : (1 : ℝ) ≤ |(r : ℝ)| := by
-      rw [abs_of_pos (by exact_mod_cast hrpos)]; exact_mod_cast hrpos
-    calc (0 : ℝ) < 1 := one_pos
-      _ ≤ |(r : ℝ)| := this
-      _ ≤ max |(q : ℝ)| |(r : ℝ)| := le_max_right _ _
-      _ ≤ max |((0 : ℤ) : ℝ)| (max |(q : ℝ)| |(r : ℝ)|) := le_max_right _ _
-  have hkpos : (0 : ℝ) < k := by exact_mod_cast (by omega : 0 < k)
-  -- `c/2^κ / k^κ = c/(2k)^κ ≤ c/H^κ ≤ Λ`.
-  have hstep : c / 2 ^ κ / (k : ℝ) ^ κ ≤ c / H ^ κ := by
-    rw [div_div, ← mul_pow]
-    have hHκpos : (0 : ℝ) < H ^ κ := pow_pos hHpos κ
-    have h2kκpos : (0 : ℝ) < (2 * (k : ℝ)) ^ κ := by positivity
-    apply div_le_div_of_nonneg_left hc.le hHκpos
-    exact pow_le_pow_left₀ hHpos.le hHle κ
-  exact le_trans hstep hkey
+  -- Apply Rhin at `(0, m, −k)`.  `H = max |m| |−k| = m` (since `m > k`), and `m ≥ 2`.
+  have hax := Assumed.rhin_1987_log_two_three_measure 0 (m : ℤ) (-(k : ℤ)) ?_
+  · -- rewrite the Rhin bound to `1/m^14 ≤ Λ`
+    have hz : max |(m : ℤ)| |-(k : ℤ)| = (m : ℤ) := by
+      rw [abs_of_nonneg (by positivity), abs_neg, abs_of_nonneg (by positivity)]
+      exact max_eq_left (by exact_mod_cast hkm.le)
+    rw [hz, Int.cast_neg] at hax
+    have hval : |((0 : ℤ) : ℝ) + ((m : ℤ) : ℝ) * Real.log 2 + -((k : ℤ) : ℝ) * Real.log 3|
+        = (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
+      rw [abs_of_pos]
+      · push_cast; ring
+      · push_cast; linarith [hΛpos]
+    have haxΛ : 1 / ((m : ℤ) : ℝ) ^ 14 ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 :=
+      hval ▸ hax
+    -- `(1/3^14)/k^14 ≤ 1/m^14 ≤ Λ` since `m < 3k`.
+    have hmlt : ((m : ℤ) : ℝ) ≤ 3 * (k : ℝ) := by push_cast; exact_mod_cast hm3k.le
+    have hstep : (1 / 3 ^ 14) / (k : ℝ) ^ 14 ≤ 1 / ((m : ℤ) : ℝ) ^ 14 := by
+      have hle : ((m : ℤ) : ℝ) ^ 14 ≤ 3 ^ 14 * (k : ℝ) ^ 14 := by
+        calc ((m : ℤ) : ℝ) ^ 14 ≤ (3 * (k : ℝ)) ^ 14 :=
+              pow_le_pow_left₀ (by positivity) hmlt 14
+          _ = 3 ^ 14 * (k : ℝ) ^ 14 := by rw [mul_pow]
+      have hmpos : (0 : ℝ) < ((m : ℤ) : ℝ) ^ 14 := by
+        have : (0 : ℝ) < ((m : ℤ) : ℝ) := by exact_mod_cast (by omega : 0 < m)
+        positivity
+      have h1 := one_div_le_one_div_of_le hmpos hle
+      rw [div_div]; exact h1
+    exact le_trans hstep haxΛ
+  · -- `max |m| |−k| ≥ 2` since `m ≥ 2`
+    rw [abs_of_nonneg (by positivity : (0:ℤ) ≤ (m:ℤ))]
+    have : (2 : ℤ) ≤ (m : ℤ) := by exact_mod_cast (by omega : 2 ≤ m)
+    exact le_trans this (le_max_left _ _)
 
 end CollatzMoonshot.FrontA

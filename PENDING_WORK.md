@@ -16,10 +16,19 @@ endpoint powers *structurally* from `H_N ∈ (12,x)^N ℤ[x]` (proved content in
 `lcmUpto N ≤ 4^N`; both `< τ`).  Then `E_N = lcmUpto N·(9/40)^N ≈ (0.61)^N → 0` and the transference
 goes through, `μ ≈ 7.9`.  Concrete steps (1)–(4) are in the findings doc.
 
-**Alternative (DIRECTION.md option (a)):** disclose one named Rhin-1987 axiom
-`|u₀+u₁log2+u₂log3| ≥ H^{−13.3}` and keep the machine-checked reduction (`log23_effective_measure`
-+ the PowSeparation pipeline), Hercher-style.  Proportionate if the structural re-derivation is too
-long.
+**DONE (2026-08-31) — option (a) taken:** `Assumed/Rhin1987.lean` now states the named,
+provenance-audited axiom `rhin_1987_log_two_three_measure` (`|u₀+u₁log2+u₂log3| ≥ 1/H^14`, `H ≥ 2`;
+Rhin 1987, read firsthand), and `log23_effective_measure` is **proved from it** (κ=14, c=1/3^14) —
+no longer `sorryAx`-tainted.  The novel Rhin-lite construction (`rhinLiteLIMeasure`) stays a
+disclosed sorry: its purpose is now to *retire* this axiom via the K=1 structural clearing (μ≈7.9).
+
+**Residual to close `sep_two_three` from `log23_effective_measure`:** the exponent is κ=14, so
+`sep_of_linear_form_poly`'s hard-coded `k ≥ 130` crossover threshold is too small
+(`k^14 ≤ (1/3^14)·2^{k/3}` first holds around `k ≈ 360`).  Options: (i) extend the finite
+`native_decide` separation check from the current `k < 130` up to `k ≈ 360` (heavy: `3^360` is
+~172 digits, ~230 near-critical `k`), then apply `sep_of_linear_form` for `k ≥ 360`; or (ii) add a
+`sep_of_linear_form_poly`-style interface with a parametric threshold `K` in place of `130`.  This
+is the final elementary step; it is a computation/interface question, not a Diophantine one.
 
 ### Prior "next actions" (mechanism now proved; superseded by the course correction above)
 
