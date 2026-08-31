@@ -1399,14 +1399,59 @@ theorem rhinLiteCentral_step_growth16 (t : ℕ) :
   rw [rhinLiteCentral, rhinLiteCentral]
   exact_mod_cast hZ
 
-/-- **Sub-node (the rate gap `μ₁ > M₂`).**  `I₁` decays strictly slower than `I₂`: per step the
-`I₁`-ratio exceeds twice the `I₂`-ratio, `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true
-per-step ratio gap is `exp(m₁ − m₂) ≈ exp(11) ≈ 6·10⁴ ≫ 2`.  This is the analytic heart of the
-determinant non-vanishing (the "separated maxima" of `ψ` on `[2,3]` vs `[3,4]`).  Disclosed
+/-- The per-interval `[3,4]` step-factor constant `κ = (2209/10000)^{2·scale}`.  It is a rational
+upper envelope for the pointwise step factor `φ(x)² = (kernelAbs x / x^{scale})²` on `[3,4]`
+(numerically `φ² ≤ exp(m₂) ≈ exp(−3025.5) = (0.220314…)^{2000}`, and `2209/10000 = 0.2209 > 0.220314`),
+and simultaneously `2κ` sits strictly below the `[2,3]` peak step factor `exp(m₁) ≈ exp(−3014.5)`
+(`2·(0.2209)^{2000} = exp(−3019.4)`).  This double margin is exactly what separates the two rates. -/
+noncomputable def rhinLiteKappa : ℝ := (2209 / 10000 : ℝ) ^ (2 * rhinLiteScale)
+
+theorem rhinLiteKappa_pos : 0 < rhinLiteKappa := by
+  rw [rhinLiteKappa]; positivity
+
+/-- **Pure-arithmetic reduction of the rate gap.**  Given the `[3,4]`-peak upper step bound
+`q₁ ≤ κ·q₀` and the `[2,3]`-concentration lower step bound `2κ·p₀ ≤ p₁` (with the same `κ`), the gap
+`2·p₀q₁ ≤ p₁q₀` follows by two monotone multiplications — no cancellation, no analysis.  This is the
+glue that turns the separated-maxima statement into two one-sided per-interval facts. -/
+theorem rhinLite_ratio_gap_of_step_bounds {p₀ p₁ q₀ q₁ κ : ℝ}
+    (hp₀ : 0 ≤ p₀) (hq₀ : 0 ≤ q₀)
+    (hupper : q₁ ≤ κ * q₀) (hlower : 2 * κ * p₀ ≤ p₁) :
+    2 * (p₀ * q₁) ≤ p₁ * q₀ := by
+  nlinarith [mul_le_mul_of_nonneg_left hupper hp₀,
+    mul_le_mul_of_nonneg_right hlower hq₀]
+
+/-- **Sub-node (I₂ `[3,4]`-peak per-step upper bound).**  `I₂(t+1) ≤ κ·I₂(t)` with the tight
+per-interval constant `κ = rhinLiteKappa`.  Pointwise on `[3,4]` the step factor `φ(x)²` is bounded
+by `(2209/10000)^{2·scale}` — a genuinely tighter envelope than the global `(9/40)^{2·scale}` used for
+the decays (the `[3,4]` peak `exp(m₂)` is `exp(31)` below the global one).  Proving it needs the
+`RhinLiteInterval` factor-bound machinery restricted to the `[3,4]` critical brackets; disclosed
 sub-node. -/
-theorem rhinLite_ratio_gap (t : ℕ) :
-    2 * (rhinLiteI₁ t * rhinLiteI₂ (t + 1)) ≤ rhinLiteI₁ (t + 1) * rhinLiteI₂ t := by
+theorem rhinLiteI₂_peak_upper (t : ℕ) :
+    rhinLiteI₂ (t + 1) ≤ rhinLiteKappa * rhinLiteI₂ t := by
   sorry
+
+/-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound).**  `2κ·I₁(t) ≤ I₁(t+1)` with
+`κ = rhinLiteKappa`.  This is the analytic HEART: unlike the upper bounds it is NOT pointwise —
+`φ(x)` vanishes at the endpoints of `[2,3]`, so no pointwise lower bound exists.  The mass of
+`φ^{2t}` must CONCENTRATE near the higher peak `x₁* ≈ 2.223` (`φ² ≈ exp(m₁) ≈ exp(−3014.5)`), which
+dominates `2κ = exp(−3019.4)` with `exp(4.9) ≈ 134×` room.  Route (Laplace lower bound): fix a
+rational sub-window `[a,b] ⊂ [2,3]` about `x₁*` where `φ² ≥ 2κ`, bound `I₁(t+1) ≥ 2κ·∫_{[a,b]}
+φ^{2t}/x`, and control the tail `∫_{[2,3]∖[a,b]} φ^{2t}/x ≤ ∫_{[a,b]} φ^{2t}/x` so that
+`∫_{[a,b]} φ^{2t}/x ≥ ½·I₁(t)`.  Disclosed sub-node (the genuinely multi-lap concentration crux). -/
+theorem rhinLiteI₁_concentration_lower (t : ℕ) :
+    2 * rhinLiteKappa * rhinLiteI₁ t ≤ rhinLiteI₁ (t + 1) := by
+  sorry
+
+/-- **Sub-node (the rate gap `μ₁ > M₂`) — now REDUCED to two one-sided per-interval facts.**  `I₁`
+decays strictly slower than `I₂`: per step the `I₁`-ratio exceeds twice the `I₂`-ratio,
+`2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true per-step ratio gap is
+`exp(m₁ − m₂) ≈ exp(11) ≈ 6·10⁴ ≫ 2`.  Assembled from the `[3,4]`-peak upper bound
+`rhinLiteI₂_peak_upper` and the `[2,3]`-concentration lower bound `rhinLiteI₁_concentration_lower`
+via the pure-arithmetic glue `rhinLite_ratio_gap_of_step_bounds`. -/
+theorem rhinLite_ratio_gap (t : ℕ) :
+    2 * (rhinLiteI₁ t * rhinLiteI₂ (t + 1)) ≤ rhinLiteI₁ (t + 1) * rhinLiteI₂ t :=
+  rhinLite_ratio_gap_of_step_bounds (rhinLiteI₁_pos t).le (rhinLiteI₂_pos t).le
+    (rhinLiteI₂_peak_upper t) (rhinLiteI₁_concentration_lower t)
 
 /-- **Single-term dominance — now REDUCED to four clean per-step sub-nodes.**  The `c₂·M(0,1)`
 cofactor term strictly dominates the sum of the other two in absolute value,

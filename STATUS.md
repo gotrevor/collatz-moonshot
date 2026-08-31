@@ -61,11 +61,14 @@
 Both headline fronts remain open. `FrontA.sep_two_three` is now proved sorry-free modulo the cited
 `rhin_1987_log_two_three_measure` axiom.  The novel Rhin-lite route aimed at retiring that axiom
 (`FrontA.rhinLiteLIMeasure`) has its crux `rhinLite_det_dominance` **DECOMPOSED** into four disclosed
-per-step analytic sub-nodes in `RhinLiteApprox.lean` — `rhinLiteI₁_step_decay16`,
-`rhinLiteI₂_step_decay16`, `rhinLiteCentral_step_growth16`, `rhinLite_ratio_gap` — with the entire
-pure-arithmetic dominance assembly (`det_dominance_of_step_bounds`) PROVED trust-base clean.  Disclosed
-proof debt is thus these 4 per-step sub-nodes (all in `RhinLiteApprox.lean`); named literature and
-conjecture axioms are also used explicitly.
+per-step analytic sub-nodes in `RhinLiteApprox.lean`.  THREE are PROVED trust-base clean
+(`rhinLiteI₁_step_decay16`, `rhinLiteI₂_step_decay16`, `rhinLiteCentral_step_growth16`); the fourth,
+`rhinLite_ratio_gap` (the rate-gap `μ₁>M₂`), is itself now PROVED from TWO one-sided per-interval
+leaves via the pure-arithmetic glue `rhinLite_ratio_gap_of_step_bounds` (trust-base clean).  The
+entire dominance assembly (`det_dominance_of_step_bounds`) is PROVED trust-base clean.  Disclosed
+proof debt is thus exactly TWO leaves (both in `RhinLiteApprox.lean`): `rhinLiteI₂_peak_upper`
+(pointwise `[3,4]` step bound — mechanical) and `rhinLiteI₁_concentration_lower` (the Laplace
+concentration crux — multi-lap).  Named literature and conjecture axioms are also used explicitly.
 The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.

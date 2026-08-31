@@ -66,6 +66,10 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.rhinLitePositive_coeffNonneg
 #print axioms CollatzMoonshot.FrontA.rhinLiteCentral_coeff_link
 #print axioms CollatzMoonshot.FrontA.rhinLiteCentral_step_growth16
+#print axioms CollatzMoonshot.FrontA.rhinLiteKappa_pos
+#print axioms CollatzMoonshot.FrontA.rhinLite_ratio_gap_of_step_bounds
+#print axioms CollatzMoonshot.FrontA.rhinLiteI₂_peak_upper
+#print axioms CollatzMoonshot.FrontA.rhinLiteI₁_concentration_lower
 #print axioms CollatzMoonshot.FrontA.rhinLite_ratio_gap
 #print axioms CollatzMoonshot.FrontA.rhinLite_det_dominance
 #print axioms CollatzMoonshot.FrontA.rhinLite_integralMatrix_det_ne_zero

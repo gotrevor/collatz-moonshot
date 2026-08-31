@@ -31,16 +31,23 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
      c(t)·c(1)` (one convolution term via `coeff_mul_term_le`, others only add), and `c(1) ≥ 17^{2000}
      ≥ 16`.  Bridge `rhinLiteCentral_coeff_link` identifies the ℤ central coeff with the
      positive-transform coeff over ℚ.  NO asymptotics.
-  4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  — **the SOLE remaining sorry** (the
-     `μ₁>M₂` separation, true gap `exp 11 ≈ 6·10⁴`; the analytic HEART — separated maxima of `ψ` on
-     `[2,3]` vs `[3,4]`).  This is genuinely a concentration/Laplace statement and does NOT reduce to
-     the global bound: the pure-power trick gives only `Iᵢ(t+1) ≤ (9/40)²⁰⁰⁰·Iᵢ(t)` (an UPPER bound
-     for BOTH intervals), whereas the gap needs a LOWER bound on `I₁(t+1)/I₁(t)` exceeding twice the
-     `I₂` upper — i.e. the [2,3]-peak must beat the [3,4]-peak, requiring the mass of `φ^{2t}` to
-     concentrate near the higher peak (a Laplace lower bound).  NEXT: prove a per-interval peak
-     LOWER bound `∫_{[a,b]⊂[2,3]} φ^{2t}/x ≥ (peak sub-window)` vs a per-interval peak UPPER bound on
-     `[3,4]`, with the two peak values rationally separated — the `RhinLiteCritical`/`RhinLiteInterval`
-     bracket machinery localized to each interval.
+  4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  — **now PROVED from TWO one-sided
+     per-interval leaves** (2026-08-31, this lap).  Reduced by the pure-arithmetic glue
+     `rhinLite_ratio_gap_of_step_bounds` (PROVED, trust-base clean): from `q₁ ≤ κ·q₀` and
+     `2κ·p₀ ≤ p₁` (same `κ`) the gap is two monotone multiplications, no cancellation.  The shared
+     constant `rhinLiteKappa = (2209/10000)^{2·scale}` sits in the narrow valid window
+     `[exp(m₂), exp(m₁)/2]` = `[(0.220314)^{2000}, (0.221454)^{2000}]` (base `0.2209`), the double
+     margin that separates the two rates.  Two REMAINING disclosed leaves (the current SOLE sorries,
+     RhinLiteApprox.lean:1431,1443):
+     - `rhinLiteI₂_peak_upper` : `I₂(t+1) ≤ κ·I₂(t)` — a POINTWISE `[3,4]` step bound `φ² ≤ κ`,
+       tighter than the global `(9/40)²⁰⁰⁰`.  Provable by localizing the `RhinLiteInterval`
+       factor-bound machinery to the `[3,4]` critical brackets (mechanical but real; NEXT-lap
+       candidate — the easier of the two).
+     - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — the genuine Laplace HEART.  NOT
+       pointwise (`φ` vanishes at `[2,3]` endpoints).  Route: fix rational `[a,b]⊂[2,3]` about
+       `x₁*≈2.223` with `φ² ≥ 2κ`; then `I₁(t+1) ≥ 2κ·∫_{[a,b]}φ^{2t}/x` and a tail comparison
+       `∫_{[2,3]∖[a,b]} ≤ ∫_{[a,b]}` gives `∫_{[a,b]}φ^{2t}/x ≥ ½·I₁(t)`.  Multi-lap.
+       ⚠ Do NOT chase a global pointwise lower bound (φ vanishes at endpoints — refuted).
 
 **KEY CORRECTION over the previous handoff's route.**  Independent two-sided *absolute* exponential
 envelopes on `I₁,I₂` do NOT yield the `|M(0,1)|` lower bound: the difference `I₁(t₀)I₂(t₀+1) −
