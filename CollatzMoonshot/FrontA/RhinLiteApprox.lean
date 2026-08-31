@@ -849,11 +849,227 @@ theorem lcmUpto_remainder_majorant :
           gcongr; exact hN₀ N hN
       _ = (396 / 5 : ℝ) ^ N := by rw [← mul_pow]; norm_num
 
+/-- helper: `rhinLiteEvenIndex t = 2000·t`. -/
+theorem rhinLiteEvenIndex_eq (t : ℕ) : rhinLiteEvenIndex t = 2000 * t := by
+  simp only [rhinLiteEvenIndex, rhinLiteScale]
+
+/-- **Selection + envelope (the analytic core of the crux).**  There are a finite exponent `κ` and
+constant `C > 0` such that for every height `H ≥ 1` and every `S ≤ 2H` there is a starting index
+`t₀` with: (smallness) `S·E_{N(t)} ≤ 1/2` for all `t ≥ t₀` (so `logForm_conditional_lower` has
+slack `≥ 1/2`); and (envelope) the denominator `lcmUpto N(t)·18^{N(t)} ≤ C·H^κ` for `t` in the
+non-vanishing window `[t₀, t₀+2]`.  `κ = ⌈log(396/5)/log(100/99)⌉`.  This is the log/rpow conversion
+that turns the exponential denominator into a polynomial-in-`H` bound. -/
+theorem rhinLite_selection_envelope :
+    ∃ (κ : ℕ) (C : ℝ), 0 < C ∧
+      ∀ (S : ℕ) (H : ℝ), 1 ≤ H → (S : ℝ) ≤ 2 * H →
+        ∃ t₀ : ℕ,
+          (∀ t, t₀ ≤ t →
+            (S : ℝ) * ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+              (9 / 40 : ℝ) ^ rhinLiteEvenIndex t) ≤ 1 / 2) ∧
+          (∀ t, t₀ ≤ t → t ≤ t₀ + 2 →
+            (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t
+              ≤ C * H ^ κ) := by
+  obtain ⟨N₀, hmaj⟩ := lcmUpto_remainder_majorant
+  set L99 : ℝ := Real.log (100 / 99) with hL99def
+  set L396 : ℝ := Real.log (396 / 5) with hL396def
+  have hL99pos : 0 < L99 := Real.log_pos (by norm_num)
+  have hL396pos : 0 < L396 := Real.log_pos (by norm_num)
+  have hL99ne : L99 ≠ 0 := hL99pos.ne'
+  set ρ : ℝ := L396 / L99 with hρdef
+  have hρpos : 0 < ρ := div_pos hL396pos hL99pos
+  set κ : ℕ := ⌈ρ⌉₊ with hκdef
+  refine ⟨κ, (396 / 5 : ℝ) ^ (6000 + N₀) * 6 ^ κ, by positivity, ?_⟩
+  intro S H hH hSH
+  set y : ℝ := 2 * (S : ℝ) + 2 with hydef
+  have hy1 : (1 : ℝ) ≤ y := by
+    rw [hydef]; have := Nat.cast_nonneg (α := ℝ) S; linarith
+  have hypos : (0 : ℝ) < y := by linarith
+  have hlogy : 0 ≤ Real.log y := Real.log_nonneg hy1
+  set T : ℝ := max (N₀ : ℝ) (Real.log y / L99) with hTdef
+  have hTnn : 0 ≤ T := le_trans (Nat.cast_nonneg _) (le_max_left _ _)
+  set t₀ : ℕ := ⌈T / 2000⌉₊ with ht₀def
+  -- index arithmetic
+  have hNt0_ge : T ≤ 2000 * (t₀ : ℝ) := by
+    have := Nat.le_ceil (T / 2000)
+    rw [ht₀def]; nlinarith [this]
+  have hNt0_lt : (2000 : ℝ) * (t₀ : ℝ) < T + 2000 := by
+    have := Nat.ceil_lt_add_one (a := T / 2000) (by positivity)
+    rw [ht₀def]; nlinarith [this]
+  -- for t ≥ t₀ : N(t) ≥ N₀ (as nats) and (N(t):ℝ) ≥ T
+  have hidx : ∀ t : ℕ, (rhinLiteEvenIndex t : ℝ) = 2000 * (t : ℝ) := by
+    intro t; rw [rhinLiteEvenIndex_eq]; push_cast; ring
+  have hNge : ∀ t, t₀ ≤ t → T ≤ (rhinLiteEvenIndex t : ℝ) := by
+    intro t ht
+    rw [hidx t]
+    have : (2000 : ℝ) * (t₀ : ℝ) ≤ 2000 * (t : ℝ) := by
+      have : (t₀ : ℝ) ≤ (t : ℝ) := by exact_mod_cast ht
+      linarith
+    linarith [hNt0_ge]
+  have hNN₀ : ∀ t, t₀ ≤ t → N₀ ≤ rhinLiteEvenIndex t := by
+    intro t ht
+    have h1 : (N₀ : ℝ) ≤ (rhinLiteEvenIndex t : ℝ) :=
+      le_trans (le_max_left _ _) (hNge t ht)
+    exact_mod_cast h1
+  refine ⟨t₀, ?_, ?_⟩
+  · -- smallness
+    intro t ht
+    have hn := hNN₀ t ht
+    obtain ⟨hm1, _⟩ := hmaj (rhinLiteEvenIndex t) hn
+    -- reduce to S·(99/100)^N ≤ 1/2
+    have hSnn : (0 : ℝ) ≤ (S : ℝ) := Nat.cast_nonneg _
+    have hstep : (S : ℝ) * ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+        (9 / 40 : ℝ) ^ rhinLiteEvenIndex t) ≤ (S : ℝ) * (99 / 100 : ℝ) ^ rhinLiteEvenIndex t :=
+      mul_le_mul_of_nonneg_left hm1 hSnn
+    -- (99/100)^N ≤ 1/y  (rpow chain)
+    have hbasepos : (0 : ℝ) < (99 / 100 : ℝ) := by norm_num
+    have hbasele1 : (99 / 100 : ℝ) ≤ 1 := by norm_num
+    -- monomial → rpow, decreasing in exponent
+    have hpow_rpow : (99 / 100 : ℝ) ^ rhinLiteEvenIndex t
+        = (99 / 100 : ℝ) ^ ((rhinLiteEvenIndex t : ℕ) : ℝ) := by
+      rw [Real.rpow_natCast]
+    have hdec1 : (99 / 100 : ℝ) ^ ((rhinLiteEvenIndex t : ℕ) : ℝ) ≤ (99 / 100 : ℝ) ^ T :=
+      Real.rpow_le_rpow_of_exponent_ge hbasepos hbasele1 (hNge t ht)
+    have hdec2 : (99 / 100 : ℝ) ^ T ≤ (99 / 100 : ℝ) ^ (Real.log y / L99) :=
+      Real.rpow_le_rpow_of_exponent_ge hbasepos hbasele1 (le_max_right _ _)
+    have hval : (99 / 100 : ℝ) ^ (Real.log y / L99) = 1 / y := by
+      rw [Real.rpow_def_of_pos hbasepos]
+      have hlog : Real.log (99 / 100) = - L99 := by
+        rw [hL99def, show (99 / 100 : ℝ) = (100 / 99 : ℝ)⁻¹ by norm_num, Real.log_inv]
+      rw [hlog]
+      rw [show (-L99) * (Real.log y / L99) = -(Real.log y) by field_simp]
+      rw [Real.exp_neg, Real.exp_log hypos, one_div]
+    have hle_y : (99 / 100 : ℝ) ^ rhinLiteEvenIndex t ≤ 1 / y := by
+      rw [hpow_rpow]; calc _ ≤ (99/100:ℝ)^T := hdec1
+        _ ≤ (99/100:ℝ)^(Real.log y / L99) := hdec2
+        _ = 1 / y := hval
+    -- combine
+    have : (S : ℝ) * (99 / 100 : ℝ) ^ rhinLiteEvenIndex t ≤ (S : ℝ) * (1 / y) :=
+      mul_le_mul_of_nonneg_left hle_y hSnn
+    have hfin : (S : ℝ) * (1 / y) ≤ 1 / 2 := by
+      rw [hydef, mul_one_div, div_le_iff₀ (by positivity)]; nlinarith [hSnn]
+    calc (S : ℝ) * ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+            (9 / 40 : ℝ) ^ rhinLiteEvenIndex t)
+        ≤ (S : ℝ) * (99 / 100 : ℝ) ^ rhinLiteEvenIndex t := hstep
+      _ ≤ (S : ℝ) * (1 / y) := this
+      _ ≤ 1 / 2 := hfin
+  · -- envelope
+    intro t ht htle
+    have hn := hNN₀ t ht
+    obtain ⟨_, hm2⟩ := hmaj (rhinLiteEvenIndex t) hn
+    -- (N(t):ℝ) ≤ T + 6000
+    have hNt_le : (rhinLiteEvenIndex t : ℝ) ≤ T + 6000 := by
+      rw [hidx t]
+      have h1 : (t : ℝ) ≤ (t₀ : ℝ) + 2 := by exact_mod_cast htle
+      nlinarith [hNt0_lt, h1]
+    -- suffices (396/5)^N ≤ C·H^κ
+    have hb1 : (1 : ℝ) < (396 / 5 : ℝ) := by norm_num
+    have hbpos : (0 : ℝ) < (396 / 5 : ℝ) := by norm_num
+    have hpow_rpow : (396 / 5 : ℝ) ^ rhinLiteEvenIndex t
+        = (396 / 5 : ℝ) ^ ((rhinLiteEvenIndex t : ℕ) : ℝ) := by rw [Real.rpow_natCast]
+    have hinc1 : (396 / 5 : ℝ) ^ ((rhinLiteEvenIndex t : ℕ) : ℝ)
+        ≤ (396 / 5 : ℝ) ^ (T + 6000) :=
+      Real.rpow_le_rpow_of_exponent_le hb1.le hNt_le
+    -- (396/5)^(T+6000) = (396/5)^6000 · (396/5)^T
+    have hsplit1 : (396 / 5 : ℝ) ^ (T + 6000)
+        = (396 / 5 : ℝ) ^ (6000 : ℝ) * (396 / 5 : ℝ) ^ T := by
+      rw [add_comm, Real.rpow_add hbpos]
+    -- (396/5)^T ≤ (396/5)^(N₀ + log y/L99)
+    have hTle : T ≤ (N₀ : ℝ) + Real.log y / L99 := by
+      rw [hTdef]
+      apply max_le
+      · nlinarith [div_nonneg hlogy hL99pos.le]
+      · nlinarith [Nat.cast_nonneg (α := ℝ) N₀]
+    have hinc2 : (396 / 5 : ℝ) ^ T ≤ (396 / 5 : ℝ) ^ ((N₀ : ℝ) + Real.log y / L99) :=
+      Real.rpow_le_rpow_of_exponent_le hb1.le hTle
+    have hsplit2 : (396 / 5 : ℝ) ^ ((N₀ : ℝ) + Real.log y / L99)
+        = (396 / 5 : ℝ) ^ (N₀ : ℝ) * (396 / 5 : ℝ) ^ (Real.log y / L99) := by
+      rw [Real.rpow_add hbpos]
+    -- (396/5)^(log y/L99) = y^ρ
+    have hyρ : (396 / 5 : ℝ) ^ (Real.log y / L99) = y ^ ρ := by
+      rw [Real.rpow_def_of_pos hbpos, Real.rpow_def_of_pos hypos, hρdef, hL396def]
+      congr 1; field_simp
+    -- y^ρ ≤ y^κ ≤ (6H)^κ
+    have hyρκ : y ^ ρ ≤ y ^ (κ : ℝ) :=
+      Real.rpow_le_rpow_of_exponent_le hy1 (by rw [hκdef]; exact Nat.le_ceil ρ)
+    have hyκ_nat : y ^ (κ : ℝ) = y ^ κ := Real.rpow_natCast y κ
+    have hy6H : y ≤ 6 * H := by rw [hydef]; nlinarith [hSH, hH]
+    have hyκ6 : (y : ℝ) ^ κ ≤ (6 * H) ^ κ :=
+      pow_le_pow_left₀ (by positivity) hy6H κ
+    have h6H : (6 * H : ℝ) ^ κ = 6 ^ κ * H ^ κ := by rw [mul_pow]
+    -- assemble the (396/5)^T chain
+    have hchainT : (396 / 5 : ℝ) ^ T ≤ (396 / 5 : ℝ) ^ (N₀ : ℝ) * (6 ^ κ * H ^ κ) := by
+      calc (396 / 5 : ℝ) ^ T
+          ≤ (396 / 5 : ℝ) ^ (N₀ : ℝ) * (396 / 5 : ℝ) ^ (Real.log y / L99) := by
+            rw [← hsplit2]; exact hinc2
+        _ = (396 / 5 : ℝ) ^ (N₀ : ℝ) * y ^ ρ := by rw [hyρ]
+        _ ≤ (396 / 5 : ℝ) ^ (N₀ : ℝ) * (6 ^ κ * H ^ κ) := by
+            gcongr
+            calc y ^ ρ ≤ y ^ (κ : ℝ) := hyρκ
+              _ = y ^ κ := hyκ_nat
+              _ ≤ (6 * H) ^ κ := hyκ6
+              _ = 6 ^ κ * H ^ κ := h6H
+    -- (396/5)^(6000:ℝ) = (396/5)^6000 (nat), (396/5)^(N₀:ℝ)=(396/5)^N₀
+    have hr6000 : (396 / 5 : ℝ) ^ (6000 : ℝ) = (396 / 5 : ℝ) ^ (6000 : ℕ) := by
+      rw [show (6000 : ℝ) = ((6000 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]
+    have hrN₀ : (396 / 5 : ℝ) ^ (N₀ : ℝ) = (396 / 5 : ℝ) ^ N₀ := Real.rpow_natCast _ _
+    -- final chain
+    calc (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t
+        ≤ (396 / 5 : ℝ) ^ rhinLiteEvenIndex t := hm2
+      _ = (396 / 5 : ℝ) ^ ((rhinLiteEvenIndex t : ℕ) : ℝ) := hpow_rpow
+      _ ≤ (396 / 5 : ℝ) ^ (T + 6000) := hinc1
+      _ = (396 / 5 : ℝ) ^ (6000 : ℝ) * (396 / 5 : ℝ) ^ T := hsplit1
+      _ ≤ (396 / 5 : ℝ) ^ (6000 : ℝ) * ((396 / 5 : ℝ) ^ (N₀ : ℝ) * (6 ^ κ * H ^ κ)) :=
+            mul_le_mul_of_nonneg_left hchainT (by positivity)
+      _ = ((396 / 5 : ℝ) ^ (6000 : ℕ) * (396 / 5 : ℝ) ^ N₀) * 6 ^ κ * H ^ κ := by
+            rw [hr6000, hrN₀]; ring
+      _ = (396 / 5 : ℝ) ^ (6000 + N₀) * 6 ^ κ * H ^ κ := by rw [← pow_add]
+
 theorem rhinLiteLIMeasure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ p q r : ℤ, (p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) →
         c / (max |(p : ℝ)| (max |(q : ℝ)| |(r : ℝ)|)) ^ κ
           ≤ |(p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3)| := by
-  sorry
+  obtain ⟨κ, C, hCpos, henv⟩ := rhinLite_selection_envelope
+  refine ⟨κ, 1 / (2 * C), by positivity, ?_⟩
+  intro p q r hpqr
+  set H : ℝ := max |(p : ℝ)| (max |(q : ℝ)| |(r : ℝ)|) with hHdef
+  -- H ≥ 1 (some coordinate is a nonzero integer)
+  have hqleH : |(q : ℝ)| ≤ H := le_trans (le_max_left _ _) (le_max_right _ _)
+  have hrleH : |(r : ℝ)| ≤ H := le_trans (le_max_right _ _) (le_max_right _ _)
+  have hpleH : |(p : ℝ)| ≤ H := le_max_left _ _
+  have hH1 : 1 ≤ H := by
+    rcases hpqr with hp | hq | hr
+    · have hb : (1 : ℝ) ≤ |(p : ℝ)| := by exact_mod_cast Int.one_le_abs hp
+      linarith [hpleH]
+    · have hb : (1 : ℝ) ≤ |(q : ℝ)| := by exact_mod_cast Int.one_le_abs hq
+      linarith [hqleH]
+    · have hb : (1 : ℝ) ≤ |(r : ℝ)| := by exact_mod_cast Int.one_le_abs hr
+      linarith [hrleH]
+  have hHpos : 0 < H := by linarith
+  -- S = |q|+|r| as a nat
+  set S : ℕ := (|q| + |r|).toNat with hSdef
+  have hSnonneg : (0 : ℤ) ≤ |q| + |r| := by positivity
+  have hSZ : (S : ℤ) = |q| + |r| := by rw [hSdef]; exact Int.toNat_of_nonneg hSnonneg
+  have hSint : (S : ℝ) = ((|q| + |r| : ℤ) : ℝ) := by
+    rw [show (S : ℝ) = ((S : ℤ) : ℝ) by push_cast; ring, hSZ]
+  have hScast : (S : ℝ) = |(q : ℝ)| + |(r : ℝ)| := by rw [hSint]; push_cast; ring
+  have hSH : (S : ℝ) ≤ 2 * H := by rw [hScast]; linarith [hqleH, hrleH]
+  obtain ⟨t₀, hsmall, henvt⟩ := henv S H hH1 hSH
+  obtain ⟨t, ht₀, htle, hn⟩ := rhinLite_nonvanishing_triple p q r hpqr t₀
+  have hsm : ((|q| + |r| : ℤ) : ℝ) *
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t) ≤ 1 / 2 := by
+    rw [← hSint]; exact hsmall t ht₀
+  have hlow := rhinLite_pointwise_lower p q r t hn hsm
+  -- denominator envelope
+  obtain ⟨hBpos, _, hBle, _⟩ := rhinLiteFD_spec t
+  have hBenv : (rhinLiteB t : ℝ) ≤ C * H ^ κ := le_trans hBle (henvt t ht₀ htle)
+  have hBRpos : (0 : ℝ) < (rhinLiteB t : ℝ) := by exact_mod_cast hBpos
+  have hHκpos : (0 : ℝ) < H ^ κ := by positivity
+  -- assemble
+  calc (1 / (2 * C)) / H ^ κ = 1 / (2 * C * H ^ κ) := by rw [div_div]
+    _ ≤ 1 / (2 * (rhinLiteB t : ℝ)) := by
+        apply one_div_le_one_div_of_le (by linarith [hBRpos])
+        nlinarith [hBenv]
+    _ ≤ |(p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3)| := hlow
 
 end CollatzMoonshot.FrontA

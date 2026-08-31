@@ -66,7 +66,18 @@ The K=1 forms and the finite-exponent prerequisite are now proved in `RhinLiteAp
 - `lcmUpto_le_pow_eventually` (PROVED): `∃N₀, ∀N≥N₀, lcmUpto N ≤ (22/5)^N` (base 4.4 ∈ (4, 40/9);
   `E_N ≤ (99/100)^N → 0`).  Via `isLittleO_log_rpow_atTop` (√N·log N = o(N)).
 
-**UPDATE (later lap): crux decomposed; assembly core PROVED.**  `RhinLiteApprox.lean` now has
+**UPDATE (latest lap): `rhinLiteLIMeasure` ASSEMBLED — reduces to ONE node.**  The full
+transference is now machine-checked: `rhinLite_selection_envelope` (PROVED: the log/rpow height→index
+selection + denominator envelope `lcmUpto N·18^N ≤ C·H^κ`, `κ=⌈log(396/5)/log(100/99)⌉`) feeds
+`rhinLite_pointwise_lower` + `rhinLite_nonvanishing_triple` to give `rhinLiteLIMeasure` (PROVED
+modulo the single sorry).  **The ENTIRE crux now rests on exactly one lemma:
+`rhinLite_nonvanishing_triple`** (the 3-consecutive determinant non-vanishing).  Repo-wide there is
+now exactly ONE disclosed sorry: `rhinLite_nonvanishing_triple` (`RhinLiteApprox.lean:804`).
+NEXT: prove `rhinLite_nonvanishing_triple` — the Wronskian/Padé perfect-system non-degeneracy.
+⚠ RISK: verify this determinant is actually nonzero for OUR six-factor `N=2000t` construction (it
+is asserted from Rhin/Wu theory; confirm it holds for the specific block subsequence before assuming).
+
+**UPDATE (earlier lap): crux decomposed; assembly core PROVED.**  `RhinLiteApprox.lean` now has
 the definite form data `rhinLiteA₁/A₂/B` + `rhinLiteFD_spec` (PROVED), the isolated hard node
 `rhinLite_nonvanishing_triple` (disclosed sorry: 3-consecutive `n(t)≠0`), and
 `rhinLite_pointwise_lower` (PROVED: at a good `t`, `|Λ| ≥ 1/(2·B(t))`).  Two disclosed sorries now:
