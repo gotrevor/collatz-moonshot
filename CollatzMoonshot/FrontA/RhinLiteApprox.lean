@@ -1637,7 +1637,9 @@ theorem rhinLiteI₁_logConvex (t : ℕ) :
         interval_sq_integral_cauchySchwarz (by norm_num) hcu hcv hunn hvnn
     _ = rhinLiteI₁ t * rhinLiteI₁ (t + 2) := by rw [e_uu, e_vv]
 
-/-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — disclosed numerical node (single-window route).**
+set_option maxHeartbeats 1000000 in
+open intervalIntegral in
+/-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — PROVED via a single monotone window.**
 `I₁(0) = ∫₂³ dx/x = log(3/2)` and `I₁(1) = ∫₂³ φ²/x` with `φ² = rhinLiteKernelSq` (= normalized 1).
 After the 2026-08-31 sharpening of `κ` to base `0.2205`, the required margin is `exp(3.9)=50×`, so a
 **single monotone window** suffices (verified in `experiments/rhinlite_single_window.py` /
@@ -1654,10 +1656,201 @@ After the 2026-08-31 sharpening of `κ` to base `0.2205`, the required margin is
 
 The remaining Lean debt is the analytic wiring (monotonicity `φ²` on `W` via `strictMonoOn_of_
 deriv_pos` + `hasDerivAt_rhinLiteLogSq`, and the interval-integral lower bounds); the numerics are
-fully pinned.  Disclosed. -/
+fully pinned.  Now discharged. -/
 theorem rhinLiteI₁_ratio_base :
     2 * rhinLiteKappa * rhinLiteI₁ 0 ≤ rhinLiteI₁ 1 := by
-  sorry
+  set a : ℝ := 2219/1000 with ha_def
+  set b : ℝ := 2223/1000 with hb_def
+  have hab : a < b := by rw [ha_def, hb_def]; norm_num
+  -- factor signs on [a,b]
+  have hsign : ∀ x : ℝ, a ≤ x → x ≤ b →
+      rhinLiteFactor1 x < 0 ∧ 0 < rhinLiteFactor2 x ∧ rhinLiteFactor3 x < 0 ∧
+      rhinLiteFactor4 x < 0 ∧ 0 < rhinLiteFactor5 x ∧ rhinLiteFactor6 x < 0 ∧ 0 < x := by
+    intro x hx1 hx2
+    rw [ha_def] at hx1; rw [hb_def] at hx2
+    simp only [rhinLiteFactor1, rhinLiteFactor2, rhinLiteFactor3, rhinLiteFactor4,
+      rhinLiteFactor5, rhinLiteFactor6]
+    refine ⟨by nlinarith, by nlinarith, by nlinarith, by nlinarith, by nlinarith,
+      by nlinarith, by nlinarith⟩
+  have hne : ∀ x : ℝ, a ≤ x → x ≤ b →
+      rhinLiteFactor1 x ≠ 0 ∧ rhinLiteFactor2 x ≠ 0 ∧ rhinLiteFactor3 x ≠ 0 ∧
+      rhinLiteFactor4 x ≠ 0 ∧ rhinLiteFactor5 x ≠ 0 ∧ rhinLiteFactor6 x ≠ 0 ∧ x ≠ 0 := by
+    intro x hx1 hx2
+    obtain ⟨s1,s2,s3,s4,s5,s6,s7⟩ := hsign x hx1 hx2
+    exact ⟨s1.ne, s2.ne', s3.ne, s4.ne, s5.ne', s6.ne, s7.ne'⟩
+  -- derivative positivity on (a,b)
+  have hderivpos : ∀ x ∈ Ioo a b, 0 < deriv rhinLiteLogSq x := by
+    intro x hx
+    obtain ⟨hx1, hx2⟩ := hx
+    obtain ⟨n1,n2,n3,n4,n5,n6,n7⟩ := hne x hx1.le hx2.le
+    rw [(hasDerivAt_rhinLiteLogSq x n7 n1 n2 n3 n4 n5 n6).deriv]
+    obtain ⟨s1,s2,s3,s4,s5,s6,s7⟩ := hsign x hx1.le hx2.le
+    -- denominator product D > 0 (four negative factors)
+    have hD : 0 < rhinLiteFactor1 x * rhinLiteFactor2 x * rhinLiteFactor3 x
+        * rhinLiteFactor4 x * rhinLiteFactor5 x * rhinLiteFactor6 x * x := by
+      have p12 : rhinLiteFactor1 x * rhinLiteFactor2 x < 0 := mul_neg_of_neg_of_pos s1 s2
+      have p123 : 0 < rhinLiteFactor1 x * rhinLiteFactor2 x * rhinLiteFactor3 x :=
+        mul_pos_of_neg_of_neg p12 s3
+      have p1234 : rhinLiteFactor1 x * rhinLiteFactor2 x * rhinLiteFactor3 x
+          * rhinLiteFactor4 x < 0 := mul_neg_of_pos_of_neg p123 s4
+      have p12345 : rhinLiteFactor1 x * rhinLiteFactor2 x * rhinLiteFactor3 x
+          * rhinLiteFactor4 x * rhinLiteFactor5 x < 0 := mul_neg_of_neg_of_pos p1234 s5
+      have p123456 : 0 < rhinLiteFactor1 x * rhinLiteFactor2 x * rhinLiteFactor3 x
+          * rhinLiteFactor4 x * rhinLiteFactor5 x * rhinLiteFactor6 x :=
+        mul_pos_of_neg_of_neg p12345 s6
+      exact mul_pos p123456 s7
+    -- S = criticalReal.eval x / D  (bridge to the explicit degree-8 polynomial)
+    have hSD : (705 / rhinLiteFactor1 x + 551 / rhinLiteFactor2 x + 449 / rhinLiteFactor3 x
+        + 545 / rhinLiteFactor4 x + 39 * (34 * x - 102) / rhinLiteFactor5 x
+        + 54 * (38 * x - 108) / rhinLiteFactor6 x - 1000 / x)
+        = rhinLiteCriticalReal.eval x / (rhinLiteFactor1 x * rhinLiteFactor2 x
+          * rhinLiteFactor3 x * rhinLiteFactor4 x * rhinLiteFactor5 x * rhinLiteFactor6 x * x) := by
+      rw [eq_div_iff (ne_of_gt hD), rhinLiteCriticalReal_eval]
+      field_simp [n1, n2, n3, n4, n5, n6, n7]
+      simp only [rhinLiteFactor1, rhinLiteFactor2, rhinLiteFactor3, rhinLiteFactor4,
+        rhinLiteFactor5, rhinLiteFactor6]
+      ring
+    rw [hSD]
+    apply mul_pos (by norm_num : (0:ℝ) < 2)
+    apply div_pos _ hD
+    rw [rhinLiteCriticalReal_eval]
+    rw [ha_def] at hx1; rw [hb_def] at hx2
+    have h1 : (0:ℝ) < x - 2219/1000 := by linarith
+    have h2 : (0:ℝ) < 2223/1000 - x := by linarith
+    nlinarith [h1, h2, mul_pos h1 h2, sq_nonneg (x-2221/1000), mul_pos (mul_pos h1 h2) h1,
+      mul_pos (mul_pos h1 h2) h2, mul_pos (mul_pos (mul_pos h1 h2) h1) h2,
+      mul_pos h1 h1, mul_pos h2 h2]
+  -- continuity of logSq on [a,b]
+  have hcont : ContinuousOn rhinLiteLogSq (Icc a b) := by
+    intro x hx
+    obtain ⟨n1,n2,n3,n4,n5,n6,n7⟩ := hne x hx.1 hx.2
+    exact ((hasDerivAt_rhinLiteLogSq x n7 n1 n2 n3 n4 n5 n6).continuousAt).continuousWithinAt
+  -- logSq monotone on [a,b]
+  have hmonoLog : MonotoneOn rhinLiteLogSq (Icc a b) :=
+    (strictMonoOn_of_deriv_pos (convex_Icc a b) hcont
+      (by rw [interior_Icc]; exact hderivpos)).monotoneOn
+  -- kernelSq monotone: kernelSq a ≤ kernelSq x
+  have hmono : ∀ x ∈ Icc a b, rhinLiteKernelSq a ≤ rhinLiteKernelSq x := by
+    intro x hx
+    obtain ⟨n1,n2,n3,n4,n5,n6,n7⟩ := hne x hx.1 hx.2
+    obtain ⟨m1,m2,m3,m4,m5,m6,m7⟩ := hne a le_rfl hab.le
+    have hxpos : (0:ℝ) < x := (hsign x hx.1 hx.2).2.2.2.2.2.2
+    have hapos : (0:ℝ) < a := (hsign a le_rfl hab.le).2.2.2.2.2.2
+    have hlog := hmonoLog ⟨le_rfl, hab.le⟩ hx hx.1
+    rw [← exp_rhinLiteLogSq x hxpos n1 n2 n3 n4 n5 n6,
+      ← exp_rhinLiteLogSq a hapos m1 m2 m3 m4 m5 m6]
+    exact Real.exp_le_exp.mpr hlog
+  -- normalized 1 = kernelSq for x>0
+  have hnorm1 : ∀ {x:ℝ}, 0 < x → rhinLiteEvenNormalized 1 x = rhinLiteKernelSq x := by
+    intro x hx
+    rw [rhinLiteEvenNormalized_eq 1 hx, ← abs_rhinLiteKernel_eq x hx,
+      show 2*1 = 2 from rfl, sq_abs, rhinLiteKernelSq]
+  -- I₁ 1 = ∫₂³ kernelSq/x
+  have hI1eq : rhinLiteI₁ 1 = ∫ x in (2:ℝ)..3, rhinLiteKernelSq x / x := by
+    rw [rhinLiteI₁]
+    refine integral_congr (fun x hx => ?_)
+    rw [uIcc_of_le (by norm_num)] at hx
+    rw [rhinLiteEven_logForm_integrand 1 x, hnorm1 (by linarith [hx.1] : (0:ℝ) < x)]
+  -- I₁ 0 = log(3/2)
+  have hI0eq : rhinLiteI₁ 0 = Real.log (3/2) := by
+    rw [rhinLiteI₁]
+    have hc : (∫ x in (2:ℝ)..3,
+        ((rhinLiteEvenPolynomialZ 0).map (Int.castRingHom ℝ)).eval x /
+          x ^ (rhinLiteEvenIndex 0 + 1)) = ∫ x in (2:ℝ)..3, 1/x := by
+      refine integral_congr (fun x hx => ?_)
+      rw [uIcc_of_le (by norm_num)] at hx
+      rw [rhinLiteEven_logForm_integrand 0 x]
+      have : rhinLiteEvenNormalized 0 x = 1 := by
+        rw [rhinLiteEvenNormalized_eq 0 (by linarith [hx.1] : (0:ℝ) < x)]; simp
+      rw [this]
+    rw [hc, integral_one_div (fun h => by
+      rw [uIcc_of_le (by norm_num : (2:ℝ) ≤ 3)] at h; linarith [h.1])]
+  -- integrand nonneg + integrability
+  have hfnn : ∀ x ∈ Icc (2:ℝ) 3, 0 ≤ rhinLiteKernelSq x / x :=
+    fun x hx => div_nonneg (rhinLiteKernelSq_nonneg x) (by linarith [hx.1])
+  have hfcont : ContinuousOn (fun x => rhinLiteKernelSq x / x) (Icc (2:ℝ) 3) :=
+    ContinuousOn.div (rhinLiteKernelSq_continuousOn.mono (Icc_subset_Icc le_rfl (by norm_num)))
+      continuousOn_id (fun x hx => by linarith [hx.1])
+  have hint : ∀ p q : ℝ, 2 ≤ p → p ≤ q → q ≤ 3 →
+      IntervalIntegrable (fun x => rhinLiteKernelSq x / x) volume p q := by
+    intro p q hp hpq hq
+    exact (hfcont.mono (by rw [uIcc_of_le hpq]; exact Icc_subset_Icc hp hq)).intervalIntegrable
+  -- lower bound over [a,b]
+  have haIcc : a ∈ Icc (2:ℝ) 3 := by rw [ha_def]; constructor <;> norm_num
+  have hbIcc : b ∈ Icc (2:ℝ) 3 := by rw [hb_def]; constructor <;> norm_num
+  have hpa : (0:ℝ) < a := by rw [ha_def]; norm_num
+  -- integrability of the constant-numerator comparison function on [a,b]
+  have hintc : IntervalIntegrable (fun x => rhinLiteKernelSq a / x) volume a b := by
+    apply ContinuousOn.intervalIntegrable
+    rw [uIcc_of_le hab.le]
+    exact continuousOn_const.div continuousOn_id (fun x hx => by linarith [hx.1])
+  -- ∫_a^b kernelSq/x ≥ kernelSq a * log(b/a)
+  have hstep1 : rhinLiteKernelSq a * Real.log (b/a)
+      ≤ ∫ x in a..b, rhinLiteKernelSq x / x := by
+    have hle : (∫ x in a..b, rhinLiteKernelSq a / x) ≤ ∫ x in a..b, rhinLiteKernelSq x / x := by
+      refine intervalIntegral.integral_mono_on hab.le hintc
+        (hint a b haIcc.1 hab.le hbIcc.2) (fun x hx => ?_)
+      have hxpos : 0 < x := by linarith [hx.1]
+      exact div_le_div_of_nonneg_right (hmono x ⟨hx.1, hx.2⟩) hxpos.le
+    have heq : (∫ x in a..b, rhinLiteKernelSq a / x) = rhinLiteKernelSq a * Real.log (b/a) := by
+      have hrw : (∫ x in a..b, rhinLiteKernelSq a / x)
+          = ∫ x in a..b, rhinLiteKernelSq a * x⁻¹ := by simp only [div_eq_mul_inv]
+      rw [hrw, intervalIntegral.integral_const_mul,
+        integral_inv (fun h => by rw [Set.uIcc_of_le hab.le] at h; linarith [hpa, h.1])]
+    rw [heq] at hle; exact hle
+  -- ∫₂³ ≥ ∫_a^b  (drop the two nonneg outer pieces)
+  have hsub : (∫ x in a..b, rhinLiteKernelSq x / x) ≤ ∫ x in (2:ℝ)..3, rhinLiteKernelSq x / x := by
+    have e1 : (∫ x in (2:ℝ)..3, rhinLiteKernelSq x / x)
+        = (∫ x in (2:ℝ)..a, rhinLiteKernelSq x / x)
+          + ((∫ x in a..b, rhinLiteKernelSq x / x) + (∫ x in b..(3:ℝ), rhinLiteKernelSq x / x)) := by
+      rw [integral_add_adjacent_intervals (hint a b haIcc.1 hab.le hbIcc.2)
+          (hint b 3 hbIcc.1 hbIcc.2 le_rfl),
+        integral_add_adjacent_intervals (hint 2 a le_rfl haIcc.1 haIcc.2)
+          (hint a 3 haIcc.1 (hab.le.trans hbIcc.2) le_rfl)]
+    have hn1 : 0 ≤ ∫ x in (2:ℝ)..a, rhinLiteKernelSq x / x :=
+      integral_nonneg haIcc.1 (fun x hx => hfnn x ⟨hx.1, le_trans hx.2 haIcc.2⟩)
+    have hn2 : 0 ≤ ∫ x in b..(3:ℝ), rhinLiteKernelSq x / x :=
+      integral_nonneg hbIcc.2 (fun x hx => hfnn x ⟨le_trans haIcc.1 (le_trans hab.le hx.1), hx.2⟩)
+    linarith [e1]
+  -- final numeric: κ ≤ kernelSq a * (4/2223)
+  have hnum : (2205/10000:ℝ)^2000 ≤ rhinLiteKernelSq a * (4/2223) := by
+    rw [ha_def]
+    simp only [rhinLiteKernelSq, rhinLiteKernel, rhinLiteFactor1, rhinLiteFactor2,
+      rhinLiteFactor3, rhinLiteFactor4, rhinLiteFactor5, rhinLiteFactor6, rhinLiteW1,
+      rhinLiteW2, rhinLiteW3, rhinLiteW4, rhinLiteW5, rhinLiteW6, rhinLiteScale]
+    have hq : (2205/10000:ℚ)^2000 ≤
+        (((2219/1000-3)^705*(2219/1000-2)^551*(2219/1000-4)^449*(5*(2219/1000)-12)^109
+          *(17*(2219/1000)^2-102*(2219/1000)+144)^39*(19*(2219/1000)^2-108*(2219/1000)+144)^54)
+          /(2219/1000)^1000)^2 * (4/2223) := by native_decide
+    have hr := (Rat.cast_le (K := ℝ)).mpr hq
+    push_cast at hr
+    convert hr using 2
+  -- log bounds
+  have hlog32 : Real.log (3/2) ≤ 1/2 := by
+    have := Real.log_le_sub_one_of_pos (by norm_num : (0:ℝ) < 3/2); linarith
+  have hlogba : (4:ℝ)/2223 ≤ Real.log (b/a) := by
+    have hab' : Real.log (a/b) ≤ a/b - 1 :=
+      Real.log_le_sub_one_of_pos (by rw [ha_def, hb_def]; norm_num)
+    have he : Real.log (b/a) = - Real.log (a/b) := by
+      rw [← Real.log_inv, inv_div]
+    rw [he, ha_def, hb_def]; rw [ha_def, hb_def] at hab'; nlinarith [hab']
+  -- assemble
+  have hksa_nonneg : 0 ≤ rhinLiteKernelSq a := rhinLiteKernelSq_nonneg a
+  have hκ : rhinLiteKappa = (2205/10000:ℝ)^2000 := by
+    rw [rhinLiteKappa, rhinLiteScale]
+  rw [hI0eq, hI1eq, hκ]
+  calc 2 * (2205/10000:ℝ)^2000 * Real.log (3/2)
+      ≤ 2 * (2205/10000:ℝ)^2000 * (1/2) := by
+        have hpos : (0:ℝ) ≤ 2 * (2205/10000:ℝ)^2000 := by positivity
+        nlinarith [mul_nonneg hpos (by linarith [hlog32] : (0:ℝ) ≤ 1/2 - Real.log (3/2))]
+    _ = (2205/10000:ℝ)^2000 := by ring
+    _ ≤ rhinLiteKernelSq a * (4/2223) := hnum
+    _ ≤ rhinLiteKernelSq a * Real.log (b/a) :=
+        mul_le_mul_of_nonneg_left hlogba hksa_nonneg
+    _ ≤ ∫ x in a..b, rhinLiteKernelSq x / x := hstep1
+    _ ≤ ∫ x in (2:ℝ)..3, rhinLiteKernelSq x / x := hsub
+
+
 
 /-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound) — PROVED from log-convexity.**
 `2κ·I₁(t) ≤ I₁(t+1)` for all `t`.  The step ratio `I₁(t+1)/I₁(t)` is nondecreasing in `t` (immediate

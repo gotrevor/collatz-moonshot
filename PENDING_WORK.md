@@ -1,8 +1,30 @@
 # PENDING_WORK
 
-## ★ I₁ BASE-CASE NODE — κ SHARPENED, single-window route pinned (2026-08-31, LATEST lap) ★
+## ★★ I₁ BASE-CASE NODE — PROVED; `src/` NOW SORRY-FREE (2026-08-31, LATEST lap) ★★
 
-The sole remaining `src/` sorry is `rhinLiteI₁_ratio_base : 2κ·I₁(0) ≤ I₁(1)` (`RhinLiteApprox.lean`).
+`rhinLiteI₁_ratio_base : 2κ·I₁(0) ≤ I₁(1)` is **DISCHARGED** (`RhinLiteApprox.lean`). This was the
+sole open obligation under the determinant crux. `check-proof-debt.sh` now reports **0 sorries**;
+the axiom audit is clean (headline `sep_two_three` rests only on the cited `rhin_1987_…` axiom +
+`native_decide` certs; `rhinLiteI₁_ratio_base` carries just `propext/Classical.choice/Quot.sound`
++ one `native_decide` cert for the closing rational inequality).
+
+**Proof (single monotone window, ~190 lines):**
+- κ sharpened 0.2209→0.2205 (prior sub-lap) opened the margin to 50×.
+- Window `W=[2219/1000, 2223/1000]`, left of the peak `x*≈2.22324`.
+- `φ² = rhinLiteKernelSq` (= `rhinLiteEvenNormalized 1`); strictly increasing on `W` via
+  `strictMonoOn_of_deriv_pos` on `rhinLiteLogSq` (deriv = `2·S`, and `S = rhinLiteCriticalReal.eval
+  x / D` with `D = ∏fᵢ·x > 0` — the `criticalReal` numerator bridge dodges the degree-8 `field_simp`;
+  numerator `> 0` on `W` by `nlinarith`); then `exp∘logSq = kernelSq` transfers monotonicity.
+- `I₁(1) = ∫₂³ φ²/x ≥ ∫_W φ²/x ≥ φ²(a)·log(b/a) ≥ φ²(a)·(4/2223)`; `2κ·log(3/2) ≤ 2κ·½`;
+  closing `(2205/10000)^2000 ≤ φ²(a)·(4/2223)` by `native_decide` over ℚ (ratio 8.93×).
+
+KEY GOTCHA recorded: for a rational-function identity `Σ wᵢ/fᵢ = P/∏fᵢ`, keep the `fᵢ` **abstract**
+(`rhinLiteFactorᵢ x`) through `field_simp [ne-hyps]`, THEN `simp only` unfold, THEN `ring`; unfolding
+the quadratic factors *before* `field_simp` leaves uncleared inverses and `ring` fails.
+
+Original stub retained below for provenance.
+
+The sole remaining `src/` sorry (now closed) was `rhinLiteI₁_ratio_base : 2κ·I₁(0) ≤ I₁(1)` (`RhinLiteApprox.lean`).
 
 - **REFUTED the naive single-window plan at old κ-base 0.2209.**  Full `∫₂³ φ²/x` exceeds
   `2κ·log(3/2)` by only `exp(0.29)=1.34×`; a single constant-min window loses `~1.7×`; even a lower
