@@ -355,10 +355,10 @@ satisfies both `val₂(c_j) ≥ 2(N−j)` and `val₃(c_j) ≥ (N−j)`, hence `
 The content splits by CRT (`12 = 4·3`, coprime) into a 2-adic and a 3-adic part, decomposed here as
 two named obligations of **very different difficulty**:
 
-* **3-adic (`rhinLiteEvenPolynomialZ_three_adic_content`)** — provable *factorwise*.  With the
+* **3-adic (`rhinLiteEvenPolynomialZ_three_adic_content`)** — now **PROVED** factorwise.  With the
   `(3,X)`-adic order `ord₃(Q₁)=1, ord₃(Q₄)=1, ord₃(Q₅)=ord₃(Q₆)=2, ord₃(Q₂)=ord₃(Q₃)=0`, the product
-  order is `Σ eᵢ·ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  So `H_N ∈ (3,X)^N` follows
-  from superadditivity of the `(3,X)`-order over products — no cross-terms needed.
+  order is `Σ eᵢ·ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  Proved via the coefficientwise
+  predicate `Dvd3Adic` (superadditive over products: `Dvd3Adic_mul`/`_pow`) — no cross-terms needed.
 * **2-adic (`rhinLiteEvenPolynomialZ_two_adic_content`)** — the genuinely hard node: the factorwise
   `(4,X)`-order bound gives only `Σ eᵢ·ord₄(Qᵢ) = 2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so
   `H_N ∈ (4,X)^N` is **NOT** implied factorwise; it requires cross-term cancellation (verified true
@@ -366,13 +366,93 @@ two named obligations of **very different difficulty**:
   2-adic Newton polygon of the six-factor product).  This is where the multi-lap work concentrates.
 -/
 
-/-- **3-adic content of `H_N` (factorwise; disclosed).**  `3^{N−j} ∣ coeff_j(H_N)`, i.e.
-`H_N ∈ (3,X)^N ℤ[X]` with `N = rhinLiteEvenIndex t = 2000t`.  TRUE and provable factorwise: the
-`(3,X)`-adic orders of the six factors sum (weighted by the exponents `eᵢ = 2wᵢt`) to exactly `N`.
-The remaining Lean work is to formalize the `(3,X)`-order and its superadditivity over products. -/
+/-- Coefficientwise `(3,X)`-adic order predicate: `3^{a−j} ∣ coeff_j p` for all `j`
+(`p ∈ (3,X)^a ℤ[X]`, using `ℕ` truncated subtraction so `j ≥ a` is vacuous). -/
+def Dvd3Adic (a : ℕ) (p : ℤ[X]) : Prop := ∀ j, (3 : ℤ) ^ (a - j) ∣ p.coeff j
+
+theorem Dvd3Adic_zero (p : ℤ[X]) : Dvd3Adic 0 p := by
+  intro j; simp
+
+theorem Dvd3Adic_add {a : ℕ} {p q : ℤ[X]} (hp : Dvd3Adic a p) (hq : Dvd3Adic a q) :
+    Dvd3Adic a (p + q) := by
+  intro j; rw [coeff_add]; exact dvd_add (hp j) (hq j)
+
+theorem Dvd3Adic_mul {a b : ℕ} {p q : ℤ[X]} (hp : Dvd3Adic a p) (hq : Dvd3Adic b q) :
+    Dvd3Adic (a + b) (p * q) := by
+  intro n
+  rw [Polynomial.coeff_mul]
+  apply Finset.dvd_sum
+  rintro ⟨u, v⟩ huv
+  have huvn : u + v = n := Finset.HasAntidiagonal.mem_antidiagonal.mp huv
+  have hprod : (3 : ℤ) ^ ((a - u) + (b - v)) ∣ p.coeff u * q.coeff v := by
+    rw [pow_add]; exact mul_dvd_mul (hp u) (hq v)
+  exact dvd_trans (pow_dvd_pow 3 (by omega)) hprod
+
+theorem Dvd3Adic_pow {a : ℕ} {p : ℤ[X]} (hp : Dvd3Adic a p) : ∀ n, Dvd3Adic (n * a) (p ^ n)
+  | 0 => by simpa using Dvd3Adic_zero (1 : ℤ[X])
+  | n + 1 => by
+      rw [pow_succ, Nat.succ_mul]
+      exact Dvd3Adic_mul (Dvd3Adic_pow hp n) hp
+
+/-- **3-adic content of `H_N` (PROVED factorwise).**  `3^{N−j} ∣ coeff_j(H_N)`, i.e.
+`H_N ∈ (3,X)^N ℤ[X]` with `N = rhinLiteEvenIndex t = 2000t`.  The `(3,X)`-adic orders of the six
+factors are `(1,0,0,1,2,2)`, and `Σ eᵢ·ordᵢ = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**; the
+result follows from superadditivity of `Dvd3Adic` over products (`Dvd3Adic_mul`/`_pow`). -/
 theorem rhinLiteEvenPolynomialZ_three_adic_content (t j : ℕ) :
     (3 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
-  sorry
+  -- base facts for the six factors, at their `(3,X)`-orders
+  have hQ1 : Dvd3Adic 1 rhinLiteQ1 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ1.coeff 0 = -3 := by simp [rhinLiteQ1]
+           rw [hc]; norm_num
+    | (k + 1) => have h0 : 1 - (k + 1) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ4 : Dvd3Adic 1 rhinLiteQ4 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ4.coeff 0 = -12 := by simp [rhinLiteQ4]
+           rw [hc]; norm_num
+    | (k + 1) => have h0 : 1 - (k + 1) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ5 : Dvd3Adic 2 rhinLiteQ5 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ5.coeff 0 = 144 := by simp [rhinLiteQ5]
+           rw [hc]; norm_num
+    | 1 => have hc : rhinLiteQ5.coeff 1 = -102 := by simp [rhinLiteQ5]
+           rw [hc]; norm_num
+    | (k + 2) => have h0 : 2 - (k + 2) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ6 : Dvd3Adic 2 rhinLiteQ6 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ6.coeff 0 = 144 := by simp [rhinLiteQ6]
+           rw [hc]; norm_num
+    | 1 => have hc : rhinLiteQ6.coeff 1 = -108 := by simp [rhinLiteQ6]
+           rw [hc]; norm_num
+    | (k + 2) => have h0 : 2 - (k + 2) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  -- assemble the product; total order = N exactly
+  have hprod : Dvd3Adic
+      ((((((2 * rhinLiteW1 * t) * 1) + 0) + 0) + ((2 * rhinLiteW4 * t) * 1)
+        + ((2 * rhinLiteW5 * t) * 2)) + ((2 * rhinLiteW6 * t) * 2))
+      (rhinLiteEvenPolynomialZ t) := by
+    rw [rhinLiteEvenPolynomialZ]
+    exact Dvd3Adic_mul (Dvd3Adic_mul (Dvd3Adic_mul (Dvd3Adic_mul (Dvd3Adic_mul
+      (Dvd3Adic_pow hQ1 (2 * rhinLiteW1 * t))
+      (Dvd3Adic_zero (rhinLiteQ2 ^ (2 * rhinLiteW2 * t))))
+      (Dvd3Adic_zero (rhinLiteQ3 ^ (2 * rhinLiteW3 * t))))
+      (Dvd3Adic_pow hQ4 (2 * rhinLiteW4 * t)))
+      (Dvd3Adic_pow hQ5 (2 * rhinLiteW5 * t)))
+      (Dvd3Adic_pow hQ6 (2 * rhinLiteW6 * t))
+  have heq : (((((2 * rhinLiteW1 * t) * 1) + 0) + 0) + ((2 * rhinLiteW4 * t) * 1)
+        + ((2 * rhinLiteW5 * t) * 2)) + ((2 * rhinLiteW6 * t) * 2)
+      = rhinLiteEvenIndex t := by
+    simp only [rhinLiteEvenIndex, rhinLiteScale, rhinLiteW1, rhinLiteW4, rhinLiteW5, rhinLiteW6]
+    ring
+  rw [← heq]
+  exact hprod j
 
 /-- **2-adic content of `H_N` (the hard cross-term node; disclosed).**  `4^{N−j} ∣ coeff_j(H_N)`,
 i.e. `H_N ∈ (4,X)^N ℤ[X]` with `N = 2000t`.  TRUE (numerically verified: `val₂(c_j) ≥ 2(N−j)`), but

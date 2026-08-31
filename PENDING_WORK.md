@@ -43,11 +43,11 @@ into three named nodes:
 
 - `rhinLiteEvenPolynomialZ_content` (**PROVED** from the two below via `IsCoprime (4^k) (3^k)`,
   `12 = 4·3`): the target `12^{N−j} ∣ coeff_j`.
-- `rhinLiteEvenPolynomialZ_three_adic_content` (disclosed sorry, **factorwise-provable**):
-  `3^{N−j} ∣ coeff_j`.  The `(3,X)`-orders of the six factors are `ord₃(Q₁,…,Q₆) = (1,0,0,1,2,2)`, and
-  `Σ eᵢ ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  Next lap: formalize the `(3,X)`-adic
-  order (largest `m` with `p ∈ (3,X)^m`) and its superadditivity over products, then compute the six
-  factor orders and sum.  This is a self-contained, tractable Lean lemma.
+- `rhinLiteEvenPolynomialZ_three_adic_content` (**PROVED 2026-08-31**): `3^{N−j} ∣ coeff_j`.  Done via
+  the coefficientwise predicate `Dvd3Adic a p := ∀ j, 3^{a−j} ∣ coeff_j p`, with closure lemmas
+  `Dvd3Adic_add/_mul/_pow` (superadditive: `Dvd3Adic a p → Dvd3Adic b q → Dvd3Adic (a+b) (p*q)` via
+  `coeff_mul` + `Finset.dvd_sum`) and the six factor base-facts at orders `(1,0,0,1,2,2)`; the total
+  order sums to `N = 2000t` exactly.
 - `rhinLiteEvenPolynomialZ_two_adic_content` (disclosed sorry, **the hard node**): `4^{N−j} ∣ coeff_j`.
   Factorwise `(4,X)`-order sum is only `2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so `H_N ∈ (4,X)^N` does
   **NOT** follow from factor orders — the extra `590t` powers of 2 come from cross-term cancellation in
