@@ -10,8 +10,10 @@
 > `FrontA/RhinLiteMaximum.lean`. The compact-maximum bridge is complete and axiom-clean, and
 > `FrontA/RhinLiteEven.lean` now lifts it to the even block subsequence `N = 2000t` (exact degree
 > `2N`, central band `17^N ≤ B_N ≤ 18^N`, pointwise normalized-integrand identity/nonnegativity/
-> `(9/40)^N` bound, all sorry-free); the interval-integral consequences and integer-log-form
-> wiring remain. See `FRONT-A-RHIN-LITE.md`. The source `sorry`
+> `(9/40)^N` bound, plus the interval-integral consequences — integrability,
+> `∫ ≤ length·(9/40)^N`, nonnegativity, and strict positivity on `[2,3]`/`[3,4]` — all
+> sorry-free; objective 2 is complete and only the integer-log-form wiring remains. See
+> `FRONT-A-RHIN-LITE.md`. The source `sorry`
 > `sep_two_three` is not yet discharged.
 
 > [!CAUTION]

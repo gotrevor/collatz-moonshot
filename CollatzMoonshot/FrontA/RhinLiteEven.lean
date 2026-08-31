@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontA.RhinLiteMaximum
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
 /-!
 # The even Rhin-lite subsequence
@@ -149,5 +150,148 @@ theorem rhinLiteEvenNormalized_le {t : ℕ} {x : ℝ} (hx : x ∈ Icc (2 : ℝ) 
     (div_nonneg (by rw [rhinLiteKernelAbs]; positivity)
       (pow_nonneg (by linarith [hx.1]) _))
     (rhinLiteKernelAbs_div_pow_le_on_Icc hx) (2 * t)
+
+/-! ## Interval-integral consequences on `[2,3]` and `[3,4]` -/
+
+open MeasureTheory
+
+/-- The absolute kernel is a continuous real function. -/
+theorem continuous_rhinLiteKernelAbs : Continuous rhinLiteKernelAbs := by
+  unfold rhinLiteKernelAbs rhinLiteFactor1 rhinLiteFactor2 rhinLiteFactor3 rhinLiteFactor4
+    rhinLiteFactor5 rhinLiteFactor6
+  fun_prop
+
+/-- The normalized even integrand is continuous on `[2,4]`. -/
+theorem continuousOn_rhinLiteEvenNormalized (t : ℕ) :
+    ContinuousOn (rhinLiteEvenNormalized t) (Icc (2 : ℝ) 4) := by
+  have hg : ContinuousOn
+      (fun x => (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)) (Icc (2 : ℝ) 4) := by
+    apply ContinuousOn.pow
+    apply ContinuousOn.div continuous_rhinLiteKernelAbs.continuousOn
+      (continuous_pow rhinLiteScale).continuousOn
+    intro x hx
+    exact pow_ne_zero _ (by linarith [hx.1] : x ≠ 0)
+  exact hg.congr (fun x hx => rhinLiteEvenNormalized_eq t (by linarith [hx.1]))
+
+/-- The normalized even integrand is interval-integrable on any subinterval of `[2,4]`. -/
+theorem intervalIntegrable_rhinLiteEvenNormalized (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) :
+    IntervalIntegrable (rhinLiteEvenNormalized t) volume a b := by
+  apply ContinuousOn.intervalIntegrable
+  rw [uIcc_of_le hab]
+  exact (continuousOn_rhinLiteEvenNormalized t).mono (Icc_subset_Icc ha hb)
+
+/-- **Interval upper bound.** Each remainder integral is at most the interval length times the
+pointwise decay `(9/40)^N`. -/
+theorem rhinLiteEvenIntegral_le (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) :
+    ∫ x in a..b, rhinLiteEvenNormalized t x ≤
+      (b - a) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+  have hbound := intervalIntegral.integral_mono_on hab
+    (intervalIntegrable_rhinLiteEvenNormalized t ha hb hab)
+    (intervalIntegrable_const)
+    (fun x hx => rhinLiteEvenNormalized_le
+      ⟨le_trans ha hx.1, le_trans hx.2 hb⟩)
+  simpa [mul_comm] using hbound
+
+/-- The absolute kernel is strictly positive wherever all six factors are nonzero. -/
+theorem rhinLiteKernelAbs_pos {x : ℝ}
+    (h1 : rhinLiteFactor1 x ≠ 0) (h2 : rhinLiteFactor2 x ≠ 0) (h3 : rhinLiteFactor3 x ≠ 0)
+    (h4 : rhinLiteFactor4 x ≠ 0) (h5 : rhinLiteFactor5 x ≠ 0) (h6 : rhinLiteFactor6 x ≠ 0) :
+    0 < rhinLiteKernelAbs x := by
+  unfold rhinLiteKernelAbs
+  have a1 := abs_pos.mpr h1; have a2 := abs_pos.mpr h2; have a3 := abs_pos.mpr h3
+  have a4 := abs_pos.mpr h4; have a5 := abs_pos.mpr h5; have a6 := abs_pos.mpr h6
+  positivity
+
+/-- The normalized even integrand is strictly positive wherever all six factors are nonzero
+(and `x > 0`). -/
+theorem rhinLiteEvenNormalized_pos (t : ℕ) {x : ℝ} (hx : 0 < x)
+    (h1 : rhinLiteFactor1 x ≠ 0) (h2 : rhinLiteFactor2 x ≠ 0) (h3 : rhinLiteFactor3 x ≠ 0)
+    (h4 : rhinLiteFactor4 x ≠ 0) (h5 : rhinLiteFactor5 x ≠ 0) (h6 : rhinLiteFactor6 x ≠ 0) :
+    0 < rhinLiteEvenNormalized t x := by
+  rw [rhinLiteEvenNormalized_eq t hx]
+  exact pow_pos (div_pos (rhinLiteKernelAbs_pos h1 h2 h3 h4 h5 h6) (pow_pos hx _)) _
+
+/-- **Positivity via a positive subinterval.** If the integrand is strictly positive on some
+`(c,d) ⊆ [a,b] ⊆ [2,4]`, the whole integral is strictly positive. -/
+theorem rhinLiteEvenIntegral_pos_of_subinterval (t : ℕ) {a b c d : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hac : a ≤ c) (hcd : c < d) (hdb : d ≤ b)
+    (hpos : ∀ x ∈ Ioo c d, 0 < rhinLiteEvenNormalized t x) :
+    0 < ∫ x in a..b, rhinLiteEvenNormalized t x := by
+  have hcd' : c ≤ d := le_of_lt hcd
+  have hc4 : c ≤ 4 := le_trans hcd' (le_trans hdb hb)
+  have h2c : 2 ≤ c := le_trans ha hac
+  have h2d : 2 ≤ d := le_trans h2c hcd'
+  have iac := intervalIntegrable_rhinLiteEvenNormalized t ha hc4 hac
+  have icd := intervalIntegrable_rhinLiteEvenNormalized t h2c
+    (le_trans hdb hb) hcd'
+  have idb := intervalIntegrable_rhinLiteEvenNormalized t h2d hb hdb
+  have poscd : 0 < ∫ x in c..d, rhinLiteEvenNormalized t x :=
+    intervalIntegral.intervalIntegral_pos_of_pos_on icd hpos hcd
+  have nonneg_ac : 0 ≤ ∫ x in a..c, rhinLiteEvenNormalized t x :=
+    intervalIntegral.integral_nonneg hac
+      (fun x hx => rhinLiteEvenNormalized_nonneg t (by linarith [hx.1] : (0:ℝ) < x))
+  have nonneg_db : 0 ≤ ∫ x in d..b, rhinLiteEvenNormalized t x :=
+    intervalIntegral.integral_nonneg hdb
+      (fun x hx => rhinLiteEvenNormalized_nonneg t (by linarith [hx.1, h2d] : (0:ℝ) < x))
+  have split1 := intervalIntegral.integral_add_adjacent_intervals icd idb
+  have split2 := intervalIntegral.integral_add_adjacent_intervals iac
+    (icd.trans idb)
+  linarith [split1, split2]
+
+/-- **The `[2,3]` remainder integral is strictly positive.** -/
+theorem rhinLiteEvenIntegral_pos_23 (t : ℕ) :
+    0 < ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized t x := by
+  refine rhinLiteEvenIntegral_pos_of_subinterval t (a := 2) (b := 3) (c := 13/5) (d := 14/5)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) ?_
+  intro x hx
+  obtain ⟨hc, hd⟩ := hx
+  refine rhinLiteEvenNormalized_pos t (by linarith : (0:ℝ) < x) ?_ ?_ ?_ ?_ ?_ ?_
+  · exact (show rhinLiteFactor1 x < 0 by unfold rhinLiteFactor1; linarith).ne
+  · exact (show (0:ℝ) < rhinLiteFactor2 x by unfold rhinLiteFactor2; linarith).ne'
+  · exact (show rhinLiteFactor3 x < 0 by unfold rhinLiteFactor3; linarith).ne
+  · exact (show (0:ℝ) < rhinLiteFactor4 x by unfold rhinLiteFactor4; linarith).ne'
+  · have h5 : rhinLiteFactor5 x < 0 := by
+      unfold rhinLiteFactor5
+      nlinarith [mul_nonneg (show (0:ℝ) ≤ 14/5 - x by linarith)
+        (show (0:ℝ) ≤ x - 13/5 by linarith)]
+    exact h5.ne
+  · have h6 : rhinLiteFactor6 x < 0 := by
+      unfold rhinLiteFactor6
+      nlinarith [mul_nonneg (show (0:ℝ) ≤ 14/5 - x by linarith)
+        (show (0:ℝ) ≤ x - 13/5 by linarith)]
+    exact h6.ne
+
+/-- **The `[3,4]` remainder integral is strictly positive.** -/
+theorem rhinLiteEvenIntegral_pos_34 (t : ℕ) :
+    0 < ∫ x in (3 : ℝ)..4, rhinLiteEvenNormalized t x := by
+  refine rhinLiteEvenIntegral_pos_of_subinterval t (a := 3) (b := 4) (c := 19/5) (d := 39/10)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) ?_
+  intro x hx
+  obtain ⟨hc, hd⟩ := hx
+  refine rhinLiteEvenNormalized_pos t (by linarith : (0:ℝ) < x) ?_ ?_ ?_ ?_ ?_ ?_
+  · exact (show (0:ℝ) < rhinLiteFactor1 x by unfold rhinLiteFactor1; linarith).ne'
+  · exact (show (0:ℝ) < rhinLiteFactor2 x by unfold rhinLiteFactor2; linarith).ne'
+  · exact (show rhinLiteFactor3 x < 0 by unfold rhinLiteFactor3; linarith).ne
+  · exact (show (0:ℝ) < rhinLiteFactor4 x by unfold rhinLiteFactor4; linarith).ne'
+  · have h5 : (0:ℝ) < rhinLiteFactor5 x := by
+      unfold rhinLiteFactor5
+      nlinarith [mul_pos (show (0:ℝ) < x - 19/5 by linarith)
+        (show (0:ℝ) < x - 3 by linarith)]
+    exact h5.ne'
+  · have h6 : (0:ℝ) < rhinLiteFactor6 x := by
+      unfold rhinLiteFactor6
+      nlinarith [mul_pos (show (0:ℝ) < x - 19/5 by linarith)
+        (show (0:ℝ) < x - 3 by linarith)]
+    exact h6.ne'
+
+/-- **Interval nonnegativity.** Each remainder integral is nonnegative. -/
+theorem rhinLiteEvenIntegral_nonneg (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) :
+    0 ≤ ∫ x in a..b, rhinLiteEvenNormalized t x := by
+  apply intervalIntegral.integral_nonneg hab
+  intro x hx
+  exact rhinLiteEvenNormalized_nonneg t (by linarith [hx.1] : (0 : ℝ) < x)
 
 end CollatzMoonshot.FrontA

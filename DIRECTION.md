@@ -37,9 +37,10 @@
   `[2,4]`, sorry-free. `FrontA/RhinLiteEven.lean` now lifts that base estimate to the even block
   subsequence `N = 2000t`: exact degree `2N`, central-coefficient band `17^N ≤ B_N ≤ 18^N` (via
   the `comp (-X)` identification with `rhinLitePositive (2t)`), and the pointwise normalized
-  integrand identity/nonnegativity/`(9/40)^N` bound — all sorry-free. **Next live theorem:** the
-  two interval-integral consequences, then the two LCM-cleared integral log forms. Read
-  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
+  integrand identity/nonnegativity/`(9/40)^N` bound, plus the interval-integral consequences
+  (integrability, `∫ ≤ length·(9/40)^N`, nonnegativity, and strict positivity on `[2,3]`/`[3,4]`)
+  — all sorry-free; **objective 2 is complete.** **Next live theorem:** the two LCM-cleared
+  integer log forms. Read `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
 
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem

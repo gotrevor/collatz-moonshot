@@ -142,8 +142,11 @@ The remaining Lean work is:
    coefficient in `[17^N, 18^N]`; `rhinLiteEvenNormalized_eq` proves the normalized integrand
    equals `(|H|/x^1000)^{2t}` pointwise (via `aeval` of the exact ℚ-polynomial), giving
    `rhinLiteEvenNormalized_nonneg` and `rhinLiteEvenNormalized_le` (pointwise `≤ (9/40)^N`).
-   Still open on this step: the two *interval-integral* consequences (positivity and
-   `≤ length·(9/40)^N`).
+   The interval-integral consequences are also proved: `continuousOn_rhinLiteEvenNormalized` +
+   `intervalIntegrable_rhinLiteEvenNormalized` (integrable on `[2,4]` subintervals),
+   `rhinLiteEvenIntegral_le` (`∫ ≤ length·(9/40)^N`), `rhinLiteEvenIntegral_nonneg`, and
+   strict positivity `rhinLiteEvenIntegral_pos_23`/`rhinLiteEvenIntegral_pos_34` (via a
+   root-free positive subinterval `[13/5,14/5]` resp. `[19/5,39/10]`). **Objective 2 complete.**
 2. instantiate polynomial-integral/LCM machinery and prove the two integer linear
    forms for `log(3/2)` and `log(4/3)`;
 3. prove a coarse simultaneous-approximation criterion using the explicit lower/upper coefficient
