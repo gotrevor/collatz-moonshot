@@ -87,4 +87,18 @@ theorem integral_poly_div_pow {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (p : ℝ[
   exact Finset.sum_congr rfl (fun j _ => by
     rw [intervalIntegral.integral_const_mul, integral_monomial_div_pow ha hab])
 
+/-- **Log term split out.**  When `N ≤ deg p`, the remainder integral is the single log term
+`coeff_N · log(b/a)` plus a rational tail summed over the other indices. -/
+theorem integral_poly_div_pow_split {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (p : ℝ[X]) (N : ℕ)
+    (hN : N ≤ p.natDegree) :
+    (∫ x in a..b, p.eval x / x ^ (N + 1)) =
+      p.coeff N * Real.log (b / a) +
+        ∑ j ∈ (range (p.natDegree + 1)).erase N,
+          p.coeff j * ((b ^ ((j : ℤ) - N) - a ^ ((j : ℤ) - N)) / ((j : ℤ) - N)) := by
+  rw [integral_poly_div_pow ha hab,
+    ← Finset.add_sum_erase _ _ (mem_range.mpr (by omega : N < p.natDegree + 1))]
+  congr 1
+  · rw [if_pos rfl]
+  · exact Finset.sum_congr rfl (fun j hj => by rw [if_neg (Finset.ne_of_mem_erase hj)])
+
 end CollatzMoonshot.FrontA
