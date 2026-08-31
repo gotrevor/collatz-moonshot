@@ -13,9 +13,11 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
 - **Four disclosed sub-nodes** (all TRUE with enormous room; each an honest analytic hole):
   1. `rhinLiteI₁_step_decay16` : `16·I₁(t+1) ≤ I₁(t)`   (true rate `exp(−3014.5)`; need `≤ 1/16`).
   2. `rhinLiteI₂_step_decay16` : `16·I₂(t+1) ≤ I₂(t)`   (true rate `exp(−3025.5)`).
-  3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  (true `≈ 17^2000`; the loose absolute
-     band `17^N≤c≤18^N` CANNOT compare consecutive `c`'s — its slack `(18/17)^N` compounds — so this
-     needs a genuine per-step ratio bound).
+  3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  — **now PROVED as an EDGE** from the new
+     envelope node `rhinLiteCentral_envelope` (`∃ g cc CC, 0<cc≤CC ∧ 16·CC≤cc·g ∧ ∀t, cc·gᵗ≤c(t)≤CC·gᵗ`,
+     disclosed).  KEY: the absolute band `17^N≤c≤18^N` is NOT a single-rate envelope (its two ends
+     carry rates `17^2000` vs `18^2000`, tightness `(18/17)^N` blows up), so it cannot give per-step
+     growth; a *tight single-rate* envelope can, and the four leaves all follow from such envelopes.
   4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  (the `μ₁>M₂` separation, true gap
      `exp 11 ≈ 6·10⁴`; the analytic HEART — separated maxima of `ψ` on `[2,3]` vs `[3,4]`).
 
@@ -34,6 +36,17 @@ coefficient recursion / generating structure of `H_N`.  (4) ratio-gap: the separ
 `m₁ > m₂` on the two intervals — bound `∫₂³` below and `∫₃⁴` above by their peak contributions
 (`RhinLiteCritical`/`RhinLiteInterval` machinery).  All four are O(1)-margin facts (`exp` of a few
 thousand slack); no `√N` Laplace precision needed.
+
+**Recommended refactor (started this lap): convert ALL FOUR leaves to EDGES over single-rate
+envelopes.**  `rhinLiteCentral_step_growth16` is already an edge over the landed
+`rhinLiteCentral_envelope`.  Mirror it with `rhinLiteI₁_envelope`, `rhinLiteI₂_envelope`
+(`∃ r c C, 0<c≤C ∧ ∀t, c·rᵗ ≤ Iᵢ(t) ≤ C·rᵗ`).  Then all four per-step facts become pure arithmetic —
+including the ratio-gap, which is MULTIPLICATIVE (`2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)` needs only
+`r₁/r₂ ≥ 2·C₁C₂/(c₁c₂)`, no subtraction), so tight envelopes with bounded `C/c` suffice — verified
+on paper this lap.  Genuine analytic content then collapses to THREE envelope nodes (`I₁`,`I₂`,
+central) + two rate separations `r₁>r₂` (gap) and `g≫r₁`.  The crude `(9/40)^N` envelope is provably
+too lossy (overestimates `Iᵢ(t)` by `exp(31t)`: its rate `(9/40)^2000=exp(−2983t)` vs true
+`exp(−3014.5t)`), so the envelopes need the true per-interval PEAK values, not the global one.
 
 ---
 

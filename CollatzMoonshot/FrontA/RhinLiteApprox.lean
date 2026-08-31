@@ -1249,13 +1249,35 @@ factor `≥ 16` per step (Laplace rate `≈ exp(−3025.5)`).  Disclosed analyti
 theorem rhinLiteI₂_step_decay16 (t : ℕ) : 16 * rhinLiteI₂ (t + 1) ≤ rhinLiteI₂ t := by
   sorry
 
-/-- **Sub-node (central per-step growth).**  The central coefficient `c_N = [x^N]H_N` grows by a
-factor `≥ 16` per step; the proved band `17^N ≤ c_N ≤ 18^N` gives `c_{t+1}/c_t ≈ 17^{2000} ≫ 16`.
-Disclosed sub-node — the loose absolute band cannot compare consecutive `c`'s (its slack
-`(18/17)^N` compounds), so this needs a genuine per-step ratio bound. -/
+/-- **Refined analytic object (envelope node).**  A *tight single-rate* two-sided envelope for the
+central column: `∃ g cc CC, 0 < cc ≤ CC` and a rate `g` with `16·CC ≤ cc·g` such that
+`cc·gᵗ ≤ c(t) ≤ CC·gᵗ`.  This is the honest shared prerequisite for the per-step growth: the proved
+absolute band `17^N ≤ c ≤ 18^N` is NOT of this form — its two ends carry *different* rates
+`(17^2000)ᵗ` vs `(18^2000)ᵗ`, so its tightness `CC/cc = (18/17)^N` blows up and cannot bound
+`c(t+1)/c(t)`.  A single-rate envelope with bounded `CC/cc` (true rate `g ≈ 17.5^2000`) is what the
+coefficient asymptotics deliver.  Disclosed. -/
+theorem rhinLiteCentral_envelope :
+    ∃ g cc CC : ℝ, 0 < cc ∧ cc ≤ CC ∧ 16 * CC ≤ cc * g ∧
+      ∀ t, cc * g ^ t ≤ rhinLiteCentral t ∧ rhinLiteCentral t ≤ CC * g ^ t := by
+  sorry
+
+/-- **Sub-node (central per-step growth) — now an EDGE** from `rhinLiteCentral_envelope`.  The
+central coefficient grows by a factor `≥ 16` per step; proved by pure arithmetic from the single-rate
+envelope (`16·CC ≤ cc·g`). -/
 theorem rhinLiteCentral_step_growth16 (t : ℕ) :
     16 * rhinLiteCentral t ≤ rhinLiteCentral (t + 1) := by
-  sorry
+  -- EDGE: derived from the single-rate envelope by pure arithmetic (`16 CC ≤ cc g`).
+  obtain ⟨g, cc, CC, hcc, hccCC, hgrow, hbound⟩ := rhinLiteCentral_envelope
+  have hg : 0 < g := by nlinarith [hgrow, hcc, hccCC]
+  have ht := (hbound t).2      -- c(t) ≤ CC·gᵗ
+  have ht1 := (hbound (t + 1)).1  -- cc·g^{t+1} ≤ c(t+1)
+  have hgt : (0:ℝ) < g ^ t := pow_pos hg t
+  calc 16 * rhinLiteCentral t ≤ 16 * (CC * g ^ t) := by linarith
+    _ = (16 * CC) * g ^ t := by ring
+    _ ≤ (cc * g) * g ^ t := by
+        exact mul_le_mul_of_nonneg_right hgrow hgt.le
+    _ = cc * g ^ (t + 1) := by rw [pow_succ]; ring
+    _ ≤ rhinLiteCentral (t + 1) := ht1
 
 /-- **Sub-node (the rate gap `μ₁ > M₂`).**  `I₁` decays strictly slower than `I₂`: per step the
 `I₁`-ratio exceeds twice the `I₂`-ratio, `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true
