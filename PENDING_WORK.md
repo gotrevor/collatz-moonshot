@@ -22,13 +22,17 @@ Rhin 1987, read firsthand), and `log23_effective_measure` is **proved from it** 
 no longer `sorryAx`-tainted.  The novel Rhin-lite construction (`rhinLiteLIMeasure`) stays a
 disclosed sorry: its purpose is now to *retire* this axiom via the K=1 structural clearing (μ≈7.9).
 
-**Residual to close `sep_two_three` from `log23_effective_measure`:** the exponent is κ=14, so
-`sep_of_linear_form_poly`'s hard-coded `k ≥ 130` crossover threshold is too small
-(`k^14 ≤ (1/3^14)·2^{k/3}` first holds around `k ≈ 360`).  Options: (i) extend the finite
-`native_decide` separation check from the current `k < 130` up to `k ≈ 360` (heavy: `3^360` is
-~172 digits, ~230 near-critical `k`), then apply `sep_of_linear_form` for `k ≥ 360`; or (ii) add a
-`sep_of_linear_form_poly`-style interface with a parametric threshold `K` in place of `130`.  This
-is the final elementary step; it is a computation/interface question, not a Diophantine one.
+**DONE (2026-08-31) — `sep_two_three` is now PROVED sorry-free** (option (ii) taken).  Added
+`sep_of_linear_form_poly_threshold` (threshold `K` parametric, replacing the hard-coded `130`),
+`crossover_exp_450` (`3^14·k^14 ≤ exp((k/3)log2)` for `k ≥ 450`; the true crossover is `k ≈ 435`,
+`450` is a clean divisible-by-3 threshold past it — base `1350^14 ≤ 2^150` by `native_decide`, step
+`(1+1/n)^14 ≤ exp(14/n) ≤ 2^(1/3)` for `n ≥ 61`), and `sep_two_three_small_450` (`native_decide`
+table over `6 ≤ k < 450`, `m < 713`).  Instantiated at `κ=14, c=1/3^14, K=450` feeding
+`log23_effective_measure_concrete` (moved into `PowSeparation.lean` alongside the Rhin1987 import).
+`#print axioms sep_two_three` = trust base + `rhin_1987_log_two_three_measure` + 3 `native_decide`
+artifacts — the ONLY math axiom is the cited Rhin 1987.  The two-block exclusion is now
+machine-checked modulo that one axiom.  **Remaining work is exclusively `rhinLiteLIMeasure`** (below),
+whose purpose is now to *retire* that cited axiom.
 
 ### Prior "next actions" (mechanism now proved; superseded by the course correction above)
 

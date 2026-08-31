@@ -45,13 +45,26 @@
 > importance. Lean source and `#print axioms` are authoritative; see `README.md` for the
 > concise public status.
 
-**Public checkpoint (2026-08-25):** `lake build` is green (8754 jobs).
-Both headline fronts remain open. There are two declarations containing a disclosed `sorry`,
-`FrontA.sep_two_three` and `FrontA.rhinLiteLIMeasure` (the latter is the concrete Rhin-lite route
-to the former); named literature and conjecture axioms are also used explicitly.
-The recently added single-kernel Legendre development produces useful small nonzero
+> **Sink closed (2026-08-31): `sep_two_three` is now PROVED sorry-free** from the cited Rhin 1987
+> axiom. Added `sep_of_linear_form_poly_threshold` (threshold-parametric variant of
+> `sep_of_linear_form_poly`), `crossover_exp_450` (`3^14·k^14 ≤ 2^(k/3)` for `k ≥ 450`, induction
+> with base `1350^14 ≤ 2^150` and ratio step `(1+1/n)^14 ≤ exp(14/n) ≤ 2^(1/3)`), and the finite
+> check `sep_two_three_small_450` (`native_decide` on `6 ≤ k < 450`, `m < 713`). Instantiated at
+> `κ=14, c=1/3^14, K=450` with `log23_effective_measure_concrete` (moved into `PowSeparation.lean`).
+> `#print axioms sep_two_three` = `[propext, Classical.choice, Quot.sound,
+> rhin_1987_log_two_three_measure, <3 native_decide artifacts>]` — the ONLY math axiom is Rhin 1987.
+> The whole two-block exclusion (`le_two_blocks_not_acyclicParadoxical`) is therefore machine-checked
+> modulo that one cited axiom. **Sole remaining `src/` sorry: `rhinLiteLIMeasure`** — the novel
+> Rhin-lite route whose purpose is now to *retire* the cited axiom, not to close `sep_two_three`.
+
+**Public checkpoint (2026-08-31):** `lake build` is green (8764 jobs).
+Both headline fronts remain open. `FrontA.sep_two_three` is now proved sorry-free modulo the cited
+`rhin_1987_log_two_three_measure` axiom; exactly one declaration still contains a disclosed `sorry`,
+`FrontA.rhinLiteLIMeasure` (the novel Rhin-lite route aimed at retiring that axiom); named literature
+and conjecture axioms are also used explicitly.
+The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
-needed by `sep_two_three` nor constitutes progress on either Collatz front by itself.
+underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.
 
 ## Where it stands
 The headline wiring is done and axiom-clean: `conjecture_iff_split` and

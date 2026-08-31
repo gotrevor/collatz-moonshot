@@ -9,22 +9,22 @@ hits="$(grep -REn --include='*.lean' \
   CollatzMoonshot CollatzMoonshot.lean || true)"
 count="$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')"
 
-# Disclosed proof debt is confined to the two files on the Rhin-lite separation path:
-#   * FrontA/PowSeparation.lean   — `sep_two_three` (the sink node's β = 1/3 form).
+# Disclosed proof debt is now confined to a single file on the Rhin-lite separation path:
 #   * FrontA/RhinLiteApprox.lean  — the coarse Rhin linear-independence measure and its named
 #     sub-obligations (the crux `rhinLiteLIMeasure` and its decomposition), from which
-#     `log23_effective_measure` is derived, the concrete route to discharging `sep_two_three`.
-# The gate pins the LOCATIONS (no debt may leak elsewhere) and requires the sink `sep_two_three`
-# to still be present; the count within RhinLiteApprox.lean may grow as the crux is decomposed.
-expected_files='^CollatzMoonshot/FrontA/PowSeparation\.lean:|^CollatzMoonshot/FrontA/RhinLiteApprox\.lean:'
+#     `log23_effective_measure` is derived.  The sink `sep_two_three` (FrontA/PowSeparation.lean)
+#     is now PROVED sorry-free from the cited `Assumed.rhin_1987_log_two_three_measure` axiom, so
+#     PowSeparation.lean must carry NO anonymous proof debt.
+# The gate pins the LOCATIONS (no debt may leak elsewhere, in particular not into
+# PowSeparation.lean); the count within RhinLiteApprox.lean may grow as the crux is decomposed.
+expected_files='^CollatzMoonshot/FrontA/RhinLiteApprox\.lean:'
 unexpected="$(printf '%s\n' "$hits" | sed '/^$/d' | grep -Ev "$expected_files" || true)"
-pow_hits="$(printf '%s\n' "$hits" | sed '/^$/d' | grep -c '^CollatzMoonshot/FrontA/PowSeparation\.lean:' || true)"
 
-if [[ -n "$unexpected" ]] || [[ "$pow_hits" != "1" ]]; then
+if [[ -n "$unexpected" ]]; then
   printf '%s\n' 'Unexpected anonymous proof debt:' >&2
   printf '%s\n' "$hits" >&2
-  printf '%s\n' 'Expected: exactly one sorry in PowSeparation.lean and all others in RhinLiteApprox.lean.' >&2
+  printf '%s\n' 'Expected: all disclosed sorries in RhinLiteApprox.lean only (PowSeparation.lean sorry-free).' >&2
   exit 1
 fi
 
-printf 'Proof-debt gate: %s disclosed sorries (PowSeparation + RhinLiteApprox only)\n%s\n' "$count" "$hits"
+printf 'Proof-debt gate: %s disclosed sorries (RhinLiteApprox only; sep_two_three proved)\n%s\n' "$count" "$hits"

@@ -42,6 +42,12 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.rhinLite_forms_bounded
 #print axioms CollatzMoonshot.FrontA.overcleared_remainder_ge_one
 #print axioms CollatzMoonshot.FrontA.log23_effective_measure
+#print axioms CollatzMoonshot.FrontA.log23_effective_measure_concrete
+#print axioms CollatzMoonshot.FrontA.crossover_exp_450
+#print axioms CollatzMoonshot.FrontA.sep_two_three_small_450
+#print axioms CollatzMoonshot.FrontA.sep_of_linear_form_poly_threshold
+#print axioms CollatzMoonshot.FrontA.sep_two_three
+#print axioms CollatzMoonshot.FrontA.bd_reduction
 #print axioms CollatzMoonshot.Assumed.rhin_1987_log_two_three_measure
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontB.frontB_of_compression_le_91
