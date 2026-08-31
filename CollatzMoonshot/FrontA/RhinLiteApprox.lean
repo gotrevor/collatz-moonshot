@@ -64,7 +64,7 @@ explicit threshold); see `PENDING_WORK.md`.
 
 namespace CollatzMoonshot.FrontA
 
-open Real
+open Real Polynomial MeasureTheory Set
 
 /-- `log(3/2) = log 3 − log 2`. -/
 theorem log_three_halves : Real.log (3 / 2) = Real.log 3 - Real.log 2 := by
@@ -94,6 +94,120 @@ theorem elim_identity (A₁ A₂ B p q r : ℤ) (θ₁ θ₂ : ℝ) :
       = ((p * B - q * A₁ - r * A₂ : ℤ) : ℝ)
           + q * ((A₁ : ℝ) + B * θ₁) + r * ((A₂ : ℝ) + B * θ₂) := by
   push_cast; ring
+
+/-- **Eval bridge.**  The real evaluation of the integer even polynomial equals the `aeval` of the
+rational even polynomial (both are the value of the same underlying polynomial at `x`). -/
+theorem rhinLiteEvenPolynomialZ_eval_real (t : ℕ) (x : ℝ) :
+    ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x
+      = aeval x (rhinLiteEvenPolynomial t) := by
+  rw [← rhinLiteEvenPolynomialZ_map_rat, aeval_def, eval₂_eq_eval_map, Polynomial.map_map]
+  congr 1
+
+/-- **Integrand identity.**  The log-form integrand `H_N(x)/x^{N+1}` equals the normalized even
+integrand divided by `x`.  This is the `x^{N+1}`→`x^N` bridge (factor `1/x`) connecting the
+`RhinLiteLogForm` integral to the `RhinLiteEven` size/positivity bounds. -/
+theorem rhinLiteEven_logForm_integrand (t : ℕ) (x : ℝ) :
+    ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x / x ^ (rhinLiteEvenIndex t + 1)
+      = rhinLiteEvenNormalized t x / x := by
+  rw [rhinLiteEvenPolynomialZ_eval_real, rhinLiteEvenNormalized, div_div, ← pow_succ]
+
+/-- Interval-integrability of the log-form integrand `normalized/x` on subintervals of `[2,4]`. -/
+theorem intervalIntegrable_rhinLiteEven_logForm (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) :
+    IntervalIntegrable (fun x => rhinLiteEvenNormalized t x / x) volume a b := by
+  apply ContinuousOn.intervalIntegrable
+  rw [uIcc_of_le hab]
+  apply ContinuousOn.div
+    ((continuousOn_rhinLiteEvenNormalized t).mono (Icc_subset_Icc ha hb))
+    continuousOn_id
+  intro x hx
+  exact ne_of_gt (by linarith [hx.1] : (0 : ℝ) < x)
+
+/-- **Size + positivity of the log-form remainder integral.**  For `[a,b] ⊆ [2,4]` with the
+normalized integral already known positive, the log-form integral `∫ H_N/x^{N+1} = ∫ normalized/x`
+is positive and at most `(9/40)^N`.  Upper: `1/x ≤ 1/2` on `[2,4]` and `rhinLiteEvenIntegral_le`
+(with `b − a ≤ 2`).  Lower: `1/x ≥ 1/4 > 0` and the positive normalized integral. -/
+theorem rhinLiteEven_logForm_bounds_aux (t : ℕ) {a b : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) (hlen : b - a ≤ 2)
+    (hposN : 0 < ∫ x in a..b, rhinLiteEvenNormalized t x) :
+    0 < (∫ x in a..b,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1)) ∧
+      (∫ x in a..b,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1))
+        ≤ (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+  -- rewrite the log-form integral as `∫ normalized/x`
+  have hcongr : (∫ x in a..b,
+        ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+          x ^ (rhinLiteEvenIndex t + 1))
+      = ∫ x in a..b, rhinLiteEvenNormalized t x / x := by
+    apply intervalIntegral.integral_congr
+    intro x _; exact rhinLiteEven_logForm_integrand t x
+  rw [hcongr]
+  have hII := intervalIntegrable_rhinLiteEven_logForm t ha hb hab
+  have hIN := intervalIntegrable_rhinLiteEvenNormalized t ha hb hab
+  constructor
+  · -- positivity: `normalized/x ≥ normalized/4 ≥ 0`, and `∫ normalized/4 = (1/4)·∫ normalized > 0`
+    have hlow : ∫ x in a..b, rhinLiteEvenNormalized t x / 4 ≤ ∫ x in a..b,
+        rhinLiteEvenNormalized t x / x := by
+      apply intervalIntegral.integral_mono_on hab (hIN.div_const 4) hII
+      intro x hx
+      have hxpos : (0 : ℝ) < x := by linarith [hx.1]
+      have hnn : 0 ≤ rhinLiteEvenNormalized t x :=
+        rhinLiteEvenNormalized_nonneg t hxpos
+      exact div_le_div_of_nonneg_left hnn hxpos (by linarith [hx.2])
+    have hquart : (∫ x in a..b, rhinLiteEvenNormalized t x / 4)
+        = (∫ x in a..b, rhinLiteEvenNormalized t x) / 4 :=
+      intervalIntegral.integral_div (4:ℝ) (rhinLiteEvenNormalized t)
+    rw [hquart] at hlow
+    have : 0 < (∫ x in a..b, rhinLiteEvenNormalized t x) / 4 := by positivity
+    linarith
+  · -- upper: `normalized/x ≤ normalized/2`, and `∫ normalized/2 = (1/2)·∫ normalized ≤ (9/40)^N`
+    have hup : ∫ x in a..b, rhinLiteEvenNormalized t x / x ≤ ∫ x in a..b,
+        rhinLiteEvenNormalized t x / 2 := by
+      apply intervalIntegral.integral_mono_on hab hII (hIN.div_const 2)
+      intro x hx
+      have hxpos : (0 : ℝ) < x := by linarith [hx.1]
+      have hnn : 0 ≤ rhinLiteEvenNormalized t x :=
+        rhinLiteEvenNormalized_nonneg t hxpos
+      exact div_le_div_of_nonneg_left hnn (by norm_num : (0 : ℝ) < 2) (by linarith [hx.1])
+    have hhalf : (∫ x in a..b, rhinLiteEvenNormalized t x / 2)
+        = (∫ x in a..b, rhinLiteEvenNormalized t x) / 2 :=
+      intervalIntegral.integral_div (2:ℝ) (rhinLiteEvenNormalized t)
+    have hle := rhinLiteEvenIntegral_le t ha hb hab
+    have hpow : (0 : ℝ) ≤ (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by positivity
+    rw [hhalf] at hup
+    -- `∫ normalized ≤ (b−a)·(9/40)^N ≤ 2·(9/40)^N`, so `∫ normalized/2 ≤ (9/40)^N`
+    have hle2 : (∫ x in a..b, rhinLiteEvenNormalized t x) ≤ 2 * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+      have : (b - a) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t ≤ 2 * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
+        mul_le_mul_of_nonneg_right hlen hpow
+      linarith [hle]
+    linarith [hup, hle2]
+
+/-- **Size + positivity of the log-form remainder integral (`[2,3]`).** -/
+theorem rhinLiteEven_logForm_small_23 (t : ℕ) :
+    0 < (∫ x in (2 : ℝ)..3,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1)) ∧
+      (∫ x in (2 : ℝ)..3,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1))
+        ≤ (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
+  rhinLiteEven_logForm_bounds_aux t (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIntegral_pos_23 t)
+
+/-- **Size + positivity of the log-form remainder integral (`[3,4]`).** -/
+theorem rhinLiteEven_logForm_small_34 (t : ℕ) :
+    0 < (∫ x in (3 : ℝ)..4,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1)) ∧
+      (∫ x in (3 : ℝ)..4,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1))
+        ≤ (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
+  rhinLiteEven_logForm_bounds_aux t (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIntegral_pos_34 t)
 
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 

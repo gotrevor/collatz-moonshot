@@ -11,11 +11,14 @@ The simultaneous-approximation criterion is now wired end-to-end modulo ONE disc
    sequence of common-`B` approximation pairs `(A₁,A₂,B)` (`rhinLiteEven_two_log_forms`), with
    `|Lᵢ| ≤ D_N·(9/40)^N` (needs the `x^{N+1}`→`x^N` size bridge, factor `1/x`, from
    `rhinLiteEvenIntegral_le`) and `D_N·17^N ≤ B ≤ D_N·18^N`, produce the measure.  Sub-steps to
-   name next lap: (a) the size bridge lemma `0 < Lᵢ ≤ D_N·(9/40)^N`; (b) the two-consecutive-`N`
-   determinant non-vanishing giving `n = pB − qA₁ − rA₂ ≠ 0` for one of two consecutive `N`
-   (`elim_identity` already provides the algebra); (c) the `lcmUpto N ≤ 4^N·e^{o(N)}` asymptotic
-   to convert `1/(2·D_N·18^N)` into `c·H^{−κ}`.  Decompose these as named `sorry`s in
-   `RhinLiteApprox.lean`.
+   name next lap: (a) ✅ **DONE (2026-08-31)** — the size bridge is proved, all trust-base clean:
+   `rhinLiteEvenPolynomialZ_eval_real` (ℤ-eval = ℚ-`aeval`), `rhinLiteEven_logForm_integrand`
+   (`H_N/x^{N+1} = normalized/x`), `intervalIntegrable_rhinLiteEven_logForm`, and
+   `rhinLiteEven_logForm_small_23`/`_34` (`0 < ∫ H_N/x^{N+1} ≤ (9/40)^N` on `[2,3]`/`[3,4]`);
+   (b) **NEXT** the two-consecutive-`N` determinant non-vanishing giving `n = pB − qA₁ − rA₂ ≠ 0`
+   for one of two consecutive `N` (`elim_identity` already provides the algebra); (c) the
+   `lcmUpto N ≤ 4^N·e^{o(N)}` asymptotic to convert `1/(2·D_N·18^N)` into `c·H^{−κ}`.  Decompose
+   (b),(c) as named `sorry`s in `RhinLiteApprox.lean`.
 
 2. **Close the elementary residual** from `log23_effective_measure` to `sep_two_three`.
    `log23_effective_measure` is already the exact `hLF` shape of `sep_of_linear_form_poly`.  The
