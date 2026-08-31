@@ -2,6 +2,7 @@
 Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import CollatzMoonshot.FrontA.RhinLiteLogForm
 import CollatzMoonshot.FrontA.PowSeparation
 import CollatzMoonshot.Assumed.Rhin1987
@@ -664,6 +665,71 @@ theorem rhinLite_forms_bounded_K1 (t : ℕ) :
   · rw [← h₁]; exact mul_le_mul_of_nonneg_left hi23le hDpos.le
   · rw [← h₂]; exact mul_pos hDpos hi34pos
   · rw [← h₂]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
+
+/-- **Chebyshev denominator bound (prerequisite for the finite exponent `κ`).**  The `K=1`
+denominator `D_N = lcmUpto N` satisfies `log D_N ≤ log 4 · N + 2√N·log N`, i.e. `D_N ≤ 4^N·N^{2√N}`
+— exponential rate exactly `log 4 < τ = log(40/9)`, with a subexponential correction.  This is the
+mathlib Chebyshev upper bound `ψ x ≤ log 4·x + 2√x·log x` transported through
+`ψ N = log(lcmUpto N)`.  It is what converts `1/(2·D_N·18^N)` into `c·H^{−κ}` for a finite `κ`. -/
+theorem lcmUpto_log_le_chebyshev (N : ℕ) :
+    Real.log (Nat.lcmUpto N) ≤
+      Real.log 4 * (N : ℝ) + 2 * Real.sqrt (N : ℝ) * Real.log (N : ℝ) := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · rw [show Nat.lcmUpto 0 = 1 from rfl]; simp
+  · have h1 : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+    have hple := Chebyshev.psi_le (x := (N : ℝ)) h1
+    rwa [Chebyshev.psi_eq_log_lcmUpto N] at hple
+
+/-- **Eventual clean exponential denominator bound.**  For `N ≥ N₀` the subexponential factor
+`N^{2√N}` is absorbed into a slightly larger base: `lcmUpto N ≤ (22/5)^N`.  The base `22/5 = 4.4`
+lies strictly between the Chebyshev rate `4` and the remainder threshold `40/9 ≈ 4.444`, so
+`E_N = lcmUpto N·(9/40)^N ≤ (22/5·9/40)^N = (99/100)^N → 0` (K < τ).  Proof: `lcmUpto_log_le_chebyshev`
+plus `2√N·log N ≤ (log(22/5) − log 4)·N` for large `N` (the subexponential term is `o(N)`). -/
+theorem lcmUpto_le_pow_eventually :
+    ∃ N₀ : ℕ, ∀ N ≥ N₀, (Nat.lcmUpto N : ℝ) ≤ (22 / 5) ^ N := by
+  set c : ℝ := Real.log (22 / 5) - Real.log 4 with hc_def
+  have hc : 0 < c := by
+    have h1 : Real.log 4 < Real.log (22 / 5) := Real.log_lt_log (by norm_num) (by norm_num)
+    rw [hc_def]; linarith
+  -- `√x·log x = o(x)` over ℝ.
+  have hlittleO : (fun x : ℝ => Real.sqrt x * Real.log x) =o[Filter.atTop] (fun x : ℝ => x) := by
+    have h1 : Real.log =o[Filter.atTop] (fun x : ℝ => x ^ (1 / 2 : ℝ)) :=
+      _root_.isLittleO_log_rpow_atTop (by norm_num)
+    have h2 := (Asymptotics.isBigO_refl (fun x : ℝ => Real.sqrt x) Filter.atTop).mul_isLittleO h1
+    refine h2.congr' Filter.EventuallyEq.rfl ?_
+    filter_upwards [Filter.eventually_ge_atTop (0 : ℝ)] with x hx
+    rw [← Real.sqrt_eq_rpow, Real.mul_self_sqrt hx]
+  -- constant `2`, then the `o`-bound at level `c`.
+  have hbound := (hlittleO.const_mul_left 2).def hc
+  rw [Filter.eventually_atTop] at hbound
+  obtain ⟨M, hM⟩ := hbound
+  refine ⟨max (⌈M⌉₊) 1, fun N hN => ?_⟩
+  have hN1 : 1 ≤ N := le_trans (le_max_right _ _) hN
+  have hNM : M ≤ (N : ℝ) := by
+    calc M ≤ (⌈M⌉₊ : ℝ) := Nat.le_ceil M
+      _ ≤ (N : ℝ) := by exact_mod_cast le_trans (le_max_left _ _) hN
+  have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN1
+  have hlogN : 0 ≤ Real.log (N : ℝ) := Real.log_nonneg (by exact_mod_cast hN1)
+  have hsqrtN : 0 ≤ Real.sqrt (N : ℝ) := Real.sqrt_nonneg _
+  -- unpack the `o`-bound into a clean inequality
+  have hb := hM (N : ℝ) hNM
+  rw [Real.norm_eq_abs, Real.norm_eq_abs,
+    abs_of_nonneg (by positivity : (0:ℝ) ≤ 2 * (Real.sqrt (N:ℝ) * Real.log (N:ℝ))),
+    abs_of_nonneg hNpos.le] at hb
+  have h34 : 2 * Real.sqrt (N : ℝ) * Real.log (N : ℝ) ≤ c * (N : ℝ) := by nlinarith [hb]
+  -- Chebyshev + the o-bound ⇒ `log(lcmUpto N) ≤ N·log(22/5)`
+  have hcheb := lcmUpto_log_le_chebyshev N
+  have hkey : Real.log (Nat.lcmUpto N) ≤ (N : ℝ) * Real.log (22 / 5) := by
+    have : Real.log 4 * (N : ℝ) + 2 * Real.sqrt (N : ℝ) * Real.log (N : ℝ)
+        ≤ (N : ℝ) * Real.log (22 / 5) := by
+      rw [hc_def] at h34; nlinarith [h34]
+    linarith [hcheb]
+  -- exponentiate
+  have hlcmpos : (0 : ℝ) < (Nat.lcmUpto N : ℝ) := by exact_mod_cast Nat.lcmUpto_pos N
+  have hpowpos : (0 : ℝ) < (22 / 5 : ℝ) ^ N := by positivity
+  rw [← Real.log_le_log_iff hlcmpos hpowpos, Real.log_pow]
+  push_cast
+  linarith [hkey]
 
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
