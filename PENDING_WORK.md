@@ -77,6 +77,19 @@ NEXT: prove `rhinLite_nonvanishing_triple` — the Wronskian/Padé perfect-syste
 ⚠ RISK: verify this determinant is actually nonzero for OUR six-factor `N=2000t` construction (it
 is asserted from Rhin/Wu theory; confirm it holds for the specific block subsequence before assuming).
 
+**UPDATE — LINEAR-ALGEBRA REDUCTION DONE; sole sorry is now the 3×3 determinant.**
+`rhinLite_nonvanishing_triple` is now PROVED from a single crisp node via clean linear algebra:
+- `rhinLiteFormMatrix t₀` : the `3×3` integer matrix of rows `(B, A₁, A₂)` at `t₀,t₀+1,t₀+2`.
+- `rhinLite_formMatrix_det_ne_zero` (THE sole remaining sorry): `det ≠ 0`.
+- `rhinLite_nonvanishing_triple` (PROVED): if `det ≠ 0`, then `![p,-q,-r] ≠ 0` cannot lie in the
+  kernel (`Matrix.eq_zero_of_mulVec_eq_zero`), so some `n(t) ≠ 0`.  `(M *ᵥ ![p,-q,-r])ᵢ = n(t₀+i)`.
+So the ENTIRE Rhin-lite measure (retiring `rhin_1987_log_two_three_measure`) now rests on ONE
+standard statement: **the determinant of three consecutive form-triples is a nonzero integer**
+(`rhinLite_formMatrix_det_ne_zero`).  Repo-wide sorry count: 1.
+NEXT: prove `rhinLite_formMatrix_det_ne_zero`.  Route: needs `B/A₁/A₂` made explicit (coefficient
+sums from `lcm_cleared_log_form_K1`), then the Rhin/Wu perfect-system determinant evaluation.
+This is Rhin's genuine core lemma — a multi-lap explicit-construction formalization.
+
 **UPDATE — reformulation PROVED, node sharpened.**  Two new PROVED lemmas in `RhinLiteApprox.lean`:
 - `rhinLite_n_eq`: `(n(t):ℝ) = B(t)·Λ − q·L₁(t) − r·L₂(t)` (from `elim_identity`), `Λ` the target form.
 - `rhinLite_nonvanishing_of_large`: **if `Λ ≠ 0` then `n(t) ≠ 0` for all large `t`** — proved via

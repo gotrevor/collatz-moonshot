@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
+import Mathlib.LinearAlgebra.Matrix.Nondegenerate
 import CollatzMoonshot.FrontA.RhinLiteLogForm
 import CollatzMoonshot.FrontA.PowSeparation
 import CollatzMoonshot.Assumed.Rhin1987
@@ -935,10 +936,54 @@ matrix — impossible.  So `n(t) ≠ 0` for at least one of the three.
 
 TODO: prove the perfect-system non-degeneracy (the explicit determinant is a nonzero rational
 coming from the six-factor integral construction).  This is the last genuinely hard node. -/
+noncomputable def rhinLiteFormMatrix (t₀ : ℕ) : Matrix (Fin 3) (Fin 3) ℤ :=
+  Matrix.of ![![rhinLiteB t₀, rhinLiteA₁ t₀, rhinLiteA₂ t₀],
+    ![rhinLiteB (t₀ + 1), rhinLiteA₁ (t₀ + 1), rhinLiteA₂ (t₀ + 1)],
+    ![rhinLiteB (t₀ + 2), rhinLiteA₁ (t₀ + 2), rhinLiteA₂ (t₀ + 2)]]
+
+/-- **THE deep node (perfect-system determinant).**  The `3×3` integer matrix of three consecutive
+form-triples `(B, A₁, A₂)` is nonsingular.  Column-reducing `(B,A₁,A₂) ↦ (B, L₁, L₂)` (unimodular),
+`det` is a nonzero integer.  This is Rhin's core non-degeneracy lemma for the block subsequence; it
+is the ONE remaining hard obligation of the whole Rhin-lite construction.  Its proof needs the
+explicit constructive `B/A₁/A₂` (as coefficient sums from `lcm_cleared_log_form_K1`) so the
+determinant can be evaluated — a genuine multi-lap formalization of the explicit construction. -/
+theorem rhinLite_formMatrix_det_ne_zero (t₀ : ℕ) : (rhinLiteFormMatrix t₀).det ≠ 0 := by
+  sorry
+
+/-- The non-vanishing window, REDUCED to the determinant node via clean linear algebra:
+if `det ≠ 0` then no nonzero `(p,−q,−r)` can annihilate all three rows, so some `n(t) ≠ 0`. -/
 theorem rhinLite_nonvanishing_triple (p q r : ℤ) (h : p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) (t₀ : ℕ) :
     ∃ t, t₀ ≤ t ∧ t ≤ t₀ + 2 ∧
       p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t ≠ 0 := by
-  sorry
+  classical
+  set v : Fin 3 → ℤ := ![p, -q, -r] with hvdef
+  have hv : v ≠ 0 := by
+    rw [hvdef]
+    intro hzero
+    have h0 := congrFun hzero 0
+    have h1 := congrFun hzero 1
+    have h2 := congrFun hzero 2
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
+      Matrix.tail_cons, Pi.zero_apply] at h0 h1 h2
+    rcases h with hp | hq | hr
+    · exact hp h0
+    · exact hq (by omega)
+    · exact hr (by omega)
+  by_contra hcon
+  push_neg at hcon
+  have hz0 := hcon t₀ (le_refl _) (by omega)
+  have hz1 := hcon (t₀ + 1) (by omega) (by omega)
+  have hz2 := hcon (t₀ + 2) (by omega) (by omega)
+  have hall : Matrix.mulVec (rhinLiteFormMatrix t₀) v = 0 := by
+    funext i
+    fin_cases i
+    · simp [rhinLiteFormMatrix, Matrix.mulVec, dotProduct, Fin.sum_univ_three, hvdef]
+      linear_combination hz0
+    · simp [rhinLiteFormMatrix, Matrix.mulVec, dotProduct, Fin.sum_univ_three, hvdef]
+      linear_combination hz1
+    · simp [rhinLiteFormMatrix, Matrix.mulVec, dotProduct, Fin.sum_univ_three, hvdef]
+      linear_combination hz2
+  exact hv (Matrix.eq_zero_of_mulVec_eq_zero (rhinLite_formMatrix_det_ne_zero t₀) hall)
 
 /-- **Pointwise lower bound (the proved assembly core).**  At any index `t` where the integer
 combination `n(t) = p·B(t) − q·A₁(t) − r·A₂(t)` is nonzero AND the remainder is small enough
