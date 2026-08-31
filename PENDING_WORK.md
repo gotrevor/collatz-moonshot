@@ -1,6 +1,30 @@
 # PENDING_WORK
 
-## ★ DOMINANCE NODE — DECOMPOSED into 4 per-step sub-nodes; arithmetic glue PROVED (2026-08-31, latest lap) ★
+## ★ I₁ BASE-CASE NODE — κ SHARPENED, single-window route pinned (2026-08-31, LATEST lap) ★
+
+The sole remaining `src/` sorry is `rhinLiteI₁_ratio_base : 2κ·I₁(0) ≤ I₁(1)` (`RhinLiteApprox.lean`).
+
+- **REFUTED the naive single-window plan at old κ-base 0.2209.**  Full `∫₂³ φ²/x` exceeds
+  `2κ·log(3/2)` by only `exp(0.29)=1.34×`; a single constant-min window loses `~1.7×`; even a lower
+  Riemann sum needs `~50–100` true-min pieces, and the *factored* per-factor-min bound (the only
+  cheaply-Lean-provable one) needs `~3200` pieces.  Infeasible.  (`experiments/rhinlite_i1_*.py`.)
+- **REPAIR (done, committed): sharpened κ 0.2209 → 0.2205** — smallest clean rational still clearing
+  the `I₂` `[3,4]` bound-product `native_decide` cert (binding bracket needs `base ≥ 0.2203003`).
+  κ-generic gap lemma ⇒ headline unaffected.  Opens `I₁` base margin to `exp(3.9)=50×`.
+- **NEXT ATTACK — close the sorry via ONE monotone window** (arithmetic fully pinned, ratio `8.93×`):
+  window `W=[2219/1000, 2223/1000]`, left of the interior peak `x*≈2.22324`.
+  1. `φ² = rhinLiteKernelSq` (= `rhinLiteEvenNormalized 1`, for `x>0`) — bridge lemma needed.
+  2. `φ²` strictly increasing on `W`: `strictMonoOn_of_deriv_pos` + `hasDerivAt_rhinLiteLogSq`
+     (deriv `= 2·(705/f₁+…−1000/x) > 0` on `W`; numerator = `rhinLiteCriticalReal`, no root in `W`
+     between the bracket-1 root `≈2.1151` and bracket-2 root `≈2.22324`; denominator `>0` — reuse the
+     existing critical-bracket sign machinery / `nlinarith`).  ⇒ `φ²(x) ≥ m := φ²(2219/1000)` on `W`.
+  3. `I₁(1) = ∫₂³ φ²/x ≥ ∫_W φ²/x ≥ m·∫_W dx/x = m·log(2223/2219) ≥ m·(4/2223)` (`log(1+u)≥u/(1+u)`).
+  4. `I₁(0) = log(3/2)`, and `2κ·log(3/2) ≤ 2·(2205/10000)^{2000}·(1/2)` (`log(3/2) ≤ 1/2`).
+  5. close by `native_decide`: `2·(2205/10000)^{2000}·(1/2) ≤ m·(4/2223)`  (`m` = exact rational).
+  Debt is analytic wiring only (monotonicity + interval-integral monotone lower bounds); all
+  numerics exact-verified in `experiments/rhinlite_single_window.py`.
+
+## ★ DOMINANCE NODE — DECOMPOSED into 4 per-step sub-nodes; arithmetic glue PROVED (2026-08-31, earlier lap) ★
 
 `rhinLite_det_dominance` (the sole crux sorry) is now REDUCED to four clean, disclosed per-step
 sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly proved:
