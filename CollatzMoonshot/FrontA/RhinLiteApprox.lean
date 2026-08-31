@@ -1454,20 +1454,6 @@ theorem rhinLite_ratio_gap_of_step_bounds {p₀ p₁ q₀ q₁ κ : ℝ}
   nlinarith [mul_le_mul_of_nonneg_left hupper hp₀,
     mul_le_mul_of_nonneg_right hlower hq₀]
 
-/-- **Isolated interval-arithmetic node — the tight pointwise `[3,4]` kernel bound.**
-`φ(x) = kernelAbs x / x^{scale} ≤ (2209/10000)^{scale}` for `x ∈ [3,4]`.  This is strictly stronger
-than the global `rhinLiteKernelAbs_div_pow_le_on_Icc` (which only gives `(9/40)^{scale}` and is
-`exp(18)` too loose here): the `[3,4]` peak `φ ≈ exp(m₂/2) ≈ exp(−1512.77)` sits `exp(2.7) ≈ 15×`
-below the target `(2209/10000)^{scale} = exp(−1510.05)`.  Route: recertify the `RhinLiteInterval`
-rounded factor-bound products (`rhinLiteBoundProduct`) against the tighter target
-`rootLeft^{scale}·(2209/10000)^{scale}` on the `[3,4]` critical brackets (`rhinLiteRootLeft ≥ 3`),
-plus the `RhinLiteMaximum` compact-max bridge restricted to `[3,4]` and the vanishing endpoints
-`x=3,4`.  The existing rounded factor table may need extra decimal places to clear the `10⁸`-tighter
-target.  Disclosed interval-arithmetic node. -/
-theorem rhinLiteKernelAbs_div_pow_le_on_Icc34 {x : ℝ} (hx : x ∈ Set.Icc (3 : ℝ) 4) :
-    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := by
-  sorry
-
 /-- **Sub-node (I₂ `[3,4]`-peak per-step upper bound).**  `I₂(t+1) ≤ κ·I₂(t)` with the tight
 per-interval constant `κ = rhinLiteKappa`.  Pointwise on `[3,4]` the step factor `φ(x)²` is bounded
 by `(2209/10000)^{2·scale}` — a genuinely tighter envelope than the global `(9/40)^{2·scale}` used for
