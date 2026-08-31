@@ -77,6 +77,20 @@ NEXT: prove `rhinLite_nonvanishing_triple` — the Wronskian/Padé perfect-syste
 ⚠ RISK: verify this determinant is actually nonzero for OUR six-factor `N=2000t` construction (it
 is asserted from Rhin/Wu theory; confirm it holds for the specific block subsequence before assuming).
 
+**UPDATE — reformulation PROVED, node sharpened.**  Two new PROVED lemmas in `RhinLiteApprox.lean`:
+- `rhinLite_n_eq`: `(n(t):ℝ) = B(t)·Λ − q·L₁(t) − r·L₂(t)` (from `elim_identity`), `Λ` the target form.
+- `rhinLite_nonvanishing_of_large`: **if `Λ ≠ 0` then `n(t) ≠ 0` for all large `t`** — proved via
+  `|n| ≥ B|Λ| − (|q|+|r|)E_N ≥ lcmUpto N·(17^N|Λ| − (|q|+|r|)(9/40)^N)` and `(9/680)^N → 0`.
+  This is the real analytic heart of non-vanishing, fully machine-checked.
+The residual gap in `rhinLite_nonvanishing_triple` is now PRECISE: only the FIXED-WINDOW claim
+(some `t∈[t₀,t₀+2]` for arbitrary `t₀`) is open, because the large-`t` threshold above depends on
+the unknown `|Λ|`.  Two attack routes: (a) the perfect-system determinant `det(B_i,A₁_i,A₂_i)≠0`
+(Rhin's core lemma; construction-specific, hard); (b) reduce the whole measure to needing only
+`Λ≠0` qualitatively + `rhinLite_nonvanishing_of_large` by choosing `t` large — BUT that breaks the
+`B(t)≤C·H^κ` envelope (t unbounded in H).  Route (a) is the genuine remaining number theory.
+Note: even qualitative `Λ≠0` for `(p,q,r)≠0` (lin. indep. of `1,log2,log3` over ℚ) is NOT in
+mathlib and would itself need e-transcendence/Baker-type input.
+
 **UPDATE (earlier lap): crux decomposed; assembly core PROVED.**  `RhinLiteApprox.lean` now has
 the definite form data `rhinLiteA₁/A₂/B` + `rhinLiteFD_spec` (PROVED), the isolated hard node
 `rhinLite_nonvanishing_triple` (disclosed sorry: 3-consecutive `n(t)≠0`), and

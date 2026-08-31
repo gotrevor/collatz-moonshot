@@ -787,9 +787,143 @@ theorem rhinLiteFD_spec (t : ℕ) :
         ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
   (rhinLite_forms_bounded_K1 t).choose_spec.choose_spec.choose_spec
 
+/-- helper: `rhinLiteEvenIndex t = 2000·t`. -/
+theorem rhinLiteEvenIndex_eq (t : ℕ) : rhinLiteEvenIndex t = 2000 * t := by
+  simp only [rhinLiteEvenIndex, rhinLiteScale]
+
+/-- **Reformulation identity (PROVED).**  The integer combination `n(t) = p·B − q·A₁ − r·A₂`,
+as a real, equals `B·Λ − q·L₁ − r·L₂` where `Λ = p + q·log(3/2) + r·log(4/3)` is the target linear
+form and `Lᵢ` are the (tiny, positive) cleared remainders.  This is `elim_identity` for the definite
+form data.  It reduces the non-vanishing question to the interplay of the large `B·Λ` against the
+decaying `q·L₁ + r·L₂`. -/
+theorem rhinLite_n_eq (p q r : ℤ) (t : ℕ) :
+    ((p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t : ℤ) : ℝ)
+      = (rhinLiteB t : ℝ) * ((p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3))
+        - q * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+        - r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)) := by
+  have h := elim_identity (rhinLiteA₁ t) (rhinLiteA₂ t) (rhinLiteB t) p q r
+    (Real.log (3 / 2)) (Real.log (4 / 3))
+  linear_combination -h
+
+/-- **Conditional non-vanishing for large `t` (PROVED).**  If the target `Λ ≠ 0`, then `n(t) ≠ 0`
+for all sufficiently large `t`: `|n(t)| ≥ B(t)·|Λ| − (|q|+|r|)·E_N ≥ lcmUpto N·(17^N·|Λ| −
+(|q|+|r|)·(9/40)^N)`, and `17^N·|Λ|` eventually dominates `(|q|+|r|)·(9/40)^N` since
+`(9/680)^N → 0`.  This captures the generic reason non-vanishing holds; it does **not** by itself
+give the fixed-window `[t₀,t₀+2]` bound (which needs the perfect-system determinant, since the
+threshold here depends on the unknown `|Λ|`). -/
+theorem rhinLite_nonvanishing_of_large (p q r : ℤ)
+    (hΛ : (p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3) ≠ 0) :
+    ∃ T : ℕ, ∀ t ≥ T,
+      p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t ≠ 0 := by
+  set Λ : ℝ := (p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3) with hΛdef
+  have hΛpos : 0 < |Λ| := abs_pos.mpr hΛ
+  -- threshold from `(|q|+|r|)·(9/680)^N → 0 < |Λ|`
+  have htend : Filter.Tendsto
+      (fun N : ℕ => ((|q| + |r| : ℤ) : ℝ) * (9 / 680 : ℝ) ^ N) Filter.atTop (nhds 0) := by
+    have h := tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num : (0:ℝ) ≤ 9/680)
+      (by norm_num : (9/680:ℝ) < 1)
+    simpa using h.const_mul (((|q| + |r| : ℤ) : ℝ))
+  have hev := htend.eventually_lt_const hΛpos
+  rw [Filter.eventually_atTop] at hev
+  obtain ⟨M, hM⟩ := hev
+  refine ⟨⌈(M : ℝ) / 2000⌉₊ + 1, fun t ht => ?_⟩
+  set N := rhinLiteEvenIndex t with hNdef
+  -- N = 2000 t ≥ M
+  have hNge : M ≤ N := by
+    rw [hNdef, rhinLiteEvenIndex_eq]
+    have h1 : (M : ℝ) / 2000 ≤ (⌈(M : ℝ) / 2000⌉₊ : ℝ) := Nat.le_ceil _
+    have h2 : ((⌈(M : ℝ) / 2000⌉₊ + 1 : ℕ) : ℝ) ≤ (t : ℝ) := by exact_mod_cast ht
+    have hle : (M : ℝ) ≤ 2000 * (t : ℝ) := by push_cast at h2; nlinarith [h1, h2]
+    have hle2 : (M : ℝ) ≤ ((2000 * t : ℕ) : ℝ) := by push_cast; linarith [hle]
+    exact_mod_cast hle2
+  obtain ⟨hBpos, hBlo, _, _, hL1le, _, hL2le⟩ := rhinLiteFD_spec t
+  have hBRpos : (0 : ℝ) < (rhinLiteB t : ℝ) := by exact_mod_cast hBpos
+  -- the real combination is nonzero
+  have hlcmpos : (0 : ℝ) < (Nat.lcmUpto N : ℝ) := by exact_mod_cast Nat.lcmUpto_pos N
+  -- |n_real| ≥ B|Λ| - (|q|+|r|)·E  > 0
+  have hEbound : ((|q| : ℤ) : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+      + ((|r| : ℤ) : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))
+      ≤ ((|q| + |r| : ℤ) : ℝ) *
+        ((Nat.lcmUpto N : ℝ) * (9 / 40 : ℝ) ^ N) := by
+    have hqnn : (0:ℝ) ≤ ((|q| : ℤ) : ℝ) := by positivity
+    have hrnn : (0:ℝ) ≤ ((|r| : ℤ) : ℝ) := by positivity
+    have h1 := mul_le_mul_of_nonneg_left hL1le hqnn
+    have h2 := mul_le_mul_of_nonneg_left hL2le hrnn
+    push_cast at h1 h2 ⊢
+    nlinarith [h1, h2]
+  -- key strict inequality: B|Λ| > (|q|+|r|)·E
+  have hstrict : ((|q| + |r| : ℤ) : ℝ) * ((Nat.lcmUpto N : ℝ) * (9 / 40 : ℝ) ^ N)
+      < (rhinLiteB t : ℝ) * |Λ| := by
+    -- (|q|+|r|)·(9/680)^N < |Λ| for N ≥ M
+    have hcmp := hM N hNge
+    -- lcmUpto N·17^N ≤ B, and 17^N·(9/680)^N = (9/40)^N·... actually (9/40)^N = 17^N·(9/680)^N
+    have hpow : (9 / 40 : ℝ) ^ N = (17 : ℝ) ^ N * (9 / 680 : ℝ) ^ N := by
+      rw [← mul_pow]; norm_num
+    have hBloR : (Nat.lcmUpto N : ℝ) * 17 ^ N ≤ (rhinLiteB t : ℝ) := hBlo
+    calc ((|q| + |r| : ℤ) : ℝ) * ((Nat.lcmUpto N : ℝ) * (9 / 40 : ℝ) ^ N)
+        = (Nat.lcmUpto N : ℝ) * 17 ^ N *
+            (((|q| + |r| : ℤ) : ℝ) * (9 / 680 : ℝ) ^ N) := by rw [hpow]; ring
+      _ < (Nat.lcmUpto N : ℝ) * 17 ^ N * |Λ| := by
+            apply mul_lt_mul_of_pos_left hcmp; positivity
+      _ ≤ (rhinLiteB t : ℝ) * |Λ| := by
+            apply mul_le_mul_of_nonneg_right hBloR hΛpos.le
+  -- conclude n_real ≠ 0, hence integer ≠ 0
+  have hne : ((p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t : ℤ) : ℝ) ≠ 0 := by
+    rw [rhinLite_n_eq]
+    -- |B·Λ - qL₁ - rL₂| ≥ B|Λ| - |qL₁+rL₂| > 0
+    have habs : (rhinLiteB t : ℝ) * |Λ|
+        - (((|q| : ℤ) : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+          + ((|r| : ℤ) : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)))
+        ≤ |(rhinLiteB t : ℝ) * Λ
+            - q * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+            - r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))| := by
+      have e1 : (rhinLiteB t : ℝ) * |Λ| = |(rhinLiteB t : ℝ) * Λ| := by
+        rw [abs_mul, abs_of_pos hBRpos]
+      rw [e1]
+      have := abs_sub_abs_le_abs_sub ((rhinLiteB t : ℝ) * Λ)
+        (q * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+          + r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)))
+      have hqr : |(q : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+          + r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))|
+          ≤ ((|q| : ℤ) : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+            + ((|r| : ℤ) : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)) := by
+        obtain ⟨_, _, _, hL1pos, _, hL2pos, _⟩ := rhinLiteFD_spec t
+        calc |(q : ℝ) * (_) + r * (_)|
+            ≤ |(q : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))|
+              + |(r : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))| := abs_add_le _ _
+          _ = ((|q| : ℤ) : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+              + ((|r| : ℤ) : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)) := by
+            rw [abs_mul, abs_mul, abs_of_pos hL1pos, abs_of_pos hL2pos, Int.cast_abs, Int.cast_abs]
+      have hassoc : (rhinLiteB t : ℝ) * Λ
+          - q * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+          - r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))
+          = (rhinLiteB t : ℝ) * Λ
+            - (q * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+              + r * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))) := by ring
+      rw [hassoc]
+      linarith [this, hqr]
+    have hpos : 0 < (rhinLiteB t : ℝ) * |Λ|
+        - (((|q| : ℤ) : ℝ) * ((rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2))
+          + ((|r| : ℤ) : ℝ) * ((rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3))) := by
+      have := lt_of_le_of_lt hEbound hstrict
+      linarith [this]
+    intro hzero
+    rw [hzero, abs_zero] at habs
+    linarith [hpos, habs]
+  intro hz
+  exact hne (by rw [hz]; simp)
+
 /-- **Non-vanishing determinant node (disclosed crux sub-node).**  For any nonzero integer triple
 `(p,q,r)` and any starting index `t₀`, at least one of the three consecutive combinations
 `n(t) = p·B(t) − q·A₁(t) − r·A₂(t)` (`t ∈ {t₀, t₀+1, t₀+2}`) is nonzero.
+
+Equivalently (see `rhinLite_n_eq`): `n(t) = B(t)·Λ − q·L₁(t) − r·L₂(t)`.  When `Λ ≠ 0` this holds
+for all large `t` (`rhinLite_nonvanishing_of_large`); the residual difficulty is only the
+FIXED-WINDOW claim (some `t ∈ [t₀,t₀+2]`) for arbitrary `t₀`, which — since the large-`t` threshold
+depends on the unknown `|Λ|` — needs the **perfect-system determinant**: the `3×3` integer
+determinant of the three consecutive form-triples `(B(t), A₁(t), A₂(t))` is nonzero.  Column-reducing
+`(B, A₁, A₂) ↦ (B, L₁, L₂)` (unimodular), it is a nonzero integer; a nontrivial left kernel would
+force `Λ = 0`.
 
 **Why (Wronskian / Padé non-degeneracy).**  The `3×3` integer determinant of the three consecutive
 form-triples `(B(t), A₁(t), A₂(t))` equals — after the unimodular column op
@@ -848,10 +982,6 @@ theorem lcmUpto_remainder_majorant :
   · calc (Nat.lcmUpto N : ℝ) * 18 ^ N ≤ (22 / 5 : ℝ) ^ N * 18 ^ N := by
           gcongr; exact hN₀ N hN
       _ = (396 / 5 : ℝ) ^ N := by rw [← mul_pow]; norm_num
-
-/-- helper: `rhinLiteEvenIndex t = 2000·t`. -/
-theorem rhinLiteEvenIndex_eq (t : ℕ) : rhinLiteEvenIndex t = 2000 * t := by
-  simp only [rhinLiteEvenIndex, rhinLiteScale]
 
 /-- **Selection + envelope (the analytic core of the crux).**  There are a finite exponent `κ` and
 constant `C > 0` such that for every height `H ≥ 1` and every `S ≤ 2H` there is a starting index

@@ -50,6 +50,8 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.rhinLiteFD_spec
 #print axioms CollatzMoonshot.FrontA.rhinLite_pointwise_lower
 #print axioms CollatzMoonshot.FrontA.lcmUpto_remainder_majorant
+#print axioms CollatzMoonshot.FrontA.rhinLite_n_eq
+#print axioms CollatzMoonshot.FrontA.rhinLite_nonvanishing_of_large
 #print axioms CollatzMoonshot.FrontA.rhinLite_selection_envelope
 #print axioms CollatzMoonshot.FrontA.rhinLiteLIMeasure
 #print axioms CollatzMoonshot.FrontA.overcleared_remainder_ge_one
