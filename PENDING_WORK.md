@@ -1,5 +1,40 @@
 # PENDING_WORK
 
+## ★ DETERMINANT NODE — numerically CONFIRMED nonzero, but NEAR-DEGENERATE (2026-08-31) ★
+
+`experiments/rhin_lite_det_check.py` (exact Python integers, spacing-2000 subsequence `N = 2000t`)
+settles the mandatory sanity check for `rhinLite_formMatrix_det_ne_zero`:
+
+- **The determinant is NONZERO** (statement is TRUE, not refuted).  The integer form determinant
+  `det(B,A₁,A₂)` factors as `D_{N₀}D_{N₁}D_{N₂}·det(c_N, R₁, R₂)` where `R_i = A_i/D_N` is the
+  rational part of `∫ᵢ H_N/x^{N+1}`.  Measured: `t₀=1` → `log₁₀|det(c_N,R₁,R₂)| ≈ 3570`; the
+  `t₀=0`-style `2×2` minor `R₁(1)R₂(2)−R₂(1)R₁(2)` → `log₁₀ ≈ 3692` (both exact, nonzero).
+- **But it is NEAR-DEGENERATE.**  `R₁(t)/R₂(t) = A₁(t)/A₂(t) ≈ log(3/2)/log(4/3) = 1.4094208…`
+  agrees to **≈ N digits** (`t=1`: 2500, `t=2`: 5000, `t=3`: 7500 digits identical).  Reason:
+  `R_i = I_i − c_N·θ_i` with `I_i = ∫ᵢ` tiny (`≤ (9/40)^N`), so `R_i ≈ −c_N θ_i` and the ratio
+  → `θ₁/θ₂`.  The ratio DIFFERENCE across `t` is `~10^{−3812}` (t=1 vs 2).  So `det ≠ 0` hinges on
+  the **strict monotonicity of `R₁(t)/R₂(t)`** — a coarse bound CANNOT separate it from 0.
+
+**Consequence for the proof.**  Real column reduction (log terms cancel): `det(B,A₁,A₂)` cast to ℝ
+`= D₀D₁D₂·det(c_N, I₁, I₂)` (`I_i` the tiny full integrals).  This is now PROVED in Lean
+(`rhinLite_formMatrix_det_cast`, trust-base clean).  So the ENTIRE remaining obligation is the real
+analytic node `rhinLite_integralMatrix_det_ne_zero`: the `3×3` real determinant of `(c_N, I₁, I₂)`
+over three consecutive `t` is nonzero.  Its nonzero-ness = the `R₁/R₂` (equivalently `I₁/I₂`) ratio
+does not repeat across the three rows — needs the LEADING ASYMPTOTICS of the integrals `I₁, I₂`
+(saddle-point / exact leading term), because the determinant is exponentially near-degenerate.
+NEXT ATTACK: derive `det(c_N,I₁,I₂) = c_{N₂}·(I₁(t₀)I₂(t₀+1)−I₂(t₀)I₁(t₀+1)) + (terms smaller by
+`(17·40/9)^{2000}`)`, so `det ≠ 0` reduces to (a) the dominant `2×2` minor ≠ 0 and (b) a
+strict-dominance envelope killing the other two terms.  Both need the integral asymptotics — a
+genuine multi-lap analytic obligation, NOT a citation.  (Retired this lap: the `Classical.choose`
+opacity — `rhinLite_forms_full` + `rhinLiteFD_eq` + `rhinLite_row_relations` make `B,A₁,A₂`
+explicit; `rhinLite_formMatrix_det_cast` reduces the integer det to the real integral det.)
+
+**NOTE — Λ≠0 is FREE (no Baker needed).**  For `(p,q,r)≠0`, `Λ = p+q log(3/2)+r log(4/3) ≠ 0` by
+unique factorization: `q log(3/2)+r log(4/3) = p ∈ ℤ` ⟹ `(3/2)^q(4/3)^r = e^p` rational ⟹
+`2^{2r−q}3^{q−r} = 1` (with `p=0`) ⟹ `q=r=0`.  The determinant/window is needed ONLY to control
+the vanishing index by the height `H` (the threshold in `rhinLite_nonvanishing_of_large` depends on
+the unknown `|Λ|`).
+
 ## ★ COURSE CORRECTION — objective-4 clearing bug found (2026-08-31) ★
 
 **The `12^N`-cleared log forms cannot prove `rhinLiteLIMeasure`.**  See

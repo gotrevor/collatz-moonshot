@@ -667,6 +667,115 @@ theorem rhinLite_forms_bounded_K1 (t : ℕ) :
   · rw [← h₂]; exact mul_pos hDpos hi34pos
   · rw [← h₂]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
 
+/-- **Explicit definite form data (retires the `Classical.choose` opacity).**  Same as
+`rhinLite_forms_bounded_K1`, but the existential package ALSO carries the two structural
+*equalities* that make `B, A₁, A₂` explicit:
+
+* `B = lcmUpto N · centralCoeff` (the common denominator, `N = rhinLiteEvenIndex t`);
+* `lcmUpto N · ∫₂³ H_N/x^{N+1} = A₁ + B·log(3/2)`;
+* `lcmUpto N · ∫₃⁴ H_N/x^{N+1} = A₂ + B·log(4/3)`.
+
+These equalities are exactly what the determinant argument needs: they let one perform the real
+column reduction `(B, A₁, A₂) ↦ (B, D_N·I₁, D_N·I₂) = D_N·(centralCoeff, I₁, I₂)` and thereby
+evaluate `rhinLiteFormMatrix.det`.  Without them, `rhinLiteA₁/A₂/B` are only bounded, not
+computable. -/
+theorem rhinLite_forms_full (t : ℕ) :
+    ∃ A₁ A₂ B : ℤ,
+      B = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+            * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) ∧
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+          (∫ x in (2 : ℝ)..3,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₁ : ℝ) + (B : ℝ) * Real.log (3 / 2)) ∧
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+          (∫ x in (3 : ℝ)..4,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₂ : ℝ) + (B : ℝ) * Real.log (4 / 3)) ∧
+      0 < B ∧
+      (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 17 ^ rhinLiteEvenIndex t ≤ (B : ℝ) ∧
+      (B : ℝ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t ∧
+      0 < (A₁ : ℝ) + B * Real.log (3 / 2) ∧
+      (A₁ : ℝ) + B * Real.log (3 / 2)
+          ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t ∧
+      0 < (A₂ : ℝ) + B * Real.log (4 / 3) ∧
+      (A₂ : ℝ) + B * Real.log (4 / 3)
+          ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+  have hdeg : ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree ≤
+      2 * rhinLiteEvenIndex t := le_of_eq (rhinLiteEvenPolynomialZ_map_real_natDegree t)
+  have hN : rhinLiteEvenIndex t ≤
+      ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree := by
+    rw [rhinLiteEvenPolynomialZ_map_real_natDegree]; omega
+  obtain ⟨A₁, h₁⟩ := lcm_cleared_log_form_K1 (rhinLiteEvenPolynomialZ t) (ea := 2) (eb := 3)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN (fun j => rhinLiteEvenPolynomialZ_content t j)
+  obtain ⟨A₂, h₂⟩ := lcm_cleared_log_form_K1 (rhinLiteEvenPolynomialZ t) (ea := 3) (eb := 4)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN (fun j => rhinLiteEvenPolynomialZ_content t j)
+  set D : ℝ := (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) with hDdef
+  have hDpos : 0 < D := by rw [hDdef]; exact_mod_cast Nat.lcmUpto_pos (rhinLiteEvenIndex t)
+  -- massaged equalities (goal-shaped)
+  have hE1 : D * (∫ x in (2 : ℝ)..3,
+        ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+          x ^ (rhinLiteEvenIndex t + 1))
+      = (A₁ : ℝ)
+        + (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+            * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ) : ℝ)
+            * Real.log (3 / 2) := by
+    rw [hDdef]; simpa using h₁
+  have hE2 : D * (∫ x in (3 : ℝ)..4,
+        ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+          x ^ (rhinLiteEvenIndex t + 1))
+      = (A₂ : ℝ)
+        + (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+            * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ) : ℝ)
+            * Real.log (4 / 3) := by
+    rw [hDdef]; simpa using h₂
+  obtain ⟨hlo, hhi⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+  obtain ⟨hi23pos, hi23le⟩ := rhinLiteEven_logForm_small_23 t
+  obtain ⟨hi34pos, hi34le⟩ := rhinLiteEven_logForm_small_34 t
+  have hBloR : D * 17 ^ rhinLiteEvenIndex t
+      ≤ ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+          * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ) := by
+    rw [hDdef]
+    have : ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 17 ^ rhinLiteEvenIndex t : ℤ)
+        ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+            * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) :=
+      mul_le_mul_of_nonneg_left hlo (by positivity)
+    calc (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 17 ^ rhinLiteEvenIndex t
+        = (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 17 ^ rhinLiteEvenIndex t : ℤ) : ℝ) := by
+          push_cast; ring
+      _ ≤ _ := by exact_mod_cast this
+  have hBhiR : ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+          * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ)
+      ≤ D * 18 ^ rhinLiteEvenIndex t := by
+    rw [hDdef]
+    have : (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+          * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t)
+        ≤ ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 18 ^ rhinLiteEvenIndex t : ℤ) :=
+      mul_le_mul_of_nonneg_left hhi (by positivity)
+    calc (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+            * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ) : ℝ)
+        ≤ (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 18 ^ rhinLiteEvenIndex t : ℤ) : ℝ) := by
+          exact_mod_cast this
+      _ = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t := by push_cast; ring
+  have hBpos : 0 < (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+      * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) := by
+    have h17 : (0 : ℝ) < D * 17 ^ rhinLiteEvenIndex t := by rw [hDdef]; positivity
+    have : (0 : ℝ) < (((Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+        * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℤ) : ℝ) :=
+      lt_of_lt_of_le h17 hBloR
+    exact_mod_cast this
+  refine ⟨A₁, A₂,
+    (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+      * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t),
+    rfl, hE1, hE2, hBpos, hBloR, hBhiR, ?_, ?_, ?_, ?_⟩
+  · rw [← hE1]; exact mul_pos hDpos hi23pos
+  · rw [← hE1, hDdef]; exact mul_le_mul_of_nonneg_left hi23le hDpos.le
+  · rw [← hE2]; exact mul_pos hDpos hi34pos
+  · rw [← hE2, hDdef]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
+
 /-- **Chebyshev denominator bound (prerequisite for the finite exponent `κ`).**  The `K=1`
 denominator `D_N = lcmUpto N` satisfies `log D_N ≤ log 4 · N + 2√N·log N`, i.e. `D_N ≤ 4^N·N^{2√N}`
 — exponential rate exactly `log 4 < τ = log(40/9)`, with a subexponential correction.  This is the
@@ -764,15 +873,15 @@ determinant + the `lcmUpto` denominator asymptotic — a genuine multi-lap analy
 target, not a citation. -/
 /-! ### Definite form data (the same integer triple across `t`, for the determinant argument) -/
 
-/-- `A₁(t)`: the first cleared numerator (definite choice from `rhinLite_forms_bounded_K1`). -/
-noncomputable def rhinLiteA₁ (t : ℕ) : ℤ := (rhinLite_forms_bounded_K1 t).choose
+/-- `A₁(t)`: the first cleared numerator (definite choice from `rhinLite_forms_full`). -/
+noncomputable def rhinLiteA₁ (t : ℕ) : ℤ := (rhinLite_forms_full t).choose
 
 /-- `A₂(t)`: the second cleared numerator. -/
-noncomputable def rhinLiteA₂ (t : ℕ) : ℤ := (rhinLite_forms_bounded_K1 t).choose_spec.choose
+noncomputable def rhinLiteA₂ (t : ℕ) : ℤ := (rhinLite_forms_full t).choose_spec.choose
 
 /-- `B(t)`: the common denominator `lcmUpto N · centralCoeff`. -/
 noncomputable def rhinLiteB (t : ℕ) : ℤ :=
-  (rhinLite_forms_bounded_K1 t).choose_spec.choose_spec.choose
+  (rhinLite_forms_full t).choose_spec.choose_spec.choose
 
 /-- **Spec of the definite form data.**  The full bounded-forms package for the specific integers
 `rhinLiteA₁ t`, `rhinLiteA₂ t`, `rhinLiteB t`. -/
@@ -786,7 +895,28 @@ theorem rhinLiteFD_spec (t : ℕ) :
     0 < (rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3) ∧
     (rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)
         ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
-  (rhinLite_forms_bounded_K1 t).choose_spec.choose_spec.choose_spec
+  (rhinLite_forms_full t).choose_spec.choose_spec.choose_spec.2.2.2
+
+/-- **Explicit-form spec (retires the `Classical.choose` opacity).**  The definite integers
+`rhinLiteB/A₁/A₂ t` satisfy the three structural equalities of `rhinLite_forms_full`:
+`B = lcmUpto N · centralCoeff`, and `lcmUpto N·∫ᵢ = Aᵢ + B·log(·)`.  This is what lets the
+determinant `rhinLiteFormMatrix.det` be evaluated via the real column reduction. -/
+theorem rhinLiteFD_eq (t : ℕ) :
+    rhinLiteB t = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ)
+        * (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) ∧
+    ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+        (∫ x in (2 : ℝ)..3,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1))
+      = (rhinLiteA₁ t : ℝ) + (rhinLiteB t : ℝ) * Real.log (3 / 2)) ∧
+    ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+        (∫ x in (3 : ℝ)..4,
+          ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+            x ^ (rhinLiteEvenIndex t + 1))
+      = (rhinLiteA₂ t : ℝ) + (rhinLiteB t : ℝ) * Real.log (4 / 3)) :=
+  ⟨(rhinLite_forms_full t).choose_spec.choose_spec.choose_spec.1,
+   (rhinLite_forms_full t).choose_spec.choose_spec.choose_spec.2.1,
+   (rhinLite_forms_full t).choose_spec.choose_spec.choose_spec.2.2.1⟩
 
 /-- helper: `rhinLiteEvenIndex t = 2000·t`. -/
 theorem rhinLiteEvenIndex_eq (t : ℕ) : rhinLiteEvenIndex t = 2000 * t := by
@@ -941,14 +1071,118 @@ noncomputable def rhinLiteFormMatrix (t₀ : ℕ) : Matrix (Fin 3) (Fin 3) ℤ :
     ![rhinLiteB (t₀ + 1), rhinLiteA₁ (t₀ + 1), rhinLiteA₂ (t₀ + 1)],
     ![rhinLiteB (t₀ + 2), rhinLiteA₁ (t₀ + 2), rhinLiteA₂ (t₀ + 2)]]
 
-/-- **THE deep node (perfect-system determinant).**  The `3×3` integer matrix of three consecutive
-form-triples `(B, A₁, A₂)` is nonsingular.  Column-reducing `(B,A₁,A₂) ↦ (B, L₁, L₂)` (unimodular),
-`det` is a nonzero integer.  This is Rhin's core non-degeneracy lemma for the block subsequence; it
-is the ONE remaining hard obligation of the whole Rhin-lite construction.  Its proof needs the
-explicit constructive `B/A₁/A₂` (as coefficient sums from `lcm_cleared_log_form_K1`) so the
-determinant can be evaluated — a genuine multi-lap formalization of the explicit construction. -/
-theorem rhinLite_formMatrix_det_ne_zero (t₀ : ℕ) : (rhinLiteFormMatrix t₀).det ≠ 0 := by
+/-- Central coefficient `c_N = [x^N] H_N`, `N = rhinLiteEvenIndex t`, as a real. -/
+noncomputable def rhinLiteCentral (t : ℕ) : ℝ :=
+  ((rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℝ)
+
+/-- The tiny full integral `I₁(t) = ∫₂³ H_N/x^{N+1}`. -/
+noncomputable def rhinLiteI₁ (t : ℕ) : ℝ :=
+  ∫ x in (2 : ℝ)..3,
+    ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x / x ^ (rhinLiteEvenIndex t + 1)
+
+/-- The tiny full integral `I₂(t) = ∫₃⁴ H_N/x^{N+1}`. -/
+noncomputable def rhinLiteI₂ (t : ℕ) : ℝ :=
+  ∫ x in (3 : ℝ)..4,
+    ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x / x ^ (rhinLiteEvenIndex t + 1)
+
+/-- **The real integral matrix** whose rows are `(c_N, I₁, I₂)` at `t₀, t₀+1, t₀+2`.  The integer
+form matrix is a per-row `D_N`-rescaling of a real *column* transform of this one, so the two
+determinants differ only by the nonzero factor `D_{N₀}D_{N₁}D_{N₂}` (see
+`rhinLite_formMatrix_det_cast`). -/
+noncomputable def rhinLiteIntegralMatrix (t₀ : ℕ) : Matrix (Fin 3) (Fin 3) ℝ :=
+  Matrix.of ![![rhinLiteCentral t₀, rhinLiteI₁ t₀, rhinLiteI₂ t₀],
+    ![rhinLiteCentral (t₀ + 1), rhinLiteI₁ (t₀ + 1), rhinLiteI₂ (t₀ + 1)],
+    ![rhinLiteCentral (t₀ + 2), rhinLiteI₁ (t₀ + 2), rhinLiteI₂ (t₀ + 2)]]
+
+/-- Per-row real relations for the definite form data: `B = D·c`, `A₁ = D·I₁ − B·log(3/2)`,
+`A₂ = D·I₂ − B·log(4/3)`, with `D = lcmUpto N`.  Direct from `rhinLiteFD_eq`. -/
+theorem rhinLite_row_relations (t : ℕ) :
+    (rhinLiteB t : ℝ) = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * rhinLiteCentral t ∧
+    (rhinLiteA₁ t : ℝ)
+      = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * rhinLiteI₁ t
+        - (rhinLiteB t : ℝ) * Real.log (3 / 2) ∧
+    (rhinLiteA₂ t : ℝ)
+      = (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * rhinLiteI₂ t
+        - (rhinLiteB t : ℝ) * Real.log (4 / 3) := by
+  obtain ⟨hB, he1, he2⟩ := rhinLiteFD_eq t
+  refine ⟨?_, ?_, ?_⟩
+  · rw [hB]; push_cast [rhinLiteCentral]; ring
+  · rw [rhinLiteI₁]; linarith [he1]
+  · rw [rhinLiteI₂]; linarith [he2]
+
+/-- **Column-reduction identity (PROVED).**  The cast integer form-determinant equals the product
+of the three row denominators times the real integral determinant:
+`det(B,A₁,A₂) = D_{N₀}·D_{N₁}·D_{N₂} · det(c_N, I₁, I₂)`.  This is the unimodular real column op
+`(B,A₁,A₂) ↦ (B, A₁+B log(3/2), A₂+B log(4/3)) = (B, D I₁, D I₂)` followed by extracting `D` from
+each row — the log terms cancel by `ring`. -/
+theorem rhinLite_formMatrix_det_cast (t₀ : ℕ) :
+    ((rhinLiteFormMatrix t₀).det : ℝ)
+      = (Nat.lcmUpto (rhinLiteEvenIndex t₀) : ℝ)
+        * (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 1)) : ℝ)
+        * (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 2)) : ℝ)
+        * (rhinLiteIntegralMatrix t₀).det := by
+  obtain ⟨cB0, cA10, cA20⟩ := rhinLite_row_relations t₀
+  obtain ⟨cB1, cA11, cA21⟩ := rhinLite_row_relations (t₀ + 1)
+  obtain ⟨cB2, cA12, cA22⟩ := rhinLite_row_relations (t₀ + 2)
+  have hcast : ((rhinLiteFormMatrix t₀).det : ℝ)
+      = (rhinLiteB t₀ : ℝ) * (rhinLiteA₁ (t₀+1) : ℝ) * (rhinLiteA₂ (t₀+2) : ℝ)
+        - (rhinLiteB t₀ : ℝ) * (rhinLiteA₂ (t₀+1) : ℝ) * (rhinLiteA₁ (t₀+2) : ℝ)
+        - (rhinLiteA₁ t₀ : ℝ) * (rhinLiteB (t₀+1) : ℝ) * (rhinLiteA₂ (t₀+2) : ℝ)
+        + (rhinLiteA₁ t₀ : ℝ) * (rhinLiteA₂ (t₀+1) : ℝ) * (rhinLiteB (t₀+2) : ℝ)
+        + (rhinLiteA₂ t₀ : ℝ) * (rhinLiteB (t₀+1) : ℝ) * (rhinLiteA₁ (t₀+2) : ℝ)
+        - (rhinLiteA₂ t₀ : ℝ) * (rhinLiteA₁ (t₀+1) : ℝ) * (rhinLiteB (t₀+2) : ℝ) := by
+    rw [Matrix.det_fin_three]
+    simp only [rhinLiteFormMatrix, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
+      Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two, Matrix.tail_cons,
+      Matrix.head_fin_const, Matrix.empty_val', Matrix.cons_val_fin_one]
+    push_cast
+    ring
+  rw [hcast, Matrix.det_fin_three]
+  simp only [rhinLiteIntegralMatrix, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
+    Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two, Matrix.tail_cons,
+    Matrix.head_fin_const, Matrix.empty_val', Matrix.cons_val_fin_one]
+  rw [cA10, cA11, cA12, cA20, cA21, cA22, cB0, cB1, cB2]
+  ring
+
+/-- **THE deep node (perfect-system determinant, now over ℝ).**  The `3×3` *real* matrix of three
+consecutive integral triples `(c_N, I₁, I₂)` is nonsingular.  This is the genuine analytic core of
+Rhin's non-degeneracy for the block subsequence `N = 2000t`.
+
+Numerically confirmed nonzero (`experiments/rhin_lite_det_check.py`, exact integer arithmetic:
+`t₀ = 1` gives `log₁₀|det| ≈ 3570`), but it is *near-degenerate*: columns `I₁, I₂` satisfy
+`R₁/R₂ = A₁/A₂ ≈ log(3/2)/log(4/3)` to `≈ N` digits (`R_i = A_i/D_N ≈ −c_N·θ_i`), so a coarse bound
+cannot separate `det` from `0`.  The nonzero-ness reduces to the strict monotonicity of the ratio
+`R₁(t)/R₂(t)` in `t` (equivalently `I₂θ₁−I₁θ₂` combinations not cancelling across the three rows),
+which needs the leading asymptotics of the integrals — a genuine multi-lap analytic obligation.
+See `PENDING_WORK.md` "★ determinant". -/
+theorem rhinLite_integralMatrix_det_ne_zero (t₀ : ℕ) :
+    (rhinLiteIntegralMatrix t₀).det ≠ 0 := by
   sorry
+
+/-- **THE deep node (perfect-system determinant).**  The `3×3` integer matrix of three consecutive
+form-triples `(B, A₁, A₂)` is nonsingular.  Reduced (via the PROVED column-reduction
+`rhinLite_formMatrix_det_cast`) to the real integral determinant `rhinLite_integralMatrix_det_ne_zero`
+times the nonzero denominator product `D_{N₀}D_{N₁}D_{N₂}`. -/
+theorem rhinLite_formMatrix_det_ne_zero (t₀ : ℕ) : (rhinLiteFormMatrix t₀).det ≠ 0 := by
+  intro h0
+  have hcast := rhinLite_formMatrix_det_cast t₀
+  rw [h0] at hcast
+  have hD0 : (0 : ℝ) < (Nat.lcmUpto (rhinLiteEvenIndex t₀) : ℝ) := by
+    exact_mod_cast Nat.lcmUpto_pos _
+  have hD1 : (0 : ℝ) < (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 1)) : ℝ) := by
+    exact_mod_cast Nat.lcmUpto_pos _
+  have hD2 : (0 : ℝ) < (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 2)) : ℝ) := by
+    exact_mod_cast Nat.lcmUpto_pos _
+  have hprod : (Nat.lcmUpto (rhinLiteEvenIndex t₀) : ℝ)
+      * (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 1)) : ℝ)
+      * (Nat.lcmUpto (rhinLiteEvenIndex (t₀ + 2)) : ℝ) ≠ 0 :=
+    ne_of_gt (mul_pos (mul_pos hD0 hD1) hD2)
+  have := rhinLite_integralMatrix_det_ne_zero t₀
+  rw [Int.cast_zero] at hcast
+  exact this (by
+    rcases mul_eq_zero.mp hcast.symm with h | h
+    · exact absurd h hprod
+    · exact h)
 
 /-- The non-vanishing window, REDUCED to the determinant node via clean linear algebra:
 if `det ≠ 0` then no nonzero `(p,−q,−r)` can annihilate all three rows, so some `n(t) ≠ 0`. -/
