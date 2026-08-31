@@ -1179,22 +1179,98 @@ theorem rhinLite_integralMatrix_det_cofactor (t₀ : ℕ) :
     Matrix.empty_val', Matrix.cons_val_fin_one]
   ring
 
-/-- **Single-term dominance (disclosed analytic sub-node).**  The `c₂·M(0,1)` cofactor term
-strictly dominates the sum of the other two in absolute value:
-`|c(t₀+2)·M(0,1)| > |c(t₀)·M(1,2)| + |c(t₀+1)·M(0,2)|`, `M(a,b) = I₁(a)I₂(b) − I₂(a)I₁(b)`.
+/-- **Assembly of single-term dominance from clean per-step envelope facts (PROVED, no analysis).**
+Abstracting the nine determinant entries as positive reals `c₀,c₁,c₂` (central column) and
+`p₀,p₁,p₂ = I₁`, `q₀,q₁,q₂ = I₂` at the three consecutive indices, the dominant cofactor term
+`c₂·(p₁q₀ − p₀q₁)` strictly dominates the sum of the other two in absolute value **as soon as**:
+* the ratio-gap `2·(p₀q₁) ≤ p₁q₀` holds  (`I₁` decays strictly slower than `I₂`, i.e. `μ₁ > M₂`);
+* `I₁`,`I₂` each decay by a factor `≥ 16` per step (`16 q_{k+1} ≤ q_k`, `16 p_{k+1} ≤ p_k`);
+* the central column grows by a factor `≥ 16` per step (`16 c_k ≤ c_{k+1}`).
 
-This encapsulates the ENTIRE remaining analytic content and is what makes the determinant nonzero
-by clean dominance (NO cancellation).  Its proof needs only *crude exponential two-sided bounds* on
-the integrals — `I₁(t) ≍ exp(t·m₁)` on `[2,3]`, `I₂(t) ≍ exp(t·m₂)` on `[3,4]` with the
-**separated rates** `m₁ = max_{[2,3]}ψ ≈ −3014.5 > m₂ = max_{[3,4]}ψ ≈ −3025.5` (gap `≈ 11`), the
-proved central-coefficient band `17^N ≤ c_N ≤ 18^N` (rate `γ ≈ 5700 ≫ m₁`), and the resulting
-exponent separations `γ − m₁ ≈ 8681 > 0`, `m₁ − m₂ ≈ 11 > 0`.  The margins are `exp(8681·t)`, so no
-Laplace `√N` precision is needed — enclosing rational rates suffice.  See `PENDING_WORK.md`
-"★ BREAKTHROUGH" and `experiments/rhin_lite_laplace.py`.
+Every RHS monomial is then `≤ (c₂p₁q₀)/16`, so their sum is `≤ (c₂p₁q₀)/4`, while the LHS is
+`≥ (c₂p₁q₀)/2` by the ratio-gap — clean dominance with no cancellation.  The generous factors `16`
+(true asymptotics give `exp 11`, `exp 3014`, `exp 5666` respectively) absorb all slack. -/
+theorem det_dominance_of_step_bounds
+    {c0 c1 c2 p0 p1 p2 q0 q1 q2 : ℝ}
+    (hc0 : 0 < c0) (hc1 : 0 < c1) (hc2 : 0 < c2)
+    (hp0 : 0 < p0) (hp1 : 0 < p1) (hp2 : 0 < p2)
+    (hq0 : 0 < q0) (hq1 : 0 < q1) (hq2 : 0 < q2)
+    (hsep : 2 * (p0 * q1) ≤ p1 * q0)
+    (hqmono : q2 ≤ q1) (hq1q0 : q1 ≤ q0)
+    (hp2s : 16 * p2 ≤ p1)
+    (hc02 : 16 * c0 ≤ c2) (hc12 : 16 * c1 ≤ c2) :
+    c2 * (p1 * q0 - p0 * q1)
+      > |c0 * (p1 * q2 - q1 * p2)| + |c1 * (p0 * q2 - q0 * p2)| := by
+  have hq2q0 : q2 ≤ q0 := le_trans hqmono hq1q0
+  -- the two `2×2` minors are bounded in absolute value by the sum of their (positive) monomials
+  have hA : |c0 * (p1 * q2 - q1 * p2)| ≤ c0 * (p1 * q2) + c0 * (q1 * p2) := by
+    rw [abs_le]
+    constructor <;>
+      nlinarith [mul_nonneg (mul_nonneg hc0.le hq1.le) hp2.le,
+        mul_nonneg (mul_nonneg hc0.le hp1.le) hq2.le]
+  have hB : |c1 * (p0 * q2 - q0 * p2)| ≤ c1 * (p0 * q2) + c1 * (q0 * p2) := by
+    rw [abs_le]
+    constructor <;>
+      nlinarith [mul_nonneg (mul_nonneg hc1.le hq0.le) hp2.le,
+        mul_nonneg (mul_nonneg hc1.le hp0.le) hq2.le]
+  -- each of the four RHS monomials is `≤ (c₂ p₁ q₀)/16`
+  have K : (0:ℝ) < c2 * (p1 * q0) := mul_pos hc2 (mul_pos hp1 hq0)
+  have ma : 16 * (c0 * (p1 * q2)) ≤ c2 * (p1 * q0) := by
+    nlinarith [mul_le_mul_of_nonneg_right hc02 (mul_nonneg hp1.le hq2.le),
+      mul_le_mul_of_nonneg_left hq2q0 (mul_nonneg hc2.le hp1.le)]
+  have mb : 16 * (c0 * (q1 * p2)) ≤ c2 * (p1 * q0) := by
+    nlinarith [mul_le_mul_of_nonneg_right hc02 (mul_nonneg hq1.le hp2.le),
+      mul_le_mul_of_nonneg_left hq1q0 (mul_nonneg hc2.le hp2.le),
+      mul_le_mul_of_nonneg_left hp2s (mul_nonneg hc2.le hq0.le)]
+  have hp0q2 : p0 * q2 ≤ p1 * q0 := by
+    nlinarith [mul_le_mul_of_nonneg_left hqmono hp0.le, hsep,
+      mul_nonneg hp0.le hq1.le]
+  have mc : 16 * (c1 * (p0 * q2)) ≤ c2 * (p1 * q0) := by
+    nlinarith [mul_le_mul_of_nonneg_right hc12 (mul_nonneg hp0.le hq2.le),
+      mul_le_mul_of_nonneg_left hp0q2 hc2.le]
+  have md : 16 * (c1 * (q0 * p2)) ≤ c2 * (p1 * q0) := by
+    nlinarith [mul_le_mul_of_nonneg_right hc12 (mul_nonneg hq0.le hp2.le),
+      mul_le_mul_of_nonneg_left hp2s (mul_nonneg hc2.le hq0.le)]
+  -- assemble: |A| + |B| ≤ (c₂p₁q₀)/4  <  (c₂p₁q₀)/2 ≤ c₂(p₁q₀ − p₀q₁)
+  have hsepc : 2 * (c2 * (p0 * q1)) ≤ c2 * (p1 * q0) := by
+    nlinarith [mul_le_mul_of_nonneg_left hsep hc2.le]
+  linarith [hA, hB, ma, mb, mc, md, hsepc, K]
 
-TODO(next laps): prove the four exponential integral bounds + the arithmetic separation.  Sub-nodes:
-`max_{[2,3]}ψ`, `max_{[3,4]}ψ` bounds (via `RhinLiteMaximum`/`RhinLiteCritical` brackets) and exp
-lower bounds via a fixed sub-window. -/
+/-- **Sub-node (I₁ per-step decay).**  The `[2,3]` integral `I₁(t) = ∫₂³ H_N/x^{N+1}` decays by a
+factor `≥ 16` when `t ↦ t+1` (i.e. `N ↦ N+2000`).  True with enormous room: the Laplace rate is
+`I₁(t+1)/I₁(t) ≈ exp(max_{[2,3]}ψ) ≈ exp(−3014.5)`; any rational bound `≤ 1/16` suffices here.
+Disclosed analytic sub-node (needs a two-sided exponential envelope for the integrand, e.g. via the
+`RhinLiteMaximum`/`RhinLiteCritical`/`RhinLiteInterval` bracket machinery). -/
+theorem rhinLiteI₁_step_decay16 (t : ℕ) : 16 * rhinLiteI₁ (t + 1) ≤ rhinLiteI₁ t := by
+  sorry
+
+/-- **Sub-node (I₂ per-step decay).**  The `[3,4]` integral `I₂(t) = ∫₃⁴ H_N/x^{N+1}` decays by a
+factor `≥ 16` per step (Laplace rate `≈ exp(−3025.5)`).  Disclosed analytic sub-node. -/
+theorem rhinLiteI₂_step_decay16 (t : ℕ) : 16 * rhinLiteI₂ (t + 1) ≤ rhinLiteI₂ t := by
+  sorry
+
+/-- **Sub-node (central per-step growth).**  The central coefficient `c_N = [x^N]H_N` grows by a
+factor `≥ 16` per step; the proved band `17^N ≤ c_N ≤ 18^N` gives `c_{t+1}/c_t ≈ 17^{2000} ≫ 16`.
+Disclosed sub-node — the loose absolute band cannot compare consecutive `c`'s (its slack
+`(18/17)^N` compounds), so this needs a genuine per-step ratio bound. -/
+theorem rhinLiteCentral_step_growth16 (t : ℕ) :
+    16 * rhinLiteCentral t ≤ rhinLiteCentral (t + 1) := by
+  sorry
+
+/-- **Sub-node (the rate gap `μ₁ > M₂`).**  `I₁` decays strictly slower than `I₂`: per step the
+`I₁`-ratio exceeds twice the `I₂`-ratio, `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true
+per-step ratio gap is `exp(m₁ − m₂) ≈ exp(11) ≈ 6·10⁴ ≫ 2`.  This is the analytic heart of the
+determinant non-vanishing (the "separated maxima" of `ψ` on `[2,3]` vs `[3,4]`).  Disclosed
+sub-node. -/
+theorem rhinLite_ratio_gap (t : ℕ) :
+    2 * (rhinLiteI₁ t * rhinLiteI₂ (t + 1)) ≤ rhinLiteI₁ (t + 1) * rhinLiteI₂ t := by
+  sorry
+
+/-- **Single-term dominance — now REDUCED to four clean per-step sub-nodes.**  The `c₂·M(0,1)`
+cofactor term strictly dominates the sum of the other two in absolute value,
+`|c(t₀+2)·M(0,1)| > |c(t₀)·M(1,2)| + |c(t₀+1)·M(0,2)|`.  PROVED from the pure-arithmetic assembly
+`det_dominance_of_step_bounds` fed by the four disclosed sub-nodes `rhinLiteI₁_step_decay16`,
+`rhinLiteI₂_step_decay16`, `rhinLiteCentral_step_growth16`, `rhinLite_ratio_gap`. -/
 theorem rhinLite_det_dominance (t₀ : ℕ) :
     |rhinLiteCentral (t₀ + 2)
         * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 1))|
@@ -1202,7 +1278,50 @@ theorem rhinLite_det_dominance (t₀ : ℕ) :
           * (rhinLiteI₁ (t₀ + 1) * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ (t₀ + 1) * rhinLiteI₁ (t₀ + 2))|
         + |rhinLiteCentral (t₀ + 1)
             * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 2))| := by
-  sorry
+  -- positivity of the nine entries
+  have hc0 := rhinLiteCentral_pos t₀
+  have hc1 := rhinLiteCentral_pos (t₀ + 1)
+  have hc2 := rhinLiteCentral_pos (t₀ + 2)
+  have hp0 := rhinLiteI₁_pos t₀
+  have hp1 := rhinLiteI₁_pos (t₀ + 1)
+  have hp2 := rhinLiteI₁_pos (t₀ + 2)
+  have hq0 := rhinLiteI₂_pos t₀
+  have hq1 := rhinLiteI₂_pos (t₀ + 1)
+  have hq2 := rhinLiteI₂_pos (t₀ + 2)
+  -- per-step envelope facts, specialised to the three consecutive indices
+  have hgap := rhinLite_ratio_gap t₀
+  have hI2a := rhinLiteI₂_step_decay16 t₀            -- 16 q1 ≤ q0
+  have hI2b := rhinLiteI₂_step_decay16 (t₀ + 1)      -- 16 q2 ≤ q1
+  have hI1b := rhinLiteI₁_step_decay16 (t₀ + 1)      -- 16 p2 ≤ p1
+  have hcg0 := rhinLiteCentral_step_growth16 t₀      -- 16 c0 ≤ c1
+  have hcg1 := rhinLiteCentral_step_growth16 (t₀ + 1)-- 16 c1 ≤ c2
+  have hq1q0 : rhinLiteI₂ (t₀ + 1) ≤ rhinLiteI₂ t₀ := by linarith
+  have hqmono : rhinLiteI₂ (t₀ + 2) ≤ rhinLiteI₂ (t₀ + 1) := by
+    have : (16:ℝ) * rhinLiteI₂ (t₀ + 1 + 1) ≤ rhinLiteI₂ (t₀ + 1) := hI2b
+    simp only [show t₀ + 1 + 1 = t₀ + 2 from rfl] at this; linarith
+  have hp2s : 16 * rhinLiteI₁ (t₀ + 2) ≤ rhinLiteI₁ (t₀ + 1) := by
+    have : (16:ℝ) * rhinLiteI₁ (t₀ + 1 + 1) ≤ rhinLiteI₁ (t₀ + 1) := hI1b
+    simpa only [show t₀ + 1 + 1 = t₀ + 2 from rfl] using this
+  have hc02 : 16 * rhinLiteCentral t₀ ≤ rhinLiteCentral (t₀ + 2) := by
+    have h1 : (16:ℝ) * rhinLiteCentral t₀ ≤ rhinLiteCentral (t₀ + 1) := hcg0
+    have h2 : (16:ℝ) * rhinLiteCentral (t₀ + 1) ≤ rhinLiteCentral (t₀ + 1 + 1) := hcg1
+    simp only [show t₀ + 1 + 1 = t₀ + 2 from rfl] at h2
+    nlinarith [rhinLiteCentral_pos (t₀ + 1)]
+  have hc12 : 16 * rhinLiteCentral (t₀ + 1) ≤ rhinLiteCentral (t₀ + 2) := by
+    have h2 : (16:ℝ) * rhinLiteCentral (t₀ + 1) ≤ rhinLiteCentral (t₀ + 1 + 1) := hcg1
+    simpa only [show t₀ + 1 + 1 = t₀ + 2 from rfl] using h2
+  -- apply the abstract assembly
+  have hmain := det_dominance_of_step_bounds hc0 hc1 hc2 hp0 hp1 hp2 hq0 hq1 hq2
+    hgap hqmono hq1q0 hp2s hc02 hc12
+  -- convert the goal's absolute-value LHS into the product form of `hmain`
+  have hlhs : |rhinLiteCentral (t₀ + 2)
+        * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 1))|
+      = rhinLiteCentral (t₀ + 2)
+        * (rhinLiteI₁ (t₀ + 1) * rhinLiteI₂ t₀ - rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1)) := by
+    rw [abs_mul, abs_of_pos hc2, abs_of_nonpos (by nlinarith [hgap, mul_pos hq0 hp1])]
+    ring
+  rw [hlhs]
+  exact hmain
 
 /-- **THE deep node — now PROVED from the single dominance sub-node.**  The `3×3` real integral
 determinant is nonzero: by the cofactor expansion `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)`, the

@@ -59,9 +59,13 @@
 
 **Public checkpoint (2026-08-31):** `lake build` is green (8764 jobs).
 Both headline fronts remain open. `FrontA.sep_two_three` is now proved sorry-free modulo the cited
-`rhin_1987_log_two_three_measure` axiom; exactly one declaration still contains a disclosed `sorry`,
-`FrontA.rhinLiteLIMeasure` (the novel Rhin-lite route aimed at retiring that axiom); named literature
-and conjecture axioms are also used explicitly.
+`rhin_1987_log_two_three_measure` axiom.  The novel Rhin-lite route aimed at retiring that axiom
+(`FrontA.rhinLiteLIMeasure`) has its crux `rhinLite_det_dominance` **DECOMPOSED** into four disclosed
+per-step analytic sub-nodes in `RhinLiteApprox.lean` — `rhinLiteI₁_step_decay16`,
+`rhinLiteI₂_step_decay16`, `rhinLiteCentral_step_growth16`, `rhinLite_ratio_gap` — with the entire
+pure-arithmetic dominance assembly (`det_dominance_of_step_bounds`) PROVED trust-base clean.  Disclosed
+proof debt is thus these 4 per-step sub-nodes (all in `RhinLiteApprox.lean`); named literature and
+conjecture axioms are also used explicitly.
 The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.

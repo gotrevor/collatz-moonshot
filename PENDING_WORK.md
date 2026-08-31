@@ -1,5 +1,42 @@
 # PENDING_WORK
 
+## ★ DOMINANCE NODE — DECOMPOSED into 4 per-step sub-nodes; arithmetic glue PROVED (2026-08-31, latest lap) ★
+
+`rhinLite_det_dominance` (the sole crux sorry) is now REDUCED to four clean, disclosed per-step
+sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly proved:
+
+- **`det_dominance_of_step_bounds` (PROVED, trust-base clean).**  Abstract lemma over the nine
+  entries `c₀,c₁,c₂` (central), `p₀,p₁,p₂ = I₁`, `q₀,q₁,q₂ = I₂`: from the ratio-gap
+  `2·p₀q₁ ≤ p₁q₀` + per-step decay `16 p_{k+1} ≤ p_k`, `16 q_{k+1} ≤ q_k` + central growth
+  `16 c_k ≤ c_{k+1}`, each of the four RHS monomials is `≤ (c₂p₁q₀)/16`, so their sum is
+  `≤ (c₂p₁q₀)/4 < (c₂p₁q₀)/2 ≤ c₂(p₁q₀−p₀q₁)` = |dominant term|.  Clean dominance, no cancellation.
+- **Four disclosed sub-nodes** (all TRUE with enormous room; each an honest analytic hole):
+  1. `rhinLiteI₁_step_decay16` : `16·I₁(t+1) ≤ I₁(t)`   (true rate `exp(−3014.5)`; need `≤ 1/16`).
+  2. `rhinLiteI₂_step_decay16` : `16·I₂(t+1) ≤ I₂(t)`   (true rate `exp(−3025.5)`).
+  3. `rhinLiteCentral_step_growth16` : `16·c(t) ≤ c(t+1)`  (true `≈ 17^2000`; the loose absolute
+     band `17^N≤c≤18^N` CANNOT compare consecutive `c`'s — its slack `(18/17)^N` compounds — so this
+     needs a genuine per-step ratio bound).
+  4. `rhinLite_ratio_gap` : `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`  (the `μ₁>M₂` separation, true gap
+     `exp 11 ≈ 6·10⁴`; the analytic HEART — separated maxima of `ψ` on `[2,3]` vs `[3,4]`).
+
+**KEY CORRECTION over the previous handoff's route.**  Independent two-sided *absolute* exponential
+envelopes on `I₁,I₂` do NOT yield the `|M(0,1)|` lower bound: the difference `I₁(t₀)I₂(t₀+1) −
+I₂(t₀)I₁(t₀+1)` has both terms of near-equal rate, so an absolute envelope loses the correlation and
+`ℓ₂ℓ₁ − u₁u₂ < 0` for large `t₀`.  The fix is **per-step RATIO (multiplicative) bounds** — sub-nodes
+1–4 above are all ratio/cross facts, and with them the assembly is subtraction-free and clean.  Same
+correction retires the "central band gives `16c₀≤c₂`" idea: only a per-step central ratio does.
+
+**NEXT ATTACK (per sub-node).**  (1)(2) exp per-step decay ≥16: bound the normalized integrand
+`H_N/x^{N+1}` on `[2,3]`,`[3,4]` and its ratio across `N→N+2000` (the extra `x^{-2000}` factor alone
+gives `≤ 2^{-2000}` on `[2,3]`? no — need the full integrand; use `RhinLiteMaximum` bracket for a
+uniform envelope).  (3) central per-step ratio ≥16: `c_{N+2000}/c_N`; likely from the explicit
+coefficient recursion / generating structure of `H_N`.  (4) ratio-gap: the separated Laplace maxima
+`m₁ > m₂` on the two intervals — bound `∫₂³` below and `∫₃⁴` above by their peak contributions
+(`RhinLiteCritical`/`RhinLiteInterval` machinery).  All four are O(1)-margin facts (`exp` of a few
+thousand slack); no `√N` Laplace precision needed.
+
+---
+
 ## ★ DETERMINANT NODE — numerically CONFIRMED nonzero, but NEAR-DEGENERATE (2026-08-31) ★
 
 `experiments/rhin_lite_det_check.py` (exact Python integers, spacing-2000 subsequence `N = 2000t`)
