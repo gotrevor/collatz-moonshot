@@ -23,7 +23,14 @@
 > disclosed crux `rhinLiteLIMeasure` (coarse Rhin linear-independence measure of
 > `{1,log(3/2),log(4/3)}`). Two disclosed `src/` sorries remain: `sep_two_three`
 > (`PowSeparation.lean`) and `rhinLiteLIMeasure` (`RhinLiteApprox.lean`); the latter is the
-> concrete route to the former. See `FRONT-A-RHIN-LITE.md` (steps 3–4) and `PENDING_WORK.md`.
+> concrete route to the former.
+> **⚠️ Course correction (2026-08-31):** the `12^N`-cleared log forms of `RhinLiteLogForm` CANNOT
+> prove `rhinLiteLIMeasure` — the clearing rate `K ≈ 3.49` exceeds the remainder decay `τ ≈ 1.49`
+> (Wu needs `τ > K`), so the cleared remainder does not decay (in-kernel witness
+> `overcleared_remainder_ge_one`). The elementary mechanism (`logForm_conditional_lower`,
+> `rhinLite_forms_bounded`, the size bridge) is proved and correct; it needs forms with a *decaying*
+> remainder. Fix: structural clearing `H_N ∈ (12,x)^N ℤ[x]`, `D_N = lcmUpto N` (`K = 1 < τ`),
+> `μ ≈ 7.9`. See `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`, `PENDING_WORK.md`.
 
 > [!CAUTION]
 > This is a chronological research ledger, not a claim that Collatz or either open front

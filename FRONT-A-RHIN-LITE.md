@@ -129,6 +129,13 @@ target estimates are
 D_N <= 4^N * exp(o(N)).
 ```
 
+⚠️ **CORRECTION (2026-08-31): the decay claim below assumed `D_N ≈ 4^N` (lcm only).  The
+formalized `RhinLiteLogForm` clears with `D_N = lcmUpto N · 12^N`, whose rate `K ≈ 3.49` exceeds
+the remainder decay `τ ≈ 1.49`, so the cleared value GROWS and NO measure results from those forms.
+See `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md` and `overcleared_remainder_ge_one`.  The fix is Wu's
+structural clearing (endpoints cleared from `H_N ∈ (12,x)^N ℤ[x]`, `D_N = lcmUpto N`, `K = 1`),
+which restores `τ > K` and gives `μ ≈ 7.9`.**  The (now-corrected) intended statement was:
+
 Hence the common integer denominator grows at most like `72^N exp(o(N))`, while both errors decay
 like `(9/10)^N exp(o(N))`.  This gives a coarse but finite simultaneous linear-independence measure.
 Sharp `7.616` constants are irrelevant.

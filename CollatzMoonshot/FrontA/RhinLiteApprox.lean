@@ -319,13 +319,43 @@ theorem rhinLite_forms_bounded (t : ℕ) :
   · rw [← h₂]; exact mul_pos hDpos hi34pos
   · rw [← h₂]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
 
+/-- **Scaling diagnosis (machine witness).**  The clearing used by `RhinLiteLogForm`,
+`D_N = lcmUpto N · 12^N`, makes the cleared remainder `E_N = D_N · (9/40)^N ≥ 1` for **every** `N`:
+`D_N · (9/40)^N = lcmUpto N · (27/10)^N ≥ 1` since `lcmUpto N ≥ 1` and `27/10 ≥ 1`.
+
+Consequence: `logForm_conditional_lower` instantiated at `E = E_N` is **vacuous**
+(`1 − (|q|+|r|)·E_N ≤ 1 − (|q|+|r|) ≤ 0` for any nonzero `(q,r)`), so the crux `rhinLiteLIMeasure`
+is **not reachable through the `12^N`-cleared forms**.  In Wu's terms (Math. Comp. 72 (2003),
+Thm 2) the clearing rate is `K = lim (1/N) log D_N = 1 + log 12 ≈ 3.485`, which **exceeds** the
+remainder-decay rate `τ = −lim (1/N) log I_N = log(40/9) ≈ 1.492`; Wu's criterion needs `τ > K`.
+
+**Fix (recorded 2026-08-31, see `FRONT-A-RHIN-LITE.md`):** the endpoint powers must be cleared
+*structurally* from `H_N ∈ (12,x)^N ℤ[x]` (each `coeff_j` carries `12^{N−j}`), NOT by a global
+`12^N` multiplier.  Then `D_N = lcmUpto N` alone (`K = 1`) suffices, `τ = 1.492 > 1 = K`, and the
+coarse kernel yields a finite measure `μ = (τ⁽⁰⁾ + K)/(τ − K) ≈ (2.89 + 1)/0.492 ≈ 7.9`. -/
+theorem overcleared_remainder_ge_one (N : ℕ) :
+    1 ≤ (Nat.lcmUpto N : ℝ) * 12 ^ N * (9 / 40 : ℝ) ^ N := by
+  have h1 : (1 : ℝ) ≤ (Nat.lcmUpto N : ℝ) := by exact_mod_cast Nat.lcmUpto_pos N
+  have h2 : (1 : ℝ) ≤ 12 ^ N * (9 / 40 : ℝ) ^ N := by
+    rw [← mul_pow]; exact one_le_pow₀ (by norm_num)
+  calc (1 : ℝ) = 1 * 1 := (one_mul 1).symm
+    _ ≤ (Nat.lcmUpto N : ℝ) * (12 ^ N * (9 / 40 : ℝ) ^ N) :=
+        mul_le_mul h1 h2 zero_le_one (le_trans zero_le_one h1)
+    _ = (Nat.lcmUpto N : ℝ) * 12 ^ N * (9 / 40 : ℝ) ^ N := by ring
+
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
 There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p, q, r)`,
 `c / H^κ ≤ |p + q·log(3/2) + r·log(4/3)|`, where `H = max(|p|, |q|, |r|)`.
 
-This is the coarse Rhin measure produced by the block subsequence `N = 2000t`.  **Route to a
-proof** (all ingredients are already in the repo; only the transference/optimization remains):
+This is the coarse Rhin measure produced by the block subsequence `N = 2000t`.  It is TRUE
+(Rhin 1987), but see `overcleared_remainder_ge_one`: the **`12^N`-cleared forms of
+`RhinLiteLogForm` cannot prove it** — their clearing rate `K ≈ 3.49` exceeds the remainder decay
+`τ ≈ 1.49`, so the cleared remainder does not decay.  A proof needs the **structural clearing**
+(`H_N ∈ (12,x)^N ℤ[x]`, `D_N = lcmUpto N`, `K = 1 < τ`), giving `μ ≈ 7.9`.  The mechanism below is
+correct once fed forms with a *decaying* `E_N`.
+
+**Route to a proof** (mechanism proved; the missing piece is the K=1 clearing + non-vanishing):
 
 * ✅ Data + size (PROVED): `rhinLite_forms_bounded t` packages `rhinLiteEven_two_log_forms` with the
   size package into `0 < B`, `D_N·17^N ≤ B ≤ D_N·18^N`, `0 < Lᵢ ≤ D_N·(9/40)^N`.

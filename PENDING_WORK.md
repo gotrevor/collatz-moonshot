@@ -1,11 +1,29 @@
 # PENDING_WORK
 
-## ★ NEXT ACTION — finish objective 4 wiring (2026-08-31) ★
+## ★ COURSE CORRECTION — objective-4 clearing bug found (2026-08-31) ★
 
-The simultaneous-approximation criterion is now wired end-to-end modulo ONE disclosed crux
-(`FrontA/RhinLiteApprox.lean`).  Two concrete next actions, in priority order:
+**The `12^N`-cleared log forms cannot prove `rhinLiteLIMeasure`.**  See
+`FRONT-A-RHIN-LITE-SCALING-2026-08-31.md` and the in-kernel witness
+`overcleared_remainder_ge_one`.  `RhinLiteLogForm` clears with `D_N = lcmUpto N · 12^N`, whose
+Wu-rate `K = 1 + log 12 ≈ 3.49` **exceeds** the remainder decay `τ = log(40/9) ≈ 1.49`.  Wu's
+criterion needs `τ > K`, so the cleared remainder `E_N = D_N·(9/40)^N ≥ 1` does not decay and the
+(correct) mechanism `logForm_conditional_lower` is vacuous at every index.
 
-1. **Attack the crux `rhinLiteLIMeasure`** (the coarse Rhin linear-independence measure of
+**This does not touch objectives 1–3** (the polynomial/integral/log-form identities are correct).
+It is a wrong clearing FACTOR for the measure step.  **The fix (corrected objective 4):** clear the
+endpoint powers *structurally* from `H_N ∈ (12,x)^N ℤ[x]` (proved content in `RhinLite.lean`:
+`12^{N−j} ∣ coeff_j`), leaving `D_N = lcmUpto N` (`K = 1`, or `K = log 4 ≈ 1.39` via the crude
+`lcmUpto N ≤ 4^N`; both `< τ`).  Then `E_N = lcmUpto N·(9/40)^N ≈ (0.61)^N → 0` and the transference
+goes through, `μ ≈ 7.9`.  Concrete steps (1)–(4) are in the findings doc.
+
+**Alternative (DIRECTION.md option (a)):** disclose one named Rhin-1987 axiom
+`|u₀+u₁log2+u₂log3| ≥ H^{−13.3}` and keep the machine-checked reduction (`log23_effective_measure`
++ the PowSeparation pipeline), Hercher-style.  Proportionate if the structural re-derivation is too
+long.
+
+### Prior "next actions" (mechanism now proved; superseded by the course correction above)
+
+1. **`rhinLiteLIMeasure`** (the coarse Rhin linear-independence measure of
    `{1, log(3/2), log(4/3)}`).  This is THE remaining hard node on the Rhin-lite path.  The
    ingredients are all in the repo; the missing piece is the *transference lemma*: from the
    sequence of common-`B` approximation pairs `(A₁,A₂,B)` (`rhinLiteEven_two_log_forms`), with
