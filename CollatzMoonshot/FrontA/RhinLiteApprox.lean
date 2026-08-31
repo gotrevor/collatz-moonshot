@@ -731,7 +731,9 @@ theorem lcmUpto_le_pow_eventually :
   push_cast
   linarith [hkey]
 
-/-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
+/-! ### Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`
+
+**Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
 There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p, q, r)`,
 `c / H^κ ≤ |p + q·log(3/2) + r·log(4/3)|`, where `H = max(|p|, |q|, |r|)`.
@@ -759,6 +761,51 @@ correct once fed forms with a *decaying* `E_N`.
 The two ✅ steps are now proved; the remaining obligation is the number-theoretic non-vanishing
 determinant + the `lcmUpto` denominator asymptotic — a genuine multi-lap analytic number-theory
 target, not a citation. -/
+/-! ### Definite form data (the same integer triple across `t`, for the determinant argument) -/
+
+/-- `A₁(t)`: the first cleared numerator (definite choice from `rhinLite_forms_bounded_K1`). -/
+noncomputable def rhinLiteA₁ (t : ℕ) : ℤ := (rhinLite_forms_bounded_K1 t).choose
+
+/-- `A₂(t)`: the second cleared numerator. -/
+noncomputable def rhinLiteA₂ (t : ℕ) : ℤ := (rhinLite_forms_bounded_K1 t).choose_spec.choose
+
+/-- `B(t)`: the common denominator `lcmUpto N · centralCoeff`. -/
+noncomputable def rhinLiteB (t : ℕ) : ℤ :=
+  (rhinLite_forms_bounded_K1 t).choose_spec.choose_spec.choose
+
+/-- **Spec of the definite form data.**  The full bounded-forms package for the specific integers
+`rhinLiteA₁ t`, `rhinLiteA₂ t`, `rhinLiteB t`. -/
+theorem rhinLiteFD_spec (t : ℕ) :
+    0 < rhinLiteB t ∧
+    (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 17 ^ rhinLiteEvenIndex t ≤ (rhinLiteB t : ℝ) ∧
+    (rhinLiteB t : ℝ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t ∧
+    0 < (rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2) ∧
+    (rhinLiteA₁ t : ℝ) + rhinLiteB t * Real.log (3 / 2)
+        ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t ∧
+    0 < (rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3) ∧
+    (rhinLiteA₂ t : ℝ) + rhinLiteB t * Real.log (4 / 3)
+        ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t :=
+  (rhinLite_forms_bounded_K1 t).choose_spec.choose_spec.choose_spec
+
+/-- **Non-vanishing determinant node (disclosed crux sub-node).**  For any nonzero integer triple
+`(p,q,r)` and any starting index `t₀`, at least one of the three consecutive combinations
+`n(t) = p·B(t) − q·A₁(t) − r·A₂(t)` (`t ∈ {t₀, t₀+1, t₀+2}`) is nonzero.
+
+**Why (Wronskian / Padé non-degeneracy).**  The `3×3` integer determinant of the three consecutive
+form-triples `(B(t), A₁(t), A₂(t))` equals — after the unimodular column op
+`(B, A₁, A₂) ↦ (B, A₁+B·θ₁, A₂+B·θ₂) = (B, L₁, L₂)` (determinant `1`) — the determinant of
+`(B(t), L₁(t), L₂(t))`, whose leading term is `B(t)·B(t+1)·B(t+2)` against the tiny `Lᵢ`.  The
+Rhin/Wu construction is a *perfect system*: this determinant is a fixed nonzero integer.  If it were
+zero for three consecutive `t`, `(p,−q,−r)` would lie in the left kernel of a nonsingular integer
+matrix — impossible.  So `n(t) ≠ 0` for at least one of the three.
+
+TODO: prove the perfect-system non-degeneracy (the explicit determinant is a nonzero rational
+coming from the six-factor integral construction).  This is the last genuinely hard node. -/
+theorem rhinLite_nonvanishing_triple (p q r : ℤ) (h : p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) (t₀ : ℕ) :
+    ∃ t, t₀ ≤ t ∧ t ≤ t₀ + 2 ∧
+      p * rhinLiteB t - q * rhinLiteA₁ t - r * rhinLiteA₂ t ≠ 0 := by
+  sorry
+
 theorem rhinLiteLIMeasure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ p q r : ℤ, (p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) →
