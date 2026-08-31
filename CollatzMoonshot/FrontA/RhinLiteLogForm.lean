@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontA.RhinLiteEven
+import CollatzMoonshot.FrontA.Legendre
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 /-!
@@ -100,5 +101,22 @@ theorem integral_poly_div_pow_split {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (p 
   congr 1
   · rw [if_pos rfl]
   · exact Finset.sum_congr rfl (fun j hj => by rw [if_neg (Finset.ne_of_mem_erase hj)])
+
+/-! ## Denominator-clearing arithmetic for the rational tail -/
+
+/-- Each tail denominator `j - N` (with `j ≤ 2N`, `j ≠ N`, so `1 ≤ |j-N| ≤ N`) divides
+`lcmUpto N`. -/
+theorem sub_natCast_dvd_lcmUpto {j N : ℕ} (hj : j ≤ 2 * N) (hjN : j ≠ N) :
+    ((j : ℤ) - N) ∣ (Nat.lcmUpto N : ℤ) := by
+  rw [← Int.natAbs_dvd]
+  have h1 : 1 ≤ ((j : ℤ) - N).natAbs := by omega
+  have h2 : ((j : ℤ) - N).natAbs ≤ N := by omega
+  exact_mod_cast dvd_lcmUpto h1 h2
+
+/-- An endpoint `e ∈ {2,3,4}` raised to a power `≤ N` divides `12^N` (since `e ∣ 12`). -/
+theorem endpoint_pow_dvd_twelve_pow {e : ℤ} (he : e ∣ 12) {m N : ℕ} (hm : m ≤ N) :
+    e ^ m ∣ (12 : ℤ) ^ N := by
+  calc e ^ m ∣ (12 : ℤ) ^ m := pow_dvd_pow_of_dvd he m
+    _ ∣ (12 : ℤ) ^ N := pow_dvd_pow 12 hm
 
 end CollatzMoonshot.FrontA
