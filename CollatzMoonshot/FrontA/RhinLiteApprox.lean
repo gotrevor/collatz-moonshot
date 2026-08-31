@@ -359,11 +359,14 @@ two named obligations of **very different difficulty**:
   `(3,X)`-adic order `ord₃(Q₁)=1, ord₃(Q₄)=1, ord₃(Q₅)=ord₃(Q₆)=2, ord₃(Q₂)=ord₃(Q₃)=0`, the product
   order is `Σ eᵢ·ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  Proved via the coefficientwise
   predicate `Dvd3Adic` (superadditive over products: `Dvd3Adic_mul`/`_pow`) — no cross-terms needed.
-* **2-adic (`rhinLiteEvenPolynomialZ_two_adic_content`)** — the genuinely hard node: the factorwise
-  `(4,X)`-order bound gives only `Σ eᵢ·ord₄(Qᵢ) = 2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so
-  `H_N ∈ (4,X)^N` is **NOT** implied factorwise; it requires cross-term cancellation (verified true
-  numerically, but the proof needs the finer 2-adic structure of the convolution, e.g. the exact
-  2-adic Newton polygon of the six-factor product).  This is where the multi-lap work concentrates.
+* **2-adic (`rhinLiteEvenPolynomialZ_two_adic_content`)** — now **PROVED**.  The naive factorwise
+  `(4,X)`-order gives only `1410t < N`, but grouping the factors into **squares** captures the
+  cross-terms elementarily: `(X−2)² ∈ (4,X)` and `Q₅² ∈ (4,X)³` (whose odd-power orders vanish).
+  The `ord₄` of the factor-powers is `(0, w₂t, 2w₃t, 2w₄t, 3w₅t, 4w₆t)`, summing to
+  `w₂t+2w₃t+2w₄t+3w₅t+4w₆t = 2000t = N` **exactly** — no Newton-polygon machinery needed.
+
+Both parts and the combined `rhinLiteEvenPolynomialZ_content` (`H_N ∈ (12,X)^N`) are now proved with
+trust-base-only ledgers.  The K=1 structural clearing input is therefore in hand.
 -/
 
 /-- Coefficientwise `(3,X)`-adic order predicate: `3^{a−j} ∣ coeff_j p` for all `j`
@@ -454,20 +457,120 @@ theorem rhinLiteEvenPolynomialZ_three_adic_content (t j : ℕ) :
   rw [← heq]
   exact hprod j
 
-/-- **2-adic content of `H_N` (the hard cross-term node; disclosed).**  `4^{N−j} ∣ coeff_j(H_N)`,
-i.e. `H_N ∈ (4,X)^N ℤ[X]` with `N = 2000t`.  TRUE (numerically verified: `val₂(c_j) ≥ 2(N−j)`), but
-**not** obtainable factorwise: the `(4,X)`-order sum over factors is only `1410t < N`, so the extra
-`590t` powers of `2` come from cancellation across the convolution.  This is the concentration of the
-axiom-retirement difficulty; it needs the exact 2-adic structure of the product, not factor orders. -/
+/-- Coefficientwise `(4,X)`-adic order predicate (base-4 analogue of `Dvd3Adic`):
+`4^{a−j} ∣ coeff_j p` for all `j`. -/
+def Dvd4Adic (a : ℕ) (p : ℤ[X]) : Prop := ∀ j, (4 : ℤ) ^ (a - j) ∣ p.coeff j
+
+theorem Dvd4Adic_zero (p : ℤ[X]) : Dvd4Adic 0 p := by intro j; simp
+
+theorem Dvd4Adic_mul {a b : ℕ} {p q : ℤ[X]} (hp : Dvd4Adic a p) (hq : Dvd4Adic b q) :
+    Dvd4Adic (a + b) (p * q) := by
+  intro n
+  rw [Polynomial.coeff_mul]
+  apply Finset.dvd_sum
+  rintro ⟨u, v⟩ huv
+  have huvn : u + v = n := Finset.HasAntidiagonal.mem_antidiagonal.mp huv
+  have hprod : (4 : ℤ) ^ ((a - u) + (b - v)) ∣ p.coeff u * q.coeff v := by
+    rw [pow_add]; exact mul_dvd_mul (hp u) (hq v)
+  exact dvd_trans (pow_dvd_pow 4 (by omega)) hprod
+
+theorem Dvd4Adic_pow {a : ℕ} {p : ℤ[X]} (hp : Dvd4Adic a p) : ∀ n, Dvd4Adic (n * a) (p ^ n)
+  | 0 => by simpa using Dvd4Adic_zero (1 : ℤ[X])
+  | n + 1 => by rw [pow_succ, Nat.succ_mul]; exact Dvd4Adic_mul (Dvd4Adic_pow hp n) hp
+
+/-- **2-adic content of `H_N` (PROVED via the paired-factor 2-adic orders).**  `4^{N−j} ∣ coeff_j(H_N)`,
+i.e. `H_N ∈ (4,X)^N ℤ[X]` with `N = 2000t`.  Naively the `(4,X)`-order sums factorwise to only
+`1410t < N`; the missing `590t` powers of `2` come from cross-terms, captured by grouping the factors
+into their **squares**: `(X−2)² ∈ (4,X)` and `Q₅² ∈ (4,X)³` (their odd-power orders vanish, but the
+squares clear).  With `ord₄` of the factor-powers `(Q₁^{e₁},…,Q₆^{e₆})` equal to
+`(0, w₂t, 2w₃t, 2w₄t, 3w₅t, 4w₆t)`, the product order is `w₂t+2w₃t+2w₄t+3w₅t+4w₆t = 2000t = N`
+**exactly**.  Fully elementary (`Dvd4Adic_mul`/`_pow` + finite coefficient checks on the base squares). -/
 theorem rhinLiteEvenPolynomialZ_two_adic_content (t j : ℕ) :
     (4 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
-  sorry
+  -- base facts (finite coefficient checks)
+  have hQ2sq : Dvd4Adic 1 (rhinLiteQ2 ^ 2) := by
+    have hsq : rhinLiteQ2 ^ 2 = X ^ 2 - C 4 * X + C 4 := by simp [rhinLiteQ2]; ring
+    intro i
+    match i with
+    | 0 => have hc : (rhinLiteQ2 ^ 2).coeff 0 = 4 := by rw [hsq]; simp
+           rw [hc]; norm_num
+    | (k + 1) => have h0 : 1 - (k + 1) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ3 : Dvd4Adic 1 rhinLiteQ3 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ3.coeff 0 = -4 := by simp [rhinLiteQ3]
+           rw [hc]; norm_num
+    | (k + 1) => have h0 : 1 - (k + 1) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ4 : Dvd4Adic 1 rhinLiteQ4 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ4.coeff 0 = -12 := by simp [rhinLiteQ4]
+           rw [hc]; norm_num
+    | (k + 1) => have h0 : 1 - (k + 1) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ6 : Dvd4Adic 2 rhinLiteQ6 := by
+    intro i
+    match i with
+    | 0 => have hc : rhinLiteQ6.coeff 0 = 144 := by simp [rhinLiteQ6]
+           rw [hc]; norm_num
+    | 1 => have hc : rhinLiteQ6.coeff 1 = -108 := by simp [rhinLiteQ6]
+           rw [hc]; norm_num
+    | (k + 2) => have h0 : 2 - (k + 2) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  have hQ5sq : Dvd4Adic 3 (rhinLiteQ5 ^ 2) := by
+    have hsq : rhinLiteQ5 ^ 2
+        = C 289 * X ^ 4 - C 3468 * X ^ 3 + C 15300 * X ^ 2 - C 29376 * X + C 20736 := by
+      simp [rhinLiteQ5]; ring
+    intro i
+    match i with
+    | 0 => have hc : (rhinLiteQ5 ^ 2).coeff 0 = 20736 := by rw [hsq]; simp
+           rw [hc]; norm_num
+    | 1 => have hc : (rhinLiteQ5 ^ 2).coeff 1 = -29376 := by rw [hsq]; simp
+           rw [hc]; norm_num
+    | 2 => have hc : (rhinLiteQ5 ^ 2).coeff 2 = 15300 := by rw [hsq]; simp [Polynomial.coeff_X]
+           rw [hc]; norm_num
+    | (k + 3) => have h0 : 3 - (k + 3) = 0 := by omega
+                 rw [h0, pow_zero]; exact one_dvd _
+  -- per-factor-power orders
+  have p1 : Dvd4Adic 0 (rhinLiteQ1 ^ (2 * rhinLiteW1 * t)) := Dvd4Adic_zero _
+  have p2 : Dvd4Adic (rhinLiteW2 * t) (rhinLiteQ2 ^ (2 * rhinLiteW2 * t)) := by
+    have e2 : rhinLiteQ2 ^ (2 * rhinLiteW2 * t) = (rhinLiteQ2 ^ 2) ^ (rhinLiteW2 * t) := by
+      rw [← pow_mul]; congr 1; ring
+    rw [e2]; simpa using Dvd4Adic_pow hQ2sq (rhinLiteW2 * t)
+  have p3 : Dvd4Adic (2 * rhinLiteW3 * t) (rhinLiteQ3 ^ (2 * rhinLiteW3 * t)) := by
+    simpa using Dvd4Adic_pow hQ3 (2 * rhinLiteW3 * t)
+  have p4 : Dvd4Adic (2 * rhinLiteW4 * t) (rhinLiteQ4 ^ (2 * rhinLiteW4 * t)) := by
+    simpa using Dvd4Adic_pow hQ4 (2 * rhinLiteW4 * t)
+  have p5 : Dvd4Adic (3 * rhinLiteW5 * t) (rhinLiteQ5 ^ (2 * rhinLiteW5 * t)) := by
+    have e5 : rhinLiteQ5 ^ (2 * rhinLiteW5 * t) = (rhinLiteQ5 ^ 2) ^ (rhinLiteW5 * t) := by
+      rw [← pow_mul]; congr 1; ring
+    rw [e5, show 3 * rhinLiteW5 * t = rhinLiteW5 * t * 3 by ring]
+    exact Dvd4Adic_pow hQ5sq (rhinLiteW5 * t)
+  have p6 : Dvd4Adic (2 * rhinLiteW6 * t * 2) (rhinLiteQ6 ^ (2 * rhinLiteW6 * t)) :=
+    Dvd4Adic_pow hQ6 (2 * rhinLiteW6 * t)
+  -- assemble
+  have hprod : Dvd4Adic
+      (((((0 + rhinLiteW2 * t) + 2 * rhinLiteW3 * t) + 2 * rhinLiteW4 * t) + 3 * rhinLiteW5 * t)
+        + 2 * rhinLiteW6 * t * 2)
+      (rhinLiteEvenPolynomialZ t) := by
+    rw [rhinLiteEvenPolynomialZ]
+    exact Dvd4Adic_mul (Dvd4Adic_mul (Dvd4Adic_mul (Dvd4Adic_mul (Dvd4Adic_mul p1 p2) p3) p4) p5) p6
+  have heq : (((((0 + rhinLiteW2 * t) + 2 * rhinLiteW3 * t) + 2 * rhinLiteW4 * t)
+        + 3 * rhinLiteW5 * t) + 2 * rhinLiteW6 * t * 2) = rhinLiteEvenIndex t := by
+    simp only [rhinLiteEvenIndex, rhinLiteScale, rhinLiteW2, rhinLiteW3, rhinLiteW4,
+      rhinLiteW5, rhinLiteW6]
+    ring
+  rw [← heq]
+  exact hprod j
 
 /-- **Coefficient content of `H_N`: `12^{N−j} ∣ coeff_j(H_N)` (PROVED from the 2- and 3-adic parts).**
 `H_N ∈ (12,X)^N ℤ[X]`, `N = 2000t`.  This is the structural-clearing input for the corrected
 (K=1) objective 4 (`D_N = lcmUpto N`).  Combines `rhinLiteEvenPolynomialZ_two_adic_content` and
-`rhinLiteEvenPolynomialZ_three_adic_content` via `IsCoprime (4^k) (3^k)` and `12 = 4·3`.  For `j ≥ N`
-the exponent `N−j` is `0` and the divisibility is trivial. -/
+`rhinLiteEvenPolynomialZ_three_adic_content` (both now PROVED) via `IsCoprime (4^k) (3^k)` and
+`12 = 4·3`.  For `j ≥ N` the exponent `N−j` is `0` and the divisibility is trivial.  **This lemma is
+now fully machine-checked** (trust-base-only ledger). -/
 theorem rhinLiteEvenPolynomialZ_content (t j : ℕ) :
     (12 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
   set k := rhinLiteEvenIndex t - j with hk

@@ -48,16 +48,21 @@ into three named nodes:
   `Dvd3Adic_add/_mul/_pow` (superadditive: `Dvd3Adic a p → Dvd3Adic b q → Dvd3Adic (a+b) (p*q)` via
   `coeff_mul` + `Finset.dvd_sum`) and the six factor base-facts at orders `(1,0,0,1,2,2)`; the total
   order sums to `N = 2000t` exactly.
-- `rhinLiteEvenPolynomialZ_two_adic_content` (disclosed sorry, **the hard node**): `4^{N−j} ∣ coeff_j`.
-  Factorwise `(4,X)`-order sum is only `2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so `H_N ∈ (4,X)^N` does
-  **NOT** follow from factor orders — the extra `590t` powers of 2 come from cross-term cancellation in
-  the convolution.  Needs the exact 2-adic Newton polygon / valuation of the six-factor product; this is
-  where the multi-lap ANT work concentrates.  (Route options: 2-adic Newton polygon of `∏ Qᵢ^{eᵢ}`, or a
-  direct lower bound on `val₂` of the convolution sum via the factors' 2-adic expansions.)
+- `rhinLiteEvenPolynomialZ_two_adic_content` (**PROVED 2026-08-31**): `4^{N−j} ∣ coeff_j`.  The naive
+  factorwise `(4,X)`-order is only `1410t < N`, but grouping factors into **squares** captures the
+  cross-terms *elementarily*: `(X−2)² ∈ (4,X)` and `Q₅² ∈ (4,X)³`.  `ord₄` of the factor-powers is
+  `(0, w₂t, 2w₃t, 2w₄t, 3w₅t, 4w₆t)`, summing to `2000t = N` exactly — no Newton polygon needed.  Done
+  with a base-4 `Dvd4Adic` predicate + finite coefficient checks on `(X−2)²`, `X−4`, `5X−12`, `Q₅²`,
+  `Q₆`.  So **`rhinLiteEvenPolynomialZ_content` (`12^{N−j} ∣ coeff_j`) is now fully machine-checked.**
 
-Downstream once the content lemma lands: redo `tail_term_cleared`/`lcm_cleared_log_form` with
-`D_N = lcmUpto N` (structural endpoint clearing from `12^{N−j} ∣ c_j` + `a,b ∣ 12`), then the
-non-vanishing determinant + `lcmUpto ≤ 4^N` (steps 2–4 in `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`).
+**★ K=1 content lemma COMPLETE.** Next downstream (the remaining path to retire the axiom):
+1. Redo `tail_term_cleared`/`lcm_cleared_log_form` with `D_N = lcmUpto N` (structural endpoint clearing
+   from `12^{N−j} ∣ c_j` + `a,b ∣ 12`, i.e. `c_j · x^{j−N}` at `x ∈ {2,3,4}` is already an integer).
+   This replaces the `12^N`-overclearing; the new forms have `E_N = lcmUpto N · (9/40)^N → 0` (`K=1<τ`),
+   so `logForm_conditional_lower` becomes non-vacuous.
+2. Non-vanishing determinant of three consecutive `(B, A₁, A₂)` triples (nonzero integer ⇒ `n ≠ 0`).
+3. `lcmUpto N ≤ 4^N` asymptotic (mathlib `Nat.lcmUpto`/Chebyshev) to get the finite exponent `κ`.
+See steps 2–4 in `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`.
 
 ### Prior "next actions" (mechanism now proved; superseded by the course correction above)
 
