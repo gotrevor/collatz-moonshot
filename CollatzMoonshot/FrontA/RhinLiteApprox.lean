@@ -581,6 +581,90 @@ theorem rhinLiteEvenPolynomialZ_content (t j : ℕ) :
   have hmul := hcop.mul_dvd h4 h3
   rwa [← mul_pow, show (4 : ℤ) * 3 = 12 by norm_num] at hmul
 
+/-- **The two `D_N = lcmUpto N`-cleared integer log forms (K=1).**  Structural analogue of
+`rhinLiteEven_two_log_forms` but with the SMALLER denominator `D_N = lcmUpto N` (no global `12^N`),
+using the proved coefficient content `rhinLiteEvenPolynomialZ_content`.  Common
+`B = lcmUpto N · coeff_N(H_N)`, `lcmUpto N·17^N ≤ B ≤ lcmUpto N·18^N`. -/
+theorem rhinLiteEven_two_log_forms_K1 (t : ℕ) :
+    ∃ A₁ A₂ B : ℤ,
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+          (∫ x in (2 : ℝ)..3,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₁ : ℝ) + (B : ℝ) * Real.log (3 / 2)) ∧
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) *
+          (∫ x in (3 : ℝ)..4,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₂ : ℝ) + (B : ℝ) * Real.log (4 / 3)) ∧
+      (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 17 ^ rhinLiteEvenIndex t ≤ B ∧
+      B ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 18 ^ rhinLiteEvenIndex t := by
+  have hdeg : ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree ≤
+      2 * rhinLiteEvenIndex t := le_of_eq (rhinLiteEvenPolynomialZ_map_real_natDegree t)
+  have hN : rhinLiteEvenIndex t ≤
+      ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree := by
+    rw [rhinLiteEvenPolynomialZ_map_real_natDegree]; omega
+  obtain ⟨A₁, h₁⟩ := lcm_cleared_log_form_K1 (rhinLiteEvenPolynomialZ t) (ea := 2) (eb := 3)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN (fun j => rhinLiteEvenPolynomialZ_content t j)
+  obtain ⟨A₂, h₂⟩ := lcm_cleared_log_form_K1 (rhinLiteEvenPolynomialZ t) (ea := 3) (eb := 4)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN (fun j => rhinLiteEvenPolynomialZ_content t j)
+  refine ⟨A₁, A₂,
+    (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) *
+      (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t), ?_, ?_, ?_, ?_⟩
+  · simpa using h₁
+  · simpa using h₂
+  · obtain ⟨hlo, _⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+    have hD : (0 : ℤ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) := by positivity
+    calc (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 17 ^ rhinLiteEvenIndex t
+        ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) *
+            (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) :=
+          mul_le_mul_of_nonneg_left hlo hD
+      _ = _ := by ring
+  · obtain ⟨_, hhi⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+    have hD : (0 : ℤ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) := by positivity
+    exact mul_le_mul_of_nonneg_left hhi hD
+
+/-- **Data packaging (K=1).**  Structural analogue of `rhinLite_forms_bounded` with the smaller
+`D_N = lcmUpto N`: `0 < B`, `lcmUpto N·17^N ≤ B ≤ lcmUpto N·18^N`, `0 < Lᵢ ≤ lcmUpto N·(9/40)^N`.
+The remainder `E_N = lcmUpto N·(9/40)^N → 0` (K=1 < τ), so `logForm_conditional_lower` is
+non-vacuous for large `N`. -/
+theorem rhinLite_forms_bounded_K1 (t : ℕ) :
+    ∃ A₁ A₂ B : ℤ,
+      0 < B ∧
+      (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 17 ^ rhinLiteEvenIndex t ≤ (B : ℝ) ∧
+      (B : ℝ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 18 ^ rhinLiteEvenIndex t ∧
+      0 < (A₁ : ℝ) + B * Real.log (3 / 2) ∧
+      (A₁ : ℝ) + B * Real.log (3 / 2)
+          ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t ∧
+      0 < (A₂ : ℝ) + B * Real.log (4 / 3) ∧
+      (A₂ : ℝ) + B * Real.log (4 / 3)
+          ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+  obtain ⟨A₁, A₂, B, h₁, h₂, hBlo, hBhi⟩ := rhinLiteEven_two_log_forms_K1 t
+  set N := rhinLiteEvenIndex t with hN
+  set D : ℝ := (Nat.lcmUpto N : ℝ) with hDdef
+  have hDpos : 0 < D := by rw [hDdef]; exact_mod_cast Nat.lcmUpto_pos N
+  have hBloR : D * 17 ^ N ≤ (B : ℝ) := by
+    have : ((Nat.lcmUpto N : ℤ) * 17 ^ N : ℤ) ≤ B := hBlo
+    calc D * 17 ^ N = (((Nat.lcmUpto N : ℤ) * 17 ^ N : ℤ) : ℝ) := by rw [hDdef]; push_cast; ring
+      _ ≤ (B : ℝ) := by exact_mod_cast this
+  have hBhiR : (B : ℝ) ≤ D * 18 ^ N := by
+    have : B ≤ ((Nat.lcmUpto N : ℤ) * 18 ^ N : ℤ) := hBhi
+    calc (B : ℝ) ≤ (((Nat.lcmUpto N : ℤ) * 18 ^ N : ℤ) : ℝ) := by exact_mod_cast this
+      _ = D * 18 ^ N := by rw [hDdef]; push_cast; ring
+  have hBpos : 0 < B := by
+    have h17 : (0 : ℝ) < D * 17 ^ N := by positivity
+    have : (0 : ℝ) < (B : ℝ) := lt_of_lt_of_le h17 hBloR
+    exact_mod_cast this
+  obtain ⟨hi23pos, hi23le⟩ := rhinLiteEven_logForm_small_23 t
+  obtain ⟨hi34pos, hi34le⟩ := rhinLiteEven_logForm_small_34 t
+  refine ⟨A₁, A₂, B, hBpos, hBloR, hBhiR, ?_, ?_, ?_, ?_⟩
+  · rw [← h₁]; exact mul_pos hDpos hi23pos
+  · rw [← h₁]; exact mul_le_mul_of_nonneg_left hi23le hDpos.le
+  · rw [← h₂]; exact mul_pos hDpos hi34pos
+  · rw [← h₂]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
+
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
 There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p, q, r)`,
