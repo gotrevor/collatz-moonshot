@@ -1179,27 +1179,53 @@ theorem rhinLite_integralMatrix_det_cofactor (t₀ : ℕ) :
     Matrix.empty_val', Matrix.cons_val_fin_one]
   ring
 
-/-- **THE deep node (perfect-system determinant, now over ℝ).**  The `3×3` *real* matrix of three
-consecutive integral triples `(c_N, I₁, I₂)` is nonsingular.  This is the genuine analytic core of
-Rhin's non-degeneracy for the block subsequence `N = 2000t`.
+/-- **Single-term dominance (disclosed analytic sub-node).**  The `c₂·M(0,1)` cofactor term
+strictly dominates the sum of the other two in absolute value:
+`|c(t₀+2)·M(0,1)| > |c(t₀)·M(1,2)| + |c(t₀+1)·M(0,2)|`, `M(a,b) = I₁(a)I₂(b) − I₂(a)I₁(b)`.
 
-By `rhinLite_integralMatrix_det_cofactor`, `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)` with minors
-`M(a,b) = I₂(a)I₂(b)(ρ(a)−ρ(b))`, `ρ(t) = I₁(t)/I₂(t)`, and all `c_N, I₁, I₂ > 0`
-(`rhinLiteCentral_pos`, `rhinLiteI₁_pos`, `rhinLiteI₂_pos`).  Note `ρ`-strict-monotonicity ALONE is
-insufficient: the three cofactor terms alternate in sign, so `det ≠ 0` needs the *magnitude* balance
-too (numerically a ~4000-order cancellation for `t₀=1`), i.e. the leading asymptotics
-`I_i(t) = γ_i·N^{-1/2}·(9/40)^N·(1 + O(1/N))` of the two integrals.
+This encapsulates the ENTIRE remaining analytic content and is what makes the determinant nonzero
+by clean dominance (NO cancellation).  Its proof needs only *crude exponential two-sided bounds* on
+the integrals — `I₁(t) ≍ exp(t·m₁)` on `[2,3]`, `I₂(t) ≍ exp(t·m₂)` on `[3,4]` with the
+**separated rates** `m₁ = max_{[2,3]}ψ ≈ −3014.5 > m₂ = max_{[3,4]}ψ ≈ −3025.5` (gap `≈ 11`), the
+proved central-coefficient band `17^N ≤ c_N ≤ 18^N` (rate `γ ≈ 5700 ≫ m₁`), and the resulting
+exponent separations `γ − m₁ ≈ 8681 > 0`, `m₁ − m₂ ≈ 11 > 0`.  The margins are `exp(8681·t)`, so no
+Laplace `√N` precision is needed — enclosing rational rates suffice.  See `PENDING_WORK.md`
+"★ BREAKTHROUGH" and `experiments/rhin_lite_laplace.py`.
 
-Numerically confirmed nonzero (`experiments/rhin_lite_det_check.py`, exact integer arithmetic:
-`t₀ = 1` gives `log₁₀|det| ≈ 3570`), but it is *near-degenerate*: columns `I₁, I₂` satisfy
-`R₁/R₂ = A₁/A₂ ≈ log(3/2)/log(4/3)` to `≈ N` digits (`R_i = A_i/D_N ≈ −c_N·θ_i`), so a coarse bound
-cannot separate `det` from `0`.  The nonzero-ness reduces to the strict monotonicity of the ratio
-`R₁(t)/R₂(t)` in `t` (equivalently `I₂θ₁−I₁θ₂` combinations not cancelling across the three rows),
-which needs the leading asymptotics of the integrals — a genuine multi-lap analytic obligation.
-See `PENDING_WORK.md` "★ determinant". -/
+TODO(next laps): prove the four exponential integral bounds + the arithmetic separation.  Sub-nodes:
+`max_{[2,3]}ψ`, `max_{[3,4]}ψ` bounds (via `RhinLiteMaximum`/`RhinLiteCritical` brackets) and exp
+lower bounds via a fixed sub-window. -/
+theorem rhinLite_det_dominance (t₀ : ℕ) :
+    |rhinLiteCentral (t₀ + 2)
+        * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 1))|
+      > |rhinLiteCentral t₀
+          * (rhinLiteI₁ (t₀ + 1) * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ (t₀ + 1) * rhinLiteI₁ (t₀ + 2))|
+        + |rhinLiteCentral (t₀ + 1)
+            * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 2))| := by
+  sorry
+
+/-- **THE deep node — now PROVED from the single dominance sub-node.**  The `3×3` real integral
+determinant is nonzero: by the cofactor expansion `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)`, the
+dominant term `c₂M(0,1)` exceeds the other two in absolute value (`rhinLite_det_dominance`), so a
+reverse triangle inequality gives `|det| ≥ |c₂M(0,1)| − |c₀M(1,2)| − |c₁M(0,2)| > 0`. -/
 theorem rhinLite_integralMatrix_det_ne_zero (t₀ : ℕ) :
     (rhinLiteIntegralMatrix t₀).det ≠ 0 := by
-  sorry
+  rw [rhinLite_integralMatrix_det_cofactor]
+  set b : ℝ := rhinLiteCentral t₀
+      * (rhinLiteI₁ (t₀ + 1) * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ (t₀ + 1) * rhinLiteI₁ (t₀ + 2))
+    with hb
+  set d : ℝ := rhinLiteCentral (t₀ + 1)
+      * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 2) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 2)) with hd
+  set a : ℝ := rhinLiteCentral (t₀ + 2)
+      * (rhinLiteI₁ t₀ * rhinLiteI₂ (t₀ + 1) - rhinLiteI₂ t₀ * rhinLiteI₁ (t₀ + 1)) with ha
+  have hkey : |a| > |b| + |d| := rhinLite_det_dominance t₀
+  -- goal: b - d + a ≠ 0
+  intro h
+  have haeq : a = d - b := by linarith
+  have htri : |d - b| ≤ |d| + |b| := by
+    have := abs_sub_le d 0 b; simpa using this
+  rw [haeq] at hkey
+  linarith [htri]
 
 /-- **THE deep node (perfect-system determinant).**  The `3×3` integer matrix of three consecutive
 form-triples `(B, A₁, A₂)` is nonsingular.  Reduced (via the PROVED column-reduction
