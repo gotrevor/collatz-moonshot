@@ -56,10 +56,15 @@ into three named nodes:
   `Q₆`.  So **`rhinLiteEvenPolynomialZ_content` (`12^{N−j} ∣ coeff_j`) is now fully machine-checked.**
 
 **★ K=1 content lemma COMPLETE.** Next downstream (the remaining path to retire the axiom):
-1. Redo `tail_term_cleared`/`lcm_cleared_log_form` with `D_N = lcmUpto N` (structural endpoint clearing
-   from `12^{N−j} ∣ c_j` + `a,b ∣ 12`, i.e. `c_j · x^{j−N}` at `x ∈ {2,3,4}` is already an integer).
-   This replaces the `12^N`-overclearing; the new forms have `E_N = lcmUpto N · (9/40)^N → 0` (`K=1<τ`),
-   so `logForm_conditional_lower` becomes non-vacuous.
+1. **DONE (2026-08-31): K=1 clearing lemmas proved** in `RhinLiteLogForm.lean`, sorry-free —
+   `content_zpow_isInt` (`c · e^{j−N} ∈ ℤ` for `e ∣ 12` given `12^{N−j} ∣ c`),
+   `tail_term_cleared_K1`, and `lcm_cleared_log_form_K1` (the `D_N = lcmUpto N` log form, taking the
+   coefficient content `∀ j, 12^{N−j} ∣ P.coeff j` as a hypothesis).  These are the general clearing
+   lemmas with a *decaying* remainder (`E_N = lcmUpto N · (9/40)^N → 0`, `K=1<τ`).
+   **NEXT: instantiate `lcm_cleared_log_form_K1` at `P = rhinLiteEvenPolynomialZ t`** using the proved
+   `rhinLiteEvenPolynomialZ_content` for `hcontent`, to get the K=1 versions of the two concrete log
+   forms (`rhinLiteEven_two_log_forms`-analogue with `D_N = lcmUpto N`), then re-run
+   `rhinLite_forms_bounded`/`logForm_conditional_lower` with the smaller `D_N` (now `E_N → 0`).
 2. Non-vanishing determinant of three consecutive `(B, A₁, A₂)` triples (nonzero integer ⇒ `n ≠ 0`).
 3. `lcmUpto N ≤ 4^N` asymptotic (mathlib `Nat.lcmUpto`/Chebyshev) to get the finite exponent `κ`.
 See steps 2–4 in `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`.

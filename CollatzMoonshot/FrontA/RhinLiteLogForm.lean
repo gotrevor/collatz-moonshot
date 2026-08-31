@@ -220,6 +220,97 @@ theorem lcm_cleared_log_form (P : ℤ[X]) {ea eb : ℤ} (hea : ea ∣ 12) (heb :
   push_cast
   ring
 
+/-! ## K=1 structural clearing: `D_N = lcmUpto N` from the coefficient content `12^{N−j} ∣ c_j`
+
+The `12^N`-global clearing above overclears (`K = 1 + log 12 > τ`).  When the coefficient `c` is
+already divisible by `12^{N−j}` (the content of `H_N ∈ (12,X)^N`), the negative endpoint power
+`c · e^{j−N}` (`e ∣ 12`) is **already an integer** — no global `12^N` is needed, only `lcmUpto N`
+clears the `1/(j−N)` factor.  This is Wu's `Δ = 1`, `K = 1 < τ` construction. -/
+
+/-- For `e ∣ 12` (positive) and a coefficient `c` with `12^{N−j} ∣ c`, the endpoint value
+`c · e^{j−N}` is an integer (the negative power `e^{j−N}` is cleared by the content of `c`). -/
+theorem content_zpow_isInt {e : ℤ} (he : e ∣ 12) (hepos : 0 < e) {c : ℤ} {j N : ℕ}
+    (hcontent : (12 : ℤ) ^ (N - j) ∣ c) :
+    ∃ z : ℤ, (c : ℝ) * (e : ℝ) ^ ((j : ℤ) - N) = (z : ℝ) := by
+  have hepos' : (0 : ℝ) < (e : ℝ) := by exact_mod_cast hepos
+  by_cases hjN : N ≤ j
+  · -- `j ≥ N`: nonnegative exponent
+    have hk0 : 0 ≤ (j : ℤ) - N := by omega
+    refine ⟨c * e ^ ((j : ℤ) - N).toNat, ?_⟩
+    push_cast
+    rw [← zpow_natCast (e : ℝ) ((j : ℤ) - N).toNat, Int.toNat_of_nonneg hk0]
+  · -- `j < N`: clear the negative power via the content `e^{N−j} ∣ 12^{N−j} ∣ c`
+    have hdvd : (e : ℤ) ^ (N - j) ∣ c := dvd_trans (pow_dvd_pow_of_dvd he (N - j)) hcontent
+    obtain ⟨w, hw⟩ := hdvd
+    refine ⟨w, ?_⟩
+    have hkm : ((j : ℤ) - N) = -((N - j : ℕ) : ℤ) := by omega
+    have hem : (e : ℝ) ^ (N - j) ≠ 0 := by positivity
+    rw [hkm, zpow_neg, zpow_natCast,
+      show (c : ℝ) = ((e : ℝ) ^ (N - j)) * (w : ℝ) by rw [hw]; push_cast; ring]
+    field_simp
+
+/-- **Single tail term cleared to an integer by `D_N = lcmUpto N` alone (K=1).**  Given the
+coefficient content `12^{N−j} ∣ c`, the tail term is cleared without the global `12^N` factor. -/
+theorem tail_term_cleared_K1 {ea eb : ℤ} (hea : ea ∣ 12) (heb : eb ∣ 12)
+    (heap : 0 < ea) (hebp : 0 < eb) (c : ℤ) {j N : ℕ} (hj : j ≤ 2 * N) (hjN : j ≠ N)
+    (hcontent : (12 : ℤ) ^ (N - j) ∣ c) :
+    ∃ m : ℤ, (Nat.lcmUpto N : ℝ) *
+        ((c : ℝ) * (((eb : ℝ) ^ ((j : ℤ) - N) - (ea : ℝ) ^ ((j : ℤ) - N)) /
+          ((j : ℤ) - N))) = (m : ℝ) := by
+  set k : ℤ := (j : ℤ) - N with hk_def
+  have hkz : k ≠ 0 := by rw [hk_def]; intro h; apply hjN; omega
+  have hkne : (k : ℝ) ≠ 0 := by exact_mod_cast hkz
+  obtain ⟨zb, hzb⟩ := content_zpow_isInt heb hebp (c := c) (j := j) (N := N) hcontent
+  obtain ⟨za, hza⟩ := content_zpow_isInt hea heap (c := c) (j := j) (N := N) hcontent
+  obtain ⟨q, hq⟩ := sub_natCast_dvd_lcmUpto hj hjN
+  refine ⟨q * (zb - za), ?_⟩
+  have hqR : (Nat.lcmUpto N : ℝ) = (k : ℝ) * (q : ℝ) := by rw [hk_def]; exact_mod_cast hq
+  have hdiv : (Nat.lcmUpto N : ℝ) / (k : ℝ) = (q : ℝ) := by
+    rw [hqR, mul_comm, mul_div_assoc, div_self hkne, mul_one]
+  rw [show ((j : ℤ) : ℝ) - (N : ℝ) = (k : ℝ) by rw [hk_def]; push_cast; ring]
+  calc (Nat.lcmUpto N : ℝ) *
+          ((c : ℝ) * (((eb : ℝ) ^ k - (ea : ℝ) ^ k) / (k : ℝ)))
+      = ((Nat.lcmUpto N : ℝ) / (k : ℝ)) *
+          ((c : ℝ) * (eb : ℝ) ^ k - (c : ℝ) * (ea : ℝ) ^ k) := by ring
+    _ = (q : ℝ) * ((zb : ℝ) - (za : ℝ)) := by rw [hdiv, hzb, hza]
+    _ = ((q * (zb - za) : ℤ) : ℝ) := by push_cast; ring
+
+/-- **The `lcmUpto`-cleared integer log form (K=1).**  Same as `lcm_cleared_log_form` but with
+`D_N = lcmUpto N` (no global `12^N`), given the coefficient content `12^{N−j} ∣ P.coeff j` for all
+`j`.  `B = lcmUpto N · P.coeff N`.  This is the form with a *decaying* remainder (`K = 1 < τ`). -/
+theorem lcm_cleared_log_form_K1 (P : ℤ[X]) {ea eb : ℤ} (hea : ea ∣ 12) (heb : eb ∣ 12)
+    (heap : 0 < ea) (hebp : 0 < eb) (hab : ea ≤ eb) (N : ℕ)
+    (hdeg : (P.map (Int.castRingHom ℝ)).natDegree ≤ 2 * N)
+    (hN : N ≤ (P.map (Int.castRingHom ℝ)).natDegree)
+    (hcontent : ∀ j : ℕ, (12 : ℤ) ^ (N - j) ∣ P.coeff j) :
+    ∃ A : ℤ, (Nat.lcmUpto N : ℝ) *
+        (∫ x in (ea : ℝ)..(eb : ℝ),
+          (P.map (Int.castRingHom ℝ)).eval x / x ^ (N + 1))
+      = (A : ℝ) + ((Nat.lcmUpto N * P.coeff N : ℤ) : ℝ) *
+          Real.log ((eb : ℝ) / (ea : ℝ)) := by
+  classical
+  set p := P.map (Int.castRingHom ℝ) with hp
+  have ha : (0 : ℝ) < (ea : ℝ) := by exact_mod_cast heap
+  have hab' : (ea : ℝ) ≤ (eb : ℝ) := by exact_mod_cast hab
+  have hcoeff : ∀ j : ℕ, p.coeff j = ((P.coeff j : ℤ) : ℝ) := by
+    intro j; rw [hp, coeff_map]; simp
+  obtain ⟨A, hA⟩ := isInt_finset_sum ((range (p.natDegree + 1)).erase N)
+    (fun j => (Nat.lcmUpto N : ℝ) *
+      (p.coeff j * (((eb : ℝ) ^ ((j : ℤ) - N) - (ea : ℝ) ^ ((j : ℤ) - N)) / ((j : ℤ) - N))))
+    (by
+      intro j hj
+      have hjN : j ≠ N := (Finset.mem_erase.mp hj).1
+      have hjr : j < p.natDegree + 1 := Finset.mem_range.mp (Finset.mem_erase.mp hj).2
+      have hj2 : j ≤ 2 * N := by omega
+      rw [hcoeff j]
+      exact tail_term_cleared_K1 hea heb heap hebp (P.coeff j) hj2 hjN (hcontent j))
+  refine ⟨A, ?_⟩
+  rw [integral_poly_div_pow_split ha hab' p N hN, mul_add, Finset.mul_sum, hA, add_comm]
+  congr 1
+  rw [hcoeff N]
+  push_cast
+  ring
+
 /-! ## The integer even polynomial `H_N` and the two concrete log forms -/
 
 /-- The signed six-factor polynomial at `N = 2000t`, over `ℤ` (the same object as
