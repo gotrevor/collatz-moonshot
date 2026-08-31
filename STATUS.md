@@ -70,11 +70,13 @@ entire dominance assembly (`det_dominance_of_step_bounds`) is PROVED trust-base 
 kernel bound `rhinLiteKernelAbs_div_pow_le_on_Icc34` — a `[3,4]`-restricted compact-max bridge plus
 the tight bracket certificate).  The concentration lower leaf `rhinLiteI₁_concentration_lower` is
 now PROVED by a log-convexity induction (`I₁(t+1)/I₁(t)` nondecreasing ⟹ stays `≥` its base value
-`≥ 2κ`), resting on TWO sound disclosed nodes: `rhinLiteI₁_logConvex` (`I₁(t+1)² ≤ I₁(t)·I₁(t+2)`,
-Cauchy–Schwarz moment log-convexity) and `rhinLiteI₁_ratio_base` (`2κ·I₁(0) ≤ I₁(1)`, one numerical
-node).  (This replaced an earlier UNSOUND window decomposition whose "window carries ≥ ½ mass" claim
-is false at small `t`.)  Disclosed proof debt is thus exactly these TWO nodes (in
-`RhinLiteApprox.lean`).  Named literature and conjecture axioms are also used explicitly.
+`≥ 2κ`), resting on the moment log-convexity `rhinLiteI₁_logConvex` (`I₁(t+1)² ≤ I₁(t)·I₁(t+2)`) — now PROVED
+trust-base clean via a general interval Cauchy–Schwarz (`interval_sq_integral_cauchySchwarz`,
+`L²`-Hölder, also trust-base clean) — plus `rhinLiteI₁_ratio_base` (`2κ·I₁(0) ≤ I₁(1)`).  (This
+replaced an earlier UNSOUND window decomposition whose "window carries ≥ ½ mass" claim is false at
+small `t`.)  **Disclosed proof debt across the ENTIRE determinant crux is thus a SINGLE numerical
+node `rhinLiteI₁_ratio_base`** (in `RhinLiteApprox.lean`).  Named literature and conjecture axioms
+are also used explicitly.
 The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.

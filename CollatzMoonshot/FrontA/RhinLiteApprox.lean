@@ -1511,14 +1511,124 @@ theorem rhinLiteI₂_peak_upper (t : ℕ) :
         ≤ ((2209 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
     _ = rhinLiteKappa := by rw [rhinLiteKappa, ← pow_mul, Nat.mul_comm rhinLiteScale 2]
 
-/-- **(C1) Log-convexity of the moment sequence `I₁` — disclosed.**  `I₁(t+1)² ≤ I₁(t)·I₁(t+2)`.
-Since `I₁(t) = ∫₂³ g(x)^t dν(x)` with `g = φ²  ≥ 0` and `dν = dx/x ≥ 0`, this is the Cauchy–Schwarz
-(moment) log-convexity: `∫ g^{t+1} = ∫ g^{t/2}·g^{(t+2)/2} ≤ (∫g^t)^{1/2}(∫g^{t+2})^{1/2}`.  A clean,
-robustly-true analytic fact (no tight numerics) — the honest replacement for the false "window
-carries ≥ ½ the mass" statement, which fails at small `t`.  Disclosed. -/
+/-- Cauchy–Schwarz for interval integrals of nonnegative continuous functions,
+`(∫ₐᵇ u·v)² ≤ (∫ₐᵇ u²)(∫ₐᵇ v²)`.  Standard `L²` Hölder; disclosed as the single general analytic
+lemma behind the moment log-convexity of `I₁`. -/
+theorem interval_sq_integral_cauchySchwarz {a b : ℝ} (hab : a ≤ b) {u v : ℝ → ℝ}
+    (hu : ContinuousOn u (Set.Icc a b)) (hv : ContinuousOn v (Set.Icc a b))
+    (hunn : ∀ x ∈ Set.Icc a b, 0 ≤ u x) (hvnn : ∀ x ∈ Set.Icc a b, 0 ≤ v x) :
+    (∫ x in a..b, u x * v x) ^ 2 ≤ (∫ x in a..b, u x ^ 2) * (∫ x in a..b, v x ^ 2) := by
+  rw [intervalIntegral.integral_of_le hab, intervalIntegral.integral_of_le hab,
+    intervalIntegral.integral_of_le hab]
+  set μ : MeasureTheory.Measure ℝ := MeasureTheory.volume.restrict (Set.Ioc a b) with hμ
+  haveI : MeasureTheory.IsFiniteMeasure μ :=
+    ⟨by rw [hμ, MeasureTheory.Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+  have mIoc : MeasurableSet (Set.Ioc a b) := measurableSet_Ioc
+  have hsub : Set.Ioc a b ⊆ Set.Icc a b := Set.Ioc_subset_Icc_self
+  have hne : (Set.Icc a b).Nonempty := ⟨a, Set.left_mem_Icc.mpr hab⟩
+  -- uniform bounds from the extreme value theorem on the compact interval
+  obtain ⟨mu, _, hmu⟩ := isCompact_Icc.exists_isMaxOn hne hu.abs
+  obtain ⟨mv, _, hmv⟩ := isCompact_Icc.exists_isMaxOn hne hv.abs
+  have aeu : MeasureTheory.AEStronglyMeasurable u μ :=
+    (hu.mono hsub).aestronglyMeasurable mIoc
+  have aev : MeasureTheory.AEStronglyMeasurable v μ :=
+    (hv.mono hsub).aestronglyMeasurable mIoc
+  have memu : MeasureTheory.MemLp u (ENNReal.ofReal 2) μ :=
+    MeasureTheory.MemLp.of_bound aeu |u mu|
+      (MeasureTheory.ae_restrict_of_forall_mem mIoc
+        (fun x hx => by simpa [Real.norm_eq_abs] using hmu (hsub hx)))
+  have memv : MeasureTheory.MemLp v (ENNReal.ofReal 2) μ :=
+    MeasureTheory.MemLp.of_bound aev |v mv|
+      (MeasureTheory.ae_restrict_of_forall_mem mIoc
+        (fun x hx => by simpa [Real.norm_eq_abs] using hmv (hsub hx)))
+  have hpq : (2 : ℝ).HolderConjugate 2 := by rw [Real.holderConjugate_iff]; norm_num
+  have hunn' : 0 ≤ᵐ[μ] u :=
+    MeasureTheory.ae_restrict_of_forall_mem mIoc (fun x hx => hunn x (hsub hx))
+  have hvnn' : 0 ≤ᵐ[μ] v :=
+    MeasureTheory.ae_restrict_of_forall_mem mIoc (fun x hx => hvnn x (hsub hx))
+  have hol := MeasureTheory.integral_mul_le_Lp_mul_Lq_of_nonneg hpq hunn' hvnn' memu memv
+  -- rewrite rpow(2) to nat-pow, (·)^(1/2) to sqrt
+  have hpu : (∫ x, u x ^ (2 : ℝ) ∂μ) = ∫ x, u x ^ 2 ∂μ := by
+    refine MeasureTheory.integral_congr_ae (Filter.Eventually.of_forall (fun x => ?_))
+    exact Real.rpow_two (u x)
+  have hpv : (∫ x, v x ^ (2 : ℝ) ∂μ) = ∫ x, v x ^ 2 ∂μ := by
+    refine MeasureTheory.integral_congr_ae (Filter.Eventually.of_forall (fun x => ?_))
+    exact Real.rpow_two (v x)
+  rw [hpu, hpv] at hol
+  have hP : 0 ≤ ∫ x, u x ^ 2 ∂μ :=
+    MeasureTheory.integral_nonneg (fun x => sq_nonneg _)
+  have hQ : 0 ≤ ∫ x, v x ^ 2 ∂μ :=
+    MeasureTheory.integral_nonneg (fun x => sq_nonneg _)
+  have hA : 0 ≤ ∫ x, u x * v x ∂μ := by
+    refine MeasureTheory.integral_nonneg_of_ae ?_
+    filter_upwards [hunn', hvnn'] with x hx hy using mul_nonneg hx hy
+  have hsqrt : (∫ x, u x ^ 2 ∂μ) ^ ((1:ℝ)/2) * (∫ x, v x ^ 2 ∂μ) ^ ((1:ℝ)/2)
+      = Real.sqrt (∫ x, u x ^ 2 ∂μ) * Real.sqrt (∫ x, v x ^ 2 ∂μ) := by
+    rw [Real.sqrt_eq_rpow, Real.sqrt_eq_rpow]
+  rw [hsqrt] at hol
+  calc (∫ x, u x * v x ∂μ) ^ 2
+      ≤ (Real.sqrt (∫ x, u x ^ 2 ∂μ) * Real.sqrt (∫ x, v x ^ 2 ∂μ)) ^ 2 :=
+        pow_le_pow_left₀ hA hol 2
+    _ = (∫ x, u x ^ 2 ∂μ) * (∫ x, v x ^ 2 ∂μ) := by
+        rw [mul_pow, Real.sq_sqrt hP, Real.sq_sqrt hQ]
+
+/-- **(C1) Log-convexity of the moment sequence `I₁` — PROVED from interval Cauchy–Schwarz.**
+`I₁(t+1)² ≤ I₁(t)·I₁(t+2)`.  With `u = √(φ^{2t}/x)`, `v = √(φ^{2t+4}/x)` one has (pointwise on
+`[2,3]`) `u² = φ^{2t}/x`, `v² = φ^{2t+4}/x`, and `u·v = √(φ^{4t+4}/x²) = φ^{2t+2}/x`, so
+`interval_sq_integral_cauchySchwarz` gives exactly the moment inequality. -/
 theorem rhinLiteI₁_logConvex (t : ℕ) :
     rhinLiteI₁ (t + 1) ^ 2 ≤ rhinLiteI₁ t * rhinLiteI₁ (t + 2) := by
-  sorry
+  have hI : ∀ s : ℕ, rhinLiteI₁ s = ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized s x / x := by
+    intro s; rw [rhinLiteI₁]; exact intervalIntegral.integral_congr
+      (fun x _ => rhinLiteEven_logForm_integrand s x)
+  -- integrand `G s x = normalized s x / x`, continuous and nonneg on [2,3]
+  have hcont : ∀ s : ℕ,
+      ContinuousOn (fun x : ℝ => rhinLiteEvenNormalized s x / x) (Set.Icc (2 : ℝ) 3) := by
+    intro s
+    exact ContinuousOn.div
+      ((continuousOn_rhinLiteEvenNormalized s).mono (Set.Icc_subset_Icc (le_refl _) (by norm_num)))
+      continuousOn_id (fun x hx => ne_of_gt (by linarith [hx.1] : (0:ℝ) < x))
+  have hGnn : ∀ s : ℕ, ∀ x ∈ Set.Icc (2 : ℝ) 3, 0 ≤ rhinLiteEvenNormalized s x / x :=
+    fun s x hx => div_nonneg (rhinLiteEvenNormalized_nonneg s (by linarith [hx.1]))
+      (by linarith [hx.1])
+  set u : ℝ → ℝ := fun x => Real.sqrt (rhinLiteEvenNormalized t x / x) with hu_def
+  set v : ℝ → ℝ := fun x => Real.sqrt (rhinLiteEvenNormalized (t + 2) x / x) with hv_def
+  have hcu : ContinuousOn u (Set.Icc (2 : ℝ) 3) := Real.continuous_sqrt.comp_continuousOn (hcont t)
+  have hcv : ContinuousOn v (Set.Icc (2 : ℝ) 3) :=
+    Real.continuous_sqrt.comp_continuousOn (hcont (t + 2))
+  have hunn : ∀ x ∈ Set.Icc (2 : ℝ) 3, 0 ≤ u x := fun x _ => Real.sqrt_nonneg _
+  have hvnn : ∀ x ∈ Set.Icc (2 : ℝ) 3, 0 ≤ v x := fun x _ => Real.sqrt_nonneg _
+  -- pointwise identities on uIcc 2 3 = Icc 2 3
+  have hmem : Set.uIcc (2 : ℝ) 3 = Set.Icc (2 : ℝ) 3 := Set.uIcc_of_le (by norm_num)
+  have e_uu : (∫ x in (2 : ℝ)..3, u x ^ 2) = rhinLiteI₁ t := by
+    rw [hI t]; refine intervalIntegral.integral_congr (fun x hx => ?_)
+    rw [hmem] at hx
+    exact Real.sq_sqrt (hGnn t x hx)
+  have e_vv : (∫ x in (2 : ℝ)..3, v x ^ 2) = rhinLiteI₁ (t + 2) := by
+    rw [hI (t + 2)]; refine intervalIntegral.integral_congr (fun x hx => ?_)
+    rw [hmem] at hx
+    exact Real.sq_sqrt (hGnn (t + 2) x hx)
+  have e_uv : (∫ x in (2 : ℝ)..3, u x * v x) = rhinLiteI₁ (t + 1) := by
+    rw [hI (t + 1)]; refine intervalIntegral.integral_congr (fun x hx => ?_)
+    rw [hmem] at hx
+    have hx0 : (0 : ℝ) < x := by linarith [hx.1]
+    rw [hu_def, hv_def, ← Real.sqrt_mul (hGnn t x hx)]
+    have key : (rhinLiteEvenNormalized t x / x) * (rhinLiteEvenNormalized (t + 2) x / x)
+        = (rhinLiteEvenNormalized (t + 1) x / x) ^ 2 := by
+      rw [rhinLiteEvenNormalized_eq t hx0, rhinLiteEvenNormalized_eq (t + 2) hx0,
+        rhinLiteEvenNormalized_eq (t + 1) hx0]
+      set A : ℝ := rhinLiteKernelAbs x / x ^ rhinLiteScale with hA
+      have hpow : A ^ (2 * t) * A ^ (2 * (t + 2)) = (A ^ (2 * (t + 1))) ^ 2 := by
+        rw [← pow_add, ← pow_mul]; congr 1; ring
+      rw [div_mul_div_comm, hpow]
+      generalize A ^ (2 * (t + 1)) = C
+      rw [div_pow, pow_two x]
+    rw [key, Real.sqrt_sq (hGnn (t + 1) x hx)]
+  calc rhinLiteI₁ (t + 1) ^ 2
+      = (∫ x in (2 : ℝ)..3, u x * v x) ^ 2 := by rw [e_uv]
+    _ ≤ (∫ x in (2 : ℝ)..3, u x ^ 2) * (∫ x in (2 : ℝ)..3, v x ^ 2) :=
+        interval_sq_integral_cauchySchwarz (by norm_num) hcu hcv hunn hvnn
+    _ = rhinLiteI₁ t * rhinLiteI₁ (t + 2) := by rw [e_uu, e_vv]
 
 /-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — disclosed numerical node.**  `I₁(0) = ∫₂³ dx/x =
 log(3/2)` and `I₁(1) = ∫₂³ φ²/x`; the `1/x`-weighted average of `φ²` over `[2,3]` is `≥ 2κ`

@@ -53,10 +53,12 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
        (trust-base clean given the two nodes below).  The step ratio `I₁(t+1)/I₁(t)` is nondecreasing
        in `t` (moment log-convexity), so it stays `≥` its base value `I₁(1)/I₁(0) ≥ 2κ`.  TWO remaining
        disclosed nodes (the SOLE repo sorries now), BOTH TRUE for all `t`:
-       · `rhinLiteI₁_logConvex` : `I₁(t+1)² ≤ I₁(t)·I₁(t+2)` — Cauchy–Schwarz moment log-convexity
-         (`I₁(t)=∫₂³ (φ²)^t dx/x`).  Robustly true, no tight numerics.  NEXT-lap candidate (Mathlib
-         `inner_mul_le_norm_mul_norm` / `intervalIntegral` Cauchy–Schwarz on `g^{t/2}·g^{(t+2)/2}`).
-       · `rhinLiteI₁_ratio_base` : `2κ·I₁(0) ≤ I₁(1)` — one tight numerical node (`I₁(0)=log(3/2)`,
+       · `rhinLiteI₁_logConvex` : `I₁(t+1)² ≤ I₁(t)·I₁(t+2)` — **now PROVED, trust-base clean.**
+         Via the general interval Cauchy–Schwarz `interval_sq_integral_cauchySchwarz` (also PROVED,
+         trust-base clean, `L²`-Hölder `integral_mul_le_Lp_mul_Lq_of_nonneg`) applied to
+         `u=√(φ^{2t}/x)`, `v=√(φ^{2t+4}/x)` with `u·v = φ^{2t+2}/x`.
+       · `rhinLiteI₁_ratio_base` : `2κ·I₁(0) ≤ I₁(1)` — **the SOLE remaining repo sorry.**  One tight
+         numerical node (`I₁(0)=log(3/2)`,
          `I₁(1)≈exp(−3020.0)` vs `2κ·I₁(0)≈exp(−3020.3)`, margin `exp(0.29)`).  A modest window lower
          bound on `I₁(1)` supplies it.
 
