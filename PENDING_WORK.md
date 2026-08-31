@@ -66,7 +66,19 @@ The K=1 forms and the finite-exponent prerequisite are now proved in `RhinLiteAp
 - `lcmUpto_le_pow_eventually` (PROVED): `∃N₀, ∀N≥N₀, lcmUpto N ≤ (22/5)^N` (base 4.4 ∈ (4, 40/9);
   `E_N ≤ (99/100)^N → 0`).  Via `isLittleO_log_rpow_atTop` (√N·log N = o(N)).
 
-**REMAINING — `rhinLiteLIMeasure` (the only open sorry).**  Now needs, in order:
+**UPDATE (later lap): crux decomposed; assembly core PROVED.**  `RhinLiteApprox.lean` now has
+the definite form data `rhinLiteA₁/A₂/B` + `rhinLiteFD_spec` (PROVED), the isolated hard node
+`rhinLite_nonvanishing_triple` (disclosed sorry: 3-consecutive `n(t)≠0`), and
+`rhinLite_pointwise_lower` (PROVED: at a good `t`, `|Λ| ≥ 1/(2·B(t))`).  Two disclosed sorries now:
+`rhinLite_nonvanishing_triple` and `rhinLiteLIMeasure`.  The crux reduces to a **selection/envelope
+lemma**: pick `t` (via `rhinLite_nonvanishing_triple` at a `t₀ ~ log H`) with (i) smallness
+`(|q|+|r|)·E_{N(t)} ≤ 1/2` for all `t≥t₀` (majorant `E_N ≤ (99/100)^N` from `lcmUpto_le_pow_eventually`,
+decreasing) and (ii) `B(t) ≤ b^{N(t)}`, `b = 22/5·18 = 396/5`, with `N(t) ≤ N(t₀)+4000` bounding
+`b^{N(t)} ≤ C·H^κ` (`κ = ⌈log b/log(100/99)⌉ ≈ 435`).  Then `rhinLite_pointwise_lower` closes it.
+NEXT LAP: the analytic selection/envelope lemma (log/ceiling/rpow), then feed both into
+`rhinLiteLIMeasure`.  Handle `q=r=0` separately (`|Λ|=|p|≥1`).
+
+**REMAINING — `rhinLiteLIMeasure`.**  Now needs, in order:
 1. **Non-vanishing determinant** (THE hard node): for `(p,q,r) ≠ 0`, the 3×3 determinant of three
    consecutive form-triples `(B_t, A₁_t, A₂_t)` is a nonzero integer, so `n = p·B − q·A₁ − r·A₂ ≠ 0`
    for at least one of three consecutive `t`.  This is the genuine analytic-NT obligation (a Wronskian
