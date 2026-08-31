@@ -39,6 +39,29 @@ flips it), so nonzero-ness genuinely needs the *magnitude* balance, i.e. the lea
 this is the real obstruction and the next lap must produce the integral asymptotics (saddle-point on
 the normalized integrand, whose max is exactly `(9/40)^N`).
 
+**Route analysis (2026-08-31, third lap) — two routes weighed, one REFUTED:**
+- **(b) p-adic / mod-p certificate — REFUTED for the `∀ t₀` theorem.**  `experiments/rhin_lite_det_modp.py`
+  computes the integer form determinant `det(B,A₁,A₂) mod p` for a prime `p > N_max` (so `p ∤ lcmUpto N`,
+  all `(j−N),2,3` invertible): `t₀=0,1,2 → det ≡ 501, 26, 117 (mod 10007) ≠ 0`, a rigorous per-`t₀`
+  nonzero certificate.  BUT the headline node is `∀ t₀`, and `lcmUpto(2000t) mod p` is NOT periodic in
+  `t` (its prime content changes with `t`), so there is no finite mod-`p` table covering all `t₀`.  A
+  mod-`p` `native_decide` route therefore cannot discharge the universal statement.  (It could only
+  ever close finitely many `t₀`.)
+- **(a′) crude envelope dominance — ALSO REFUTED (quantitative).**  Write the cofactor terms
+  `T0=|c₀M(1,2)|, T1=|c₁M(0,2)|, T2=|c₂M(0,1)|` with `N₀=n, N₁=n+2000, N₂=n+4000`, using
+  `c_i≈17..18^{N_i}`, `M(a,b)≈(9/40)^{N_a+N_b}·(9/680)^{min}` (since `|ρ(a)−ρ(b)|≈(9/680)^{min N}`).
+  The per-`n` exponents are `T0,T1 ≈ e^{−4.420 n}` (EQUAL leading rate) and `T2 ≈ e^{−4.477 n}`
+  (strictly smaller).  So NO single term dominates: `det` is a leading `T0−T1` near-cancellation.
+  A one-term envelope `|c₂M(0,1)| > |c₀M(1,2)|+|c₁M(0,2)|` is FALSE for large `n`.  ⇒ the proof needs
+  the sub-leading (constant + `1/N`) asymptotics, not just leading order.
+- **(a) leading + sub-leading integral asymptotics — THE route.**  The irreducible core is the
+  `T0−T1` cancellation coefficient, i.e. two-term Laplace expansions
+  `I_i(t) = (9/40)^N·N^{-1/2}·(γ_i + δ_i/N + …)` (max `(9/40)^N` and maximizer already in
+  `RhinLiteMaximum`); `det ≠ 0` follows from `γ`/`δ` not conspiring.  Only large `t₀` is needed (the
+  measure selects `t₀ ~ log H`), so an `∃ T₀, ∀ t₀ ≥ T₀` node would suffice with a small-`H`
+  adjustment to the selection.  This is genuine multi-lap analytic NT (Laplace's method to 2 orders,
+  not currently in mathlib).
+
 **NOTE — Λ≠0 is FREE (no Baker needed).**  For `(p,q,r)≠0`, `Λ = p+q log(3/2)+r log(4/3) ≠ 0` by
 unique factorization: `q log(3/2)+r log(4/3) = p ∈ ℤ` ⟹ `(3/2)^q(4/3)^r = e^p` rational ⟹
 `2^{2r−q}3^{q−r} = 1` (with `p=0`) ⟹ `q=r=0`.  The determinant/window is needed ONLY to control
