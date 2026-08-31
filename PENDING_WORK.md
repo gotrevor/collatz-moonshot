@@ -1,6 +1,27 @@
 # PENDING_WORK
 
-## ★ DOMINANCE NODE — DECOMPOSED into 4 per-step sub-nodes; arithmetic glue PROVED (2026-08-31, latest lap) ★
+## ★ DOMINANCE NODE — reduced to TWO envelope nodes; all per-step facts are EDGES (2026-08-31, latest lap) ★
+
+The dominance crux `rhinLite_det_dominance` now rests on exactly **two disclosed analytic nodes**, both
+*tight single-rate two-sided envelopes* — everything else (the assembly, all four per-step facts) is
+PROVED:
+- `rhinLite_integral_envelopes` (disclosed): rates `r₁>r₂` + constants for `I₁,I₂` with per-step
+  decay (`16C₁r₁≤c₁`, `16C₂r₂≤c₂`) and the rate gap (`2C₁C₂r₂ ≤ c₁c₂r₁`), plus `cᵢrᵢᵗ≤Iᵢ(t)≤Cᵢrᵢᵗ`.
+- `rhinLiteCentral_envelope` (disclosed): rate `g`, `16CC≤cc·g`, `cc·gᵗ≤c(t)≤CC·gᵗ`.
+- EDGES (all PROVED from the two nodes): `rhinLiteI₁_step_decay16`, `rhinLiteI₂_step_decay16`,
+  `rhinLite_ratio_gap` (multiplicative — no subtraction), `rhinLiteCentral_step_growth16`.
+
+**Remaining analytic content = the two envelopes.**  Each is a saddle-point/peak-contribution
+obligation: produce, with enclosing RATIONAL rates and `O(1)` tightness, a single-rate two-sided
+bound.  For `I₁,I₂` the rates are the *per-interval* peak values (`exp(m₁), exp(m₂)`, `m₁>m₂`); the
+global-peak `(9/40)^N` envelope is provably too lossy (overestimates by `exp(31t)`).  For central,
+a single-rate envelope (the band `17^N≤c≤18^N` is two-rate, tightness `(18/17)^N` blows up).  NEXT:
+attack `rhinLite_integral_envelopes` first (it carries the gap = the analytic heart), via the
+`RhinLiteMaximum`/`RhinLiteCritical`/`RhinLiteInterval` bracket machinery restricted to each interval
+separately (lower bound: peak sub-window contribution; upper: the existing interval bound sharpened
+to the per-interval max instead of the global `(9/40)^N`).
+
+## ★ DOMINANCE NODE — DECOMPOSED into 4 per-step sub-nodes; arithmetic glue PROVED (2026-08-31, superseded above) ★
 
 `rhinLite_det_dominance` (the sole crux sorry) is now REDUCED to four clean, disclosed per-step
 sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly proved:
