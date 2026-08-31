@@ -49,20 +49,26 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
        no recomputation needed — and (b) a `[3,4]`-restricted copy of the `RhinLiteMaximum`
        compact-max/critical-bracket bridge (`rhinLiteKernelSq_three = 0`, positive interior `7/2`,
        `rhinLiteRootLeft_ge_three`).  DONE.
-     - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — **now REDUCED** (PROVED combination
-       via the pure-power LOWER step `rhinLiteEven_logForm_step_ge_of_bound` (trust-base clean) +
-       adjacent-interval monotonicity).  Fixed window `[a,b]=[277/125,223/100]=[2.216,2.230]⊂[2,3]`.
-       Chain `I₁(t+1) ≥ ∫_{[a,b]}φ²φ^{2t}/x ≥ 4κ∫_{[a,b]}φ^{2t}/x ≥ 4κ·½·I₁(t) = 2κ·I₁(t)`.  TWO
-       remaining disclosed window nodes (the SOLE repo sorries now):
-       · `rhinLiteWindow_phi_sq_lower` : `4κ ≤ φ(x)²` on `[a,b]` — a per-interval LOWER kernel bound
-         (mirror of the `[3,4]` upper node; factor-bound-BELOW certificate on ONE window, factors
-         sign-definite there so endpoint enclosures bracket from below).  ⚠ Note the threshold is
-         `4κ` not `2κ` — the extra factor 2 pays for the ½ mass loss; margin `exp(2.1)` at the tighter
-         endpoint (`ψ≥−3016.5` vs `ln4κ=−3018.7`).  Mechanical, NEXT-lap candidate.
-       · `rhinLiteWindow_mass_half` : `I₁(t) ≤ 2∫_{[a,b]}φ^{2t}/x` — the genuine Laplace concentration
-         (tail `∫_{[2,3]∖[a,b]} ≤ ∫_{[a,b]}` via monotone reparametrization toward the peak).  The
-         real multi-lap heart.  ⚠ Do NOT chase a global pointwise lower bound (φ vanishes at
-         endpoints — refuted).
+     - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — **PROVED by log-convexity induction**
+       (trust-base clean given the two nodes below).  The step ratio `I₁(t+1)/I₁(t)` is nondecreasing
+       in `t` (moment log-convexity), so it stays `≥` its base value `I₁(1)/I₁(0) ≥ 2κ`.  TWO remaining
+       disclosed nodes (the SOLE repo sorries now), BOTH TRUE for all `t`:
+       · `rhinLiteI₁_logConvex` : `I₁(t+1)² ≤ I₁(t)·I₁(t+2)` — Cauchy–Schwarz moment log-convexity
+         (`I₁(t)=∫₂³ (φ²)^t dx/x`).  Robustly true, no tight numerics.  NEXT-lap candidate (Mathlib
+         `inner_mul_le_norm_mul_norm` / `intervalIntegral` Cauchy–Schwarz on `g^{t/2}·g^{(t+2)/2}`).
+       · `rhinLiteI₁_ratio_base` : `2κ·I₁(0) ≤ I₁(1)` — one tight numerical node (`I₁(0)=log(3/2)`,
+         `I₁(1)≈exp(−3020.0)` vs `2κ·I₁(0)≈exp(−3020.3)`, margin `exp(0.29)`).  A modest window lower
+         bound on `I₁(1)` supplies it.
+
+       ⚠ **REFUTED sub-approaches (do NOT retry):** (1) the earlier decomposition via a fixed window
+       `[2.216,2.230]` with `rhinLiteWindow_mass_half : I₁(t) ≤ 2∫_window` is UNSOUND — that mass
+       claim is FALSE at small `t` (at `t=0` the mass is uniform: `I₁(0)=0.405` but `2∫_window=0.013`).
+       Concentration only kicks in for large `t`; the log-convexity induction handles all `t` cleanly.
+       (2) A single-window pointwise `4κ ≤ φ²` certificate via independent factor-min interval
+       arithmetic is `~18` digits too loose (the factor `f₂=x−2` alone has `W₂=551·Δln≈35` on a
+       mass-carrying window); would need `~50` sub-brackets, or a concavity (`ψ''<0`) argument reducing
+       to two endpoint evaluations.  Both mooted — the log-convexity route sidesteps pointwise bounds
+       entirely.  ⚠ Also do NOT chase a global pointwise lower bound (φ vanishes at endpoints).
 
 **KEY CORRECTION over the previous handoff's route.**  Independent two-sided *absolute* exponential
 envelopes on `I₁,I₂` do NOT yield the `|M(0,1)|` lower bound: the difference `I₁(t₀)I₂(t₀+1) −

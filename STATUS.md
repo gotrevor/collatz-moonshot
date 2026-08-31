@@ -69,10 +69,11 @@ entire dominance assembly (`det_dominance_of_step_bounds`) is PROVED trust-base 
 `[3,4]`-peak upper leaf `rhinLiteI₂_peak_upper` is now ALSO fully PROVED (via the tight per-interval
 kernel bound `rhinLiteKernelAbs_div_pow_le_on_Icc34` — a `[3,4]`-restricted compact-max bridge plus
 the tight bracket certificate).  The concentration lower leaf `rhinLiteI₁_concentration_lower` is
-now REDUCED (combination PROVED via the pure-power lower step + adjacent-interval monotonicity) to
-TWO window facts on `[2.216,2.230]`: `rhinLiteWindow_phi_sq_lower` (`4κ ≤ φ²`, a per-interval lower
-kernel bound — mechanical) and `rhinLiteWindow_mass_half` (`I₁(t) ≤ 2∫_window` — the Laplace
-concentration heart).  Disclosed proof debt is thus exactly these TWO window nodes (in
+now PROVED by a log-convexity induction (`I₁(t+1)/I₁(t)` nondecreasing ⟹ stays `≥` its base value
+`≥ 2κ`), resting on TWO sound disclosed nodes: `rhinLiteI₁_logConvex` (`I₁(t+1)² ≤ I₁(t)·I₁(t+2)`,
+Cauchy–Schwarz moment log-convexity) and `rhinLiteI₁_ratio_base` (`2κ·I₁(0) ≤ I₁(1)`, one numerical
+node).  (This replaced an earlier UNSOUND window decomposition whose "window carries ≥ ½ mass" claim
+is false at small `t`.)  Disclosed proof debt is thus exactly these TWO nodes (in
 `RhinLiteApprox.lean`).  Named literature and conjecture axioms are also used explicitly.
 The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate

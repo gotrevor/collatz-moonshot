@@ -1511,89 +1511,43 @@ theorem rhinLiteI₂_peak_upper (t : ℕ) :
         ≤ ((2209 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
     _ = rhinLiteKappa := by rw [rhinLiteKappa, ← pow_mul, Nat.mul_comm rhinLiteScale 2]
 
-/-- **(L1) Window squared-`φ` lower bound — disclosed interval-arithmetic node.**  On the fixed
-rational window `[277/125, 223/100] = [2.216, 2.230] ⊂ [2,3]` around the peak `x₁* ≈ 2.223`, the step
-factor `φ(x)²` is at least `4κ` (numerically the margin is `exp(2.1)` at the tighter endpoint —
-`ψ ≥ −3016.5` vs `ln(4κ) = −3018.7`).  This is a per-interval LOWER kernel bound, the mirror of the
-`[3,4]` upper node; provable by a factor-bound-BELOW certificate on this single window (the factors
-`|x−3|,|x−2|,…` are monotone / sign-definite there, so endpoint enclosures bracket them from below).
-Disclosed. -/
-theorem rhinLiteWindow_phi_sq_lower {x : ℝ}
-    (hx : x ∈ Set.Icc (277 / 125 : ℝ) (223 / 100)) :
-    4 * rhinLiteKappa ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2 := by
+/-- **(C1) Log-convexity of the moment sequence `I₁` — disclosed.**  `I₁(t+1)² ≤ I₁(t)·I₁(t+2)`.
+Since `I₁(t) = ∫₂³ g(x)^t dν(x)` with `g = φ²  ≥ 0` and `dν = dx/x ≥ 0`, this is the Cauchy–Schwarz
+(moment) log-convexity: `∫ g^{t+1} = ∫ g^{t/2}·g^{(t+2)/2} ≤ (∫g^t)^{1/2}(∫g^{t+2})^{1/2}`.  A clean,
+robustly-true analytic fact (no tight numerics) — the honest replacement for the false "window
+carries ≥ ½ the mass" statement, which fails at small `t`.  Disclosed. -/
+theorem rhinLiteI₁_logConvex (t : ℕ) :
+    rhinLiteI₁ (t + 1) ^ 2 ≤ rhinLiteI₁ t * rhinLiteI₁ (t + 2) := by
   sorry
 
-/-- **(L2) Window mass ≥ ½ — the Laplace concentration heart, disclosed.**  The full `[2,3]` integral
-is at most twice the window integral: the mass of `φ^{2t}` concentrates near the peak.  Route: the
-tail `∫_{[2,3]∖[a,b]} φ^{2t}/x` is dominated by `∫_{[a,b]} φ^{2t}/x` because on the tail `φ` is
-strictly below its window values (a monotone reparametrization toward the peak), so as `t` grows the
-window carries at least half the mass.  This is the genuine multi-lap analytic obligation. -/
-theorem rhinLiteWindow_mass_half (t : ℕ) :
-    rhinLiteI₁ t ≤ 2 * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by
+/-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — disclosed numerical node.**  `I₁(0) = ∫₂³ dx/x =
+log(3/2)` and `I₁(1) = ∫₂³ φ²/x`; the `1/x`-weighted average of `φ²` over `[2,3]` is `≥ 2κ`
+(numerically `I₁(1) ≈ exp(−3020.0)` vs `2κ·I₁(0) ≈ exp(−3020.3)`, margin `exp(0.29)`).  This is the
+single tight numerical prerequisite; a modest window lower bound on `I₁(1)` supplies it.  Disclosed. -/
+theorem rhinLiteI₁_ratio_base :
+    2 * rhinLiteKappa * rhinLiteI₁ 0 ≤ rhinLiteI₁ 1 := by
   sorry
 
-/-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound) — now REDUCED** to the two window
-facts `rhinLiteWindow_phi_sq_lower` (φ² ≥ 4κ on `[a,b]`) and `rhinLiteWindow_mass_half`
-(window carries ≥ ½ the `[2,3]` mass), combined by the pure-power lower step
-`rhinLiteEven_logForm_step_ge_of_bound` and sub-interval monotonicity.  Chain:
-`I₁(t+1) ≥ ∫_{[a,b]} φ²φ^{2t}/x ≥ 4κ∫_{[a,b]} φ^{2t}/x ≥ 4κ·½·I₁(t) = 2κ·I₁(t)`. -/
+/-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound) — PROVED from log-convexity.**
+`2κ·I₁(t) ≤ I₁(t+1)` for all `t`.  The step ratio `I₁(t+1)/I₁(t)` is nondecreasing in `t` (immediate
+from the moment log-convexity `rhinLiteI₁_logConvex`), so it stays above its base value
+`I₁(1)/I₁(0) ≥ 2κ` (`rhinLiteI₁_ratio_base`).  This sound induction replaces the earlier unsound
+window-mass decomposition (whose mass-fraction claim is false at small `t`). -/
 theorem rhinLiteI₁_concentration_lower (t : ℕ) :
     2 * rhinLiteKappa * rhinLiteI₁ t ≤ rhinLiteI₁ (t + 1) := by
-  have hab : (277 / 125 : ℝ) ≤ 223 / 100 := by norm_num
-  have hκnn : (0 : ℝ) ≤ rhinLiteKappa := rhinLiteKappa_pos.le
-  -- normalized form of the two full integrals
-  have hI : ∀ s : ℕ, rhinLiteI₁ s = ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized s x / x := by
-    intro s; rw [rhinLiteI₁]; exact intervalIntegral.integral_congr
-      (fun x _ => rhinLiteEven_logForm_integrand s x)
-  -- pointwise nonnegativity of the integrand on [2,3]
-  have hFnn : ∀ x ∈ Set.Icc (2 : ℝ) 3, 0 ≤ rhinLiteEvenNormalized (t + 1) x / x := by
-    intro x hx
-    exact div_nonneg (rhinLiteEvenNormalized_nonneg (t + 1) (by linarith [hx.1]))
-      (by linarith [hx.1])
-  -- integrability on the three adjacent pieces [2,a], [a,b], [b,3]
-  have i2a := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 2) (b := 277 / 125)
-    (by norm_num) (by norm_num) (by norm_num)
-  have iab := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 277 / 125) (b := 223 / 100)
-    (by norm_num) (by norm_num) hab
-  have ib3 := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 223 / 100) (b := 3)
-    (by norm_num) (by norm_num) (by norm_num)
-  -- the window integral is ≤ the full [2,3] integral (nonneg integrand, adjacent-interval split)
-  have hsub : (∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x)
-      ≤ ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := by
-    have hnn2a : 0 ≤ ∫ x in (2 : ℝ)..(277 / 125), rhinLiteEvenNormalized (t + 1) x / x :=
-      intervalIntegral.integral_nonneg (by norm_num)
-        (fun x hx => hFnn x ⟨hx.1, by linarith [hx.2]⟩)
-    have hnnb3 : 0 ≤ ∫ x in (223 / 100 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x :=
-      intervalIntegral.integral_nonneg (by norm_num)
-        (fun x hx => hFnn x ⟨by linarith [hx.1], hx.2⟩)
-    have hsplit : (∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x)
-        = (∫ x in (2 : ℝ)..(277 / 125), rhinLiteEvenNormalized (t + 1) x / x)
-          + (∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x)
-          + ∫ x in (223 / 100 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := by
-      rw [add_assoc, intervalIntegral.integral_add_adjacent_intervals iab ib3,
-        intervalIntegral.integral_add_adjacent_intervals i2a (iab.trans ib3)]
-    rw [hsplit]; linarith
-  -- pure-power lower step on the window: 4κ · ∫window φ^{2t} ≤ ∫window φ^{2t+2}
-  have hstep := rhinLiteEven_logForm_step_ge_of_bound t (by norm_num : (2:ℝ) ≤ 277/125)
-    (by norm_num : (223/100:ℝ) ≤ 4) hab (by positivity)
-    (fun x hx => rhinLiteWindow_phi_sq_lower hx)
-  -- window carries at least half the [2,3] mass
-  have hmass := rhinLiteWindow_mass_half t
-  -- assemble
-  rw [hI (t + 1)]
-  have hwin_nn : 0 ≤ ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by
-    refine intervalIntegral.integral_nonneg hab (fun x hx => ?_)
-    exact div_nonneg (rhinLiteEvenNormalized_nonneg t (by linarith [hx.1] : (0:ℝ) < x))
-      (by linarith [hx.1])
-  calc 2 * rhinLiteKappa * rhinLiteI₁ t
-        ≤ 2 * rhinLiteKappa
-            * (2 * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x) := by
-          have : 0 ≤ 2 * rhinLiteKappa := by positivity
-          nlinarith [hmass, this]
-    _ = 4 * rhinLiteKappa
-            * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by ring
-    _ ≤ ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x := hstep
-    _ ≤ ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := hsub
+  induction t with
+  | zero => exact rhinLiteI₁_ratio_base
+  | succ n ih =>
+    have hp1 := rhinLiteI₁_pos (n + 1)
+    have hp2 := rhinLiteI₁_pos (n + 2)
+    have hκ := rhinLiteKappa_pos
+    have hlc := rhinLiteI₁_logConvex n
+    -- ih : 2κ·I₁ n ≤ I₁(n+1);  hlc : I₁(n+1)² ≤ I₁ n · I₁(n+2);  want 2κ·I₁(n+1) ≤ I₁(n+2)
+    have hkey : 2 * rhinLiteKappa * rhinLiteI₁ (n + 1) ^ 2
+        ≤ rhinLiteI₁ (n + 1) * rhinLiteI₁ (n + 2) := by
+      nlinarith [mul_le_mul_of_nonneg_left hlc (by positivity : (0:ℝ) ≤ 2 * rhinLiteKappa),
+        mul_le_mul_of_nonneg_right ih hp2.le]
+    nlinarith [hkey, hp1]
 
 /-- **Sub-node (the rate gap `μ₁ > M₂`) — now REDUCED to two one-sided per-interval facts.**  `I₁`
 decays strictly slower than `I₂`: per step the `I₁`-ratio exceeds twice the `I₂`-ratio,
