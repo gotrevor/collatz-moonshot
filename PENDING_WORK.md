@@ -39,7 +39,39 @@ flips it), so nonzero-ness genuinely needs the *magnitude* balance, i.e. the lea
 this is the real obstruction and the next lap must produce the integral asymptotics (saddle-point on
 the normalized integrand, whose max is exactly `(9/40)^N`).
 
-**Route analysis (2026-08-31, third lap) — two routes weighed, one REFUTED:**
+## ★ BREAKTHROUGH (2026-08-31, fourth lap) — det is CLEAN DOMINANCE, not a cancellation ★
+
+**The prior "delicate cancellation / two-term Laplace required" assessment was WRONG** — it assumed
+`I₁, I₂` share the rate `(9/40)^N`.  They do NOT.  `experiments/rhin_lite_laplace.py` (float; the
+per-`t` log profile `g_N = exp(t·ψ)`, `ψ(x) = Σ2Wᵢ log|fᵢ(x)| − 2000 log x`, grid-scanned) shows the
+two integrals have **different exponential rates**:
+- `m₁ := max_{[2,3]} ψ = −3014.51` at `x ≈ 2.2232`   ⟹ `I₁(t) ≍ exp(t·m₁)`
+- `m₂ := max_{[3,4]} ψ = −3025.53` at `x ≈ 3.6524`   ⟹ `I₂(t) ≍ exp(t·m₂)`
+- **gap `m₁ − m₂ = +11.02 > 0`** (so `I₁ ≫ I₂` by `exp(11 t)`), and the central-coeff rate
+  `γ ∈ [2000 log17, 2000 log18] = [5666, 5781]` dwarfs both (`γ − m₁ ≈ 8681`).
+
+Cofactor `det = c₀M(1,2) − c₁M(0,2) + c₂M(0,1)`, each minor `M(a,b) = I₁(a)I₂(b) − I₂(a)I₁(b)` is
+itself dominated by ONE product (rates differ), and among the three `c·M` terms the exponents are
+separated by `γ − m₁ ≈ 8681` (`c₂M(0,1)` vs `c₁M(0,2)`) and `2γ − m₁ − m₂` (vs `c₀M(1,2)`).  So
+`det` is dominated by the SINGLE clean term `c(t₀+2)·I₁(t₀+1)·I₂(t₀)`, no cancellation.  Cross-check:
+predicted `log₁₀|det|` at `t₀=1` is `≈ (3γ+2m₁+m₂)/ln10 ≈ 3524`, matching the EXACT integer value
+`3570` (`rhin_lite_det_check.py`).  ✓
+
+**TRACTABLE PROOF ROUTE (no Laplace √N needed — crude exponential two-sided bounds suffice, the
+margins are `exp(8681 t)`):**
+1. `I₁(t) ∈ [c₁ exp(t μ₁), C₁ exp(t M₁)]`, `μ₁ = m₁−ε ≤ M₁ = m₁+ε` — exp two-sided bounds on the
+   `[2,3]` integral (upper: integrand `≤ exp(t·max ψ|[2,3])`; lower: `≥ exp(t(m₁−ε))·width` over a
+   window where `ψ ≥ m₁−ε`).  Same for `I₂` on `[3,4]` with `m₂`.
+2. central-coeff `17^N ≤ c_N ≤ 18^N` (ALREADY PROVED, `rhinLiteEvenPolynomialZ_centralCoeff_bounds`).
+3. rate separations `μ₁ > M₂` (needs gap `11 > 2ε`) and `γ_lo − M₁ > 0` (needs `> 8681 − ...`, huge
+   slack) ⟹ single-term dominance ⟹ `|det| ≥ |c₂M(0,1)| − |c₀M(1,2)| − |c₁M(0,2)| > 0`.
+NEXT LAP: (i) prove the per-interval max bounds `max_{[2,3]} ψ < m₁+ε`, `max_{[3,4]} ψ < m₂+ε` and
+the gap (the `RhinLiteMaximum`/`RhinLiteCritical` critical-bracket machinery is the lever); (ii) the
+exp lower bounds via a fixed sub-window; (iii) the pure arithmetic dominance lemma (provable NOW from
+(1)+(2)+(3) as hypotheses — a good next Lean target that isolates the analytic inputs).
+
+**Route analysis (2026-08-31, third lap) — two routes weighed [SUPERSEDED by the breakthrough above;
+the "(a′)/(a)" rate assumptions were WRONG]:**
 - **(b) p-adic / mod-p certificate — REFUTED for the `∀ t₀` theorem.**  `experiments/rhin_lite_det_modp.py`
   computes the integer form determinant `det(B,A₁,A₂) mod p` for a prime `p > N_max` (so `p ∤ lcmUpto N`,
   all `(j−N),2,3` invertible): `t₀=0,1,2 → det ≡ 501, 26, 117 (mod 10007) ≠ 0`, a rigorous per-`t₀`
