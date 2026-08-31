@@ -34,6 +34,31 @@ artifacts — the ONLY math axiom is the cited Rhin 1987.  The two-block exclusi
 machine-checked modulo that one axiom.  **Remaining work is exclusively `rhinLiteLIMeasure`** (below),
 whose purpose is now to *retire* that cited axiom.
 
+## ★ AXIOM-RETIREMENT STEP 1 STARTED — content lemma decomposed (2026-08-31) ★
+
+The K=1 structural clearing needs `12^{N−j} ∣ coeff_j(H_N)` (`H_N = rhinLiteEvenPolynomialZ t`,
+`N = 2000t`).  **Numerically verified TRUE** on the exact degree-4000 base polynomial: every
+coefficient has `val₂(c_j) ≥ 2(N−j)` and `val₃(c_j) ≥ (N−j)`.  Now decomposed in `RhinLiteApprox.lean`
+into three named nodes:
+
+- `rhinLiteEvenPolynomialZ_content` (**PROVED** from the two below via `IsCoprime (4^k) (3^k)`,
+  `12 = 4·3`): the target `12^{N−j} ∣ coeff_j`.
+- `rhinLiteEvenPolynomialZ_three_adic_content` (disclosed sorry, **factorwise-provable**):
+  `3^{N−j} ∣ coeff_j`.  The `(3,X)`-orders of the six factors are `ord₃(Q₁,…,Q₆) = (1,0,0,1,2,2)`, and
+  `Σ eᵢ ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  Next lap: formalize the `(3,X)`-adic
+  order (largest `m` with `p ∈ (3,X)^m`) and its superadditivity over products, then compute the six
+  factor orders and sum.  This is a self-contained, tractable Lean lemma.
+- `rhinLiteEvenPolynomialZ_two_adic_content` (disclosed sorry, **the hard node**): `4^{N−j} ∣ coeff_j`.
+  Factorwise `(4,X)`-order sum is only `2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so `H_N ∈ (4,X)^N` does
+  **NOT** follow from factor orders — the extra `590t` powers of 2 come from cross-term cancellation in
+  the convolution.  Needs the exact 2-adic Newton polygon / valuation of the six-factor product; this is
+  where the multi-lap ANT work concentrates.  (Route options: 2-adic Newton polygon of `∏ Qᵢ^{eᵢ}`, or a
+  direct lower bound on `val₂` of the convolution sum via the factors' 2-adic expansions.)
+
+Downstream once the content lemma lands: redo `tail_term_cleared`/`lcm_cleared_log_form` with
+`D_N = lcmUpto N` (structural endpoint clearing from `12^{N−j} ∣ c_j` + `a,b ∣ 12`), then the
+non-vanishing determinant + `lcmUpto ≤ 4^N` (steps 2–4 in `FRONT-A-RHIN-LITE-SCALING-2026-08-31.md`).
+
 ### Prior "next actions" (mechanism now proved; superseded by the course correction above)
 
 1. **`rhinLiteLIMeasure`** (the coarse Rhin linear-independence measure of

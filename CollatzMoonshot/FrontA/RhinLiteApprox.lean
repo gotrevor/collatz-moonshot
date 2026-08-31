@@ -344,6 +344,60 @@ theorem overcleared_remainder_ge_one (N : ℕ) :
         mul_le_mul h1 h2 zero_le_one (le_trans zero_le_one h1)
     _ = (Nat.lcmUpto N : ℝ) * 12 ^ N * (9 / 40 : ℝ) ^ N := by ring
 
+/-! ### K=1 structural clearing — the coefficient content of `H_N` (route to retire the axiom)
+
+The `12^N`-over-clearing is fixed by exploiting that `H_N`'s coefficients are already divisible by
+the endpoint powers: `12^{N−j} ∣ coeff_j(H_N)` (i.e. `H_N ∈ (12,X)^N ℤ[X]`, `N = 2000t`), so the
+endpoints `x ∈ {2,3,4}` clear *structurally* and only `D_N = lcmUpto N` (`K = 1 < τ`) remains.  This
+was **numerically verified** on the exact degree-`4000` base polynomial (`t = 1`): every coefficient
+satisfies both `val₂(c_j) ≥ 2(N−j)` and `val₃(c_j) ≥ (N−j)`, hence `12^{N−j} ∣ c_j`.
+
+The content splits by CRT (`12 = 4·3`, coprime) into a 2-adic and a 3-adic part, decomposed here as
+two named obligations of **very different difficulty**:
+
+* **3-adic (`rhinLiteEvenPolynomialZ_three_adic_content`)** — provable *factorwise*.  With the
+  `(3,X)`-adic order `ord₃(Q₁)=1, ord₃(Q₄)=1, ord₃(Q₅)=ord₃(Q₆)=2, ord₃(Q₂)=ord₃(Q₃)=0`, the product
+  order is `Σ eᵢ·ord₃(Qᵢ) = 2t(w₁+w₄+2w₅+2w₆) = 2t·1000 = N` **exactly**.  So `H_N ∈ (3,X)^N` follows
+  from superadditivity of the `(3,X)`-order over products — no cross-terms needed.
+* **2-adic (`rhinLiteEvenPolynomialZ_two_adic_content`)** — the genuinely hard node: the factorwise
+  `(4,X)`-order bound gives only `Σ eᵢ·ord₄(Qᵢ) = 2t(w₃+w₄+w₅+2w₆) = 1410t < N = 2000t`, so
+  `H_N ∈ (4,X)^N` is **NOT** implied factorwise; it requires cross-term cancellation (verified true
+  numerically, but the proof needs the finer 2-adic structure of the convolution, e.g. the exact
+  2-adic Newton polygon of the six-factor product).  This is where the multi-lap work concentrates.
+-/
+
+/-- **3-adic content of `H_N` (factorwise; disclosed).**  `3^{N−j} ∣ coeff_j(H_N)`, i.e.
+`H_N ∈ (3,X)^N ℤ[X]` with `N = rhinLiteEvenIndex t = 2000t`.  TRUE and provable factorwise: the
+`(3,X)`-adic orders of the six factors sum (weighted by the exponents `eᵢ = 2wᵢt`) to exactly `N`.
+The remaining Lean work is to formalize the `(3,X)`-order and its superadditivity over products. -/
+theorem rhinLiteEvenPolynomialZ_three_adic_content (t j : ℕ) :
+    (3 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
+  sorry
+
+/-- **2-adic content of `H_N` (the hard cross-term node; disclosed).**  `4^{N−j} ∣ coeff_j(H_N)`,
+i.e. `H_N ∈ (4,X)^N ℤ[X]` with `N = 2000t`.  TRUE (numerically verified: `val₂(c_j) ≥ 2(N−j)`), but
+**not** obtainable factorwise: the `(4,X)`-order sum over factors is only `1410t < N`, so the extra
+`590t` powers of `2` come from cancellation across the convolution.  This is the concentration of the
+axiom-retirement difficulty; it needs the exact 2-adic structure of the product, not factor orders. -/
+theorem rhinLiteEvenPolynomialZ_two_adic_content (t j : ℕ) :
+    (4 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
+  sorry
+
+/-- **Coefficient content of `H_N`: `12^{N−j} ∣ coeff_j(H_N)` (PROVED from the 2- and 3-adic parts).**
+`H_N ∈ (12,X)^N ℤ[X]`, `N = 2000t`.  This is the structural-clearing input for the corrected
+(K=1) objective 4 (`D_N = lcmUpto N`).  Combines `rhinLiteEvenPolynomialZ_two_adic_content` and
+`rhinLiteEvenPolynomialZ_three_adic_content` via `IsCoprime (4^k) (3^k)` and `12 = 4·3`.  For `j ≥ N`
+the exponent `N−j` is `0` and the divisibility is trivial. -/
+theorem rhinLiteEvenPolynomialZ_content (t j : ℕ) :
+    (12 : ℤ) ^ (rhinLiteEvenIndex t - j) ∣ (rhinLiteEvenPolynomialZ t).coeff j := by
+  set k := rhinLiteEvenIndex t - j with hk
+  have h4 := rhinLiteEvenPolynomialZ_two_adic_content t j
+  have h3 := rhinLiteEvenPolynomialZ_three_adic_content t j
+  have hcop : IsCoprime ((4 : ℤ) ^ k) ((3 : ℤ) ^ k) :=
+    (show IsCoprime (4 : ℤ) 3 from ⟨1, -1, by ring⟩).pow
+  have hmul := hcop.mul_dvd h4 h3
+  rwa [← mul_pow, show (4 : ℤ) * 3 = 12 by norm_num] at hmul
+
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
 There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p, q, r)`,
