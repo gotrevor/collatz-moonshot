@@ -15,10 +15,15 @@
 > sorry-free; objective 2 is complete. `FrontA/RhinLiteLogForm.lean` now also lands objective 3:
 > the two `D_N`-cleared integer log forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)`
 > (`rhinLiteEven_two_log_forms`) with a common `B = D_N·(central coeff)`,
-> `D_N·17^N ≤ B ≤ D_N·18^N`, `D_N = lcmUpto N · 12^N` — all sorry-free. What remains toward
-> `sep_two_three` is the final simultaneous-approximation criterion. See
-> `FRONT-A-RHIN-LITE.md`. The source `sorry`
-> `sep_two_three` is not yet discharged.
+> `D_N·17^N ≤ B ≤ D_N·18^N`, `D_N = lcmUpto N · 12^N` — all sorry-free.
+> `FrontA/RhinLiteApprox.lean` now wires objective 4 (the simultaneous-approximation criterion) as
+> far as elementary algebra allows: `linForm_eq_log23` (change of basis to the Baker linear form)
+> and `elim_identity` are trust-base clean, and `log23_effective_measure` (the effective
+> irrationality measure of `log₂3` in the exact `hLF` shape) is **proved from** the single new
+> disclosed crux `rhinLiteLIMeasure` (coarse Rhin linear-independence measure of
+> `{1,log(3/2),log(4/3)}`). Two disclosed `src/` sorries remain: `sep_two_three`
+> (`PowSeparation.lean`) and `rhinLiteLIMeasure` (`RhinLiteApprox.lean`); the latter is the
+> concrete route to the former. See `FRONT-A-RHIN-LITE.md` (steps 3–4) and `PENDING_WORK.md`.
 
 > [!CAUTION]
 > This is a chronological research ledger, not a claim that Collatz or either open front
@@ -27,8 +32,9 @@
 > concise public status.
 
 **Public checkpoint (2026-08-25):** `lake build` is green (8754 jobs).
-Both headline fronts remain open. There is one declaration containing `sorry`,
-`FrontA.sep_two_three`; named literature and conjecture axioms are also used explicitly.
+Both headline fronts remain open. There are two declarations containing a disclosed `sorry`,
+`FrontA.sep_two_three` and `FrontA.rhinLiteLIMeasure` (the latter is the concrete Rhin-lite route
+to the former); named literature and conjecture axioms are also used explicitly.
 The recently added single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
 needed by `sep_two_three` nor constitutes progress on either Collatz front by itself.

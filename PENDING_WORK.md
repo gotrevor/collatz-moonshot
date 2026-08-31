@@ -1,5 +1,33 @@
 # PENDING_WORK
 
+## ★ NEXT ACTION — finish objective 4 wiring (2026-08-31) ★
+
+The simultaneous-approximation criterion is now wired end-to-end modulo ONE disclosed crux
+(`FrontA/RhinLiteApprox.lean`).  Two concrete next actions, in priority order:
+
+1. **Attack the crux `rhinLiteLIMeasure`** (the coarse Rhin linear-independence measure of
+   `{1, log(3/2), log(4/3)}`).  This is THE remaining hard node on the Rhin-lite path.  The
+   ingredients are all in the repo; the missing piece is the *transference lemma*: from the
+   sequence of common-`B` approximation pairs `(A₁,A₂,B)` (`rhinLiteEven_two_log_forms`), with
+   `|Lᵢ| ≤ D_N·(9/40)^N` (needs the `x^{N+1}`→`x^N` size bridge, factor `1/x`, from
+   `rhinLiteEvenIntegral_le`) and `D_N·17^N ≤ B ≤ D_N·18^N`, produce the measure.  Sub-steps to
+   name next lap: (a) the size bridge lemma `0 < Lᵢ ≤ D_N·(9/40)^N`; (b) the two-consecutive-`N`
+   determinant non-vanishing giving `n = pB − qA₁ − rA₂ ≠ 0` for one of two consecutive `N`
+   (`elim_identity` already provides the algebra); (c) the `lcmUpto N ≤ 4^N·e^{o(N)}` asymptotic
+   to convert `1/(2·D_N·18^N)` into `c·H^{−κ}`.  Decompose these as named `sorry`s in
+   `RhinLiteApprox.lean`.
+
+2. **Close the elementary residual** from `log23_effective_measure` to `sep_two_three`.
+   `log23_effective_measure` is already the exact `hLF` shape of `sep_of_linear_form_poly`.  The
+   only gap is `hcross : ∀ k ≥ 130, k^κ ≤ c·exp((k/3)·log2)`, which couples the SAME constant `c`
+   to both the lower bound and the crossover — for a realistic exponent `κ ≈ 8`, `130^κ >
+   c·2^{43}`, so the fixed `130` threshold of `sep_of_linear_form_poly` is too small.  RESOLUTION:
+   route through `sep_of_uniform_measure` (integer form) instead, whose crossover `hK` is
+   `pow_le_two_pow_gen` (explicit `k ≥ (3C)²`) and whose finite residual `hfin` on `6 ≤ k < (3C)²`
+   is a `native_decide` table — feasible once `C` is a concrete number (from a proved crux).  Both
+   `sep_of_uniform_measure` and `sep_of_linear_form_poly` already exist in `PowSeparation.lean`;
+   pick the integer route when the crux lands with concrete constants.
+
 ## ★ CURRENT — Rhin-lite finite-certificate route (2026-08-25) ★
 
 An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`.

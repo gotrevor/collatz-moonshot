@@ -6,8 +6,9 @@
 > [!IMPORTANT]
 > **This repository does not prove the Collatz conjecture, the absence of divergent
 > orbits, or the absence of nontrivial cycles.** It is an exploratory Lean 4 research
-> project. At this checkpoint the project builds, but one theorem contains `sorry`,
-> several conditional results depend on explicitly named axioms, and computational
+> project. At this checkpoint the project builds, but two theorems contain a disclosed
+> `sorry` (`sep_two_three` and `rhinLiteLIMeasure`, the latter a concrete route to the
+> former), several conditional results depend on explicitly named axioms, and computational
 > searches provide evidence rather than proofs.
 
 The project splits Collatz into its two logically independent failure modes—an
@@ -26,7 +27,8 @@ the open hypotheses fed into that wiring:
 | `conjecture_iff_split` | proved in Lean: Collatz is equivalent to `NoDivergentOrbit ∧ NoNontrivialCycle` |
 | Front A: no divergent orbit | open; the repository proves several conditional implications |
 | Front B: no nontrivial cycle | open; the current compression target does not close the front |
-| `sep_two_three` | the sole declaration containing `sorry`; it is an effective separation statement for powers of 2 and 3 |
+| `sep_two_three` | a disclosed `sorry`; an effective separation statement for powers of 2 and 3 (the sink node of the two-block exclusion) |
+| `rhinLiteLIMeasure` | a disclosed `sorry`; the coarse Rhin linear-independence measure of `{1, log(3/2), log(4/3)}`, from which `log23_effective_measure` (the `log₂3` irrationality measure feeding `sep_two_three`) is proved |
 | named declarations in `CollatzMoonshot/Assumed/` | explicit external assumptions, some published results and some open conjectures |
 | `native_decide` certificates | kernel-checked finite computations, retained in theorem axiom ledgers as `native_decide` artifacts |
 
@@ -38,7 +40,10 @@ The current independent two-log experiment is more direct: `FrontA/RhinLite.lean
 arithmetic balances and a coarse central-coefficient band `17^n ≤ B_n ≤ 18^n` for a rationalized
 Rhin kernel. `FrontA/RhinLiteCritical.lean` exhausts the relevant roots of its degree-8 critical
 polynomial, and `FrontA/RhinLiteInterval.lean` proves the exact local `(9/40)^1000` remainder bound.
-The compact-maximum, integral, and simultaneous-approximation wiring remain. See
+The compact-maximum, integral, and log-form wiring are complete; `FrontA/RhinLiteApprox.lean`
+now reduces `sep_two_three` to the single Rhin linear-independence measure `rhinLiteLIMeasure`
+(via the trust-base-clean change of basis `linForm_eq_log23`, the elimination identity
+`elim_identity`, and the proved-from-crux `log23_effective_measure`). See
 [FRONT-A-RHIN-LITE.md](FRONT-A-RHIN-LITE.md); this progress does not discharge `sep_two_three` yet.
 
 Run `#print axioms <theorem>` to inspect a theorem's dependency ledger. A successful

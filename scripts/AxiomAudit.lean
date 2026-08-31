@@ -33,6 +33,9 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.rhinLiteEvenPolynomialZ_natDegree
 #print axioms CollatzMoonshot.FrontA.rhinLiteEvenPolynomialZ_centralCoeff_bounds
 #print axioms CollatzMoonshot.FrontA.rhinLiteEven_two_log_forms
+#print axioms CollatzMoonshot.FrontA.linForm_eq_log23
+#print axioms CollatzMoonshot.FrontA.elim_identity
+#print axioms CollatzMoonshot.FrontA.log23_effective_measure
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontB.frontB_of_compression_le_91
 #print axioms CollatzMoonshot.Furstenberg.isClosed_invariant_finite_or_univ

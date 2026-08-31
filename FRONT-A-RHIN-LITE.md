@@ -152,9 +152,26 @@ The remaining Lean work is:
    per-term integer clearing → assembled `lcm_cleared_log_form`) and `rhinLiteEven_two_log_forms`
    lands the two integer linear forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)` with a common
    `B = D_N·(central coeff)` satisfying `D_N·17^N ≤ B ≤ D_N·18^N`, `D_N = lcmUpto N · 12^N`;
-3. prove a coarse simultaneous-approximation criterion using the explicit lower/upper coefficient
-   bands (cite the standard Q-linear independence of `1,log(3/2),log(4/3)` if convenient);
-4. feed the resulting finite measure through `sep_of_linear_form_poly` and extend the finite check.
+3. 🟡 **PARTIAL (`FrontA/RhinLiteApprox.lean`).** The simultaneous-approximation criterion is now
+   wired as far as elementary algebra allows.
+   - `linForm_eq_log23` (trust-base clean): the change of basis
+     `(m−2k)·log(3/2) + (m−k)·log(4/3) = m·log2 − k·log3`, expressing the Baker linear form `Λ` as
+     a **homogeneous** integer combination of `{log(3/2), log(4/3)}` (no constant term).
+   - `elim_identity` (trust-base clean): the elimination identity
+     `B·(p + q·θ₁ + r·θ₂) = (pB − qA₁ − rA₂) + q·L₁ + r·L₂` — the mechanism that turns the two
+     small common-`B` forms into a lower bound on `Λ`.
+   - `rhinLiteLIMeasure` (**disclosed crux `sorry`**): the coarse Rhin linear-independence measure
+     `c/H^κ ≤ |p + q·log(3/2) + r·log(4/3)|` produced by the block subsequence.  Its docstring
+     records the concrete route (data from `rhinLiteEven_two_log_forms`, size from
+     `rhinLiteEvenIntegral_le/_pos`, `elim_identity`, determinant non-vanishing, `lcmUpto`
+     asymptotic).
+   - `log23_effective_measure` (**proved from the crux**): the effective irrationality measure of
+     `log₂3` in the exact `hLF` shape `c/k^κ ≤ m·log2 − k·log3` on the near-critical window.
+4. feed `log23_effective_measure` through `sep_of_linear_form_poly` and extend the finite check.
+   **Residual (elementary):** the crossover hypothesis `hcross` of `sep_of_linear_form_poly` ties
+   a single constant to both the lower bound and the near-`130` window; with the concrete `c, κ`
+   from a proved `rhinLiteLIMeasure` this is discharged by `poly_le_pow` from an explicit
+   threshold plus a `native_decide` finite check. See `PENDING_WORK.md`.
 
 No published quantitative Rhin theorem is needed if these four steps close.
 
