@@ -39,10 +39,15 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
      `[exp(m₂), exp(m₁)/2]` = `[(0.220314)^{2000}, (0.221454)^{2000}]` (base `0.2209`), the double
      margin that separates the two rates.  Two REMAINING disclosed leaves (the current SOLE sorries,
      RhinLiteApprox.lean:1431,1443):
-     - `rhinLiteI₂_peak_upper` : `I₂(t+1) ≤ κ·I₂(t)` — a POINTWISE `[3,4]` step bound `φ² ≤ κ`,
-       tighter than the global `(9/40)²⁰⁰⁰`.  Provable by localizing the `RhinLiteInterval`
-       factor-bound machinery to the `[3,4]` critical brackets (mechanical but real; NEXT-lap
-       candidate — the easier of the two).
+     - `rhinLiteI₂_peak_upper` : `I₂(t+1) ≤ κ·I₂(t)` — **now PROVED** from the generalized pure-power
+       step lemma `rhinLiteEven_logForm_step_le_of_bound` (trust-base clean, `μ`-parametric) fed by
+       ONE isolated interval-arithmetic node `rhinLiteKernelAbs_div_pow_le_on_Icc34` :
+       `φ(x) ≤ (2209/10000)^{scale}` on `[3,4]`.  That node is the sole remaining debt of this leaf:
+       recertify the `RhinLiteInterval` `rhinLiteBoundProduct` against the tighter target
+       `rootLeft^{scale}·(2209/10000)^{scale}` on the `[3,4]` critical brackets (`rootLeft ≥ 3`),
+       plus the `RhinLiteMaximum` compact-max bridge on `[3,4]` and the vanishing endpoints `x=3,4`.
+       The rounded factor table likely needs extra decimals to clear the `10⁸`-tighter target.
+       NEXT-lap candidate (mechanical but real — the easier of the two).
      - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — the genuine Laplace HEART.  NOT
        pointwise (`φ` vanishes at `[2,3]` endpoints).  Route: fix rational `[a,b]⊂[2,3]` about
        `x₁*≈2.223` with `φ² ≥ 2κ`; then `I₁(t+1) ≥ 2κ·∫_{[a,b]}φ^{2t}/x` and a tail comparison

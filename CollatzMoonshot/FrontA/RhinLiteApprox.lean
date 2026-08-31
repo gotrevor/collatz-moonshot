@@ -1289,6 +1289,40 @@ theorem rhinLiteEven_logForm_step_le (t : ℕ) {a b : ℝ}
   have hmono := intervalIntegral.integral_mono_on hab hf hg hpt
   rwa [intervalIntegral.integral_const_mul] at hmono
 
+/-- **Generalized pure-power per-step drop.**  Same argument as `rhinLiteEven_logForm_step_le`, but
+with an ABSTRACT per-step factor `μ` supplied by a pointwise squared-`φ` bound on `[a,b]`.  Taking
+`μ = (9/40)^{2·scale}` with the global bound recovers the original; taking a tighter per-interval
+`μ` (e.g. `(2209/10000)^{2·scale}` on `[3,4]`) gives the tighter `I₂` step estimate. -/
+theorem rhinLiteEven_logForm_step_le_of_bound (t : ℕ) {a b μ : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) (hμ : 0 ≤ μ)
+    (hbound : ∀ x ∈ Set.Icc a b, (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2 ≤ μ) :
+    (∫ x in a..b, rhinLiteEvenNormalized (t + 1) x / x)
+      ≤ μ * ∫ x in a..b, rhinLiteEvenNormalized t x / x := by
+  have hg : IntervalIntegrable
+      (fun x => μ * (rhinLiteEvenNormalized t x / x)) volume a b :=
+    (intervalIntegrable_rhinLiteEven_logForm t ha hb hab).const_mul _
+  have hf := intervalIntegrable_rhinLiteEven_logForm (t + 1) ha hb hab
+  have hpt : ∀ x ∈ Set.Icc a b,
+      rhinLiteEvenNormalized (t + 1) x / x ≤ μ * (rhinLiteEvenNormalized t x / x) := by
+    intro x hx
+    have hxmem : x ∈ Set.Icc (2 : ℝ) 4 := ⟨le_trans ha hx.1, le_trans hx.2 hb⟩
+    have hxpos : 0 < x := by linarith [hxmem.1]
+    have hφnn : 0 ≤ rhinLiteKernelAbs x / x ^ rhinLiteScale :=
+      div_nonneg (rhinLiteKernelAbs_nonneg x) (pow_nonneg hxpos.le _)
+    have hsq := hbound x hx
+    have hstep : rhinLiteEvenNormalized (t + 1) x ≤ μ * rhinLiteEvenNormalized t x := by
+      rw [rhinLiteEvenNormalized_eq (t + 1) hxpos, rhinLiteEvenNormalized_eq t hxpos,
+        show 2 * (t + 1) = 2 * t + 2 by ring, pow_add]
+      calc (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)
+              * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
+            ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t) * μ :=
+            mul_le_mul_of_nonneg_left hsq (pow_nonneg hφnn (2 * t))
+        _ = μ * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t) := by ring
+    rw [← mul_div_assoc]
+    exact (div_le_div_iff_of_pos_right hxpos).mpr hstep
+  have hmono := intervalIntegral.integral_mono_on hab hf hg hpt
+  rwa [intervalIntegral.integral_const_mul] at hmono
+
 /-- The fixed per-step drop `(9/40)²⁰⁰⁰` is `≤ 1/16`, so a step loses a factor `≥ 16`. -/
 theorem rhinLite_stepFactor_le_one_sixteenth :
     (16 : ℝ) * (9 / 40 : ℝ) ^ (2 * rhinLiteScale) ≤ 1 := by
@@ -1420,6 +1454,20 @@ theorem rhinLite_ratio_gap_of_step_bounds {p₀ p₁ q₀ q₁ κ : ℝ}
   nlinarith [mul_le_mul_of_nonneg_left hupper hp₀,
     mul_le_mul_of_nonneg_right hlower hq₀]
 
+/-- **Isolated interval-arithmetic node — the tight pointwise `[3,4]` kernel bound.**
+`φ(x) = kernelAbs x / x^{scale} ≤ (2209/10000)^{scale}` for `x ∈ [3,4]`.  This is strictly stronger
+than the global `rhinLiteKernelAbs_div_pow_le_on_Icc` (which only gives `(9/40)^{scale}` and is
+`exp(18)` too loose here): the `[3,4]` peak `φ ≈ exp(m₂/2) ≈ exp(−1512.77)` sits `exp(2.7) ≈ 15×`
+below the target `(2209/10000)^{scale} = exp(−1510.05)`.  Route: recertify the `RhinLiteInterval`
+rounded factor-bound products (`rhinLiteBoundProduct`) against the tighter target
+`rootLeft^{scale}·(2209/10000)^{scale}` on the `[3,4]` critical brackets (`rhinLiteRootLeft ≥ 3`),
+plus the `RhinLiteMaximum` compact-max bridge restricted to `[3,4]` and the vanishing endpoints
+`x=3,4`.  The existing rounded factor table may need extra decimal places to clear the `10⁸`-tighter
+target.  Disclosed interval-arithmetic node. -/
+theorem rhinLiteKernelAbs_div_pow_le_on_Icc34 {x : ℝ} (hx : x ∈ Set.Icc (3 : ℝ) 4) :
+    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+  sorry
+
 /-- **Sub-node (I₂ `[3,4]`-peak per-step upper bound).**  `I₂(t+1) ≤ κ·I₂(t)` with the tight
 per-interval constant `κ = rhinLiteKappa`.  Pointwise on `[3,4]` the step factor `φ(x)²` is bounded
 by `(2209/10000)^{2·scale}` — a genuinely tighter envelope than the global `(9/40)^{2·scale}` used for
@@ -1428,7 +1476,20 @@ the decays (the `[3,4]` peak `exp(m₂)` is `exp(31)` below the global one).  Pr
 sub-node. -/
 theorem rhinLiteI₂_peak_upper (t : ℕ) :
     rhinLiteI₂ (t + 1) ≤ rhinLiteKappa * rhinLiteI₂ t := by
-  sorry
+  have hI : ∀ s : ℕ, rhinLiteI₂ s = ∫ x in (3 : ℝ)..4, rhinLiteEvenNormalized s x / x := by
+    intro s; rw [rhinLiteI₂]; exact intervalIntegral.integral_congr
+      (fun x _ => rhinLiteEven_logForm_integrand s x)
+  rw [hI (t + 1), hI t]
+  refine rhinLiteEven_logForm_step_le_of_bound t (by norm_num) (by norm_num) (by norm_num)
+    (by rw [rhinLiteKappa]; positivity) ?_
+  intro x hx
+  have hnn : 0 ≤ rhinLiteKernelAbs x / x ^ rhinLiteScale :=
+    div_nonneg (rhinLiteKernelAbs_nonneg x)
+      (pow_nonneg (by linarith [hx.1] : (0:ℝ) ≤ x) _)
+  have hb := rhinLiteKernelAbs_div_pow_le_on_Icc34 hx
+  calc (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
+        ≤ ((2209 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
+    _ = rhinLiteKappa := by rw [rhinLiteKappa, ← pow_mul, Nat.mul_comm rhinLiteScale 2]
 
 /-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound).**  `2κ·I₁(t) ≤ I₁(t+1)` with
 `κ = rhinLiteKappa`.  This is the analytic HEART: unlike the upper bounds it is NOT pointwise —
