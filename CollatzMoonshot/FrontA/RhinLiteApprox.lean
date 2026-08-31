@@ -1236,49 +1236,18 @@ theorem det_dominance_of_step_bounds
     nlinarith [mul_le_mul_of_nonneg_left hsep hc2.le]
   linarith [hA, hB, ma, mb, mc, md, hsepc, K]
 
-/-- **Refined analytic object (integral envelope node).**  *Tight single-rate* two-sided envelopes
-for BOTH tiny integrals at *separated* rates, bundling the joint analytic content the ratio-gap
-needs.  There are rates `r₁ > r₂` (the separated per-interval Laplace maxima, `exp(m₁) > exp(m₂)`)
-and constants `0 < c₁ ≤ C₁`, `0 < c₂ ≤ C₂` with:
-* `c₁·r₁ᵗ ≤ I₁(t) ≤ C₁·r₁ᵗ`, `c₂·r₂ᵗ ≤ I₂(t) ≤ C₂·r₂ᵗ` (single-rate, bounded tightness);
-* per-step decay `16·C₁·r₁ ≤ c₁`, `16·C₂·r₂ ≤ c₂` (true `rᵢ ≈ exp(−3014.5), exp(−3025.5) ≪ 1/16`);
-* **the rate gap** `2·(C₁C₂)·r₂ ≤ (c₁c₂)·r₁` (true `r₁/r₂ ≈ exp 11 ≫ 2·C₁C₂/(c₁c₂)`).
-
-All three per-step integral sub-nodes below are pure-arithmetic EDGES of this one node.  The crude
-`(9/40)^N` envelope is provably too lossy (it overestimates `Iᵢ` by `exp(31t)`, using the *global*
-peak `(9/40)^{2000}=exp(−2983t)` rather than the true per-interval peaks), so this needs the genuine
-saddle-point/peak-contribution asymptotics with enclosing RATIONAL rates.  Disclosed. -/
-theorem rhinLite_integral_envelopes :
-    ∃ r₁ r₂ c₁ C₁ c₂ C₂ : ℝ,
-      0 < r₁ ∧ 0 < r₂ ∧ 0 < c₁ ∧ c₁ ≤ C₁ ∧ 0 < c₂ ∧ c₂ ≤ C₂ ∧
-      16 * C₁ * r₁ ≤ c₁ ∧ 16 * C₂ * r₂ ≤ c₂ ∧
-      2 * (C₁ * C₂) * r₂ ≤ (c₁ * c₂) * r₁ ∧
-      (∀ t, c₁ * r₁ ^ t ≤ rhinLiteI₁ t ∧ rhinLiteI₁ t ≤ C₁ * r₁ ^ t) ∧
-      (∀ t, c₂ * r₂ ^ t ≤ rhinLiteI₂ t ∧ rhinLiteI₂ t ≤ C₂ * r₂ ^ t) := by
+/-- **Sub-node (I₁ per-step decay).**  The `[2,3]` integral `I₁(t) = ∫₂³ H_N/x^{N+1}` decays by a
+factor `≥ 16` when `t ↦ t+1` (i.e. `N ↦ N+2000`).  True with enormous room: the Laplace rate is
+`I₁(t+1)/I₁(t) ≈ exp(max_{[2,3]}ψ) ≈ exp(−3014.5)`; any rational bound `≤ 1/16` suffices here.
+Disclosed analytic sub-node (needs a two-sided exponential envelope for the integrand, e.g. via the
+`RhinLiteMaximum`/`RhinLiteCritical`/`RhinLiteInterval` bracket machinery). -/
+theorem rhinLiteI₁_step_decay16 (t : ℕ) : 16 * rhinLiteI₁ (t + 1) ≤ rhinLiteI₁ t := by
   sorry
 
-/-- **Sub-node (I₁ per-step decay) — now an EDGE** of `rhinLite_integral_envelopes`.  `16·I₁(t+1) ≤
-I₁(t)`, by arithmetic from the single-rate envelope (`16·C₁·r₁ ≤ c₁`). -/
-theorem rhinLiteI₁_step_decay16 (t : ℕ) : 16 * rhinLiteI₁ (t + 1) ≤ rhinLiteI₁ t := by
-  obtain ⟨r₁, _, c₁, C₁, _, _, hr1, _, _, _, _, _, hcc1, _, _, henv1, _⟩ :=
-    rhinLite_integral_envelopes
-  have ha : (0:ℝ) < r₁ ^ t := pow_pos hr1 t
-  have h1 := (henv1 (t + 1)).2      -- I₁(t+1) ≤ C₁ r₁^(t+1)
-  have h2 := (henv1 t).1            -- c₁ r₁^t ≤ I₁ t
-  have hstep : 16 * (C₁ * r₁ ^ (t + 1)) ≤ c₁ * r₁ ^ t := by
-    rw [pow_succ]; nlinarith [mul_le_mul_of_nonneg_right hcc1 ha.le]
-  linarith [h1, h2, hstep]
-
-/-- **Sub-node (I₂ per-step decay) — now an EDGE** of `rhinLite_integral_envelopes`. -/
+/-- **Sub-node (I₂ per-step decay).**  The `[3,4]` integral `I₂(t) = ∫₃⁴ H_N/x^{N+1}` decays by a
+factor `≥ 16` per step (Laplace rate `≈ exp(−3025.5)`).  Disclosed analytic sub-node. -/
 theorem rhinLiteI₂_step_decay16 (t : ℕ) : 16 * rhinLiteI₂ (t + 1) ≤ rhinLiteI₂ t := by
-  obtain ⟨_, r₂, _, _, c₂, C₂, _, hr2, _, _, _, _, _, hcc2, _, _, henv2⟩ :=
-    rhinLite_integral_envelopes
-  have hb : (0:ℝ) < r₂ ^ t := pow_pos hr2 t
-  have h1 := (henv2 (t + 1)).2
-  have h2 := (henv2 t).1
-  have hstep : 16 * (C₂ * r₂ ^ (t + 1)) ≤ c₂ * r₂ ^ t := by
-    rw [pow_succ]; nlinarith [mul_le_mul_of_nonneg_right hcc2 hb.le]
-  linarith [h1, h2, hstep]
+  sorry
 
 /-- **Refined analytic object (envelope node).**  A *tight single-rate* two-sided envelope for the
 central column: `∃ g cc CC, 0 < cc ≤ CC` and a rate `g` with `16·CC ≤ cc·g` such that
@@ -1310,38 +1279,14 @@ theorem rhinLiteCentral_step_growth16 (t : ℕ) :
     _ = cc * g ^ (t + 1) := by rw [pow_succ]; ring
     _ ≤ rhinLiteCentral (t + 1) := ht1
 
-/-- **Sub-node (the rate gap `μ₁ > M₂`) — now an EDGE** of `rhinLite_integral_envelopes`.
-`I₁` decays strictly slower than `I₂`: `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  This is MULTIPLICATIVE (no
-subtraction), so it follows by pure arithmetic from the two single-rate envelopes and the rate-gap
-hypothesis `2·C₁C₂·r₂ ≤ c₁c₂·r₁`: bound `LHS ≤ 2C₁C₂r₂·(r₁r₂)ᵗ ≤ c₁c₂r₁·(r₁r₂)ᵗ ≤ RHS`. -/
+/-- **Sub-node (the rate gap `μ₁ > M₂`).**  `I₁` decays strictly slower than `I₂`: per step the
+`I₁`-ratio exceeds twice the `I₂`-ratio, `2·I₁(t)I₂(t+1) ≤ I₁(t+1)I₂(t)`.  True with room: the true
+per-step ratio gap is `exp(m₁ − m₂) ≈ exp(11) ≈ 6·10⁴ ≫ 2`.  This is the analytic heart of the
+determinant non-vanishing (the "separated maxima" of `ψ` on `[2,3]` vs `[3,4]`).  Disclosed
+sub-node. -/
 theorem rhinLite_ratio_gap (t : ℕ) :
     2 * (rhinLiteI₁ t * rhinLiteI₂ (t + 1)) ≤ rhinLiteI₁ (t + 1) * rhinLiteI₂ t := by
-  obtain ⟨r₁, r₂, c₁, C₁, c₂, C₂, hr1, hr2, hc1, hcC1, hc2, hcC2, _, _, hgap, henv1, henv2⟩ :=
-    rhinLite_integral_envelopes
-  have ha : (0:ℝ) < r₁ ^ t := pow_pos hr1 t
-  have hb : (0:ℝ) < r₂ ^ t := pow_pos hr2 t
-  have hI1t := (henv1 t).2            -- I₁ t ≤ C₁ r₁^t
-  have hI2t1 := (henv2 (t + 1)).2     -- I₂ (t+1) ≤ C₂ r₂^(t+1)
-  have hI1t1 := (henv1 (t + 1)).1     -- c₁ r₁^(t+1) ≤ I₁ (t+1)
-  have hI2t := (henv2 t).1            -- c₂ r₂^t ≤ I₂ t
-  have hI1tpos := rhinLiteI₁_pos t
-  have hI2t1pos := rhinLiteI₂_pos (t + 1)
-  -- LHS upper bound
-  have hLHS : 2 * (rhinLiteI₁ t * rhinLiteI₂ (t + 1))
-      ≤ 2 * ((C₁ * r₁ ^ t) * (C₂ * r₂ ^ (t + 1))) := by
-    have := mul_le_mul hI1t hI2t1 hI2t1pos.le (le_trans hI1tpos.le hI1t)
-    linarith
-  -- middle: rate gap times (r₁r₂)ᵗ
-  have hmid : 2 * ((C₁ * r₁ ^ t) * (C₂ * r₂ ^ (t + 1)))
-      ≤ (c₁ * r₁ ^ (t + 1)) * (c₂ * r₂ ^ t) := by
-    rw [pow_succ, pow_succ]
-    nlinarith [mul_le_mul_of_nonneg_right hgap (mul_nonneg ha.le hb.le)]
-  -- RHS lower bound
-  have hRHS : (c₁ * r₁ ^ (t + 1)) * (c₂ * r₂ ^ t)
-      ≤ rhinLiteI₁ (t + 1) * rhinLiteI₂ t := by
-    have hnn1 : (0:ℝ) ≤ c₂ * r₂ ^ t := (mul_pos hc2 hb).le
-    exact mul_le_mul hI1t1 hI2t hnn1 (rhinLiteI₁_pos (t + 1)).le
-  linarith [hLHS, hmid, hRHS]
+  sorry
 
 /-- **Single-term dominance — now REDUCED to four clean per-step sub-nodes.**  The `c₂·M(0,1)`
 cofactor term strictly dominates the sum of the other two in absolute value,
