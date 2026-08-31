@@ -15,10 +15,17 @@ The simultaneous-approximation criterion is now wired end-to-end modulo ONE disc
    `rhinLiteEvenPolynomialZ_eval_real` (ℤ-eval = ℚ-`aeval`), `rhinLiteEven_logForm_integrand`
    (`H_N/x^{N+1} = normalized/x`), `intervalIntegrable_rhinLiteEven_logForm`, and
    `rhinLiteEven_logForm_small_23`/`_34` (`0 < ∫ H_N/x^{N+1} ≤ (9/40)^N` on `[2,3]`/`[3,4]`);
-   (b) **NEXT** the two-consecutive-`N` determinant non-vanishing giving `n = pB − qA₁ − rA₂ ≠ 0`
-   for one of two consecutive `N` (`elim_identity` already provides the algebra); (c) the
-   `lcmUpto N ≤ 4^N·e^{o(N)}` asymptotic to convert `1/(2·D_N·18^N)` into `c·H^{−κ}`.  Decompose
-   (b),(c) as named `sorry`s in `RhinLiteApprox.lean`.
+   the mechanism is also proved: `logForm_conditional_lower` (`n ≠ 0 ⇒ |Λ| ≥ (1 −
+   (|q|+|r|)·D_N·(9/40)^N)/B`) and `rhinLite_forms_bounded` (packages the data + size into
+   `0 < B`, `D_N·17^N ≤ B ≤ D_N·18^N`, `0 < Lᵢ ≤ D_N·(9/40)^N`), all trust-base clean.
+   (b) **NEXT** the 3×3 determinant non-vanishing: the integer determinant of three consecutive
+   form-triples `(B, A₁, A₂)` is nonzero, so for any `(p,q,r) ≠ 0` at least one of three
+   consecutive `N` has `n = pB − qA₁ − rA₂ ≠ 0` (`elim_identity` supplies the algebra; the
+   determinant value is a construction-specific `native_decide`/explicit computation). (c) the
+   `Nat.lcmUpto N ≤ 4^N·e^{o(N)}` asymptotic (mathlib `Nat.lcmUpto`/Chebyshev bounds) to convert
+   `1/(2·D_N·18^N)` into `c·H^{−κ}`.  Also needed: an index-selection lemma choosing the least `N`
+   with `(|q|+|r|)·D_N·(9/40)^N ≤ 1/2` and `H`-controlled `B`.  Decompose (b),(c) as named
+   `sorry`s in `RhinLiteApprox.lean`.
 
 2. **Close the elementary residual** from `log23_effective_measure` to `sep_two_three`.
    `log23_effective_measure` is already the exact `hLF` shape of `sep_of_linear_form_poly`.  The

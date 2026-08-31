@@ -209,6 +209,116 @@ theorem rhinLiteEven_logForm_small_34 (t : ℕ) :
   rhinLiteEven_logForm_bounds_aux t (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (rhinLiteEvenIntegral_pos_34 t)
 
+/-- **Per-index conditional lower bound (the rigorous mechanism).**  Given the two forms
+`L₁ = A₁ + B·θ₁`, `L₂ = A₂ + B·θ₂` (`θ₁ = log(3/2)`, `θ₂ = log(4/3)`) with `0 < Lᵢ ≤ E`, `0 < B`,
+and a target integer triple `(p,q,r)` whose integer combination `n = p·B − q·A₁ − r·A₂` is
+**nonzero**, the linear form `Λ = p + q·θ₁ + r·θ₂` obeys
+`|Λ| ≥ (1 − (|q|+|r|)·E) / B`.
+
+This is `elim_identity` + `|n| ≥ 1` + the triangle bound `|q·L₁ + r·L₂| ≤ (|q|+|r|)·E`.  It is the
+fully-proved core of the transference; the crux `rhinLiteLIMeasure` then only needs the
+number-theoretic *non-vanishing* (some `t` with `n ≠ 0` at controlled size) and the `lcmUpto`
+denominator asymptotic. -/
+theorem logForm_conditional_lower
+    (A₁ A₂ B p q r : ℤ) (E : ℝ)
+    (hB : 0 < B)
+    (hL₁pos : 0 < (A₁ : ℝ) + B * Real.log (3 / 2))
+    (hL₁le : (A₁ : ℝ) + B * Real.log (3 / 2) ≤ E)
+    (hL₂pos : 0 < (A₂ : ℝ) + B * Real.log (4 / 3))
+    (hL₂le : (A₂ : ℝ) + B * Real.log (4 / 3) ≤ E)
+    (hn : p * B - q * A₁ - r * A₂ ≠ 0) :
+    (1 - ((|q| + |r| : ℤ) : ℝ) * E) / (B : ℝ)
+      ≤ |(p : ℝ) + q * Real.log (3 / 2) + r * Real.log (4 / 3)| := by
+  set θ₁ : ℝ := Real.log (3 / 2)
+  set θ₂ : ℝ := Real.log (4 / 3)
+  set L₁ : ℝ := (A₁ : ℝ) + B * θ₁ with hL₁def
+  set L₂ : ℝ := (A₂ : ℝ) + B * θ₂ with hL₂def
+  set Λ : ℝ := (p : ℝ) + q * θ₁ + r * θ₂ with hΛdef
+  have hBR : (0 : ℝ) < (B : ℝ) := by exact_mod_cast hB
+  -- `B·Λ = n + q·L₁ + r·L₂`
+  have hBΛ : (B : ℝ) * Λ = ((p * B - q * A₁ - r * A₂ : ℤ) : ℝ) + q * L₁ + r * L₂ := by
+    rw [hΛdef, hL₁def, hL₂def]; exact elim_identity A₁ A₂ B p q r θ₁ θ₂
+  -- `|n| ≥ 1`
+  have hn1 : (1 : ℝ) ≤ |((p * B - q * A₁ - r * A₂ : ℤ) : ℝ)| := by
+    have : (1 : ℤ) ≤ |p * B - q * A₁ - r * A₂| := Int.one_le_abs hn
+    calc (1 : ℝ) ≤ ((|p * B - q * A₁ - r * A₂| : ℤ) : ℝ) := by exact_mod_cast this
+      _ = |((p * B - q * A₁ - r * A₂ : ℤ) : ℝ)| := by rw [Int.cast_abs]
+  -- `|q·L₁ + r·L₂| ≤ (|q|+|r|)·E`
+  have htri : |(q : ℝ) * L₁ + r * L₂| ≤ ((|q| + |r| : ℤ) : ℝ) * E := by
+    have hq : |(q : ℝ) * L₁| ≤ (|q| : ℤ) * E := by
+      rw [abs_mul, abs_of_pos hL₁pos, Int.cast_abs]
+      exact mul_le_mul_of_nonneg_left hL₁le (abs_nonneg _)
+    have hr : |(r : ℝ) * L₂| ≤ (|r| : ℤ) * E := by
+      rw [abs_mul, abs_of_pos hL₂pos, Int.cast_abs]
+      exact mul_le_mul_of_nonneg_left hL₂le (abs_nonneg _)
+    calc |(q : ℝ) * L₁ + r * L₂| ≤ |(q : ℝ) * L₁| + |(r : ℝ) * L₂| := abs_add_le _ _
+      _ ≤ (|q| : ℤ) * E + (|r| : ℤ) * E := by linarith
+      _ = ((|q| + |r| : ℤ) : ℝ) * E := by push_cast; ring
+  -- `|B·Λ| ≥ 1 − (|q|+|r|)·E`
+  have hlow : 1 - ((|q| + |r| : ℤ) : ℝ) * E ≤ |(B : ℝ) * Λ| := by
+    rw [hBΛ]
+    -- `|n + s| ≥ |n| − |s| ≥ 1 − (|q|+|r|)E`
+    have hge : |((p * B - q * A₁ - r * A₂ : ℤ) : ℝ)| - |(q : ℝ) * L₁ + r * L₂|
+        ≤ |((p * B - q * A₁ - r * A₂ : ℤ) : ℝ) + (q * L₁ + r * L₂)| :=
+      abs_sub_abs_le_abs_add _ _
+    have hassoc : ((p * B - q * A₁ - r * A₂ : ℤ) : ℝ) + q * L₁ + r * L₂
+        = ((p * B - q * A₁ - r * A₂ : ℤ) : ℝ) + (q * L₁ + r * L₂) := by ring
+    rw [hassoc]; linarith [hn1, htri, hge]
+  -- divide by `B`
+  rw [abs_mul, abs_of_pos hBR] at hlow
+  rw [div_le_iff₀ hBR]
+  have hcomm : (B : ℝ) * |Λ| = |Λ| * (B : ℝ) := mul_comm _ _
+  linarith [hlow, hcomm]
+
+/-- **Data packaging.**  For each block index `t`, `rhinLiteEven_two_log_forms` together with the
+size package produces the two forms with bounds: `0 < B`, `D_N·17^N ≤ B ≤ D_N·18^N`,
+`0 < Lᵢ ≤ D_N·(9/40)^N`, where `D_N = lcmUpto N · 12^N` (as a real).  Feeds
+`logForm_conditional_lower` with `E = D_N·(9/40)^N`. -/
+theorem rhinLite_forms_bounded (t : ℕ) :
+    ∃ A₁ A₂ B : ℤ,
+      0 < B ∧
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t) * 17 ^ rhinLiteEvenIndex t
+          ≤ (B : ℝ) ∧
+      (B : ℝ) ≤ ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t)
+          * 18 ^ rhinLiteEvenIndex t ∧
+      0 < (A₁ : ℝ) + B * Real.log (3 / 2) ∧
+      (A₁ : ℝ) + B * Real.log (3 / 2)
+          ≤ ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t)
+              * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t ∧
+      0 < (A₂ : ℝ) + B * Real.log (4 / 3) ∧
+      (A₂ : ℝ) + B * Real.log (4 / 3)
+          ≤ ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t)
+              * (9 / 40 : ℝ) ^ rhinLiteEvenIndex t := by
+  obtain ⟨A₁, A₂, B, h₁, h₂, hBlo, hBhi⟩ := rhinLiteEven_two_log_forms t
+  set N := rhinLiteEvenIndex t with hN
+  set D : ℝ := (Nat.lcmUpto N : ℝ) * 12 ^ N with hDdef
+  have hDpos : 0 < D := by
+    rw [hDdef]
+    have hl : (0 : ℝ) < (Nat.lcmUpto N : ℝ) := by exact_mod_cast Nat.lcmUpto_pos N
+    positivity
+  have hBloR : D * 17 ^ N ≤ (B : ℝ) := by
+    have : ((Nat.lcmUpto N : ℤ) * 12 ^ N * 17 ^ N : ℤ) ≤ B := hBlo
+    calc D * 17 ^ N = (((Nat.lcmUpto N : ℤ) * 12 ^ N * 17 ^ N : ℤ) : ℝ) := by
+          rw [hDdef]; push_cast; ring
+      _ ≤ (B : ℝ) := by exact_mod_cast this
+  have hBhiR : (B : ℝ) ≤ D * 18 ^ N := by
+    have : B ≤ ((Nat.lcmUpto N : ℤ) * 12 ^ N * 18 ^ N : ℤ) := hBhi
+    calc (B : ℝ) ≤ (((Nat.lcmUpto N : ℤ) * 12 ^ N * 18 ^ N : ℤ) : ℝ) := by exact_mod_cast this
+      _ = D * 18 ^ N := by rw [hDdef]; push_cast; ring
+  have hBpos : 0 < B := by
+    have h17 : (0 : ℝ) < D * 17 ^ N := by positivity
+    have : (0 : ℝ) < (B : ℝ) := lt_of_lt_of_le h17 hBloR
+    exact_mod_cast this
+  -- the integrals
+  obtain ⟨hi23pos, hi23le⟩ := rhinLiteEven_logForm_small_23 t
+  obtain ⟨hi34pos, hi34le⟩ := rhinLiteEven_logForm_small_34 t
+  -- L₁ = D · ∫_2^3, positive and ≤ D·(9/40)^N
+  refine ⟨A₁, A₂, B, hBpos, hBloR, hBhiR, ?_, ?_, ?_, ?_⟩
+  · rw [← h₁]; exact mul_pos hDpos hi23pos
+  · rw [← h₁]; exact mul_le_mul_of_nonneg_left hi23le hDpos.le
+  · rw [← h₂]; exact mul_pos hDpos hi34pos
+  · rw [← h₂]; exact mul_le_mul_of_nonneg_left hi34le hDpos.le
+
 /-- **Disclosed crux: linear-independence measure of `{1, log(3/2), log(4/3)}`.**
 
 There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p, q, r)`,
@@ -217,19 +327,20 @@ There are `κ : ℕ` and `c > 0` such that for every nonzero integer triple `(p,
 This is the coarse Rhin measure produced by the block subsequence `N = 2000t`.  **Route to a
 proof** (all ingredients are already in the repo; only the transference/optimization remains):
 
-* Data: `rhinLiteEven_two_log_forms t` gives `A₁, A₂, B` with `D_N·17^N ≤ B ≤ D_N·18^N`,
-  `L₁ = A₁ + B·log(3/2) = D_N·∫_2^3`, `L₂ = A₂ + B·log(4/3) = D_N·∫_3^4`.
-* Size: `rhinLiteEvenIntegral_le` / `rhinLiteEvenIntegral_pos_23`/`_34` bound each integral in
-  `(0, (9/40)^N]`, so `0 < Lᵢ ≤ D_N·(9/40)^N` (after the `x^{N+1}`→`x^N` bridge, a factor `1/x`).
-* Elimination: `elim_identity` gives `B·Λ = n + q·L₁ + r·L₂`, `n = p·B − q·A₁ − r·A₂ ∈ ℤ`.
-* Non-vanishing: for a given `(p,q,r)` choose the least `N` with `(|q|+|r|)·D_N·(9/40)^N < 1/2`;
-  the determinant of two consecutive form-pairs is nonzero (the two integrals are `> 0` and the
-  kernel is not degenerate), so `n ≠ 0` for at least one of two consecutive `N`.  Then
-  `|B·Λ| ≥ 1/2`, giving `|Λ| ≥ 1/(2B) ≥ 1/(2·D_N·18^N)`.  With `D_N ≤ 4^N·e^{o(N)}` this is
-  `≥ c·H^{−κ}` for a finite `κ` (the coarse Rhin exponent).
+* ✅ Data + size (PROVED): `rhinLite_forms_bounded t` packages `rhinLiteEven_two_log_forms` with the
+  size package into `0 < B`, `D_N·17^N ≤ B ≤ D_N·18^N`, `0 < Lᵢ ≤ D_N·(9/40)^N`.
+* ✅ Mechanism (PROVED): `logForm_conditional_lower` gives, for any `(p,q,r)` with
+  `n = p·B − q·A₁ − r·A₂ ≠ 0`, the rigorous bound `|Λ| ≥ (1 − (|q|+|r|)·D_N·(9/40)^N)/B`.
+* ⏳ Non-vanishing (REMAINING): for a given `(p,q,r)` choose the least `N` with
+  `(|q|+|r|)·D_N·(9/40)^N ≤ 1/2` (needs `D_N·(9/40)^N`'s growth vs `H`); the 3×3 determinant of
+  three consecutive form-triples `(B, A₁, A₂)` is a nonzero integer, so `n ≠ 0` for at least one of
+  three consecutive `N`.  Then `|Λ| ≥ 1/(2B) ≥ 1/(2·D_N·18^N)`.
+* ⏳ Asymptotic (REMAINING): `D_N = lcmUpto N · 12^N ≤ 4^N·e^{o(N)}` (`Nat.lcmUpto` bound) converts
+  `1/(2·D_N·18^N)` into `c·H^{−κ}` for a finite `κ` (the coarse Rhin exponent).
 
-Left as the single disclosed obligation of this module; it is a genuine multi-lap analytic
-number-theory target (the transference lemma + `lcmUpto` asymptotic), not a citation. -/
+The two ✅ steps are now proved; the remaining obligation is the number-theoretic non-vanishing
+determinant + the `lcmUpto` denominator asymptotic — a genuine multi-lap analytic number-theory
+target, not a citation. -/
 theorem rhinLiteLIMeasure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ p q r : ℤ, (p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) →
