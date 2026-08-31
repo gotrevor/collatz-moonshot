@@ -14,8 +14,15 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
 - ✅ `FrontA/RhinLiteMaximum.lean` proves the global base-block estimate on `[2,4]`: it maximizes
   the normalized square, differentiates the factorwise log-square, clears the six nonzero factors
   to the checked degree-eight critical polynomial, and applies the local certificates;
-- **NEXT:** lift the base theorem to the actual even block subsequence, then extract the two
-  LCM-cleared integer log forms. See `FRONT-A-RHIN-LITE-NEXT.md`.
+- ✅ `FrontA/RhinLiteEven.lean` lifts the base estimate to the even block subsequence
+  `N = 2000t`: exact degree `2N` (`rhinLiteEvenPolynomial_natDegree`), central-coefficient band
+  `17^N ≤ B_N ≤ 18^N` via the `comp (-X)` identification with `rhinLitePositive (2t)`
+  (`rhinLiteEvenPolynomial_centralCoeff_bounds`), and the normalized real integrand identity
+  `rhinLiteEvenNormalized_eq` = `(|H|/x^1000)^{2t}` yielding pointwise nonnegativity
+  (`rhinLiteEvenNormalized_nonneg`) and the `(9/40)^N` bound (`rhinLiteEvenNormalized_le`).
+- **NEXT:** the interval-integral consequences (integrand integrable+positive on `[2,3]`/`[3,4]`,
+  integral `≤ (9/40)^N`), then the two LCM-cleared integer log forms. See
+  `FRONT-A-RHIN-LITE-NEXT.md` objectives 2 (tail) and 3.
 
 This route needs no sharp Rhin constant and no central coefficient asymptotics. Any finite measure
 closes the large-`k` part of `sep_two_three`; a larger `native_decide` range may finish the residue.

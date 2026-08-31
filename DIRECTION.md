@@ -34,9 +34,12 @@
   theory was needed), and `FrontA/RhinLiteInterval.lean` proves the full rational target
   `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets.
   `FrontA/RhinLiteMaximum.lean` now closes the compact-maximum/derivative bridge globally on
-  `[2,4]`, sorry-free. **Next live theorem:** lift this base estimate to the actual even block
-  subsequence, followed by the two LCM-cleared integral log forms. Read `FRONT-A-RHIN-LITE.md`
-  and `FRONT-A-RHIN-LITE-NEXT.md`.
+  `[2,4]`, sorry-free. `FrontA/RhinLiteEven.lean` now lifts that base estimate to the even block
+  subsequence `N = 2000t`: exact degree `2N`, central-coefficient band `17^N ≤ B_N ≤ 18^N` (via
+  the `comp (-X)` identification with `rhinLitePositive (2t)`), and the pointwise normalized
+  integrand identity/nonnegativity/`(9/40)^N` bound — all sorry-free. **Next live theorem:** the
+  two interval-integral consequences, then the two LCM-cleared integral log forms. Read
+  `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
 
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem

@@ -7,8 +7,11 @@
 > **2026-08-26 live advance:** the independent Rhin-lite route has machine-checked exact content
 > balances and `17^n ≤ B_n ≤ 18^n`. It now also exhausts the degree-8 critical roots without
 > Sturm theory and proves the exact `(9/40)^1000` bound globally on `[2,4]` in
-> `FrontA/RhinLiteMaximum.lean`. The compact-maximum bridge is complete and axiom-clean; the even
-> block lift and integer-log-form wiring remain. See `FRONT-A-RHIN-LITE.md`. The source `sorry`
+> `FrontA/RhinLiteMaximum.lean`. The compact-maximum bridge is complete and axiom-clean, and
+> `FrontA/RhinLiteEven.lean` now lifts it to the even block subsequence `N = 2000t` (exact degree
+> `2N`, central band `17^N ≤ B_N ≤ 18^N`, pointwise normalized-integrand identity/nonnegativity/
+> `(9/40)^N` bound, all sorry-free); the interval-integral consequences and integer-log-form
+> wiring remain. See `FRONT-A-RHIN-LITE.md`. The source `sorry`
 > `sep_two_three` is not yet discharged.
 
 > [!CAUTION]

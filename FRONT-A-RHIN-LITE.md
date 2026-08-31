@@ -135,8 +135,15 @@ Sharp `7.616` constants are irrelevant.
 
 The remaining Lean work is:
 
-1. lift the completed base estimate to the even block subsequence (the exact assignment is
-   `FRONT-A-RHIN-LITE-NEXT.md`);
+1. ✅ **DONE (`FrontA/RhinLiteEven.lean`).** The base estimate is lifted to the even block
+   subsequence `N = 2000t`. `rhinLiteEvenPolynomial_natDegree` gives exact degree `2N`;
+   `rhinLiteEvenPolynomial_comp_neg_X` shows `(-X)`-substitution identifies it with
+   `rhinLitePositive (2t)`, so `rhinLiteEvenPolynomial_centralCoeff_bounds` places its central
+   coefficient in `[17^N, 18^N]`; `rhinLiteEvenNormalized_eq` proves the normalized integrand
+   equals `(|H|/x^1000)^{2t}` pointwise (via `aeval` of the exact ℚ-polynomial), giving
+   `rhinLiteEvenNormalized_nonneg` and `rhinLiteEvenNormalized_le` (pointwise `≤ (9/40)^N`).
+   Still open on this step: the two *interval-integral* consequences (positivity and
+   `≤ length·(9/40)^N`).
 2. instantiate polynomial-integral/LCM machinery and prove the two integer linear
    forms for `log(3/2)` and `log(4/3)`;
 3. prove a coarse simultaneous-approximation criterion using the explicit lower/upper coefficient
