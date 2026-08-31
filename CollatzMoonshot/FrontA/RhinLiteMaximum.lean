@@ -274,7 +274,7 @@ compact-maximum/critical-bracket bridge as the global estimate, but the maximise
 bracket (`rootLeft ≥ 3`), where the tight per-bracket certificate applies.  This is the isolated
 interval-arithmetic node feeding the `I₂` per-step upper bound `rhinLiteI₂_peak_upper`. -/
 theorem rhinLiteKernelAbs_div_pow_le_on_Icc34 {x : ℝ} (hx : x ∈ Icc (3 : ℝ) 4) :
-    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2205 / 10000 : ℝ) ^ rhinLiteScale := by
   obtain ⟨m, hm, hmax⟩ := isCompact_Icc.exists_isMaxOn (by norm_num : (Icc (3 : ℝ) 4).Nonempty)
     (rhinLiteKernelSq_continuousOn.mono (Icc_subset_Icc (by norm_num) le_rfl))
   have hm24 : m ∈ Icc (2 : ℝ) 4 := ⟨by linarith [hm.1], hm.2⟩
@@ -329,14 +329,14 @@ theorem rhinLiteKernelAbs_div_pow_le_on_Icc34 {x : ℝ} (hx : x ∈ Icc (3 : ℝ
   have hi3 : (3 : ℚ) ≤ rhinLiteRootLeft i.succ := rhinLiteRootLeft_ge_three i hRR
   have hmBound := rhinLiteKernelAbs_div_pow_le_tight i hi3 hmi
   have hmpos' : 0 < m := lt_trans (by norm_num) hmopen.1
-  have habsm : |rhinLiteKernel m| ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+  have habsm : |rhinLiteKernel m| ≤ (2205 / 10000 : ℝ) ^ rhinLiteScale := by
     rw [abs_rhinLiteKernel_eq m hmpos']
     exact hmBound
   have hxpos : 0 < x := lt_of_lt_of_le (by norm_num) hx.1
   have hsquares : |rhinLiteKernel x| ^ 2 ≤ |rhinLiteKernel m| ^ 2 := by
     simpa [rhinLiteKernelSq, sq_abs] using hmax hx
   rw [← abs_rhinLiteKernel_eq x hxpos]
-  have htarget : 0 ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := pow_nonneg (by norm_num) _
+  have htarget : 0 ≤ (2205 / 10000 : ℝ) ^ rhinLiteScale := pow_nonneg (by norm_num) _
   nlinarith [abs_nonneg (rhinLiteKernel x), abs_nonneg (rhinLiteKernel m),
     sq_nonneg (|rhinLiteKernel x| + |rhinLiteKernel m|)]
 

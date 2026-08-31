@@ -202,7 +202,7 @@ exceeds the target — so the `rootLeft ≥ 3` guard is essential.) -/
 theorem rhinLite_boundProduct_certificate_tight (i : Fin 7)
     (hi : (3 : ℚ) ≤ rhinLiteRootLeft i.succ) :
     rhinLiteBoundProduct i ≤
-      rhinLiteRootLeft i.succ ^ rhinLiteScale * (2209 / 10000 : ℚ) ^ rhinLiteScale := by
+      rhinLiteRootLeft i.succ ^ rhinLiteScale * (2205 / 10000 : ℚ) ^ rhinLiteScale := by
   native_decide +revert
 
 set_option maxRecDepth 100000 in
@@ -211,14 +211,14 @@ kernel is bounded by `(2209/10000)^{scale}`, strictly below the global `(9/40)^{
 theorem rhinLiteKernelAbs_div_pow_le_tight (i : Fin 7)
     (hi : (3 : ℚ) ≤ rhinLiteRootLeft i.succ) {x : ℝ}
     (hx : x ∈ Icc (rhinLiteRootLeft i.succ : ℝ) (rhinLiteRootRight i.succ : ℝ)) :
-    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+    rhinLiteKernelAbs x / x ^ rhinLiteScale ≤ (2205 / 10000 : ℝ) ^ rhinLiteScale := by
   have hcert' : (rhinLiteBoundProduct i : ℝ) ≤
       ((rhinLiteRootLeft i.succ ^ rhinLiteScale *
-        (2209 / 10000 : ℚ) ^ rhinLiteScale : ℚ) : ℝ) := by
+        (2205 / 10000 : ℚ) ^ rhinLiteScale : ℚ) : ℝ) := by
     exact_mod_cast rhinLite_boundProduct_certificate_tight i hi
   have hcert : (rhinLiteBoundProduct i : ℝ) ≤
       (rhinLiteRootLeft i.succ : ℝ) ^ rhinLiteScale *
-        (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+        (2205 / 10000 : ℝ) ^ rhinLiteScale := by
     push_cast at hcert'
     exact hcert'
   have hleft : (0 : ℝ) ≤ (rhinLiteRootLeft i.succ : ℝ) := by
@@ -230,10 +230,10 @@ theorem rhinLiteKernelAbs_div_pow_le_tight (i : Fin 7)
     rhinLiteKernelAbs x ≤ (rhinLiteBoundProduct i : ℝ) :=
       rhinLiteKernelAbs_le_boundProduct i hx
     _ ≤ (rhinLiteRootLeft i.succ : ℝ) ^ rhinLiteScale *
-        (2209 / 10000 : ℝ) ^ rhinLiteScale := hcert
-    _ ≤ x ^ rhinLiteScale * (2209 / 10000 : ℝ) ^ rhinLiteScale := by
+        (2205 / 10000 : ℝ) ^ rhinLiteScale := hcert
+    _ ≤ x ^ rhinLiteScale * (2205 / 10000 : ℝ) ^ rhinLiteScale := by
       exact mul_le_mul_of_nonneg_right
         (pow_le_pow_left₀ hleft hx.1 rhinLiteScale) (pow_nonneg (by norm_num) _)
-    _ = (2209 / 10000 : ℝ) ^ rhinLiteScale * x ^ rhinLiteScale := mul_comm _ _
+    _ = (2205 / 10000 : ℝ) ^ rhinLiteScale * x ^ rhinLiteScale := mul_comm _ _
 
 end CollatzMoonshot.FrontA

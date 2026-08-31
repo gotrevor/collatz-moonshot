@@ -1467,12 +1467,19 @@ theorem rhinLiteCentral_step_growth16 (t : ℕ) :
   rw [rhinLiteCentral, rhinLiteCentral]
   exact_mod_cast hZ
 
-/-- The per-interval `[3,4]` step-factor constant `κ = (2209/10000)^{2·scale}`.  It is a rational
+/-- The per-interval `[3,4]` step-factor constant `κ = (2205/10000)^{2·scale}`.  It is a rational
 upper envelope for the pointwise step factor `φ(x)² = (kernelAbs x / x^{scale})²` on `[3,4]`
-(numerically `φ² ≤ exp(m₂) ≈ exp(−3025.5) = (0.220314…)^{2000}`, and `2209/10000 = 0.2209 > 0.220314`),
-and simultaneously `2κ` sits strictly below the `[2,3]` peak step factor `exp(m₁) ≈ exp(−3014.5)`
-(`2·(0.2209)^{2000} = exp(−3019.4)`).  This double margin is exactly what separates the two rates. -/
-noncomputable def rhinLiteKappa : ℝ := (2209 / 10000 : ℝ) ^ (2 * rhinLiteScale)
+(numerically `φ² ≤ exp(m₂) ≈ (0.2202995…)^{2000}` at the `[3,4]` peak `x≈3.6524`, and
+`2205/10000 = 0.2205 > 0.2202995`; the exact `[3,4]` bound-product certificate still clears the
+smaller `0.2205` target — the binding bracket `rootLeft≈3.6524` needs only `base ≥ 0.2203003`),
+and simultaneously `2κ` sits strictly below the `[2,3]` peak step factor.  **Sharpened 2026-08-31**
+from base `0.2209` to `0.2205`: `0.2209` made the `I₁` base case `2κ·I₁(0) ≤ I₁(1)` too tight
+(only `exp(0.29)=1.34×`, unreachable by a single-window lower bound, which loses `~1.7×`), whereas
+`0.2205` opens the `I₁` base margin to `exp(3.9)=50×` while keeping the `I₂` `[3,4]` envelope valid
+(cert slack `(0.2205/0.2203)^{1000}≈2.5×`).  This is the operator-sanctioned "sharpen κ" repair;
+it does not weaken the headline (the gap lemma `rhinLite_ratio_gap_of_step_bounds` is κ-generic).
+This double margin is exactly what separates the two rates. -/
+noncomputable def rhinLiteKappa : ℝ := (2205 / 10000 : ℝ) ^ (2 * rhinLiteScale)
 
 theorem rhinLiteKappa_pos : 0 < rhinLiteKappa := by
   rw [rhinLiteKappa]; positivity
@@ -1508,7 +1515,7 @@ theorem rhinLiteI₂_peak_upper (t : ℕ) :
       (pow_nonneg (by linarith [hx.1] : (0:ℝ) ≤ x) _)
   have hb := rhinLiteKernelAbs_div_pow_le_on_Icc34 hx
   calc (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
-        ≤ ((2209 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
+        ≤ ((2205 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
     _ = rhinLiteKappa := by rw [rhinLiteKappa, ← pow_mul, Nat.mul_comm rhinLiteScale 2]
 
 /-- Cauchy–Schwarz for interval integrals of nonnegative continuous functions,
@@ -1630,10 +1637,24 @@ theorem rhinLiteI₁_logConvex (t : ℕ) :
         interval_sq_integral_cauchySchwarz (by norm_num) hcu hcv hunn hvnn
     _ = rhinLiteI₁ t * rhinLiteI₁ (t + 2) := by rw [e_uu, e_vv]
 
-/-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — disclosed numerical node.**  `I₁(0) = ∫₂³ dx/x =
-log(3/2)` and `I₁(1) = ∫₂³ φ²/x`; the `1/x`-weighted average of `φ²` over `[2,3]` is `≥ 2κ`
-(numerically `I₁(1) ≈ exp(−3020.0)` vs `2κ·I₁(0) ≈ exp(−3020.3)`, margin `exp(0.29)`).  This is the
-single tight numerical prerequisite; a modest window lower bound on `I₁(1)` supplies it.  Disclosed. -/
+/-- **(C2) Base-case ratio `2κ·I₁(0) ≤ I₁(1)` — disclosed numerical node (single-window route).**
+`I₁(0) = ∫₂³ dx/x = log(3/2)` and `I₁(1) = ∫₂³ φ²/x` with `φ² = rhinLiteKernelSq` (= normalized 1).
+After the 2026-08-31 sharpening of `κ` to base `0.2205`, the required margin is `exp(3.9)=50×`, so a
+**single monotone window** suffices (verified in `experiments/rhinlite_single_window.py` /
+`rhinlite_peak34.py`).  Concrete certificate, all arithmetic exact:
+
+* window `W = [2219/1000, 2223/1000] ⊂ (2.115, 2.223)`, left of the interior peak `x*≈2.22324`;
+* on `W`, `φ²` is strictly increasing (`(log φ²)' = 2·(705/f₁+551/f₂+449/f₃+545/f₄+
+  39(34x-102)/f₅+54(38x-108)/f₆-1000/x) > 0`: numerator `rhinLiteCriticalReal` has no root in `W`
+  and the denominator `f₁f₂f₃f₄f₅f₆·x > 0` there), so `φ²(x) ≥ m := φ²(2219/1000)` on `W`;
+* `I₁(1) ≥ ∫_W φ²/x ≥ m·∫_W dx/x = m·log(2223/2219) ≥ m·(4/2223)`  (using `log(1+u) ≥ u/(1+u)`);
+* `2κ·I₁(0) = 2·(2205/10000)^{2000}·log(3/2) ≤ 2·(2205/10000)^{2000}·(1/2)`  (`log(3/2) ≤ 1/2`);
+* the closing rational inequality `2·(2205/10000)^{2000}·(1/2) ≤ m·(4/2223)` holds with ratio
+  `8.93×` (checked exactly in `experiments/rhinlite_single_window.py`, `native_decide`-grade).
+
+The remaining Lean debt is the analytic wiring (monotonicity `φ²` on `W` via `strictMonoOn_of_
+deriv_pos` + `hasDerivAt_rhinLiteLogSq`, and the interval-integral lower bounds); the numerics are
+fully pinned.  Disclosed. -/
 theorem rhinLiteI₁_ratio_base :
     2 * rhinLiteKappa * rhinLiteI₁ 0 ≤ rhinLiteI₁ 1 := by
   sorry
