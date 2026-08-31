@@ -220,4 +220,110 @@ theorem lcm_cleared_log_form (P : ℤ[X]) {ea eb : ℤ} (hea : ea ∣ 12) (heb :
   push_cast
   ring
 
+/-! ## The integer even polynomial `H_N` and the two concrete log forms -/
+
+/-- The signed six-factor polynomial at `N = 2000t`, over `ℤ` (the same object as
+`rhinLiteEvenPolynomial` but with integer coefficients). -/
+noncomputable def rhinLiteEvenPolynomialZ (t : ℕ) : ℤ[X] :=
+  rhinLiteQ1 ^ (2 * rhinLiteW1 * t) * rhinLiteQ2 ^ (2 * rhinLiteW2 * t) *
+    rhinLiteQ3 ^ (2 * rhinLiteW3 * t) * rhinLiteQ4 ^ (2 * rhinLiteW4 * t) *
+    rhinLiteQ5 ^ (2 * rhinLiteW5 * t) * rhinLiteQ6 ^ (2 * rhinLiteW6 * t)
+
+/-- `H_N` casts to the rational even polynomial. -/
+theorem rhinLiteEvenPolynomialZ_map_rat (t : ℕ) :
+    (rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℚ) = rhinLiteEvenPolynomial t := by
+  simp only [rhinLiteEvenPolynomialZ, rhinLiteEvenPolynomial, Polynomial.map_mul,
+    Polynomial.map_pow, rhinLiteQ1, rhinLiteQ2, rhinLiteQ3, rhinLiteQ4, rhinLiteQ5, rhinLiteQ6,
+    Polynomial.map_sub, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_pow, map_X, map_C,
+    map_ofNat]
+  norm_num
+
+/-- `H_N` has exact degree `2N`. -/
+theorem rhinLiteEvenPolynomialZ_natDegree (t : ℕ) :
+    (rhinLiteEvenPolynomialZ t).natDegree = 2 * rhinLiteEvenIndex t := by
+  rw [rhinLiteEvenPolynomialZ, rhinLiteEvenIndex, rhinLiteQ1, rhinLiteQ2, rhinLiteQ3,
+    rhinLiteQ4, rhinLiteQ5, rhinLiteQ6]
+  compute_degree!
+  all_goals simp only [rhinLiteScale, rhinLiteW1, rhinLiteW2, rhinLiteW3, rhinLiteW4,
+    rhinLiteW5, rhinLiteW6]
+  all_goals omega
+
+/-- The real cast of `H_N` also has degree `2N`. -/
+theorem rhinLiteEvenPolynomialZ_map_real_natDegree (t : ℕ) :
+    ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree =
+      2 * rhinLiteEvenIndex t := by
+  rw [natDegree_map_eq_of_injective (by exact_mod_cast Int.cast_injective),
+    rhinLiteEvenPolynomialZ_natDegree]
+
+/-- `H_N`'s central integer coefficient lies in the promised `[17^N, 18^N]` band. -/
+theorem rhinLiteEvenPolynomialZ_centralCoeff_bounds (t : ℕ) :
+    (17 : ℤ) ^ rhinLiteEvenIndex t ≤
+        (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) ∧
+      (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) ≤
+        (18 : ℤ) ^ rhinLiteEvenIndex t := by
+  have hmap : ((rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℚ) =
+      (rhinLiteEvenPolynomial t).coeff (rhinLiteEvenIndex t) := by
+    rw [← rhinLiteEvenPolynomialZ_map_rat, coeff_map]; simp
+  obtain ⟨hlo, hhi⟩ := rhinLiteEvenPolynomial_centralCoeff_bounds t
+  refine ⟨?_, ?_⟩
+  · have : (17 : ℚ) ^ rhinLiteEvenIndex t ≤
+        ((rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℚ) := by rw [hmap]; exact hlo
+    exact_mod_cast this
+  · have : ((rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) : ℚ) ≤
+        (18 : ℚ) ^ rhinLiteEvenIndex t := by rw [hmap]; exact hhi
+    exact_mod_cast this
+
+/-- **The two `D_N`-cleared integer log forms with a common `B`.**  With
+`N = rhinLiteEvenIndex t`, `D_N = lcmUpto N · 12^N`, and `p` the real cast of `H_N`, there are
+integers `A₁, A₂, B` such that
+
+`D_N·∫_2^3 p/x^{N+1} = A₁ + B·log(3/2)`,  `D_N·∫_3^4 p/x^{N+1} = A₂ + B·log(4/3)`,
+
+the same `B`, with `D_N·17^N ≤ B ≤ D_N·18^N`. -/
+theorem rhinLiteEven_two_log_forms (t : ℕ) :
+    ∃ A₁ A₂ B : ℤ,
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t *
+          (∫ x in (2 : ℝ)..3,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₁ : ℝ) + (B : ℝ) * Real.log (3 / 2)) ∧
+      ((Nat.lcmUpto (rhinLiteEvenIndex t) : ℝ) * 12 ^ rhinLiteEvenIndex t *
+          (∫ x in (3 : ℝ)..4,
+            ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).eval x /
+              x ^ (rhinLiteEvenIndex t + 1))
+        = (A₂ : ℝ) + (B : ℝ) * Real.log (4 / 3)) ∧
+      (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t *
+          17 ^ rhinLiteEvenIndex t ≤ B ∧
+      B ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t *
+          18 ^ rhinLiteEvenIndex t := by
+  have hdeg : ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree ≤
+      2 * rhinLiteEvenIndex t := le_of_eq (rhinLiteEvenPolynomialZ_map_real_natDegree t)
+  have hN : rhinLiteEvenIndex t ≤
+      ((rhinLiteEvenPolynomialZ t).map (Int.castRingHom ℝ)).natDegree := by
+    rw [rhinLiteEvenPolynomialZ_map_real_natDegree]; omega
+  obtain ⟨A₁, h₁⟩ := lcm_cleared_log_form (rhinLiteEvenPolynomialZ t) (ea := 2) (eb := 3)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN
+  obtain ⟨A₂, h₂⟩ := lcm_cleared_log_form (rhinLiteEvenPolynomialZ t) (ea := 3) (eb := 4)
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (rhinLiteEvenIndex t) hdeg hN
+  refine ⟨A₁, A₂,
+    (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t *
+      (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t), ?_, ?_, ?_, ?_⟩
+  · simpa using h₁
+  · simpa using h₂
+  · obtain ⟨hlo, _⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+    have hD : (0 : ℤ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t := by
+      positivity
+    calc (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t *
+            17 ^ rhinLiteEvenIndex t
+        ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t *
+            (rhinLiteEvenPolynomialZ t).coeff (rhinLiteEvenIndex t) :=
+          mul_le_mul_of_nonneg_left hlo hD
+      _ = _ := by ring
+  · obtain ⟨_, hhi⟩ := rhinLiteEvenPolynomialZ_centralCoeff_bounds t
+    have hD : (0 : ℤ) ≤ (Nat.lcmUpto (rhinLiteEvenIndex t) : ℤ) * 12 ^ rhinLiteEvenIndex t := by
+      positivity
+    exact mul_le_mul_of_nonneg_left hhi hD
+
 end CollatzMoonshot.FrontA

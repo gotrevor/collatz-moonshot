@@ -12,7 +12,11 @@
 > `2N`, central band `17^N ≤ B_N ≤ 18^N`, pointwise normalized-integrand identity/nonnegativity/
 > `(9/40)^N` bound, plus the interval-integral consequences — integrability,
 > `∫ ≤ length·(9/40)^N`, nonnegativity, and strict positivity on `[2,3]`/`[3,4]` — all
-> sorry-free; objective 2 is complete and only the integer-log-form wiring remains. See
+> sorry-free; objective 2 is complete. `FrontA/RhinLiteLogForm.lean` now also lands objective 3:
+> the two `D_N`-cleared integer log forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)`
+> (`rhinLiteEven_two_log_forms`) with a common `B = D_N·(central coeff)`,
+> `D_N·17^N ≤ B ≤ D_N·18^N`, `D_N = lcmUpto N · 12^N` — all sorry-free. What remains toward
+> `sep_two_three` is the final simultaneous-approximation criterion. See
 > `FRONT-A-RHIN-LITE.md`. The source `sorry`
 > `sep_two_three` is not yet discharged.
 

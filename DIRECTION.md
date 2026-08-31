@@ -39,8 +39,12 @@
   the `comp (-X)` identification with `rhinLitePositive (2t)`), and the pointwise normalized
   integrand identity/nonnegativity/`(9/40)^N` bound, plus the interval-integral consequences
   (integrability, `∫ ≤ length·(9/40)^N`, nonnegativity, and strict positivity on `[2,3]`/`[3,4]`)
-  — all sorry-free; **objective 2 is complete.** **Next live theorem:** the two LCM-cleared
-  integer log forms. Read `FRONT-A-RHIN-LITE.md` and `FRONT-A-RHIN-LITE-NEXT.md`.
+  — all sorry-free; **objective 2 is complete.** `FrontA/RhinLiteLogForm.lean` now also lands
+  **objective 3**: the two `D_N`-cleared integer log forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)`
+  (`rhinLiteEven_two_log_forms`) with a common `B = D_N·(central coeff)`, `D_N·17^N ≤ B ≤ D_N·18^N`,
+  `D_N = lcmUpto N·12^N`, all sorry-free. **Next live theorem:** the final
+  simultaneous-approximation criterion feeding `sep_two_three`. Read `FRONT-A-RHIN-LITE.md` and
+  `FRONT-A-RHIN-LITE-NEXT.md`.
 
 - **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
   bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem

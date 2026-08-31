@@ -147,8 +147,11 @@ The remaining Lean work is:
    `rhinLiteEvenIntegral_le` (`∫ ≤ length·(9/40)^N`), `rhinLiteEvenIntegral_nonneg`, and
    strict positivity `rhinLiteEvenIntegral_pos_23`/`rhinLiteEvenIntegral_pos_34` (via a
    root-free positive subinterval `[13/5,14/5]` resp. `[19/5,39/10]`). **Objective 2 complete.**
-2. instantiate polynomial-integral/LCM machinery and prove the two integer linear
-   forms for `log(3/2)` and `log(4/3)`;
+2. ✅ **DONE (`FrontA/RhinLiteLogForm.lean`).** The polynomial-integral/LCM machinery is built
+   (monomial identity → coefficient-sum expansion → log-term split → `lcmUpto`/`12^N` clearing →
+   per-term integer clearing → assembled `lcm_cleared_log_form`) and `rhinLiteEven_two_log_forms`
+   lands the two integer linear forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)` with a common
+   `B = D_N·(central coeff)` satisfying `D_N·17^N ≤ B ≤ D_N·18^N`, `D_N = lcmUpto N · 12^N`;
 3. prove a coarse simultaneous-approximation criterion using the explicit lower/upper coefficient
    bands (cite the standard Q-linear independence of `1,log(3/2),log(4/3)` if convenient);
 4. feed the resulting finite measure through `sep_of_linear_form_poly` and extend the finite check.

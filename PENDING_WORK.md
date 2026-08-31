@@ -43,10 +43,15 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
   `[N, 2N]` and positive endpoints `ea ≤ eb` dividing 12,
   `D_N·∫_{ea}^{eb} P/x^{N+1} = A + B·log(eb/ea)` with `A : ℤ`, `B = D_N·P.coeff N : ℤ`, and
   `D_N = lcmUpto N · 12^N`.
-  Next (final objective-3 assembly): define the integer even polynomial `H_N : ℤ[X]` with
-  `H_N.map (Int.cast) = ` the real even polynomial and `H_N.coeff N =` the central coefficient;
-  instantiate `lcm_cleared_log_form` at `(ea,eb)=(2,3)` and `(3,4)` to get `A₁ + B·log(3/2)`,
-  `A₂ + B·log(4/3)` with the SAME `B = D_N·(central coeff) ∈ [D_N·17^N, D_N·18^N]`.
+  ✅ **Objective 3 headline LANDED** (`rhinLiteEven_two_log_forms`): with the integer even
+  polynomial `H_N = rhinLiteEvenPolynomialZ t` (degree `2N`, `H_N.coeff N ∈ [17^N,18^N]`, casts to
+  the rational even polynomial), instantiating `lcm_cleared_log_form` at `(2,3)` and `(3,4)` gives
+  integers `A₁,A₂,B` with `D_N·∫_2^3 = A₁ + B·log(3/2)`, `D_N·∫_3^4 = A₂ + B·log(4/3)`, the SAME
+  `B`, and `D_N·17^N ≤ B ≤ D_N·18^N` (`D_N = lcmUpto N · 12^N`).
+  Next (objective 4 / final criterion): combine the common-`B` forms with the interval decay
+  `∫ ≤ (9/40)^N` (objective 2) into the simultaneous-approximation contradiction that closes
+  `sep_two_three` — the coefficient `B` grows like `≥ 17^N` while `D_N·(9/40)^N` decay must beat
+  the `lcmUpto N · 12^N` denominator; check the arithmetic of `12·(9/40) = 27/10` vs growth.
 - **NEXT (objective 3):** the two LCM-cleared integer log forms `A₁ + B·log(3/2)`,
   `A₂ + B·log(4/3)` with common `B` and clearing factor `D_N`. See `FRONT-A-RHIN-LITE-NEXT.md`
   objective 3: the monomial integral identity `∫_a^b H_N/x^{N+1}` isolates the `x^N` term
