@@ -1323,6 +1323,40 @@ theorem rhinLiteEven_logForm_step_le_of_bound (t : ℕ) {a b μ : ℝ}
   have hmono := intervalIntegral.integral_mono_on hab hf hg hpt
   rwa [intervalIntegral.integral_const_mul] at hmono
 
+/-- **Generalized pure-power per-step LOWER bound.**  Dual to `rhinLiteEven_logForm_step_le_of_bound`:
+from a pointwise squared-`φ` LOWER bound `μ ≤ φ(x)²` on `[a,b]`, the step integral GROWS by at least
+`μ`.  Used with the `[a,b] ⊂ [2,3]` window where `φ² ≥ 4κ` to feed the concentration lower bound. -/
+theorem rhinLiteEven_logForm_step_ge_of_bound (t : ℕ) {a b μ : ℝ}
+    (ha : 2 ≤ a) (hb : b ≤ 4) (hab : a ≤ b) (hμ : 0 ≤ μ)
+    (hbound : ∀ x ∈ Set.Icc a b, μ ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2) :
+    μ * (∫ x in a..b, rhinLiteEvenNormalized t x / x)
+      ≤ ∫ x in a..b, rhinLiteEvenNormalized (t + 1) x / x := by
+  have hg : IntervalIntegrable
+      (fun x => μ * (rhinLiteEvenNormalized t x / x)) volume a b :=
+    (intervalIntegrable_rhinLiteEven_logForm t ha hb hab).const_mul _
+  have hf := intervalIntegrable_rhinLiteEven_logForm (t + 1) ha hb hab
+  have hpt : ∀ x ∈ Set.Icc a b,
+      μ * (rhinLiteEvenNormalized t x / x) ≤ rhinLiteEvenNormalized (t + 1) x / x := by
+    intro x hx
+    have hxmem : x ∈ Set.Icc (2 : ℝ) 4 := ⟨le_trans ha hx.1, le_trans hx.2 hb⟩
+    have hxpos : 0 < x := by linarith [hxmem.1]
+    have hφnn : 0 ≤ rhinLiteKernelAbs x / x ^ rhinLiteScale :=
+      div_nonneg (rhinLiteKernelAbs_nonneg x) (pow_nonneg hxpos.le _)
+    have hsq := hbound x hx
+    have hstep : μ * rhinLiteEvenNormalized t x ≤ rhinLiteEvenNormalized (t + 1) x := by
+      rw [rhinLiteEvenNormalized_eq (t + 1) hxpos, rhinLiteEvenNormalized_eq t hxpos,
+        show 2 * (t + 1) = 2 * t + 2 by ring, pow_add]
+      calc μ * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)
+            ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2
+                * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t) :=
+            mul_le_mul_of_nonneg_right hsq (pow_nonneg hφnn (2 * t))
+        _ = (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ (2 * t)
+              * (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2 := by ring
+    rw [← mul_div_assoc]
+    exact (div_le_div_iff_of_pos_right hxpos).mpr hstep
+  have hmono := intervalIntegral.integral_mono_on hab hg hf hpt
+  rwa [intervalIntegral.integral_const_mul] at hmono
+
 /-- The fixed per-step drop `(9/40)²⁰⁰⁰` is `≤ 1/16`, so a step loses a factor `≥ 16`. -/
 theorem rhinLite_stepFactor_le_one_sixteenth :
     (16 : ℝ) * (9 / 40 : ℝ) ^ (2 * rhinLiteScale) ≤ 1 := by
@@ -1477,17 +1511,89 @@ theorem rhinLiteI₂_peak_upper (t : ℕ) :
         ≤ ((2209 / 10000 : ℝ) ^ rhinLiteScale) ^ 2 := pow_le_pow_left₀ hnn hb 2
     _ = rhinLiteKappa := by rw [rhinLiteKappa, ← pow_mul, Nat.mul_comm rhinLiteScale 2]
 
-/-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound).**  `2κ·I₁(t) ≤ I₁(t+1)` with
-`κ = rhinLiteKappa`.  This is the analytic HEART: unlike the upper bounds it is NOT pointwise —
-`φ(x)` vanishes at the endpoints of `[2,3]`, so no pointwise lower bound exists.  The mass of
-`φ^{2t}` must CONCENTRATE near the higher peak `x₁* ≈ 2.223` (`φ² ≈ exp(m₁) ≈ exp(−3014.5)`), which
-dominates `2κ = exp(−3019.4)` with `exp(4.9) ≈ 134×` room.  Route (Laplace lower bound): fix a
-rational sub-window `[a,b] ⊂ [2,3]` about `x₁*` where `φ² ≥ 2κ`, bound `I₁(t+1) ≥ 2κ·∫_{[a,b]}
-φ^{2t}/x`, and control the tail `∫_{[2,3]∖[a,b]} φ^{2t}/x ≤ ∫_{[a,b]} φ^{2t}/x` so that
-`∫_{[a,b]} φ^{2t}/x ≥ ½·I₁(t)`.  Disclosed sub-node (the genuinely multi-lap concentration crux). -/
+/-- **(L1) Window squared-`φ` lower bound — disclosed interval-arithmetic node.**  On the fixed
+rational window `[277/125, 223/100] = [2.216, 2.230] ⊂ [2,3]` around the peak `x₁* ≈ 2.223`, the step
+factor `φ(x)²` is at least `4κ` (numerically the margin is `exp(2.1)` at the tighter endpoint —
+`ψ ≥ −3016.5` vs `ln(4κ) = −3018.7`).  This is a per-interval LOWER kernel bound, the mirror of the
+`[3,4]` upper node; provable by a factor-bound-BELOW certificate on this single window (the factors
+`|x−3|,|x−2|,…` are monotone / sign-definite there, so endpoint enclosures bracket them from below).
+Disclosed. -/
+theorem rhinLiteWindow_phi_sq_lower {x : ℝ}
+    (hx : x ∈ Set.Icc (277 / 125 : ℝ) (223 / 100)) :
+    4 * rhinLiteKappa ≤ (rhinLiteKernelAbs x / x ^ rhinLiteScale) ^ 2 := by
+  sorry
+
+/-- **(L2) Window mass ≥ ½ — the Laplace concentration heart, disclosed.**  The full `[2,3]` integral
+is at most twice the window integral: the mass of `φ^{2t}` concentrates near the peak.  Route: the
+tail `∫_{[2,3]∖[a,b]} φ^{2t}/x` is dominated by `∫_{[a,b]} φ^{2t}/x` because on the tail `φ` is
+strictly below its window values (a monotone reparametrization toward the peak), so as `t` grows the
+window carries at least half the mass.  This is the genuine multi-lap analytic obligation. -/
+theorem rhinLiteWindow_mass_half (t : ℕ) :
+    rhinLiteI₁ t ≤ 2 * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by
+  sorry
+
+/-- **Sub-node (I₁ `[2,3]`-concentration per-step lower bound) — now REDUCED** to the two window
+facts `rhinLiteWindow_phi_sq_lower` (φ² ≥ 4κ on `[a,b]`) and `rhinLiteWindow_mass_half`
+(window carries ≥ ½ the `[2,3]` mass), combined by the pure-power lower step
+`rhinLiteEven_logForm_step_ge_of_bound` and sub-interval monotonicity.  Chain:
+`I₁(t+1) ≥ ∫_{[a,b]} φ²φ^{2t}/x ≥ 4κ∫_{[a,b]} φ^{2t}/x ≥ 4κ·½·I₁(t) = 2κ·I₁(t)`. -/
 theorem rhinLiteI₁_concentration_lower (t : ℕ) :
     2 * rhinLiteKappa * rhinLiteI₁ t ≤ rhinLiteI₁ (t + 1) := by
-  sorry
+  have hab : (277 / 125 : ℝ) ≤ 223 / 100 := by norm_num
+  have hκnn : (0 : ℝ) ≤ rhinLiteKappa := rhinLiteKappa_pos.le
+  -- normalized form of the two full integrals
+  have hI : ∀ s : ℕ, rhinLiteI₁ s = ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized s x / x := by
+    intro s; rw [rhinLiteI₁]; exact intervalIntegral.integral_congr
+      (fun x _ => rhinLiteEven_logForm_integrand s x)
+  -- pointwise nonnegativity of the integrand on [2,3]
+  have hFnn : ∀ x ∈ Set.Icc (2 : ℝ) 3, 0 ≤ rhinLiteEvenNormalized (t + 1) x / x := by
+    intro x hx
+    exact div_nonneg (rhinLiteEvenNormalized_nonneg (t + 1) (by linarith [hx.1]))
+      (by linarith [hx.1])
+  -- integrability on the three adjacent pieces [2,a], [a,b], [b,3]
+  have i2a := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 2) (b := 277 / 125)
+    (by norm_num) (by norm_num) (by norm_num)
+  have iab := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 277 / 125) (b := 223 / 100)
+    (by norm_num) (by norm_num) hab
+  have ib3 := intervalIntegrable_rhinLiteEven_logForm (t + 1) (a := 223 / 100) (b := 3)
+    (by norm_num) (by norm_num) (by norm_num)
+  -- the window integral is ≤ the full [2,3] integral (nonneg integrand, adjacent-interval split)
+  have hsub : (∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x)
+      ≤ ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := by
+    have hnn2a : 0 ≤ ∫ x in (2 : ℝ)..(277 / 125), rhinLiteEvenNormalized (t + 1) x / x :=
+      intervalIntegral.integral_nonneg (by norm_num)
+        (fun x hx => hFnn x ⟨hx.1, by linarith [hx.2]⟩)
+    have hnnb3 : 0 ≤ ∫ x in (223 / 100 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x :=
+      intervalIntegral.integral_nonneg (by norm_num)
+        (fun x hx => hFnn x ⟨by linarith [hx.1], hx.2⟩)
+    have hsplit : (∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x)
+        = (∫ x in (2 : ℝ)..(277 / 125), rhinLiteEvenNormalized (t + 1) x / x)
+          + (∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x)
+          + ∫ x in (223 / 100 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := by
+      rw [add_assoc, intervalIntegral.integral_add_adjacent_intervals iab ib3,
+        intervalIntegral.integral_add_adjacent_intervals i2a (iab.trans ib3)]
+    rw [hsplit]; linarith
+  -- pure-power lower step on the window: 4κ · ∫window φ^{2t} ≤ ∫window φ^{2t+2}
+  have hstep := rhinLiteEven_logForm_step_ge_of_bound t (by norm_num : (2:ℝ) ≤ 277/125)
+    (by norm_num : (223/100:ℝ) ≤ 4) hab (by positivity)
+    (fun x hx => rhinLiteWindow_phi_sq_lower hx)
+  -- window carries at least half the [2,3] mass
+  have hmass := rhinLiteWindow_mass_half t
+  -- assemble
+  rw [hI (t + 1)]
+  have hwin_nn : 0 ≤ ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by
+    refine intervalIntegral.integral_nonneg hab (fun x hx => ?_)
+    exact div_nonneg (rhinLiteEvenNormalized_nonneg t (by linarith [hx.1] : (0:ℝ) < x))
+      (by linarith [hx.1])
+  calc 2 * rhinLiteKappa * rhinLiteI₁ t
+        ≤ 2 * rhinLiteKappa
+            * (2 * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x) := by
+          have : 0 ≤ 2 * rhinLiteKappa := by positivity
+          nlinarith [hmass, this]
+    _ = 4 * rhinLiteKappa
+            * ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized t x / x := by ring
+    _ ≤ ∫ x in (277 / 125 : ℝ)..(223 / 100), rhinLiteEvenNormalized (t + 1) x / x := hstep
+    _ ≤ ∫ x in (2 : ℝ)..3, rhinLiteEvenNormalized (t + 1) x / x := hsub
 
 /-- **Sub-node (the rate gap `μ₁ > M₂`) — now REDUCED to two one-sided per-interval facts.**  `I₁`
 decays strictly slower than `I₂`: per step the `I₁`-ratio exceeds twice the `I₂`-ratio,

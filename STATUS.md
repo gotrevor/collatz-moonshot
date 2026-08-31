@@ -68,9 +68,12 @@ leaves via the pure-arithmetic glue `rhinLite_ratio_gap_of_step_bounds` (trust-b
 entire dominance assembly (`det_dominance_of_step_bounds`) is PROVED trust-base clean.  The
 `[3,4]`-peak upper leaf `rhinLiteI₂_peak_upper` is now ALSO fully PROVED (via the tight per-interval
 kernel bound `rhinLiteKernelAbs_div_pow_le_on_Icc34` — a `[3,4]`-restricted compact-max bridge plus
-the tight bracket certificate).  Disclosed proof debt is thus exactly ONE leaf (in
-`RhinLiteApprox.lean`): `rhinLiteI₁_concentration_lower` (the Laplace concentration crux — the
-genuine analytic heart, multi-lap).  Named literature and conjecture axioms are also used explicitly.
+the tight bracket certificate).  The concentration lower leaf `rhinLiteI₁_concentration_lower` is
+now REDUCED (combination PROVED via the pure-power lower step + adjacent-interval monotonicity) to
+TWO window facts on `[2.216,2.230]`: `rhinLiteWindow_phi_sq_lower` (`4κ ≤ φ²`, a per-interval lower
+kernel bound — mechanical) and `rhinLiteWindow_mass_half` (`I₁(t) ≤ 2∫_window` — the Laplace
+concentration heart).  Disclosed proof debt is thus exactly these TWO window nodes (in
+`RhinLiteApprox.lean`).  Named literature and conjecture axioms are also used explicitly.
 The single-kernel Legendre development produces useful small nonzero
 linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` estimate
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.

@@ -49,11 +49,20 @@ sub-nodes (`RhinLiteApprox.lean`), with the entire pure-arithmetic assembly prov
        no recomputation needed — and (b) a `[3,4]`-restricted copy of the `RhinLiteMaximum`
        compact-max/critical-bracket bridge (`rhinLiteKernelSq_three = 0`, positive interior `7/2`,
        `rhinLiteRootLeft_ge_three`).  DONE.
-     - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — the genuine Laplace HEART.  NOT
-       pointwise (`φ` vanishes at `[2,3]` endpoints).  Route: fix rational `[a,b]⊂[2,3]` about
-       `x₁*≈2.223` with `φ² ≥ 2κ`; then `I₁(t+1) ≥ 2κ·∫_{[a,b]}φ^{2t}/x` and a tail comparison
-       `∫_{[2,3]∖[a,b]} ≤ ∫_{[a,b]}` gives `∫_{[a,b]}φ^{2t}/x ≥ ½·I₁(t)`.  Multi-lap.
-       ⚠ Do NOT chase a global pointwise lower bound (φ vanishes at endpoints — refuted).
+     - `rhinLiteI₁_concentration_lower` : `2κ·I₁(t) ≤ I₁(t+1)` — **now REDUCED** (PROVED combination
+       via the pure-power LOWER step `rhinLiteEven_logForm_step_ge_of_bound` (trust-base clean) +
+       adjacent-interval monotonicity).  Fixed window `[a,b]=[277/125,223/100]=[2.216,2.230]⊂[2,3]`.
+       Chain `I₁(t+1) ≥ ∫_{[a,b]}φ²φ^{2t}/x ≥ 4κ∫_{[a,b]}φ^{2t}/x ≥ 4κ·½·I₁(t) = 2κ·I₁(t)`.  TWO
+       remaining disclosed window nodes (the SOLE repo sorries now):
+       · `rhinLiteWindow_phi_sq_lower` : `4κ ≤ φ(x)²` on `[a,b]` — a per-interval LOWER kernel bound
+         (mirror of the `[3,4]` upper node; factor-bound-BELOW certificate on ONE window, factors
+         sign-definite there so endpoint enclosures bracket from below).  ⚠ Note the threshold is
+         `4κ` not `2κ` — the extra factor 2 pays for the ½ mass loss; margin `exp(2.1)` at the tighter
+         endpoint (`ψ≥−3016.5` vs `ln4κ=−3018.7`).  Mechanical, NEXT-lap candidate.
+       · `rhinLiteWindow_mass_half` : `I₁(t) ≤ 2∫_{[a,b]}φ^{2t}/x` — the genuine Laplace concentration
+         (tail `∫_{[2,3]∖[a,b]} ≤ ∫_{[a,b]}` via monotone reparametrization toward the peak).  The
+         real multi-lap heart.  ⚠ Do NOT chase a global pointwise lower bound (φ vanishes at
+         endpoints — refuted).
 
 **KEY CORRECTION over the previous handoff's route.**  Independent two-sided *absolute* exponential
 envelopes on `I₁,I₂` do NOT yield the `|M(0,1)|` lower bound: the difference `I₁(t₀)I₂(t₀+1) −
