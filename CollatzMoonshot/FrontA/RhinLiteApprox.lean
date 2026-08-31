@@ -833,6 +833,22 @@ theorem rhinLite_pointwise_lower (p q r : ℤ) (t : ℕ)
           / (rhinLiteB t : ℝ) := by gcongr
     _ ≤ _ := hlow
 
+/-- **Remainder + denominator majorants (clean exponential envelopes).**  For `N ≥ N₀` the
+`K=1` remainder `E_N = lcmUpto N·(9/40)^N` is majorized by `(99/100)^N` (decaying) and the
+denominator `lcmUpto N·18^N` by `(396/5)^N`.  Both from `lcmUpto_le_pow_eventually`. -/
+theorem lcmUpto_remainder_majorant :
+    ∃ N₀ : ℕ, ∀ N ≥ N₀,
+      (Nat.lcmUpto N : ℝ) * (9 / 40 : ℝ) ^ N ≤ (99 / 100 : ℝ) ^ N ∧
+      (Nat.lcmUpto N : ℝ) * 18 ^ N ≤ (396 / 5 : ℝ) ^ N := by
+  obtain ⟨N₀, hN₀⟩ := lcmUpto_le_pow_eventually
+  refine ⟨N₀, fun N hN => ⟨?_, ?_⟩⟩
+  · calc (Nat.lcmUpto N : ℝ) * (9 / 40 : ℝ) ^ N ≤ (22 / 5 : ℝ) ^ N * (9 / 40 : ℝ) ^ N := by
+          gcongr; exact hN₀ N hN
+      _ = (99 / 100 : ℝ) ^ N := by rw [← mul_pow]; norm_num
+  · calc (Nat.lcmUpto N : ℝ) * 18 ^ N ≤ (22 / 5 : ℝ) ^ N * 18 ^ N := by
+          gcongr; exact hN₀ N hN
+      _ = (396 / 5 : ℝ) ^ N := by rw [← mul_pow]; norm_num
+
 theorem rhinLiteLIMeasure :
     ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
       ∀ p q r : ℤ, (p ≠ 0 ∨ q ≠ 0 ∨ r ≠ 0) →
