@@ -21,7 +21,7 @@ explicit clearing factor `D_N`) will be assembled.
 
 namespace CollatzMoonshot.FrontA
 
-open MeasureTheory intervalIntegral
+open MeasureTheory intervalIntegral Polynomial Finset
 
 /-- **Single-monomial integral identity.**  For `0 < a ≤ b`, the integral of `x^j / x^{N+1}`
 over `[a,b]` is the log term `log(b/a)` when `j = N`, and the rational value
@@ -57,5 +57,34 @@ theorem integral_monomial_div_pow {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (j N 
     congr 1
     push_cast
     ring
+
+/-- Interval-integrability of a single monomial-over-power term on `[a,b]` with `0 < a`. -/
+theorem intervalIntegrable_monomial_div_pow {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (j N : ℕ) :
+    IntervalIntegrable (fun x => x ^ j / x ^ (N + 1)) volume a b := by
+  apply ContinuousOn.intervalIntegrable
+  apply ContinuousOn.div (continuous_pow j).continuousOn (continuous_pow (N + 1)).continuousOn
+  intro x hx
+  rw [Set.uIcc_of_le hab] at hx
+  exact pow_ne_zero _ (by linarith [hx.1] : x ≠ 0)
+
+/-- **Full remainder-integral expansion.**  For any real polynomial `p` and `0 < a ≤ b`,
+`∫_a^b p(x)/x^{N+1} dx` expands as the coefficient sum in which the `x^N` term carries
+`log(b/a)` and every other term is rational. -/
+theorem integral_poly_div_pow {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (p : ℝ[X]) (N : ℕ) :
+    (∫ x in a..b, p.eval x / x ^ (N + 1)) =
+      ∑ j ∈ range (p.natDegree + 1),
+        p.coeff j * (if j = N then Real.log (b / a)
+          else (b ^ ((j : ℤ) - N) - a ^ ((j : ℤ) - N)) / ((j : ℤ) - N)) := by
+  have hcongr : (∫ x in a..b, p.eval x / x ^ (N + 1)) =
+      ∫ x in a..b, ∑ j ∈ range (p.natDegree + 1), p.coeff j * (x ^ j / x ^ (N + 1)) := by
+    apply intervalIntegral.integral_congr
+    intro x _
+    show p.eval x / x ^ (N + 1) = ∑ j ∈ range (p.natDegree + 1), p.coeff j * (x ^ j / x ^ (N + 1))
+    rw [eval_eq_sum_range, Finset.sum_div]
+    exact Finset.sum_congr rfl (fun j _ => mul_div_assoc _ _ _)
+  rw [hcongr, intervalIntegral.integral_finsetSum
+    (fun j _ => (intervalIntegrable_monomial_div_pow ha hab j N).const_mul _)]
+  exact Finset.sum_congr rfl (fun j _ => by
+    rw [intervalIntegral.integral_const_mul, integral_monomial_div_pow ha hab])
 
 end CollatzMoonshot.FrontA

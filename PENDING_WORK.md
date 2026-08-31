@@ -26,8 +26,10 @@ An independent weaker re-derivation is now concrete; read `FRONT-A-RHIN-LITE.md`
 - 🚧 objective 3 STARTED in `FrontA/RhinLiteLogForm.lean`: `integral_monomial_div_pow` proves the
   elementary single-monomial identity `∫_a^b x^j/x^{N+1} = log(b/a)` if `j=N`, else
   `(b^{j-N}-a^{j-N})/(j-N)` (via `integral_zpow`/`integral_inv`). This is the arithmetic core;
-  next: sum it over the integer polynomial's coefficients to expand the full remainder integral,
-  then LCM-clear the rational tail.
+  `integral_poly_div_pow` sums it over a polynomial's coefficients:
+  `∫_a^b p(x)/x^{N+1} = ∑_{j≤deg} coeff_j·(log(b/a) if j=N else (b^{j-N}-a^{j-N})/(j-N))`
+  (with `intervalIntegrable_monomial_div_pow` supplying termwise integrability).
+  Next: instantiate `p` at the integer even polynomial `H_N` and LCM-clear the rational tail.
 - **NEXT (objective 3):** the two LCM-cleared integer log forms `A₁ + B·log(3/2)`,
   `A₂ + B·log(4/3)` with common `B` and clearing factor `D_N`. See `FRONT-A-RHIN-LITE-NEXT.md`
   objective 3: the monomial integral identity `∫_a^b H_N/x^{N+1}` isolates the `x^N` term
