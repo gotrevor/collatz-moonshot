@@ -55,7 +55,30 @@ into three named nodes:
   with a base-4 `Dvd4Adic` predicate + finite coefficient checks on `(X−2)²`, `X−4`, `5X−12`, `Q₅²`,
   `Q₆`.  So **`rhinLiteEvenPolynomialZ_content` (`12^{N−j} ∣ coeff_j`) is now fully machine-checked.**
 
-**★ K=1 content lemma COMPLETE.** Next downstream (the remaining path to retire the axiom):
+## ★ K=1 WIRING + CHEBYSHEV BOUNDS DONE (2026-08-31, later lap) ★
+
+The K=1 forms and the finite-exponent prerequisite are now proved in `RhinLiteApprox.lean`:
+- `rhinLiteEven_two_log_forms_K1` / `rhinLite_forms_bounded_K1`: the two concrete log forms and the
+  size package with the SMALLER `D_N = lcmUpto N` (no `12^N`), `B = lcmUpto N·centralCoeff`,
+  `lcmUpto N·17^N ≤ B ≤ lcmUpto N·18^N`, `0 < Lᵢ ≤ lcmUpto N·(9/40)^N`.  Remainder now DECAYS.
+- `lcmUpto_log_le_chebyshev` (PROVED): `log(lcmUpto N) ≤ log4·N + 2√N·log N` (mathlib
+  `Chebyshev.psi_le` + `psi_eq_log_lcmUpto`).
+- `lcmUpto_le_pow_eventually` (PROVED): `∃N₀, ∀N≥N₀, lcmUpto N ≤ (22/5)^N` (base 4.4 ∈ (4, 40/9);
+  `E_N ≤ (99/100)^N → 0`).  Via `isLittleO_log_rpow_atTop` (√N·log N = o(N)).
+
+**REMAINING — `rhinLiteLIMeasure` (the only open sorry).**  Now needs, in order:
+1. **Non-vanishing determinant** (THE hard node): for `(p,q,r) ≠ 0`, the 3×3 determinant of three
+   consecutive form-triples `(B_t, A₁_t, A₂_t)` is a nonzero integer, so `n = p·B − q·A₁ − r·A₂ ≠ 0`
+   for at least one of three consecutive `t`.  This is the genuine analytic-NT obligation (a Wronskian
+   / Padé non-degeneracy).  Attack next: decompose into (a) det ≠ 0 as an integer, (b) "not all three
+   `n` vanish", both as named sub-sorries in `src/`.
+2. **Selection of `N`/`t` vs height `H`**: least `t` with `(|q|+|r|)·E_N ≤ 1/2`.  `E_N` is NOT
+   monotone (lcmUpto jumps at prime powers) — use `lcmUpto_le_pow_eventually` for the upper envelope
+   `E_N ≤ (99/100)^N` to get a clean monotone majorant, pick `N ~ log H`.
+3. **Assembly**: `|Λ| ≥ 1/(2B) ≥ 1/(2·lcmUpto N·18^N) ≥ 1/(2·(22/5·18)^N) = c·H^{−κ}` with
+   `κ = log(22/5·18)/log(100/99)`-ish (finite; crude, not Rhin's sharp 7.9 — that's fine).
+
+### (historical) K=1 content lemma COMPLETE — clearing lemmas:
 1. **DONE (2026-08-31): K=1 clearing lemmas proved** in `RhinLiteLogForm.lean`, sorry-free —
    `content_zpow_isInt` (`c · e^{j−N} ∈ ℤ` for `e ∣ 12` given `12^{N−j} ∣ c`),
    `tail_term_cleared_K1`, and `lcm_cleared_log_form_K1` (the `D_N = lcmUpto N` log form, taking the
