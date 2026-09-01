@@ -1,4 +1,7 @@
 # STATUS — collatz-moonshot 📊
+**Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
+**Build**: 🟢 green (8764 jobs) · **Updated**: review lap · 2026-09-01 · `67f510a`+
+
 
 > **2026-09-01 — Rhin 1987 axiom RETIRED.**  `sep_two_three` is now proved from the Rhin-lite
 > measure with **no literature axiom** (`FrontA/RhinLiteSep.lean`, `sep_two_three_rhinLite`;
@@ -93,7 +96,20 @@ linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` 
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.
 
 ## Where it stands
-The headline wiring is done and axiom-clean: `conjecture_iff_split` and
+**Current (2026-09-01, review lap).**  The Front-A two-block exclusion
+`le_two_blocks_not_acyclicParadoxical` is now **fully machine-checked** — its ledger is the trust
+base plus `native_decide` artifacts, with **no literature axiom** (the `sep_two_three` sink was
+proved from the repo's own Rhin-lite measure, retiring the cited Rhin 1987 axiom), and it is
+**sharp**: `acyclicParadoxical_seven_eight` exhibits a three-odd-block acyclic paradoxical segment,
+so the exclusion ladder is finished.  This lap also caught and repaired a fidelity bug at a
+headline's base: `rozier_terracol_3_2` had been stated as *unboundedly large* paradoxical starts,
+which (machine-checked, `noNontrivialCycle_of_unboundedParadoxicalStarts`) implies
+`NoNontrivialCycle` — an open problem — and is therefore strictly stronger than the published
+theorem.  The axiom now carries Rozier–Terracol's cardinality claim, checked non-vacuous by
+`infinite_paradoxical_of_tstep_cycle`.  It is the **only** cited axiom left under a Front-A
+headline, and discharging it is the current binding objective.
+
+**Standing picture.**  The headline wiring is done and axiom-clean: `conjecture_iff_split` and
 `conjecture_of_fronts` (`Conjecture.lean`, `Descent.lean`) reduce Collatz to two
 front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialCycle`
 (Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. Front B's closer needs `Compression` (an *upper*
@@ -130,6 +146,25 @@ repository's policy for established literature; neither choice would prove the m
 global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-09-01 (review lap — fidelity bug caught at a headline's base, and repaired):**
+  `Assumed.rozier_terracol_3_2` read *"for every `K` there are `k, m` with `K < 2^k n` and
+  `Paradoxical (2^k n) m"`* — unboundedly large paradoxical starts.  Machine-checked that this
+  form implies `NoNontrivialCycle` (from a start `2^k n` the shortcut orbit halves down to `n`
+  then follows `n`'s orbit, so a *bounded* orbit admits no returning segment once `2^k n` exceeds
+  the bound; a nontrivial cycle's minimum has infinite shortcut stopping time and a bounded orbit).
+  No published theorem gives `NoNontrivialCycle`, so the axiom was strictly stronger than its
+  source.  **Repaired**: the axiom now states Rozier–Terracol's cardinality claim
+  (`{p | Paradoxical (2^p.1 * n) p.2}.Infinite`); the refutation stays in `src/` as a permanent
+  guard (`UnboundedParadoxicalStarts`, `not_unboundedParadoxicalStarts_of_bounded`,
+  `noNontrivialCycle_of_unboundedParadoxicalStarts`, all trust-base clean); non-vacuity is
+  anchored by `infinite_paradoxical_of_tstep_cycle` (a shortcut cycle through `n > 2` really does
+  give infinitely many paradoxical segments starting at `2^0 n`);
+  `diverges_imp_infinite_acyclicParadoxical` re-derived through the injection
+  `(k,m) ↦ (2^k m₀, m)`, so `finite_acyclicParadoxical_imp_noDivergent` is unchanged in statement
+  and ledger.  Also pinned **sharpness** of the two-block exclusion:
+  `acyclicParadoxical_seven_eight` (`n=7`, `m=8`, word `TTTFTFFT`, three odd blocks, kernel
+  `decide`) — no three-block strengthening can exist.  Direction reset to discharging
+  `rozier_terracol_3_2`, split bounded / unbounded orbit.
 - **2026-08-26 (Lane 1 — the Furstenberg axiom is DISCHARGED):** Furstenberg's 1967
   topological ×p×q rigidity is now a **proved theorem**, axiom-clean
   (`#print axioms` = `[propext, Classical.choice, Quot.sound]`, verified 2026-08-26):
@@ -306,34 +341,45 @@ global finiteness of acyclic paradoxical segments.
 
 ## Axiom ledger (per headline theorem)
 Trust base = `propext, Classical.choice, Quot.sound` (+ `native_decide` `ax_*` artifacts),
-excluded from the math-axiom count below.
+excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2026-09-01.
 
 | headline theorem | paper claim | `#print axioms` shows (beyond trust base) | math-axioms |
 |---|---|---|---|
 | `conjecture_iff_split` | uncond (finite wiring) | — | 0 ✅ |
 | `conjecture_of_fronts` | uncond (finite wiring) | — | 0 ✅ |
 | `noNontrivialCycle_iff_frontB` | uncond (dictionary) | — | 0 ✅ |
+| `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
+| `FrontA.sep_two_three` | effective 2/3 power separation | 13× `native_decide.ax` (Rhin-lite tower + the `k<450` table) | **0 math** ✅ 🟢 — the Rhin 1987 axiom is RETIRED |
+| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | 13× `native_decide.ax` + `finite_two_block_check` | **0 math** ✅ 🟢 — and **sharp** (`acyclicParadoxical_seven_eight`) |
+| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, *cardinality* form; corrected 2026-09-01 — see below) |
 | `frontB_of_compression_le_91` | Front B closer | `hercher_min_circuit_count` | 1 · 🟡 proved (Hercher 2023, no transcendence; `Compression` still an *open def*, not an axiom) |
+| `Assumed.frontier_min_cycle_length` | cycle-length frontier | `hercher_odd_members_bound` | 1 · 🟡 proved (Hercher 2023 + Bařina 2025 compute) |
 | `two_pow_68_lt_of_onCycle_nontrivial` | conditional demo | `collatz_verified_up_to_two_pow_68` | 1 · 🟢 finite computation |
 | `no_positive_harmonic_local_certificate` | no-go (one scheme) | 4× `native_decide.ax` | 0 math · 🟢 finite checks |
-| `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
-| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, faithful constructive form; no `sorryAx`) |
-| `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | `sorryAx` (= `sep_two_three`) + `finite_two_block_check` native_decide ax | crux DECOMPOSED both ways; sole disclosed sorry `sep_two_three` reduced (sorry-free, `sep_of_uniform_measure`) to ONE uniform measure = **🟡 Rhin 1987** effective `{1,log2,log3}` measure (explicit `E=13.3`, polynomial ≫ needed); legs 1–2 of the Padé/Legendre construction built trust-base clean; native_decide artifact 🟢 |
-| `sep_two_three_of_gelfond_measure` | reduction (illustrative C=6) | 2× `native_decide.ax` only | 0 math · 🟢 (conditional on `hmeas` hypothesis; no sorry) |
-| `legendre_mobius_linear_form` / `_ne_zero` | leg-2 single-kernel facts | — | 0 ✅ trust base only |
+| `Furstenberg.isClosed_invariant_finite_or_univ` | Furstenberg 1967 ×p×q rigidity | — | 0 ✅ **axiom DISCHARGED** (2026-08-26) |
+| `noNontrivialCycle_of_unboundedParadoxicalStarts` | fidelity guard (this repo) | — | 0 ✅ trust base only |
+| `infinite_paradoxical_of_tstep_cycle` | non-vacuity anchor (this repo) | — | 0 ✅ trust base only |
+| `acyclicParadoxical_seven_eight` | sharpness witness | — | 0 ✅ kernel `decide`, no `native_decide` |
 
-Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier, not yet on a
-headline's uncond path): `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡,
-`hercher_min_circuit_count` 🟡, `baker_bounded_difference` 🟠 (Baker/Tijdeman),
-`furstenberg_topological_rigidity` 🟠 (proved 1967, unformalized), `tao_2019_almost_bounded`
-🟡 (proved upstream), `collatz_verified_*` 🟢, `abc` 🔴 (open conjecture — used ONLY in
-results that are themselves stated conditional on abc). No 🔴 appears on any unconditional
-headline.
+**Correction on record (2026-09-01).**  `rozier_terracol_3_2` previously claimed *unboundedly
+large* paradoxical starts `2^k n`.  That is strictly stronger than Rozier–Terracol Thm 3.2:
+in-kernel, it implies `NoNontrivialCycle`, an open problem
+(`noNontrivialCycle_of_unboundedParadoxicalStarts`).  It now states the published cardinality
+claim.  Treat this as the template for auditing every remaining cited axiom: *state exactly what
+the source proves, then try to derive something famous from it.*
+
+Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier):
+`eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡, `hercher_min_circuit_count` 🟡,
+`baker_bounded_difference` 🟠 (Baker/Tijdeman), `tao_2019_almost_bounded` 🟠 (Tao 2019,
+logarithmic density + Syracuse random variables), `rozier_terracol_3_2` 🟡 (**current target**),
+`collatz_verified_*` 🟢, `abc` 🔴 (open conjecture — used ONLY in results themselves stated
+conditional on abc).  `furstenberg_topological_rigidity` is **discharged** (now a theorem).
+No 🔴 appears on any unconditional headline.
 
 ## Pointers
 - Binding directive: `DIRECTION.md` → CURRENT DIRECTIVE
 - Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-08-25-2300.md` (single-kernel leg-2 toolkit) · scratchpad: `PENDING_WORK.md`
+- Newest baton: newest `HANDOFF-2026-*.md` (find with `ls HANDOFF-*.md | sort` — currently `HANDOFF-2026-09-01-rt-axiom-fidelity.md`) · scratchpad: `PENDING_WORK.md`
 - Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`

@@ -3,136 +3,62 @@
 ## CURRENT DIRECTIVE  (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
 
 > [!NOTE]
-> Public checkpoint, 2026-08-25: no treadmill is active. This section supersedes the
-> dated directive history below, which is retained as a research log.
+> Set by the review lap of **2026-09-01 (later)**.  It replaces the whole previous directive,
+> whose mandated moves (`sep_two_three`, `rhinLiteLIMeasure`, the `b + d ≤ 5` crux) are all
+> **DONE**.  Detail lives in `PENDING_WORK.md`; the standing charter below is unchanged.
 
-- 🎯 **The objective is novel PROOFS — new mathematics.  Novel *formalization* is not the point
-  here, at all** (operator, 2026-08-29: "The entire point is novel *proofs*.  This is different
-  from other lean repos, where formalization *is* the point.").  Same doctrine as normal-numbers.
-  Weigh every candidate move by its probability of producing new mathematics; "first in any
-  prover" carries no weight in prioritization.
+- 🎯 **THE OBJECTIVE: discharge `Assumed.rozier_terracol_3_2`** — the *only* cited axiom left
+  under a Front-A headline — into a machine-checked proof, so that
+  `finite_acyclicParadoxical_imp_noDivergent` becomes trust-base clean.
 
-- **THE OBJECTIVE, restated (2026-08-29): this repo's product is a machine-checked conjecture
-  GRAPH, not a proof queue.**  A unit of progress = one green **node** (a named Prop - working
-  conjecture, axiom candidate, interface - kernel-elaborated, with provenance, odds, and a
-  refutation probe under `experiments/`), one green **edge** (sorry-free, axiom-audited wiring),
-  or one **probe-refuted node** (a kill is progress).  The FrontB thread board and `Assumed/`
-  tiers are the prior art; this generalizes them to the whole repo.  Sink: `Conjecture`
-  (via the two fronts).  Every lap answers: *what is the weakest open node on each path to the
-  sink - add a weaker node, add an edge, or kill one.*  Grinding known mathematics is only ever
-  *discharging a named node* (lane 2, KB two-lanes doctrine: phase 1 tolerates
-  warnings/`native_decide`/boosts; distribution prep is separate).  The Rhin-lite campaign
-  below is exactly that: lane-2 discharge of the single node `sep_two_three`.  A lap that
-  cannot advance a proof can ALWAYS advance the graph.
+- **MANDATED NEXT MOVE — split the axiom by orbit boundedness and prove the bounded half first,
+  then attack the unbounded half as a Diophantine node.**  Fix `n ≥ 2` with
+  `InfiniteStoppingTime n`; the goal is `{p | Paradoxical (2^p.1 * n) p.2}.Infinite`.
+  · **(A) bounded shortcut orbit** — the orbit is eventually periodic, entering a cycle of
+    period `L` at time `t`.  The cycle block is subcritical (`subcritical_of_tstep_cycle`,
+    proved 2026-09-01), so the coefficient `3^a / 2^m` of `m = t + jL` tends to `0`; for large
+    `j` it drops below `1` while the endpoint stays `≥ n`.  Infinitely many pairs `(0, m)`.
+    **Fully elementary — prove this case outright.**  (`infinite_paradoxical_of_tstep_cycle`
+    already does the special case `t = 0`.)
+  · **(B) unbounded shortcut orbit** — reduce to the named node
+    `∃ᶠ j, ∃ k, 3^(a_j) / 2^j < 2^k ≤ (tstep^[j] n) / n`  (an integer power of `2` separating
+    the multiplicative coefficient from the normalized endpoint; this is exactly the
+    equivalence `3^a < 2^(k+j) ∧ 2^k n ≤ tstep^[j] n`).  That is RT's "infinitely many left
+    approximations `3^a/2^b < 1` of `1`" step, and it is the natural consumer of the repo's
+    own `log₂3` apparatus (`PowSeparation`, `sep_of_bracket_nat`, the convergent brackets).
+    State the node in `src/` as a disclosed `sorry` and chip it.
 
-- **Independent Rhin-lite route now active (2026-08-25).**  `FrontA/RhinKernel.lean` proves the
-  exact arithmetic/content balances of Rhin's published kernel.  `FrontA/RhinLite.lean` uses the
-  nearby denominator-1000 kernel `(705,551,449,109,39,54)/1000` and machine-checks the complete
-  central-coefficient band `17^n ≤ B_n ≤ 18^n` along its block subsequence.  No saddle-point or
-  coefficient asymptotic remains. `FrontA/RhinLiteCritical.lean` proves that eight disjoint
-  sign-changing brackets exhaust the real roots of the degree-8 critical polynomial (so no Sturm
-  theory was needed), and `FrontA/RhinLiteInterval.lean` proves the full rational target
-  `|H(x)|/x^1000 ≤ (9/40)^1000` on all seven possible critical brackets.
-  `FrontA/RhinLiteMaximum.lean` now closes the compact-maximum/derivative bridge globally on
-  `[2,4]`, sorry-free. `FrontA/RhinLiteEven.lean` now lifts that base estimate to the even block
-  subsequence `N = 2000t`: exact degree `2N`, central-coefficient band `17^N ≤ B_N ≤ 18^N` (via
-  the `comp (-X)` identification with `rhinLitePositive (2t)`), and the pointwise normalized
-  integrand identity/nonnegativity/`(9/40)^N` bound, plus the interval-integral consequences
-  (integrability, `∫ ≤ length·(9/40)^N`, nonnegativity, and strict positivity on `[2,3]`/`[3,4]`)
-  — all sorry-free; **objective 2 is complete.** `FrontA/RhinLiteLogForm.lean` now also lands
-  **objective 3**: the two `D_N`-cleared integer log forms `A₁ + B·log(3/2)`, `A₂ + B·log(4/3)`
-  (`rhinLiteEven_two_log_forms`) with a common `B = D_N·(central coeff)`, `D_N·17^N ≤ B ≤ D_N·18^N`,
-  `D_N = lcmUpto N·12^N`, all sorry-free. `FrontA/RhinLiteApprox.lean` now wires the
-  simultaneous-approximation criterion (objective 4) as far as elementary algebra allows: the
-  change of basis `linForm_eq_log23` (`(m−2k)log(3/2)+(m−k)log(4/3) = m log2 − k log3`) and the
-  elimination identity `elim_identity` are trust-base clean, and `log23_effective_measure` (the
-  effective irrationality measure of `log₂3` in `hLF` shape) is **proved from** the single
-  disclosed crux `rhinLiteLIMeasure` (the coarse Rhin linear-independence measure of
-  `{1,log(3/2),log(4/3)}`). **Next live theorem:** discharge `rhinLiteLIMeasure` via the
-  transference lemma (decompose the size bridge + determinant non-vanishing + `lcmUpto` asymptotic
-  as named sorries). Read `FRONT-A-RHIN-LITE.md` (steps 3–4) and `PENDING_WORK.md`.
+- 🚫 **FORBIDDEN drift.**
+  · **Never restore the "unbounded paradoxical starts" form of the axiom.**  It is refuted
+    in-kernel (`noNontrivialCycle_of_unboundedParadoxicalStarts`): it proves `NoNontrivialCycle`
+    outright.  Any restatement must be checked against that theorem.
+  · No three-block strengthening of `le_two_blocks_not_acyclicParadoxical` — refuted by the
+    kernel witness `acyclicParadoxical_seven_eight` (`n=7, m=8`, three odd blocks).  The
+    two-block exclusion is exactly sharp; the discovery ladder is finished.
+  · No further Rhin-lite κ-sharpening / crossover re-tuning (refuted low-leverage, 2026-09-01),
+    and no reopening of the elementary `b + d ≤ 5` route (refuted 2026-08-25).
+  · Front B `Compression` / more block-word vocabulary — still blocked and mis-scoped.
+  · Converting the Rhin-lite `native_decide` certificates to `decide +kernel` is hygiene, not a
+    lap goal.
 
-- **THE objective:** Advance one of the two genuinely open headline fronts.  The reachable
-  bridge on Front A has changed: **M2′ is COMPLETE**.  The sorry-free theorem
-  `parityRigidityW1'_imp_noDivergent : ParityRigidityW1' → NoDivergentOrbit` now includes
-  the whole empirical-Cesàro → Krylov–Bogolyubov invariance/support → uniform parity
-  `limsup` → high-tail drift contradiction, and its axiom footprint is exactly
-  `[propext, Classical.choice, Quot.sound]`.  Do not rebuild that measure plumbing.
-
-- **The parity-reconstruction pull is COMPLETE and classified BASELINE / RE-SCOPE.** It
-  landed a sorry-free cylinder envelope, forward residue determinacy, and the genuine
-  eventually-periodic `¬Diverges` baseline. The exact reconstruction API is complete in the
-  experiment. The same-suffix spread proves only that a suffix does not determine or
-  uniformly approximate the normalized endpoint; it does **not** prove a universal
-  finite-state no-go. Do not add routine reconstruction plumbing or repeat that experiment.
-
-- **Actual open obligation:** Continue the paradoxical project's two-block
-  exclusion `le_two_blocks_not_acyclicParadoxical` (strictly generalizes RT Appendix A). It is
-  machine-checked **modulo the single inequality `b + d ≤ 5`** (the sole `src/` `sorry`, in
-  `near_critical_containment`); everything else — the elementary squeeze, `window_unique_m`, the
-  power bracket, and the finite discharge once `b+d ≤ 5` — is sorry-free.
-  **`b + d ≤ 5` is now DEFINITIVELY Baker-grade** (effective irrationality of `log₂3`): the review
-  lap 2026-08-25-1500 REFUTED the last elementary hope by proving the real relaxation of
-  `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is FEASIBLE at unbounded `g` (fully-checked witness at `g=41`,
-  `experiments/two_block_relaxation.py`), so NO `nlinarith`/polynomial certificate can exist.
-  A proof needs an effective irrationality / linear-forms-in-logs lower bound for `log₂3`.
-  **Target sharpened (review lap 2026-08-25-2100).** `sep_two_three` is now reduced *sorry-free*
-  (`sep_of_uniform_measure`, using `poly_le_two_pow`) to ONE uniform pure-ℕ bound
-  `∀ near-critical k ≥ K:  3^k ≤ (2^m − 3^k)·k^C`. That is exactly a **classical effective
-  irrationality measure of `log₂3`** (linear forms in *two* logs) — a *polynomial* measure,
-  exponentially stronger than the `2^(−k/3)` this crux needs. **Honest constants (findings
-  2026-08-25):** the proven object is **Rhin 1987**'s lin-indep measure of `{1,log2,log3}`;
-  the *fully explicit, threshold-free* exponent is `E = 13.3` ⇒ **`C = 15`, `k ≥ 400`** (exact
-  crossover `k^45 ≤ 2^k` at `k = 387`); the asymptotic `7.616+ε` carries an unpublished `H₀(ε)`.
-  Bennett–Bugeaud is OFF-path (quadratic irrationals). `C = 6/k ≥ 130`
-  (`sep_two_three_of_gelfond_measure`) is **illustrative only**; the honest interface is the
-  parametric `sep_of_uniform_measure` at the true `C`. Formalizing that literature from first
-  principles is a substantial, source-sensitive project; leg 3 (the two-*kernel* simultaneous form)
-  is a genuine multi-lap expedition
-  (integer transfinite diameter of `[2,4]`, effective two-sided coefficient asymptotics `n(ε)`).
-
-  **Do not continue the single-log detour merely to prove `Irrational (Real.log 2)`.**
-  `Legendre.lean` now has a useful, trust-base-clean single-kernel package: an integer
-  linear form, non-vanishing, and a geometric remainder for `log 2`. This is standard
-  auxiliary mathematics and does not give the simultaneous `log 2`/`log 3` estimate.
-  If work resumes, either (a) state the exact published Rhin-style input as a narrow,
-  provenance-audited named axiom, consistent with `Assumed.lean`, or (b) undertake the
-  two-kernel formalization as its own explicit objective. Do not imply that the single-log
-  package itself advances `sep_two_three`.
-
-- **Front B remains on hold.**  `Compression` asks for an upper bound on the circuit count
-  of a primitive nontrivial cycle and is Front B restated once combined with Hercher's lower
-  bound.  Its block/S-unit/rotation apparatus is feature-complete; resume only if the missing
-  Simons–de Weger source or a genuinely new upper-bound idea changes the mathematics.
-
-- **FORBIDDEN drift (do NOT spend a lap on):**
-  - **Front B `Compression` / more block-word vocabulary** — blocked + mis-scoped (above);
-    the apparatus is feature-complete. Wait for the SdW source or a new idea.
-  - Grinding the `OneCircuit` a≥2 case as an *elementary* `omega` argument — it is
-    **Steiner's theorem = Baker/transcendence**, off the critical path
-    (`hercher_min_circuit_count` covers every rung ≤91). Resolved by the isolated
-    `SteinerOneCircuit` hypothesis; leave it.
-  - Porting another harmonic/subharmonic exponent — that project is COMPLETE.
-  - Rebuilding M2′, proving only its converse calibration, or adding more empirical-measure
-    plumbing — M2′ is COMPLETE; the converse is useful calibration but not the live crux.
-  - A prefix-local forbidden-word search: every finite parity word is realized by a residue
-    class. A finite-state argument is admissible only when its global transition inequality
-    or carry/height content is load-bearing; suffix collisions alone are not a no-go theorem.
-  - Route-1 gcd-harvest (`Threads.lean` Thread 7) — KILLED; rotations give one condition.
-  - **The "elementary A/B route" for `b+d ≤ 5`** (`¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` via nlinarith/omega
-    over exponent atoms) — REFUTED (real relaxation feasible at unbounded `g`; no certificate
-    exists). Also the `le_of_gap_A/B` decomposition of that plan, and any restart of "maybe some
-    clever elementary inequality bounds `b+d`/`d`" — all void; the finiteness is Baker-forced.
-  - Off-path leaf sorries, docs-only laps, or freezing a finite table as a headline.
-
-- **WHY:** Paradoxical segments make the additive remainder—the information discarded by
-  density heuristics—exactly load-bearing. They are finite, enumerable, and admit a clean
-  word criterion, while the literature proves that a divergent/infinite-stopping orbit would
-  force infinitely many of them. This does not make the route easy: global finiteness is
-  stronger than Collatz. It does give a current, falsifiable place to discover structural
-  lemmas rather than extending formal vocabulary.
+- **WHY.**  As of 2026-09-01 the Front-A two-block exclusion is fully machine-checked (trust
+  base + `native_decide` artifacts, no literature axiom), so `rozier_terracol_3_2` is the single
+  remaining non-trust-base dependency of a Front-A headline.  Its hard half is precisely the
+  left-approximation-of-1 object that ten laps of Rhin-lite work built the machinery for, and
+  its easy half is a clean elementary win available now.  Nothing else in the repo has that
+  combination of on-path-ness and reachability.
 
 ### Directive history
+- 2026-09-01 (review lap): **Caught and repaired a fidelity BUG at a headline's base.** The
+  `rozier_terracol_3_2` axiom read "unboundedly large paradoxical starts `2^k n`"; machine-checked
+  that this implies `NoNontrivialCycle` (open), hence is strictly stronger than Rozier--Terracol
+  Thm 3.2. Restated the axiom in its published cardinality form, kept the refutation
+  (`noNontrivialCycle_of_unboundedParadoxicalStarts`) and a non-vacuity anchor
+  (`infinite_paradoxical_of_tstep_cycle`) in `src/`, and re-derived
+  `diverges_imp_infinite_acyclicParadoxical` through an injection. Also pinned
+  `acyclicParadoxical_seven_eight` (three odd blocks), proving the two-block exclusion sharp and
+  closing the discovery ladder. **Redirected the objective** from the (completed) `sep_two_three`
+  campaign to discharging `rozier_terracol_3_2`, decomposed bounded / unbounded orbit.
 - 2026-08-24 (review lap): harmonic-dual project certified COMPLETE. Diagnosed
   `OneCircuit` a≥2 as Steiner/Baker (not `omega`) and off critical path; resolved it via
   explicit `SteinerOneCircuit` hypothesis (no new axiom, sorry removed). Set the binding

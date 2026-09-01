@@ -676,4 +676,26 @@ theorem le_two_blocks_not_acyclicParadoxical
       have := two_block_residue_core b c d e n X (tstep^[d + e] X) hb hd hI hII hsub
       omega)
 
+/-!
+## Sharpness of the two-block exclusion
+
+`le_two_blocks_not_acyclicParadoxical` says a word of shape `[T]^b[F]^c[T]^d[F]^e` (`b,d ≥ 1`)
+is never acyclic paradoxical.  The exclusion stops there, and provably so: the very first
+acyclic paradoxical segment, `n = 7`, `m = 8`, already has a **three**-block word.  So the
+"every acyclic paradoxical word has at least three odd blocks" discovery result is *exactly*
+sharp, and no three-block strengthening of the theorem can hold.  Both witnesses are closed by
+kernel `decide` — no `native_decide`, no axiom beyond the trust base.
+-/
+
+/-- The itinerary of `7` over `8` accelerated steps: `7 → 11 → 17 → 26 → 13 → 20 → 10 → 5 → 8`,
+word `[T,T,T,F,T,F,F,T]` — three maximal odd blocks (`TTT`, `T`, `T`). -/
+theorem traceWord_seven_eight :
+    traceWord 7 8 = [true, true, true, false, true, false, false, true] := by decide
+
+/-- **Sharpness witness.**  `AcyclicParadoxical 7 8` holds: `3^5 = 243 < 256 = 2^8` (subcritical)
+and `tstep^[8] 7 = 8 > 7` (endpoint strictly above the start).  Its word has three odd blocks
+(`traceWord_seven_eight`), so `le_two_blocks_not_acyclicParadoxical` is at the exact boundary. -/
+theorem acyclicParadoxical_seven_eight : AcyclicParadoxical 7 8 := by
+  refine ⟨by norm_num, by norm_num, ?_, ?_⟩ <;> decide
+
 end CollatzMoonshot.FrontA

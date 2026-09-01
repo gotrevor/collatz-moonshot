@@ -1,5 +1,78 @@
 # PENDING_WORK
 
+## ★★★ RT AXIOM FIDELITY BUG — CAUGHT, MACHINE-CHECKED, REPAIRED (2026-09-01 review lap, LATEST) ★★★
+
+**Finding.**  `Assumed.rozier_terracol_3_2` was stated as
+`∀ K, ∃ k m, K < 2^k n ∧ Paradoxical (2^k n) m` — *unboundedly large* paradoxical starts.
+That form **implies `NoNontrivialCycle`**, an open problem, hence is strictly stronger than
+Rozier–Terracol 2026 Thm 3.2 (which claims a *cardinality*: infinitely many paradoxical
+segments starting at numbers `2^k n`).
+
+**The refutation (now a permanent theorem in `src/`, trust-base clean).**  From a start `2^k n`
+the shortcut orbit does `k` pure halvings down to `n` and then follows `n`'s own orbit.  So every
+value after step `≥ 1` is `≤ max(2^(k-1) n, sup orbit(n))`.  If `orbit(n)` is bounded by `B`, then
+once `2^k n > B` no segment from `2^k n` can return to its start — no paradoxical segment at all.
+A nontrivial cycle's minimum `m₀` has infinite shortcut stopping time *and* a bounded orbit, so
+the old axiom is inconsistent with the existence of a nontrivial cycle.
+Lemmas: `tstep_iterate_two_pow_mul{,_le,_ge}`, `step_orbit_bounded_of_onCycle`,
+`not_unboundedParadoxicalStarts_of_bounded`, `noNontrivialCycle_of_unboundedParadoxicalStarts`.
+
+**The repair.**  Axiom restated as `{p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite`.
+`diverges_imp_infinite_acyclicParadoxical` re-derived from it via the injection
+`(k, m) ↦ (2^k m₀, m)` plus `not_tstep_fixed_of_diverges` (divergence upgrades `≤` to `<`).
+`finite_acyclicParadoxical_imp_noDivergent` unchanged in statement and ledger.
+Non-vacuity anchor: `infinite_paradoxical_of_tstep_cycle` — a shortcut cycle through `n > 2`
+really does give infinitely many paradoxical segments starting at `2^0 n` (the period multiples;
+subcriticality from `subcritical_of_tstep_cycle`, ones-additivity from
+`ones_traceWord_mul_of_cycle`).  So the repaired form survives the very configuration that
+killed the old one.
+
+**Also landed: the two-block exclusion is SHARP.**  `acyclicParadoxical_seven_eight`
+(`n = 7`, `m = 8`, word `TTTFTFFT`, ones `5`, `3^5 = 243 < 256 = 2^8`, `tstep^[8] 7 = 8 > 7`) has
+exactly **three** odd blocks and is closed by kernel `decide` (no `native_decide`).  A brute scan
+(`3 ≤ n ≤ 200000`, first acyclic paradoxical segment per start) finds three-block examples but
+none with fewer, so `le_two_blocks_not_acyclicParadoxical` is at the exact boundary and the
+"≥ 3 odd blocks" discovery result is sharp.  **The exclusion ladder is finished — do not attempt
+a three-block strengthening.**
+
+## ★ NEXT ATTACK — discharge `rozier_terracol_3_2` (the binding directive) ★
+
+Goal: `n ≥ 2`, `InfiniteStoppingTime n` ⊢ `{p | Paradoxical (2^p.1 * n) p.2}.Infinite`.
+
+The exact algebra (derived this lap, worth re-using).  Put `N = 2^k n`, `m = k + j`,
+`w = traceWord n j`, `a = ones w`, `Y = tstep^[j] n`.  The word of `N` over `m` steps is
+`[F]^k ++ w`, so `numer([F]^k ++ w) = 2^k · numer w` and the iterate identity collapses to
+`2^j Y = 3^a n + numer w` — the `2^k` prefix cancels.  Hence
+
+  `Paradoxical (2^k n) (k+j)  ⟺  3^a < 2^(k+j) ∧ 2^k n ≤ Y  ⟺  ρ_j < 2^k ≤ Y/n`,
+  where `ρ_j = 3^a / 2^j` is the segment's multiplicative coefficient.
+
+So the whole theorem is: **for infinitely many `j`, an integer power of `2` separates `ρ_j` from
+`Y_j / n`.**  The gap is exactly the additive remainder: `Y_j/n − ρ_j = E_j/n > 0` whenever
+`a ≥ 1`.  This is precisely RT's "infinitely many left approximations `3^a/2^b < 1` of `1`".
+
+**(A) Bounded shortcut orbit — PROVE THIS FIRST, fully elementary.**  Bounded ⇒ the orbit repeats
+⇒ it enters a cycle of period `L` at some time `t`, with `c = tstep^[t] n ≥ n`.  For `m = t + jL`
+the coefficient is `ρ_(t+jL) = ρ_t · (3^(a_L)/2^L)^j`, and `3^(a_L) < 2^L`
+(`subcritical_of_tstep_cycle`), so `ρ → 0`: for large `j` it is `< 1`, i.e. `k = 0` works, and the
+endpoint is `c ≥ n`.  Infinitely many pairs `(0, t + jL)`.  Needed Lean pieces: "bounded orbit ⇒
+eventually periodic" (pigeonhole on `tstep^[i] n` for `i ≤ B`), `ones` additivity along the cycle
+block (have it), and a `(3^(a_L)/2^L)^j → 0` step done in ℕ as `3^(a_t + j a_L) < 2^(t + jL)` for
+`j` large (pure `Nat.pow` comparison — no reals needed).
+
+**(B) Unbounded shortcut orbit — the Diophantine node.**  `Y_j → ∞`.  Need infinitely many `j`
+with a power of `2` in `(ρ_j, Y_j/n]`.  Failure mode to beat: `ρ_j` and `Y_j/n` inside the same
+dyadic block, i.e. `E_j / (ρ_j n) < 1` with no power of 2 crossed — the multiplicative window is
+`1 + E_j/(ρ_j n)`, which for odd-heavy words is `≈ 1 + 1/n`.  So the node genuinely needs a left
+approximation `3^a/2^b < 1` within `1/n` of `1`, which is where the repo's own `log₂3` apparatus
+(`PowSeparation`, `sep_of_bracket_nat`, the convergent brackets `306/665`, `665/15601`, …) is the
+natural input.  **State (B) in `src/` as a named disclosed `sorry` and chip it.**
+
+Do NOT: restore the unbounded-starts axiom shape (kernel-refuted); strengthen the two-block
+exclusion to three blocks (kernel-refuted); re-tune the Rhin-lite κ / crossover (refuted
+low-leverage 2026-09-01); reopen the elementary `b + d ≤ 5` route (refuted 2026-08-25).
+
+
 ## ★★ RHIN 1987 AXIOM RETIRED — `sep_two_three` proved axiom-free (2026-09-01, LATEST lap) ★★
 
 **Verdict on the operator's fork (direct re-wiring of `sep_two_three` onto `rhinLiteLIMeasure`):**
