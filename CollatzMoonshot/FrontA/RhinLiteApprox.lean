@@ -6,7 +6,6 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.LinearAlgebra.Matrix.Nondegenerate
 import CollatzMoonshot.FrontA.RhinLiteLogForm
 import CollatzMoonshot.FrontA.PowSeparation
-import CollatzMoonshot.Assumed.Rhin1987
 
 /-!
 # Simultaneous-approximation criterion for the Rhin-lite log forms
@@ -50,19 +49,18 @@ here gives a finite (non-optimal) exponent `κ`, which is all `sep_two_three` ne
 * `elim_identity` — the elimination identity `B·(p + qθ₁ + rθ₂) = n + q·L₁ + r·L₂` with the
   integer `n = pB − qA₁ − rA₂`.  This is the algebraic heart of the transference: a nonzero `n`
   forces `|B·Λ| ≥ 1 − |q||L₁| − |r||L₂|`, hence `|Λ| ≥ (…)/B`.
-* `rhinLiteLIMeasure` — **the disclosed crux** (single `sorry` in this file): the linear
-  independence measure of `{1, θ₁, θ₂}` produced by the sequence above.  Its docstring records the
-  concrete route from `rhinLiteEven_two_log_forms`.
-* `log23_effective_measure` — **proved from `rhinLiteLIMeasure`**: the effective irrationality
-  measure of `log₂ 3` in the exact linear-form shape `c/k^κ ≤ m·log2 − k·log3` on the
-  near-critical window.  This is one restriction away from the `hLF` hypothesis of
-  `sep_of_linear_form_poly`, so it is the concrete object that discharges `sep_two_three` once the
-  crux is proved.
-
-The remaining gap between `log23_effective_measure` and a fully-closed `sep_two_three` is the
-constant/threshold reconciliation of `sep_of_linear_form_poly`'s crossover hypothesis `hcross`
-(the finite near-`130` window depends on the unknown `c, κ` and needs `poly_le_pow` from an
-explicit threshold); see `PENDING_WORK.md`.
+* `rhinLiteLIMeasure` — **PROVED** (2026-08-31; sorry-free, no literature axiom): the linear
+  independence measure of `{1, θ₁, θ₂}` produced by the sequence above, assembled from the
+  determinant non-vanishing (`rhinLite_nonvanishing_triple`), the pointwise lower bound
+  (`rhinLite_pointwise_lower`) and the selection envelope (`rhinLite_selection_envelope`).  It is
+  stated *existentially* (`∃ κ c`): its constant `c = 1/(2C)`, `C = (396/5)^(6000+N₀)·6^κ`, takes
+  `N₀` from the classical `lcmUpto_le_pow_eventually`, so it cannot by itself feed the concrete
+  crossover of `sep_of_linear_form_poly_threshold`.
+* The **explicit-constant** version (`κ = 436`, `C = (396/5)^6000·6^436`, no `N₀`) and the
+  re-wiring of `sep_two_three` onto it — crossover `K = 141000` plus a convergent-bracket finite
+  range — live in `FrontA/RhinLiteSep.lean` (`rhinLiteLIMeasure_explicit`,
+  `rhinLite_log23_measure`, `sep_two_three_rhinLite`).  That is what retires the cited Rhin 1987
+  axiom on the two-block path.
 -/
 
 namespace CollatzMoonshot.FrontA

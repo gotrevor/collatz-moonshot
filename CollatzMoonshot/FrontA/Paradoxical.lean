@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontB.Dictionary
-import CollatzMoonshot.FrontA.PowSeparation
+import CollatzMoonshot.FrontA.RhinLiteSep
 import CollatzMoonshot.FrontA.Gelfond
 import CollatzMoonshot.FrontA.Legendre
 

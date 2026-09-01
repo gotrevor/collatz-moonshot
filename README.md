@@ -6,10 +6,10 @@
 > [!IMPORTANT]
 > **This repository does not prove the Collatz conjecture, the absence of divergent
 > orbits, or the absence of nontrivial cycles.** It is an exploratory Lean 4 research
-> project. At this checkpoint the project builds; the sink separation `sep_two_three` is now
-> **proved** modulo one cited literature axiom (Rhin 1987, `rhin_1987_log_two_three_measure`),
-> one theorem still contains a disclosed `sorry` (`rhinLiteLIMeasure`, the novel Rhin-lite route
-> aimed at *retiring* that axiom), several conditional results depend on explicitly named axioms,
+> project. At this checkpoint the project builds with **no disclosed `sorry`**; the sink
+> separation `sep_two_three` (powers of 2 and 3) is **proved from first principles** via the
+> Rhin-lite construction (`FrontA/RhinLiteSep.lean`), so the formerly cited Rhin 1987 axiom is
+> retired from the build; several conditional results still depend on explicitly named axioms,
 > and computational searches provide evidence rather than proofs.
 
 The project splits Collatz into its two logically independent failure modes—an
@@ -28,9 +28,9 @@ the open hypotheses fed into that wiring:
 | `conjecture_iff_split` | proved in Lean: Collatz is equivalent to `NoDivergentOrbit ∧ NoNontrivialCycle` |
 | Front A: no divergent orbit | open; the repository proves several conditional implications |
 | Front B: no nontrivial cycle | open; the current compression target does not close the front |
-| `sep_two_three` | **proved** (no `sorry`) from the cited `rhin_1987_log_two_three_measure` axiom: the effective separation statement for powers of 2 and 3 (the sink node of the two-block exclusion), via `log23_effective_measure_concrete` (κ=14, c=1/3¹⁴), the crossover `crossover_exp_450`, and a `native_decide` finite check on `6 ≤ k < 450` |
-| `rhin_1987_log_two_three_measure` | cited literature axiom (Rhin, *Approximants de Padé et mesures effectives d'irrationalité*, 1987): the effective irrationality measure `|u₀+u₁log2+u₂log3| ≥ 1/H¹⁴`; the sole math axiom behind `sep_two_three` |
-| `rhinLiteLIMeasure` | a disclosed `sorry`; the coarse Rhin linear-independence measure of `{1, log(3/2), log(4/3)}` — the novel Rhin-lite construction aimed at *retiring* the cited Rhin axiom above |
+| `sep_two_three` | **proved, no literature axiom** (`FrontA/RhinLiteSep.lean`): the effective separation statement for powers of 2 and 3 (the sink node of the two-block exclusion), from the explicit Rhin-lite measure `rhinLiteLIMeasure_explicit` (κ=436, `c = 1/(2·(396/5)^6000·6^436)`), the crossover `crossover_exp_436_141000` (`k ≥ 141000`), five kernel-checked convergent brackets of `log₂3` on `450 ≤ k < 141000`, and the `native_decide` table on `6 ≤ k < 450`; ledger = trust base + `native_decide` certificates |
+| `rhinLiteLIMeasure` | **proved** (`FrontA/RhinLiteApprox.lean`): the coarse Rhin linear-independence measure of `{1, log(3/2), log(4/3)}` from the Rhin-lite kernel — existential constants; its explicit-constant form is `rhinLiteLIMeasure_explicit` |
+| Rhin 1987 (`rhin_1987_log_two_three_measure`) | **retired** 2026-09-01: no longer in the build; the axiom and the old `κ=14` route are parked in `wip/Rhin1987.lean`, `wip/RhinAxiomRoute.lean` |
 | named declarations in `CollatzMoonshot/Assumed/` | explicit external assumptions, some published results and some open conjectures |
 | `native_decide` certificates | kernel-checked finite computations, retained in theorem axiom ledgers as `native_decide` artifacts |
 
@@ -42,12 +42,14 @@ The current independent two-log experiment is more direct: `FrontA/RhinLite.lean
 arithmetic balances and a coarse central-coefficient band `17^n ≤ B_n ≤ 18^n` for a rationalized
 Rhin kernel. `FrontA/RhinLiteCritical.lean` exhausts the relevant roots of its degree-8 critical
 polynomial, and `FrontA/RhinLiteInterval.lean` proves the exact local `(9/40)^1000` remainder bound.
-The compact-maximum, integral, and log-form wiring are complete. `sep_two_three` is now **proved
-sorry-free** in `FrontA/PowSeparation.lean` from the cited Rhin 1987 axiom: the effective measure
-`log23_effective_measure_concrete` (κ=14, c=1/3¹⁴) supplies the Baker linear-form lower bound, the
-explicit crossover `crossover_exp_450` clears `k ≥ 450`, and a `native_decide` table handles
-`6 ≤ k < 450`. The remaining novel target `rhinLiteLIMeasure` (`FrontA/RhinLiteApprox.lean`) aims to
-*retire* the cited axiom by reconstructing the measure from the Rhin-lite kernel. See
+The compact-maximum, integral, and log-form wiring are complete, the determinant crux is closed,
+and `rhinLiteLIMeasure` (`FrontA/RhinLiteApprox.lean`) is proved. `FrontA/RhinLiteSep.lean` makes
+its constants explicit (`κ = 436`; the `lcmUpto` majorant `lcmUpto(2000t) ≤ (22/5)^(2000t)` holds
+for every `t ≥ 1`, so no asymptotic threshold survives) and re-wires `sep_two_three` onto it:
+the explicit measure gives `m·log2 − k·log3 ≥ c/k^436` on the near-critical window, the crossover
+`k^436 ≤ c·2^(k/3)` holds for `k ≥ 141000`, and the finite range is closed by five consecutive
+convergent brackets of `log₂3` (largest certificate `2^478245 < 3^301739`, `decide +kernel`) plus
+the existing `k < 450` table. The cited Rhin 1987 axiom is therefore retired from the build. See
 [FRONT-A-RHIN-LITE.md](FRONT-A-RHIN-LITE.md).
 
 Run `#print axioms <theorem>` to inspect a theorem's dependency ledger. A successful

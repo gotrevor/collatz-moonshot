@@ -3,7 +3,6 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
-import CollatzMoonshot.Assumed.Rhin1987
 
 /-!
 # Effective separation of powers of 2 and 3, and the two-block `b + d ≤ 5` reduction
@@ -15,16 +14,20 @@ This module isolates the sole deep input behind the interior two-block exclusion
 That inequality is **Baker-grade** — a review lap proved that the real relaxation of the
 governing constraints is feasible at unbounded `b + d`, so no `nlinarith`/polynomial certificate
 can exist (`experiments/two_block_relaxation.py`).  The *only* genuinely arithmetic (integrality)
-input needed is a **weak** effective separation between powers of 2 and 3, isolated here as
-`sep_two_three`.  Everything else — the reduction to `b + d ≤ 5`, a growth lemma, and a finite
-`native_decide` check — is machine-checked in this file.
+input needed is a **weak** effective separation between powers of 2 and 3, `sep_two_three`:
+the exponent-`β = 1/3` form `3 ^ (3k) ≤ (2^m − 3^k)^3 · 2^k` for the near-critical `m`
+(`3^k < 2^m < 2·3^k`), i.e. `|2^m − 3^k| ≥ 3^k · 2^(−k/3)`.
 
-`sep_two_three` is the exponent-`β = 1/3` form `3 ^ (3k) ≤ (2^m − 3^k)^3 · 2^k` for the
-near-critical `m` (`3^k < 2^m < 2·3^k`), i.e. `|2^m − 3^k| ≥ 3^k · 2^(−k/3)`.  It is **true**
-for every near-critical `k ≥ 6` (verified exactly to `k < 500`, `experiments/two_block_separation.py`;
-`β = 1/3` sits in the feasible window `[0.319, 0.387)`).  It is far weaker than full Baker and is
-the target to discharge via mathlib's continued-fraction convergent bounds for `log₂ 3`
-(`Mathlib/Algebra/ContinuedFractions/`).  It is left as the single disclosed obligation.
+This file holds the **elementary engine** behind it: the integer bridge `a/b < log₂3 ↔ 2^a < 3^b`,
+the unimodular best-approximation bounds (`denom_ge_of_between`, `theta_dist_lower_sharp`,
+`sep_of_bracket_sharp`), the linear-form reductions (`sep_of_linear_form`,
+`sep_of_linear_form_poly_threshold`), the crossover pattern (`crossover_exp_450`), the growth lemma
+and the finite `native_decide` tables (`sep_two_three_small_450`, `finite_two_block_check`).
+
+`sep_two_three` itself and the reduction `bd_reduction` (to `b + d ≤ 5`) live in
+`FrontA/RhinLiteSep.lean`, where the separation is **proved from the Rhin-lite measure**
+(`rhinLiteLIMeasure_explicit`) with **no literature axiom**.  The earlier proof from the cited
+Rhin 1987 axiom (`κ = 14`, `K = 450`) is parked, with the axiom, in `wip/RhinAxiomRoute.lean`.
 -/
 
 namespace CollatzMoonshot.FrontA
@@ -796,173 +799,5 @@ theorem sep_two_three_small_450 (k m : ℕ) (hk : 6 ≤ k) (hklt : k < 450)
     with h | h
   · exact absurd ⟨hk, h1, h2⟩ h
   · exact h
-
-/-- **Effective irrationality measure of `log₂ 3`, concrete constants (from the Rhin 1987 axiom).**
-On the near-critical window (`3^k < 2^m < 2·3^k`, `k ≥ 1`) the Baker linear form obeys
-`(1/3^14) / k^14 ≤ m·log2 − k·log3`.  This is the concrete-`(κ,c)` form (`κ = 14`, `c = 1/3^14`)
-consumed as `hLF` by `sep_of_linear_form_poly_threshold`.
-
-Proved from `Assumed.rhin_1987_log_two_three_measure` (`|u₀+u₁log2+u₂log3| ≥ 1/H^14`, `H ≥ 2`) at
-`(u₀,u₁,u₂) = (0, m, −k)`: then `Λ = m·log2 − k·log3 > 0`, `H = max(m,k) = m ≥ 2` (since `m > k ≥ 1`
-on the window), giving `Λ ≥ 1/m^14`, and `m < 3k` gives `1/m^14 ≥ (1/3^14)/k^14`. -/
-theorem log23_effective_measure_concrete
-    (k m : ℕ) (hk : 1 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
-    (1 / 3 ^ 14) / (k : ℝ) ^ 14 ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
-  -- `m` sits in `(k, 3k)` on the near-critical window.
-  have hkm : k < m := by
-    have h2k : (2 : ℕ) ^ k ≤ 3 ^ k := Nat.pow_le_pow_left (by norm_num) k
-    have : (2 : ℕ) ^ k < 2 ^ m := lt_of_le_of_lt h2k h1
-    exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp this
-  have hm3k : m < 3 * k := by
-    have hbnd : 2 * 3 ^ k ≤ 2 ^ (3 * k) := by
-      calc 2 * 3 ^ k ≤ 2 * 4 ^ k := by gcongr; norm_num
-        _ ≤ 2 ^ k * 4 ^ k := by
-            gcongr
-            calc (2 : ℕ) = 2 ^ 1 := (pow_one 2).symm
-              _ ≤ 2 ^ k := Nat.pow_le_pow_right (by norm_num) hk
-        _ = 2 ^ (3 * k) := by rw [← Nat.mul_pow]; norm_num [pow_mul]
-    have : (2 : ℕ) ^ m < 2 ^ (3 * k) := lt_of_lt_of_le h2 hbnd
-    exact (Nat.pow_lt_pow_iff_right (by norm_num)).mp this
-  -- `Λ > 0`.
-  have hΛpos : (0 : ℝ) < (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
-    have h3lt : (3 : ℝ) ^ k < (2 : ℝ) ^ m := by exact_mod_cast h1
-    have hlog : Real.log ((3 : ℝ) ^ k) < Real.log ((2 : ℝ) ^ m) :=
-      Real.log_lt_log (by positivity) h3lt
-    rw [Real.log_pow, Real.log_pow] at hlog
-    linarith
-  -- Apply Rhin at `(0, m, −k)`.  `H = max |m| |−k| = m` (since `m > k`), and `m ≥ 2`.
-  have hax := Assumed.rhin_1987_log_two_three_measure 0 (m : ℤ) (-(k : ℤ)) ?_
-  · -- rewrite the Rhin bound to `1/m^14 ≤ Λ`
-    have hz : max |(m : ℤ)| |-(k : ℤ)| = (m : ℤ) := by
-      rw [abs_of_nonneg (by positivity), abs_neg, abs_of_nonneg (by positivity)]
-      exact max_eq_left (by exact_mod_cast hkm.le)
-    rw [hz, Int.cast_neg] at hax
-    have hval : |((0 : ℤ) : ℝ) + ((m : ℤ) : ℝ) * Real.log 2 + -((k : ℤ) : ℝ) * Real.log 3|
-        = (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 := by
-      rw [abs_of_pos]
-      · push_cast; ring
-      · push_cast; linarith [hΛpos]
-    have haxΛ : 1 / ((m : ℤ) : ℝ) ^ 14 ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 :=
-      hval ▸ hax
-    -- `(1/3^14)/k^14 ≤ 1/m^14 ≤ Λ` since `m < 3k`.
-    have hmlt : ((m : ℤ) : ℝ) ≤ 3 * (k : ℝ) := by push_cast; exact_mod_cast hm3k.le
-    have hstep : (1 / 3 ^ 14) / (k : ℝ) ^ 14 ≤ 1 / ((m : ℤ) : ℝ) ^ 14 := by
-      have hle : ((m : ℤ) : ℝ) ^ 14 ≤ 3 ^ 14 * (k : ℝ) ^ 14 := by
-        calc ((m : ℤ) : ℝ) ^ 14 ≤ (3 * (k : ℝ)) ^ 14 :=
-              pow_le_pow_left₀ (by positivity) hmlt 14
-          _ = 3 ^ 14 * (k : ℝ) ^ 14 := by rw [mul_pow]
-      have hmpos : (0 : ℝ) < ((m : ℤ) : ℝ) ^ 14 := by
-        have : (0 : ℝ) < ((m : ℤ) : ℝ) := by exact_mod_cast (by omega : 0 < m)
-        positivity
-      have h1 := one_div_le_one_div_of_le hmpos hle
-      rw [div_div]; exact h1
-    exact le_trans hstep haxΛ
-  · -- `max |m| |−k| ≥ 2` since `m ≥ 2`
-    rw [abs_of_nonneg (by positivity : (0:ℤ) ≤ (m:ℤ))]
-    have : (2 : ℤ) ≤ (m : ℤ) := by exact_mod_cast (by omega : 2 ≤ m)
-    exact le_trans this (le_max_left _ _)
-
-/-- **Effective irrationality measure of `log₂ 3` (existential audit surface).**  Repackages
-`log23_effective_measure_concrete` in the `∃ κ c` shape used elsewhere (`κ = 14`, `c = 1/3^14`). -/
-theorem log23_effective_measure :
-    ∃ (κ : ℕ) (c : ℝ), 0 < c ∧
-      ∀ k m : ℕ, 1 ≤ k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
-        c / (k : ℝ) ^ κ ≤ (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 :=
-  ⟨14, 1 / 3 ^ 14, by positivity, fun k m hk h1 h2 => log23_effective_measure_concrete k m hk h1 h2⟩
-
-/-- **Weak power separation `β = 1/3` (sorry-free, modulo the cited Rhin 1987 axiom).**  For the
-near-critical power `2^m` just above `3^k` (`3^k < 2^m < 2·3^k`) with `k ≥ 6`,
-`3^(3k) ≤ (2^m − 3^k)^3 · 2^k`, i.e. `2^m − 3^k ≥ 3^k · 2^(−k/3)`.
-
-Discharged by instantiating `sep_of_linear_form_poly_threshold` at the concrete Rhin measure
-constants `κ = 14`, `c = 1/3^14` (`log23_effective_measure_concrete`), threshold `K = 450` (past the
-crossover point `k ≈ 435`), crossover `crossover_exp_450`, and the finite check
-`sep_two_three_small_450` on `6 ≤ k < 450`.  The sole remaining mathematical input is the cited
-`Assumed.rhin_1987_log_two_three_measure`; everything else is elementary + a `native_decide` table. -/
-theorem sep_two_three (k m : ℕ) (hk : 6 ≤ k) (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k) :
-    3 ^ (3 * k) ≤ (2 ^ m - 3 ^ k) ^ 3 * 2 ^ k := by
-  refine sep_of_linear_form_poly_threshold (1 / 3 ^ 14) 14 450 ?_ ?_ ?_ k m hk h1 h2
-  · intro k m hk450 h1 h2
-    exact log23_effective_measure_concrete k m (by omega) h1 h2
-  · intro k hk450
-    have hc := crossover_exp_450 k hk450
-    rw [show (1 : ℝ) / 3 ^ 14 * Real.exp ((k : ℝ) / 3 * Real.log 2)
-          = Real.exp ((k : ℝ) / 3 * Real.log 2) / 3 ^ 14 by ring,
-        le_div_iff₀ (by positivity : (0 : ℝ) < (3 : ℝ) ^ 14)]
-    linarith [hc, mul_comm ((3 : ℝ) ^ 14) ((k : ℝ) ^ 14)]
-  · intro k m hk6 hklt h1 h2
-    exact sep_two_three_small_450 k m hk6 hklt h1 h2
-
-/-- **The reduction (machine-checked modulo `sep_two_three`).**  Given the near-critical window
-`3^k < 2^m < 2·3^k` and the two block inequalities
-  `(W) : 2^d·(2^m − 3^k) < 2^m`  and  `(A) : (2^m − 3^k)·2^k ≤ 2^m·3^d`,
-with `1 ≤ d < k`, the separation forces `k ≤ 5`.  (β=1/3 gives the elementary bound `k ≤ 14` via
-`grow_two_three`; the residue `6 ≤ k ≤ 14` is cleared by `finite_two_block_check`.) -/
-theorem bd_reduction (k m d : ℕ) (hk1 : 1 ≤ d) (hdk : d < k)
-    (h1 : 3 ^ k < 2 ^ m) (h2 : 2 ^ m < 2 * 3 ^ k)
-    (hW : 2 ^ d * (2 ^ m - 3 ^ k) < 2 ^ m)
-    (hA : (2 ^ m - 3 ^ k) * 2 ^ k ≤ 2 ^ m * 3 ^ d) :
-    k ≤ 5 := by
-  by_contra hcon
-  have hk6 : 6 ≤ k := by omega
-  set D := 2 ^ m - 3 ^ k with hD
-  have hDpos : 0 < D := by rw [hD]; omega
-  have hS : 3 ^ (3 * k) ≤ D ^ 3 * 2 ^ k := sep_two_three k m hk6 h1 h2
-  have hD3 : 0 < D ^ 3 := by positivity
-  -- (ii'): 3d < k+3
-  have hii : 3 * d < k + 3 := by
-    have hWc : (2 ^ d * D) ^ 3 < (2 * 3 ^ k) ^ 3 := by
-      apply Nat.pow_lt_pow_left _ (by norm_num)
-      calc 2 ^ d * D < 2 ^ m := hW
-        _ < 2 * 3 ^ k := h2
-    have key : D ^ 3 * (2 ^ d) ^ 3 < D ^ 3 * 2 ^ (k + 3) := by
-      calc D ^ 3 * (2 ^ d) ^ 3 = (2 ^ d * D) ^ 3 := by ring
-        _ < (2 * 3 ^ k) ^ 3 := hWc
-        _ = 8 * 3 ^ (3 * k) := by rw [mul_pow, ← pow_mul, Nat.mul_comm k 3]; norm_num
-        _ ≤ 8 * (D ^ 3 * 2 ^ k) := by gcongr
-        _ = D ^ 3 * 2 ^ (k + 3) := by rw [pow_add]; ring
-    have hpow : (2 ^ d) ^ 3 < 2 ^ (k + 3) := Nat.lt_of_mul_lt_mul_left key
-    rw [← pow_mul] at hpow
-    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).mp hpow
-    omega
-  -- (iii'): 2^(2k-3) < 3^(3d)
-  have hiii : 2 ^ (2 * k - 3) < 3 ^ (3 * d) := by
-    have hAstrict : D * 2 ^ k < 2 * 3 ^ (k + d) := by
-      calc D * 2 ^ k ≤ 2 ^ m * 3 ^ d := hA
-        _ < 2 * 3 ^ k * 3 ^ d := by gcongr
-        _ = 2 * 3 ^ (k + d) := by rw [pow_add]; ring
-    have hAc : (D * 2 ^ k) ^ 3 < (2 * 3 ^ (k + d)) ^ 3 :=
-      Nat.pow_lt_pow_left hAstrict (by norm_num)
-    have hlow : 3 ^ (3 * k) * 2 ^ (2 * k) ≤ (D * 2 ^ k) ^ 3 := by
-      calc 3 ^ (3 * k) * 2 ^ (2 * k) ≤ (D ^ 3 * 2 ^ k) * 2 ^ (2 * k) := by gcongr
-        _ = D ^ 3 * 2 ^ (3 * k) := by
-              rw [mul_assoc, ← pow_add, show k + 2 * k = 3 * k by ring]
-        _ = (D * 2 ^ k) ^ 3 := by rw [mul_pow, ← pow_mul, Nat.mul_comm k 3]
-    have hchain : 3 ^ (3 * k) * 2 ^ (2 * k) < (2 * 3 ^ (k + d)) ^ 3 := lt_of_le_of_lt hlow hAc
-    have hRHS : (2 * 3 ^ (k + d)) ^ 3 = 3 ^ (3 * k) * (8 * 3 ^ (3 * d)) := by
-      rw [mul_pow, ← pow_mul, show (k + d) * 3 = 3 * k + 3 * d by ring, pow_add]; ring
-    rw [hRHS] at hchain
-    have hcancel : 2 ^ (2 * k) < 8 * 3 ^ (3 * d) := Nat.lt_of_mul_lt_mul_left hchain
-    have hsplit : 2 ^ (2 * k) = 2 ^ (2 * k - 3) * 8 := by
-      rw [show (8:ℕ) = 2 ^ 3 by norm_num, ← pow_add]; congr 1; omega
-    rw [hsplit] at hcancel
-    have hmul : 2 ^ (2 * k - 3) * 8 < 3 ^ (3 * d) * 8 := by omega
-    exact Nat.lt_of_mul_lt_mul_right hmul
-  -- combine (ii') + (iii'): 2^(2k-3) < 3^(k+2)
-  have hd3 : 3 * d ≤ k + 2 := by omega
-  have h3dle : 3 ^ (3 * d) ≤ 3 ^ (k + 2) := Nat.pow_le_pow_right (by norm_num) hd3
-  have hiv : 2 ^ (2 * k - 3) < 3 ^ (k + 2) := lt_of_lt_of_le hiii h3dle
-  by_cases hk15 : 15 ≤ k
-  · exact absurd (grow_two_three k hk15) (by omega)
-  · have hkle : k ≤ 14 := by omega
-    have hmlt : m < 24 := by
-      have hlt : 2 ^ m < 2 ^ 24 := by
-        calc 2 ^ m < 2 * 3 ^ k := h2
-          _ ≤ 2 * 3 ^ 14 := by gcongr <;> norm_num
-          _ < 2 ^ 24 := by norm_num
-      exact (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).mp hlt
-    exact finite_two_block_check k (Finset.mem_range.mpr (by omega)) m
-      (Finset.mem_range.mpr hmlt) d (Finset.mem_range.mpr (by omega))
-      ⟨hk6, hk1, hdk, h1, h2, hW, hA⟩
 
 end CollatzMoonshot.FrontA

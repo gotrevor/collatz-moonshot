@@ -9,14 +9,12 @@ hits="$(grep -REn --include='*.lean' \
   CollatzMoonshot CollatzMoonshot.lean || true)"
 count="$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')"
 
-# Disclosed proof debt is now confined to a single file on the Rhin-lite separation path:
-#   * FrontA/RhinLiteApprox.lean  — the coarse Rhin linear-independence measure and its named
-#     sub-obligations (the crux `rhinLiteLIMeasure` and its decomposition), from which
-#     `log23_effective_measure` is derived.  The sink `sep_two_three` (FrontA/PowSeparation.lean)
-#     is now PROVED sorry-free from the cited `Assumed.rhin_1987_log_two_three_measure` axiom, so
-#     PowSeparation.lean must carry NO anonymous proof debt.
-# The gate pins the LOCATIONS (no debt may leak elsewhere, in particular not into
-# PowSeparation.lean); the count within RhinLiteApprox.lean may grow as the crux is decomposed.
+# Disclosed proof debt is currently ZERO (2026-09-01): the Rhin-lite measure `rhinLiteLIMeasure`
+# (FrontA/RhinLiteApprox.lean) is proved, and the sink `sep_two_three` (FrontA/RhinLiteSep.lean)
+# is proved from its explicit-constant form with no literature axiom.  Should the Rhin-lite path
+# be decomposed further, any new disclosed sorry must stay in RhinLiteApprox.lean; the gate pins
+# the LOCATION (no debt may leak elsewhere, in particular not into PowSeparation.lean or
+# RhinLiteSep.lean).
 expected_files='^CollatzMoonshot/FrontA/RhinLiteApprox\.lean:'
 unexpected="$(printf '%s\n' "$hits" | sed '/^$/d' | grep -Ev "$expected_files" || true)"
 
@@ -27,4 +25,4 @@ if [[ -n "$unexpected" ]]; then
   exit 1
 fi
 
-printf 'Proof-debt gate: %s disclosed sorries (RhinLiteApprox only; sep_two_three proved)\n%s\n' "$count" "$hits"
+printf 'Proof-debt gate: %s disclosed sorries (RhinLiteApprox only; sep_two_three proved axiom-free)\n%s\n' "$count" "$hits"

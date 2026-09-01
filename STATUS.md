@@ -1,5 +1,16 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-09-01 — Rhin 1987 axiom RETIRED.**  `sep_two_three` is now proved from the Rhin-lite
+> measure with **no literature axiom** (`FrontA/RhinLiteSep.lean`, `sep_two_three_rhinLite`;
+> ledger = `propext/Classical.choice/Quot.sound` + the Rhin-lite tower's `native_decide`
+> certificates).  The direct re-wiring of the existential `rhinLiteLIMeasure` was **refuted**
+> (its constant is opaque: `N₀` from an `isLittleO`); instead the constants were made explicit —
+> `lcmUpto(2000t) ≤ (22/5)^(2000t)` for all `t ≥ 1` (eight kernel block certificates + Chebyshev
+> for `N ≥ 62000`), `κ = 436`, `c = 1/(2·(396/5)^6000·6^436)` — giving crossover `K = 141000`,
+> with `450 ≤ k < 141000` closed by five consecutive-convergent brackets of `log₂3` (eight
+> `decide +kernel` power certificates, largest `2^478245 < 3^301739`).  `Assumed/Rhin1987.lean`
+> and the old `κ = 14` route are parked in `wip/`.  `src/` remains sorry-free.
+
 > **2026-08-26 (Lane 1):** Furstenberg's topological ×p×q rigidity (1967) is now **proved,
 > axiom-clean** in `Rigidity/Furstenberg.lean` — the `Assumed/Furstenberg.lean` axiom is
 > discharged, and the ⟨p,q⟩-orbit-density corollary comes with it.  See the ledger entry below.

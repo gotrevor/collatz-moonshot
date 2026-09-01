@@ -1,5 +1,10 @@
 # Front A: consume Rhin 1987 and close the two-block theorem
 
+> **RETIRED (2026-09-01):** the axiom route was executed on 2026-08-31 and then superseded the
+> next day — `sep_two_three` is now proved from the Rhin-lite measure with no literature axiom
+> (`FrontA/RhinLiteSep.lean`).  `Assumed/Rhin1987.lean` and the `κ = 14` proof are parked in
+> `wip/Rhin1987.lean`, `wip/RhinAxiomRoute.lean`.  This document is historical.
+>
 > **Fallback only (2026-08-26):** this is the short citation/axiom route. The live independent
 > formalization route is now `FRONT-A-RHIN-LITE.md`; do not run this assignment unless the decision
 > is explicitly made to cite Rhin instead.

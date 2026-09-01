@@ -1,5 +1,52 @@
 # PENDING_WORK
 
+## ★★ RHIN 1987 AXIOM RETIRED — `sep_two_three` proved axiom-free (2026-09-01, LATEST lap) ★★
+
+**Verdict on the operator's fork (direct re-wiring of `sep_two_three` onto `rhinLiteLIMeasure`):**
+- **REFUTED as stated.**  `rhinLiteLIMeasure` is `∃ κ c`; `c = 1/(2C)` with
+  `C = (396/5)^(6000+N₀)·6^κ` and `N₀` the *classical* threshold of `lcmUpto_le_pow_eventually`
+  (`isLittleO.def` → `Filter.eventually_atTop`).  No concrete `K`, so the finite check of
+  `sep_of_linear_form_poly_threshold` cannot be stated.
+- **FEASIBLE with explicit constants — DONE** (`FrontA/RhinLiteSep.lean`):
+  · `N₀ = 0` on even indices: `lcmUpto(2000t)·5^(2000t) ≤ 22^(2000t)` for `1 ≤ t ≤ 30` by eight
+    monotone block certificates (`decide +kernel`, `lcmUpto_dvd_of_le` + `lcmUpto_block_le`), and
+    `lcmUpto N ≤ (22/5)^N` for `N ≥ 62000` from mathlib Chebyshev with the subexponential term
+    absorbed by `4·log s ≤ s/11` (`s = √N ≥ 248`, via `log s ≤ 8 log 2 + s/256 − 1`).
+  · `κ = 436`: `(100/99)^436 ≥ 396/5` (`435` fails) — kernel-checked, no log bounds needed.
+  · `c = rhinLiteSepC = 1/(2·(396/5)^6000·6^436)`, `log₂(1/c) ≈ 38972`.
+  · Change of basis on the window: height of `(m−2k, m−k)` is `≤ k` (`k < m ≤ 2k`), so
+    `Λ ≥ c/k^436` with no extra `2^436` loss (`rhinLite_log23_measure`).
+  · Crossover `K = 141000 = 3·47000`, margin `133` bits; base case
+    `2·141000^436·396^6000·6^436 ≤ 2^47000·5^6000` by `decide +kernel` (~14k-digit operands).
+  · Finite range `450 ≤ k < 141000`: five consecutive-convergent brackets of `log₂3`
+    (`q = 306, 665, 15601, 31867, 79335, 111202`), each fed to `sep_of_bracket_sharp` through the
+    all-integer interface `sep_of_bracket_nat` (inner same-side fractions bound the gap by
+    `1/b'`, `1/d'`; scale `j` with `3j ≤ k`, `2b' ≤ 2^j`).  Eight power certificates, largest
+    `2^478245 < 3^301739`, all `decide +kernel` (`[propext]` only; the 5M-digit certificate
+    `2^16785921 < 3^10590737` that a `K ≈ 1.2e6` route would need exceeds the kernel numeral cap
+    but passes `native_decide` — not needed).
+- **κ-sharpening (operator point 3) REFUTED as low-leverage:** with `C ≈ 10^11730` fixed by the
+  `2000`-index block spacing + 3-index non-vanishing window, even Hanson's `lcm < 3^n` (κ ≈ 11)
+  moves `K` only from `≈139k` to `≈104k`; convergent denominators jump `190537 → 10590737`, so any
+  `K < 190537` costs the same certificates.  Do NOT pursue.
+- **Ledger:** `#print axioms sep_two_three_rhinLite` = trust base + the Rhin-lite tower's
+  `native_decide` certificates (`rhinLiteI₁_ratio_base`, bound-product/root brackets, block term,
+  `sep_two_three_small_450`).  No `sorryAx`, no `rhin_1987_log_two_three_measure`.
+- **Wiring:** `sep_two_three` and `bd_reduction` moved from `PowSeparation.lean` to
+  `RhinLiteSep.lean`; `Paradoxical.lean` imports `RhinLiteSep`; `Assumed/Rhin1987.lean` and the
+  old axiom route (`log23_effective_measure_concrete`, `log23_effective_measure`, old
+  `sep_two_three`) parked as `wip/Rhin1987.lean`, `wip/RhinAxiomRoute.lean`.
+
+**Next attacks (fresh direction; `src/` sorry-free, two-block exclusion axiom-clean):**
+- The remaining cited axioms on the divergence front are `rozier_terracol_3_2` (behind
+  `finite_acyclicParadoxical_imp_noDivergent`) and the Front-B/cycle citations
+  (`Assumed/Cycles.lean`); `baker_bounded_difference` if still consumed.  Inventory with
+  `scripts/AxiomAudit.lean` and pick the one nearest a machine-checked kernel.
+- Optional tightening (NOT a lap goal): the `native_decide` certificates inside the Rhin-lite
+  tower could be re-checked with `decide +kernel` where the operand sizes allow (see
+  corpus `decide-kernel-over-native-decide.md`), shrinking the ledger of `sep_two_three` to the
+  bare trust base.
+
 ## ★★ I₁ BASE-CASE NODE — PROVED; `src/` NOW SORRY-FREE (2026-08-31, LATEST lap) ★★
 
 `rhinLiteI₁_ratio_base : 2κ·I₁(0) ≤ I₁(1)` is **DISCHARGED** (`RhinLiteApprox.lean`). This was the
