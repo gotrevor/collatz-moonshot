@@ -35,7 +35,31 @@ none with fewer, so `le_two_blocks_not_acyclicParadoxical` is at the exact bound
 "≥ 3 odd blocks" discovery result is sharp.  **The exclusion ladder is finished — do not attempt
 a three-block strengthening.**
 
-## ★ NEXT ATTACK — discharge `rozier_terracol_3_2` (the binding directive) ★
+## ★★ CASE (A) DISCHARGED — `rozier_terracol_3_2` is now a THEOREM; only the unbounded half is cited ★★
+*(2026-09-01, same lap)*
+
+`infinite_paradoxical_of_bounded_orbit` **PROVED, trust-base clean**: `n ≥ 2` with infinite
+shortcut stopping time and a *bounded* shortcut orbit has infinitely many paradoxical segments
+starting at `2^0 n`.  Route, all elementary:
+- `exists_eventual_period_of_bounded` — pigeonhole `j ↦ tstep^[j] n` into `Fin (B+1)` via
+  `Finite.exists_ne_map_eq_of_infinite`, giving `t, L > 0` with `tstep^[L] c = c`, `c = tstep^[t] n`.
+- `subcritical_of_tstep_cycle` gives `3^(a_L) < 2^L`; `ones_traceWord_mul_of_cycle` gives
+  `ones (traceWord n (t + L j)) = a_t + j·a_L`; `hend` gives endpoint `= c ≥ n`.
+- Domination without any real-analysis limit: `nat_bernoulli_mul` (`x^j(x+j) ≤ x(x+1)^j`) ⇒
+  `const_mul_pow_lt_pow`: for `1 ≤ x < y`, already at `j = c·x` one has `c·x^j < y^j`.  Applied
+  with `x = 3^(a_L)`, `y = 2^L`, `c = 3^(a_t)`, so the explicit threshold is
+  `j₀ = 3^(a_t)·3^(a_L)`; subcriticality then holds for every `j ≥ j₀` by multiplying by
+  `(3^(a_L))^i ≤ (2^L)^i`.
+- `two_lt_of_infiniteStoppingTime` upgrades `2 ≤ n` to the `2 < n` that `Paradoxical` needs.
+
+**Ledger effect.**  The axiom is now `Assumed.rozier_terracol_3_2_unbounded` (same statement,
+extra hypothesis `∀ B, ∃ j, B < tstep^[j] n`), and `Assumed.rozier_terracol_3_2` is a **theorem**
+proved by case split on boundedness.  `finite_acyclicParadoxical_imp_noDivergent` now reads
+`[propext, Classical.choice, Quot.sound, Assumed.rozier_terracol_3_2_unbounded]`.
+Note the consumer only ever hits the unbounded branch (a divergent orbit's shortcut orbit is
+unbounded, `not_tstep_fixed_of_diverges`), so case (A) is pure axiom-shrinkage, not a shortcut.
+
+## ★ NEXT ATTACK — case (B), the Diophantine half (the binding directive) ★
 
 Goal: `n ≥ 2`, `InfiniteStoppingTime n` ⊢ `{p | Paradoxical (2^p.1 * n) p.2}.Infinite`.
 

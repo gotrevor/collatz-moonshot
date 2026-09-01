@@ -351,7 +351,9 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `FrontA.sep_two_three` | effective 2/3 power separation | 13× `native_decide.ax` (Rhin-lite tower + the `k<450` table) | **0 math** ✅ 🟢 — the Rhin 1987 axiom is RETIRED |
 | `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | 13× `native_decide.ax` + `finite_two_block_check` | **0 math** ✅ 🟢 — and **sharp** (`acyclicParadoxical_seven_eight`) |
-| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2` | 1 · 🟡 proved (RT 2026 Thm 3.2, *cardinality* form; corrected 2026-09-01 — see below) |
+| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `rozier_terracol_3_2_unbounded` | 1 · 🟡 proved (RT 2026 Thm 3.2, *cardinality* form, **unbounded half only** — the bounded half is discharged, see below) |
+| `Assumed.rozier_terracol_3_2` | RT 2026 Thm 3.2 (full) | `rozier_terracol_3_2_unbounded` | now a **THEOREM**, not an axiom |
+| `infinite_paradoxical_of_bounded_orbit` | RT 2026 Thm 3.2, bounded case | — | 0 ✅ **half the axiom DISCHARGED** (2026-09-01) |
 | `frontB_of_compression_le_91` | Front B closer | `hercher_min_circuit_count` | 1 · 🟡 proved (Hercher 2023, no transcendence; `Compression` still an *open def*, not an axiom) |
 | `Assumed.frontier_min_cycle_length` | cycle-length frontier | `hercher_odd_members_bound` | 1 · 🟡 proved (Hercher 2023 + Bařina 2025 compute) |
 | `two_pow_68_lt_of_onCycle_nontrivial` | conditional demo | `collatz_verified_up_to_two_pow_68` | 1 · 🟢 finite computation |

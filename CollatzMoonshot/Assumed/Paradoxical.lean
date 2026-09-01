@@ -76,9 +76,18 @@ def FiniteAcyclicParadoxical : Prop :=
 
 namespace Assumed
 
-/-- **[ASSUMED — THEOREM-grade]** Rozier--Terracol 2026, Theorem 3.2.  An integer `n ≥ 2` of
-infinite shortcut stopping time produces **infinitely many** paradoxical segments starting at
-numbers of the form `2^k n`: the set of pairs `(k, m)` with `Paradoxical (2^k n) m` is infinite.
+/-- **[ASSUMED — THEOREM-grade]** Rozier--Terracol 2026, Theorem 3.2, **restricted to the
+unbounded case**.  An integer `n ≥ 2` of infinite shortcut stopping time and *unbounded* shortcut
+orbit produces **infinitely many** paradoxical segments starting at numbers of the form `2^k n`:
+the set of pairs `(k, m)` with `Paradoxical (2^k n) m` is infinite.
+
+The *bounded* case of Theorem 3.2 is **proved** below
+(`infinite_paradoxical_of_bounded_orbit`), and the two are recombined into the full statement
+`rozier_terracol_3_2`; so this axiom is strictly narrower than the published theorem, and half
+of it is already discharged.  What remains behind the axiom is the genuinely Diophantine half:
+for an unbounded orbit one needs infinitely many `j` admitting an integer `k` with
+`3^(a_j)/2^j < 2^k ≤ (tstep^[j] n)/n`, i.e. RT's "infinitely many left approximations
+`3^a/2^b < 1` of `1`".
 
 Provenance: Rozier & Terracol, *Paradoxical behavior in Collatz sequences*, Discrete
 Mathematics 349 (2026), 115167 (arXiv:2502.00948v5), Theorem 3.2 and Corollary 3.3
@@ -96,7 +105,8 @@ nontrivial cycle, hence it *proves* `NoNontrivialCycle` — an open problem — 
 The refutation is machine-checked immediately below
 (`noNontrivialCycle_of_unboundedParadoxicalStarts`); do **not** restore the old form.  Cardinality
 of the segment set, not growth of its starts, is what Theorem 3.2 delivers. -/
-axiom rozier_terracol_3_2 (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n) :
+axiom rozier_terracol_3_2_unbounded (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n)
+    (hunb : ∀ B, ∃ j, B < tstep^[j] n) :
     {p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite
 
 end Assumed
@@ -301,6 +311,165 @@ theorem infinite_paradoxical_of_tstep_cycle {n L : ℕ} (h2 : 2 < n) (hL : 0 < L
         _ = 2 ^ (L * (j + 1)) := by rw [← pow_mul]
     · simp only []
       rw [pow_zero, one_mul, hiter]
+
+/-!
+### The bounded half of Theorem 3.2, PROVED
+
+If `n`'s shortcut orbit is bounded it is eventually periodic, entering a cycle of period `L` at
+some time `t`.  The cycle block is subcritical (`subcritical_of_tstep_cycle`), so the segment
+coefficient `3^a / 2^m` at `m = t + jL` shrinks geometrically and eventually drops below `1`,
+while the endpoint sits at the cycle entry point `c ≥ n`.  Every such `m` gives a paradoxical
+segment starting at `2^0 n = n`, and there are infinitely many of them.
+
+The only quantitative ingredient is that `x^j` is eventually beaten by `y^j` for `x < y`, however
+large the constant in front — proved here in `ℕ` from a multiplicative Bernoulli bound, so no
+real-analysis limit is needed.
+-/
+
+/-- Bernoulli in `ℕ`, stated multiplicatively to avoid `x^(j-1)`: `x^j·(x+j) ≤ x·(x+1)^j`. -/
+theorem nat_bernoulli_mul (x : ℕ) : ∀ j, x ^ j * (x + j) ≤ x * (x + 1) ^ j := by
+  intro j
+  induction j with
+  | zero => simp
+  | succ i ih =>
+    have hstep : x ^ (i + 1) * (x + (i + 1)) ≤ (x ^ i * (x + i)) * (x + 1) := by
+      have hexp : (x ^ i * (x + i)) * (x + 1) = x ^ (i + 1) * (x + i) + x ^ i * (x + i) := by
+        ring
+      rw [hexp]
+      have h1 : x ^ (i + 1) * (x + (i + 1)) = x ^ (i + 1) * (x + i) + x ^ (i + 1) := by ring
+      rw [h1]
+      have h2 : x ^ (i + 1) ≤ x ^ i * (x + i) := by
+        calc x ^ (i + 1) = x ^ i * x := by ring
+          _ ≤ x ^ i * (x + i) := Nat.mul_le_mul_left _ (by omega)
+      omega
+    calc x ^ (i + 1) * (x + (i + 1)) ≤ (x ^ i * (x + i)) * (x + 1) := hstep
+      _ ≤ (x * (x + 1) ^ i) * (x + 1) := Nat.mul_le_mul_right _ ih
+      _ = x * (x + 1) ^ (i + 1) := by ring
+
+/-- For `1 ≤ x < y` the power `y^j` outgrows any constant multiple of `x^j`: already at
+`j = c·x` one has `c · x^j < y^j`.  (Pure `ℕ`; the witness is explicit.) -/
+theorem const_mul_pow_lt_pow {x y : ℕ} (hx : 1 ≤ x) (hxy : x < y) (c : ℕ) :
+    c * x ^ (c * x) < y ^ (c * x) := by
+  set j := c * x with hj
+  have hxpos : 0 < x := hx
+  have hb : x ^ j * (x + j) ≤ x * (x + 1) ^ j := nat_bernoulli_mul x j
+  have hy : (x + 1) ^ j ≤ y ^ j := Nat.pow_le_pow_left (by omega) j
+  have h1 : x ^ j * (x + j) ≤ x * y ^ j := le_trans hb (Nat.mul_le_mul_left x hy)
+  have h2 : x * (c * x ^ j) < x ^ j * (x + j) := by
+    have he : x ^ j * (x + j) = x ^ j * x * (1 + c) := by rw [hj]; ring
+    have hl : x * (c * x ^ j) = x ^ j * x * c := by ring
+    rw [he, hl]
+    exact mul_lt_mul_of_pos_left (by omega) (by positivity)
+  exact Nat.lt_of_mul_lt_mul_left (lt_of_lt_of_le h2 h1)
+
+/-- Infinite shortcut stopping time forces `n > 2` (at `n = 2` the very first step drops to `1`).
+This upgrades the axiom's `2 ≤ n` to the `2 < n` that `Paradoxical` demands. -/
+theorem two_lt_of_infiniteStoppingTime {n : ℕ} (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n) :
+    2 < n := by
+  rcases Nat.lt_or_ge 2 n with h | h
+  · exact h
+  · exfalso
+    have hn2 : n = 2 := by omega
+    have h1 := hstop 1
+    rw [hn2] at h1
+    simp at h1
+
+/-- A bounded shortcut orbit is eventually periodic (pigeonhole into `Fin (B+1)`). -/
+theorem exists_eventual_period_of_bounded {n B : ℕ} (hB : ∀ j, tstep^[j] n ≤ B) :
+    ∃ t L, 0 < L ∧ tstep^[L] (tstep^[t] n) = tstep^[t] n := by
+  obtain ⟨i, j, hij, heq⟩ := Finite.exists_ne_map_eq_of_infinite
+    (fun k : ℕ => (⟨tstep^[k] n, Nat.lt_succ_of_le (hB k)⟩ : Fin (B + 1)))
+  have heq' : tstep^[i] n = tstep^[j] n := by simpa [Fin.ext_iff] using heq
+  have key : ∀ a b : ℕ, a < b → tstep^[a] n = tstep^[b] n →
+      ∃ t L, 0 < L ∧ tstep^[L] (tstep^[t] n) = tstep^[t] n := by
+    intro a b hab h
+    refine ⟨a, b - a, by omega, ?_⟩
+    rw [← Function.iterate_add_apply, Nat.sub_add_cancel hab.le]
+    exact h.symm
+  rcases lt_or_gt_of_ne hij with h | h
+  · exact key i j h heq'
+  · exact key j i h heq'.symm
+
+/-- **Rozier--Terracol Theorem 3.2, bounded case — PROVED, trust-base clean.**  If `n ≥ 2` has
+infinite shortcut stopping time and a *bounded* shortcut orbit, then infinitely many pairs
+`(k, m)` satisfy `Paradoxical (2^k n) m` — all with `k = 0`, at the lengths `m = t + jL` for
+`j` past an explicit threshold `j₀ = 3^(a_t)·3^(a_L)`. -/
+theorem infinite_paradoxical_of_bounded_orbit {n B : ℕ} (h2 : 2 ≤ n)
+    (hstop : InfiniteStoppingTime n) (hB : ∀ j, tstep^[j] n ≤ B) :
+    {p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite := by
+  have hn3 : 2 < n := two_lt_of_infiniteStoppingTime h2 hstop
+  obtain ⟨t, L, hL, hcfix⟩ := exists_eventual_period_of_bounded hB
+  set c := tstep^[t] n with hc
+  have hcn : n ≤ c := hstop t
+  have hc1 : 1 ≤ c := by omega
+  set aL := ones (traceWord c L) with haL
+  set aT := ones (traceWord n t) with haT
+  have hsubL : 3 ^ aL < 2 ^ L := subcritical_of_tstep_cycle hc1 hL hcfix
+  have hones : ∀ j, ones (traceWord n (t + L * j)) = aT + j * aL := by
+    intro j
+    rw [FrontA.traceWord_add, FrontB.ones_append, ← hc, ones_traceWord_mul_of_cycle hcfix]
+  have hend : ∀ j, tstep^[t + L * j] n = c := by
+    intro j
+    rw [show t + L * j = L * j + t from by ring, Function.iterate_add_apply, ← hc,
+      Function.iterate_mul]
+    exact Function.iterate_fixed hcfix j
+  set j₀ := 3 ^ aT * 3 ^ aL with hj₀
+  have h3aL : 1 ≤ (3 : ℕ) ^ aL := Nat.one_le_pow _ _ (by norm_num)
+  have hsub0 : 3 ^ aT * (3 ^ aL) ^ j₀ < (2 ^ L) ^ j₀ :=
+    const_mul_pow_lt_pow h3aL hsubL (3 ^ aT)
+  have hsub : ∀ i : ℕ, 3 ^ (aT + (j₀ + i) * aL) < 2 ^ (t + L * (j₀ + i)) := by
+    intro i
+    have hle : ((3 : ℕ) ^ aL) ^ i ≤ (2 ^ L) ^ i := Nat.pow_le_pow_left hsubL.le i
+    have hpos : 0 < ((2 : ℕ) ^ L) ^ i := by positivity
+    have hstep : (3 ^ aT * (3 ^ aL) ^ j₀) * ((3 : ℕ) ^ aL) ^ i
+        < ((2 : ℕ) ^ L) ^ j₀ * ((2 : ℕ) ^ L) ^ i :=
+      Nat.mul_lt_mul_of_lt_of_le hsub0 hle hpos
+    calc (3 : ℕ) ^ (aT + (j₀ + i) * aL)
+        = (3 ^ aT * (3 ^ aL) ^ j₀) * ((3 : ℕ) ^ aL) ^ i := by
+          rw [pow_add, ← pow_mul, ← pow_mul, ← pow_add]; ring_nf
+      _ < ((2 : ℕ) ^ L) ^ j₀ * ((2 : ℕ) ^ L) ^ i := hstep
+      _ = 2 ^ (L * (j₀ + i)) := by rw [← pow_add, ← pow_mul]
+      _ ≤ 2 ^ (t + L * (j₀ + i)) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h3T : 1 ≤ (3 : ℕ) ^ aT := Nat.one_le_pow _ _ (by norm_num)
+  have hj₀pos : 1 ≤ j₀ := by rw [hj₀]; simpa using Nat.mul_le_mul h3T h3aL
+  refine Set.infinite_of_injective_forall_mem
+    (f := fun i : ℕ => ((0 : ℕ), t + L * (j₀ + i))) ?_ ?_
+  · intro a b hab
+    simp only [Prod.mk.injEq, true_and] at hab
+    have hmul : L * (j₀ + a) = L * (j₀ + b) := by omega
+    have := Nat.eq_of_mul_eq_mul_left hL hmul
+    omega
+  · intro i
+    refine ⟨by simpa using hn3, ?_, ?_, ?_⟩
+    · have : 0 < L * (j₀ + i) := Nat.mul_pos hL (by omega)
+      simp only []
+      omega
+    · simp only [pow_zero, one_mul]
+      rw [hones (j₀ + i)]
+      exact hsub i
+    · simp only [pow_zero, one_mul]
+      rw [hend (j₀ + i)]
+      exact hcn
+
+namespace Assumed
+
+/-- **Rozier--Terracol 2026, Theorem 3.2 — now a THEOREM**, not an axiom: its bounded half is
+proved (`infinite_paradoxical_of_bounded_orbit`) and only the unbounded half is cited
+(`rozier_terracol_3_2_unbounded`).  The statement and name that the rest of the repository
+consumes are unchanged. -/
+theorem rozier_terracol_3_2 (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n) :
+    {p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite := by
+  by_cases hbd : ∃ B, ∀ j, tstep^[j] n ≤ B
+  · obtain ⟨B, hB⟩ := hbd
+    exact infinite_paradoxical_of_bounded_orbit h2 hstop hB
+  · refine rozier_terracol_3_2_unbounded n h2 hstop ?_
+    intro B
+    by_contra hcon
+    exact hbd ⟨B, fun j => by
+      by_contra hj
+      exact hcon ⟨j, by omega⟩⟩
+
+end Assumed
 
 /-- **Running-minimum lemma (proved).**  A divergent standard orbit has a least value `m₀`,
 and from `m₀` the orbit never drops below `m₀` (infinite *standard* stopping time); moreover
