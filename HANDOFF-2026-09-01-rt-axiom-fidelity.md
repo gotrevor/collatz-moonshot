@@ -1,10 +1,24 @@
 # HANDOFF 2026-09-01 (review lap) — RT axiom fidelity bug caught & repaired; two-block exclusion proved SHARP
 
-## State
-- Branch `main`, working tree committed, `lake build` 🟢 **8764 jobs**, `check-proof-debt.sh` → **0
-  sorries**, `src/` (`CollatzMoonshot/`) sorry-free.
-- **Binding directive changed** — see `DIRECTION.md` → CURRENT DIRECTIVE.  New objective:
-  discharge `Assumed.rozier_terracol_3_2`.
+## State (final, end of lap)
+- Branch `main`, HEAD **`a6c269e`**, working tree **clean** (nothing uncommitted, nothing pushed).
+- `lake build` 🟢 **8765 jobs**.  `check-proof-debt.sh` → **1 disclosed sorry**, and it is the
+  active crux: `FrontA/PowApprox.lean:48`, `two_pow_approx_three_pow_from_above`.
+- **Binding directive changed this lap** — see `DIRECTION.md` → CURRENT DIRECTIVE.  Objective:
+  discharge `Assumed.rozier_terracol_3_2`.  Both halves of that are now done; what is left is the
+  one node below.  (The directive's "(A) bounded / (B) unbounded" split is superseded: (A) is
+  proved outright and (B) is proved modulo the node.  A future altitude lap should retarget the
+  directive at the node itself.)
+
+## ⇒ START HERE NEXT LAP
+Prove `FrontA.two_pow_approx_three_pow_from_above` (`CollatzMoonshot/FrontA/PowApprox.lean`):
+
+    ∀ M N, ∃ A s : ℕ, M < A ∧ 3 ^ A < 2 ^ s ∧ (2 ^ s - 3 ^ A) * N ≤ 3 ^ A
+
+Closing it makes `finite_acyclicParadoxical_imp_noDivergent` **trust-base clean** — a headline
+theorem with zero cited axioms.  Full attack plan in the module docstring and `PENDING_WORK.md`;
+the short version is mathlib Dirichlet (`Real.exists_int_int_abs_mul_sub_le` at `ξ = log₂ 3`) plus
+a two-branch sign fix, with `2 ^ p ≠ 3 ^ q` (`q ≥ 1`) by parity.
 
 ## What this lap found (the headline)
 `Assumed.rozier_terracol_3_2` was stated as
