@@ -106,6 +106,10 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.FrontA.sep_two_three
 #print axioms CollatzMoonshot.FrontA.bd_reduction
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
+#print axioms CollatzMoonshot.noNontrivialCycle_of_unboundedParadoxicalStarts
+#print axioms CollatzMoonshot.not_unboundedParadoxicalStarts_of_bounded
+#print axioms CollatzMoonshot.infinite_paradoxical_of_tstep_cycle
+#print axioms CollatzMoonshot.diverges_imp_infinite_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontB.frontB_of_compression_le_91
 #print axioms CollatzMoonshot.Furstenberg.isClosed_invariant_finite_or_univ
 #print axioms CollatzMoonshot.Furstenberg.dense_orbit_of_not_isOfFinAddOrder
