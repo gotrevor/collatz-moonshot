@@ -1,7 +1,7 @@
 # HANDOFF 2026-09-01 — Rhin 1987 axiom RETIRED; `sep_two_three` proved from Rhin-lite, axiom-free
 
 ## State
-- Branch `main`, working tree to be committed this lap (see commit message).  Nothing to push.
+- Branch `main`, HEAD `d21f006`, working tree **clean** (all committed; nothing to push).  Full `lake build` green (8764 jobs), `check-proof-debt.sh` → 0 sorries, `AxiomAudit.lean` → no `rhin_1987`, no `sorryAx`.
 - `src/` (the `CollatzMoonshot` lib) is **sorry-free** and the two-block exclusion path now carries
   **no literature axiom**.
 
