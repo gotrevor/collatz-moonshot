@@ -36,6 +36,7 @@ import CollatzMoonshot.FrontA.RhinLiteEven
 import CollatzMoonshot.FrontA.RhinLiteLogForm
 import CollatzMoonshot.FrontA.RhinLiteApprox
 import CollatzMoonshot.FrontA.RhinLiteSep
+import CollatzMoonshot.FrontA.PowApprox
 import CollatzMoonshot.Assumed.Paradoxical
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers

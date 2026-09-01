@@ -59,7 +59,59 @@ proved by case split on boundedness.  `finite_acyclicParadoxical_imp_noDivergent
 Note the consumer only ever hits the unbounded branch (a divergent orbit's shortcut orbit is
 unbounded, `not_tstep_fixed_of_diverges`), so case (A) is pure axiom-shrinkage, not a shortcut.
 
-## ★ NEXT ATTACK — case (B), the Diophantine half (the binding directive) ★
+## ★★★ RT THEOREM 3.2 IS NOW A THEOREM — the cited axiom is GONE; ONE Diophantine node remains ★★★
+*(2026-09-01, same lap)*
+
+`infinite_paradoxical_of_infiniteStoppingTime` proves the **full** Theorem 3.2 (no boundedness
+hypothesis) from exactly one disclosed node.  `Assumed.rozier_terracol_3_2` is now
+`theorem ... := infinite_paradoxical_of_infiniteStoppingTime h2 hstop`; the axiom
+`rozier_terracol_3_2_unbounded` is **deleted**.
+
+**The cancellation that makes it work.**  `traceWord_two_pow_mul`:
+`traceWord (2^k n) (k+j) = [F]^k ++ traceWord n j`, so the blow-up prefix contributes no odd
+letters, and `tstep^[k+j] (2^k n) = tstep^[j] n`.  Hence (`paradoxical_two_pow_mul`)
+
+    Paradoxical (2^k n) (k+j)  ⟸  2 < n ∧ 0 < k+j ∧ 3^(a_j) < 2^(k+j) ∧ 2^k n ≤ Y_j.
+
+With `s = k+j` and `2^j Y_j = 3^(a_j) n + numer_j` this is purely arithmetic:
+`3^(a_j) < 2^s` and `(2^s - 3^(a_j))·n ≤ numer_j`.
+
+**Case split (both handled).**
+- Subcritical infinitely often (`3^(a_j) < 2^j` for arbitrarily large `j`): take `k = 0`; the
+  endpoint condition is just `n ≤ Y_j`, i.e. the infinite-stopping-time hypothesis.  **No node.**
+- Eventually supercritical (`2^j ≤ 3^(a_j)` for `j > J`): then `a_j → ∞`, and since
+  `ones` steps by at most one (`ones_traceWord_succ_le`) it attains **every** large value `A`
+  (`exists_ones_eq`, discrete IVT).  The normalized remainder `numer_j / 3^(a_j)` is
+  **non-decreasing** (`orbit_numer_mono`, via `numer_append_true/false` along the orbit), so once
+  one odd step has happened it is `≥ P/Q > 0` for fixed `P = numer_{j₁}`, `Q = 3^(a_{j₁})`.
+  Feed `N = n·Q` to the node, get `A > M` and `s` with `3^A < 2^s`, `(2^s − 3^A)·N ≤ 3^A`; take
+  the `j` with `a_j = A`; then `(2^s − 3^A)·n ≤ numer_j`, `j < s` (since `2^j ≤ 3^A < 2^s`), and
+  `k = s − j` works.  Lengths `m = s > A > M`, so the pair set is infinite
+  (`infinite_of_snd_unbounded`).
+
+**Ledger.**  `finite_acyclicParadoxical_imp_noDivergent` now reads
+`[propext, sorryAx, Classical.choice, Quot.sound]` — one *classical* hole instead of a cited
+2026 paper.  `infinite_paradoxical_of_bounded_orbit` remains separately **node-free**, so the
+debt is confined to the eventually-supercritical regime (conjecturally vacuous).
+
+## ★ NEXT ATTACK — prove the node `two_pow_approx_three_pow_from_above` (the binding directive) ★
+
+`∀ M N, ∃ A s, M < A ∧ 3^A < 2^s ∧ (2^s − 3^A)·N ≤ 3^A`  (`FrontA/PowApprox.lean`).
+
+Classical: the fractional parts of `A·log₂3` come arbitrarily close to `1`.  Route with mathlib:
+`Real.exists_int_int_abs_mul_sub_le` (Dirichlet) at `ξ = log₂3` gives `0 < q ≤ Q`, `p` with
+`|qξ − p| ≤ 1/(Q+1)`, i.e. `2^p/3^q` within a factor `2^(1/(Q+1))` of `1`; irrationality of
+`log₂3` rules out equality, leaving two branches:
+- `3^q < 2^p`: right side already; raise to `u = ⌈(M+1)/q⌉` so `A = uq > M`, the relative error
+  becoming `(1+η)^u − 1`, absorbed by taking `Q` large (`u ≤ M+1` is bounded).
+- `2^p < 3^q`: take `u` maximal with `(3^q/2^p)^u < 2`; then `2^(up+1)/3^(uq) ∈ (1, 3^q/2^p]`, and
+  `u ≈ log 2 / η` is automatically large, so `A = uq > M` for free.
+Irrationality of `log₂3` in the form needed (`2^p ≠ 3^q` for `q ≥ 1`) is elementary (parity).
+
+The old ★ NEXT ATTACK text (case A/B split) is superseded: (A) is proved, (B) is proved modulo
+this node.
+
+## ★ (superseded) earlier framing of the same attack ★
 
 Goal: `n ≥ 2`, `InfiniteStoppingTime n` ⊢ `{p | Paradoxical (2^p.1 * n) p.2}.Infinite`.
 

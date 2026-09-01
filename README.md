@@ -6,7 +6,8 @@
 > [!IMPORTANT]
 > **This repository does not prove the Collatz conjecture, the absence of divergent
 > orbits, or the absence of nontrivial cycles.** It is an exploratory Lean 4 research
-> project. At this checkpoint the project builds with **no disclosed `sorry`**; the sink
+> project. At this checkpoint the project builds with **one disclosed `sorry`** (the classical
+> Diophantine node `two_pow_approx_three_pow_from_above`, which replaced a cited 2026 paper); the sink
 > separation `sep_two_three` (powers of 2 and 3) is **proved from first principles** via the
 > Rhin-lite construction (`FrontA/RhinLiteSep.lean`), so the formerly cited Rhin 1987 axiom is
 > retired from the build; several conditional results still depend on explicitly named axioms,
@@ -31,7 +32,8 @@ the open hypotheses fed into that wiring:
 | `sep_two_three` | **proved, no literature axiom** (`FrontA/RhinLiteSep.lean`): the effective separation statement for powers of 2 and 3 (the sink node of the two-block exclusion), from the explicit Rhin-lite measure `rhinLiteLIMeasure_explicit` (κ=436, `c = 1/(2·(396/5)^6000·6^436)`), the crossover `crossover_exp_436_141000` (`k ≥ 141000`), five kernel-checked convergent brackets of `log₂3` on `450 ≤ k < 141000`, and the `native_decide` table on `6 ≤ k < 450`; ledger = trust base + `native_decide` certificates |
 | `rhinLiteLIMeasure` | **proved** (`FrontA/RhinLiteApprox.lean`): the coarse Rhin linear-independence measure of `{1, log(3/2), log(4/3)}` from the Rhin-lite kernel — existential constants; its explicit-constant form is `rhinLiteLIMeasure_explicit` |
 | Rhin 1987 (`rhin_1987_log_two_three_measure`) | **retired** 2026-09-01: no longer in the build; the axiom and the old `κ=14` route are parked in `wip/Rhin1987.lean`, `wip/RhinAxiomRoute.lean` |
-| `rozier_terracol_3_2` (Rozier--Terracol 2026, Thm 3.2) | **corrected 2026-09-01.** The axiom previously claimed *unboundedly large* paradoxical starts `2^k n`; that reading is strictly stronger than the published theorem and provably implies `NoNontrivialCycle` (an open problem) — see the in-repo kernel refutation `noNontrivialCycle_of_unboundedParadoxicalStarts`. It now states the paper's cardinality claim (`{(k,m) : Paradoxical (2^k n) m}` is infinite); `infinite_paradoxical_of_tstep_cycle` checks that form is not vacuous |
+| `rozier_terracol_3_2` (Rozier--Terracol 2026, Thm 3.2) | **corrected, then DISCHARGED, 2026-09-01.** The axiom previously claimed *unboundedly large* paradoxical starts `2^k n`; that reading is strictly stronger than the published theorem and provably implies `NoNontrivialCycle` (an open problem) — see the in-repo kernel refutation `noNontrivialCycle_of_unboundedParadoxicalStarts`. Restated as the paper's cardinality claim, it is now a **proved theorem** of `Assumed/Paradoxical.lean` resting on one disclosed classical node |
+| `two_pow_approx_three_pow_from_above` (`FrontA/PowApprox.lean`) | the repository's **single disclosed `sorry`**: for all `M N` there are `A > M` and `s` with `3^A < 2^s` and `(2^s − 3^A)·N ≤ 3^A`, i.e. powers of two approximate powers of three from above to arbitrary relative precision, infinitely often. Classical (density of `{A·log₂3}` mod 1); it is the whole remaining content of RT Theorem 3.2 |
 | `le_two_blocks_not_acyclicParadoxical` | **proved, no literature axiom**, and **sharp**: `acyclicParadoxical_seven_eight` exhibits an acyclic paradoxical segment (`n=7`, `m=8`) whose word has three odd blocks, so no three-block strengthening exists |
 | named declarations in `CollatzMoonshot/Assumed/` | explicit external assumptions, some published results and some open conjectures |
 | `native_decide` certificates | kernel-checked finite computations, retained in theorem axiom ledgers as `native_decide` artifacts |

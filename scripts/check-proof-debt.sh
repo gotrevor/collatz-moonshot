@@ -9,20 +9,22 @@ hits="$(grep -REn --include='*.lean' \
   CollatzMoonshot CollatzMoonshot.lean || true)"
 count="$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')"
 
-# Disclosed proof debt is currently ZERO (2026-09-01): the Rhin-lite measure `rhinLiteLIMeasure`
-# (FrontA/RhinLiteApprox.lean) is proved, and the sink `sep_two_three` (FrontA/RhinLiteSep.lean)
-# is proved from its explicit-constant form with no literature axiom.  Should the Rhin-lite path
-# be decomposed further, any new disclosed sorry must stay in RhinLiteApprox.lean; the gate pins
-# the LOCATION (no debt may leak elsewhere, in particular not into PowSeparation.lean or
-# RhinLiteSep.lean).
-expected_files='^CollatzMoonshot/FrontA/RhinLiteApprox\.lean:'
+# Disclosed proof debt (2026-09-01): ONE sorry, `two_pow_approx_three_pow_from_above` in
+# FrontA/PowApprox.lean — powers of two approximate powers of three from above to arbitrary
+# relative precision, infinitely often (classical: density of `{A·log₂3}` mod 1).  It is the sole
+# remaining obligation behind Rozier--Terracol 2026 Theorem 3.2, which is now a THEOREM of
+# Assumed/Paradoxical.lean rather than a cited axiom.  The Rhin-lite tower and the sink
+# `sep_two_three` are sorry-free and literature-axiom-free.  The gate pins the LOCATION: debt may
+# live only in PowApprox.lean (the active node) or RhinLiteApprox.lean (the Rhin-lite decomposition
+# slot), never elsewhere — in particular not in PowSeparation.lean or RhinLiteSep.lean.
+expected_files='^CollatzMoonshot/FrontA/(PowApprox|RhinLiteApprox)\.lean:'
 unexpected="$(printf '%s\n' "$hits" | sed '/^$/d' | grep -Ev "$expected_files" || true)"
 
 if [[ -n "$unexpected" ]]; then
   printf '%s\n' 'Unexpected anonymous proof debt:' >&2
   printf '%s\n' "$hits" >&2
-  printf '%s\n' 'Expected: all disclosed sorries in RhinLiteApprox.lean only (PowSeparation.lean sorry-free).' >&2
+  printf '%s\n' 'Expected: all disclosed sorries in PowApprox.lean / RhinLiteApprox.lean only.' >&2
   exit 1
 fi
 
-printf 'Proof-debt gate: %s disclosed sorries (RhinLiteApprox only; sep_two_three proved axiom-free)\n%s\n' "$count" "$hits"
+printf 'Proof-debt gate: %s disclosed sorries (PowApprox/RhinLiteApprox only; sep_two_three proved axiom-free)\n%s\n' "$count" "$hits"
