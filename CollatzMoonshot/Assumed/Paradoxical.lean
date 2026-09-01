@@ -11,10 +11,12 @@ import CollatzMoonshot.FrontA.PowApprox
 Tier: **DISCHARGED** (2026-09-01) — this module no longer *assumes* Rozier--Terracol 2026,
 Theorem 3.2 (Olivier Rozier and Claude Terracol, *Paradoxical behavior in Collatz sequences*,
 Discrete Mathematics 349 (2026), 115167; arXiv:2502.00948v5).  `Assumed.rozier_terracol_3_2` is
-now a **theorem proved here**, resting on exactly one disclosed node,
-`FrontA.two_pow_approx_three_pow_from_above` (`FrontA/PowApprox.lean`): powers of two approximate
-powers of three from above to arbitrary relative precision, infinitely often.  That node is a
-classical statement about `log₂ 3` (density of `{A·log₂3}` mod `1`), not a citation.
+now a **theorem proved here, trust-base clean** (`#print axioms` = `propext, Classical.choice,
+Quot.sound`).  Its one Diophantine input, `FrontA.two_pow_approx_three_pow_from_above`
+(`FrontA/PowApprox.lean`: powers of two approximate powers of three from above to arbitrary
+relative precision, infinitely often), was briefly a disclosed `sorry` on 2026-09-01 and is now
+proved by a multiplicative pigeonhole — no logarithms, no irrationality of `log₂ 3`, no
+`native_decide`.
 
 The file keeps its `Assumed` name and namespace so that consumers are unchanged.
 
@@ -47,8 +49,8 @@ through `n > 2` does deliver infinitely many paradoxical segments starting at `2
 ## The Front-A wiring
 
 `finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical → NoDivergentOrbit` is
-the intended derived implication, now **fully proved** modulo the single cited axiom
-(`#print axioms` = trust base + `rozier_terracol_3_2`, no `sorry`).  It routes through
+the intended derived implication, now **fully proved, trust-base clean**
+(`#print axioms` = `propext, Classical.choice, Quot.sound`; no cited axiom, no `sorry`).  It routes through
 `diverges_imp_infinite_acyclicParadoxical`, the Front-A specialization the project doc flags as
 owed, assembled here from: the running-minimum lemma (`exists_standardStop_of_diverges`), the
 shortcut embedding (`tstep_iterate_eq_step_iterate`, `infiniteStoppingTime_of_diverges`), and
@@ -439,8 +441,9 @@ infinite-stopping-time hypothesis.  Otherwise `2^j ≤ 3^(a_j)` from some point 
 and, because `a_j` steps by at most one, it attains *every* large value `A`.  The normalized
 remainder `numer_j / 3^(a_j)` is non-decreasing (`orbit_numer_mono`), so it is bounded below by a
 fixed positive rational `P/Q` once one odd step has occurred.  Choosing `A` for which some `2^s`
-approximates `3^A` from above to relative precision `1/(nQ)` — the node
-`FrontA.two_pow_approx_three_pow_from_above` — makes `(2^s - 3^A)·n ≤ numer_j` and hence gives a
+approximates `3^A` from above to relative precision `1/(nQ)` — the theorem
+`FrontA.two_pow_approx_three_pow_from_above` (multiplicative pigeonhole, `FrontA/PowApprox.lean`)
+— makes `(2^s - 3^A)·n ≤ numer_j` and hence gives a
 paradoxical segment with `k = s - j`.
 -/
 
@@ -572,7 +575,7 @@ theorem infinite_of_snd_unbounded {S : Set (ℕ × ℕ)} (h : ∀ M, ∃ p ∈ S
   have hmem : p.2 ∈ Prod.snd '' S := ⟨p, hp, rfl⟩
   exact absurd (hB hmem) (by omega)
 
-/-- **Rozier--Terracol Theorem 3.2 — full statement, modulo the single Diophantine node.** -/
+/-- **Rozier--Terracol Theorem 3.2 — full statement, trust-base clean.** -/
 theorem infinite_paradoxical_of_infiniteStoppingTime {n : ℕ} (h2 : 2 ≤ n)
     (hstop : InfiniteStoppingTime n) :
     {p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite := by
@@ -668,10 +671,10 @@ namespace Assumed
 /-- **Rozier--Terracol 2026, Theorem 3.2 — now a THEOREM, no longer an axiom.**  The whole
 statement is derived in this file: the *bounded* case unconditionally
 (`infinite_paradoxical_of_bounded_orbit`), and the general case
-(`infinite_paradoxical_of_infiniteStoppingTime`) from the single disclosed Diophantine node
-`FrontA.two_pow_approx_three_pow_from_above`.  The name and statement consumed by the rest of the
-repository are unchanged; what changed is that the dependency is now one classical fact about
-`log₂ 3` rather than a cited paper. -/
+(`infinite_paradoxical_of_infiniteStoppingTime`) from the Diophantine input
+`FrontA.two_pow_approx_three_pow_from_above`, itself proved (multiplicative pigeonhole).  The name
+and statement consumed by the rest of the repository are unchanged; the ledger is now the bare
+trust base `[propext, Classical.choice, Quot.sound]`. -/
 theorem rozier_terracol_3_2 (n : ℕ) (h2 : 2 ≤ n) (hstop : InfiniteStoppingTime n) :
     {p : ℕ × ℕ | Paradoxical (2 ^ p.1 * n) p.2}.Infinite :=
   infinite_paradoxical_of_infiniteStoppingTime h2 hstop

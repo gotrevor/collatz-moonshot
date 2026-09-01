@@ -1,6 +1,44 @@
 # PENDING_WORK
 
-## ★★★ RT AXIOM FIDELITY BUG — CAUGHT, MACHINE-CHECKED, REPAIRED (2026-09-01 review lap, LATEST) ★★★
+## ★★★ NODE PROVED — `two_pow_approx_three_pow_from_above` closed; Front-A closer TRUST-BASE CLEAN (2026-09-01, LATEST) ★★★
+
+**Done.**  `FrontA.two_pow_approx_three_pow_from_above`
+(`∀ M N, ∃ A s, M < A ∧ 3^A < 2^s ∧ (2^s − 3^A)·N ≤ 3^A`) is proved in `FrontA/PowApprox.lean`,
+`#print axioms` = `[propext, Classical.choice, Quot.sound]`.  Hence
+`Assumed.rozier_terracol_3_2` and `finite_acyclicParadoxical_imp_noDivergent` print the bare
+trust base.  `check-proof-debt.sh` → **0 sorries**.  **The `DIRECTION.md` objective is
+complete**; an altitude lap should retarget.
+
+**The proof (not the Dirichlet route in the old plan — no logs, no irrationality).**
+1. `s A := ⌊log₂ 3^A⌋ + 1` gives `q A = 2^(s A)/3^A ∈ (1, 2]`.
+2. `exists_mul_box`: `(1, 2]` is covered by the `N` boxes `((1+1/N)^j, (1+1/N)^(j+1)]`, `j < N`
+   (Bernoulli `(1+1/N)^N ≥ 2`; `Nat.find` on the least `j` with `q ≤ (1+1/N)^(j+1)`).
+3. `exists_two_pow_three_pow_ratio_close`: pigeonhole the `N+1` indices `A = i(M+1)`, `i ≤ N`
+   (`Finset.exists_ne_map_eq_of_card_lt_of_maps_to`).  A collision `A₁ < A₂` in box `j` gives
+   `q A₂ / q A₁ = 2^b/3^a` with `a = A₂ − A₁ ≥ M+1` and BOTH `2^b/3^a < 1+1/N` and
+   `3^a/2^b < 1+1/N` (each ratio is `≤ (1+1/N)^(j+1)` and `> (1+1/N)^j`).
+4. `approx_from_above_of_ratio_close`: `3^a ≠ 2^b` (parity).  If `3^a < 2^b`, `u = 1`.  Else
+   `ρ = 3^a/2^b ∈ (1, 1+1/N)`; least `u` with `ρ^(u+1) ≥ 2` (`pow_unbounded_of_one_lt`) has
+   `u ≥ 1` and `ρ^u < 2 ≤ ρ·ρ^u`, so `2^(ub+1)/3^(ua) = 2/ρ^u ∈ (1, ρ]`.  `A = ua ≥ a > M`.
+
+**Why this matters for the old plan.**  The Dirichlet route needed `Real.log`, the
+irrationality of `log₂3`, and an `exp`/`rpow` bridge; the pigeonhole needs none of it and is
+~150 lines.  Reusable pattern: *"good approximations exist" is a pigeonhole on multiplicative
+boxes, not a transcendence statement.*
+
+**What is left in the repo (for the next altitude lap to rank).**
+- Hygiene, on-path: the 13 `native_decide` certificates under `sep_two_three` and
+  `le_two_blocks_not_acyclicParadoxical` (Rhin-lite tower + the `k < 450` table).  Converting
+  them to `decide +kernel` would make the whole Front-A two-block exclusion bare trust base.
+  DIRECTION labels this hygiene, not a lap goal.
+- Cited axioms still in the build: `hercher_min_circuit_count`, `hercher_odd_members_bound`,
+  `eliahou_min_cycle_length` (Front B, computation-backed literature),
+  `collatz_verified_up_to_two_pow_68`, `collatz_verified_barina_2025` (finite computation, not
+  kernel-checkable), `tao_2019_almost_bounded`, `abc`, `baker_bounded_difference` (deep).
+- The mathematical frontier proper: the *hypotheses* of the three conditional closers —
+  `FiniteAcyclicParadoxical`, `ParityRigidityW1'`, `Compression` — each an open problem.
+
+## ★★★ RT AXIOM FIDELITY BUG — CAUGHT, MACHINE-CHECKED, REPAIRED (2026-09-01 review lap) ★★★
 
 **Finding.**  `Assumed.rozier_terracol_3_2` was stated as
 `∀ K, ∃ k m, K < 2^k n ∧ Paradoxical (2^k n) m` — *unboundedly large* paradoxical starts.
@@ -94,7 +132,7 @@ With `s = k+j` and `2^j Y_j = 3^(a_j) n + numer_j` this is purely arithmetic:
 2026 paper.  `infinite_paradoxical_of_bounded_orbit` remains separately **node-free**, so the
 debt is confined to the eventually-supercritical regime (conjecturally vacuous).
 
-## ★ NEXT ATTACK — prove the node `two_pow_approx_three_pow_from_above` (the binding directive) ★
+## ★ (DONE 2026-09-01 — see top; proved by pigeonhole, NOT by this Dirichlet plan) former NEXT ATTACK — prove the node `two_pow_approx_three_pow_from_above` ★
 
 `∀ M N, ∃ A s, M < A ∧ 3^A < 2^s ∧ (2^s − 3^A)·N ≤ 3^A`  (`FrontA/PowApprox.lean`).
 

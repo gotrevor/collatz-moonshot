@@ -9,14 +9,13 @@ hits="$(grep -REn --include='*.lean' \
   CollatzMoonshot CollatzMoonshot.lean || true)"
 count="$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')"
 
-# Disclosed proof debt (2026-09-01): ONE sorry, `two_pow_approx_three_pow_from_above` in
-# FrontA/PowApprox.lean — powers of two approximate powers of three from above to arbitrary
-# relative precision, infinitely often (classical: density of `{A·log₂3}` mod 1).  It is the sole
-# remaining obligation behind Rozier--Terracol 2026 Theorem 3.2, which is now a THEOREM of
-# Assumed/Paradoxical.lean rather than a cited axiom.  The Rhin-lite tower and the sink
-# `sep_two_three` are sorry-free and literature-axiom-free.  The gate pins the LOCATION: debt may
-# live only in PowApprox.lean (the active node) or RhinLiteApprox.lean (the Rhin-lite decomposition
-# slot), never elsewhere — in particular not in PowSeparation.lean or RhinLiteSep.lean.
+# Disclosed proof debt (2026-09-01, later): ZERO sorries.  The last one,
+# `two_pow_approx_three_pow_from_above` (FrontA/PowApprox.lean), is proved by a multiplicative
+# pigeonhole; Rozier--Terracol 2026 Theorem 3.2 and `finite_acyclicParadoxical_imp_noDivergent`
+# are trust-base clean.  The Rhin-lite tower and the sink `sep_two_three` are sorry-free and
+# literature-axiom-free.  The gate still pins the LOCATION of any future debt: it may live only in
+# PowApprox.lean or RhinLiteApprox.lean (the two historical decomposition slots), never elsewhere —
+# in particular not in PowSeparation.lean or RhinLiteSep.lean.
 expected_files='^CollatzMoonshot/FrontA/(PowApprox|RhinLiteApprox)\.lean:'
 unexpected="$(printf '%s\n' "$hits" | sed '/^$/d' | grep -Ev "$expected_files" || true)"
 

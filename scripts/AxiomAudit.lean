@@ -3,8 +3,8 @@ import CollatzMoonshot
 /-!
 Print the dependency ledgers for representative public-facing theorems. This file is
 compiled in CI so the exact output is visible in the build log. The declarations span
-trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the disclosed
-`sorry`, and the conditional cycle front.
+trust-base-only wiring, an explicit hypothesis, a cited literature axiom, and the conditional
+cycle front.  (As of 2026-09-01 no disclosed `sorry` remains; `sorryAx` must not appear.)
 -/
 
 #print axioms CollatzMoonshot.conjecture_iff_split
@@ -110,6 +110,9 @@ trust-base-only wiring, an explicit hypothesis, a cited literature axiom, the di
 #print axioms CollatzMoonshot.Assumed.rozier_terracol_3_2
 #print axioms CollatzMoonshot.infinite_paradoxical_of_infiniteStoppingTime
 #print axioms CollatzMoonshot.FrontA.two_pow_approx_three_pow_from_above
+#print axioms CollatzMoonshot.FrontA.exists_mul_box
+#print axioms CollatzMoonshot.FrontA.exists_two_pow_three_pow_ratio_close
+#print axioms CollatzMoonshot.FrontA.approx_from_above_of_ratio_close
 #print axioms CollatzMoonshot.paradoxical_two_pow_mul
 #print axioms CollatzMoonshot.orbit_numer_mono
 #print axioms CollatzMoonshot.infinite_paradoxical_of_bounded_orbit

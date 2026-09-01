@@ -1,7 +1,17 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 green (8764 jobs) · **Updated**: review lap · 2026-09-01 · `67f510a`+
+**Build**: 🟢 green (8765 jobs) · **Updated**: 2026-09-01 (PowApprox node PROVED) · `a90af60`+
 
+
+> **2026-09-01 (latest) — the last `src/` sorry is PROVED; `finite_acyclicParadoxical_imp_noDivergent`
+> is TRUST-BASE CLEAN.**  `FrontA.two_pow_approx_three_pow_from_above` (powers of two approximate
+> powers of three from above to relative precision `1/N`, with `A > M`) is proved by a
+> multiplicative pigeonhole (`exists_mul_box`, `exists_two_pow_three_pow_ratio_close`) plus a
+> side-fixing flip (`approx_from_above_of_ratio_close`) — no logarithms, no irrationality of
+> `log₂3`, no `native_decide`.  Consequently `Assumed.rozier_terracol_3_2` (RT 2026 Thm 3.2) and
+> the Front-A closer `finite_acyclicParadoxical_imp_noDivergent` both print
+> `[propext, Classical.choice, Quot.sound]`.  `check-proof-debt.sh` → **0 sorries**.  The
+> `DIRECTION.md` objective set by the 2026-09-01 review lap is complete.
 
 > **2026-09-01 — Rhin 1987 axiom RETIRED.**  `sep_two_three` is now proved from the Rhin-lite
 > measure with **no literature axiom** (`FrontA/RhinLiteSep.lean`, `sep_two_three_rhinLite`;
@@ -129,7 +139,9 @@ EVIDENCE.** Parts A/B/C complete: exact source lock (identity, criterion (P), sl
 acyclicParadoxical`); the exact few-block `numer` closed forms; and the full Front-A
 consumption `finite_acyclicParadoxical_imp_noDivergent : FiniteAcyclicParadoxical →
 NoDivergentOrbit`, machine-checked with ledger `[propext, Classical.choice, Quot.sound,
-rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged sorry-free).
+rozier_terracol_3_2]` (the whole divergence→infinite-acyclic bridge discharged sorry-free) —
+and, since 2026-09-01, `rozier_terracol_3_2` is itself a proved theorem, so the ledger is the
+bare trust base.
 Computational evidence suggests that **every acyclic paradoxical word has ≥ 3 odd blocks**;
 this was checked two ways (word-based to length 38; independent orbit-based to start 100000).
 The corresponding general interior two-block exclusion
@@ -310,6 +322,13 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
+- **2026-09-01 — the binding objective is COMPLETE.**  `src/` has **0 sorries**;
+  `finite_acyclicParadoxical_imp_noDivergent`, `rozier_terracol_3_2`,
+  `two_pow_approx_three_pow_from_above` are trust-base clean.  Remaining non-trust-base
+  dependencies anywhere: the 13 `native_decide` certificates under `sep_two_three` /
+  `le_two_blocks_not_acyclicParadoxical` (hygiene), and the Front-B / computation citations
+  (`hercher_*`, `eliahou_*`, `collatz_verified_*`, `tao_2019_*`, `abc`, `baker_bounded_difference`).
+  The bullets below are the historical short-term list and are superseded.
 - **Front A two-block exclusion** (binding): discharge the sole `src/` sorry `sep_two_three`
   (`PowSeparation.lean`). Reduced (sorry-free) to ONE **uniform Rhin measure**
   `3^k ≤ (2^m−3^k)·k^C` via `sep_of_uniform_measure`; the honest object is **Rhin 1987**'s
@@ -351,10 +370,10 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `FrontA.sep_two_three` | effective 2/3 power separation | 13× `native_decide.ax` (Rhin-lite tower + the `k<450` table) | **0 math** ✅ 🟢 — the Rhin 1987 axiom is RETIRED |
 | `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | 13× `native_decide.ax` + `finite_two_block_check` | **0 math** ✅ 🟢 — and **sharp** (`acyclicParadoxical_seven_eight`) |
-| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | `sorryAx` (the node `two_pow_approx_three_pow_from_above`) | **0 cited axioms** — the RT citation is DISCHARGED; one classical Diophantine node open |
-| `Assumed.rozier_terracol_3_2` | RT 2026 Thm 3.2 (full) | `sorryAx` (same node) | now a **THEOREM**, proved in-repo |
+| `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | — | 0 ✅ 🟢 — RT citation DISCHARGED **and** the Diophantine node PROVED (2026-09-01); trust base only |
+| `Assumed.rozier_terracol_3_2` | RT 2026 Thm 3.2 (full) | — | 0 ✅ now a **THEOREM**, proved in-repo, trust base only |
 | `infinite_paradoxical_of_bounded_orbit` | RT 2026 Thm 3.2, bounded case | — | 0 ✅ node-free, fully proved |
-| `FrontA.two_pow_approx_three_pow_from_above` | `2^s` approximates `3^A` from above to relative `1/N`, infinitely often | `sorryAx` | 🟡 classical (density of `{A·log₂3}`); THE open node |
+| `FrontA.two_pow_approx_three_pow_from_above` | `2^s` approximates `3^A` from above to relative `1/N`, infinitely often | — | 0 ✅ **PROVED** 2026-09-01 (multiplicative pigeonhole; no logs, no irrationality, no `native_decide`) |
 | `frontB_of_compression_le_91` | Front B closer | `hercher_min_circuit_count` | 1 · 🟡 proved (Hercher 2023, no transcendence; `Compression` still an *open def*, not an axiom) |
 | `Assumed.frontier_min_cycle_length` | cycle-length frontier | `hercher_odd_members_bound` | 1 · 🟡 proved (Hercher 2023 + Bařina 2025 compute) |
 | `two_pow_68_lt_of_onCycle_nontrivial` | conditional demo | `collatz_verified_up_to_two_pow_68` | 1 · 🟢 finite computation |
