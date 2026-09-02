@@ -958,6 +958,30 @@ theorem threeBlock_finite_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 
     False := by
   sorry
 
+/-- **The window node's separation input — PROVED.**  In the near-critical window with
+`k < 190537`, `sep_strong_190537` gives `3^k ≤ D·2^20`, hence `2^m ≤ 2^21·D`: the deficit
+`1 − 3^k/2^m` is bounded below by the *absolute constant* `2^(−21)`, not by `2^(−k/3)`.
+This is the hypothesis shape the census argument consumes (`2^m ≤ 2^t·D`, here `t = 21`; the
+non-window branch above is the same shape at `t = 1`). -/
+theorem threeBlock_window_scale {b c d e f g : ℕ} (hk : 0 < b + d + f) (hklt : b + d + f < 190537)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hwin : 2 ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f)) :
+    (2 : ℤ) ^ (b + c + d + e + f + g)
+      ≤ 2 ^ 21 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) := by
+  have hS := sep_strong_190537 (b + d + f) (b + c + d + e + f + g) hk hklt hsub
+  have hSZ : (3 : ℤ) ^ (b + d + f)
+      ≤ ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ 20 := by
+    have hle : (3 : ℕ) ^ (b + d + f) ≤ 2 ^ (b + c + d + e + f + g) := le_of_lt hsub
+    have : ((3 ^ (b + d + f) : ℕ) : ℤ)
+        ≤ (((2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ 20 : ℕ) : ℤ) := by
+      exact_mod_cast hS
+    push_cast [Nat.cast_sub hle] at this
+    linarith
+  have hwinZ : (2 : ℤ) ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f) := by exact_mod_cast hwin
+  have : (2 : ℤ) ^ 21 = 2 * 2 ^ 20 := by norm_num
+  rw [this]
+  linarith
+
 /-- **Node 2 of the rung-3 crux — THE crux.**  The near-critical window `3^k < 2^m < 2·3^k` at
 length `m ≥ 28`.  Route (worked out 2026-09-02, see the module notes above): the Rhin-lite
 *polynomial* measure `rhinLite_log23_measure` gives `1 − R ≥ rhinLiteSepC/(2·k^436)` with

@@ -1,5 +1,55 @@
 # PENDING_WORK
 
+## RUNG 3 — state after the lap of 2026-09-02 (evening)
+
+**The crux is now three named nodes** (`FrontA/ThreeBlock.lean`), with the cascade scales
+`w₁,w₂,w₃` eliminated: `threeBlock_leaves_infeasible` is a statement about the exponent tuple
+alone, and it splits as
+
+| node | status |
+|---|---|
+| non-window `2·3^k ≤ 2^m` | **PROVED** (`threeBlock_nonwindow`, `m ≤ 22`) |
+| `threeBlock_finite_infeasible` (`m ≤ 27`) | disclosed — a finite `decide` job, ~2·10⁵ tuples |
+| `threeBlock_window_infeasible` (`m ≥ 28`, `3^k < 2^m < 2·3^k`) | disclosed — THE crux |
+
+### The separation input: a strictly stronger theorem than `sep_two_three`
+`sep_strong_of_bracket_nat` / `sep_strong_190537` (`FrontA/RhinLiteSep.lean`, sorry-free):
+
+    3^k ≤ (2^m − 3^k) · 2^20      for every 0 < k < 190537 with 3^k < 2^m.
+
+The unimodular-bracket machinery already in the repo bounds the gap by `2/2^j` with
+`2^j ≥ 2·max(b',d')` set by the *inner convergent denominators alone* — a constant, independent
+of `k`.  `sep_of_bracket_nat` threw this away because `sep_two_three` is stated at `β = 1/3`
+(its `3j ≤ k` hypothesis).  The strong form drops that hypothesis entirely.  Consequence
+(`threeBlock_window_scale`): in the window, `2^m ≤ 2^21·D`.
+
+### Why this matters (the effectivity answer DIRECTION.md asks for)
+Normalising the three relaxed inequalities with `R = 3^k/2^m`, `X = (3/2)^d/2^e`, `Y = (3/2)^f`
+and `L = log₂(1/(1−R))`:
+
+    (A*) (1−R)2^f < 1+X      (V*) (1−R)2^d ≲ 2(1+1/X)      (W*) (1−R)2^(b+g)+1 < Y(1+X)
+
+give `f ≤ L+O(1)`, `d ≤ (L+e)/1.585`, `b+g ≤ 1.585L+O(1)`, and with `e ≤ m−k ≤ 0.585k`
+these close as **`k ≤ 5.1·L + 6`**.
+* At `β = 1/3` (`sep_two_three`) `L = k/3` and the system has the fixed point
+  `b/k = d/k = f/k = 1/3` — **feasible**, so rung 2's input is provably too weak for rung 3.
+* The Rhin-lite *polynomial* measure gives `L ≤ 436·log₂k + 38973` ⇒ `k ≲ 2.4·10⁵`: finite, but
+  the residual census is uncomputable.
+* The **strong bracket** gives `L ≤ 21` outright ⇒ **`k ≲ 115`** (crude constants: a few hundred).
+  That is what makes the window node a finite check at all.
+
+### Next attack (in order)
+1. Re-run the `_S*/_F*` chain with the scale hypothesis `2^m ≤ 2^t·D` as a **parameter** `t`
+   (non-window = `t=1`, window = `t=21`).  Sharp constants matter: use `3^5 ≤ 2^8` (not
+   `3 ≤ 4`) so the `1.585` shows up — the crude `3^x ≤ 4^x` route lands at `m ≤ 78t+43`, the
+   sharp one near `m ≤ 20t`.
+2. Then the finite census, which is the same job for both leftover nodes.  Do not brute-force
+   `m ≤ 27` and `m ≤ O(t)` separately; build one decision procedure over the exponent tuple.
+3. `k ≥ 190537` is not yet covered by the strong bracket (the polynomial measure only closes
+   `k ≳ 2.4·10⁵`).  Gap `[190537, 2.4·10⁵]`: needs one more convergent pair of `log₂3` with
+   `decide +kernel` power certificates (next after `478245/301739`).
+
+
 ## ★★★ RUNG 3 OPENED — engine landed sorry-free, crux isolated to a 27-tuple census (2026-09-02, LATEST) ★★★
 
 **New module `CollatzMoonshot/FrontA/ThreeBlock.lean`.**  The odd-block ladder's rung 3:

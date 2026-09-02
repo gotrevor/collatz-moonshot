@@ -742,4 +742,124 @@ theorem bd_reduction (k m d : ℕ) (hk1 : 1 ≤ d) (hdk : d < k)
       ⟨hk6, hk1, hdk, h1, h2, hW, hA⟩
 
 
+
+/-! ### A STRICTLY STRONGER separation from the same brackets
+
+`sep_of_bracket_nat` throws away most of what a unimodular bracket gives: it only ever compares
+the gap with `2^(−k/3)`, because `sep_two_three` (rung 2's sink) is stated at `β = 1/3`.  The
+bracket actually bounds the gap by `2/2^j` where `2^j ≥ 2·max(b', d')` is set by the *inner*
+convergent denominators alone — a constant, independent of `k`, valid for every `k < b + d`.
+
+`sep_strong_of_bracket_nat` extracts that: `3^k ≤ (2^m − 3^k)·2^j`, i.e. `1 − 3^k/2^m ≥ 2^(−j−1)`
+in the near-critical window.  With the certificates already in this file (`j = 20` clears
+`2·301739 ≤ 2^20`) this holds for **every** `k < 492276`, where `sep_two_three` only gives
+`2^(−k/3)`.  It is the input the rung-3 window node needs (`FrontA/ThreeBlock.lean`): there the
+`β = 1/3` form is provably too weak (the normalized system has a fixed point at `β = 1/3`). -/
+theorem sep_strong_of_bracket_nat (k m a b c d a' b' c' d' j : ℕ) (hk : 0 < k)
+    (h1 : 3 ^ k < 2 ^ m) (hb : 0 < b) (hd : 0 < d) (hb' : 0 < b') (hd' : 0 < d')
+    (huni : b * c = a * d + 1)
+    (hlo : 2 ^ a < 3 ^ b) (hhi : 3 ^ d < 2 ^ c)
+    (hlo' : 2 ^ a' < 3 ^ b') (hhi' : 3 ^ d' < 2 ^ c')
+    (hin1 : a * b' < a' * b) (hin2 : c' * d < c * d')
+    (hklt : k < b + d) (hg1 : 2 * b' ≤ 2 ^ j) (hg2 : 2 * d' ≤ 2 ^ j) :
+    3 ^ k ≤ (2 ^ m - 3 ^ k) * 2 ^ j := by
+  set θ := Real.logb 2 3 with hθ
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hb'R : (0 : ℝ) < b' := by exact_mod_cast hb'
+  have hd'R : (0 : ℝ) < d' := by exact_mod_cast hd'
+  have hloR : (a : ℝ) / b < θ := (lt_logb_two_three_iff a b hb).mpr hlo
+  have hhiR : θ < (c : ℝ) / d := (logb_two_three_lt_iff c d hd).mpr hhi
+  have hlo'R : (a' : ℝ) / b' < θ := (lt_logb_two_three_iff a' b' hb').mpr hlo'
+  have hhi'R : θ < (c' : ℝ) / d' := (logb_two_three_lt_iff c' d' hd').mpr hhi'
+  have hgap1 : (1 : ℝ) / b' ≤ (b : ℝ) * θ - a := by
+    have ha' : (a' : ℝ) < θ * b' := by rwa [div_lt_iff₀ hb'R] at hlo'R
+    have h1' : (a : ℝ) * b' + 1 ≤ a' * b := by
+      have : a * b' + 1 ≤ a' * b := hin1
+      exact_mod_cast this
+    have hmul : (b : ℝ) * a' < b * (θ * b') := mul_lt_mul_of_pos_left ha' hbR
+    rw [div_le_iff₀ hb'R]
+    nlinarith
+  have hgap2 : (1 : ℝ) / d' ≤ (c : ℝ) - d * θ := by
+    have hc' : θ * d' < c' := by rwa [lt_div_iff₀ hd'R] at hhi'R
+    have h2' : (c' : ℝ) * d + 1 ≤ c * d' := by
+      have : c' * d + 1 ≤ c * d' := hin2
+      exact_mod_cast this
+    have hmul : (d : ℝ) * (θ * d') < d * c' := mul_lt_mul_of_pos_left hc' hdR
+    rw [div_le_iff₀ hd'R]
+    nlinarith
+  -- the bracket's gap is at least `2/2^j`
+  have hg1R : (2 : ℝ) * b' ≤ 2 ^ j := by exact_mod_cast hg1
+  have hg2R : (2 : ℝ) * d' ≤ 2 ^ j := by exact_mod_cast hg2
+  have hjpos : (0 : ℝ) < 2 ^ j := by positivity
+  have hmin : (2 : ℝ) / 2 ^ j ≤ min ((b : ℝ) * θ - a) ((c : ℝ) - d * θ) := by
+    apply le_min
+    · calc (2 : ℝ) / 2 ^ j ≤ 1 / b' := by
+            rw [div_le_div_iff₀ hjpos hb'R]; linarith
+        _ ≤ (b : ℝ) * θ - a := hgap1
+    · calc (2 : ℝ) / 2 ^ j ≤ 1 / d' := by
+            rw [div_le_div_iff₀ hjpos hd'R]; linarith
+        _ ≤ (c : ℝ) - d * θ := hgap2
+  -- hence `m − k·θ ≥ 2/2^j`
+  have hkθ : (k : ℝ) * θ < m := by
+    have e1 : (k : ℝ) * θ = Real.logb 2 ((3 : ℝ) ^ k) := by rw [hθ, Real.logb_pow]
+    have e2 : (m : ℝ) = Real.logb 2 ((2 : ℝ) ^ m) := by
+      rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num)]; ring
+    rw [e1, e2]; apply Real.logb_lt_logb (by norm_num) (by positivity); exact_mod_cast h1
+  have hdist := theta_dist_lower_sharp a b c d θ hb hd huni hloR hhiR k m hk hklt
+  have habs : |(k : ℝ) * θ - m| = (m : ℝ) - k * θ := by rw [abs_of_neg (by linarith)]; ring
+  rw [habs] at hdist
+  have hmk : (2 : ℝ) / 2 ^ j ≤ (m : ℝ) - k * θ := le_trans hmin hdist
+  -- the linear form, then the deficit
+  have hlog2 : (1 : ℝ) / 2 ≤ Real.log 2 := by have := Real.log_two_gt_d9; linarith
+  have hΛ : (1 : ℝ) / 2 ^ j ≤ (m : ℝ) * Real.log 2 - k * Real.log 3 := by
+    rw [linear_form_eq_logb]
+    calc (1 : ℝ) / 2 ^ j = (1 / 2) * (2 / 2 ^ j) := by ring
+      _ ≤ Real.log 2 * ((m : ℝ) - k * θ) := by
+          apply mul_le_mul hlog2 hmk (by positivity) (by linarith)
+  set Λ : ℝ := (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 with hΛdef
+  have e2 : (2 : ℝ) ^ m = Real.exp ((m : ℝ) * Real.log 2) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e3 : (3 : ℝ) ^ k = Real.exp ((k : ℝ) * Real.log 3) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have hprod : (3 : ℝ) ^ k * Real.exp Λ = (2 : ℝ) ^ m := by
+    rw [e3, ← Real.exp_add, e2]; congr 1; rw [hΛdef]; ring
+  have hDfac : (3 : ℝ) ^ k * (Real.exp Λ - 1) = (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    rw [mul_sub, mul_one, hprod]
+  have hR : (3 : ℝ) ^ k ≤ ((2 : ℝ) ^ m - (3 : ℝ) ^ k) * 2 ^ j := by
+    have hstep : (3 : ℝ) ^ k * (1 / 2 ^ j) ≤ (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+      rw [← hDfac]
+      refine le_trans (mul_le_mul_of_nonneg_left hΛ (by positivity)) ?_
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      have := Real.add_one_le_exp Λ; linarith
+    have h2 : (3 : ℝ) ^ k / 2 ^ j ≤ (2 : ℝ) ^ m - 3 ^ k := by
+      calc (3 : ℝ) ^ k / 2 ^ j = 3 ^ k * (1 / 2 ^ j) := by ring
+        _ ≤ (2 : ℝ) ^ m - 3 ^ k := hstep
+    exact (div_le_iff₀ hjpos).mp h2
+  have hcast : ((2 ^ m - 3 ^ k : ℕ) : ℝ) = (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    have : (3 : ℕ) ^ k ≤ 2 ^ m := le_of_lt h1
+    push_cast [Nat.cast_sub this]
+    ring
+  have : ((3 ^ k : ℕ) : ℝ) ≤ (((2 ^ m - 3 ^ k) * 2 ^ j : ℕ) : ℝ) := by
+    push_cast [hcast]
+    exact_mod_cast hR
+  exact_mod_cast this
+
+
+/-- **The strong separation, instantiated once: `k < 190537`.**  A single bracket
+(`176251/111202 < log₂3 < 125743/79335`, inner witnesses `478245/301739`, `301994/190537`)
+covers the whole range with `j = 20`, because `2·301739 ≤ 2^20`:
+
+    3^k ≤ (2^m − 3^k)·2^20      for every `0 < k < 190537` with `3^k < 2^m`.
+
+Compare `sep_two_three`, which on the same range only gives `2^m − 3^k ≥ 3^k·2^(−k/3)`.  The
+`β = 1/3` shape was forced by `sep_of_bracket_nat`'s `3j ≤ k` hypothesis, which the strong form
+does not need at all. -/
+theorem sep_strong_190537 (k m : ℕ) (hk : 0 < k) (hklt : k < 190537) (h1 : 3 ^ k < 2 ^ m) :
+    3 ^ k ≤ (2 ^ m - 3 ^ k) * 2 ^ 20 :=
+  sep_strong_of_bracket_nat k m 176251 111202 125743 79335 478245 301739 301994 190537 20 hk h1
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    pow_cert_111202 pow_cert_79335 pow_cert_301739 pow_cert_190537
+    (by norm_num) (by norm_num) (by omega) (by norm_num) (by norm_num)
+
 end CollatzMoonshot.FrontA
