@@ -37,11 +37,16 @@ Word `[T]^b[F]^c[T]^d[F]^e[T]^f[F]^g`, `m = b+c+d+e+f+g`, `k = b+d+f`, `D = 2^m 
 Eliminating `w₂` gives `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`, so `w₃ ≥ 1` alone yields the
 division-free **real relaxation**
 
-    (R3)   D·(2^(c+d+e+f) − T)  ≤  3^(b+d)·2^(c+d+e)·(3^f − 2^f).
+    (R3)   2^(b+g)·U  ≤  3^(b+d)·(3^f − 1),        U := 2^(c+d+e+f) − T = 2^(c+d)L₂ − 3^d(2^c−1).
 
-* **(R3) alone is INFINITE** — 18 tuples at `m=8`, 258 at `m=16`, 2489 at `m=27`, 18324 at
-  `m=46`, still growing (`experiments/rung3_census.py relax`).  Exactly the rung-2 lesson
-  (real relaxation of `b+d ≤ 5` feasible at unbounded `g`).
+`threeBlock_cascade_elim` (PROVED) gives `3^(b+d) w₁ + T = 2^(c+d+e+f) w₃`, and
+`threeBlock_gap_of_real` (PROVED) turns the *negation* of (R3) into the gap.  So the disclosed
+node is now only `threeBlock_ceiling_gap`: the census restricted to tuples that satisfy (R3).
+
+* **(R3) alone is INFINITE** — 18 tuples at `m=8`, 317 at `m=16`, 2931 at `m=27`, 88718 in
+  total for `m ≤ 40`, still growing (`experiments/rung3_census.py relax`).  Exactly the rung-2
+  lesson (real relaxation of `b+d ≤ 5` feasible at unbounded `g`).  Its clean division-free
+  form, after dividing by `2^(c+d+e+f)`, is `2^(b+g)·U ≤ 3^(b+d)(3^f − 1)`.
 * **Keeping `w₂ ∈ ℕ` collapses it to 27 tuples**, at `m ∈ {5,8,16,27}` only, exhaustive for all
   `m ≤ 130` and every `k` with `3^k/2^m > 1/8` (`experiments/rung3_census.py census 130`).
 * The 10 tuples at `m ∈ {5,16,27}` are killed by the true realizing residue with margins of

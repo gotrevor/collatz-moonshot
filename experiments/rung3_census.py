@@ -17,9 +17,10 @@ w1 = ceil((2^(c+d) w2 - 2^c + 1)/3^b)) gives the CEILING BOUND.  Results:
     m <= 130 and every k with 3^k/2^m > 1/8.  Only the m = 8 block contains realized words
     (the four solutions); the 10 tuples at m in {5,16,27} are killed by the true realizing
     residue, by factors 10^2-10^3 (mode `verify`).
-  * real relaxation only (drop the integrality of the interior scale w2; equivalently keep
-    D*(2^(c+d+e+f) - T) <= 3^(b+d)*2^(c+d+e)*(3^f - 2^f), which is what w3 >= 1 alone gives)
-    -> INFINITE: 18 tuples at m=8, 258 at m=16, 2489 at m=27, 18324 at m=46, still growing.
+  * real relaxation only (drop the integrality of the interior scale w2, keeping only w3 >= 1;
+    the resulting division-free condition is  2^(b+g)*U <= 3^(b+d)*(3^f - 1)  with
+    U = 2^(c+d+e+f) - T -- this is exactly the negation of Lean's threeBlock_gap_of_real)
+    -> INFINITE, see mode `relax`.
 
 So rung 3's finiteness is carried by the two-level integer ceiling, not by a linear form in
 logarithms -- unlike rung 2, whose crux `b + d <= 5` provably needs Baker (`sep_two_three`).
@@ -77,8 +78,8 @@ def scan(mmax, ceiling=True):
                                 ok = D * w1_ceiling(b, c, d, e, f, g) <= rhs(b, c, d, e, f, g)
                             else:
                                 T = 2**(c+d+e) - 2**(c+d) + 3**d * (2**c - 1)
-                                ok = (D * (2**(c+d+e+f) - T)
-                                      <= 3**(b+d) * 2**(c+d+e) * (3**f - 2**f))
+                                U = 2**(c+d+e+f) - T
+                                ok = 2**(b+g) * U <= 3**(b+d) * (3**f - 1)
                             if ok:
                                 hits.append((b, c, d, e, f, g))
             if hits:

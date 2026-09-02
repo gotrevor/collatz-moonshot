@@ -62,10 +62,14 @@ yields the division-free **real relaxation**
 
     (R3)   D · (2^(c+d+e+f) − T)  ≤  3^(b+d) · 2^(c+d+e) · (3^f − 2^f).
 
-**(R3) is provably insufficient** (host census, exact integers): the number of tuples satisfying
-it grows without bound — 18 at length 8, 258 at length 16, 2489 at length 27, 18324 at length 46.
-This mirrors the rung-2 finding that the real relaxation of `b+d ≤ 5` is feasible at unbounded
-`g`.
+Equivalently (divide by `2^(c+d+e+f)` and use `2^m = 2^(c+d+e+f)·2^(b+g)`), the whole content of
+`w₃ ≥ 1` is the single division-free inequality `3^(b+d)(3^f − 1) < 2^(b+g)·U`, which is exactly
+what `threeBlock_gap_of_real` consumes.
+
+**(R3) is provably insufficient** (host census, exact integers): the number of tuples that
+*fail* it grows without bound — 18 at `m = 8`, 317 at `m = 16`, 2931 at `m = 27`, 88718 in total
+for `m ≤ 40`.  This mirrors the rung-2 finding that the real relaxation of `b+d ≤ 5` is feasible
+at unbounded `g`.
 
 **The integrality of the *interior* joint is what makes rung 3 finite.**  Keeping `w₂ ∈ ℕ` —
 i.e. `w₂ ≥ ⌈(2^(e+f) − 2^e + 1)/3^d⌉` before dividing again by `3^b` — collapses the same
@@ -375,6 +379,76 @@ theorem threeBlock_criticality_of_acyclicParadoxical {b c d e f g n : ℕ}
   obtain ⟨hI, hII, hIII⟩ := threeBlock_segment_identities hword
   exact threeBlock_merge_reduction hb hd hf hI hII hIII hap.2.2.2
 
+/-! ### Chipping the census: eliminate the interior scale, then split off the real relaxation -/
+
+/-- **Eliminating the interior scale `w₂` from the cascade.**  The two cascade equations
+collapse to one exact relation between the outer scales:
+
+    3^(b+d) · w₁ + T  =  2^(c+d+e+f) · w₃,    T = 2^(c+d+e) − 2^(c+d) + 3^d(2^c − 1).
+
+So `w₁` is *determined* by `w₃`, and `w₃ ≥ 1` alone gives `3^(b+d) w₁ ≥ U := 2^(c+d+e+f) − T`. -/
+theorem threeBlock_cascade_elim {b c d e f w₁ w₂ w₃ : ℕ}
+    (h₁ : 3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1)
+    (h₂ : 3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1) :
+    (3 : ℤ) ^ (b + d) * w₁ + (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+      = 2 ^ (c + d + e + f) * w₃ := by
+  have e₁ : (3 : ℤ) ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 := by exact_mod_cast h₁
+  have e₂ : (3 : ℤ) ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 := by exact_mod_cast h₂
+  linear_combination (3 : ℤ) ^ d * e₁ + (2 : ℤ) ^ (c + d) * e₂
+
+/-- **The real-relaxation leaf of the census — PROVED.**  `w₃ ≥ 1` alone closes the rung-3 gap
+for every tuple satisfying the division-free inequality
+
+    (R3)   3^(b+d) · (3^f − 1)  <  2^(b+g) · U,    U = 2^(c+d+e+f) − T.
+
+Nothing but `w₃ ≥ 1` and `3^k < 2^m` is used, so this is the *entire* elementary content of the
+census: what survives it is exactly the set of tuples where the two integer ceilings (`w₂ ∈ ℕ`
+and `w₁ ∈ ℕ`) have to do the work.  Host census: (R3) alone leaves an infinite set (18 tuples at
+`m = 8`, 258 at `m = 16`, 2489 at `m = 27`, 18324 at `m = 46`), which is precisely why the
+residual node below is stated in terms of the ceilings. -/
+theorem threeBlock_gap_of_real {b c d e f g : ℕ}
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hR3 : (3 : ℤ) ^ (b + d) * (3 ^ f - 1)
+      < 2 ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))) :
+    ∀ w₁ w₂ w₃ : ℕ, 1 ≤ w₃ →
+      3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 →
+      3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
+      (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f) : ℤ)
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
+  intro w₁ w₂ w₃ h3 h₁ h₂
+  set T : ℤ := 2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1) with hT
+  set U : ℤ := 2 ^ (c + d + e + f) - T with hU
+  have hDpos : (0 : ℤ) < 2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f) := by
+    have : (3 : ℤ) ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by exact_mod_cast hsub
+    linarith
+  have h3z : (1 : ℤ) ≤ (w₃ : ℤ) := by exact_mod_cast h3
+  -- `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T ≥ U`.
+  have helim := threeBlock_cascade_elim h₁ h₂
+  have hw₁lb : U ≤ (3 : ℤ) ^ (b + d) * w₁ := by
+    have hpow : (0 : ℤ) < 2 ^ (c + d + e + f) := by positivity
+    nlinarith [helim, h3z, hpow]
+  -- `D·U > 3^(b+d)·RHS`, because `D·U − 3^(b+d)·RHS = 2^(c+d+e+f)·(2^(b+g)U − 3^(b+d)(3^f−1))`.
+  have hsplit : (2 : ℤ) ^ (b + c + d + e + f + g)
+      = 2 ^ (c + d + e + f) * 2 ^ (b + g) := by rw [← pow_add]; ring_nf
+  have hkey : (3 : ℤ) ^ (b + d) * (3 ^ f * T - 2 ^ (c + d + e + f))
+      < (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * U := by
+    have hpow : (0 : ℤ) < 2 ^ (c + d + e + f) := by positivity
+    have hexp : (3 : ℤ) ^ (b + d + f) = 3 ^ (b + d) * 3 ^ f := by rw [← pow_add]
+    have hmul : (2 : ℤ) ^ (c + d + e + f) * ((3 : ℤ) ^ (b + d) * (3 ^ f - 1))
+        < 2 ^ (c + d + e + f) * (2 ^ (b + g) * U) :=
+      mul_lt_mul_of_pos_left hR3 hpow
+    rw [hsplit, hexp, hU]
+    nlinarith [hmul]
+  -- Multiply the `w₁` lower bound by `D > 0` and divide by `3^(b+d) > 0`.
+  have h3pos : (0 : ℤ) < (3 : ℤ) ^ (b + d) := by positivity
+  have hchain : (3 : ℤ) ^ (b + d) * (3 ^ f * T - 2 ^ (c + d + e + f))
+      < 3 ^ (b + d) * ((2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁) := by
+    have := mul_le_mul_of_nonneg_left hw₁lb hDpos.le
+    nlinarith [hkey, this]
+  exact lt_of_mul_lt_mul_left hchain h3pos.le
+
 /-- **Rung-3 census (host instrument, exact integers).**  Combining `threeBlock_criterion` with
 the integer cascade of `threeBlock_cascade` — minimising `w₁` over integer triples with
 `w₃ ≥ 1` — leaves exactly **27** three-block tuples, at lengths `m ∈ {5, 8, 16, 27}`,
@@ -388,15 +462,35 @@ m = 16, k = 10 :  5 tuples   (4,5,3,1,3,0) (4,2,4,4,2,0) (5,4,2,2,3,0) (5,5,2,1,
 m = 27, k = 17 :  4 tuples   (6,1,8,9,3,0) (7,5,6,5,4,0) (8,8,4,1,5,1) (8,9,4,1,5,0)
 ```
 
-Dropping the integrality of the *interior* scale `w₂` — i.e. keeping only the division-free
-real relaxation `D · (2^(c+d+e+f) − T) ≤ 3^(b+d) · 2^(c+d+e) · (3^f − 2^f)` implied by
-`w₃ ≥ 1` — makes the same set **infinite**: 18 tuples at `m = 8`, 258 at `m = 16`, 2489 at
-`m = 27`, 18324 at `m = 46`, growing steadily.  So the finiteness of rung 3 is carried by a
+Dropping the integrality of the *interior* scale `w₂` — i.e. keeping only what `w₃ ≥ 1` gives,
+the division-free `2^(b+g)·U ≤ 3^(b+d)(3^f − 1)` — makes the same set **infinite**: 18 tuples at
+`m = 8`, 317 at `m = 16`, 2931 at `m = 27`, 88718 in total for `m ≤ 40`, growing steadily.
+So the finiteness of rung 3 is carried by a
 **two-level integer ceiling**, not by a linear form in logarithms; contrast rung 2, whose
 crux `b + d ≤ 5` provably needs the Baker-grade `sep_two_three`.
 
-This is the disclosed obligation: the census above, as a `∀`-gap statement.  Chipping it is the
-rung-3 crux; see `PENDING_WORK.md` for the attack. -/
+**Narrowed (2026-09-02, same lap).**  `threeBlock_gap_of_real` above discharges, sorry-free,
+every tuple satisfying the real relaxation `3^(b+d)(3^f − 1) < 2^(b+g)·U`.  What is left —
+and is the disclosed node `threeBlock_ceiling_gap` — is only the complementary half, where the
+two integer ceilings (`w₂ ∈ ℕ`, then `w₁ ∈ ℕ`) have to do the work.  Chipping it is the rung-3
+crux; see `PENDING_WORK.md` for the two-regime attack. -/
+theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hc : 1 ≤ c) (he : 1 ≤ e)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ))
+    (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+        ≤ 3 ^ (b + d) * (3 ^ f - 1)) :
+    ∀ w₁ w₂ w₃ : ℕ, 1 ≤ w₃ →
+      3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 →
+      3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
+      (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f) : ℤ)
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
+  sorry
+
+/-- **The rung-3 census gap.**  Assembled from the proved real-relaxation leaf
+`threeBlock_gap_of_real` and the disclosed ceiling residual `threeBlock_ceiling_gap`. -/
 theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -407,7 +501,11 @@ theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
       (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
           - 2 ^ (c + d + e + f) : ℤ)
         < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
-  sorry
+  by_cases hR3 : (3 : ℤ) ^ (b + d) * (3 ^ f - 1)
+      < 2 ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+  · exact threeBlock_gap_of_real hsub hR3
+  · exact threeBlock_ceiling_gap b c d e f g hb hd hf hc he hsub hlong (not_lt.1 hR3)
 
 /-- **Rung 3, the long-length half.**  Modulo the disclosed census gap `threeBlock_gap_of_long`,
 no three-odd-block word of length outside `{5, 8, 16, 27}` is acyclic paradoxical.  The four

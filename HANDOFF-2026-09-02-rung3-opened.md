@@ -34,7 +34,7 @@ it, all of length 8 — and it is the Front-A analogue of Front B's `m`-cycle la
     `3^f w₃ = 2^g y + 1`, all in ℕ, `w₃ ≥ 1`.  Eliminating `w₂`: `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`.
 - **THE FINDING.**  Dropping the integrality of the *interior* scale `w₂` (i.e. using only
   `w₃ ≥ 1`, the division-free relaxation `D·(2^(c+d+e+f) − T) ≤ 3^(b+d)·2^(c+d+e)·(3^f − 2^f)`)
-  leaves an **infinite** set: 18 / 258 / 2489 / 18324 tuples at `m = 8 / 16 / 27 / 46`.  Keeping
+  leaves an **infinite** set: 18 / 317 / 2931 tuples at `m = 8 / 16 / 27`, 88718 for `m ≤ 40`.  Keeping
   `w₂ ∈ ℕ` collapses the rung to **27 tuples at `m ∈ {5, 8, 16, 27}`**, exhaustive for all
   `m ≤ 130` and every `k` with `3^k/2^m > 1/8`.  The 10 tuples off `m = 8` die on the true
   realizing residue by factors 10²–10³.  So rung 3's finiteness is carried by a **two-level integer
@@ -54,11 +54,35 @@ it, all of length 8 — and it is the Front-A analogue of Front B's `m`-cycle la
 - No Aristotle job in flight.
 
 ## 🎬 Next actions
-1. **Prove `threeBlock_gap_of_long`.**  Two-regime split (details in `PENDING_WORK.md`):
+0. **The census is already narrowed.**  `threeBlock_cascade_elim` (`3^(b+d) w₁ + T =
+   2^(c+d+e+f) w₃`, proved) and `threeBlock_gap_of_real` (proved) discharge the entire `w₃ ≥ 1`
+   half of the census, sorry-free.  `threeBlock_gap_of_long` is now *assembled* by a `by_cases`
+   on the division-free (R3) inequality `3^(b+d)(3^f − 1) < 2^(b+g)·U`, and the **only** disclosed
+   node is `threeBlock_ceiling_gap` — the complementary half, carrying the extra hypothesis
+   `2^(b+g)·U ≤ 3^(b+d)(3^f − 1)`.
+1. **Prove `threeBlock_ceiling_gap`.**  Two-regime split (details in `PENDING_WORK.md`):
    Regime II `3^d > 2^(e+f)` forces `w₂ = 1`; Regime I `3^d ≤ 2^(e+f)` makes the `w₂`-ceiling a
    bounded correction.  Both funnel into `D·2^f ≲ 3^k·2^b` — a **two-log** linear form, so
    `sep_two_three` is the fallback.  **Record which regime actually consumes it**: that datum is
    the asymmetry result.
+
+   ⚠️ **The honest shape of the residual, worked out this lap.**  Write `s := 3^d W₂ − L₂ ∈
+   [0, 3^d)` and `t := 3^b W₁ − (2^(c+d) W₂ − 2^c + 1) ∈ [0, 3^b)` for the two ceiling defects
+   (`L₂ = 2^(e+f) − 2^e + 1`, `W₂ = ⌈L₂/3^d⌉`, `W₁ = ⌈(2^(c+d)W₂ − 2^c + 1)/3^b⌉`).  Then the
+   gap is *exactly*
+
+       2^m·U + D·(2^(c+d)·s + 3^d·t)  >  2^(c+d+e+f)·3^(b+d)·(3^f − 1).
+
+   `threeBlock_gap_of_real` is the `s = t = 0` case.  In the residual, `s ≡ −L₂ (mod 3^d)` and
+   `t` is the analogous least residue mod `3^b`, so a *general* lower bound on `s`, `t` is the
+   same least-residue wall rung 2 hit.  **Heuristic that explains the census** (record it, it is
+   the shape of the eventual proof): typical `s ~ 3^d/2`, `t ~ 3^b/2` force
+   `1 − R ≲ 2^(−max(b,d,f))`, while `sep_two_three` forces `1 − R ≳ R·2^(−k/3)`; since
+   `b + d + f = k` gives `max(b,d,f) ≥ k/3`, the two meet at a constant and only small `k`
+   survive.  So the likely real proof is: *either* `s`/`t` is large (size argument) *or* the
+   divisibility `3^d ∣ L₂` pins the tuple (a `ZMod (3^d)` argument on `2^e(2^f − 1) + 1`).
+   Empirical anchor worth re-deriving: at `m = 46` there are 18324+ (R3)-passers and **none**
+   has `s = t = 0`.
 2. Then the finite tail: 10 tuples at `m ∈ {5,16,27}` by explicit realizing residue (`decide`),
    17 at `m = 8` are the exception.
 3. Re-run `python3 experiments/rung3_census.py census 130` / `relax 46` / `verify` before

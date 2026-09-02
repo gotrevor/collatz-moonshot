@@ -10,12 +10,14 @@
 > both two-block sub-segments — `threeBlock_merge_reduction`), the exact criterion
 > `threeBlock_criterion` (`n < y ⟺ D·w₁ ≤ 3^f·T − 2^(c+d+e+f)`), the slack identity
 > `threeBlock_slack`, the 2-adic `threeBlock_cascade`, and the word→identities bridge.  **Finding:**
-> the *real* relaxation implied by `w₃ ≥ 1` is infinite (18/258/2489/18324 tuples at
-> `m = 8/16/27/46`), but keeping the *interior* scale `w₂` an integer collapses the whole rung to
+> the *real* relaxation implied by `w₃ ≥ 1` is infinite (18/317/2931 tuples at `m = 8/16/27`,
+> 88718 for `m ≤ 40`), but keeping the *interior* scale `w₂` an integer collapses the whole rung to
 > **27 tuples at `m ∈ {5,8,16,27}`** (exhaustive `m ≤ 130`).  So rung 3's finiteness is carried by a
 > two-level integer ceiling, not by a linear form in logarithms — an effectivity asymmetry against
 > rung 2 (which needs Baker via `sep_two_three`) and against Front B's `m`-cycle ladder.  The single
-> `src/` sorry is that census, `threeBlock_gap_of_long`: the ACTIVE CRUX, deliberately disclosed.
+> `src/` sorry is that census.  It is already narrowed: `threeBlock_cascade_elim` and
+> `threeBlock_gap_of_real` PROVE the whole `w₃ ≥ 1` half sorry-free, so the disclosed node is only
+> `threeBlock_ceiling_gap` — the tuples where the two integer ceilings must do the work.
 
 
 > **2026-09-01 — the last `src/` sorry of the RT campaign is PROVED; `finite_acyclicParadoxical_imp_noDivergent`
