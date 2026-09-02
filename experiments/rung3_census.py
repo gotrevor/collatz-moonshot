@@ -13,6 +13,10 @@ D = 2^m - 3^k.  Lean-proved facts this script exercises (all exact integers, no 
 Minimising w1 over the cascade (w3 = 1, then w2 = ceil((2^(e+f)-2^e+1)/3^d), then
 w1 = ceil((2^(c+d) w2 - 2^c + 1)/3^b)) gives the CEILING BOUND.  Results:
 
+  * POSITIVITY ONLY (mode `leaves`; no rounding at all, just w1,w2,w3 >= 1 -- exactly what the
+    three Lean leaves threeBlock_gap_of_real / _of_w2 / _of_w1 consume) -> 58 tuples in total, at
+    the same four lengths m in {5, 8, 16, 27}, exhaustive for all m <= 80.  So rung 3's finiteness
+    needs only the MAXIMUM of three cascade-level positivity bounds, not the ceilings.
   * ceiling bound  -> 27 tuples in total, at lengths m in {5, 8, 16, 27}, exhaustive for all
     m <= 130 and every k with 3^k/2^m > 1/8.  Only the m = 8 block contains realized words
     (the four solutions); the 10 tuples at m in {5,16,27} are killed by the true realizing
@@ -25,7 +29,8 @@ w1 = ceil((2^(c+d) w2 - 2^c + 1)/3^b)) gives the CEILING BOUND.  Results:
 So rung 3's finiteness is carried by the two-level integer ceiling, not by a linear form in
 logarithms -- unlike rung 2, whose crux `b + d <= 5` provably needs Baker (`sep_two_three`).
 
-Usage:  python3 experiments/rung3_census.py census 130
+Usage:  python3 experiments/rung3_census.py leaves 80
+        python3 experiments/rung3_census.py census 130
         python3 experiments/rung3_census.py relax 46
         python3 experiments/rung3_census.py verify
 """
@@ -46,13 +51,22 @@ def rhs(b, c, d, e, f, g):
     T = 2**(c+d+e) - 2**(c+d) + 3**d * (2**c - 1)
     return 3**f * T - 2**(c+d+e+f)
 
+def w1_positivity(b, c, d, e, f, g):
+    """Lower bound on 3^(b+d)*w1 from POSITIVITY ONLY (w3>=1, w2>=1, w1>=1) -- no rounding.
+    Matches Lean's three leaves threeBlock_gap_of_real / _of_w2 / _of_w1."""
+    L2 = 2**(e+f) - 2**e + 1
+    U = 2**(c+d) * L2 - 3**d * (2**c - 1)          # w3 >= 1
+    V = 2**(c+d) - 2**c + 1                         # w2 >= 1  (gives 3^b w1 >= V)
+    return max(3**(b+d), 3**d * V, U)               # w1 >= 1  gives 3^(b+d)
+
+
 def w1_ceiling(b, c, d, e, f, g):
     """Minimum of w1 over integer cascade triples with w3 >= 1."""
     w2 = ceildiv(2**(e+f) - 2**e + 1, 3**d)
     return ceildiv(2**(c+d) * w2 - 2**c + 1, 3**b)
 
 
-def scan(mmax, ceiling=True):
+def scan(mmax, ceiling="census"):
     """Tuples passing the criterion at the minimal w1.  For each m only the k with
     3^k/2^m > 1/8 matter (that bracket is verified to contain every passer)."""
     out = {}
@@ -74,8 +88,11 @@ def scan(mmax, ceiling=True):
                             g = m - k - c - e
                             if g < 0:
                                 continue
-                            if ceiling:
+                            if ceiling == "census":
                                 ok = D * w1_ceiling(b, c, d, e, f, g) <= rhs(b, c, d, e, f, g)
+                            elif ceiling == "leaves":
+                                ok = (D * w1_positivity(b, c, d, e, f, g)
+                                      <= 3**(b+d) * rhs(b, c, d, e, f, g))
                             else:
                                 T = 2**(c+d+e) - 2**(c+d) + 3**d * (2**c - 1)
                                 U = 2**(c+d+e+f) - T
@@ -89,7 +106,7 @@ def scan(mmax, ceiling=True):
 
 def verify():
     """The realizing start of every ceiling-passer at m != 8: none is acyclic paradoxical."""
-    for (m, k), tuples in sorted(scan(30).items()):
+    for (m, k), tuples in sorted(scan(30, "census").items()):
         for t in tuples:
             v = word(*t)
             M = 1 << len(v)
@@ -108,7 +125,7 @@ if __name__ == "__main__":
         verify()
     else:
         mmax = int(sys.argv[2]) if len(sys.argv) > 2 else 40
-        res = scan(mmax, ceiling=(mode == "census"))
+        res = scan(mmax, ceiling=mode)
         tot = sum(len(v) for v in res.values())
         print(f"{mode}: {tot} passing tuples, m <= {mmax}")
         for (m, k), v in sorted(res.items()):

@@ -54,12 +54,16 @@ it, all of length 8 — and it is the Front-A analogue of Front B's `m`-cycle la
 - No Aristotle job in flight.
 
 ## 🎬 Next actions
-0. **The census is already narrowed.**  `threeBlock_cascade_elim` (`3^(b+d) w₁ + T =
-   2^(c+d+e+f) w₃`, proved) and `threeBlock_gap_of_real` (proved) discharge the entire `w₃ ≥ 1`
-   half of the census, sorry-free.  `threeBlock_gap_of_long` is now *assembled* by a `by_cases`
-   on the division-free (R3) inequality `3^(b+d)(3^f − 1) < 2^(b+g)·U`, and the **only** disclosed
-   node is `threeBlock_ceiling_gap` — the complementary half, carrying the extra hypothesis
-   `2^(b+g)·U ≤ 3^(b+d)(3^f − 1)`.
+0. **The census is sharply narrowed, and needs NO rounding.**  `threeBlock_gap_of_scaled_lower`
+   (proved) turns any bound `B ≤ 3^(b+d) w₁` into the gap once `3^(b+d)·RHS < D·B`; it is
+   instantiated at all three levels of the cascade by `threeBlock_gap_of_real` (`w₃ ≥ 1`, via
+   `threeBlock_cascade_elim`: `3^(b+d) w₁ + T = 2^(c+d+e+f) w₃`), `threeBlock_gap_of_w2`
+   (`w₂ ≥ 1`) and `threeBlock_gap_of_w1` (`w₁ ≥ 1`) — all sorry-free.  `threeBlock_gap_of_long`
+   is *assembled* by a three-way `by_cases`, and the **only** disclosed node is
+   `threeBlock_ceiling_gap`, carrying all three failure hypotheses.  Host scan exhaustive for
+   `m ≤ 80` (`experiments/rung3_census.py leaves`): tuples failing all three leaves number **58**,
+   at `m ∈ {5,8,16,27}` (1/17/17/23).  **The fractional ceilings are not needed for finiteness —
+   only the maximum of three positivity bounds.**
 1. **Prove `threeBlock_ceiling_gap`.**  Two-regime split (details in `PENDING_WORK.md`):
    Regime II `3^d > 2^(e+f)` forces `w₂ = 1`; Regime I `3^d ≤ 2^(e+f)` makes the `w₂`-ceiling a
    bounded correction.  Both funnel into `D·2^f ≲ 3^k·2^b` — a **two-log** linear form, so

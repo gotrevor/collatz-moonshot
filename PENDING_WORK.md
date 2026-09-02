@@ -59,7 +59,50 @@ ceiling** does it.  Contrast rung 2, whose crux `b+d ≤ 5` provably needs the B
 form may still be needed to *prove* the census — see the next attack — but it is a two-log form,
 `D·2^f ≲ 3^k·2^b`, never a simultaneous one.)
 
-### ★ NEXT ATTACK — prove `threeBlock_gap_of_long` (the sole `src/` sorry) ★
+### ★★ THE CENSUS NEEDS NO ROUNDING — three POSITIVITY leaves proved, 58 tuples left ★★
+
+`threeBlock_gap_of_scaled_lower` (PROVED) turns any lower bound `B ≤ 3^(b+d)·w₁` into the gap
+once `3^(b+d)·RHS < D·B`.  Instantiated at the three levels of the cascade — all PROVED
+sorry-free, all elementary, no rounding anywhere:
+
+| leaf | bound used | division-free hypothesis |
+| --- | --- | --- |
+| `threeBlock_gap_of_real` | `w₃ ≥ 1` ⟹ `3^(b+d) w₁ ≥ U` | `3^(b+d)(3^f − 1) < 2^(b+g)·U` |
+| `threeBlock_gap_of_w2`   | `w₂ ≥ 1` ⟹ `3^b w₁ ≥ V`     | `3^b·RHS < D·V`, `V = 2^(c+d) − 2^c + 1` |
+| `threeBlock_gap_of_w1`   | `w₁ ≥ 1`                     | `RHS < D` |
+
+(`threeBlock_cascade_pos` derives `w₂ ≥ 1` and `w₁ ≥ 1` from `w₃ ≥ 1` plus `d,f ≥ 1`.)
+
+**Host scan, exhaustive for `m ≤ 80`** (`experiments/rung3_census.py leaves`): the tuples failing
+*all three* leaves number **58**, at `m ∈ {5,8,16,27}` — 1, 17, 17, 23.  With the fractional
+ceilings restored the same set is 27 (1, 17, 5, 4).  **So rung 3's finiteness is carried by the
+maximum of three cascade-level positivity bounds; the rounding only trims.**  That is a stronger
+and much more formalizable statement than the ceiling census, and it is what
+`threeBlock_ceiling_gap` now has to prove.
+
+### ★ NEXT ATTACK — prove `threeBlock_ceiling_gap` (the sole `src/` sorry) ★
+
+The three failure hypotheses are now explicit in the statement.  Normalised
+(`r₁ = 3^b/2^(b+c)`, `r₂ = 3^d/2^(d+e)`, `r₃ = 3^f/2^(f+g)`, `R = r₁r₂r₃ = 3^k/2^m`,
+`P := (1 − 2^(−e)) + r₂(1 − 2^(−c)) ∈ (0, 1+r₂)`, so `3^f(1 − A) = (3/2)^f·P`):
+
+    (A) failure of the w₃ leaf :  1 − 2^(−f)·P  ≤  R − r₁r₂·2^(−(f+g))
+    (B) failure of the w₂ leaf :  (1−R)(1 − 2^(−d) + 2^(−(c+d)))  ≤  r₁·2^(−(d+g))·[(3/2)^f P − 1]
+    (C) failure of the w₁ leaf :  (1−R)·2^(b+g)  ≤  (3/2)^f·P − 1
+
+`sep_two_three` supplies the missing lower bound `1 − R ≥ R·2^(−k/3)` (for `k ≥ 6` in the window
+`3^k < 2^m < 2·3^k`).  Crude elimination — `P < 1 + r₂ ≤ 2(3/2)^d` in (A) and (C), then
+`b + d + f = k` — gives `f < k/3 + 2` and `b + g < 0.53k + 3.2` but does **not** close: the slack
+survives.  **Attempted and refuted this lap**, so the next attack must keep `P` sharp (it is
+`≤ 1 + r₂` only when `c, e → ∞`, and large `e` forces `r₂ → 0`) rather than bounding it crudely.
+Concrete next probe: for each `(m,k)` with `28 ≤ m ≤ 60` and `R > 1/2`, tabulate which of
+(A)/(B)/(C) fails first and by what margin — that identifies the binding inequality before any
+more algebra.
+
+Do NOT: restate rung 3 as an *exclusion* (kernel-refuted by `acyclicParadoxical_seven_eight`);
+weaken `le_two_blocks_not_acyclicParadoxical`; park the node in `wip/`.
+
+### (superseded framing) the census as a single ∀-gap
 
 Statement: for `b,c,d,e,f ≥ 1`, whole-word subcritical, `m ∉ {5,8,16,27}`, and every integer
 cascade triple with `w₃ ≥ 1`, `D·w₁ > 3^f·T − 2^(c+d+e+f)`.  Two-regime split:

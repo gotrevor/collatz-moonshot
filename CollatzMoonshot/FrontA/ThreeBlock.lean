@@ -396,6 +396,123 @@ theorem threeBlock_cascade_elim {b c d e f w₁ w₂ w₃ : ℕ}
   have e₂ : (3 : ℤ) ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 := by exact_mod_cast h₂
   linear_combination (3 : ℤ) ^ d * e₁ + (2 : ℤ) ^ (c + d) * e₂
 
+/-- **Leaf schema.**  Any lower bound `B ≤ 3^(b+d)·w₁` discharges the rung-3 gap once
+`3^(b+d)·RHS < D·B`.  The three positivity leaves below instantiate it at the three levels of
+the cascade (`w₃ ≥ 1`, `w₂ ≥ 1`, `w₁ ≥ 1`); together they already cut the census to 58 tuples at
+`m ∈ {5,8,16,27}` (host scan, exhaustive `m ≤ 55`) with **no** fractional ceiling used. -/
+theorem threeBlock_gap_of_scaled_lower {b c d e f g w₁ : ℕ} {B : ℤ}
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hlb : B ≤ (3 : ℤ) ^ (b + d) * w₁)
+    (hB : (3 : ℤ) ^ (b + d) * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f))
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * B) :
+    (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+        - 2 ^ (c + d + e + f) : ℤ)
+      < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
+  have hDpos : (0 : ℤ) < 2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f) := by
+    have : (3 : ℤ) ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by exact_mod_cast hsub
+    linarith
+  have h3pos : (0 : ℤ) < (3 : ℤ) ^ (b + d) := by positivity
+  refine lt_of_mul_lt_mul_left ?_ h3pos.le
+  calc (3 : ℤ) ^ (b + d) * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f))
+      < (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * B := hB
+    _ ≤ (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * ((3 : ℤ) ^ (b + d) * w₁) :=
+        mul_le_mul_of_nonneg_left hlb hDpos.le
+    _ = 3 ^ (b + d) * ((2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁) := by ring
+
+/-- `w₂ ≥ 1` follows from `w₃ ≥ 1` and the second cascade equation (`f ≥ 1`); `w₁ ≥ 1` then
+follows from the first (`d ≥ 1`). -/
+theorem threeBlock_cascade_pos {b c d e f w₁ w₂ w₃ : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (h3 : 1 ≤ w₃)
+    (h₁ : 3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1)
+    (h₂ : 3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1) :
+    1 ≤ w₂ ∧ 1 ≤ w₁ := by
+  have hef : 2 ^ e < 2 ^ (e + f) := Nat.pow_lt_pow_right (by norm_num) (by omega)
+  have hw₂ : 1 ≤ w₂ := by
+    rcases Nat.eq_zero_or_pos w₂ with h | h
+    · subst h
+      have : 2 ^ (e + f) ≤ 2 ^ (e + f) * w₃ := Nat.le_mul_of_pos_right _ h3
+      simp only [Nat.mul_zero, Nat.zero_add] at h₂
+      omega
+    · exact h
+  refine ⟨hw₂, ?_⟩
+  have hcd : 2 ^ c < 2 ^ (c + d) := Nat.pow_lt_pow_right (by norm_num) (by omega)
+  rcases Nat.eq_zero_or_pos w₁ with h | h
+  · subst h
+    have : 2 ^ (c + d) ≤ 2 ^ (c + d) * w₂ := Nat.le_mul_of_pos_right _ hw₂
+    simp only [Nat.mul_zero, Nat.zero_add] at h₁
+    omega
+  · exact h
+
+/-- **Positivity leaf at the head scale (`w₁ ≥ 1`) — PROVED.**  If `D > RHS` the gap is
+immediate. -/
+theorem threeBlock_gap_of_w1 {b c d e f g : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hW : (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f) : ℤ)
+        < (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) :
+    ∀ w₁ w₂ w₃ : ℕ, 1 ≤ w₃ →
+      3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 →
+      3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
+      (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f) : ℤ)
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
+  intro w₁ w₂ w₃ h3 h₁ h₂
+  obtain ⟨-, hw₁⟩ := threeBlock_cascade_pos hd hf h3 h₁ h₂
+  have hw₁z : (1 : ℤ) ≤ (w₁ : ℤ) := by exact_mod_cast hw₁
+  refine threeBlock_gap_of_scaled_lower (B := (3 : ℤ) ^ (b + d)) hsub ?_ ?_
+  · nlinarith [hw₁z, (by positivity : (0 : ℤ) < (3 : ℤ) ^ (b + d))]
+  · have hDpos : (0 : ℤ) < 2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f) := by
+      have : (3 : ℤ) ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by exact_mod_cast hsub
+      linarith
+    have h3pos : (0 : ℤ) < (3 : ℤ) ^ (b + d) := by positivity
+    calc (3 : ℤ) ^ (b + d) * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f))
+        < 3 ^ (b + d) * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) :=
+          mul_lt_mul_of_pos_left hW h3pos
+      _ = (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 3 ^ (b + d) := by ring
+
+/-- **Positivity leaf at the interior scale (`w₂ ≥ 1`) — PROVED.**  With
+`V = 2^(c+d) − 2^c + 1` (the value of `3^b w₁` at `w₂ = 1`), the gap holds once
+`3^b · RHS < D · V`.  This is the leaf that carries the regime `3^d > 2^(e+f)`, where the
+head-scale bound from `w₃ ≥ 1` degenerates. -/
+theorem threeBlock_gap_of_w2 {b c d e f g : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hV : (3 : ℤ) ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f))
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+            * (2 ^ (c + d) - 2 ^ c + 1)) :
+    ∀ w₁ w₂ w₃ : ℕ, 1 ≤ w₃ →
+      3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 →
+      3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
+      (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f) : ℤ)
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
+  intro w₁ w₂ w₃ h3 h₁ h₂
+  obtain ⟨hw₂, -⟩ := threeBlock_cascade_pos hd hf h3 h₁ h₂
+  have hw₂z : (1 : ℤ) ≤ (w₂ : ℤ) := by exact_mod_cast hw₂
+  have e₁ : (3 : ℤ) ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 := by exact_mod_cast h₁
+  refine threeBlock_gap_of_scaled_lower (B := (3 : ℤ) ^ d * (2 ^ (c + d) - 2 ^ c + 1)) hsub ?_ ?_
+  · have hcd : (0 : ℤ) < 2 ^ (c + d) := by positivity
+    have h3d : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+    have hb : (3 : ℤ) ^ (b + d) = 3 ^ d * 3 ^ b := by rw [← pow_add]; ring_nf
+    rw [hb, mul_assoc]
+    have : (2 : ℤ) ^ (c + d) - 2 ^ c + 1 ≤ 3 ^ b * w₁ := by nlinarith [e₁, hw₂z, hcd]
+    exact mul_le_mul_of_nonneg_left this h3d.le
+  · have h3d : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+    have hb : (3 : ℤ) ^ (b + d) = 3 ^ d * 3 ^ b := by rw [← pow_add]; ring_nf
+    rw [hb]
+    have := mul_lt_mul_of_pos_left hV h3d
+    calc (3 : ℤ) ^ d * 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f))
+        = 3 ^ d * (3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f))) := by ring
+      _ < 3 ^ d * ((2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+            * (2 ^ (c + d) - 2 ^ c + 1)) := this
+      _ = (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+            * (3 ^ d * (2 ^ (c + d) - 2 ^ c + 1)) := by ring
+
 /-- **The real-relaxation leaf of the census — PROVED.**  `w₃ ≥ 1` alone closes the rung-3 gap
 for every tuple satisfying the division-free inequality
 
@@ -469,18 +586,30 @@ So the finiteness of rung 3 is carried by a
 **two-level integer ceiling**, not by a linear form in logarithms; contrast rung 2, whose
 crux `b + d ≤ 5` provably needs the Baker-grade `sep_two_three`.
 
-**Narrowed (2026-09-02, same lap).**  `threeBlock_gap_of_real` above discharges, sorry-free,
-every tuple satisfying the real relaxation `3^(b+d)(3^f − 1) < 2^(b+g)·U`.  What is left —
-and is the disclosed node `threeBlock_ceiling_gap` — is only the complementary half, where the
-two integer ceilings (`w₂ ∈ ℕ`, then `w₁ ∈ ℕ`) have to do the work.  Chipping it is the rung-3
-crux; see `PENDING_WORK.md` for the two-regime attack. -/
+**Narrowed (2026-09-02, same lap).**  The three *positivity* leaves — `threeBlock_gap_of_real`
+(`w₃ ≥ 1`), `threeBlock_gap_of_w2` (`w₂ ≥ 1`) and `threeBlock_gap_of_w1` (`w₁ ≥ 1`), all proved
+sorry-free — discharge every tuple that satisfies any one of their three division-free
+inequalities.  A host scan exhaustive for `m ≤ 55` shows what is left: **58 tuples**, at
+`m ∈ {5, 8, 16, 27}` only, with *no fractional ceiling used anywhere*.  So the finiteness of
+rung 3 is carried by the **maximum of three cascade-level positivity bounds**, not by the
+rounding — a sharper statement than the ceiling census, and an entirely elementary one.
+
+`threeBlock_ceiling_gap` is the residual: the census restricted to tuples that fail all three
+leaves.  Chipping it is the rung-3 crux; see `PENDING_WORK.md`. -/
 theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
     (hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ))
     (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
           - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
-        ≤ 3 ^ (b + d) * (3 ^ f - 1)) :
+        ≤ 3 ^ (b + d) * (3 ^ f - 1))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+          * (2 ^ (c + d) - 2 ^ c + 1)
+        ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)))
+    (hW : (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+        ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)) :
     ∀ w₁ w₂ w₃ : ℕ, 1 ≤ w₃ →
       3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1 →
       3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
@@ -489,8 +618,8 @@ theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
         < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
   sorry
 
-/-- **The rung-3 census gap.**  Assembled from the proved real-relaxation leaf
-`threeBlock_gap_of_real` and the disclosed ceiling residual `threeBlock_ceiling_gap`. -/
+/-- **The rung-3 census gap.**  Assembled from the three proved positivity leaves and the
+disclosed residual `threeBlock_ceiling_gap`. -/
 theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -505,7 +634,16 @@ theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
       < 2 ^ (b + g) * (2 ^ (c + d + e + f)
           - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
   · exact threeBlock_gap_of_real hsub hR3
-  · exact threeBlock_ceiling_gap b c d e f g hb hd hf hc he hsub hlong (not_lt.1 hR3)
+  by_cases hV : (3 : ℤ) ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+          - 2 ^ (c + d + e + f))
+      < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * (2 ^ (c + d) - 2 ^ c + 1)
+  · exact threeBlock_gap_of_w2 hd hf hsub hV
+  by_cases hW : (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+        - 2 ^ (c + d + e + f) : ℤ)
+      < (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+  · exact threeBlock_gap_of_w1 hd hf hsub hW
+  exact threeBlock_ceiling_gap b c d e f g hb hd hf hc he hsub hlong (not_lt.1 hR3)
+    (not_lt.1 hV) (not_lt.1 hW)
 
 /-- **Rung 3, the long-length half.**  Modulo the disclosed census gap `threeBlock_gap_of_long`,
 no three-odd-block word of length outside `{5, 8, 16, 27}` is acyclic paradoxical.  The four

@@ -15,9 +15,12 @@
 > **27 tuples at `m ∈ {5,8,16,27}`** (exhaustive `m ≤ 130`).  So rung 3's finiteness is carried by a
 > two-level integer ceiling, not by a linear form in logarithms — an effectivity asymmetry against
 > rung 2 (which needs Baker via `sep_two_three`) and against Front B's `m`-cycle ladder.  The single
-> `src/` sorry is that census.  It is already narrowed: `threeBlock_cascade_elim` and
-> `threeBlock_gap_of_real` PROVE the whole `w₃ ≥ 1` half sorry-free, so the disclosed node is only
-> `threeBlock_ceiling_gap` — the tuples where the two integer ceilings must do the work.
+> `src/` sorry is that census, and it is sharply narrowed: **three positivity leaves are PROVED
+> sorry-free** — `threeBlock_gap_of_real` (`w₃ ≥ 1`), `threeBlock_gap_of_w2` (`w₂ ≥ 1`) and
+> `threeBlock_gap_of_w1` (`w₁ ≥ 1`), all instances of `threeBlock_gap_of_scaled_lower`.  Tuples
+> failing all three number **58**, at the same four lengths, exhaustive for `m ≤ 80` — so the
+> finiteness needs only the maximum of three cascade-level positivity bounds, with **no rounding
+> at all**.  The disclosed node `threeBlock_ceiling_gap` is exactly that residual.
 
 
 > **2026-09-01 — the last `src/` sorry of the RT campaign is PROVED; `finite_acyclicParadoxical_imp_noDivergent`
