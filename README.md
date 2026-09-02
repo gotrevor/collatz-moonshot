@@ -6,8 +6,12 @@
 > [!IMPORTANT]
 > **This repository does not prove the Collatz conjecture, the absence of divergent
 > orbits, or the absence of nontrivial cycles.** It is an exploratory Lean 4 research
-> project. At this checkpoint the project builds with **zero `sorry`s** (the last one, the classical
-> Diophantine node `two_pow_approx_three_pow_from_above`, was proved on 2026-09-01); the sink
+> project. At this checkpoint the project carries **one disclosed `sorry`**,
+> `threeBlock_gap_of_long` (`FrontA/ThreeBlock.lean`) — the active research crux, the census gap
+> of rung 3 of the odd-block ladder, opened on 2026-09-02. Every Front-A closer is unaffected:
+> `finite_acyclicParadoxical_imp_noDivergent` and `Assumed.rozier_terracol_3_2` print the bare
+> trust base (the classical Diophantine node `two_pow_approx_three_pow_from_above` was proved on
+> 2026-09-01). The sink
 > separation `sep_two_three` (powers of 2 and 3) is **proved from first principles** via the
 > Rhin-lite construction (`FrontA/RhinLiteSep.lean`), so the formerly cited Rhin 1987 axiom is
 > retired from the build; several conditional results still depend on explicitly named axioms,

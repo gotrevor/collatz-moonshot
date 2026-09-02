@@ -1,9 +1,24 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 green (8765 jobs) · **Updated**: 2026-09-01 (PowApprox node PROVED) · `a90af60`+
+**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-02 (odd-block ladder, rung 3 opened) · `0f9fde9`+
 
 
-> **2026-09-01 (latest) — the last `src/` sorry is PROVED; `finite_acyclicParadoxical_imp_noDivergent`
+> **2026-09-02 (latest) — the odd-block ladder reaches RUNG 3, and its crux is a finite census.**
+> New module `FrontA/ThreeBlock.lean`.  Rung 3 asks for a *classification*, not an exclusion:
+> **every acyclic paradoxical segment with three odd blocks has length 8** (four realized words,
+> all `m = 8`).  Landed sorry-free: the **block-merge reduction** (rung 2 reused as a black box on
+> both two-block sub-segments — `threeBlock_merge_reduction`), the exact criterion
+> `threeBlock_criterion` (`n < y ⟺ D·w₁ ≤ 3^f·T − 2^(c+d+e+f)`), the slack identity
+> `threeBlock_slack`, the 2-adic `threeBlock_cascade`, and the word→identities bridge.  **Finding:**
+> the *real* relaxation implied by `w₃ ≥ 1` is infinite (18/258/2489/18324 tuples at
+> `m = 8/16/27/46`), but keeping the *interior* scale `w₂` an integer collapses the whole rung to
+> **27 tuples at `m ∈ {5,8,16,27}`** (exhaustive `m ≤ 130`).  So rung 3's finiteness is carried by a
+> two-level integer ceiling, not by a linear form in logarithms — an effectivity asymmetry against
+> rung 2 (which needs Baker via `sep_two_three`) and against Front B's `m`-cycle ladder.  The single
+> `src/` sorry is that census, `threeBlock_gap_of_long`: the ACTIVE CRUX, deliberately disclosed.
+
+
+> **2026-09-01 — the last `src/` sorry of the RT campaign is PROVED; `finite_acyclicParadoxical_imp_noDivergent`
 > is TRUST-BASE CLEAN.**  `FrontA.two_pow_approx_three_pow_from_above` (powers of two approximate
 > powers of three from above to relative precision `1/N`, with `A > M`) is proved by a
 > multiplicative pigeonhole (`exists_mul_box`, `exists_two_pow_three_pow_ratio_close`) plus a

@@ -3,52 +3,76 @@
 ## CURRENT DIRECTIVE  (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
 
 > [!NOTE]
-> Set by the review lap of **2026-09-01 (later)**.  It replaces the whole previous directive,
-> whose mandated moves (`sep_two_three`, `rhinLiteLIMeasure`, the `b + d ≤ 5` crux) are all
-> **DONE**.  Detail lives in `PENDING_WORK.md`; the standing charter below is unchanged.
+> Set by the **altitude lap of 2026-09-02**.  The previous directive — discharge
+> `Assumed.rozier_terracol_3_2` — is **COMPLETE** (`55a119b`; `finite_acyclicParadoxical_imp_noDivergent`
+> and `rozier_terracol_3_2` both print the bare trust base).  Do not restart it.
 
-- 🎯 **THE OBJECTIVE: discharge `Assumed.rozier_terracol_3_2`** — the *only* cited axiom left
-  under a Front-A headline — into a machine-checked proof, so that
-  `finite_acyclicParadoxical_imp_noDivergent` becomes trust-base clean.
+- 🎯 **THE OBJECTIVE: the odd-block ladder, rung 3.**  Prove
+  `FrontA.threeBlock_gap_of_long` (`FrontA/ThreeBlock.lean`), hence
+  `threeBlock_not_acyclicParadoxical_of_long`, hence the rung-3 classification:
+  **every acyclic paradoxical segment whose word has three odd blocks has length 8.**
+  Rungs 1 (Rozier–Terracol App. A) and 2 (`le_two_blocks_not_acyclicParadoxical`) are closed;
+  rung 3 is the first rung whose answer is a *classification* rather than an exclusion, and it
+  is the natural Front-A analogue of Front B's `m`-cycle ladder.
 
-- **MANDATED NEXT MOVE — split the axiom by orbit boundedness and prove the bounded half first,
-  then attack the unbounded half as a Diophantine node.**  Fix `n ≥ 2` with
-  `InfiniteStoppingTime n`; the goal is `{p | Paradoxical (2^p.1 * n) p.2}.Infinite`.
-  · **(A) bounded shortcut orbit** — the orbit is eventually periodic, entering a cycle of
-    period `L` at time `t`.  The cycle block is subcritical (`subcritical_of_tstep_cycle`,
-    proved 2026-09-01), so the coefficient `3^a / 2^m` of `m = t + jL` tends to `0`; for large
-    `j` it drops below `1` while the endpoint stays `≥ n`.  Infinitely many pairs `(0, m)`.
-    **Fully elementary — prove this case outright.**  (`infinite_paradoxical_of_tstep_cycle`
-    already does the special case `t = 0`.)
-  · **(B) unbounded shortcut orbit** — reduce to the named node
-    `∃ᶠ j, ∃ k, 3^(a_j) / 2^j < 2^k ≤ (tstep^[j] n) / n`  (an integer power of `2` separating
-    the multiplicative coefficient from the normalized endpoint; this is exactly the
-    equivalence `3^a < 2^(k+j) ∧ 2^k n ≤ tstep^[j] n`).  That is RT's "infinitely many left
-    approximations `3^a/2^b < 1` of `1`" step, and it is the natural consumer of the repo's
-    own `log₂3` apparatus (`PowSeparation`, `sep_of_bracket_nat`, the convergent brackets).
-    State the node in `src/` as a disclosed `sorry` and chip it.
+- **WHY THIS AND NOT THE OTHERS.**  Ranked by probability of new mathematics:
+  · **(a) rung 3 — CHOSEN.**  It is the only candidate that is simultaneously (i) on the
+    Front-A path (`FiniteAcyclicParadoxical` is the open hypothesis of the trust-base-clean
+    closer), (ii) genuinely open, and (iii) already reduced this lap to a *finite explicit
+    census* — 27 tuples at four lengths — rather than an open Diophantine wall.
+  · **(b) Rhin-lite tower extraction into a shared Lake package** — deferred.  It is packaging,
+    not mathematics, in this repo; `~/src/normal-numbers` is owned by another session and is
+    read-only here, so the payoff cannot even be landed from this side.  Revisit as an
+    *interface proposal* once rung 3 is settled.
+  · **(c) Kolmogorov–Sinai entropy for the one-sided 2-adic shift** — deferred.  It is a
+    multi-lap mathlib-infrastructure build (measure-theoretic entropy where mathlib carries
+    only topological entropy) on the *Rigidity* front, with no rung-level payoff and no
+    contact with the paradoxical crux.
+  · **`native_decide` → `decide +kernel`** — still hygiene, still not a lap goal.
+
+- **MANDATED NEXT MOVE — chip the census gap, hardest case first.**  The lap of 2026-09-02
+  landed, sorry-free, the whole rung-3 engine: `threeBlock_master`, `threeBlock_slack`,
+  `threeBlock_criterion` (acyclicity ⟺ `D·w₁ ≤ 3^f·T − 2^(c+d+e+f)`), `threeBlock_cascade`
+  (the integer cascade `3^b w₁ + 2^c = 2^(c+d) w₂ + 1`, `3^d w₂ + 2^e = 2^(e+f) w₃ + 1`,
+  `3^f w₃ = 2^g y + 1`), `threeBlock_of_gap`, `threeBlock_segment_identities`, and the
+  **block-merge reduction** (`threeBlock_le_of_AB_C` / `_A_BC` / `threeBlock_merge_reduction`)
+  that reuses rung 2 as a black box on both two-block sub-segments.  What is open is exactly
+  the census.  Attack it in this order:
+  1. **Eliminate `w₂` and prove the two-regime split.**  `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`.
+     Regime I (`3^d ≤ 2^(e+f)`): the ceiling on `w₂` is a bounded correction and the
+     division-free real relaxation (R3) carries the argument.  Regime II (`3^d > 2^(e+f)`):
+     `w₂ = 1` is *forced*, and the substitution `w₂ = 1` gives a strictly stronger bound.
+     Prove each regime separately; the census says both terminate.
+  2. **Both regimes funnel into `D · 2^f ≲ 3^k · 2^b`** — a linear form in **two** logs, so
+     `sep_two_three` (already axiom-free in this repo) is the available Baker input if the
+     elementary route stalls.  Record which regime actually needs it: that answer *is* the
+     effectivity-asymmetry finding against Front B.
+  3. Only then the finite tail: the 10 ceiling-passing tuples at `m ∈ {5,16,27}` are killed by
+     the true realizing residue (host-verified 2026-09-02, margins of 10²–10³), and the 17 at
+     `m = 8` are the exceptional length.
 
 - 🚫 **FORBIDDEN drift.**
-  · **Never restore the "unbounded paradoxical starts" form of the axiom.**  It is refuted
-    in-kernel (`noNontrivialCycle_of_unboundedParadoxicalStarts`): it proves `NoNontrivialCycle`
-    outright.  Any restatement must be checked against that theorem.
-  · No three-block strengthening of `le_two_blocks_not_acyclicParadoxical` — refuted by the
-    kernel witness `acyclicParadoxical_seven_eight` (`n=7, m=8`, three odd blocks).  The
-    two-block exclusion is exactly sharp; the discovery ladder is finished.
-  · No further Rhin-lite κ-sharpening / crossover re-tuning (refuted low-leverage, 2026-09-01),
-    and no reopening of the elementary `b + d ≤ 5` route (refuted 2026-08-25).
+  · **No three-block *exclusion*.**  `acyclicParadoxical_seven_eight` refutes it in-kernel.
+    Rung 3 is a **classification** (`length = 8`), which is compatible; do not restate it as an
+    exclusion, and do not weaken `le_two_blocks_not_acyclicParadoxical`.
+  · Never restore the "unbounded paradoxical starts" form of `rozier_terracol_3_2`
+    (kernel-refuted by `noNontrivialCycle_of_unboundedParadoxicalStarts`).
+  · No Rhin-lite κ-sharpening / crossover re-tuning (refuted low-leverage, 2026-09-01); no
+    reopening of the elementary `b + d ≤ 5` route (refuted 2026-08-25).
+  · **Do not park `threeBlock_gap_of_long` in `wip/`.**  It is the active crux; `src/`
+    sorry-freedom is the completion end-state, not a per-lap gate.
   · Front B `Compression` / more block-word vocabulary — still blocked and mis-scoped.
-  · Converting the Rhin-lite `native_decide` certificates to `decide +kernel` is hygiene, not a
-    lap goal.
-
-- **WHY.**  As of 2026-09-01 the Front-A two-block exclusion is fully machine-checked (trust
-  base + `native_decide` artifacts, no literature axiom), so `rozier_terracol_3_2` is the single
-  remaining non-trust-base dependency of a Front-A headline.  Its hard half is precisely the
-  left-approximation-of-1 object that ten laps of Rhin-lite work built the machinery for, and
-  its easy half is a clean elementary win available now.  Nothing else in the repo has that
-  combination of on-path-ness and reachability.
 
 ### Directive history
+- 2026-09-02 (altitude lap): **Retargeted to the odd-block ladder, rung 3.**  Previous objective
+  (discharge `rozier_terracol_3_2`) certified complete.  Ranked the operator candidates and chose
+  (a); deferred (b) as cross-repo packaging and (c) as off-path mathlib infrastructure.  Landed the
+  whole rung-3 engine sorry-free (`FrontA/ThreeBlock.lean`) and **isolated the crux to a finite
+  census**: the exact criterion plus the *two-level integer ceiling* leaves 27 tuples at
+  `m ∈ {5,8,16,27}` (exhaustive `m ≤ 130`), while the real relaxation alone is provably infinite
+  (18 → 258 → 2489 → 18324 tuples at `m = 8, 16, 27, 46`).  Finding: rung 3's finiteness is carried
+  by interior integrality, not by a linear form in logarithms — an effectivity asymmetry against
+  both rung 2 and Front B's `m`-cycle ladder.
 - 2026-09-01 (review lap): **Caught and repaired a fidelity BUG at a headline's base.** The
   `rozier_terracol_3_2` axiom read "unboundedly large paradoxical starts `2^k n`"; machine-checked
   that this implies `NoNontrivialCycle` (open), hence is strictly stronger than Rozier--Terracol

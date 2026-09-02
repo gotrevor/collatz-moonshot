@@ -1,5 +1,81 @@
 # PENDING_WORK
 
+## ★★★ RUNG 3 OPENED — engine landed sorry-free, crux isolated to a 27-tuple census (2026-09-02, LATEST) ★★★
+
+**New module `CollatzMoonshot/FrontA/ThreeBlock.lean`.**  The odd-block ladder's rung 3:
+
+> **every acyclic paradoxical segment whose word has three odd blocks has length 8.**
+
+Rung 1 (RT App. A) and rung 2 (`le_two_blocks_not_acyclicParadoxical`) are exclusions; rung 3 is
+the first rung whose answer is a **classification** — four words realize it, all of length 8:
+`(1,1,2,2,2,0)` (n=25), `(1,1,3,1,1,1)` (n=9), `(2,2,2,1,1,0)` (n=19), `(3,1,1,2,1,0)` (n=7).
+
+### PROVED sorry-free this lap (the whole engine)
+
+Word `[T]^b[F]^c[T]^d[F]^e[T]^f[F]^g`, `m = b+c+d+e+f+g`, `k = b+d+f`, `D = 2^m − 3^k`,
+`T = 2^(c+d+e) − 2^(c+d) + 3^d(2^c−1)`; itinerary `n → X → Z → y`.
+
+* `segment_identity_of_word`, `threeBlock_segment_identities` — one `traceWord` hypothesis →
+  the three head-block identities (I) `2^(b+c)X + 2^b = 3^b(n+1)`, (II), (III).
+* `headBlock_le_of_identity`, `headBlock_scale` — rung-1 tools in **identity form**, which is
+  what lets rung 2 be applied to *interior* sub-segments where no `traceWord` equation exists.
+* **BLOCK-MERGE REDUCTION** (`threeBlock_le_of_AB_C`, `threeBlock_le_of_A_BC`,
+  `threeBlock_merge_reduction`, `threeBlock_criticality_of_acyclicParadoxical`): rung 2 as a
+  black box on both two-block sub-segments.  An acyclic three-block segment must have
+  `(¬subcrit AB ∨ ¬subcrit C)` **and** `(¬subcrit A ∨ ¬subcrit BC)`.  Host census: cuts the
+  length-≤24 space 126824 → 34832 subcritical words, 0 violations.
+* `threeBlock_master` — the exact `ℤ` identity after eliminating `X`, `Z`.
+* **`threeBlock_slack`** — `2^b·(RHS − D·w₁) = 2^m·(y − (n+1))`, the rung-3 `slack_identity`.
+* **`threeBlock_criterion`** — acyclicity is *equivalent* to ONE inequality:
+  `D·w₁ ≤ 3^f·T − 2^(c+d+e+f)`, where `n + 1 = 2^b w₁`.
+* **`threeBlock_cascade`** — the 2-adic normal form: `w₁,w₂,w₃ ∈ ℕ`, `w₃ ≥ 1`,
+  `3^b w₁ + 2^c = 2^(c+d) w₂ + 1`, `3^d w₂ + 2^e = 2^(e+f) w₃ + 1`, `3^f w₃ = 2^g y + 1`.
+* `threeBlock_of_gap` — gap ⟹ exclusion glue (rung-3 analogue of `core_of_gap`).
+
+### THE FINDING — rung 3 is cut to a finite census by *interior integrality*, not by Baker
+
+Eliminating `w₂` gives `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`, so `w₃ ≥ 1` alone yields the
+division-free **real relaxation**
+
+    (R3)   D·(2^(c+d+e+f) − T)  ≤  3^(b+d)·2^(c+d+e)·(3^f − 2^f).
+
+* **(R3) alone is INFINITE** — 18 tuples at `m=8`, 258 at `m=16`, 2489 at `m=27`, 18324 at
+  `m=46`, still growing (`experiments/rung3_census.py relax`).  Exactly the rung-2 lesson
+  (real relaxation of `b+d ≤ 5` feasible at unbounded `g`).
+* **Keeping `w₂ ∈ ℕ` collapses it to 27 tuples**, at `m ∈ {5,8,16,27}` only, exhaustive for all
+  `m ≤ 130` and every `k` with `3^k/2^m > 1/8` (`experiments/rung3_census.py census 130`).
+* The 10 tuples at `m ∈ {5,16,27}` are killed by the true realizing residue with margins of
+  10²–10³ (`experiments/rung3_census.py verify`); the 17 at `m = 8` are the exceptional length.
+
+**Effectivity asymmetry (the operator's question, answered).**  Rung 3 needs *neither* one
+linear form in two logs *nor* simultaneous approximation to become finite: a **two-level integer
+ceiling** does it.  Contrast rung 2, whose crux `b+d ≤ 5` provably needs the Baker-grade
+`sep_two_three`, and Front B's `m`-cycle ladder, which needs Baker at every rung.  (A linear
+form may still be needed to *prove* the census — see the next attack — but it is a two-log form,
+`D·2^f ≲ 3^k·2^b`, never a simultaneous one.)
+
+### ★ NEXT ATTACK — prove `threeBlock_gap_of_long` (the sole `src/` sorry) ★
+
+Statement: for `b,c,d,e,f ≥ 1`, whole-word subcritical, `m ∉ {5,8,16,27}`, and every integer
+cascade triple with `w₃ ≥ 1`, `D·w₁ > 3^f·T − 2^(c+d+e+f)`.  Two-regime split:
+
+1. **Regime II (`3^d > 2^(e+f)`): `w₂ = 1` is forced** (the cascade's second equation has
+   `3^d w₂ = 2^(e+f) w₃ − 2^e + 1 ≤ 2^(e+f)w₃`, and `w₂ ≥ 2` would need `w₃ ≥ 2`… substitute
+   and the criterion becomes `D·⌈(2^(c+d) − 2^c + 1)/3^b⌉ ≤ 3^f T − 2^(c+d+e+f)`).  Real-relax
+   *that*: `D ≲ 3^(b+f) 2^e (1 − (2/3)^f)`, i.e. `1 − R ≲ R·2^e/3^d`.
+2. **Regime I (`3^d ≤ 2^(e+f)`)**: the `w₂`-ceiling is a bounded correction; (R3) plus the
+   `w₁`-ceiling.  Both regimes funnel into `D·2^f ≲ 3^k·2^b` — a **two-log** linear form, so
+   `sep_two_three` (axiom-free in this repo since `d21f006`) is the fallback input.  Record
+   which regime actually consumes it: that is the asymmetry datum.
+3. Finite tail: 10 tuples at `m ∈ {5,16,27}` by explicit residue (`decide`), 17 at `m = 8`
+   are the exception.
+
+Do NOT: restate rung 3 as an *exclusion* (kernel-refuted by `acyclicParadoxical_seven_eight`);
+weaken `le_two_blocks_not_acyclicParadoxical`; park `threeBlock_gap_of_long` in `wip/`.
+
+---
+
+
 ## ★★★ NODE PROVED — `two_pow_approx_three_pow_from_above` closed; Front-A closer TRUST-BASE CLEAN (2026-09-01, LATEST) ★★★
 
 **Done.**  `FrontA.two_pow_approx_three_pow_from_above`
