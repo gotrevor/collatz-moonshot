@@ -665,7 +665,7 @@ theorem threeBlock_relax_W {b c d e f g : ℕ}
         ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
             - 2 ^ (c + d + e + f)) :
     ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 2 ^ (c + d + e + f)
-      < 3 ^ f * (2 ^ c * (2 ^ (d + e) + 3 ^ d)) := by
+      < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d) := by
   have hTlt : (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1) : ℤ)
       < 2 ^ c * (2 ^ (d + e) + 3 ^ d) := by
     have h1 : (2 : ℤ) ^ (c + d + e) = 2 ^ c * 2 ^ (d + e) := by rw [← pow_add]; congr 1; omega
@@ -828,6 +828,166 @@ theorem threeBlock_nonwindow_F3 {b d e f g : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f) 
   norm_num at this
   omega
 
+/-- `2^(d+e) ≤ 2·3^d` with `d ≤ 13` forces `e ≤ 8` (worst case `d = 13`: `(3/2)^13 < 256`). -/
+theorem threeBlock_nonwindow_e_bound {d e : ℕ} (hd13 : d ≤ 13) (h : 2 ^ (d + e) ≤ 2 * 3 ^ d) :
+    e ≤ 8 := by
+  by_contra hcon
+  have h9 : (2 : ℕ) ^ (d + 9) ≤ 2 * 3 ^ d :=
+    le_trans (Nat.pow_le_pow_right (by norm_num) (by omega)) h
+  rw [pow_add] at h9
+  interval_cases d <;> norm_num at h9
+
+set_option maxHeartbeats 1200000 in
+/-- **The non-window branch — PROVED.**  If the tuple is not near-critical (`2·3^k ≤ 2^m`) then
+its length is at most `22`, hence inside the finite range `m ≤ 27` where the census is decided by
+explicit check.  So every residual tuple of length `> 27` satisfies `3^k < 2^m < 2·3^k`. -/
+theorem threeBlock_nonwindow (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hc : 1 ≤ c) (he : 1 ≤ e)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hbig : 2 * 3 ^ (b + d + f) ≤ 2 ^ (b + c + d + e + f + g))
+    (hA : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (d + e + f)
+        < 2 ^ (b + c + d + e + f + g) * (2 ^ (d + e) + 3 ^ d))
+    (hW : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 2 ^ (c + d + e + f)
+        < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ d
+        ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d)) :
+    b + c + d + e + f + g ≤ 22 := by
+  set m := b + c + d + e + f + g with hm
+  set k := b + d + f with hk
+  have hPM : (3 : ℤ) ^ k < 2 ^ m := by exact_mod_cast hsub
+  have hbigZ : 2 * (3 : ℤ) ^ k ≤ 2 ^ m := by exact_mod_cast hbig
+  have hMpos : (0 : ℤ) < 2 ^ m := by positivity
+  have hD : (0 : ℤ) < 2 ^ m - 3 ^ k := by linarith
+  have hM2 : (2 : ℤ) ^ m ≤ 2 * (2 ^ m - 3 ^ k) := by linarith
+  have hPD : (3 : ℤ) ^ k ≤ 2 ^ m - 3 ^ k := by linarith
+  -- the three scale-free inequalities
+  have hS2 := threeBlock_nonwindow_S2 hD hMpos hM2 hA
+  have hPb : (3 : ℤ) ^ b * 3 ^ f * 3 ^ d = 3 ^ k := by
+    rw [hk, ← pow_add, ← pow_add]; congr 1; omega
+  have hS1 := threeBlock_nonwindow_S1 hD (by rw [hPb]; exact hPD) hV
+  have hBg : (2 : ℤ) ^ (b + g) * 2 ^ (c + d + e + f) = 2 ^ m := by
+    rw [hm, ← pow_add]; congr 1; omega
+  have hS3 := threeBlock_nonwindow_S3 (show (0:ℤ) < 2 ^ (b + g) by positivity)
+    (by rw [hBg]; exact hM2) hW
+  -- transport to ℕ
+  have n1 : 2 ^ d * 3 ^ d ≤ 2 * (2 ^ (d + e) + 3 ^ d) := by exact_mod_cast hS1
+  have n2 : 2 ^ (d + e + f) < 2 * (2 ^ (d + e) + 3 ^ d) := by exact_mod_cast hS2
+  have n3 : 2 ^ (d + e + f) * (2 ^ (b + g) + 2) < 2 * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := by
+    exact_mod_cast hS3
+  have h3d : 3 ^ d ≤ 2 ^ (e + 2) := threeBlock_nonwindow_F1 hd n1
+  have hf2 : f ≤ 2 := threeBlock_nonwindow_F2 hd h3d n2
+  have hbg4 : b + g ≤ 4 := threeBlock_nonwindow_F3 hd hf hf2 h3d n3
+  -- `3^d ≤ 2·2^(d+e)` and `3^(b+f) ≤ 729`
+  have h3dZ : (3 : ℤ) ^ d ≤ 2 * 2 ^ (d + e) := by
+    have h1 : (2 : ℕ) ^ (e + 2) ≤ 2 * 2 ^ (d + e) := by
+      have : (2 : ℕ) ^ (e + 2) ≤ 2 ^ (d + e + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      have h2 : (2 : ℕ) ^ (d + e + 1) = 2 * 2 ^ (d + e) := by rw [pow_succ]; ring
+      omega
+    have : (3 : ℕ) ^ d ≤ 2 * 2 ^ (d + e) := le_trans h3d h1
+    exact_mod_cast this
+  have hbfZ : (3 : ℤ) ^ b * 3 ^ f ≤ 729 := by
+    have : (3 : ℕ) ^ b * 3 ^ f ≤ 729 := by
+      have hbf : b + f ≤ 6 := by omega
+      calc (3 : ℕ) ^ b * 3 ^ f = 3 ^ (b + f) := by rw [pow_add]
+        _ ≤ 3 ^ 6 := Nat.pow_le_pow_right (by norm_num) hbf
+        _ = 729 := by norm_num
+    exact_mod_cast this
+  -- F5 : `D ≤ 4374·2^e`, hence `m ≤ e + 13`
+  have hsum3 : (2 : ℤ) ^ (d + e) + 3 ^ d ≤ 3 * 2 ^ (d + e) := by linarith
+  have hdpos : (0 : ℤ) < (2 : ℤ) ^ d := by positivity
+  have hF5 : ((2 : ℤ) ^ m - 3 ^ k) * 2 ^ d ≤ 4374 * (2 ^ d * 2 ^ e) := by
+    have hsplit : (2 : ℤ) ^ (d + e) = 2 ^ d * 2 ^ e := by rw [← pow_add]
+    have hpos : (0 : ℤ) < 2 * (3 ^ b * 3 ^ f) := by positivity
+    calc ((2 : ℤ) ^ m - 3 ^ k) * 2 ^ d ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d) := hV
+      _ ≤ 2 * (3 ^ b * 3 ^ f) * (3 * 2 ^ (d + e)) := by nlinarith [hsum3, hpos]
+      _ ≤ 2 * 729 * (3 * 2 ^ (d + e)) := by nlinarith [hbfZ, (by positivity : (0:ℤ) < 2 ^ (d+e))]
+      _ = 4374 * (2 ^ d * 2 ^ e) := by rw [hsplit]; ring
+  have hDe : (2 : ℤ) ^ m - 3 ^ k ≤ 4374 * 2 ^ e := le_of_mul_le_mul_right (by nlinarith [hF5]) hdpos
+  have hme : m ≤ e + 13 := by
+    have hMe : (2 : ℤ) ^ m < 2 ^ (e + 14) := by
+      have : (2 : ℤ) ^ (e + 14) = 16384 * 2 ^ e := by rw [pow_add]; ring
+      rw [this]; linarith
+    have : (2 : ℕ) ^ m < 2 ^ (e + 14) := by exact_mod_cast hMe
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 this
+    omega
+  have hd13 : d ≤ 13 := by omega
+  have hk13 : k ≤ 13 := by omega
+  -- F6 : bound `e`, or else `R > 1/4`
+  by_cases hX : (2 : ℕ) ^ (d + e) ≤ 2 * 3 ^ d
+  · have := threeBlock_nonwindow_e_bound hd13 hX
+    omega
+  · -- `2·3^d < 2^(d+e)`, so `2(2^(d+e)+3^d) ≤ 3·2^(d+e)`, and `(A*)` gives `2^m < 4·3^k`
+    have hXZ : 2 * (3 : ℤ) ^ d < 2 ^ (d + e) := by
+      have : 2 * 3 ^ d < (2 : ℕ) ^ (d + e) := by omega
+      exact_mod_cast this
+    have hde1 : (2 : ℤ) ^ (d + e + f) ≥ 2 * 2 ^ (d + e) := by
+      have h1 : (2 : ℤ) ^ (d + e + 1) ≤ 2 ^ (d + e + f) := by
+        apply pow_le_pow_right₀ (by norm_num); omega
+      have h2 : (2 : ℤ) ^ (d + e + 1) = 2 * 2 ^ (d + e) := by rw [pow_succ]; ring
+      linarith
+    have hkey : 4 * ((2 : ℤ) ^ m - 3 ^ k) < 3 * 2 ^ m := by
+      have hdepos : (0 : ℤ) < (2 : ℤ) ^ (d + e) := by positivity
+      nlinarith [hA, hde1, hD, hMpos, hXZ, hdepos]
+    have hlt : (2 : ℕ) ^ m < 4 * 3 ^ k := by
+      have : (2 : ℤ) ^ m < 4 * 3 ^ k := by linarith
+      exact_mod_cast this
+    have h3k : (3 : ℕ) ^ k ≤ 3 ^ 13 := Nat.pow_le_pow_right (by norm_num) hk13
+    have : (2 : ℕ) ^ m < 2 ^ 23 := by
+      have : (4 : ℕ) * 3 ^ 13 < 2 ^ 23 := by norm_num
+      omega
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 this
+    omega
+
+/-- **Node 1 of the rung-3 crux: the finite range.**  No exponent tuple of length `m ≤ 27` other
+than the four census lengths fails all three positivity leaves.  This is a finite check
+(≈2·10⁵ tuples, integers below `2^60`) — a `decide`/`native_decide` job, not mathematics. -/
+theorem threeBlock_finite_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hc : 1 ≤ c) (he : 1 ≤ e) (hshort : b + c + d + e + f + g ≤ 27)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ))
+    (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+        ≤ 3 ^ (b + d) * (3 ^ f - 1))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+          * (2 ^ (c + d) - 2 ^ c + 1)
+        ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)))
+    (hW : (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+        ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)) :
+    False := by
+  sorry
+
+/-- **Node 2 of the rung-3 crux — THE crux.**  The near-critical window `3^k < 2^m < 2·3^k` at
+length `m ≥ 28`.  Route (worked out 2026-09-02, see the module notes above): the Rhin-lite
+*polynomial* measure `rhinLite_log23_measure` gives `1 − R ≥ rhinLiteSepC/(2·k^436)` with
+`R = 3^k/2^m`; writing `L = log₂(1/(1−R)) = O(log k)` and `X = (3/2)^d/2^e`, the three relaxed
+inequalities `threeBlock_relax_A/W/V` read
+
+    f ≤ L + log₂(1+X),   d ≤ L + 1 + log₂(1+1/X),   b + g ≤ L + f·log₂(3/2) + log₂(1+X),
+
+and with `e ≤ m − k ≤ 0.585k + 1` these close as `k ≤ 5.09·L + 6`, i.e. `k` bounded.
+⚠️ It is the *polynomial* measure that closes this, **not** `sep_two_three` (`β = 1/3`): at
+`β = 1/3` the normalized system has the fixed point `b/k = d/k = f/k = 1/3`, so it is feasible.
+Rung 3 therefore needs a strictly stronger separation input than rung 2 does — the effectivity
+asymmetry `DIRECTION.md` asks to record. -/
+theorem threeBlock_window_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hc : 1 ≤ c) (he : 1 ≤ e) (hlongm : 28 ≤ b + c + d + e + f + g)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hwin : 2 ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f))
+    (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+        ≤ 3 ^ (b + d) * (3 ^ f - 1))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+          * (2 ^ (c + d) - 2 ^ c + 1)
+        ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)))
+    (hW : (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+        ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)) :
+    False := by
+  sorry
+
 /-- **THE RUNG-3 CRUX, in exponent form.**  The residual census, with the cascade scales
 `w₁, w₂, w₃` eliminated: no exponent tuple of length outside `{5, 8, 16, 27}` fails all three
 positivity leaves at once.  Host scan (`experiments/rung3_census.py leaves`, exhaustive
@@ -852,7 +1012,14 @@ theorem threeBlock_leaves_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 
         ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
             - 2 ^ (c + d + e + f)) :
     False := by
-  sorry
+  by_cases hshort : b + c + d + e + f + g ≤ 27
+  · exact threeBlock_finite_infeasible b c d e f g hb hd hf hc he hshort hsub hlong hR3 hV hW
+  by_cases hwin : 2 ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f)
+  · exact threeBlock_window_infeasible b c d e f g hb hd hf hc he (by omega) hsub hwin hR3 hV hW
+  · have hbig : 2 * 3 ^ (b + d + f) ≤ 2 ^ (b + c + d + e + f + g) := by omega
+    have := threeBlock_nonwindow b c d e f g hb hd hf hc he hsub hbig
+      (threeBlock_relax_A hR3) (threeBlock_relax_W hW) (threeBlock_relax_V hd hsub hV)
+    omega
 
 /-- The residual node of the census, now a one-line consequence of the exponent-only
 `threeBlock_leaves_infeasible`: its hypotheses never mention `w₁, w₂, w₃`. -/
