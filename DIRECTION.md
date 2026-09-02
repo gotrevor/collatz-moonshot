@@ -24,6 +24,33 @@
     not mathematics, in this repo; `~/src/normal-numbers` is owned by another session and is
     read-only here, so the payoff cannot even be landed from this side.  Revisit as an
     *interface proposal* once rung 3 is settled.
+    ⚠️ **Its advertised cross-repo payoff is REFUTED — do not re-attempt it.**  The kickoff
+    prompt says to specialize `rhinLiteLIMeasure_explicit` at a zero log-3 coefficient to
+    discharge normal-numbers' Tier-1 node `LnTwoExpSep`.  That node is not open.  Host
+    computation, 2026-09-02: `log(3/2) + log(4/3) = log 2`, so `q = r = 2ⁿ`, `p = −p'` turns
+    the form `|p + q·log(3/2) + r·log(4/3)|` into `|2ⁿ·log 2 − p'|` at height
+    `H = max(|p'|, 2ⁿ) = 2ⁿ`, giving `‖2ⁿ log 2‖ ≥ rhinLiteSepC · 2^(−436n)` — i.e.
+    `LnTwoExpSep` at **β ≈ 437**, against a **β = 9** already proved over there.  ~48×
+    weaker, and it cannot touch their β<9 wall either (that wall is missing PNT-strength
+    `lcm(1..ℓ) ≤ e^{(1+ε)ℓ}` in mathlib v4.33.1; the Rhin-lite Chebyshev envelope is the same
+    `4^ℓ` bound they already use).
+    **Evidence tiers, stated because this directive gets summarized:** β = 9 exists at *grep
+    tier* (`theorem lnTwoExpSep_sharp : ∃ N₀, LnTwoExpSep 9 N₀`,
+    `~/src/normal-numbers/src/NormalNumbers/LnTwoExpSepSharp.lean`, file clean of `sorry`,
+    independently grepped by a second session).  Its axiom-cleanliness is *prose tier only* —
+    their `PENDING_WORK`/`HANDOFF` claim the trust triple, but no one here ran
+    `#print axioms`; do not upgrade that wording without running it.  The β ≈ 437 figure is
+    *hand-computation tier*: arithmetic on the **statement** as read from source, not a Lean
+    proof.  Enough to keep a lap off a dead payoff; **not** citable.  If anything load-bearing
+    needs it, formalize the specialization first — that is a cheap, well-defined green node.
+    What survives of (b) is only the **architecture**: normal-numbers already built its half of
+    the door (`lnTwoDyadicSep_iff_int`, `src/NormalNumbers/DiophantineWall.lean`) which strips
+    all orbit/digit language, and its docstring names `sep_two_three` as knocking at the same
+    wall in the polynomial-coefficient regime.  This repo has no counterpart.  A shared
+    separation-interface node family — with the one-log and two-log tiers as *definitional*
+    instances — would make the gap between β = 9 and exponent 436 a stateable question instead
+    of an artifact of two codebases.  That is the queued follow-on once rung 3 lands or is
+    refuted; it is **not** tonight's objective.
   · **(c) Kolmogorov–Sinai entropy for the one-sided 2-adic shift** — deferred.  It is a
     multi-lap mathlib-infrastructure build (measure-theoretic entropy where mathlib carries
     only topological entropy) on the *Rigidity* front, with no rung-level payoff and no
