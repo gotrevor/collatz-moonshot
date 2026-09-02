@@ -1,6 +1,10 @@
 # Handoff: rung 3 of the odd-block ladder opened — engine sorry-free, crux = a 27-tuple census
 
-**Date**: 2026-09-02 · **Branch**: `main` · **HEAD**: (this commit) · nothing pushed — host pushes
+**Date**: 2026-09-02 · **Branch**: `main` · **HEAD**: `5bc3c19` (clean tree) · nothing pushed — host pushes
+
+**Three commits this lap**: `5c8b48f` (rung 3 opened, engine sorry-free) → `016bf34` (real-relaxation
+half proved, sorry confined to the ceilings) → `5bc3c19` (three positivity leaves proved; the
+rounding turns out to be unnecessary).
 
 ## 🎯 What we're doing
 `DIRECTION.md` was retargeted by this **altitude lap**.  The previous objective (discharge
@@ -41,16 +45,23 @@ it, all of length 8 — and it is the Front-A analogue of Front B's `m`-cycle la
   ceiling**, not by a linear form in logarithms — the effectivity asymmetry the operator asked
   about, against both rung 2 (needs Baker via `sep_two_three`) and Front B's `m`-cycle ladder.
 
-## ✅ State (all observed this session)
-- `lake build` → `Build completed successfully (8766 jobs)`.
-- `scripts/check-proof-debt.sh` → `1 disclosed sorries`, `ThreeBlock.lean:410` only (gate's
-  allowlist extended to `ThreeBlock.lean` with the reason written in the script).
+## ✅ State (all observed this session, at `5bc3c19`)
+- `lake build` → `Build completed successfully (8766 jobs)` (also re-run by the pre-commit hook).
+- `scripts/check-proof-debt.sh` → `1 disclosed sorries`, `ThreeBlock.lean:619` only — the single
+  live crux `threeBlock_ceiling_gap` (gate's allowlist extended to `ThreeBlock.lean`, with the
+  reason written into the script: `src/` sorry-freedom is the completion end-state, not a
+  per-lap invariant).
 - `lake env lean scripts/AxiomAudit.lean | grep -c sorryAx` → `0` (no audited headline touched).
 - `#print axioms`: `threeBlock_slack`, `threeBlock_criterion`, `threeBlock_cascade`,
   `threeBlock_of_gap`, `threeBlock_segment_identities` = `[propext, Classical.choice, Quot.sound]`;
   `threeBlock_merge_reduction` / `threeBlock_criticality_of_acyclicParadoxical` add exactly the
   two-block exclusion's existing `native_decide` certificates (they consume rung 2);
-  `threeBlock_not_acyclicParadoxical_of_long` carries the one disclosed `sorryAx`.
+  `threeBlock_cascade_elim`, `threeBlock_gap_of_scaled_lower`, `threeBlock_cascade_pos`,
+  `threeBlock_gap_of_real`, `threeBlock_gap_of_w2`, `threeBlock_gap_of_w1` all print the bare
+  trust base; only `threeBlock_gap_of_long` / `threeBlock_not_acyclicParadoxical_of_long` carry
+  the one disclosed `sorryAx`.
+- **No Front-A headline is affected**: `finite_acyclicParadoxical_imp_noDivergent` and
+  `Assumed.rozier_terracol_3_2` are unchanged and still trust-base clean.
 - No Aristotle job in flight.
 
 ## 🎬 Next actions
