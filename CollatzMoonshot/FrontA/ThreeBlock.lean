@@ -566,7 +566,9 @@ theorem threeBlock_gap_of_real {b c d e f g : ℕ}
     nlinarith [hkey, this]
   exact lt_of_mul_lt_mul_left hchain h3pos.le
 
-/-- **Rung-3 census (host instrument, exact integers).**  Combining `threeBlock_criterion` with
+/-! ### Rung-3 census (host instrument, exact integers)
+
+Combining `threeBlock_criterion` with
 the integer cascade of `threeBlock_cascade` — minimising `w₁` over integer triples with
 `w₃ ≥ 1` — leaves exactly **27** three-block tuples, at lengths `m ∈ {5, 8, 16, 27}`,
 exhaustively for all `m ≤ 130` and all `k` with `3^k / 2^m > 1/8`
@@ -596,6 +598,154 @@ rounding — a sharper statement than the ceiling census, and an entirely elemen
 
 `threeBlock_ceiling_gap` is the residual: the census restricted to tuples that fail all three
 leaves.  Chipping it is the rung-3 crux; see `PENDING_WORK.md`. -/
+/-! ### The residual, reduced to the exponents alone
+
+The three positivity leaves are *division-free*: their hypotheses mention only `b,c,d,e,f,g`.
+So the residual census is a statement about the **exponent tuple alone** — the cascade scales
+`w₁, w₂, w₃` have been eliminated entirely.  `threeBlock_leaves_infeasible` says exactly that,
+and `threeBlock_ceiling_gap` is then a one-line consequence.  The three `threeBlock_relax_*`
+lemmas below strip the tuple down further, replacing `T` by the two-term envelope
+`2^c·(2^(d+e) + 3^d)`; in the relaxed variables the system reads (with `R = 3^k/2^m`,
+`X = (3/2)^d/2^e`, `Y = (3/2)^f`)
+
+    (A*)  (1−R)·2^f        <  1 + X
+    (W*)  (1−R)·2^(b+g)+1  <  Y·(1 + X)
+    (V*)  (1−R)·2^d        ≤  2·Y·(3/2)^b·(1 + X)/2^e · 2^e
+
+i.e. every one of them is an upper bound on `1 − R` — which is why the surviving lengths are
+exactly the continued-fraction convergents `m/k ∈ {5/3, 8/5, 13/8, 16/10, 27/17}` of `log₂3`.
+**Finding (the effectivity question `DIRECTION.md` asks):** the residual regime is the
+near-critical one, `3^k < 2^m < 2·3^k`, so rung 3's *residual* does consume a two-log
+separation after all — `sep_two_three` is the intended input, exactly as in rung 2's
+`bd_reduction`.  What the ceiling census showed is only that the *bulk* of rung 3 (all but 58
+tuples) is elementary. -/
+
+/-- **Relaxation (A\*) of the failed real-relaxation leaf.**  `hR3` (the negation of
+`threeBlock_gap_of_real`'s hypothesis) implies `D·2^(c+d+e+f) < 2^m·T`, and `T` is below the
+envelope `2^c·(2^(d+e) + 3^d)`; cancelling `2^c` gives a relation free of `c`. -/
+theorem threeBlock_relax_A {b c d e f g : ℕ}
+    (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+        ≤ 3 ^ (b + d) * (3 ^ f - 1)) :
+    ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (d + e + f)
+      < 2 ^ (b + c + d + e + f + g) * (2 ^ (d + e) + 3 ^ d) := by
+  have hMpos : (0 : ℤ) < 2 ^ (b + c + d + e + f + g) := by positivity
+  have hcpos : (0 : ℤ) < (2 : ℤ) ^ c := by positivity
+  set T : ℤ := 2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1) with hT
+  have hsplitc : (2 : ℤ) ^ (c + d + e + f) = 2 ^ c * 2 ^ (d + e + f) := by
+    rw [← pow_add]; congr 1; omega
+  have hTlt : T < 2 ^ c * (2 ^ (d + e) + 3 ^ d) := by
+    have h1 : (2 : ℤ) ^ (c + d + e) = 2 ^ c * 2 ^ (d + e) := by rw [← pow_add]; congr 1; omega
+    have h4 : (2 : ℤ) ^ (c + d) = 2 ^ c * 2 ^ d := by rw [← pow_add]
+    have h2 : (0 : ℤ) < (2 : ℤ) ^ c * 2 ^ d := by positivity
+    have h3 : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+    rw [hT, h1, h4]; ring_nf; nlinarith [h2, h3]
+  have key : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (c + d + e + f)
+      < 2 ^ (b + c + d + e + f + g) * T := by
+    have hm : (2 : ℤ) ^ (b + c + d + e + f + g) = 2 ^ (b + g) * 2 ^ (c + d + e + f) := by
+      rw [← pow_add]; congr 1; omega
+    have hk : (3 : ℤ) ^ (b + d + f) = 3 ^ (b + d) * 3 ^ f := by rw [← pow_add]
+    have hbd : (0 : ℤ) < (3 : ℤ) ^ (b + d) := by positivity
+    have h1 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f) - T) < 3 ^ (b + d + f) := by
+      rw [hk]; nlinarith [hR3, hbd]
+    have h2 := mul_lt_mul_of_pos_right h1 (show (0:ℤ) < 2 ^ (c + d + e + f) by positivity)
+    rw [hm]; nlinarith [h2]
+  refine lt_of_mul_lt_mul_left ?_ hcpos.le
+  calc (2 : ℤ) ^ c * (((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (d + e + f))
+      = ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (c + d + e + f) := by
+        rw [hsplitc]; ring
+    _ < 2 ^ (b + c + d + e + f + g) * T := key
+    _ < 2 ^ (b + c + d + e + f + g) * (2 ^ c * (2 ^ (d + e) + 3 ^ d)) :=
+        mul_lt_mul_of_pos_left hTlt hMpos
+    _ = 2 ^ c * (2 ^ (b + c + d + e + f + g) * (2 ^ (d + e) + 3 ^ d)) := by ring
+
+/-- **Relaxation (W\*) of the failed head-scale leaf.** -/
+theorem threeBlock_relax_W {b c d e f g : ℕ}
+    (hW : (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+        ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)) :
+    ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 2 ^ (c + d + e + f)
+      < 3 ^ f * (2 ^ c * (2 ^ (d + e) + 3 ^ d)) := by
+  have hTlt : (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1) : ℤ)
+      < 2 ^ c * (2 ^ (d + e) + 3 ^ d) := by
+    have h1 : (2 : ℤ) ^ (c + d + e) = 2 ^ c * 2 ^ (d + e) := by rw [← pow_add]; congr 1; omega
+    have h4 : (2 : ℤ) ^ (c + d) = 2 ^ c * 2 ^ d := by rw [← pow_add]
+    have h2 : (0 : ℤ) < (2 : ℤ) ^ c * 2 ^ d := by positivity
+    have h3 : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+    rw [h1, h4]; ring_nf; nlinarith [h2, h3]
+  have hfpos : (0 : ℤ) < (3 : ℤ) ^ f := by positivity
+  nlinarith [hW, mul_lt_mul_of_pos_left hTlt hfpos]
+
+/-- **Relaxation (V\*) of the failed interior-scale leaf.**  Uses `1 ≤ d` through
+`2·(2^(c+d) − 2^c + 1) ≥ 2^(c+d)`. -/
+theorem threeBlock_relax_V {b c d e f g : ℕ} (hd : 1 ≤ d)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+          * (2 ^ (c + d) - 2 ^ c + 1)
+        ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f))) :
+    ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ d
+      ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d) := by
+  have hcpos : (0 : ℤ) < (2 : ℤ) ^ c := by positivity
+  have hDpos : (0 : ℤ) < 2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f) := by
+    have : (3 : ℤ) ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by exact_mod_cast hsub
+    linarith
+  have hTlt : (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1) : ℤ)
+      < 2 ^ c * (2 ^ (d + e) + 3 ^ d) := by
+    have h1 : (2 : ℤ) ^ (c + d + e) = 2 ^ c * 2 ^ (d + e) := by rw [← pow_add]; congr 1; omega
+    have h4 : (2 : ℤ) ^ (c + d) = 2 ^ c * 2 ^ d := by rw [← pow_add]
+    have h2 : (0 : ℤ) < (2 : ℤ) ^ c * 2 ^ d := by positivity
+    have h3 : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+    rw [h1, h4]; ring_nf; nlinarith [h2, h3]
+  -- `2·(2^(c+d) − 2^c + 1) ≥ 2^(c+d)` because `2^(c+d) ≥ 2^(c+1)`.
+  have hVlow : (2 : ℤ) ^ (c + d) ≤ 2 * (2 ^ (c + d) - 2 ^ c + 1) := by
+    have h1 : (2 : ℤ) ^ (c + 1) ≤ 2 ^ (c + d) := by
+      apply pow_le_pow_right₀ (by norm_num); omega
+    have h2 : (2 : ℤ) ^ (c + 1) = 2 * 2 ^ c := by rw [pow_succ]; ring
+    linarith
+  have hbfpos : (0 : ℤ) < (3 : ℤ) ^ b * 3 ^ f := by positivity
+  have hstep : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (c + d)
+      ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ c * (2 ^ (d + e) + 3 ^ d)) := by
+    have h1 := mul_le_mul_of_nonneg_left hVlow hDpos.le
+    have h2 : (0 : ℤ) < (3 : ℤ) ^ f := by positivity
+    have h3 : (0 : ℤ) < (2 : ℤ) ^ (c + d + e + f) := by positivity
+    nlinarith [hV, mul_lt_mul_of_pos_left hTlt (show (0:ℤ) < (3:ℤ)^b * 3^f by positivity), h1, h2, h3]
+  have hsplit : (2 : ℤ) ^ (c + d) = 2 ^ c * 2 ^ d := by rw [← pow_add]
+  refine le_of_mul_le_mul_left ?_ hcpos
+  calc (2 : ℤ) ^ c * (((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ d)
+      = ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (c + d) := by
+        rw [hsplit]; ring
+    _ ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ c * (2 ^ (d + e) + 3 ^ d)) := hstep
+    _ = 2 ^ c * (2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d)) := by ring
+
+/-- **THE RUNG-3 CRUX, in exponent form.**  The residual census, with the cascade scales
+`w₁, w₂, w₃` eliminated: no exponent tuple of length outside `{5, 8, 16, 27}` fails all three
+positivity leaves at once.  Host scan (`experiments/rung3_census.py leaves`, exhaustive
+`m ≤ 80`): the failures number 58 and sit at `m ∈ {5, 8, 16, 27}` exactly.  The relaxed system
+`threeBlock_relax_A/W/V` — which drops `c` from two of the three — is already finite:
+exhaustively for `m ≤ 70` its solutions have `m ∈ {5,6,7,8,10,12,13,16,27}`, all with
+`3^k < 2^m < 2·3^k` except one at `m = 6`.  So the intended proof is
+*near-critical window ⇒ `sep_two_three` ⇒ `k` bounded ⇒ finite check*, the same shape as rung 2's
+`bd_reduction`. -/
+theorem threeBlock_leaves_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
+    (hc : 1 ≤ c) (he : 1 ≤ e)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ))
+    (hR3 : (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+          - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+        ≤ 3 ^ (b + d) * (3 ^ f - 1))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f))
+          * (2 ^ (c + d) - 2 ^ c + 1)
+        ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)))
+    (hW : (2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)
+        ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+            - 2 ^ (c + d + e + f)) :
+    False := by
+  sorry
+
+/-- The residual node of the census, now a one-line consequence of the exponent-only
+`threeBlock_leaves_infeasible`: its hypotheses never mention `w₁, w₂, w₃`. -/
 theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -615,8 +765,8 @@ theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
       3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1 →
       (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
           - 2 ^ (c + d + e + f) : ℤ)
-        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ := by
-  sorry
+        < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ :=
+  (threeBlock_leaves_infeasible b c d e f g hb hd hf hc he hsub hlong hR3 hV hW).elim
 
 /-- **The rung-3 census gap.**  Assembled from the three proved positivity leaves and the
 disclosed residual `threeBlock_ceiling_gap`. -/
