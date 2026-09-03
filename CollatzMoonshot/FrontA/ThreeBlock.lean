@@ -938,6 +938,126 @@ theorem threeBlock_nonwindow (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (
     have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 this
     omega
 
+/-! ### The census chain at a general scale `2^m ≤ 2^t·D`
+
+The non-window chain above is the case `t = 1`.  The window node runs the same argument at
+`t = 21`, the scale supplied by `threeBlock_window_scale`.  Constants here are deliberately crude
+(`3 ≤ 4` rather than `3^5 ≤ 2^8`): the point is that the bound is *linear in `t`*, hence finite
+and explicit, since `t = O(log k)` for every separation input this repo has. -/
+
+/-- (A\*) at scale `t`. -/
+theorem threeBlock_scaled_S2 {d e f t : ℕ} {D M : ℤ} (hD : 0 < D) (hMpos : 0 < M)
+    (hM : M ≤ 2 ^ t * D) (hA : D * 2 ^ (d + e + f) < M * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := by
+  have hp : (0 : ℤ) < 2 ^ (d + e + f) := by positivity
+  have ht : (0 : ℤ) < (2 : ℤ) ^ t := by positivity
+  refine lt_of_mul_lt_mul_left ?_ hMpos.le
+  nlinarith [hA, hM, hp, ht]
+
+/-- (V\*) at scale `t`. -/
+theorem threeBlock_scaled_S1 {d e t : ℕ} {D Pb : ℤ} (hD : 0 < D)
+    (hPb : Pb * 3 ^ d ≤ 2 ^ t * D) (hV : D * 2 ^ d ≤ 2 * Pb * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d) := by
+  have h3 : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+  have hsum : (0 : ℤ) < (2 : ℤ) ^ (d + e) + 3 ^ d := by positivity
+  have hpow : (2 : ℤ) ^ (t + 1) = 2 * 2 ^ t := by rw [pow_succ]; ring
+  rw [hpow]
+  refine le_of_mul_le_mul_left ?_ hD
+  nlinarith [hV, hPb, h3, hsum]
+
+/-- (W\*) at scale `t`. -/
+theorem threeBlock_scaled_S3 {c d e f t : ℕ} {D Bg : ℤ} (hBg : 0 < Bg)
+    (hm : Bg * 2 ^ (c + d + e + f) ≤ 2 ^ t * D)
+    (hW : D + 2 ^ (c + d + e + f) < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ (d + e + f) * (Bg + 2 ^ t) < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := by
+  have hsplit : (2 : ℤ) ^ (c + d + e + f) = 2 ^ c * 2 ^ (d + e + f) := by
+    rw [← pow_add]; congr 1; omega
+  have hcpos : (0 : ℤ) < (2 : ℤ) ^ c := by positivity
+  have ht : (0 : ℤ) < (2 : ℤ) ^ t := by positivity
+  refine lt_of_mul_lt_mul_left ?_ hcpos.le
+  rw [hsplit] at hm hW
+  nlinarith [hm, hW, ht]
+
+/-- `F1` at scale `t`: `3^d ≤ 2^(2t+4+e)`. -/
+theorem threeBlock_scaled_F1 {d e t : ℕ}
+    (h : 2 ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d)) : 3 ^ d ≤ 2 ^ (2 * t + 4 + e) := by
+  rcases Nat.lt_or_ge d (t + 2) with hd | hd
+  · calc (3 : ℕ) ^ d ≤ 4 ^ d := Nat.pow_le_pow_left (by norm_num) d
+      _ = 2 ^ (2 * d) := by rw [pow_mul]; norm_num
+      _ ≤ 2 ^ (2 * t + 4 + e) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  · -- `2·2^(t+1) ≤ 2^d`, so the `3^d` term on the right absorbs into the left
+    have habs : 2 * 2 ^ (t + 1) ≤ 2 ^ d := by
+      have : (2 : ℕ) ^ (t + 2) ≤ 2 ^ d := Nat.pow_le_pow_right (by norm_num) hd
+      calc 2 * 2 ^ (t + 1) = 2 ^ (t + 2) := by rw [pow_succ]; ring
+        _ ≤ 2 ^ d := this
+    have h3 : 0 < (3 : ℕ) ^ d := by positivity
+    have hmul : 2 * 2 ^ (t + 1) * 3 ^ d ≤ 2 ^ d * 3 ^ d := Nat.mul_le_mul_right _ habs
+    have hde : (2 : ℕ) ^ (d + e) = 2 ^ d * 2 ^ e := pow_add 2 d e
+    rw [hde] at h
+    have hkey : 2 ^ d * 3 ^ d ≤ 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by
+      have e1 : (2 : ℕ) ^ (t + 2) = 2 * 2 ^ (t + 1) := by rw [pow_succ]; ring
+      have : 2 * (2 ^ d * 3 ^ d) ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) + 2 ^ d * 3 ^ d := by
+        nlinarith [h, hmul]
+      calc 2 ^ d * 3 ^ d ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) := by omega
+        _ = 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by rw [e1]; ring
+    have hdpos : 0 < (2 : ℕ) ^ d := by positivity
+    have := Nat.le_of_mul_le_mul_left hkey hdpos
+    calc (3 : ℕ) ^ d ≤ 2 ^ (t + 2) * 2 ^ e := this
+      _ = 2 ^ (t + 2 + e) := (pow_add 2 (t + 2) e).symm
+      _ ≤ 2 ^ (2 * t + 4 + e) := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+/-- The envelope `2^(d+e) + 3^d ≤ 2^(2t+4+d+e)` used throughout (needs `1 ≤ d`). -/
+theorem threeBlock_scaled_env {d e t : ℕ} (hd : 1 ≤ d) (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e)) :
+    2 ^ (d + e) + 3 ^ d ≤ 2 ^ (2 * t + 4 + d + e) := by
+  have h1 : (2 : ℕ) ^ (d + e) ≤ 2 ^ (2 * t + 3 + d + e) :=
+    Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h2 : (3 : ℕ) ^ d ≤ 2 ^ (2 * t + 3 + d + e) :=
+    le_trans h3d (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have h3 : (2 : ℕ) ^ (2 * t + 4 + d + e) = 2 * 2 ^ (2 * t + 3 + d + e) := by
+    rw [show 2 * t + 4 + d + e = (2 * t + 3 + d + e) + 1 by omega, pow_succ]; ring
+  omega
+
+/-- `F2` at scale `t`: `f ≤ 3t + 4`. -/
+theorem threeBlock_scaled_F2 {d e f t : ℕ} (hd : 1 ≤ d) (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e))
+    (h : 2 ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d)) : f ≤ 3 * t + 4 := by
+  have henv := threeBlock_scaled_env hd h3d
+  have hlt : (2 : ℕ) ^ (d + e + f) < 2 ^ (t + (2 * t + 4 + d + e)) := by
+    calc (2 : ℕ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := h
+      _ ≤ 2 ^ t * 2 ^ (2 * t + 4 + d + e) := Nat.mul_le_mul_left _ henv
+      _ = 2 ^ (t + (2 * t + 4 + d + e)) := (pow_add 2 t (2 * t + 4 + d + e)).symm
+  have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+  omega
+
+/-- `F3` at scale `t`: `b + g ≤ 9t + 11`. -/
+theorem threeBlock_scaled_F3 {b d e f g t : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f) (hf3 : f ≤ 3 * t + 4)
+    (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e))
+    (h : 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))) :
+    b + g ≤ 9 * t + 11 := by
+  have henv := threeBlock_scaled_env hd h3d
+  have h3f : (3 : ℕ) ^ f ≤ 2 ^ (6 * t + 8) := by
+    calc (3 : ℕ) ^ f ≤ 4 ^ f := Nat.pow_le_pow_left (by norm_num) f
+      _ = 2 ^ (2 * f) := by rw [pow_mul]; norm_num
+      _ ≤ 2 ^ (6 * t + 8) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hR : 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) ≤ 2 ^ (9 * t + 12 + d + e) := by
+    calc 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+        ≤ 2 ^ t * (2 ^ (6 * t + 8) * 2 ^ (2 * t + 4 + d + e)) := by
+          exact Nat.mul_le_mul_left _ (Nat.mul_le_mul h3f henv)
+      _ = 2 ^ (9 * t + 12 + d + e) := by rw [← pow_add, ← pow_add]; congr 1; omega
+  have hL : 2 ^ (d + e + 1) * 2 ^ (b + g) ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := by
+    have hfge : (2 : ℕ) ^ (d + e + 1) ≤ 2 ^ (d + e + f) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    calc 2 ^ (d + e + 1) * 2 ^ (b + g) ≤ 2 ^ (d + e + f) * 2 ^ (b + g) :=
+          Nat.mul_le_mul_right _ hfge
+      _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) :=
+          Nat.mul_le_mul_left _ (Nat.le_add_right _ _)
+  have hlt : (2 : ℕ) ^ (d + e + 1 + (b + g)) < 2 ^ (9 * t + 12 + d + e) := by
+    calc (2 : ℕ) ^ (d + e + 1 + (b + g)) = 2 ^ (d + e + 1) * 2 ^ (b + g) := by rw [pow_add]
+      _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := hL
+      _ < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := h
+      _ ≤ 2 ^ (9 * t + 12 + d + e) := hR
+  have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+  omega
+
 /-- **Node 1 of the rung-3 crux: the finite range.**  No exponent tuple of length `m ≤ 27` other
 than the four census lengths fails all three positivity leaves.  This is a finite check
 (≈2·10⁵ tuples, integers below `2^60`) — a `decide`/`native_decide` job, not mathematics. -/
