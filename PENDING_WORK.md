@@ -1,9 +1,12 @@
 # PENDING_WORK
 
-## RUNG 3 WINDOW NODE CLOSED — 2026-09-08
+## RUNG 3 FRONT-NORMALIZED CLASSIFICATION CLOSED — 2026-09-08
 
-The scoped kickoff target is complete.  `threeBlock_window_infeasible`,
-`threeBlock_gap_of_long`, and `threeBlock_not_acyclicParadoxical_of_long` are proved; the
+The scoped kickoff target is complete, and its advertised literal classification is now also
+proved.  `threeBlock_window_infeasible`, `threeBlock_gap_of_long`,
+`threeBlock_not_acyclicParadoxical_of_long`,
+`threeBlock_not_acyclicParadoxical_of_exceptional`, and
+`threeBlock_length_eq_eight_of_acyclicParadoxical` are all in the kernel-checked source; the
 proof-debt gate reports zero sorries.
 
 The near-critical proof chain is:
@@ -21,10 +24,18 @@ The previous gap `[190537, ≈2.4·10^5]` is closed by the next bracket.  Its lo
 is `decide +kernel`; its 5-million-digit upper comparison exceeds `LEAN_NAT_MAX_SIZE` and is
 therefore `native_decide`, as is the final finite census.  The axiom audit records both artifacts.
 
-**Next mathematical tail, outside this window-node kickoff:** the current word theorem excludes
-all lengths outside `{5,8,16,27}`.  To turn that statement into the literal “length 8”
-classification, formalize the already host-verified realizing-residue rejection of the ten
-ceiling-passing tuples at lengths `5,16,27`.  Do not describe that tail as already formalized.
+The exceptional tail is closed without a new native artifact.  Nested ceiling bounds give the
+least possible head scale of every genuine cascade.  A single `decide +kernel` certificate then
+reduces lengths `5`, `16`, and `27` to ten tuples, checks the complete parity trace and canonical
+residue for each least realizing start, and verifies failure of the exact acyclic criterion.
+`traceWord_eq_imp_modEq` plus a generic canonical-representative lemma transfers that rejection
+to every start realizing the same word.
+
+**Next:** there is no remaining obligation in the rung-3 window-node kickoff.  Do not resume the
+stale window attack in `DIRECTION.md`; wait for an altitude-level retarget.  A logically separate
+possible strengthening would classify the surviving length-8 block tuples themselves, rather
+than only prove that every front-normalized three-block acyclic paradoxical segment has length
+`8`.
 
 ## RUNG 3 — state after the lap of 2026-09-02 (evening)
 

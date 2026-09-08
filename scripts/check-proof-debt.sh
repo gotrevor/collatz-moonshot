@@ -11,7 +11,8 @@ count="$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')"
 
 # Disclosed proof debt (2026-09-08): ZERO sorries.  The rung-3 census gap
 # (`threeBlock_gap_of_long`, FrontA/ThreeBlock.lean) is proved by the Rhin-lite bootstrap,
-# sharp scaled contraction, and one pruned residual certificate.  Historical note
+# sharp scaled contraction, and one pruned residual certificate; the exceptional residue tail
+# and literal front-normalized length-8 classification are also proved.  Historical note
 # (2026-09-01): the previous last sorry,
 # `two_pow_approx_three_pow_from_above` (FrontA/PowApprox.lean), is proved by a multiplicative
 # pigeonhole; Rozier--Terracol 2026 Theorem 3.2 and `finite_acyclicParadoxical_imp_noDivergent`

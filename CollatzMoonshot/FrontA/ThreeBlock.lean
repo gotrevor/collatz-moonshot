@@ -3,6 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import CollatzMoonshot.FrontA.Paradoxical
+import CollatzMoonshot.FrontA.ParityReconstruction
 
 /-!
 # Front A: the three-odd-block rung of the paradoxical ladder
@@ -13,11 +14,11 @@ Rozier--Terracol Appendix A) or two blocks (`le_two_blocks_not_acyclicParadoxica
 acyclic paradoxical start.  Rung 2 is **sharp**: `acyclicParadoxical_seven_eight` is a genuine
 three-block witness (`n = 7`, `m = 8`).
 
-This module opens **rung 3**, the first rung whose answer is a *classification* rather than an
+This module closes **rung 3**, the first rung whose answer is a *classification* rather than an
 exclusion:
 
-> **Rung-3 conjecture.**  Every acyclic paradoxical segment whose word has three odd blocks has
-> length `8`.
+> **Rung-3 theorem (front-normalized).**  Every acyclic paradoxical segment whose word has three
+> odd blocks has length `8`.
 
 Exactly four front-normalized three-block words admit an acyclic paradoxical start, all of
 length `8` (`experiments/block_ladder_probe.py`, exhaustive to length `26`):
@@ -54,6 +55,10 @@ Write a three-block word as `[T]^b [F]^c [T]^d [F]^e [T]^f [F]^g` (`b,c,d,e,f �
 
 * **`threeBlock_of_gap`** — if the corresponding `∀`-gap over integer cascade triples holds, the
   segment is not acyclic paradoxical.  This is the rung-3 analogue of `core_of_gap`.
+* **`threeBlock_length_eq_eight_of_acyclicParadoxical`** — the full front-normalized
+  classification.  The window argument excludes every length outside `{5,8,16,27}`; one
+  kernel-checked finite certificate computes the least realizing residue at the ten remaining
+  tuples of lengths `5`, `16`, and `27` and rejects them by the exact acyclic criterion.
 
 ## Where the deep content sits
 
@@ -1694,7 +1699,7 @@ theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
 /-- **Rung 3, the long-length half.**  No three-odd-block word of length outside
 `{5, 8, 16, 27}` is acyclic paradoxical.  The four
 realized solutions all have length `8`; lengths `5`, `16`, `27` carry ceiling-passing tuples
-that are killed by the true realizing residue (a finite check, not yet formalized). -/
+that are killed below by a kernel-checked true-realizing-residue certificate. -/
 theorem threeBlock_not_acyclicParadoxical_of_long {b c d e f g n : ℕ}
     (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f) (hc : 1 ≤ c) (he : 1 ≤ e)
     (hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ))
@@ -1712,5 +1717,188 @@ theorem threeBlock_not_acyclicParadoxical_of_long {b c d e f g n : ℕ}
     (by have := threeBlock_of_gap hI hII hIII
           (threeBlock_gap_of_long b c d e f g hb hd hf hc he hsub hlong)
         omega)
+
+/-! ### The exceptional finite tail and the full classification -/
+
+/-- The least possible interior scale when only the second cascade equation and `w₃ ≥ 1`
+are retained. -/
+private def threeBlock_minW₂ (d e f : ℕ) : ℕ :=
+  (2 ^ (e + f) - 2 ^ e + 1) ⌈/⌉ 3 ^ d
+
+/-- The corresponding least possible head scale, retaining both cascade equations. -/
+private def threeBlock_minW₁ (b c d e f : ℕ) : ℕ :=
+  (2 ^ (c + d) * threeBlock_minW₂ d e f - 2 ^ c + 1) ⌈/⌉ 3 ^ b
+
+/-- The nested ceilings really are lower bounds for every integer cascade triple. -/
+private theorem threeBlock_minW₁_le {b c d e f w₁ w₂ w₃ : ℕ}
+    (hd : 1 ≤ d) (hf : 1 ≤ f) (h₃ : 1 ≤ w₃)
+    (h₁ : 3 ^ b * w₁ + 2 ^ c = 2 ^ (c + d) * w₂ + 1)
+    (h₂ : 3 ^ d * w₂ + 2 ^ e = 2 ^ (e + f) * w₃ + 1) :
+    threeBlock_minW₁ b c d e f ≤ w₁ := by
+  obtain ⟨hw₂pos, -⟩ := threeBlock_cascade_pos hd hf h₃ h₁ h₂
+  have hL₂ : 2 ^ (e + f) - 2 ^ e + 1 ≤ 3 ^ d * w₂ := by
+    have hpow : 2 ^ e ≤ 2 ^ (e + f) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    have hmul : 2 ^ (e + f) ≤ 2 ^ (e + f) * w₃ := by
+      simpa using Nat.mul_le_mul_left (2 ^ (e + f)) h₃
+    omega
+  have hw₂ : threeBlock_minW₂ d e f ≤ w₂ := by
+    exact (ceilDiv_le_iff_le_mul (show 0 < 3 ^ d by positivity)).2 hL₂
+  have hmul : 2 ^ (c + d) * threeBlock_minW₂ d e f ≤ 2 ^ (c + d) * w₂ :=
+    Nat.mul_le_mul_left _ hw₂
+  have hbase : 2 ^ (c + d) * threeBlock_minW₂ d e f - 2 ^ c + 1 ≤ 3 ^ b * w₁ := by
+    have hpow : 2 ^ c ≤ 2 ^ (c + d) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    have hle : 2 ^ c ≤ 2 ^ (c + d) * w₂ := by
+      calc 2 ^ c ≤ 2 ^ (c + d) := hpow
+        _ ≤ 2 ^ (c + d) * w₂ := by
+          simpa using Nat.mul_le_mul_left (2 ^ (c + d)) hw₂pos
+    have heq : 2 ^ (c + d) * w₂ - 2 ^ c + 1 = 3 ^ b * w₁ := by omega
+    rw [← heq]
+    exact Nat.add_le_add_right (Nat.sub_le_sub_right hmul _) _
+  exact (ceilDiv_le_iff_le_mul (show 0 < 3 ^ b by positivity)).2 hbase
+
+private def threeBlockWord (b c d e f g : ℕ) : List Bool :=
+  List.replicate b true ++ List.replicate c false ++ List.replicate d true ++
+    List.replicate e false ++ List.replicate f true ++ List.replicate g false
+
+/-- Least realizing starts above `2` for the ten ceiling-passing tuples at the exceptional
+lengths `5`, `16`, and `27`.  The certificate below independently checks which entry applies,
+its whole parity trace, its canonical-residue property, and failure of the acyclic criterion. -/
+private def threeBlockExceptionalStarts : List ℕ :=
+  [33, 63759, 41679, 18783, 60255, 64351, 80553407, 50946431, 110715135, 120086783]
+
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 10000000 in
+/-- **Kernel-checked exceptional-tail certificate.**  The nested cascade ceiling first reduces
+the three exceptional lengths to ten tuples.  For each tuple this certificate supplies its least
+realizing start above `2` and checks that the exact word numerator is no larger than the
+subcritical deficit times that start. -/
+private theorem threeBlock_exceptional_residue_cert :
+    ∀ m ∈ ([5, 16, 27] : List ℕ),
+    ∀ k ∈ List.range 28, 3 ^ k < 2 ^ m →
+    ∀ b ∈ List.range (k + 1), 1 ≤ b →
+    ∀ d ∈ List.range (k - b + 1), 1 ≤ d →
+    let f := k - b - d
+    1 ≤ f →
+    ∀ c ∈ List.range (m - k + 1), 1 ≤ c →
+    ∀ e ∈ List.range (m - k - c + 1), 1 ≤ e →
+    let g := m - k - c - e
+    ((2 : ℤ) ^ m - 3 ^ k) * threeBlock_minW₁ b c d e f ≤
+      3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)) -
+        2 ^ (c + d + e + f) →
+    ∃ r ∈ threeBlockExceptionalStarts,
+      traceWord r m = threeBlockWord b c d e f g ∧
+      r = (if r % 2 ^ m ≤ 2 then r % 2 ^ m + 2 ^ m else r % 2 ^ m) ∧
+      numer (threeBlockWord b c d e f g) ≤ (2 ^ m - 3 ^ k) * r := by
+  decide +kernel
+
+/-- A canonical representative of a residue class modulo `M`, chosen to be the least member
+strictly above `2`, is below every other member of that class strictly above `2`. -/
+private theorem canonicalResidueAboveTwo_le {r n M : ℕ} (hM : 0 < M) (hn : 2 < n)
+    (hr : r = if r % M ≤ 2 then r % M + M else r % M)
+    (hmod : r ≡ n [MOD M]) : r ≤ n := by
+  unfold Nat.ModEq at hmod
+  split at hr
+  · rename_i hsmall
+    have hnM : M ≤ n := by
+      by_contra h
+      have hnmod : n % M = n := Nat.mod_eq_of_lt (by omega)
+      omega
+    have hq : 1 ≤ n / M := (Nat.one_le_div_iff hM).2 hnM
+    have hMmul : M ≤ M * (n / M) := by
+      calc M = M * 1 := by simp
+        _ ≤ M * (n / M) := Nat.mul_le_mul_left M hq
+    have hdecomp := Nat.mod_add_div n M
+    omega
+  · rw [hr, hmod]
+    exact Nat.mod_le n M
+
+/-- **The exceptional tail.**  A front-normalized three-block word at one of the three
+ceiling-passing lengths other than `8` cannot be acyclic paradoxical.  The proof obtains the
+actual cascade scale `w₁`, lowers it to the nested ceiling, invokes the finite certificate, and
+uses parity-trace residue determinacy to compare an arbitrary realizing start with the certified
+least one. -/
+theorem threeBlock_not_acyclicParadoxical_of_exceptional {b c d e f g n : ℕ}
+    (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f) (hc : 1 ≤ c) (he : 1 ≤ e)
+    (hexceptional : b + c + d + e + f + g ∈ ({5, 16, 27} : Finset ℕ))
+    (hword : traceWord n (b + c + d + e + f + g)
+      = List.replicate b true ++ List.replicate c false ++ List.replicate d true
+          ++ List.replicate e false ++ List.replicate f true ++ List.replicate g false) :
+    ¬ AcyclicParadoxical n (b + c + d + e + f + g) := by
+  rintro ⟨hn, -, hsubTrace, hlt⟩
+  have hones : ones (traceWord n (b + c + d + e + f + g)) = b + d + f := by
+    rw [hword, ones_append, ones_append, ones_append, ones_append, ones_append]
+    simp
+  have hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by
+    rwa [hones] at hsubTrace
+  obtain ⟨hI, hII, hIII⟩ := threeBlock_segment_identities hword
+  obtain ⟨w₁, w₂, w₃, hw₃, hw, hc₁, hc₂, -⟩ := threeBlock_cascade hI hII hIII
+  have hwmin : threeBlock_minW₁ b c d e f ≤ w₁ :=
+    threeBlock_minW₁_le hd hf hw₃ hc₁ hc₂
+  have hcriterion := (threeBlock_criterion hI hII hIII hw).1 hlt
+  have hDnonneg : (0 : ℤ) ≤ 2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f) := by
+    have : (3 : ℤ) ^ (b + d + f) < 2 ^ (b + c + d + e + f + g) := by
+      exact_mod_cast hsub
+    omega
+  have hwminZ : (threeBlock_minW₁ b c d e f : ℤ) ≤ w₁ := by exact_mod_cast hwmin
+  have hminCriterion :
+      ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) *
+          threeBlock_minW₁ b c d e f ≤
+        3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)) -
+          2 ^ (c + d + e + f) :=
+    le_trans (mul_le_mul_of_nonneg_left hwminZ hDnonneg) hcriterion
+  have hfdef : b + d + f - b - d = f := by omega
+  have hgdef : b + c + d + e + f + g - (b + d + f) - c - e = g := by omega
+  have hmle : b + c + d + e + f + g ≤ 27 := by
+    have hex := hexceptional
+    simp at hex
+    omega
+  have hkle : b + d + f ≤ b + c + d + e + f + g := by omega
+  have hmList : b + c + d + e + f + g ∈ ([5, 16, 27] : List ℕ) := by
+    simpa using hexceptional
+  obtain ⟨r, -, hrtrace, hrcanonical, hfail⟩ :=
+    threeBlock_exceptional_residue_cert (b + c + d + e + f + g) hmList
+      (b + d + f) (by simp; omega) hsub
+      b (by simp; omega) hb d (by simp; omega) hd (by omega)
+      c (by simp; omega) hc e (by simp; omega) he
+      (by simpa only [hfdef] using hminCriterion)
+  have hrtrace' : traceWord r (b + c + d + e + f + g)
+      = List.replicate b true ++ List.replicate c false ++ List.replicate d true
+          ++ List.replicate e false ++ List.replicate f true ++ List.replicate g false := by
+    simpa only [hfdef, hgdef, threeBlockWord] using hrtrace
+  have hmod : r ≡ n [MOD 2 ^ (b + c + d + e + f + g)] :=
+    traceWord_eq_imp_modEq (hrtrace'.trans hword.symm)
+  have hrle : r ≤ n := canonicalResidueAboveTwo_le (by positivity) hn hrcanonical hmod
+  have hDmul :
+      (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * r ≤
+        (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * n :=
+    Nat.mul_le_mul_left _ hrle
+  have hfail' :
+      numer (List.replicate b true ++ List.replicate c false ++ List.replicate d true
+          ++ List.replicate e false ++ List.replicate f true ++ List.replicate g false)
+        ≤ (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * r := by
+    simpa only [hfdef, hgdef, threeBlockWord] using hfail
+  have hacrit :=
+    (acyclicParadoxical_criterion n (b + c + d + e + f + g) hsubTrace).1 hlt
+  rw [hones, hword] at hacrit
+  exact (not_lt_of_ge (hfail'.trans hDmul)) hacrit
+
+/-- **Rung 3, full front-normalized classification.**  A three-odd-block acyclic paradoxical
+segment has length exactly `8`. -/
+theorem threeBlock_length_eq_eight_of_acyclicParadoxical {b c d e f g n : ℕ}
+    (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f) (hc : 1 ≤ c) (he : 1 ≤ e)
+    (hword : traceWord n (b + c + d + e + f + g)
+      = List.replicate b true ++ List.replicate c false ++ List.replicate d true
+          ++ List.replicate e false ++ List.replicate f true ++ List.replicate g false)
+    (hap : AcyclicParadoxical n (b + c + d + e + f + g)) :
+    b + c + d + e + f + g = 8 := by
+  by_contra hne
+  by_cases hexceptional : b + c + d + e + f + g ∈ ({5, 16, 27} : Finset ℕ)
+  · exact (threeBlock_not_acyclicParadoxical_of_exceptional hb hd hf hc he hexceptional hword) hap
+  · have hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ) := by
+      simp only [Finset.mem_insert, Finset.mem_singleton] at hexceptional ⊢
+      omega
+    exact (threeBlock_not_acyclicParadoxical_of_long hb hd hf hc he hlong hword) hap
 
 end CollatzMoonshot.FrontA

@@ -1,9 +1,9 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-08 (rung-3 window node closed) · `71bf727`+
+**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-08 (rung-3 classification closed) · `cf5d1d1`+
 
 
-> **2026-09-08 (latest) — rung-3 window node CLOSED; `threeBlock_gap_of_long` proved.**
+> **2026-09-08 (latest) — rung-3 front-normalized classification CLOSED.**
 > The parameterized exponent algebra now proves the sharp feedback bound `k ≤ 6t+5` using
 > `3^5 ≤ 2^8`.  The Rhin-lite polynomial measure bootstraps the near-critical window to
 > `k < 492276`; a new convergent bracket gives deficit scale `t=26` and hence `k ≤ 161`; a
@@ -12,11 +12,16 @@
 > both the old `m ≤ 27` node and the contracted window.  Consequently
 > `threeBlock_window_infeasible`, `threeBlock_leaves_infeasible`, `threeBlock_gap_of_long`, and
 > `threeBlock_not_acyclicParadoxical_of_long` are all proved, and the proof-debt gate reports
-> **0 sorries**.  Full build: 8766 jobs green.  Trust note: the next bracket's 5-million-digit
+> **0 sorries**.  An adversarial statement review then caught the remaining gap between that
+> theorem (length outside `{5,8,16,27}` is impossible) and the advertised literal length-8
+> classification.  The new `threeBlock_not_acyclicParadoxical_of_exceptional` rejects the ten
+> ceiling-passing tuples at lengths `5,16,27` via nested cascade ceilings, exact parity-trace
+> residues, and one `decide +kernel` certificate.  Therefore
+> `threeBlock_length_eq_eight_of_acyclicParadoxical` proves the full front-normalized theorem.
+> Full build: 8766 jobs green.  Trust note: the next bracket's 5-million-digit
 > upper power comparison exceeds Lean's kernel numeral cap and uses `native_decide`; the unified
-> residual census is also native, and both are explicit in `scripts/AxiomAudit.lean`.
-> The literal length-8 classification still has a separate finite tail: reject the ten
-> host-verified realizing residues at exceptional lengths `5,16,27`.
+> residual census is also native, and both are explicit in `scripts/AxiomAudit.lean`.  The new
+> exceptional-tail theorem itself prints only `propext`, `Classical.choice`, and `Quot.sound`.
 
 
 > **2026-09-02 (historical) — the odd-block ladder reaches RUNG 3, and its crux is a finite census.**
@@ -358,6 +363,10 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
+- **2026-09-08 — the rung-3 window-node objective and front-normalized length-8 classification
+  are COMPLETE.**  The exceptional lengths `5,16,27` are rejected in Lean by a kernel-checked
+  finite residue certificate; `src/` remains at **0 sorries**.  Await an altitude-level retarget
+  rather than following the now-stale rung-3 instructions in `DIRECTION.md`.
 - **2026-09-01 — the binding objective is COMPLETE.**  `src/` has **0 sorries**;
   `finite_acyclicParadoxical_imp_noDivergent`, `rozier_terracol_3_2`,
   `two_pow_approx_three_pow_from_above` are trust-base clean.  Remaining non-trust-base
@@ -396,7 +405,7 @@ global finiteness of acyclic paradoxical segments.
 
 ## Axiom ledger (per headline theorem)
 Trust base = `propext, Classical.choice, Quot.sound` (+ `native_decide` `ax_*` artifacts),
-excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2026-09-01.
+excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2026-09-08.
 
 | headline theorem | paper claim | `#print axioms` shows (beyond trust base) | math-axioms |
 |---|---|---|---|
@@ -406,6 +415,8 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |
 | `FrontA.sep_two_three` | effective 2/3 power separation | 13× `native_decide.ax` (Rhin-lite tower + the `k<450` table) | **0 math** ✅ 🟢 — the Rhin 1987 axiom is RETIRED |
 | `le_two_blocks_not_acyclicParadoxical` | new: 2-block exclusion (generalizes RT App. A) | 13× `native_decide.ax` + `finite_two_block_check` | **0 math** ✅ 🟢 — and **sharp** (`acyclicParadoxical_seven_eight`) |
+| `FrontA.threeBlock_not_acyclicParadoxical_of_exceptional` | rejects the exceptional lengths `5,16,27` | — | **0 math** ✅ 🟢 — nested ceilings + kernel finite residue certificate |
+| `FrontA.threeBlock_length_eq_eight_of_acyclicParadoxical` | rung-3 front-normalized length classification | inherited Rhin-lite/window `native_decide.ax` artifacts only | **0 math** ✅ 🟢 — no new native artifact in the exceptional tail |
 | `finite_acyclicParadoxical_imp_noDivergent` | Front A conditional closer (paradoxical) | — | 0 ✅ 🟢 — RT citation DISCHARGED **and** the Diophantine node PROVED (2026-09-01); trust base only |
 | `Assumed.rozier_terracol_3_2` | RT 2026 Thm 3.2 (full) | — | 0 ✅ now a **THEOREM**, proved in-repo, trust base only |
 | `infinite_paradoxical_of_bounded_orbit` | RT 2026 Thm 3.2, bounded case | — | 0 ✅ node-free, fully proved |
@@ -439,5 +450,5 @@ No 🔴 appears on any unconditional headline.
 - Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: newest `HANDOFF-2026-*.md` (find with `ls HANDOFF-*.md | sort` — currently `HANDOFF-2026-09-01-rt-axiom-fidelity.md`) · scratchpad: `PENDING_WORK.md`
+- Newest baton: `HANDOFF-2026-09-08-rung3-window-plus-tail-closed.md` · scratchpad: `PENDING_WORK.md`
 - Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`

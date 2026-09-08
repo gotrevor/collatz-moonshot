@@ -6,10 +6,11 @@
 > [!IMPORTANT]
 > **This repository does not prove the Collatz conjecture, the absence of divergent
 > orbits, or the absence of nontrivial cycles.** It is an exploratory Lean 4 research
-> project. At this checkpoint the project carries **no disclosed `sorry`**.  The rung-3 window
-> node and `threeBlock_gap_of_long` (`FrontA/ThreeBlock.lean`) were proved on 2026-09-08; the
-> literal length-8 classification still needs the finite realizing-residue rejection at the
-> exceptional lengths `5,16,27`. Every Front-A closer remains unaffected:
+> project. At this checkpoint the project carries **no disclosed `sorry`**.  Rung 3's window
+> node and exceptional finite tail were proved on 2026-09-08: the front-normalized theorem
+> `threeBlock_length_eq_eight_of_acyclicParadoxical` now says that every acyclic paradoxical
+> three-odd-block segment of the displayed block form has length `8`. Every Front-A closer
+> remains unaffected:
 > `finite_acyclicParadoxical_imp_noDivergent` and `Assumed.rozier_terracol_3_2` print the bare
 > trust base (the classical Diophantine node `two_pow_approx_three_pow_from_above` was proved on
 > 2026-09-01). The sink
@@ -41,6 +42,7 @@ the open hypotheses fed into that wiring:
 | `two_pow_approx_three_pow_from_above` (`FrontA/PowApprox.lean`) | **proved** 2026-09-01, trust base only: for all `M N` there are `A > M` and `s` with `3^A < 2^s` and `(2^s − 3^A)·N ≤ 3^A`, i.e. powers of two approximate powers of three from above to arbitrary relative precision, infinitely often. Multiplicative pigeonhole: the `N+1` ratios `2^s/3^A ∈ (1,2]` at `A = i(M+1)` fall into `N` boxes `((1+1/N)^j, (1+1/N)^(j+1)]`, a collision gives `2^b/3^a` within `1+1/N` of `1` on both sides with `a > M`, and a flip (least `u` with `(3^a/2^b)^(u+1) ≥ 2`) fixes the side. No logarithms, no irrationality of `log₂3`, no `native_decide`. With it `finite_acyclicParadoxical_imp_noDivergent` is trust-base clean |
 | `le_two_blocks_not_acyclicParadoxical` | **proved, no literature axiom**, and **sharp**: `acyclicParadoxical_seven_eight` exhibits an acyclic paradoxical segment (`n=7`, `m=8`) whose word has three odd blocks, so no three-block strengthening exists |
 | `threeBlock_gap_of_long` | **proved** 2026-09-08: the near-critical window is contracted by the Rhin-lite polynomial measure, a new convergent bracket, the sharp bound `k ≤ 6t+5`, and one pruned native census; `threeBlock_not_acyclicParadoxical_of_long` excludes every three-block word length outside `{5,8,16,27}` |
+| `threeBlock_length_eq_eight_of_acyclicParadoxical` | **proved** 2026-09-08: a kernel-checked finite certificate rejects the ten remaining ceiling-passing tuples at lengths `5,16,27` by their least realizing residues, completing the front-normalized rung-3 classification; the exceptional-tail theorem itself is trust-base clean |
 | named declarations in `CollatzMoonshot/Assumed/` | explicit external assumptions, some published results and some open conjectures |
 | `native_decide` certificates | finite computations checked by Lean's native evaluator and retained in theorem axiom ledgers as explicit `native_decide` artifacts |
 
