@@ -1,9 +1,25 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-02 (odd-block ladder, rung 3 opened) · `0f9fde9`+
+**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-08 (rung-3 window node closed) · `71bf727`+
 
 
-> **2026-09-02 (latest) — the odd-block ladder reaches RUNG 3, and its crux is a finite census.**
+> **2026-09-08 (latest) — rung-3 window node CLOSED; `threeBlock_gap_of_long` proved.**
+> The parameterized exponent algebra now proves the sharp feedback bound `k ≤ 6t+5` using
+> `3^5 ≤ 2^8`.  The Rhin-lite polynomial measure bootstraps the near-critical window to
+> `k < 492276`; a new convergent bracket gives deficit scale `t=26` and hence `k ≤ 161`; a
+> kernel-checked aggregate table improves this to `t=8`, hence `k ≤ 53` and `m ≤ 106`.
+> One pruned native certificate, with `(k,m)` outermost and `f,g` derived from the totals, covers
+> both the old `m ≤ 27` node and the contracted window.  Consequently
+> `threeBlock_window_infeasible`, `threeBlock_leaves_infeasible`, `threeBlock_gap_of_long`, and
+> `threeBlock_not_acyclicParadoxical_of_long` are all proved, and the proof-debt gate reports
+> **0 sorries**.  Full build: 8766 jobs green.  Trust note: the next bracket's 5-million-digit
+> upper power comparison exceeds Lean's kernel numeral cap and uses `native_decide`; the unified
+> residual census is also native, and both are explicit in `scripts/AxiomAudit.lean`.
+> The literal length-8 classification still has a separate finite tail: reject the ten
+> host-verified realizing residues at exceptional lengths `5,16,27`.
+
+
+> **2026-09-02 (historical) — the odd-block ladder reaches RUNG 3, and its crux is a finite census.**
 > New module `FrontA/ThreeBlock.lean`.  Rung 3 asks for a *classification*, not an exclusion:
 > **every acyclic paradoxical segment with three odd blocks has length 8** (four realized words,
 > all `m = 8`).  Landed sorry-free: the **block-merge reduction** (rung 2 reused as a black box on

@@ -1,5 +1,31 @@
 # PENDING_WORK
 
+## RUNG 3 WINDOW NODE CLOSED — 2026-09-08
+
+The scoped kickoff target is complete.  `threeBlock_window_infeasible`,
+`threeBlock_gap_of_long`, and `threeBlock_not_acyclicParadoxical_of_long` are proved; the
+proof-debt gate reports zero sorries.
+
+The near-critical proof chain is:
+
+1. the Rhin-lite polynomial measure gives the explicit aggregate scale and
+   `threeBlock_polynomial_k_lt : k < 492276`;
+2. the next `log₂3` bracket (`sep_strong_492276`) gives scale `t=26`;
+3. the sharp scaled closure `threeBlock_scaled_k_bound` gives `k ≤ 161`;
+4. a kernel-checked two-exponent certificate improves the deficit scale to `t=8`, so the same
+   closure gives `k ≤ 53`, and the window gives `m ≤ 106`;
+5. one pruned native certificate `threeBlock_residual_cert`, indexed first by `(k,m)` and deriving
+   `f,g` from the totals, covers both the `m ≤ 27` node and the contracted window.
+
+The previous gap `[190537, ≈2.4·10^5]` is closed by the next bracket.  Its lower power comparison
+is `decide +kernel`; its 5-million-digit upper comparison exceeds `LEAN_NAT_MAX_SIZE` and is
+therefore `native_decide`, as is the final finite census.  The axiom audit records both artifacts.
+
+**Next mathematical tail, outside this window-node kickoff:** the current word theorem excludes
+all lengths outside `{5,8,16,27}`.  To turn that statement into the literal “length 8”
+classification, formalize the already host-verified realizing-residue rejection of the ten
+ceiling-passing tuples at lengths `5,16,27`.  Do not describe that tail as already formalized.
+
 ## RUNG 3 — state after the lap of 2026-09-02 (evening)
 
 **The crux is now three named nodes** (`FrontA/ThreeBlock.lean`), with the cascade scales

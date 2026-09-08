@@ -1,3 +1,40 @@
+## OPERATOR ADDENDUM 2026-09-07 20:31 — LAND THE WORK, then continue ⚠️
+
+*This section outranks the body below where they conflict.  The body's
+mathematics is unchanged; this is about getting it recorded.*
+
+**Observed**: laps 1-3 of run `...-192938` each ended with **+0 commits** while
+`CollatzMoonshot/FrontA/ThreeBlock.lean` carried **+155 uncommitted lines** whose
+targeted build the lap itself reported green.  Adaptive has already escalated to
+the `xhigh` ceiling.  An uncommitted artifact is **invisible to the next fresh
+lap** — every lap that inherits it re-derives it or, worse, re-decides it.
+
+1. 🔨 **Commit the ThreeBlock work before extending the algebra.**  A targeted
+   green build on the module you touched **is** a coherent checkpoint under
+   `codex-treadmill/AGENTS.md`.  Run the repository gate too; if the gate cannot
+   run, or is red for reasons unrelated to your edit, commit anyway and **name
+   the evidence tier in the commit message** (`targeted build green; full gate
+   not run`).  Do not hold a green module hostage to a repo-wide check.
+2. ✍️ **Every lap ends with a commit, or with an explicit written reason there
+   is nothing to commit.**  "Still iterating" is not a reason after 15 minutes.
+
+### Where the mathematics stands (carry this forward)
+
+The live attack, from lap 2's own report, is the reduction of the window algebra
+to **four aggregate exponent inequalities**, with the sharp constant pair
+
+    2^19 ≤ 3^12   (lower log bound)      3^5 ≤ 2^8   (upper log bound)
+
+which makes the feedback contract where the crude `3 ≤ 4` route does not.  Next:
+formalize the aggregates, derive an absolute window range at scale `t = 21`, then
+discharge with **one** pruned finite certificate covering both leftover nodes
+(`threeBlock_finite_infeasible` and `threeBlock_window_infeasible`) — not two.
+
+Keep `P` sharp in (A)/(B)/(C); `PENDING_WORK.md` records that the crude
+`P < 1 + r2` elimination was **attempted and refuted**, so do not re-run it.
+
+---
+
 # KICKOFF 2026-09-07 — rung 3 of the odd-block ladder, the window node ⛓️
 
 **Engine**: Codex, model `gpt-5.6-sol`, effort `high`.  **Branch**: `main`.

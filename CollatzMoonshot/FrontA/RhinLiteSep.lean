@@ -604,6 +604,10 @@ theorem pow_cert_79335 : 3 ^ 79335 < 2 ^ 125743 := by decide +kernel
 theorem pow_cert_111202 : 2 ^ 176251 < 3 ^ 111202 := by decide +kernel
 theorem pow_cert_190537 : 3 ^ 190537 < 2 ^ 301994 := by decide +kernel
 theorem pow_cert_301739 : 2 ^ 478245 < 3 ^ 301739 := by decide +kernel
+theorem pow_cert_492276 : 2 ^ 780239 < 3 ^ 492276 := by decide +kernel
+/-- This 5-million-digit comparison exceeds Lean's kernel numeral cap (`LEAN_NAT_MAX_SIZE`),
+so it is the sole certificate in this convergent table checked by native reduction. -/
+theorem pow_cert_10781274 : 3 ^ 10781274 < 2 ^ 17087915 := by native_decide
 
 /-- **Finite range `6 ≤ k < 141000`.**  `k < 450`: the table `sep_two_three_small_450`.
 `450 ≤ k < 141000`: five consecutive-convergent brackets, each covering `[q_{n-1}+q_n, q_n+q_{n+1})`
@@ -860,6 +864,18 @@ theorem sep_strong_190537 (k m : ℕ) (hk : 0 < k) (hklt : k < 190537) (h1 : 3 ^
   sep_strong_of_bracket_nat k m 176251 111202 125743 79335 478245 301739 301994 190537 20 hk h1
     (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     pow_cert_111202 pow_cert_79335 pow_cert_301739 pow_cert_190537
+    (by norm_num) (by norm_num) (by omega) (by norm_num) (by norm_num)
+
+/-- **The next strong bracket.**  The semiconvergent `478245/301739` and convergent
+`301994/190537` cover `k < 492276`.  The next lower semiconvergent `780239/492276` and next
+upper convergent `17087915/10781274` certify an absolute `2^-25` deficit scale. -/
+theorem sep_strong_492276 (k m : ℕ) (hk : 0 < k) (hklt : k < 492276)
+    (h1 : 3 ^ k < 2 ^ m) :
+    3 ^ k ≤ (2 ^ m - 3 ^ k) * 2 ^ 25 :=
+  sep_strong_of_bracket_nat k m 478245 301739 301994 190537
+    780239 492276 17087915 10781274 25 hk h1
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    pow_cert_301739 pow_cert_190537 pow_cert_492276 pow_cert_10781274
     (by norm_num) (by norm_num) (by omega) (by norm_num) (by norm_num)
 
 end CollatzMoonshot.FrontA

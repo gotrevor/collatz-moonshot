@@ -55,7 +55,7 @@ Write a three-block word as `[T]^b [F]^c [T]^d [F]^e [T]^f [F]^g` (`b,c,d,e,f �
 * **`threeBlock_of_gap`** — if the corresponding `∀`-gap over integer cascade triples holds, the
   segment is not acyclic paradoxical.  This is the rung-3 analogue of `core_of_gap`.
 
-## Where the deep content sits (`threeBlock_containment`, disclosed)
+## Where the deep content sits
 
 Eliminating `w₂` from the cascade gives `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`, so `w₃ ≥ 1` alone
 yields the division-free **real relaxation**
@@ -77,10 +77,10 @@ search to **27 tuples in total**, at lengths `m ∈ {5, 8, 16, 27}` only, exhaus
 for all `m ≤ 130` and all `k` with `3^k/2^m > 1/8`.  Seventeen of the 27 sit at `m = 8`
 (where the four true solutions live).
 
-That is a genuine *effectivity asymmetry* against Front B's `m`-cycle ladder: rung 3 of the
-odd-block ladder is cut to a finite explicit list by a **two-level integer ceiling**, with no
-linear form in logarithms — whereas rung 2 needed the Baker-grade `sep_two_three`, and Front B's
-`m`-cycle ladder needs Baker at every rung.
+The final proof uses the repo's Rhin-lite polynomial measure to make this empirical finiteness
+effective, then a stronger convergent bracket and the sharp `3^5 ≤ 2^8` scaled algebra to contract
+to a small exact census.  Thus rung 3 does consume a two-log measure, but unlike Front B's
+`m`-cycle ladder its exponent system contracts to one bounded native certificate.
 -/
 
 namespace CollatzMoonshot.FrontA
@@ -596,8 +596,8 @@ inequalities.  A host scan exhaustive for `m ≤ 55` shows what is left: **58 tu
 rung 3 is carried by the **maximum of three cascade-level positivity bounds**, not by the
 rounding — a sharper statement than the ceiling census, and an entirely elementary one.
 
-`threeBlock_ceiling_gap` is the residual: the census restricted to tuples that fail all three
-leaves.  Chipping it is the rung-3 crux; see `PENDING_WORK.md`. -/
+**Closed (2026-09-08).**  The residual is now proved by `threeBlock_window_infeasible` and the
+single pruned `threeBlock_residual_cert`; `threeBlock_ceiling_gap` is a theorem with no `sorry`. -/
 /-! ### The residual, reduced to the exponents alone
 
 The three positivity leaves are *division-free*: their hypotheses mention only `b,c,d,e,f,g`.
@@ -615,10 +615,10 @@ lemmas below strip the tuple down further, replacing `T` by the two-term envelop
 i.e. every one of them is an upper bound on `1 − R` — which is why the surviving lengths are
 exactly the continued-fraction convergents `m/k ∈ {5/3, 8/5, 13/8, 16/10, 27/17}` of `log₂3`.
 **Finding (the effectivity question `DIRECTION.md` asks):** the residual regime is the
-near-critical one, `3^k < 2^m < 2·3^k`, so rung 3's *residual* does consume a two-log
-separation after all — `sep_two_three` is the intended input, exactly as in rung 2's
-`bd_reduction`.  What the ceiling census showed is only that the *bulk* of rung 3 (all but 58
-tuples) is elementary. -/
+near-critical one, `3^k < 2^m < 2·3^k`, so rung 3's *residual* consumes the stronger polynomial
+Rhin-lite measure rather than rung 2's `2^(-k/3)` consequence.  That measure enters only to
+bootstrap into a fixed convergent bracket; the sharp scaled system then contracts the exact
+census to `k ≤ 53`, `m ≤ 106`. -/
 
 /-- **Relaxation (A\*) of the failed real-relaxation leaf.**  `hR3` (the negation of
 `threeBlock_gap_of_real`'s hypothesis) implies `D·2^(c+d+e+f) < 2^m·T`, and `T` is below the
@@ -938,9 +938,358 @@ theorem threeBlock_nonwindow (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (
     have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 this
     omega
 
-/-- **Node 1 of the rung-3 crux: the finite range.**  No exponent tuple of length `m ≤ 27` other
-than the four census lengths fails all three positivity leaves.  This is a finite check
-(≈2·10⁵ tuples, integers below `2^60`) — a `decide`/`native_decide` job, not mathematics. -/
+/-! ### The census chain at a general scale `2^m ≤ 2^t·D`
+
+The non-window chain above is the case `t = 1`.  The initial lemmas record a coarse linear bound;
+`threeBlock_scaled_k_bound` below sharpens it with `3^5 ≤ 2^8` to `k ≤ 6t+5`.  The window proof
+uses this first at `t=26`, then at the exact small-range scale `t=8`. -/
+
+/-- (A\*) at scale `t`. -/
+theorem threeBlock_scaled_S2 {d e f t : ℕ} {D M : ℤ} (hD : 0 < D) (hMpos : 0 < M)
+    (hM : M ≤ 2 ^ t * D) (hA : D * 2 ^ (d + e + f) < M * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := by
+  have hp : (0 : ℤ) < 2 ^ (d + e + f) := by positivity
+  have ht : (0 : ℤ) < (2 : ℤ) ^ t := by positivity
+  refine lt_of_mul_lt_mul_left ?_ hMpos.le
+  nlinarith [hA, hM, hp, ht]
+
+/-- (V\*) at scale `t`. -/
+theorem threeBlock_scaled_S1 {d e t : ℕ} {D Pb : ℤ} (hD : 0 < D)
+    (hPb : Pb * 3 ^ d ≤ 2 ^ t * D) (hV : D * 2 ^ d ≤ 2 * Pb * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d) := by
+  have h3 : (0 : ℤ) < (3 : ℤ) ^ d := by positivity
+  have hsum : (0 : ℤ) < (2 : ℤ) ^ (d + e) + 3 ^ d := by positivity
+  have hpow : (2 : ℤ) ^ (t + 1) = 2 * 2 ^ t := by rw [pow_succ]; ring
+  rw [hpow]
+  refine le_of_mul_le_mul_left ?_ hD
+  nlinarith [hV, hPb, h3, hsum]
+
+/-- (W\*) at scale `t`. -/
+theorem threeBlock_scaled_S3 {c d e f t : ℕ} {D Bg : ℤ} (hBg : 0 < Bg)
+    (hm : Bg * 2 ^ (c + d + e + f) ≤ 2 ^ t * D)
+    (hW : D + 2 ^ (c + d + e + f) < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d)) :
+    (2 : ℤ) ^ (d + e + f) * (Bg + 2 ^ t) < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := by
+  have hsplit : (2 : ℤ) ^ (c + d + e + f) = 2 ^ c * 2 ^ (d + e + f) := by
+    rw [← pow_add]; congr 1; omega
+  have hcpos : (0 : ℤ) < (2 : ℤ) ^ c := by positivity
+  have ht : (0 : ℤ) < (2 : ℤ) ^ t := by positivity
+  refine lt_of_mul_lt_mul_left ?_ hcpos.le
+  rw [hsplit] at hm hW
+  nlinarith [hm, hW, ht]
+
+/-- `F1` at scale `t`: `3^d ≤ 2^(2t+4+e)`. -/
+theorem threeBlock_scaled_F1 {d e t : ℕ}
+    (h : 2 ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d)) : 3 ^ d ≤ 2 ^ (2 * t + 4 + e) := by
+  rcases Nat.lt_or_ge d (t + 2) with hd | hd
+  · calc (3 : ℕ) ^ d ≤ 4 ^ d := Nat.pow_le_pow_left (by norm_num) d
+      _ = 2 ^ (2 * d) := by rw [pow_mul]; norm_num
+      _ ≤ 2 ^ (2 * t + 4 + e) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  · -- `2·2^(t+1) ≤ 2^d`, so the `3^d` term on the right absorbs into the left
+    have habs : 2 * 2 ^ (t + 1) ≤ 2 ^ d := by
+      have : (2 : ℕ) ^ (t + 2) ≤ 2 ^ d := Nat.pow_le_pow_right (by norm_num) hd
+      calc 2 * 2 ^ (t + 1) = 2 ^ (t + 2) := by rw [pow_succ]; ring
+        _ ≤ 2 ^ d := this
+    have h3 : 0 < (3 : ℕ) ^ d := by positivity
+    have hmul : 2 * 2 ^ (t + 1) * 3 ^ d ≤ 2 ^ d * 3 ^ d := Nat.mul_le_mul_right _ habs
+    have hde : (2 : ℕ) ^ (d + e) = 2 ^ d * 2 ^ e := pow_add 2 d e
+    rw [hde] at h
+    have hkey : 2 ^ d * 3 ^ d ≤ 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by
+      have e1 : (2 : ℕ) ^ (t + 2) = 2 * 2 ^ (t + 1) := by rw [pow_succ]; ring
+      have : 2 * (2 ^ d * 3 ^ d) ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) + 2 ^ d * 3 ^ d := by
+        nlinarith [h, hmul]
+      calc 2 ^ d * 3 ^ d ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) := by omega
+        _ = 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by rw [e1]; ring
+    have hdpos : 0 < (2 : ℕ) ^ d := by positivity
+    have := Nat.le_of_mul_le_mul_left hkey hdpos
+    calc (3 : ℕ) ^ d ≤ 2 ^ (t + 2) * 2 ^ e := this
+      _ = 2 ^ (t + 2 + e) := (pow_add 2 (t + 2) e).symm
+      _ ≤ 2 ^ (2 * t + 4 + e) := Nat.pow_le_pow_right (by norm_num) (by omega)
+
+/-- The envelope `2^(d+e) + 3^d ≤ 2^(2t+4+d+e)` used throughout (needs `1 ≤ d`). -/
+theorem threeBlock_scaled_env {d e t : ℕ} (hd : 1 ≤ d) (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e)) :
+    2 ^ (d + e) + 3 ^ d ≤ 2 ^ (2 * t + 4 + d + e) := by
+  have h1 : (2 : ℕ) ^ (d + e) ≤ 2 ^ (2 * t + 3 + d + e) :=
+    Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h2 : (3 : ℕ) ^ d ≤ 2 ^ (2 * t + 3 + d + e) :=
+    le_trans h3d (Nat.pow_le_pow_right (by norm_num) (by omega))
+  have h3 : (2 : ℕ) ^ (2 * t + 4 + d + e) = 2 * 2 ^ (2 * t + 3 + d + e) := by
+    rw [show 2 * t + 4 + d + e = (2 * t + 3 + d + e) + 1 by omega, pow_succ]; ring
+  omega
+
+/-- `F2` at scale `t`: `f ≤ 3t + 4`. -/
+theorem threeBlock_scaled_F2 {d e f t : ℕ} (hd : 1 ≤ d) (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e))
+    (h : 2 ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d)) : f ≤ 3 * t + 4 := by
+  have henv := threeBlock_scaled_env hd h3d
+  have hlt : (2 : ℕ) ^ (d + e + f) < 2 ^ (t + (2 * t + 4 + d + e)) := by
+    calc (2 : ℕ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := h
+      _ ≤ 2 ^ t * 2 ^ (2 * t + 4 + d + e) := Nat.mul_le_mul_left _ henv
+      _ = 2 ^ (t + (2 * t + 4 + d + e)) := (pow_add 2 t (2 * t + 4 + d + e)).symm
+  have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+  omega
+
+/-- `F3` at scale `t`: `b + g ≤ 9t + 11`. -/
+theorem threeBlock_scaled_F3 {b d e f g t : ℕ} (hd : 1 ≤ d) (hf : 1 ≤ f) (hf3 : f ≤ 3 * t + 4)
+    (h3d : 3 ^ d ≤ 2 ^ (2 * t + 4 + e))
+    (h : 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))) :
+    b + g ≤ 9 * t + 11 := by
+  have henv := threeBlock_scaled_env hd h3d
+  have h3f : (3 : ℕ) ^ f ≤ 2 ^ (6 * t + 8) := by
+    calc (3 : ℕ) ^ f ≤ 4 ^ f := Nat.pow_le_pow_left (by norm_num) f
+      _ = 2 ^ (2 * f) := by rw [pow_mul]; norm_num
+      _ ≤ 2 ^ (6 * t + 8) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hR : 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) ≤ 2 ^ (9 * t + 12 + d + e) := by
+    calc 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+        ≤ 2 ^ t * (2 ^ (6 * t + 8) * 2 ^ (2 * t + 4 + d + e)) := by
+          exact Nat.mul_le_mul_left _ (Nat.mul_le_mul h3f henv)
+      _ = 2 ^ (9 * t + 12 + d + e) := by rw [← pow_add, ← pow_add]; congr 1; omega
+  have hL : 2 ^ (d + e + 1) * 2 ^ (b + g) ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := by
+    have hfge : (2 : ℕ) ^ (d + e + 1) ≤ 2 ^ (d + e + f) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    calc 2 ^ (d + e + 1) * 2 ^ (b + g) ≤ 2 ^ (d + e + f) * 2 ^ (b + g) :=
+          Nat.mul_le_mul_right _ hfge
+      _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) :=
+          Nat.mul_le_mul_left _ (Nat.le_add_right _ _)
+  have hlt : (2 : ℕ) ^ (d + e + 1 + (b + g)) < 2 ^ (9 * t + 12 + d + e) := by
+    calc (2 : ℕ) ^ (d + e + 1 + (b + g)) = 2 ^ (d + e + 1) * 2 ^ (b + g) := by rw [pow_add]
+      _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := hL
+      _ < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := h
+      _ ≤ 2 ^ (9 * t + 12 + d + e) := hR
+  have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+  omega
+
+/-- The elementary sharp comparison `3^n ≤ 2^⌈8n/5⌉`, packaged with a Nat-valued ceiling.
+This is the quantitative improvement over `3^n ≤ 4^n` needed by the window bootstrap. -/
+theorem three_pow_le_two_pow_eight_fifths (n : ℕ) :
+    3 ^ n ≤ 2 ^ (n + (3 * n + 4) / 5) := by
+  have hr : n % 5 < 5 := Nat.mod_lt _ (by norm_num)
+  have hn : n = 5 * (n / 5) + n % 5 := by omega
+  have hblock : (3 : ℕ) ^ (5 * (n / 5)) ≤ 2 ^ (8 * (n / 5)) := by
+    simpa only [pow_mul] using
+      Nat.pow_le_pow_left (show (3 : ℕ) ^ 5 ≤ 2 ^ 8 by norm_num) (n / 5)
+  have hrem : (3 : ℕ) ^ (n % 5) ≤ 2 ^ (n % 5 + (3 * (n % 5) + 4) / 5) := by
+    have hc : n % 5 = 0 ∨ n % 5 = 1 ∨ n % 5 = 2 ∨ n % 5 = 3 ∨ n % 5 = 4 := by omega
+    rcases hc with h | h | h | h | h <;> simp [h]
+  calc 3 ^ n = 3 ^ (5 * (n / 5)) * 3 ^ (n % 5) := by
+          conv_lhs => rw [hn, pow_add]
+    _
+      ≤ 2 ^ (8 * (n / 5)) * 2 ^ (n % 5 + (3 * (n % 5) + 4) / 5) :=
+        Nat.mul_le_mul hblock hrem
+    _ = 2 ^ (n + (3 * n + 4) / 5) := by rw [← pow_add]; congr 1; omega
+
+/-- In the large-`d` branch, `S1` absorbs its own `3^d` term and loses only `t+2`. -/
+theorem threeBlock_scaled_F1_large {d e t : ℕ} (hd : t + 2 ≤ d)
+    (h : 2 ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d)) :
+    3 ^ d ≤ 2 ^ (t + 2 + e) := by
+  have habs : 2 * 2 ^ (t + 1) ≤ 2 ^ d := by
+    have : (2 : ℕ) ^ (t + 2) ≤ 2 ^ d := Nat.pow_le_pow_right (by norm_num) hd
+    calc 2 * 2 ^ (t + 1) = 2 ^ (t + 2) := by rw [pow_succ]; ring
+      _ ≤ 2 ^ d := this
+  have hmul : 2 * 2 ^ (t + 1) * 3 ^ d ≤ 2 ^ d * 3 ^ d := Nat.mul_le_mul_right _ habs
+  have hde : (2 : ℕ) ^ (d + e) = 2 ^ d * 2 ^ e := pow_add 2 d e
+  rw [hde] at h
+  have hkey : 2 ^ d * 3 ^ d ≤ 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by
+    have e1 : (2 : ℕ) ^ (t + 2) = 2 * 2 ^ (t + 1) := by rw [pow_succ]; ring
+    have : 2 * (2 ^ d * 3 ^ d) ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) + 2 ^ d * 3 ^ d := by
+      nlinarith [h, hmul]
+    calc 2 ^ d * 3 ^ d ≤ 2 * (2 ^ (t + 1) * (2 ^ d * 2 ^ e)) := by omega
+      _ = 2 ^ d * (2 ^ (t + 2) * 2 ^ e) := by rw [e1]; ring
+  have := Nat.le_of_mul_le_mul_left hkey (show 0 < (2 : ℕ) ^ d by positivity)
+  calc (3 : ℕ) ^ d ≤ 2 ^ (t + 2) * 2 ^ e := this
+    _ = 2 ^ (t + 2 + e) := (pow_add 2 (t + 2) e).symm
+
+/-- Sharp closure of the `d < t+2` branch of the scaled system. -/
+theorem threeBlock_scaled_small_d_bound {b d e f g t : ℕ} (hdsmall : d < t + 2)
+    (hS2 : 2 ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d))
+    (hS3 : 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t)
+      < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))) :
+    b + d + f ≤ 6 * t + 5 := by
+  set s := (3 * d + 4) / 5 with hs
+  have h3d : (3 : ℕ) ^ d ≤ 2 ^ (d + s) := by
+    rw [hs]
+    exact three_pow_le_two_pow_eight_fifths d
+  have hsum : (2 : ℕ) ^ (d + e) + 3 ^ d ≤ 2 ^ (d + e + s + 1) := by
+    have h1 : (2 : ℕ) ^ (d + e) ≤ 2 ^ (d + e + s) :=
+      Nat.pow_le_pow_right (by norm_num) (by omega)
+    have h2 : (3 : ℕ) ^ d ≤ 2 ^ (d + e + s) :=
+      le_trans h3d (Nat.pow_le_pow_right (by norm_num) (by omega))
+    calc (2 : ℕ) ^ (d + e) + 3 ^ d ≤ 2 ^ (d + e + s) + 2 ^ (d + e + s) :=
+          Nat.add_le_add h1 h2
+      _ = 2 ^ (d + e + s + 1) := by rw [pow_succ]; ring
+  have hf : f ≤ t + s := by
+    have hlt : (2 : ℕ) ^ (d + e + f) < 2 ^ (t + (d + e + s + 1)) := by
+      calc (2 : ℕ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := hS2
+        _ ≤ 2 ^ t * 2 ^ (d + e + s + 1) := Nat.mul_le_mul_left _ hsum
+        _ = 2 ^ (t + (d + e + s + 1)) := (pow_add 2 t _).symm
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+    omega
+  set q := (3 * f + 4) / 5 with hq
+  have h3f : (3 : ℕ) ^ f ≤ 2 ^ (f + q) := by
+    rw [hq]
+    exact three_pow_le_two_pow_eight_fifths f
+  have hbg : b + g ≤ t + q + s := by
+    have hL : (2 : ℕ) ^ (d + e + f + (b + g))
+        ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := by
+      calc (2 : ℕ) ^ (d + e + f + (b + g))
+          = 2 ^ (d + e + f) * 2 ^ (b + g) := by rw [pow_add]
+        _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) :=
+          Nat.mul_le_mul_left _ (Nat.le_add_right _ _)
+    have hR : 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+        ≤ 2 ^ (t + (f + q) + (d + e + s + 1)) := by
+      calc 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+          ≤ 2 ^ t * (2 ^ (f + q) * 2 ^ (d + e + s + 1)) := by gcongr
+        _ = 2 ^ (t + (f + q) + (d + e + s + 1)) := by
+          rw [← pow_add, ← pow_add]
+          congr 1 <;> omega
+    have hlt : (2 : ℕ) ^ (d + e + f + (b + g))
+        < 2 ^ (t + (f + q) + (d + e + s + 1)) := lt_of_le_of_lt hL (lt_of_lt_of_le hS3 hR)
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+    omega
+  rw [hs] at hf hbg
+  rw [hq] at hbg
+  have hsle : (3 * d + 4) / 5 ≤ t + 1 := by omega
+  omega
+
+set_option maxHeartbeats 2400000 in
+/-- **Sharp parameterized closure.**  The three failed-leaf inequalities at deficit scale
+`2^m ≤ 2^t(2^m-3^k)` force `k ≤ 6t+5`.  The proof splits at `d=t+2`: below it the
+`3^5≤2^8` envelope controls `f` and `b+g`; above it `S1` absorbs the `3^d` term, after which
+`S2`, `S3`, and `V` give the same slope. -/
+theorem threeBlock_scaled_k_bound (b c d e f g t : ℕ) (hc : 1 ≤ c)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hscale : (2 : ℤ) ^ (b + c + d + e + f + g)
+      ≤ 2 ^ t * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)))
+    (hA : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (d + e + f)
+        < 2 ^ (b + c + d + e + f + g) * (2 ^ (d + e) + 3 ^ d))
+    (hW : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 2 ^ (c + d + e + f)
+        < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ d
+        ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d)) :
+    b + d + f ≤ 6 * t + 5 := by
+  set m := b + c + d + e + f + g with hm
+  set k := b + d + f with hk
+  have hMpos : (0 : ℤ) < 2 ^ m := by positivity
+  have hD : (0 : ℤ) < 2 ^ m - 3 ^ k := by
+    have : (3 : ℤ) ^ k < 2 ^ m := by exact_mod_cast hsub
+    linarith
+  have hS2 := threeBlock_scaled_S2 hD hMpos hscale hA
+  have hPb : (3 : ℤ) ^ b * 3 ^ f * 3 ^ d = 3 ^ k := by
+    rw [hk, ← pow_add, ← pow_add]; congr 1; omega
+  have hPD : (3 : ℤ) ^ b * 3 ^ f * 3 ^ d ≤ 2 ^ t * (2 ^ m - 3 ^ k) := by
+    rw [hPb]
+    have h3 : (0 : ℤ) < 3 ^ k := by positivity
+    nlinarith [hscale]
+  have hS1 := threeBlock_scaled_S1 hD hPD hV
+  have hBg : (2 : ℤ) ^ (b + g) * 2 ^ (c + d + e + f) = 2 ^ m := by
+    rw [hm, ← pow_add]; congr 1; omega
+  have hS3 := threeBlock_scaled_S3 (show (0 : ℤ) < 2 ^ (b + g) by positivity)
+    (by rw [hBg]; exact hscale) hW
+  have n1 : 2 ^ d * 3 ^ d ≤ 2 ^ (t + 1) * (2 ^ (d + e) + 3 ^ d) := by exact_mod_cast hS1
+  have n2 : 2 ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := by exact_mod_cast hS2
+  have n3 : 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t)
+      < 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d)) := by exact_mod_cast hS3
+  by_cases hdsmall : d < t + 2
+  · rw [hk]
+    exact threeBlock_scaled_small_d_bound hdsmall n2 n3
+  have hdlarge : t + 2 ≤ d := by omega
+  have h3d : 3 ^ d ≤ 2 ^ (t + 2 + e) := threeBlock_scaled_F1_large hdlarge n1
+  have hsum : (2 : ℕ) ^ (d + e) + 3 ^ d ≤ 2 ^ (d + e + 1) := by
+    have h3d' : (3 : ℕ) ^ d ≤ 2 ^ (d + e) :=
+      le_trans h3d (Nat.pow_le_pow_right (by norm_num) (by omega))
+    calc (2 : ℕ) ^ (d + e) + 3 ^ d ≤ 2 ^ (d + e) + 2 ^ (d + e) :=
+          Nat.add_le_add_left h3d' _
+      _ = 2 ^ (d + e + 1) := by rw [pow_succ]; ring
+  have hf : f ≤ t := by
+    have hlt : (2 : ℕ) ^ (d + e + f) < 2 ^ (t + (d + e + 1)) := by
+      calc (2 : ℕ) ^ (d + e + f) < 2 ^ t * (2 ^ (d + e) + 3 ^ d) := n2
+        _ ≤ 2 ^ t * 2 ^ (d + e + 1) := Nat.mul_le_mul_left _ hsum
+        _ = 2 ^ (t + (d + e + 1)) := (pow_add 2 t _).symm
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+    omega
+  set q := (3 * f + 4) / 5 with hq
+  have h3f : (3 : ℕ) ^ f ≤ 2 ^ (f + q) := by
+    rw [hq]
+    exact three_pow_le_two_pow_eight_fifths f
+  have hbg : b + g ≤ t + q := by
+    have hL : (2 : ℕ) ^ (d + e + f + (b + g))
+        ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) := by
+      calc (2 : ℕ) ^ (d + e + f + (b + g))
+          = 2 ^ (d + e + f) * 2 ^ (b + g) := by rw [pow_add]
+        _ ≤ 2 ^ (d + e + f) * (2 ^ (b + g) + 2 ^ t) :=
+          Nat.mul_le_mul_left _ (Nat.le_add_right _ _)
+    have hR : 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+        ≤ 2 ^ (t + (f + q) + (d + e + 1)) := by
+      calc 2 ^ t * (3 ^ f * (2 ^ (d + e) + 3 ^ d))
+          ≤ 2 ^ t * (2 ^ (f + q) * 2 ^ (d + e + 1)) := by gcongr
+        _ = 2 ^ (t + (f + q) + (d + e + 1)) := by
+          rw [← pow_add, ← pow_add]
+          congr 1 <;> omega
+    have hlt : (2 : ℕ) ^ (d + e + f + (b + g))
+        < 2 ^ (t + (f + q) + (d + e + 1)) := lt_of_le_of_lt hL (lt_of_lt_of_le n3 hR)
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hlt
+    omega
+  set r := (3 * (b + f) + 4) / 5 with hr
+  have h3bf : (3 : ℕ) ^ b * 3 ^ f ≤ 2 ^ (b + f + r) := by
+    calc (3 : ℕ) ^ b * 3 ^ f = 3 ^ (b + f) := by rw [pow_add]
+      _ ≤ 2 ^ (b + f + (3 * (b + f) + 4) / 5) :=
+        three_pow_le_two_pow_eight_fifths (b + f)
+      _ = 2 ^ (b + f + r) := by rw [hr]
+  have hVnat : (2 ^ m - 3 ^ k) * 2 ^ d
+      ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d) := by
+    have hle : (3 : ℕ) ^ k ≤ 2 ^ m := le_of_lt hsub
+    rw [hm, hk] at hV hle
+    exact_mod_cast hV
+  have hDpow : (2 ^ m - 3 ^ k) * 2 ^ d ≤ 2 ^ (b + f + r + d + e + 2) := by
+    calc (2 ^ m - 3 ^ k) * 2 ^ d
+        ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d) := hVnat
+      _ ≤ 2 * 2 ^ (b + f + r) * 2 ^ (d + e + 1) := by gcongr
+      _ = 2 ^ (b + f + r + d + e + 2) := by
+        change (2 ^ 1 * 2 ^ (b + f + r)) * 2 ^ (d + e + 1) = _
+        rw [← pow_add, ← pow_add]
+        congr 1 <;> omega
+  have hDpow' : 2 ^ m - 3 ^ k ≤ 2 ^ (b + f + r + e + 2) := by
+    exact Nat.le_of_mul_le_mul_right (by
+      calc (2 ^ m - 3 ^ k) * 2 ^ d ≤ 2 ^ (b + f + r + d + e + 2) := hDpow
+        _ = 2 ^ (b + f + r + e + 2) * 2 ^ d := by rw [← pow_add]; congr 1; omega)
+      (show 0 < (2 : ℕ) ^ d by positivity)
+  have hscaleNat : 2 ^ m ≤ 2 ^ t * (2 ^ m - 3 ^ k) := by
+    have hle : (3 : ℕ) ^ k ≤ 2 ^ m := le_of_lt hsub
+    exact_mod_cast hscale
+  have hMpow : 2 ^ m ≤ 2 ^ (t + (b + f + r + e + 2)) := by
+    calc 2 ^ m ≤ 2 ^ t * (2 ^ m - 3 ^ k) := hscaleNat
+      _ ≤ 2 ^ t * 2 ^ (b + f + r + e + 2) := Nat.mul_le_mul_left _ hDpow'
+      _ = 2 ^ (t + (b + f + r + e + 2)) := (pow_add 2 t _).symm
+  have hme : m ≤ t + (b + f + r + e + 2) :=
+    (Nat.pow_le_pow_iff_right (a := 2) (by norm_num)).1 hMpow
+  rw [hm] at hme
+  rw [hk, hq, hr] at *
+  omega
+
+/-- One pruned decision procedure covers both residual regimes: the old `m ≤ 27` node and the
+near-critical window after it has been contracted to `k ≤ 53`, `m ≤ 106`.  Indexing first by
+`(k,m)` and deriving `f,g` from the totals avoids a six-dimensional rectangular search. -/
+private theorem threeBlock_residual_cert :
+    ∀ k ∈ List.range 54, ∀ m ∈ List.range 107,
+      m ∉ ({5, 8, 16, 27} : Finset ℕ) →
+      3 ^ k < 2 ^ m → (m ≤ 27 ∨ 2 ^ m < 2 * 3 ^ k) →
+      ∀ b ∈ List.range (k + 1), 1 ≤ b →
+      ∀ d ∈ List.range (k - b + 1), 1 ≤ d →
+      let f := k - b - d
+      1 ≤ f →
+      ∀ c ∈ List.range (m - k + 1), 1 ≤ c →
+      ∀ e ∈ List.range (m - k - c + 1), 1 ≤ e →
+      let g := m - k - c - e
+      (2 : ℤ) ^ (b + g) * (2 ^ (c + d + e + f)
+            - (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1)))
+          ≤ 3 ^ (b + d) * (3 ^ f - 1) →
+      ((2 : ℤ) ^ m - 3 ^ k) * (2 ^ (c + d) - 2 ^ c + 1)
+          ≤ 3 ^ b * (3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+              - 2 ^ (c + d + e + f)) →
+      (2 : ℤ) ^ m - 3 ^ k
+          ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
+              - 2 ^ (c + d + e + f) →
+      False := by
+  native_decide
+
 theorem threeBlock_finite_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e) (hshort : b + c + d + e + f + g ≤ 27)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -956,7 +1305,170 @@ theorem threeBlock_finite_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 
         ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
             - 2 ^ (c + d + e + f)) :
     False := by
-  sorry
+  have hfdef : b + d + f - b - d = f := by omega
+  have hgdef : b + c + d + e + f + g - (b + d + f) - c - e = g := by omega
+  exact threeBlock_residual_cert (b + d + f) (by simp; omega)
+    (b + c + d + e + f + g) (by simp; omega) hlong hsub (Or.inl hshort)
+    b (by simp; omega) hb d (by simp; omega) hd (by omega)
+    c (by simp; omega) hc e (by simp; omega) he
+    (by simpa only [hfdef, hgdef] using hR3)
+    (by simpa only [hfdef] using hV)
+    (by simpa only [hfdef] using hW)
+
+/-! ### Polynomial-measure bootstrap into the strong-bracket range -/
+
+/-- The explicit Rhin-lite real linear-form measure implies a deliberately loose pure-`ℕ`
+polynomial deficit bound.  Dropping the helpful factor `5^6000` keeps the later power-of-two
+envelope simple and is still strong enough for the window bootstrap. -/
+theorem rhinLite_nat_measure_loose (k m : ℕ) (hk : 1 ≤ k) (hsub : 3 ^ k < 2 ^ m)
+    (hwin : 2 ^ m < 2 * 3 ^ k) :
+    3 ^ k ≤ (2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436 := by
+  have hmeas := rhinLite_log23_measure k m hk hsub hwin
+  set Λ : ℝ := (m : ℝ) * Real.log 2 - (k : ℝ) * Real.log 3 with hΛ
+  have e2 : (2 : ℝ) ^ m = Real.exp ((m : ℝ) * Real.log 2) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have e3 : (3 : ℝ) ^ k = Real.exp ((k : ℝ) * Real.log 3) := by
+    rw [← Real.log_pow, Real.exp_log (by positivity)]
+  have hprod : (3 : ℝ) ^ k * Real.exp Λ = (2 : ℝ) ^ m := by
+    rw [e3, ← Real.exp_add, e2]; congr 1; rw [hΛ]; ring
+  have hDfac : (3 : ℝ) ^ k * (Real.exp Λ - 1) = (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    rw [mul_sub, mul_one, hprod]
+  have hc : (1 : ℝ) / (2 * 396 ^ 6000 * 6 ^ 436) ≤ rhinLiteSepC := by
+    unfold rhinLiteSepC
+    have hp : (396 / 5 : ℝ) ^ 6000 ≤ 396 ^ 6000 :=
+      pow_le_pow_left₀ (by positivity) (by norm_num) _
+    apply one_div_le_one_div_of_le (by positivity)
+    calc 2 * ((396 / 5 : ℝ) ^ 6000 * 6 ^ 436)
+        ≤ 2 * (396 ^ 6000 * 6 ^ 436) := by
+          exact mul_le_mul_of_nonneg_left
+            (mul_le_mul_of_nonneg_right hp (by positivity)) (by positivity)
+      _ = 2 * 396 ^ 6000 * 6 ^ 436 := by ring
+  have hkpow : (0 : ℝ) < (k : ℝ) ^ 436 := by positivity
+  have hlow : (1 : ℝ) / ((2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436) ≤ Λ := by
+    calc (1 : ℝ) / ((2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436)
+        = (1 / (2 * 396 ^ 6000 * 6 ^ 436)) / k ^ 436 := by rw [div_div]
+      _ ≤ rhinLiteSepC / k ^ 436 := div_le_div_of_nonneg_right hc hkpow.le
+      _ ≤ Λ := by simpa [hΛ] using hmeas
+  have hDreal : (3 : ℝ) ^ k /
+      ((2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436)
+      ≤ (2 : ℝ) ^ m - (3 : ℝ) ^ k := by
+    calc (3 : ℝ) ^ k / ((2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436)
+        = 3 ^ k * (1 / ((2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436)) := by ring
+      _ ≤ 3 ^ k * Λ := mul_le_mul_of_nonneg_left hlow (by positivity)
+      _ ≤ 3 ^ k * (Real.exp Λ - 1) := by
+        gcongr
+        have := Real.add_one_le_exp Λ
+        linarith
+      _ = (2 : ℝ) ^ m - (3 : ℝ) ^ k := hDfac
+  have hden : (0 : ℝ) < (2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436 := by positivity
+  have hcross : (3 : ℝ) ^ k ≤ ((2 : ℝ) ^ m - (3 : ℝ) ^ k) *
+      ((2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436) := by
+    exact (div_le_iff₀ hden).mp hDreal
+  have hcast : (((2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436 : ℕ) : ℝ)
+      = ((2 : ℝ) ^ m - (3 : ℝ) ^ k) *
+          ((2 * 396 ^ 6000 * 6 ^ 436 : ℝ) * (k : ℝ) ^ 436) := by
+    push_cast [Nat.cast_sub (le_of_lt hsub)]
+    ring
+  have hreal : ((3 ^ k : ℕ) : ℝ) ≤
+      (((2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436 : ℕ) : ℝ) := by
+    rw [hcast]
+    exact_mod_cast hcross
+  exact_mod_cast hreal
+
+/-- Kernel certificate for the deliberately loose Rhin-lite constant. -/
+theorem rhinLite_loose_constant_le_two_pow :
+    2 * 396 ^ 6000 * 6 ^ 436 ≤ 2 ^ 52905 := by
+  decide +kernel
+
+/-- Turn the polynomial measure into a power-of-two deficit scale using the binary length of
+`k`.  This is the scale consumed by `threeBlock_scaled_k_bound`. -/
+theorem threeBlock_polynomial_window_scale (k m : ℕ) (hk : 1 ≤ k)
+    (hsub : 3 ^ k < 2 ^ m) (hwin : 2 ^ m < 2 * 3 ^ k) :
+    2 ^ m ≤ 2 ^ (52906 + 436 * (Nat.log 2 k + 1)) * (2 ^ m - 3 ^ k) := by
+  have hmeas := rhinLite_nat_measure_loose k m hk hsub hwin
+  have hklt : k < 2 ^ (Nat.log 2 k + 1) := Nat.lt_pow_succ_log_self (by norm_num) k
+  have hkpow : k ^ 436 ≤ 2 ^ (436 * (Nat.log 2 k + 1)) := by
+    calc k ^ 436 ≤ (2 ^ (Nat.log 2 k + 1)) ^ 436 :=
+          Nat.pow_le_pow_left (le_of_lt hklt) _
+      _ = 2 ^ (436 * (Nat.log 2 k + 1)) := by rw [← pow_mul]; congr 1; omega
+  have hC : (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436
+      ≤ 2 ^ (52905 + 436 * (Nat.log 2 k + 1)) := by
+    calc (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436
+        ≤ 2 ^ 52905 * 2 ^ (436 * (Nat.log 2 k + 1)) :=
+          Nat.mul_le_mul rhinLite_loose_constant_le_two_pow hkpow
+      _ = 2 ^ (52905 + 436 * (Nat.log 2 k + 1)) := (pow_add 2 _ _).symm
+  have hDC : (2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436
+      ≤ (2 ^ m - 3 ^ k) * 2 ^ (52905 + 436 * (Nat.log 2 k + 1)) := by
+    calc (2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436
+        = (2 ^ m - 3 ^ k) * ((2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436) := by ring
+      _ ≤ (2 ^ m - 3 ^ k) * 2 ^ (52905 + 436 * (Nat.log 2 k + 1)) :=
+        Nat.mul_le_mul_left _ hC
+  calc 2 ^ m ≤ 2 * 3 ^ k := by omega
+    _ ≤ 2 * ((2 ^ m - 3 ^ k) * (2 * 396 ^ 6000 * 6 ^ 436) * k ^ 436) :=
+      Nat.mul_le_mul_left _ hmeas
+    _ ≤ 2 * ((2 ^ m - 3 ^ k) * 2 ^ (52905 + 436 * (Nat.log 2 k + 1))) :=
+      Nat.mul_le_mul_left _ hDC
+    _ = 2 ^ (52906 + 436 * (Nat.log 2 k + 1)) * (2 ^ m - 3 ^ k) := by
+      rw [show 52906 + 436 * (Nat.log 2 k + 1) =
+        (52905 + 436 * (Nat.log 2 k + 1)) + 1 by omega, pow_succ]
+      ring
+
+/-- A small elementary crossover used only to make the polynomial bootstrap numerical. -/
+theorem ten_thousand_mul_le_two_pow (n : ℕ) (hn : 18 ≤ n) : 10000 * n ≤ 2 ^ n := by
+  induction n, hn using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih =>
+      have hten : 10000 ≤ 2 ^ n := by
+        have : 10000 ≤ 10000 * n := by omega
+        omega
+      rw [pow_succ]
+      omega
+
+/-- The polynomial Rhin-lite measure and the sharp scaled closure put every residual window
+tuple below `492276`, exactly the range of the next strong convergent bracket. -/
+theorem threeBlock_polynomial_k_lt (b c d e f g : ℕ) (hc : 1 ≤ c)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
+    (hwin : 2 ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f))
+    (hA : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ (d + e + f)
+        < 2 ^ (b + c + d + e + f + g) * (2 ^ (d + e) + 3 ^ d))
+    (hW : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 2 ^ (c + d + e + f)
+        < 3 ^ f * 2 ^ c * (2 ^ (d + e) + 3 ^ d))
+    (hV : ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ d
+        ≤ 2 * (3 ^ b * 3 ^ f) * (2 ^ (d + e) + 3 ^ d)) :
+    b + d + f < 492276 := by
+  set k := b + d + f with hk
+  set m := b + c + d + e + f + g with hm
+  have hkpos : 1 ≤ k := by
+    by_contra h
+    have hk0 : k = 0 := by omega
+    rw [hk0] at hsub hwin
+    norm_num at hsub hwin
+    have hm0 : m = 0 := by
+      by_contra hm
+      have hm1 : 1 ≤ m := by omega
+      have htwo : (2 : ℕ) ^ 1 ≤ 2 ^ m := Nat.pow_le_pow_right (by norm_num) hm1
+      norm_num at htwo
+      omega
+    exact hsub hm0
+  set t := 52906 + 436 * (Nat.log 2 k + 1) with ht
+  have hscaleNat := threeBlock_polynomial_window_scale k m hkpos hsub hwin
+  have hscaleZ : (2 : ℤ) ^ m ≤ 2 ^ t * (2 ^ m - 3 ^ k) := by
+    have hle : (3 : ℕ) ^ k ≤ 2 ^ m := le_of_lt hsub
+    rw [ht]
+    exact_mod_cast hscaleNat
+  have hkbound : k ≤ 6 * t + 5 := by
+    rw [hk, hm] at hsub hA hW hV hscaleZ
+    exact threeBlock_scaled_k_bound b c d e f g t hc hsub hscaleZ hA hW hV
+  by_contra hnot
+  have hklarge : 492276 ≤ k := by omega
+  have hpow18 : 2 ^ 18 ≤ k := by omega
+  have hlog18 : 18 ≤ Nat.log 2 k := Nat.le_log_of_pow_le (by norm_num) hpow18
+  have hlogpow := ten_thousand_mul_le_two_pow (Nat.log 2 k) hlog18
+  have hkne : k ≠ 0 := by omega
+  have hpowlow : 2 ^ Nat.log 2 k ≤ k := Nat.pow_log_le_self 2 hkne
+  have hlogle : 10000 * Nat.log 2 k ≤ k := le_trans hlogpow hpowlow
+  rw [ht] at hkbound
+  omega
 
 /-- **The window node's separation input — PROVED.**  In the near-critical window with
 `k < 190537`, `sep_strong_190537` gives `3^k ≤ D·2^20`, hence `2^m ≤ 2^21·D`: the deficit
@@ -982,19 +1494,60 @@ theorem threeBlock_window_scale {b c d e f g : ℕ} (hk : 0 < b + d + f) (hklt :
   rw [this]
   linarith
 
-/-- **Node 2 of the rung-3 crux — THE crux.**  The near-critical window `3^k < 2^m < 2·3^k` at
-length `m ≥ 28`.  Route (worked out 2026-09-02, see the module notes above): the Rhin-lite
-*polynomial* measure `rhinLite_log23_measure` gives `1 − R ≥ rhinLiteSepC/(2·k^436)` with
-`R = 3^k/2^m`; writing `L = log₂(1/(1−R)) = O(log k)` and `X = (3/2)^d/2^e`, the three relaxed
-inequalities `threeBlock_relax_A/W/V` read
+/-- The extra convergent bracket closes the interval left between the polynomial bootstrap and
+`sep_strong_190537`.  Its separation exponent is `25`, hence the whole power `2^m` has scale
+`26` relative to the deficit. -/
+theorem threeBlock_window_scale_492276 {b c d e f g : ℕ} (hk : 0 < b + d + f)
+    (hklt : b + d + f < 492276)
+    (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g)) :
+    (2 : ℤ) ^ (b + c + d + e + f + g)
+      ≤ 2 ^ 26 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) := by
+  have hS := sep_strong_492276 (b + d + f) (b + c + d + e + f + g) hk hklt hsub
+  have hle : (3 : ℕ) ^ (b + d + f) ≤ 2 ^ (b + c + d + e + f + g) := le_of_lt hsub
+  have hSN : 2 ^ (b + c + d + e + f + g)
+      ≤ 2 ^ 26 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) := by
+    calc
+      2 ^ (b + c + d + e + f + g) =
+          (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) + 3 ^ (b + d + f) := by omega
+      _
+          ≤ (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) +
+              (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * 2 ^ 25 :=
+            Nat.add_le_add_left hS _
+      _ ≤ 2 ^ 26 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) := by
+        nlinarith
+  have hSNZ : ((2 ^ (b + c + d + e + f + g) : ℕ) : ℤ)
+      ≤ ((2 ^ 26 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) : ℕ) : ℤ) := by
+    exact_mod_cast hSN
+  push_cast [Nat.cast_sub hle] at hSNZ
+  exact hSNZ
 
-    f ≤ L + log₂(1+X),   d ≤ L + 1 + log₂(1+1/X),   b + g ≤ L + f·log₂(3/2) + log₂(1+X),
+/-- Exact small-range separation scale.  This finite certificate is only over the two aggregate
+exponents; it is deliberately separate from the six-exponent leaf census below. -/
+private theorem threeBlock_small_scale_cert :
+    ∀ k ∈ List.range 162, ∀ m ∈ List.range 323,
+      0 < k → 3 ^ k < 2 ^ m → 2 ^ m < 2 * 3 ^ k →
+      2 ^ m ≤ 2 ^ 8 * (2 ^ m - 3 ^ k) := by
+  decide +kernel
 
-and with `e ≤ m − k ≤ 0.585k + 1` these close as `k ≤ 5.09·L + 6`, i.e. `k` bounded.
-⚠️ It is the *polynomial* measure that closes this, **not** `sep_two_three` (`β = 1/3`): at
-`β = 1/3` the normalized system has the fixed point `b/k = d/k = f/k = 1/3`, so it is feasible.
-Rung 3 therefore needs a strictly stronger separation input than rung 2 does — the effectivity
-asymmetry `DIRECTION.md` asks to record. -/
+theorem threeBlock_small_window_scale (k m : ℕ) (hk : 0 < k) (hk161 : k ≤ 161)
+    (hsub : 3 ^ k < 2 ^ m) (hwin : 2 ^ m < 2 * 3 ^ k) :
+    2 ^ m ≤ 2 ^ 8 * (2 ^ m - 3 ^ k) := by
+  have h3 : 3 ^ k ≤ 4 ^ k := Nat.pow_le_pow_left (by norm_num) _
+  have hm : m ≤ 2 * k := by
+    have hp : 2 ^ m < 2 ^ (2 * k + 1) := by
+      calc
+        2 ^ m < 2 * 3 ^ k := hwin
+        _ ≤ 2 * 4 ^ k := Nat.mul_le_mul_left 2 h3
+        _ = 2 ^ (2 * k + 1) := by rw [show 4 = 2 ^ 2 by norm_num, ← pow_mul, pow_succ]; ring
+    have := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hp
+    omega
+  exact threeBlock_small_scale_cert k (by simp; omega) m (by simp; omega) hk hsub hwin
+
+/-- **Node 2 of the rung-3 crux — PROVED.**  In the near-critical window, the Rhin-lite
+polynomial measure and `threeBlock_scaled_k_bound` first give `k < 492276`.  The next convergent
+bracket gives deficit scale `t=26`, hence `k ≤ 161`; an exact two-exponent certificate improves
+the scale to `t=8`, hence `k ≤ 53` and `m ≤ 106`.  The shared residual certificate then closes
+the six-exponent leaves. -/
 theorem threeBlock_window_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e) (hlongm : 28 ≤ b + c + d + e + f + g)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -1010,17 +1563,59 @@ theorem threeBlock_window_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 
         ≤ 3 ^ f * (2 ^ (c + d + e) - 2 ^ (c + d) + 3 ^ d * (2 ^ c - 1))
             - 2 ^ (c + d + e + f)) :
     False := by
-  sorry
+  have hArel := threeBlock_relax_A hR3
+  have hWrel := threeBlock_relax_W hW
+  have hVrel := threeBlock_relax_V hd hsub hV
+  have hkpos : 0 < b + d + f := by omega
+  have hkpoly := threeBlock_polynomial_k_lt b c d e f g hc hsub hwin hArel hWrel hVrel
+  have hscale26 := threeBlock_window_scale_492276 hkpos hkpoly hsub
+  have hk161 : b + d + f ≤ 161 := by
+    have := threeBlock_scaled_k_bound b c d e f g 26 hc hsub hscale26 hArel hWrel hVrel
+    norm_num at this ⊢
+    exact this
+  have hscale8N := threeBlock_small_window_scale (b + d + f)
+    (b + c + d + e + f + g) hkpos hk161 hsub hwin
+  have hscale8 : (2 : ℤ) ^ (b + c + d + e + f + g)
+      ≤ 2 ^ 8 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) := by
+    have hscale8Z : ((2 ^ (b + c + d + e + f + g) : ℕ) : ℤ)
+        ≤ ((2 ^ 8 * (2 ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) : ℕ) : ℤ) := by
+      exact_mod_cast hscale8N
+    push_cast [Nat.cast_sub (le_of_lt hsub)] at hscale8Z
+    exact hscale8Z
+  have hk53 : b + d + f ≤ 53 := by
+    have := threeBlock_scaled_k_bound b c d e f g 8 hc hsub hscale8 hArel hWrel hVrel
+    norm_num at this ⊢
+    exact this
+  have hm106 : b + c + d + e + f + g ≤ 106 := by
+    have h3 : 3 ^ (b + d + f) ≤ 4 ^ (b + d + f) := Nat.pow_le_pow_left (by norm_num) _
+    have hp : 2 ^ (b + c + d + e + f + g) < 2 ^ (2 * (b + d + f) + 1) := by
+      calc
+        2 ^ (b + c + d + e + f + g) < 2 * 3 ^ (b + d + f) := hwin
+        _ ≤ 2 * 4 ^ (b + d + f) := Nat.mul_le_mul_left 2 h3
+        _ = 2 ^ (2 * (b + d + f) + 1) := by
+          rw [show 4 = 2 ^ 2 by norm_num, ← pow_mul, pow_succ]
+          ring
+    have hm2k := (Nat.pow_lt_pow_iff_right (a := 2) (by norm_num)).1 hp
+    omega
+  have hfdef : b + d + f - b - d = f := by omega
+  have hgdef : b + c + d + e + f + g - (b + d + f) - c - e = g := by omega
+  have hlong : b + c + d + e + f + g ∉ ({5, 8, 16, 27} : Finset ℕ) := by
+    simp
+    omega
+  exact threeBlock_residual_cert (b + d + f) (by simp; omega)
+    (b + c + d + e + f + g) (by simp; omega) hlong hsub (Or.inr hwin)
+    b (by simp; omega) hb d (by simp; omega) hd (by omega)
+    c (by simp; omega) hc e (by simp; omega) he
+    (by simpa only [hfdef, hgdef] using hR3)
+    (by simpa only [hfdef] using hV)
+    (by simpa only [hfdef] using hW)
 
 /-- **THE RUNG-3 CRUX, in exponent form.**  The residual census, with the cascade scales
 `w₁, w₂, w₃` eliminated: no exponent tuple of length outside `{5, 8, 16, 27}` fails all three
 positivity leaves at once.  Host scan (`experiments/rung3_census.py leaves`, exhaustive
-`m ≤ 80`): the failures number 58 and sit at `m ∈ {5, 8, 16, 27}` exactly.  The relaxed system
-`threeBlock_relax_A/W/V` — which drops `c` from two of the three — is already finite:
-exhaustively for `m ≤ 70` its solutions have `m ∈ {5,6,7,8,10,12,13,16,27}`, all with
-`3^k < 2^m < 2·3^k` except one at `m = 6`.  So the intended proof is
-*near-critical window ⇒ `sep_two_three` ⇒ `k` bounded ⇒ finite check*, the same shape as rung 2's
-`bd_reduction`. -/
+`m ≤ 80`): the failures number 58 and sit at `m ∈ {5, 8, 16, 27}` exactly.  The proved route is
+*near-critical window ⇒ polynomial Rhin-lite measure ⇒ fixed convergent bracket ⇒ sharp scaled
+contraction ⇒ one pruned finite check*. -/
 theorem threeBlock_leaves_infeasible (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -1069,8 +1664,8 @@ theorem threeBlock_ceiling_gap (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
         < ((2 : ℤ) ^ (b + c + d + e + f + g) - 3 ^ (b + d + f)) * w₁ :=
   (threeBlock_leaves_infeasible b c d e f g hb hd hf hc he hsub hlong hR3 hV hW).elim
 
-/-- **The rung-3 census gap.**  Assembled from the three proved positivity leaves and the
-disclosed residual `threeBlock_ceiling_gap`. -/
+/-- **The rung-3 census gap.**  Assembled from the three positivity leaves and the proved
+residual `threeBlock_ceiling_gap`. -/
 theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d) (hf : 1 ≤ f)
     (hc : 1 ≤ c) (he : 1 ≤ e)
     (hsub : 3 ^ (b + d + f) < 2 ^ (b + c + d + e + f + g))
@@ -1096,8 +1691,8 @@ theorem threeBlock_gap_of_long (b c d e f g : ℕ) (hb : 1 ≤ b) (hd : 1 ≤ d)
   exact threeBlock_ceiling_gap b c d e f g hb hd hf hc he hsub hlong (not_lt.1 hR3)
     (not_lt.1 hV) (not_lt.1 hW)
 
-/-- **Rung 3, the long-length half.**  Modulo the disclosed census gap `threeBlock_gap_of_long`,
-no three-odd-block word of length outside `{5, 8, 16, 27}` is acyclic paradoxical.  The four
+/-- **Rung 3, the long-length half.**  No three-odd-block word of length outside
+`{5, 8, 16, 27}` is acyclic paradoxical.  The four
 realized solutions all have length `8`; lengths `5`, `16`, `27` carry ceiling-passing tuples
 that are killed by the true realizing residue (a finite check, not yet formalized). -/
 theorem threeBlock_not_acyclicParadoxical_of_long {b c d e f g n : ℕ}

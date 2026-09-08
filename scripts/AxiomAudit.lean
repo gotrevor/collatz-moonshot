@@ -107,6 +107,10 @@ cycle front.  (As of 2026-09-01 no disclosed `sorry` remains; `sorryAx` must not
 #print axioms CollatzMoonshot.FrontA.bd_reduction
 #print axioms CollatzMoonshot.FrontA.le_two_blocks_not_acyclicParadoxical
 #print axioms CollatzMoonshot.FrontA.acyclicParadoxical_seven_eight
+#print axioms CollatzMoonshot.FrontA.sep_strong_492276
+#print axioms CollatzMoonshot.FrontA.threeBlock_window_infeasible
+#print axioms CollatzMoonshot.FrontA.threeBlock_gap_of_long
+#print axioms CollatzMoonshot.FrontA.threeBlock_not_acyclicParadoxical_of_long
 #print axioms CollatzMoonshot.Assumed.rozier_terracol_3_2
 #print axioms CollatzMoonshot.infinite_paradoxical_of_infiniteStoppingTime
 #print axioms CollatzMoonshot.FrontA.two_pow_approx_three_pow_from_above
