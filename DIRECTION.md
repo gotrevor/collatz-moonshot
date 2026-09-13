@@ -6,6 +6,8 @@ Set by the **2026-09-13 whole-repository reflection**, reconciled through
 `6a33554`, from baseline `5a54acc`. This supersedes all older assignments and
 rankings in handoffs, route maps, source docstrings, and PENDING_WORK history.
 
+*History note (2026-09-13, operator-assigned bounded node):* `FrontA/TrunkBound.lean` formalizes the easy min-term half of Rozier–Terracol Theorem 4.2 (every paradoxical segment dips below `a/(3Λ)`; Rhin-lite corollary `x_min < a^437/(3c)+a`); the awaiting-a-new-mechanism pause otherwise stands. See `HANDOFF-2026-09-13-trunk-bound.md`.
+
 **Nothing currently on Front A or Front B clears the bar of probability times
 magnitude of NEW mathematics for a bounded objective.** Do not launch another
 proof lap from the deferred list. This is a judgment about the presently

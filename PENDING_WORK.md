@@ -1,6 +1,19 @@
 # PENDING_WORK
 
-## CURRENT — awaiting a new idea; reflection complete, 2026-09-13
+## CURRENT — awaiting a new idea; trunk-bound node landed, 2026-09-13
+
+Operator-assigned bounded node (2026-09-13) landed as `CollatzMoonshot/FrontA/TrunkBound.lean`
+(default build, gate green): product identity `tstep_iterate_prod_identity`, min-term
+inequality `min_term_inequality` (`≤` form retains cyclic endpoints), real form
+`segMin_lt_of_subcritical` (`x_min < a/(3Λ)`), Rhin-lite corollary
+`segMin_lt_poly_of_acyclicParadoxical` / `segMin_lt_nat_poly_of_acyclicParadoxical`
+(`x_min < 396^6000·6^436·a^437`; inherits the eleven allow-listed native certificates),
+kernel control on `(7,8)`. Easy half of Rozier–Terracol Thm 4.2; no novelty. Next attack, if
+the pause is lifted: the hard half (harmonic-mean / all-terms form) and turning the
+trajectory dip `x_min < a/(3Λ)` into an admission constraint on `D·c_m < N`. See
+`HANDOFF-2026-09-13-trunk-bound.md`. The paragraphs below are the standing reflection.
+
+## Historical — awaiting a new idea; reflection complete, 2026-09-13
 
 Read `DIRECTION.md` and `HANDOFF-2026-09-13-whole-board-reflection.md`.
 The whole board is reconciled through `6a33554`. **No bounded objective on

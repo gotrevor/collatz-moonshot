@@ -339,6 +339,16 @@ repository's policy for established literature; neither choice would prove the m
 global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-09-13 (operator-assigned bounded node — min-term trunk bound):** new default-build module
+  `FrontA/TrunkBound.lean`. Product identity `2^m·x_m·∏_{I}3x_i = 3^a·n·∏_{I}(3x_i+1)` over the
+  odd-step set `oddSteps`; min-term inequality `2^m(3x_min)^a < 3^a(3x_min+1)^a` for every strictly
+  climbing segment (odd or even start; `≤` form for cyclic endpoints); real form
+  `x_min < a/(3(m log 2 − a log 3))` for subcritical segments; Rhin-lite corollary
+  `x_min < a^437/(3·rhinLiteSepC) + a`, i.e. `x_min < 396^6000·6^436·a^437` in `ℕ`. (1)–(3) are
+  trust-triple only; the corollary inherits the eleven allow-listed Rhin-lite native certificates.
+  Kernel control on `(7,8)`: odd values `7,11,17,13,5`, `x_min=5`, `a=5`,
+  `2^8·15^5 = 194400000 < 254803968 = 3^5·16^5`. Easy half of Rozier–Terracol Theorem 4.2; no
+  novelty claimed. Gate `scripts/check-fixed-block-bound.sh` GREEN (8772 jobs).
 - **2026-09-01 (review lap — fidelity bug caught at a headline's base, and repaired):**
   `Assumed.rozier_terracol_3_2` read *"for every `K` there are `k, m` with `K < 2^k n` and
   `Paradoxical (2^k n) m"`* — unboundedly large paradoxical starts.  Machine-checked that this

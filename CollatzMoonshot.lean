@@ -43,6 +43,7 @@ import CollatzMoonshot.FrontA.BlockComposition
 import CollatzMoonshot.FrontA.BlockCycle
 import CollatzMoonshot.FrontA.BlockLength
 import CollatzMoonshot.FrontA.FixedBlocks
+import CollatzMoonshot.FrontA.TrunkBound
 import CollatzMoonshot.Assumed.Paradoxical
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
