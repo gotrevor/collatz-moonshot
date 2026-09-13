@@ -21,8 +21,11 @@ Usage:  paradoxical_orbit_census.py M [--quiet] [--horizon H] [--trunks]
 Known-answer controls: m=8 gives starts 7, 9, 19, 25 (a=5); m=27 gives the 19 words of the word
 census at a=17 (starts 165 .. 885).
 
-Results 2026-09-13 (admitting words = admitting starts once 2^m > X): see the KB leaf
-projects/moonshot-review-2026-09-13.md §7.1 and the commit message.
+Results 2026-09-13 (admitting words = admitting starts once 2^m > X).  Sweep of every length
+2..80: segments exist at exactly five lengths, m = 8, 27, 46, 65, 73, with 4, 19, 101, 155, 41
+words (all at the near-critical a = 5, 17, 29, 41, 46); m = 54 has none.  Every trunk (orbit
+minimum) at m >= 27 lies on the trajectory of 27: {31, 47} at 27 and 73, {91, 47, 31, 71, 103, 61}
+at 46, {31, 47, 91, 103, 71, 23} at 65.  Detail: KB leaf projects/moonshot-review-2026-09-13.md §7.1.
 """
 import sys, os, time
 from fractions import Fraction

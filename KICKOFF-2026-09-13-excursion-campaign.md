@@ -39,7 +39,8 @@ Results (complete at each length; null `R` is the continuous model):
 | 65 | 41 | 155 | 42.35 | 3.66 | 13–21 | 73–4547 | 31, 47, 91, 103, 71, 23 |
 | 73 | 46 | 41 | 7.91 | 5.18 | 17–22 | 487–4613 | 31, 47 |
 
-**Every trunk at `m ≥ 27` lies on the trajectory of 27.**  An admitting segment is a descent
+A sweep of **every** length `2 ≤ m ≤ 80` (complete, all `a`) finds segments at only five
+lengths: 8, 27, 46, 65, 73.  **Every trunk at `m ≥ 27` lies on the trajectory of 27.**  An admitting segment is a descent
 from `n` to its orbit minimum `t` (depth `k`, `j` odd steps, `n/t ≈ 2^k/3^j`) followed by `t`'s
 climb over `m − k` steps; the words are preimage clusters of a few trunk climbs.  The start's
 own excursion is small (endpoint ratio `1.001–1.05`, realized peak mostly `1.5–6`); `E = 10–200`
