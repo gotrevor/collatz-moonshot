@@ -1,5 +1,29 @@
 # PENDING_WORK
 
+## CURRENT — altitude review, 2026-09-13
+
+The review is complete. Follow `DIRECTION.md` and
+`HANDOFF-2026-09-13-altitude-direction.md`; all three preceding campaigns are closed.
+
+**One next objective:** test bounded total length in the strict rational
+fixed-point positivity relaxation with uniformly bounded odd/even runs and
+primitive words. Seek an exact unbounded family by a bounded defect or common
+invariant interval; prove primitivity and track all joint slacks. Powers of a
+single word alone do not satisfy the costume check. No such family is claimed yet.
+The exact canonical residue/admission test is retained separately, to expose
+what rational positivity loses. No proof work was started in this altitude lap.
+
+Review probes already refute the literal `runs ≥ 0.22*m` statement (1807@46:
+9 runs; 1127@65: 13 runs), and deletion of the leading even prefix as a
+normalization map (18@8 → 9@7 loses subcriticality). These are finite exact
+refutations, not global finiteness results. The residue given exact numerator
+at fixed (m,a) is deterministic, so the model-to-census gap needs a genuinely
+new quantitative statement. Fixed-b completion is not a uniform-in-b result.
+
+Success means a green node, green edge, or probe refutation with its scope
+stated. No rung 4/5 work or constant sharpening. Earlier “stop/await assignment”
+entries below are completion records, superseded by this altitude directive.
+
 ## CAMPAIGN B COMPLETE — explicit uniform fixed-block bound (2026-09-13)
 
 **Stopped: objective proved.** Read `HANDOFF-2026-09-13-fixed-block-bound.md`.

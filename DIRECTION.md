@@ -1,96 +1,179 @@
 # DIRECTION — collatz-moonshot
 
-## CURRENT DIRECTIVE  (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
+## CURRENT DIRECTIVE (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
 
-> [!NOTE]
-> Set by the **altitude lap of 2026-09-02**.  The previous directive — discharge
-> `Assumed.rozier_terracol_3_2` — is **COMPLETE** (`55a119b`; `finite_acyclicParadoxical_imp_noDivergent`
-> and `rozier_terracol_3_2` both print the bare trust base).  Do not restart it.
+Set by the **2026-09-13 altitude review**, reconciled through `9ae73a3`.
+This replaces the 2026-09-02 directive. The historical instructions below are
+not a work queue. This review changes direction only; no proof work was started.
 
-- 🎯 **THE OBJECTIVE: the odd-block ladder, rung 3.**  Prove
-  `FrontA.threeBlock_gap_of_long` (`FrontA/ThreeBlock.lean`), hence
-  `threeBlock_not_acyclicParadoxical_of_long`, hence the rung-3 classification:
-  **every acyclic paradoxical segment whose word has three odd blocks has length 8.**
-  Rungs 1 (Rozier–Terracol App. A) and 2 (`le_two_blocks_not_acyclicParadoxical`) are closed;
-  rung 3 is the first rung whose answer is a *classification* rather than an exclusion, and it
-  is the natural Front-A analogue of Front B's `m`-cycle ladder.
+### Closed campaigns — do not reopen
 
-- **WHY THIS AND NOT THE OTHERS.**  Ranked by probability of new mathematics:
-  · **(a) rung 3 — CHOSEN.**  It is the only candidate that is simultaneously (i) on the
-    Front-A path (`FiniteAcyclicParadoxical` is the open hypothesis of the trust-base-clean
-    closer), (ii) genuinely open, and (iii) already reduced this lap to a *finite explicit
-    census* — 27 tuples at four lengths — rather than an open Diophantine wall.
-  · **(b) Rhin-lite tower extraction into a shared Lake package** — deferred.  It is packaging,
-    not mathematics, in this repo; `~/src/normal-numbers` is owned by another session and is
-    read-only here, so the payoff cannot even be landed from this side.  Revisit as an
-    *interface proposal* once rung 3 is settled.
-    ⚠️ **Its advertised cross-repo payoff is REFUTED — do not re-attempt it.**  The kickoff
-    prompt says to specialize `rhinLiteLIMeasure_explicit` at a zero log-3 coefficient to
-    discharge normal-numbers' Tier-1 node `LnTwoExpSep`.  That node is not open.  Host
-    computation, 2026-09-02: `log(3/2) + log(4/3) = log 2`, so `q = r = 2ⁿ`, `p = −p'` turns
-    the form `|p + q·log(3/2) + r·log(4/3)|` into `|2ⁿ·log 2 − p'|` at height
-    `H = max(|p'|, 2ⁿ) = 2ⁿ`, giving `‖2ⁿ log 2‖ ≥ rhinLiteSepC · 2^(−436n)` — i.e.
-    `LnTwoExpSep` at **β ≈ 437**, against a **β = 9** already proved over there.  ~48×
-    weaker, and it cannot touch their β<9 wall either (that wall is missing PNT-strength
-    `lcm(1..ℓ) ≤ e^{(1+ε)ℓ}` in mathlib v4.33.1; the Rhin-lite Chebyshev envelope is the same
-    `4^ℓ` bound they already use).
-    **Evidence tiers, stated because this directive gets summarized:** β = 9 exists at *grep
-    tier* (`theorem lnTwoExpSep_sharp : ∃ N₀, LnTwoExpSep 9 N₀`,
-    `~/src/normal-numbers/src/NormalNumbers/LnTwoExpSepSharp.lean`, file clean of `sorry`,
-    independently grepped by a second session).  Its axiom-cleanliness is *prose tier only* —
-    their `PENDING_WORK`/`HANDOFF` claim the trust triple, but no one here ran
-    `#print axioms`; do not upgrade that wording without running it.  The β ≈ 437 figure is
-    *hand-computation tier*: arithmetic on the **statement** as read from source, not a Lean
-    proof.  Enough to keep a lap off a dead payoff; **not** citable.  If anything load-bearing
-    needs it, formalize the specialization first — that is a cheap, well-defined green node.
-    What survives of (b) is only the **architecture**: normal-numbers already built its half of
-    the door (`lnTwoDyadicSep_iff_int`, `src/NormalNumbers/DiophantineWall.lean`) which strips
-    all orbit/digit language, and its docstring names `sep_two_three` as knocking at the same
-    wall in the polynomial-coefficient regime.  This repo has no counterpart.  A shared
-    separation-interface node family — with the one-log and two-log tiers as *definitional*
-    instances — would make the gap between β = 9 and exponent 436 a stateable question instead
-    of an artifact of two codebases.  That is the queued follow-on once rung 3 lands or is
-    refuted; it is **not** tonight's objective.
-  · **(c) Kolmogorov–Sinai entropy for the one-sided 2-adic shift** — deferred.  It is a
-    multi-lap mathlib-infrastructure build (measure-theoretic entropy where mathlib carries
-    only topological entropy) on the *Rigidity* front, with no rung-level payoff and no
-    contact with the paradoxical crux.
-  · **`native_decide` → `decide +kernel`** — still hygiene, still not a lap goal.
+- **Rung 3 COMPLETE (`5a54acc`).**
+  `FrontA.threeBlock_length_eq_eight_of_acyclicParadoxical`
+  (`FrontA/ThreeBlock.lean`) classifies front-normalized three-run segments:
+  length exactly 8. The exceptional lengths and the long tail are both closed.
+  The final proof consumes the polynomial separation measure; the old account
+  claiming finiteness from interior integrality without logarithmic separation
+  is superseded by the source audit in `BLOCK-COMPOSITION-2026-09-13.md` §2.
+- **Campaign A2 COMPLETE (`c3aba74`).** Exact trunk slack and strict/equality
+  criteria are in `FrontA/Excursion.lean`. The 2305/2313 control refutes omission
+  of the descent numerator. `EXCURSION-AUDIT-2026-09-13.md` proves the null-model
+  law mathematically with exact controls; it is not a Lean asymptotics theorem
+  and not a law for the actual census. No excursion-rate obligation remains
+  from that assignment.
+- **Campaign B COMPLETE (`4a12a68`, following `529ccef`).**
+  `FrontA.acyclicParadoxical_length_lt_of_oddRunCount` proves
+  `m < L(b) = 4*((2^b-1)*(b+53342))^2+b` for every odd-start acyclic paradoxical
+  segment with at most b maximal odd runs. The rational envelope, small vertex,
+  squaring, numerical feedback, and word bridge are all proved. The composition
+  uses the standard trust triple; the length theorem additionally inherits
+  eleven disclosed native certificates. It is **not** bare-trust-base-only.
+  The factor-2 proposal and missing-bridge language in lap-1 notes are obsolete.
 
-- **MANDATED NEXT MOVE — chip the census gap, hardest case first.**  The lap of 2026-09-02
-  landed, sorry-free, the whole rung-3 engine: `threeBlock_master`, `threeBlock_slack`,
-  `threeBlock_criterion` (acyclicity ⟺ `D·w₁ ≤ 3^f·T − 2^(c+d+e+f)`), `threeBlock_cascade`
-  (the integer cascade `3^b w₁ + 2^c = 2^(c+d) w₂ + 1`, `3^d w₂ + 2^e = 2^(e+f) w₃ + 1`,
-  `3^f w₃ = 2^g y + 1`), `threeBlock_of_gap`, `threeBlock_segment_identities`, and the
-  **block-merge reduction** (`threeBlock_le_of_AB_C` / `_A_BC` / `threeBlock_merge_reduction`)
-  that reuses rung 2 as a black box on both two-block sub-segments.  What is open is exactly
-  the census.  Attack it in this order:
-  1. **Eliminate `w₂` and prove the two-regime split.**  `3^(b+d) w₁ = 2^(c+d+e+f) w₃ − T`.
-     Regime I (`3^d ≤ 2^(e+f)`): the ceiling on `w₂` is a bounded correction and the
-     division-free real relaxation (R3) carries the argument.  Regime II (`3^d > 2^(e+f)`):
-     `w₂ = 1` is *forced*, and the substitution `w₂ = 1` gives a strictly stronger bound.
-     Prove each regime separately; the census says both terminate.
-  2. **Both regimes funnel into `D · 2^f ≲ 3^k · 2^b`** — a linear form in **two** logs, so
-     `sep_two_three` (already axiom-free in this repo) is the available Baker input if the
-     elementary route stalls.  Record which regime actually needs it: that answer *is* the
-     effectivity-asymmetry finding against Front B.
-  3. Only then the finite tail: the 10 ceiling-passing tuples at `m ∈ {5,16,27}` are killed by
-     the true realizing residue (host-verified 2026-09-02, margins of 10²–10³), and the 17 at
-     `m = 8` are the exceptional length.
+### What still reaches the headline
 
-- 🚫 **FORBIDDEN drift.**
-  · **No three-block *exclusion*.**  `acyclicParadoxical_seven_eight` refutes it in-kernel.
-    Rung 3 is a **classification** (`length = 8`), which is compatible; do not restate it as an
-    exclusion, and do not weaken `le_two_blocks_not_acyclicParadoxical`.
-  · Never restore the "unbounded paradoxical starts" form of `rozier_terracol_3_2`
-    (kernel-refuted by `noNontrivialCycle_of_unboundedParadoxicalStarts`).
-  · No Rhin-lite κ-sharpening / crossover re-tuning (refuted low-leverage, 2026-09-01); no
-    reopening of the elementary `b + d ≤ 5` route (refuted 2026-08-25).
-  · **Do not park `threeBlock_gap_of_long` in `wip/`.**  It is the active crux; `src/`
-    sorry-freedom is the completion end-state, not a per-lap gate.
-  · Front B `Compression` / more block-word vocabulary — still blocked and mis-scoped.
+`FiniteAcyclicParadoxical` in `Assumed/Paradoxical.lean` quantifies **all**
+(start, length) pairs, not only odd starts. Its proved implication to
+`NoDivergentOrbit` is trust-base clean; `conjecture_iff_split` additionally needs
+`NoNontrivialCycle`. Both fronts remain open. Global paradoxical finiteness is
+stronger than convergence, not an established easier reformulation of Front A.
+
+The campaign proved `∀ b, ∀ odd-start segments with runs ≤ b, m < L(b)`.
+It did not prove `∃ M, ∀ odd-start segments, m < M`. The latter is the restricted
+finiteness target itself (bounded lengths give finitely many words and starts
+via `D*n<N`; a finite set has bounded lengths). Using Campaign B, a global bound
+on run count is also that restricted target in another form. Neither statement
+may be imported as a lemma. Passing to the unrestricted node still needs an edge.
+`AcyclicParadoxical` means strict endpoint growth, not absence of repeated states.
+
+### Census reconciliation — finite evidence, with two corrected claims
+
+The recorded complete start census (`9b5dc54`, instrument
+`experiments/paradoxical_orbit_census.py`) covers **2 ≤ m ≤ 80**, every subcritical
+odd count, and every odd start through its analytic bound X(m). Nonempty lengths
+are exactly 8, 27, 46, 65, 73, with respectively 4, 19, 101, 155, 41 starts and
+minimum run counts 3, 7, 9, 13, 17. All trunks **at m ≥ 27** lie on the trajectory
+of 27; do not extend that wording to the length-8 trunks 7 and 11. The extra word
+censuses through `9ae73a3` corroborate empty fixed-four-run slices; they do not
+open rung 4 or 5 as objectives.
+
+**The literal bound `runs ≥ 0.22*m` is false.** Exact review controls give
+`1807 -> 1822` at (m,a,b)=(46,29,9), and `1127 -> 1154` at (65,41,13):
+`50*9 < 11*46` and `50*13 < 11*65`. The minimum observed ratio is 9/46.
+The old “rung 6 first appears at 27” sentence in `block_ladder_rung_census.py`
+also conflicts with its newer complete-census paragraph: the minimum is 7.
+These are probe refutations/corrections, not new all-length bounds. Many runs
+and small **average** run lengths describe the table; no uniform bound on the
+largest run follows. This lap repeated complete lengths 8 and 27 and all five
+nonempty rows through start 5000, not the full 2..80 completeness scan.
+
+### Candidate ranking: probability × magnitude of NEW mathematics
+
+These are subjective ordinal estimates for a bounded next campaign, not measured
+success rates. A likely port of a known theorem has little novelty value.
+
+| rank | candidate | probability of useful new result × magnitude | decision |
+|---|---|---|---|
+| **1** | **(3) Many short runs: expose the limit of rational positivity** | medium-high × high route value for an exact obstruction/refutation; low probability of global finiteness | **CHOSEN**, narrowly scoped below. It tests what information must replace the present `2^b-1` feedback, rather than tuning that exponent. |
+| 2 | (4) Numerator/residue transfer | medium × potentially high, but no quantitative law specified yet | Deferred. Conditional on exact N at fixed (m,a), the canonical residue is already determined. The open question is arithmetic distribution across a specified coarse population and admission threshold, not recovering an unknown independent conditional residue. |
+| 3 | (2) Odd-start finiteness → unrestricted finiteness | medium × moderate edge value, little new mechanism by itself | Deferred, genuinely unproved. Deleting an even prefix need not preserve subcriticality; see the exact obstruction below. A finite-to-one reduction would be a useful green edge, but does not discharge either finiteness node. |
+| 4 | (1) Transport composition to Front B integer cycles | high probability of a port × low new mathematical content | Deferred as known fixed-circuit finiteness with weaker quantitative bounds. Equality and cyclic-run bookkeeping need an explicit bridge, not a new research campaign. |
+
+**Literature costume check for (1).** The source is available: the old
+“Simons–de Weger source-blocked” explanation is obsolete. The ledger
+`papers/simons-deweger-2010-m-cycles-summary.md` and
+`ON-LINE-FINDINGS-2026-08-24-simons-deweger-m-cycles.md` identify Theorem 3(a)
+as fixed-circuit finiteness. Re-read primary v1.44 (2010), §1.4, Lemmas 6–7,
+12–14: it chains minima with exponent `rho=log(3)/log(2)` and combines that with
+a two-log lower bound. Its asymptotic odd-count ceiling is of order
+`b*rho^b`, compared with our coarse length ceiling of order `4^b*(b+53342)^2`.
+This is a comparison of bound strength, not a formal implication between APIs.
+The source credits Steiner with one-circuit **exclusion**; a transported length
+bound alone is weaker and does not discharge `SteinerOneCircuit`.
+[Primary paper](https://deweger.net/papers/%5B35a%5DSidW-3n%2B1-v1.44%5B2010%5D.pdf).
+The transport would be a new formal edge for a known mechanism, not a new cycle
+finiteness theorem. Neither fixed-circuit finiteness nor arbitrary bounded
+circuit count establishes `LadderCompletes` or `Compression`.
+
+**Exact boundary for (2).** `18 -> 20` in 8 steps is acyclic paradoxical, with
+five odd steps: `243<256`. Deleting its first halving gives `9 -> 20` in 7 steps,
+whose multiplier is `243/128>1`. Thus the naive normalization map is refuted;
+this does not refute the finiteness implication. Any future bridge must supply
+another subcritical window and control the fibers, including even-prefix depth.
+
+**Exact boundary for (4).** From the iterate identity,
+`r(v) = (-N(v)*(3^a)^(-1)) mod 2^m`; see `realizing_residue_affine` in
+`experiments/paradoxical.py` and the residue dictionary in
+`FrontA/ParityReconstruction.lean`. The law of r given exact N is a point mass.
+For subcritical odd words let n0 be the least representative above 2. Admission is precisely
+`D*n0<N`. A coarse-bin discrepancy or residue-threshold counting statement would
+be new; rewriting this exact indicator or fitting observed/model ratios is not.
+The 2305/2313 prefix remainders remain compulsory controls.
+
+### ONE OBJECTIVE — primitive short-run obstruction to the positivity relaxation
+
+Decide whether **bounded individual runs plus positivity of the rational cycle**
+can force bounded total length, even after word powers are removed. The proposed
+statement to attack (not assume) is:
+
+```
+For every Q ≥ 1 there is M_Q such that every primitive word
+v = T^q_0 F^e_0 ... T^q_(b-1) F^e_(b-1),  1 ≤ q_i,e_i ≤ Q,
+whose rational affine cycle satisfies
+z_(i+1) = (3^q_i / 2^(q_i+e_i))*z_i + 1 - 2^(-e_i),
+z_b = z_0,  z_i > 2^q_i,  R = 3^(sum q_i)/2^|v| < 1,
+has |v| ≤ M_Q.
+```
+
+Use the existing `FrontB.Primitive` meaning (not a proper word power).
+All even gaps are positive here so cyclic and finite run counts coincide.
+This is a **test of the current proof's relaxation**, not a new Collatz axiom.
+Strict positivity prevents the repeated trivial `TF` cycle from being a fake
+counterexample. Primitivity prevents simply replaying the known `wpow` degeneracy.
+
+**First attack (one bounded architecture/probe lap).** Reuse exact rational
+composition in `experiments/block_composition.py`. Find a short rational cycle
+with strict slack at every joint, then try a bounded defect in a repeated block
+pattern, or two block patterns preserving a common rational interval. Track
+q, e, b, a, m, R, every z_i, and the minimum slack exactly. Search for a fixed Q
+and an arbitrarily long **primitive** family; a finite list of survivors is not
+a refutation of an unspecified M_Q. A recurrence/invariant-interval certificate
+for the family would refute the proposed statement. Uniform positive slack or
+R bounded away from 1 would strengthen the diagnosis, but are not requirements.
+No such family is asserted by this review; construction is the next attack.
+
+For each finite probe compute its canonical n0 and `N-D*n0` separately; keep
+rational-envelope survivors distinct from actual admissions. Preserve all 320
+census controls and the shared-trunk pair. If a family survives, identify exactly
+which integer head congruences or final residue test reject its nonadmitting members; carry that input
+forward as the missing arithmetic, rather than another real growth bound.
+
+**Costume check and acceptance.** A family of rational cycles does not refute
+Collatz or paradoxical finiteness. It would refute bounded-length arguments based
+only on these rational hypotheses, even with short runs and no proper powers.
+It would not prove `2^b-1` optimal or rule out all improvements to it. Conversely,
+asserting bounded length/run count for all actual admitting words just renames
+the restricted finiteness target; an unbounded excursion law can also exclude
+nontrivial cycles. State the quantifiers before celebrating a new node.
+
+Success is a green node, a green edge, or an exact probe refutation with its
+scope pinned. Do not measure progress by sorry count. If the family search fails,
+record the precise failed construction and remaining arithmetic test; do not
+promote finite search failure to the proposed universal bound. No multi-lap
+implementation tranche without a new inequality, family, or smaller obstruction.
+
+**Excluded drift:** no rung 4/5 classification, fixed-b rerun, constant or
+irrationality-exponent sharpening, shared-package extraction, entropy build,
+Front B vocabulary campaign, or native-certificate cleanup. The old unbounded-
+paradoxical-starts axiom remains forbidden. Only a later altitude lap may replace
+this objective. Stop this review after the committed direction and handoff.
 
 ### Directive history
+- 2026-09-13 (altitude review): reconciled rung 3, A2, and fixed-b completion;
+  ranked all four operator candidates and chose the primitive short-run rational
+  positivity obstruction. Exact probes refuted the literal 0.22 run-density bound
+  and naive even-prefix normalization. Primary literature demoted cycle transport
+  to a known, quantitatively weaker specialization. No proof work started.
 - 2026-09-02 (altitude lap): **Retargeted to the odd-block ladder, rung 3.**  Previous objective
   (discharge `rozier_terracol_3_2`) certified complete.  Ranked the operator candidates and chose
   (a); deferred (b) as cross-repo packaging and (c) as off-path mathlib infrastructure.  Landed the

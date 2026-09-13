@@ -1,6 +1,22 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (Campaign B architecture lap 2).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (altitude direction review).
+
+> **2026-09-13 — altitude review complete; next objective selected.**
+> Rung 3 (`5a54acc`), A2 (`c3aba74`), and fixed-b Campaign B (`4a12a68`) are
+> closed. `DIRECTION.md` now selects **one bounded probe of primitive short-run
+> rational cycles**: decide whether their strict positivity can coexist with
+> unbounded length, exposing the integer information a uniform argument needs.
+> No family or new Lean theorem is claimed yet. Cycle transport is a known,
+> quantitatively weaker specialization; its old source-availability blocker is
+> obsolete. Odd-start finiteness still lacks a bridge to the unrestricted node.
+> Exact review probes refute `runs ≥ 0.22*m` (9@46 and 13@65) and naive deletion
+> of an even prefix (18@8 is subcritical; its 9@7 suffix is not). The exact
+> numerator already determines the canonical residue at fixed length/odd count.
+> **Verification:** full 8771-job FORMALIZE gate and Campaign B axiom audit green;
+> A2 exact controls and independent review probes pass. No proof edits.
+> Read `HANDOFF-2026-09-13-altitude-direction.md`. Older assignments below are
+> historical; the CURRENT DIRECTIVE is authoritative.
 
 > **2026-09-13 — Campaign B complete.**
 > `FrontA.acyclicParadoxical_length_lt_of_oddRunCount` proves the explicit
@@ -182,7 +198,7 @@ linear forms in `log 2`, but it neither proves the simultaneous `log 2`/`log 3` 
 underlying `sep_two_three` nor constitutes progress on either Collatz front by itself.
 
 ## Where it stands
-**Current (2026-09-01, review lap).**  The Front-A two-block exclusion
+**Historical checkpoint (2026-09-01, review lap; superseded above).**  The Front-A two-block exclusion
 `le_two_blocks_not_acyclicParadoxical` is now **fully machine-checked** — its ledger is the trust
 base plus `native_decide` artifacts, with **no literature axiom** (the `sep_two_three` sink was
 proved from the repo's own Rhin-lite measure, retiring the cited Rhin 1987 axiom), and it is
@@ -200,8 +216,9 @@ headline, and discharging it is the current binding objective.
 front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialCycle`
 (Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. Front B's closer needs `Compression` (an *upper*
 bound on cycle circuit-count) — now diagnosed as Front B *restated* (no elementary/known
-upper bound; the literature bounds circuits only below) and **source-blocked** (the needed
-Simons–de Weger source is not included); its Lean apparatus is feature-complete and **on hold**. Front A milestone **M2′ is
+upper bound; the literature bounds circuits only below) and remains **on hold for lack of a new mathematical mechanism**. The source was
+obtained on 2026-08-24 and re-read at the 2026-09-13 altitude review; source availability
+is not a blocker. Front A milestone **M2′ is
 complete**: `ParityRigidityW1' → NoDivergentOrbit` is sorry-free and trust-base clean, including
 all Krylov–Bogolyubov/Portmanteau/frequency/drift plumbing. The remaining Front-A crux is
 `ParityRigidityW1'` itself—the arithmetic restriction distinguishing positive-integer parity
@@ -398,6 +415,11 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
+- **2026-09-13 — chosen objective:** the primitive short-run positivity obstruction
+  in `DIRECTION.md`. First attack: exact rational patterns with one bounded defect
+  or a common invariant interval, retaining strict slack and proving primitivity.
+  The deliverable is a family/refutation or a precise smaller obstruction, not
+  another fixed-b theorem. The dated assignments below are historical.
 - **2026-09-08 — the rung-3 window-node objective and front-normalized length-8 classification
   are COMPLETE.**  The exceptional lengths `5,16,27` are rejected in Lean by a kernel-checked
   finite residue certificate; `src/` remains at **0 sorries**.  Await an altitude-level retarget
@@ -423,17 +445,19 @@ global finiteness of acyclic paradoxical segments.
   Rhin bound as a narrow, provenance-documented axiom.
 - M2′ is complete. Do not rebuild measure plumbing or spend the next project only proving
   the converse calibration `NoDivergentOrbit → ParityRigidityW1'`.
-- Front B `Compression` is **on hold** (blocked + mis-scoped) — do not extend until the
-  SdW source lands or a new upper-bound idea appears.
-- (Optional) Prove `SteinerOneCircuit` — Steiner 1977; needs an effective irrationality
-  measure for `log₂3`. Multi-year; leave isolated.
+- Front B `Compression` is **on hold** — source availability is resolved; a new
+  mathematical idea is still needed. Fixed-circuit finiteness does not supply it.
+- Historical optional target `SteinerOneCircuit` remains deferred. The effective
+  separation input now exists; the old “multi-year” estimate from its absence is stale.
+  This is a known theorem and is not the selected new-mathematics objective.
 ### Long-term
 - Prove `ParityRigidityW1'` itself — the arithmetic intertwining making positive-orbit
   conditioning visible to ×2×3 rigidity (FRONT-A-ROUTES §A1, "no route close"). M2′ makes
   W1′ a valid sufficient condition; this is the genuinely-open new mathematics behind it.
 - Discharge / narrow the Front B cited axioms (`baker_bounded_difference`, `eliahou`,
   `hercher_*`); consider adopting the stronger Hercher–Bařina unconditional bound.
-- Reopen Front B `Compression` if the SdW source or a new upper-bound idea arrives.
+- Reopen Front B `Compression` only for a new mathematical mechanism; the SdW
+  source is already available.
 ### To completion
 - Both fronts unconditional (or each conditional exactly where the mathematics is), all
   cited axioms discharged or reduced to trust base + `native_decide` + genuine citations.
@@ -475,7 +499,7 @@ the source proves, then try to derive something famous from it.*
 Cited axioms in `Assumed/` + `FrontB/Threads.lean` (the discharge frontier):
 `eliahou_min_cycle_length` 🟡, `hercher_odd_members_bound` 🟡, `hercher_min_circuit_count` 🟡,
 `baker_bounded_difference` 🟠 (Baker/Tijdeman), `tao_2019_almost_bounded` 🟠 (Tao 2019,
-logarithmic density + Syracuse random variables), `rozier_terracol_3_2` 🟡 (**current target**),
+logarithmic density + Syracuse random variables), `rozier_terracol_3_2` (**discharged; listed historically**),
 `collatz_verified_*` 🟢, `abc` 🔴 (open conjecture — used ONLY in results themselves stated
 conditional on abc).  `furstenberg_topological_rigidity` is **discharged** (now a theorem).
 No 🔴 appears on any unconditional headline.
@@ -485,5 +509,5 @@ No 🔴 appears on any unconditional headline.
 - Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-09-08-rung3-window-plus-tail-closed.md` · scratchpad: `PENDING_WORK.md`
+- Newest baton: `HANDOFF-2026-09-13-altitude-direction.md` · scratchpad: `PENDING_WORK.md`
 - Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`
