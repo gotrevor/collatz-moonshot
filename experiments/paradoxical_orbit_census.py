@@ -13,7 +13,11 @@ of length m, for every a at once.  Values stay below 2^63 on subcritical rows (n
 that leave the subcritical range are masked by their exact odd count before any wrap matters, and
 every hit is re-verified in exact Python integers.
 
-Usage:  paradoxical_orbit_census.py M [--quiet] [--horizon H]
+Usage:  paradoxical_orbit_census.py M [--quiet] [--horizon H] [--trunks]
+  --trunks groups the admitting starts by the MINIMUM of their length-m orbit (the "trunk" t at
+  depth k): every admitting segment is a descent from n0 to t followed by t's climb, so the
+  clusters, not the words, are the independent events.  Also reports whether t lies on the
+  trajectory of 27 (the record climber 27 -> 9232).
 Known-answer controls: m=8 gives starts 7, 9, 19, 25 (a=5); m=27 gives the 19 words of the word
 census at a=17 (starts 165 .. 885).
 
@@ -89,7 +93,32 @@ def census(m, quiet=False, horizon=100_000, chunk=4_000_000):
     return hits
 
 
+def trunks(m, hits):
+    traj27 = set(); x = 27
+    while x != 1:
+        traj27.add(x); x = tstep(x)
+    by_t = {}
+    for n0, a, v in hits:
+        x = n0; orb = [n0]
+        for _ in range(m):
+            x = tstep(x); orb.append(x)
+        k = min(range(m + 1), key=lambda j: orb[j]); t = orb[k]
+        by_t.setdefault(t, []).append((n0, k))
+    print(f"m={m}: {len(hits)} admitting starts, {len(by_t)} distinct orbit minima (trunks); "
+          f"on the 27-trajectory: {sum(1 for t in by_t if t in traj27)}/{len(by_t)}", flush=True)
+    for t, l in sorted(by_t.items(), key=lambda kv: -len(kv[1])):
+        ks = sorted(k for _, k in l); st = sorted(n0 for n0, _ in l)
+        x = t; climb = Fraction(1)                       # t's own climb over the longest window m - k_min
+        for _ in range(m - ks[0]):
+            x = tstep(x); climb = max(climb, Fraction(x, t))
+        print(f"  trunk t={t} on27={t in traj27} cluster={len(l)} depth k={ks[0]}..{ks[-1]} "
+              f"climb(t, {m - ks[0]} steps)={float(climb):.1f} starts={st[:6]}{'...' if len(st) > 6 else ''}", flush=True)
+    return by_t
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     horizon = int(args[args.index("--horizon") + 1]) if "--horizon" in args else 100_000
-    census(int(args[0]), quiet="--quiet" in args, horizon=horizon)
+    h = census(int(args[0]), quiet="--quiet" in args, horizon=horizon)
+    if "--trunks" in args:
+        trunks(int(args[0]), h)
