@@ -15,8 +15,10 @@ four rung-3 words at j=8 and nothing else to 14):
     BLOCKS=4: zero admitting words for every j <= 30  (2 035 800 words at j=30)
     BLOCKS=5: zero admitting words for every j <= 27  (4 686 825 words at j=27)
     BLOCKS=3 at (M,A)=(27,17): zero (5400 words) - rung 3 really is length 8 only
-    BLOCKS=4 at the next near-critical lengths (M,A) = (46,29), (46,28), (54,34), (65,41): see the
-    KB leaf `projects/moonshot-review-2026-09-13.md` (result appended there when the run finished).
+    BLOCKS=4 at (M,A) = (46,29): zero (2 227 680 words); (46,28): zero (2 386 800); (54,34): zero
+    (6 219 840, 20 min); (65,41): zero (19 997 120 words, 98 min).  Independent-origin confirmation
+    of `paradoxical_orbit_census.py`, whose complete sweep of every length <= 80 finds the
+    smallest realized run counts 3@8, 7@27, 9@46, 13@65, 17@73 and nothing with 4 or 5 runs.
 Together with `block_ladder_probe.py`'s Probe 2 (min blocks per length: 8->3, 27->6, 46->9, ...,
 roughly blocks >= 0.22*m) the picture is: paradoxical windows live only at near-critical lengths
 (3^a just below 2^m) and need many SHORT blocks there.  Rungs 4 and 5 are empty; rung 6 first
