@@ -1,17 +1,27 @@
 # PENDING_WORK
 
-## CURRENT — altitude review, 2026-09-13
+## CURRENT — short-run rational obstruction COMPLETE, 2026-09-13
 
-The review is complete. Follow `DIRECTION.md` and
-`HANDOFF-2026-09-13-altitude-direction.md`; all three preceding campaigns are closed.
+**Stopped: the bounded objective in DIRECTION.md is complete.** Read
+`HANDOFF-2026-09-13-short-run-obstruction.md` and
+`SHORT-RUN-OBSTRUCTION-2026-09-13.md`. With X=TF and Y=T²F, the family
+`(XY)^k XYY` has Q=2, length 5k+8, all joint slacks at least 8/5, and
+R≤243/256. A common invariant interval proves the rational cycle for every k;
+5a−3m=1 proves literal Boolean-word primitivity. This refutes M_Q for the
+rational relaxation by an all-k mathematical proof and exact certificate,
+not by extrapolating finite survivors. No new Lean theorem is claimed.
 
-**One next objective:** test bounded total length in the strict rational
-fixed-point positivity relaxation with uniformly bounded odd/even runs and
-primitive words. Seek an exact unbounded family by a bounded defect or common
-invariant interval; prove primitivity and track all joint slacks. Powers of a
-single word alone do not satisfy the costume check. No such family is claimed yet.
-The exact canonical residue/admission test is retained separately, to expose
-what rational positivity loses. No proof work was started in this altitude lap.
+The canonical n0 and N−D*n0 remain separate: every family member starts
+TFTTFT, forcing n0≡57 mod 64, while N/D≤421/13<57. Thus every member fails
+integer admission. The certificate checks 36 exact finite cycles through
+k=256 against the existing cascade, plus the original 320 census controls
+and the 2305/2313 pair; the full 8771-job FORMALIZE gate passes.
+
+**Next highest-value decision belongs to altitude:** whether to test rational
+families that also survive specified prefix congruence filters, or formulate
+a quantitative canonical-admission statement. Neither is authorized as a
+stretch campaign in this lap. General arithmetic exclusion remains open;
+there is no blocker to this completed objective and no operator ask.
 
 Review probes already refute the literal `runs ≥ 0.22*m` statement (1807@46:
 9 runs; 1127@65: 13 runs), and deletion of the leading even prefix as a
@@ -20,9 +30,9 @@ refutations, not global finiteness results. The residue given exact numerator
 at fixed (m,a) is deterministic, so the model-to-census gap needs a genuinely
 new quantitative statement. Fixed-b completion is not a uniform-in-b result.
 
-Success means a green node, green edge, or probe refutation with its scope
-stated. No rung 4/5 work or constant sharpening. Earlier “stop/await assignment”
-entries below are completion records, superseded by this altitude directive.
+The costume check is explicit: no Collatz counterexample, no restricted
+finiteness result, no optimality claim for 2^b−1. No rung 4/5 work or constant
+sharpening. Earlier entries below are historical completion records.
 
 ## CAMPAIGN B COMPLETE — explicit uniform fixed-block bound (2026-09-13)
 

@@ -1,8 +1,23 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (altitude direction review).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (short-run rational obstruction complete).
 
-> **2026-09-13 — altitude review complete; next objective selected.**
+> **2026-09-13 — stopped: primitive short-run rational bound refuted.**
+> For X=TF, Y=T²F, `(XY)^k XYY` is an unbounded primitive family with Q=2,
+> joint slack ≥8/5 and R≤243/256. The invariant interval [34/5,434/13]
+> certifies every k; 5a−3m=1 excludes all proper Boolean-word powers.
+> This is an all-k mathematical proof with an exact rational certificate,
+> not a new Lean theorem or an extrapolation from finite survivors.
+> All family members fail admission: the common TFTTFT prefix forces
+> n0≡57 mod 64, but N/D≤421/13. N and canonical n0 are tracked separately.
+> **Verification:** 36 exact cycles through k=256, original 320 census controls,
+> 2305/2313 prefix-remainder pair, and full 8771-job FORMALIZE gate with the
+> existing six-declaration axiom audit. No proof or build configuration changed.
+> The bounded CURRENT DIRECTIVE objective is complete; no new campaign started.
+> Read `HANDOFF-2026-09-13-short-run-obstruction.md`; the general arithmetic
+> admission problem and both Collatz fronts remain open.
+
+> **Historical, 2026-09-13 — altitude review complete; next objective selected.**
 > Rung 3 (`5a54acc`), A2 (`c3aba74`), and fixed-b Campaign B (`4a12a68`) are
 > closed. `DIRECTION.md` now selects **one bounded probe of primitive short-run
 > rational cycles**: decide whether their strict positivity can coexist with
