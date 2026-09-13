@@ -1,6 +1,6 @@
 # Handoff: min-term trunk bound landed (operator-assigned bounded node)
 
-Date: 2026-09-13. Branch: `main`. Starting HEAD: `571214e`.
+Date: 2026-09-13. Branch: `main`. Starting HEAD: `571214e`. Landed as `4fd7882`; treadmill stop requested after this lap.
 Scope: the one-lap operator assignment (Trevor, 2026-09-13) superseding the
 "awaiting a new mechanism" pause for this node only. DIRECTION.md carries a
 one-line history note; its directive otherwise stands.
