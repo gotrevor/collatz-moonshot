@@ -250,6 +250,10 @@ not a claimed novel literature theorem. No filter, new rung, census expansion,
 Aristotle submission, or certificate-translation tranche is authorized here.
 
 ### Directive history
+- 2026-09-13 (execution lap): the odd-start cycle-exclusion edge and its U.Finite→Conjecture
+  corollary are PROVED, trust-base clean (`HANDOFF-2026-09-13-cycle-edge-proved.md`).
+  The witness map worked exactly as specified. Next bounded objective: to be set by the
+  next altitude review.
 - 2026-09-13 (post-prefix altitude): reconciled `3a3e838`; closed P_6 and
   retired all finite-prefix relaxations. Selected the missing strict-endpoint
   cycle-exclusion edge O.Finite→NoNontrivialCycle, with the direct U.Finite→Collatz

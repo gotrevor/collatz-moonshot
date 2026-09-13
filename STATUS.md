@@ -1,19 +1,20 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (post-prefix altitude review complete).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (cycle-exclusion edge proved).
 
-> **2026-09-13 — altitude complete; cycle-exclusion edge selected.**
-> Reconciled the sole commit since `bc4158e`, `3a3e838`: the padded Q=2 family
-> passes P_6 at every parameter. The fixed-prefix relaxation thread is retired;
-> no larger L or replacement finite-prefix filter is authorized.
-> **Next bounded objective:** O.Finite → NoNontrivialCycle, where O counts
-> odd-start acyclic paradoxical **pairs**. The actual predicate permits interior
-> repetitions. First attack: repeat an odd member's period and append its odd
-> step, using the existing cycle-subcriticality and power-domination lemmas.
-> The direct consumer is U.Finite → Conjecture, using the existing divergence edge.
-> Both new edges remain unproved; **no proof work started in this review**.
-> O.Finite, U.Finite, and O.Finite→U.Finite remain open. The chosen edge changes
-> dependency accounting, not the difficulty of the finiteness hypotheses.
+> **2026-09-13 — cycle-exclusion edge PROVED (trust-base clean).**
+> `Assumed/Paradoxical.lean` now carries the infinite-witness node
+> `infinite_acyclicParadoxical_of_odd_tstep_cycle` (odd periodic n>2 ⇒ the set of
+> lengths m with `AcyclicParadoxical n m` is infinite, witnesses `L(3·3^a+j)+1`),
+> the named hypothesis `FiniteOddAcyclicParadoxical` (O.Finite), the edge
+> `finite_odd_acyclicParadoxical_imp_noNontrivialCycle : O.Finite → NoNontrivialCycle`,
+> and the corollary `finite_acyclicParadoxical_imp_conjecture : U.Finite → Conjecture`.
+> `#print axioms` for all three = `propext, Classical.choice, Quot.sound`; no
+> CST/cycle axiom, no sorry, no new native certificate. Gate green, 8771 jobs.
+> The dictionary's related-member case and the trivial 1↔2 shortcut cycle are
+> discharged explicitly. O.Finite, U.Finite, and O.Finite→U.Finite remain open;
+> U.Finite is now a machine-checked sufficient condition for full Collatz, not
+> identified with the paper's numerical 4614 conjecture.
 > Operator context strengthens the previous finite full-rejection observations:
 > every padded-family member fails full admission, independently host-verified,
 > with n0 of about m bits. The repository script still certifies full rejection
@@ -484,11 +485,11 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **2026-09-13 — chosen objective:** the cycle-exclusion edge from odd-start
-  acyclic pair finiteness, with its direct unrestricted-finiteness→Collatz
-  consumer. Follow `DIRECTION.md` and `HANDOFF-2026-09-13-cycle-edge-direction.md`.
-  No proof has started. Rational positivity and P_6 boundedness are refuted;
-  all finite-prefix follow-ups are retired. Earlier dated assignments are history.
+- **2026-09-13 — cycle-exclusion edge DONE:** `O.Finite → NoNontrivialCycle` and
+  `U.Finite → Conjecture` are kernel-checked on the trust base
+  (`HANDOFF-2026-09-13-cycle-edge-proved.md`). Next objective awaits the next
+  altitude review; candidates are O.Finite→U.Finite (rank 2) and trajectory
+  constraints (rank 3). All finite-prefix follow-ups remain retired.
 - **2026-09-08 — the rung-3 window-node objective and front-normalized length-8 classification
   are COMPLETE.**  The exceptional lengths `5,16,27` are rejected in Lean by a kernel-checked
   finite residue certificate; `src/` remains at **0 sorries**.  Await an altitude-level retarget
@@ -538,6 +539,8 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | headline theorem | paper claim | `#print axioms` shows (beyond trust base) | math-axioms |
 |---|---|---|---|
 | `conjecture_iff_split` | uncond (finite wiring) | — | 0 ✅ |
+| `finite_odd_acyclicParadoxical_imp_noNontrivialCycle` | new edge: O.Finite → no nontrivial cycle | — | 0 ✅ (`FiniteOddAcyclicParadoxical` is an explicit `def` hypothesis) |
+| `finite_acyclicParadoxical_imp_conjecture` | U.Finite → Collatz (conditional) | — | 0 ✅ (`FiniteAcyclicParadoxical` is an explicit `def` hypothesis) |
 | `conjecture_of_fronts` | uncond (finite wiring) | — | 0 ✅ |
 | `noNontrivialCycle_iff_frontB` | uncond (dictionary) | — | 0 ✅ |
 | `parityRigidityW1'_imp_noDivergent` | Front A conditional closer | — | 0 ✅ (`ParityRigidityW1'` is an explicit hypothesis/`def`, not an axiom) |

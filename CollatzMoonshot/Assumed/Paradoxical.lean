@@ -60,12 +60,17 @@ shortcut cycle, so each paradoxical segment is strictly acyclic; the injection
 `(k, m) ↦ (2^k m₀, m)` then carries the axiom's infinite pair set into the acyclic set.  Only
 the **cardinality** of that set is used — never any growth of its starts.
 
-**Strength caveat (mandatory).** `FiniteAcyclicParadoxical` is a *sufficient* hypothesis for
-Front A, and its own truth (global finiteness of paradoxical segments, Rozier--Terracol
-Conjecture 6.1) is **stronger than the full Collatz conjecture**.  This wiring is therefore a
-conditional reduction, not an easier route; it is BASELINE Front-A plumbing, and the novel
-content of the project lives in the discovery lemmas (`headBlock_not_acyclicParadoxical`, the
-`≥3` odd-blocks finding), not here.
+**Strength caveat (mandatory).** `FiniteAcyclicParadoxical` (`U.Finite`, finiteness of the set
+of acyclic paradoxical pairs `(start, length)`) is a *sufficient* hypothesis for Front A, and —
+by the odd-start cycle-exclusion edge proved at the end of this module — its odd-start
+restriction `FiniteOddAcyclicParadoxical` (`O.Finite`) already implies `NoNontrivialCycle`, so
+`U.Finite → Conjecture` (`finite_acyclicParadoxical_imp_conjecture`) is machine-checked on the
+trust base.  `U.Finite` is therefore **at least as strong as the full Collatz conjecture**.  It
+is related to, but not identical with, Rozier--Terracol Conjecture 6.1, which fixes the cutoff
+`4614` for *all* paradoxical starts; no such cutoff is asserted here.  This wiring is a
+conditional reduction, not an easier route; it is BASELINE plumbing, and the novel content of
+the project lives in the discovery lemmas (`headBlock_not_acyclicParadoxical`, the `≥3`
+odd-blocks finding), not here.
 -/
 
 namespace CollatzMoonshot
@@ -77,8 +82,9 @@ open CollatzMoonshot.FrontB CollatzMoonshot.FrontA
 def InfiniteStoppingTime (n : ℕ) : Prop := ∀ j, n ≤ tstep^[j] n
 
 /-- There are only finitely many acyclic paradoxical segments (pairs `(start, length)`).  This
-is the Front-A sufficient condition; its truth is Rozier--Terracol Conjecture 6.1, stronger
-than Collatz. -/
+is the Front-A sufficient condition, and (via `finite_acyclicParadoxical_imp_conjecture`) implies
+the full Collatz conjecture.  It is not identified with Rozier--Terracol Conjecture 6.1's
+numerical cutoff. -/
 def FiniteAcyclicParadoxical : Prop :=
   {p : ℕ × ℕ | AcyclicParadoxical p.1 p.2}.Finite
 
@@ -856,5 +862,171 @@ theorem finite_acyclicParadoxical_imp_noDivergent
     (hfin : FiniteAcyclicParadoxical) : NoDivergentOrbit := by
   intro n hn hdiv
   exact (diverges_imp_infinite_acyclicParadoxical n hn hdiv).not_finite hfin
+
+/-!
+## The odd-start cycle-exclusion edge (2026-09-13)
+
+Let `O = {(n, m) | n odd ∧ AcyclicParadoxical n m}` (`FiniteOddAcyclicParadoxical` says `O` is
+finite) and `U` the unrestricted pair set (`FiniteAcyclicParadoxical`).  `AcyclicParadoxical`
+forbids only *equal endpoints*; interior repetitions are allowed.  So an odd shortcut-periodic
+member `n > 2` of period `L` yields infinitely many strict witnesses at the single start `n`:
+repeat the period `J + j` times and append one genuine odd step.  The endpoint is
+`tstep n = (3n+1)/2 > n`, the odd count is `(J+j)·a + 1`, and subcriticality
+`3·A^(J+j) < 2·B^(J+j)` (`A = 3^a < B = 2^L`) follows from `const_mul_pow_lt_pow` at `c = 3`,
+`J = 3A`, carried to all `j`.  Lengths `L(J+j)+1` are injective in `j` since `L > 0`.
+
+Consumption: any nontrivial standard cycle gives (via `FrontB.tstep_cycle_of_step_cycle`) a
+shortcut-periodic member `n'`, which need not be the original member or the cycle minimum; the
+cycle through `n'` has an odd member `m`, still periodic.  If `m = 1` the cycle is the trivial
+`1 ↔ 2` shortcut cycle, so `n' ∈ {1, 2}` and `n ∈ {1, 2, 4}`.  Otherwise `m > 2` and the witness
+set makes `O` infinite.  Hence `O.Finite → NoNontrivialCycle`, and with the divergence closer,
+`U.Finite → Conjecture`.  All trust-base clean; no CST/cycle axiom.
+-/
+
+
+/-- There are only finitely many **odd-start** acyclic paradoxical segments. -/
+def FiniteOddAcyclicParadoxical : Prop :=
+  {p : ℕ × ℕ | p.1 % 2 = 1 ∧ AcyclicParadoxical p.1 p.2}.Finite
+
+/-- Positivity is preserved along the accelerated orbit. -/
+theorem tstep_iterate_pos {n : ℕ} (hn : 1 ≤ n) (k : ℕ) : 1 ≤ tstep^[k] n := by
+  induction k with
+  | zero => simpa
+  | succ i ih => rw [Function.iterate_succ_apply']; exact tstep_pos ih
+
+/-- An odd `n > 2` strictly increases under one accelerated step. -/
+theorem tstep_odd_gt {n : ℕ} (h2 : 2 < n) (hodd : n % 2 = 1) : n < tstep n := by
+  unfold tstep; rw [if_neg (by omega)]; omega
+
+/-- **The infinite-witness node.**  For an odd shortcut-periodic `n > 2`, the set of lengths `m`
+with `AcyclicParadoxical n m` is infinite: witnesses `m = L·(3·3^a + j) + 1`, `j ∈ ℕ`. -/
+theorem infinite_acyclicParadoxical_of_odd_tstep_cycle {n L : ℕ} (h2 : 2 < n)
+    (hodd : n % 2 = 1) (hL : 0 < L) (hfix : tstep^[L] n = n) :
+    {m : ℕ | AcyclicParadoxical n m}.Infinite := by
+  have hn : 1 ≤ n := by omega
+  set a := ones (traceWord n L) with ha
+  set A := 3 ^ a with hA
+  set B := 2 ^ L with hB
+  have hAB : A < B := subcritical_of_tstep_cycle hn hL hfix
+  have hA1 : 1 ≤ A := Nat.one_le_pow _ _ (by norm_num)
+  set J := 3 * A with hJ
+  have hbase : 3 * A ^ J < B ^ J := const_mul_pow_lt_pow hA1 hAB 3
+  refine Set.infinite_of_injective_forall_mem (f := fun j : ℕ => L * (J + j) + 1) ?_ ?_
+  · intro x y hxy
+    simp only at hxy
+    have : J + x = J + y := Nat.eq_of_mul_eq_mul_left hL (by omega)
+    omega
+  · intro j
+    simp only [Set.mem_ofPred_eq]
+    have hiter : tstep^[L * (J + j)] n = n := by
+      rw [Function.iterate_mul]; exact Function.iterate_fixed hfix (J + j)
+    have hword : traceWord n (L * (J + j) + 1) = traceWord n (L * (J + j)) ++ [true] := by
+      rw [FrontA.traceWord_add n _ 1, hiter]; simp [traceWord, hodd]
+    have hones : ones (traceWord n (L * (J + j) + 1)) = (J + j) * a + 1 := by
+      rw [hword, FrontB.ones_append, ones_traceWord_mul_of_cycle hfix, ← ha]; simp [ones]
+    have hend : tstep^[L * (J + j) + 1] n = tstep n := by
+      rw [Function.iterate_succ_apply', hiter]
+    refine ⟨h2, by omega, ?_, ?_⟩
+    · rw [hones]
+      have h3 : 3 * A ^ (J + j) < 2 * B ^ (J + j) := by
+        have hAj : A ^ j ≤ B ^ j := Nat.pow_le_pow_left hAB.le j
+        have hBpos : 0 < B ^ j := by positivity
+        calc 3 * A ^ (J + j) = (3 * A ^ J) * A ^ j := by ring
+          _ < B ^ J * A ^ j := Nat.mul_lt_mul_of_pos_right hbase (by positivity)
+          _ ≤ B ^ J * B ^ j := Nat.mul_le_mul_left _ hAj
+          _ = B ^ (J + j) := by ring
+          _ ≤ 2 * B ^ (J + j) := by omega
+      calc 3 ^ ((J + j) * a + 1) = 3 * A ^ (J + j) := by rw [hA, ← pow_mul, pow_succ]; ring
+        _ < 2 * B ^ (J + j) := h3
+        _ = 2 ^ (L * (J + j) + 1) := by rw [hB, ← pow_mul, pow_succ]; ring
+    · rw [hend]; exact tstep_odd_gt h2 hodd
+
+/-- An all-even orbit prefix halves: `tstep^[i] n * 2^i = n`. -/
+theorem tstep_iterate_all_even {n : ℕ} : ∀ i, (∀ k < i, tstep^[k] n % 2 = 0) →
+    tstep^[i] n * 2 ^ i = n := by
+  intro i
+  induction i with
+  | zero => intro _; simp
+  | succ i ih =>
+    intro h
+    have hi := ih (fun k hk => h k (by omega))
+    have he := h i (by omega)
+    rw [Function.iterate_succ_apply', tstep, if_pos he, pow_succ]
+    have : tstep^[i] n / 2 * 2 = tstep^[i] n := Nat.div_mul_cancel (Nat.dvd_of_mod_eq_zero he)
+    calc tstep^[i] n / 2 * (2 ^ i * 2) = (tstep^[i] n / 2 * 2) * 2 ^ i := by ring
+      _ = n := by rw [this, hi]
+
+/-- Every nontrivial shortcut cycle has an odd member. -/
+theorem exists_odd_of_tstep_cycle {n p : ℕ} (hn : 1 ≤ n) (hp : 0 < p)
+    (hfix : tstep^[p] n = n) : ∃ i < p, tstep^[i] n % 2 = 1 := by
+  by_contra h
+  push Not at h
+  have hall : ∀ k < p, tstep^[k] n % 2 = 0 := fun k hk => by
+    have := h k hk; omega
+  have := tstep_iterate_all_even p hall
+  rw [hfix] at this
+  have h2 : 2 ≤ 2 ^ p := by
+    calc 2 = 2 ^ 1 := by norm_num
+      _ ≤ 2 ^ p := Nat.pow_le_pow_right (by norm_num) hp
+  nlinarith
+
+/-- The accelerated orbit of `1` stays in the trivial cycle `{1, 2}`. -/
+theorem tstep_iterate_one (q : ℕ) : tstep^[q] 1 = 1 ∨ tstep^[q] 1 = 2 := by
+  cases q with
+  | zero => exact Or.inl rfl
+  | succ q =>
+    rw [Function.iterate_succ_apply, tstep_one]
+    rcases tstep_iterate_two q with h | h
+    · exact Or.inr h
+    · exact Or.inl h
+
+/-- **The odd-start cycle-exclusion edge**: finitely many odd-start acyclic paradoxical pairs
+implies no nontrivial standard cycle.  The dictionary's returned member may differ from the
+original (`n = 3n'+1` case) and from the cycle minimum; both are handled by passing to an odd
+periodic member and using `step_member_trivial` for the trivial `1 ↔ 2` shortcut cycle. -/
+theorem finite_odd_acyclicParadoxical_imp_noNontrivialCycle
+    (hfin : FiniteOddAcyclicParadoxical) : NoNontrivialCycle := by
+  intro n hn hc
+  obtain ⟨n', p, hn', hp, hcyc, hrel⟩ := tstep_cycle_of_step_cycle hn hc
+  obtain ⟨i, hi, hodd⟩ := exists_odd_of_tstep_cycle hn' hp hcyc
+  set m := tstep^[i] n' with hm
+  have hmfix : tstep^[p] m = m := by
+    rw [hm, ← Function.iterate_add_apply, Nat.add_comm, Function.iterate_add_apply, hcyc]
+  have hm1 : 1 ≤ m := tstep_iterate_pos hn' i
+  -- Trivial shortcut cycle `1 ↔ 2`: the odd member is `1`, hence `n' ∈ {1, 2}`.
+  by_cases hm_eq : m = 1
+  · have hn'12 : n' = 1 ∨ n' = 2 := by
+      have : n' = tstep^[p - i] m := by
+        rw [hm, ← Function.iterate_add_apply, show p - i + i = p by omega, hcyc]
+      rw [this, hm_eq]
+      exact tstep_iterate_one _
+    exact step_member_trivial hn'12 hrel
+  · exfalso
+    have h2 : 2 < m := by omega
+    have hinf := infinite_acyclicParadoxical_of_odd_tstep_cycle h2 hodd hp hmfix
+    refine hinf.not_finite ?_
+    have hsub : (fun k : ℕ => (m, k)) '' {k : ℕ | AcyclicParadoxical m k}
+        ⊆ {p : ℕ × ℕ | p.1 % 2 = 1 ∧ AcyclicParadoxical p.1 p.2} := by
+      rintro _ ⟨k, hk, rfl⟩
+      exact ⟨hodd, hk⟩
+    have hinj : Function.Injective (fun k : ℕ => (m, k)) := fun x y hxy => by
+      simpa using hxy
+    exact Set.Finite.of_finite_image (hfin.subset hsub) hinj.injOn
+
+/-- Unrestricted finiteness restricts to odd starts. -/
+theorem finiteOdd_of_finiteAcyclicParadoxical (hfin : FiniteAcyclicParadoxical) :
+    FiniteOddAcyclicParadoxical :=
+  hfin.subset (fun _ hp => hp.2)
+
+/-- **Direct consumption**: unrestricted acyclic-paradoxical finiteness (`U.Finite`) implies the
+full Collatz conjecture, by restricting to odd starts for Front B and the existing divergence
+closer for Front A.  Conditional: `U.Finite` is an open hypothesis, *not* identified with the
+numerical 4614 conjecture. -/
+theorem finite_acyclicParadoxical_imp_conjecture (hfin : FiniteAcyclicParadoxical) :
+    Conjecture :=
+  conjecture_iff_split.mpr
+    ⟨finite_acyclicParadoxical_imp_noDivergent hfin,
+     finite_odd_acyclicParadoxical_imp_noNontrivialCycle
+       (finiteOdd_of_finiteAcyclicParadoxical hfin)⟩
 
 end CollatzMoonshot
