@@ -490,3 +490,23 @@ if __name__ == "__main__" and "--secondimpl" in sys.argv:
         mb, w = orbit_min_blocks_of_paradoxical(N)
         print(f"orbit-based: starts<= {N:>6}: min odd-blocks over ALL acyclic paradoxical "
               f"windows = {mb}  witness(n,m,blocks)={w}")
+
+# ============ O(1) realizing residue via the affine identity (host probe 2026-09-13) ============
+# 2^m * y = 3^a * n + numer(v)  with y an integer forces  3^a * n ≡ -numer(v)  (mod 2^m), and the
+# residue class mod 2^m determines the word (residue determinacy), so the unique class realizing v is
+#     r(v) = -numer(v) * (3^a)^(-1)  mod 2^m.
+# This replaces the O(m^2) bit-lifting in realizing_residue_fast for large censuses; the two are
+# cross-checked exhaustively at small lengths by check_residue_affine().
+
+def realizing_residue_affine(v: list[bool]) -> int:
+    m = len(v); a = ones(v); M = 1 << m
+    return (-numer_fast(v) * pow(3 ** a, -1, M)) % M
+
+def check_residue_affine(mmax=12) -> bool:
+    from itertools import product
+    for m in range(1, mmax + 1):
+        for bits in product((False, True), repeat=m):
+            v = list(bits)
+            if realizing_residue_affine(v) != realizing_residue_fast(v):
+                return False
+    return True
