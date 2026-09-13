@@ -1,8 +1,26 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (cycle-exclusion edge proved).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (whole-board reflection; awaiting a new idea).
 
-> **2026-09-13 — cycle-exclusion edge PROVED (trust-base clean).**
+> **CURRENT — whole-board reflection complete; no bounded objective selected.**
+> Reconciled baseline `5a54acc` through `6a33554`, all 17 intervening commits,
+> the route maps, thread definitions, and primary RT/Simons–de Weger/Tao sources.
+> **Nothing currently clears the probability × magnitude of NEW mathematics bar.**
+> `DIRECTION.md` now states the full-admission obstruction and ranks the whole
+> board without converting deferred ideas into a proof queue. Fixed-b finiteness
+> is the Simons–de Weger mechanism extended to strict segments; it supplies no
+> uniform run bound. U.Finite implies full Collatz; O.Finite already excludes
+> cycles. Neither finiteness input nor the O→U edge is proved.
+> Source audit also catches `CountingGivesFinite` counting all words, so word
+> powers make it equivalent to FrontB; its finiteness-versus-emptiness comment
+> requires a different, primitive population. `LadderCompletes` likewise
+> quantifies over all bounds. These are documented deductions, not new Lean proofs.
+> The standing state is **awaiting a new idea**, not an operator-blocked claim.
+> No proof work started. Read `HANDOFF-2026-09-13-whole-board-reflection.md` for
+> exact verification and the gate parser caveat. All older assignments below
+> are historical and subordinate to the CURRENT DIRECTIVE.
+
+> **Historical completion — cycle-exclusion edge PROVED (trust-base clean).**
 > `Assumed/Paradoxical.lean` now carries the infinite-witness node
 > `infinite_acyclicParadoxical_of_odd_tstep_cycle` (odd periodic n>2 ⇒ the set of
 > lengths m with `AcyclicParadoxical n m` is infinite, witnesses `L(3·3^a+j)+1`),
@@ -281,7 +299,7 @@ theorem.  The axiom now carries Rozier–Terracol's cardinality claim, checked n
 `infinite_paradoxical_of_tstep_cycle`.  It is the **only** cited axiom left under a Front-A
 headline, and discharging it is the current binding objective.
 
-**Standing picture.**  The headline wiring is done and axiom-clean: `conjecture_iff_split` and
+**Historical standing picture (superseded by CURRENT above).**  The headline wiring is done and axiom-clean: `conjecture_iff_split` and
 `conjecture_of_fronts` (`Conjecture.lean`, `Descent.lean`) reduce Collatz to two
 front-hypotheses — `NoDivergentOrbit` (Front A, divergence) and `NoNontrivialCycle`
 (Front B, cycles) — using only `propext/choice/Quot.sound`. Both fronts are open. Front B's closer needs `Compression` (an *upper*
@@ -485,11 +503,13 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **2026-09-13 — cycle-exclusion edge DONE:** `O.Finite → NoNontrivialCycle` and
-  `U.Finite → Conjecture` are kernel-checked on the trust base
-  (`HANDOFF-2026-09-13-cycle-edge-proved.md`). Next objective awaits the next
-  altitude review; candidates are O.Finite→U.Finite (rank 2) and trajectory
-  constraints (rank 3). All finite-prefix follow-ups remain retired.
+- **2026-09-13 — reflection DONE; awaiting a new idea.** No current bounded
+  objective clears the new-mathematics bar. The ranking in `DIRECTION.md` is
+  not an execution queue. Reopening requires an exact statement and evidenced
+  mechanism; the O.Finite→U.Finite route specifically requires a finite-to-one
+  map. Both fronts and both finiteness predicates remain open. The cycle edge,
+  A2, fixed-b Campaign B and rung 3 stay closed; finite-prefix follow-ups stay retired.
+- The remaining short-term bullets below are historical, not current assignments.
 - **2026-09-08 — the rung-3 window-node objective and front-normalized length-8 classification
   are COMPLETE.**  The exceptional lengths `5,16,27` are rejected in Lean by a kernel-checked
   finite residue certificate; `src/` remains at **0 sorries**.  Await an altitude-level retarget
@@ -578,8 +598,8 @@ No 🔴 appears on any unconditional headline.
 
 ## Pointers
 - Binding directive: `DIRECTION.md` → CURRENT DIRECTIVE
-- Routes: `FRONT-A-PARADOXICAL.md` (live), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
+- Routes: `FRONT-A-PARADOXICAL.md` (historical route; awaiting new mechanism), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-09-13-altitude-direction.md` · scratchpad: `PENDING_WORK.md`
+- Newest baton: `HANDOFF-2026-09-13-whole-board-reflection.md` · scratchpad: `PENDING_WORK.md`
 - Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`

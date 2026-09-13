@@ -1,354 +1,278 @@
 # DIRECTION — collatz-moonshot
 
-## CURRENT DIRECTIVE (altitude laps are the ONLY writers; this OUTRANKS any HANDOFF)
+## CURRENT DIRECTIVE — awaiting a new idea; no execution lap selected
 
-Set by the **2026-09-13 post-prefix altitude review**, reconciled through
-`3a3e838` (the sole commit since `bc4158e`). This replaces the six-letter
-assignment. Earlier assignments below are history, not a queue. **This review
-selects direction only: no proof work is started in this lap.**
+Set by the **2026-09-13 whole-repository reflection**, reconciled through
+`6a33554`, from baseline `5a54acc`. This supersedes all older assignments and
+rankings in handoffs, route maps, source docstrings, and PENDING_WORK history.
 
-### Reconciliation: both relaxation questions are ANSWERED
+**Nothing currently on Front A or Front B clears the bar of probability times
+magnitude of NEW mathematics for a bounded objective.** Do not launch another
+proof lap from the deferred list. This is a judgment about the presently
+specified mechanisms, not an impossibility theorem or a claim that Collatz is
+unprovable. The completed campaign remains green and useful.
 
-`882c787` refuted the rational short-run length bound with the primitive
-Q=2 family `(XY)^k XYY`, X=TF, Y=TTF. Its invariant interval certifies every
-internal head, but the entry residue 57 mod 64 exceeds its threshold N/D.
-`bc4158e` consequently selected the fixed six-letter filter P_6.
+The operator explicitly requested reflection and documentation only. That
+instruction overrides reflection.md's generic instruction to implement a proof
+step afterward. No Lean proof, new experiment, or Aristotle job is part of this
+lap. Its deliverable is this reconciled decision and the verification/handoff.
 
-`3a3e838` refutes that filter's boundedness with the padded family
+## What the completed laps actually bought
 
-```
-w_j=(XY)^(2j+12) X Y^17, j≥0;
-a=6j+71, m=10j+113, b=4j+42, c_6=57;
-k=2j+12;
-5*(N-57D)=409787117366273728*32^k+256*3^35*27^k > 0.
-```
+The git range contains 17 commits after the baseline, including host experiment
+commits and direction reviews; it is not 17 independent proof advances.
+`5a54acc` itself is dated September 8 and closes the front-normalized rung-3
+classification at length 8. It is the settled baseline for this review.
 
-The interval [34/5,225] certifies all head slacks ≥8/5 and subcriticality;
-odd a,m and 5a−3m=16 certify literal Boolean-word primitivity. There are no
-exceptional j. This is the old family with fifteen terminal Y blocks added;
-the new content is the all-parameter strict prefix margin. Read
-`PREFIX-ADMISSION-OBSTRUCTION-2026-09-13.md` and its handoff. This review
-reran the existing exact certificate; it remains a mathematical certificate,
-not a new Lean theorem.
+| Commits | Reconciled result | Limit on what follows |
+|---|---|---|
+| `f8fa4a5`, `cf8d748`, `56304ac`, `5ea1b38`, `9b5dc54` | Rung, word-model, and orbit censuses; recorded length sweep 2..80 has hits at 8,27,46,65,73. | Finite data; a cluster on the trajectory of 27 is not a universal theorem. |
+| `26c49b9`, `c3aba74` | Campaign A2: exact trunk slack/criterion, 2305/2313 obstruction, and null-model audit. | Prefix remainder cannot be dropped. The proved model law is not a distribution law for admitted integer traces. |
+| `529ccef`, `4a12a68` | Arbitrary-block cascade, rational envelope, and explicit fixed-run length bound. | Complete for each fixed b, not uniform in b. “Campaign B” here is work on Front A, not a proof of the cycle front. |
+| `9ae73a3`, `972c772` | Further fixed four-block empty censuses and corrected census commentary (minimum observed run ratio 9/46; first populated rung after 3 is 7). | No global run-density law; no new theorem from editing the summary. |
+| `5bdea84`, `882c787` | Rational short-run positivity question selected, then refuted by a primitive Q=2 family at unbounded length. | Rational positivity does not imply integer admission. |
+| `bc4158e`, `3a3e838` | Six-letter admission question selected, then refuted by a padded primitive Q=2 family. | The certified filter is exactly P_6; full admission remains separate. |
+| `e6cb096`, `6a33554` | Odd-start strict cycle-witness edge selected, then proved; unrestricted pair finiteness now implies Collatz. | New formal dependency information, not a proof of either finiteness hypothesis. |
 
-**Reconcile evidence levels explicitly.** The checked-in proof/script establishes
-universal P_6 survival and checks full rejection at 36 parameter values. The
-current operator additionally reports independently host-verified **full
-rejection for every member**, with full canonical n0 having about m bits.
-Accept that report as current campaign context; the repository's finite-probe
-output alone does not establish the universal full-rejection assertion. No
-host proof artifact or new Lean proof of that assertion is added in this review.
-
-The relaxation thread is retired. **Do not choose a larger L, any other fixed
-finite-prefix filter, or a sequence of such filters.** The two counterfamilies
-prove the two stated obstructions, not a general arbitrary-L theorem; the ban
-on further filters is a direction decision about the same unproductive ladder.
-Uniform enforcement of all prefixes reaches full admission itself.
-
-For a word v of length m, a=ones(v), D=2^m−3^a>0, the missing datum is
+The fixed-b theorem is
 
 ```
-r_m=[−N(v)*(3^a)^(-1)] mod 2^m;
-c_m=min {n∈ℕ : n>2 and n≡r_m mod 2^m};
-full admission: D*c_m<N(v).
+odd n ∧ AcyclicParadoxical n m ∧ oddRunCount(traceWord n m) ≤ b
+  → m < 4*((2^b−1)*(b+53342))^2+b.
 ```
 
-When r_m>2, c_m=r_m. Keep the least-above-2 correction otherwise. Admission
-says that the word is the actual trace of a small integer start below N/D.
-Rational fixed-point positivity supplies neither that trace nor an integer
-cycle. New work must expose trajectory information, not another word relaxation.
+It includes a terminal odd run without adding a trajectory step. The rational
+small-vertex argument and repeated squaring produce the factor `2^b−1`; the
+existing polynomial 2/3 separation closes the feedback. This is a meaningful
+extension to strict segments, but its mechanism is the Simons–de Weger pincer
+on a new object. Their fixed-circuit finiteness combines an elementary upper
+bound with logarithmic-form separation; its rate deteriorates with circuit
+count. It is not a source of uniform compression. Source availability is
+resolved. [Simons–de Weger v1.44, Theorem 3, Lemmas 7/12, §8](https://deweger.net/papers/%5B35a%5DSidW-3n%2B1-v1.44%5B2010%5D.pdf).
 
-The day's other completions remain closed: rung 3 (`5a54acc`, front-normalized
-length 8); excursion A2 (`c3aba74`, exact prefix remainder retained); and
-fixed-b Campaign B (`4a12a68`), with
-`m<4*((2^b−1)*(b+53342))^2+b` for odd-start segments with at most b odd runs,
-including a final odd run. No uniform-in-b claim follows. The recorded census
-2≤m≤80 and its 2305/2313 controls are unchanged; no larger census was run here.
-The 0.22*m run bound and the naive 18@8→9@7 normalization remain refuted.
+Do not confuse the benefits: rung classification and fixed-b formalization
+advance restricted structure; the obstruction families eliminate relaxations;
+cycle repetition clarifies the graph. None supplies the remaining uniform
+integer-trajectory input. Another known specialization does not inherit novelty
+from having a fresh theorem name.
 
-### Source-audited graph: the overlooked cycle edge
+## Exact statement and dependency graph
 
-Write
+`Conjecture` means every positive integer reaches 1 under the standard map
+`step`; `NoDivergentOrbit` excludes unbounded positive orbits;
+`NoNontrivialCycle` permits only 1,2,4 on positive standard cycles.
+Their conjunction is equivalent to Conjecture by `conjecture_iff_split`.
+Paradoxical segments instead use the shortcut map `tstep`.
 
 ```
-O = {p : ℕ×ℕ | p.1 % 2=1 ∧ FrontA.AcyclicParadoxical p.1 p.2};
-U = {p : ℕ×ℕ | FrontA.AcyclicParadoxical p.1 p.2}.
+AcyclicParadoxical n m :=
+  n>2 ∧ m>0 ∧ 3^ones(traceWord n m)<2^m ∧ n<tstep^[m] n
+U := {(n,m) | AcyclicParadoxical n m}
+O := {(n,m) ∈ U | n is odd}
 ```
 
-`FiniteAcyclicParadoxical` is exactly U.Finite. The predicate in
-`FrontA/Paradoxical.lean` requires n>2, m>0, 3^a<2^m and T^m(n)>n.
-**“Acyclic” means unequal endpoints; it does not prohibit interior repetitions.**
-It has no primitivity, first-return, first-descent, or odd-start requirement.
-Do not import the obsolete relaxation population's extra restrictions.
+“Acyclic” means strictly unequal endpoints. Interior repetitions are allowed.
+The sets count pairs, not distinct starts, primitive words, first returns, or
+segments before first descent. These distinctions are load-bearing.
 
-Already kernel-checked:
+The default build proves:
 
-- U.Finite → NoDivergentOrbit (`finite_acyclicParadoxical_imp_noDivergent`).
-- Conjecture ↔ NoDivergentOrbit ∧ NoNontrivialCycle (`conjecture_iff_split`).
-- A positive shortcut cycle has 3^a<2^L (`subcritical_of_tstep_cycle`).
-- Period counts add (`ones_traceWord_mul_of_cycle`); constant multiples of
-  smaller powers are eventually dominated (`const_mul_pow_lt_pow`).
-- A standard cycle supplies a related shortcut periodic member
-  (`FrontB.tstep_cycle_of_step_cycle`), with its precise related-member cases.
+- `U.Finite → NoDivergentOrbit`.
+- `U.Finite → O.Finite → NoNontrivialCycle`.
+- Hence `U.Finite → Conjecture`.
+- An odd shortcut periodic member n>2 produces infinitely many lengths in O,
+  by repeating its period and appending one odd step. Infinitely many starts
+  are neither needed nor claimed.
+- `ParityRigidityW1' → NoDivergentOrbit`; also
+  `RepeatOrDescendCertificate ↔ NoDivergentOrbit`.
+- `NoNontrivialCycle ↔ FrontB` in the integral-word dictionary.
 
-The existing `infinite_paradoxical_of_tstep_cycle` constructs equal-endpoint
-period multiples for **Paradoxical**, not strict **AcyclicParadoxical** witnesses.
-Source search found no odd-start cycle-exclusion edge or U.Finite→Conjecture
-corollary. The next objective is the missing strict-endpoint strengthening,
-followed by its direct consumption. Its proposed mechanism is a repeated
-period with one genuine odd step appended, at an odd periodic member above 2.
-This is a target and first attack, **not a theorem proved by this review**.
+All these displayed edges are trust-base clean. **Still open:** O.Finite,
+U.Finite, O.Finite→U.Finite, both unconditional fronts, W1', compression and
+the other research predicates. `Conjecture → U.Finite` is not supplied by
+this graph. Pointwise termination does not supply a uniform pair bound.
 
-Still open: O.Finite itself; U.Finite itself; O.Finite→U.Finite; both
-unconditional fronts; and ParityRigidityW1'. A global odd-start length or run
-bound repackages O.Finite with the existing fixed-b result, so cannot be an
-assumption disguised as a lemma. U.Finite is not literally the paper's
-Conjecture 6.1: that conjecture specifies the cutoff 4614 for **all** paradoxical
-starts. Historical source docstrings conflating those statements are not authority.
+The old “Front A only” reading of paradoxical finiteness is now decisively
+wrong: even O.Finite carries cycle exclusion. A uniform bound on odd-start
+run count, together with fixed-b finiteness, repackages O.Finite; a uniform
+length bound does likewise (finitely many words, each with finitely many
+starts below its threshold). Neither is a harmless auxiliary assumption.
 
-### Ranking by probability × magnitude of NEW mathematics
+## Standing obstruction: full admission is the missing information
 
-These are subjective ordinal judgments about one bounded lap. A new graph edge
-has value, but elementary cycle repetition is not a literature-novel Collatz
-mechanism. No candidate gets credit for renaming an open finiteness statement.
+For a Boolean word v of length m with a ones, put `N=numer(v)` and
+`D=2^m−3^a>0`. Its full realizing residue and least allowed start are
 
-| Rank | Candidate | Probability × magnitude | Decision |
+```
+r_m = [−N*(3^a)^(-1)] mod 2^m
+c_m = min {n ∈ ℕ | n>2 and n≡r_m mod 2^m}.
+```
+
+A word admits a strict paradoxical start exactly when `D*c_m<N`. All its
+admitting starts are the representatives n>2 in that residue class with
+`D*n<N`. Keep the least-above-2 correction when r_m≤2. In contrast, the
+rational affine fixed point is `N/D`; positivity of it and of every internal
+head does not realize the word as a small integer trajectory. For an actual
+integer cycle the endpoint equality instead requires `D*n=N`.
+
+`882c787` certifies `(XY)^k XYY`, X=TF, Y=TTF, with bounded run lengths,
+primitivity and all rational head slacks positive, for unbounded k. Its common
+six-bit residue is 57, above N/D. `3a3e838` certifies
+`(XY)^(2j+12) X Y^17`, j≥0, at lengths 10j+113, with the same positivity and
+primitivity and now `D*57<N`. Thus even that necessary entry test admits an
+unbounded family. Both are mathematical all-parameter arguments with exact
+rational scripts, not new Lean theorems.
+
+Evidence boundary: the checked-in second certificate proves P_6 survival,
+not an arbitrary-L theorem. Its full-admission rejection check covers 36
+parameters. Prior operator context additionally reports universal full
+rejection with canonical starts of about m bits; no corresponding universal
+proof artifact was added to this repository. The current operator treats
+finite-prefix relaxations as exhausted. **All fixed finite-prefix follow-ups
+remain retired**, without relabeling the P_6 certificate as a theorem for every
+L. Neither that retirement nor these examples refutes every symbolic proof.
+
+At fixed (m,a,N) the full residue is deterministic. A uniform argument must
+therefore consume trajectory-side information: the actual small start and
+all its parity/carry compatibility. This can be expressed symbolically, but
+cannot be replaced by rational head positivity, a fixed-prefix test, or an
+independent random-residue model. A2's exact trunk criterion already shows why
+retaining only the minimum and subsequent climb loses decisive information.
+
+## Whole-board ranking: all below the bounded-objective bar
+
+This is an ordinal ranking of present research prospects, **not a work queue**.
+“High magnitude” means a new mechanism would matter; it does not make an
+unspecified mechanism a bounded task. Historical 40%, 55%, and 70% route odds
+are conditional speculation about eventual solutions, not success probabilities
+for the next lap. They have no scheduling authority.
+
+| Rank | Candidate | Probability × magnitude of NEW mathematics in a bounded lap | Decision / missing deliverable |
 |---|---|---|---|
-| **1** | **(vi) Reconciliation's cycle-exclusion edge: O.Finite → NoNontrivialCycle** | High: the exact period and power APIs exist × moderate: settles whether the odd-start node already controls Front B, and completes U.Finite's conditional route to Collatz | **CHOSEN**, one bounded edge package below. New to this graph, no literature novelty claimed. |
-| 2 | (ii) O.Finite → U.Finite | Low-medium without an actual finite-to-one construction × high if achieved | Deferred. The 18@8 counterexample kills only `(2^k*u,m)↦(u,m−k)`. No replacement map with proved target membership and finite fibers has been identified. A promise to “normalize” is not an objective specification. |
-| 3 | (v) Trajectory constraints beyond the known stopping-time results | Medium for faithful conditional wiring, low for a stronger unconditional exclusion × potentially high | Deferred as a separate campaign. The literature constraints below calibrate the chosen edge; merely porting them or restating restricted finiteness is not new arithmetic. |
-| 4 | (iii) Coarse residue-given-numerator discrepancy | Low for an error bound useful at rare admission thresholds × high if achieved | Ineligible now: no useful error scale is established. A null-model law or a bound of the order of the whole population supplies no exclusion. |
-| 5 | Fixed-circuit Front B transport, certificate ports, further finite filters | High for known specializations × low new content | Not selected. Finite-prefix work is prohibited; fixed-circuit finiteness is known and supplies no uniform compression. |
+| 1 | Front A: a new trajectory constraint beyond RT's harmonic-mean condition | Low for an unconditional strengthening × high; high for a faithful port × negligible new mathematics | No proposed extra inequality controls admission or couples the mean to length/start strongly enough. Do not assign the port. |
+| 2 | O.Finite → U.Finite | Unassessable without a specified map (treat as low) × substantial graph value | No map with target membership and finite fibers is known here. “Normalize even starts” is not an objective. |
+| 3 | Coefficient stopping time (CST), or a genuinely new restricted obstruction to its failure | Low × high; known equivalence/verification ports have high probability but low new content | No fresh restricted class and mechanism are specified. Global CST is an open cycle-excluding conjecture. |
+| 4 | Carry/transducer or repeat-or-descend certificate | Very low at present × very high | No state space with a proved sound transition invariant and a surviving descent/recurrence certificate. The interface alone is exactly Front A. |
+| 5 | W1' parity rigidity / Furstenberg intertwining | Very low × very high | No arithmetic transfer from a positive integer orbit to the joint ×2,×3 action, nor applicable entropy input. The conditional consumer is already complete. |
+| 6 | Tao forward/backward saturation; pointwise harmonic growth and packing | Very low × very high | Need actual high-floor harmonic mass AND control of overlap across moving seeds. Neither follows from the completed subharmonic certificates. |
+| 7 | Front B primitive compression, bounded denominator, or a new Knight-type identity class | Very low × high | No transformation preserving integrality/nontriviality while reducing complexity, and no new identity class. Fixed-circuit finiteness does not bound circuit count. |
+| 8 | Numerator/residue discrepancy or cycle counting | Very low at the useful error scale × high | No estimate reaching an integer exclusion threshold; mean behavior is not enough. Exact conditioning leaves no randomness. |
+| 9 | The 4614 cutoff, U.Finite itself, global start/length/run bounds | No credible bounded attack × very high | These are destination conjectures, not reductions. Increasing a census cannot prove their universal quantifiers. |
+| 10 | More fixed rungs, sharper fixed-b constants, cycle transport, standard certificate/axiom ports, converse wiring | Often high × little or no new mathematics | Valuable formalization under a separately requested objective, but below this operator's bar. |
 
-**Front A versus Front B.** The day removes word-relaxation evidence for a
-uniform Front-A bound; it does not create an independent Front-B compression
-idea. Fixed-b finiteness is still meaningful but insufficient. Reconciliation
-instead suggests that odd-start pair finiteness already excludes cycles. Check
-that edge before funding a separate cycle lane. If it closes, U.Finite becomes
-one explicit sufficient input for both fronts, while O.Finite still lacks a
-proved divergence consequence. This changes the graph's dependency accounting,
-not the difficulty of proving either finiteness hypothesis. Simons–de Weger's
-source is available; lack of source is not a current blocker.
+RT Theorem 4.2 says `1−C≤E/n≤((3+1/h)^a−3^a)/2^m`, where h is the
+harmonic mean of the actual odd terms, C=3^a/2^m and E=N/2^m.
+Its upper bound is a product/AM–GM
+estimate. It gives a necessary condition, not control of h as the trajectory
+varies. CST is `t(n)=τ(n)` for n≥2, including infinite values; equivalently a
+paradoxical segment contains an earlier value below its start. Conjecture 6.1
+excludes all paradoxical starts above 4614. Those conjectures must not be
+assumed as known constraints. [Rozier–Terracol v5, §§1,4,6](https://arxiv.org/html/2502.00948v5).
 
-### Trajectory literature calibration (not new proof assignments)
+For rank 2, even-prefix deletion sends the actual 18@8 witness to 9@7,
+which is not subcritical. Reanchoring at a minimum does not repair coefficient
+control automatically, and forgetting prefix depth does not prove finite
+fibers. A real proposal must specify a map `f:U\E→O` for an explicitly finite
+exception set E (possibly empty), prove membership for every input, and bound
+or otherwise prove each fiber finite. No such map is supplied by this review.
+If proved, this would make O.Finite sufficient for full Collatz through the
+existing U edge; it still would not prove O.Finite.
 
-In the shortcut convention, Rozier–Terracol Theorem 4.2 gives
-`1−C≤E/n≤((3+1/h)^a−3^a)/2^m`, h the harmonic mean of odd terms;
-Corollary 4.3 gives `log2/log(3+1/h)≤a/m<log2/log3`.
-Terras' CST conjecture is `t(n)=τ(n)` for n≥2, including infinite values:
-first strict descent equals first coefficient below 1. Equivalent formulations
-require a paradoxical segment to contain an earlier value below its start.
-The paper reports Terras' verification through 250000, Garner's through
-1150000 (his Col convention), and extends CST through `2.8×10^19` in
-Corollary 5.4. Conjecture 6.1 excludes paradoxical starts above 4614; Theorem
-1.3 reports 593 segments at or below 4614 and none further through that verified
-range. These are source results, not this repository's 320-control census or
-new kernel certificates. Section 6 conditionally derives finiteness from a
-uniform logarithmic total-stopping-time bound; that bound remains conjectural.
-[Primary source, v5, §§1,4–6](https://arxiv.org/html/2502.00948v5).
+For ranks 4–6, distinguish three inputs that an umbrella “rigidity certificate”
+can conceal. Pure 2-adic invariant measures are not constrained by positivity
+of the original integer: the existing negative-cycle witness defeats the
+unconditioned parity claim. Topological Furstenberg rigidity is already proved
+in this repo; it supplies neither the missing arithmetic intertwining nor a
+measure entropy theorem. W1' uses standard-map threshold `log 2/log 6`, not
+the shortcut threshold `log 2/log 3`. Its expected converse is finite-measure
+calibration, still only a pinned target here, not new rigidity. W1 without the
+prime is stronger and would also exclude nontrivial positive cycles.
 
-Neither the harmonic constraint nor verified CST gives full admission for
-arbitrary starts. CST includes a cycle consequence, but no CST assumption is
-needed or allowed for the selected edge. No strongest-in-all-literature claim
-is made beyond the precise source results just checked.
+Tao's result concerns orbit minima for logarithmically almost all starts.
+A large backward basin entering one fixed seed d has orbitMin≤d and is
+eventually Tao-good. The existing `mem_taoGood_of_reachesValue` formalizes the
+failure of that amplification argument. A useful replacement needs moving
+high floors and a positive logarithmic-density contradiction.
+[Tao, Almost all orbits attain almost bounded values](https://arxiv.org/abs/1909.03562).
+The exponent-4/5 renewal/stopping pipeline is complete; another exponent below
+1 does not provide the harmonic budget. The harmonic obstruction excludes the
+specified five-floor, constant-lift certificate scheme; it is not a theorem
+against every enriched state space. Escaping that scheme without a proposed
+invariant, or merely porting a larger table, is not a bounded new idea.
 
-### Deferred discrepancy specification (retain the actual population)
+## Front B statement audit: do not trust obsolete labels
 
-For future altitude comparison only: W(m,a) consists of **all Boolean words**
-of length m starting T, with a odd letters and D=2^m−3^a>0, each counted once.
-For j≥0 let
-`W_j={v∈W(m,a): 2^(−j−1)<N(v)/(D*2^m)≤2^(−j)}`, with a separate overflow
-bin above 1. Compare
+Reading `FrontB/Threads.lean` and `Powers.lean` exposes two residual mismatches.
+These are source-grounded mathematical deductions recorded here, **not new
+kernel theorems or proof assignments**:
 
-```
-A_j = Σ_(v∈W_j) 1[D*c_m(v)<N(v)],
-μ_j = Σ_(v∈W_j) p_odd(N(v)),
-```
+1. `CountingGivesFinite` currently counts **all** nontrivial integral words,
+   not primitive cycles. If v is one such word, `wpow v (j+1)` remains integral
+   and nontrivial by `integerCycle_wpow_iff` and `isTrivial_wpow_iff`.
+   `length_wpow` gives length `(j+1)*v.length`; v is nonempty, so the words
+   are distinct. Thus that literal finiteness predicate implies FrontB, whose
+   converse makes the set empty. `FinitenessIsNotEmptiness`, currently defined
+   as this predicate AND `¬FrontB`, is consequently impossible. The comment
+   that this is a weaker counting conclusion is false for the written type.
+   Finiteness without emptiness is the appropriate warning for **primitive
+   cycles** (or cycles modulo powers), a different population.
+2. `LadderCompletes` universally quantifies over every circuit bound C.
+   Set C to the primitive word's own circuit count and use primitive-root
+   decomposition to see that it too is equivalent to FrontB. Fixed-C
+   finiteness does not give fixed-C exclusion, let alone this whole ladder.
 
-where p_odd counts starts in {3,5,…,2^m+1} strictly below N(v)/D, divided by
-2^(m−1). At exact (m,a,N), the residue is deterministic. Any proposed error
-E_j must explain its consequence for these actual sums: an emptiness argument,
-for example, would need `μ_j+E_j<1` in every relevant bin plus control of the
-overflow and all (m,a). No such scale or theorem is presently available;
-we do not select a distribution campaign on the strength of a model analogy.
+`NaiveCompression` and `NaiveBoundedDen` already have their power-degeneracy
+proofs. Primitive `Compression` avoids that particular defect, but its unknown
+constant does not finish the front: one still needs to exclude the finitely
+many survivors up to that constant. A bound ≤91 closes only through the named
+Hercher citation. The earlier route-map assertion that *any* bounded denominator
+or circuit count automatically dies against a known lower bound overclaims.
+A bound must be explicit and within verified exclusions, or the survivors
+must be eliminated independently. No kernel theorem here says otherwise.
 
-### ONE BOUNDED OBJECTIVE — the odd-start finiteness cycle-exclusion edge
+Other board entries have not acquired a mechanism overnight: rotation gcd
+harvesting is already killed by unit-multiple equivalence; logarithmic-form
+and abc lower bounds alone lack the upper bound/exclusion input; sign-blind
+cycle arguments must survive the negative-cycle falsification harness;
+sum-product, zero-entropy classification, function-field carry transport,
+Cobham rigidity, and independence/Goodstein analogies have no specified
+load-bearing lemma. Importing entropy definitions, translating citations, or
+formalizing the two accounting corrections above does not clear the novelty
+bar. Leave their formal interfaces unchanged in this documentation-only lap.
 
-**Next lap only:** prove the following edge, with a named predicate (a `def`,
-never an axiom) for O.Finite:
+## Trust, verification, and reopening condition
 
-```
-finite_odd_acyclicParadoxical_imp_noNontrivialCycle :
-  O.Finite → NoNontrivialCycle
-```
+The default source has zero disclosed sorries. The fixed-b headline inherits
+eleven existing Rhin-lite native certificates; it is not bare-trust-base-only.
+The new cycle witness and both finiteness edges use exactly `propext`,
+`Classical.choice`, `Quot.sound`. RT 3.2, power approximation, and topological
+Furstenberg are proved, despite historical file names under Assumed.
 
-The load-bearing intermediate is the exact strict-endpoint witness statement:
+Named citation debt remains: Tao, Eliahou/Hercher bounds and computations,
+Baker bounded difference; abc is an explicitly conjectural input to conditional
+results. Historical Rhin axiom routes in `wip/` are retired and not root
+imports. Cited axioms are debt, not permanent mathematical destinations;
+discharging them still does not create the missing uniform mechanism.
 
-```
-∀ n L, 2<n → n%2=1 → 0<L → T^[L] n=n →
-  {m : ℕ | FrontA.AcyclicParadoxical n m}.Infinite.
-```
+The handoff records the real full build, fixed-b audit, trust-only graph audit,
+existing obstruction certificates, and proof-debt check. No new arithmetic
+claim was kernel-proved in this reflection.
 
-**First attack.** Read the existing cycle/power lemmas in
-`CollatzMoonshot/Assumed/Paradoxical.lean` and the standard/shortcut dictionary.
-For an odd periodic member n>2, set a=ones(traceWord n L), A=3^a, B=2^L.
-Try the explicit witness map
+**Standing state: awaiting a new idea. No next proof lap is authorized by this
+file.** Reopen only when a proposal names an exact bounded statement, a first
+attack with concrete mathematical evidence, the new information it consumes,
+an acceptance test, and a costume check against the obstructions above.
+For the even-start edge the actual finite-to-one map is mandatory. For a
+uniform Front-A route the small integer trajectory must be load-bearing.
+For Front B the proposal must go beyond fixed-circuit finiteness and preserve
+the correct primitive/integral population. These are admission criteria for a
+future idea, not assignments to search each row in turn.
 
-```
-f(j)=(n, L*(J+j)+1), with J=3*A, j∈ℕ.
-```
+The reflection objective is complete. Use `box done` after the green commit,
+not `box stuck`: absence of a promising current idea is not an impossible
+external condition or a request for an operator decision. Do not resume the
+completed cycle edge, enlarge a prefix filter, or substitute routine
+formalization merely to keep the treadmill moving.
 
-The next lap must check these exact obligations: the endpoint is T(n)>n;
-the count is `(J+j)*a+1`; and `3*A^(J+j)<2*B^(J+j)`. The existing
-`const_mul_pow_lt_pow` at c=3 provides the proposed starting estimate; carry
-it to all j. Length injectivity follows from L>0. This map is an **injection
-from period repetitions into O**, not an even-start normalization or a
-finite-to-one map O←U. J need not be sharp.
-
-Then extract an odd periodic n>2 from any hypothetical nontrivial standard
-cycle. The dictionary may give a related member rather than the original
-one; discharge that case and transport periodicity to an odd member. Exclude
-entry into the trivial 1↔2 shortcut cycle explicitly. Do not assume the minimum
-of the standard cycle is automatically returned by the dictionary.
-
-**Acceptance criterion.** Kernel-check the displayed infinite-witness node
-and its consumer O.Finite→NoNontrivialCycle. As the direct consumption of this
-same edge, restrict U.Finite to O and compose with the existing divergence
-closer to export
-
-```
-finite_acyclicParadoxical_imp_conjecture :
-  FiniteAcyclicParadoxical → Conjecture.
-```
-
-This corollary introduces no further research assumption or second campaign.
-Print axioms for both new edges and the witness theorem: standard trust triple
-only, no CST/Collatz/cycle-exclusion axiom, no sorry, and no new native certificate
-should be required. Run the real full gate and preserve the existing headline
-and fixed-b audits. Update the applicable source strength caveat so it states
-the proved implication faithfully, without identifying U.Finite with the
-numerical 4614 conjecture. Commit green work and stop.
-
-A kernel-checked load-bearing witness node with the precise remaining bridge
-recorded is honest progress, not completion of the entire edge. If the proposed
-map fails, provide the exact failed membership/count inequality or a verified
-counterexample to that map; do not claim a counterexample to an implication
-from O.Finite. Do not weaken the goal, add a global stopping hypothesis, or
-silently substitute non-strict Paradoxical. No proof is attempted in this review.
-
-**Costume check.** O.Finite is an explicit unproved hypothesis. The target is
-an edge, not a proof of finiteness or Collatz. Period multiples alone have equal
-endpoints and fail the strict target: the appended odd step is indispensable.
-Repeated intermediate states are allowed by the actual predicate; adding a
-simple-path or primitive-word condition changes the problem. Infinitely many
-lengths at one start suffice because the hypothesis counts pairs, not distinct
-starts. No unbounded-start claim is permitted. A closed edge would show that
-the finiteness hypothesis carries cycle information already; it would not
-supply O.Finite→U.Finite, a bound on even-prefix depth, or new uniform arithmetic.
-This is elementary cycle repetition with a new formal graph consequence,
-not a claimed novel literature theorem. No filter, new rung, census expansion,
-Aristotle submission, or certificate-translation tranche is authorized here.
-
-### Directive history
-- 2026-09-13 (execution lap): the odd-start cycle-exclusion edge and its U.Finite→Conjecture
-  corollary are PROVED, trust-base clean (`HANDOFF-2026-09-13-cycle-edge-proved.md`).
-  The witness map worked exactly as specified. Next bounded objective: to be set by the
-  next altitude review.
-- 2026-09-13 (post-prefix altitude): reconciled `3a3e838`; closed P_6 and
-  retired all finite-prefix relaxations. Selected the missing strict-endpoint
-  cycle-exclusion edge O.Finite→NoNontrivialCycle, with the direct U.Finite→Collatz
-  corollary. Ranked the even-start bridge second; no proof work started.
-- 2026-09-13 (post-obstruction altitude): closed rational M_Q after `882c787`;
-  chose exactly Q=2, L=6 prefix-admission boundedness as the next bounded
-  architecture question. Ranked the finite-to-one edge second and coarse
-  distribution third. No proof work started.
-- 2026-09-13 (altitude review): reconciled rung 3, A2, and fixed-b completion;
-  ranked all four operator candidates and chose the primitive short-run rational
-  positivity obstruction. Exact probes refuted the literal 0.22 run-density bound
-  and naive even-prefix normalization. Primary literature demoted cycle transport
-  to a known, quantitatively weaker specialization. No proof work started.
-- 2026-09-02 (altitude lap): **Retargeted to the odd-block ladder, rung 3.**  Previous objective
-  (discharge `rozier_terracol_3_2`) certified complete.  Ranked the operator candidates and chose
-  (a); deferred (b) as cross-repo packaging and (c) as off-path mathlib infrastructure.  Landed the
-  whole rung-3 engine sorry-free (`FrontA/ThreeBlock.lean`) and **isolated the crux to a finite
-  census**: the exact criterion plus the *two-level integer ceiling* leaves 27 tuples at
-  `m ∈ {5,8,16,27}` (exhaustive `m ≤ 130`), while the real relaxation alone is provably infinite
-  (18 → 258 → 2489 → 18324 tuples at `m = 8, 16, 27, 46`).  Finding: rung 3's finiteness is carried
-  by interior integrality, not by a linear form in logarithms — an effectivity asymmetry against
-  both rung 2 and Front B's `m`-cycle ladder.
-- 2026-09-01 (review lap): **Caught and repaired a fidelity BUG at a headline's base.** The
-  `rozier_terracol_3_2` axiom read "unboundedly large paradoxical starts `2^k n`"; machine-checked
-  that this implies `NoNontrivialCycle` (open), hence is strictly stronger than Rozier--Terracol
-  Thm 3.2. Restated the axiom in its published cardinality form, kept the refutation
-  (`noNontrivialCycle_of_unboundedParadoxicalStarts`) and a non-vacuity anchor
-  (`infinite_paradoxical_of_tstep_cycle`) in `src/`, and re-derived
-  `diverges_imp_infinite_acyclicParadoxical` through an injection. Also pinned
-  `acyclicParadoxical_seven_eight` (three odd blocks), proving the two-block exclusion sharp and
-  closing the discovery ladder. **Redirected the objective** from the (completed) `sep_two_three`
-  campaign to discharging `rozier_terracol_3_2`, decomposed bounded / unbounded orbit.
-- 2026-08-24 (review lap): harmonic-dual project certified COMPLETE. Diagnosed
-  `OneCircuit` a≥2 as Steiner/Baker (not `omega`) and off critical path; resolved it via
-  explicit `SteinerOneCircuit` hypothesis (no new axiom, sorry removed). Set the binding
-  objective to the two open fronts, Front B `Compression` first. Created DIRECTION.md +
-  STATUS.md.
-- 2026-08-24 (review lap, later): **RE-SCOPED.** Established Front B `Compression` is
-  Front B restated (no elementary/known upper bound on circuit count) AND source-blocked
-  (the needed SdW source was unavailable) → put on hold, forbid more block vocabulary. Redirected the binding
-  objective to **Front A M2′** (`ParityRigidityW1' → NoDivergentOrbit`): confirmed mathlib
-  has Prokhorov + Portmanteau-on-clopen; isolated the sole gap as a Krylov–Bogolyubov
-  module; landed the two pure M2′ endpoints (`exists_freqThreshold_gt`,
-  `not_diverges_of_eventually_lt`) and the precise 3-piece decomposition in PENDING_WORK.
-- 2026-08-24 (M2′ completion + audit): `parityRigidityW1'_imp_noDivergent` proved with the
-  full KB/support/frequency/drift chain and independently rebuilt/audited at the trust base.
-  Redirected the live Front-A pull to the parity-reconstruction/carry barrier; see
-  `FRONT-A-PARITY-RECONSTRUCTION.md`.
-- 2026-08-24 (parity reconstruction completion + post-run audit): landed the exact
-  experiment and sorry-free Lean baseline. Corrected the run's overclaim: endpoint spread
-  within a suffix class is not a universal finite-state obstruction. Classified the pull
-  BASELINE / RE-SCOPE and redirected to `FRONT-A-PARADOXICAL.md`.
-- 2026-08-25 (review lap): paradoxical project executed → PROMISING EVIDENCE confirmed. Made
-  real crux progress: DECOMPOSED `le_two_blocks_not_acyclicParadoxical` and PROVED Case A
-  (both blocks subcritical) sorry-free via two head-block applications + word-split. Isolated
-  the residual to one arithmetic core (GOAL2', joint 2-adic/3-adic residue force) shared by
-  Cases B/C; wrote the reconstruction route + failed simple bounds into PENDING_WORK. Kept
-  the objective on this new-mathematics crux (proving it = GO).
-- 2026-08-25 (review lap, 1500): **REFUTED the "elementary A/B route" for the crux `b+d ≤ 5`.**
-  Proved (exact-rational witness at `g=41`, `experiments/two_block_relaxation.py`) that the real
-  relaxation of `¬A∧¬B∧subcrit∧U₁ ⇒ b+d≤5` is feasible at unbounded `g`, so NO nlinarith/
-  polynomial certificate exists (verified in-Lean: couplings compile, nlinarith fails). The
-  integer-truth is Baker-forced. Redirected the MANDATED next move to the sole GO path: build
-  effective irrationality of `log₂3` (linear forms in logs) in Lean; forbade all further
-  elementary-inequality attempts on `b+d`. Axiom audit re-run: two headline consumption theorems
-  clean (trust base + faithful `rozier_terracol_3_2`); two-block exclusion carries the single
-  disclosed `sorryAx` (the `b+d≤5` crux).
-- 2026-08-25 (review lap, 2100): **Route-decisive source read — crux core reclassified 🟡, target
-  sharpened.** Identified `sep_two_three`'s residual as the classical **Gelfond 1935 / Bennett–Bugeaud**
-  effective `|2ⁿ−3ᵐ|` bound (polynomial measure ≫ the exponential needed) — 🟡 project-scale, not the
-  pessimistic 🟠. Landed sorry-free (trust base) `poly_le_two_pow` + `sep_of_uniform_measure`,
-  machine-checking that ONE uniform measure `3^k ≤ (2^m−3^k)·k^C` (large k) + finite check ⇒ the full
-  crux. Kept GO on the effective bound; next narrowing = discharge finite check at concrete `C`, then
-  build the Padé/Gelfond core. Build 🟢 8752 jobs.
-- 2026-08-25 (review lap, this one): **Direction KEPT (GO on effective measure), constants corrected,
-  next chip pinned.** Findings landed: the object is **Rhin 1987** (`{1,log2,log3}` measure), honest
-  explicit exponent `E=13.3 ⇒ C=15, k≥400`; `C=6` is unprovable from literature (illustrative only);
-  Bennett–Bugeaud is off-path. Confirmed leg 1 (`Gelfond.lcmUpto_le`) + full single-kernel leg 2
-  (`Legendre.lean`) are trust-base clean; leg 3 (two-*kernel* Rhin determinant) is a real multi-lap
-  expedition (transfinite diameter, effective `n(ε)` asymptotics). The run then set a single-log
-  denominator/integrality warm-up as its next chip; the public-readiness review later classified
-  that work as ancillary. Build 🟢 8754 jobs; crux `sep_two_three` unchanged
-  disclosed sorry.
-
----
-
-## Standing charter (destination)
-
-Prove the Collatz headline `Conjecture ↔ NoDivergentOrbit ∧ NoNontrivialCycle`
-(`Conjecture.lean`, `Descent.lean`) by discharging the cited axioms behind each front
-into machine-checked proofs, keeping `lake build` green and every headline
-`#print axioms`-honest. "Done" = every headline's base is the trust base +
-`native_decide` artifacts + genuinely-discharged inputs, with `🔴` open-conjecture
-axioms appearing ONLY inside results the mathematics itself states conditionally.
-
-Guardrails (repo-wide): a claim is real only when the kernel accepts it with a clean
-`#print axioms`; disclosed `sorry`/cited axioms are honest, faked proofs are not; never
-claim a Collatz result stronger than what is actually proved.
+Newest checkpoint: `HANDOFF-2026-09-13-whole-board-reflection.md`.
+Earlier directions remain recoverable in git and dated handoffs.

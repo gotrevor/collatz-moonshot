@@ -1,12 +1,33 @@
 # PENDING_WORK
 
-## CURRENT — awaiting next altitude review (cycle-exclusion edge closed), 2026-09-13
+## CURRENT — awaiting a new idea; reflection complete, 2026-09-13
 
-The bounded objective set by the post-prefix altitude review is complete; see
-`HANDOFF-2026-09-13-cycle-edge-proved.md`. No new bounded objective is set here
-(altitude laps are the only writers of DIRECTION). The ranked deferred candidates
-stand: O.Finite→U.Finite (rank 2, needs a finite-to-one map with proved target
-membership), trajectory constraints (rank 3), coarse discrepancy (rank 4).
+Read `DIRECTION.md` and `HANDOFF-2026-09-13-whole-board-reflection.md`.
+The whole board is reconciled through `6a33554`. **No bounded objective on
+Front A or Front B currently clears the probability × magnitude of NEW
+mathematics bar.** No proof lap is selected; historical candidate rankings
+below are not assignments. Both fronts, O.Finite, U.Finite and O.Finite→U.Finite
+remain open. The cycle edge, A2, fixed-b Campaign B and rung 3 are complete.
+
+The standing obstruction is full admission `D*c_m<N`, with c_m the least
+start above 2 in the full canonical residue. Rational positivity and the
+certified P_6 relaxation admit unbounded primitive families; all fixed-prefix
+follow-ups are retired. No new trajectory inequality, finite-to-one O←U map,
+arithmetic intertwining, harmonic packing, or primitive compression mechanism
+has been specified. Reopen only with a concrete new proposal meeting DIRECTION's
+acceptance conditions; do not turn that condition into another search lap.
+
+**Source fidelity debt found in reflection (not an execution assignment):**
+`FrontB.CountingGivesFinite` counts all words, including powers. Consequently
+it is equivalent to FrontB, and `FinitenessIsNotEmptiness` is impossible as
+currently typed. The weaker intended counting population would be primitive
+cycles. `LadderCompletes` also has FrontB's full strength. DIRECTION records
+precise deductions from the existing word-power APIs, not new kernel theorems.
+Formal interfaces were left unchanged under the no-proof-work instruction.
+
+Verification and stopping: full gates and exact existing certificates are
+recorded in the handoff. Documentation-only checkpoint; `box done` for the
+reflection, not `box stuck` for difficult mathematics. No operator ask.
 
 ## Historical completion — odd-start cycle-exclusion edge, 2026-09-13
 

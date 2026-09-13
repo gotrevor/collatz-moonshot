@@ -1,5 +1,10 @@
 # Front A route map: how divergence could actually be excluded 🧭
 
+> **2026-09-13 reflection:** this is a historical route map, not a work queue.
+> [DIRECTION.md](DIRECTION.md) ranks the whole board and selects no bounded
+> objective: awaiting a new idea. Completed certificate/rigidity plumbing and
+> retired fixed-prefix work must not be restarted from older instructions here.
+
 > 🧾 **The board is also Lean.**  `CollatzMoonshot/FrontA/Threads.lean` states the
 > principal interfaces below.  Proposed new mathematics is a `def`; proved wiring and
 > falsification facts are theorems.

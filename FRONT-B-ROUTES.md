@@ -1,5 +1,12 @@
 # Front B route map: how a cycle proof could actually close 🔒
 
+> **2026-09-13 reflection:** [DIRECTION.md](DIRECTION.md) supersedes the rankings
+> and proposed next steps below; no bounded objective currently clears the bar.
+> It also records a statement mismatch in `FrontB/Threads.lean`: counting all
+> integral words includes powers, so `CountingGivesFinite` has FrontB strength.
+> Finiteness-versus-emptiness requires primitive cycles instead. Fixed-circuit
+> finiteness does not prove the universally quantified `LadderCompletes`.
+
 > 🧾 **The board is also Lean.**  `CollatzMoonshot/FrontB/Threads.lean` states every thread
 > below as a `Prop`, so "killed" is a theorem and "open" is an uninhabited statement.  Prose
 > and Lean are kept in sync deliberately; if they drift, **the Lean file wins**.
