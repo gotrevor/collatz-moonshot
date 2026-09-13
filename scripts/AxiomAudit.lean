@@ -16,6 +16,14 @@ cycle front.  (As of 2026-09-01 no disclosed `sorry` remains; `sorryAx` must not
 #print axioms CollatzMoonshot.FrontA.trunk_equality_criterion
 #print axioms CollatzMoonshot.FrontA.trunk_depth_data_insufficient
 #print axioms CollatzMoonshot.FrontA.trunk_climb_one_step_control
+#print axioms CollatzMoonshot.FrontA.headBlock_conjugate
+#print axioms CollatzMoonshot.FrontA.blockCascade_compose
+#print axioms CollatzMoonshot.FrontA.blockCascade_of_identities
+#print axioms CollatzMoonshot.FrontA.affineFixedPoint_dominates
+#print axioms CollatzMoonshot.FrontA.blockPotential_step
+#print axioms CollatzMoonshot.FrontA.blockPotential_has_unit
+#print axioms CollatzMoonshot.FrontA.blockPotential_mass_bound
+#print axioms CollatzMoonshot.FrontA.affineCycle_multiplier_lower
 #print axioms CollatzMoonshot.FrontA.seventeen_pow_le_rhinLitePositive_coeff
 #print axioms CollatzMoonshot.FrontA.rhinLitePositive_coeff_le_eighteen_pow
 #print axioms CollatzMoonshot.FrontA.rhinLiteCriticalRoot_exhaustive_Icc

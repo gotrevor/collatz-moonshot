@@ -1,5 +1,44 @@
 # PENDING_WORK
 
+## CAMPAIGN B ARCHITECTURE LAP 1 — cyclic potential contraction (2026-09-13)
+
+**Running+advancing.** Read `BLOCK-COMPOSITION-2026-09-13.md` and
+`HANDOFF-2026-09-13-block-composition.md` next; A2 remains complete.
+
+- Derived the arbitrary integer cascade with every prefix correction `T_i`;
+  `FrontA/BlockComposition.lean` proves its extraction from head identities and
+  its prefix-composition rule. The audit identifies exactly which positivity
+  leaves, separation bounds, rounding and residue inputs the completed low
+  rungs consume; the final rung-3 contraction uses all positivity leaves plus
+  the polynomial measure, not a new nested-ceiling theorem.
+- New proposed composition inequality, proved mathematically in the note:
+  `2^a < (b/δ)^(2^b-1)` and `2^m < 2^b*3^a`, where `δ=D/2^m`. Construct the
+  rational affine fixed point, use its positivity at **every** run start, and
+  bound the maximum partial multiplier products cyclically. Their recurrence
+  has a vertex of value one; cutting there gives `M_(i+1)≤(b/δ) M_i^2`.
+- The arbitrary-length mass induction, unit-potential cut, multiplier lower
+  bound and local algebra are kernel-checked. **The bridge from an actual word
+  to the cyclic maximum-product potential is not yet formalized.** The new
+  inequality is not yet a Lean theorem about actual segments.
+- The existing polynomial separation gives the proposed explicit
+  `L(b)=2*((2^b-1)*(b+53342))^2+b`; no new arithmetic hypothesis is needed in
+  the written derivation. This bound is not yet a Lean theorem.
+- Exact b=4,5 probes at `(m,a)=(16,10),(27,17),(46,29)` test every rational
+  positivity survivor, including **678142** at b=5,m=46, not merely empty
+  admitting populations. Dropping one joint's positivity refutes the proposed
+  bound in explicit b=2,3,4,5 negative controls. All 320 A1 starts pass the new
+  block checks; the 2305/2313 pair retains its different prefix remainders and
+  opposite admission.
+
+**Next: architecture lap 2.** Adversarially verify the finite cyclic-product
+derivation, then prove its construction, recurrence and cyclic affine sum
+identity; rotate the exponent sum through the unit cut and apply
+`blockPotential_mass_bound`. Connect actual `traceWord` block splits and the
+existing Rhin-lite bound to L(b). Do not assert an integer rotated word or an
+integer fixed point. The two-lap no-progress stopping rule has not fired: this
+lap supplies a new inequality and mechanism. No global Collatz/uniform theorem
+may be imported as an induction hypothesis.
+
 ## CAMPAIGN A2 COMPLETE — 2026-09-13
 
 The current kickoff is `KICKOFF-2026-09-13-excursion-campaign.md`; its A2 audit is complete.

@@ -1,6 +1,19 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8767 jobs) · **Updated**: 2026-09-13 (Campaign A2 complete).
+**Build**: 🟢 FORMALIZE-tier green (8768 jobs) · **Updated**: 2026-09-13 (Campaign B architecture lap 1).
+
+> **2026-09-13 — Campaign B running+advancing.** The arbitrary-block integer
+> cascade now has a kernel-checked extraction and composition rule. A cyclic
+> maximum-product potential yields the proposed uniform inequality
+> `2^a<(b/δ)^(2^b-1)` and `m<2a+b`; its local growth, unit cut and arbitrary-length
+> mass induction are kernel-checked in `FrontA/BlockComposition.lean`.
+> `BLOCK-COMPOSITION-2026-09-13.md` gives the mathematical word-to-potential
+> derivation and an explicit proposed `L(b)=2*((2^b-1)*(b+53342))^2+b` using the
+> existing polynomial separation. **The complete segment bound remains to be
+> formalized**, chiefly the finite cyclic-product construction and word bridge.
+> Exact b=4,5 probes include every rational-positivity survivor at lengths 16,
+> 27 and 46; no survivor violates the mechanism. Prefix remainders remain in
+> the exact criterion. Next: Campaign B architecture lap 2, not A2 or rung 3.
 
 > **2026-09-13 — Campaign A2 settled.** `FrontA/Excursion.lean` proves the trunk slack
 > identity and exact strict/equality criteria; the kernel-checked 2305/2313 witness refutes
