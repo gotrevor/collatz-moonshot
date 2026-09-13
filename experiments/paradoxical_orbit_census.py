@@ -36,6 +36,10 @@ Results 2026-09-13 (admitting words = admitting starts once 2^m > X).  Sweep of 
 words (all at the near-critical a = 5, 17, 29, 41, 46); m = 54 has none.  Every trunk (orbit
 minimum) at m >= 27 lies on the trajectory of 27: {31, 47} at 27 and 73, {91, 47, 31, 71, 103, 61}
 at 46, {31, 47, 91, 103, 71, 23} at 65.  Detail: KB leaf projects/moonshot-review-2026-09-13.md §7.1.
+Length 92 (2026-09-13, 10 workers, 84 min, 1.1e11 odd starts): exactly 5 starts, all at a = 58,
+3567, 4491, 4513, 4521, 4551 - the five that Rozier-Terracol's count of 593 predicted beyond the
+588 of lengths <= 80 (paradoxical_rt593_control.py); trunks 31 (3567, 4491, 4551) and 47 (4513,
+4521), both on 27's trajectory; 995 rows left int64 and were decided exactly, none admitting.
 """
 import sys, os, time
 from fractions import Fraction
