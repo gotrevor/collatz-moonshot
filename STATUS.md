@@ -1,8 +1,24 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (short-run rational obstruction complete).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (post-obstruction altitude complete; prefix-admission objective selected).
 
-> **2026-09-13 — stopped: primitive short-run rational bound refuted.**
+> **2026-09-13 — altitude complete; Q=2, L=6 admission directive committed.**
+> Reconciled both commits since `5bdea84` through `882c787`. The rational M_Q
+> question is closed: the interval-certified primitive family is unbounded,
+> and every member fails the six-letter threshold test. DIRECTION now chooses
+> exactly one new bounded question: can primitive Q=2 rational cycles pass
+> **D*c_6<N** at unbounded length, where c_6 is the least start above 2 for
+> the first six letters and N/D is the full-word threshold?
+> First attack: baseline rotations/defects, then short invariant-interval macros.
+> Acceptance and costume checks require an all-parameter refutation or a proved
+> bound for the full specified population; full admission remains separate.
+> The odd-start→unrestricted edge ranks second; coarse residue discrepancy third.
+> **No proof work started.** Both Collatz fronts and arithmetic admission remain open.
+> **Verification:** existing exact short-run certificate PASS; full 8771-job gate
+> and six-declaration axiom audit FORMALIZE-TIER GREEN; diff whitespace check clean.
+> Read `HANDOFF-2026-09-13-prefix-admission-direction.md`. Older entries are history.
+
+> **Historical completion, 2026-09-13 — primitive short-run rational bound refuted.**
 > For X=TF, Y=T²F, `(XY)^k XYY` is an unbounded primitive family with Q=2,
 > joint slack ≥8/5 and R≤243/256. The invariant interval [34/5,434/13]
 > certifies every k; 5a−3m=1 excludes all proper Boolean-word powers.
@@ -13,7 +29,7 @@
 > **Verification:** 36 exact cycles through k=256, original 320 census controls,
 > 2305/2313 prefix-remainder pair, and full 8771-job FORMALIZE gate with the
 > existing six-declaration axiom audit. No proof or build configuration changed.
-> The bounded CURRENT DIRECTIVE objective is complete; no new campaign started.
+> The previous rational-positivity directive was completed; no stretch campaign started.
 > Read `HANDOFF-2026-09-13-short-run-obstruction.md`; the general arithmetic
 > admission problem and both Collatz fronts remain open.
 

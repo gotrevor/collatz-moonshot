@@ -1,8 +1,46 @@
 # PENDING_WORK
 
-## CURRENT — short-run rational obstruction COMPLETE, 2026-09-13
+## CURRENT — Q=2, L=6 prefix-admission question selected, 2026-09-13
 
-**Stopped: the bounded objective in DIRECTION.md is complete.** Read
+The post-obstruction altitude lap reconciled through `882c787` and rewrote
+`DIRECTION.md`. The rational M_Q question is **closed/refuted**, and every
+member of its primitive family is rejected by n≡57 mod64 against N/D<57.
+Read `HANDOFF-2026-09-13-prefix-admission-direction.md` next. No follow-on
+proof work was started in the review.
+
+**One next objective:** decide whether primitive Q=2 rational cycles with
+positive terminal gaps and strict positivity at every odd-run head can have
+unbounded length while passing **P_6: D*c_6<N**. Here c_6 is the least integer
+above 2 realizing the first six parity letters, and N/D is the full-word
+threshold. The exact S2 population, quantifiers, and residue formula are in
+DIRECTION. This is an entry-prefix test, not all cyclic windows or full admission.
+
+**First attack:** baseline rotations/defects of the known family, then two
+short block macros with an invariant interval and a strict all-parameter
+prefix-margin certificate. Start with at most four (q,e) blocks per macro.
+Keep c_6, full canonical c_m and both admission margins separate. If an easy
+rotation settles the question, disclose it and stop without increasing L.
+
+**Acceptance:** an all-parameter unbounded-family refutation, or a proved
+explicit bound covering the entire S2∩P_6 population uniformly in run count.
+A green intermediate node/edge must establish a needed arithmetic fact;
+finite search failure, predicate scaffolding or replayed positivity is not
+completion. The question is still open; this lap selected it, not solved it.
+
+**Costume check:** neither a six-bit survivor nor its exclusion settles
+restricted finiteness. A bound would cover only the specified primitive Q=2,
+terminal-even population; a survivor need not fully admit. The unrestricted
+finite-to-one edge is ranked second, coarse residue discrepancy third.
+No global run/length bound is an allowed input. No rung 4/5 or fixed-b rerun.
+
+**Review verification:** existing short-run exact certificate PASS (36 probes);
+full `bash scripts/check-fixed-block-bound.sh` PASS (8771 jobs, six-declaration
+axiom audit, final FORMALIZE-TIER GREEN); `git diff --check` clean.
+The altitude deliverable is complete; proof work belongs to the next lap.
+
+## Historical completion — short-run rational obstruction, 2026-09-13
+
+**Stopped: the previous rational-positivity objective is complete.** Read
 `HANDOFF-2026-09-13-short-run-obstruction.md` and
 `SHORT-RUN-OBSTRUCTION-2026-09-13.md`. With X=TF and Y=T²F, the family
 `(XY)^k XYY` has Q=2, length 5k+8, all joint slacks at least 8/5, and
