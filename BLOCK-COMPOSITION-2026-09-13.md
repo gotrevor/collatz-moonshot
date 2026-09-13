@@ -1,6 +1,65 @@
 # Campaign B, architecture lap 1: a cyclic potential contracts arbitrary block count
 
-**Running+advancing.** A new composition mechanism survives: positivity at every
+## Architecture lap 2 update: Campaign B proved
+
+The historical lap-1 proposal below has now been proved and connected to actual
+segments. `FrontA/FixedBlocks.lean` proves
+`acyclicParadoxical_length_lt_of_oddRunCount` with the explicit bound
+
+```
+L(b) = 4*((2^b-1)*(b+53342))^2+b.
+```
+
+The factor 4 replaces the proposed factor 2; this small loss permits a purely
+natural-number binary-length proof. There is no remaining arithmetic hypothesis,
+word bridge, fixed-point construction, or uniform-bound proof obligation for
+Campaign B. The theorem concerns all lengths and starts, not only the census.
+See `HANDOFF-2026-09-13-fixed-block-bound.md` for exact verification and the
+completion decision. The lap-1 text below is retained as the original derivation
+and audit, with its former unformalized boundaries now superseded.
+
+The proof avoids the maximum-product construction. For a positive rational
+cycle `z_next=r*z+s`, with `s<1` and total multiplier `R=1-δ` in `(0,1)`, suppose
+every `z≥b/δ`. Put `c=δ/b`. Then
+
+```
+(1-c)*z_next < r*z,
+(1-c)^b < R,                 after multiplying and cancelling all z,
+R = 1-b*c ≤ (1-c)^b,        by Bernoulli.
+```
+
+Thus some vertex has `z<b/δ`. For a nonempty odd run,
+`r+1/2≤2^q` and `z≥2^q≥2`; hence `z_next<2^q*z≤z^2`.
+Starting at that small vertex gives `z_j<(b/δ)^(2^j)`, and multiplying all
+`2^q_j≤z_j` yields exactly the original composition inequality
+`2^a<(b/δ)^(2^b-1)`. Finite reindexing preserves the exponent sum. The original
+length inequality `2^m<2^b*3^a` follows from the existing multiplier-lower lemma.
+All of these statements, including the rational cycle's construction above the
+actual integer path, are now kernel-checked in `FrontA/BlockCycle.lean`.
+
+For the final feedback let `t=Nat.log 2 a`, `C=2^b-1`, and
+`H=C*(b+53342)`. The existing polynomial measure in both regimes gives
+`2^m≤2^(52906+436*(t+1))*D`. Composition implies
+`a<C*(b+52906+436*(t+1))≤H*(t+1)`. For `t≥4`, elementary induction gives
+`(t+1)^2≤2*2^t≤2a`; squaring and cancelling positive a yields `a<2H^2`.
+For `t<4`, `a<16` gives the same bound directly. Therefore
+`m<b+2a<4H^2+b`. This is `FrontA/BlockLength.lean`.
+
+The final module counts maximal odd runs by true-to-false transitions with a
+false sentinel at the end of the *word*. This sentinel adds no trajectory step.
+It extracts exactly that many blocks (allowing zero trailing even steps), proves
+every actual head identity by trace splitting, and applies the cascade bound.
+The bound is monotone, so an upper bound on the run count suffices, including
+`b=0` vacuously. Kernel controls include the terminal-odd 7@8 witness, 9@8,
+and the shared-trunk run counts 13 and 11 for 2305 and 2313.
+
+The updated exact probe checks the new small-vertex and squaring mechanism on
+all its prior controls and on **449,400** complete exponent tuples at
+`(b,m,a)=(4,27,17),(5,27,17)`, including **134,456** rational-positivity survivors.
+The previous 46-step complete scans are historical lap-1 evidence; they were
+not repeated in lap 2. The preimage remainders and negative controls remain.
+
+**Historical lap 1 — running+advancing.** A new composition mechanism survives: positivity at every
 block start, applied to the rational affine fixed point of the whole word, gives
 
 ```

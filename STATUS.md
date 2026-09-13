@@ -1,8 +1,19 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8768 jobs) · **Updated**: 2026-09-13 (Campaign B architecture lap 1).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (Campaign B architecture lap 2).
 
-> **2026-09-13 — Campaign B running+advancing.** The arbitrary-block integer
+> **2026-09-13 — Campaign B complete.**
+> `FrontA.acyclicParadoxical_length_lt_of_oddRunCount` proves the explicit
+> bound `L(b)=4*((2^b-1)*(b+53342))^2+b` for every odd-start acyclic
+> paradoxical segment with at most b maximal odd runs. The composition,
+> rational envelope, numerical feedback, word decomposition, and monotonicity
+> are all kernel-checked. A Bernoulli small-vertex argument replaces the
+> maximum-product construction. No new arithmetic obligation remains.
+> The final length theorem inherits eleven existing Rhin-lite native certificates;
+> the composition theorem itself uses the standard trust triple.
+> See `HANDOFF-2026-09-13-fixed-block-bound.md`; the assigned campaign stops here.
+
+> **Historical lap 1 — Campaign B running+advancing.** The arbitrary-block integer
 > cascade now has a kernel-checked extraction and composition rule. A cyclic
 > maximum-product potential yields the proposed uniform inequality
 > `2^a<(b/δ)^(2^b-1)` and `m<2a+b`; its local growth, unit cut and arbitrary-length

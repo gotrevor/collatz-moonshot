@@ -101,6 +101,15 @@ def potential_check(q, e, data):
     assert min(maxima) == 1
     pivot = maxima.index(1)
     K = F(b, 1)/delta
+    # Architecture lap 2: independently check the Bernoulli/squaring proof.
+    # This cut depends on the rational fixed values, not the multiplier maxima.
+    small = min(range(b), key=lambda i: z[i])
+    assert z[small] < K
+    for j in range(b):
+        i = (small+j) % b
+        assert r[i] + F(1, 2) <= 2**q[i]
+        assert z[(i+1) % b] < z[i]**2
+        assert power_compare(K, 2**j, z[i], strict=True)
     for j in range(b):
         i = (pivot+j) % b
         assert power_compare(K, 2**j-1, maxima[i], strict=False)

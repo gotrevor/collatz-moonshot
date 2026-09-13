@@ -1,5 +1,29 @@
 # PENDING_WORK
 
+## CAMPAIGN B COMPLETE — explicit uniform fixed-block bound (2026-09-13)
+
+**Stopped: objective proved.** Read `HANDOFF-2026-09-13-fixed-block-bound.md`.
+`FrontA.acyclicParadoxical_length_lt_of_oddRunCount` proves, for every b,
+that every odd-start acyclic paradoxical segment with at most b maximal odd
+runs has length strictly below `4*((2^b-1)*(b+53342))^2+b`.
+
+- `BlockCycle.lean` proves the arbitrary rational-cycle composition inequality
+  and constructs the envelope directly from genuine integer head identities.
+  Bernoulli supplies a small vertex; nonempty odd runs give `z_next<z^2`.
+- `BlockLength.lean` closes the numerical feedback using the existing
+  polynomial separation. Its factor 4 replaces the proposed factor 2.
+- `FixedBlocks.lean` extracts maximal runs, proves all trace head identities,
+  and closes the actual at-most-b theorem with a monotone explicit bound.
+  Final odd runs are counted without adding a trajectory step.
+- No new axiom, sorry, global Collatz assumption, or uniform-bound hypothesis.
+  The final theorem inherits eleven existing Rhin-lite native certificates,
+  explicitly disclosed and allowed by the reproducible FORMALIZE gate.
+  Campaign A2 and the rung-3 classification remain settled.
+
+There is no remaining Campaign B obligation. Stop after verification and the
+completion checkpoint; do not start an unassigned classification or global
+Front A campaign. Historical entries below describe previous checkpoints.
+
 ## CAMPAIGN B ARCHITECTURE LAP 1 — cyclic potential contraction (2026-09-13)
 
 **Running+advancing.** Read `BLOCK-COMPOSITION-2026-09-13.md` and
