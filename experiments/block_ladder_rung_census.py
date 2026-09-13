@@ -20,9 +20,10 @@ four rung-3 words at j=8 and nothing else to 14):
     of `paradoxical_orbit_census.py`, whose complete sweep of every length <= 80 finds the
     smallest realized run counts 3@8, 7@27, 9@46, 13@65, 17@73 and nothing with 4 or 5 runs.
 Together with `block_ladder_probe.py`'s Probe 2 (min blocks per length: 8->3, 27->6, 46->9, ...,
-roughly blocks >= 0.22*m) the picture is: paradoxical windows live only at near-critical lengths
-(3^a just below 2^m) and need many SHORT blocks there.  Rungs 4 and 5 are empty; rung 6 first
-appears at length 27.
+the picture is: paradoxical windows live only at near-critical lengths (3^a just below 2^m)
+and need many short blocks there (smallest observed runs/length ratio 9/46, at 1807@46 - the
+"0.22*m" figure is descriptive, not a bound).  Rungs 4 and 5 are empty; front-normalized, the
+first rung realized after 3 is 7, at length 27 (the earlier "6 at 27" allowed an even first step).
 
 Caveat (same as block_ladder_probe.py): under Rozier-Terracol Conj. 6.1 the whole set of acyclic
 paradoxical windows is a finite list, so only a PROVED uniform-in-BLOCKS statement carries content.
