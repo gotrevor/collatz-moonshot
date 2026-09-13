@@ -11,6 +11,11 @@ cycle front.  (As of 2026-09-01 no disclosed `sorry` remains; `sorryAx` must not
 #print axioms CollatzMoonshot.conjecture_iff_descent
 #print axioms CollatzMoonshot.parityRigidityW1'_imp_noDivergent
 #print axioms CollatzMoonshot.finite_acyclicParadoxical_imp_noDivergent
+#print axioms CollatzMoonshot.FrontA.trunk_slack_identity
+#print axioms CollatzMoonshot.FrontA.trunk_acyclic_criterion
+#print axioms CollatzMoonshot.FrontA.trunk_equality_criterion
+#print axioms CollatzMoonshot.FrontA.trunk_depth_data_insufficient
+#print axioms CollatzMoonshot.FrontA.trunk_climb_one_step_control
 #print axioms CollatzMoonshot.FrontA.seventeen_pow_le_rhinLitePositive_coeff
 #print axioms CollatzMoonshot.FrontA.rhinLitePositive_coeff_le_eighteen_pow
 #print axioms CollatzMoonshot.FrontA.rhinLiteCriticalRoot_exhaustive_Icc

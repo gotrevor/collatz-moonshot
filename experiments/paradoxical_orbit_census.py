@@ -15,8 +15,8 @@ every hit is re-verified in exact Python integers.
 
 Usage:  paradoxical_orbit_census.py M [--quiet] [--horizon H] [--trunks]
   --trunks groups the admitting starts by the MINIMUM of their length-m orbit (the "trunk" t at
-  depth k): every admitting segment is a descent from n0 to t followed by t's climb, so the
-  clusters, not the words, are the independent events.  Also reports whether t lies on the
+  depth k): every admitting segment is a prefix from n0 to t followed by t's climb.  Clusters
+  expose shared orbit data; no independence between clusters is asserted.  Also reports whether t lies on the
   trajectory of 27 (the record climber 27 -> 9232).
 Known-answer controls: m=8 gives starts 7, 9, 19, 25 (a=5); m=27 gives the 19 words of the word
 census at a=17 (starts 165 .. 885).

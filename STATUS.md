@@ -1,9 +1,20 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 green (8766 jobs) · **Updated**: 2026-09-08 (rung-3 classification closed) · `cf5d1d1`+
+**Build**: 🟢 FORMALIZE-tier green (8767 jobs) · **Updated**: 2026-09-13 (Campaign A2 complete).
+
+> **2026-09-13 — Campaign A2 settled.** `FrontA/Excursion.lean` proves the trunk slack
+> identity and exact strict/equality criteria; the kernel-checked 2305/2313 witness refutes
+> admission from the climb, depth and odd count alone. The prefix remainder is indispensable.
+> The `(91,46)` control has a one-step suffix climb `61→92`. The exact probe reproduces all
+> 320 A1 table starts through start 5000, including every trunk count, without claiming to
+> repeat A1's full completeness scan. `EXCURSION-AUDIT-2026-09-13.md` proves the model law
+> `2δR→1`, records the residue/numerator dependence preventing a census prediction, and
+> classifies every candidate excursion node. Its surviving bound `C_trunk>2δn/a` needs a
+> new start-length input for polynomial/exponential growth in m. The next campaign is B's
+> arbitrary-block composition architecture; A2 and rung 3 are complete.
 
 
-> **2026-09-08 (latest) — rung-3 front-normalized classification CLOSED.**
+> **2026-09-08 — rung-3 front-normalized classification CLOSED.**
 > The parameterized exponent algebra now proves the sharp feedback bound `k ≤ 6t+5` using
 > `3^5 ≤ 2^8`.  The Rhin-lite polynomial measure bootstraps the near-critical window to
 > `k < 492276`; a new convergent bracket gives deficit scale `t=26` and hence `k ≤ 161`; a

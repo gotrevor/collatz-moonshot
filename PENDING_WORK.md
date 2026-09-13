@@ -1,5 +1,34 @@
 # PENDING_WORK
 
+## CAMPAIGN A2 COMPLETE — 2026-09-13
+
+The current kickoff is `KICKOFF-2026-09-13-excursion-campaign.md`; its A2 audit is complete.
+See `EXCURSION-AUDIT-2026-09-13.md` for the full derivations and candidate-node classification,
+and `HANDOFF-2026-09-13-excursion-a2-audit.md` for the verification and next attack.
+
+- New `FrontA/Excursion.lean` proves the exact trunk slack identity and strict/equality
+  criteria. The descent numerator cannot be discarded: starts **2305 and 2313** share
+  `(m,t,k,j)=(46,103,14,6)` and the same climb to 2308, but only 2305 admits. This is
+  kernel-checked, including both segment minima. A second kernel control `(91,46)` has
+  just one step after its minimum, from 61 to 92.
+- The null-model law `2δR→1` (also `2δR_odd→1`) is proved in the audit by generating
+  functions, the binomial identity and an explicit Chebyshev error bound. Unclipping
+  follows for every subcritical pair from the maximum formula, existing `sep_two_three`,
+  and five small controls. This is mathematical-proof + exact-probe evidence, not a Lean
+  asymptotics formalization. It supplies no arithmetic law for actual canonical residues.
+- All 320 reported starts and trunk counts reproduce in the exact audit through start 5000;
+  dropping the prefix remainder loses 61. This checks the A1 table, not its much larger
+  complete search bounds. The audit also verifies convergence of every hit.
+- The surviving implication is `C_trunk ≥ C_end > 2δn/a`. Turning it into growth in m
+  needs a new start-length bound; global logarithmic hitting time would suffice but already
+  assumes quantitative Collatz. An unbounded excursion law for strict paradoxical segments
+  would also exclude nontrivial cycles; strict endpoint growth does not forbid repeats.
+
+**Next: Campaign B architecture lap 1 only.** Derive an arbitrary-block integer cascade
+and a genuinely new composition inequality; keep the prefix remainders. Test rungs 4–5
+and the shared-trunk controls before implementation. Do not restart A2, the completed
+rung-3 classification, or the stale directive in `DIRECTION.md`.
+
 ## RUNG 3 FRONT-NORMALIZED CLASSIFICATION CLOSED — 2026-09-08
 
 The scoped kickoff target is complete, and its advertised literal classification is now also

@@ -19,7 +19,10 @@ closed form plus an O(m*a) integer dynamic program (both from the 2026-09-13 cam
 Binomial form: with U~Bin(m-1,1/2), V~Bin(m-1,3/4),
     S_N/M^2 = (Pr(U<=a-2) - Pr(V<=a-2))/2 + Pr(V=a-1)/4  ->  1/2  (a/m -> log2/log3 in (1/2,3/4)),
 so R = (S_N/M^2)/delta ~ 1/(2*delta) on near-critical subsequences.  p_odd needs per-word N, so
-R_odd is enumerated when the population is small enough; always 0 < p_cont - p_odd < (3+1/D)/M.
+R_odd is enumerated when the population is small enough; always 0 <= p_cont - p_odd < (3+1/D)/M
+(the difference can vanish when both probabilities saturate at 1).  The asymptotic is a theorem
+about the model, not a prediction of the word census; see EXCURSION-AUDIT-2026-09-13.md for the
+clipping hypothesis, error bound, and the residue/numerator dependence.
 
 Usage:
   paradoxical_random_model.py M A             exact: DP + closed form (+ enumeration if cheap)
