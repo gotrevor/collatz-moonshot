@@ -1,8 +1,26 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (post-obstruction altitude complete; prefix-admission objective selected).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (prefix-admission objective complete).
 
-> **2026-09-13 — altitude complete; Q=2, L=6 admission directive committed.**
+> **2026-09-13 — stopped; Q=2, L=6 boundedness refuted.**
+> With X=TF and Y=TTF, `(XY)^(2j+12) X Y^17`, j>=0, is primitive and in S2,
+> has unbounded length m=10j+113, and passes P_6 for every j. Its fixed-cycle
+> interval [34/5,225] certifies every head slack >=8/5; odd a,m and
+> 5a-3m=16 prove primitivity. The common six-letter prefix still gives c_6=57,
+> but now N/D>66 and an exact positive-coefficient formula proves N-57D>0.
+> This pads the known family by 15 Y blocks; the new content is the all-j
+> prefix-margin certificate, not a new positivity construction.
+> **Proof level:** mathematical all-parameter proof with an exact rational
+> certificate, not a new Lean theorem. Full admission is checked separately;
+> all 36 sampled full margins are negative, with no universal claim about them.
+> **Verification:** new certificate and 36 probes PASS; original certificate,
+> 320 census controls and 2305/2313 pair PASS; full 8771-job gate and existing
+> six-declaration axiom audit FORMALIZE-TIER GREEN. No new trust debt.
+> Read `HANDOFF-2026-09-13-prefix-admission-obstruction.md` and
+> `PREFIX-ADMISSION-OBSTRUCTION-2026-09-13.md`. Return to altitude; do not
+> increase L or start a full-admission campaign. Both Collatz fronts remain open.
+
+> **Historical, 2026-09-13 — altitude complete; Q=2, L=6 admission directive committed.**
 > Reconciled both commits since `5bdea84` through `882c787`. The rational M_Q
 > question is closed: the interval-certified primitive family is unbounded,
 > and every member fails the six-letter threshold test. DIRECTION now chooses

@@ -1,6 +1,40 @@
 # PENDING_WORK
 
-## CURRENT — Q=2, L=6 prefix-admission question selected, 2026-09-13
+## CURRENT — Q=2, L=6 prefix-admission question answered, 2026-09-13
+
+**Stopped: assigned objective complete.** Read
+`HANDOFF-2026-09-13-prefix-admission-obstruction.md` and
+`PREFIX-ADMISSION-OBSTRUCTION-2026-09-13.md`. For X=TF, Y=TTF, the family
+`(XY)^(2j+12) X Y^17`, j>=0, is primitive, belongs to S2 and passes P_6 at
+unbounded lengths m=10j+113. There are no exceptional j in this parameterization.
+
+The common interval [34/5,225] for `(XY)^2` and `(XY)^12 X Y^17` proves
+every head slack >=8/5 and total multiplier <1. Counts a=6j+71 and m=10j+113
+are odd with 5a-3m=16, forcing primitivity. Set k=2j+12; the arithmetic crux is
+
+```
+c_6=57,
+5*(N-57D)=409787117366273728*32^k+256*3^35*27^k > 0.
+```
+
+This is a mathematical all-parameter proof and exact rational certificate,
+not a new Lean theorem. It pads the known family with 15 Y blocks. Only the
+six-bit prefix-margin result is new. Full canonical margins remain separate;
+all 36 finite probes reject full admission, with no all-j conclusion asserted.
+Neither Collatz nor restricted finiteness is refuted. No global run/length
+bound is assumed; L remains exactly 6 and only the entry prefix is tested.
+
+Verification: `python3 experiments/prefix_admission_obstruction.py` PASS;
+original certificate, block controls (all 320 recorded starts, 2305/2313),
+and excursion audit PASS; `bash scripts/check-fixed-block-bound.sh` PASS
+(8771 jobs, six-declaration audit, final FORMALIZE-TIER GREEN).
+
+No blocker remains for this question. **Next action belongs to altitude:**
+reconcile this exact filter refutation before choosing any new arithmetic
+admission or finite-to-one objective. No automatic L increase, full-admission
+search, or kernel-translation stretch work is authorized in this lap.
+
+## Historical selection — Q=2, L=6 prefix-admission question, 2026-09-13
 
 The post-obstruction altitude lap reconciled through `882c787` and rewrote
 `DIRECTION.md`. The rational M_Q question is **closed/refuted**, and every
