@@ -1,8 +1,28 @@
 # STATUS — collatz-moonshot 📊
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
-**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (prefix-admission objective complete).
+**Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-13 (post-prefix altitude review complete).
 
-> **2026-09-13 — stopped; Q=2, L=6 boundedness refuted.**
+> **2026-09-13 — altitude complete; cycle-exclusion edge selected.**
+> Reconciled the sole commit since `bc4158e`, `3a3e838`: the padded Q=2 family
+> passes P_6 at every parameter. The fixed-prefix relaxation thread is retired;
+> no larger L or replacement finite-prefix filter is authorized.
+> **Next bounded objective:** O.Finite → NoNontrivialCycle, where O counts
+> odd-start acyclic paradoxical **pairs**. The actual predicate permits interior
+> repetitions. First attack: repeat an odd member's period and append its odd
+> step, using the existing cycle-subcriticality and power-domination lemmas.
+> The direct consumer is U.Finite → Conjecture, using the existing divergence edge.
+> Both new edges remain unproved; **no proof work started in this review**.
+> O.Finite, U.Finite, and O.Finite→U.Finite remain open. The chosen edge changes
+> dependency accounting, not the difficulty of the finiteness hypotheses.
+> Operator context strengthens the previous finite full-rejection observations:
+> every padded-family member fails full admission, independently host-verified,
+> with n0 of about m bits. The repository script still certifies full rejection
+> only at its 36 probe values; this review does not add the host's universal proof.
+> **Verification:** existing prefix certificate PASS; real full 8771-job gate
+> and existing six-declaration axiom audit FORMALIZE-TIER GREEN. No new trust debt.
+> Read `DIRECTION.md` and `HANDOFF-2026-09-13-cycle-edge-direction.md`.
+
+> **Historical completion, 2026-09-13 — Q=2, L=6 boundedness refuted.**
 > With X=TF and Y=TTF, `(XY)^(2j+12) X Y^17`, j>=0, is primitive and in S2,
 > has unbounded length m=10j+113, and passes P_6 for every j. Its fixed-cycle
 > interval [34/5,225] certifies every head slack >=8/5; odd a,m and
@@ -464,11 +484,11 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
-- **2026-09-13 — chosen objective:** the primitive short-run positivity obstruction
-  in `DIRECTION.md`. First attack: exact rational patterns with one bounded defect
-  or a common invariant interval, retaining strict slack and proving primitivity.
-  The deliverable is a family/refutation or a precise smaller obstruction, not
-  another fixed-b theorem. The dated assignments below are historical.
+- **2026-09-13 — chosen objective:** the cycle-exclusion edge from odd-start
+  acyclic pair finiteness, with its direct unrestricted-finiteness→Collatz
+  consumer. Follow `DIRECTION.md` and `HANDOFF-2026-09-13-cycle-edge-direction.md`.
+  No proof has started. Rational positivity and P_6 boundedness are refuted;
+  all finite-prefix follow-ups are retired. Earlier dated assignments are history.
 - **2026-09-08 — the rung-3 window-node objective and front-normalized length-8 classification
   are COMPLETE.**  The exceptional lengths `5,16,27` are rejected in Lean by a kernel-checked
   finite residue certificate; `src/` remains at **0 sorries**.  Await an altitude-level retarget

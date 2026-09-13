@@ -1,6 +1,48 @@
 # PENDING_WORK
 
-## CURRENT — Q=2, L=6 prefix-admission question answered, 2026-09-13
+## CURRENT — odd-start finiteness cycle-exclusion edge, 2026-09-13
+
+**Altitude review complete; proof work has not started.** Read the CURRENT
+DIRECTIVE in `DIRECTION.md` and `HANDOFF-2026-09-13-cycle-edge-direction.md`.
+Reconciled `bc4158e..3a3e838`: the six-letter question is answered by the
+all-parameter padded family. The operator reports universal full rejection
+and n0 of about m bits; distinguish that independent host result from the
+checked-in script's 36 full-rejection probes. No finite-prefix filter is funded.
+
+**One objective:** prove O.Finite→NoNontrivialCycle, where
+`O={p : ℕ×ℕ | p.1%2=1 ∧ FrontA.AcyclicParadoxical p.1 p.2}`. As its direct
+consumer, derive `FiniteAcyclicParadoxical→Conjecture` from the existing
+unrestricted-finiteness→NoDivergentOrbit edge. These are explicit conditional
+edges; neither finiteness hypothesis is proved or silently strengthened.
+
+**First attack:** for an odd periodic n>2 of period L>0, put
+`a=ones(traceWord n L)`, `A=3^a`, `B=2^L`, `J=3*A`, and check the injection
+`j↦(n,L*(J+j)+1)` into O. The endpoint must be T(n)>n; the count must be
+`(J+j)*a+1`; subcriticality requires `3*A^(J+j)<2*B^(J+j)`. Reuse
+`subcritical_of_tstep_cycle`, `ones_traceWord_mul_of_cycle`,
+`const_mul_pow_lt_pow`, and the exact standard/shortcut cycle dictionary.
+The second part is extracting an odd periodic member above 2 from a
+nontrivial standard cycle, with the dictionary's related-member case handled.
+
+**Acceptance:** kernel-check the infinite strict-witness lemma, the odd-start
+cycle-exclusion edge, and its direct unrestricted-finiteness→Collatz consumer;
+audit the standard trust base and run the full gate. A real intermediate node
+is progress, not completion; a failed map requires its exact failed obligation.
+Do not substitute equal-endpoint Paradoxical or import a CST/Collatz assumption.
+
+**Costume check:** “acyclic” permits repeated intermediate states. Finiteness
+counts pairs, so infinitely many lengths at one start suffice. Period multiples
+alone are not strict witnesses; append the genuine odd step. No primitive-word
+restriction, unbounded-start assertion, even-start normalization, or finite-to-one
+map is supplied. This is a new graph edge, not a novel uniform Collatz argument.
+O.Finite→U.Finite and all uniform arithmetic remain open. The finite-to-one
+candidate ranks second; coarse discrepancy lacks a useful error scale.
+
+**Review verification:** existing exact P_6 certificate and 36 probes PASS;
+`bash scripts/check-fixed-block-bound.sh` PASS, 8771 jobs and six existing
+axiom audits, final FORMALIZE-TIER GREEN. No Lean/experiment/build files changed.
+
+## Historical completion — Q=2, L=6 prefix-admission question answered, 2026-09-13
 
 **Stopped: assigned objective complete.** Read
 `HANDOFF-2026-09-13-prefix-admission-obstruction.md` and
