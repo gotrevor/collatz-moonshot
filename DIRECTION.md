@@ -1,5 +1,53 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-15 23:58 EDT — operator-assigned BOUNDED FORMALIZATION node (ACTIVE for this run only; the "awaiting a new mechanism" pause below otherwise stands)
+
+Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.
+Branch `main`.  This is the Lean "formalizing known results" lane (rank 10 of the board below),
+assigned separately as the reflection permits; it claims **no new mechanism** and nothing here is
+a step toward `U.Finite`.  Hard stop: the host kills every lap by 05:25 EDT 2026-09-16 - **commit a
+compiling skeleton with named `sorry` leaves before every hard step**.  Read this addendum, the
+newest `HANDOFF-*.md`, then `git log`; reconcile before acting.  Finish with `box done` (the repo
+is sorry-free; keep it so at every commit, or use `box done --green` if a skeleton leaf is open).
+
+🎯 **Node 1 - Front B statement hygiene, as theorems** (`FrontB/Threads.lean`, small).  The
+reflection found two labels that are Front B in costume; make the kernel say so:
+- `countingGivesFinite_iff_frontB : CountingGivesFinite ↔ FrontB` (forward: a counterexample `v`
+  gives the distinct family `wpow v (j+1)`, all integral and nontrivial by `integerCycle_wpow_iff`
+  / `isTrivial_wpow_iff`, lengths `(j+1)·|v|` by `length_wpow`, so the set is infinite; backward:
+  empty is finite).  Then `not_finitenessIsNotEmptiness : ¬ FinitenessIsNotEmptiness`.
+- `ladderCompletes_iff_frontB : LadderCompletes ↔ FrontB` (forward: take `C := circuits` of the
+  primitive root from `exists_primitive_root`; backward: FrontB makes every integral cycle trivial).
+- Then add the honest **primitive-population** predicate `PrimitiveCountingGivesFinite :=
+  {v | Primitive v ∧ IntegerCycle v ∧ ¬IsTrivial v}.Finite` with a docstring saying it is the
+  population Simons–de Weger/Hercher count, and do NOT claim any implication from it to FrontB.
+  Fix the two docstrings the reflection called false.  `#print axioms` on each.
+
+🎯 **Node 2 - Rozier–Terracol Theorem 4.2, the all-terms harmonic-mean half**
+(`FrontA/TrunkBound.lean` has the easy min-term half; put this in a new
+`FrontA/HarmonicMean.lean` importing it).  With `I = oddSteps n m`, `a = |I|`,
+`x_i = tstep^[i] n`, `H := ∑_{i∈I} 1/x_i` (so the harmonic mean is `h = a/H`):
+- `prod_le_pow_harmonic : ∏_{i∈I} (3x_i+1)/(3x_i) ≤ (1 + H/(3a))^a` for `a ≥ 1` - AM–GM with
+  equal weights `1/a` on the factors `1 + 1/(3x_i)` (mathlib
+  `Real.geom_mean_le_arith_mean_weighted`, or `Real.inner_le_nnorm_mul_nnorm`-free routes via
+  `Real.add_pow_le_pow_mul_pow_of_sq_le_sq` are NOT needed; the weighted AM–GM is the tool).
+- `harmonic_mean_inequality : n < x_m → (2:ℝ)^m < (3 + H/a)^a`, from
+  `tstep_iterate_prod_identity` exactly as `min_term_inequality` was derived, with the product
+  bound above in place of the min-term bound.  This is RT 4.2's `log 2/log(3+1/h) ≤ a/m`.
+- Corollary under `3^a < 2^m` (`AcyclicParadoxical`), with `Λ = m log 2 − a log 3 > 0` and
+  `h = a/H`: `2^(m/a) < 3 + H/a`, and `2^(m/a) − 3 = 3(exp(Λ/a) − 1) ≥ 3Λ/a`, so
+  `harmonicMean_lt_of_subcritical : h < a/(3Λ)` - the same bound `TrunkBound` proves for `x_min`,
+  now for the harmonic mean of ALL odd terms (`x_min ≤ h` is the trivial comparison; prove it).
+  Add the `(7,8)` control (`H = 1/7+1/11+1/17+1/13+1/5`, `a = 5`, `m = 8`) as `TrunkBound` did.
+- Docstring: "hard half of RT Theorem 4.2 (harmonic-mean form); no novelty claimed."
+
+**Rules.**  Trust triple only (`[propext, Classical.choice, Quot.sound]`); the Rhin-lite natives
+may be inherited only by a corollary that says so in its docstring.  No new experiments, no
+Aristotle, no push (host pushes), no changes to `DIRECTION.md` below this addendum, no work on
+any board row.  When both nodes are green and audited (`bash scripts/check-fixed-block-bound.sh`
+still FORMALIZE-TIER GREEN), write the handoff and `box done`.  A review lap ranks the open leaves
+of these two nodes only.
+
 ## CURRENT DIRECTIVE — awaiting a new idea; no execution lap selected
 
 Set by the **2026-09-13 whole-repository reflection**, reconciled through
