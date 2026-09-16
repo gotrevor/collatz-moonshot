@@ -1,5 +1,72 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-16 00:10 EDT — NODE 3, discharge the Eliahou citation axiom (ACTIVE for this run only; Nodes 1–2 of the 23:58 override are DONE at `2a1478b`/`8510836`, host-verified trust triple, pushed)
+
+Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.
+Branch `main`.  Same lane as the 23:58 override (formalizing a known result; no new
+mechanism, nothing toward `U.Finite`); the "awaiting a new mechanism" pause otherwise stands.
+Hard stop: the host kills every lap by 05:25 EDT - **commit a compiling skeleton with named
+`sorry` leaves first**, then close leaves; `box done --green` is the exit while a leaf is open,
+`box done` once `src/` is sorry-free again.  Reconcile with `git log` and the newest
+`HANDOFF-*.md` before acting.
+
+🎯 **Node 3 - turn `Assumed.eliahou_min_cycle_length` (`CollatzMoonshot/Assumed/Cycles.lean`)
+from an `axiom` into a `theorem` with the SAME statement**, standing only on
+`collatz_verified_up_to_two_pow_68` (already consumed by
+`Conditional.two_pow_68_lt_of_onCycle_nontrivial`) plus the trust triple and, if needed, a
+`native_decide` certificate for one big power comparison (disclose it in the docstring; the
+Rhin-lite allow-list pattern in `scripts/check-fixed-block-bound.sh` is the model).
+
+**Reference implementation, read-only:** `papers/eliahou-collatz-bounds-tangentstorm/`
+(untracked; see its `PROVENANCE.md` - no license, so read for structure and lemma names and
+write our own proofs; cite it in the module docstring as "structure follows tangentstorm's
+Lean 4.28 formalization, edited by Aristotle").  Its headline `eliahou_bound {L} (c :
+CollatzCycle L) (hmin : 2^40 < c.minElem) (hk : 0 < c.numOdd) : 17087915 ≤ L` is stated for the
+compressed map `collatzComp` = our `tstep`, over a `Fin L`-indexed cycle structure.  Its
+`Sandwich.lean` (ratio bounds) is 113 lines, `ProductFormula.lean` 133, `ContinuedFractions.lean`
+211 (Farey pair bound + certified convergent facts `3^10781274 < 2^17087915` via
+`native_decide`), `Defs.lean` 126.
+
+**Route, in order (new module `CollatzMoonshot/FrontB/Eliahou.lean`; import it from the
+root; keep `Assumed/Cycles.lean`'s docstring, change `axiom` → `theorem … := Eliahou.…`):**
+1. **Product identity on a `tstep`-cycle** - we already have
+   `FrontA.TrunkBound.tstep_iterate_prod_identity : 2^m·x_m·∏_I 3x_i = 3^a·n·∏_I(3x_i+1)`;
+   with `x_m = n` and `n > 0` it gives `2^m ∏_I 3x_i = 3^a ∏_I (3x_i+1)`, i.e. Eliahou's
+   `∏_{odd} (3 + 1/x_i) = 2^m`.  No `Fin L` cycle structure needed: index by
+   `oddSteps n m` exactly as `TrunkBound`/`HarmonicMean` do.
+2. **Sandwich** (Eliahou Thm 2.1): with `x_min = segMin n m` (all cycle elements `≥ x_min`)
+   `2^m ≤ (3 + 1/x_min)^a` (this is `min_term_inequality_le` at `x = x_min`, already proved for
+   `n ≤ x_m`), and `3^a < 2^m` (strict, from the product identity since every factor
+   `3x_i+1 > 3x_i`; equality is impossible for `a ≥ 1`).  So `a·log₂3 < m < a·log₂(3 + 1/x_min)`.
+3. **Cycle elements are big**: for a `step`-cycle `n` not in `{1,2,4}`, EVERY element exceeds
+   `2^68` - `Conditional.two_pow_68_lt_of_onCycle_nontrivial` gives it for `n`; apply it to each
+   element (each is on the same cycle).  Then translate `step`-cycle ↔ `tstep`-cycle: a
+   `step`-period `m_s` with `k₁` odd steps is a `tstep`-period `L = m_s − k₁` with the same odd
+   elements (each odd `step` is followed by a halving); prove the relation you need
+   (`step^[m_s] n = n → ∃ L a, tstep^[L] n = n ∧ a = ones (traceWord n L) ∧ m_s = L + a`).
+   `Basic.lean`/`Conjecture.lean` may already have pieces - grep `tstep`, `OnCycle` first.
+4. **The Farey/convergent step** (Eliahou §3, the reference's `ContinuedFractions.lean`):
+   any fraction `L/a` with `log₂3 < L/a < log₂(3 + 2^{−40})` has `L ≥ 17087915` (and then
+   `a ≥ 10781274`, since `a > L/log₂(3+2^{−40})`; hand-checked 2026-09-16: `17087915/10781274`
+   lies in the interval and `17087915/log₂(3+2^{−40}) − 10781274 ≈ +4·10⁻⁷ > 0`, so the
+   inequality is tight but true - certify it with exact integer arithmetic, not floats).
+   Ingredients: two convergent facts as big-integer inequalities (`3^{10781274} < 2^{17087915}`,
+   and the upper one with `(3·2^{40}+1)^{a}` vs `2^{L}·2^{40a}`), `native_decide` allowed;
+   the Farey-pair lemma (`b·c − a·d = 1` ⇒ any `p/q` strictly between `a/b` and `c/d` has
+   `q ≥ b + d`) - elementary, prove in the kernel.
+5. **Assemble**: `eliahou_min_cycle_length` as a theorem: `m_s = L + a ≥ 17087915 + 10781274 =
+   27869189`.  Then `#print axioms` must show `[propext, Classical.choice, Quot.sound,
+   collatz_verified_up_to_two_pow_68]` plus at most the named `native_decide` certificate(s).
+   Record the exact axiom list in the docstring and the handoff.  Downstream users of the old
+   axiom (`grep -rn eliahou_min_cycle_length`) must still build unchanged.
+
+**Rules.**  One writer per file; no edits to `Assumed/Computation.lean`; no new axioms; no
+experiments, no Aristotle, no push (host pushes); no work on any board row.  A review lap ranks
+the open leaves of this node only.  If step 4's convergent facts do not certify within one lap
+(the powers have ~10⁷ bits; `native_decide` on `Nat.pow` with `Nat.blt` should be seconds via
+GMP, but measure), fall back to leaving step 4 as ONE named `sorry` leaf `farey_convergent_bound`
+with everything else closed, and say so.
+
 ## Attended operator override: 2026-09-15 23:58 EDT — operator-assigned BOUNDED FORMALIZATION node (ACTIVE for this run only; the "awaiting a new mechanism" pause below otherwise stands)
 
 Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.
