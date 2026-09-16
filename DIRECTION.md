@@ -47,9 +47,12 @@ root; keep `Assumed/Cycles.lean`'s docstring, change `axiom` → `theorem … :=
    `Basic.lean`/`Conjecture.lean` may already have pieces - grep `tstep`, `OnCycle` first.
 4. **The Farey/convergent step** (Eliahou §3, the reference's `ContinuedFractions.lean`):
    any fraction `L/a` with `log₂3 < L/a < log₂(3 + 2^{−40})` has `L ≥ 17087915` (and then
-   `a ≥ 10781274`, since `a > L/log₂(3+2^{−40})`; hand-checked 2026-09-16: `17087915/10781274`
-   lies in the interval and `17087915/log₂(3+2^{−40}) − 10781274 ≈ +4·10⁻⁷ > 0`, so the
-   inequality is tight but true - certify it with exact integer arithmetic, not floats).
+   `a ≥ 10781274`, since `a > L/log₂(3+1/x_min)`; hand-checked 2026-09-16 with mpmath at 40
+   digits: `17087915/10781274` lies in the interval, `17087915/log₂(3+2^{−40}) − 10781274 ≈
+   −3·10⁻⁶` (so with a `2^{40}` cutoff the integer bound holds only because `a` is an integer
+   exceeding `10781273.999997`), while `17087915/log₂(3+2^{−68}) − 10781274 ≈ +1.1·10⁻⁸ > 0`.
+   **Use the `2^{68}` cutoff we actually have** (`x_min > 2^{68}`), and certify the convergent
+   facts with exact integer arithmetic, never floats).
    Ingredients: two convergent facts as big-integer inequalities (`3^{10781274} < 2^{17087915}`,
    and the upper one with `(3·2^{40}+1)^{a}` vs `2^{L}·2^{40a}`), `native_decide` allowed;
    the Farey-pair lemma (`b·c − a·d = 1` ⇒ any `p/q` strictly between `a/b` and `c/d` has
