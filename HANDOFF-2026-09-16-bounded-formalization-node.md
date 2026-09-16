@@ -1,5 +1,17 @@
 # HANDOFF 2026-09-16 — operator-assigned bounded formalization node: both halves landed
 
+**Branch** `main`. **HEAD at checkpoint** `f05b7f7` (this doc), on top of `2a1478b` (Node 2)
+and `8510836` (Node 1). Working tree clean, `lake build` green (8773 jobs), `src/` sorry-free,
+`box done` signalled and honored — the treadmill does not relaunch after this lap.
+
+**Exact next steps if the pause is lifted** (none of these is currently assigned):
+1. Rhin-lite polynomial corollary for the harmonic mean: copy
+   `TrunkBound.segMin_lt_poly_of_acyclicParadoxical` with `harmonicMean` in place of `segMin`,
+   feeding `harmonicMean_lt_of_subcritical` into `rhinLite_log23_measure`; it will inherit the
+   eleven allow-listed natives, so it must be a separate declaration with the ledger docstring.
+2. The standing open problem is unchanged: turning the trajectory dip `x_min < a/(3Λ)` (now also
+   `h < a/(3Λ)`) into an admission constraint on `D·c_m < N`. No mechanism for that is specified.
+
 Assignment: `DIRECTION.md` attended override 2026-09-15 23:58 EDT. Both nodes complete,
 repo sorry-free, `bash scripts/check-fixed-block-bound.sh` still FORMALIZE-TIER GREEN.
 
