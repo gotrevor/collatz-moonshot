@@ -1,5 +1,71 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-16 00:25 EDT — NODE 4, the Eliahou bound at OUR frontier (ACTIVE for this run only; nodes 1–3 DONE at `073b0d2`, host-verified, pushed)
+
+Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.
+Branch `main`.  Same lane (formalizing a known method at a new parameter; no new mechanism).
+Hard stop: host kills laps at 05:25 EDT - skeleton with named `sorry` leaves first.  Reconcile
+with `git log` and `HANDOFF-2026-09-16-eliahou-axiom-discharged.md` before acting.
+
+🎯 **Node 4.**  Node 3's `FrontB.Eliahou` machinery, re-run with the Farey pair that straddles the
+interval `(log₂3, log₂(3 + 2^{−68}))` instead of the 1993 pair.  Host computation
+(`mpmath`, 60 digits, Stern–Brocot walk, 2026-09-16 00:20):
+
+```
+c₁ = 103768467013 / 65470613321  <  log₂ 3  <  e/a  <  log₂(3 + 2^{−68})  <  c₂ = 10439860591 / 6586818670
+65470613321·10439860591 − 103768467013·6586818670 = 1        (Farey neighbours)
+q₁ + q₂ = 72057431991 ;  the least-denominator fraction inside is 114208327604 / 72057431991
+log₂3 − c₁ ≈ 1.02·10⁻²² ;  c₂ − log₂(3+2^{−68}) ≈ 5.88·10⁻²² ;  interval width ≈ 1.63·10⁻²¹
+72057431991 · log₂3 = 114208327603.99999999999205…  (so e ≥ 114208327604 once a ≥ 72057431991)
+```
+
+**Target theorems** (new module `CollatzMoonshot/FrontB/EliahouFrontier.lean`, importing
+`FrontB.Eliahou`; leave `Assumed/Cycles.lean` alone except to mention the result in its docstring):
+
+```
+theorem odd_members_ge_of_two_pow_68 : ∀ n m, 1 ≤ n → 0 < m → step^[m] n = n →
+    (n = 1 ∨ n = 2 ∨ n = 4) ∨ 72057431991 ≤ ((Finset.range m).filter (fun i => step^[i] n % 2 = 1)).card
+theorem min_cycle_length_two_pow_68 : ∀ n m, 1 ≤ n → 0 < m → step^[m] n = n →
+    (n = 1 ∨ n = 2 ∨ n = 4) ∨ 186265759595 ≤ m          -- 114208327604 + 72057431991
+```
+
+Ledger must be exactly `[propext, Classical.choice, Quot.sound,
+collatz_verified_up_to_two_pow_68]` - **no big-power `native_decide`**: the node-3 certificates
+`2^p < 3^q` are infeasible here (`q ≈ 6.5·10¹⁰` means ~10¹¹-bit numbers).  Replace them by
+**certified real bounds on `log 2` and `log 3`** to ~26 significant digits:
+
+- `Real.abs_log_sub_add_sum_range_le (h : |x| < 1) (n) : |∑_{i<n} x^{i+1}/(i+1) + log(1−x)| ≤ |x|^{n+1}/(1−|x|)`
+  (mathlib, `Analysis/SpecialFunctions/Log/Deriv.lean:217`).  `log 2 = −log(1 − 1/2)` with `n = 90`
+  (error `≤ 2^{−90}·2 < 10⁻²⁶`); `log 3 = log 2 + log(3/2)`, `log(3/2) = −log(1 − 1/3)` with `n = 58`
+  (error `≤ 3^{−59}·(3/2) < 10⁻²⁷`).  Evaluate the finite rational sums with `norm_num`
+  (rationals with ~30-digit denominators; if `norm_num` is slow, `decide`-free `Rat` arithmetic
+  via `norm_num [Finset.sum_range_succ]` in chunks, or state the partial sum as a literal
+  `p/q` and prove `∑ = p/q` by `norm_num`).  Reference values: `ln 2 =
+  0.69314718055994530941723212145817657`, `ln 3 = 1.0986122886681096913952452369225257`.
+- From the bounds: `c₁ < log₂3` ⇔ `103768467013 · log 2 < 65470613321 · log 3` (margin
+  `≈ 1.0·10⁻²² · 65470613321 · log 2 ≈ 4.6·10⁻¹²` in absolute terms - comfortable), and
+  `log₂(3 + 2^{−68}) < c₂` ⇔ `6586818670 · (log 3 + log(1 + 1/(3·2^{68}))) < 10439860591 · log 2`,
+  using `log(1+x) ≤ x` (`Real.log_le_sub_one_of_pos`) and `1/(3·2^{68}) < 10⁻²⁰`.
+- The cycle side is already abstract in `FrontB.Eliahou`: `3^a < 2^e` gives `a log 3 < e log 2`
+  (`Real.log_lt_log` after casting), and `2^e · x^a ≤ (3x+1)^a` with `2^{68} < x` gives
+  `e log 2 ≤ a log(3 + 1/x) ≤ a log(3 + 2^{−68})`.  So `c₁ < e/a < c₂` in `ℝ`, and
+  `farey_denominator_bound` (node 3) gives `a ≥ 72057431991`; then `e > a·c₁ ≥ 72057431991·c₁`,
+  which exceeds `114208327603` (check: `72057431991 · 103768467013 / 65470613321 =
+  114208327603.9999999999847…` - the margin is `1.5·10⁻¹¹`, so prove `114208327603 < a·c₁`
+  as an exact rational inequality with `norm_num`, never with floats).  Reuse node 3's
+  `step_prod_identity`, `three_pow_lt_two_pow`, `two_pow_mul_pow_le`, `two_pow_68_lt_orbit`.
+- Docstring: this is Eliahou's 1993 method at the repo's own `2^{68}` frontier; it is **not**
+  Hercher 2023 Cor. 29 (`1.375·10¹¹` odd members needs his residue-class computation on top of
+  the continued fraction - the pure Farey step at `X₀ = 2075·2^{60}` gives the same `72057431991`,
+  host-checked), so `hercher_odd_members_bound` stays a citation axiom.  Cite Eliahou §3.
+- `(7,8)`-style control: none needed; instead a kernel/`norm_num` check that the two Farey
+  fractions really are neighbours (`b·c − a·d = 1`).
+
+**Rules.**  One writer per file; no new axioms; no experiments, no push; no board-row work.
+Review laps rank the open leaves of this node only.  If the 26-digit series bounds resist
+`norm_num` within one lap, commit the skeleton with the two log bounds as named `sorry` leaves
+(`log_two_bounds_26`, `log_three_bounds_26`) and everything else closed, and say so.
+
 ## Attended operator override: 2026-09-16 00:10 EDT — NODE 3, discharge the Eliahou citation axiom (ACTIVE for this run only; Nodes 1–2 of the 23:58 override are DONE at `2a1478b`/`8510836`, host-verified trust triple, pushed)
 
 Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.
