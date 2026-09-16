@@ -86,3 +86,27 @@ continued fraction, and the pure Farey step at his `X₀ = 2075·2^60` gives the
    `EliahouFrontier.lower_ineq`/`upper_ineq` are stated for arbitrary `a, e` and
    the log bounds are reusable to 30 decimals.
 2. The standing "awaiting a new mechanism" pause (`PENDING_WORK.md`) otherwise resumes.
+
+## Checkpoint (end of lap, 2026-09-16)
+
+* Branch `main`; HEAD `9d3fbd6` (this checkpoint's own commit follows it).
+* `lake build` green, 8775 jobs, via the pre-commit hook on `9d3fbd6`.
+* `src/` sorry-free; working tree clean; nothing pushed (the host pushes).
+* `box done --green` signalled and accepted — the treadmill does not relaunch.
+* `DIRECTION.md`'s node 4 was the only assignment this run had, and it is complete
+  with no open leaf.  The "awaiting a new mechanism" pause above it is again the
+  standing position; `PENDING_WORK.md` is unchanged and still accurate.
+
+### Exact next steps, none of them currently assigned
+
+1. `Assumed.hercher_odd_members_bound` — the last cycle-front citation axiom.
+   Kernel-ready inputs now: `Eliahou.step_prod_identity`, `three_pow_lt_two_pow`,
+   `two_pow_mul_pow_le`, `two_pow_68_lt_orbit`, `farey_denominator_bound`, plus
+   this lap's `EliahouFrontier.{log_two_bounds_26, log_three_halves_bounds_26,
+   lower_ineq, upper_ineq}` (the last two stated for arbitrary `a, e`).  Missing:
+   an effective lower bound on `|e log 2 − a log 3|` (Baker, or the repo's own
+   FrontA Rhin-lite machinery) and Hercher's circuit counting.
+2. Pushing the frontier bound further is now purely a matter of a wider Farey pair
+   plus more Taylor terms — mechanical, no new mathematics, do it only on request.
+3. The standing open problem (turning the trajectory dip `x_min < a/(3Λ)` into an
+   admission constraint on `D·c_m < N`) is unchanged and untouched by this lap.
