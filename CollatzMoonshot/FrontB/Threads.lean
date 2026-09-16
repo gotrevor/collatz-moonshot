@@ -114,12 +114,31 @@ consumed by the *ladder*, not by compression. -/
 def Compression : Prop :=
   ∃ C, ∀ v, Primitive v → IntegerCycle v → ¬ IsTrivial v → circuits v ≤ C
 
-/-- The Simons-de Weger ladder completing at every fixed circuit count.  Their published
+/-- ⚠️ 2026-09-15: despite the primitivity, this thread is **also Front B in costume**
+(`ladderCompletes_iff_frontB`): quantifying over *every* circuit bound `C` lets one take
+`C := circuits u` for the primitive root `u` of an alleged counterexample, so completing the
+whole ladder is exactly Front B, not a reduction of it.  What is genuinely weaker - and what
+Simons-de Weger/Hercher actually prove - is the ladder at a *fixed* `C`
+(`hercher_min_circuit_count` is the rungs `C ≤ 91`).
+
+The Simons-de Weger ladder completing at every fixed circuit count.  Their published
 theorems cover specific small counts by computation; this is the *extrapolation*, so it is
 a `def` and not an axiom.  (`hercher_min_circuit_count` below IS the proved part of the
 ladder: rungs `≤ 91` hold, vacuously - no primitive nontrivial cycle lives there.) -/
 def LadderCompletes : Prop :=
   ∀ C v, Primitive v → IntegerCycle v → circuits v ≤ C → IsTrivial v
+
+/-- **The degeneracy of the full ladder, as a theorem** (axiom-free). -/
+theorem ladderCompletes_iff_frontB : LadderCompletes ↔ FrontB := by
+  constructor
+  · intro h v hv
+    obtain ⟨u, j, hu, hj, rfl⟩ := exists_primitive_root v hv.1
+    have hICu : IntegerCycle u := (integerCycle_wpow_iff hj).mp hv
+    have hdu : 0 < den u := hICu.2.2.1
+    exact (isTrivial_wpow_iff (ne_of_gt hdu) hj).mpr
+      (h (circuits u) u hu hICu (le_refl _))
+  · intro h C v _ hv _
+    exact h v hv
 
 /-- **Route 2's wiring**, provable now: compression plus the ladder gives Front B.  The
 decomposition `exists_primitive_root` is what lets the primitive-only hypotheses cover
@@ -233,13 +252,62 @@ already exists.  What it yields is the statement below - and finiteness is not e
 A counting argument with main term below `1` would need its error term below `1` too, i.e.
 full cancellation in a sum of `2^(0.95k)` terms. -/
 
-/-- What a successful counting argument would give: finitely many nontrivial integral
-cycles.  **Not** what Front B asserts. -/
+/-- The set counted by a "finitely many cycles" argument over **all** words.  ⚠️ 2026-09-15:
+this is the same degeneracy as Threads 1 and 2 - because word powers of a counterexample
+are again nontrivial integral cycles, this set is infinite as soon as it is nonempty, so
+`CountingGivesFinite` is *equivalent* to Front B (`countingGivesFinite_iff_frontB`).  The
+old docstring here claimed it is "not what Front B asserts"; that was false. -/
 def CountingGivesFinite : Prop := {v : List Bool | IntegerCycle v ∧ ¬ IsTrivial v}.Finite
 
-/-- The gap that kills the counting route, stated so it cannot be glossed over: finiteness
-does not imply emptiness, and no amount of sharpening the count closes it. -/
+/-- **The degeneracy, as a theorem** (axiom-free): counting all words gives Front B.
+Forward: from a counterexample `v`, the family `wpow v (j+1)` is an injective ℕ-indexed
+family inside the set (distinct lengths `(j+1)*|v|`), so the set is infinite.  Backward:
+Front B empties the set. -/
+theorem countingGivesFinite_iff_frontB : CountingGivesFinite ↔ FrontB := by
+  constructor
+  · intro hfin v hv
+    by_contra hnt
+    have hdv : 0 < den v := hv.2.2.1
+    have hvne : v ≠ [] := hv.1
+    have hlen : 0 < v.length := List.length_pos_iff.mpr hvne
+    have hinf : {v : List Bool | IntegerCycle v ∧ ¬ IsTrivial v}.Infinite := by
+      refine Set.infinite_of_injective_forall_mem
+        (f := fun j : ℕ => wpow v (j + 1)) ?_ ?_
+      · intro i j hij
+        have hl := congrArg List.length hij
+        rw [length_wpow, length_wpow] at hl
+        have := Nat.eq_of_mul_eq_mul_right hlen hl
+        omega
+      · intro j
+        exact ⟨(integerCycle_wpow_iff (by omega)).mpr hv,
+          fun h => hnt ((isTrivial_wpow_iff (ne_of_gt hdv) (by omega)).mp h)⟩
+    exact hinf hfin
+  · intro h
+    have hemp : {v : List Bool | IntegerCycle v ∧ ¬ IsTrivial v} = ∅ := by
+      ext v
+      simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+      rintro ⟨hv, hnt⟩
+      exact hnt (h v hv)
+    show Set.Finite _
+    rw [hemp]
+    exact Set.finite_empty
+
+/-- The gap the counting route was *hoped* to leave open.  ⚠️ It is **impossible** as
+typed: `countingGivesFinite_iff_frontB` makes its two conjuncts contradictory.  Kept, with
+`not_finitenessIsNotEmptiness`, as the record of that. -/
 def FinitenessIsNotEmptiness : Prop := CountingGivesFinite ∧ ¬ FrontB
+
+/-- Finiteness *is* emptiness here, so the "gap" is uninhabited. -/
+theorem not_finitenessIsNotEmptiness : ¬ FinitenessIsNotEmptiness := by
+  rintro ⟨hfin, hnf⟩
+  exact hnf (countingGivesFinite_iff_frontB.mp hfin)
+
+/-- The honest counting population: **primitive** nontrivial integral cycles.  This is the
+population Simons-de Weger and Hercher actually count (their `m`-cycles are traversed once),
+and it is not degenerate under powers.  No implication from its finiteness to Front B is
+claimed or provable here - finiteness of this set really is weaker than emptiness. -/
+def PrimitiveCountingGivesFinite : Prop :=
+  {v : List Bool | Primitive v ∧ IntegerCycle v ∧ ¬ IsTrivial v}.Finite
 
 /-! ## Thread 13 - the falsification harness.  **PROVED** ✅ -/
 
