@@ -90,3 +90,33 @@ mathematics: it is the 1993 published bound, formalized, with the repo's own
 citation axiom in `Assumed/Cycles.lean` is `hercher_odd_members_bound`
 (Hercher 2023 Cor. 29) — a genuinely harder target (Baker linear forms), and the
 obvious next node if anyone wants one.
+
+## Checkpoint (end of lap, 2026-09-16)
+
+* Branch `main`; HEAD at handoff time `c4b2eff` (this doc's own commit follows it).
+* `lake build` green, 8774 jobs, via the pre-commit hook on `073b0d2`.
+* `src/` sorry-free; working tree clean; nothing pushed (the host pushes).
+* `box done` signalled and honored — the treadmill does not relaunch after this lap.
+* `DIRECTION.md`'s node 3 is the only assignment this run had, and it is complete.
+  The "awaiting a new mechanism" pause above it is again the standing position.
+
+### Exact next steps, none of them currently assigned
+
+1. **`Assumed.hercher_odd_members_bound`** (`Assumed/Cycles.lean`) is now the only
+   cycle-front citation axiom left.  Hercher 2023, *J. Integer Seq.* 26, 23.3.5,
+   Cor. 29: `K ≥ 1.375·10¹¹` odd members once the frontier is `≥ 1536·2⁶⁰`.
+   Genuinely harder than Eliahou — it needs a Baker linear-forms-in-logarithms
+   input, not just a continued-fraction convergent, so the honest decomposition
+   is (a) the `2^e ∏ x_i = ∏(3x_i+1)` identity we now have, unchanged; (b) an
+   effective lower bound on `|e·log2 − a·log3|`; (c) Hercher's circuit counting.
+   Only (a) is in the kernel today.  Paper summary is in `papers/`.
+2. **Sharpen the bound we just proved.**  `FrontB.Eliahou.length_bound` takes the
+   two cycle inequalities as hypotheses and is independent of the cycle; feeding
+   it a later Farey pair (the next convergents of `log₂3`) plus the matching
+   `native_decide` certificates raises `27869189` with no new mathematics.  The
+   `2^68` cutoff leaves a lot on the table: the interval is ~`1.6·10⁻²¹` wide, so
+   the true forced denominator is far above `10781274`.  Cheap, mechanical, and
+   purely a formalization exercise — do it only if someone wants the number.
+3. The standing open problem is unchanged and unaffected by this lap: turning the
+   trajectory dip `x_min < a/(3Λ)` (and `h < a/(3Λ)`) into an admission constraint
+   on `D·c_m < N`.  No mechanism for that is specified.
