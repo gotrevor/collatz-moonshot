@@ -32,7 +32,11 @@ the odd move in two steps, so the corresponding bound here is the sum,
 `27,869,189`.  The modern frontier (Hercher 2023 + Bařina's `2⁷¹` verification)
 pushes this to ~`3.6 × 10¹¹` for this map - verified firsthand 2026-08-22 and
 adopted below as `hercher_odd_members_bound`; this 1993 bound stays for
-provenance-pinned results.
+provenance-pinned results.  Eliahou's method re-run at THIS repository's own
+`2⁶⁸` frontier is proved in `FrontB/EliahouFrontier.lean`
+(`min_cycle_length_two_pow_68` : period `≥ 186,265,759,595`,
+`odd_members_ge_of_two_pow_68` : `≥ 72,057,431,991` odd members), with no
+`native_decide` and no new axioms.  It is still weaker than Hercher below.
 
 Stated for ALL periods, not just the minimal one: any period is a multiple of the
 minimal period, so the bound transfers. -/
