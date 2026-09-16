@@ -2,7 +2,7 @@
 Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import CollatzMoonshot.Basic
+import CollatzMoonshot.FrontB.Eliahou
 
 /-!
 # Assumed: cycle-length lower bounds
@@ -14,8 +14,13 @@ Tier: THEOREM-grade (published proofs, unformalized).  This is Front B territory
 
 namespace CollatzMoonshot.Assumed
 
-/-- **[ASSUMED - published theorem]** Any cycle of `step` outside the trivial one
-has period at least `27,869,189`.
+/-- **[PROVED, 2026-09-16]** Any cycle of `step` outside the trivial one has
+period at least `27,869,189`.  Formerly an axiom; now `FrontB.Eliahou.min_cycle_length`.
+
+`#print axioms` reports the classical trio, `Assumed.collatz_verified_up_to_two_pow_68`,
+and the three named `native_decide` big-integer certificates
+(`two_pow_lt_three_pow_cert._native.…`, `upper_convergent_cert._native.…`,
+`two_pow_lt_three_pow_big._native.…`).
 
 Provenance: Eliahou (1993), *The 3x+1 problem: new lower bounds on nontrivial
 cycle lengths* (Discrete Math. 118; PDF + summary in `papers/`), via the product
@@ -31,9 +36,10 @@ provenance-pinned results.
 
 Stated for ALL periods, not just the minimal one: any period is a multiple of the
 minimal period, so the bound transfers. -/
-axiom eliahou_min_cycle_length :
+theorem eliahou_min_cycle_length :
     ∀ n m : ℕ, 1 ≤ n → 0 < m → step^[m] n = n →
-      (n = 1 ∨ n = 2 ∨ n = 4) ∨ 27869189 ≤ m
+      (n = 1 ∨ n = 2 ∨ n = 4) ∨ 27869189 ≤ m :=
+  FrontB.Eliahou.min_cycle_length
 
 /-- **[ASSUMED - published theorem + computation]** Any nontrivial cycle of
 `step` passes through at least `1.375 × 10¹¹` odd values per period.
