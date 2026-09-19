@@ -141,10 +141,114 @@ theorem geomS_mono : Monotone geomS := by
 
 /-- **The run telescoping in `ℝ`.**  Along a block word with all blocks nonempty,
 `2^K ≤ (n+1)^(geomS r)`. -/
-theorem two_pow_ones_le_rpow (L : List (ℕ × ℕ)) : ∀ n : ℕ, 1 ≤ n →
+theorem rpow_two_logTwoThree : (2 : ℝ) ^ logTwoThree = 3 := by
+  rw [Real.rpow_def_of_pos (by norm_num), logTwoThree,
+    show Real.log 2 * (Real.log 3 / Real.log 2) = Real.log 3 by
+      field_simp [(Real.log_pos (by norm_num : (1:ℝ) < 2)).ne'],
+    Real.exp_log (by norm_num)]
+
+theorem pow_rpow_logTwoThree (q : ℕ) : ((2 : ℝ) ^ q) ^ logTwoThree = (3 : ℝ) ^ q := by
+  rw [← Real.rpow_natCast (2 : ℝ) q, ← Real.rpow_mul (by norm_num), mul_comm,
+    Real.rpow_mul (by norm_num), rpow_two_logTwoThree, Real.rpow_natCast]
+
+/-- **The step inequality.**  If the head block `(q, e)` (both positive) is traced from `n ≥ 1`
+with successor `x'`, then `x' + 1 ≤ (n+1)^logTwoThree`. -/
+theorem succ_le_rpow_of_block {n q e : ℕ} (hn : 1 ≤ n) (hq : 0 < q) (he : 0 < e)
+    (hword : traceWord n (q + e) = List.replicate q true ++ List.replicate e false) :
+    ((tstep^[q + e] n : ℕ) : ℝ) + 1 ≤ ((n : ℝ) + 1) ^ logTwoThree := by
+  have hid := segment_identity_of_word hword
+  set x := tstep^[q + e] n with hx
+  -- `2^q ∣ n + 1`
+  have hdvd : (2 : ℕ) ^ q ∣ n + 1 := by
+    have h1 : (2 : ℕ) ^ q ∣ 3 ^ q * (n + 1) := by
+      rw [← hid]
+      exact Nat.dvd_add (Dvd.dvd.mul_right (pow_dvd_pow 2 (Nat.le_add_right q e)) _) dvd_rfl
+    exact (Nat.Coprime.pow _ _ (by decide)).dvd_of_dvd_mul_left h1
+  have hAnat : (2 : ℕ) ^ q ≤ n + 1 := Nat.le_of_dvd (by omega) hdvd
+  have hnatb : 2 ^ (q + 1) * x ≤ 3 ^ q * (n + 1) := by
+    calc 2 ^ (q + 1) * x ≤ 2 ^ (q + e) * x :=
+          Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) (by omega))
+      _ ≤ 3 ^ q * (n + 1) := by omega
+  set N : ℝ := (n : ℝ) + 1 with hN
+  set A : ℝ := (2 : ℝ) ^ q with hA
+  have hApos : 0 < A := by positivity
+  have hNpos : 0 < N := by rw [hN]; positivity
+  have hN2 : (2 : ℝ) ≤ N := by
+    rw [hN]; have : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+    linarith
+  have hθ := one_lt_logTwoThree
+  have hA_le : A ≤ N := by
+    rw [hA, hN]; exact_mod_cast hAnat
+  have hb : 2 * A * (x : ℝ) ≤ (3 : ℝ) ^ q * N := by
+    have := hnatb
+    have hc : ((2 ^ (q + 1) * x : ℕ) : ℝ) ≤ ((3 ^ q * (n + 1) : ℕ) : ℝ) := by exact_mod_cast this
+    push_cast at hc
+    rw [pow_succ] at hc
+    rw [hA, hN]; push_cast; linarith [hc]
+  -- `3^q / A ≤ N^(θ-1)`
+  have hsub : A ^ (logTwoThree - 1) = (3 : ℝ) ^ q / A := by
+    rw [Real.rpow_sub hApos, pow_rpow_logTwoThree, Real.rpow_one]
+  have hC : (3 : ℝ) ^ q / A ≤ N ^ (logTwoThree - 1) := by
+    rw [← hsub]; exact Real.rpow_le_rpow hApos.le hA_le (by linarith)
+  have hNθ : N ^ (logTwoThree - 1) * N = N ^ logTwoThree := by
+    have h := (Real.rpow_add hNpos (logTwoThree - 1) 1).symm
+    simpa using h
+  have hxle : (x : ℝ) ≤ N ^ logTwoThree / 2 := by
+    have h1 : 2 * (x : ℝ) ≤ ((3 : ℝ) ^ q / A) * N := by
+      rw [div_mul_eq_mul_div, le_div_iff₀ hApos]; nlinarith
+    have h2 : ((3 : ℝ) ^ q / A) * N ≤ N ^ (logTwoThree - 1) * N :=
+      mul_le_mul_of_nonneg_right hC hNpos.le
+    rw [hNθ] at h2
+    linarith
+  have hge2 : (2 : ℝ) ≤ N ^ logTwoThree := by
+    calc (2 : ℝ) ≤ N := hN2
+      _ = N ^ (1 : ℝ) := (Real.rpow_one N).symm
+      _ ≤ N ^ logTwoThree := Real.rpow_le_rpow_of_exponent_le (by linarith) hθ.le
+  linarith
+
+/-- **The run telescoping in `ℝ`.**  Along a block word with all blocks nonempty,
+`2^K ≤ (n+1)^(geomS r)`. -/
+theorem two_pow_ones_le_rpow : ∀ (L : List (ℕ × ℕ)) (n : ℕ), 1 ≤ n →
     (∀ p ∈ L, 0 < p.1 ∧ 0 < p.2) → traceWord n (blockWord L).length = blockWord L →
-    (2 : ℝ) ^ ones (blockWord L) ≤ ((n : ℝ) + 1) ^ geomS L.length := by
-  sorry
+    (2 : ℝ) ^ ones (blockWord L) ≤ ((n : ℝ) + 1) ^ geomS L.length
+  | [], n, _, _, _ => by simp [blockWord, ones, geomS, Real.rpow_zero]
+  | (q, e) :: L, n, hn, hpos, hword => by
+    obtain ⟨hq, he⟩ := hpos (q, e) (by simp)
+    have hlen := blockWord_cons_length q e L
+    have hsplit : traceWord n (q + e) ++ traceWord (tstep^[q + e] n) (blockWord L).length =
+        (List.replicate q true ++ List.replicate e false) ++ blockWord L := by
+      rw [← traceWord_add, ← hlen, hword]; rfl
+    obtain ⟨hhead, htail⟩ := List.append_inj hsplit (by simp)
+    set x := tstep^[q + e] n with hx
+    have hx1 : 1 ≤ x := tstep_iterate_pos hn (q + e)
+    have ih := two_pow_ones_le_rpow L x hx1 (fun p hp => hpos p (by simp [hp])) htail
+    have hstep := succ_le_rpow_of_block hn hq he hhead
+    have hones : ones (blockWord ((q, e) :: L)) = q + ones (blockWord L) := by
+      simp only [blockWord, ones_append]; simp
+    set N : ℝ := (n : ℝ) + 1 with hN
+    have hNpos : 0 < N := by rw [hN]; positivity
+    have hg := geomS_nonneg L.length
+    -- transport the induction hypothesis along `x + 1 ≤ N^θ`
+    have hchain : ((x : ℝ) + 1) ^ geomS L.length ≤ N ^ (logTwoThree * geomS L.length) := by
+      calc ((x : ℝ) + 1) ^ geomS L.length ≤ (N ^ logTwoThree) ^ geomS L.length :=
+            Real.rpow_le_rpow (by positivity) hstep hg
+        _ = N ^ (logTwoThree * geomS L.length) := (Real.rpow_mul hNpos.le _ _).symm
+    have hAnat : ((2 : ℝ) ^ q) ≤ N := by
+      have hdvd : (2 : ℕ) ^ q ∣ n + 1 := by
+        have hid := segment_identity_of_word hhead
+        have h1 : (2 : ℕ) ^ q ∣ 3 ^ q * (n + 1) := by
+          rw [← hid]
+          exact Nat.dvd_add (Dvd.dvd.mul_right (pow_dvd_pow 2 (Nat.le_add_right q e)) _) dvd_rfl
+        exact (Nat.Coprime.pow _ _ (by decide)).dvd_of_dvd_mul_left h1
+      have := Nat.le_of_dvd (by omega) hdvd
+      rw [hN]; exact_mod_cast this
+    rw [hones, pow_add]
+    calc (2 : ℝ) ^ q * 2 ^ ones (blockWord L)
+        ≤ N * N ^ (logTwoThree * geomS L.length) :=
+          mul_le_mul hAnat (le_trans ih hchain) (by positivity) hNpos.le
+      _ = N ^ (1 + logTwoThree * geomS L.length) := by
+          rw [Real.rpow_add hNpos, Real.rpow_one]
+      _ = N ^ geomS ((q, e) :: L).length := by simp [geomS]
 
 /-! ## Target 6: the upper side -/
 
