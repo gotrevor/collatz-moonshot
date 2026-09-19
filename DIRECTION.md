@@ -1,5 +1,115 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-19 (Fable, night) - verified log₂3 digits, and r ≤ 50
+
+Standing authorization (Trevor, 2026-09-19: "keep planning in parallel with the grind").  Opus-low
+helper, **at most three laps**.  Create `CollatzMoonshot/FrontA/LogTwoThreeDigits.lean` importing
+`CollatzMoonshot.FrontA.FirstCrossingFewRuns`.  Do not change any existing theorem or definition.
+Your only files are this module, its root import line (after FirstCrossingFewRuns), and a short
+dated handoff `HANDOFF-2026-09-19-log23-digits.md`.  Do not edit DIRECTION or experiments.  No
+successor task.  **Commit a compiling skeleton with named `sorry` leaves first.**  `.lake/build`
+is warm (host built `7005730`); never `lake exe cache get`.
+
+Namespace `CollatzMoonshot.FrontA.FirstCrossing`, `open CollatzMoonshot CollatzMoonshot.FrontB`.
+Purpose: the repo certifies brackets `2^a < 3^b` by power comparison, which dies at the numeral
+cap (`pow_cert_10781274` is a 5-million-digit `native_decide`).  Forty-four verified digits of
+`log 2` and `log 3` certify the same brackets by rational arithmetic at ANY scale.  With the
+bracket at denominators ~6·10¹⁵ the pincer of `descends_of_oddRunCount_le_four` extends to fifty runs.
+
+Available: everything in FewRuns (`geomS`, `geomS_mono`, `geomS_nonneg`, `logTwoThree`,
+`two_pow_ones_le_rpow`, `exists_blockWord_oddRunCount_pos`, `last_false_of_at`,
+`two_pow_lt_two_mul_three_pow`, `descends_of_even`, the log ledger incl. `log_rhinLiteSepC_ge`),
+`gap_mul_pow_le` (Runs), `sep_strong_of_bracket_nat` and `lt_logb_two_three_iff` /
+`logb_two_three_lt_iff` (RhinLiteSep; note `Real.logb 2 3 = Real.log 3 / Real.log 2 = logTwoThree`
+by `Real.logb`), `rhinLite_log23_measure`.  Mathlib: `Real.abs_log_sub_add_sum_range_le`
+(`|x| < 1 → |(∑ i ∈ range n, x^(i+1)/(i+1)) + log (1 - x)| ≤ |x|^(n+1)/(1 - |x|)`),
+`Real.log_div`, `Finset.sum_range_succ`, `norm_num`.
+
+Freeze these targets exactly:
+
+1. `theorem log_two_bounds :
+       (69314718055994530941723212145817656807550013 : ℝ) / 10 ^ 44 < Real.log 2 ∧
+       Real.log 2 < (69314718055994530941723212145817656807550015 : ℝ) / 10 ^ 44`
+   Route: `Real.log 2 = -Real.log (1 - 1/2)`; apply `Real.abs_log_sub_add_sum_range_le` with
+   `x = 1/2`, `n = 150` (remainder ≤ 2^(-150) < 10^(-45)); the partial sum is a rational, evaluate it
+   with `simp only [Finset.sum_range_succ, Finset.sum_range_zero]` then `norm_num` (if `norm_num`
+   is slow, split the sum into blocks of 25 with `Finset.sum_range_add`-style lemmas, or prove
+   the rational value with `decide`-free `norm_num` on each block).  Then `abs_lt` and `linarith`.
+
+2. `theorem log_three_bounds :
+       (109861228866810969139524523692252570464749055 : ℝ) / 10 ^ 44 < Real.log 3 ∧
+       Real.log 3 < (109861228866810969139524523692252570464749057 : ℝ) / 10 ^ 44`
+   Route: `Real.log 3 = Real.log 2 + Real.log (3/2)` and `Real.log (3/2) = -Real.log (1 - 1/3)`,
+   `x = 1/3`, `n = 96` (remainder ≤ (1/3)^97·(3/2) < 10^(-45)); combine with target 1.
+
+3. `theorem logTwoThree_bounds :
+       (109861228866810969139524523692252570464749055 : ℝ) / 69314718055994530941723212145817656807550015
+         < logTwoThree ∧
+       logTwoThree < (109861228866810969139524523692252570464749057 : ℝ) / 69314718055994530941723212145817656807550013`
+   (quotients of the bounds; `div_lt_div_iff`, both logs positive.)
+
+4. `theorem two_pow_lt_three_pow_of_lt {a b : ℕ} (hb : 0 < b)
+       (h : (a : ℝ) / b < (109861228866810969139524523692252570464749055 : ℝ) / 69314718055994530941723212145817656807550015) :
+       2 ^ a < 3 ^ b`
+   and
+   `theorem three_pow_lt_two_pow_of_lt {c d : ℕ} (hd : 0 < d)
+       (h : (109861228866810969139524523692252570464749057 : ℝ) / 69314718055994530941723212145817656807550013 < (c : ℝ) / d) :
+       3 ^ d < 2 ^ c`
+   via targets 3 and `lt_logb_two_three_iff` / `logb_two_three_lt_iff` (unfold `Real.logb`).
+
+5. The bracket at the 6·10¹⁵ scale (consecutive convergents of log₂3; all four hypotheses of
+   `sep_strong_of_bracket_nat` verified on the host by exact rational arithmetic 2026-09-19):
+     outer lower  a/b   = 766512153894657 / 483615324366283
+     outer upper  c/d   = 9115015689657667 / 5750934602875680      (b·c = a·d + 1)
+     inner lower  a'/b' = 9881527843552324 / 6234549927241963
+     inner upper  c'/d' = 206745572560704147 / 130441933147714940
+     j = 58                                                     (2·max(b',d') ≤ 2^58)
+   `theorem sep_strong_6e15 (k m : ℕ) (hk : 0 < k) (hklt : k < 6234549927241963)
+       (h1 : 3 ^ k < 2 ^ m) : 3 ^ k ≤ (2 ^ m - 3 ^ k) * 2 ^ 58`
+   by `sep_strong_of_bracket_nat k m 766512153894657 483615324366283 9115015689657667 5750934602875680
+   9881527843552324 6234549927241963 206745572560704147 130441933147714940 58 …`, the four power
+   inequalities from target 4 (the rational comparisons are `norm_num`), `huni`/`hin1`/`hin2`/`hg1`/`hg2`
+   by `norm_num`.  Note `b + d = 6234549927241963`.
+
+6. `theorem succ_pow_sub_le_runs (n r : ℕ) (hn : 2 * r * r ≤ n) (hr : 1 ≤ r) :
+       (n + 1) ^ r - n ^ r ≤ (r + 1) * n ^ (r - 1)`
+   Route: `(n+1)^r - n^r ≤ r·(n+1)^(r-1)` (telescoping / `Nat.sub_le` of the binomial), and the
+   Bernoulli-type `(n+1)^k · (n+1-k) ≤ n^k · (n+1)` for `k ≤ n+1` (induction on k), so with
+   `k = r-1 ≤ (n+1)/2`: `(n+1)^(r-1) ≤ n^(r-1) · (n+1)/(n+1-(r-1)) ≤ n^(r-1)·(1 + 2(r-1)/n)`, and
+   `r·(1 + 2(r-1)/n) ≤ r + 1` when `2r(r-1) ≤ n`.  Any correct route is fine.
+
+7. `theorem gap_mul_le_runs_succ {n m : ℕ} (hn : n % 2 = 1) (h : At n m) (hsurv : n ≤ tstep^[m] n)
+       (hbig : 2 * oddRunCount (traceWord n m) * oddRunCount (traceWord n m) ≤ n) :
+       (2 ^ m - 3 ^ ones (traceWord n m)) * n ≤ (oddRunCount (traceWord n m) + 1) * 3 ^ ones (traceWord n m)`
+   from `gap_mul_pow_le` and target 6 (r ≥ 1 since the word starts odd), cancelling `n^(r-1)`.
+
+8. `theorem ones_ge_of_survives_6e15 (hv : CSTVerified) {n m : ℕ} (hn : 2 ≤ n) (h : At n m)
+       (hsurv : n ≤ tstep^[m] n) (hr : oddRunCount (traceWord n m) ≤ 96) :
+       6234549927241963 ≤ ones (traceWord n m)`
+   Route: n odd (else descent by `descends_of_even`), K := ones ≥ 1.  If `K < 6234549927241963`:
+   `sep_strong_6e15` gives `3^K ≤ D·2^58`; `n ≥ 2·96² = 18432` holds because otherwise `hv`
+   applies directly (n ≤ 28·10¹⁸); target 7 gives `D·n ≤ 97·3^K ≤ 97·D·2^58`, so
+   `n ≤ 97·2^58 = 27958346486716039168 < 28·10^18`, and `hv` forces descent.  Contradiction.
+
+9. `theorem descends_of_oddRunCount_le_fifty (hv : CSTVerified) {n m : ℕ} (hn : 2 ≤ n)
+       (h : At n m) (hr : oddRunCount (traceWord n m) ≤ 50) : tstep^[m] n < n`
+   Same pincer as `descends_of_oddRunCount_le_four`, with: K ≥ 6234549927241963 (target 8);
+   upper bound `D·n ≤ 51·3^K` (target 7) hence `(n:ℝ) ≤ 51·K^436 / rhinLiteSepC` via
+   `rhinLite_log23_measure` and `Real.log_le_sub_one_of_pos`; lower bound
+   `K·log 2 ≤ geomS 50 · log (n+1)` with `geomS 50 ≤ (159/100)^50 / (59/100) < 2.1·10^10`
+   (prove `geomS r ≤ logTwoThree^r / (logTwoThree - 1)` by induction, or bound term by term).
+   Numerics: `log (n+1) ≥ K·0.6931/(2.1·10^10) ≥ 3.3·10^(-11)·K ≥ 2.05·10^5` at `K = 6.23·10^15`,
+   while `log n ≤ log 51 + 436·log K + 27203 ≤ 3.94 + 436·36.4 + 27203 < 43100`; use the concavity
+   step `log K ≤ log K₀ + (K - K₀)/K₀` at `K₀ = 6234549927241963` (`log K₀ ≤ 36.37`) and
+   `log (n+1) ≤ log 2 + log n`, exactly as in the r ≤ 4 proof.  Margin is a factor ~5; do not tune.
+
+Build the module and the root, run `#print axioms descends_of_oddRunCount_le_fifty` (expect the
+standard three plus the inherited Rhin-lite `native_decide` certificates and NO `pow_cert_10781274`
+- the point of the module is that this bracket uses no power certificate; report the ledger),
+commit, then `box done --green`.  If a frozen statement is false, report the counterexample; do not
+weaken it.  This gives `StoppingCorrect` on all first crossings with at most fifty odd runs, modulo
+the explicit verification hypothesis.  It does NOT prove CST.
+
 ## Attended operator override: 2026-09-19 (Fable, evening) - few-run stopping-time helper, r ≤ 4
 
 Trevor's standing authorization for this campaign ("carry on & keep on trucking", 2026-09-19);
