@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence")):
     main()
 
 
@@ -593,3 +593,91 @@ def first_crossing_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "first-crossing":
     first_crossing_main()
+
+
+# ---------------------------------------------------------------------------
+# coalescence statistics (2026-09-19 Fable handoff, KB leaf
+# collatz-fable-strategy-2026-09-19.md).  For each n >= 2:
+#   sigma(n) = first m with tstep^[m](n) < n              (shortcut stopping time)
+#   c(n)     = first m with tstep^[m](n) in V(n), where V(n) is the forward-closed
+#              union of the orbits of every start s < n     (earliest coalescence)
+#   S(n)     = L(n) - 2 A(n), signed score at the first hit of 1; a BALANCED merger
+#              to some s < n exists iff some s < n has S(s) = S(n).
+# c(n) <= sigma(n) always (the descent target is itself a smaller start).
+# Every quantity is computed by exact walking, never from the finite claim's limit.
+# ---------------------------------------------------------------------------
+
+def coalescence_scan(limit):
+    """Return dict n -> (c, sigma, S) for 1 <= n <= limit, plus the state table."""
+    la = {1: (0, 0)}            # state -> (L, A): steps and odd steps to first hit of 1
+    out = {1: (0, 0, 0)}        # c(1), sigma(1) are conventional zeros
+    for n in range(2, limit + 1):
+        path = []               # (state, odd?) not yet in la
+        x, m, c, sigma = n, 0, None, None
+        while x not in la:
+            if sigma is None and x < n:
+                sigma = m       # cannot happen: x < n implies x in la
+            path.append((x, x % 2 == 1))
+            x = tstep(x)
+            m += 1
+        c = m
+        # sigma: first step whose value is < n; x itself may be it
+        y, k = n, 0
+        while y >= n:
+            y = tstep(y)
+            k += 1
+        sigma = k
+        L, A = la[x]
+        for st, odd in reversed(path):
+            L += 1
+            A += 1 if odd else 0
+            la[st] = (L, A)
+        Ln, An = la[n]
+        out[n] = (c, sigma, Ln - 2 * An)
+    return out, la
+
+
+def coalescence_main():
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 100000
+    out, _ = coalescence_scan(limit)
+    print(f"# Coalescence vs descent, exact, 2 <= n <= {limit}")
+    scores_seen = {out[1][2]}
+    no_gain_odd = []            # odd n with c(n) == sigma(n)
+    no_balanced_odd = []        # odd n with no smaller start of equal score
+    worst_c = (0.0, None)       # max c(n)/log2(n)
+    worst_sigma = (0.0, None)
+    gain_hist = {}
+    from math import log2
+    for n in range(2, limit + 1):
+        c, sigma, S = out[n]
+        if n % 2 == 1:
+            if c == sigma:
+                no_gain_odd.append(n)
+            if S not in scores_seen:
+                no_balanced_odd.append(n)
+        scores_seen.add(S)
+        g = sigma - c
+        gain_hist[g] = gain_hist.get(g, 0) + 1
+        rc, rs = c / log2(n), sigma / log2(n)
+        if rc > worst_c[0]:
+            worst_c = (rc, n)
+        if rs > worst_sigma[0]:
+            worst_sigma = (rs, n)
+    odd_total = limit // 2
+    print(f"odd n with c(n) == sigma(n) (coalescence buys nothing): {len(no_gain_odd)} of {odd_total}")
+    print(f"  first few: {no_gain_odd[:20]}")
+    print(f"odd n with NO balanced partner below them: {len(no_balanced_odd)} of {odd_total}")
+    print(f"  first few: {no_balanced_odd[:20]}")
+    print(f"max c(n)/log2 n     = {worst_c[0]:.4f} at n={worst_c[1]}  (c={out[worst_c[1]][0]})")
+    print(f"max sigma(n)/log2 n = {worst_sigma[0]:.4f} at n={worst_sigma[1]}  (sigma={out[worst_sigma[1]][1]})")
+    print("gain sigma-c histogram (gain: count), gains 0..12 then max:")
+    print("  " + ", ".join(f"{g}: {gain_hist.get(g, 0)}" for g in range(13)) + f"; max gain {max(gain_hist)}")
+    for n in (3, 7, 15, 27, 97, 871, 6171, 77031):
+        if n <= limit:
+            c, sigma, S = out[n]
+            print(f"  n={n}: c={c} sigma={sigma} S={S}")
+    print("Finite scan; no claim about all n is drawn from it.")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "coalescence":
+    coalescence_main()
