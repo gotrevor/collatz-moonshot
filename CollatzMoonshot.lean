@@ -54,6 +54,7 @@ import CollatzMoonshot.FrontB.Threads
 import CollatzMoonshot.FrontB.Eliahou
 import CollatzMoonshot.FrontB.EliahouFrontier
 import CollatzMoonshot.FrontA.FirstCrossingCycles
+import CollatzMoonshot.FrontA.FirstCrossingSwaps
 import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional
