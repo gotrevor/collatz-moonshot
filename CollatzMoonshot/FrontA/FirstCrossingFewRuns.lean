@@ -283,10 +283,185 @@ theorem gap_mul_le_fifteen {n m : ℕ} (hn : n % 2 = 1) (h : At n m) (hsurv : n 
         _ = (15 * 3 ^ K) * n ^ (r - 1) := by ring
     exact Nat.le_of_mul_le_mul_right hchain (by positivity)
 
+/-! ## Explicit logarithm bounds -/
+
+theorem log_three_le : Real.log 3 ≤ (159 / 100) * Real.log 2 := by
+  have h2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have := logTwoThree_lt
+  rw [logTwoThree, div_lt_iff₀ h2] at this
+  linarith
+
+theorem log_fifteen_le : Real.log 15 ≤ 272 / 100 := by
+  have h : Real.log (15 / 16) ≤ 15 / 16 - 1 := Real.log_le_sub_one_of_pos (by norm_num)
+  have h16 : Real.log (16 : ℝ) = 4 * Real.log 2 := by
+    rw [show (16 : ℝ) = 2 ^ (4 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hsplit : Real.log (15 : ℝ) = Real.log (15 / 16) + Real.log 16 := by
+    rw [← Real.log_mul (by norm_num) (by norm_num)]; norm_num
+  have h2 := Real.log_two_lt_d9
+  rw [hsplit, h16]
+  linarith
+
+theorem log_492276_le : Real.log 492276 ≤ 1311 / 100 := by
+  have h : Real.log (492276 / 524288) ≤ 492276 / 524288 - 1 :=
+    Real.log_le_sub_one_of_pos (by norm_num)
+  have h19 : Real.log (524288 : ℝ) = 19 * Real.log 2 := by
+    rw [show (524288 : ℝ) = 2 ^ (19 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hsplit : Real.log (492276 : ℝ) = Real.log (492276 / 524288) + Real.log 524288 := by
+    rw [← Real.log_mul (by norm_num) (by norm_num)]; norm_num
+  have h2 := Real.log_two_lt_d9
+  rw [hsplit, h19]
+  linarith
+
+theorem log_396_div_5_le : Real.log (396 / 5) ≤ 43964 / 10000 := by
+  have h : Real.log (99 / 80) ≤ 99 / 80 - 1 := Real.log_le_sub_one_of_pos (by norm_num)
+  have h64 : Real.log (64 : ℝ) = 6 * Real.log 2 := by
+    rw [show (64 : ℝ) = 2 ^ (6 : ℕ) by norm_num, Real.log_pow]; push_cast; ring
+  have hsplit : Real.log ((396 : ℝ) / 5) = Real.log 64 + Real.log (99 / 80) := by
+    rw [← Real.log_mul (by norm_num) (by norm_num)]; norm_num
+  have h2 := Real.log_two_lt_d9
+  rw [hsplit, h64]
+  linarith
+
+theorem log_six_le : Real.log 6 ≤ 18 / 10 := by
+  have hsplit : Real.log (6 : ℝ) = Real.log 2 + Real.log 3 := by
+    rw [← Real.log_mul (by norm_num) (by norm_num)]; norm_num
+  have h3 := log_three_le
+  have h2 := Real.log_two_lt_d9
+  rw [hsplit]
+  linarith
+
+/-- `log (1 / rhinLiteSepC) ≤ 27203`. -/
+theorem log_rhinLiteSepC_ge : -(27203 : ℝ) ≤ Real.log rhinLiteSepC := by
+  have hp : (0 : ℝ) < (396 / 5 : ℝ) ^ (6000 : ℕ) := by positivity
+  have hq : (0 : ℝ) < (6 : ℝ) ^ (436 : ℕ) := by positivity
+  have hexp : Real.log (2 * (((396 / 5 : ℝ)) ^ (6000 : ℕ) * (6 : ℝ) ^ (436 : ℕ)))
+      = Real.log 2 + (6000 * Real.log (396 / 5) + 436 * Real.log 6) := by
+    rw [Real.log_mul (by norm_num) (by positivity), Real.log_mul hp.ne' hq.ne',
+      Real.log_pow, Real.log_pow]
+    push_cast; ring
+  have hbig : Real.log (2 * (((396 / 5 : ℝ)) ^ (6000 : ℕ) * (6 : ℝ) ^ (436 : ℕ)))
+      ≤ 27203 := by
+    rw [hexp]
+    have h2 := Real.log_two_lt_d9
+    have ha := log_396_div_5_le
+    have hb := log_six_le
+    linarith
+  rw [rhinLiteSepC, one_div, Real.log_inv]
+  linarith
+
 /-! ## Target 7: stopping-time correctness on few-run crossings -/
+
+/-- An even start descends at its first crossing (which has length one). -/
+theorem descends_of_even {n m : ℕ} (hn : 2 ≤ n) (heven : n % 2 = 0) (h : At n m) :
+    tstep^[m] n < n := by
+  have hm : m = 1 := by
+    by_contra hm
+    have hm2 : 1 < m := by have := h.1; omega
+    have := h.2.1 1 hm2
+    rw [show traceWord n 1 = [decide (n % 2 = 1)] from rfl] at this
+    simp [heven, ones] at this
+  subst hm
+  simp only [Function.iterate_one, tstep, if_pos heven]
+  omega
 
 theorem descends_of_oddRunCount_le_four (hv : CSTVerified) {n m : ℕ} (hn : 2 ≤ n)
     (h : At n m) (hr : oddRunCount (traceWord n m) ≤ 4) : tstep^[m] n < n := by
-  sorry
+  rcases Nat.even_or_odd n with heven | hoddN
+  · exact descends_of_even hn (Nat.even_iff.mp heven) h
+  have hodd : n % 2 = 1 := Nat.odd_iff.mp hoddN
+  by_contra hcon
+  push_neg at hcon
+  set K := ones (traceWord n m) with hKdef
+  have hK : 492276 ≤ K := ones_ge_of_survives hv hn h hcon
+  have hw1 : 3 ^ K < 2 ^ m := h.2.2
+  have hw2 : 2 ^ m < 2 * 3 ^ K := two_pow_lt_two_mul_three_pow h (by omega)
+  have hgapnat := gap_mul_le_fifteen hodd h hcon hr
+  rw [← hKdef] at hgapnat
+  -- real setting
+  set Kr : ℝ := (K : ℝ) with hKr
+  set nr : ℝ := (n : ℝ) with hnr
+  have hnr2 : (2 : ℝ) ≤ nr := by rw [hnr]; exact_mod_cast hn
+  have hnrpos : (0 : ℝ) < nr := by linarith
+  have hKrge : (492276 : ℝ) ≤ Kr := by rw [hKr]; exact_mod_cast hK
+  have h3pos : (0 : ℝ) < (3 : ℝ) ^ K := by positivity
+  -- ### upper side
+  have hmeas := rhinLite_log23_measure K m (by omega) hw1 hw2
+  have hratio : (m : ℝ) * Real.log 2 - Kr * Real.log 3
+      = Real.log ((2 : ℝ) ^ m / (3 : ℝ) ^ K) := by
+    rw [Real.log_div (by positivity) (by positivity), Real.log_pow, Real.log_pow]
+  have hle1 : Real.log ((2 : ℝ) ^ m / (3 : ℝ) ^ K) ≤ (2 : ℝ) ^ m / (3 : ℝ) ^ K - 1 :=
+    Real.log_le_sub_one_of_pos (by positivity)
+  have hcast : (((2 ^ m - 3 ^ K : ℕ)) : ℝ) = (2 : ℝ) ^ m - (3 : ℝ) ^ K := by
+    rw [Nat.cast_sub hw1.le]; push_cast; ring
+  have hgapR : ((2 : ℝ) ^ m - (3 : ℝ) ^ K) * nr ≤ 15 * (3 : ℝ) ^ K := by
+    have := hgapnat
+    have hc : (((2 ^ m - 3 ^ K : ℕ) * n : ℕ) : ℝ) ≤ ((15 * 3 ^ K : ℕ) : ℝ) := by
+      exact_mod_cast this
+    push_cast [hcast] at hc
+    rw [hnr]; linarith
+  have hfrac : (2 : ℝ) ^ m / (3 : ℝ) ^ K - 1 ≤ 15 / nr := by
+    rw [show (2 : ℝ) ^ m / (3 : ℝ) ^ K - 1 = ((2 : ℝ) ^ m - (3 : ℝ) ^ K) / (3 : ℝ) ^ K by
+      field_simp, div_le_div_iff₀ h3pos hnrpos]
+    linarith
+  have hmeas2 : rhinLiteSepC / Kr ^ 436 ≤ 15 / nr := by
+    calc rhinLiteSepC / Kr ^ 436 ≤ (m : ℝ) * Real.log 2 - Kr * Real.log 3 := hmeas
+      _ = Real.log ((2 : ℝ) ^ m / (3 : ℝ) ^ K) := hratio
+      _ ≤ (2 : ℝ) ^ m / (3 : ℝ) ^ K - 1 := hle1
+      _ ≤ 15 / nr := hfrac
+  have hKrpos : (0 : ℝ) < Kr := by linarith
+  have hprod : nr * rhinLiteSepC ≤ 15 * Kr ^ 436 := by
+    rw [div_le_div_iff₀ (by positivity) hnrpos] at hmeas2
+    linarith
+  have hUlog : Real.log nr + Real.log rhinLiteSepC ≤ Real.log 15 + 436 * Real.log Kr := by
+    have h1 : Real.log (nr * rhinLiteSepC) ≤ Real.log (15 * Kr ^ 436) :=
+      Real.log_le_log (mul_pos hnrpos rhinLiteSepC_pos) hprod
+    rw [Real.log_mul hnrpos.ne' rhinLiteSepC_pos.ne',
+      Real.log_mul (by norm_num) (by positivity), Real.log_pow] at h1
+    push_cast at h1
+    linarith
+  have hU : Real.log nr ≤ 272 / 100 + 436 * Real.log Kr + 27203 := by
+    have := log_fifteen_le
+    have := log_rhinLiteSepC_ge
+    linarith
+  have hlogK : Real.log Kr ≤ 1311 / 100 + Kr / 492276 - 1 := by
+    have h1 : Real.log (Kr / 492276) ≤ Kr / 492276 - 1 :=
+      Real.log_le_sub_one_of_pos (by positivity)
+    rw [Real.log_div hKrpos.ne' (by norm_num)] at h1
+    have := log_492276_le
+    linarith
+  -- ### lower side
+  have hhead : (traceWord n m).head? = some true := by
+    obtain ⟨k, hk⟩ := Nat.exists_eq_succ_of_ne_zero (by have := h.1; omega : m ≠ 0)
+    rw [hk]; simp [traceWord, hodd]
+  obtain ⟨L, hposL, hword, hcount⟩ :=
+    exists_blockWord_oddRunCount_pos _ hhead (last_false_of_at h)
+  have hlenm : m = (blockWord L).length := by
+    have := congrArg List.length hword; simpa using this
+  have htrace : traceWord n (blockWord L).length = blockWord L := by rw [← hlenm, hword]
+  have hbound := two_pow_ones_le_rpow L n (by omega) hposL htrace
+  have honesL : ones (blockWord L) = K := by rw [hKdef, hword]
+  have hLlen : L.length ≤ 4 := by rw [hcount]; exact hr
+  have hNge : (1 : ℝ) ≤ nr + 1 := by linarith
+  have hexp : ((nr : ℝ) + 1) ^ geomS L.length ≤ ((nr : ℝ) + 1) ^ geomS 4 :=
+    Real.rpow_le_rpow_of_exponent_le hNge (geomS_mono hLlen)
+  have hlow0 : (2 : ℝ) ^ K ≤ ((nr : ℝ) + 1) ^ geomS 4 := by
+    rw [← honesL]; exact le_trans hbound hexp
+  have hlogn1 : 0 ≤ Real.log (nr + 1) := Real.log_nonneg (by linarith)
+  have hL1 : Kr * Real.log 2 ≤ geomS 4 * Real.log (nr + 1) := by
+    have h1 : Real.log ((2 : ℝ) ^ K) ≤ Real.log (((nr : ℝ) + 1) ^ geomS 4) :=
+      Real.log_le_log (by positivity) hlow0
+    rw [Real.log_pow, Real.log_rpow (by linarith)] at h1
+    rw [hKr]; exact_mod_cast h1
+  have hL2 : Kr * Real.log 2 ≤ (914 / 100) * Real.log (nr + 1) := by
+    have := geomS_four_le
+    nlinarith
+  have hL3 : Kr * (6931471803 / 10 ^ 10) ≤ (914 / 100) * Real.log (nr + 1) := by
+    have h2 := Real.log_two_gt_d9
+    nlinarith
+  have hsplit : Real.log (nr + 1) ≤ Real.log 2 + Real.log nr := by
+    have h1 : Real.log (nr + 1) ≤ Real.log (2 * nr) := Real.log_le_log (by linarith) (by linarith)
+    rwa [Real.log_mul (by norm_num) hnrpos.ne'] at h1
+  have h2hi := Real.log_two_lt_d9
+  linarith
 
 end CollatzMoonshot.FrontA.FirstCrossing
