@@ -1,5 +1,87 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-19 (Fable) - two-run stopping-time helper
+
+Trevor authorized this run ("proceed per your best judgement", 2026-09-19 evening); Opus-low
+helper, **at most two laps**.  Create `CollatzMoonshot/FrontA/FirstCrossingTwoRun.lean`,
+importing `CollatzMoonshot.FrontA.FirstCrossingOneRun` (which already imports FirstCrossing and
+OneCircuit).  Do not change any existing theorem or definition.  Your only files are this new
+module, its line in `CollatzMoonshot.lean` (after the OneRun import), and a short dated handoff
+`HANDOFF-2026-09-19-two-run.md`.  Do not edit DIRECTION or experiments.  No successor task.
+
+**Commit a compiling skeleton with named `sorry` leaves first**, then fill them; a lap that has
+committed nothing when it dies loses the hour.  Before any build, `.lake/build` is already warm
+(host built `220e2f1`); do not `lake exe cache get`.
+
+Namespace `CollatzMoonshot.FrontA.FirstCrossing`, `open CollatzMoonshot CollatzMoonshot.FrontB`.
+Reuse from `FirstCrossingOneRun.lean`: `traceWord_add`, `ones_replicate_false'`,
+`overshoot_identity`, `two_pow_le_gap`; from `FirstCrossing.lean`: `At`, `numerator_bound`,
+`small_start_of_not_descending`, `prefix_supercritical_trace`, `take_traceWord`; from
+`RhinLiteSep.lean`: `sep_two_three` (3^(3k) ≤ (2^m − 3^k)^3 · 2^k for 6 ≤ k, 3^k < 2^m < 2·3^k)
+and `sep_strong_492276` (3^k ≤ (2^m − 3^k)·2^25 for 0 < k < 492276, 3^k < 2^m).
+
+Freeze these targets exactly:
+
+1. `def CSTVerified : Prop := ∀ n m, 2 ≤ n → n ≤ 28 * 10 ^ 18 → At n m → tstep^[m] n < n`
+   A `def` hypothesis in the style of `SteinerOneCircuit`, NOT an axiom.  Provenance for the
+   docstring: Rozier–Terracol, arXiv 2502.00948v5, Corollary 5.4 (t(n) = τ(n) for 2 ≤ n ≤ 2.8·10^19).
+
+2. `theorem ones_ge_of_survives (hv : CSTVerified) {n m : ℕ} (hn : 2 ≤ n) (h : At n m)
+       (hsurv : n ≤ tstep^[m] n) : 492276 ≤ ones (traceWord n m)`
+   Route: put a := ones, D := 2^m − 3^a.  If a = 0 then `numer = 0` (`numer_eq_zero_of_ones_eq_zero`),
+   the iterate identity gives `2^m * y = n` with m ≥ 1, so y < n, contradiction.  For 1 ≤ a < 492276,
+   `sep_strong_492276` gives `3^a ≤ D * 2^25`; `small_start_of_not_descending` gives
+   `3 * D * n ≤ a * 3^a ≤ a * D * 2^25`, so `3 n ≤ a * 2^25 < 492276 * 2^25`, hence
+   `n ≤ 28 * 10^18`, and `hv` yields descent, contradiction.
+
+3. `def twoRunWord (k₁ l₁ k₂ l₂ : ℕ) : List Bool :=
+      List.replicate k₁ true ++ List.replicate l₁ false ++ List.replicate k₂ true ++ List.replicate l₂ false`
+
+4. `theorem iterate_ge_of_prefix_supercritical {n j : ℕ}
+       (hp : 2 ^ j ≤ 3 ^ ones (traceWord n j)) : n ≤ tstep^[j] n`
+   From the iterate identity: `2^j * y = 3^a n + N ≥ 2^j n`.
+
+5. `theorem descends_of_twoRun (hv : CSTVerified) {n m k₁ l₁ k₂ l₂ : ℕ} (hn : 2 ≤ n)
+       (h : At n m) (hw : traceWord n m = twoRunWord k₁ l₁ k₂ l₂) : tstep^[m] n < n`
+
+Proof route for 5 (every step is exact ℕ arithmetic; K := k₁ + k₂, L := l₁ + l₂, m = K + L):
+  - Degenerate shapes: if k₂ = 0 or l₁ = 0 the word is a one-run word (`oneCircuitWord`), use
+    `descends_of_oneRun` (for l₁ = 0 the word is `1^(k₁+k₂) 0^l₂`; rewrite with `List.replicate_add`).
+    If k₁ = 0 the word starts even: as in `descends_of_oneRun`'s a = 0 branch the first crossing is
+    m = 1 and n descends; or argue `At n m` with first letter false forces m = 1 (prefix j = 1 needs
+    2 ≤ 3^0).  l₂ ≥ 1 because the last letter of a crossing word is false (3^K < 2^m fails otherwise).
+  - Main case k₁, l₁, k₂, l₂ ≥ 1.  By contradiction assume `n ≤ y`, y := tstep^[m] n.
+    Split the trace twice with `traceWord_add` and `List.append_inj` (as in OneRun):
+      prefix 1^k₁ from n; suffix 0^l₁ from x₀' := tstep^[k₁] n; then 1^k₂ from x₁ := tstep^[k₁+l₁] n;
+      then 0^l₂ from tstep^[k₂] x₁.
+    Exact chain facts, each by the OneRun prefix/suffix pattern:
+      (c1) n + 1 = 2^k₁ * a₀      (c2) tstep^[k₁] n + 1 = 3^k₁ * a₀
+      (c3) 2^l₁ * x₁ = tstep^[k₁] n
+      (c4) x₁ + 1 = 2^k₂ * a₁     (c5) tstep^[k₂] x₁ + 1 = 3^k₂ * a₁
+      (c6) 2^l₂ * y = tstep^[k₂] x₁
+    Also x₁ ≥ n by target 4 at j = k₁ + l₁ (a proper prefix, so `h.2.1` supplies the hypothesis),
+    and K ≥ 492276 by target 2 (`ones (twoRunWord …) = K`).
+    Upper bound on n: multiply (c2)(c3) and (c5)(c6):
+      3^K * (n+1) * (x₁+1) = 2^K * (2^l₁ x₁ + 1) * (2^l₂ y + 1) ≥ 2^(K+L) * x₁ * y ≥ 2^(K+L) * x₁ * n.
+    Multiply by n and use n * (x₁ + 1) ≤ (n + 1) * x₁ (this is x₁ ≥ n), cancel x₁ > 0:
+      2^(K+L) * n^2 ≤ 3^K * (n+1)^2,  so  D * n^2 ≤ 3^K * (2n+1)  and  D * n < 3 * 3^K.
+    `sep_two_three` at k = K, m = K + L (hypotheses: K ≥ 6, 3^K < 2^m from `h.2.2`, and
+    2^m < 2 * 3^K from the proper prefix of length m − 1, which has K ones: 2^(m-1) ≤ 3^K, strict
+    because 3^K is odd) gives 3^(3K) ≤ D^3 * 2^K, hence  n^3 < 27 * 2^K  and  (n+1)^3 < 2^(K+8).
+    Lower bounds: (c1) gives 2^k₁ ≤ n + 1, so 2^(3k₁) < 2^(K+8), i.e. 3k₁ < K + 8.
+    From (c3) with l₁ ≥ 1, x₁ ≤ tstep^[k₁] n / 2 < 3^k₁ * a₀, so with (c4): 2^k₂ ≤ x₁ + 1 ≤ 3^k₁ * a₀,
+    and multiplying by 2^k₁ with (c1): 2^K ≤ 3^k₁ * (n + 1).  Cube: 2^(3K) ≤ 3^(3k₁) * (n+1)^3
+    < 2^(5k₁) * 2^(K+8) (since 27 < 32), so 3K < 5k₁ + K + 8, i.e. 2K < 5k₁ + 8.
+    Combine 3k₁ < K + 8 and 2K < 5k₁ + 8: 6K < 15k₁ + 24 < 5K + 64, so K < 64, contradicting K ≥ 492276.
+    Exponent comparisons use `Nat.pow_lt_pow_iff_right (by norm_num : 1 < 2)` after `← pow_mul`,
+    `← pow_add`; `Nat.pow_lt_pow_left` for cubing; `omega` on the final linear facts.
+
+Build the module and the root, run `#print axioms descends_of_twoRun` (expect the standard three
+plus the Rhin-lite `native_decide` certificates, nothing else), commit, then `box done --green`.
+If a frozen statement is false, report the mathematical counterexample; do not weaken it.
+This gives the two-run instance of `StoppingCorrect` modulo the explicit verification hypothesis.
+It does NOT prove CST.
+
 ## Attended session note: 2026-09-19 (Fable) - one-run stopping-time correctness LANDED
 
 Commit `220e2f1`, host build green.  `FrontA/FirstCrossingOneRun.lean` proves the overshoot
