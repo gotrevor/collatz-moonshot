@@ -129,3 +129,18 @@ through to an older dated override in `DIRECTION.md`.  The one concrete, bounded
 item (1) above: more Taylor terms plus a deeper convergent, which is mechanical given this
 module and moves `r` to roughly `1.5·(digits)/1` — genuine but incremental; it does not
 approach the structural obstruction.
+
+## Final checkpoint
+* Branch: `main`.  Lap commits, in order:
+  `3d202d3` (compiling skeleton, ten named `sorry` leaves) →
+  `0234db1` (targets 1–5: verified digits, brackets, `sep_strong_6e15`) →
+  `85203d8` (targets 6–9: scaled Bernoulli, raised threshold, the headline) →
+  `56e9287` (handoff) → this commit, which is the lap HEAD (`git log -1` on `main`).
+* `lake build`: green, 8784 jobs, re-verified by the pre-commit hook on every commit.
+  Not pushed; the host pushes.
+* Working tree clean.  `box done --green` signalled; the treadmill will not relaunch.
+* Files this lap: `CollatzMoonshot/FrontA/LogTwoThreeDigits.lean` (new),
+  `CollatzMoonshot.lean` (one import line, 62), this handoff.  Nothing else touched —
+  `DIRECTION.md`, `STATUS.md`, `PENDING_WORK.md` and `experiments/` are untouched, as the
+  override required.
+* `src/` sorry count contributed by this lap: 0.
