@@ -3,6 +3,13 @@
 Bounded helper lap per the 2026-09-18 attended override in `DIRECTION.md`.  Done; no
 successor selected.
 
+## Checkpoint
+
+* Branch: `main` (no push; host pushes).
+* HEAD at time of proof commit: `94076e2` "Prove StoppingCorrect implies NoNontrivialCycle at the orbit minimum".
+* `lake build`: green, 8777 jobs (pre-commit hook re-verified).
+* Treadmill STOP signalled via `box done --green`; no successor lap selected.
+
 ## What landed
 
 New module `CollatzMoonshot/FrontA/FirstCrossingCycles.lean` (plus its root import in
@@ -48,6 +55,24 @@ conjecture — `CrossingExists` is the *only* genuinely Front A-flavoured half o
 hypothesis pair.
 
 No missing hypothesis was exposed; the target statement was provable as written.
+
+## Exact next steps (for whoever picks the tree up)
+
+This helper task is closed; the override forbade selecting a successor, so the next
+session should re-read `DIRECTION.md` for a fresh attended override rather than
+inheriting a thread from this lap.  If none is posted, the standing frontier is the
+one described in `HANDOFF-2026-09-16-eliahou-frontier-node.md` (FrontB Eliahou bound at
+the 2^68 frontier) and the open-node inventory in `PENDING_WORK.md`.
+
+Two concrete, small follow-ups this lap makes available (neither started):
+
+1. `CrossingExists` is now the *sole* Front A-flavoured half of
+   `conjecture_of_stoppingCorrect_and_crossingExists`.  Worth recording in
+   `FRONT-A-ROUTES.md` that `StoppingCorrect` alone already implies Front B, so any
+   route claiming `StoppingCorrect` is "the easy front" is mis-scoped.
+2. `full_period_subcritical` (this module) is a reusable statement: any lemma that
+   currently re-derives `3 ^ ones (traceWord n p) < 2 ^ p` from the iterate identity for
+   a cycle can call it instead.
 
 ## Blockers
 
