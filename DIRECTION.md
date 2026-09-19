@@ -1,5 +1,15 @@
 # DIRECTION — collatz-moonshot
 
+## Attended session note: 2026-09-19 (Fable) - one-run stopping-time correctness LANDED
+
+Commit `220e2f1`, host build green.  `FrontA/FirstCrossingOneRun.lean` proves the overshoot
+identity at a first crossing (`D·n + 2^m·(y−n) = numer`, `3(y−n) < a`), the one-run instance of
+`StoppingCorrect` (`stoppingCorrect_oneRun`), and discharges `SteinerOneCircuit` from
+`sep_two_three`.  `experiments/parity_reconstruction.py near-cycle N` is the exact control.
+Research rationale and the Simons–de Weger transfer route: personal KB leaf
+`collatz-near-cycle-few-runs-2026-09-19.md`.  No successor lap is authorized by this note;
+`StoppingCorrect` and `CrossingExists` remain open.
+
 ## Attended operator override: 2026-09-19 - residue-swap helper COMPLETE
 
 Completed at `2ab0926`, handoff checkpoint `a946b7c`.  All three frozen targets
