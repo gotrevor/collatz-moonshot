@@ -306,7 +306,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] == "deep"):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing")):
     main()
 
 
@@ -424,3 +424,117 @@ def deeper_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "deep":
     deeper_main()
+
+
+# ---------------------------------------------------------------------------
+# First-crossing geometry, not unrestricted paradoxical excursions.
+# Exact integer DP; decimal output is a uniform-residue NULL MODEL, not a count
+# of actual failures and not an independence assertion.
+# ---------------------------------------------------------------------------
+
+def first_crossing_sharp_numerator(odd_count):
+    """Maximum numerator: delay odd letter i to floor(log_2(3^i)).
+
+    bit_length computes that floor exactly, including i=0.  No floating logs
+    decide word membership or the maximizing positions.
+    """
+    return sum(3**(odd_count-1-i) * (1 << ((3**i).bit_length()-1))
+               for i in range(odd_count))
+
+
+def first_crossing_dp(max_depth):
+    """Return exact count, sum numerator, and max numerator for each crossing length.
+
+    Alive states have never crossed.  Aggregate by odd count because the
+    affine numerator update only uses that count and the current depth.
+    """
+    if max_depth < 1:
+        raise ValueError("max_depth must be positive")
+    alive = {0: (1, 0, 0)}
+    powers = [3**a for a in range(max_depth+1)]
+    rows = []
+    for m in range(1, max_depth+1):
+        old_modulus, modulus = 1 << (m-1), 1 << m
+        next_alive = {}
+        crossed = {}
+        for a, (count, total, largest) in alive.items():
+            for b in (0, 1):
+                aa = a+b
+                tt = 3*total+old_modulus*count if b else total
+                uu = 3*largest+old_modulus if b else largest
+                target = crossed if powers[aa] < modulus else next_alive
+                old_count, old_total, old_largest = target.get(aa, (0, 0, 0))
+                target[aa] = (old_count+count, old_total+tt, max(old_largest, uu))
+        alive = next_alive
+        for a, (count, total, largest) in crossed.items():
+            assert m == powers[a].bit_length()
+            assert 3*largest <= a*powers[a]
+            assert largest == first_crossing_sharp_numerator(a)
+            gap = modulus-powers[a]
+            rows.append({"length": m, "ones": a, "count": count,
+                         "numerator_sum": total, "numerator_max": largest,
+                         "gap": gap, "modulus": modulus,
+                         "null_numerator": total, "null_denominator": gap*modulus})
+    return rows
+
+
+def check_first_crossing(depth=16):
+    """Independent exhaustive words vs DP, sharp envelope, and actual least starts.
+
+    Only the tested finite depths are certified.  Least starts exclude 0 and 1.
+    Each word's numerator uses the existing right-to-left implementation, not DP.
+    """
+    rows = {row["length"]: row for row in first_crossing_dp(depth)}
+    actual_counts = {}
+    failures = []
+    checked = 0
+    for m in range(1, depth+1):
+        count = total = largest = 0
+        for bits in product((False, True), repeat=m):
+            if 3**ones(bits) >= 1 << m:
+                continue
+            if any(3**ones(bits[:j]) < 1 << j for j in range(1, m)):
+                continue
+            count += 1
+            checked += 1
+            n = numer(bits)
+            total += n
+            largest = max(largest, n)
+            a, modulus = ones(bits), 1 << m
+            assert 3*n <= a*3**a
+            r = R_modular(bits)
+            least = r if r >= 2 else r+modulus
+            assert trace_word(least, m) == list(bits)
+            gap = modulus-3**a
+            if gap*least <= n:
+                failures.append((m, least, bits))
+        if count:
+            row = rows[m]
+            assert (count, total, largest) == (
+                row["count"], row["numerator_sum"], row["numerator_max"])
+            actual_counts[m] = count
+        else:
+            assert m not in rows
+    return {"depth": depth, "words_checked": checked,
+            "counts": actual_counts, "actual_failures": failures}
+
+
+def first_crossing_main():
+    depth = int(sys.argv[2]) if len(sys.argv) > 2 else 500
+    controls = check_first_crossing(min(depth, 16))
+    print("# First coefficient crossing: exact geometry and uniform-residue null baseline")
+    print(controls)
+    print("m a word_count continuous_null_baseline sharp_start_ceiling")
+    selected = {27, 46, 65, 100, 200, 500, 501, depth}
+    for row in first_crossing_dp(depth):
+        if row["length"] <= 16 or row["length"] in selected:
+            baseline = row["null_numerator"]/row["null_denominator"]
+            ceiling = row["numerator_max"]/row["gap"]
+            print(row["length"], row["ones"], row["count"],
+                  f"{baseline:.12g}", f"{ceiling:.12g}")
+    print("Baseline is sum_v numer(v)/(D*2^m), NOT an observed admitting-word count.")
+    print("No random-residue assumption or infinite-depth exclusion is proved.")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "first-crossing":
+    first_crossing_main()

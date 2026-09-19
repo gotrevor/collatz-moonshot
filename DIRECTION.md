@@ -1,6 +1,18 @@
 # DIRECTION — collatz-moonshot
 
-## Attended operator override: 2026-09-18 - one Opus/low first-crossing implication helper
+## Attended operator override: 2026-09-18 - first-crossing helper COMPLETE
+
+Completed at `94076e2`, handoff checkpoint `792fee0`, with a successful host build.
+`FirstCrossingCycles.noNontrivialCycle_of_stoppingCorrect` has the frozen target.
+No successor lap is authorized by this directive; do not fall through to an old
+dated override below.  The two open inputs remain `StoppingCorrect` and `CrossingExists`.
+The parent also proved the first-crossing numerator bound in `FirstCrossing.lean`
+and added exact first-crossing geometry/null-baseline diagnostics to
+`experiments/parity_reconstruction.py first-crossing 501`.
+Research rationale and next gate: the 2026-09-18 headline blueprint and
+`moonshot-first-crossing-carry-audit-2026-09-18.md` in the personal KB project leaves.
+
+Original bounded task, preserved for provenance:
 
 Trevor authorized Opus-low helpers in this session.  This is a bounded formalization task,
 not permission to attack CST or the Collatz conjecture.  Parent Ren owns the analytic work
