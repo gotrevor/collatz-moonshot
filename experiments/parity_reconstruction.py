@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle")):
     main()
 
 
@@ -681,3 +681,70 @@ def coalescence_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "coalescence":
     coalescence_main()
+
+
+# ---------------------------------------------------------------------------
+# near-cycle form of a stopping-time failure (Fable, 2026-09-19).
+# At a first crossing v (length m, a odd letters, D = 2^m - 3^a > 0) a start n that
+# does not descend has overshoot E = tstep^[m](n) - n with 0 <= E < a/3, and
+#     n = (N - 2^m E) / D,   so   N ≡ 3^a E  (mod D)   (since 2^m ≡ 3^a mod D).
+# Put rho(v) = N * 3^(-a) mod D.  Then v carries a failure with some start n >= 2 iff
+#     rho(v) < a/3  and  N - 2^m rho(v) >= 2 D.
+# E = 0 is exactly the cycle case.  This probe checks that equivalence against the
+# direct test c(v) <= N/D on every first-crossing word, and records how far each
+# length's residues sit from the failure window.
+# ---------------------------------------------------------------------------
+
+def first_crossing_words(max_len):
+    """Yield (word, a, N) over all first-crossing words of length <= max_len."""
+    stack = [([], 1, 0, 1)]          # word, A=3^a, N, M=2^m  (prefix supercritical)
+    while stack:
+        v, A, N, M = stack.pop()
+        m = len(v)
+        for b in (False, True):
+            if b:
+                A2, N2, M2 = 3 * A, 3 * N + M, 2 * M
+            else:
+                A2, N2, M2 = A, N, 2 * M
+            v2 = v + [b]
+            if A2 < M2:
+                yield v2, (A2.bit_length() - 1) // 1 if False else ones(v2), N2
+            elif m + 1 < max_len:
+                stack.append((v2, A2, N2, M2))
+
+
+def near_cycle_main():
+    max_len = int(sys.argv[2]) if len(sys.argv) > 2 else 24
+    from math import gcd
+    per_m = {}
+    for v, a, N in first_crossing_words(max_len):
+        m = len(v)
+        M = 1 << m
+        D = M - 3 ** a
+        assert D > 0 and N == numer(v) and a == ones(v)
+        rho = (N * pow(3, -a, D)) % D if D > 1 else 0
+        near = (3 * rho < a) and (N - M * rho >= 2 * D)
+        # direct test: least start >= 2 in the residue class fails to descend
+        r = R_modular(v)
+        c = r if r >= 2 else r + M
+        direct = D * c <= N
+        assert near == direct, (v, rho, r, c, N, D)
+        row = per_m.setdefault(m, {"a": a, "D": D, "count": 0, "min_rho": None, "max_rho": 0,
+                                   "near": 0, "min_E_over_D": None})
+        row["count"] += 1
+        row["near"] += near
+        row["min_rho"] = rho if row["min_rho"] is None else min(row["min_rho"], rho)
+        row["max_rho"] = max(row["max_rho"], rho)
+    print(f"# Near-cycle residues rho(v) = N 3^-a mod D over first-crossing words, length <= {max_len}")
+    print("# equivalence (rho < a/3 and N - 2^m rho >= 2D) <-> (D c(v) <= N) asserted on every word")
+    print("m a D words failures min_rho a/3 min_rho/D uniform_expected_min/D")
+    for m in sorted(per_m):
+        r = per_m[m]
+        exp_min = 1 / (r["count"] + 1)
+        print(m, r["a"], r["D"], r["count"], r["near"], r["min_rho"], f"{r['a']/3:.2f}",
+              f"{r['min_rho']/r['D']:.3g}", f"{exp_min:.3g}")
+    print("Finite enumeration; nothing about all lengths is claimed.")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "near-cycle":
+    near_cycle_main()
