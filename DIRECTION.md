@@ -1,5 +1,42 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-18 late - one Opus-low residue-swap helper
+
+Trevor requested continuation and permits Opus-low helpers.  One bounded lap only.
+Create `CollatzMoonshot/FrontA/FirstCrossingSwaps.lean`, importing FirstCrossing.
+Do not change any existing theorem or definition.  Parent owns the experiment script;
+your only files are this new module, its root import, and your short dated handoff.
+Do not edit DIRECTION or experiments.  No successor task and no Aristotle.
+
+Freeze these mathematical targets (namespace FirstCrossing, open FrontB):
+
+1. `numer_adjacent_swap (u w : List Bool)`:
+   `numer (u ++ [false,true] ++ w) = numer (u ++ [true,false] ++ w) +
+      2 ^ u.length * 3 ^ ones w`.
+2. `residue_adjacent_swap {x y m : Nat} (u w : List Bool)` with
+   `hx : traceWord x m = u ++ [true,false] ++ w` and
+   `hy : traceWord y m = u ++ [false,true] ++ w`:
+   `3 ^ (ones u + 1) * y + 2 ^ u.length ≡
+      3 ^ (ones u + 1) * x [MOD 2 ^ m]`.
+   This is suffix-independent, with no first-crossing assumption needed.
+3. Define `NumeratorAntitoneResidue : Prop` as
+   `∀ x y m : Nat, 2 ≤ x → 2 ≤ y → x < 2^m → y < 2^m →
+       At x m → At y m →
+       numer (traceWord x m) ≤ numer (traceWord y m) → y ≤ x`.
+   Prove `numeratorAntitoneResidue_false : ¬ NumeratorAntitoneResidue`.
+   Hand-checked anchor: x=95,y=175,m=8, words 11111000 and 11110100,
+   numerators 211 and 227; both first-crossing, but 175>95.
+
+Proof route: induct on u for the numerator swap; both suffixes have equal odd counts.
+Subtract the two affine iterate identities modulo 2^m; use the numerator swap,
+factor 3^(ones w), and cancel this unit.  Reuse the Nat.ModEq cancellation pattern
+in ParityReconstruction.traceWord_eq_imp_modEq.  The remaining expression is exactly
+the frozen residue identity, with the displayed orientation (plus 2^len u on y).
+
+Build, inspect dependencies of the three named results, commit, then `box done --green`.
+If a frozen target fails, report the mathematical counterexample; do not weaken it.
+This gives local residue transport and refutes monotonicity.  It does NOT prove CST.
+
 ## Attended operator override: 2026-09-18 - first-crossing helper COMPLETE
 
 Completed at `94076e2`, handoff checkpoint `792fee0`, with a successful host build.
