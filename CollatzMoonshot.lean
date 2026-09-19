@@ -58,6 +58,7 @@ import CollatzMoonshot.FrontA.FirstCrossingSwaps
 import CollatzMoonshot.FrontA.FirstCrossingOneRun
 import CollatzMoonshot.FrontA.FirstCrossingTwoRun
 import CollatzMoonshot.FrontA.FirstCrossingRuns
+import CollatzMoonshot.FrontA.FirstCrossingFewRuns
 import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional
