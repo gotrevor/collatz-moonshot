@@ -76,3 +76,14 @@ the numerically verified range.  The genuinely open inputs to
    so the squeeze closes only while `r` is `o(K)` — the constant `64` becomes a function of
    `r`.  Quantifying that threshold (is `r ≤ c·K/log K` enough?) is the real next question,
    and it is where the two-run argument stops being free.
+
+## Final checkpoint
+* Branch: `main`.  HEAD of this lap: `b77e931` "Prove stopping-time correctness on two-run
+  first-crossing words" (skeleton lap `9c14375` precedes it).
+* `lake build`: green, 8780 jobs (pre-commit hook re-verified on both commits).  Not pushed;
+  the host pushes.
+* `box done --green` signalled; the treadmill will not relaunch.
+* Files this lap: `CollatzMoonshot/FrontA/FirstCrossingTwoRun.lean` (new),
+  `CollatzMoonshot.lean` (one import line), this handoff.  Nothing else touched —
+  `DIRECTION.md`, `STATUS.md`, `PENDING_WORK.md` and the experiments are as they were,
+  per the override's file restriction.
