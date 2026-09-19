@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check")):
     main()
 
 
@@ -791,3 +791,39 @@ def run_window_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "run-window":
     run_window_main()
+
+
+# ---------------------------------------------------------------------------
+# cst-check (2026-09-19 fresh-eyes review): direct verification of Terras's coefficient
+# stopping-time conjecture on 2 ≤ n ≤ N.  Rozier–Terracol Cor 5.4 covers n ≤ 4614 only by
+# citing Terras/Garner; this closes that citation hop in-repo.  Prints, per failure, the
+# start, first-crossing length and endpoint; prints the anchors 3 and 7 for the pytest file.
+
+
+def first_crossing(n):
+    """(m, T^m(n)) at the first m with 3^a < 2^m along the shortcut orbit of n."""
+    x, a, m = n, 0, 0
+    while True:
+        if x % 2:
+            x, a = (3 * x + 1) // 2, a + 1
+        else:
+            x //= 2
+        m += 1
+        if 3 ** a < 2 ** m:
+            return m, x
+
+
+def cst_check_main():
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 4614
+    failures = [(n, *first_crossing(n)) for n in range(2, limit + 1)
+                if first_crossing(n)[1] >= n]
+    print(f"# cst-check: first-crossing descent for 2 ≤ n ≤ {limit}")
+    print(f"failures {len(failures)}")
+    for f in failures[:20]:
+        print("failure", *f)
+    print("anchor 3", *first_crossing(3))
+    print("anchor 7", *first_crossing(7))
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "cst-check":
+    cst_check_main()
