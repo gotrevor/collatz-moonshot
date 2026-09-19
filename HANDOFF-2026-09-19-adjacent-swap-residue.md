@@ -48,3 +48,22 @@ congruence, not an inequality.
 
 This does **not** prove CST. The two open inputs remain `StoppingCorrect` and
 `CrossingExists`.
+
+## Final checkpoint
+* Branch: `main`. HEAD of this lap: `2ab0926` "Prove adjacent-swap numerator law and
+  local residue transport; refute numerator antitonicity".
+* `lake build`: green, 8778 jobs (pre-commit hook re-verified). Not pushed; host pushes.
+* `box done --green` signalled; treadmill will not relaunch.
+
+## Exact next steps (for whoever picks this up under a NEW attended override)
+1. Nothing is pending from this lap — all three frozen targets are proved and
+   axiom-clean. Do **not** fall through to an older dated override in `DIRECTION.md`.
+2. The two genuinely open inputs to `FirstCrossing.conjecture_of_...` remain
+   `StoppingCorrect` and `CrossingExists` (see `CollatzMoonshot/FrontA/FirstCrossing.lean`).
+   `CrossingExists` is already known unnecessary for the cycle front
+   (`FirstCrossingCycles.noNontrivialCycle_of_stoppingCorrect`).
+3. Natural follow-on if authorized: iterate `residue_adjacent_swap` along a sequence of
+   adjacent transpositions to get residue transport between arbitrary same-multiset
+   words (bubble-sort composition of the prefix-only affine relations), and ask whether
+   the accumulated `2^|u|` terms can be summed into a usable invariant. The antitonicity
+   refutation says no *order* statement will come out of it, only congruences.
