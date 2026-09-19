@@ -1,6 +1,15 @@
 # DIRECTION — collatz-moonshot
 
-## Attended operator override: 2026-09-18 late - one Opus-low residue-swap helper
+## Attended operator override: 2026-09-19 - residue-swap helper COMPLETE
+
+Completed at `2ab0926`, handoff checkpoint `a946b7c`.  All three frozen targets
+below are proved with their original statements.  The parent checked the source
+and added exhaustive exact controls to the existing parity-reconstruction probe.
+No successor lap is authorized here; do not fall through to older overrides.
+StoppingCorrect and CrossingExists remain open.  Follow-up analysis is recorded
+in the KB leaf `moonshot-resonance-residue-swaps-2026-09-19.md`.
+
+Original bounded directive, retained for provenance:
 
 Trevor requested continuation and permits Opus-low helpers.  One bounded lap only.
 Create `CollatzMoonshot/FrontA/FirstCrossingSwaps.lean`, importing FirstCrossing.

@@ -88,8 +88,8 @@ def NumeratorAntitoneResidue : Prop :=
 
 /-- **No numerator antitonicity.**  `x = 95` and `y = 175` both first-cross at `m = 8`
 with traces `11111000` and `11110100` — one adjacent swap apart — and numerators
-`211 < 227`; yet `175 > 95`.  So the numerator carries no ordering information about
-the starts, and the swap law above is genuinely only a residue statement. -/
+`211 < 227`; yet `175 > 95`.  This refutes the proposed antitone ordering of
+the starts; the swap law above itself gives a congruence, not an inequality. -/
 theorem numeratorAntitoneResidue_false : ¬ NumeratorAntitoneResidue := by
   intro h
   have := h 95 175 8 (by norm_num) (by norm_num) (by norm_num) (by norm_num)

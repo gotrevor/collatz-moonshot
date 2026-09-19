@@ -42,9 +42,9 @@ drops out entirely — the relation depends only on the prefix.
 
 Counterexample: `x = 95`, `y = 175`, `m = 8`; traces `11111000` and `11110100` (one
 adjacent swap apart), numerators `211` and `227`. Both are first crossings (`At _ 8`),
-`211 ≤ 227`, yet `175 > 95`. So the first-crossing numerator carries no order
-information about the starts, and `residue_adjacent_swap` is genuinely only a
-congruence, not an inequality.
+`211 ≤ 227`, yet `175 > 95`. This refutes the proposed antitone order of the
+starts. `residue_adjacent_swap` itself gives a congruence, not an inequality;
+this does not rule out all other order statements under additional hypotheses.
 
 This does **not** prove CST. The two open inputs remain `StoppingCorrect` and
 `CrossingExists`.
@@ -66,4 +66,5 @@ This does **not** prove CST. The two open inputs remain `StoppingCorrect` and
    adjacent transpositions to get residue transport between arbitrary same-multiset
    words (bubble-sort composition of the prefix-only affine relations), and ask whether
    the accumulated `2^|u|` terms can be summed into a usable invariant. The antitonicity
-   refutation says no *order* statement will come out of it, only congruences.
+   refutation rules out the proposed antitone ordering, not every possible
+   inequality using additional structure.

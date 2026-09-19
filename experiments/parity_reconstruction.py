@@ -38,6 +38,7 @@ words.  No claim about Collatz is drawn from finite data.
 
 import sys
 from itertools import product
+from math import comb
 
 
 # ---------------------------------------------------------------------------
@@ -468,6 +469,12 @@ def first_crossing_dp(max_depth):
         alive = next_alive
         for a, (count, total, largest) in crossed.items():
             assert m == powers[a].bit_length()
+            if m > 1:
+                # Rotate a zero-total discrepancy walk after a minimum, then append 0.
+                # Every rotation class has <= m-1 members, including periodic words.
+                all_final_even = comb(m-1, a)
+                assert all_final_even <= (m-1)*count and count <= all_final_even
+                assert count*(powers[a]-2**a) <= total
             assert 3*largest <= a*powers[a]
             assert largest == first_crossing_sharp_numerator(a)
             gap = modulus-powers[a]
@@ -519,11 +526,59 @@ def check_first_crossing(depth=16):
             "counts": actual_counts, "actual_failures": failures}
 
 
+def prefix_supercritical(bits):
+    """All proper prefixes have coefficient at least one, including the empty one."""
+    a = 0
+    for j, bit in enumerate(bits):
+        if 3**a < 1 << j:
+            return False
+        a += bit
+    return True
+
+
+def check_adjacent_swaps(depth=12):
+    """Exact independent controls for the Lean swap identities and legal moves.
+
+    The first-crossing family is closed under moving an odd letter left (01->10).
+    Moving it right (10->01) requires the extra prefix margin 2^(d+1)<=3^i.
+    Neither fact orders the reconstructed residues as ordinary integers.
+    """
+    checked = legal_first_crossing = 0
+    for m in range(2, depth+1):
+        modulus = 1 << m
+        for bits in product((False, True), repeat=m):
+            for d in range(m-1):
+                if bits[d:d+2] != (True, False):
+                    continue
+                swapped = bits[:d]+(False, True)+bits[d+2:]
+                i, tail_ones = ones(bits[:d]), ones(bits[d+2:])
+                x, y = R_modular(bits), R_modular(swapped)
+                assert numer(swapped) == numer(bits)+(1 << d)*3**tail_ones
+                assert (3**(i+1)*(y-x)+(1 << d)) % modulus == 0
+                # Only the prefix of length d+1 changes its odd count.
+                if prefix_supercritical(swapped):
+                    assert prefix_supercritical(bits)
+                if prefix_supercritical(bits):
+                    assert prefix_supercritical(swapped) == (1 << (d+1) <= 3**i)
+                    if 3**ones(bits) < modulus and prefix_supercritical(swapped):
+                        legal_first_crossing += 1
+                checked += 1
+    witness = (trace_word(95, 8), trace_word(175, 8))
+    assert all(prefix_supercritical(v) and 3**ones(v) < 256 for v in witness)
+    assert tuple(numer(v) for v in witness) == (211, 227)
+    assert 95 < 175  # refutes numerator-antitone residue order
+    return {"depth": depth, "swaps_checked": checked,
+            "first_crossing_swaps": legal_first_crossing,
+            "antitone_counterexample": {"length": 8, "starts": [95, 175],
+                                         "numerators": [211, 227]}}
+
+
 def first_crossing_main():
     depth = int(sys.argv[2]) if len(sys.argv) > 2 else 500
     controls = check_first_crossing(min(depth, 16))
     print("# First coefficient crossing: exact geometry and uniform-residue null baseline")
     print(controls)
+    print(check_adjacent_swaps(min(depth, 12)))
     print("m a word_count continuous_null_baseline sharp_start_ceiling")
     selected = {27, 46, 65, 100, 200, 500, 501, depth}
     for row in first_crossing_dp(depth):
