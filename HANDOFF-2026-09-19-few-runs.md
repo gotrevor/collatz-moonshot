@@ -96,8 +96,11 @@ inputs to `FirstCrossing.conjecture_of_stoppingCorrect_and_crossingExists` remai
    replaced by a growing floor, which is what the `FirstCrossingRuns` note already flags.
 
 ## Final checkpoint
-* Branch: `main`.  HEAD of this lap: the "few-run" commit below the skeleton commit
-  `2120f8d`.
+* Branch: `main`.  HEAD of this lap: `9df2d8d` "Prove stopping-time correctness on first
+  crossings with at most four odd runs".  Lap commits, in order:
+  `2120f8d` (skeleton, seven named `sorry` leaves) → `582ce6a` (targets 1, 2, 3, 4, 6) →
+  `51d191d` (target 5, the real telescoping) → `9df2d8d` (target 7, the headline).
+  Working tree clean; `box done --green` signalled and the treadmill will not relaunch.
 * `lake build`: green, 8782 jobs (pre-commit hook re-verified on every commit).  Not pushed;
   the host pushes.
 * Files this lap: `CollatzMoonshot/FrontA/FirstCrossingFewRuns.lean` (new),
