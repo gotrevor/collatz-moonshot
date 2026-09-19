@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window")):
     main()
 
 
@@ -748,3 +748,46 @@ def near_cycle_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "near-cycle":
     near_cycle_main()
+
+
+# ---------------------------------------------------------------------------
+# run-window probe (2026-09-19 late): the least multiplier admitting a prescribed next run.
+# From x = 2^q a - 1 (a run of q odd steps), e = v2(3^q - 1) even steps follow and the next
+# run length is q' = v2((3^q a - 1)/2^e + 1).  Prescribing q' forces
+#     3^q * a ≡ 1 - 2^e   (mod 2^(e+q')),
+# and a_min(q, q') is the least positive solution.  Simons-de Weger's chaining uses only a ≥ 1;
+# a two-run chaining would use x ≥ 2^q * a_min.  This prints min over q of a_min / 2^q'.
+# Reducing mod 3^q shows a_min small <=> 2^(-q') (1 - 2^(-e)) mod 3^q small, a base-3 digit
+# window of a power of two (Erdős territory), which is why the chaining cannot be improved
+# by known tools.  Finite probe; no claim about all q.
+# ---------------------------------------------------------------------------
+
+def v2_of(n):
+    c = 0
+    while n % 2 == 0:
+        n //= 2
+        c += 1
+    return c
+
+
+def a_min(q, qp):
+    e = v2_of(3 ** q - 1)
+    M = 1 << (e + qp)
+    a = ((1 - (1 << e)) * pow(3, -q, M)) % M
+    return (a if a else M), e
+
+
+def run_window_main():
+    qmax = int(sys.argv[2]) if len(sys.argv) > 2 else 400
+    print(f"# run-window: a_min(q, q') = least a with 3^q a ≡ 1 - 2^e (mod 2^(e+q')), q ≤ {qmax}")
+    print("q' min_ratio argmin_q a_min e median_ratio")
+    for qp in (5, 10, 15, 20, 25, 30, 40, 50):
+        vals = sorted((a_min(q, qp)[0] / 2 ** qp, q) for q in range(1, qmax + 1))
+        r, q = vals[0]
+        a, e = a_min(q, qp)
+        print(qp, f"{r:.4f}", q, a, e, f"{vals[len(vals)//2][0]:.3f}")
+    print(f"anchors: a_min(1,5) = {a_min(1,5)[0]}  a_min(12,5) = {a_min(12,5)[0]}")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "run-window":
+    run_window_main()
