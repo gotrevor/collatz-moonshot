@@ -1,5 +1,38 @@
 # DIRECTION — collatz-moonshot
 
+## Standing objective after 2026-09-19 (Fable): the run-count gap on first-crossing near-cycles
+
+All three 2026-09-19 helper overrides below are COMPLETE (`182e2ca`, `39c7949`, `5b21804`); none
+authorizes a successor.  The first-crossing route now stands as follows (details: README proof
+status, STATUS 2026-09-19 entry, personal KB leaves `collatz-near-cycle-few-runs-2026-09-19.md`
+and `collatz-avenues-blueprint-2026-09-19.md`):
+
+- A `StoppingCorrect` failure is a **near-cycle**: `D·n + 2^m·E = numer`, `3E < a`, and with `r`
+  odd runs `E ≤ r` (about); `E = 0` is the cycle case.  Simons–de Weger's `m`-cycle pincer
+  transfers verbatim, giving CST on ≤ 68 runs on paper and ≤ 50 runs in Lean
+  (`Assumed.stoppingCorrect_of_oddRunCount_le_fifty`, one named computation axiom).  The ladder
+  STOPS at fifty by decision: the remaining rungs to 68 are Rhin's published exponent, not new
+  mathematics.
+- The exact reach of every two-log pincer is **logarithmically many runs**: a near-cycle with `K`
+  odd steps has `r ≳ 2.17·ln K` runs (SdW Lemma 14 transferred).  Collatz needs `r ≥ ε·K`; a
+  typical word has `r ≈ K/2`.  Everything between is new mathematics.
+
+**Node (run-count gap).**  `∀ n m, 2 ≤ n → At n m → n ≤ tstep^[m] n → f(ones) ≤ oddRunCount`
+with `f(K) = ε·K`.  Proved: `f = 2.17·ln K − O(ln ln K)` (paper).  Probe: over first-crossing
+words, the least `r/K` among near-misses (`experiments/parity_reconstruction.py near-cycle`, extend
+with `runs`); a few-run near-miss refutes any proposed intermediate `f`.  What a mechanism must do:
+turn the ballot structure of a first-crossing word into a lower bound on its reconstruction residue
+that grows faster than any polynomial in `m`, uniformly over words with `r ≥ εK` runs.  The
+function-field case shows what that looks like when carries are absent.
+
+Retired the same day, with reasons in the blueprint leaf: coalescence / smaller-start reduction
+(measured, zero gain at the stopping-time records); polynomial-frequency Fourier majorants;
+run-merging as a descent on `r` (the offset shifts by `(2^{l₁}−1)·2^{k₁}·(3^{k₂}−2^{k₂})`);
+"CST ⇐ polynomial stopping-time bound" (true via `survivor_ones_pow_ge`, circular); automatic-set /
+Cobham angle; Christoffel-word residue signatures (probed, none); "extremal words are the dangerous
+ones" (probed, false).  🛑 **No lap without a mechanism for the gap node.**  `CrossingExists`
+(the Π₂, symbolic half) has no lever on the board at all.
+
 ## Attended operator override: 2026-09-19 (Fable, night) - verified log₂3 digits, and r ≤ 50
 
 Standing authorization (Trevor, 2026-09-19: "keep planning in parallel with the grind").  Opus-low
