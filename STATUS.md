@@ -339,6 +339,27 @@ repository's policy for established literature; neither choice would prove the m
 global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-09-19 (attended Fable session + three one-lap Opus-low helpers — the first-crossing near-cycle route):**
+  `StoppingCorrect` failures are *near-cycles*: `overshoot_identity` / `three_mul_overshoot_lt`
+  (`D·n + 2^m·E = numer`, `3E < a`), the run-product bound `run_product_bound`
+  (`2^m·n^(r−1)·y ≤ 3^K·(n+1)^r`, standard axioms), and the consequences `endpoint_mul_pow_lt`
+  (overshoot ≤ about the run count) and `gap_mul_pow_le` (integer Simons–de Weger Lemma 4).
+  Rungs: `stoppingCorrect_oneRun` (unconditional; `SteinerOneCircuit` discharged from
+  `sep_two_three`), `descends_of_twoRun`, `descends_of_oddRunCount_le_four`,
+  `descends_of_oddRunCount_le_fifty` — the last three under the explicit `def` `CSTVerified`
+  (Rozier–Terracol Cor. 5.4).  The fifty-run rung replaces power-comparison certificates by
+  44 verified digits of `log 2`, `log 3` (`LogTwoThreeDigits.lean`, Mathlib's series remainder
+  bound) and certifies the `log₂3` bracket at denominators ~6·10^15 by rational arithmetic.
+  `survivor_ones_pow_ge`: a CST failure satisfies `3·c·n ≤ K^437` (stopping-time outlier).
+  Paper-level: Simons–de Weger's `m ≤ 68` pincer transfers verbatim to first-crossing
+  near-cycles (closure enters only their Lemma 4 telescoping and the last chaining link, both
+  on the harmless side), giving CST for at most 68 odd runs — the exact reach of the two-log
+  pincer is logarithmically many runs, `r ≳ 2.17·ln K`; Collatz needs `r ≥ εK`.
+  Experiments: `parity_reconstruction.py coalescence N` and `near-cycle N` with hand-computed
+  pytest anchors.  The coalescence / smaller-start reduction route was measured and closed
+  (zero gain at the stopping-time records 27, 871, 77031).  Rationale and the run-count-gap
+  node: personal KB leaves `collatz-near-cycle-few-runs-2026-09-19.md`,
+  `collatz-avenues-blueprint-2026-09-19.md`.
 - **2026-09-13 (operator-assigned bounded node — min-term trunk bound):** new default-build module
   `FrontA/TrunkBound.lean`. Product identity `2^m·x_m·∏_{I}3x_i = 3^a·n·∏_{I}(3x_i+1)` over the
   odd-step set `oddSteps`; min-term inequality `2^m(3x_min)^a < 3^a(3x_min+1)^a` for every strictly
@@ -569,6 +590,10 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | headline theorem | paper claim | `#print axioms` shows (beyond trust base) | math-axioms |
 |---|---|---|---|
 | `conjecture_iff_split` | uncond (finite wiring) | — | 0 ✅ |
+| `run_product_bound` / `endpoint_mul_pow_lt` / `gap_mul_pow_le` | new: run-product bound at a first crossing | — | 0 ✅ |
+| `stoppingCorrect_oneRun`, `steinerOneCircuit` | CST on one-run words; Steiner 1977 | Rhin-lite `native_decide` certificates only | 0 ✅ |
+| `descends_of_twoRun`, `descends_of_oddRunCount_le_four`, `descends_of_oddRunCount_le_fifty` | CST on ≤ 2 / ≤ 4 / ≤ 50 runs | Rhin-lite certificates only | 0 ✅ (`CSTVerified` is an explicit `def` hypothesis) |
+| `survivor_ones_pow_ge` | CST failure ⇒ `3cn ≤ K^437` | Rhin-lite certificates only | 0 ✅ |
 | `finite_odd_acyclicParadoxical_imp_noNontrivialCycle` | new edge: O.Finite → no nontrivial cycle | — | 0 ✅ (`FiniteOddAcyclicParadoxical` is an explicit `def` hypothesis) |
 | `finite_acyclicParadoxical_imp_conjecture` | U.Finite → Collatz (conditional) | — | 0 ✅ (`FiniteAcyclicParadoxical` is an explicit `def` hypothesis) |
 | `conjecture_of_fronts` | uncond (finite wiring) | — | 0 ✅ |
