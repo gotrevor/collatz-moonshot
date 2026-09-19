@@ -26,42 +26,116 @@ open CollatzMoonshot CollatzMoonshot.FrontB
 /-- A first-crossing word ends in `false`: a final odd letter would make
 `2^m ≤ 2·3^(K−1) < 3^K`, contradicting the crossing. -/
 theorem last_false_of_at {n m : ℕ} (h : At n m) : (traceWord n m).getLast? = some false := by
-  sorry
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by have := h.1; omega : m ≠ 0)
+  have hsplit : traceWord n (j + 1) = traceWord n j ++ [decide (tstep^[j] n % 2 = 1)] := by
+    rw [traceWord_add]; rfl
+  rw [hsplit, List.getLast?_concat]
+  simp only [Option.some.injEq, decide_eq_false_iff_not]
+  intro hodd
+  have hones : ones (traceWord n (j + 1)) = ones (traceWord n j) + 1 := by
+    rw [hsplit, ones_append]; simp [hodd, ones]
+  have hpre := h.2.1 j (by omega)
+  have hsub := h.2.2
+  rw [hones] at hsub
+  have : (3 : ℕ) ^ (ones (traceWord n j) + 1) = 3 * 3 ^ ones (traceWord n j) := by ring
+  rw [this, pow_succ] at hsub
+  omega
 
 /-- The crossing overshoot is less than a factor `2`: `2^m < 2·3^K`. -/
 theorem two_pow_lt_two_mul_three_pow {n m : ℕ} (h : At n m)
     (hK : 1 ≤ ones (traceWord n m)) : 2 ^ m < 2 * 3 ^ ones (traceWord n m) := by
-  sorry
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by have := h.1; omega : m ≠ 0)
+  have hlast := last_false_of_at h
+  have hsplit : traceWord n (j + 1) = traceWord n j ++ [decide (tstep^[j] n % 2 = 1)] := by
+    rw [traceWord_add]; rfl
+  have hb : decide (tstep^[j] n % 2 = 1) = false := by
+    rw [hsplit, List.getLast?_concat] at hlast
+    simpa using hlast
+  have hones : ones (traceWord n (j + 1)) = ones (traceWord n j) := by
+    rw [hsplit, ones_append, hb]; simp [ones]
+  have hpre := h.2.1 j (by omega)
+  rw [hones] at hK ⊢
+  rcases Nat.lt_or_ge (2 ^ j) (3 ^ ones (traceWord n j)) with hlt | hge
+  · rw [pow_succ]; omega
+  · have heq : (2 : ℕ) ^ j = 3 ^ ones (traceWord n j) := le_antisymm hpre hge
+    exfalso
+    have h3 : (3 : ℕ) ∣ 3 ^ ones (traceWord n j) := dvd_pow_self 3 (by omega)
+    rw [← heq] at h3
+    have := Nat.Coprime.eq_one_of_dvd (Nat.Coprime.pow_right j (by decide)) h3
+    omega
 
 /-! ## Target 3: block decomposition with both lengths positive -/
 
 /-- A word that starts odd and ends even decomposes into blocks with *both* components
 positive. -/
-theorem exists_blockWord_oddRunCount_pos : ∀ v : List Bool, v.head? = some true →
-    v.getLast? = some false →
+theorem oddRunCount_blockWord : ∀ L : List (ℕ × ℕ), (∀ p ∈ L, 0 < p.1 ∧ 0 < p.2) →
+    oddRunCount (blockWord L) = L.length
+  | [], _ => by simp [blockWord]
+  | (q, e) :: L, hpos => by
+    obtain ⟨hq, he⟩ := hpos (q, e) (by simp)
+    have ih := oddRunCount_blockWord L (fun p hp => hpos p (by simp [hp]))
+    simp only [blockWord, List.length_cons]
+    rw [oddRunCount_head q e hq he, ih]
+    omega
+
+theorem exists_blockWord_oddRunCount_pos (v : List Bool) (hhead : v.head? = some true)
+    (hlast : v.getLast? = some false) :
     ∃ L : List (ℕ × ℕ), (∀ p ∈ L, 0 < p.1 ∧ 0 < p.2) ∧ v = blockWord L ∧
       L.length = oddRunCount v := by
-  sorry
+  obtain ⟨L, hL, hword⟩ := exists_blockWord_canonical v hhead hlast
+  exact ⟨L, hL, hword, by rw [hword, oddRunCount_blockWord L hL]⟩
 
 /-! ## Target 4: the geometric exponent -/
 
 /-- `log₂ 3`. -/
 noncomputable def logTwoThree : ℝ := Real.log 3 / Real.log 2
 
-theorem one_lt_logTwoThree : 1 < logTwoThree := by sorry
+theorem one_lt_logTwoThree : 1 < logTwoThree := by
+  have h2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have h23 : Real.log 2 < Real.log 3 := Real.log_lt_log (by norm_num) (by norm_num)
+  rw [logTwoThree, lt_div_iff₀ h2]
+  linarith
 
-theorem logTwoThree_lt : logTwoThree < 159 / 100 := by sorry
+theorem logTwoThree_lt : logTwoThree < 159 / 100 := by
+  have h2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have key : (100 : ℝ) * Real.log 3 < 159 * Real.log 2 := by
+    have h : Real.log ((3 : ℝ) ^ (100 : ℕ)) < Real.log ((2 : ℝ) ^ (159 : ℕ)) :=
+      Real.log_lt_log (by positivity) (by norm_num)
+    rw [Real.log_pow, Real.log_pow] at h
+    push_cast at h
+    linarith
+  rw [logTwoThree, div_lt_iff₀ h2]
+  linarith
 
 /-- `geomS r = 1 + θ + θ² + … + θ^(r−1)` with `θ = log₂ 3`. -/
 noncomputable def geomS : ℕ → ℝ
   | 0 => 0
   | r + 1 => 1 + logTwoThree * geomS r
 
-theorem geomS_nonneg (r : ℕ) : 0 ≤ geomS r := by sorry
+theorem geomS_nonneg : ∀ r : ℕ, 0 ≤ geomS r
+  | 0 => le_refl 0
+  | r + 1 => by
+    have := geomS_nonneg r
+    have h1 := one_lt_logTwoThree
+    simp only [geomS]
+    nlinarith
 
-theorem geomS_four_le : geomS 4 ≤ 914 / 100 := by sorry
+theorem geomS_four_le : geomS 4 ≤ 914 / 100 := by
+  have h1 := one_lt_logTwoThree
+  have h2 := logTwoThree_lt
+  simp only [geomS, mul_zero, add_zero]
+  nlinarith [sq_nonneg logTwoThree]
 
-theorem geomS_mono : Monotone geomS := by sorry
+theorem geomS_mono : Monotone geomS := by
+  have h1 := one_lt_logTwoThree
+  have step : ∀ r : ℕ, geomS r ≤ geomS (r + 1) := by
+    intro r
+    induction r with
+    | zero => simp [geomS]
+    | succ r ih =>
+      simp only [geomS] at ih ⊢
+      nlinarith
+  exact monotone_nat_of_le_succ step
 
 /-! ## Target 5: the real lower bound on the odd-step count -/
 
@@ -74,11 +148,36 @@ theorem two_pow_ones_le_rpow (L : List (ℕ × ℕ)) : ∀ n : ℕ, 1 ≤ n →
 
 /-! ## Target 6: the upper side -/
 
+/-- `(n+1)^r − n^r ≤ 15 n^(r−1)` for `1 ≤ r ≤ 4`. -/
+theorem succ_pow_sub_le {n r : ℕ} (hn : 1 ≤ n) (h1 : 1 ≤ r) (h4 : r ≤ 4) :
+    (n + 1) ^ r - n ^ r ≤ 15 * n ^ (r - 1) := by
+  have hnn : 1 ≤ n ^ 2 := Nat.one_le_pow _ _ (by omega)
+  have hn3 : 1 ≤ n ^ 3 := Nat.one_le_pow _ _ (by omega)
+  interval_cases r <;>
+    refine Nat.sub_le_iff_le_add.mpr ?_ <;> ring_nf <;> nlinarith [hn, hnn, hn3]
+
 /-- With at most four odd runs, the Simons–de Weger bound reads `D · n ≤ 15 · 3^K`. -/
 theorem gap_mul_le_fifteen {n m : ℕ} (hn : n % 2 = 1) (h : At n m) (hsurv : n ≤ tstep^[m] n)
     (hr : oddRunCount (traceWord n m) ≤ 4) :
     (2 ^ m - 3 ^ ones (traceWord n m)) * n ≤ 15 * 3 ^ ones (traceWord n m) := by
-  sorry
+  have hn1 : 1 ≤ n := by omega
+  have hb := gap_mul_pow_le hn h hsurv
+  set K := ones (traceWord n m) with hKdef
+  set r := oddRunCount (traceWord n m) with hrdef
+  set D := 2 ^ m - 3 ^ K with hD
+  rcases Nat.eq_zero_or_pos r with hr0 | hr1
+  · have hD0 : D = 0 := by rw [hr0] at hb; simpa using hb
+    rw [hD0]; simp
+  · have hexp : (n + 1) ^ r - n ^ r ≤ 15 * n ^ (r - 1) := succ_pow_sub_le hn1 hr1 hr
+    have hsplit : n ^ r = n * n ^ (r - 1) := by
+      conv_lhs => rw [show r = 1 + (r - 1) by omega]
+      rw [pow_add, pow_one]
+    have hchain : (D * n) * n ^ (r - 1) ≤ (15 * 3 ^ K) * n ^ (r - 1) := by
+      calc (D * n) * n ^ (r - 1) = D * n ^ r := by rw [hsplit]; ring
+        _ ≤ 3 ^ K * ((n + 1) ^ r - n ^ r) := hb
+        _ ≤ 3 ^ K * (15 * n ^ (r - 1)) := Nat.mul_le_mul_left _ hexp
+        _ = (15 * 3 ^ K) * n ^ (r - 1) := by ring
+    exact Nat.le_of_mul_le_mul_right hchain (by positivity)
 
 /-! ## Target 7: stopping-time correctness on few-run crossings -/
 
