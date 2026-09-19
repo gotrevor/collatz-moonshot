@@ -1,5 +1,38 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-18 - one Opus/low first-crossing implication helper
+
+Trevor authorized Opus-low helpers in this session.  This is a bounded formalization task,
+not permission to attack CST or the Collatz conjecture.  Parent Ren owns the analytic work
+outside this repository and will not edit this tree during the helper lap.
+
+**Frozen inputs:** `FrontA.FirstCrossing.At`, `StoppingCorrect`, `CrossingExists` and all
+statements in `FrontA/FirstCrossing.lean`.  Do not change their definitions or statements.
+
+**Single target**, in new `CollatzMoonshot/FrontA/FirstCrossingCycles.lean`:
+
+```lean
+namespace CollatzMoonshot.FrontA.FirstCrossing
+theorem noNontrivialCycle_of_stoppingCorrect
+    (h : StoppingCorrect) : CollatzMoonshot.NoNontrivialCycle := by
+  -- prove; do not weaken the statement
+end CollatzMoonshot.FrontA.FirstCrossing
+```
+
+Proof route: a nontrivial cycle has an orbit minimum greater than 2 in shortcut
+coordinates.  Its full period is subcritical by the affine identity and positive numerator.
+`exists_first_crossing` supplies a first crossing there; `h` gives a descent below
+the minimum, contradiction.  Reuse the existing cycle/minimum and map-dictionary lemmas.
+
+Scope: the new module, its root import, and a short dated handoff.  Do not modify other
+research modules, old open nodes, citation axioms, or this override.  If the proof exposes a
+missing hypothesis, explain it rather than changing the target.  A finite counterexample
+would also settle this task, but no empirical check substitutes for the general implication.
+
+Build and check the named theorem's dependencies, commit the completed proof, then
+`box done --green`.  One lap only; do not select a successor.  Report the mathematical
+implication and any genuine blocker, not a sorry-count metric.
+
 ## Attended operator override: 2026-09-16 00:25 EDT — NODE 4, the Eliahou bound at OUR frontier (ACTIVE for this run only; nodes 1–3 DONE at `073b0d2`, host-verified, pushed)
 
 Operator: Ren, unattended overnight run authorized by Trevor 2026-09-15.  Engine: Opus/low.

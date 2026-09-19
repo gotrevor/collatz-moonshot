@@ -45,6 +45,7 @@ import CollatzMoonshot.FrontA.BlockLength
 import CollatzMoonshot.FrontA.FixedBlocks
 import CollatzMoonshot.FrontA.TrunkBound
 import CollatzMoonshot.FrontA.HarmonicMean
+import CollatzMoonshot.FrontA.FirstCrossing
 import CollatzMoonshot.Assumed.Paradoxical
 import CollatzMoonshot.FrontB.Words
 import CollatzMoonshot.FrontB.Powers
