@@ -1,5 +1,111 @@
 # DIRECTION — collatz-moonshot
 
+## Attended operator override: 2026-09-19 (Fable, evening) - few-run stopping-time helper, r ≤ 4
+
+Trevor's standing authorization for this campaign ("carry on & keep on trucking", 2026-09-19);
+Opus-low helper, **at most three laps**.  Create `CollatzMoonshot/FrontA/FirstCrossingFewRuns.lean`
+importing `CollatzMoonshot.FrontA.FirstCrossingRuns` (which brings FirstCrossingTwoRun,
+FirstCrossingOneRun, FirstCrossing, FixedBlocks, OneCircuit; `RhinLiteSep` is reachable through
+FirstCrossing → Paradoxical).  Do not change any existing theorem or definition.  Your only files
+are this module, its line in `CollatzMoonshot.lean` (after the FirstCrossingRuns import), and a
+short dated handoff `HANDOFF-2026-09-19-few-runs.md`.  Do not edit DIRECTION or experiments.  No
+successor task.  **Commit a compiling skeleton with named `sorry` leaves first.**  `.lake/build`
+is warm (host built `04869eb`); never `lake exe cache get`.
+
+Namespace `CollatzMoonshot.FrontA.FirstCrossing`, `open CollatzMoonshot CollatzMoonshot.FrontB`.
+Available: `At`, `numerator_bound`, `prefix_supercritical_trace`, `take_traceWord`
+(FirstCrossing); `traceWord_add`, `ones_replicate_false'` (OneRun); `CSTVerified`,
+`ones_ge_of_survives`, `iterate_ge_of_prefix_supercritical`, `run_true`, `run_false`
+(TwoRun); `run_product_bound`, `gap_mul_pow_le`, `blockWord_cons_length` (Runs);
+`exists_blockWord_oddRunCount`, `segment_identity_of_word`, `oddRunCount` (FixedBlocks /
+ThreeBlock); `rhinLite_log23_measure (k m) (hk : 1 ≤ k) (h1 : 3^k < 2^m) (h2 : 2^m < 2*3^k) :
+rhinLiteSepC / k^436 ≤ m * Real.log 2 - k * Real.log 3`, `rhinLiteSepC_pos`, and
+`rhinLiteSepC = 1 / (2 * ((396/5 : ℝ)^6000 * 6^436))` (RhinLiteSep).  Mathlib:
+`Real.log_two_lt_d9`, `Real.log_two_gt_d9`, `Real.add_one_le_exp`, `Real.log_le_sub_one_of_pos`,
+`Real.rpow_natCast`, `Real.rpow_le_rpow_left_iff`, `Real.rpow_mul`, `Real.log_lt_log`.
+
+Freeze these targets exactly (add any helper lemmas you like):
+
+1. `theorem last_false_of_at {n m : ℕ} (h : At n m) : (traceWord n m).getLast? = some false`
+   Route: m ≥ 1; `traceWord n m = traceWord n (m-1) ++ [decide (tstep^[m-1] n % 2 = 1)]` by
+   `traceWord_add` with second argument 1.  If the last letter were `true`, `ones = ones(prefix)+1`
+   and the prefix condition `h.2.1 (m-1)` gives `2^(m-1) ≤ 3^ones(prefix)`, so
+   `2^m ≤ 2·3^ones(prefix) < 3^(ones(prefix)+1)`, against `h.2.2`.
+
+2. `theorem two_pow_lt_two_mul_three_pow {n m : ℕ} (h : At n m) :
+       2 ^ m < 2 * 3 ^ ones (traceWord n m)`
+   From 1 and `h.2.1 (m-1)`: `2^(m-1) ≤ 3^K` with K = ones of the whole word (the last letter is
+   even), strict because `3^K` is odd and `m ≥ 1` (if `2^(m-1) = 3^K` then K = 0 and m = 1, but
+   then `2^m < 2` fails... handle K = 0 separately: then the word is all-even and m = 1, giving
+   `2 < 2·1`? — no: K = 0 forces m = 1 and the claim reads `2 < 2`, FALSE).  So freeze with the
+   extra hypothesis `(hK : 1 ≤ ones (traceWord n m))`.
+
+3. `theorem exists_blockWord_oddRunCount_pos (v : List Bool) (hhead : v.head? = some true)
+       (hlast : v.getLast? = some false) :
+       ∃ L : List (ℕ × ℕ), (∀ p ∈ L, 0 < p.1 ∧ 0 < p.2) ∧ v = blockWord L ∧
+         L.length = oddRunCount v`
+   Copy the proof of `exists_blockWord_oddRunCount` (FixedBlocks.lean:42); the `r = []` branch
+   (word `1^q`) contradicts `hlast`; in the recursive branch `s.getLast? = v.getLast?` because
+   `s ≠ []` (`List.getLast?_append`).
+
+4. `noncomputable def logTwoThree : ℝ := Real.log 3 / Real.log 2`
+   `theorem one_lt_logTwoThree : 1 < logTwoThree` and
+   `theorem logTwoThree_lt : logTwoThree < 159 / 100`   (from `(3:ℝ)^100 < 2^159` by `norm_num`,
+   `Real.log_lt_log`, `Real.log_pow`).
+   `def geomS : ℕ → ℝ | 0 => 0 | r + 1 => 1 + logTwoThree * geomS r`
+   `theorem geomS_four_le : geomS 4 ≤ 914 / 100` and `theorem geomS_mono : Monotone geomS`.
+
+5. `theorem two_pow_ones_le_rpow (L : List (ℕ × ℕ)) : ∀ n : ℕ, 1 ≤ n →
+       (∀ p ∈ L, 0 < p.1 ∧ 0 < p.2) → traceWord n (blockWord L).length = blockWord L →
+       (2 : ℝ) ^ ones (blockWord L) ≤ ((n : ℝ) + 1) ^ geomS L.length`
+   (real power `^` with real exponent).  Induction on L generalizing n.  Head block `(q, e)`,
+   `x' := tstep^[q+e] n`, from `segment_identity_of_word`: `2^(q+e) x' + 2^q = 3^q (n+1)`, so
+   `2^q ∣ 3^q (n+1)` hence `2^q ∣ n+1` (`Nat.Coprime.pow`), so `(2:ℝ)^q ≤ n+1`; and
+   `x' ≤ 3^q (n+1) / 2^(q+1)` (e ≥ 1).  Since `(3:ℝ)^q = (2^q)^logTwoThree`
+   (`Real.rpow_def_of_pos`, `Real.rpow_natCast`), `3^q / 2^q = (2^q)^(logTwoThree-1) ≤ (n+1)^(logTwoThree-1)`,
+   so `x' ≤ (n+1)^logTwoThree / 2` and `x' + 1 ≤ (n+1)^logTwoThree` (as `(n+1)^logTwoThree ≥ 2`).
+   Induction hypothesis at `x'`, then `((x'+1))^(geomS r') ≤ ((n+1)^logTwoThree)^(geomS r') = (n+1)^(logTwoThree * geomS r')`
+   (`Real.rpow_le_rpow`, `Real.rpow_mul`, `geomS r' ≥ 0`), and `2^(q + K') ≤ (n+1)^(1 + logTwoThree * geomS r')`.
+
+6. `theorem gap_mul_le_fifteen {n m : ℕ} (hn : n % 2 = 1) (h : At n m) (hsurv : n ≤ tstep^[m] n)
+       (hr : oddRunCount (traceWord n m) ≤ 4) :
+       (2 ^ m - 3 ^ ones (traceWord n m)) * n ≤ 15 * 3 ^ ones (traceWord n m)`
+   From `gap_mul_pow_le` and, for r = 1, 2, 3, 4 (r ≥ 1 as the word starts odd),
+   `(n+1)^r - n^r ≤ 15 * n^(r-1)` for n ≥ 1 (`interval_cases` on r, then `nlinarith`/`ring_nf`),
+   cancelling `n^(r-1) > 0`.
+
+7. `theorem descends_of_oddRunCount_le_four (hv : CSTVerified) {n m : ℕ} (hn : 2 ≤ n)
+       (h : At n m) (hr : oddRunCount (traceWord n m) ≤ 4) : tstep^[m] n < n`
+   Even n: the first letter is false, so `h.2.1 1` fails unless m = 1, and then
+   `2 * tstep n = n` gives descent (factor this as `descends_of_even`).  Odd n, by contradiction
+   `n ≤ y`.  K := ones ≥ 492276 by `ones_ge_of_survives`.
+   Upper: `gap_mul_le_fifteen` gives `D n ≤ 15 · 3^K`; `rhinLite_log23_measure K m` (window from 2)
+   gives `rhinLiteSepC / K^436 ≤ m log 2 − K log 3 = Real.log ((2^m : ℝ) / 3^K) ≤ 2^m/3^K − 1 = D/3^K ≤ 15/n`,
+   so `(n : ℝ) ≤ 15 * K^436 / rhinLiteSepC`.
+   Lower: targets 1, 3, 5 give `(2:ℝ)^K ≤ (n+1)^(geomS r) ≤ (n+1)^(geomS 4)` (geomS_mono, n+1 ≥ 1), so
+   `K * Real.log 2 ≤ geomS 4 * Real.log (n+1) ≤ 9.14 * Real.log (n+1)`.
+   Numerics (all in ℝ, with `Real.log_two_gt_d9`, `Real.log_two_lt_d9`; bound
+   `Real.log (396/5) ≤ 6 * Real.log 2 + Real.log (1.2375) ≤ 6 * 0.6932 + 0.2375` via
+   `Real.log_le_sub_one_of_pos`; `Real.log 6 ≤ Real.log 2 + Real.log 3`, `Real.log 3 ≤ Real.log 2 + 0.5`):
+   `Real.log (1 / rhinLiteSepC) ≤ 27203`.  Then from the lower bound
+   `Real.log (n+1) ≥ K * 0.6931 / 9.14 ≥ 0.07583 K`, and from the upper bound
+   `Real.log n ≤ Real.log 15 + 436 * Real.log K + 27203`.  Use the concavity step
+   `Real.log K ≤ Real.log 492276 + (K − 492276) / 492276` (from `Real.log_le_sub_one_of_pos` applied
+   to `K / 492276`), and `Real.log 492276 ≤ 13.11`, `Real.log 15 ≤ 2.71`, to get
+   `Real.log n ≤ 5716 + 2.71 + 27203 + 0.000886 (K − 492276) < 0.07583 K ≤ Real.log (n+1)` for
+   every `K ≥ 492276` — but `Real.log n < Real.log (n+1)` is not a contradiction by itself, so
+   compare the upper bound against `Real.log (n+1) ≤ Real.log (2n) = Real.log 2 + Real.log n`:
+   `0.07583 K ≤ Real.log (n+1) ≤ 0.6932 + Real.log n ≤ 0.6932 + 32922 + 0.000886 (K − 492276)`,
+   i.e. `0.0749 K ≤ 32487`, false for `K ≥ 492276` (LHS ≥ 36871).  `nlinarith`/`linarith` with these
+   explicit real facts closes it.
+
+Build the module and the root, run `#print axioms descends_of_oddRunCount_le_four` (expect the
+standard three plus the inherited Rhin-lite `native_decide` certificates and nothing else), commit,
+then `box done --green`.  If a frozen statement is false, report the mathematical counterexample;
+do not weaken it - except target 2, whose hypothesis is stated above.  This gives
+`StoppingCorrect` on all first crossings with at most four odd runs, modulo the explicit
+verification hypothesis.  It does NOT prove CST.
+
 ## Attended operator override: 2026-09-19 (Fable) - two-run stopping-time helper
 
 Trevor authorized this run ("proceed per your best judgement", 2026-09-19 evening); Opus-low
