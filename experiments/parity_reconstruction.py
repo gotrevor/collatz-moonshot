@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height")):
     main()
 
 
@@ -869,3 +869,88 @@ def stopping_records_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "stopping-records":
     stopping_records_main()
+
+
+# ---------------------------------------------------------------------------
+# residue-height (2026-09-19 night): for every first-crossing word v of length m ≤ M, the least
+# start x_v = (-N(v)·3^(-a)) mod 2^m, its run count r and the maximal height H of the ballot walk
+# log2(3^a_j / 2^j).  Tests the "ballot S-unit inequality" pitch: does log2(min x_v) depend on r
+# exponentially and on H only polynomially?  Reports, per m: min over all words, and min by r.
+# Hand anchors (m = 5): words 11100 (N = 19, x_v = 23, r = 1) and 11010 (N = 23, x_v = 11, r = 2);
+# 3^-3 ≡ 19 (mod 32).  min x_v at m = 5 is 11.
+
+
+def first_crossing_words(m):
+    """Yield (word_as_list, a) for every first crossing of length exactly m."""
+    log23 = math.log(3, 2)
+    out = []
+
+    def rec(prefix, a):
+        j = len(prefix)
+        if j == m:
+            if 3 ** a < 2 ** m:
+                out.append((prefix[:], a))
+            return
+        if j > 0 and not (2 ** j <= 3 ** a):
+            return
+        prefix.append(1); rec(prefix, a + 1); prefix.pop()
+        prefix.append(0); rec(prefix, a); prefix.pop()
+
+    rec([], 0)
+    return out
+
+
+def word_numer(v):
+    """N(v) = Σ_i v_i · 2^i · 3^(ones after position i); N(1) = 1, N(11) = 5, N(11100) = 19."""
+    n = 0
+    ones_after = sum(v)
+    for i, letter in enumerate(v):
+        if letter:
+            ones_after -= 1
+            n += 2 ** i * 3 ** ones_after
+    return n
+
+
+def word_stats(v, a):
+    m = len(v)
+    N = word_numer(v)
+    x = (-N * pow(3, -a, 2 ** m)) % 2 ** m
+    runs = sum(1 for i, c in enumerate(v) if c and (i == 0 or not v[i - 1]))
+    aj = 0; H = 0.0
+    for j, c in enumerate(v, 1):
+        aj += c
+        H = max(H, aj * math.log2(3) - j)
+    return N, x, runs, H
+
+
+def residue_height_main():
+    M = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+    print(f"# residue-height: least start x_v per first-crossing word, m ≤ {M}")
+    print("m words a min_xv log2 r_of_min H_of_min gap | by r: log2(min)/pigeonhole-gap")
+    for m in range(2, M + 1):
+        words = first_crossing_words(m)
+        if not words:
+            continue
+        best = None; by_r = {}; cnt_r = {}
+        for v, a in words:
+            N, x, r, H = word_stats(v, a)
+            cnt_r[r] = cnt_r.get(r, 0) + 1
+            if x < 2:
+                continue
+            if best is None or x < best[0]:
+                best = (x, r, H, a)
+            if r not in by_r or x < by_r[r][0]:
+                by_r[r] = (x, H)
+        if best is None:
+            continue
+        x, r, H, a = best
+        # pigeonhole gap: log2(min x_v) - (m - log2 #words with r runs); 0 = uniform spacing
+        byr = " ".join(f"{k}:{math.log2(w[0]):.1f}/{math.log2(w[0]) - (m - math.log2(cnt_r[k])):+.1f}"
+                       for k, w in sorted(by_r.items()))
+        print(m, len(words), a, x, f"{math.log2(x):.2f}", r, f"{H:.2f}",
+              f"gap{math.log2(x) - (m - math.log2(len(words))):+.1f}", "|", byr)
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "residue-height":
+    import math
+    residue_height_main()
