@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings")):
     main()
 
 
@@ -954,3 +954,52 @@ def residue_height_main():
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "residue-height":
     import math
     residue_height_main()
+
+
+# ---------------------------------------------------------------------------
+# ballot-siblings (2026-09-19 night): do two distinct prefix-supercritical words of the same
+# shape (s, a) ever have N(w) ≡ N(v) (mod 3^a)?  Equivalently: do two ballot trajectories of the
+# same shape ever coalesce (T^s(x) = T^s(x') with the same odd count)?  For unrestricted words
+# they do (hand anchor: shape (4,2), 0011 has N = 4·3 + 8 = 20 and 1001 has N = 3 + 8 = 11,
+# difference 9 = 3^2; starts 12 and 13 both reach 8 in four steps).  Prints per s the ballot word
+# count, the number of colliding classes, and the random-model expectation W²/(2·3^a).
+
+
+def ballot_words(s):
+    out = []
+
+    def rec(prefix, a):
+        j = len(prefix)
+        if j > 0 and 2 ** j > 3 ** a:
+            return
+        if j == s:
+            out.append((tuple(prefix), a))
+            return
+        prefix.append(1); rec(prefix, a + 1); prefix.pop()
+        prefix.append(0); rec(prefix, a); prefix.pop()
+
+    rec([], 0)
+    return out
+
+
+def ballot_siblings_main():
+    S = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+    print(f"# ballot-siblings: same-shape numerator collisions mod 3^a among ballot words, s ≤ {S}")
+    print("s words colliding_classes expected_random")
+    for s in range(2, S + 1):
+        seen = {}
+        coll = 0
+        words = ballot_words(s)
+        amin = min((a for _, a in words), default=0)
+        for v, a in words:
+            key = (a, word_numer(v) % 3 ** a)
+            if key in seen:
+                coll += 1
+            else:
+                seen[key] = True
+        exp = len(words) ** 2 / (2 * 3 ** amin) if words else 0
+        print(s, len(words), coll, f"{exp:.1f}")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-siblings":
+    ballot_siblings_main()
