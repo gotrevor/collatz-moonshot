@@ -341,3 +341,25 @@ bibliography of record.
   2007.
 - J. Lagarias, *The 3x+1 problem and its generalizations*, Amer. Math. Monthly, 1985.
 - C. Terras, 1976 / C. Everett, 1977 - density-one finite stopping time.
+
+## Cross-repo: the Diophantine wall, and what is NOT a known door 🧱
+
+The one wall both this repo and `normal-numbers` knock at - effective lower bounds on linear forms in
+`{log 2, log 3, 1}`, in two coefficient regimes - is mapped in
+`normal-numbers/docs/diophantine-wall.md` (`sep_two_three` here is the polynomial-coefficient door;
+`FrontA/Legendre.lean` is the donor for their Tier 1).  That doc's "Not a KNOWN door" section records
+why assuming normality of `ln 2`, `ln 3` feeds nothing into any known Collatz route (normality
+controls `{bⁿα}`, cycles need `{k·log₂3}` discrepancy, and Bugeaud's normal Liouville numbers show
+the first does not bound the second) - a heuristic, not a theorem.
+
+Adjacent and also **not a door**: the *parity-word* genericity questions (must a divergent orbit's
+parity sequence be normal, or at least disjunctive?).  The answer flips on the encoding.  Under raw
+`step` the word lives in the golden-mean subshift - `3n+1` is always even, so `11` never occurs -
+and is trivially neither normal nor disjunctive.  Under accelerated `tstep` normality is *provably
+false*: normal means 1-density `1/2`, while the drift bound of `Rigidity/Drift.lean` forces odd
+density `>= log 2 / log 3 ~ 0.631`.  Disjunctivity is open, but it is strictly stronger than
+"arbitrarily long odd runs", so it cannot serve as a route to that question.  Irrationality of the
+associated real is aperiodicity restated (`injective_of_diverges` collapses unbounded into
+`-> infinity`), and the transcendence machinery (Adamczewski-Bugeaud, `liminf p(n)/n < infinity`)
+fires only on *low* complexity - the Sturmian antipode, already retired here as Christoffel-word
+residue signatures and the Cobham angle.  No lever on the run-count gap node.
