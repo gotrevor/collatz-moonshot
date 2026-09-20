@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings", "ballot-max-ancestor", "ballot-nonmin", "ballot-pair")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings", "ballot-max-ancestor", "ballot-nonmin", "ballot-pair", "ballot-walk")):
     main()
 
 
@@ -1168,3 +1168,80 @@ if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-nonmi
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-pair":
     ballot_pair_main()
+
+
+# ---------------------------------------------------------------------------
+# ballot-walk: the (Φ, d) walk of a pair of starts x, x + k, both words kept ballot.
+# Conjecture C (two ballot words of one shape never coalesce) is FALSE: first at length 34.
+# ---------------------------------------------------------------------------
+
+def ballot_walk_main():
+    """`ballot-walk S K [THETA_U]`.  Let A, B be the trajectories of x and x + k (any x in
+    the class), d = ones(w) − ones(u) so far, Φ = 3^d·B − A, and M = 3^max(0,−d)·Φ ∈ ℤ.
+    Φ₀ = k, and the two words collide (T^j(x) = T^j(x+k), same number of odd steps) exactly
+    when Φ = 0 and d = 0.  Steps, with M even ⇔ the two letters agree:
+      d ≥ 0: (1,1) M ↦ (3M + 3^d − 1)/2; (0,0) M/2; (1,0) (3M − 1)/2, d+1;
+             (0,1) (M + 3^{d−1})/2, d−1  [from d = 0: (3M + 1)/2, d = −1]
+      d < 0, e = −d: (1,1) (3M + 1 − 3^e)/2; (0,0) M/2; (1,0) (M − 3^{e−1})/2, d+1;
+             (0,1) (3M + 1)/2, d−1.
+    DFS over all walks of length S in which w stays exactly ballot and u stays within
+    THETA_U bits of ballot (default 0 = exactly ballot); prints every collision and the
+    node count."""
+    S, K = int(sys.argv[2]), int(sys.argv[3])
+    theta_u = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
+    sys.setrecursionlimit(10000)
+    p3 = [3 ** i for i in range(S + 3)]
+    p2 = [2 ** i for i in range(S + 3)]
+    stats = {"nodes": 0, "collisions": 0}
+    w, u = [], []
+
+    def rec(j, M, d, cw, cu):
+        stats["nodes"] += 1
+        if M == 0 and d == 0 and j > 0:
+            stats["collisions"] += 1
+            print(f"COLLISION k={K} j={j} a={cw}\n  w={''.join(w)}\n  u={''.join(u)}")
+        if j == S:
+            return
+        agree = M % 2 == 0
+        for wl in (1, 0):
+            ul = wl if agree else 1 - wl
+            cw2, cu2 = cw + wl, cu + ul
+            if p2[j + 1] > p3[cw2]:
+                continue
+            if theta_u == 0.0:
+                if p2[j + 1] > p3[cu2]:
+                    continue
+            elif cu2 * LOG2_3 - (j + 1) < -theta_u:
+                continue
+            d2 = d
+            if d >= 0:
+                if wl and ul:
+                    M2 = (3 * M + p3[d] - 1) // 2
+                elif not wl and not ul:
+                    M2 = M // 2
+                elif wl:
+                    M2, d2 = (3 * M - 1) // 2, d + 1
+                elif d >= 1:
+                    M2, d2 = (M + p3[d - 1]) // 2, d - 1
+                else:
+                    M2, d2 = (3 * M + 1) // 2, -1
+            else:
+                e = -d
+                if wl and ul:
+                    M2 = (3 * M + 1 - p3[e]) // 2
+                elif not wl and not ul:
+                    M2 = M // 2
+                elif wl:
+                    M2, d2 = (M - p3[e - 1]) // 2, d + 1
+                else:
+                    M2, d2 = (3 * M + 1) // 2, d - 1
+            w.append(str(wl)); u.append(str(ul))
+            rec(j + 1, M2, d2, cw2, cu2)
+            w.pop(); u.pop()
+
+    rec(0, K, 0, 0, 0)
+    print(f"k={K} S={S} theta_u={theta_u} nodes={stats['nodes']} collisions={stats['collisions']}")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-walk":
+    ballot_walk_main()
