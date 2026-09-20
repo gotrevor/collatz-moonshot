@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings", "ballot-max-ancestor")):
     main()
 
 
@@ -1003,3 +1003,46 @@ def ballot_siblings_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-siblings":
     ballot_siblings_main()
+
+
+# ---------------------------------------------------------------------------
+# ballot-max-ancestor (2026-09-19 night): the one-sided form of ballot coalescence.  Among ALL
+# words of a shape (m, a), take every colliding pair N(v) ≡ N(w) (mod 3^a), v ≠ w.  Conjecture C':
+# the word with the LARGER numerator is never prefix-supercritical.  Equivalently a ballot
+# ancestor of z at shape (m, a) is the largest ancestor of z at that shape.  Hand anchor: shape
+# (4,2) has the single colliding pair 0011 (N = 20) / 1001 (N = 11); 0011 is not ballot.
+
+
+def is_ballot(v):
+    a = 0
+    for j, c in enumerate(v, 1):
+        a += c
+        if 2 ** j > 3 ** a:
+            return False
+    return True
+
+
+def ballot_max_ancestor_main():
+    import itertools, collections
+    shapes = [tuple(int(t) for t in arg.split(",")) for arg in sys.argv[2:]] or [(4, 2), (12, 8), (14, 9)]
+    print("# ballot-max-ancestor: colliding same-shape pairs whose larger-numerator word is ballot")
+    print("m a colliding_pairs larger_is_ballot")
+    for m, a in shapes:
+        cls = collections.defaultdict(list)
+        for pos in itertools.combinations(range(m), a):
+            v = [0] * m
+            for q in pos:
+                v[q] = 1
+            cls[word_numer(v) % 3 ** a].append(tuple(v))
+        pairs = bad = 0
+        for k in cls.values():
+            for v, w in itertools.combinations(k, 2):
+                pairs += 1
+                hi = w if word_numer(w) > word_numer(v) else v
+                if is_ballot(hi):
+                    bad += 1
+        print(m, a, pairs, bad)
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-max-ancestor":
+    ballot_max_ancestor_main()

@@ -43,3 +43,14 @@ def test_unrestricted_anchor():
     spec.loader.exec_module(pr)
     assert pr.word_numer([0, 0, 1, 1]) == 20 and pr.word_numer([1, 0, 0, 1]) == 11
     assert (20 - 11) % 9 == 0
+
+
+def test_max_ancestor_anchor():
+    """Shape (4,2) by hand: the only collision is 0011 (N = 20) with 1001 (N = 11), 20 − 11 = 9;
+    the larger-numerator word 0011 starts with 0 so it is not ballot.  Shape (12,8): 226 colliding
+    pairs (tool count), none with a ballot larger-numerator word."""
+    out = subprocess.run([sys.executable, str(SCRIPT), "ballot-max-ancestor", "4,2", "12,8"],
+                         capture_output=True, text=True, check=True).stdout
+    rows = {tuple(l.split()[:2]): l.split() for l in out.splitlines() if l[:1].isdigit()}
+    assert rows[("4", "2")][2:] == ["1", "0"]
+    assert rows[("12", "8")][3] == "0"
