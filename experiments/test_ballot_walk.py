@@ -75,3 +75,21 @@ def test_walk_finds_the_cprime_pair_when_u_may_dip():
     out = cli("ballot-walk", "29", "2", "0.5")
     assert "  w=11101101100110110110110101101\n  u=10111111110101111011100001100\n" in out
     assert cli("ballot-walk", "29", "2").strip().endswith("collisions=0")
+
+
+def test_c_twin_matches(tmp_path):
+    """`ballot_walk.c` is the same walk in C; it must reproduce the hand-counted small walks and
+    the five length-34 collisions.  Skipped when no C compiler is on the PATH."""
+    import shutil
+    cc = shutil.which("cc")
+    if cc is None:
+        import pytest
+        pytest.skip("no C compiler")
+    exe = tmp_path / "ballot_walk"
+    subprocess.run([cc, "-O2", "-o", str(exe), str(SCRIPT.with_name("ballot_walk.c"))], check=True)
+    run = lambda *a: subprocess.run([str(exe), *a], capture_output=True, text=True, check=True).stdout
+    assert run("3", "4").strip().endswith("nodes=5 collisions=0")
+    assert run("4", "4").strip().endswith("nodes=7 collisions=0")
+    out = run("34", "4")
+    assert "collisions=5" in out
+    assert "  w=1101101110011011010110110110110101\n  u=1111111101111011101101011000100100\n" in out
