@@ -62,6 +62,7 @@ import CollatzMoonshot.FrontA.FirstCrossingRuns
 import CollatzMoonshot.FrontA.FirstCrossingFewRuns
 import CollatzMoonshot.FrontA.LogTwoThreeDigits
 import CollatzMoonshot.FrontA.FirstCrossingOutlier
+import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional
