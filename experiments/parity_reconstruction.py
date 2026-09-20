@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records")):
     main()
 
 
@@ -827,3 +827,45 @@ def cst_check_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "cst-check":
     cst_check_main()
+
+
+# ---------------------------------------------------------------------------
+# stopping-records (2026-09-19 night): least start with shortcut stopping time ≥ m, and its
+# growth rate log2(x)/σ(x).  A CST failure at first-crossing length m is a start ≤ poly(m) with
+# stopping time > m, so CST says these records grow super-polynomially; the ballot random
+# model predicts 2^{(1 − H(1/δ))·m} · poly, entropy gap 1 − H(log 2 / log 3) ≈ 0.0500.
+
+
+def stopping_time(n):
+    """Least j with T^j(n) < n for the shortcut map."""
+    x, j = n, 0
+    while True:
+        x = (3 * x + 1) // 2 if x % 2 else x // 2
+        j += 1
+        if x < n:
+            return j
+
+
+def stopping_records(limit):
+    best, recs = 0, []
+    for x in range(2, limit + 1):
+        s = stopping_time(x)
+        if s > best:
+            best = s
+            recs.append((x, s))
+    return recs
+
+
+def stopping_records_main():
+    import math
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 3_000_000
+    gap = 1 + sum(p * math.log2(p) for p in (math.log(2) / math.log(3), 1 - math.log(2) / math.log(3)))
+    print(f"# stopping-records: least x with shortcut stopping time ≥ m, x ≤ {limit}")
+    print(f"# entropy gap 1 - H(1/δ) = {gap:.4f}")
+    print("x sigma log2x_over_sigma")
+    for x, s in stopping_records(limit):
+        print(x, s, f"{math.log2(x) / s:.4f}")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "stopping-records":
+    stopping_records_main()
