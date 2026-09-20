@@ -32,6 +32,12 @@ run-merging as a descent on `r` (the offset shifts by `(2^{l₁}−1)·2^{k₁}�
 Cobham angle; Christoffel-word residue signatures (probed, none); "extremal words are the dangerous
 ones" (probed, false); Hercher 2023 transfer (checked, does not: his 68 → 91 gain is the
 orbit-merging lemma, which needs a closed orbit and a convergence frontier; paper reach stays 68).
+Ballot-coalescence rigidity ("two ballot words of one shape never coalesce", and the one-sided
+"a ballot numerator is least in its class"): **refuted** 2026-09-19 at lengths 34 and 29
+(`experiments/parity_reconstruction.py ballot-walk 34 4`, `ballot-nonmin 29 0`, anchors by direct
+iteration) - the zero-collision count to length 30 was a small-length artifact; the minimality
+lever (the least CST failure has no prefix that is the smaller-numerator member of a ballot pair)
+stands and is thin by counting.
 🛑 **No lap without a mechanism for the gap node.**  `CrossingExists`
 (the Π₂, symbolic half) has no lever on the board at all.
 

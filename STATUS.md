@@ -357,9 +357,14 @@ global finiteness of acyclic paradoxical segments.
   pincer is logarithmically many runs, `r ≳ 2.17·ln K`; Collatz needs `r ≥ εK`.
   Experiments: `parity_reconstruction.py coalescence N` and `near-cycle N` with hand-computed
   pytest anchors.  The coalescence / smaller-start reduction route was measured and closed
-  (zero gain at the stopping-time records 27, 871, 77031).  Rationale and the run-count-gap
+  (zero gain at the stopping-time records 27, 871, 77031).  Later the same night the
+  minimality lever (a smaller start with a same-shape ballot word into the same orbit would
+  survive its first crossing) led to two conjectures about ballot coalescence, both refuted by
+  the Φ-walk probes `ballot-nonmin` (length 29) and `ballot-walk` (length 34: starts 15231450875
+  and 15231450879, both with 22 odd steps in 34 ballot letters, meet at 27822043514); the lever
+  stands but is thin.  Rationale and the run-count-gap
   node: personal KB leaves `collatz-near-cycle-few-runs-2026-09-19.md`,
-  `collatz-avenues-blueprint-2026-09-19.md`.
+  `collatz-avenues-blueprint-2026-09-19.md`, `collatz-ballot-coalescence-2026-09-19.md`.
 - **2026-09-13 (operator-assigned bounded node — min-term trunk bound):** new default-build module
   `FrontA/TrunkBound.lean`. Product identity `2^m·x_m·∏_{I}3x_i = 3^a·n·∏_{I}(3x_i+1)` over the
   odd-step set `oddSteps`; min-term inequality `2^m(3x_min)^a < 3^a(3x_min+1)^a` for every strictly
