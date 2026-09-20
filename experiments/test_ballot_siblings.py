@@ -46,11 +46,13 @@ def test_unrestricted_anchor():
 
 
 def test_max_ancestor_anchor():
-    """Shape (4,2) by hand: the only collision is 0011 (N = 20) with 1001 (N = 11), 20 − 11 = 9;
-    the larger-numerator word 0011 starts with 0 so it is not ballot.  Shape (12,8): 226 colliding
-    pairs (tool count), none with a ballot larger-numerator word."""
+    """Shape (4,2) by hand: numerators 0011→20, 0101→14, 0110→10, 1001→11, 1010→7, 1100→5;
+    mod 9 these are 2, 5, 1, 2, 7, 5, so the colliding pairs are {0011, 1001} (20 − 11 = 9) and
+    {0101, 1100} (14 − 5 = 9): two pairs, and both larger-numerator words (0011, 0101) start
+    with 0, so neither is ballot.  Shape (12,8): 226 colliding pairs (tool count), none with a
+    ballot larger-numerator word."""
     out = subprocess.run([sys.executable, str(SCRIPT), "ballot-max-ancestor", "4,2", "12,8"],
                          capture_output=True, text=True, check=True).stdout
     rows = {tuple(l.split()[:2]): l.split() for l in out.splitlines() if l[:1].isdigit()}
-    assert rows[("4", "2")][2:] == ["1", "0"]
+    assert rows[("4", "2")][2:] == ["2", "0"]
     assert rows[("12", "8")][3] == "0"
