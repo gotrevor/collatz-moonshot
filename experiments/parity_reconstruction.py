@@ -307,7 +307,7 @@ def main():
     print("# done")
 
 
-if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings", "ballot-max-ancestor")):
+if __name__ == "__main__" and not (len(sys.argv) > 1 and sys.argv[1] in ("deep", "first-crossing", "coalescence", "near-cycle", "run-window", "cst-check", "stopping-records", "residue-height", "ballot-siblings", "ballot-max-ancestor", "ballot-nonmin", "ballot-pair")):
     main()
 
 
@@ -1046,3 +1046,125 @@ def ballot_max_ancestor_main():
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-max-ancestor":
     ballot_max_ancestor_main()
+
+
+# ---------------------------------------------------------------------------
+# ballot-nonmin / ballot-pair: is a ballot word's numerator the least in its class mod 3^a?
+# (Conjecture C' of 2026-09-19.)  Answer: NO - first counterexample at length 29.
+# ---------------------------------------------------------------------------
+
+LOG2_3 = 1.5849625007211563
+
+
+def greedy_decode(n, a):
+    """Decode n as Σ_t 2^{q_t} 3^{a−t} with q strictly increasing (q_t = v₂ of the remainder);
+    return the positions, or None if the decode fails (remainder ≤ 0, or nonzero at the end)."""
+    pos = []
+    for t in range(1, a + 1):
+        if n <= 0:
+            return None
+        q = (n & -n).bit_length() - 1
+        if pos and q <= pos[-1]:
+            return None
+        n -= (1 << q) * 3 ** (a - t)
+        pos.append(q)
+    return pos if n == 0 else None
+
+
+def min_height(pos, s):
+    """min over prefixes j = 1..s of  ones(prefix)·log₂3 − j  (ballot ⇔ ≥ 0), and where."""
+    ones = set(pos)
+    c, mn, arg = 0, 0.0, 0
+    for j in range(s):
+        c += 1 if j in ones else 0
+        h = c * LOG2_3 - (j + 1)
+        if h < mn:
+            mn, arg = h, j + 1
+    return mn, arg
+
+
+def is_ballot_exact(pos, s):
+    ones = set(pos)
+    c = 0
+    for j in range(s):
+        c += 1 if j in ones else 0
+        if 2 ** (j + 1) > 3 ** c:
+            return False
+    return True
+
+
+def ballot_nonmin_main():
+    """For every length s ≤ SMAX, DFS over words starting with 1 whose every prefix height
+    is ≥ −THETA bits; for each such w and every k ≥ 1 with N(w) − k·3^a > 0, greedy-decode
+    N(w) − k·3^a as a same-a word u (any length).  A success means w is NOT the least
+    numerator of its class mod 3^a.  Reports, per s: successes, how many have |u| ≤ s, how
+    many have w exactly ballot (C' counterexamples), how many have both w and u ballot
+    (C counterexamples), the best (largest) min-height of w and of min(w,u), with the words."""
+    smax = int(sys.argv[2]) if len(sys.argv) > 2 else 24
+    theta = float(sys.argv[3]) if len(sys.argv) > 3 else 1.3
+    sys.setrecursionlimit(10000)
+    print(f"# ballot-nonmin: words with prefix height >= -{theta} bits that are not class minima")
+    print("s successes within_s w_ballot both_ballot best_mh_w best_mh_pair k w u")
+    for s in range(3, smax + 1):
+        results = []
+
+        def rec(j, c, mh, pos):
+            if j == s:
+                a = c
+                n = sum((1 << q) * 3 ** (a - 1 - t) for t, q in enumerate(pos))
+                for k in range(1, n // 3 ** a + 1):
+                    u = greedy_decode(n - k * 3 ** a, a)
+                    if u is not None:
+                        ulen = max(s, u[-1] + 1)
+                        mhu, _ = min_height(u, ulen)
+                        results.append((mh, min(mh, mhu), s, a, k, tuple(pos), tuple(u), ulen))
+                return
+            h1 = (c + 1) * LOG2_3 - (j + 1)
+            if h1 >= -theta:
+                rec(j + 1, c + 1, min(mh, h1), pos + [j])
+            h0 = c * LOG2_3 - (j + 1)
+            if h0 >= -theta:
+                rec(j + 1, c, min(mh, h0), pos)
+
+        rec(1, 1, 0.0, [0])
+        if not results:
+            print(s, 0, 0, 0, 0, "-", "-", "-", "-", "-")
+            sys.stdout.flush()
+            continue
+        within = sum(1 for r in results if r[7] <= s)
+        wb = sum(1 for r in results if is_ballot_exact(r[5], s))
+        both = sum(1 for r in results if is_ballot_exact(r[5], s) and r[7] <= s and is_ballot_exact(r[6], s))
+        best_w = max(results, key=lambda r: r[0])
+        best_pair = max(results, key=lambda r: r[1])
+        mh, mhp, _, a, k, pos, u, ulen = best_pair
+        w_str = "".join("1" if i in set(pos) else "0" for i in range(s))
+        u_str = "".join("1" if i in set(u) else "0" for i in range(ulen))
+        print(s, len(results), within, wb, both, f"{best_w[0]:+.3f}", f"{mhp:+.3f}", k, w_str, u_str)
+        sys.stdout.flush()
+
+
+def ballot_pair_main():
+    """`ballot-pair W U`: for two 0/1 words of one shape, print k = (N(w) − N(u))/3^a, the least
+    starts, their s-th iterates, exact ballot flags and min heights."""
+    w, u = sys.argv[2], sys.argv[3]
+    s, a = len(w), w.count("1")
+    assert len(u) == s and u.count("1") == a, "same shape required"
+    pw = [i for i, ch in enumerate(w) if ch == "1"]
+    pu = [i for i, ch in enumerate(u) if ch == "1"]
+    nw = sum((1 << q) * 3 ** (a - 1 - t) for t, q in enumerate(pw))
+    nu = sum((1 << q) * 3 ** (a - 1 - t) for t, q in enumerate(pu))
+    d = nw - nu
+    print(f"s={s} a={a} N(w)={nw} N(u)={nu} N(w)-N(u)={d} k={d / 3 ** a}")
+    xw = (-nw * pow(3, -a, 2 ** s)) % 2 ** s
+    xu = (-nu * pow(3, -a, 2 ** s)) % 2 ** s
+    print(f"x_w={xw} x_u={xu} x_u-x_w={xu - xw}")
+    print(f"T^s(x_w)={tstep_iter(xw, s)} T^s(x_u)={tstep_iter(xu, s)}")
+    print(f"w ballot={is_ballot_exact(pw, s)} min_height={min_height(pw, s)[0]:+.3f}")
+    print(f"u ballot={is_ballot_exact(pu, s)} min_height={min_height(pu, s)[0]:+.3f}")
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-nonmin":
+    ballot_nonmin_main()
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "ballot-pair":
+    ballot_pair_main()
