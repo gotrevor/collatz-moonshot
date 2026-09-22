@@ -36,7 +36,23 @@ kickoff file and `RESEARCH-2026-09-22-packing-shadow.md` first.
 * Only `Σ 1/y_j` bounded is needed, never the uniform tail `B(F)` of the paper's
   §3 — that was for the §4/§7 remainder discussion, which is out of scope here.
 
-## Next leaf (kickoff item 4)
+`CollatzMoonshot/FrontA/CrossingEquivalence.lean` (kickoff item 4, COMPLETE):
+
+* `ones_traceWord_add` — odd-step counts split at any time `k`.
+* `exists_floor_tstep`, `exists_tail_min`, `exists_ballot_forever` — a divergent
+  orbit has arbitrarily late values `x ≥ 2` with `2^m ≤ 3^(ones (traceWord x m))`
+  for every `m`.
+* `noDivergentOrbit_of_crossingExists` (forward).
+* `exists_tstep_repeat_of_not_diverges`, `pow_ones_lt_of_cycle`,
+  `ones_traceWord_period`, `crossingExists_of_noDivergentOrbit` (reverse).
+* `crossingExists_iff_noDivergentOrbit` — the headline equivalence, plus an
+  `Audit` section with `#guard_msgs`-pinned `#print axioms` for
+  `block_card_le`, `sum_inv_orbit_le` and the equivalence: each is exactly
+  `[propext, Classical.choice, Quot.sound]`.
+
+## ALL FOUR KICKOFF ITEMS ARE DONE.  Historical next-leaf notes follow.
+
+## Old next leaf (kickoff item 4) — now discharged
 
 1. `divergence_coefficient_tendsto`: from `iterate_le_coefficient` plus
    `y_k → ∞` (divergence), conclude `b_k = 3^(r_k)/2^k → ∞` along a divergent
@@ -50,7 +66,8 @@ kickoff file and `RESEARCH-2026-09-22-packing-shadow.md` first.
        hence `y_k → ∞` genuinely.  THIS WORKS and is cheap — use
        `tstep_time_injective` to injectively map `{k : y_k ≤ M}` into `[1,M]`.
    (b) avoid the limit entirely.
-   Take (a).
+   Take (a).  DONE via `exists_floor_of_diverges` (already in `Rigidity/Drift`)
+   lifted to `tstep` by `exists_step_count`; no new injectivity argument needed.
 2. `b` attains a minimum on every tail `{k ≥ j}` (since `b_k → ∞` and `b` is
    positive), giving `k_j ≥ j` with `b_{k_j+t} ≥ b_{k_j}` for all `t`, i.e.
    `2^t ≤ 3^(ones (traceWord y_{k_j} t))` for all `t` — exactly
