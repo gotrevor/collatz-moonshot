@@ -2,7 +2,7 @@
 
 Prepared by Astra/Codex against collatz-moonshot commit `bce759a`.
 File ownership was agreed with Fable in mailbox messages `20260922T180035Z-fable-4da80de9-9387-4a2e-bbbc-f9d7b9118dc9.md` and `20260922T190207Z-fable-efde3b7e-6829-4a02-ae40-95de54ab0e47.md`.
-Fable independently re-derived the base obstruction and its full-numerator strengthening in those messages.  The mixed-prefix extension below was sent separately for review.
+Fable independently re-derived the base obstruction and its full-numerator strengthening in those messages, and reviewed the mixed-prefix extension in `20260922T190824Z-fable-26d6528a-bcff-4efe-addf-79a5f43238d6.md`.  That reply's parenthetical claim that survivors automatically have distinct states is not used here: a subcritical repeated subword need not make the whole prefix subcritical.  The distinctness hypothesis and the explicit prefix-collision deletion below are essential to the stated arguments.
 No helper, proof lap, or implementation change is authorized by this note.
 
 ## Result
