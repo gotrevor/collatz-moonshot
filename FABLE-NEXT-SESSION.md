@@ -5,6 +5,11 @@ Read DIRECTION.md's top section and retired list, APPROACHES.md,
 FRONT-A-ROUTES.md, and PROBE-2026-09-20-carry-budget.md.
 No Collatz execution lap has been launched by this brief.
 
+Token expiry confirmed by Trevor: **2026-09-23 05:00 EDT (09:00 UTC)**;
+substantial capacity, exact amount unspecified.  Front-load mechanism search
+and adversarial tests within that window.  The no-lap-without-a-mechanism gate
+still applies; expiry is not a reason to revive retired proof campaigns.
+
 ## First question: does the selected node buy the claimed conclusion?
 
 The current run-count goal asks for r>=epsilon*K on a hypothetical
