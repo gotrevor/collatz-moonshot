@@ -26,6 +26,7 @@ import CollatzMoonshot.FrontA.BackwardFourFifthsRenewal
 import CollatzMoonshot.FrontA.BackwardFourFifthsStopping
 import CollatzMoonshot.FrontA.BackwardHarmonicObstruction
 import CollatzMoonshot.FrontA.ParityReconstruction
+import CollatzMoonshot.FrontA.OrbitPacking
 import CollatzMoonshot.FrontA.Paradoxical
 import CollatzMoonshot.FrontA.Excursion
 import CollatzMoonshot.FrontA.RhinKernel
