@@ -1,4 +1,7 @@
 # STATUS — collatz-moonshot 📊
+
+> **2026-09-22, independent angular-clock attempt:** [finite ordered Fourier estimate and controls](RESEARCH-2026-09-22-angular-clock.md).  Paper proof: divergent odd orbits would be base-2 Benford; large-floor long segments have an improved harmonic coefficient.  Exact rational controls defeat the real-dynamics relaxation, and averaging defeats an independent angular extension of finite-state potentials.  No new integer-orbit exclusion; no lap mechanism.
+
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·
 **Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-22 (mechanism search: goal audit, single-congruence lemma, 5n+1 control; awaiting a new idea).
 
