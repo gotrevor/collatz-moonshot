@@ -1,5 +1,7 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-09-22, second logarithmic pass:** [explicit packing-to-shadow proof](RESEARCH-2026-09-22-packing-shadow.md).  The classical Garcia-Tal collision mechanism, re-derived with elementary parity counting, makes the +1 correction summable.  Paper consequence: `CrossingExists ↔ NoDivergentOrbit`; divergent odd phases track one rotation with convergent phase offset.  Old infinite-harmonic-budget and liminf-only route notes corrected.  No new Lean result or integer-orbit exclusion claimed.
+
 > **2026-09-22, independent angular-clock attempt:** [finite ordered Fourier estimate and controls](RESEARCH-2026-09-22-angular-clock.md).  Paper proof: divergent odd orbits would be base-2 Benford; large-floor long segments have an improved harmonic coefficient.  Exact rational controls defeat the real-dynamics relaxation, and averaging defeats an independent angular extension of finite-state potentials.  No new integer-orbit exclusion; no lap mechanism.
 
 **Machine-checked conjecture graph for Collatz: two fronts, every edge axiom-audited.** ·

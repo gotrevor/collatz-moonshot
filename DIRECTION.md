@@ -1,5 +1,7 @@
 # DIRECTION — collatz-moonshot
 
+> **2026-09-22, paper-level graph correction:** [orbit packing and logarithmic shadow](RESEARCH-2026-09-22-packing-shadow.md) gives finite reciprocal correction on divergent orbits, hence `CrossingExists ↔ NoDivergentOrbit`.  The old infinite harmonic-budget subtarget already has full non-divergence strength.  Neither `CrossingExists` nor cycle exclusion is proved; no new proof-lap authorization.
+
 ## Standing objective after 2026-09-19 (Fable): the run-count gap on first-crossing near-cycles
 
 All three 2026-09-19 helper overrides below are COMPLETE (`182e2ca`, `39c7949`, `5b21804`); none

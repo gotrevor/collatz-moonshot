@@ -1,5 +1,11 @@
 # An ordered logarithmic clock, and why its marginal law does not force descent
 
+Follow-up: [packing and convergent logarithmic correction](RESEARCH-2026-09-22-packing-shadow.md)
+uses actual integer-orbit collision avoidance to prove reciprocal summability.  This
+strengthens the phase conclusion to tracking one rotation and rules out the linear-growth
+rational control as a model of integer orbit packing.  The present real-relaxation
+counterexamples remain valid within their stated scope.
+
 Independent research following Trevor's request to create a new Collatz
 mechanism.  These are paper proofs, not new Lean theorems.  No priority claim
 is made.  No mechanism here clears the standing proof-lap gate.

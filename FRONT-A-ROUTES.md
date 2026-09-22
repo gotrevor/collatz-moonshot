@@ -228,11 +228,14 @@ additive budget is `∑ c_{d_i}(15)/d_i`:
 The product `(starting floor) × (total budget)` stays order one; later-record tail budgets
 collapse still faster.  This is a **negative result for naive aggregation**, not a theorem
 about a hypothetical divergent orbit, but it exposes the missing input more sharply.  One
-needs something like `DivergentTailHarmonicBudget` (`∑_k 1/T^k(n) = ∞` on every divergent
-orbit), or coefficients growing strongly enough to replace it, *plus* an overlap/packing
-lemma.  Neither follows from divergence alone by an evident argument: an exponentially
-escaping orbit would have finite reciprocal budget.  Route A2 therefore remains alive but
-is less attractive than the single-tree census initially makes it look.
+would have needed something like `DivergentTailHarmonicBudget` (`∑_k 1/T^k(n) = ∞` on
+every divergent orbit), or coefficients growing strongly enough to replace it, plus an
+overlap/packing lemma.  **Correction, 2026-09-22:** the quantitative Garcia-Tal packing
+mechanism actually gives a FINITE reciprocal sum for every divergent orbit.  Thus the
+proposed infinite-budget conditional is equivalent to non-divergence, not an intermediate
+input.  A weighted replacement would need new mathematics.  See the self-contained
+[packing and logarithmic-shadow proof](RESEARCH-2026-09-22-packing-shadow.md), including
+the explicit tail bound and the new paper equivalence `CrossingExists ↔ NoDivergentOrbit`.
 
 ### The first genuine chip: binary safe branching, and a 3-adic stress test
 
@@ -518,9 +521,9 @@ The chippable mathematical ladder is now:
    of larger tables;
 10. decide experimentally, then prove, whether the correct theorem is pointwise harmonic
    growth or a uniform bound—the 3-adic adversary is the falsification side;
-11. only if enough uniformity survives, return to `DivergentTailHarmonicBudget` and annular
-   packing.  Otherwise Route A2 has merged back into the positive-integer itinerary rigidity
-   problem of Routes A1/A3.
+11. the old `DivergentTailHarmonicBudget` return target is superseded by the 2026-09-22
+   summability correction above.  Any annular aggregation needs a different weighted
+   input; the infinite-budget conditional already has full non-divergence strength.
 
 ## Route A3 - Symbolic/carry certificates 🤖
 

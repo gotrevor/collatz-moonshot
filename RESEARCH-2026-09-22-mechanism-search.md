@@ -234,10 +234,12 @@ ballot-forever for the `3n−1` itinerary (its own set `C'`, not `C`: under `3n+
 theorem is consistent with a single orbit, and `mem_taoGood_of_reachesValue` kills backward
 amplification).  What positivity gives on an individual orbit: `tstep^[j] n ≥ n` for all `j`
 (prefix supercritical), unboundedness (a bounded orbit is eventually a subcritical cycle whose
-walk climbs), and - *if* `Λ_j → −∞`, which unboundedness alone does not give (it gives only
-`liminf Λ_j = −∞`) - infinitely many future-maximum times of the walk at which the orbit value
-is itself ballot-forever.  None of this separates `ℕ` from `−ℕ` inside `ℤ₂` beyond the sign
-of `N`, and I found no statement that does.  Recorded to stop re-derivation; **no lever**.
+walk climbs).  **Later correction, 2026-09-22:** quantitative orbit packing supplies
+summability of the reciprocal correction, so divergence DOES give `Λ_j → −∞` and
+infinitely many future-maximum times whose orbit values are ballot-forever.  The earlier
+liminf-only assessment omitted this input.  Consequently `CrossingExists` is equivalent
+to non-divergence on positive 3n+1 orbits.  See the self-contained paper proof
+`RESEARCH-2026-09-22-packing-shadow.md`; this does not prove `CrossingExists` itself.
 
 The blueprint's split "arithmetic kills near-cycles, symbolic kills ballot-forever" is
 sharpened by the sign controls: for **CST** the sign control is vacuous (`3n−1` has no
