@@ -124,9 +124,14 @@ So the positivity of every `x_i`, the divisibilities `2^{q_{i+1}} ∣ x_i + 1`, 
 compatibility of every carry are *consequences* of the one congruence `D ∣ N − 2ᵐE`; there is
 no discarded congruence to recover.  What the pincer discards is magnitude: it uses
 `a_i ≥ 1`, i.e. `x_i ≥ 2^{q_{i+1}} − 1`, which for a run of length 1–3 is `x_i ≥ 1 … 7`.
-Amortising over a variable number of runs cannot help, because the total divisibility
-information is `Σ q_i = K` bits, which is exactly `n mod 2ᵐ` restricted to the odd positions
-(Terras), already used in full by `R(v)`.
+Amortising *divisibility* over a variable number of runs cannot help, because the total
+divisibility information is `Σ q_i = K` bits, which is exactly `n mod 2ᵐ` restricted to the
+odd positions (Terras), already used in full by `R(v)`.  This does **not** exclude a useful
+*inequality* over jointly realizable states (the pincer is one; Astra's integer-spacing bound
+`u(1 + E/n) ≤ ∏_{i<K}(1 + 1/(3(n+2i)))` is another, see
+`RESEARCH-2026-09-22-astra-integer-spacing.md`): such inequalities are necessary conditions
+with their own loss profile, and each must be tested against candidates that satisfy it while
+lying outside the residue class.
 
 **Exact form of CST.**  `2ᵐ ≡ 3ᴷ (mod D)`, so `E ≡ N·3^{−K} (mod D)` (`overshoot_modEq`), and
 `3E < K` (`three_mul_overshoot_lt`).  Since `D > K/3` (by hand for `K ≤ 6`; beyond,
@@ -180,8 +185,9 @@ that is the smaller-numerator member of a ballot pair) is unaffected and stays t
 `|B_m| = 2^{(0.950 + o(1)) m}` (binary entropy of `log₂3⁻¹ = 0.6309`; the `o(1)` is large
 at computable lengths: exponent `0.81` at `m = 40`, `0.94` at `m = 1280`), whereas for `5n+1`
 (threshold `0.43 < ½`) they
-have positive density and survivors exist.  The verified range is the only other
-`3`-specific input, and it is finite.
+have positive density and survivors exist.  The verified range is the other *known*
+`3`-specific global input, and it is finite.  (These two are the known inputs, not provably
+the only ones - Astra's objection, accepted.)
 
 **Statement.**  `min { R(v) : v ∈ B_m } > max_v N/D` where `R(v) = [−N·3^{−K}]_{2ᵐ}`; the
 right side is `≤ K^{437}/(3c)` (Rhin-lite) and `≤ 3.3K` when `u ≥ 1.1`.
@@ -201,7 +207,9 @@ heuristic for "finitely many CST failures" - but a discrepancy or large-sieve bo
 `≳ √|B_m| ≫ 1`, and CST needs the exact count `0` at every `m`.  Fourier majorants were
 retired 2026-09-19 for the same reason.
 
-**Where it fails.**  No estimate of any known type reaches an error below `1` in the count.
+**Where it fails.**  No estimate of any known type reaches an error below `1` in the count
+(the `√|B_m|` figure is the shape of large-sieve/discrepancy bounds, not a theorem about every
+counting method).
 The entropy deficit is a *density* input; the statement needed is *pointwise* over words.
 This is DIRECTION's rank-8 row restated with the exact threshold: error `< 1` at window
 width `≤ K/(3u)` in modulus `D ≈ 2ᵐ(1 − 1/u)`.
@@ -250,7 +258,7 @@ first-crossing survivor at all, since `N < 0` makes `D·n + 2ᵐE = N` impossibl
 | Mersenne `q = 12 → 6` | the pincer's worst case can repeat; the only bits a short run pins are its own `q` (§2) |
 | word powers / repetitions | a first-crossing word is **never** a proper power (`at_primitive`, Lean); eventually-periodic words do arise (§1.3, with the stated rotation hypotheses) and are the cycle problem |
 | many-short-runs scaling | window `≤ K/(3u)` is run-count independent; magnitude information `Σ q_i = K` bits is fully spent by `R(v)`; `N/3ᴷ ≈ cK` is largest for shallow walks (§2) |
-| `K → ∞`, `r ∝ K` | `5n+1`'s `n = 5` family scales: `ℓ` laps give `r = ℓ·runs(w)`, `K = 1 + ℓ·ones(w)`; the shape any `C_ε` proof must exclude for `3n+1` by excluding cycles |
+| `K → ∞`, `r ∝ K` | the seed `5` has ONE first crossing (39 laps), not a family (Astra's correction); a scaling family would need different `(n, cycle)` pairs, each giving `r = ℓ·runs(w)`, `K = 1 + ℓ·ones(w)` at its own `ℓ`; the shape any `C_ε` proof must exclude for `3n+1` by excluding cycles |
 
 ## 7. What landed, verification, and handoff
 
