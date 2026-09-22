@@ -1,5 +1,32 @@
 # PENDING_WORK
 
+## 2026-09-22 — summability/crossing bridge: DONE, nothing owed
+
+`KICKOFF-2026-09-22-summability-crossing.md` is fully discharged (commits
+`774843c`, `833c223`, `99daea3`).  All four acceptance items are proved with no
+sorry, no new axiom, and no assumed-summability consumer left behind.
+
+Advance on the crux, for the record: the decisive obligation was the Garcia-Tal
+power-saving packing count, since everything downstream is conditional on it.
+It is now a theorem.  Two deviations from the source note made it tractable and
+should be reused if the packing is ever sharpened:
+
+* shells in steps of five, `[2^(5t), 2^(5t+5))`, are themselves single aligned
+  blocks (`q = 0`, `m = 5t+5`, with `3m/5 = 3t+3` exact), so the paper's
+  interval-to-block reduction (its eq. (4)) is never needed;
+* the bad-word weight is `2`, not the paper's `3/2` — `(1+2) < 2·2^(3/5)` still
+  holds and `2^ones` keeps the whole count inside `ℕ`.
+
+Defect found in the source note: it asserts `b_k → ∞` from divergence, but this
+repo's `Diverges` is unboundedness, not `tendsto atTop`.  The step is repaired
+(not patched around) by the pre-existing `exists_floor_of_diverges` lifted to
+`tstep` through `exists_step_count`.
+
+Not owed, explicitly out of scope per the kickoff: the uniform tail `B(F)`, the
+one-rotation phase statement, angular equidistribution, self-packing entropy,
+few-run bounds, constant optimization.
+
+
 ## CURRENT — awaiting a new idea; trunk-bound node landed, 2026-09-13
 
 Operator-assigned bounded node (2026-09-13) landed as `CollatzMoonshot/FrontA/TrunkBound.lean`
