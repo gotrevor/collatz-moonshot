@@ -41,6 +41,25 @@ stands and is thin by counting.
 🛑 **No lap without a mechanism for the gap node.**  `CrossingExists`
 (the Π₂, symbolic half) has no lever on the board at all.
 
+**2026-09-22 (Fable) - goal audit and mechanism search, no lap.**  Detail:
+`RESEARCH-2026-09-22-mechanism-search.md`.  (i) The node above is the few-run exclusion made
+uniform; it does **not** imply CST.  `StoppingCorrect ⟺ N_ε ∧ C_ε` where `C_ε` = *no survivor
+with `r ≥ εK` runs*, and `C_ε` contains the many-circuit cycle problem (a cycle's minimum is a
+survivor with `E = 0`) plus the "orbit below a cycle" shape.  The honest frozen node is `C_ε`.
+(ii) The run-to-run admission equations carry exactly **one** congruence (Cramer, det `= D`;
+integrality of `(N − 2ᵐE)/D` already forces the residue class): multiplying run bounds loses
+magnitude only.  Round A is closed - do not re-open it with different run bookkeeping.
+(iii) New control: under `5n+1` the starts `13, 17` (cycles) and `5` (`m = 274`, `K = 118`,
+`39` runs, `E = 8`) are first-crossing survivors, so any `C_ε` mechanism valid for every odd
+multiplier is false; it must consume the ballot entropy deficit or the verified range
+(`experiments/sibling_survivors.py`).  For `3n−1` there is no survivor at all (`N < 0`), so
+the sign control for CST is vacuous; the sign control for `CrossingExists` is `3n−1`, `n = 5`.
+(iv) Retired with reasons: minimal-counterexample suffix constraints (all run starts lie above
+the least failure - circular); ballot-residue discrepancy (needs exact count `0`, every
+counting bound stops at error `≳ √|B_m|`).  (v) Lean, axiom-clean: `at_primitive` (a
+first-crossing word is never a proper power), `overshoot_modEq` (`3ᴷE ≡ N (mod D)`), in
+`FrontA/FirstCrossingResidue.lean`.  The gate below stands unchanged.
+
 ## Attended operator override: 2026-09-19 (Fable, night) - verified log₂3 digits, and r ≤ 50
 
 Standing authorization (Trevor, 2026-09-19: "keep planning in parallel with the grind").  Opus-low
