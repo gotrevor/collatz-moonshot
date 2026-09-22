@@ -275,3 +275,8 @@ This pass repairs a real gap in the project's mathematical map and gives
 a stronger arithmetic-derived shadow law.  It does NOT prove
 CrossingExists, exclude many-run cycles, or provide a new uniform residue
 lower bound.  No unattended proof lap is authorized by this note.
+
+Follow-up: [self-packing bootstrap](RESEARCH-2026-09-22-self-packing.md)
+derives the entropy fixed point that blocks the scalar iteration.  That
+note also records independently developed peer work already containing the
+summability-to-coefficient-crossing equivalence; no novelty is claimed here.
