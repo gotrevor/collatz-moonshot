@@ -3,8 +3,9 @@
 **Build**: 🟢 FORMALIZE-tier green (8771 jobs; inherited native certificates disclosed) · **Updated**: 2026-09-22 (mechanism search: goal audit, single-congruence lemma, 5n+1 control; awaiting a new idea).
 
 > **2026-09-22 — mechanism search (Fable), no lap.**  The run-count node `r ≥ εK` does not
-> imply CST; `StoppingCorrect ⟺ N_ε ∧ C_ε`, and the complement `C_ε` (no survivor with `≥ εK`
-> runs) contains the many-circuit cycle problem.  Run-to-run admission carries exactly one
+> imply CST; `StoppingCorrect ⟺ N_ε ∧ C_ε` (a tautology), and the complement `C_ε` (no survivor
+> with `≥ εK` runs) holds the cycles whose crossing prefix has that many runs, a sub-problem
+> of many-circuit cycles with no known mechanism.  Run-to-run admission carries exactly one
 > congruence, so amortised run bookkeeping is closed.  New control: `5n+1` has first-crossing
 > survivors `13, 17` and `5` (274 steps, 118 odd, 39 runs, `E = 8`), refuting any mechanism
 > valid for all odd multipliers.  Two candidates retired with named failure steps.  Lean:

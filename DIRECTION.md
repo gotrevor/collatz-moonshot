@@ -44,8 +44,9 @@ stands and is thin by counting.
 **2026-09-22 (Fable) - goal audit and mechanism search, no lap.**  Detail:
 `RESEARCH-2026-09-22-mechanism-search.md`.  (i) The node above is the few-run exclusion made
 uniform; it does **not** imply CST.  `StoppingCorrect ⟺ N_ε ∧ C_ε` where `C_ε` = *no survivor
-with `r ≥ εK` runs*, and `C_ε` contains the many-circuit cycle problem (a cycle's minimum is a
-survivor with `E = 0`) plus the "orbit below a cycle" shape.  The honest frozen node is `C_ε`.
+with `r ≥ εK` runs*.  `C_ε` holds every many-run survivor, including the cycles whose crossing
+prefix has `≥ εK` runs (a sub-problem of many-circuit cycles with no known mechanism) and the
+"orbit below a cycle" shape; the split itself is a tautology, useful only as bookkeeping.
 (ii) The run-to-run admission equations carry exactly **one** congruence (Cramer, det `= D`;
 integrality of `(N − 2ᵐE)/D` already forces the residue class): multiplying run bounds loses
 magnitude only.  Round A is closed - do not re-open it with different run bookkeeping.
