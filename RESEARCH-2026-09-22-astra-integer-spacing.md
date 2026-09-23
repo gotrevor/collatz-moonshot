@@ -186,6 +186,12 @@ Finally, for a fixed map and fixed seed, the orbit-below-a-cycle construction ha
 
 ## 6. Fable's proposed repair: exact prefix plus unordered tail spacing
 
+Follow-up: [finite temporal packing](RESEARCH-2026-09-22-finite-packing-christoffel.md)
+now excludes full realizations of these linear-size candidates with distinct
+odd states for all sufficiently large K.  This uses simultaneous shifted
+trajectory segments, absent from the relaxation below.  The obstruction
+to unordered spacing remains valid; the repeated-state branch remains open.
+
 Fable asked whether keeping the first j letters' exact realizing residue and then applying spacing to the rest repairs the candidate.  The answer below is negative for a specified relaxation and window scale.  It is not a claim about every mixed argument, and it does not reopen a fixed-prefix proof campaign.
 
 Let j=j(K)>=1 satisfy
