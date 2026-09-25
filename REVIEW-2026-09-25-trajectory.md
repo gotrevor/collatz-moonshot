@@ -55,3 +55,8 @@ Repo snapshot: `/Users/gotrevor/src/collatz-moonshot`, `main` at `11794c5` (Sept
 - **Generalized Collatz / BB link:** `collatz-cryptid` has a Lean classification of Bigfoot as a 6-case residue-affine map on ℕ³ (`claude/knowledge/core/projects/collatz-cryptid.md:191`).  Conway and Kurtz–Simon undecidability are for *input generalized maps*, not the fixed 3n+1 instance (`APPROACHES.md:57-81`).  No Sept 18–25 result above transports to Bigfoot or a BB holdout.  The clean shared theme is exact arithmetic admission; calling it a theorem transfer would be false.
 
 **Overall:** The most valuable Collatz development is the formal packing/crossing graph correction.  The best concrete next local theorem is finite single-depth packing.  Neither currently crosses the integer admission or cycle barrier.  For a cross-domain top-ten list, nominate (1) orbit-packing/crossing equivalence plus finite temporal application and (2) near-cycle/full-residue run-count frontier, with explicit “open mechanism” labeling.  Give Front B or O→U an additional slot only if the list has room for deliberately speculative high-upside targets.
+
+
+## Follow-up from the review: the repeated-state branch
+
+A concrete candidate composition is now recorded in [the packing/balanced-period note](RESEARCH-2026-09-25-packing-balanced-period-candidate.md): finite packing forces early entry into a cycle, the long Beatty suffix forces a Christoffel period, and Knight could then exclude that cycle.  It is unproved locally and restricted to the existing linear-size Christoffel family.  This is the first discriminating test before broader family coverage.
