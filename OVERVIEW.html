@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Project overview</title>
+  <style>
+
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">:root { color-scheme: light; --ink: #172a35; --muted: #53616c; --rule: #cbd3d9; --accent: #215b79; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: white; }
+body { max-width: 1160px; margin: 0 auto; padding: 46px 38px 64px; color: var(--ink); background: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 17px; line-height: 1.62; }
+header { border-top: 4px solid var(--ink); padding-top: 20px; }
+h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.13; letter-spacing: -.035em; margin: 0 0 26px; }
+body > p, body > ul, body > ol, body > h3 { max-width: 900px; }
+body > p:first-of-type { font-size: .87rem; color: var(--muted); margin-bottom: 30px; }
+h2 { margin: 44px 0 16px; padding-top: 17px; border-top: 1px solid var(--rule); font-size: 1.55rem; line-height: 1.25; letter-spacing: -.02em; break-after: avoid; }
+h3 { font-size: 1.17rem; line-height: 1.35; margin: 27px 0 10px; break-after: avoid; }
+p { margin: 12px 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+strong { font-weight: 650; }
+ul, ol { padding-left: 26px; }
+li { padding-left: 5px; margin: 7px 0; }
+figure { margin: 24px 0 18px; padding: 15px 8px; border: 1px solid var(--rule); border-radius: 8px; overflow-x: auto; }
+figure img { display: block; width: 100%; height: auto; min-width: 680px; }
+figcaption { display: none; }
+table { width: 100%; border-collapse: collapse; margin: 21px 0; font-size: .94rem; line-height: 1.5; }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .045em; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); }
+th, td { text-align: left; vertical-align: top; padding: 13px 15px 13px 0; }
+td { border-bottom: 1px solid var(--rule); }
+td:first-child { width: 27%; }
+code { font-size: .87em; overflow-wrap: anywhere; }
+body > h2:last-of-type ~ p { font-size: .86rem; color: var(--muted); }
+@media (max-width: 700px) { body { padding: 25px 20px 45px; font-size: 16px; } h2 { margin-top: 34px; } table { font-size: .83rem; } th, td { padding-right: 10px; } figure { margin-inline: -9px; } }
+@media print { body { max-width: none; padding: 0; font-size: 10pt; color: black; } h1 { font-size: 25pt; } h2 { margin-top: 22pt; } h3 { font-size: 12pt; } figure { break-inside: avoid; border: 0; padding: 0; } figure img { min-width: 0; max-height: 650px; } table { font-size: 9pt; } tr { break-inside: avoid; } a { color: black; } }
+</style>
+</head>
+<body>
+<h1 id="collatz-where-the-proof-stands">Collatz: where the proof
+stands</h1>
+<p><strong>Project map · 26 September 2026</strong><br />
+<a href="OVERVIEW.html">Visual edition</a> · <a href="REVIEW-2026-09-25-trajectory.md">Detailed research review</a></p>
+<h2 id="the-destination">The destination</h2>
+<p><strong>Every positive integer eventually reaches 1.</strong> That
+requires ruling out both an orbit that never repeats and never reaches
+1, and a cycle other than the familiar one. Neither has been ruled
+out.</p>
+<p>The recent work has made these two obstacles much more precise. It
+has also excluded restricted kinds of counterexample. <strong>There is
+still no mechanism covering all possible counterexamples.</strong></p>
+<h2 id="the-map">The map</h2>
+<figure>
+<img role="img" aria-label="Collatz proof map: both global fronts remain open; restricted first-crossing results sit below a missing generalization." src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIKICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8IS0tIEdlbmVyYXRlZCBieSBncmFwaHZpeiB2ZXJzaW9uIDE1LjAuMCAoMjAyNjA1MjMuMTg0MikKIC0tPgo8IS0tIFRpdGxlOiBDb2xsYXR6IFBhZ2VzOiAxIC0tPgo8c3ZnIHdpZHRoPSI2NjJwdCIgaGVpZ2h0PSI3MzVwdCIKIHZpZXdCb3g9IjAuMDAgMC4wMCA2NjIuMDAgNzM1LjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KPGcgaWQ9ImdyYXBoMCIgY2xhc3M9ImdyYXBoIiB0cmFuc2Zvcm09InNjYWxlKDEgMSkgcm90YXRlKDApIHRyYW5zbGF0ZSgyMS42IDcxMy42OSkiPgo8dGl0bGU+Q29sbGF0ejwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IndoaXRlIiBzdHJva2U9Im5vbmUiIHBvaW50cz0iLTIxLjYsMjEuNiAtMjEuNiwtNzEzLjY5IDY0MC41MiwtNzEzLjY5IDY0MC41MiwyMS42IC0yMS42LDIxLjYiLz4KPCEtLSBnb2FsIC0tPgo8ZyBpZD0ibm9kZTEiIGNsYXNzPSJub2RlIj4KPHRpdGxlPmdvYWw8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMxNTJjM2EiIHN0cm9rZS13aWR0aD0iMi41IiBkPSJNMzEwLjE3LC02OTIuMDlDMzEwLjE3LC02OTIuMDkgMzcuNSwtNjkyLjA5IDM3LjUsLTY5Mi4wOSAzMS41LC02OTIuMDkgMjUuNSwtNjg2LjA5IDI1LjUsLTY4MC4wOSAyNS41LC02ODAuMDkgMjUuNSwtNjQ0LjkzIDI1LjUsLTY0NC45MyAyNS41LC02MzguOTMgMzEuNSwtNjMyLjkzIDM3LjUsLTYzMi45MyAzNy41LC02MzIuOTMgMzEwLjE3LC02MzIuOTMgMzEwLjE3LC02MzIuOTMgMzE2LjE3LC02MzIuOTMgMzIyLjE3LC02MzguOTMgMzIyLjE3LC02NDQuOTMgMzIyLjE3LC02NDQuOTMgMzIyLjE3LC02ODAuMDkgMzIyLjE3LC02ODAuMDkgMzIyLjE3LC02ODYuMDkgMzE2LjE3LC02OTIuMDkgMzEwLjE3LC02OTIuMDkiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTczLjg0IiB5PSItNjYzLjk2IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTkuMDAiPkRFU1RJTkFUSU9OIMK3IE9QRU48L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE3My44NCIgeT0iLTY0NC40NiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE5LjAwIj5FdmVyeSBwb3NpdGl2ZSBpbnRlZ2VyIHJlYWNoZXMgMTwvdGV4dD4KPC9nPgo8IS0tIGJvdGggLS0+CjxnIGlkPSJub2RlMiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+Ym90aDwvdGl0bGU+CjxlbGxpcHNlIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzU5NjM2ZSIgc3Ryb2tlLXdpZHRoPSIxLjUiIGN4PSIxNzMuODQiIGN5PSItNTQ5LjY2IiByeD0iNzUuNiIgcnk9IjIzLjI3Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjE3My44NCIgeT0iLTU0NC42NCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEyLjAwIj5CT1RIIHJlcXVpcmVkPC90ZXh0Pgo8L2c+CjwhLS0gYm90aCYjNDU7Jmd0O2dvYWwgLS0+CjxnIGlkPSJlZGdlMyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+Ym90aCYjNDU7Jmd0O2dvYWw8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1OTYzNmUiIGQ9Ik0xNzMuODQsLTU4MS45NUMxNzMuODQsLTU5NC45IDE3My44NCwtNjEwLjA0IDE3My44NCwtNjIzLjYxIi8+Cjxwb2x5Z29uIGZpbGw9IiM1OTYzNmUiIHN0cm9rZT0iIzU5NjM2ZSIgcG9pbnRzPSIxNzYuMjksLTU4Mi4xNCAxNzMuODQsLTU3NS4xNCAxNzEuMzksLTU4Mi4xNCAxNzYuMjksLTU4Mi4xNCIvPgo8cG9seWdvbiBmaWxsPSIjNTk2MzZlIiBzdHJva2U9IiM1OTYzNmUiIHBvaW50cz0iMTcxLjM5LC02MjMuMzEgMTczLjg0LC02MzAuMzEgMTc2LjI5LC02MjMuMzEgMTcxLjM5LC02MjMuMzEiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjIwLjM0IiB5PSItNTk4LjQ4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPnByb3ZlZCBlcXVpdmFsZW5jZTwvdGV4dD4KPC9nPgo8IS0tIG5kIC0tPgo8ZyBpZD0ibm9kZTMiIGNsYXNzPSJub2RlIj4KPHRpdGxlPm5kPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk1NTEzIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMjE1LjY3LC00NzcuMzlDMjE1LjY3LC00NzcuMzkgMTIsLTQ3Ny4zOSAxMiwtNDc3LjM5IDYsLTQ3Ny4zOSAwLC00NzEuMzkgMCwtNDY1LjM5IDAsLTQ2NS4zOSAwLC00MjEuOTggMCwtNDIxLjk4IDAsLTQxNS45OCA2LC00MDkuOTggMTIsLTQwOS45OCAxMiwtNDA5Ljk4IDIxNS42NywtNDA5Ljk4IDIxNS42NywtNDA5Ljk4IDIyMS42NywtNDA5Ljk4IDIyNy42NywtNDE1Ljk4IDIyNy42NywtNDIxLjk4IDIyNy42NywtNDIxLjk4IDIyNy42NywtNDY1LjM5IDIyNy42NywtNDY1LjM5IDIyNy42NywtNDcxLjM5IDIyMS42NywtNDc3LjM5IDIxNS42NywtNDc3LjM5Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjExMy44NCIgeT0iLTQ1My4wNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5PUEVOPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxMTMuODQiIHk9Ii00MzcuMzEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+Tm8gZGl2ZXJnZW50IG9yYml0PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxMTMuODQiIHk9Ii00MjEuNTYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+PSBldmVudHVhbCBjb2VmZmljaWVudCBjcm9zc2luZzwvdGV4dD4KPC9nPgo8IS0tIG5kJiM0NTsmZ3Q7Ym90aCAtLT4KPGcgaWQ9ImVkZ2UxIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5uZCYjNDU7Jmd0O2JvdGg8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1OTYzNmUiIGQ9Ik0xMzIuOTgsLTQ3Ny44N0MxNDAuNjEsLTQ5MS4wOCAxNDkuMzIsLTUwNi4xNyAxNTYuNzMsLTUxOS4wMiIvPgo8cG9seWdvbiBmaWxsPSIjNTk2MzZlIiBzdHJva2U9IiM1OTYzNmUiIHBvaW50cz0iMTU0LjU1LC01MjAuMTQgMTYwLjE3LC01MjQuOTggMTU4Ljc5LC01MTcuNjkgMTU0LjU1LC01MjAuMTQiLz4KPC9nPgo8IS0tIG5jIC0tPgo8ZyBpZD0ibm9kZTQiIGNsYXNzPSJub2RlIj4KPHRpdGxlPm5jPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk1NTEzIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMzg2LjE3LC00NjkuNTJDMzg2LjE3LC00NjkuNTIgMjYzLjUsLTQ2OS41MiAyNjMuNSwtNDY5LjUyIDI1Ny41LC00NjkuNTIgMjUxLjUsLTQ2My41MiAyNTEuNSwtNDU3LjUyIDI1MS41LC00NTcuNTIgMjUxLjUsLTQyOS44NiAyNTEuNSwtNDI5Ljg2IDI1MS41LC00MjMuODYgMjU3LjUsLTQxNy44NiAyNjMuNSwtNDE3Ljg2IDI2My41LC00MTcuODYgMzg2LjE3LC00MTcuODYgMzg2LjE3LC00MTcuODYgMzkyLjE3LC00MTcuODYgMzk4LjE3LC00MjMuODYgMzk4LjE3LC00MjkuODYgMzk4LjE3LC00MjkuODYgMzk4LjE3LC00NTcuNTIgMzk4LjE3LC00NTcuNTIgMzk4LjE3LC00NjMuNTIgMzkyLjE3LC00NjkuNTIgMzg2LjE3LC00NjkuNTIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzI0Ljg0IiB5PSItNDQ1LjE5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPk9QRU48L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjMyNC44NCIgeT0iLTQyOS40NCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5ObyBub250cml2aWFsIGN5Y2xlPC90ZXh0Pgo8L2c+CjwhLS0gbmMmIzQ1OyZndDtib3RoIC0tPgo8ZyBpZD0iZWRnZTIiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPm5jJiM0NTsmZ3Q7Ym90aDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzU5NjM2ZSIgZD0iTTI4Ny45LC00NzAuMTJDMjY0LjUzLC00ODYuMjEgMjM0LjQ0LC01MDYuOTMgMjExLjAyLC01MjMuMDUiLz4KPHBvbHlnb24gZmlsbD0iIzU5NjM2ZSIgc3Ryb2tlPSIjNTk2MzZlIiBwb2ludHM9IjIwOS45MiwtNTIwLjg0IDIwNS41NSwtNTI2LjgyIDIxMi43LC01MjQuODcgMjA5LjkyLC01MjAuODQiLz4KPC9nPgo8IS0tIGNzdCAtLT4KPGcgaWQ9Im5vZGU1IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5jc3Q8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM5OTU1MTMiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik00MDQuMTcsLTM0OS45OEM0MDQuMTcsLTM0OS45OCAyNDUuNSwtMzQ5Ljk4IDI0NS41LC0zNDkuOTggMjM5LjUsLTM0OS45OCAyMzMuNSwtMzQzLjk4IDIzMy41LC0zMzcuOTggMjMzLjUsLTMzNy45OCAyMzMuNSwtMjk0LjU3IDIzMy41LC0yOTQuNTcgMjMzLjUsLTI4OC41NyAyMzkuNSwtMjgyLjU3IDI0NS41LC0yODIuNTcgMjQ1LjUsLTI4Mi41NyA0MDQuMTcsLTI4Mi41NyA0MDQuMTcsLTI4Mi41NyA0MTAuMTcsLTI4Mi41NyA0MTYuMTcsLTI4OC41NyA0MTYuMTcsLTI5NC41NyA0MTYuMTcsLTI5NC41NyA0MTYuMTcsLTMzNy45OCA0MTYuMTcsLTMzNy45OCA0MTYuMTcsLTM0My45OCA0MTAuMTcsLTM0OS45OCA0MDQuMTcsLTM0OS45OCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIzMjQuODQiIHk9Ii0zMjUuNjUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+T1BFTiDCtyBDU1Q8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjMyNC44NCIgeT0iLTMwOS45IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPkFjdHVhbCBkZXNjZW50IGF0IHRoZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzI0Ljg0IiB5PSItMjk0LjE1IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPmZpcnN0IGNvZWZmaWNpZW50IGNyb3NzaW5nPC90ZXh0Pgo8L2c+CjwhLS0gY3N0JiM0NTsmZ3Q7bmMgLS0+CjxnIGlkPSJlZGdlNCIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+Y3N0JiM0NTsmZ3Q7bmM8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1OTYzNmUiIGQ9Ik0zMjQuODQsLTM1MC41NUMzMjQuODQsLTM2OC41MSAzMjQuODQsLTM5MC42NCAzMjQuODQsLTQwOC43Ii8+Cjxwb2x5Z29uIGZpbGw9IiM1OTYzNmUiIHN0cm9rZT0iIzU5NjM2ZSIgcG9pbnRzPSIzMjIuMzksLTQwOC43IDMyNC44NCwtNDE1LjcgMzI3LjI5LC00MDguNyAzMjIuMzksLTQwOC43Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM2Ny45NiIgeT0iLTM3NS41MyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj5wcm92ZWQgaW1wbGljYXRpb248L3RleHQ+CjwvZz4KPCEtLSBmZXcgLS0+CjxnIGlkPSJub2RlNiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+ZmV3PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTc2ODUyIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0zMjAuOCwtMjEwLjU3QzMyMC44LC0yMTAuNTcgMTM4Ljg4LC0yMTAuNTcgMTM4Ljg4LC0yMTAuNTcgMTMyLjg4LC0yMTAuNTcgMTI2Ljg4LC0yMDQuNTcgMTI2Ljg4LC0xOTguNTcgMTI2Ljg4LC0xOTguNTcgMTI2Ljg4LC0xMzkuNDEgMTI2Ljg4LC0xMzkuNDEgMTI2Ljg4LC0xMzMuNDEgMTMyLjg4LC0xMjcuNDEgMTM4Ljg4LC0xMjcuNDEgMTM4Ljg4LC0xMjcuNDEgMzIwLjgsLTEyNy40MSAzMjAuOCwtMTI3LjQxIDMyNi44LC0xMjcuNDEgMzMyLjgsLTEzMy40MSAzMzIuOCwtMTM5LjQxIDMzMi44LC0xMzkuNDEgMzMyLjgsLTE5OC41NyAzMzIuOCwtMTk4LjU3IDMzMi44LC0yMDQuNTcgMzI2LjgsLTIxMC41NyAzMjAuOCwtMjEwLjU3Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIyOS44NCIgeT0iLTE4Ni4yNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5QUk9WRUQsIGNvbmRpdGlvbmFsPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIyMjkuODQiIHk9Ii0xNzAuNDkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+Rmlyc3QmIzQ1O2Nyb3NzaW5nIGZhaWx1cmVzIG5lZWQ8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIyOS44NCIgeT0iLTE1NC43NCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5tb3JlIHRoYW4gNTAgb2RkIHJ1bnM8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIyOS44NCIgeT0iLTEzOC45OSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5Bc3N1bWVzIGZpbml0ZSB2ZXJpZmljYXRpb248L3RleHQ+CjwvZz4KPCEtLSBmZXcmIzQ1OyZndDtjc3QgLS0+CjxnIGlkPSJlZGdlNSIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+ZmV3JiM0NTsmZ3Q7Y3N0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk1NTEzIiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik0yNTYuOCwtMjExLjIzQzI2OS45LC0yMzEuMjYgMjg1LjU3LC0yNTUuMjIgMjk4LjU3LC0yNzUuMSIvPgo8cG9seWdvbiBmaWxsPSIjOTk1NTEzIiBzdHJva2U9IiM5OTU1MTMiIHBvaW50cz0iMjk2LjUyLC0yNzYuNDQgMzAyLjQsLTI4MC45NiAzMDAuNjIsLTI3My43NiAyOTYuNTIsLTI3Ni40NCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIzMzMuODQiIHk9Ii0yNDguMTIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+YXJiaXRyYXJ5IHJ1biBjb3VudHM6PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIzMzMuODQiIHk9Ii0yMzYuMTIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+bWlzc2luZyBtZWNoYW5pc208L3RleHQ+CjwvZz4KPCEtLSBwYWNrIC0tPgo8ZyBpZD0ibm9kZTciIGNsYXNzPSJub2RlIj4KPHRpdGxlPnBhY2s8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMxNzY4NTIiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTYwMy4xNywtNjcuNDFDNjAzLjE3LC02Ny40MSAzNzIuNSwtNjcuNDEgMzcyLjUsLTY3LjQxIDM2Ni41LC02Ny40MSAzNjAuNSwtNjEuNDEgMzYwLjUsLTU1LjQxIDM2MC41LC01NS40MSAzNjAuNSwtMTIgMzYwLjUsLTEyIDM2MC41LC02IDM2Ni41LDAgMzcyLjUsMCAzNzIuNSwwIDYwMy4xNywwIDYwMy4xNywwIDYwOS4xNywwIDYxNS4xNywtNiA2MTUuMTcsLTEyIDYxNS4xNywtMTIgNjE1LjE3LC01NS40MSA2MTUuMTcsLTU1LjQxIDYxNS4xNywtNjEuNDEgNjA5LjE3LC02Ny40MSA2MDMuMTcsLTY3LjQxIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjQ4Ny44NCIgeT0iLTQzLjA4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPlBBUEVSIFJFU1VMVCDCtyByZXN0cmljdGVkIGZhbWlseTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNDg3Ljg0IiB5PSItMjcuMzMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+U3BlY2lmaWMgQmVhdHR5IHdvcmRzIGF0IG4g4omkIENLPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI0ODcuODQiIHk9Ii0xMS41OCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5jYW5ub3QgaGF2ZSBhbGwgZGlzdGluY3Qgb2RkIHN0YXRlczwvdGV4dD4KPC9nPgo8IS0tIHJlcGVhdCAtLT4KPGcgaWQ9Im5vZGU4IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5yZXBlYXQ8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1YzQ4OTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iMSw1IiBkPSJNNjA2LjkyLC0yMDIuN0M2MDYuOTIsLTIwMi43IDM2OC43NSwtMjAyLjcgMzY4Ljc1LC0yMDIuNyAzNjIuNzUsLTIwMi43IDM1Ni43NSwtMTk2LjcgMzU2Ljc1LC0xOTAuNyAzNTYuNzUsLTE5MC43IDM1Ni43NSwtMTQ3LjI5IDM1Ni43NSwtMTQ3LjI5IDM1Ni43NSwtMTQxLjI5IDM2Mi43NSwtMTM1LjI5IDM2OC43NSwtMTM1LjI5IDM2OC43NSwtMTM1LjI5IDYwNi45MiwtMTM1LjI5IDYwNi45MiwtMTM1LjI5IDYxMi45MiwtMTM1LjI5IDYxOC45MiwtMTQxLjI5IDYxOC45MiwtMTQ3LjI5IDYxOC45MiwtMTQ3LjI5IDYxOC45MiwtMTkwLjcgNjE4LjkyLC0xOTAuNyA2MTguOTIsLTE5Ni43IDYxMi45MiwtMjAyLjcgNjA2LjkyLC0yMDIuNyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI0ODcuODQiIHk9Ii0xNzguMzciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxNS4wMCI+UFJPUE9TRUQgwrcgc2FtZSBmYW1pbHkgb25seTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNDg3Ljg0IiB5PSItMTYyLjYyIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTUuMDAiPlBhY2tpbmcgKyBiYWxhbmNlZCBwZXJpb2QgKyBLbmlnaHQ8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjQ4Ny44NCIgeT0iLTE0Ni44NyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE1LjAwIj5FeGNsdWRlIHJlcGVhdGluZyByZWFsaXphdGlvbnM8L3RleHQ+CjwvZz4KPCEtLSBwYWNrJiM0NTsmZ3Q7cmVwZWF0IC0tPgo8ZyBpZD0iZWRnZTYiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPnBhY2smIzQ1OyZndDtyZXBlYXQ8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM1YzQ4OTAiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTQ4Ny44NCwtNjguMzRDNDg3Ljg0LC04NS44NiA0ODcuODQsLTEwNy40NSA0ODcuODQsLTEyNi4wNiIvPgo8cG9seWdvbiBmaWxsPSIjNWM0ODkwIiBzdHJva2U9IiM1YzQ4OTAiIHBvaW50cz0iNDg1LjM5LC0xMjUuODUgNDg3Ljg0LC0xMzIuODUgNDkwLjI5LC0xMjUuODUgNDg1LjM5LC0xMjUuODUiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNTQxLjA5IiB5PSItOTIuOTYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+Y2FuZGlkYXRlIGNvbXBvc2l0aW9uPC90ZXh0Pgo8L2c+CjwhLS0gcmVwZWF0JiM0NTsmZ3Q7Y3N0IC0tPgo8ZyBpZD0iZWRnZTciIGNsYXNzPSJlZGdlIj4KPHRpdGxlPnJlcGVhdCYjNDU7Jmd0O2NzdDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk5NTUxMyIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNNDUwLjAzLC0yMDMuNjlDNDI1LjY3LC0yMjUuNCAzOTMuOTEsLTI1My43MSAzNjguNDgsLTI3Ni4zOCIvPgo8cG9seWdvbiBmaWxsPSIjOTk1NTEzIiBzdHJva2U9IiM5OTU1MTMiIHBvaW50cz0iMzY2Ljg4LC0yNzQuNTIgMzYzLjI4LC0yODEgMzcwLjE0LC0yNzguMTggMzY2Ljg4LC0yNzQuNTIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNDkxLjEiIHk9Ii0yNDguMTIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+YXJiaXRyYXJ5IHdvcmRzIEFORCBoZWlnaHRzOjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNDkxLjEiIHk9Ii0yMzYuMTIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+bm8gZ2VuZXJhbCBhZG1pc3Npb24gbWVjaGFuaXNtPC90ZXh0Pgo8L2c+CjwvZz4KPC9zdmc+Cg==" alt="Collatz proof map: both global fronts remain open; restricted first-crossing results sit below a missing generalization." />
+<figcaption aria-hidden="true">Collatz proof map: both global fronts
+remain open; restricted first-crossing results sit below a missing
+generalization.</figcaption>
+</figure>
+<p><strong>Reading the map:</strong> solid arrows are established
+implications, even when their starting assumptions remain open. Dashed
+arrows are missing research steps. The two global fronts are needed
+<strong>together</strong>. “Paper” means a written argument that has not
+yet been transferred to Lean.</p>
+<h2 id="what-we-have-actually-established">What we have actually
+established</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Result</th>
+<th>What it tells us</th>
+<th>Its boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>An exact split of Collatz into two fronts</strong></td>
+<td>No divergence <strong>and</strong> no nontrivial cycle would prove
+Collatz.</td>
+<td>Neither front is closed.</td>
+</tr>
+<tr>
+<td><strong>Coefficient crossing is equivalent to no
+divergence</strong></td>
+<td>The linear multiplier along an orbit eventually falling below 1 is
+exactly as strong as excluding divergence.</td>
+<td>This reformulation has not made the open claim easier.</td>
+</tr>
+<tr>
+<td><strong>Descent at first crossing would exclude cycles</strong></td>
+<td>If the actual integer is always smaller when its multiplier first
+falls below 1, nontrivial cycles cannot exist. This is the open
+statement called <strong>CST</strong>.</td>
+<td>Additive terms can defeat multiplier contraction; ruling that out is
+the work.</td>
+</tr>
+<tr>
+<td><strong>First-crossing failures need more than 50 odd
+runs</strong></td>
+<td>The Lean argument eliminates the few-run cases, assuming the
+explicitly stated finite verification bound.</td>
+<td>The paper reaches 68; increasing this cutoff does not address
+arbitrary run counts.</td>
+</tr>
+<tr>
+<td><strong>Finite temporal packing for one balanced
+family</strong></td>
+<td>At starting height at most a fixed constant times word length,
+sufficiently long Beatty words cannot be realized by distinct odd
+states.</td>
+<td>This is a paper result for one family; a realization that repeats is
+not yet excluded.</td>
+</tr>
+</tbody>
+</table>
+<p>An <strong>odd run</strong> is a consecutive block of odd steps. A
+<strong>Beatty word</strong> spaces odd steps as evenly as an irrational
+slope allows. These unusually balanced words provide a demanding test
+case, not an exhaustive list of dangerous words.</p>
+<h2 id="where-we-are-pressing">Where we are pressing</h2>
+<h3 id="the-latest-concrete-candidate-finish-the-balanced-family-test">The
+latest concrete candidate: finish the balanced-family test</h3>
+<p>The September 25 proposal combines the finite packing result with a
+theorem excluding certain balanced cycles:</p>
+<ol type="1">
+<li>Packing forces a sufficiently long, low-height realization to repeat
+early.</li>
+<li>Enough of the genuine Beatty prefix survives to constrain the
+repeating period.</li>
+<li>Prove that its primitive period is circularly balanced.</li>
+<li>Apply Knight’s high-cycle exclusion, and separately exclude the
+trivial cycle.</li>
+</ol>
+<p><strong>This composition is unproved.</strong> The candidate note
+records the delicate points, including the artificially appended final
+symbol, which cannot be treated as part of the balanced prefix. No proof
+step has followed that note in the inspected branch.</p>
+<p><strong>A successful result would say:</strong> for every fixed
+height multiplier, this entire balanced family eventually has no
+positive integer realization at that height, whether or not states
+repeat. That is a definite theorem with a finish line. It would still
+leave arbitrary first-crossing words and larger starting heights
+untouched.</p>
+<h3 id="the-larger-missing-step-exclude-every-first-crossing-survivor">The
+larger missing step: exclude every first-crossing survivor</h3>
+<p>A survivor is a start whose multiplier has contracted but whose
+actual value has not descended. Its arithmetic is now sharply
+constrained by an exact near-cycle equation. The existing estimates
+eliminate relatively few odd runs; they do not eliminate the many-run
+region. Even a linear lower bound on the required run count would leave
+that complementary region open.</p>
+<p><strong>Closing CST requires a uniform obstruction to integer
+realization across all those words.</strong> There is no such
+obstruction on the board. No-divergence remains a second, separate
+requirement.</p>
+<h2 id="what-would-count-as-a-change-in-position">What would count as a
+change in position?</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Next result</th>
+<th>What changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prove or refute the packing–balanced-period composition</td>
+<td>Settles this composition, or eliminates the proposed mechanism.</td>
+</tr>
+<tr>
+<td>Find a mechanism covering arbitrary first-crossing words</td>
+<td>Supplies the missing route from restricted examples toward CST.</td>
+</tr>
+<tr>
+<td>Prove CST</td>
+<td>Closes the nontrivial-cycle front.</td>
+</tr>
+<tr>
+<td>Prove no-divergence as well</td>
+<td>Reaches full Collatz.</td>
+</tr>
+</tbody>
+</table>
+<p>The standing gate in <a href="DIRECTION.md">DIRECTION.md</a> is
+appropriate: further proof campaigns need a mechanism for the actual
+gap. More run bookkeeping, marginal statistics, or a higher finite
+cutoff do not supply one. Retired approaches are recorded in <a href="APPROACHES.md">APPROACHES.md</a>.</p>
+<h2 id="evidence-and-upkeep">Evidence and upkeep</h2>
+<p>Snapshot: <code>main</code> at <code>751a76e</code>. Read the <a href="CollatzMoonshot/Conjecture.lean">exact split</a>, <a href="CollatzMoonshot/FrontA/CrossingEquivalence.lean">crossing
+equivalence</a>, <a href="CollatzMoonshot/FrontA/FirstCrossingCycles.lean">CST-to-cycle
+implication</a>, <a href="RESEARCH-2026-09-22-finite-packing-christoffel.md">finite packing
+argument</a>, and <a href="RESEARCH-2026-09-25-packing-balanced-period-candidate.md">candidate
+composition</a>.</p>
+<p>This is the maintained reader’s map. Update it when a frontier is
+proved, refuted, or replaced; retain the detailed chronology in the
+existing research notes. Diagram source: <a href="docs/overview.dot">docs/overview.dot</a>. Rebuild the visual
+edition with <code>make -f docs/overview.mk</code>.</p>
+</body>
+</html>

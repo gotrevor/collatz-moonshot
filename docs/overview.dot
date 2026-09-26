@@ -1,0 +1,24 @@
+digraph Collatz {
+  graph [rankdir=BT, bgcolor="white", pad=0.3, nodesep=0.34, ranksep=0.65, fontname="Helvetica", fontsize=15, compound=true];
+  node [shape=box, style="rounded", fontname="Helvetica", fontsize=15, margin="0.18,0.14", color="#59636e", penwidth=1.5];
+  edge [fontname="Helvetica", fontsize=11, color="#59636e", arrowsize=0.7];
+
+  goal [label="DESTINATION · OPEN\nEvery positive integer reaches 1", fontsize=19, penwidth=2.5, color="#152c3a"];
+  both [label="BOTH required", shape=ellipse, fontsize=12];
+  nd [label="OPEN\nNo divergent orbit\n= eventual coefficient crossing", color="#995513", style="rounded,dashed"];
+  nc [label="OPEN\nNo nontrivial cycle", color="#995513", style="rounded,dashed"];
+  cst [label="OPEN · CST\nActual descent at the\nfirst coefficient crossing", color="#995513", style="rounded,dashed"];
+  few [label="PROVED, conditional\nFirst-crossing failures need\nmore than 50 odd runs\nAssumes finite verification", color="#176852", penwidth=2];
+  pack [label="PAPER RESULT · restricted family\nSpecific Beatty words at n ≤ CK\ncannot have all distinct odd states", color="#176852", penwidth=2];
+  repeat [label="PROPOSED · same family only\nPacking + balanced period + Knight\nExclude repeating realizations", color="#5c4890", style="rounded,dotted", penwidth=2];
+
+  nd -> both;
+  nc -> both;
+  both -> goal [label="proved equivalence", dir=both];
+  cst -> nc [label="proved implication"];
+  few -> cst [style=dashed, label="arbitrary run counts:\nmissing mechanism", color="#995513"];
+  pack -> repeat [style=dashed, label="candidate composition", color="#5c4890"];
+  repeat -> cst [style=dashed, label="arbitrary words AND heights:\nno general admission mechanism", color="#995513"];
+  {rank=same; nd; nc;}
+  {rank=same; few; repeat;}
+}

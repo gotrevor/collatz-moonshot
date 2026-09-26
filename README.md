@@ -1,5 +1,7 @@
 # collatz-moonshot 🌙
 
+> **Current project map (26 September 2026):** [overview and diagram](OVERVIEW.md) · [browser edition](OVERVIEW.html).  What is proved, where the gaps are, and where we are pressing.
+
 [![CI](https://github.com/gotrevor/collatz-moonshot/actions/workflows/ci.yml/badge.svg)](https://github.com/gotrevor/collatz-moonshot/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
