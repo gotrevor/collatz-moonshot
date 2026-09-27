@@ -1,5 +1,31 @@
 # HANDOFF 2026-09-27 — negative-shadow obstructions formalized (task complete)
 
+**Branch** `main`.  **HEAD at handoff** `52c6cd7` (the commit that added this
+document plus the kernel weighted anchors and the research note's formalization
+status); the mathematics landed one commit earlier at `3f5cd81`.  `lake build`
+green, 8791 jobs.  Scoped objective `sorry-free:CollatzMoonshot/Obstructions/NegativeShadow.lean`
+is met, `box done` confirmed it, and no further lap is needed for this task.
+
+**Exact next steps: none are required.**  This bounded task is closed.  If a
+later session wants to continue in this area, the only two things left are both
+optional and explicitly out of the accepted scope:
+
+1. Replace the depth-10 `native_decide` catalog facts with a kernel `decide`
+   (`catalog_ten_six`, `catalog_ten_three`, `catalog_ten_increases`).  At 2^11
+   words this is a performance question, not a mathematical one, and the
+   architect pinned the current evaluation convention — ask before changing it.
+2. Anything *new* in the negative-reference direction must first clear the gate
+   stated at the end of `RESEARCH-2026-09-27-negative-shadow.md`: name the
+   admissible family, say why its score is finite, say how it handles a change
+   of maximizing reference, and survive both the `9 -> 14` denominator example
+   and the `(1,2)`-cycle witnesses now formalized here.  The two theorems proved
+   this lap are precisely what kills the two obvious candidates, so they are the
+   benchmark any successor proposal has to beat, not scaffolding to extend.
+
+Do **not** treat the sorry-free state of this module as licence to start a proof
+campaign on a negative-reference mechanism; the repo's research gate in
+`DIRECTION.md` is unchanged by a proved obstruction.
+
 Bounded task `KICKOFF-2026-09-27-negative-shadow.md` is finished.  All eleven
 acceptance claims are machine-checked, every pinned statement is preserved
 verbatim, and `CollatzMoonshot/Obstructions/NegativeShadow.lean` contains no
