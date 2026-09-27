@@ -284,3 +284,60 @@ def test_dyadic_cycle_ledger_is_prefix_bookkeeping():
     assert got['prefix_collision_counts']==[[1,13],[2,7],[3,3],[4,1]]
     assert got['vandermonde_v2']==got['prefix_collision_sum']==24
     assert got['integral'] is False
+
+
+def test_catalyst_makes_the_first_cubic_quadratically_reachable():
+    # r7*r121=r11*r17 supplies the first move; the explicit seven-step
+    # chain is checked edge-by-edge in Lean's CatalyticRepair module.
+    got=run('quadratic-path','--sources',7,65,133,121,'--target',13,19,29,121,
+            '--max-label',2000,'--max-states',500)
+    assert got['path'][0]==[7,65,121,133]
+    assert got['path'][-1]==[13,19,29,121]
+    assert got['value']=='209/1120'
+
+
+def test_quadratic_unit_assisted_seven_repair():
+    got=run('unit-assisted-seven')
+    assert all(v=='7' for v in got['stage_values'])
+    assert got['final_twos']==6
+    assert got['final_sources']==[5,7,11,13,17]
+    assert got['final_certificate']['realizable'] is True
+    assert got['moves'][0]=={'remove':[35,53],'add':[25,133],'value':'7/16'}
+    assert got['moves'][-1]=={'remove':[7,121],'add':[11,17],'value':'11/26'}
+
+
+def test_small_generators_are_frozen_without_a_height_bound():
+    for n in [1,3,5]:
+        got=run('quadratic-neighbors',n)
+        assert got['frozen'] is True
+        assert got['height_cutoff'] is None
+    got=run('quadratic-neighbors',7)
+    # Directly solving the small-variable equations gives exactly these
+    # three partners.  Only 121 is 3-free.
+    assert got['nontrivial_exchanges']==[
+        {'before':[7,121],'after':[11,17]},
+        {'before':[7,261],'after':[9,29]},
+        {'before':[7,429],'after':[13,15]}]
+
+
+def test_unit_palette_obstruction_and_essential_cubic():
+    got=run('palette-obstruction')
+    assert got['unit_indices']=={'trivial':0,'eight':0,'thirteen':0}
+    # Virtual: 5*16-3*16-1=31.  Actual: 5*28-3*37-1=28.
+    assert got['seventy_one']['virtual_index']==31
+    assert got['seventy_one']['actual_index']==28
+    # (11/17)*(13/20)*(17/26)=11/40
+    # (5/8)*(55/83)*(83/125)=11/40.
+    assert got['essential_cubic']['left_value']==got['essential_cubic']['right_value']=='11/40'
+    assert got['essential_cubic']['index_change']==1
+    assert got['new_unit']['value']=='1'
+    assert got['new_unit']['index']==1
+
+
+def test_structural_snapshot_contains_both_kinds_of_cubic_obstruction():
+    got=run('controls','--structural')
+    assert got['cubic_component']['path'] is None
+    assert got['cubic_component']['height_pruned']==0
+    assert got['catalyst_121']['path'] is not None
+    assert got['small_neighbors'][2]['frozen'] is True
+    assert got['sharp_anchors'][1]['sharp_defect_norm']=='1/26'

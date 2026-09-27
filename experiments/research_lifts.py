@@ -666,6 +666,64 @@ def quadratic_neighbors(a):
             'frozen':not rows,'height_cutoff':None}
 
 
+
+def unit_assisted_seven():
+    """Repair using eight quadratic moves and the two fixed unit words."""
+    unit8=[19,25,29,55,83]
+    unit13=[5,7,7,11,17,55,65,83]
+    moves=[([35,53],[25,133]),([65,133],[53,247]),
+           ([17,53],[13,901]),([247,901],[221,1577]),
+           ([11,221],[13,55]),([55,1577],[95,121]),
+           ([13,95],[19,29]),([7,121],[11,17])]
+    labels=Counter([35,53]+unit13)
+    stages=[sorted(labels.elements())]
+    def value(pair):
+        return prod((Fraction(u,step(u)) for u in pair),start=Fraction(1))
+    for old,new in moves:
+        assert not (Counter(old)-labels)
+        assert value(old)==value(new)
+        labels.subtract(old);labels.update(new)
+        stages.append(sorted(labels.elements()))
+    assert not (Counter(unit8)-labels)
+    labels.subtract(unit8)
+    return {'original_twos':4,'insert_unit':{'twos':5,'sources':unit13},
+            'moves':[{'remove':old,'add':new,'value':str(value(old))} for old,new in moves],
+            'stages':stages,'stage_values':[str(512*value(row)) for row in stages],
+            'remove_unit':{'twos':3,'sources':unit8},
+            'final_twos':6,'final_sources':sorted(labels.elements()),
+            'final_certificate':certificate(6,list(labels.elements()))}
+
+
+def palette_obstruction():
+    """Index preserved by quadratic moves and the three initial unit words.
+
+    Frozen multiplicities m1,m5 give I=5*twos-3*odd_count-m5-2*m1.
+    The index is not a scalar invariant: the two certificates of 71 differ.
+    The cubic r5*r55*r83=r11*r13*r17 breaks it by one.
+    """
+    def index(t,labels):
+        return 5*t-3*len(labels)-labels.count(5)-2*labels.count(1)
+    unit8=[19,25,29,55,83]
+    unit13=[5,7,7,11,17,55,65,83]
+    new_unit13=[7,7,11,11,13,17,17,65]
+    virtual=[25,19,29,11,17,13,5,355,533,7,7,11,17,55,65,83]
+    actual=orbit_to_one(71)
+    twos,odds=factor_counts(actual)
+    actual_odds=list(odds.elements())
+    left=[5,55,83];right=[11,13,17]
+    def value(labels):
+        return prod((Fraction(u,step(u)) for u in labels),start=Fraction(1))
+    return {'unit_indices':{'trivial':index(1,[1]),'eight':index(3,unit8),
+                            'thirteen':index(5,unit13)},
+            'seventy_one':{'virtual_index':index(16,virtual),'actual_index':index(twos,actual_odds),
+                          'actual_twos':twos,'actual_odds':actual_odds},
+            'essential_cubic':{'left':left,'right':right,'left_value':str(value(left)),
+                               'right_value':str(value(right)),
+                               'index_change':index(0,right)-index(0,left)},
+            'new_unit':{'twos':5,'sources':new_unit13,'value':str(32*value(new_unit13)),
+                        'index':index(5,new_unit13)}}
+
+
 def main():
     if sys.argv[1:]==['test']:
         raise SystemExit(subprocess.call(['uv','run','--quiet','--with','pytest','python3','-m',
@@ -720,8 +778,11 @@ def main():
     p.add_argument('--cutoff',type=int,default=1000)
     p=sub.add_parser('quadratic-neighbors')
     p.add_argument('label',type=int)
+    p=sub.add_parser('unit-assisted-seven')
+    p=sub.add_parser('palette-obstruction')
     p=sub.add_parser('controls')
     p.add_argument('--followup',action='store_true')
+    p.add_argument('--structural',action='store_true')
     p.add_argument('--scan-depth',type=int,default=16)
     a=parser.parse_args()
     if a.command=='certificate': result=certificate(a.twos,a.odd_sources)
@@ -743,6 +804,19 @@ def main():
     elif a.command=='catalytic-seven': result=catalytic_seven()
     elif a.command=='anchored-cut': result=anchored_cut(a.n,a.cutoff)
     elif a.command=='quadratic-neighbors': result=quadratic_neighbors(a.label)
+    elif a.command=='unit-assisted-seven': result=unit_assisted_seven()
+    elif a.command=='palette-obstruction': result=palette_obstruction()
+    elif a.structural:
+        result={
+            'unit_parity':unit_parity(),
+            'cubic_component':quadratic_path([7,65,133],[13,19,29],1000,20),
+            'catalyst_121':quadratic_path([7,65,133,121],[13,19,29,121],2000,500),
+            'unit_assisted_repair':unit_assisted_seven(),
+            'small_neighbors':[quadratic_neighbors(u) for u in [1,3,5,7]],
+            'palette_obstruction':palette_obstruction(),
+            'dyadic_ledger':dyadic_pair_ledger('11111000'),
+            'sharp_anchors':[anchored_cut(n,64) for n in [3,7,8]],
+        }
     elif a.followup:
         result={
             'local_repair':two_edge_repair(1),
