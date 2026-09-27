@@ -363,3 +363,8 @@ associated real is aperiodicity restated (`injective_of_diverges` collapses unbo
 `-> infinity`), and the transcendence machinery (Adamczewski-Bugeaud, `liminf p(n)/n < infinity`)
 fires only on *low* complexity - the Sturmian antipode, already retired here as Christoffel-word
 residue signatures and the Cobham angle.  No lever on the run-count gap node.
+
+
+## 2026-09-27: negative-reference potential, tested and retired
+
+The exact archimedean/2-adic score has compatible-branch contraction, but a finite cycle catalog fails, the all-rational envelope is exactly `(n+1)^2`, and the inverse-basin denominator repair is infinite already at 1.  Proofs, controls, and the persistent probe: [negative-shadow research note](RESEARCH-2026-09-27-negative-shadow.md).  No surviving mechanism or new proof lap.
