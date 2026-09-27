@@ -71,3 +71,5 @@ import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional
 import CollatzMoonshot.Obstructions.NegativeShadow
+
+import CollatzMoonshot.Obstructions.ArithmeticLifts

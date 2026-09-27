@@ -372,3 +372,7 @@ The exact archimedean/2-adic score has compatible-branch contraction, but a fini
 ## 2026-09-27 - three arithmetic research proposals
 
 The negative-shadow envelope and inverse-basin obstructions are now proved in Lean.  Three different proposed directions, with explicit failure controls and bounded next experiments: [semigroup certificate lifting, pairwise cycle transport, and positive fixed-series rigidity](RESEARCH-2026-09-27-three-arithmetic-lifts.md).  First experimental preference: lift prime balance to vertex balance by parametric neutral exchanges.  No general repair or exclusion inequality is established, and the proof-campaign gate remains closed.
+
+### Follow-up: a local semigroup repair and its obstruction
+
+[The three-direction follow-up](RESEARCH-2026-09-27-arithmetic-lifts-followup.md) finds a parametric two-edge neutral repair, classifies its entire two-factor fiber and exhibits a nonzero local minimum.  The next target is a finer rewrite measure on atomic four-charge multiplicative relations.  Pair-gap integrality restates state admission; the actual positive Collatz coefficient cone has no uniform weighted coercivity bound.  No general termination or Collatz exclusion has been established.

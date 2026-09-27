@@ -145,3 +145,7 @@ Two controls prevent weakening away the hard part:
 My first choice is the semigroup lift (65% confidence as a choice of next experiment, not as a probability of solving Collatz).  It starts from a strong existing theorem, exposes an exact lost datum, and has a tiny obstruction on which to test repairs.  Pairwise cycle transport is the second bet; positive fixed-series rigidity is the third because the analytical obstruction is less localized.
 
 The proposal-specific formulations were checked against the repo's negative inventory.  None is claimed to be new in the literature.  The scripts provide exact finite controls and an exhaustive factor-ordering decision for a supplied finite certificate; they do not prove the general candidate statements.  Eleven CLI tests use independently computed anchors.  Their outputs are recorded in `experiments/research_lifts_controls.json`.
+
+## Follow-up after pursuing all three
+
+[Local repair, exact local minimum, and positive-cone obstruction](RESEARCH-2026-09-27-arithmetic-lifts-followup.md).  A parametric neutral exchange now reduces a specified vertex defect, but its complete two-factor fiber contains a nonzero local minimum.  The factor-count obstruction and pair-integrality equivalence are proved in `Obstructions/ArithmeticLifts.lean`; the full operator construction remains a paper proof with its exact general statement pinned as an unproved Lean Prop.
