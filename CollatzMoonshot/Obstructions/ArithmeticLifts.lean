@@ -5,9 +5,9 @@ import CollatzMoonshot.FrontB.Dictionary
 # Obstructions encountered while pursuing three arithmetic lifts
 
 The semigroup length obstruction and the pair-integrality equivalence are
-proved here.  The approximate-fixed-series argument is pinned as an explicit
-Prop, with its decay arithmetic proved below; the general coefficient identity
-is not yet formalized.  See RESEARCH-2026-09-27-arithmetic-lifts-followup.md.
+proved here.  The approximate-fixed-series statement and decay arithmetic
+are recorded below; PositiveApproximation.lean proves the general coefficient
+identity against these unchanged definitions.  See RESEARCH-2026-09-27-arithmetic-lifts-followup.md.
 -/
 
 namespace CollatzMoonshot.Obstructions.ArithmeticLifts
@@ -125,8 +125,8 @@ def approxCoeff (K n : ℕ) : ℚ :=
 def transfer (a : ℕ → ℚ) (n : ℕ) : ℚ :=
   a (2 * n) + if n % 3 = 2 then a ((2 * n - 1) / 3) else 0
 
-/-- Paper-proved target, NOT a proved Lean theorem.  The full general bridge
-from the explicit series to its one-point defect remains to be formalized. -/
+/-- The general coefficient statement, proved by positiveApproximationFamily
+in PositiveApproximation.lean.  Kept separate from its proof module. -/
 def PositiveApproximationFamily : Prop :=
   ∀ K, 2 ≤ K →
     (∀ n, approxCoeff K n = 0 ∨ approxCoeff K n = 1) ∧

@@ -81,3 +81,5 @@ import CollatzMoonshot.Obstructions.MinimalRepairs
 import CollatzMoonshot.Obstructions.QuadraticInvariants
 
 import CollatzMoonshot.Obstructions.CatalyticRepair
+
+import CollatzMoonshot.Obstructions.RepairPalette

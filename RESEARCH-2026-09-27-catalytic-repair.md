@@ -133,7 +133,7 @@ But
 r_5 r_55 r_83 = r_11 r_13 r_17 = 11/40.
 ```
 
-The left has one r_5 and the right has none.  No catalyst can make this exchange quadratic, because the identical catalyst contributes the same r_5 count to both sides.  `QuadraticInvariants.lean` is the separately assigned formalization of this universal statement; its final status is recorded below.
+The left has one r_5 and the right has none.  No catalyst can make this exchange quadratic, because the identical catalyst contributes the same r_5 count to both sides.  `QuadraticInvariants.lean` now proves the frozen multiplicity theorem and `no_catalyst_for_five_exchange`, universally over all finite catalysts.
 
 The complete neighbor probe through a=101 found only 1,3,5 frozen.  Each individual list is complete over all partner heights; the assertion that there are no other frozen labels beyond 101 is **not** established.
 
@@ -145,7 +145,7 @@ Allow arbitrary quadratic replacements and insertion/removal of `2r_1`, U8 and U
 I = 5t - 3k - m_5 - 2m_1.
 ```
 
-Quadratic moves preserve it by the frozen-factor result; each of the three unit words has I=0.  The published 32-factor certificate for 71 has I=31.  The actual 65-step certificate has 28 even and 37 odd steps, includes one r_5 and no r_1, so I=28.  Extra turns around `1 -> 2 -> 1` add `2r_1` and cannot change I.  Thus this fixed palette, despite repairing 7, **cannot repair that certificate for 71 into any path to 1**.
+Quadratic moves preserve it by the frozen-factor result; each of the three unit words has I=0.  The published 32-factor certificate for 71 has I=31.  The actual 65-step certificate has 28 even and 37 odd steps, includes one r_5 and no r_1, so I=28.  `RepairPalette.lean` proves index preservation under arbitrary sequences of these moves, verifies the actual 65-step trace, and proves `initial_palette_cannot_repair_seventy_one`.  Extra turns around `1 -> 2 -> 1` add `2r_1` and cannot change I.  Thus this fixed palette, despite repairing 7, **cannot repair that certificate for 71 into any path to 1**.
 
 The essential cubic above changes I by one.  Applied to U13 it produces a new unit, of value one but I=1:
 
@@ -246,4 +246,4 @@ This sharp anchored result is a paper proof with exact extremizer controls; its 
 
 The persistent suite has 38 CLI tests.  `experiments/catalytic_repair_controls.json` records the small complete components, the successful catalyst path, the full eight-move repair, frozen-generator lists, the palette obstruction, and the operator extremizers.  A path found in a bounded graph is an exact witness.  Failure is called a complete-component obstruction only when the queue is exhausted and no height pruning occurred.
 
-Lean files: `MinimalRepairs.lean` proves the unbounded two-state obstruction; `CatalyticRepair.lean` checks the explicit positive repair witnesses; `PositiveApproximation.lean` proves the general coefficient family.  `QuadraticInvariants.lean` is assigned the all-catalysts obstruction.  The mathematical crux is still a terminating repair mechanism with actual vertex balance.  The new local machinery does not supply that theorem.
+Lean files: `MinimalRepairs.lean` proves the unbounded two-state obstruction; `CatalyticRepair.lean` checks the explicit positive repair witnesses; `PositiveApproximation.lean` proves the general coefficient family.  `QuadraticInvariants.lean` proves the all-catalysts obstruction; `RepairPalette.lean` proves the conserved index and the initial palette's nonreachability at 71.  The mathematical crux is still a terminating repair mechanism with actual vertex balance.  The new local machinery does not supply that theorem.
