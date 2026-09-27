@@ -70,3 +70,4 @@ import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontB.Dictionary
 import CollatzMoonshot.FrontB.OneCircuit
 import CollatzMoonshot.Conditional
+import CollatzMoonshot.Obstructions.NegativeShadow
