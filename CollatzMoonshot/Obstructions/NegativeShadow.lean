@@ -6,8 +6,8 @@ import CollatzMoonshot.FrontB.Dictionary
 
 Faithful targets for RESEARCH-2026-09-27-negative-shadow.md.  The finite
 catalog uses the existing FrontB word numerator and odd-step count.
-The two general obstructions are unfinished until their proofs are supplied.
-Keep the definitions and headline statements fixed during the bounded task.
+The all-rational envelope and inverse-basin unboundedness obstructions
+are proved below, together with the finite-catalog counterexample.
 -/
 
 namespace CollatzMoonshot.Obstructions.NegativeShadow

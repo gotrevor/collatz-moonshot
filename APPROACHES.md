@@ -368,3 +368,7 @@ residue signatures and the Cobham angle.  No lever on the run-count gap node.
 ## 2026-09-27: negative-reference potential, tested and retired
 
 The exact archimedean/2-adic score has compatible-branch contraction, but a finite cycle catalog fails, the all-rational envelope is exactly `(n+1)^2`, and the inverse-basin denominator repair is infinite already at 1.  Proofs, controls, and the persistent probe: [negative-shadow research note](RESEARCH-2026-09-27-negative-shadow.md).  No surviving mechanism or new proof lap.
+
+## 2026-09-27 - three arithmetic research proposals
+
+The negative-shadow envelope and inverse-basin obstructions are now proved in Lean.  Three different proposed directions, with explicit failure controls and bounded next experiments: [semigroup certificate lifting, pairwise cycle transport, and positive fixed-series rigidity](RESEARCH-2026-09-27-three-arithmetic-lifts.md).  First experimental preference: lift prime balance to vertex balance by parametric neutral exchanges.  No general repair or exclusion inequality is established, and the proof-campaign gate remains closed.

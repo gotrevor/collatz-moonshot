@@ -1,0 +1,135 @@
+{
+  "three_path": {
+    "value": "3",
+    "realizable": true,
+    "backward_path": [
+      1,
+      2,
+      4,
+      8,
+      5,
+      3
+    ],
+    "states_examined": 6
+  },
+  "nine_product_only": {
+    "value": "9",
+    "realizable": false,
+    "backward_path": null,
+    "states_examined": 15
+  },
+  "nine_repaired": {
+    "value": "9",
+    "realizable": true,
+    "backward_path": [
+      1,
+      2,
+      4,
+      8,
+      5,
+      10,
+      20,
+      13,
+      26,
+      17,
+      11,
+      7,
+      14,
+      9
+    ],
+    "states_examined": 23
+  },
+  "positive_cycle": {
+    "word": "10",
+    "states": [
+      "1",
+      "2"
+    ],
+    "mixed_ratio": "2",
+    "required_ratio": "2",
+    "identity_holds": true,
+    "integral": true,
+    "minimum_gap": "1"
+  },
+  "negative_cycle": {
+    "word": "110",
+    "states": [
+      "-5",
+      "-7",
+      "-10"
+    ],
+    "mixed_ratio": "8/3",
+    "required_ratio": "8/3",
+    "identity_holds": true,
+    "integral": true,
+    "minimum_gap": "2"
+  },
+  "rational_large_gaps": {
+    "word": "11111000",
+    "states": [
+      "211/13",
+      "323/13",
+      "491/13",
+      "743/13",
+      "1121/13",
+      "1688/13",
+      "844/13",
+      "422/13"
+    ],
+    "mixed_ratio": "268435456/59049",
+    "required_ratio": "268435456/59049",
+    "identity_holds": true,
+    "integral": false,
+    "minimum_gap": "69/13"
+  },
+  "five_n_plus_one": {
+    "word": "1110000",
+    "states": [
+      "13",
+      "33",
+      "83",
+      "208",
+      "104",
+      "52",
+      "26"
+    ],
+    "mixed_ratio": "2097152/125",
+    "required_ratio": "2097152/125",
+    "identity_holds": true,
+    "integral": true,
+    "minimum_gap": "7"
+  },
+  "signed_fixed_control": {
+    "odd_source": 3,
+    "cutoff": 64,
+    "positive": [
+      10,
+      20,
+      40
+    ],
+    "negative": [
+      3,
+      6,
+      12,
+      24,
+      48
+    ],
+    "residuals": []
+  },
+  "multiplicative_map_control": {
+    "cutoff": 64,
+    "support": [
+      1,
+      2,
+      3,
+      4,
+      8,
+      9,
+      16,
+      27,
+      32,
+      64
+    ],
+    "residuals": []
+  }
+}

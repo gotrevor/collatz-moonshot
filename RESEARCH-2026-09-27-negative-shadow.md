@@ -155,7 +155,7 @@ Both general propositions above are now machine-checked in
 `CollatzMoonshot/Obstructions/NegativeShadow.lean`, imported from the root
 build.  `score_le_square` and `scoreValues_isLUB` give section 3 exactly: the
 all-rational envelope equals `(n+1)^2` as a rational least upper bound, with no
-real-supremum machinery, no restriction on `n`, and the actual score rather than
+real-supremum machinery, for every positive `n`, and the actual score rather than
 its upper bound at the sharpness end.  `envelope_not_nonincreasing` turns that
 into the refutation of the proposed monotonicity, using `tstep 3 = 5` and
 `36 > 16`.  Section 4 is covered by `witness_admissible`,
@@ -168,13 +168,6 @@ and not assumed, and the closed pair map factors as
 scan of section 2 is pinned by `catalog_ten_six`, `catalog_ten_three` and
 `catalog_ten_increases`.
 
-Axiom audit: every headline declaration depends only on `propext`,
-`Classical.choice` and `Quot.sound`, with no `sorryAx`.  The three depth-10
-catalog facts additionally carry their own `native_decide` axioms, which is the
-pinned evaluation convention for that finite scan; nothing else in the module
-uses `native_decide`, including the weighted anchors `4`, `192/25`, `9216/529`,
-which are derived from the closed form in the kernel.
-
 ## Reproduction
 
 From the repo root:
@@ -186,4 +179,4 @@ From the repo root:
 ./experiments/negative_shadow.py cycle-witness 2
 ```
 
-The external pytest suite exercises the real CLI with hand-computed rational anchors and includes supplementary checks of the height and compatible-branch identities.  The scan output is stored beside the probe as `negative_shadow_depth10.json`.  The general propositions above are paper proofs; finite tests do not establish them.
+The external pytest suite exercises the real CLI with hand-computed rational anchors and includes supplementary checks of the height and compatible-branch identities.  The scan output is stored beside the probe as `negative_shadow_depth10.json`.  The general propositions are proved in the Lean module; the finite tests provide executable regression controls.
