@@ -418,6 +418,17 @@ theorem witness_weighted_gt (p : ℕ) :
   rw [witness_weighted_closed, lt_div_iff₀ (by positivity)]
   exact mul_lt_mul_of_pos_left hsq h3p
 
+/- Hand-computed weighted anchors from the research note, proved in the kernel
+via the closed form rather than by evaluation. -/
+theorem weighted_anchor_zero : weightedScore 1 (witnessA 0) (witnessB 0) = 4 := by
+  rw [witness_weighted_closed]; norm_num [witnessA]
+
+theorem weighted_anchor_one : weightedScore 1 (witnessA 1) (witnessB 1) = 192 / 25 := by
+  rw [witness_weighted_closed]; norm_num [witnessA]
+
+theorem weighted_anchor_two : weightedScore 1 (witnessA 2) (witnessB 2) = 9216 / 529 := by
+  rw [witness_weighted_closed]; norm_num [witnessA]
+
 /-- Main second obstruction: unboundedness at the known positive cycle. -/
 theorem weighted_witnesses_unbounded :
     ¬ BddAbove (Set.range fun p : ℕ => weightedScore 1 (witnessA p) (witnessB p)) := by

@@ -149,6 +149,32 @@ Other mechanisms considered in this research pass do not yet supply a replacemen
 
 A future negative-reference proposal must specify its admissible family, why its score is finite, how it handles a change of maximizing reference, and why it survives both the `9 -> 14` denominator example and the `(1,2)` cycle witnesses.  Merely saying “track switching costs” does not clear that gate.
 
+## Formalization status (2026-09-27)
+
+Both general propositions above are now machine-checked in
+`CollatzMoonshot/Obstructions/NegativeShadow.lean`, imported from the root
+build.  `score_le_square` and `scoreValues_isLUB` give section 3 exactly: the
+all-rational envelope equals `(n+1)^2` as a rational least upper bound, with no
+real-supremum machinery, no restriction on `n`, and the actual score rather than
+its upper bound at the sharpness end.  `envelope_not_nonincreasing` turns that
+into the refutation of the proposed monotonicity, using `tstep 3 = 5` and
+`36 > 16`.  Section 4 is covered by `witness_admissible`,
+`witness_reaches_neg_one`, `witness_weighted_gt`,
+`weighted_witnesses_unbounded` and `inverse_basin_scores_unbounded`; the
+dynamics half is proved through the reduced numerator (`Rat.num` via
+`Rat.num_div_eq_of_coprime`), so the rational parity test is genuinely checked
+and not assumed, and the closed pair map factors as
+`witnessRef (p+1) -> 2 * witnessRef p -> witnessRef p`.  The finite depth-10
+scan of section 2 is pinned by `catalog_ten_six`, `catalog_ten_three` and
+`catalog_ten_increases`.
+
+Axiom audit: every headline declaration depends only on `propext`,
+`Classical.choice` and `Quot.sound`, with no `sorryAx`.  The three depth-10
+catalog facts additionally carry their own `native_decide` axioms, which is the
+pinned evaluation convention for that finite scan; nothing else in the module
+uses `native_decide`, including the weighted anchors `4`, `192/25`, `9216/529`,
+which are derived from the closed form in the kernel.
+
 ## Reproduction
 
 From the repo root:
