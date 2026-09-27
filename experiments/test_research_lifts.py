@@ -203,3 +203,84 @@ def test_followup_snapshot_checks_the_nonzero_boundary():
     assert got['positive_approximation']['residuals']==[[6560,1]]
     assert got['exact_nearly_positive_fixed']['negative']==[13120]
     assert got['exact_nearly_positive_fixed']['residuals']==[]
+
+
+def test_short_units_and_parity_obstruction():
+    # For k>=1, 2^t(5/8)^k <= 1 < 2^t(2/3)^k.  Below odd
+    # length 13, only t=2,k=3 survives; its least label is 5, leaving
+    # (c-3)(d-3)=10 with c,d odd, impossible modulo 4.
+    got=run('unit-parity')
+    assert got['odd_length_candidates_below_thirteen']==[[2,3]]
+    assert got['reduced_unit_candidates_below_eight']==[[2,3]]
+    assert got['candidate_triple_fiber']['unordered_odd_tuples']==[]
+    assert got['unit_value']=='1'
+    assert got['unit_length']==13
+
+
+def test_exact_factor_fibers_small_anchors():
+    assert run('odd-factor-fiber','--ratio','3/5','--count',1)['unordered_odd_tuples']==[[3]]
+    assert run('odd-factor-fiber','--ratio','1/4','--count',2)['unordered_odd_tuples']==[[1,1]]
+    assert run('odd-factor-fiber','--ratio','1/8','--count',3)['unordered_odd_tuples']==[[1,1,1]]
+    assert run('odd-factor-fiber','--ratio','2/3','--count',1)['unordered_odd_tuples']==[]
+
+
+def test_catalytic_repair_of_seven():
+    # U8 telescopes multiplicatively to
+    # (19/38)*(25/125)*(55/44)=1/8.  U13 is the published inverse-5
+    # certificate times 5 -> 8 -> 4 -> 2 -> 1.
+    got=run('catalytic-seven')
+    assert got['unit8']['value']==got['unit13']['value']=='1'
+    assert got['count_lattice_determinant']==-1
+    assert got['exchange']['before_value']==got['exchange']['after_value']=='65/352'
+    assert [row['twos'] for row in got['stages']]==[4,9,9,9,6]
+    assert all(row['value']=='7' for row in got['stages'])
+    assert got['stages'][-1]['sources']==[5,7,11,13,17]
+    assert got['original']['realizable'] is False
+    assert got['repaired']['backward_path']==[1,2,4,8,5,10,20,13,26,17,11,7]
+
+
+def test_quadratic_moves_cannot_replace_the_cubic_exchange():
+    # High pair equation: (17c-741)(17d-741)=553280, c<=d.
+    # The valid pairs are (53,247) and (65,133).  Pairs involving 7
+    # in either triple have no alternative (the smaller label is <15).
+    got=run('quadratic-path','--sources',7,65,133,'--target',13,19,29,
+            '--max-label',1000,'--max-states',20)
+    assert got['path'] is None
+    assert got['bounded_graph_exhausted'] is True
+    assert got['height_pruned']==0
+    assert got['visited_states']==[[7,53,247],[7,65,133]]
+
+
+def test_quadratic_path_and_incomplete_search_are_distinguished():
+    got=run('quadratic-path','--sources',35,53,'--target',23,245)
+    assert got['path']==[[35,53],[23,245]]
+    got=run('quadratic-path','--sources',7,65,133,'--target',13,19,29,
+            '--max-states',1)
+    assert got['path'] is None
+    assert got['bounded_graph_exhausted'] is False
+
+
+@pytest.mark.parametrize('n,peak,prefix',[(3,8,[3,5,8]),(7,26,[7,11,17,26]),(8,4,[8,4])])
+def test_sharp_anchored_cut(n,peak,prefix):
+    got=run('anchored-cut',n,'--cutoff',64)
+    assert got['peak_future']==peak
+    assert got['prefix_to_peak']==prefix
+    assert got['anchor_coefficient']==1
+    assert got['cycle_coefficients']==[0,0]
+    assert got['sharp_defect_norm']==f'1/{peak}'
+    assert got['forward_cut_residual_sum']==1
+    assert got['residuals']==[[peak,1]]
+
+
+def test_dyadic_cycle_ledger_is_prefix_bookkeeping():
+    # For 1100 only the pairs of 1-starts and 0-starts agree for one bit.
+    got=run('dyadic-pair-ledger','1100')
+    assert got['vandermonde_v2']==got['prefix_collision_sum']==2
+    assert got['prefix_collision_counts']==[[1,2]]
+    assert all(row['gap_v2']==row['common_prefix'] for row in got['pairs'])
+    # For 11111000: length-one groups 5,3 give 13 pairs; length-two
+    # groups 4,2,1,1 give 7; then 3 and 1, totaling 24.
+    got=run('dyadic-pair-ledger','11111000')
+    assert got['prefix_collision_counts']==[[1,13],[2,7],[3,3],[4,1]]
+    assert got['vandermonde_v2']==got['prefix_collision_sum']==24
+    assert got['integral'] is False

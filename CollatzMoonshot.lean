@@ -75,3 +75,7 @@ import CollatzMoonshot.Obstructions.NegativeShadow
 import CollatzMoonshot.Obstructions.ArithmeticLifts
 
 import CollatzMoonshot.Obstructions.PositiveApproximation
+
+import CollatzMoonshot.Obstructions.MinimalRepairs
+
+import CollatzMoonshot.Obstructions.QuadraticInvariants

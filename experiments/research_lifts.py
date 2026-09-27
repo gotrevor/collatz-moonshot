@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --quiet python3
 """Exact controls for three Collatz research proposals, not a convergence test."""
-from collections import Counter
+from collections import Counter, deque
 from fractions import Fraction
 from functools import lru_cache
 from itertools import combinations, product
@@ -288,10 +288,23 @@ def two_odd_fiber(value):
     A,B=ratio.numerator,ratio.denominator
     D=4*B-9*A
     total=4*A*B
+    # Factor A and B separately: trial factoring each costs about sqrt(A)
+    # and sqrt(B), rather than scanning sqrt(4AB) candidate divisors.
+    powers=Counter({2:2})
+    for part in (A,B):
+        divisor=2
+        while divisor*divisor<=part:
+            while part%divisor==0:
+                powers[divisor]+=1
+                part//=divisor
+            divisor=3 if divisor==2 else divisor+2
+        if part>1:
+            powers[part]+=1
+    divisors=[1]
+    for prime,exponent in powers.items():
+        divisors=[d*prime**e for d in divisors for e in range(exponent+1)]
     pairs=[]
-    for left in range(1,isqrt(total)+1):
-        if total%left:
-            continue
+    for left in sorted(d for d in divisors if d*d<=total):
         right=total//left
         if (left+3*A)%D or (right+3*A)%D:
             continue
@@ -405,6 +418,254 @@ def wild_five_repair(n):
             }}
 
 
+
+def odd_factor_fiber(value, count, least=1):
+    """Exact finite enumeration, sorted odd labels, no height cutoff.
+
+    r_u is strictly increasing towards 2/3.  If u is the smallest of k
+    remaining labels, r_u**k <= value < (2/3)**k.  This gives a finite
+    upper bound by exact binary search.  The last two factors use the
+    divisor identity, and the last factor is solved directly.
+    """
+    ratio=Fraction(value)
+    if count < 1 or count > 5 or least < 1 or least%2==0:
+        raise ValueError('count in 1..5 and positive odd least label required')
+    def solve(q,k,lo):
+        if not 0 < q < Fraction(2,3)**k or Fraction(lo,step(lo))**k>q:
+            return
+        if k==1:
+            u=q/(2-3*q)
+            if u.denominator==1 and u.numerator>=lo and u.numerator%2:
+                yield [u.numerator]
+            return
+        if k==2:
+            for pair in two_odd_fiber(q)['unordered_odd_pairs']:
+                if pair[0]>=lo:
+                    yield pair
+            return
+        high=max(lo,3)
+        while Fraction(2*high,3*high+1)**k<=q:
+            high*=2
+        low=lo
+        while low+1<high:
+            mid=(low+high)//2
+            if Fraction(2*mid,3*mid+1)**k<=q:
+                low=mid
+            else:
+                high=mid
+        for u in range(lo,low+1,2):
+            for tail in solve(q/Fraction(u,step(u)),k-1,u):
+                yield [u]+tail
+    solutions=list(solve(ratio,count,least))
+    return {'ratio':str(ratio),'count':count,'least':least,
+            'unordered_odd_tuples':solutions,'height_cutoff':None}
+
+
+def unit_parity():
+    """Arithmetic reduction proving odd unit length is at least thirteen.
+
+    Delete copies of 2*r_1=1.  A unit has no 3-divisible label, so every
+    remaining odd label is >=5.  The interval 5/8 <= r_u < 2/3 leaves
+    exactly (twos,odds)=(2,3) below length 13 with odd length.  Its least
+    label must be 5; the residual two-factor fiber of 2/5 is empty.
+    """
+    candidates=[]
+    for twos in range(13):
+        for odds in range(1,13-twos):
+            if (twos+odds)%2 and Fraction(2**twos)*Fraction(5,8)**odds<=1<                    Fraction(2**twos)*Fraction(2,3)**odds:
+                candidates.append([twos,odds])
+    sources=[5,7,7,11,17,55,65,83]
+    short_candidates=[[t,k] for t in range(8) for k in range(1,8-t)
+                      if Fraction(2**t)*Fraction(5,8)**k<=1<
+                         Fraction(2**t)*Fraction(2,3)**k]
+    return {'odd_length_candidates_below_thirteen':candidates,
+            'reduced_unit_candidates_below_eight':short_candidates,
+            'candidate_triple_fiber':odd_factor_fiber('1/4',3,5),
+            'unit_twos':5,'unit_odd_sources':sources,'unit_length':13,
+            'unit_value':certificate(5,sources)['value']}
+
+
+def dyadic_pair_ledger(word):
+    """Compare exact rational v2 gaps with cyclic parity-prefix collisions."""
+    data=pair_energy(word)
+    states=list(map(Fraction,data['states']))
+    m=len(word)
+    def v2(x):
+        q=abs(x)
+        a,b=q.numerator,q.denominator
+        return (a & -a).bit_length()-(b & -b).bit_length()
+    rows=[]
+    for i,j in combinations(range(m),2):
+        common=next(k for k in range(m) if word[(i+k)%m]!=word[(j+k)%m])
+        rows.append({'indices':[i,j],'gap_v2':v2(states[i]-states[j]),
+                     'common_prefix':common})
+    collisions=[]
+    for length in range(1,m):
+        counts=Counter(''.join(word[(i+k)%m] for k in range(length)) for i in range(m))
+        pairs=sum(c*(c-1)//2 for c in counts.values())
+        if pairs:
+            collisions.append([length,pairs])
+    return {'word':word,'states':data['states'],'integral':data['integral'],
+            'pairs':rows,'prefix_collision_counts':collisions,
+            'vandermonde_v2':sum(row['gap_v2'] for row in rows),
+            'prefix_collision_sum':sum(c for _,c in collisions)}
+
+
+
+def quadratic_path(sources, target, max_label, max_states):
+    """Bounded search using complete two-factor fibers at each visited pair.
+
+    A returned path is exact; failure is explicitly bounded and proves no
+    global disconnection.  No actual Collatz trajectory is used by the search.
+    """
+    start=tuple(sorted(sources))
+    end=tuple(sorted(target))
+    if len(start)!=len(end) or not start or any(u<1 or u%2==0 for u in start+end):
+        raise ValueError('equal nonzero numbers of positive odd factors required')
+    def value(state):
+        return prod((Fraction(u,step(u)) for u in state),start=Fraction(1))
+    if value(start)!=value(end):
+        raise ValueError('source and target must have equal scalar value')
+    if max_label<max(start+end) or max_states<1:
+        raise ValueError('bounds must contain the endpoints')
+    @lru_cache(None)
+    def alternatives(a,b):
+        return two_odd_fiber(Fraction(a,step(a))*Fraction(b,step(b)))['unordered_odd_pairs']
+    parent={start:None}
+    queue=deque([start])
+    found=start==end
+    height_pruned=0
+    largest_proposed=max(start)
+    while queue and not found and len(parent)<max_states:
+        state=queue.popleft()
+        for i,j in combinations(range(len(state)),2):
+            for a,b in alternatives(state[i],state[j]):
+                largest_proposed=max(largest_proposed,b)
+                if b>max_label:
+                    height_pruned+=1
+                    continue
+                nxt=tuple(sorted([u for k,u in enumerate(state) if k not in (i,j)]+[a,b]))
+                if nxt in parent:
+                    continue
+                parent[nxt]=state
+                queue.append(nxt)
+                if nxt==end:
+                    found=True
+                    break
+                if len(parent)>=max_states:
+                    break
+            if found or len(parent)>=max_states:
+                break
+    path=[]
+    if found:
+        node=end
+        while node is not None:
+            path.append(list(node))
+            node=parent[node]
+        path.reverse()
+    return {'value':str(value(start)),'path':path or None,
+            'max_label':max_label,'max_states':max_states,
+            'states_seen':len(parent),'bounded_graph_exhausted':not queue and not found,
+            'height_pruned':height_pruned,'largest_proposed_label':largest_proposed,
+            'visited_states':list(map(list,sorted(parent))) if len(parent)<=50 else None}
+
+
+def catalytic_seven():
+    # 2^3 r19 r25 r29 r55 r83=1, by the visible cancellations
+    # (19/29)(25/38)(29/44)(55/83)(83/125)=1/8.
+    unit8=[19,25,29,55,83]
+    unit13=[5,7,7,11,17,55,65,83]
+    before=[7,35,53,65]
+    after=[13,19,25,29]
+    def scalar(labels):
+        return prod((Fraction(u,step(u)) for u in labels),start=Fraction(1))
+    labels=Counter([35,53])
+    stages=[{'twos':4,'sources':sorted(labels.elements())}]
+    labels.update(unit13)
+    stages.append({'twos':9,'sources':sorted(labels.elements())})
+    labels.subtract([35,53]); labels.update([25,133])
+    stages.append({'twos':9,'sources':sorted(labels.elements())})
+    labels.subtract([7,65,133]); labels.update([13,19,29])
+    stages.append({'twos':9,'sources':sorted(labels.elements())})
+    labels.subtract(unit8)
+    assert all(v>=0 for v in labels.values())
+    stages.append({'twos':6,'sources':sorted(labels.elements())})
+    for row in stages:
+        row['value']=str(Fraction(2**row['twos'])*scalar(row['sources']))
+    return {'stages':stages,'unit8':{'twos':3,'sources':unit8,'value':str(8*scalar(unit8))},
+            'unit13':{'twos':5,'sources':unit13,'value':str(32*scalar(unit13))},
+            'count_lattice_determinant':3*8-5*5,
+            'exchange':{'before':before,'after':after,'before_value':str(scalar(before)),
+                        'after_value':str(scalar(after))},
+            'original':certificate(4,[35,53]),
+            'repaired':certificate(6,[7,11,17,13,5])}
+
+
+def anchored_cut(n, cutoff):
+    """Attain the exact 1/peak defect constant for a checked convergent start.
+
+    This is a witness/control, not an algorithm for proving an unknown orbit
+    bounded.  The infinite dyadic ray is evaluated at every queried preimage.
+    """
+    if n<3 or cutoff<1:
+        raise ValueError('start >=3 and positive cutoff required')
+    path=orbit_to_one(n)
+    peak=max(path[1:])
+    end=path.index(peak,1)
+    prefix=set(path[1:end])
+    future=set(path[1:])|{1,2}
+    def coefficient(u):
+        return dyadic_ray_coefficient(u,n)+int(u in prefix)
+    def residual(u):
+        pushed=coefficient(2*u)
+        if u%3==2:
+            pushed+=coefficient((2*u-1)//3)
+        return pushed-coefficient(u)
+    rows=[[u,residual(u)] for u in range(1,cutoff+1) if residual(u)]
+    return {'start':n,'peak_future':peak,'prefix_to_peak':path[:end+1],
+            'anchor_coefficient':coefficient(n),
+            'cycle_coefficients':[coefficient(1),coefficient(2)],
+            'sharp_defect_norm':str(Fraction(1,peak)),
+            'forward_cut_residual_sum':sum(residual(u) for u in future),
+            'cutoff':cutoff,'residuals':rows}
+
+
+
+def quadratic_neighbors(a):
+    """All nontrivial pair exchanges involving r_a, with no label cutoff.
+
+    Sort the replacement c<=d; then c<2a+1.  Put alpha=3(a-c),
+    beta=a(3c+1), gamma=c(3a+1).  Equality becomes
+    alpha*b*d + beta*b - gamma*d = 0.  If alpha>0, b<gamma/alpha;
+    if alpha<0, d<beta/(-alpha).  Solve for the unbounded variable.
+    """
+    if a<1 or a%2==0:
+        raise ValueError('positive odd label required')
+    rows=set()
+    for c in range(1,2*a+1,2):
+        if c==a:
+            continue
+        alpha=3*(a-c)
+        beta=a*(3*c+1)
+        gamma=c*(3*a+1)
+        if alpha>0:
+            for b in range(1,(gamma-1)//alpha+1,2):
+                d=Fraction(beta*b,gamma-alpha*b)
+                if d.denominator==1 and d>=c and d.numerator%2:
+                    old=tuple(sorted([a,b]));new=(c,d.numerator)
+                    if old!=new:
+                        rows.add((old,new))
+        else:
+            for d in range(c,(beta-1)//(-alpha)+1,2):
+                b=Fraction(gamma*d,beta+alpha*d)
+                if b.denominator==1 and b>=1 and b.numerator%2:
+                    old=tuple(sorted([a,b.numerator]));new=(c,d)
+                    if old!=new:
+                        rows.add((old,new))
+    return {'label':a,'nontrivial_exchanges':[{'before':list(x),'after':list(y)} for x,y in sorted(rows)],
+            'frozen':not rows,'height_cutoff':None}
+
+
 def main():
     if sys.argv[1:]==['test']:
         raise SystemExit(subprocess.call(['uv','run','--quiet','--with','pytest','python3','-m',
@@ -441,6 +702,24 @@ def main():
     p.add_argument('--parameter',type=int,default=1)
     p=sub.add_parser('two-odd-fiber')
     p.add_argument('--ratio',default='7/16')
+    p=sub.add_parser('odd-factor-fiber')
+    p.add_argument('--ratio',required=True)
+    p.add_argument('--count',type=int,required=True)
+    p.add_argument('--least',type=int,default=1)
+    p=sub.add_parser('unit-parity')
+    p=sub.add_parser('dyadic-pair-ledger')
+    p.add_argument('word')
+    p=sub.add_parser('quadratic-path')
+    p.add_argument('--sources',type=int,nargs='+',required=True)
+    p.add_argument('--target',type=int,nargs='+',required=True)
+    p.add_argument('--max-label',type=int,default=1000)
+    p.add_argument('--max-states',type=int,default=2000)
+    p=sub.add_parser('catalytic-seven')
+    p=sub.add_parser('anchored-cut')
+    p.add_argument('n',type=int)
+    p.add_argument('--cutoff',type=int,default=1000)
+    p=sub.add_parser('quadratic-neighbors')
+    p.add_argument('label',type=int)
     p=sub.add_parser('controls')
     p.add_argument('--followup',action='store_true')
     p.add_argument('--scan-depth',type=int,default=16)
@@ -457,6 +736,13 @@ def main():
     elif a.command=='gap-control': result=gap_control(a.parameter)
     elif a.command=='two-edge-repair': result=two_edge_repair(a.parameter)
     elif a.command=='two-odd-fiber': result=two_odd_fiber(a.ratio)
+    elif a.command=='odd-factor-fiber': result=odd_factor_fiber(a.ratio,a.count,a.least)
+    elif a.command=='unit-parity': result=unit_parity()
+    elif a.command=='dyadic-pair-ledger': result=dyadic_pair_ledger(a.word)
+    elif a.command=='quadratic-path': result=quadratic_path(a.sources,a.target,a.max_label,a.max_states)
+    elif a.command=='catalytic-seven': result=catalytic_seven()
+    elif a.command=='anchored-cut': result=anchored_cut(a.n,a.cutoff)
+    elif a.command=='quadratic-neighbors': result=quadratic_neighbors(a.label)
     elif a.followup:
         result={
             'local_repair':two_edge_repair(1),
