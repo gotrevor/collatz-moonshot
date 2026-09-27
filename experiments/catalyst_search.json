@@ -1,0 +1,142 @@
+[
+  {
+    "catalyst": 7,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 11,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 13,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 17,
+    "path": null,
+    "states_seen": 6,
+    "height_pruned": 16,
+    "exhausted": true
+  },
+  {
+    "catalyst": 19,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 23,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 1,
+    "exhausted": true
+  },
+  {
+    "catalyst": 25,
+    "path": null,
+    "states_seen": 11,
+    "height_pruned": 8,
+    "exhausted": true
+  },
+  {
+    "catalyst": 29,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 31,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 53,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 65,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 83,
+    "path": null,
+    "states_seen": 2,
+    "height_pruned": 0,
+    "exhausted": true
+  },
+  {
+    "catalyst": 121,
+    "path": [
+      [
+        7,
+        65,
+        121,
+        133
+      ],
+      [
+        11,
+        17,
+        65,
+        133
+      ],
+      [
+        11,
+        17,
+        53,
+        247
+      ],
+      [
+        11,
+        13,
+        247,
+        901
+      ],
+      [
+        11,
+        13,
+        221,
+        1577
+      ],
+      [
+        13,
+        13,
+        55,
+        1577
+      ],
+      [
+        13,
+        13,
+        95,
+        121
+      ],
+      [
+        13,
+        19,
+        29,
+        121
+      ]
+    ],
+    "states_seen": 11,
+    "height_pruned": 17,
+    "exhausted": false
+  }
+]

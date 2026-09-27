@@ -376,3 +376,7 @@ The negative-shadow envelope and inverse-basin obstructions are now proved in Le
 ### Follow-up: a local semigroup repair and its obstruction
 
 [The three-direction follow-up](RESEARCH-2026-09-27-arithmetic-lifts-followup.md) finds a parametric two-edge neutral repair, classifies its entire two-factor fiber and exhibits a nonzero local minimum.  The next target is a finer rewrite measure on atomic four-charge multiplicative relations.  Pair-gap integrality restates state admission; the actual positive Collatz coefficient cone has no uniform weighted coercivity bound.  No general termination or Collatz exclusion has been established.
+
+### Catalytic repair and sharp anchored bounds
+
+[Catalytic repair](RESEARCH-2026-09-27-catalytic-repair.md) repairs the stalled certificate for 7 using two fixed unit words and eight quadratic exchanges.  Exact interaction lists expose an obstruction that survives arbitrary catalysts: r5 multiplicity is frozen under quadratic moves, requiring a cubic rule.  The first unit palette also fails at 71 by an explicit conserved index.  The dyadic pair ledger is prefix-collision data; the sharp anchored operator constant equals reciprocal future peak height.  No general terminating repair is established.
