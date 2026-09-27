@@ -73,3 +73,5 @@ import CollatzMoonshot.Conditional
 import CollatzMoonshot.Obstructions.NegativeShadow
 
 import CollatzMoonshot.Obstructions.ArithmeticLifts
+
+import CollatzMoonshot.Obstructions.PositiveApproximation

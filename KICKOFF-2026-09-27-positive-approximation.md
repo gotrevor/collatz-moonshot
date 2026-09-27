@@ -1,0 +1,11 @@
+# Positive approximation coefficient theorem
+
+Trevor authorized continuing all three arithmetic directions and formalizing their negative results.  This bounded helper implements the already pinned paper theorem, Opus/low, at most three laps.  It does not reopen the general Collatz proof campaign.
+
+Read `RESEARCH-2026-09-27-arithmetic-lifts-followup.md`, section 3, and `CollatzMoonshot/Obstructions/ArithmeticLifts.lean`.  The host steers further research in experiments and research notes.  Your sole Lean writer footprint is `CollatzMoonshot/Obstructions/PositiveApproximation.lean`; add helper declarations there.  You may write `HANDOFF-2026-09-27-positive-approximation.md`.  Do not change ArithmeticLifts, the root import, other modules, or DIRECTION.  If the statement is false, report a precise counterexample without weakening it.
+
+Frozen headline: `CollatzMoonshot.Obstructions.ArithmeticLifts.positiveApproximationFamily : PositiveApproximationFamily`.  The proposition and all coefficient definitions in ArithmeticLifts are frozen.  The skeleton is already committed.  Commit compiling partial progress, with named mathematical leaves as needed; success is advancing the theorem, not a sorry tally.  Stop when the headline is proved and the root builds.  No successor task.
+
+Paper proof: put n_j=3^j*2^(K-j)-1.  For j<K these numbers are odd, strictly increasing, and their actual shortcut successors are n_(j+1).  All n_j for j>=1 and j<K differ from the odd base n_0 and from its positive even dyadic multiples.  Hence the coefficient sum is 0/1, vanishes below n_0, and equals one at n_0.  The ray satisfies P D_(n_0)-D_(n_0)=z^n_1.  The finite prefix contributes z^n_K-z^n_1, by a finite-sum reindexing of actual preimages, leaving only z^n_K.  The finite range used in rayCoeff is exact: n=2^j*base with base>0 implies j<=n.  Prove a ray membership characterization first; the range was used only for computability.  No norm topology or asymptotics are required for this task.
+
+The host checked lake-base and relake plan; the dependency tree is warm.  Do not download dependencies or run lake exe cache get.  Build the target and root.  The completion gate is sorry-free on this file plus a required headline declaration.  Record the mathematical advance and remaining crux in the handoff.
