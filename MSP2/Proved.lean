@@ -2,7 +2,7 @@
 Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import MSP2.Defs
+import MSP2.Order
 
 /-!
 # MSP²: the results the article proves
@@ -161,7 +161,52 @@ theorem bConst_parity (n : ℕ) : bConst n % 2 = n % 2 := by
 theorem tA_distance (n : ℕ) :
     (tA (3 ^ (n + 2)))^[3 ^ (n + 1) + 1] 1 = bConst n ∧
       ∀ i < 3 ^ (n + 1) + 1, (tA (3 ^ (n + 2)))^[i] 1 ≠ bConst n := by
-  sorry
+  have hA : (3 : ℕ) ^ (n + 2) % 2 = 1 := by simp [Nat.pow_mod]
+  have hb : 2 * bConst n + 1 = 3 ^ (n + 2) := bConst_closed n
+  have hbz : 2 * (bConst n : ℤ) + 1 = 3 ^ (n + 2) := by exact_mod_cast hb
+  have hA9 : 9 ≤ (3 : ℕ) ^ (n + 2) := by
+    calc (9 : ℕ) = 3 ^ 2 := by norm_num
+      _ ≤ 3 ^ (n + 2) := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have hBlt : bConst n < 3 ^ (n + 2) := by omega
+  have h1lt : 1 < (3 : ℕ) ^ (n + 2) := by omega
+  -- `2^(3^(n+1)) ≡ −1`, so `2^(3^(n+1)+1) · Bₙ ≡ (−1)·(−1) = 1`
+  have hkey : 2 ^ (3 ^ (n + 1) + 1) * bConst n ≡ 1 [MOD 3 ^ (n + 2)] := by
+    refine Nat.modEq_iff_dvd.mpr ?_
+    push_cast
+    obtain ⟨c, hc, -⟩ := two_pow_three_pow (n + 1)
+    exact ⟨1 + c - 3 ^ (n + 2) * c, by
+      linear_combination (-2 * (bConst n : ℤ)) * hc + (1 - 3 ^ (n + 2) * c) * hbz⟩
+  refine ⟨tA_iterate_eq hA h1lt hBlt _ hkey, ?_⟩
+  intro i hi heq
+  -- an earlier hit would make `2^(i−1) ≡ −1` strictly inside the half period
+  have h2 : 2 ^ i * bConst n ≡ 1 [MOD 3 ^ (n + 2)] := by
+    have h := two_pow_mul_iterate hA 1 i
+    rwa [heq] at h
+  obtain ⟨w, hw⟩ : ((3 : ℕ) ^ (n + 2) : ℤ) ∣ 1 - 2 ^ i * (bConst n : ℤ) := by
+    have h := Nat.modEq_iff_dvd.mp h2
+    push_cast at h ⊢
+    exact h
+  have h3 : (3 : ℕ) ^ (n + 2) ∣ 2 ^ i + 2 := by
+    have hz : ((3 : ℕ) ^ (n + 2) : ℤ) ∣ ((2 ^ i + 2 : ℕ) : ℤ) :=
+      ⟨2 * w + 2 ^ i, by push_cast; linear_combination 2 * hw + (2 : ℤ) ^ i * hbz⟩
+    exact_mod_cast hz
+  rcases Nat.eq_zero_or_pos i with rfl | hipos
+  · norm_num at h3
+    have := Nat.le_of_dvd (by norm_num) h3
+    omega
+  · obtain ⟨k, rfl⟩ : ∃ k, i = k + 1 := ⟨i - 1, by omega⟩
+    have hfac : 2 ^ (k + 1) + 2 = 2 * (2 ^ k + 1) := by ring
+    rw [hfac] at h3
+    have hodd : Nat.Coprime ((3 : ℕ) ^ (n + 2)) 2 :=
+      Nat.coprime_two_right.mpr (Nat.odd_iff.mpr hA)
+    have h4 : (3 : ℕ) ^ (n + 2) ∣ 2 ^ k + 1 := hodd.dvd_of_dvd_mul_left h3
+    have h5 : (3 : ℕ) ^ (n + 1) ∣ k := three_pow_dvd_of_dvd_two_pow_add_one h4
+    have hklt : k < 3 ^ (n + 1) := by omega
+    have hk0 : k = 0 := Nat.eq_zero_of_dvd_of_lt h5 hklt
+    subst hk0
+    norm_num at h4
+    have := Nat.le_of_dvd (by norm_num) h4
+    omega
 
 /-- **§16.5.** The left route revisits the right side on alternate levels:
 `C_{2m+2} = B_{2m+1}` (13, 121, 1093, …). -/
@@ -177,6 +222,29 @@ theorem cLeft_even_eq_bConst (m : ℕ) : cLeft (2 * m + 2) = bConst (2 * m + 1) 
     rw [e1, e2, c1, b2, b1, ih]
     ring
 
+/-- Closed form of the left route on even indices: `2·C_{2t} + 1 = 3^(2t+1)`. -/
+theorem cLeft_closed_even (t : ℕ) : 2 * cLeft (2 * t) + 1 = 3 ^ (2 * t + 1) := by
+  induction t with
+  | zero => rfl
+  | succ t ih =>
+    have e1 : 2 * (t + 1) = 2 * t + 2 := by ring
+    have c1 : cLeft (2 * t + 2) = 9 * cLeft (2 * t) + 4 := rfl
+    have e2 : (3 : ℕ) ^ (2 * t + 2 + 1) = 9 * 3 ^ (2 * t + 1) := by ring
+    rw [e1, c1, e2]
+    omega
+
+/-- Closed form of the left route on odd indices: `2·C_{2t+1} + 1 = 5·3^(2t+2)`. -/
+theorem cLeft_closed_odd (t : ℕ) : 2 * cLeft (2 * t + 1) + 1 = 5 * 3 ^ (2 * t + 2) := by
+  induction t with
+  | zero => rfl
+  | succ t ih =>
+    have e1 : 2 * (t + 1) + 1 = 2 * t + 1 + 2 := by ring
+    have c1 : cLeft (2 * t + 1 + 2) = 9 * cLeft (2 * t + 1) + 4 := rfl
+    have e2 : (3 : ℕ) ^ (2 * (t + 1) + 2) = 9 * 3 ^ (2 * t + 2) := by
+      rw [show 2 * (t + 1) + 2 = 2 * t + 2 + 2 by ring]; ring
+    rw [e1, c1, e2]
+    omega
+
 /-- **§16.5.** The useful distance between the two sides at `A = 3^(m+3)` is `2·3^(m+1)`
 (6, 18, 54, …), in the direction that alternates with the level. -/
 theorem tA_distance_opt2 (m : ℕ) :
@@ -187,14 +255,8 @@ theorem tA_distance_opt2 (m : ℕ) :
 /-! ## §16.7: the vertical rule is multiplication by `2⁻¹` -/
 
 /-- **§16.7.1.** For odd `A`, `T_A(b) ≡ b·2⁻¹ (mod A)`, i.e. `2·T_A(b) ≡ b`. -/
-theorem tA_two_mul {A : ℕ} (hA : A % 2 = 1) (b : ℕ) : 2 * tA A b ≡ b [MOD A] := by
-  unfold tA
-  split
-  · next h =>
-    rw [show 2 * (b / 2) = b by omega]
-  · next h =>
-    rw [show 2 * ((A + b) / 2) = A + b by omega]
-    exact Nat.add_mod_left A b
+theorem tA_two_mul {A : ℕ} (hA : A % 2 = 1) (b : ℕ) : 2 * tA A b ≡ b [MOD A] :=
+  tA_two_modEq hA b
 
 /-- **§16.7.2.** At `A = 3ⁿ` the vertical loop through any `b` prime to `3` has length
 `2·3^(n−1)` (2 is a primitive root mod `3ⁿ`). -/
