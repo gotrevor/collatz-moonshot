@@ -149,4 +149,84 @@ theorem orderOf_two_zmod (m : ℕ) : orderOf (2 : ZMod (3 ^ (m + 1))) = 2 * 3 ^ 
   · exact absurd (Nat.Coprime.dvd_of_dvd_mul_left
       (Nat.coprime_two_right.mpr ho) hdvd) hnotdvd
 
+/-! ## The vertical rule as multiplication by `2⁻¹` -/
+
+/-- **§16.7.1.**  For odd `A`, `2·T_A(b) ≡ b (mod A)`. -/
+theorem tA_two_modEq {A : ℕ} (hA : A % 2 = 1) (b : ℕ) : 2 * tA A b ≡ b [MOD A] := by
+  unfold tA
+  split
+  · next h => rw [show 2 * (b / 2) = b by omega]
+  · next h =>
+    rw [show 2 * ((A + b) / 2) = A + b by omega]
+    exact Nat.add_mod_left A b
+
+/-- The vertical rule keeps a column entry inside `[0, A)`. -/
+theorem tA_lt {A b : ℕ} (hA : A % 2 = 1) (hb : b < A) : tA A b < A := by
+  unfold tA; split <;> omega
+
+theorem tA_iterate_lt {A : ℕ} (hA : A % 2 = 1) {b : ℕ} (hb : b < A) (i : ℕ) :
+    (tA A)^[i] b < A := by
+  induction i with
+  | zero => simpa using hb
+  | succ i ih => rw [Function.iterate_succ_apply']; exact tA_lt hA ih
+
+/-- Iterating: `2^i · T_A^i(b) ≡ b (mod A)`, i.e. `T_A^i` is multiplication by `2^(−i)`. -/
+theorem two_pow_mul_iterate {A : ℕ} (hA : A % 2 = 1) (b i : ℕ) :
+    2 ^ i * (tA A)^[i] b ≡ b [MOD A] := by
+  induction i with
+  | zero => simpa using Nat.ModEq.refl b
+  | succ i ih =>
+    calc 2 ^ (i + 1) * (tA A)^[i + 1] b
+        = 2 ^ i * (2 * tA A ((tA A)^[i] b)) := by rw [Function.iterate_succ_apply']; ring
+      _ ≡ 2 ^ i * (tA A)^[i] b [MOD A] := Nat.ModEq.mul_left _ (tA_two_modEq hA _)
+      _ ≡ b [MOD A] := ih
+
+/-- Cancelling the factor `2`, which is invertible modulo an odd `A`. -/
+theorem modEq_of_two_mul {A x y : ℕ} (hA : A % 2 = 1) (h : 2 * x ≡ 2 * y [MOD A]) :
+    x ≡ y [MOD A] :=
+  Nat.ModEq.cancel_left_of_coprime (Nat.coprime_two_right.mpr (Nat.odd_iff.mpr hA)) h
+
+/-- **The characterisation of a vertical distance.**  `T_A^i(b) = x` exactly when `x` is the
+representative in `[0, A)` with `2^i·x ≡ b (mod A)`. -/
+theorem tA_iterate_eq {A : ℕ} (hA : A % 2 = 1) {b x : ℕ} (hb : b < A) (hx : x < A) (i : ℕ)
+    (h : 2 ^ i * x ≡ b [MOD A]) : (tA A)^[i] b = x := by
+  have hco : Nat.Coprime A (2 ^ i) :=
+    Nat.Coprime.pow_right i (Nat.coprime_two_right.mpr (Nat.odd_iff.mpr hA))
+  have h2 : (tA A)^[i] b ≡ x [MOD A] :=
+    Nat.ModEq.cancel_left_of_coprime hco ((two_pow_mul_iterate hA b i).trans h.symm)
+  unfold Nat.ModEq at h2
+  rwa [Nat.mod_eq_of_lt (tA_iterate_lt hA hb i), Nat.mod_eq_of_lt hx] at h2
+
+/-! ## Consequences of primitivity -/
+
+theorem zmod_pow_eq_one_iff {A e : ℕ} : (2 : ZMod A) ^ e = 1 ↔ 2 ^ e ≡ 1 [MOD A] := by
+  have h := (ZMod.natCast_eq_natCast_iff (2 ^ e) 1 A)
+  push_cast at h
+  exact h
+
+/-- If `3^(m+1) ∣ 2^k + 1` then `3^m ∣ k`: a `−1` can only be hit at the half-order. -/
+theorem three_pow_dvd_of_dvd_two_pow_add_one {m k : ℕ} (h : (3 : ℕ) ^ (m + 1) ∣ 2 ^ k + 1) :
+    (3 : ℕ) ^ m ∣ k := by
+  have h0 : ((2 ^ k + 1 : ℕ) : ZMod (3 ^ (m + 1))) = 0 :=
+    (CharP.cast_eq_zero_iff (ZMod (3 ^ (m + 1))) (3 ^ (m + 1)) _).mpr h
+  push_cast at h0
+  have hneg : (2 : ZMod (3 ^ (m + 1))) ^ k = -1 := by linear_combination h0
+  have hone : (2 : ZMod (3 ^ (m + 1))) ^ (2 * k) = 1 := by
+    rw [mul_comm, pow_mul, hneg]; norm_num
+  have hdvd : 2 * 3 ^ m ∣ 2 * k := by
+    rw [← orderOf_two_zmod m]
+    exact orderOf_dvd_of_pow_eq_one hone
+  exact (Nat.mul_dvd_mul_iff_left (show 0 < 2 by norm_num)).mp hdvd
+
+/-- The cube root of unity the second optimisation of §16.5 lands on:
+`2^(2·3ⁿ) ≡ 1 + 3^(n+1) (mod 3^(n+2))`.  This is where `cₙ ≡ 1 (mod 3)` is used. -/
+theorem two_pow_two_mul_three_pow (n : ℕ) :
+    (3 : ℤ) ^ (n + 2) ∣ (2 : ℤ) ^ (2 * 3 ^ n) - (1 + 3 ^ (n + 1)) := by
+  obtain ⟨c, hc, hc3⟩ := two_pow_three_pow n
+  obtain ⟨t, rfl⟩ : ∃ t, c = 1 + 3 * t := ⟨c / 3, by omega⟩
+  refine ⟨-1 - 2 * t + 3 ^ n * (1 + 3 * t) ^ 2, ?_⟩
+  have hsq : (2 : ℤ) ^ (2 * 3 ^ n) = ((2 : ℤ) ^ (3 ^ n)) ^ 2 := by rw [mul_comm, pow_mul]
+  rw [hsq, hc]
+  ring
+
 end MSP2
