@@ -250,7 +250,49 @@ theorem cLeft_closed_odd (t : ℕ) : 2 * cLeft (2 * t + 1) + 1 = 5 * 3 ^ (2 * t 
 theorem tA_distance_opt2 (m : ℕ) :
     if m % 2 = 0 then (tA (3 ^ (m + 3)))^[2 * 3 ^ (m + 1)] (cLeft (m + 1)) = bConst (m + 1)
     else (tA (3 ^ (m + 3)))^[2 * 3 ^ (m + 1)] (bConst (m + 1)) = cLeft (m + 1) := by
-  sorry
+  have hA : (3 : ℕ) ^ (m + 3) % 2 = 1 := by simp [Nat.pow_mod]
+  have hbn : 2 * bConst (m + 1) + 1 = 3 ^ (m + 3) := by
+    have h := bConst_closed (m + 1)
+    rwa [show m + 1 + 2 = m + 3 from by ring] at h
+  have hbz : 2 * (bConst (m + 1) : ℤ) + 1 = 3 ^ (m + 3) := by exact_mod_cast hbn
+  have h3 : (3 : ℕ) ^ (m + 3) = 3 * 3 ^ (m + 2) := by ring
+  have h2 : (3 : ℕ) ^ (m + 2) = 3 * 3 ^ (m + 1) := by ring
+  -- the distance `2·3^(m+1)` is a third of the loop: `2^(2·3^(m+1)) ≡ 1 + 3^(m+2)`
+  obtain ⟨w, hw0⟩ := two_pow_two_mul_three_pow (m + 1)
+  have hw : (2 : ℤ) ^ (2 * 3 ^ (m + 1)) = 1 + 3 ^ (m + 2) + 3 ^ (m + 3) * w := by
+    linear_combination hw0
+  have hcl_even : m % 2 = 0 → 2 * cLeft (m + 1) + 1 = 5 * 3 ^ (m + 2) := by
+    intro hm
+    obtain ⟨t, rfl⟩ : ∃ t, m = 2 * t := ⟨m / 2, by omega⟩
+    exact cLeft_closed_odd t
+  have hcl_odd : m % 2 = 1 → 2 * cLeft (m + 1) + 1 = 3 ^ (m + 2) := by
+    intro hm
+    obtain ⟨t, rfl⟩ : ∃ t, m = 2 * t + 1 := ⟨m / 2, by omega⟩
+    have h := cLeft_closed_even (t + 1)
+    rw [show 2 * (t + 1) + 1 = 2 * t + 1 + 2 from by ring,
+        show 2 * (t + 1) = 2 * t + 1 + 1 from by ring] at h
+    exact h
+  by_cases hm : m % 2 = 0
+  · rw [if_pos hm]
+    have hcn := hcl_even hm
+    have hcz : 2 * (cLeft (m + 1) : ℤ) + 1 = 5 * 3 ^ (m + 2) := by exact_mod_cast hcn
+    refine tA_iterate_eq hA ?_ ?_ _ ?_
+    · omega
+    · omega
+    refine modEq_of_two_mul hA (Nat.modEq_iff_dvd.mpr ?_)
+    push_cast
+    exact ⟨2 - 2 ^ (2 * 3 ^ (m + 1)) + w, by
+      linear_combination hw - (2 : ℤ) ^ (2 * 3 ^ (m + 1)) * hbz + hcz⟩
+  · rw [if_neg hm]
+    have hcn := hcl_odd (by omega)
+    have hcz : 2 * (cLeft (m + 1) : ℤ) + 1 = 3 ^ (m + 2) := by exact_mod_cast hcn
+    refine tA_iterate_eq hA ?_ ?_ _ ?_
+    · omega
+    · omega
+    refine modEq_of_two_mul hA (Nat.modEq_iff_dvd.mpr ?_)
+    push_cast
+    exact ⟨1 - 3 ^ (m + 1) + w - w * 3 ^ (m + 2), by
+      linear_combination hbz - (2 : ℤ) ^ (2 * 3 ^ (m + 1)) * hcz + (1 - 3 ^ (m + 2)) * hw⟩
 
 /-! ## §16.7: the vertical rule is multiplication by `2⁻¹` -/
 
@@ -262,7 +304,30 @@ theorem tA_two_mul {A : ℕ} (hA : A % 2 = 1) (b : ℕ) : 2 * tA A b ≡ b [MOD 
 `2·3^(n−1)` (2 is a primitive root mod `3ⁿ`). -/
 theorem tA_period {n b : ℕ} (hn : 1 ≤ n) (hb : b < 3 ^ n) (h3 : ¬ 3 ∣ b) :
     Function.minimalPeriod (tA (3 ^ n)) b = 2 * 3 ^ (n - 1) := by
-  sorry
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+  simp only [Nat.add_sub_cancel]
+  have hA : (3 : ℕ) ^ (m + 1) % 2 = 1 := by simp [Nat.pow_mod]
+  have hcop : Nat.Coprime ((3 : ℕ) ^ (m + 1)) b :=
+    Nat.Coprime.pow_left _ ((Nat.Prime.coprime_iff_not_dvd Nat.prime_three).mpr h3)
+  have hone : 2 ^ (2 * 3 ^ m) ≡ 1 [MOD 3 ^ (m + 1)] :=
+    zmod_pow_eq_one_iff.mp (by rw [← orderOf_two_zmod m]; exact pow_orderOf_eq_one _)
+  have hfix : (tA (3 ^ (m + 1)))^[2 * 3 ^ m] b = b := by
+    refine tA_iterate_eq hA hb hb _ ?_
+    calc 2 ^ (2 * 3 ^ m) * b ≡ 1 * b [MOD 3 ^ (m + 1)] := Nat.ModEq.mul_right b hone
+      _ = b := one_mul b
+  have hper : Function.IsPeriodicPt (tA (3 ^ (m + 1))) (2 * 3 ^ m) b := hfix
+  have hdvd1 : Function.minimalPeriod (tA (3 ^ (m + 1))) b ∣ 2 * 3 ^ m := hper.minimalPeriod_dvd
+  have hpfix : (tA (3 ^ (m + 1)))^[Function.minimalPeriod (tA (3 ^ (m + 1))) b] b = b :=
+    Function.isPeriodicPt_minimalPeriod _ _
+  have hmod : 2 ^ Function.minimalPeriod (tA (3 ^ (m + 1))) b * b ≡ 1 * b [MOD 3 ^ (m + 1)] := by
+    rw [one_mul]
+    have h := two_pow_mul_iterate hA b (Function.minimalPeriod (tA (3 ^ (m + 1))) b)
+    rwa [hpfix] at h
+  have hdvd2 : 2 * 3 ^ m ∣ Function.minimalPeriod (tA (3 ^ (m + 1))) b := by
+    rw [← orderOf_two_zmod m]
+    exact orderOf_dvd_of_pow_eq_one
+      (zmod_pow_eq_one_iff.mpr (Nat.ModEq.cancel_right_of_coprime hcop hmod))
+  exact Nat.dvd_antisymm hdvd1 hdvd2
 
 /-- **§16.7.4**, the closed form the article gives for its recurrence:
 `Δ_n = (9·(−3)ⁿ − 5)/2`.  (This is algebra; the open question is whether the Generator
