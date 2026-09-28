@@ -62,12 +62,12 @@ With it, each of §16.3, §16.5, §16.7.2 becomes one congruence plus one bound.
 
 ## One reading note for the authors (statement, not proof)
 
-`tA_distance_opt2` is stated with the direction alternating with the level, and that is correct as
-stated, but the reason is worth recording: the *congruence* does not alternate.  At `A = 3^(n+2)`
-with `d = 2·3^n` one always has `ω · Cₙ ≡ Bₙ`, i.e. `(tA A)^[d] Bₙ = Cₙ`.  What alternates is which
-of `Bₙ`, `Cₙ` the article calls the source, because `Cₙ` has two closed forms according to the
-parity of `n` (`2Cₙ+1 = 3^(n+1)` vs `5·3^(n+1)`).  The Lean statement matches the article; the
-asymmetry is in `cLeft`, not in the vertical rule.
+`tA_distance_opt2` alternates the direction with the level, and the alternation is real: with
+`ω := 2^(2·3ⁿ) ≡ 1 + 3^(n+1) (mod 3^(n+2))` one gets `ω·Bₙ ≡ Cₙ` for `n` odd but `ω·Cₙ ≡ Bₙ` for
+`n` even (checked: `10·13 ≡ 22 (mod 27)`, `28·13 ≡ 40 (mod 81)`).  The source of the asymmetry is
+not the vertical rule — that is the same fixed multiplier `ω` at every level — but `cLeft`, whose
+closed form depends on the parity of the index (`2Cₖ+1 = 3^(k+1)` for `k` even, `5·3^(k+1)` for `k`
+odd) while `2Bₖ+1 = 3^(k+2)` does not.  The Lean statement matches the article as printed.
 
 ## What is still open in `MSP2/`
 
