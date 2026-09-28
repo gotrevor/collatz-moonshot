@@ -31,7 +31,14 @@ theorem msp2_odd_run {M r u : ℕ} (hr : 1 ≤ r) (hu : u % 2 = 1) (hM : M + 1 =
 form `6q ± 1`. -/
 theorem not_three_dvd_after_run {r u s : ℕ} (hr : 1 ≤ r) (hu : 1 ≤ u)
     (hs : 2 ^ s ∣ 3 ^ r * u - 1) : ¬ 3 ∣ (3 ^ r * u - 1) / 2 ^ s := by
-  sorry
+  intro hdvd
+  obtain ⟨k, hk⟩ := hs
+  have hpow : (0 : ℕ) < 2 ^ s := by positivity
+  have hk3 : 3 ∣ k := by rwa [hk, Nat.mul_div_cancel_left _ hpow] at hdvd
+  have h1 : 3 ∣ 3 ^ r * u - 1 := by rw [hk]; exact Dvd.dvd.mul_left hk3 _
+  have h3 : 3 ∣ 3 ^ r * u := Dvd.dvd.mul_right (dvd_pow_self 3 (by omega)) u
+  have hpos : 1 ≤ 3 ^ r * u := Nat.one_le_iff_ne_zero.mpr (by positivity)
+  omega
 
 /-! ## §3: the run-length families partition the odd numbers -/
 
@@ -46,24 +53,69 @@ theorem odd_family_unique {n : ℕ} (hn : n % 2 = 1) :
 rank-`j+1` form with `A_{j+1} = 3·A_j`. -/
 theorem fam_reproduce (j s v : ℕ) :
     3 * famA j / 4 * (4 * v + s) + 1 = fam (j + 1) s v := by
-  sorry
+  have h1 : 3 * famA j / 4 = 216 * 3 ^ j := by
+    simp only [famA]
+    rw [show 3 * (288 * 3 ^ j) = 4 * (216 * 3 ^ j) by ring,
+      Nat.mul_div_cancel_left _ (by norm_num : 0 < 4)]
+  have h2 : famA (j + 1) = 864 * 3 ^ j := by simp only [famA]; ring
+  have h3 : famA (j + 1) / 4 = 216 * 3 ^ j := by
+    rw [h2, show (864 : ℕ) * 3 ^ j = 4 * (216 * 3 ^ j) by ring,
+      Nat.mul_div_cancel_left _ (by norm_num : 0 < 4)]
+  simp only [fam]
+  rw [h3, h2, h1]
+  ring
 
 /-- **§9.8** (the Collatz step behind "surviving family"): three steps take `A_j·u + 1`
 to `(3/4)·A_j·u + 1`. -/
 theorem step_three_fam_zero (j u : ℕ) : step^[3] (fam j 0 u) = 3 * famA j / 4 * u + 1 := by
-  sorry
+  have key : ∀ m : ℕ, step^[3] (288 * m + 1) = 216 * m + 1 := by
+    intro m
+    have s0 : step (288 * m + 1) = 864 * m + 4 := by
+      simp only [step, if_neg (by omega : ¬ (288 * m + 1) % 2 = 0)]; ring
+    have s1 : step (864 * m + 4) = 432 * m + 2 := by
+      simp only [step, if_pos (by omega : (864 * m + 4) % 2 = 0)]; omega
+    have s2 : step (432 * m + 2) = 216 * m + 1 := by
+      simp only [step, if_pos (by omega : (432 * m + 2) % 2 = 0)]; omega
+    show step (step (step _)) = _
+    rw [s0, s1, s2]
+  have hdiv : 3 * famA j / 4 = 216 * 3 ^ j := by
+    simp only [famA]
+    rw [show 3 * (288 * 3 ^ j) = 4 * (216 * 3 ^ j) by ring,
+      Nat.mul_div_cancel_left _ (by norm_num : 0 < 4)]
+  have h1 : fam j 0 u = 288 * (3 ^ j * u) + 1 := by
+    simp only [fam, famA]; ring
+  rw [h1, key, hdiv]
+  ring
 
 /-- Consequently every member `A_j·u + 1` with `u ≥ 1` is covered. -/
 theorem covered_fam_zero (j u : ℕ) (hu : 1 ≤ u) : Covered (fam j 0 u) := by
-  sorry
+  refine ⟨3, ?_⟩
+  rw [step_three_fam_zero]
+  have hdiv : 3 * famA j / 4 = 216 * 3 ^ j := by
+    simp only [famA]
+    rw [show 3 * (288 * 3 ^ j) = 4 * (216 * 3 ^ j) by ring,
+      Nat.mul_div_cancel_left _ (by norm_num : 0 < 4)]
+  have h1 : fam j 0 u = 288 * (3 ^ j * u) + 1 := by
+    simp only [fam, famA]; ring
+  have h2 : 3 * famA j / 4 * u = 216 * (3 ^ j * u) := by rw [hdiv]; ring
+  have h3 : 1 ≤ 3 ^ j * u := Nat.one_le_iff_ne_zero.mpr (by positivity)
+  rw [h1, h2]
+  omega
 
 /-- **§9.9.** Closed form of the blocking points: `B_j = 24·16^j + 1`. -/
 theorem blockB_eq (j : ℕ) : blockB j = 24 * 16 ^ j + 1 := by
-  sorry
+  induction j with
+  | zero => rfl
+  | succ j ih =>
+    have h : (16 : ℕ) ^ (j + 1) = 16 * 16 ^ j := by ring
+    simp only [blockB, ih, h]
+    omega
 
 /-- **§9.9.** The blocking points grow strictly: `B_{j+1} − B_j = 360·16^j`. -/
 theorem blockB_succ_sub (j : ℕ) : blockB (j + 1) - blockB j = 360 * 16 ^ j := by
-  sorry
+  rw [blockB_eq, blockB_eq]
+  have h : (16 : ℕ) ^ (j + 1) = 16 * 16 ^ j := by ring
+  omega
 
 /-! ## §16.2: from coverage to reaching 1 -/
 
@@ -71,7 +123,16 @@ theorem blockB_succ_sub (j : ℕ) : blockB (j + 1) - blockB j = 360 * 16 ^ j := 
 `1 ≤ N ≤ K` reaches `1` (strong induction). -/
 theorem reachesOne_of_covered_upto {K : ℕ} (h : ∀ N, 2 ≤ N → N ≤ K → Covered N) :
     ∀ N, 1 ≤ N → N ≤ K → ReachesOne N := by
-  sorry
+  intro N
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+    intro hN hK
+    rcases eq_or_lt_of_le hN with h1 | h2
+    · exact h1 ▸ reachesOne_one
+    · obtain ⟨j, hj⟩ := h N h2 hK
+      have hm1 : 1 ≤ step^[j] N := iterate_step_pos hN j
+      obtain ⟨c, hc⟩ := ih (step^[j] N) hj hm1 (by omega)
+      exact ⟨c + j, by rw [Function.iterate_add_apply, hc]⟩
 
 /-- The article's `T` is the grouped step `msp2Step`; covered under it and under the
 un-accelerated `step` coincide (the skipped value `3M+1` is never the first dip). -/
@@ -82,11 +143,18 @@ theorem covered_iff_msp2 {N : ℕ} (hN : 2 ≤ N) : Covered N ↔ ∃ j, msp2Ste
 
 /-- **§16.3-16.4.** Closed form `B_n = (A_n − 1)/2` with `A_n = 3^(n+2)`. -/
 theorem bConst_closed (n : ℕ) : 2 * bConst n + 1 = 3 ^ (n + 2) := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    have h : (3 : ℕ) ^ (n + 1 + 2) = 3 * 3 ^ (n + 2) := by ring
+    simp only [bConst, h]
+    omega
 
 /-- **§16.4.** The parity of `B_n` alternates, starting even. -/
 theorem bConst_parity (n : ℕ) : bConst n % 2 = n % 2 := by
-  sorry
+  induction n with
+  | zero => rfl
+  | succ n ih => simp only [bConst]; omega
 
 /-- **§16.3.** Under the vertical rule at `A = 3^(n+2)`, the useful distance from `1` to
 `B_n` is `3^(n+1) + 1` (4, 10, 28, 82, …): reached at that step and not before. -/
@@ -98,7 +166,16 @@ theorem tA_distance (n : ℕ) :
 /-- **§16.5.** The left route revisits the right side on alternate levels:
 `C_{2m+2} = B_{2m+1}` (13, 121, 1093, …). -/
 theorem cLeft_even_eq_bConst (m : ℕ) : cLeft (2 * m + 2) = bConst (2 * m + 1) := by
-  sorry
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    have e1 : 2 * (m + 1) + 2 = 2 * m + 2 + 2 := by ring
+    have e2 : 2 * (m + 1) + 1 = 2 * m + 1 + 1 + 1 := by ring
+    have c1 : cLeft (2 * m + 2 + 2) = 9 * cLeft (2 * m + 2) + 4 := rfl
+    have b1 : bConst (2 * m + 1 + 1) = 3 * bConst (2 * m + 1) + 1 := rfl
+    have b2 : bConst (2 * m + 1 + 1 + 1) = 3 * bConst (2 * m + 1 + 1) + 1 := rfl
+    rw [e1, e2, c1, b2, b1, ih]
+    ring
 
 /-- **§16.5.** The useful distance between the two sides at `A = 3^(m+3)` is `2·3^(m+1)`
 (6, 18, 54, …), in the direction that alternates with the level. -/
@@ -111,7 +188,13 @@ theorem tA_distance_opt2 (m : ℕ) :
 
 /-- **§16.7.1.** For odd `A`, `T_A(b) ≡ b·2⁻¹ (mod A)`, i.e. `2·T_A(b) ≡ b`. -/
 theorem tA_two_mul {A : ℕ} (hA : A % 2 = 1) (b : ℕ) : 2 * tA A b ≡ b [MOD A] := by
-  sorry
+  unfold tA
+  split
+  · next h =>
+    rw [show 2 * (b / 2) = b by omega]
+  · next h =>
+    rw [show 2 * ((A + b) / 2) = A + b by omega]
+    exact Nat.add_mod_left A b
 
 /-- **§16.7.2.** At `A = 3ⁿ` the vertical loop through any `b` prime to `3` has length
 `2·3^(n−1)` (2 is a primitive root mod `3ⁿ`). -/
@@ -123,7 +206,11 @@ theorem tA_period {n b : ℕ} (hn : 1 ≤ n) (hb : b < 3 ^ n) (h3 : ¬ 3 ∣ b) 
 `Δ_n = (9·(−3)ⁿ − 5)/2`.  (This is algebra; the open question is whether the Generator
 Table's cousin jumps obey `delta` at every level.) -/
 theorem delta_closed (n : ℕ) : 2 * delta n = 9 * (-3) ^ n - 5 := by
-  sorry
+  induction n with
+  | zero => norm_num [delta]
+  | succ n ih =>
+    simp only [delta, pow_succ]
+    linarith
 
 /-- **§16.7.4**, the conditional algebra: with the §16.4 passage (`k ↦ 2k+1` when `B_n` is
 even, `k ↦ 2k` when odd, shift `+1`, cousin jump `+Δ_{n+1}`, halve), the jump `delta`
@@ -132,12 +219,43 @@ theorem bConst_succ_via_delta (n : ℕ) :
     2 * (bConst (n + 1) : ℤ) =
       (if n % 2 = 0 then 3 * ((3 : ℤ) ^ (n + 2) + bConst n + 1) else 3 * ((bConst n : ℤ) + 1))
         + delta (n + 1) := by
-  sorry
+  have hb : 2 * (bConst n : ℤ) + 1 = 3 ^ (n + 2) := by
+    have := bConst_closed n; exact_mod_cast this
+  have hb1 : 2 * (bConst (n + 1) : ℤ) + 1 = 3 ^ (n + 1 + 2) := by
+    have := bConst_closed (n + 1); exact_mod_cast this
+  have hd : 2 * delta (n + 1) = 9 * (-3) ^ (n + 1) - 5 := delta_closed _
+  have h32 : (3 : ℤ) ^ (n + 2) = 3 * 3 ^ (n + 1) := by ring
+  have h33 : (3 : ℤ) ^ (n + 1 + 2) = 9 * 3 ^ (n + 1) := by ring
+  rcases Nat.even_or_odd n with he | ho
+  · rw [if_pos (Nat.even_iff.mp he)]
+    have hneg : ((-3 : ℤ)) ^ (n + 1) = -(3 : ℤ) ^ (n + 1) :=
+      Odd.neg_pow (Even.add_one he) 3
+    rw [hneg] at hd
+    linarith
+  · rw [if_neg (by have := Nat.odd_iff.mp ho; omega)]
+    have hneg : ((-3 : ℤ)) ^ (n + 1) = (3 : ℤ) ^ (n + 1) :=
+      Even.neg_pow (Odd.add_one ho) 3
+    rw [hneg] at hd
+    linarith
 
 /-! ## §16.8: the residue bound -/
 
 /-- **§16.8** (Proposition): for `m ≥ 2`, `B_{m−2} = (3^m − 1)/2 > K_m = 2^m − 1`. -/
 theorem residue_bound {m : ℕ} (hm : 2 ≤ m) : 2 ^ m - 1 < (3 ^ m - 1) / 2 := by
-  sorry
+  have key : ∀ k : ℕ, 2 * 2 ^ (k + 2) + 1 ≤ 3 ^ (k + 2) := by
+    intro k
+    induction k with
+    | zero => norm_num
+    | succ k ih =>
+      have h2 : (2 : ℕ) ^ (k + 1 + 2) = 2 * 2 ^ (k + 2) := by ring
+      have h3 : (3 : ℕ) ^ (k + 1 + 2) = 3 * 3 ^ (k + 2) := by ring
+      omega
+  have gen : ∀ A B : ℕ, 1 ≤ B → 2 * B + 1 ≤ A → A % 2 = 1 → B - 1 < (A - 1) / 2 := by
+    intro A B h0 h1 h2
+    obtain ⟨C, rfl⟩ : ∃ C, A = C + 1 := ⟨A - 1, by omega⟩
+    rw [Nat.add_sub_cancel]
+    omega
+  obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
+  exact gen _ _ (Nat.one_le_two_pow) (key k) (by simp [Nat.pow_mod])
 
 end MSP2
