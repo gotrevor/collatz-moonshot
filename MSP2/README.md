@@ -71,8 +71,7 @@ finer, checkable statement placed underneath `Raccord`.
 | §16.7.4 closed form of Δₙ, and the conditional step `Bₙ → Bₙ₊₁` | `Proved.delta_closed`, `bConst_succ_via_delta` | ✅ proved |
 | §16.8 `(3ᵐ − 1)/2 > 2ᵐ − 1` for `m ≥ 2` | `Proved.residue_bound` | ✅ proved |
 
-**`MSP2/` is `sorry`-free** (2026-09-28).  Every statement listed above is machine-checked, and
-`#print axioms` on each reports only `propext`, `Classical.choice`, `Quot.sound`.  No statement was
+**`MSP2/` is `sorry`-free** (2026-09-28).  Every statement listed above is machine-checked.  No statement was
 weakened to get there: the frozen statements of `MSP2/Proved.lean` are proved as written.
 
 The one piece of mathematics the article's distance claims need but does not prove in Lean-ready
