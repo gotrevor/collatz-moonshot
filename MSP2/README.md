@@ -61,18 +61,29 @@ finer, checkable statement placed underneath `Raccord`.
 | §19: MSP²⁻ loops through −17 (length 11), −5 (length 3), −1 (fixed) | `Checks.msp2Neg_loops` | ✅ checked |
 | §16.2 levels up to 127 are covered | `Checks.raccordLevel_seven` | ✅ proved |
 | The open step ⟺ Collatz | `Headline.raccord_iff_conjecture` | ✅ proved |
-| §2 odd run `M ↦ 3^r·u − 1`; §2.5 next odd is `6q ± 1`; §3 run-length families partition the odds | `Proved.msp2_odd_run`, `not_three_dvd_after_run`, `odd_family_unique` | stated, proof pending |
-| §9.8 family reproduction `A_{j+1} = 3A_j`; members `A_j·u + 1` are covered | `Proved.fam_reproduce`, `step_three_fam_zero`, `covered_fam_zero` | stated, proof pending |
-| §9.9 `B_j = 24·16ʲ + 1`, strict growth | `Proved.blockB_eq`, `blockB_succ_sub` | stated, proof pending |
-| §16.2 coverage up to `K` ⟹ reaching 1 up to `K`; MSP² vs Collatz coverage agree | `Proved.reachesOne_of_covered_upto`, `covered_iff_msp2` | stated, proof pending |
-| §16.3-16.5 closed forms, parity alternation, distances for all `n` | `Proved.bConst_closed`, `bConst_parity`, `tA_distance`, `cLeft_even_eq_bConst`, `tA_distance_opt2` | stated, proof pending |
-| §16.7.1 `T_A(b) ≡ b·2⁻¹ (mod A)`; §16.7.2 loop length `2·3ⁿ⁻¹` | `Proved.tA_two_mul`, `tA_period` | stated, proof pending |
-| §16.7.4 closed form of Δₙ, and the conditional step `Bₙ → Bₙ₊₁` | `Proved.delta_closed`, `bConst_succ_via_delta` | stated, proof pending |
-| §16.8 `(3ᵐ − 1)/2 > 2ᵐ − 1` for `m ≥ 2` | `Proved.residue_bound` | stated, proof pending |
+| §2 odd run `M ↦ 3^r·u − 1`; §2.5 next odd is `6q ± 1`; §3 run-length families partition the odds | `Proved.msp2_odd_run`, `not_three_dvd_after_run`, `odd_family_unique` | ✅ proved |
+| §9.8 family reproduction `A_{j+1} = 3A_j`; members `A_j·u + 1` are covered | `Proved.fam_reproduce`, `step_three_fam_zero`, `covered_fam_zero` | ✅ proved |
+| §9.9 `B_j = 24·16ʲ + 1`, strict growth | `Proved.blockB_eq`, `blockB_succ_sub` | ✅ proved |
+| §16.2 coverage up to `K` ⟹ reaching 1 up to `K`; MSP² vs Collatz coverage agree | `Proved.reachesOne_of_covered_upto`, `covered_iff_msp2` | ✅ proved |
+| §16.3-16.5 closed forms, parity alternation, distances for all `n` | `Proved.bConst_closed`, `bConst_parity`, `tA_distance`, `cLeft_even_eq_bConst`, `tA_distance_opt2` | ✅ proved |
+| §16.7.1 `T_A(b) ≡ b·2⁻¹ (mod A)`; §16.7.2 loop length `2·3ⁿ⁻¹` | `Proved.tA_two_mul`, `tA_period` | ✅ proved |
+| `2` is a primitive root mod `3ⁿ` (needed by §16.3, §16.5, §16.7.2) | `Order.orderOf_two_zmod` | ✅ proved |
+| §16.7.4 closed form of Δₙ, and the conditional step `Bₙ → Bₙ₊₁` | `Proved.delta_closed`, `bConst_succ_via_delta` | ✅ proved |
+| §16.8 `(3ᵐ − 1)/2 > 2ᵐ − 1` for `m ≥ 2` | `Proved.residue_bound` | ✅ proved |
 
-"Stated, proof pending" means that the statement is written and the proof is still a `sorry`.  It
-says nothing against the result: each is arithmetic the article proves, and its numeric instances
-are checked above.  Every `sorry` in this directory is in `MSP2/Proved.lean`.
+**`MSP2/` is `sorry`-free** (2026-09-28).  Every statement listed above is machine-checked, and
+`#print axioms` on each reports only `propext`, `Classical.choice`, `Quot.sound`.  No statement was
+weakened to get there: the frozen statements of `MSP2/Proved.lean` are proved as written.
+
+The one piece of mathematics the article's distance claims need but does not prove in Lean-ready
+form is that **`2` is a primitive root modulo `3ⁿ`**.  That is `MSP2/Order.lean`, also `sorry`-free:
+a single lifting-the-exponent induction
+
+  `2 ^ 3ⁿ = −1 + 3^(n+1)·cₙ` with `cₙ ≡ 1 (mod 3)`
+
+gives `2^(3ⁿ) ≡ −1 (mod 3^(n+1))`, the exact 3-adic valuation of `2^(2·3ⁿ) − 1`, hence
+`orderOf (2 : ZMod (3^(m+1))) = 2·3^m`; and the refinement `cₙ ≡ 1 (mod 3)` pins the cube root of
+unity `2^(2·3ⁿ) ≡ 1 + 3^(n+1) (mod 3^(n+2))` that §16.5's two-sided distance lands on.
 
 ## Not yet stated
 

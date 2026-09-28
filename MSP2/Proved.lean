@@ -8,9 +8,10 @@ import MSP2.Order
 # MSP²: the results the article proves
 
 One declaration per result the article establishes, stated over `ℕ`/`ℤ` as literally as
-the text allows.  A `sorry` here means *not yet formalized*, never *doubted*: each of these
-is arithmetic the article proves, and the numeric instances are already checked in
-`MSP2.Checks`.  Parts of the article that need the inverse trees (§4-§7) or the Generator
+the text allows.  This file is `sorry`-free: every statement below is proved as written, with
+no hypothesis or conclusion weakened, and the numeric instances are checked in `MSP2.Checks`.
+The distance and period statements of §16.3/§16.5/§16.7.2 rest on `MSP2.Order`, where `2` is
+proved to be a primitive root modulo `3ⁿ`.  Parts of the article that need the inverse trees (§4-§7) or the Generator
 Table itself (§11-§15) are not stated yet; `MSP2/README.md` lists them.
 -/
 
@@ -25,7 +26,41 @@ to `3^r·u − 1`, which is even; every intermediate value is odd. -/
 theorem msp2_odd_run {M r u : ℕ} (hr : 1 ≤ r) (hu : u % 2 = 1) (hM : M + 1 = 2 ^ r * u) :
     msp2Step^[r] M = 3 ^ r * u - 1 ∧ (3 ^ r * u - 1) % 2 = 0 ∧
       ∀ i < r, msp2Step^[i] M % 2 = 1 := by
-  sorry
+  -- the invariant: after `i` odd steps the successor is `3^i · 2^(r−i) · u`
+  have hodd_step : ∀ v, v % 2 = 1 → msp2Step v = (3 * v + 1) / 2 := by
+    intro v h; unfold msp2Step; rw [if_neg (by omega)]
+  have haux : ∀ i ≤ r, msp2Step^[i] M + 1 = 3 ^ i * 2 ^ (r - i) * u := by
+    intro i
+    induction i with
+    | zero => intro _; simpa using hM
+    | succ i ih =>
+      intro hi
+      have hV := ih (by omega)
+      have hsplit : (2 : ℕ) ^ (r - i) = 2 * 2 ^ (r - (i + 1)) := by
+        rw [show r - i = (r - (i + 1)) + 1 from by omega]; ring
+      rw [hsplit] at hV
+      obtain ⟨X, hX1, hX2⟩ :
+          ∃ X, msp2Step^[i] M + 1 = 2 * X ∧ 3 ^ (i + 1) * 2 ^ (r - (i + 1)) * u = 3 * X :=
+        ⟨3 ^ i * 2 ^ (r - (i + 1)) * u, by rw [hV]; ring, by ring⟩
+      rw [Function.iterate_succ_apply', hX2, hodd_step _ (by omega)]
+      omega
+  have hend := haux r le_rfl
+  simp only [Nat.sub_self, pow_zero, mul_one] at hend
+  have hoddprod : 3 ^ r * u % 2 = 1 := by
+    rw [Nat.mul_mod, Nat.pow_mod]
+    simp [hu]
+  obtain ⟨Y, hY⟩ : ∃ Y, 3 ^ r * u = Y := ⟨_, rfl⟩
+  rw [hY] at hend hoddprod
+  rw [hY]
+  refine ⟨by omega, by omega, ?_⟩
+  intro i hi
+  have h := haux i (by omega)
+  obtain ⟨X, hX⟩ : ∃ X, 3 ^ i * 2 ^ (r - i) * u = 2 * X :=
+    ⟨3 ^ i * 2 ^ (r - i - 1) * u, by
+      obtain ⟨q, hq⟩ : ∃ q, r - i = q + 1 := ⟨r - i - 1, by omega⟩
+      rw [hq, Nat.add_sub_cancel]; ring⟩
+  rw [hX] at h
+  omega
 
 /-- **§2.5 / §4.4.** The next odd value after a run is not a multiple of `3`, so it has the
 form `6q ± 1`. -/
@@ -45,7 +80,51 @@ theorem not_three_dvd_after_run {r u s : ℕ} (hr : 1 ≤ r) (hu : 1 ≤ u)
 /-- **§3.** Every odd `n` lies in exactly one family `2^(r+1)·k + 2^r − 1` with `r ≥ 1`. -/
 theorem odd_family_unique {n : ℕ} (hn : n % 2 = 1) :
     ∃! p : ℕ × ℕ, 1 ≤ p.1 ∧ n = 2 ^ (p.1 + 1) * p.2 + 2 ^ p.1 - 1 := by
-  sorry
+  -- `n + 1 = 2^r·(2k+1)`: the family index is the 2-adic valuation of `n + 1`
+  have hlt : ∀ a b x y : ℕ, a < b → 2 ^ a * (2 * x + 1) = 2 ^ b * (2 * y + 1) → False := by
+    intro a b x y hab h
+    have h2 : (2 : ℕ) ^ b = 2 ^ a * 2 ^ (b - a) := by rw [← pow_add]; congr 1; omega
+    rw [h2, mul_assoc] at h
+    have h3 : 2 * x + 1 = 2 ^ (b - a) * (2 * y + 1) :=
+      Nat.eq_of_mul_eq_mul_left (by positivity) h
+    obtain ⟨q, hq⟩ : ∃ q, b - a = q + 1 := ⟨b - a - 1, by omega⟩
+    have h4 : (2 : ℕ) ^ (b - a) = 2 * 2 ^ q := by rw [hq]; ring
+    rw [h4, mul_assoc] at h3
+    omega
+  have key : ∀ a b x y : ℕ, 2 ^ a * (2 * x + 1) = 2 ^ b * (2 * y + 1) → a = b := by
+    intro a b x y h
+    rcases Nat.lt_trichotomy a b with hab | hab | hab
+    · exact absurd h (fun h => hlt a b x y hab h)
+    · exact hab
+    · exact absurd h.symm (fun h => hlt b a y x hab h)
+  -- the equation `n = 2^(r+1)k + 2^r − 1` rearranged
+  have hform : ∀ r k : ℕ, 1 ≤ r → n = 2 ^ (r + 1) * k + 2 ^ r - 1 →
+      n + 1 = 2 ^ r * (2 * k + 1) := by
+    intro r k _ h
+    have hp : 1 ≤ (2 : ℕ) ^ r := Nat.one_le_two_pow
+    have he : (2 : ℕ) ^ (r + 1) * k + 2 ^ r = 2 ^ r * (2 * k + 1) := by ring
+    omega
+  obtain ⟨r, m, hm, hrm⟩ := Nat.exists_eq_two_pow_mul_odd (show n + 1 ≠ 0 by omega)
+  obtain ⟨j, hj⟩ := hm
+  have hr1 : 1 ≤ r := by
+    rcases Nat.eq_zero_or_pos r with rfl | h
+    · rw [pow_zero, one_mul] at hrm; omega
+    · exact h
+  have hn1 : n + 1 = 2 ^ r * (2 * j + 1) := by rw [hrm, hj]
+  have hp : 1 ≤ (2 : ℕ) ^ r := Nat.one_le_two_pow
+  refine ⟨(r, j), ⟨hr1, ?_⟩, ?_⟩
+  · show n = 2 ^ (r + 1) * j + 2 ^ r - 1
+    have he : (2 : ℕ) ^ (r + 1) * j + 2 ^ r = 2 ^ r * (2 * j + 1) := by ring
+    omega
+  · rintro ⟨a, b⟩ ⟨ha1, ha2⟩
+    have hab := hform a b ha1 ha2
+    have haeq : a = r := key a r b j (by omega)
+    subst haeq
+    have hbe : 2 * b + 1 = 2 * j + 1 :=
+      Nat.eq_of_mul_eq_mul_left (by positivity) (by omega : 2 ^ a * (2 * b + 1) = 2 ^ a * (2 * j + 1))
+    have : b = j := by omega
+    subst this
+    rfl
 
 /-! ## §9.8-9.9: uniform reproduction of the families, and the blocking points -/
 
@@ -137,7 +216,54 @@ theorem reachesOne_of_covered_upto {K : ℕ} (h : ∀ N, 2 ≤ N → N ≤ K →
 /-- The article's `T` is the grouped step `msp2Step`; covered under it and under the
 un-accelerated `step` coincide (the skipped value `3M+1` is never the first dip). -/
 theorem covered_iff_msp2 {N : ℕ} (hN : 2 ≤ N) : Covered N ↔ ∃ j, msp2Step^[j] N < N := by
-  sorry
+  have hs_even : ∀ v, v % 2 = 0 → step v = msp2Step v := by
+    intro v h; unfold step msp2Step; rw [if_pos h, if_pos h]
+  have hs_odd : ∀ v, v % 2 = 1 → step v = 3 * v + 1 := by
+    intro v h; unfold step; rw [if_neg (by omega)]
+  have hs_odd2 : ∀ v, v % 2 = 1 → step (3 * v + 1) = msp2Step v := by
+    intro v h; unfold step msp2Step; rw [if_pos (by omega), if_neg (by omega)]
+  -- every MSP² iterate is a Collatz iterate
+  have hsub : ∀ j, ∃ i, msp2Step^[j] N = step^[i] N := by
+    intro j
+    induction j with
+    | zero => exact ⟨0, rfl⟩
+    | succ j ih =>
+      obtain ⟨i, hi⟩ := ih
+      rcases Nat.even_or_odd (msp2Step^[j] N) with he | ho
+      · refine ⟨i + 1, ?_⟩
+        have hev : msp2Step^[j] N % 2 = 0 := Nat.even_iff.mp he
+        rw [Function.iterate_succ_apply', Function.iterate_succ_apply', ← hi,
+          hs_even _ hev]
+      · refine ⟨i + 2, ?_⟩
+        have hodd : msp2Step^[j] N % 2 = 1 := Nat.odd_iff.mp ho
+        have h2 : step^[i + 2] N = step (step (step^[i] N)) := by
+          rw [show i + 2 = i + 1 + 1 from rfl, Function.iterate_succ_apply',
+            Function.iterate_succ_apply']
+        rw [Function.iterate_succ_apply', h2, ← hi, hs_odd _ hodd, hs_odd2 _ hodd]
+  -- and every Collatz iterate is either an MSP² iterate or the skipped odd image `3v+1`
+  have hclass : ∀ i, (∃ j, step^[i] N = msp2Step^[j] N) ∨
+      (∃ j, msp2Step^[j] N % 2 = 1 ∧ step^[i] N = 3 * msp2Step^[j] N + 1) := by
+    intro i
+    induction i with
+    | zero => exact Or.inl ⟨0, rfl⟩
+    | succ i ih =>
+      rcases ih with ⟨j, hj⟩ | ⟨j, hodd, hj⟩
+      · rcases Nat.even_or_odd (msp2Step^[j] N) with he | ho
+        · refine Or.inl ⟨j + 1, ?_⟩
+          rw [Function.iterate_succ_apply', hj, hs_even _ (Nat.even_iff.mp he),
+            Function.iterate_succ_apply']
+        · refine Or.inr ⟨j, Nat.odd_iff.mp ho, ?_⟩
+          rw [Function.iterate_succ_apply', hj, hs_odd _ (Nat.odd_iff.mp ho)]
+      · refine Or.inl ⟨j + 1, ?_⟩
+        rw [Function.iterate_succ_apply', hj, hs_odd2 _ hodd, Function.iterate_succ_apply']
+  constructor
+  · rintro ⟨i, hi⟩
+    rcases hclass i with ⟨j, hj⟩ | ⟨j, hodd, hj⟩
+    · exact ⟨j, by rw [← hj]; exact hi⟩
+    · exact ⟨j, by omega⟩
+  · rintro ⟨j, hj⟩
+    obtain ⟨i, hi⟩ := hsub j
+    exact ⟨i, by rw [← hi]; exact hj⟩
 
 /-! ## §16.3-16.5: the B constants and the useful distances -/
 
