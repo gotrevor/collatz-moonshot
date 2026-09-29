@@ -2,6 +2,14 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Q1 follow-through: a finite-depth strategy is now excluded
+
+[Q1 coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md) now resolves the bounded-splicing test left by the slope audit.  On `s=240+1024t`, the actual `n` orbit meets the `q1` orbit at times 18 and 11, giving direct 18-step descent.  But for every bound `K`, another hard-family parameter has every `n` iterate through `K` at or above its start and every `q1` iterate through `K` below that start.  Both results are proved in [Q1Coalescence.lean](CollatzMoonshot/Obstructions/Q1Coalescence.lean).  No finite bounded-depth menu of splices into `q1` can cover the family.
+
+The negative construction uses a shared parameter to shadow two different rational dynamics: `q1` approaches `-1/9`, whose first two steps reach the trivial positive cycle, while the actual target's sixth step approaches the negative fixed point `-1`.  Finite positive-integer prefixes then separate by height.  The older `-1/13` construction is retained as a control: it avoids bounded coalescence even on starts with a direct 15-step descent.
+
+This excludes a specified finite-depth mechanism, not adaptive repairs with depth growing with the parameter.  The explicit separated-phase recurrence decreases binary precision while increasing a power-of-three multiplier; the exit transition and a full-state rank remain missing.  The other two arithmetic branches retain their independent open inputs.
+
 ## Follow-through: signed extraction and the carry obstruction
 
 The next audit removes a second self-imposed prerequisite.  **A finite signed integer edge flow with boundary `e_n-e_1` already proves convergence.**  Positivity and an identical catalyst return are sufficient construction choices, not necessary hypotheses for extracting convergence.  [SignedFlow.lean](CollatzMoonshot/Obstructions/SignedFlow.lean) proves the equivalence and the stronger result for any nonzero integer multiple of the desired boundary.  It does not construct a new flow; existence is still equivalent to the convergence problem.
@@ -93,6 +101,6 @@ A successor proposal must exhibit an arithmetic transition connecting the actual
 
 The existing repair CLI includes the 14-gap and sixth-iterate regression with hand-derived numeric anchors; its 13 subprocess tests pass.  Both new Lean modules are root imports.  The existing CI audit consumes the exact signed-flow definitions and theorem types, and the carry definition and unbounded-gap theorem.  Paper-only statements remain explicitly labeled above.
 
-### Applying the existing bounded-coalescence gate
+### Earlier slope gate, now resolved for Q1 at bounded depth
 
-The [slope audit](RESEARCH-2026-09-29-affine-coalescence-slope.md) applies the already-known fixed-tail obstruction to all ten supplied hard64 families.  Nine have an outside prime in the ratio of their slope to the target slope, so no infinite parameter subclass can merge their ordinary orbits with the target at uniformly bounded depths on both sides.  This includes the original smaller endpoint `m`.  Only `q1` passes the necessary test, with `128q1=9n+1` and `T^7(n)=27q1+2`.  These identities do not establish a meeting.  A next bounded symbolic-coalescence investigation should therefore focus on this pair; methods with growing depth remain outside the exclusion.  The finite-exception theorem is a paper argument, and all ten exact slope ratios are checked by the existing CLI regression suite.
+The [slope audit](RESEARCH-2026-09-29-affine-coalescence-slope.md) applies the already-known fixed-tail obstruction to all ten supplied hard64 families.  Nine have an outside prime in the ratio of their slope to the target slope, so no infinite parameter subclass can merge their ordinary orbits with the target at uniformly bounded depths on both sides.  This includes the original smaller endpoint `m`.  Only `q1` passes the necessary test, with `128q1=9n+1` and `T^7(n)=27q1+2`.  These identities do not establish a meeting.  The Q1 investigation above now gives both a sparse positive class and an all-depth obstruction to a uniform bound; methods with growing depth remain outside the exclusion.  The finite-exception theorem is a paper argument, and all ten exact slope ratios are checked by the existing CLI regression suite.

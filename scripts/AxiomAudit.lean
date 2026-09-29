@@ -203,3 +203,28 @@ open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
 example : ∀ B : ℕ, ∃ s : ℕ,
     CollatzMoonshot.FrontB.tstep^[2] (neighbor s) + B <
       CollatzMoonshot.FrontB.tstep^[5] (cubicN s) := cubic_carry_gap_unbounded
+
+
+-- Q1 coalescence: actual map, positive cylinder, and all-depth separation.
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (t : ℕ) : branchQ t = 105 + 2048*t := rfl
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (t : ℕ) : hardParam t = 240 + 1024*t := rfl
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (t : ℕ) : CollatzMoonshot.FrontB.tstep^[18]
+    (cubicN (240+1024*t)) < cubicN (240+1024*t) :=
+  hardParam_descends_at_eighteen t
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example : ∀ K : ℕ, ∃ s : ℕ,
+    (∀ i ≤ K, cubicN s ≤ CollatzMoonshot.FrontB.tstep^[i] (cubicN s)) ∧
+    (∀ j ≤ K, CollatzMoonshot.FrontB.tstep^[j] (cubicQ1 s) < cubicN s) :=
+  cubicN_q1_ordered_separation
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example : ∀ K : ℕ, ∃ s : ℕ, ∀ i ≤ K, ∀ j ≤ K,
+    CollatzMoonshot.FrontB.tstep^[i] (cubicN s) ≠
+      CollatzMoonshot.FrontB.tstep^[j] (cubicQ1 s) :=
+  cubicN_q1_no_bounded_pairwise_meeting

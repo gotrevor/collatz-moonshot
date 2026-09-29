@@ -1,5 +1,7 @@
 # A slope obstruction to uniformly bounded affine-orbit coalescence
 
+> **Follow-through:** [Q1 coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md) now gives a sparse positive class and an all-depth obstruction to a uniform bound for the remaining Q1 pair.
+
 This applies the repository's existing [fixed-tail slope obstruction](RESEARCH-2026-09-28-symbolic-repair.md) to the new hard64 auxiliary families.  The mechanism is already in the negative inventory; the new work is the ten-family ledger, its explicit finite-exception count, and identification of the sole slope-compatible auxiliary.  It does not address parameter-dependent path lengths or a catalytic relation that never asks two ordinary orbits to meet.
 
 ## Exact finite-exception theorem

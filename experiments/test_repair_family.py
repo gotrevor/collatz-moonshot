@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+from fractions import Fraction
 from pathlib import Path
 
 
@@ -190,6 +191,108 @@ def test_cubic_second_frontier_crt_family_has_legal_labels():
     assert easy['borrowed_inputs'] == [989839387,1135299655]
     assert 'known_basin_neighbor' not in easy
     assert 'coalescence_slope_audit' not in easy
+
+
+def test_q1_symbolic_pair_has_one_depth_eleven_affine_connection():
+    # Initially q(s)=1,795,983,881+2,744,062,650s and v=27q+2.
+    # Both are odd.  Their first affine images are T(q) and 27T(q)-10.
+    first = run('q1-pair-branch','--max-depth',1,'--max-branches',2)
+    assert (first['status'],first['completed_depth'],first['frontier_count']) == (
+        'depth_limit',1,1)
+    row = first['frontier'][0]
+    assert row['q_affine'] == [4116093975,2693975822]
+    assert row['v_affine'] == [111134537325,72737347184]
+    assert (row['q_parity_word'],row['v_parity_word']) == ('1','1')
+
+    # With q≡105 mod 2048, the independent parity-word calculation gives
+    # T^11(q)=T^11(27q+2)=(729q+1279)/2048.  q(s) hits this class exactly
+    # when s≡240 mod1024; the endpoint is affine for *every* t in that class.
+    got = run('q1-pair-branch')
+    assert got['q_family'] == {'slope':2744062650,'constant':1795983881}
+    assert got['v_from_q'] == {'multiplier':27,'offset':2}
+    assert (got['completed_depth'],got['first_connection_depth'],
+            got['connection_count']) == (11,11,1)
+    connection = got['connections'][0]
+    assert (connection['residue'],connection['exponent'],connection['depth']) == (
+        240,10,11)
+    assert (connection['q_parity_word'],connection['v_parity_word']) == (
+        '10111100100','10000010001')
+    q_base = 1795983881+2744062650*240
+    assert q_base%2048 == 105
+    expected_affine = [729*(2744062650*1024)//2048,
+                       (729*q_base+1279)//2048]
+    assert connection['q_affine'] == connection['v_affine'] == expected_affine
+    # This joined endpoint is below q throughout the progression, so the
+    # resulting n-to-q splice is an 18-step descent subclass.
+    assert expected_affine[0] < 2744062650*1024
+    assert expected_affine[1] < q_base
+    assert connection['q_odd_steps']-connection['v_odd_steps'] == 3
+    assert got['frontier_count'] == len(got['frontier'])
+    assert sum((Fraction(1,2**row['exponent']) for row in
+                got['frontier']+got['connections']),Fraction()) == 1
+
+    # Tight branch budgets return the whole current frontier, not a partial
+    # subset of the next depth's residue classes.
+    capped = run('q1-pair-branch','--max-depth',3,'--max-branches',1)
+    assert (capped['status'],capped['completed_depth'],
+            capped['frontier_count']) == ('branch_limit',1,1)
+
+
+def test_q1_hard_2adic_shadow_separates_bounded_prefixes():
+    # (9q(s)+1)/2=8,081,927,465+12,348,281,925s.  Modulo 8 its zero
+    # class is s=3.  Here T^2(q)=1+4u, while T^6(n)+1=2(9q+1).
+    got = run('q1-pair-shadow',2)
+    assert (got['variant'],got['s_residue'],got['s_modulus']) == (
+        'hard9',3,8)
+    assert (got['q'],got['n'],got['n_post_six']) == (
+        10028171831,142622888263,180507092959)
+    assert (got['q_after_two'],got['q_prefix_upper_bound']) == (
+        22563386621,33845079932)
+    assert got['nine_q_plus_one']%16 == 0
+    assert got['q_after_two'] == 1+4*got['cycle_shadow_u']
+    assert got['q_prefix_upper_bound'] < got['n'] < got['n_post_six']
+    assert (got['n_above_start_steps_at_least'],got['q_below_n_through'],
+            got['no_lagged_meeting_depths_through']) == (11,2,2)
+    # Independent first-two-step anchors show the height separation.
+    assert [got['n'],(3*got['n']+1)//2,(9*got['n']+5)//4] == [
+        142622888263,213934332395,320901498593]
+    assert [got['q'],(3*got['q']+1)//2,(9*got['q']+5)//4] == [
+        10028171831,15042257747,22563386621]
+    farther = run('q1-pair-shadow',16)
+    assert farther['variant'] == 'hard9'
+    assert farther['nine_q_plus_one']%(2**18) == 0
+    assert farther['q_after_two'] == 1+2**16*farther['cycle_shadow_u']
+    assert farther['q_prefix_upper_bound'] < farther['n'] < farther['n_post_six']
+
+
+def test_q1_carry_2adic_shadow_blocks_splices_but_descends():
+    # Solving 93s≡25 mod128 gives s=109.  Then q=300,898,812,731≡59
+    # mod256, its 27q+2 companion is congruent, and n=(128q-1)/9.
+    got = run('q1-pair-shadow',2,'--variant','carry13')
+    assert got['variant'] == 'carry13'
+    assert (got['shadow_exponent'],got['s_residue'],got['s_modulus'],
+            got['s_shift'],got['s_witness']) == (8,109,128,0,109)
+    assert (got['n'],got['q'],got['v']) == (
+        4279449781063,300898812731,27*300898812731+2)
+    assert got['fixed_point_numerator']%256 == 0
+    assert got['difference']%512 == 0
+    assert (got['same_parity_steps_at_least'],
+            got['no_lagged_meeting_depths_through']) == (2,2)
+    # Two hand-computed odd steps on each side have no common value.
+    n, q = got['n'],got['q']
+    assert {n,(3*n+1)//2,(9*n+5)//4}.isdisjoint(
+        {q,(3*q+1)//2,(9*q+5)//4})
+    assert got['fifteen_step_parity_word'] == '111010111011000'
+    assert got['fifteen_step_endpoint'] == 2570569154074 < n
+
+    # At K=16 the least fixed-point residue alone is too small for the
+    # nonresonant bound; the constructor shifts along the same progression.
+    farther = run('q1-pair-shadow',16,'--variant','carry13')
+    assert farther['s_shift'] > 0
+    assert farther['s_witness']%farther['s_modulus'] == farther['s_residue']
+    assert farther['q'] > 19*6**16
+    assert farther['fixed_point_numerator']%(2**16) == 0
+    assert farther['fifteen_step_endpoint'] < farther['n']
 
 
 def test_family_table_deduplicates_overlapping_examples():

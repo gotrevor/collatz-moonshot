@@ -98,3 +98,4 @@ import CollatzMoonshot.Obstructions.AffineQLift
 import CollatzMoonshot.Obstructions.CubicPeel
 import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.Obstructions.CubicCarry
+import CollatzMoonshot.Obstructions.Q1Coalescence

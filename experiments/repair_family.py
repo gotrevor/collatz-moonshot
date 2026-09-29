@@ -352,6 +352,168 @@ def second_frontier_cubic(s, variant='hard64'):
             **near_miss}
 
 
+def q1_pair_branch(max_depth=11, max_branches=1024):
+    """Exact synchronous affine branches for q1(s) and T^7(n)=27*q1(s)+2.
+
+    Each unresolved state covers s=residue+2^exponent*t for every t>=0.
+    No individual trajectory is sampled; equality requires both affine
+    coefficients to agree on the whole residue progression.
+    """
+    if not 0 <= max_depth <= 64 or not 1 <= max_branches <= 4096:
+        raise ValueError('bounds require 0<=max-depth<=64 and 1<=max-branches<=4096')
+    q_slope, q_constant = 2744062650, 1795983881
+    initial = {'residue':0, 'exponent':0,
+               'q_affine':[q_slope,q_constant],
+               'v_affine':[27*q_slope,27*q_constant+2],
+               'q_parity_word':'', 'v_parity_word':'',
+               'q_odd_steps':0, 'v_odd_steps':0}
+    frontier, connections = [initial], []
+    completed_depth, status = 0, 'depth_limit'
+
+    def refine(row, bit):
+        result = dict(row)
+        result['residue'] += (1 << row['exponent'])*bit
+        result['exponent'] += 1
+        for name in ('q_affine','v_affine'):
+            slope, constant = row[name]
+            result[name] = [2*slope, constant+bit*slope]
+        return result
+
+    def advance(row):
+        result = dict(row)
+        for name, word, odd_count in (
+            ('q_affine','q_parity_word','q_odd_steps'),
+            ('v_affine','v_parity_word','v_odd_steps'),
+        ):
+            slope, constant = row[name]
+            assert slope%2 == 0
+            parity = constant%2
+            result[name] = ([(3*slope)//2,(3*constant+1)//2]
+                            if parity else [slope//2,constant//2])
+            result[word] += str(parity)
+            result[odd_count] += parity
+        return result
+
+    for depth in range(1,max_depth+1):
+        required = sum(2 if row['q_affine'][0]%2 or row['v_affine'][0]%2
+                       else 1 for row in frontier)
+        if required > max_branches:
+            status = 'branch_limit'
+            break
+        next_frontier = []
+        for row in frontier:
+            rows = ([refine(row,0),refine(row,1)]
+                    if row['q_affine'][0]%2 or row['v_affine'][0]%2
+                    else [row])
+            for refined in rows:
+                advanced = advance(refined)
+                if advanced['q_affine'] == advanced['v_affine']:
+                    connections.append({'depth':depth, **advanced})
+                else:
+                    next_frontier.append(advanced)
+        frontier = next_frontier
+        completed_depth = depth
+        if not frontier:
+            status = 'all_coalesced'
+            break
+
+    # Equality of nonconstant slopes at equal depth requires three more odd
+    # q steps than v steps: their initial slope ratio is 27=3^3.
+    assert all(row['q_affine'] != row['v_affine'] for row in frontier)
+    assert all(row['q_odd_steps']-row['v_odd_steps'] == 3
+               for row in connections)
+    return {'q_family':{'slope':q_slope,'constant':q_constant},
+            'v_from_q':{'multiplier':27,'offset':2},
+            'max_depth':max_depth, 'max_branches':max_branches,
+            'completed_depth':completed_depth, 'status':status,
+            'connections':connections, 'connection_count':len(connections),
+            'first_connection_depth':(connections[0]['depth'] if connections else None),
+            'frontier_count':len(frontier), 'frontier':frontier,
+            'frontier_exponent_histogram':dict(sorted(Counter(
+                row['exponent'] for row in frontier).items()))}
+
+
+def q1_pair_shadow(k, variant='hard9'):
+    """Exact congruence witnesses for bounded q1-family splice tests.
+
+    hard9 separates every n- and q1-prefix through depth k by height.
+    carry13 preserves the earlier fixed-point shadow and 15-step descent.
+    """
+    if not 1 <= k <= 1024:
+        raise ValueError('shadow requires 1<=k<=1024')
+    q_constant, q_slope = 1795983881, 2744062650
+    if variant == 'hard9':
+        # (9q(s)+1)/2 has odd slope, so one s residue modulo 2^(k+1)
+        # makes 9q+1 divisible by 2^(k+2).  Then T^2(q)=1+2^k*u
+        # shadows the 1↔2 cycle, while T^6(n)=18q+1 has k+3 odd steps.
+        modulus = 1 << (k+1)
+        coefficient = 9*q_slope//2
+        constant = (9*q_constant+1)//2
+        assert coefficient%2 == 1 and (9*q_constant+1)%2 == 0
+        residue = (-constant*pow(coefficient,-1,modulus))%modulus
+        q = q_constant+q_slope*residue
+        n, remainder = divmod(128*q-1,9)
+        assert remainder == 0 and n == 25542881863+39026668800*residue
+        nine_q_plus_one = 9*q+1
+        u, remainder = divmod(nine_q_plus_one,1 << (k+2))
+        assert remainder == 0 and u > 0
+        q_after_two = (9*q+5)//4
+        post_six = 18*q+1
+        q_upper = (27*q+19)//8
+        assert q_after_two == 1+(1 << k)*u
+        assert post_six+1 == 2*nine_q_plus_one
+        assert q_upper < n and q < n < post_six
+        return {'variant':'hard9', 'k':k,
+                's_residue':residue, 's_modulus':modulus,
+                's_witness':residue, 'n':n, 'q':q, 'v':27*q+2,
+                'nine_q_plus_one':nine_q_plus_one,
+                'cycle_shadow_u':u, 'q_after_two':q_after_two,
+                'q_prefix_upper_bound':q_upper, 'n_post_six':post_six,
+                'n_above_start_steps_at_least':k+9,
+                'q_below_n_through':k,
+                'no_lagged_meeting_depths_through':k}
+    if variant != 'carry13':
+        raise ValueError('variant must be hard9 or carry13')
+    exponent = max(k,8)
+    modulus = 1 << (exponent-1)
+    coefficient = 13*q_slope//2
+    constant = (13*q_constant+1)//2
+    assert coefficient%2 == 1 and (13*q_constant+1)%2 == 0
+    residue = (-constant*pow(coefficient,-1,modulus))%modulus
+    base_q = q_constant+q_slope*residue
+    bound = 19*6**k
+    q_increment = q_slope*modulus
+    shift = max(0,(bound-base_q)//q_increment+1)
+    s = residue+modulus*shift
+    q = q_constant+q_slope*s
+    v = 27*q+2
+    n, remainder = divmod(128*q-1,9)
+    assert remainder == 0 and n == 25542881863+39026668800*s
+    assert q > bound and (13*q+1)%(1 << exponent) == 0
+    assert (v-q)%(1 << (exponent+1)) == 0
+    assert 0 < q < v and q%2 == v%2 == 1
+    # For q ≡ -1/13 (mod 256), both q and v have parity word 11011000.
+    # T^8(v)=(81v+85)/256=(19683n+33803)/32768, below n for n>=3.
+    assert q%256 == v%256 == 59
+    endpoint, remainder = divmod(19683*n+33803,32768)
+    assert remainder == 0 and endpoint < n
+    # For any i,j<=k, a nonresonant equality T^i(n)=T^j(q) would force
+    # q<=19*6^k from the exact affine word offsets.  The only equal-slope
+    # case has i=j+7 and reduces to T^j(27q+2)=T^j(q), ruled out by shadow.
+    return {'variant':'carry13', 'k':k, 'shadow_exponent':exponent,
+            's_residue':residue, 's_modulus':modulus,
+            's_shift':shift, 's_witness':s,
+            'n':n, 'q':q, 'v':v, 'difference':v-q,
+            'nonresonant_q_bound':bound,
+            'fixed_point_numerator':13*q+1,
+            'same_parity_steps_at_least':k,
+            'no_synchronous_meeting_through':k,
+            'no_lagged_meeting_depths_through':k,
+            'fifteen_step_parity_word':'111010111011000',
+            'fifteen_step_endpoint':endpoint,
+            'strict_descent_at_fifteen':True}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -464,6 +626,12 @@ def main():
     cubic = sub.add_parser('second-frontier-cubic')
     cubic.add_argument('s',type=int)
     cubic.add_argument('--variant',choices=['hard64','easy32'],default='hard64')
+    pair = sub.add_parser('q1-pair-branch')
+    pair.add_argument('--max-depth',type=int,default=11)
+    pair.add_argument('--max-branches',type=int,default=1024)
+    shadow = sub.add_parser('q1-pair-shadow')
+    shadow.add_argument('k',type=int)
+    shadow.add_argument('--variant',choices=['hard9','carry13'],default='hard9')
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -482,6 +650,8 @@ def main():
               lower_composite(args.family,args.t) if args.command == 'lower-composite' else
               second_frontier_pairs(args.family,args.t,args.ceiling) if args.command == 'second-frontier-pairs' else
               second_frontier_cubic(args.s,args.variant) if args.command == 'second-frontier-cubic' else
+              q1_pair_branch(args.max_depth,args.max_branches) if args.command == 'q1-pair-branch' else
+              q1_pair_shadow(args.k,args.variant) if args.command == 'q1-pair-shadow' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

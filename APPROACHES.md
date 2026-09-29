@@ -408,3 +408,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Signed flow and cubic carry, 2026-09-29
 
 [Follow-through](RESEARCH-2026-09-29-ordinal-repair-checkpoint.md): finite signed vertex balance already implies convergence; positivity and catalyst return are optional proof interfaces.  This is formalized, as is the cubic near miss: an initial gap of 14 from an induction-known convergent vertex becomes unbounded after two lockstep steps.  Unrestricted finite-prefix peeling is automatic by semigroup supply (paper), and lower auxiliary paths leave the actual frontier unresolved.  No full-state rank or target-free connection to the known basin is supplied.
+
+### Q1 bounded-splicing obstruction, 2026-09-29
+
+[Positive class and universal finite-depth obstruction](RESEARCH-2026-09-29-q1-coalescence.md): the remaining slope-compatible auxiliary coalesces on one infinite residue class, but for every cutoff another parameter keeps all target prefixes above all auxiliary prefixes.  Both claims are formalized.  Uniform bounded-depth splicing into Q1 is excluded; a rank for a repair of growing depth still needs a transition out of the separated phase.  The negative theorem does not exclude convergence or all adaptive repair.
