@@ -1,9 +1,34 @@
 # HANDOFF 2026-09-29 — exact affine deformation of a quadratic exchange
 
-Scope owned this lap: `CollatzMoonshot/Obstructions/AffineQLift.lean` and this
-file. Root `lake build` green (8817 jobs), all four frozen statements proved,
-zero `sorry`, `#print axioms` clean (`propext`, `Classical.choice`, `Quot.sound`)
-on all four.
+**Checkpoint (graceful host stop).** Branch `main`, HEAD `1eb55cc`, working tree
+clean, root `lake build` green (8817 jobs). Three commits this lap, all green and
+all confined to the two files this lap owned:
+
+| Commit | Content |
+|---|---|
+| `0cf7c65` | the four frozen statements |
+| `c36ed96` | simultaneity criteria; my own conjecture refuted |
+| `1eb55cc` | the congruence/divisibility no-go |
+
+**Status: the scoped objective is met and the file is finished for its purpose.**
+`CollatzMoonshot/Obstructions/AffineQLift.lean` holds 11 public theorems plus 5
+private helpers, zero `sorry`, and `#print axioms` clean on every public theorem
+(nothing beyond `propext`, `Classical.choice`, `Quot.sound`). No open obligation
+remains in it, so a successor lap should pick a different node — see *Next steps*
+at the bottom for what this lap ruled out, which is the part worth reading before
+anyone reopens the deformation idea.
+
+Public theorems, in file order: `affineLift_preserves_cross`,
+`affineLift_smaller_inputs`, `affineLift_domain`, `liftU_shared_iff`,
+`affineLift_simultaneous_shared_head`, `liftX_eq_liftU_iff`,
+`affineLift_simultaneous_chained`, `affineLift_dvd`, `affineLift_mod_three`,
+`affineLift_mod_six_invariant`, `affineLift_unbounded`.
+
+Scope note: `DIRECTION.md`'s CURRENT DIRECTIVE is "awaiting a new idea; no
+execution lap selected". This lap was an operator-assigned bounded node (the same
+precedent as the `FrontA/TrunkBound.lean` history note in that directive), not a
+launch from the deferred list, and all work stayed inside the two owned files.
+
 
 ## What landed
 
