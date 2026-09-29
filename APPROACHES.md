@@ -384,3 +384,7 @@ The negative-shadow envelope and inverse-basin obstructions are now proved in Le
 ### Delegated checkpoint, 2026-09-28
 
 [Three independent branches](RESEARCH-2026-09-28-delegated-checkpoint.md): catalytic repair splits into integer relations and legally borrowable factors; the pairwise branch gains an odd-prime cancellation ledger and a formal closed-cycle counterexample; the anchored finite-cut transfer bound is now proved in Lean.  Each branch retains a separate missing mechanism.
+
+### Follow-through, 2026-09-28
+
+The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now includes a restricted-palette repair of 71 with legal borrowing and return, and the arbitrary orbit-prefix transfer identity, both proved in Lean.  The pair-ordering equality and smaller-input borrowability induction have explicit negative controls.  The general surviving inputs remain separate: target-free repair, a genuinely excluding joint arithmetic/order inequality, and an independent anchored-height estimate.  Repeating finite known-orbit repairs or generic pair transport is not a new mechanism.

@@ -62,8 +62,7 @@ theorem and then `decide`:
 
 Combining this identity with the finite-cut lower bound in `AnchoredCut.lean`
 to get the exact anchored infimum needs the separate 0/1 lemma, i.e. injectivity
-of the prefix and disjointness from the dyadic ray. Those are nonperiodicity
-consequences and are deliberately absent here.
+of the prefix and disjointness from the dyadic ray. Disjointness from the ray follows from nonperiodicity of the base.  Prefix injectivity additionally needs a restriction such as ending at the first future maximum, or an unbounded orbit.  A nonperiodic start may eventually enter a cycle, so nonperiodicity of the base alone does not make every finite prefix injective.
 
 ## Exact next steps (none owed by this run)
 
@@ -75,7 +74,7 @@ kickoff:
 
 1. Prove the 0/1 lemma for `orbitPrefixCoeff`: it needs injectivity of
    `j ↦ tstep^[j] n` on `[1, L)` and disjointness of that prefix from the dyadic
-   ray `{2^h n}`. Both are consequences of nonperiodicity of the base, so they
+   ray `{2^h n}`. Ray disjointness follows from nonperiodicity of the base; prefix injectivity requires an additional condition such as stopping at the first future maximum.  They
    must enter as explicit hypotheses — they are deliberately absent from
    `orbitPrefix_defect`, which holds with multiplicity.
 2. Feed that 0/1 lemma plus `orbitPrefix_defect` into the finite-cut lower bound
@@ -85,3 +84,5 @@ kickoff:
 Nothing in `OrbitPrefix.lean` needs revisiting for either step; its API is
 `transfer_pointCoeff`, `rayCoeff_two_mul`, `rayCoeff_odd_pre`,
 `transfer_rayCoeff_eq`, `transfer_orbitPrefixCoeff`, `telescope_sub`.
+
+Host scope clarification: this run ended because its bounded assignment was complete.  The standing gate on deferred general Collatz campaigns does not revoke Trevor's explicit authorization for the new bounded research and formalization tasks.

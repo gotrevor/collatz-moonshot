@@ -87,3 +87,6 @@ import CollatzMoonshot.Obstructions.RepairPalette
 import CollatzMoonshot.Obstructions.AnchoredCut
 import CollatzMoonshot.Obstructions.PairDenominatorControl
 import CollatzMoonshot.Obstructions.OrbitPrefix
+import CollatzMoonshot.Obstructions.Repair71
+import CollatzMoonshot.Obstructions.PairOrderingControl
+import CollatzMoonshot.Obstructions.BorrowabilityHeight23

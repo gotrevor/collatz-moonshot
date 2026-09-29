@@ -276,6 +276,26 @@ def two_edge_repair(parameter):
     return result
 
 
+def positive_divisors_of_product(parts):
+    """Factor the small parts separately, then enumerate product divisors."""
+    powers=Counter()
+    for part in parts:
+        if part<1:
+            raise ValueError('positive factors required')
+        divisor=2
+        while divisor*divisor<=part:
+            while part%divisor==0:
+                powers[divisor]+=1
+                part//=divisor
+            divisor=3 if divisor==2 else divisor+2
+        if part>1:
+            powers[part]+=1
+    divisors=[1]
+    for prime,exponent in powers.items():
+        divisors=[d*prime**e for d in divisors for e in range(exponent+1)]
+    return divisors
+
+
 def two_odd_fiber(value):
     """All positive odd pairs with r_c*r_d=value, with no label cutoff.
 
@@ -288,21 +308,7 @@ def two_odd_fiber(value):
     A,B=ratio.numerator,ratio.denominator
     D=4*B-9*A
     total=4*A*B
-    # Factor A and B separately: trial factoring each costs about sqrt(A)
-    # and sqrt(B), rather than scanning sqrt(4AB) candidate divisors.
-    powers=Counter({2:2})
-    for part in (A,B):
-        divisor=2
-        while divisor*divisor<=part:
-            while part%divisor==0:
-                powers[divisor]+=1
-                part//=divisor
-            divisor=3 if divisor==2 else divisor+2
-        if part>1:
-            powers[part]+=1
-    divisors=[1]
-    for prime,exponent in powers.items():
-        divisors=[d*prime**e for d in divisors for e in range(exponent+1)]
+    divisors=positive_divisors_of_product([4,A,B])
     pairs=[]
     for left in sorted(d for d in divisors if d*d<=total):
         right=total//left
@@ -634,10 +640,12 @@ def anchored_cut(n, cutoff):
 def quadratic_neighbors(a):
     """All nontrivial pair exchanges involving r_a, with no label cutoff.
 
-    Sort the replacement c<=d; then c<2a+1.  Put alpha=3(a-c),
-    beta=a(3c+1), gamma=c(3a+1).  Equality becomes
-    alpha*b*d + beta*b - gamma*d = 0.  If alpha>0, b<gamma/alpha;
-    if alpha<0, d<beta/(-alpha).  Solve for the unbounded variable.
+    Sort c<=d; then c<2a+1.  For alpha=3(a-c), beta=a(3c+1),
+    gamma=c(3a+1), equality factors as
+        (gamma-alpha*b)*(beta+alpha*d)=beta*gamma.
+    Both factors are positive: gamma-alpha*b=beta*b/d.
+    Divisors replace the old long scan over b or d.  Factor the four
+    small terms a,c,3c+1,3a+1 separately, not their large product.
     """
     if a<1 or a%2==0:
         raise ValueError('positive odd label required')
@@ -648,20 +656,18 @@ def quadratic_neighbors(a):
         alpha=3*(a-c)
         beta=a*(3*c+1)
         gamma=c*(3*a+1)
-        if alpha>0:
-            for b in range(1,(gamma-1)//alpha+1,2):
-                d=Fraction(beta*b,gamma-alpha*b)
-                if d.denominator==1 and d>=c and d.numerator%2:
-                    old=tuple(sorted([a,b]));new=(c,d.numerator)
-                    if old!=new:
-                        rows.add((old,new))
-        else:
-            for d in range(c,(beta-1)//(-alpha)+1,2):
-                b=Fraction(gamma*d,beta+alpha*d)
-                if b.denominator==1 and b>=1 and b.numerator%2:
-                    old=tuple(sorted([a,b.numerator]));new=(c,d)
-                    if old!=new:
-                        rows.add((old,new))
+        total=beta*gamma
+        for x in positive_divisors_of_product([a,c,3*c+1,3*a+1]):
+            y=total//x
+            if (gamma-x)%alpha or (y-beta)%alpha:
+                continue
+            b=(gamma-x)//alpha
+            d=(y-beta)//alpha
+            if b<1 or d<c or b%2==0 or d%2==0:
+                continue
+            old=tuple(sorted([a,b]));new=(c,d)
+            if old!=new:
+                rows.add((old,new))
     return {'label':a,'nontrivial_exchanges':[{'before':list(x),'after':list(y)} for x,y in sorted(rows)],
             'frozen':not rows,'height_cutoff':None}
 

@@ -1,0 +1,1602 @@
+{
+  "mode": "targeted",
+  "max_label": 3077,
+  "labels": 531,
+  "max_aux_label": 100000,
+  "pairs_evaluated": 24360,
+  "relations": 2557,
+  "core_relations": 228,
+  "waves": [
+    {
+      "wave": 1,
+      "expanded_labels": [
+        4223,
+        4183,
+        2815,
+        2761,
+        2461,
+        2353,
+        2267,
+        2033,
+        1625,
+        1577
+      ],
+      "new_relations": 1022,
+      "remainder_size": 0
+    }
+  ],
+  "integer_basis_rank": 2028,
+  "residual": [
+    [
+      7,
+      4
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      17,
+      4
+    ],
+    [
+      19,
+      -10
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      25,
+      -10
+    ],
+    [
+      29,
+      -10
+    ],
+    [
+      35,
+      1
+    ],
+    [
+      53,
+      1
+    ],
+    [
+      55,
+      -10
+    ],
+    [
+      61,
+      1
+    ],
+    [
+      65,
+      2
+    ],
+    [
+      71,
+      1
+    ],
+    [
+      83,
+      -10
+    ],
+    [
+      91,
+      1
+    ],
+    [
+      103,
+      1
+    ],
+    [
+      107,
+      1
+    ],
+    [
+      121,
+      1
+    ],
+    [
+      137,
+      1
+    ],
+    [
+      155,
+      1
+    ],
+    [
+      161,
+      1
+    ],
+    [
+      167,
+      1
+    ],
+    [
+      175,
+      1
+    ],
+    [
+      233,
+      1
+    ],
+    [
+      251,
+      1
+    ],
+    [
+      263,
+      1
+    ],
+    [
+      283,
+      1
+    ],
+    [
+      319,
+      1
+    ],
+    [
+      325,
+      1
+    ],
+    [
+      355,
+      -1
+    ],
+    [
+      377,
+      1
+    ],
+    [
+      395,
+      1
+    ],
+    [
+      425,
+      1
+    ],
+    [
+      433,
+      1
+    ],
+    [
+      445,
+      1
+    ],
+    [
+      479,
+      1
+    ],
+    [
+      533,
+      -1
+    ],
+    [
+      577,
+      1
+    ],
+    [
+      593,
+      1
+    ],
+    [
+      719,
+      1
+    ],
+    [
+      911,
+      1
+    ],
+    [
+      1079,
+      1
+    ],
+    [
+      1367,
+      1
+    ],
+    [
+      1619,
+      1
+    ],
+    [
+      2051,
+      1
+    ],
+    [
+      2429,
+      1
+    ],
+    [
+      3077,
+      1
+    ]
+  ],
+  "unresolved_remainder": [],
+  "witness": [
+    {
+      "coefficient": -4,
+      "remove": [
+        7,
+        121
+      ],
+      "insert": [
+        11,
+        17
+      ]
+    },
+    {
+      "coefficient": -5,
+      "remove": [
+        11,
+        221
+      ],
+      "insert": [
+        13,
+        55
+      ]
+    },
+    {
+      "coefficient": -3,
+      "remove": [
+        11,
+        425
+      ],
+      "insert": [
+        19,
+        25
+      ]
+    },
+    {
+      "coefficient": -14,
+      "remove": [
+        13,
+        95
+      ],
+      "insert": [
+        19,
+        29
+      ]
+    },
+    {
+      "coefficient": 3,
+      "remove": [
+        13,
+        667
+      ],
+      "insert": [
+        23,
+        29
+      ]
+    },
+    {
+      "coefficient": 4,
+      "remove": [
+        13,
+        901
+      ],
+      "insert": [
+        17,
+        53
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        17,
+        215
+      ],
+      "insert": [
+        25,
+        43
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        17,
+        793
+      ],
+      "insert": [
+        23,
+        61
+      ]
+    },
+    {
+      "coefficient": -5,
+      "remove": [
+        19,
+        253
+      ],
+      "insert": [
+        23,
+        77
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        19,
+        1925
+      ],
+      "insert": [
+        25,
+        77
+      ]
+    },
+    {
+      "coefficient": -3,
+      "remove": [
+        23,
+        245
+      ],
+      "insert": [
+        25,
+        133
+      ]
+    },
+    {
+      "coefficient": 4,
+      "remove": [
+        23,
+        245
+      ],
+      "insert": [
+        29,
+        77
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        23,
+        245
+      ],
+      "insert": [
+        35,
+        53
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        23,
+        245
+      ],
+      "insert": [
+        37,
+        49
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        23,
+        1625
+      ],
+      "insert": [
+        25,
+        247
+      ]
+    },
+    {
+      "coefficient": -7,
+      "remove": [
+        23,
+        1625
+      ],
+      "insert": [
+        35,
+        65
+      ]
+    },
+    {
+      "coefficient": 5,
+      "remove": [
+        29,
+        715
+      ],
+      "insert": [
+        49,
+        65
+      ]
+    },
+    {
+      "coefficient": 5,
+      "remove": [
+        35,
+        583
+      ],
+      "insert": [
+        43,
+        143
+      ]
+    },
+    {
+      "coefficient": -5,
+      "remove": [
+        35,
+        583
+      ],
+      "insert": [
+        55,
+        83
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        35,
+        1325
+      ],
+      "insert": [
+        47,
+        125
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        43,
+        1175
+      ],
+      "insert": [
+        47,
+        355
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        53,
+        671
+      ],
+      "insert": [
+        61,
+        253
+      ]
+    },
+    {
+      "coefficient": 5,
+      "remove": [
+        53,
+        1625
+      ],
+      "insert": [
+        61,
+        325
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        55,
+        1577
+      ],
+      "insert": [
+        95,
+        121
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        49,
+        1073
+      ],
+      "insert": [
+        61,
+        203
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        41,
+        1339
+      ],
+      "insert": [
+        65,
+        103
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        65,
+        343
+      ],
+      "insert": [
+        91,
+        137
+      ]
+    },
+    {
+      "coefficient": -6,
+      "remove": [
+        65,
+        833
+      ],
+      "insert": [
+        83,
+        221
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        65,
+        1421
+      ],
+      "insert": [
+        109,
+        145
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        71,
+        2461
+      ],
+      "insert": [
+        77,
+        667
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        71,
+        2461
+      ],
+      "insert": [
+        121,
+        161
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        91,
+        1507
+      ],
+      "insert": [
+        143,
+        215
+      ]
+    },
+    {
+      "coefficient": 7,
+      "remove": [
+        95,
+        533
+      ],
+      "insert": [
+        133,
+        205
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        95,
+        1133
+      ],
+      "insert": [
+        103,
+        589
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        103,
+        755
+      ],
+      "insert": [
+        151,
+        227
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        103,
+        961
+      ],
+      "insert": [
+        121,
+        403
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        103,
+        961
+      ],
+      "insert": [
+        155,
+        233
+      ]
+    },
+    {
+      "coefficient": -3,
+      "remove": [
+        121,
+        1183
+      ],
+      "insert": [
+        143,
+        473
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        121,
+        1261
+      ],
+      "insert": [
+        143,
+        485
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        133,
+        1507
+      ],
+      "insert": [
+        137,
+        1133
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        151,
+        805
+      ],
+      "insert": [
+        161,
+        605
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        161,
+        1045
+      ],
+      "insert": [
+        205,
+        437
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        119,
+        895
+      ],
+      "insert": [
+        175,
+        263
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        175,
+        2893
+      ],
+      "insert": [
+        227,
+        605
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        175,
+        2893
+      ],
+      "insert": [
+        289,
+        385
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        203,
+        793
+      ],
+      "insert": [
+        283,
+        377
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        283,
+        2075
+      ],
+      "insert": [
+        415,
+        623
+      ]
+    },
+    {
+      "coefficient": 5,
+      "remove": [
+        325,
+        1525
+      ],
+      "insert": [
+        469,
+        625
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        343,
+        1339
+      ],
+      "insert": [
+        355,
+        1183
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        355,
+        1183
+      ],
+      "insert": [
+        403,
+        847
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        221,
+        2075
+      ],
+      "insert": [
+        377,
+        425
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        395,
+        593
+      ],
+      "insert": [
+        415,
+        553
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        289,
+        1085
+      ],
+      "insert": [
+        425,
+        493
+      ]
+    },
+    {
+      "coefficient": -5,
+      "remove": [
+        425,
+        2233
+      ],
+      "insert": [
+        625,
+        833
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        517,
+        1261
+      ],
+      "insert": [
+        533,
+        1175
+      ]
+    },
+    {
+      "coefficient": 3,
+      "remove": [
+        469,
+        2233
+      ],
+      "insert": [
+        533,
+        1421
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        25,
+        3857
+      ],
+      "insert": [
+        29,
+        175
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        35,
+        5035
+      ],
+      "insert": [
+        55,
+        95
+      ]
+    },
+    {
+      "coefficient": -4,
+      "remove": [
+        35,
+        6413
+      ],
+      "insert": [
+        49,
+        121
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        41,
+        24955
+      ],
+      "insert": [
+        55,
+        161
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        55,
+        33733
+      ],
+      "insert": [
+        61,
+        553
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        61,
+        24725
+      ],
+      "insert": [
+        85,
+        215
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        37,
+        5525
+      ],
+      "insert": [
+        65,
+        85
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        65,
+        3773
+      ],
+      "insert": [
+        77,
+        377
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        43,
+        4615
+      ],
+      "insert": [
+        71,
+        107
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        83,
+        6695
+      ],
+      "insert": [
+        103,
+        403
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        91,
+        17125
+      ],
+      "insert": [
+        95,
+        1925
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        91,
+        17125
+      ],
+      "insert": [
+        125,
+        329
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        109,
+        69905
+      ],
+      "insert": [
+        121,
+        1085
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        119,
+        9845
+      ],
+      "insert": [
+        121,
+        4165
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        121,
+        56525
+      ],
+      "insert": [
+        125,
+        3553
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        121,
+        91637
+      ],
+      "insert": [
+        133,
+        1325
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        145,
+        4033
+      ],
+      "insert": [
+        161,
+        1073
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        161,
+        3649
+      ],
+      "insert": [
+        205,
+        623
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        161,
+        46475
+      ],
+      "insert": [
+        169,
+        3175
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        167,
+        23845
+      ],
+      "insert": [
+        175,
+        3173
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        95,
+        13325
+      ],
+      "insert": [
+        175,
+        205
+      ]
+    },
+    {
+      "coefficient": -5,
+      "remove": [
+        203,
+        14213
+      ],
+      "insert": [
+        233,
+        1421
+      ]
+    },
+    {
+      "coefficient": 5,
+      "remove": [
+        205,
+        14213
+      ],
+      "insert": [
+        233,
+        1525
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        251,
+        16733
+      ],
+      "insert": [
+        253,
+        10963
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        251,
+        16733
+      ],
+      "insert": [
+        433,
+        577
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        251,
+        74965
+      ],
+      "insert": [
+        329,
+        1045
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        251,
+        74965
+      ],
+      "insert": [
+        485,
+        517
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        251,
+        95381
+      ],
+      "insert": [
+        253,
+        23845
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        247,
+        75313
+      ],
+      "insert": [
+        263,
+        3857
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        169,
+        3683
+      ],
+      "insert": [
+        283,
+        377
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        283,
+        3773
+      ],
+      "insert": [
+        385,
+        833
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        203,
+        3355
+      ],
+      "insert": [
+        319,
+        479
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        143,
+        24725
+      ],
+      "insert": [
+        253,
+        325
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        203,
+        5525
+      ],
+      "insert": [
+        325,
+        493
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        325,
+        33733
+      ],
+      "insert": [
+        469,
+        1027
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        215,
+        3553
+      ],
+      "insert": [
+        355,
+        473
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        329,
+        56525
+      ],
+      "insert": [
+        355,
+        4165
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        355,
+        12259
+      ],
+      "insert": [
+        667,
+        715
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        355,
+        16093
+      ],
+      "insert": [
+        385,
+        3553
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        355,
+        16093
+      ],
+      "insert": [
+        589,
+        847
+      ]
+    },
+    {
+      "coefficient": 2,
+      "remove": [
+        355,
+        91637
+      ],
+      "insert": [
+        437,
+        1855
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        425,
+        3683
+      ],
+      "insert": [
+        433,
+        3175
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        425,
+        4669
+      ],
+      "insert": [
+        755,
+        805
+      ]
+    },
+    {
+      "coefficient": 4,
+      "remove": [
+        425,
+        6413
+      ],
+      "insert": [
+        715,
+        901
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        425,
+        95381
+      ],
+      "insert": [
+        437,
+        13325
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        433,
+        7505
+      ],
+      "insert": [
+        553,
+        1577
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        433,
+        7505
+      ],
+      "insert": [
+        563,
+        1501
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        433,
+        46475
+      ],
+      "insert": [
+        473,
+        4615
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        437,
+        3649
+      ],
+      "insert": [
+        445,
+        3173
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        533,
+        2815
+      ],
+      "insert": [
+        563,
+        2197
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        671,
+        5035
+      ],
+      "insert": [
+        719,
+        3355
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        895,
+        25517
+      ],
+      "insert": [
+        911,
+        17005
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1079,
+        19643
+      ],
+      "insert": [
+        1183,
+        7555
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1367,
+        25517
+      ],
+      "insert": [
+        1501,
+        9571
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        1511,
+        11335
+      ],
+      "insert": [
+        1619,
+        7555
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        2051,
+        9571
+      ],
+      "insert": [
+        2815,
+        4223
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        2267,
+        17005
+      ],
+      "insert": [
+        2429,
+        11335
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        3077,
+        10963
+      ],
+      "insert": [
+        3553,
+        7421
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        4223,
+        24955
+      ],
+      "insert": [
+        6695,
+        7843
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        4033,
+        69905
+      ],
+      "insert": [
+        4223,
+        39277
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        4223,
+        39277
+      ],
+      "insert": [
+        7421,
+        7843
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        1183,
+        61525
+      ],
+      "insert": [
+        2197,
+        2461
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1421,
+        12259
+      ],
+      "insert": [
+        2461,
+        2639
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        1751,
+        4669
+      ],
+      "insert": [
+        2461,
+        2639
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1751,
+        61525
+      ],
+      "insert": [
+        2461,
+        5525
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        1925,
+        43073
+      ],
+      "insert": [
+        2267,
+        9845
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        1027,
+        11165
+      ],
+      "insert": [
+        1625,
+        2233
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        1625,
+        75313
+      ],
+      "insert": [
+        1855,
+        11165
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1511,
+        43073
+      ],
+      "insert": [
+        1577,
+        19643
+      ]
+    }
+  ],
+  "partial_combination": null
+}

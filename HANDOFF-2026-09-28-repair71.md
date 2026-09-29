@@ -79,6 +79,4 @@ repair certificate for *this* 71 certificate, not a terminating repair procedure
 arbitrary starts.  The reachability relation says nothing about how to choose a target
 path for an unknown orbit.
 
-The two JSON artifacts `experiments/catalytic_palette_71_witness.json` and
-`experiments/catalytic_palette_71_replay.json` are still untracked in git; whoever owns
-`experiments/` should commit them, since `Repair71Data.lean` was generated from them.
+The JSON artifacts, Python generator/replayer and persistent tests are integrated with the proof in the repository.  See `RESEARCH-2026-09-28-delegated-checkpoint.md` for the independent branches and remaining mechanisms.

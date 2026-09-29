@@ -232,7 +232,7 @@ Set
 F = D_n + sum_(j=1)^(L-1) z^T^j(n).
 ```
 
-The finite sum telescopes, so `(P-I)F=z^q`.  The prefix is distinct and disjoint from the ray: a forward visit to `2^h n` would return to n after h halvings, contradicting nonperiodicity.  Thus F is 0/1, has anchored coefficient one, and has connected support.  It avoids 1,2 up to the chosen endpoint and has weighted defect exactly 1/q.  Its support is a dyadic ray plus a finite set.
+The finite sum telescopes, so `(P-I)F=z^q`.  The prefix is disjoint from the ray: a forward visit to `2^h n` would return to n after h halvings, contradicting nonperiodicity.  Its distinctness needs a separate argument: choose the first occurrence of the future maximum q; a repeated earlier state would force q to occur earlier too.  Base nonperiodicity alone does not imply injectivity of the infinite future.  See the [first-hit and norm audit](RESEARCH-2026-09-28-sharp-anchored-next.md).  Thus F is 0/1, has anchored coefficient one, and has connected support.  It avoids 1,2 up to the chosen endpoint and has weighted defect exactly 1/q.  Its support is a dyadic ray plus a finite set.
 
 For an unbounded orbit, the same construction at arbitrarily large endpoints gives defect norms tending to zero.  For a nontrivial cycle, its indicator is an admissible exact fixed vector.  These prove the remaining cases.
 
@@ -240,7 +240,7 @@ Hand controls: n=3 gives `D_3+z^5`, defect at 8, `c_3=1/8`; n=7 gives `D_7+z^11+
 
 Consequently `c_n>0 for every n>=3` is equivalent to Collatz convergence.  If all constants are positive, there are no unbounded orbits and no nontrivial periodic states.  Conversely, convergence gives the finite-cut lower bound for each n.  The identity locates the analytic target exactly: a nonuniform anchored estimate is a peak-height bound, together with exclusion of periodic states.  Changing the exponent of the power weight only changes the power of the same orbit-height quantity.  The same proof gives `M_n^(-s)` for weights `u^(-s)`, s>0.
 
-The general finite-cut identity and its anchored weighted lower bound are now proved in `AnchoredCut.lean`.  The orbit-cut specialization, dyadic-ray extremizer and full infimum equality remain paper-side, with exact extremizer controls; see the [independent audit](RESEARCH-2026-09-27-anchored-audit.md).  Separately, the previously open `PositiveApproximationFamily` has now been proved in `PositiveApproximation.lean`, without changing its statement.  Its norm and sparsity consequences remain as recorded in the prior note.
+The general finite-cut identity and its anchored weighted lower bound are now proved in `AnchoredCut.lean`.  The dyadic-ray plus arbitrary finite-prefix defect identity is now proved in `OrbitPrefix.lean`.  The orbit-cut specialization, real norm bridge and full infimum equality remain paper-side, with exact extremizer controls; see the [independent audit](RESEARCH-2026-09-27-anchored-audit.md).  Separately, the previously open `PositiveApproximationFamily` has now been proved in `PositiveApproximation.lean`, without changing its statement.  Its norm and sparsity consequences remain as recorded in the prior note.
 
 ## Evidence and the three independent open inputs
 

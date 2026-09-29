@@ -341,3 +341,37 @@ def test_structural_snapshot_contains_both_kinds_of_cubic_obstruction():
     assert got['catalyst_121']['path'] is not None
     assert got['small_neighbors'][2]['frozen'] is True
     assert got['sharp_anchors'][1]['sharp_defect_norm']=='1/26'
+
+
+@pytest.mark.parametrize('label,before,after',[
+    (23,[23,245],[35,53]),
+    (35,[35,53],[23,245]),
+    (245,[23,245],[35,53]),
+])
+def test_divisor_neighbors_cover_both_factor_orientations(label,before,after):
+    # r23*r245=(23/35)*(245/368)=7/16,
+    # r35*r53=(35/53)*(53/80)=7/16.
+    # The c=35,a=23 case has negative alpha; c=23,a=35 has positive alpha.
+    got=run('quadratic-neighbors',label)
+    assert {'before':before,'after':after} in got['nontrivial_exchanges']
+    assert got['height_cutoff'] is None
+
+
+def test_divisor_neighbors_nine_complete_small_fiber():
+    # For example r9*r29=(9/14)*(29/44)=261/616=r7*r261.
+    # Enumerating odd c<19 in the factored equation leaves these pairs.
+    got=run('quadratic-neighbors',9)
+    assert got['nontrivial_exchanges']==[
+        {'before':[9,29],'after':[7,261]},
+        {'before':[9,245],'after':[15,21]},
+        {'before':[9,273],'after':[13,27]},
+        {'before':[9,385],'after':[11,45]},
+    ]
+
+
+def test_targeted_last_catalyst_interaction():
+    # 1079=13*83, 7553=7*1079 and 7555=5*1511.
+    # Hence r1079*r5035=5035/(7*1619)=5035/11333
+    # and r1007*r7555=(1007/1511)*(7555/11333)=5035/11333.
+    got=run('quadratic-neighbors',7555)
+    assert {'before':[1007,7555],'after':[1079,5035]} in got['nontrivial_exchanges']
