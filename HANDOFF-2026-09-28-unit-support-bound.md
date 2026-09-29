@@ -1,5 +1,12 @@
 # Handoff: bounded unit size forces bounded label support
 
+**Checkpoint 2026-09-29.**  Branch `main`, HEAD `491463c` ("Prove the rational
+product label bound and its value-one unit corollary").  Root `lake build`
+green (pre-commit hook verified, 8814 jobs).  Scoped objective
+`sorry-free:CollatzMoonshot/Obstructions/UnitSupportBound.lean` is **met**;
+`box done --green` signalled.  Working tree still carries other agents'
+uncommitted experiment/notes files — not mine, left untouched.
+
 `CollatzMoonshot/Obstructions/UnitSupportBound.lean` is complete, green, and
 axiom-clean (`propext, Classical.choice, Quot.sound` only).  No `sorry`, no new
 cited axiom.  The two frozen statements and `productLabelBound` are unchanged.
@@ -54,3 +61,19 @@ minimum rather than a uniform `v`).  That is what would turn this finiteness
 statement into an effective search bound.  Do **not** spend the next lap
 micro-optimizing the current recursion's constants; the payoff is in the
 analytic estimate, not in the list plumbing, which is finished.
+
+## Exact next steps (for whoever picks this up)
+
+1. Nothing is owed on this module: it is sorry-free and axiom-clean, and both
+   frozen statements are unchanged from the kickoff.  Re-audit by diffing the
+   two theorem signatures and `productLabelBound` against
+   `KICKOFF-2026-09-28-unit-support-bound.md` if you want the check.
+2. The open research step is the analytic sharpening described above: replace
+   `prod_excess_le`'s `q*4^q` by the true excess `3^q*(∑ 1/(3u) + …)`, yielding
+   `v ≲ 3^q*q*B` after the identical cancellation in `bounded_aux`.  Only
+   `prod_excess_le` and `excess_step` would change; `pow_mul_prod_lt` and the
+   erase/induction skeleton are reusable verbatim.
+3. Do not spend a lap tightening `productLabelBound`'s constants.  Per
+   `DIRECTION.md`, the repo's standing objective is the run-count gap on
+   first-crossing near-cycles, which this module does not touch and which no
+   current directive authorizes a proof lap on.
