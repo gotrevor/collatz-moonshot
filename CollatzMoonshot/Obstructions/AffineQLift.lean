@@ -212,6 +212,65 @@ theorem affineLift_simultaneous_chained
       _ ≤ x + 3*x*(3*x+1)*(3*u+1) * ((3*x₂+1)*(M+1)) := by omega
       _ = x + 3*x*(3*x+1)*(3*u+1)*((3*x₂+1)*(M+1)) := by ring
 
+/-! ### The no-go: the deformation cannot move the data a borrow argument reads
+
+Simultaneity is unobstructed (above), so if the deformation route is to fail it
+must fail because the lifted family carries *the same* congruence and divisibility
+data as the original.  It does. -/
+
+/-- Every lifted label is a multiple of the label it deforms.  Hence the
+deformation never removes a prime from a label's support; it can only scale. -/
+theorem affineLift_dvd (u b x z t : ℕ) :
+    u ∣ liftU u x t ∧ b ∣ liftB u x b t ∧ x ∣ liftX u x t ∧ z ∣ liftZ u x z t := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [liftU_eq]; exact Dvd.intro _ rfl
+  · rw [liftB_eq]; exact Dvd.intro _ rfl
+  · rw [liftX_eq]; exact Dvd.intro _ rfl
+  · rw [liftZ_eq]; exact Dvd.intro _ rfl
+
+/-- Unconditionally, the deformation fixes every label's class mod `3`. -/
+theorem affineLift_mod_three (u b x z t : ℕ) :
+    liftU u x t % 3 = u % 3 ∧ liftB u x b t % 3 = b % 3 ∧
+    liftX u x t % 3 = x % 3 ∧ liftZ u x z t % 3 = z % 3 := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have h : liftU u x t = u + 3 * (u*(3*x+1)*(3*u+1)*t) := by simp only [liftU]; ring
+    omega
+  · have h : liftB u x b t = b + 3 * (3*u*b*(3*x+1)*t) := by simp only [liftB]; ring
+    omega
+  · have h : liftX u x t = x + 3 * (x*(3*x+1)*(3*u+1)*t) := by simp only [liftX]; ring
+    omega
+  · have h : liftZ u x z t = z + 3 * (3*x*z*(3*u+1)*t) := by simp only [liftZ]; ring
+    omega
+
+/-- If the two head labels `u` and `x` are odd, the deformation fixes every
+label's class mod `6` — for all four labels and every deformation parameter `t`.
+
+This is the no-go for the deformation route.  A repair argument whose deficit is
+a statement about residues mod `2` or mod `3` (borrow counts, the 3-free
+condition, parity of a run) reads exactly the data this theorem shows is
+invariant, so no choice of `t` can ever change it.  Combined with
+`affineLift_simultaneous_shared_head` and `affineLift_simultaneous_chained`,
+which show the exchange equations impose no obstruction at all, the deformation
+is revealed as too flexible to be obstructed and too rigid to repair. -/
+theorem affineLift_mod_six_invariant (u b x z t : ℕ) (hu : u%2=1) (hx : x%2=1) :
+    liftU u x t % 6 = u % 6 ∧ liftB u x b t % 6 = b % 6 ∧
+    liftX u x t % 6 = x % 6 ∧ liftZ u x z t % 6 = z % 6 := by
+  obtain ⟨j, hj⟩ : ∃ j, x = 2*j+1 := ⟨x/2, by omega⟩
+  obtain ⟨i, hi⟩ : ∃ i, u = 2*i+1 := ⟨u/2, by omega⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have h : liftU u x t = u + 6 * (u*(3*j+2)*(3*u+1)*t) := by
+      simp only [liftU, hj]; ring
+    omega
+  · have h : liftB u x b t = b + 6 * (3*u*b*(3*j+2)*t) := by
+      simp only [liftB, hj]; ring
+    omega
+  · have h : liftX u x t = x + 6 * (x*(3*j+2)*(3*u+1)*t) := by
+      simp only [liftX, hj]; ring
+    omega
+  · have h : liftZ u x z t = z + 6 * (3*x*z*(3*i+2)*t) := by
+      simp only [liftZ, hi]; ring
+    omega
+
 theorem affineLift_unbounded (u x M : ℕ) (hu : 0<u) :
     ∃ t : ℕ, M < liftU u x t := by
   refine ⟨M+1, ?_⟩

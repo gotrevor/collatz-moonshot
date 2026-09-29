@@ -108,15 +108,51 @@ one" cannot fail for exchange-equation reasons, therefore it also cannot succeed
 for them — the exchanges are simply not the binding constraint. Do not spend
 another lap looking for an exchange-level obstruction.
 
+## The no-go is now proved, not just conjectured
+
+Simultaneity being unobstructed means the deformation route can only fail for
+*invariance* reasons: the lifted family must carry the same data any borrow or
+unit argument reads. It does, and this is now formal.
+
+- `affineLift_dvd` — `u ∣ liftU`, `b ∣ liftB`, `x ∣ liftX`, `z ∣ liftZ`. Immediate
+  from the four `liftV_eq` factorizations. So the deformation never *removes* a
+  prime from a label's support; it can only scale support up.
+- `affineLift_mod_three` — unconditionally, all four labels keep their class mod
+  `3`, for every `t`. (Each added slope carries an explicit factor `3`.)
+- `affineLift_mod_six_invariant` — if the two head labels `u`, `x` are odd (note:
+  `b` and `z` need *not* be), all four labels keep their class mod `6`, for every
+  `t`. Proved by writing each added slope as `6·(…)`, using `3x+1 = 2(3j+2)` and
+  `3u+1 = 2(3i+2)`, then `omega`.
+
+**The conclusion for the route.** The affine deformation is simultaneously too
+flexible to be obstructed and too rigid to repair:
+
+- too flexible — the exchange equations impose one linear condition per shared
+  label and never an incompatibility (`liftU_shared_iff`,
+  `liftX_eq_liftU_iff`), so there is no exchange-level obstruction to find at
+  any chain depth;
+- too rigid — the entire infinite `t`-family sits in one class mod `6` for every
+  label, so any deficit stated in terms of residues mod `2` or mod `3` (borrow
+  counts, the 3-free condition, run parity) is literally the same for every
+  member of the family.
+
+So this route cannot repair a congruence-level deficit, and this is a proof, not
+an impression. `LocalGlobalBorrow23`'s global obstruction is untouched by
+construction, as the file's original docstring asserted; the assertion is now
+backed by `affineLift_mod_six_invariant` rather than by inspection.
+
 ## Next steps
 
-1. Do **not** look for an exchange-level obstruction to simultaneity; the two
-   `_iff` lemmas above show there is none at any shared label.
-2. The live question is whether the lifted family can ever be made to satisfy
-   the borrow/unit conditions simultaneously with the exchanges. Since every
-   lifted label is `orig · (1 mod 6 factor)`, the deformation fixes each label's
-   class mod 2 and mod 3 — so it provably cannot repair a mod-3 or mod-2 borrow
-   deficit. Stating that invariance (`lift ≡ orig` on the relevant residue data)
-   is the natural next formal step, and it would turn this file from a
-   calibration into an actual no-go for the deformation route.
-3. Nothing in this file is open. Other agents own Python/docs.
+1. This file is complete for its purpose: eleven theorems, zero `sorry`,
+   `#print axioms` clean throughout. It now states both halves — the deformation
+   exists and is unobstructed, *and* it provably cannot repair congruence data.
+2. Do **not** spend a lap seeking an exchange-level obstruction to simultaneity
+   (none exists) or hoping a cleverer `t` repairs a mod-2/mod-3 deficit (the
+   invariance theorem forbids it).
+3. If anyone wants to continue the deformation idea, it must be a *different*
+   deformation: one whose added slope is not divisible by `6`, hence not of the
+   form `orig · (1 + 6c)`. That is the only opening this lap leaves, and the
+   `liftV_eq` factorizations show exactly which structure would have to be given
+   up (the clean `3·liftU+1 = (3u+1)G` factorization is what forces the slope to
+   be divisible by `3`).
+4. Other agents own Python/docs.
