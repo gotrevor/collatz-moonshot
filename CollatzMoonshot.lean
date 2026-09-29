@@ -104,3 +104,5 @@ import CollatzMoonshot.Obstructions.Q1Reentry
 import CollatzMoonshot.Obstructions.CoefficientRay
 
 import CollatzMoonshot.Obstructions.RayRefill
+
+import CollatzMoonshot.Obstructions.BoundedMerger

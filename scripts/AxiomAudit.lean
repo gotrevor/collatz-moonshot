@@ -369,3 +369,23 @@ example (k : ℕ) :
   refill0_fuel k
 
 end RayRefillConsumers
+
+
+section BoundedMergerConsumers
+open CollatzMoonshot.FrontB
+open CollatzMoonshot.Obstructions.BoundedMerger
+
+example (K n : ℕ) (hn : 6 ^ K ≤ n)
+    (h2 : 2 ^ K ∣ n + 1) (h3 : 3 ^ K ∣ n) :
+    ∀ b : ℕ, 0 < b → b < n →
+      ∀ i : ℕ, i ≤ K → ∀ j : ℕ, j ≤ K →
+        tstep^[i] n ≠ tstep^[j] b :=
+  crt_no_bounded_smaller_merge K n hn h2 h3
+
+example (K M : ℕ) :
+    ∃ n : ℕ, M < n ∧
+      ∀ b : ℕ, 0 < b → b < n →
+        ∀ i : ℕ, i ≤ K → ∀ j : ℕ, j ≤ K →
+          tstep^[i] n ≠ tstep^[j] b :=
+  arbitrarily_large_no_bounded_smaller_merge K M
+end BoundedMergerConsumers
