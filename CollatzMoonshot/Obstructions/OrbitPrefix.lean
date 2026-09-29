@@ -188,7 +188,7 @@ example : transfer (orbitPrefixCoeff 1 3) 2 - orbitPrefixCoeff 1 3 2 = 1 := by
   have := orbitPrefix_defect 1 3 (by norm_num) (by norm_num) 2 (by norm_num)
   rw [this]; decide
 
--- Trust-base audit: no `sorry`, no new axiom.
+-- Trust-base audit: complete proof, no new axiom.
 /-- info: 'CollatzMoonshot.Obstructions.ArithmeticLifts.orbitPrefix_defect' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
