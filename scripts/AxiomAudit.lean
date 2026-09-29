@@ -324,3 +324,48 @@ example {α : Type*} (r : α → α → Prop) (hr : WellFounded r) :
   no_uniform_ray_rank r hr
 
 end CoefficientRayConsumers
+
+
+section RayRefillConsumers
+open CollatzMoonshot.FrontB
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair
+
+example (t : ℕ) : refill0A t = 499 + 4608 * t := rfl
+example (t : ℕ) : refill0B t = 8 + 64 * t := rfl
+example (t : ℕ) : refill1A t = 9715 + 13824 * t := rfl
+example (t : ℕ) : refill1B t = 46 + 64 * t := rfl
+example : refillT 0 = 0 := rfl
+example (k : ℕ) : refillT (k + 1) = 64 * refillT k + 7 := rfl
+
+example (t : ℕ) :
+    0 < refill0A t ∧ 0 < refill0B t ∧
+    tstep^[6] (refill0A t) = 211 + 1944 * t ∧
+    tstep^[6] (refill0B t) = 2 + 9 * t ∧
+    refill0A t + 5 = 72 * (refill0B t - 1) ∧
+    tstep^[6] (refill0A t) + 5 =
+      216 * (tstep^[6] (refill0B t) - 1) ∧
+    tstep^[6] (refill0A t) < refill0A t ∧
+    tstep^[6] (refill0B t) < refill0B t :=
+  refill0_actual t
+
+example (t : ℕ) :
+    0 < refill1A t ∧ 0 < refill1B t ∧
+    tstep^[6] (refill1A t) = 4099 + 5832 * t ∧
+    tstep^[6] (refill1B t) = 20 + 27 * t ∧
+    refill1A t + 5 = 216 * (refill1B t - 1) ∧
+    tstep^[6] (refill1A t) + 5 =
+      216 * (tstep^[6] (refill1B t) - 1) ∧
+    tstep^[6] (refill1A t) < refill1A t ∧
+    tstep^[6] (refill1B t) < refill1B t :=
+  refill1_actual t
+
+example (k : ℕ) : 9 * refillT k + 1 = 64 ^ k :=
+  refillT_formula k
+
+example (k : ℕ) :
+    (refill0B (refillT k) - 1) % 2 = 1 ∧
+    tstep^[6] (refill0B (refillT k)) - 1 = 64 ^ k ∧
+    tstep^[6] (refill0A (refillT k)) + 5 = 216 * 64 ^ k :=
+  refill0_fuel k
+
+end RayRefillConsumers

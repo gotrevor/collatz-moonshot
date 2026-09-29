@@ -557,6 +557,274 @@ def test_q1_offset_ray_rejects_invalid_depths():
         assert 'offset-ray requires' in bad.stderr
 
 
+def test_q1_ray_exit_two_hand_stepped_anchors():
+    # A: 67 -> 101 -> 152 -> 76 -> 38.  B: 2 -> 1 -> 2 -> 1 -> 2.
+    zero = run('q1-ray-exit',0,0,1)
+    assert zero['initial'] == {'A':67,'B':2,'m':72,'d':-4}
+    assert zero['first_parity_mismatch'] == {'A':3,'B':0}
+    assert [(zero['checkpoints'][name]['A'],zero['checkpoints'][name]['B'])
+            for name in ('initial','B_after_mismatch','A_first_mismatch','final')] == [
+                (67,2),(101,1),(76,1),(38,2)]
+    assert zero['A_parity_word'] == '1100'
+    assert zero['B_parity_word'] == '0101'
+    assert zero['checkpoints']['initial']['A_offset']['v2'] == 3
+    assert zero['checkpoints']['final']['A_offset']['v2'] == 0
+    assert zero['final_vs_initial'] == {'A':'shrink','B':'equal'}
+
+    # With j=1,e=1,v=3, the two paths are obtained by ordinary T steps:
+    # A: 1291,1937,2906,1453,2180,1090; B: 7,11,17,26,13,20.
+    one = run('q1-ray-exit',1,1,3)
+    assert one['initial'] == {'A':1291,'B':7,'m':216,'d':-4}
+    assert one['first_parity_mismatch'] == {'A':4,'B':1}
+    assert [(one['checkpoints'][name]['A'],one['checkpoints'][name]['B'])
+            for name in ('B_first_mismatch','B_after_mismatch',
+                         'A_first_mismatch','final')] == [
+                (1937,11),(2906,17),(2180,13),(1090,20)]
+    assert one['A_parity_word'] == '11010'
+    assert one['B_parity_word'] == '11101'
+    assert one['final_vs_initial'] == {'A':'shrink','B':'grow'}
+
+
+def test_q1_ray_exit_six_remainder_classes_and_exact_ledger():
+    # Check the formulas at the first parity disagreements, using the
+    # independently specified reference cycles.  This covers e mod 6.
+    a_ref, b_ref = (-5,-7,-10), (1,2)
+    for e in range(6):
+        got = run('q1-ray-exit',0,e,1)
+        assert got['steps'] == e+4
+        assert got['shared_phase_steps'] == e
+        assert got['complete_six_blocks'] == e//6
+        assert got['first_parity_mismatch'] == {'A':e+3,'B':e}
+        assert got['shadow_formulas_checked'] is True
+        assert got['inherited_relation_checked'] is True
+        for name,index in (('initial',0),('B_first_mismatch',e),
+                           ('B_after_mismatch',e+1),
+                           ('A_first_mismatch',e+3),('final',e+4)):
+            row = got['checkpoints'][name]
+            assert row['index'] == index
+            assert row['A_reference'] == a_ref[index%3]
+            assert row['B_reference'] == b_ref[index%2]
+            m = Fraction(*row['m'])
+            d = Fraction(*row['d'])
+            assert row['A']+1 == m*(row['B']-1)+d
+            for label,reference in (('A',a_ref[index%3]),
+                                    ('B',b_ref[index%2])):
+                offset = row[label+'_offset']
+                assert offset['difference'] == row[label]-reference
+                assert offset['reference_hit'] == (row[label] == reference)
+                if offset['reference_hit']:
+                    assert offset['v2'] is None
+                else:
+                    power = 2**offset['v2']
+                    assert abs(offset['difference'])%power == 0
+                    assert (abs(offset['difference'])//power)%2 == 1
+            if index <= e:
+                assert row['B'] == b_ref[index%2] + (
+                    3**((index+1)//2)*2**(e-index))
+            if index <= e+3:
+                assert row['A'] == a_ref[index%3] + (
+                    9*3**(index-index//3)*2**(e+3-index))
+        if e == 2:
+            assert got['checkpoints']['B_after_mismatch']['B_offset'] == {
+                'difference':0,'reference_hit':True,'v2':None}
+
+
+def test_q1_ray_exit_rejects_invalid_parameters():
+    for j,e,v in ((-1,0,1),(129,0,1),(0,-1,1),(0,513,1),
+                  (0,0,0),(0,0,2),(0,0,-1)):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-ray-exit',
+                              str(j),str(e),str(v)],capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'ray-exit needs' in bad.stderr
+
+
+def test_q1_ray_refill_hand_six_step_controls():
+    def shortcut(value):
+        return (3*value+1)//2 if value%2 else value//2
+    # v=7 and v=71 have 9v+1=64 and 640, respectively.  The latter
+    # supplies one new factor of two after division by 64.
+    for v,a_path,b_path,fuel in (
+        (7,[499,749,1124,562,281,422,211],
+         [8,4,2,1,2,1,2],0),
+        (71,[5107,7661,11492,5746,2873,4310,2155],
+         [72,36,18,9,14,7,11],1),
+    ):
+        assert all(shortcut(a_path[i]) == a_path[i+1] for i in range(6))
+        assert all(shortcut(b_path[i]) == b_path[i+1] for i in range(6))
+        assert ''.join(str(x%2) for x in a_path[:-1]) == '110010'
+        assert ''.join(str(x%2) for x in b_path[:-1]) == '000101'
+        assert a_path[0]+1 == 72*(b_path[0]-1)-4
+        assert a_path[-1] == (243*v-13)//8
+        assert b_path[-1] == (9*v+65)//64
+        assert a_path[-1]+1 == 216*(b_path[-1]-1)-4
+        assert (b_path[-1]-1)%(2**fuel) == 0
+        assert (b_path[-1]-1)%(2**(fuel+1)) != 0
+
+
+def test_q1_ray_refill_actual_hard_family_crt_and_prefix():
+    def shortcut(value):
+        return (3*value+1)//2 if value%2 else value//2
+    for depth in (0,2,24,128):
+        got = run('q1-ray-refill',depth)
+        v = got['v']
+        assert got['K'] == depth
+        assert got['t'] == 1690+2048*got['z_residue']
+        assert 0 <= got['z_residue'] < 2**(depth+5)
+        assert got['z_modulus'] == 2**(depth+5)
+        assert got['u'] == 23629975235+2*12348281925*got['t']
+        assert got['s'] == 7+8*got['t']
+        assert got['v_slope'] == 4*3**6*12348281925
+        assert v == got['v_base']+got['v_slope']*got['z_residue']
+        assert (9*v+1)%(2**(depth+6)) == 0
+        assert (9*v+1)%(2**(depth+7)) != 0
+        assert got['nine_v_plus_one_v2'] == depth+6
+        assert got['entry']['A'] == 72*v-5
+        assert got['entry']['B'] == v+1
+        assert got['exit']['A'] == (243*v-13)//8
+        assert got['exit']['B'] == (9*v+65)//64
+        assert got['exit']['new_fuel_v2'] == depth
+        assert got['six_step_words'] == {'A':'110010','B':'000101'}
+        a,b = got['entry']['A'],got['entry']['B']
+        for _ in range(6):
+            a,b = shortcut(a),shortcut(b)
+        assert (a,b) == (got['exit']['A'],got['exit']['B'])
+        assert got['entry']['A']+1 == 72*(got['entry']['B']-1)-4
+        assert got['exit']['A']+1 == 216*(got['exit']['B']-1)-4
+        assert got['growth'] == {'A':'shrink','B':'shrink'}
+        n_path,q_path = [got['n']],[got['q']]
+        for _ in range(23):
+            n_path.append(shortcut(n_path[-1]))
+        for _ in range(19):
+            q_path.append(shortcut(q_path[-1]))
+        assert (n_path[17],q_path[13]) == (got['entry']['A'],got['entry']['B'])
+        assert (n_path[23],q_path[19]) == (got['exit']['A'],got['exit']['B'])
+        assert min(n_path) == got['n']
+        assert max(q_path) < got['n']
+        assert got['original_prefix_bounds']['n_ge_start_through_23'] is True
+        assert got['original_prefix_bounds']['q_lt_n_through_19'] is True
+        phase = got['following_phase']
+        assert phase['odd_V']%2 == 1
+        assert got['exit']['B']-1 == 2**depth*phase['odd_V']
+        assert phase['complete_six_blocks'] == depth//6
+        assert phase['first_parity_mismatch'] == {'A':depth+3,'B':depth}
+        assert phase['at_B_first_mismatch']['index'] == depth
+        assert phase['at_A_first_mismatch']['index'] == depth+3
+        assert phase['at_end']['index'] == depth+4
+        last = phase['last_six_block_endpoint']
+        blocks = depth//6
+        assert (last['index'],last['j'],last['m'],last['d'],
+                last['remaining_fuel']) == (
+            6*blocks,1+blocks,216*3**blocks,-4,depth%6)
+        assert (last['A']+5)*64**blocks == (got['exit']['A']+5)*81**blocks
+        assert (last['B']-1)*64**blocks == (got['exit']['B']-1)*27**blocks
+        assert last['A']+1 == last['m']*(last['B']-1)-4
+        a,b = got['exit']['A'],got['exit']['B']
+        for index in range(depth+5):
+            if index == 6*blocks:
+                assert (a,b) == (last['A'],last['B'])
+            if index == depth:
+                row = phase['at_B_first_mismatch']
+                assert (a,b) == (row['A'],row['B'])
+            if index == depth+3:
+                row = phase['at_A_first_mismatch']
+                assert (a,b) == (row['A'],row['B'])
+            if index == depth+4:
+                row = phase['at_end']
+                assert (a,b) == (row['A'],row['B'])
+                break
+            a,b = shortcut(a),shortcut(b)
+    # Modulo 64 and 128, direct substitution yields the first two CRT
+    # residues z=8 and z=56 for exact valuations 6 and 7.
+    assert run('q1-ray-refill',0)['z_residue'] == 8
+    assert run('q1-ray-refill',1)['z_residue'] == 56
+
+    # Four six-block multipliers overcome the initial refill contraction:
+    # (27/64)*(81/64)^4 > 1.  This is a finite regrowth statement, with
+    # the auxiliary still below its pre-refill entry, not convergence.
+    assert 27*81**4 > 64**5
+    regrown = run('q1-ray-refill',24)['following_phase']['last_six_block_endpoint']
+    assert (regrown['j'],regrown['remaining_fuel'],
+            regrown['A_vs_pre_refill_entry'],
+            regrown['B_vs_pre_refill_entry']) == (5,0,'grow','shrink')
+    zero = run('q1-ray-refill',0)
+    initial_block = zero['following_phase']['last_six_block_endpoint']
+    assert initial_block['index'] == 0
+    assert (initial_block['A'],initial_block['B']) == (
+        zero['exit']['A'],zero['exit']['B'])
+
+
+def test_q1_ray_refill_rejects_invalid_depths():
+    for depth in (-1,129):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-ray-refill',
+                              str(depth)],capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'ray-refill needs' in bad.stderr
+
+
+def test_q1_ray_refill_odd_part_residue_controls():
+    def shortcut(value):
+        return (3*value+1)//2 if value%2 else value//2
+    # On the j=1 start A=216V-5, B=V+1, V=1 misses the six-step
+    # return; V=45 has A-word 110010 and B-word 011100 and returns.
+    one_a = [211,317,476,238,119,179,269]
+    one_b = [2,1,2,1,2,1,2]
+    forty_five_a = [9715,14573,21860,10930,5465,8198,4099]
+    forty_five_b = [46,23,35,53,80,40,20]
+    for a_path,b_path in ((one_a,one_b),(forty_five_a,forty_five_b)):
+        assert all(shortcut(a_path[i]) == a_path[i+1] for i in range(6))
+        assert all(shortcut(b_path[i]) == b_path[i+1] for i in range(6))
+    assert one_a[-1]+1 != 216*(one_b[-1]-1)-4
+    assert forty_five_a[-1]+1 == 216*(forty_five_b[-1]-1)-4
+
+    for residue,returns in ((1,False),(45,True)):
+        got = run('q1-ray-refill',0,'--odd-part-mod64',residue)
+        phase = got['following_phase']
+        assert got['requested_odd_part_mod64'] == residue
+        assert got['z_modulus'] == 2**10
+        assert phase['odd_V_mod64'] == residue
+        assert phase['odd_V']%64 == residue
+        assert got['exit']['new_fuel_v2'] == 0
+        assert phase['complete_six_blocks'] == 0
+        assert phase['ordinary_six_block_available'] is False
+        assert phase['last_six_block_endpoint']['j'] == 1
+        assert phase['last_six_block_endpoint']['m'] == 216
+        assert phase['j1_six_return_residue45'] is returns
+        row = phase['post_zero_fuel_six']
+        assert row['same_j1_relation'] is returns
+        a,b = got['exit']['A'],got['exit']['B']
+        word_a,word_b = '', ''
+        for _ in range(6):
+            word_a += str(a%2)
+            word_b += str(b%2)
+            a,b = shortcut(a),shortcut(b)
+        assert (a,b,word_a,word_b) == (
+            row['A'],row['B'],row['A_word'],row['B_word'])
+        assert row['original_n_step'] == 29
+        assert row['original_q_step'] == 25
+        n_at_29 = got['n']
+        for _ in range(29):
+            n_at_29 = shortcut(n_at_29)
+        assert n_at_29 == row['A']
+        if returns:
+            assert (word_a,word_b) == ('110010','011100')
+            assert row['A']+1 == 216*(row['B']-1)-4
+            assert row['A'] < got['n']
+            assert row['A_below_original_n'] is True
+        else:
+            assert (word_a,word_b) == ('110011','010101')
+            assert row['A']+1 != 216*(row['B']-1)-4
+            assert row['A_below_original_n'] is False
+
+
+def test_q1_ray_refill_rejects_invalid_odd_part_residues():
+    for residue in (0,2,65):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-ray-refill','0',
+                              '--odd-part-mod64',str(residue)],
+                             capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'odd-part-mod64 needs odd R in 1..63' in bad.stderr
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

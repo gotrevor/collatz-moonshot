@@ -2,6 +2,19 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Fuel-exit follow-through: returns without coverage
+
+[The bounded fuel test](RESEARCH-2026-09-29-ray-fuel-exit.md) found two exact
+contracting six-step returns, now proved in Lean.  Old fuel zero can become
+arbitrarily large joint fuel at the actual return; the next long phase can
+more than undo the target's shrinkage.  The auxiliary decreases on all
+three known block families, but a residue class of actual hard-family
+successors admits none of them.  No closed induction emerged.  The
+hard-family lift and coverage calculation remain paper results with an
+exact persistent CLI, distinct from the formal local return theorems.
+Do not continue by accumulating isolated scripts: the next useful input
+is a covering argument or a different arithmetic mechanism.
+
 ## Inherited-offset closure verdict
 
 The [exact multiplier-offset projection](RESEARCH-2026-09-29-q1-projection-cycle.md)

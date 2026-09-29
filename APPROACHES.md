@@ -433,3 +433,15 @@ exact CLI).  The finite 2-adic fuel is absent from the projection; retaining
 it leaves its exit/reset unproved.  Retire this strict coefficient-only
 template, not all variable-depth repair.  Lean and paper boundaries are
 explicit in the linked note.
+
+
+### Fuel-exit test: exact refills, incomplete rule coverage, 2026-09-29
+
+[Fuel and return audit](RESEARCH-2026-09-29-ray-fuel-exit.md): two six-step
+returns restore the fixed offset and shrink both vertices, with arbitrarily
+large joint fuel replenishment from old fuel zero (Lean).  After the next
+long phase the target can exceed its pre-refill size.  The auxiliary
+decreases for all known blocks, but an infinite hard-family residue class
+escapes their coverage (paper plus CLI).  No complete induction; no claim
+against all size-aware or adaptive ranks.  More isolated return scripts
+are not a successor mechanism without a coverage argument.

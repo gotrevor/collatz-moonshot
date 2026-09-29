@@ -815,6 +815,237 @@ def q1_offset_ray(depth):
                                       'n_ge_start':True,'q_lt_n':True}}
 
 
+def q1_ray_exit(j, e, v):
+    """Exact finite exit from the negative/positive reference shadow.
+
+    This only follows e+4 shortcut steps.  The reference cycles are
+    (-5,-7,-10) and (1,2); their parity words agree with the actual pair
+    only up to the independently recorded first mismatch indices.
+    """
+    if not 0 <= j <= 128 or not 0 <= e <= 512 or v <= 0 or v%2 == 0:
+        raise ValueError('ray-exit needs 0<=j<=128, 0<=e<=512, positive odd v')
+
+    a = 72*3**j*(1 << e)*v-5
+    b_vertex = (1 << e)*v+1
+    initial_a, initial_b = a, b_vertex
+    multiplier, defect = Fraction(72*3**j), Fraction(-4)
+    a_reference, b_reference = (-5,-7,-10), (1,2)
+    first_mismatch = {'A':None, 'B':None}
+    checkpoint_indices = {
+        'initial':0, 'B_first_mismatch':e, 'B_after_mismatch':e+1,
+        'A_first_mismatch':e+3, 'final':e+4,
+    }
+    checkpoints = {}
+    parities_a, parities_b = [], []
+
+    def offset(value, reference):
+        difference = value-reference
+        return {'difference':difference, 'reference_hit':difference == 0,
+                'v2':None if difference == 0 else
+                     (abs(difference) & -abs(difference)).bit_length()-1}
+
+    for index in range(e+5):
+        ref_a, ref_b = a_reference[index%3], b_reference[index%2]
+        assert Fraction(a+1) == multiplier*(b_vertex-1)+defect
+        if index <= e:
+            assert b_vertex == ref_b + 3**((index+1)//2)*(1 << (e-index))*v
+        if index <= e+3:
+            assert a == ref_a + 9*3**j*3**(index-index//3)*(
+                1 << (e+3-index))*v
+        if first_mismatch['A'] is None and a%2 != ref_a%2:
+            first_mismatch['A'] = index
+        if first_mismatch['B'] is None and b_vertex%2 != ref_b%2:
+            first_mismatch['B'] = index
+        for name, position in checkpoint_indices.items():
+            if position == index:
+                checkpoints[name] = {
+                    'index':index, 'A':a, 'B':b_vertex,
+                    'm':[multiplier.numerator,multiplier.denominator],
+                    'd':[defect.numerator,defect.denominator],
+                    'A_reference':ref_a, 'B_reference':ref_b,
+                    'A_offset':offset(a,ref_a),
+                    'B_offset':offset(b_vertex,ref_b),
+                }
+        if index == e+4:
+            break
+        parity_a, parity_b = a%2, b_vertex%2
+        parities_a.append(parity_a)
+        parities_b.append(parity_b)
+        alpha, beta = (3 if parity_a else 1), (3 if parity_b else 1)
+        old_intercept = defect-multiplier-1
+        next_multiplier = multiplier*alpha/beta
+        next_intercept = (alpha*old_intercept+parity_a-
+                          next_multiplier*parity_b)/2
+        multiplier = next_multiplier
+        defect = next_intercept+multiplier+1
+        a, b_vertex = research_lifts.step(a), research_lifts.step(b_vertex)
+
+    assert first_mismatch == {'A':e+3,'B':e}
+    def compare(final, initial):
+        return 'grow' if final > initial else 'shrink' if final < initial else 'equal'
+    return {'j':j, 'e':e, 'v':v,
+            'initial':{'A':initial_a,'B':initial_b,'m':72*3**j,'d':-4},
+            'steps':e+4, 'shared_phase_steps':e,
+            'complete_six_blocks':e//6,
+            'first_parity_mismatch':first_mismatch,
+            'checkpoints':checkpoints,
+            'A_parity_word':''.join(map(str,parities_a)),
+            'B_parity_word':''.join(map(str,parities_b)),
+            'final_vs_initial':{'A':compare(a,initial_a),
+                                'B':compare(b_vertex,initial_b)},
+            'shadow_formulas_checked':True,
+            'inherited_relation_checked':True}
+
+
+def q1_ray_refill(depth, odd_part_mod64=None):
+    """One exact six-step fuel refill in an actual hard-family residue class.
+
+    This is a finite prefix constructor.  It does not assert a future return
+    after the newly supplied K two-adic fuel steps.
+    """
+    if not 0 <= depth <= 128:
+        raise ValueError('ray-refill needs 0<=K<=128')
+    if odd_part_mod64 is not None and not (
+            1 <= odd_part_mod64 <= 63 and odd_part_mod64%2 == 1):
+        raise ValueError('odd-part-mod64 needs odd R in 1..63')
+    u0, half_slope = 23629975235, 12348281925
+    base_t, t_stride = 1690, 2048
+    base_u = u0+2*half_slope*base_t
+    base = q1_offset_trace(0,base_u,9)
+    base_history = base['history']
+    assert ''.join(str(row['A_parity']) for row in base_history[:9]) == '110110110'
+    assert ''.join(str(row['B_parity']) for row in base_history[:9]) == '110001010'
+    base_v = base_history[9]['B']-1
+    assert base_history[9]['A'] == 72*base_v-5 and base_v%2 == 1
+    v_slope = 4*3**6*half_slope
+    constant = (9*base_v+1)//4
+    odd_slope = 9*v_slope//4
+    assert (9*base_v+1)%4 == 0 and odd_slope%2 == 1
+    modulus = 1 << (depth+(10 if odd_part_mod64 is not None else 5))
+    desired = 1 if odd_part_mod64 is None else odd_part_mod64
+    z = ((desired << (depth+4))-constant)*pow(odd_slope,-1,modulus)%modulus
+    t = base_t+t_stride*z
+    u = u0+2*half_slope*t
+    v = base_v+v_slope*z
+    assert (9*v+1)%(1 << (depth+6)) == 0
+    assert (9*v+1)%(1 << (depth+7)) != 0
+
+    trace = q1_offset_trace(0,u,9)
+    history = trace['history']
+    assert ''.join(str(row['A_parity']) for row in history[:9]) == '110110110'
+    assert ''.join(str(row['B_parity']) for row in history[:9]) == '110001010'
+    entry = history[9]
+    assert (entry['A'],entry['B'],entry['b'],entry['c']) == (
+        72*v-5,v+1,2,-77)
+    a,b_vertex = entry['A'],entry['B']
+    a_path,b_path = [a],[b_vertex]
+    for _ in range(6):
+        a,b_vertex = research_lifts.step(a),research_lifts.step(b_vertex)
+        a_path.append(a)
+        b_path.append(b_vertex)
+    assert ''.join(str(x%2) for x in a_path[:-1]) == '110010'
+    assert ''.join(str(x%2) for x in b_path[:-1]) == '000101'
+    assert (a,b_vertex) == ((243*v-13)//8,(9*v+65)//64)
+    assert a+1 == 216*(b_vertex-1)-4
+    new_fuel = b_vertex-1
+    assert new_fuel > 0 and (new_fuel & -new_fuel).bit_length()-1 == depth
+
+    membership = trace['family_membership']
+    assert membership['in_hard_q1_family'] and membership['s'] == 7+8*t
+    n,q = membership['n'],membership['q']
+    n_path,q_path = [n],[q]
+    for _ in range(23):
+        n_path.append(research_lifts.step(n_path[-1]))
+    for _ in range(19):
+        q_path.append(research_lifts.step(q_path[-1]))
+    assert (n_path[17],q_path[13]) == (entry['A'],entry['B'])
+    assert (n_path[23],q_path[19]) == (a,b_vertex)
+    assert all(value >= n for value in n_path)
+    assert all(value < n for value in q_path)
+
+    # The six-step refill supplies a new two-adic shadow phase.  Follow it
+    # through both first parity disagreements, without assuming a later reset.
+    odd_v = new_fuel >> depth
+    assert odd_v > 0 and odd_v%2 == 1
+    if odd_part_mod64 is not None:
+        assert odd_v%64 == odd_part_mod64
+    following = q1_ray_exit(1,depth,odd_v)
+    assert following['initial']['A'] == a
+    assert following['initial']['B'] == b_vertex
+    complete_blocks = depth//6
+    last_block_step = 6*complete_blocks
+    block_a,block_b = a,b_vertex
+    for _ in range(last_block_step):
+        block_a = research_lifts.step(block_a)
+        block_b = research_lifts.step(block_b)
+    block_denominator = 64**complete_blocks
+    assert ((a+5)*81**complete_blocks)%block_denominator == 0
+    assert ((b_vertex-1)*27**complete_blocks)%block_denominator == 0
+    assert block_a+5 == (a+5)*81**complete_blocks//block_denominator
+    assert block_b-1 == (b_vertex-1)*27**complete_blocks//block_denominator
+    block_multiplier = 216*3**complete_blocks
+    assert block_a+1 == block_multiplier*(block_b-1)-4
+    assert (block_b-1 & -(block_b-1)).bit_length()-1 == depth%6
+    zero_fuel_six = None
+    if depth == 0:
+        next_a,next_b = a,b_vertex
+        word_a,word_b = '', ''
+        for _ in range(6):
+            word_a += str(next_a%2)
+            word_b += str(next_b%2)
+            next_a = research_lifts.step(next_a)
+            next_b = research_lifts.step(next_b)
+        same_j1_relation = next_a+1 == 216*(next_b-1)-4
+        if odd_v%64 == 45:
+            assert same_j1_relation and next_a < n
+        zero_fuel_six = {
+            'A':next_a,'B':next_b,'A_word':word_a,'B_word':word_b,
+            'same_j1_relation':same_j1_relation,
+            'A_below_original_n':next_a < n,
+            'original_n_step':29,'original_q_step':25}
+    def compare(x,y):
+        return 'grow' if x>y else 'shrink' if x<y else 'equal'
+    return {
+        'K':depth,'requested_odd_part_mod64':odd_part_mod64,
+        't':t,'t_base':base_t,'t_stride':t_stride,
+        'z_residue':z,'z_modulus':modulus,
+        'u':u,'v':v,'v_base':base_v,'v_slope':v_slope,
+        's':membership['s'],'n':n,'q':q,
+        'nine_v_plus_one_v2':depth+6,
+        'entry':{'A':entry['A'],'B':entry['B'],'m':72,'d':-4,
+                 'original_n_step':17,'original_q_step':13},
+        'six_step_words':{'A':'110010','B':'000101'},
+        'exit':{'A':a,'B':b_vertex,'m':216,'d':-4,
+                'new_fuel_v2':depth,
+                'original_n_step':23,'original_q_step':19},
+        'growth':{'A':compare(a,entry['A']),
+                  'B':compare(b_vertex,entry['B'])},
+        'following_phase':{
+            'odd_V':odd_v,
+            'odd_V_mod64':odd_v%64,
+            'ordinary_six_block_available':depth >= 6,
+            'j1_six_return_residue45':odd_v%64 == 45,
+            'post_zero_fuel_six':zero_fuel_six,
+            'complete_six_blocks':complete_blocks,
+            'last_six_block_endpoint':{
+                'index':last_block_step,'A':block_a,'B':block_b,
+                'j':1+complete_blocks,'m':block_multiplier,'d':-4,
+                'remaining_fuel':depth%6,
+                'A_vs_pre_refill_entry':compare(block_a,entry['A']),
+                'B_vs_pre_refill_entry':compare(block_b,entry['B'])},
+            'first_parity_mismatch':following['first_parity_mismatch'],
+            'at_B_first_mismatch':following['checkpoints']['B_first_mismatch'],
+            'at_A_first_mismatch':following['checkpoints']['A_first_mismatch'],
+            'at_end':following['checkpoints']['final'],
+            'steps':following['steps'],
+            'end_vs_return':following['final_vs_initial'],
+        },
+        'original_prefix_bounds':{
+            'n_min':min(n_path),'q_max':max(q_path),
+            'n_ge_start_through_23':True,'q_lt_n_through_19':True},
+        'raw_iterates_checked':True}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -945,6 +1176,13 @@ def main():
     offset.add_argument('--steps',type=int,required=True)
     ray = sub.add_parser('q1-offset-ray')
     ray.add_argument('K',type=int)
+    ray_exit = sub.add_parser('q1-ray-exit')
+    ray_exit.add_argument('j',type=int)
+    ray_exit.add_argument('e',type=int)
+    ray_exit.add_argument('v',type=int)
+    refill = sub.add_parser('q1-ray-refill')
+    refill.add_argument('K',type=int)
+    refill.add_argument('--odd-part-mod64',type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -969,6 +1207,8 @@ def main():
               q1_run_exit(args.L,args.u) if args.command == 'q1-run-exit' else
               q1_offset_trace(args.r,args.u,args.steps) if args.command == 'q1-offset-trace' else
               q1_offset_ray(args.K) if args.command == 'q1-offset-ray' else
+              q1_ray_exit(args.j,args.e,args.v) if args.command == 'q1-ray-exit' else
+              q1_ray_refill(args.K,args.odd_part_mod64) if args.command == 'q1-ray-refill' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

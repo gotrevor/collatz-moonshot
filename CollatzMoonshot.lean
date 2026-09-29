@@ -102,3 +102,5 @@ import CollatzMoonshot.Obstructions.Q1Coalescence
 import CollatzMoonshot.Obstructions.Q1Reentry
 
 import CollatzMoonshot.Obstructions.CoefficientRay
+
+import CollatzMoonshot.Obstructions.RayRefill
