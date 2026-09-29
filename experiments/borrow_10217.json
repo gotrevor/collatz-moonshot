@@ -1,0 +1,160 @@
+{
+  "target": 10217,
+  "status": "borrowable",
+  "budgets": {
+    "max_neighbor_calls": 20,
+    "max_source_label": 20000,
+    "max_depth": 2,
+    "max_candidates_per_query": 80,
+    "max_unit_factors": 100000
+  },
+  "initial_borrowable_labels": 741,
+  "complete_neighbor_calls": [
+    {
+      "label": 10217,
+      "complete_neighbors": 2453
+    }
+  ],
+  "truncations": [],
+  "unit_factors": 61,
+  "unit_max_label": 10217,
+  "construction_max_label": 128401,
+  "unit": [
+    [
+      0,
+      23
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      19,
+      5
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      25,
+      6
+    ],
+    [
+      29,
+      5
+    ],
+    [
+      35,
+      1
+    ],
+    [
+      55,
+      5
+    ],
+    [
+      79,
+      1
+    ],
+    [
+      83,
+      5
+    ],
+    [
+      583,
+      1
+    ],
+    [
+      9215,
+      1
+    ],
+    [
+      10217,
+      1
+    ]
+  ],
+  "borrow_dag": [
+    {
+      "label": 95,
+      "remove": [
+        19,
+        29
+      ],
+      "insert": [
+        13,
+        95
+      ]
+    },
+    {
+      "label": 5035,
+      "remove": [
+        55,
+        95
+      ],
+      "insert": [
+        35,
+        5035
+      ]
+    },
+    {
+      "label": 35,
+      "remove": [
+        55,
+        83
+      ],
+      "insert": [
+        35,
+        583
+      ]
+    },
+    {
+      "label": 1625,
+      "remove": [
+        35,
+        65
+      ],
+      "insert": [
+        23,
+        1625
+      ]
+    },
+    {
+      "label": 128401,
+      "remove": [
+        83,
+        1625
+      ],
+      "insert": [
+        79,
+        128401
+      ]
+    },
+    {
+      "label": 10217,
+      "remove": [
+        5035,
+        128401
+      ],
+      "insert": [
+        9215,
+        10217
+      ]
+    }
+  ]
+}

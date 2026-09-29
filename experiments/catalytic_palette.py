@@ -365,41 +365,8 @@ def replay_lattice(witness_path, n=None):
     if state != expected_end:
         raise ValueError('catalyst replay endpoint mismatch')
 
-    closure_path = Path(__file__).with_name('borrowable_palette_71.json')
-    saved_closure = json.loads(closure_path.read_text())
-    # Revalidate the closure and the successful 71 replay as a reusable
-    # legal borrowing library.  Neither JSON file is trusted on its own.
-    derivations = {}
-    certified = set(saved_closure['seed'])
-    if certified != {1,*UNIT8,*UNIT13}:
-        raise ValueError('saved closure seed differs from palette unit seeds')
-
-    def certify_edge(label, old, new):
-        if (len(old) != 2 or len(new) != 2 or
-                any(u < 1 or u % 2 == 0 or u % 3 == 0 for u in old+new) or
-                not set(old) <= certified or label not in new):
-            raise ValueError(f'invalid saved borrowing dependency for {label}')
-        if unit_value(0,Counter(old)) != unit_value(0,Counter(new)):
-            raise ValueError(f'invalid saved quadratic identity for {label}')
-        for introduced in new:
-            if introduced not in certified:
-                derivations[introduced] = {'remove':old, 'insert':new}
-        certified.update(new)
-
-    for label_text, row in sorted(saved_closure['witness'].items(),
-                                  key=lambda item:(item[1]['round'],int(item[0]))):
-        label = int(label_text)
-        certify_edge(label,row['remove'],row['insert'])
-    if not set(saved_closure['known_labels']) <= certified:
-        raise ValueError('saved closure contains uncertified labels')
-    saved_replay = json.loads(Path(__file__).with_name(
-        'catalytic_palette_71_replay.json').read_text())
-    if saved_replay['value'] != 71 or not saved_replay['full_repair_replay_exact']:
-        raise ValueError('saved borrowing replay lacks a completed 71 certificate')
-    for row in saved_replay['borrow_dag']:
-        certify_edge(row['label'],row['remove'],row['insert'])
-    extra_borrow = saved_replay['borrowability_extra_rule']
-    certify_edge(7555,extra_borrow['remove'],extra_borrow['insert'])
+    seed_words,derivations,certified,certify_edge,extra_borrow = (
+        validated_borrowing_library())
     newly_borrowable = {}
     changed = True
     while changed:
@@ -429,14 +396,6 @@ def replay_lattice(witness_path, n=None):
                 'borrowed_word_value_one':False,
                 'full_repair_replay_exact':False}
 
-    seed_words = {1: Counter({0:1,1:1})}
-    for label in UNIT8:
-        seed_words[label] = Counter({0:3,**UNIT8})
-    for label in UNIT13:
-        seed_words.setdefault(label,Counter({0:5,**UNIT13}))
-    for word in seed_words.values():
-        if unit_value(word[0], Counter({u:c for u,c in word.items() if u})) != 1:
-            raise ValueError('seed unit has nonunit scalar value')
     unit_cache = {}
     active = set()
     derivation_order = []
@@ -514,6 +473,176 @@ def replay_lattice(witness_path, n=None):
 
 def replay_lattice_71(witness_path):
     return replay_lattice(witness_path,71)
+
+
+def validated_borrowing_library():
+    """Legal unit seeds and individually checked saved quadratic DAG edges."""
+    seed_words = {1:Counter({0:1,1:1})}
+    for label in UNIT8:
+        seed_words[label] = Counter({0:3,**UNIT8})
+    for label in UNIT13:
+        seed_words.setdefault(label,Counter({0:5,**UNIT13}))
+    for word in seed_words.values():
+        if unit_value(word[0],Counter({u:v for u,v in word.items() if u})) != 1:
+            raise ValueError('invalid palette unit seed')
+    certified = set(seed_words)
+    derivations = {}
+
+    def add_edge(label, old, new):
+        if (len(old) != 2 or len(new) != 2 or label not in new or
+                any(u < 1 or u % 2 == 0 or u % 3 == 0 for u in old+new) or
+                not set(old) <= certified or
+                unit_value(0,Counter(old)) != unit_value(0,Counter(new))):
+            raise ValueError(f'invalid saved borrowing edge for {label}')
+        for u in new:
+            if u not in certified:
+                derivations[u] = {'remove':list(old),'insert':list(new)}
+        certified.update(new)
+
+    closure = json.loads(Path(__file__).with_name('borrowable_palette_71.json').read_text())
+    if set(closure['seed']) != certified:
+        raise ValueError('saved closure seed differs from palette')
+    for label_text,row in sorted(closure['witness'].items(),
+                                 key=lambda item:(item[1]['round'],int(item[0]))):
+        add_edge(int(label_text),row['remove'],row['insert'])
+    if not set(closure['known_labels']) <= certified:
+        raise ValueError('saved closure has uncertified labels')
+    replay = json.loads(Path(__file__).with_name('catalytic_palette_71_replay.json').read_text())
+    if replay.get('value') != 71 or not replay.get('full_repair_replay_exact'):
+        raise ValueError('saved 71 borrowing library has no completed replay')
+    for row in replay['borrow_dag']:
+        add_edge(row['label'],row['remove'],row['insert'])
+    extra = replay['borrowability_extra_rule']
+    add_edge(7555,extra['remove'],extra['insert'])
+    return seed_words,derivations,certified,add_edge,extra
+
+
+def borrow_target(target, max_neighbor_calls=20, max_source_label=20000,
+                  max_depth=2, max_candidates_per_query=80,
+                  max_unit_factors=100000):
+    """Bounded target-directed legal borrowing search, independent of any orbit."""
+    if target < 1 or target % 2 == 0 or target % 3 == 0:
+        raise ValueError('target must be a positive odd 3-free label')
+    seed_words,derivations,known,_,_ = validated_borrowing_library()
+    initial_known = len(known)
+    calls = []
+    truncations = set()
+    active = set()
+    failed = set()
+
+    def derive(label,old,new):
+        if not set(old) <= known or label not in new:
+            raise ValueError('target-directed borrowing inputs unavailable')
+        if unit_value(0,Counter(old)) != unit_value(0,Counter(new)):
+            raise ValueError('target-directed quadratic identity invalid')
+        for u in new:
+            if u not in known:
+                derivations[u] = {'remove':list(old),'insert':list(new)}
+        known.update(new)
+
+    def visit(label,depth):
+        if label in known:
+            return True
+        if label in active or label in failed:
+            return False
+        if depth > max_depth:
+            truncations.add('max_depth')
+            return False
+        if label > max_source_label:
+            truncations.add('max_source_label')
+            return False
+        if len(calls) >= max_neighbor_calls:
+            truncations.add('max_neighbor_calls')
+            return False
+        active.add(label)
+        rows = research.quadratic_neighbors(label)['nontrivial_exchanges']
+        calls.append({'label':label,'complete_neighbors':len(rows)})
+        candidates = []
+        for row in rows:
+            old,new = row['after'],row['before']
+            if any(u % 3 == 0 for u in old+new):
+                continue
+            missing = sorted(set(old)-known)
+            if not missing:
+                derive(label,old,new)
+                active.remove(label)
+                return True
+            candidates.append((len(missing),max(missing),max(old+new),old,new))
+        candidates.sort()
+        if len(candidates) > max_candidates_per_query:
+            truncations.add('max_candidates_per_query')
+        for _,_,_,old,new in candidates[:max_candidates_per_query]:
+            if all(visit(u,depth+1) for u in sorted(set(old)-known)):
+                derive(label,old,new)
+                active.remove(label)
+                return True
+        active.remove(label)
+        failed.add(label)
+        return False
+
+    success = visit(target,0)
+    result = {'target':target,'status':'borrowable' if success else 'bounded-unresolved',
+              'budgets':{'max_neighbor_calls':max_neighbor_calls,
+                         'max_source_label':max_source_label,
+                         'max_depth':max_depth,
+                         'max_candidates_per_query':max_candidates_per_query,
+                         'max_unit_factors':max_unit_factors},
+              'initial_borrowable_labels':initial_known,
+              'complete_neighbor_calls':calls,
+              'truncations':sorted(truncations)}
+    if not success:
+        return result
+    cache = {}
+    order = []
+    building = set()
+
+    def unit_for(label):
+        if label in cache:
+            return cache[label].copy()
+        if label in building:
+            raise ValueError('cyclic borrowing DAG')
+        building.add(label)
+        if label in seed_words:
+            word = seed_words[label].copy()
+        else:
+            edge = derivations[label]
+            word = Counter()
+            for u in edge['remove']:
+                word.update(unit_for(u))
+            for u in edge['remove']:
+                if word[u] <= 0:
+                    raise ValueError('borrowing DAG input unavailable')
+                word[u] -= 1
+            word.update(edge['insert'])
+        building.remove(label)
+        if sum(word.values()) > max_unit_factors:
+            truncations.add('max_unit_factors')
+            raise OverflowError('borrowed unit exceeds factor budget')
+        cache[label] = word
+        order.append(label)
+        return word.copy()
+
+    try:
+        word = Counter({u:v for u,v in unit_for(target).items() if v})
+    except OverflowError:
+        result['status'] = 'unit-budget-truncated'
+        result['truncations'] = sorted(truncations)
+        return result
+    if word[target] < 1 or unit_value(word[0],Counter({u:v for u,v in word.items() if u})) != 1:
+        raise ValueError('constructed borrowing word is not a unit containing target')
+    used_seed_max = max((u for label in order if label in seed_words
+                         for u in seed_words[label] if u > 0),default=0)
+    used_edge_max = max((u for label in order if label not in seed_words
+                         for u in derivations[label]['remove']+
+                                  derivations[label]['insert']),default=0)
+    result.update({'unit_factors':sum(word.values()),
+                   'unit_max_label':max(word),
+                   'construction_max_label':max(used_seed_max,used_edge_max),
+                   'unit':[[u,v] for u,v in sorted(word.items())],
+                   'borrow_dag':[{'label':u,**derivations[u]}
+                                 for u in order if u not in seed_words],
+                   'truncations':sorted(truncations)})
+    return result
 
 
 def integer_basis_controls():
@@ -675,6 +804,14 @@ def main():
     family_replay = subs.add_parser('replay')
     family_replay.add_argument('witness',type=Path)
     family_replay.add_argument('--output',type=Path)
+    borrow = subs.add_parser('borrow')
+    borrow.add_argument('label',type=int)
+    borrow.add_argument('--max-neighbor-calls',type=int,default=20)
+    borrow.add_argument('--max-source-label',type=int,default=20000)
+    borrow.add_argument('--max-depth',type=int,default=2)
+    borrow.add_argument('--max-candidates-per-query',type=int,default=80)
+    borrow.add_argument('--max-unit-factors',type=int,default=100000)
+    borrow.add_argument('--output',type=Path)
     subs.add_parser('basis-controls')
     subs.add_parser('test')
     args = parser.parse_args()
@@ -712,6 +849,14 @@ def main():
         if args.output:
             args.output.write_text(json.dumps(result,indent=2)+'\n')
             result = {k:v for k,v in result.items() if k not in ('schedule','newly_borrowable_witnesses')}
+            result['output'] = str(args.output)
+    elif args.command == 'borrow':
+        result = borrow_target(args.label,args.max_neighbor_calls,
+                               args.max_source_label,args.max_depth,
+                               args.max_candidates_per_query,args.max_unit_factors)
+        if args.output:
+            args.output.write_text(json.dumps(result,indent=2)+'\n')
+            result = {k:v for k,v in result.items() if k not in ('unit','borrow_dag')}
             result['output'] = str(args.output)
     elif args.command == 'basis-controls':
         result = integer_basis_controls()

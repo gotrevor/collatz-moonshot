@@ -392,3 +392,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Symbolic catalytic families, 2026-09-28
 
 [Finite repairs and symbolic families](RESEARCH-2026-09-28-family-checkpoint.md): exact legal replays for 199, 263 and 1031; two universal single-exchange families, one with smaller auxiliary labels; an obstruction to deforming the complete 1031 script; and an arbitrarily long initial-growth stress family.  The bounded search at 2375 remains unresolved.  Uniform borrowing and target-free completion remain open.
+
+### Growing borrowing constructions, 2026-09-28
+
+[Borrowing checkpoint](RESEARCH-2026-09-28-borrow-checkpoint.md): four auxiliary labels in the lower five-head family now have exact legal unit constructions without target-orbit input.  A general Lean theorem proves bounded unit size forces bounded label support, so any uniform borrowing scheme must grow.  The family includes arbitrarily long initial growth; no recursive borrowing scheme or target-free full repair is yet established.

@@ -89,6 +89,67 @@ def formula_scan(lower, upper):
             'results':results}
 
 
+def dyadic_intro(j, input_ceiling):
+    """Exact bounded-input search for u_j=(4^j-1)/3, unbounded companion.
+
+    The 2-adic sieve is necessary for an odd companion b, and is exact at
+    the relevant denominator valuation.  Once c,d pass it, b is solved by
+    the cross-multiplied identity, with no upper bound on b.
+    """
+    if j < 2 or input_ceiling < 1:
+        raise ValueError('j>=2 and positive input ceiling required')
+    u = (4**j-1)//3
+    if u % 3 == 0:
+        raise ValueError('u_j is 3-divisible when j is divisible by 3')
+    M = 4**j
+    labels = [(c, ((3*c+1) & -(3*c+1)).bit_length()-1)
+              for c in range(1, input_ceiling+1, 2) if c % 3]
+    labels.sort(key=lambda item:item[1], reverse=True)
+    candidates = 0
+    rules = []
+    for i, (c, vc) in enumerate(labels):
+        if vc + labels[0][1] <= 2*j:
+            break
+        for d, vd in labels[i:]:
+            if vc + vd <= 2*j:
+                break
+            candidates += 1
+            D = u*(3*(c+d)+1)-3*c*d
+            numerator = M*c*d
+            if D <= 0 or numerator % D:
+                continue
+            b = numerator//D
+            if b <= 0 or b % 2 == 0 or sorted((u,b)) == sorted((c,d)):
+                continue
+            assert (Fraction(u,research.step(u))*Fraction(b,research.step(b)) ==
+                    Fraction(c,research.step(c))*Fraction(d,research.step(d)))
+            rules.append({'remove':sorted([c,d]), 'insert':sorted([u,b]),
+                          'companion':b, 'max_input':max(c,d)})
+    rules.sort(key=lambda row:(row['max_input'],row['remove']))
+    return {'j':j, 'label':u, 'three_free':True,
+            'input_ceiling':input_ceiling,
+            'two_adic_candidate_pairs':candidates,
+            'solutions':len(rules),
+            'least_max_input':rules[0]['max_input'] if rules else None,
+            'least_rule':rules[0] if rules else None}
+
+
+def complementary_split(j, i):
+    """Natural factorization 4^j=4^i*4^(j-i) has no odd companion."""
+    if j < 2 or not 0 < i < j:
+        raise ValueError('need j>=2 and 0<i<j')
+    u = (4**j-1)//3
+    c = (4**i-1)//3
+    d = (4**(j-i)-1)//3
+    D = u*(3*(c+d)+1)-3*c*d
+    assert D == 4**j*(c+d)
+    b = Fraction(c*d,c+d)
+    assert b.denominator % 2 == 0
+    return {'j':j,'i':i,'label':u,'inputs':[c,d],
+            'cross_denominator':D,
+            'companion':str(b),'companion_integral':False}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('label', nargs='?', type=int)
@@ -105,5 +166,11 @@ if __name__ == '__main__':
                 'test_borrowability_descent.py')),'-q']))
     if len(sys.argv) == 4 and sys.argv[1] == 'scan':
         print(json.dumps(formula_scan(int(sys.argv[2]),int(sys.argv[3])),indent=2))
+        raise SystemExit(0)
+    if len(sys.argv) == 4 and sys.argv[1] == 'dyadic':
+        print(json.dumps(dyadic_intro(int(sys.argv[2]),int(sys.argv[3])),indent=2))
+        raise SystemExit(0)
+    if len(sys.argv) == 4 and sys.argv[1] == 'split':
+        print(json.dumps(complementary_split(int(sys.argv[2]),int(sys.argv[3])),indent=2))
         raise SystemExit(0)
     main()

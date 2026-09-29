@@ -1,5 +1,6 @@
 """Persistent controls through the real catalytic_palette command line."""
 
+from collections import Counter
 from fractions import Fraction
 from pathlib import Path
 import json
@@ -177,6 +178,72 @@ def test_family_legal_replays_use_actual_borrowed_units():
         assert value == 1
     assert run('replay',FAMILY_WITNESSES[1031])['forced_net_moves'] == {
         'U2':0,'U8':1,'U13':-1,'cubic_forward':-1}
+
+
+def test_lower_five_head_auxiliaries_have_legal_borrowing_dags():
+    # Independent arithmetic anchors for the final new edge in each DAG.
+    final_edges = {
+        3689:([2635,3953],[2767,3689]),
+        10217:([5035,128401],[9215,10217]),
+        16745:([785,3349],[661,16745]),
+        23273:([1369,2327],[895,23273]),
+    }
+    u8 = Counter({0:3,19:1,25:1,29:1,55:1,83:1})
+    u13 = Counter({0:5,5:1,7:2,11:1,17:1,55:1,65:1,83:1})
+    seed_words = {1:Counter({0:1,1:1})}
+    for u in (19,25,29,55,83):
+        seed_words[u] = u8.copy()
+    for u in (5,7,11,17,55,65,83):
+        seed_words.setdefault(u,u13.copy())
+    ratio = lambda pair: Fraction(2*pair[0],3*pair[0]+1)*Fraction(
+        2*pair[1],3*pair[1]+1)
+    for label,(old,new) in final_edges.items():
+        assert ratio(old) == ratio(new)
+        got = run('borrow',label,'--max-neighbor-calls',20,
+                  '--max-source-label',30000 if label == 23273 else 20000,
+                  '--max-depth',2,
+                  '--max-candidates-per-query',80)
+        assert got['status'] == 'borrowable'
+        assert got['borrow_dag'][-1] == {
+            'label':label,'remove':old,'insert':new}
+        # Independently replay each used DAG edge as a legal unit-word move.
+        words = {u:w.copy() for u,w in seed_words.items()}
+        construction_max = 0
+        for edge in got['borrow_dag']:
+            a,b = edge['remove']
+            assert a in words and b in words
+            for seed in (a,b):
+                if seed in seed_words:
+                    construction_max = max(construction_max,
+                                           *(u for u in seed_words[seed] if u))
+            assert ratio(edge['remove']) == ratio(edge['insert'])
+            built = words[a]+words[b]
+            required = Counter(edge['remove'])
+            assert all(built[u] >= count for u,count in required.items())
+            built.subtract(required)
+            built.update(edge['insert'])
+            words[edge['label']] = Counter({u:v for u,v in built.items() if v})
+            construction_max = max(construction_max,*edge['remove'],*edge['insert'])
+        assert words[label] == Counter(dict(got['unit']))
+        assert got['construction_max_label'] == construction_max
+        word = dict(got['unit'])
+        assert word[label] >= 1
+        assert got['unit_max_label'] == max(word)
+        value = Fraction(2**word.pop(0))
+        for u,count in word.items():
+            value *= Fraction(2*u,3*u+1)**count
+        assert value == 1
+        if label == 10217:
+            assert got['construction_max_label'] >= 128401
+            assert got['unit_max_label'] < got['construction_max_label']
+
+
+def test_borrowing_budget_reports_unresolved_not_obstruction():
+    got = run('borrow',3689,'--max-source-label',1000,
+              '--max-neighbor-calls',1)
+    assert got['status'] == 'bounded-unresolved'
+    assert got['truncations'] == ['max_source_label']
+    assert got['complete_neighbor_calls'] == []
 
 
 def test_missing_borrowing_is_reported_as_a_finite_library_gap(tmp_path):
