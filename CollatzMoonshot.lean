@@ -86,3 +86,4 @@ import CollatzMoonshot.Obstructions.RepairPalette
 
 import CollatzMoonshot.Obstructions.AnchoredCut
 import CollatzMoonshot.Obstructions.PairDenominatorControl
+import CollatzMoonshot.Obstructions.OrbitPrefix
