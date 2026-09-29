@@ -97,21 +97,26 @@ class IntegerRelationBasis:
         return combination, vector
 
 
-def seventy_one_quadratic_residual():
-    data = research.wild_five_repair(71)
+def quadratic_residual(n):
+    data = research.wild_five_repair(n)
     actual = counts(data['actual_path'])[1]
     virtual = counts(data['virtual_prefix'] + data['smaller_path'][1:])[1]
     virtual.update([7, 7, 11, 17, 55, 65, 83])
     result = dict(actual)
     subtract_scaled(result, virtual, 1)
-    # Forced count ledger: +9 U8, -3 U13, -3 forward C5.
-    subtract_scaled(result, UNIT8, 9)
-    subtract_scaled(result, UNIT13, -3)
-    subtract_scaled(result, CUBIC_RIGHT, -3)
-    subtract_scaled(result, CUBIC_LEFT, 3)
+    forced = palette_ledger(n)['forced_net_moves']
+    subtract_scaled(result, {1:1}, forced['U2'])
+    subtract_scaled(result, UNIT8, forced['U8'])
+    subtract_scaled(result, UNIT13, forced['U13'])
+    subtract_scaled(result, CUBIC_RIGHT, forced['cubic_forward'])
+    subtract_scaled(result, CUBIC_LEFT, -forced['cubic_forward'])
     assert sum(result.values()) == 0
     assert result.get(1, 0) == result.get(5, 0) == 0
     return result
+
+
+def seventy_one_quadratic_residual():
+    return quadratic_residual(71)
 
 
 def pair_vector(before, after):
@@ -120,8 +125,9 @@ def pair_vector(before, after):
     return vector
 
 
-def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
-                        neighbor_waves=0, wave_width=10):
+def relation_lattice(n, max_label=3077, all_pairs=False, max_aux_label=100000,
+                     neighbor_waves=0, wave_width=10, max_pairs=30000,
+                     max_neighbor_source_label=5000, max_rules=5000):
     """A finite *integer* relation search, with exact replayable witnesses.
 
     Candidate labels are the saved six-round borrowability set plus the known
@@ -131,9 +137,13 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
     """
     closure_path = Path(__file__).with_name('borrowable_palette_71.json')
     closure = json.loads(closure_path.read_text())
-    residual = seventy_one_quadratic_residual()
+    residual = quadratic_residual(n)
+    if n % 3 == 0 or any(label % 3 == 0 for label in residual):
+        return {'value': n, 'status': 'unsupported-3-divisible-domain',
+                'reason': 'borrowable library and quadratic rule filter cover only 3-free labels'}
     target_support = set(residual)
-    labels = sorted((set(closure['known_labels']) | target_support) & set(range(1,max_label+1)))
+    labels = sorted(u for u in set(closure['known_labels']) | target_support
+                    if 1 <= u <= max_label)
     permitted = set(labels)
     if not target_support <= permitted:
         raise ValueError('max_label must include every residual label')
@@ -141,6 +151,7 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
     basis = IntegerRelationBasis(preferred)
     rules = []
     seen_rules = set()
+    truncations = set()
 
     def add_rule(before, after):
         before, after = tuple(sorted(before)), tuple(sorted(after))
@@ -153,6 +164,9 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
         key = (before, after)
         if key in seen_rules:
             return False
+        if len(rules) >= max_rules:
+            truncations.add('max_rules')
+            return False
         seen_rules.add(key)
         rule = {'remove': list(before), 'insert': list(after)}
         rule_id = len(rules)
@@ -162,17 +176,35 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
 
     pairs = 0
     for a, b in combinations_with_replacement(labels, 2):
+        if len(rules) >= max_rules:
+            truncations.add('max_rules')
+            break
         if not all_pairs and a not in target_support and b not in target_support:
             continue
+        if pairs >= max_pairs:
+            truncations.add('max_pairs')
+            break
         pairs += 1
         ratio = Fraction(a, research.step(a))*Fraction(b, research.step(b))
         for c, d in research.two_odd_fiber(ratio)['unordered_odd_pairs']:
+            if len(rules) >= max_rules:
+                truncations.add('max_rules')
+                break
             if c not in permitted or d not in permitted:
                 continue
             add_rule((a,b),(c,d))
     core_relations = len(rules)
     for label in sorted(target_support):
+        if len(rules) >= max_rules:
+            truncations.add('max_rules')
+            break
+        if label > max_neighbor_source_label:
+            truncations.add('max_neighbor_source_label')
+            continue
         for row in research.quadratic_neighbors(label)['nontrivial_exchanges']:
+            if len(rules) >= max_rules:
+                truncations.add('max_rules')
+                break
             if max(row['before']+row['after']) > max_aux_label:
                 continue
             add_rule(row['before'], row['after'])
@@ -180,7 +212,7 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
     waves = []
     expanded = set(target_support)
     for wave in range(1, neighbor_waves+1):
-        if not remainder:
+        if not remainder or len(rules) >= max_rules:
             break
         chosen = sorted((u for u in remainder if u not in expanded),
                         reverse=True)[:wave_width]
@@ -188,8 +220,17 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
             break
         before_count = len(rules)
         for label in chosen:
+            if len(rules) >= max_rules:
+                truncations.add('max_rules')
+                break
             expanded.add(label)
+            if label > max_neighbor_source_label:
+                truncations.add('max_neighbor_source_label')
+                continue
             for row in research.quadratic_neighbors(label)['nontrivial_exchanges']:
+                if len(rules) >= max_rules:
+                    truncations.add('max_rules')
+                    break
                 if max(row['before']+row['after']) <= max_aux_label:
                     add_rule(row['before'], row['after'])
         preferred.update(chosen)
@@ -206,7 +247,13 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
     assert nonzero(replay) == nonzero({k: residual.get(k,0)-remainder.get(k,0) for k in set(residual)|set(remainder)})
     selected = [{'coefficient': coefficient, **rules[rule_id]}
                 for rule_id, coefficient in sorted(combination.items()) if coefficient]
-    return {'mode': 'all-pairs' if all_pairs else 'targeted',
+    return {'value': n, 'status': 'budget-truncated' if truncations else 'finite-pool-exhausted',
+            'truncations': sorted(truncations),
+            'candidate_pool': 'saved 71 closure labels plus target residual support; '
+                'target-containing input pairs unless all_pairs; Q outputs bounded by max_aux_label',
+            'budgets': {'max_pairs': max_pairs, 'max_rules': max_rules,
+                        'max_neighbor_source_label': max_neighbor_source_label},
+            'mode': 'all-pairs' if all_pairs else 'targeted',
             'max_label': max_label, 'labels': len(labels),
             'max_aux_label': max_aux_label,
             'pairs_evaluated': pairs, 'relations': len(rules),
@@ -219,13 +266,22 @@ def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
             'partial_combination': selected if remainder else None}
 
 
-def replay_lattice_71(witness_path):
+def relation_lattice_71(max_label=3077, all_pairs=False, max_aux_label=100000,
+                        neighbor_waves=0, wave_width=10):
+    return relation_lattice(71,max_label,all_pairs,max_aux_label,
+                            neighbor_waves,wave_width)
+
+
+def replay_lattice(witness_path, n=None):
     """Independently replay a saved integer witness and construct a catalyst."""
     document = json.loads(Path(witness_path).read_text())
+    n = document.get('value',71) if n is None else n
+    if document.get('value',n) != n:
+        raise ValueError('witness value does not match requested value')
     rules = document['witness']
     if rules is None:
         raise ValueError('saved document has no completed integer witness')
-    data = research.wild_five_repair(71)
+    data = research.wild_five_repair(n)
     virtual = data['virtual_prefix'] + data['smaller_path'][1:]
     source_twos, source_odds = counts(virtual)
     source_twos += 2
@@ -239,8 +295,18 @@ def replay_lattice_71(witness_path):
         for _ in range(repeats):
             moves.append((kind, dict(remove), dict(insert)))
 
-    append_move('insert-U8', {}, {0:3, **UNIT8}, 9)
-    append_move('reverse-cubic', CUBIC_RIGHT, CUBIC_LEFT, 3)
+    forced = palette_ledger(n)['forced_net_moves']
+    units = {'U2':{0:1,1:1}, 'U8':{0:3,**UNIT8},
+             'U13':{0:5,**UNIT13}}
+    for name in ('U2','U8','U13'):
+        if forced[name] > 0:
+            append_move('insert-'+name, {}, units[name], forced[name])
+    if forced['cubic_forward'] > 0:
+        append_move('forward-cubic', CUBIC_LEFT, CUBIC_RIGHT,
+                    forced['cubic_forward'])
+    elif forced['cubic_forward'] < 0:
+        append_move('reverse-cubic', CUBIC_RIGHT, CUBIC_LEFT,
+                    -forced['cubic_forward'])
     for number, row in enumerate(rules):
         if (len(row['remove']) != 2 or len(row['insert']) != 2 or
                 any(label < 1 or label % 2 == 0 for label in row['remove']+row['insert'])):
@@ -259,7 +325,9 @@ def replay_lattice_71(witness_path):
             append_move(f'Q{number}', a, b, coefficient)
         else:
             append_move(f'Q{number}', b, a, -coefficient)
-    append_move('remove-U13', {0:5, **UNIT13}, {}, 3)
+    for name in ('U2','U8','U13'):
+        if forced[name] < 0:
+            append_move('remove-'+name, units[name], {}, -forced[name])
 
     delta = {}
     for _, remove, insert in moves:
@@ -299,7 +367,39 @@ def replay_lattice_71(witness_path):
 
     closure_path = Path(__file__).with_name('borrowable_palette_71.json')
     saved_closure = json.loads(closure_path.read_text())
-    known = set(saved_closure['known_labels'])
+    # Revalidate the closure and the successful 71 replay as a reusable
+    # legal borrowing library.  Neither JSON file is trusted on its own.
+    derivations = {}
+    certified = set(saved_closure['seed'])
+    if certified != {1,*UNIT8,*UNIT13}:
+        raise ValueError('saved closure seed differs from palette unit seeds')
+
+    def certify_edge(label, old, new):
+        if (len(old) != 2 or len(new) != 2 or
+                any(u < 1 or u % 2 == 0 or u % 3 == 0 for u in old+new) or
+                not set(old) <= certified or label not in new):
+            raise ValueError(f'invalid saved borrowing dependency for {label}')
+        if unit_value(0,Counter(old)) != unit_value(0,Counter(new)):
+            raise ValueError(f'invalid saved quadratic identity for {label}')
+        for introduced in new:
+            if introduced not in certified:
+                derivations[introduced] = {'remove':old, 'insert':new}
+        certified.update(new)
+
+    for label_text, row in sorted(saved_closure['witness'].items(),
+                                  key=lambda item:(item[1]['round'],int(item[0]))):
+        label = int(label_text)
+        certify_edge(label,row['remove'],row['insert'])
+    if not set(saved_closure['known_labels']) <= certified:
+        raise ValueError('saved closure contains uncertified labels')
+    saved_replay = json.loads(Path(__file__).with_name(
+        'catalytic_palette_71_replay.json').read_text())
+    if saved_replay['value'] != 71 or not saved_replay['full_repair_replay_exact']:
+        raise ValueError('saved borrowing replay lacks a completed 71 certificate')
+    for row in saved_replay['borrow_dag']:
+        certify_edge(row['label'],row['remove'],row['insert'])
+    extra_borrow = saved_replay['borrowability_extra_rule']
+    certify_edge(7555,extra_borrow['remove'],extra_borrow['insert'])
     newly_borrowable = {}
     changed = True
     while changed:
@@ -307,44 +407,27 @@ def replay_lattice_71(witness_path):
         for number, row in enumerate(rules):
             for old,new in ((row['remove'],row['insert']),
                             (row['insert'],row['remove'])):
-                if set(old) <= known:
+                if set(old) <= certified:
                     for label in new:
-                        if label not in known:
-                            known.add(label)
+                        if label not in certified:
+                            certify_edge(label,old,new)
                             newly_borrowable[str(label)] = {'rule': number,
                                 'remove': old, 'insert': new}
                             changed = True
-    # One additional complete quadratic neighbor borrows the sole remaining
-    # catalyst label.  The first relation for 5035 is already among the saved
-    # witness rules; 1079 is in the six-round closure.
-    extra_borrow = {'remove':[1079,5035], 'insert':[1007,7555]}
-    if not set(extra_borrow['remove']) <= known:
-        raise ValueError('7555 borrowing prerequisites are unavailable')
-    pair_a, pair_b = extra_borrow['remove'], extra_borrow['insert']
-    if unit_value(0,Counter(pair_a)) != unit_value(0,Counter(pair_b)):
-        raise ValueError('7555 borrowing pair is not an exact identity')
-    known.update(pair_b)
-    missing = sorted(set(catalyst)-known-{0})
-
-    # Independently check each saved borrowability edge in increasing round.
-    derivations = {}
-    certified = set(saved_closure['seed'])
-    for label_text, row in sorted(saved_closure['witness'].items(),
-                                  key=lambda item:(item[1]['round'],int(item[0]))):
-        label = int(label_text)
-        old, new = row['remove'], row['insert']
-        if not set(old) <= certified or label not in new:
-            raise ValueError(f'invalid saved borrowing dependency for {label}')
-        if unit_value(0,Counter(old)) != unit_value(0,Counter(new)):
-            raise ValueError(f'invalid saved quadratic identity for {label}')
-        derivations[label] = {'remove':old, 'insert':new}
-        certified.update(new)
-    if not set(saved_closure['known_labels']) <= certified:
-        raise ValueError('saved closure contains uncertified labels')
-    for label_text, row in newly_borrowable.items():
-        derivations[int(label_text)] = {'remove':row['remove'],
-                                        'insert':row['insert']}
-    derivations[7555] = extra_borrow
+    missing = sorted(set(catalyst)-certified-{0})
+    if missing:
+        return {'value':n, 'status':'unresolved-borrowability',
+                'source':[[k,v] for k,v in sorted(source.items()) if v],
+                'target':[[k,v] for k,v in sorted(target.items()) if v],
+                'forced_net_moves':forced,
+                'catalyst':[[k,v] for k,v in sorted(catalyst.items())],
+                'catalyst_missing_borrowability':missing,
+                'witness_rules':len(rules),
+                'oriented_Q_steps':sum(abs(row['coefficient']) for row in rules),
+                'vector_replay_exact':True,
+                'path_end_replay_exact':True,
+                'borrowed_word_value_one':False,
+                'full_repair_replay_exact':False}
 
     seed_words = {1: Counter({0:1,1:1})}
     for label in UNIT8:
@@ -400,10 +483,10 @@ def replay_lattice_71(witness_path):
         legal_state.update(insert)
     if legal_state != Counter(target)+witness_word:
         raise ValueError('legal repair endpoint mismatch')
-    return {'value': 71,
+    return {'value': n, 'status':'legal-repair',
             'source': [[k,v] for k,v in sorted(source.items()) if v],
             'target': [[k,v] for k,v in sorted(target.items()) if v],
-            'forced_net_moves': {'U2':0,'U8':9,'U13':-3,'cubic_forward':-3},
+            'forced_net_moves': forced,
             'saved_borrowability_file': 'experiments/borrowable_palette_71.json',
             'seed_units': {'U2': {'twos':1,'odds':[[1,1]]},
                            'U8': {'twos':3,'odds':[[k,v] for k,v in sorted(UNIT8.items())]},
@@ -427,6 +510,10 @@ def replay_lattice_71(witness_path):
             'path_end_replay_exact': True,
             'borrowed_word_value_one': True,
             'full_repair_replay_exact': True}
+
+
+def replay_lattice_71(witness_path):
+    return replay_lattice(witness_path,71)
 
 
 def integer_basis_controls():
@@ -571,9 +658,23 @@ def main():
     lattice.add_argument('--wave-width', type=int, default=10)
     lattice.add_argument('--all-pairs', action='store_true')
     lattice.add_argument('--output', type=Path)
+    family = subs.add_parser('lattice')
+    family.add_argument('n',type=int)
+    family.add_argument('--max-label',type=int,default=3077)
+    family.add_argument('--max-aux-label',type=int,default=100000)
+    family.add_argument('--neighbor-waves',type=int,default=0)
+    family.add_argument('--wave-width',type=int,default=10)
+    family.add_argument('--max-pairs',type=int,default=30000)
+    family.add_argument('--max-neighbor-source-label',type=int,default=5000)
+    family.add_argument('--max-rules',type=int,default=5000)
+    family.add_argument('--all-pairs',action='store_true')
+    family.add_argument('--output',type=Path)
     replay = subs.add_parser('replay71')
     replay.add_argument('witness', type=Path)
     replay.add_argument('--output', type=Path)
+    family_replay = subs.add_parser('replay')
+    family_replay.add_argument('witness',type=Path)
+    family_replay.add_argument('--output',type=Path)
     subs.add_parser('basis-controls')
     subs.add_parser('test')
     args = parser.parse_args()
@@ -591,8 +692,23 @@ def main():
             args.output.write_text(json.dumps(result,indent=2)+'\n')
             result = {k:v for k,v in result.items() if k not in ('witness','partial_combination')}
             result['output'] = str(args.output)
+    elif args.command == 'lattice':
+        result = relation_lattice(args.n,args.max_label,args.all_pairs,
+                                  args.max_aux_label,args.neighbor_waves,
+                                  args.wave_width,args.max_pairs,
+                                  args.max_neighbor_source_label,args.max_rules)
+        if args.output:
+            args.output.write_text(json.dumps(result,indent=2)+'\n')
+            result = {k:v for k,v in result.items() if k not in ('witness','partial_combination')}
+            result['output'] = str(args.output)
     elif args.command == 'replay71':
         result = replay_lattice_71(args.witness)
+        if args.output:
+            args.output.write_text(json.dumps(result,indent=2)+'\n')
+            result = {k:v for k,v in result.items() if k not in ('schedule','newly_borrowable_witnesses')}
+            result['output'] = str(args.output)
+    elif args.command == 'replay':
+        result = replay_lattice(args.witness)
         if args.output:
             args.output.write_text(json.dumps(result,indent=2)+'\n')
             result = {k:v for k,v in result.items() if k not in ('schedule','newly_borrowable_witnesses')}

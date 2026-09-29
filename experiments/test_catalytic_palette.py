@@ -9,6 +9,8 @@ import sys
 
 CLI = Path(__file__).with_name('catalytic_palette.py')
 WITNESS = Path(__file__).with_name('catalytic_palette_71_witness.json')
+FAMILY_WITNESSES = {n:Path(__file__).with_name(
+    f'catalytic_palette_{n}_witness.json') for n in (199,263,1031)}
 
 
 def run(*args):
@@ -140,3 +142,55 @@ def test_replay_rejects_nonquadratic_or_even_rules(tmp_path):
         result=subprocess.run([sys.executable,str(CLI),'replay71',str(path)],capture_output=True,text=True)
         assert result.returncode != 0
         assert 'positive odd pairs required' in result.stderr
+
+
+def test_family_ledger_and_bounded_search_are_explicit():
+    # For 1031 the path edge-count difference is (-2 even, -3 odd).
+    # Solving 3a+5b=-2 and 5a+8b=-3 gives (a,b)=(1,-1).
+    got = run('ledger',1031)
+    assert got['delta'] == {'twos':-2,'odd_count':-3,'m1':0,'m5':0}
+    assert got['forced_net_moves'] == {
+        'U2':0,'U8':1,'U13':-1,'cubic_forward':-1}
+    bounded = run('lattice',7,'--max-pairs',1,
+                  '--max-neighbor-source-label',1)
+    assert bounded['status'] == 'budget-truncated'
+    assert 'max_pairs' in bounded['truncations']
+    assert 'max_neighbor_source_label' in bounded['truncations']
+    unsupported = run('lattice',135)
+    assert unsupported['status'] == 'unsupported-3-divisible-domain'
+
+
+def test_family_legal_replays_use_actual_borrowed_units():
+    for n in (199,263,1031):
+        got = run('replay',FAMILY_WITNESSES[n])
+        assert got['value'] == n
+        assert got['status'] == 'legal-repair'
+        assert got['catalyst_missing_borrowability'] == []
+        assert got['full_repair_replay_exact'] is True
+        word, catalyst = dict(got['borrow_unit']),dict(got['catalyst'])
+        assert all(word[label] >= count for label,count in catalyst.items())
+        # Independent arithmetic oracle for the emitted positive unit word.
+        value = Fraction(2**word.pop(0))
+        for label,count in word.items():
+            step = (3*label+1)//2
+            value *= Fraction(label,step)**count
+        assert value == 1
+    assert run('replay',FAMILY_WITNESSES[1031])['forced_net_moves'] == {
+        'U2':0,'U8':1,'U13':-1,'cubic_forward':-1}
+
+
+def test_missing_borrowing_is_reported_as_a_finite_library_gap(tmp_path):
+    # Adding an identity exchange leaves target-source unchanged, but executing
+    # this particular word requires its large input twice.  The finite library
+    # has no construction for it.  This is not an impossibility certificate.
+    document = json.loads(WITNESS.read_text())
+    label = 10**30 + 7
+    document['witness'].append({
+        'coefficient': 1, 'remove': [label, label], 'insert': [label, label]})
+    path = tmp_path/'missing-borrow.json'
+    path.write_text(json.dumps(document))
+    got = run('replay', path)
+    assert got['status'] == 'unresolved-borrowability'
+    assert got['catalyst_missing_borrowability'] == [label]
+    assert got['vector_replay_exact'] is True
+    assert got['full_repair_replay_exact'] is False

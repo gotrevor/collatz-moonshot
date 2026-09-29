@@ -1,0 +1,95 @@
+[
+  {
+    "base_n": 71,
+    "other_n": 199,
+    "target_tail_join": 182,
+    "target_tail_join_steps_other_base": [
+      16,
+      5
+    ],
+    "shared_target_tail_steps": 60,
+    "base_unique_oriented_Q_rules": 125,
+    "other_unique_oriented_Q_rules": 134,
+    "shared_unique_oriented_Q_rules": 37,
+    "shared_weighted_applications": 72,
+    "distinguished_label_rule_touches": {
+      "virtual_first_5n": {
+        "label": 995,
+        "unique_oriented_rules": 2,
+        "weighted_applications": 5
+      },
+      "virtual_second": {
+        "label": 1493,
+        "unique_oriented_rules": 3,
+        "weighted_applications": 5
+      },
+      "actual_first_n": {
+        "label": 199,
+        "unique_oriented_rules": 6,
+        "weighted_applications": 17
+      }
+    }
+  },
+  {
+    "base_n": 71,
+    "other_n": 263,
+    "target_tail_join": 263,
+    "target_tail_join_steps_other_base": [
+      0,
+      14
+    ],
+    "shared_target_tail_steps": 51,
+    "base_unique_oriented_Q_rules": 125,
+    "other_unique_oriented_Q_rules": 220,
+    "shared_unique_oriented_Q_rules": 37,
+    "shared_weighted_applications": 69,
+    "distinguished_label_rule_touches": {
+      "virtual_first_5n": {
+        "label": 1315,
+        "unique_oriented_rules": 1,
+        "weighted_applications": 1
+      },
+      "virtual_second": {
+        "label": 1973,
+        "unique_oriented_rules": 1,
+        "weighted_applications": 1
+      },
+      "actual_first_n": {
+        "label": 263,
+        "unique_oriented_rules": 2,
+        "weighted_applications": 3
+      }
+    }
+  },
+  {
+    "base_n": 71,
+    "other_n": 1031,
+    "target_tail_join": 92,
+    "target_tail_join_steps_other_base": [
+      13,
+      52
+    ],
+    "shared_target_tail_steps": 13,
+    "base_unique_oriented_Q_rules": 125,
+    "other_unique_oriented_Q_rules": 16,
+    "shared_unique_oriented_Q_rules": 4,
+    "shared_weighted_applications": 5,
+    "distinguished_label_rule_touches": {
+      "virtual_first_5n": {
+        "label": 5155,
+        "unique_oriented_rules": 1,
+        "weighted_applications": 1
+      },
+      "virtual_second": {
+        "label": 7733,
+        "unique_oriented_rules": 3,
+        "weighted_applications": 3
+      },
+      "actual_first_n": {
+        "label": 1031,
+        "unique_oriented_rules": 1,
+        "weighted_applications": 1
+      }
+    }
+  }
+]

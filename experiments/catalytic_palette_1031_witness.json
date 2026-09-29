@@ -1,0 +1,274 @@
+{
+  "value": 1031,
+  "status": "finite-pool-exhausted",
+  "truncations": [],
+  "budgets": {
+    "max_pairs": 30000,
+    "max_rules": 6000,
+    "max_neighbor_source_label": 10000
+  },
+  "mode": "targeted",
+  "max_label": 8000,
+  "labels": 530,
+  "max_aux_label": 100000,
+  "pairs_evaluated": 9387,
+  "relations": 1192,
+  "core_relations": 105,
+  "waves": [],
+  "integer_basis_rank": 1070,
+  "residual": [
+    [
+      11,
+      1
+    ],
+    [
+      19,
+      -1
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      25,
+      -1
+    ],
+    [
+      29,
+      -1
+    ],
+    [
+      35,
+      1
+    ],
+    [
+      53,
+      1
+    ],
+    [
+      55,
+      -2
+    ],
+    [
+      83,
+      -2
+    ],
+    [
+      245,
+      1
+    ],
+    [
+      653,
+      1
+    ],
+    [
+      725,
+      -1
+    ],
+    [
+      1031,
+      1
+    ],
+    [
+      1547,
+      1
+    ],
+    [
+      1741,
+      1
+    ],
+    [
+      2321,
+      1
+    ],
+    [
+      5155,
+      -1
+    ],
+    [
+      7733,
+      -1
+    ]
+  ],
+  "unresolved_remainder": [],
+  "witness": [
+    {
+      "coefficient": -1,
+      "remove": [
+        11,
+        425
+      ],
+      "insert": [
+        19,
+        25
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        23,
+        245
+      ],
+      "insert": [
+        37,
+        49
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        25,
+        2261
+      ],
+      "insert": [
+        35,
+        85
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        25,
+        7733
+      ],
+      "insert": [
+        37,
+        77
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        29,
+        715
+      ],
+      "insert": [
+        49,
+        65
+      ]
+    },
+    {
+      "coefficient": -2,
+      "remove": [
+        35,
+        583
+      ],
+      "insert": [
+        55,
+        83
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        77,
+        725
+      ],
+      "insert": [
+        85,
+        385
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        493,
+        7733
+      ],
+      "insert": [
+        583,
+        2261
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        493,
+        7733
+      ],
+      "insert": [
+        833,
+        1045
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        53,
+        6925
+      ],
+      "insert": [
+        65,
+        277
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        583,
+        6925
+      ],
+      "insert": [
+        653,
+        3047
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        277,
+        8125
+      ],
+      "insert": [
+        425,
+        725
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        385,
+        5525
+      ],
+      "insert": [
+        715,
+        725
+      ]
+    },
+    {
+      "coefficient": -1,
+      "remove": [
+        1031,
+        5525
+      ],
+      "insert": [
+        1045,
+        5155
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        833,
+        8125
+      ],
+      "insert": [
+        1477,
+        1547
+      ]
+    },
+    {
+      "coefficient": 1,
+      "remove": [
+        1477,
+        3047
+      ],
+      "insert": [
+        1741,
+        2321
+      ]
+    }
+  ],
+  "partial_combination": null,
+  "candidate_pool": "saved 71 closure labels plus target residual support; target-containing input pairs unless all_pairs; Q outputs bounded by max_aux_label"
+}

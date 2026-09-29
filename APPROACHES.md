@@ -388,3 +388,7 @@ The negative-shadow envelope and inverse-basin obstructions are now proved in Le
 ### Follow-through, 2026-09-28
 
 The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now includes a restricted-palette repair of 71 with legal borrowing and return, and the arbitrary orbit-prefix transfer identity, both proved in Lean.  The pair-ordering equality and smaller-input borrowability induction have explicit negative controls.  The general surviving inputs remain separate: target-free repair, a genuinely excluding joint arithmetic/order inequality, and an independent anchored-height estimate.  Repeating finite known-orbit repairs or generic pair transport is not a new mechanism.
+
+### Symbolic catalytic families, 2026-09-28
+
+[Finite repairs and symbolic families](RESEARCH-2026-09-28-family-checkpoint.md): exact legal replays for 199, 263 and 1031; two universal single-exchange families, one with smaller auxiliary labels; an obstruction to deforming the complete 1031 script; and an arbitrarily long initial-growth stress family.  The bounded search at 2375 remains unresolved.  Uniform borrowing and target-free completion remain open.
