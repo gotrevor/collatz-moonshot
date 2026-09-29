@@ -1,5 +1,7 @@
 # Variable-depth repair: accumulated contraction and the re-entry problem
 
+> **Re-entry follow-through:** [Full run and reset accounting](RESEARCH-2026-09-29-q1-run-macro.md) shows both growing and descending subfamilies.  The actual exit obstruction, one-halving expansion, and equivalence of normalized-weight decrease to size decrease are now formalized.  No reusable inherited-offset reset was found.
+
 ## Decision
 
 Continue with one bounded mechanism test: find a closed family of full affine

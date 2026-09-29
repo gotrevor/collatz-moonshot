@@ -1,5 +1,7 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-09-29, variable-depth reset audit:** [Full-run results](RESEARCH-2026-09-29-q1-run-macro.md).  The exit, immediate re-entry obstruction, one-halving expansion, and normalized-reset rank calibration are proved in Lean.  Long-phase contraction survives, but resetting that rank still requires size descent; no reusable full-state induction step was found.
+
 > **2026-09-29, Q1 bounded splicing resolved:** [Coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md).  Lean proves a sparse 18-step descent class and, for every cutoff, a hard-family parameter whose target and auxiliary prefixes remain separated by the starting value.  No bounded-depth splice into Q1 covers the family.  Growing-depth repair and its rank remain open.
 
 > **2026-09-29, catalytic signed-flow audit:** [Current checkpoint](RESEARCH-2026-09-29-ordinal-repair-checkpoint.md).  Signed vertex balance is sufficient without positivity, now formalized.  The cubic reaches a vertex 14 below an induction-known convergent neighbor, but their gap becomes unbounded after two steps, also formalized.  No terminating repair or decreasing full-state rank is established; the other two arithmetic branches keep their separate missing inputs.  Older CURRENT entries below are historical.

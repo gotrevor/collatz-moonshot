@@ -416,3 +416,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Q1 variable-depth exit and re-entry, 2026-09-29
 
 [Completed-phase audit](RESEARCH-2026-09-29-q1-phase-exit.md), paper plus exact CLI: the polynomial weight decreases across phase plus odd exit exactly from 63 regular rounds onward.  The exit pair cannot immediately re-enter the original `8*3^j` multiplier class, and its auxiliary realizes every finite parity prefix.  Amortization survives; recursive closure and the terminal condition remain missing.  A next mechanism must handle the full affine offset.
+
+### Q1 full-run and normalized-reset calibration, 2026-09-29
+
+[Actual run and reset cost](RESEARCH-2026-09-29-q1-run-macro.md): Lean proves immediate canonical nonclosure, the next target run, one-halving expansion, and `phaseWeight(8d−1,d+1)=8d^4` with its strict-order equivalence.  A fresh normalized reset therefore requires numerical descent; the phase contraction alone is insufficient.  The inherited-offset route remains open without a reusable transition.  The paper audit also excludes one/two synchronous resets and bounds the depth of any symbolic canonical reset; these stronger extensions are not claimed as Lean theorems.

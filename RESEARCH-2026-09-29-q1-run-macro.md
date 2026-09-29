@@ -169,10 +169,24 @@ generic controls `L=3,u=3` giving `X=121>u`, and `L=3,u=49` giving
 `X=7779467445367>n`.
 
 The all-valuation progressions, synchronized output equation, and symbolic
-reset-depth lower bound above are paper arguments.  A bounded proof task in
-`KICKOFF-2026-09-29-q1-reentry.md` targets the actual two-step exit, immediate
-canonical nonclosure, the target's next forced run, one-halving expansion,
-and the normalized-rank reset equivalence.  Its completion must be checked
-before describing those statements as formalized.
+reset-depth lower bound above are paper arguments.  [Q1Reentry.lean](CollatzMoonshot/Obstructions/Q1Reentry.lean) now proves the actual two-step exit, its exact affine offset, immediate canonical nonclosure, the target's next two steps and any specified following halving run, one-halving expansion for `u=3 mod4`, and the normalized-rank formula and strict-order equivalence.  The module does not formalize the universal residue-progression claims, the synchronized full-state equation, or the symbolic reset-depth lower bound.  The persistent real-CLI suite passes 22 tests, and the Lean CI consumers pin the definitions and actual-orbit theorem types.
 
 The [full affine-offset audit](RESEARCH-2026-09-29-odd-exit-offset-audit.md) records the exact four-parity state update, pointwise failure of the first two synchronous resets, and the smaller alternate auxiliary.  These additional calculations remain paper-side.
+
+
+## Research decision after this test
+
+The original polynomial-weight plus fresh-normalized-reset proposal has not
+produced a new induction: its decrease condition on reset is ordinary size
+descent again.  The exact run map admits infinite growing and descending
+subfamilies; the growing case remains uncovered.  Merely running more rounds
+or enlarging a fixed reset menu is no longer the next target.
+
+The broader variable-depth idea stays open under a stricter gate: exhibit a
+nontrivial transition on an explicitly invariant inherited-offset state class,
+with full reset accounting and a correct terminal condition, or construct an
+actual connection to a smaller induction-known seed.  The affine recurrence
+and the alternate smaller seed in the companion audit are candidate data for
+such a transition, not a proof that it exists.  No surviving reusable reset
+rule was found in this pass, and no successor proof campaign is authorized by
+the completed kickoff itself.

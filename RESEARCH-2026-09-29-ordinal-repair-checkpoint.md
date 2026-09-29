@@ -2,6 +2,10 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Variable-depth follow-through: account for the reset
+
+[Full-run and reset audit](RESEARCH-2026-09-29-q1-run-macro.md): the long phase can pay for one bad exit, but the target's next full odd/even run has infinite subfamilies above the original start and others below the odd-unit parameter.  Lean now proves the exact exit offset, failure of immediate return to the canonical multiplier family, the next actual run, and one-halving expansion.  It also proves that on fresh normalized states the candidate weight is `8d^4`, so a lower reset weight is equivalent to a smaller `d`.  This rank/reset template has not supplied an induction beyond numerical descent.  A transition preserving and controlling the inherited offset, with full reset cost and terminal condition, remains missing; another fixed-depth extension alone does not qualify.
+
 ## Q1 follow-through: a finite-depth strategy is now excluded
 
 [Q1 coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md) now resolves the bounded-splicing test left by the slope audit.  On `s=240+1024t`, the actual `n` orbit meets the `q1` orbit at times 18 and 11, giving direct 18-step descent.  But for every bound `K`, another hard-family parameter has every `n` iterate through `K` at or above its start and every `q1` iterate through `K` below that start.  Both results are proved in [Q1Coalescence.lean](CollatzMoonshot/Obstructions/Q1Coalescence.lean).  No finite bounded-depth menu of splices into `q1` can cover the family.

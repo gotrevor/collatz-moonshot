@@ -185,7 +185,7 @@ theorem odd_exit_no_canonical_reentry (r u : ℕ) (hu : 0 < u)
     Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ hstep)
   omega
 
-/-- The target still has exactly two forced odd steps after this exit. -/
+/-- The target has two forced odd steps after this exit. -/
 theorem odd_exit_target_two (r u : ℕ) (hu : 0 < u) :
     tstep^[2] (oddExitA r u) = 3 ^ (2 * r + 4) * u - 1 := by
   have e2 : 36 * 9 ^ r * u = 36 * (9 ^ r * u) := by ring
@@ -194,7 +194,7 @@ theorem odd_exit_target_two (r u : ℕ) (hu : 0 < u) :
   simp only [oddExitA, e2, e5]
   exact stepsTarget_core _
 
-/-- A specified full halving run is an actual orbit segment. -/
+/-- A specified halving run is an actual orbit segment. -/
 theorem odd_exit_target_halvings (r u k x : ℕ) (hu : 0 < u)
     (hx : 3 ^ (2 * r + 4) * u - 1 = 2 ^ k * x) :
     tstep^[2 + k] (oddExitA r u) = x := by
