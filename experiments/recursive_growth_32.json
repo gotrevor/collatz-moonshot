@@ -1,0 +1,130 @@
+[
+  {
+    "class_id": 64,
+    "j": 32,
+    "t": 3596042615,
+    "modulus": 4294967296,
+    "intro": {
+      "class_id": 64,
+      "parameter": 3596042615,
+      "h": 341624048427,
+      "s": 131183634596185,
+      "n": 5575304470337863,
+      "remove": [
+        446024357627029,
+        104536958818835
+      ],
+      "insert": [
+        88031123215861,
+        2230121788135145
+      ],
+      "p_plus_one": 7056244720271360,
+      "affine_coefficients": {
+        "h": [
+          2,
+          95
+        ],
+        "u": [
+          16745,
+          620160
+        ],
+        "x": [
+          3349,
+          124032
+        ],
+        "b": [
+          661,
+          24480
+        ],
+        "z": [
+          785,
+          29070
+        ]
+      },
+      "symbolic_polynomial_identity": true,
+      "both_inputs_below_c": true,
+      "borrowing_prerequisites": [
+        446024357627029,
+        104536958818835
+      ],
+      "borrowing_prerequisites_constructed": false
+    },
+    "first_six": [
+      5575304470337863,
+      8362956705506795,
+      12544435058260193,
+      18816652587390290,
+      9408326293695145,
+      14112489440542718,
+      7056244720271359
+    ],
+    "odd_run_base": 1642910,
+    "endpoint_after_six_plus_j": 3044345398466578097309,
+    "no_descent_through_six_plus_j": true,
+    "trajectory_used": false
+  },
+  {
+    "class_id": 79,
+    "j": 32,
+    "t": 83754422,
+    "modulus": 4294967296,
+    "intro": {
+      "class_id": 79,
+      "parameter": 83754422,
+      "h": 6616599339,
+      "s": 2540774146393,
+      "n": 107982901221703,
+      "remove": [
+        12703870731965,
+        23819757622435
+      ],
+      "insert": [
+        10251541255225,
+        43193160488681
+      ],
+      "p_plus_one": 136665859358720,
+      "affine_coefficients": {
+        "h": [
+          1,
+          79
+        ],
+        "u": [
+          10217,
+          515712
+        ],
+        "x": [
+          3005,
+          151680
+        ],
+        "b": [
+          2425,
+          122400
+        ],
+        "z": [
+          5635,
+          284400
+        ]
+      },
+      "symbolic_polynomial_identity": true,
+      "both_inputs_below_c": true,
+      "borrowing_prerequisites": [
+        12703870731965,
+        23819757622435
+      ],
+      "borrowing_prerequisites_constructed": false
+    },
+    "first_six": [
+      107982901221703,
+      161974351832555,
+      242961527748833,
+      364442291623250,
+      182221145811625,
+      273331718717438,
+      136665859358719
+    ],
+    "odd_run_base": 31820,
+    "endpoint_after_six_plus_j": 58963102409265580619,
+    "no_descent_through_six_plus_j": true,
+    "trajectory_used": false
+  }
+]

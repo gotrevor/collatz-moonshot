@@ -119,6 +119,58 @@ def long_growth(j):
             'no_descent_through_six_plus_j': True}
 
 
+def lower_prefix(h):
+    """The fixed six-step word and ensuing odd run in the lower five-head family."""
+    if h < 0:
+        raise ValueError('lower-prefix requires h>=0')
+    k = 144 + 255*h
+    n, c, d = 9223 + 16320*h, 3689 + 6528*h, 5425 + 9600*h
+    six = [64*k+7, 96*k+11, 144*k+17, 216*k+26,
+           108*k+13, 162*k+20, 81*k+10]
+    p = six[-1]
+    assert six[0] == n and p+1 == 11675+20655*h
+    assert all(x > n for x in six[1:]) and 0 < c < n and 0 < d < n
+    # For p odd, the next v_2(p+1) shortcut steps are odd.  For p even,
+    # this run is empty; the immediate halving is reported separately.
+    run = 0
+    s = p+1
+    while s % 2 == 0:
+        run += 1
+        s //= 2
+    odd_run = [3**i * 2**(run-i) * s - 1 for i in range(1, run+1)]
+    endpoint = odd_run[-1] if odd_run else p
+    assert endpoint > n and all(x > n for x in odd_run)
+    if h % 2 == 0:
+        descent_step, descent_endpoint = 7, p//2
+    elif h % 4 == 1:
+        descent_step, descent_endpoint = 8, (3*p+1)//4
+    else:
+        descent_step, descent_endpoint = None, None
+    if descent_step is not None:
+        assert descent_endpoint < n
+    return {'h': h, 'k': k, 'n': n, 'c': c, 'd': d,
+            'initial_six': six, 'post_six': p,
+            'odd_run_length': run, 's': s, 'odd_run_prefix': odd_run,
+            'rising_prefix_steps': 6+run,
+            'endpoint_after_six_plus_odd_run': endpoint,
+            'no_descent_through_six_plus_odd_run': True,
+            'first_obvious_descent_step': descent_step,
+            'first_obvious_descent_endpoint': descent_endpoint}
+
+
+def lower_growth(j):
+    """Least nonnegative h forcing at least j odd steps after the fixed six."""
+    if j < 2:
+        raise ValueError('lower-growth construction requires j>=2')
+    modulus = 2**j
+    h = (-11675 * pow(20655, -1, modulus)) % modulus
+    result = lower_prefix(h)
+    assert (result['post_six']+1) % modulus == 0
+    assert result['odd_run_length'] >= j
+    return {'requested_min_odd_run': j, 'residue_modulus': modulus,
+            **result}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -217,6 +269,10 @@ def main():
     formula.add_argument('j', type=int)
     growth = sub.add_parser('growth')
     growth.add_argument('j', type=int)
+    lower = sub.add_parser('lower-prefix')
+    lower.add_argument('h', type=int)
+    lower_growing = sub.add_parser('lower-growth')
+    lower_growing.add_argument('j', type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -230,6 +286,8 @@ def main():
     result = (profile(args.n) if args.command == 'profile' else
               fixed_offset_descent(args.family, args.j) if args.command == 'descent' else
               long_growth(args.j) if args.command == 'growth' else
+              lower_prefix(args.h) if args.command == 'lower-prefix' else
+              lower_growth(args.j) if args.command == 'lower-growth' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

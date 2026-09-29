@@ -38,9 +38,10 @@ general Collatz claim.
 
 ## Next steps (for whoever picks this up)
 
-1. The natural follow-on is closure: is there a `t'` with
-   `recursiveX t = lowerC (recursiveH t')` (or `5 * recursiveX t'`)? That is a
-   linear Diophantine question in `t, t'` and is what would turn this single
-   supply rule into an actual descent, so it is the decisive next probe.
+1. The parent checked that `recursiveX t` is always 3349 modulo 6528,
+   whereas every `lowerC h` is 3689 modulo 6528.  Thus this input never
+   returns to the original auxiliary progression.  The next target is a
+   mutually recursive set of supply rules, not a self-map of this subclass.
+   See `RESEARCH-2026-09-28-nn-borrow-checkpoint.md`.
 2. `five_head_pair_of_Q5_rev` is now available to any other family in
    `FiveHead.lean` (`observed*`, `lower*`) that wants the reverse orientation.

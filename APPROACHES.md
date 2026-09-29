@@ -396,3 +396,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Growing borrowing constructions, 2026-09-28
 
 [Borrowing checkpoint](RESEARCH-2026-09-28-borrow-checkpoint.md): four auxiliary labels in the lower five-head family now have exact legal unit constructions without target-orbit input.  A general Lean theorem proves bounded unit size forces bounded label support, so any uniform borrowing scheme must grow.  The family includes arbitrarily long initial growth; no recursive borrowing scheme or target-free full repair is yet established.
+
+### NN comparison and symbolic supply steps, 2026-09-28
+
+[Local-to-global control and recursive supply steps](RESEARCH-2026-09-28-nn-borrow-checkpoint.md): prime-power local solvability at 23 does not imply one integer borrowing rule, now formalized.  Two exact affine smaller-input rules cover h=2 modulo 95 and h=1 modulo 79 in the lower five-head family; the first is formalized in Lean.  Both subclasses contain arbitrarily long initial-growth starts.  Closure under their required inputs, and subsequent target-free vertex balance, remain open.

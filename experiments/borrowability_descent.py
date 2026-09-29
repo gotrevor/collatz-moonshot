@@ -8,6 +8,7 @@ from fractions import Fraction
 from pathlib import Path
 import argparse
 import json
+import math
 import subprocess
 import sys
 
@@ -150,6 +151,82 @@ def complementary_split(j, i):
             'companion':str(b),'companion_integral':False}
 
 
+def _small_factors(n):
+    """Prime factorization for the small cross denominators in this control."""
+    factors = {}
+    p = 2
+    while p*p <= n:
+        while n % p == 0:
+            n //= p
+            factors[p] = factors.get(p,0)+1
+        p += 1 if p == 2 else 2
+    if n > 1:
+        factors[n] = factors.get(n,0)+1
+    return factors
+
+
+def local_global_23():
+    """Finite modulus certifying the existing two-smaller-input obstruction.
+
+    L is the lcm of all cross denominators.  If D*b=70*c*d modulo L for
+    any candidate pair, then D divides 70*c*d, hence the rational companion
+    is actually integral.  The incumbent 23 certificate says none is.
+    """
+    u = 23
+    rows = []
+    prime_powers = {}
+    for c in range(1,u,2):
+        for d in range(c,u,2):
+            D = u*(3*(c+d)+1)-3*c*d
+            K = (3*u+1)*c*d
+            assert D > 0
+            q = D//math.gcd(D,K)
+            assert q > 1
+            rows.append((c,d,D,K,q))
+            for p,e in _small_factors(D).items():
+                prime_powers[p] = max(prime_powers.get(p,0),e)
+    modulus = math.lcm(*(row[2] for row in rows))
+    assert modulus == math.prod(p**e for p,e in prime_powers.items())
+    # A smaller, non-optimal prime-power cover: p blocks a pair when p is
+    # present in its reduced denominator, at exponent v_p(K)+1.
+    coverage = {}
+    exponent = {}
+    for i,(_,_,_,K,q) in enumerate(rows):
+        for p in _small_factors(q):
+            coverage.setdefault(p,set()).add(i)
+            n = K
+            val = 0
+            while n % p == 0:
+                n //= p
+                val += 1
+            exponent[p] = max(exponent.get(p,0),val+1)
+    remaining = set(range(len(rows)))
+    selected = []
+    while remaining:
+        p = max(coverage,key=lambda p:(len(coverage[p] & remaining),-p))
+        assert coverage[p] & remaining
+        selected.append(p)
+        remaining -= coverage[p]
+    cover = math.prod(p**exponent[p] for p in selected)
+    for _,_,D,K,_ in rows:
+        # Linear congruence D*b=K (mod cover) is solvable iff gcd(D,cover)|K.
+        assert K % math.gcd(D,cover) != 0
+    witnesses = []
+    for c,d in [(1,1),(13,17)]:
+        row = next(row for row in rows if row[:2] == (c,d))
+        witnesses.append({'inputs':[c,d], 'D':row[2], 'K':row[3],
+                          'rational_companion':str(Fraction(row[3],row[2])),
+                          'reduced_denominator':row[4]})
+    assert math.gcd(*(row['reduced_denominator'] for row in witnesses)) == 1
+    return {'target':u, 'input_pairs':len(rows),
+            'separate_local_witnesses':witnesses,
+            'universal_modulus':modulus,
+            'universal_modulus_factors':{str(p):e for p,e in sorted(prime_powers.items())},
+            'greedy_cover_modulus':cover,
+            'greedy_cover_factors':{str(p):exponent[p] for p in sorted(selected)},
+            'raw_modulus_has_solution':False}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('label', nargs='?', type=int)
@@ -172,5 +249,8 @@ if __name__ == '__main__':
         raise SystemExit(0)
     if len(sys.argv) == 4 and sys.argv[1] == 'split':
         print(json.dumps(complementary_split(int(sys.argv[2]),int(sys.argv[3])),indent=2))
+        raise SystemExit(0)
+    if sys.argv[1:] == ['local-global-23']:
+        print(json.dumps(local_global_23(),indent=2))
         raise SystemExit(0)
     main()

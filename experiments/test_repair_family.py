@@ -61,6 +61,48 @@ def test_deliberate_long_growth_congruence():
     assert b['no_descent_through_six_plus_j'] is True
 
 
+def test_lower_family_prefix_has_adversarial_and_descent_controls():
+    # h=43: p+1=899840=2^8*3515, so the first 14 steps rise.
+    rising = run('lower-prefix', 43)
+    assert (rising['n'], rising['c'], rising['d']) == (710983, 284393, 418225)
+    assert (rising['post_six'], rising['odd_run_length'], rising['s']) == (899839, 8, 3515)
+    assert rising['initial_six'][0] == 710983
+    assert rising['initial_six'][-1] == 899839
+    assert len(rising['odd_run_prefix']) == 8
+    assert rising['rising_prefix_steps'] == 14
+    assert rising['endpoint_after_six_plus_odd_run'] == 23061914
+    assert rising['no_descent_through_six_plus_odd_run'] is True
+    assert rising['first_obvious_descent_step'] is None
+
+    # h=44: p is even, and its step-7 half lies below the start.
+    short = run('lower-prefix', 44)
+    assert (short['n'], short['c'], short['d']) == (727303, 290921, 427825)
+    assert (short['post_six'], short['odd_run_length']) == (920494, 0)
+    assert (short['first_obvious_descent_step'],
+            short['first_obvious_descent_endpoint']) == (7, 460247)
+
+
+def test_lower_growth_selects_least_residue_and_reports_actual_run():
+    # Modulo 4: 11675+20655*h = 3+3h, whose first zero is h=3.
+    first = run('lower-growth', 2)
+    assert (first['h'], first['n'], first['c'], first['d']) == (3, 58183, 23273, 34225)
+    assert (first['post_six'], first['odd_run_length'], first['s']) == (73639, 3, 9205)
+    assert first['endpoint_after_six_plus_odd_run'] == 248534
+    assert first['requested_min_odd_run'] == 2
+    # The same least residue h=43 survives modulo 2^8.
+    eighth = run('lower-growth', 8)
+    assert (eighth['h'], eighth['odd_run_length'],
+            eighth['endpoint_after_six_plus_odd_run']) == (43, 8, 23061914)
+
+
+def test_lower_prefix_one_odd_step_then_step_eight_descent():
+    # h=1: p=32329, T^7=48494, T^8=24247 < n=25543.
+    got = run('lower-prefix', 1)
+    assert (got['n'], got['post_six'], got['odd_run_prefix']) == (25543, 32329, [48494])
+    assert (got['first_obvious_descent_step'],
+            got['first_obvious_descent_endpoint']) == (8, 24247)
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

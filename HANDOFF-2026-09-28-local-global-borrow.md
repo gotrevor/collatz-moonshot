@@ -44,8 +44,7 @@ The positive statement is `∀ p k, ∃ c d b, …`.  The witnesses depend on
 
 * that one `(c,d,b)` works for all moduli simultaneously, nor
 * that every *finite joint* modulus is solvable — it is not.  A joint modulus
-  already blocks all the small input pairs, since `79 ∤ 35` and `11 ∤ 119`
-  cannot both be repaired at once while staying below 23.
+  already blocks all the small input pairs, by taking the lcm of all 66 positive cross denominators and using the existing finite divisibility obstruction for every pair.
 
 So this is a bounded negative control, not a failure of CRT, and it is not
 evidence that local-to-global methods fail in general.  The gap here is the

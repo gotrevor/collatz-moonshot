@@ -246,6 +246,82 @@ def test_borrowing_budget_reports_unresolved_not_obstruction():
     assert got['complete_neighbor_calls'] == []
 
 
+def test_lower_family_first_auxiliary_needs_height_overshoot():
+    got = run('borrow-height',0,'--max-source-label',4000)
+    assert got['status'] == 'complete-fixed-label-neighbors'
+    assert (got['c'],got['n']) == (3689,9223)
+    assert got['strict_two_smaller_count_all_odd'] == 0
+    # Independent direct companion formula exhausts all odd x<=y<3689,
+    # including inputs divisible by 3; there is no bound on companion b.
+    c = 3689
+    for x in range(1,c,2):
+        for y in range(x,c,2):
+            denominator = c*(3*(x+y)+1)-3*x*y
+            numerator = (3*c+1)*x*y
+            assert denominator > 0
+            assert numerator % denominator != 0
+    # The weaker state bound n admits this exact pair, but 3953 exceeds c.
+    row = got['least_height_three_free_below_n']
+    assert row == {'before':[2767,3689],'after':[2635,3953]}
+    assert 3689 < 3953 < 9223
+    pair_value = lambda pair: Fraction(2*pair[0],3*pair[0]+1)*Fraction(
+        2*pair[1],3*pair[1]+1)
+    assert pair_value(row['before']) == pair_value(row['after'])
+
+
+def test_two_symbolic_recursive_intro_classes():
+    # Class 64 is exactly h=2 mod 5 (u divisible by 5) and h=2 mod 19
+    # (the companion integral), hence h=2 mod 95.
+    assert [h for h in range(95) if
+            (3689+6528*h)%5 == 0 and
+            (2767+4896*h)%19 == 0] == [2]
+    # Class 79 has x=5s and z=5(15s+1)/8 integral for every h,
+    # while b=25(2767+4896h)/79 is integral just at h=1 mod 79.
+    assert [h for h in range(79) if
+            (2767+4896*h)%79 == 0] == [1]
+    expected = {
+        64:([3349,785],[661,16745],41863),
+        79:([3005,5635],[2425,10217],25543),
+    }
+    r=lambda u:Fraction(2*u,3*u+1)
+    for class_id,(old,new,n0) in expected.items():
+        first=run('recursive-intro',class_id,0)
+        assert first['remove'] == old and first['insert'] == new
+        assert first['n'] == n0
+        assert first['symbolic_polynomial_identity'] is True
+        assert first['both_inputs_below_c'] is True
+        assert first['borrowing_prerequisites_constructed'] is False
+        for t in range(5):
+            got=run('recursive-intro',class_id,t)
+            x,z=got['remove'];b,u=got['insert']
+            assert r(x)*r(z) == r(b)*r(u)
+            assert all(0<v<u for v in (x,z,b))
+            assert all(v%2 and v%3 for v in (x,z,b,u))
+
+
+def test_recursive_classes_contain_arbitrarily_long_growth_prefixes():
+    # p+1=52985+1962225t for class 64 and
+    # p+1=32330+1631745t for class 79.  Both slopes are odd, hence
+    # invertible modulo every power of two.
+    for class_id,base,slope,hand_t in ((64,52985,1962225,3),
+                                        (79,32330,1631745,2)):
+        assert slope%2 == 1
+        for j in (1,2,4,8):
+            got=run('recursive-growth',class_id,j)
+            t=got['t'];modulus=2**j
+            assert 0 <= t < modulus
+            assert got['intro']['p_plus_one'] == base+slope*t
+            assert (base+slope*t)%modulus == 0
+            assert got['endpoint_after_six_plus_j'] == (
+                3**j*((base+slope*t)//modulus)-1)
+            assert got['first_six'][0] == got['intro']['n']
+            assert got['first_six'][-1]+1 == base+slope*t
+            assert all(v>got['intro']['n'] for v in got['first_six'][1:])
+            assert got['trajectory_used'] is False
+            if j == 2:
+                assert t == hand_t
+
+
 def test_missing_borrowing_is_reported_as_a_finite_library_gap(tmp_path):
     # Adding an identity exchange leaves target-source unchanged, but executing
     # this particular word requires its large input twice.  The finite library

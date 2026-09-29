@@ -645,6 +645,115 @@ def borrow_target(target, max_neighbor_calls=20, max_source_label=20000,
     return result
 
 
+def lower_family_height(h, max_source_label=30000):
+    """Complete one-label Q census for c=17(217+384h), with no orbit data."""
+    if h < 0:
+        raise ValueError('h must be nonnegative')
+    s = 217+384*h
+    c = 17*s
+    n = (85*s+1)//2
+    result = {'h':h,'s':s,'c':c,'n':n,
+              'max_source_label':max_source_label}
+    if c > max_source_label:
+        return {**result,'status':'source-budget-truncated'}
+    rows = research.quadratic_neighbors(c)['nontrivial_exchanges']
+    strict = [row for row in rows if max(row['after']) < c]
+    below_n = [row for row in rows if max(row['after']) < n and
+               all(u%3 for u in row['before']+row['after'])]
+    below_n.sort(key=lambda row:(max(row['after']),sum(row['after']),
+                                 max(row['before'])))
+    return {**result,'status':'complete-fixed-label-neighbors',
+            'complete_neighbor_count':len(rows),
+            'strict_two_smaller_count_all_odd':len(strict),
+            'three_free_both_inputs_below_n_count':len(below_n),
+            'least_height_three_free_below_n':below_n[0] if below_n else None}
+
+
+RECURSIVE_CLASSES = {
+    64: {'h':[2,95], 'u':[16745,620160], 'x':[3349,124032],
+         'b':[661,24480], 'z':[785,29070]},
+    79: {'h':[1,79], 'u':[10217,515712], 'x':[3005,151680],
+         'b':[2425,122400], 'z':[5635,284400]},
+}
+
+
+def recursive_intro(class_id,t):
+    """Exact affine Q introduction; borrowing x,z remains a separate input."""
+    if class_id not in RECURSIVE_CLASSES or t < 0:
+        raise ValueError('class must be 64 or 79 and t nonnegative')
+    data = RECURSIVE_CLASSES[class_id]
+    at = lambda name:data[name][0]+data[name][1]*t
+    h,u,x,b,z = at('h'),at('u'),at('x'),at('b'),at('z')
+    s = 217+384*h
+    n = (85*s+1)//2
+    k = (n-7)//64
+    p_plus_one = 81*k+11
+
+    def multiply(left,right):
+        out = [0]*(len(left)+len(right)-1)
+        for i,a in enumerate(left):
+            for j,c in enumerate(right):
+                out[i+j] += a*c
+        return out
+
+    def product(*factors):
+        out = [1]
+        for factor in factors:
+            out = multiply(out,factor)
+        return out
+
+    def denominator(pair):
+        return [3*pair[0]+1,3*pair[1]]
+
+    U,B,X,Z = (data[name] for name in ('u','b','x','z'))
+    symbolic = product(U,B,denominator(X),denominator(Z)) == product(
+        X,Z,denominator(U),denominator(B))
+    if not symbolic or u != 17*s or not (0 < x < u < n and 0 < z < u and 0 < b < u):
+        raise ValueError('invalid recursive affine introduction')
+    if any(base%2 != 1 or base%3 == 0 or slope%6
+           for base,slope in (U,B,X,Z)):
+        raise ValueError('recursive affine labels fail odd 3-free domain')
+    return {'class_id':class_id,'parameter':t,'h':h,'s':s,'n':n,
+            'remove':[x,z],'insert':[b,u],
+            'p_plus_one':p_plus_one,
+            'affine_coefficients':data,
+            'symbolic_polynomial_identity':symbolic,
+            'both_inputs_below_c':True,
+            'borrowing_prerequisites':[x,z],
+            'borrowing_prerequisites_constructed':False}
+
+
+def recursive_growth(class_id,j):
+    """Force j odd steps after the six-edge prefix, without orbit iteration."""
+    if j < 1:
+        raise ValueError('j must be positive')
+    h0,hstep = RECURSIVE_CLASSES[class_id]['h']
+    base = 11675+20655*h0
+    slope = 20655*hstep
+    modulus = 1 << j
+    if slope%2 != 1:
+        raise ValueError('growth congruence coefficient must be odd')
+    t = (-base*pow(slope,-1,modulus))%modulus
+    intro = recursive_intro(class_id,t)
+    n = intro['n']
+    k = (n-7)//64
+    prefix = [64*k+7,96*k+11,144*k+17,216*k+26,
+              108*k+13,162*k+20,81*k+10]
+    p_plus_one = intro['p_plus_one']
+    if (prefix[0] != n or prefix[-1]+1 != p_plus_one or
+            p_plus_one%modulus or not all(v>n for v in prefix[1:])):
+        raise ValueError('recursive growth prefix identity failed')
+    q = p_plus_one//modulus
+    endpoint = 3**j*q-1
+    if endpoint <= n:
+        raise ValueError('recursive odd-run endpoint does not exceed start')
+    return {'class_id':class_id,'j':j,'t':t,'modulus':modulus,
+            'intro':intro,'first_six':prefix,'odd_run_base':q,
+            'endpoint_after_six_plus_j':endpoint,
+            'no_descent_through_six_plus_j':True,
+            'trajectory_used':False}
+
+
 def integer_basis_controls():
     """Tiny exact controls distinguishing integer span from rational span."""
     even = IntegerRelationBasis()
@@ -812,6 +921,15 @@ def main():
     borrow.add_argument('--max-candidates-per-query',type=int,default=80)
     borrow.add_argument('--max-unit-factors',type=int,default=100000)
     borrow.add_argument('--output',type=Path)
+    height = subs.add_parser('borrow-height')
+    height.add_argument('h',type=int)
+    height.add_argument('--max-source-label',type=int,default=30000)
+    intro = subs.add_parser('recursive-intro')
+    intro.add_argument('class_id',type=int,choices=(64,79))
+    intro.add_argument('t',type=int)
+    growth = subs.add_parser('recursive-growth')
+    growth.add_argument('class_id',type=int,choices=(64,79))
+    growth.add_argument('j',type=int)
     subs.add_parser('basis-controls')
     subs.add_parser('test')
     args = parser.parse_args()
@@ -858,6 +976,12 @@ def main():
             args.output.write_text(json.dumps(result,indent=2)+'\n')
             result = {k:v for k,v in result.items() if k not in ('unit','borrow_dag')}
             result['output'] = str(args.output)
+    elif args.command == 'borrow-height':
+        result = lower_family_height(args.h,args.max_source_label)
+    elif args.command == 'recursive-intro':
+        result = recursive_intro(args.class_id,args.t)
+    elif args.command == 'recursive-growth':
+        result = recursive_growth(args.class_id,args.j)
     elif args.command == 'basis-controls':
         result = integer_basis_controls()
     else:

@@ -3,6 +3,7 @@
 from fractions import Fraction
 from pathlib import Path
 import json
+import math
 import subprocess
 import sys
 
@@ -95,3 +96,50 @@ def test_dyadic_family_does_not_give_a_uniform_obstruction():
     assert after['least_rule'] == {
         'remove':[5461,7453], 'insert':[3683,21845],
         'companion':3683, 'max_input':7453}
+
+
+def test_separate_prime_adic_witnesses_at_fixed_target_23():
+    row = run_args('local-global-23')
+    assert row['target'] == 23
+    assert row['input_pairs'] == 66
+    assert row['separate_local_witnesses'] == [
+        {'inputs':[1,1], 'D':158, 'K':70,
+         'rational_companion':'35/79', 'reduced_denominator':79},
+        {'inputs':[13,17], 'D':1430, 'K':15470,
+         'rational_companion':'119/11', 'reduced_denominator':11}]
+    # Both rational companions are positive and odd/3-free locally;
+    # coprime reduced denominators let one witness work at every prime.
+    assert math.gcd(79,11) == 1
+    for b in (Fraction(35,79), Fraction(119,11)):
+        assert b > 0
+        assert math.gcd(b.numerator,6) == math.gcd(b.denominator,6) == 1
+    assert Fraction(23,70)*Fraction(35,184) == Fraction(1,4)**2
+    assert Fraction(23,70)*Fraction(119,368) == (
+        Fraction(13,40)*Fraction(17,52))
+
+
+def test_finite_joint_modulus_blocks_every_smaller_input_pair():
+    row = run_args('local-global-23')
+    M = row['universal_modulus']
+    cover = row['greedy_cover_modulus']
+    assert M % 158 == 0 and M % 1430 == 0
+    # D is always 2 mod4.  D(11,13)=1250=2*5^4 and
+    # D(1,9)=686=2*7^3; monotonicity gives D<=D(21,21)=1598,
+    # below 5^5 and 7^4, so these are the maximal exponents.
+    assert row['universal_modulus_factors']['2'] == 1
+    assert row['universal_modulus_factors']['5'] == 4
+    assert row['universal_modulus_factors']['7'] == 3
+    assert math.prod(int(p)**e for p,e in
+                     row['universal_modulus_factors'].items()) == M
+    assert math.prod(int(p)**e for p,e in
+                     row['greedy_cover_factors'].items()) == cover
+    assert cover < M
+    # The linear congruence D*b=K mod N has an integer solution iff
+    # gcd(D,N) divides K.  This checks all 66 pairs without searching b.
+    for c in range(1,23,2):
+        for d in range(c,23,2):
+            D = 23*(3*(c+d)+1)-3*c*d
+            K = 70*c*d
+            assert D > 0 and M % D == 0
+            assert K % math.gcd(D,M) != 0
+            assert K % math.gcd(D,cover) != 0
