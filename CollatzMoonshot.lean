@@ -94,3 +94,4 @@ import CollatzMoonshot.Obstructions.FiveHead
 import CollatzMoonshot.Obstructions.UnitSupportBound
 import CollatzMoonshot.Obstructions.LocalGlobalBorrow23
 import CollatzMoonshot.Obstructions.RecursiveBorrow
+import CollatzMoonshot.Obstructions.AffineQLift
