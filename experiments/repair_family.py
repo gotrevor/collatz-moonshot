@@ -250,10 +250,10 @@ def second_frontier_cubic(s, variant='hard64'):
     if s < 0:
         raise ValueError('second-frontier-cubic requires s>=0')
     if variant == 'hard64':
-        t, qden, eden, shift = 16475+25172*s, 64, 58, 61
+        t, t_stride, qden, eden, shift = 16475+25172*s, 25172, 64, 58, 61
         assert t%116 == 3 and t%7 == 4 and t%31 == 14
     elif variant == 'easy32':
-        t, qden, eden, shift = 4540+5642*s, 32, 26, 29
+        t, t_stride, qden, eden, shift = 4540+5642*s, 5642, 32, 26, 29
         assert t%26 == 16 and t%7 == 4 and t%31 == 14
     else:
         raise ValueError('variant must be hard64 or easy32')
@@ -277,8 +277,69 @@ def second_frontier_cubic(s, variant='hard64'):
     while odd_part%2 == 0:
         run += 1
         odd_part //= 2
+    near_miss = {}
     if variant == 'hard64':
         assert data['h']%4 == 3 and run >= 2
+        # The actual third vertex sits just below an IH-known basin vertex:
+        # q1<m gives T(q1) in the basin, hence also 32*T(q1).  The factor
+        # identity alone does not connect the two vertices across the gap.
+        q1_successor = (3*q1+1)//2
+        e1_successor = (3*e1+1)//2
+        known_basin_neighbor = 32*q1_successor
+        actual_third = (3*a2+1)//2
+        actual_sixth = 18*q1+1
+        assert a2 == 29*e1
+        assert known_basin_neighbor == 29*e1_successor
+        assert known_basin_neighbor-actual_third == 14
+        assert actual_sixth == p_plus_one-1
+        assert research_lifts.step(research_lifts.step(
+            research_lifts.step(actual_third))) == actual_sixth
+        near_miss = {
+            'known_basin_neighbor': known_basin_neighbor,
+            'actual_third': actual_third,
+            'neighbor_gap': 14,
+            'actual_sixth': actual_sixth,
+        }
+        # A bounded pair of parity words can coalesce on an infinite affine
+        # subfamily only if its two slopes differ by powers of 2 and 3.
+        # Compute slopes from adjacent symbolic rows, with no target orbit.
+        next_data = lower_composite('class95', t+t_stride)
+        next_a = next_data['actual_successor']
+        current_labels = {'m':m, 'c':data['c'], 'd':data['d'],
+                          'b':data['b'], 'x':data['x'], 'z':data['z'],
+                          'q1':q1, 'q2':q2, 'e1':e1, 'e2':e2}
+        next_labels = {
+            'm':next_data['m'], 'c':next_data['c'], 'd':next_data['d'],
+            'b':next_data['b'], 'x':next_data['x'], 'z':next_data['z'],
+            'q1':(3*next_a-1)//qden,
+            'q2':5*(2*next_a-7)//93,
+            'e1':(3*next_a+1)//eden,
+            'e2':(2*next_a-7)//21,
+        }
+        def outside_two_three(value):
+            for prime in (2,3):
+                while value%prime == 0:
+                    value //= prime
+            return value
+        n_slope = next_data['n']-data['n']
+        slope_audit = {}
+        for label, value in current_labels.items():
+            label_slope = next_labels[label]-value
+            assert label_slope > 0
+            ratio = Fraction(n_slope,label_slope)
+            outside = [outside_two_three(ratio.numerator),
+                       outside_two_three(ratio.denominator)]
+            slope_audit[label] = {
+                'label_slope': label_slope,
+                'n_to_label_ratio': [ratio.numerator,ratio.denominator],
+                'outside_2_3': outside,
+                'passes_necessary_condition': outside == [1,1],
+            }
+        near_miss['coalescence_n_slope'] = n_slope
+        near_miss['coalescence_slope_audit'] = slope_audit
+        near_miss['bounded_depth_slope_candidates'] = [
+            label for label,row in slope_audit.items()
+            if row['passes_necessary_condition']]
     return {'variant':variant,'s':s,'t':t,'h':data['h'],'n':data['n'],'m':m,
             'actual_frontier_before':a,'virtual_frontier_before':v,
             'borrowed_inputs':[q1,q2],'output_companions':[e1,e2],
@@ -287,7 +348,8 @@ def second_frontier_cubic(s, variant='hard64'):
             'common_value_numerator':common.numerator,
             'common_value_denominator':common.denominator,
             'all_auxiliaries_below_m':True,
-            'old_restricted_palette_rule':False}
+            'old_restricted_palette_rule':False,
+            **near_miss}
 
 
 def oriented_rules(witness_path):

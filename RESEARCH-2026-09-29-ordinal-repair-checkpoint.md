@@ -2,6 +2,24 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Follow-through: signed extraction and the carry obstruction
+
+The next audit removes a second self-imposed prerequisite.  **A finite signed integer edge flow with boundary `e_n-e_1` already proves convergence.**  Positivity and an identical catalyst return are sufficient construction choices, not necessary hypotheses for extracting convergence.  [SignedFlow.lean](CollatzMoonshot/Obstructions/SignedFlow.lean) proves the equivalence and the stronger result for any nonzero integer multiple of the desired boundary.  It does not construct a new flow; existence is still equivalent to the convergence problem.
+
+The [prefix audit](RESEARCH-2026-09-29-prefix-peel-audit.md) proves on paper that unrestricted semigroup supply can expose **any finite actual prefix** of a 3-free start.  Thus longer peeling alone is not evidence of a terminating repair.  For a fixed central script, an identical-unit return exists exactly when its base endpoint is nonnegative and its input-deficit catalyst has 3-free odd support.  This criterion is optional if the construction instead produces exact signed vertex balance.
+
+The cubic now has an explicit [carry obstruction](RESEARCH-2026-09-29-post-cubic-return-debt.md).  Put `q=T(q1)` for its first auxiliary, with `q1<m<n`.  Induction makes `32q` a known convergent vertex, while
+
+```
+T^3(n)=32q-14,
+T^4(n)=16q-7,       T(32q)=16q,
+T^5(n)=24q-10,      T^2(32q)=8q.
+```
+
+The initial gap 14 becomes 7 and then `16q-10`, which is unbounded across the hard CRT family.  [CubicCarry.lean](CollatzMoonshot/Obstructions/CubicCarry.lean) proves these finite-prefix relations, the unbounded two-step gap, `T^6(n)=18q1+1`, and the conditional convergence of the neighbor.  This rules out this bounded-gap argument, not every coupled rank.
+
+Using all lower auxiliary paths, the projected post-cubic residual reduces modulo their known edge boundaries to `e_1-e_(T(a))`.  The [basin-cut audit](RESEARCH-2026-09-29-signed-basin-obstruction.md) explains why inserting more scalar units or merely counting low labels does not close that residual.  The actual second frontier is still the missing connection.  No complete repair or decreasing full-state rank has been found.
+
 ## Correcting the prerequisite
 
 The earlier roadmap made uniform borrowing from U2/U8/U13 a prerequisite.  That restriction was imposed by our experimental palette.  For the Collatz route, [Applegate–Lagarias, Theorem 1.1](https://arxiv.org/html/math/0411140) already implies that any finite multiset of odd labels prime to 3, together with any number of factors 2, is contained in a finite value-one word.  Multiply the multiset by a semigroup representation of the inverse of its value.  No convergence hypothesis is used.  The [supply addendum](RESEARCH-2026-09-29-unrestricted-supply-addendum.md) proves the exact criterion and distinguishes known literature from repo Lean results.
@@ -59,10 +77,22 @@ This cancellation is available only when W really is returned.  In our partial p
 
 If every nonbalanced state in that invariant class admits such a block, and terminal states have boundary e_n-e_1, well-founded induction produces a finite nonnegative flow from n to 1.  That would prove convergence.  Neither the required rank nor the block-existence theorem has been established.
 
-## Current next target
+## Original completed-block target, now optional
 
-Take the exact post-cubic residual from the continuation note and seek a completed block with the common-unit return condition.  A candidate ordinal assignment must compare the actual before/after residual, including debt; higher ordinal notation alone is not progress.  Do not enlarge the finite example census or treat additional affine families as evidence of uniform termination.  The pairwise and anchored-operator branches retain their separate missing estimates.
+One sufficient architecture is to take the exact post-cubic residual and seek a completed block with the common-unit return condition.  The signed-flow result above now permits a second architecture: construct an exact finite signed boundary to a known convergent vertex, without positivity or catalyst-return conditions.  A candidate ordinal assignment must compare the actual before/after residual, including debt; higher ordinal notation alone is not progress.  Do not enlarge the finite example census or treat additional affine families as evidence of uniform termination.  The pairwise and anchored-operator branches retain their separate missing estimates.
 
 ## Validation
 
 The two changed persistent CLI suites pass **17 tests**.  The root Lean build passes after restoring the exact intended even endpoint m; the existing CI audit now contains declaration-type and definition anchors for that endpoint and the explicit growth congruence.  Both new modules are root imports.  The paper classifications and literature supply lemma remain explicitly distinguished from the Lean results.
+
+## Current research gate
+
+A successor proposal must exhibit an arithmetic transition connecting the actual frontier to a known convergent path, or a precisely specified signed-defect rewrite with a proved full-state decrease.  Neither exposing another finite prefix nor canceling the lower auxiliary debts qualifies.  A coupled multiplier/carry state must retain the additive offset and handle the parity split displayed above; no such transition is currently proved.  The pairwise-cycle and anchored-operator branches retain their independent missing estimates.
+
+## Follow-through validation
+
+The existing repair CLI includes the 14-gap and sixth-iterate regression with hand-derived numeric anchors; its 13 subprocess tests pass.  Both new Lean modules are root imports.  The existing CI audit consumes the exact signed-flow definitions and theorem types, and the carry definition and unbounded-gap theorem.  Paper-only statements remain explicitly labeled above.
+
+### Applying the existing bounded-coalescence gate
+
+The [slope audit](RESEARCH-2026-09-29-affine-coalescence-slope.md) applies the already-known fixed-tail obstruction to all ten supplied hard64 families.  Nine have an outside prime in the ratio of their slope to the target slope, so no infinite parameter subclass can merge their ordinary orbits with the target at uniformly bounded depths on both sides.  This includes the original smaller endpoint `m`.  Only `q1` passes the necessary test, with `128q1=9n+1` and `T^7(n)=27q1+2`.  These identities do not establish a meeting.  A next bounded symbolic-coalescence investigation should therefore focus on this pair; methods with growing depth remain outside the exclusion.  The finite-exception theorem is a paper argument, and all ten exact slope ratios are checked by the existing CLI regression suite.

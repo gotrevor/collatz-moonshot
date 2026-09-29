@@ -404,3 +404,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Goodstein comparison and cubic continuation, 2026-09-29
 
 [Ordinal repair checkpoint](RESEARCH-2026-09-29-ordinal-repair-checkpoint.md): the known semigroup theorem already supplies arbitrary finite 3-free catalysts, so restricted-palette closure is optional.  Universal affine Q lifting is formalized, calibrating how little isolated infinite families establish.  A variable cubic continues the local repair on a CRT class with unbounded initial growth, also formalized.  A complete block returning its borrowed unit and decreasing a rank of the residual defect remains the next target; no such block or rank is established.
+
+### Signed flow and cubic carry, 2026-09-29
+
+[Follow-through](RESEARCH-2026-09-29-ordinal-repair-checkpoint.md): finite signed vertex balance already implies convergence; positivity and catalyst return are optional proof interfaces.  This is formalized, as is the cubic near miss: an initial gap of 14 from an induction-known convergent vertex becomes unbounded after two lockstep steps.  Unrestricted finite-prefix peeling is automatic by semigroup supply (paper), and lower auxiliary paths leave the actual frontier unresolved.  No full-state rank or target-free connection to the known basin is supplied.

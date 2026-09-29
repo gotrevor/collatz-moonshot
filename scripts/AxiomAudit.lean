@@ -170,3 +170,36 @@ open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
 example (j : ℕ) : ∃ s : ℕ,
     Nat.ModEq (2^(j+2)) (32327709860 + 49393127700*s) 0 :=
   cubic_peel_growth_congruence j
+
+
+-- Signed-flow consumers: freeze both the meanings and the unrestricted coefficient types.
+open CollatzMoonshot.Obstructions.SignedFlow in
+example (n : ℕ) : reachesOne n = (∃ k : ℕ, CollatzMoonshot.FrontB.tstep^[k] n = 1) := rfl
+
+open CollatzMoonshot.Obstructions.SignedFlow in
+example (c : ℕ →₀ ℤ) : boundary c = c.sum (fun u z => z •
+    (Finsupp.single u (1 : ℤ) - Finsupp.single (CollatzMoonshot.FrontB.tstep u) (1 : ℤ))) := rfl
+
+open CollatzMoonshot.Obstructions.SignedFlow in
+example (n : ℕ) : (∃ c : ℕ →₀ ℤ,
+    boundary c = Finsupp.single n (1 : ℤ) - Finsupp.single 1 (1 : ℤ)) ↔ reachesOne n :=
+  exists_signed_flow_iff_reachesOne n
+
+open CollatzMoonshot.Obstructions.SignedFlow in
+example (n : ℕ) (k : ℤ) (hk : k ≠ 0) (c : ℕ →₀ ℤ)
+    (hc : boundary c = k • (Finsupp.single n (1 : ℤ) - Finsupp.single 1 (1 : ℤ))) :
+    reachesOne n := scaled_signed_flow_reachesOne n k hk c hc
+
+
+-- Cubic carry consumers: preserve the neighbor and actual unbounded-gap claim.
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (s : ℕ) : neighbor s = 32 * CollatzMoonshot.FrontB.tstep (cubicQ1 s) := rfl
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (s : ℕ) : CollatzMoonshot.FrontB.tstep^[3] (cubicN s) + 14 =
+    32 * CollatzMoonshot.FrontB.tstep (cubicQ1 s) := cubic_carry_third s
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example : ∀ B : ℕ, ∃ s : ℕ,
+    CollatzMoonshot.FrontB.tstep^[2] (neighbor s) + B <
+      CollatzMoonshot.FrontB.tstep^[5] (cubicN s) := cubic_carry_gap_unbounded

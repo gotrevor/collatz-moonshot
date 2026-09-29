@@ -148,6 +148,30 @@ def test_cubic_second_frontier_crt_family_has_legal_labels():
     assert got['virtual_frontier_after'] == 16*got['m']
     assert (got['post_six_plus_one'],got['odd_run_length']) == (32327709860,2)
     assert got['old_restricted_palette_rule'] is False
+    # q1=1,795,983,881 has T(q1)=2,693,975,822; multiplying by 32 gives
+    # 86,207,226,304.  T(57,471,484,193)=86,207,226,290, fourteen less.
+    # Three more fixed prefix steps end at 18*q1+1=32,327,709,859.
+    assert (got['known_basin_neighbor'],got['actual_third'],
+            got['neighbor_gap'],got['actual_sixth']) == (
+                86207226304,86207226290,14,32327709859)
+    # n rises by 39,026,668,800 per s.  Dividing this slope by each label's
+    # affine slope gives these reduced ratios; only 128/9 is 2,3-smooth.
+    expected_ratios = {
+        'm':[64,45], 'c':[5,2], 'd':[17,10], 'b':[190,3],
+        'x':[25,2], 'z':[160,3], 'q1':[128,9], 'q2':[31,5],
+        'e1':[116,9], 'e2':[7,1],
+    }
+    expected_outside = {
+        'm':[1,5], 'c':[5,1], 'd':[17,5], 'b':[95,1],
+        'x':[25,1], 'z':[5,1], 'q1':[1,1], 'q2':[31,5],
+        'e1':[29,1], 'e2':[7,1],
+    }
+    assert got['coalescence_n_slope'] == 39026668800
+    assert {label:row['n_to_label_ratio'] for label,row in
+            got['coalescence_slope_audit'].items()} == expected_ratios
+    assert {label:row['outside_2_3'] for label,row in
+            got['coalescence_slope_audit'].items()} == expected_outside
+    assert got['bounded_depth_slope_candidates'] == ['q1']
 
     # One CRT period raises the odd run to three steps while preserving labels.
     next_row = run('second-frontier-cubic',1)
@@ -155,11 +179,17 @@ def test_cubic_second_frontier_crt_family_has_legal_labels():
     assert next_row['borrowed_inputs'] == [4540046531,10414443655]
     assert next_row['output_companions'] == [5009706517,9224221523]
     assert (next_row['m'],next_row['odd_run_length']) == (45400465310,3)
+    assert next_row['known_basin_neighbor']-next_row['actual_third'] == 14
+    assert next_row['actual_sixth'] == 18*4540046531+1
+    assert {label:row['n_to_label_ratio'] for label,row in
+            next_row['coalescence_slope_audit'].items()} == expected_ratios
 
     # The old K32 CRT branch is an easy-prefix control, not the default.
     easy = run('second-frontier-cubic',0,'--variant','easy32')
     assert (easy['t'],easy['h'],easy['odd_run_length']) == (4540,431302,0)
     assert easy['borrowed_inputs'] == [989839387,1135299655]
+    assert 'known_basin_neighbor' not in easy
+    assert 'coalescence_slope_audit' not in easy
 
 
 def test_family_table_deduplicates_overlapping_examples():
