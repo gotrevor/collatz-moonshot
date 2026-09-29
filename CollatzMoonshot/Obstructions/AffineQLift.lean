@@ -98,6 +98,120 @@ theorem affineLift_domain (u b x z t : ℕ)
   · rw [liftX_eq]; exact mul_domain hx hF
   · rw [liftZ_eq]; exact mul_domain hz hH
 
+/-! ### Simultaneity: the exchange equations do not obstruct joint deformation
+
+The deformation is row-local, and its factor `F = 1+3(3x+1)(3u+1)t` depends on
+the row's own labels, so one might hope two rows sharing a label are forced into
+incompatible `t`-scalings.  They are not.  `liftU_shared_iff` computes the exact
+matching condition, and it is a single linear Diophantine equation with an
+obvious unbounded solution set. -/
+
+/-- Exactly when two deformations agree on a shared head label `u`.  The head
+constraint collapses to one linear equation in `t` and `s`. -/
+theorem liftU_shared_iff (u x x' t s : ℕ) (hu : 0 < u) :
+    liftU u x t = liftU u x' s ↔ (3*x+1)*t = (3*x'+1)*s := by
+  have hu' : (0:ℤ) < (u:ℤ) := by exact_mod_cast hu
+  have hc : ((3:ℤ)*u*(3*u+1)) ≠ 0 := by positivity
+  constructor
+  · intro h
+    have hZ : ((liftU u x t : ℕ) : ℤ) = ((liftU u x' s : ℕ) : ℤ) := by exact_mod_cast h
+    simp only [liftU] at hZ
+    push_cast at hZ
+    have : ((3*(x:ℤ)+1)*t) = ((3*(x':ℤ)+1)*s) := by
+      apply mul_left_cancel₀ hc
+      linear_combination hZ
+    exact_mod_cast this
+  · intro h
+    have hZ : ((3*(x:ℤ)+1)*(t:ℤ)) = ((3*(x':ℤ)+1)*(s:ℤ)) := by exact_mod_cast h
+    have : ((liftU u x t : ℕ) : ℤ) = ((liftU u x' s : ℕ) : ℤ) := by
+      simp only [liftU]
+      push_cast
+      linear_combination (3*(u:ℤ)*(3*(u:ℤ)+1)) * hZ
+    exact_mod_cast this
+
+/-- Two quadratic exchanges sharing their head label `u` admit a *joint* affine
+deformation, agreeing on the shared label, with the common head unbounded.
+So the exchange equations alone place no obstruction on simultaneity: the
+witness is `t = (3x'+1)m`, `s = (3x+1)m`. -/
+theorem affineLift_simultaneous_shared_head
+    (u b x z b' x' z' M : ℕ) (hu : 0 < u)
+    (hQ1 : u*b*(3*x+1)*(3*z+1) = x*z*(3*u+1)*(3*b+1))
+    (hQ2 : u*b'*(3*x'+1)*(3*z'+1) = x'*z'*(3*u+1)*(3*b'+1)) :
+    ∃ t s : ℕ, liftU u x t = liftU u x' s ∧ M < liftU u x t ∧
+      liftU u x t * liftB u x b t * (3*liftX u x t+1) * (3*liftZ u x z t+1) =
+        liftX u x t * liftZ u x z t * (3*liftU u x t+1) * (3*liftB u x b t+1) ∧
+      liftU u x' s * liftB u x' b' s * (3*liftX u x' s+1) * (3*liftZ u x' z' s+1) =
+        liftX u x' s * liftZ u x' z' s * (3*liftU u x' s+1)
+          * (3*liftB u x' b' s+1) := by
+  refine ⟨(3*x'+1)*(M+1), (3*x+1)*(M+1), ?_, ?_,
+    affineLift_preserves_cross u b x z _ hQ1,
+    affineLift_preserves_cross u b' x' z' _ hQ2⟩
+  · rw [liftU_shared_iff _ _ _ _ _ hu]; ring
+  · have hA : 0 < 3*u*(3*x+1)*(3*u+1) := by positivity
+    have hT : M+1 ≤ (3*x'+1)*(M+1) := Nat.le_mul_of_pos_left _ (by omega)
+    have : M+1 ≤ 3*u*(3*x+1)*(3*u+1) * ((3*x'+1)*(M+1)) :=
+      le_trans hT (Nat.le_mul_of_pos_left _ hA)
+    simp only [liftU]
+    calc M < u + (M+1) := by omega
+      _ ≤ u + 3*u*(3*x+1)*(3*u+1) * ((3*x'+1)*(M+1)) := by omega
+      _ = u + 3*u*(3*x+1)*(3*u+1)*((3*x'+1)*(M+1)) := by ring
+
+/-- Exactly when a row's deformation of its smaller input `x` agrees with the
+deformation of `x` as the *head* of a second row.  Again one linear equation. -/
+theorem liftX_eq_liftU_iff (u x x₂ t s : ℕ) (hx : 0 < x) :
+    liftX u x t = liftU x x₂ s ↔ (3*u+1)*t = (3*x₂+1)*s := by
+  have hx' : (0:ℤ) < (x:ℤ) := by exact_mod_cast hx
+  have hc : ((3:ℤ)*x*(3*x+1)) ≠ 0 := by positivity
+  constructor
+  · intro h
+    have hZ : ((liftX u x t : ℕ) : ℤ) = ((liftU x x₂ s : ℕ) : ℤ) := by exact_mod_cast h
+    simp only [liftX, liftU] at hZ
+    push_cast at hZ
+    have : ((3*(u:ℤ)+1)*t) = ((3*(x₂:ℤ)+1)*s) := by
+      apply mul_left_cancel₀ hc
+      linear_combination hZ
+    exact_mod_cast this
+  · intro h
+    have hZ : ((3*(u:ℤ)+1)*(t:ℤ)) = ((3*(x₂:ℤ)+1)*(s:ℤ)) := by exact_mod_cast h
+    have : ((liftX u x t : ℕ) : ℤ) = ((liftU x x₂ s : ℕ) : ℤ) := by
+      simp only [liftX, liftU]
+      push_cast
+      linear_combination (3*(x:ℤ)*(3*(x:ℤ)+1)) * hZ
+    exact_mod_cast this
+
+/-- The *chained* case, which is the shape the smaller-input recursion actually
+produces: row one is `(u,b,x,z)` and row two has head `x`.  A joint deformation
+still exists, matching on the shared label `x`, with that label unbounded.
+Witness: `t = (3x₂+1)m`, `s = (3u+1)m`.
+
+Together with `affineLift_simultaneous_shared_head` this settles the question
+the deformation raises: the exchange equations impose only a single linear
+condition per shared label, never an incompatibility.  Any genuine obstruction
+to recursive repair must therefore come from the borrowing/unit bookkeeping,
+not from the quadratic exchanges. -/
+theorem affineLift_simultaneous_chained
+    (u b x z b₂ x₂ z₂ M : ℕ) (hx : 0 < x)
+    (hQ1 : u*b*(3*x+1)*(3*z+1) = x*z*(3*u+1)*(3*b+1))
+    (hQ2 : x*b₂*(3*x₂+1)*(3*z₂+1) = x₂*z₂*(3*x+1)*(3*b₂+1)) :
+    ∃ t s : ℕ, liftX u x t = liftU x x₂ s ∧ M < liftX u x t ∧
+      liftU u x t * liftB u x b t * (3*liftX u x t+1) * (3*liftZ u x z t+1) =
+        liftX u x t * liftZ u x z t * (3*liftU u x t+1) * (3*liftB u x b t+1) ∧
+      liftU x x₂ s * liftB x x₂ b₂ s * (3*liftX x x₂ s+1) * (3*liftZ x x₂ z₂ s+1) =
+        liftX x x₂ s * liftZ x x₂ z₂ s * (3*liftU x x₂ s+1)
+          * (3*liftB x x₂ b₂ s+1) := by
+  refine ⟨(3*x₂+1)*(M+1), (3*u+1)*(M+1), ?_, ?_,
+    affineLift_preserves_cross u b x z _ hQ1,
+    affineLift_preserves_cross x b₂ x₂ z₂ _ hQ2⟩
+  · rw [liftX_eq_liftU_iff _ _ _ _ _ hx]; ring
+  · have hA : 0 < 3*x*(3*x+1)*(3*u+1) := by positivity
+    have hT : M+1 ≤ (3*x₂+1)*(M+1) := Nat.le_mul_of_pos_left _ (by omega)
+    have : M+1 ≤ 3*x*(3*x+1)*(3*u+1) * ((3*x₂+1)*(M+1)) :=
+      le_trans hT (Nat.le_mul_of_pos_left _ hA)
+    simp only [liftX]
+    calc M < x + (M+1) := by omega
+      _ ≤ x + 3*x*(3*x+1)*(3*u+1) * ((3*x₂+1)*(M+1)) := by omega
+      _ = x + 3*x*(3*x+1)*(3*u+1)*((3*x₂+1)*(M+1)) := by ring
+
 theorem affineLift_unbounded (u x M : ℕ) (hu : 0<u) :
     ∃ t : ℕ, M < liftU u x t := by
   refine ⟨M+1, ?_⟩

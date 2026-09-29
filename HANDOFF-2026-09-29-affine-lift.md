@@ -63,8 +63,60 @@ row-specific factor, so two rows sharing a label get incompatible `t`-scalings.
 That mismatch is the next thing to formalize if anyone wants to push this: state
 and refute (or prove) *simultaneous* liftability of two rows sharing `u`.
 
+## Simultaneity: my own conjecture from earlier this lap is REFUTED
+
+The first half of this lap ended with the conjecture that *simultaneous* lifting
+of two rows sharing a label should fail, because `F`, `G`, `H` are row-specific
+and two rows sharing a label would get incompatible `t`-scalings. That is wrong,
+and the file now proves it wrong in both shapes that matter.
+
+`liftU_shared_iff` (`0 < u`):
+
+    liftU u x t = liftU u x' s  ↔  (3x+1)·t = (3x'+1)·s
+
+`liftX_eq_liftU_iff` (`0 < x`) — the chained shape, where row two's *head* is
+row one's smaller input, i.e. exactly what the smaller-input recursion produces:
+
+    liftX u x t = liftU x x₂ s  ↔  (3u+1)·t = (3x₂+1)·s
+
+In both cases the shared-label constraint collapses to a **single linear
+Diophantine equation** in `(t,s)`, because `liftU`/`liftX` are `u`/`x` times a
+factor that is affine in `t` with the shared label's own `(3·+1)` already pulled
+out. A linear equation `at = bs` always has the unbounded solution family
+`t = bm`, `s = am`. Hence:
+
+- `affineLift_simultaneous_shared_head` — two rows sharing head `u` admit a
+  joint deformation agreeing on `u`, with `u` unbounded and *both* cross
+  equations preserved. Witness `t = (3x'+1)m`, `s = (3x+1)m`.
+- `affineLift_simultaneous_chained` — same for the chain `(u,b,x,z)` then head
+  `x`, matching on `x`, `x` unbounded. Witness `t = (3x₂+1)m`, `s = (3u+1)m`.
+
+### Why this is the useful outcome
+
+The deformation is *more* flexible than hoped, not less, and that sharpens the
+calibration rather than weakening it. The exchange equations impose **one linear
+condition per shared label and never an incompatibility**. So no obstruction to
+recursive repair can be extracted from the quadratic exchanges themselves — at
+any chain depth you can keep solving the linear matching conditions. Any real
+obstruction has to live in the *borrowing and unit bookkeeping*
+(`LocalGlobalBorrow23`, `UnitSupportBound`, `RecursiveBorrow`), which the
+deformation does not touch: it multiplies labels by factors `≡ 1 (mod 6)` and so
+cannot move a residue-class count such as the 23-obstruction.
+
+Read negatively, this closes off a route: "deform a near-solution into a real
+one" cannot fail for exchange-equation reasons, therefore it also cannot succeed
+for them — the exchanges are simply not the binding constraint. Do not spend
+another lap looking for an exchange-level obstruction.
+
 ## Next steps
 
-1. Simultaneous-lift statement for two rows sharing a label — expected to fail,
-   and the failure is the interesting object.
-2. Nothing else in this file is open. Other agents own Python/docs.
+1. Do **not** look for an exchange-level obstruction to simultaneity; the two
+   `_iff` lemmas above show there is none at any shared label.
+2. The live question is whether the lifted family can ever be made to satisfy
+   the borrow/unit conditions simultaneously with the exchanges. Since every
+   lifted label is `orig · (1 mod 6 factor)`, the deformation fixes each label's
+   class mod 2 and mod 3 — so it provably cannot repair a mod-3 or mod-2 borrow
+   deficit. Stating that invariance (`lift ≡ orig` on the relevant residue data)
+   is the natural next formal step, and it would turn this file from a
+   calibration into an actual no-go for the deformation route.
+3. Nothing in this file is open. Other agents own Python/docs.
