@@ -88,23 +88,23 @@ theorem no_bounded_smaller_merger
   ...
 ```
 
-This is a suggested statement, not a Lean proof.  The signed comparison can be isolated as a lemma about actual integer parity prefixes and the number of even steps in a negative path to \(-1\).  The repo's earlier negative inventory rules out treating finite word scans as a proof; the argument here covers all words symbolically.
+The equivalent frozen statements are now proved in `BoundedMerger.lean`, using the positive-only simplification below.  The signed comparison can be isolated as a lemma about actual integer parity prefixes and the number of even steps in a negative path to \(-1\).  The repo's earlier negative inventory rules out treating finite word scans as a proof; the argument here covers all words symbolically.
 
 
 ## Scope and execution checkpoint
 
-For K>0 these targets are divisible by3, whereas the current catalytic hard family has original targets congruent to1 modulo3.  Consequently this is a global obstruction to uniformly bounded smaller-seed certificates, not a proof that the uncovered catalytic progression itself has no bounded merger to any smaller seed.  It does not logically subsume the old Q1 theorem on that different progression.  No historical novelty is claimed.
+For K>0 these targets are divisible by 3, whereas the current catalytic hard family has original targets congruent to 1 modulo 3.  Consequently this is a global obstruction to uniformly bounded smaller-seed certificates, not a proof that the uncovered catalytic progression itself has no bounded merger to any smaller seed.  It does not logically subsume the old Q1 theorem on that different progression.  No historical novelty is claimed.
 
-The two actual-orbit statements are frozen in `CollatzMoonshot/Obstructions/BoundedMerger.lean`, with independent type consumers in `scripts/AxiomAudit.lean`.  A three-lap Opus/low run was launched as `collatz-moonshot-20260929-175724-902000`; see `KICKOFF-2026-09-29-bounded-merger.md`.  At this checkpoint the argument is a paper proof; Lean completion must be checked before reporting it as formalized.
+The two actual-orbit statements are frozen in `CollatzMoonshot/Obstructions/BoundedMerger.lean`, with independent type consumers in `scripts/AxiomAudit.lean`.  A three-lap Opus/low run was launched as `collatz-moonshot-20260929-175724-902000`; see `KICKOFF-2026-09-29-bounded-merger.md`.  The run completed on its first lap; the host confirmed the root build, and the frozen type consumers passed.  Both statements are now proved in Lean.  See `HANDOFF-2026-09-29-bounded-merger.md`.
 
 The next positive premise would still be a mechanism giving unbounded-depth access to a smaller convergent seed, with a rank that controls its termination.  This obstruction establishes the necessity of allowing depth to grow, not a mechanism or a probability of success for such a rank.
 
 
 ## Persistent diagnostic
 
-`experiments/repair_family.py bounded-merger K [--multiple M]` constructs a CRT witness and enumerates every positive inverse ancestor through depth K for every target prefix through depth K.  K is bounded to0..16; all arithmetic is exact.  The complete predecessor list of x is2x and, when x is2mod3, (2x−1)/3.  The instrument reports minima and depth coverage, and asserts the constructed witness has no smaller ancestor.  `--start N` instead diagnoses an arbitrary positive start and reports a smaller meeting if found; it does not assert the obstruction outside its hypotheses.
+`experiments/repair_family.py bounded-merger K [--multiple M]` constructs a CRT witness and enumerates every positive inverse ancestor through depth K for every target prefix through depth K.  K is bounded to 0..16; all arithmetic is exact.  The complete predecessor list of x is 2x and, when x is 2 mod 3, (2x−1)/3.  The instrument reports minima and depth coverage, and asserts the constructed witness has no smaller ancestor.  `--start N` instead diagnoses an arbitrary positive start and reports a smaller meeting if found; it does not assert the obstruction outside its hypotheses.
 
-The persistent external suite is driven by `experiments/repair_family.py test`, which exercises the real CLI.  Hand controls include K1,n9 with aggregate ancestor counts[2,3], K2,n63 with counts[3,5,6], and the genuine merger from27 to31 in three steps.  These finite checks validate the instrument and examples, not the all-K theorem.
+The persistent external suite is driven by `experiments/repair_family.py test`, which exercises the real CLI.  Hand controls include K = 1, n = 9 with aggregate ancestor counts [2,3], K = 2, n = 63 with counts [3,5,6], and the genuine merger from 27 to 31 in three steps.  These finite checks validate the instrument and examples, not the all-K theorem.
 
 
 ## Positive-only simplification used by the formalization
@@ -124,4 +124,4 @@ g_tail ≤ 2^a*3^(i-a) ≤ 3^i.
 
 Together these force `y≥3^a*n`, the contradiction.  The ternary divisibility is used to make N integral; the binary divisibility supplies the target's all-odd prefix.  This is a proof simplification of the same frozen theorem, not a new hypothesis.
 
-The actual repository CLI suite passed all40 tests after the diagnostic was installed.  Lean validation is tracked separately; a passing finite diagnostic is not substituted for the general theorem.
+The actual repository CLI suite passed all 40 tests after the diagnostic was installed.  The separate general Lean proof and root build also passed; the finite diagnostic is not substituted for that theorem.

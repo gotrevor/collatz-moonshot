@@ -396,7 +396,7 @@ theorem arbitrarily_large_no_bounded_smaller_merge (K M : ℕ) :
 The hypotheses are satisfiable and the conclusion has content: the kickoff's hand
 controls `K = 1, n = 9` and `K = 2, n = 63` sit in the cylinder, and a direct decision
 procedure confirms that no smaller positive seed meets them within the stated depths.
-The countercontrol `n = 31` (outside the cylinder, since `4 ∤ 32`) does admit the
+The countercontrol `n = 31` (outside the K = 3 cylinder, since `27 ∤ 31`) does admit the
 smaller seed `27` at depths `0` and `3`, so the cylinder hypotheses are doing work. -/
 
 example : 6 ^ 1 ≤ 9 ∧ 2 ^ 1 ∣ 9 + 1 ∧ 3 ^ 1 ∣ 9 := by decide
@@ -407,7 +407,7 @@ example : 6 ^ 2 ≤ 63 ∧ 2 ^ 2 ∣ 63 + 1 ∧ 3 ^ 2 ∣ 63 := by decide
 
 example : ∀ b < 63, 0 < b → ∀ i ≤ 2, ∀ j ≤ 2, tstep^[i] 63 ≠ tstep^[j] b := by decide
 
-/-- The countercontrol: `31` fails the `2`-adic cylinder at `K = 2` and does merge with
+/-- The countercontrol: `31` fails the ternary divisibility at `K = 3` and does merge with
 the smaller seed `27`, at depths `0` and `3`. -/
 example : tstep^[0] 31 = tstep^[3] 27 := by decide
 

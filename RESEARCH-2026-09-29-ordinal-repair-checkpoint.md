@@ -2,6 +2,10 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Coverage difficulty check and a wider bounded-depth obstruction
+
+The [coverage audit](RESEARCH-2026-09-29-ray-coverage-difficulty.md) makes the remaining premise explicit: on the uncovered hard arithmetic progression, complete closed return-or-target-terminal coverage already has full Collatz strength by Monks' sufficiency theorem.  No mechanism proving that coverage emerged.  A separate [all-smaller-seeds obstruction](RESEARCH-2026-09-29-bounded-small-merger.md) now proves in Lean that every fixed depth fails on arbitrarily large CRT starts, even when any smaller seed may be chosen.  These starts are divisible by3, outside the present hard progression, so do not transplant the quantifier into that progression.  Variable depth remains necessary globally and unresolved; another finite menu is not a new induction mechanism.
+
 ## Fuel-exit follow-through: returns without coverage
 
 [The bounded fuel test](RESEARCH-2026-09-29-ray-fuel-exit.md) found two exact

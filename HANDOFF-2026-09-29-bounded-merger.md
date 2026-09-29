@@ -88,8 +88,8 @@ clear both `M` and `6^K`.  No computational inverse is used.
 
 - `6^1 ≤ 9 ∧ 2^1 ∣ 10 ∧ 3^1 ∣ 9`, and `∀ b < 9, 0 < b → ∀ i ≤ 1, ∀ j ≤ 1, tstep^[i] 9 ≠ tstep^[j] b`.
 - `6^2 ≤ 63 ∧ 2^2 ∣ 64 ∧ 3^2 ∣ 63`, and the same exhaustive check at `K = 2` for `n = 63`.
-- Countercontrol `tstep^[0] 31 = tstep^[3] 27`: `31` fails the `K = 2` cylinder
-  (`4 ∤ 32`) and does merge with the smaller seed `27`, so the hypotheses are load-bearing.
+- Countercontrol `tstep^[0] 31 = tstep^[3] 27`: `31` fails the `K = 3` cylinder
+  (`27 ∤ 31`) and does merge with the smaller seed `27`, so the hypotheses are load-bearing.
 
 Note the kickoff's countercontrol is stated as `27 → 41 → 62 → 31`, i.e. the *smaller*
 seed `27` reaches `31` in three shortcut steps; the meeting is at depths `i = 0` on `n = 31`

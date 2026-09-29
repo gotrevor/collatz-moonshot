@@ -445,3 +445,11 @@ decreases for all known blocks, but an infinite hard-family residue class
 escapes their coverage (paper plus CLI).  No complete induction; no claim
 against all size-aware or adaptive ranks.  More isolated return scripts
 are not a successor mechanism without a coverage argument.
+
+
+### Coverage difficulty and arbitrary smaller seeds, 2026-09-29
+
+[Coverage audit](RESEARCH-2026-09-29-ray-coverage-difficulty.md): complete closed return-or-target-terminal coverage on the uncovered hard arithmetic progression would have full Collatz strength, by Monks' AP sufficiency theorem (literature input, not ported to Lean).  No joint closure mechanism emerged.  A separate [symbolic obstruction](RESEARCH-2026-09-29-bounded-small-merger.md) covers every smaller positive seed: arbitrarily large CRT starts have no merger with both prefix lengths at most K.  Its target family differs from the catalytic hard progression; unbounded-depth repair is not excluded.  Both actual-orbit statements are now proved in BoundedMerger.lean; the root build, frozen consumers, and persistent CLI suite pass.  The [operator modification audit](RESEARCH-2026-09-29-operator-mechanism-audit.md) finds finite integrality and bounded correlations retain the old extremizers; stronger arithmetic norms lose the needed divergence implication.  Do not launch more isolated return rules or norm variants without a mechanism for the remaining premise.
+
+
+The independent [time-indexed pair crossing audit](RESEARCH-2026-09-29-pairwise-crossing-audit.md) retains a factor3^a in the first mixed gap after a common-odd prefix and obtains `o≥(3^a+1)/2` at a crossing.  No mechanism forces such a crossing near a small vertex; no cycle exclusion follows.  This remains a separate open input from catalytic coverage and operator uniqueness.

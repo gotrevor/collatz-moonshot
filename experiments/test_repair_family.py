@@ -851,3 +851,48 @@ def test_out_of_domain_input_rejected():
                          capture_output=True, text=True)
     assert bad.returncode != 0
     assert 'n=7 mod64' in bad.stderr
+
+
+def test_bounded_merger_constructed_anchors_and_full_depth_coverage():
+    # K=0: n=1.  K=1: n=9 -> 14, whose inverse predecessors are 28, 9.
+    # K=2: n=63 -> 95 -> 143.  Every predecessor through depth 2 is >=63.
+    for k, n, targets in ((0, 1, [1]), (1, 9, [9, 14]),
+                          (2, 63, [63, 95, 143])):
+        got = run('bounded-merger', k)
+        assert got['n'] == n
+        assert got['forward_targets'] == targets
+        assert got['depth_coverage'] == ([1], [2, 3], [3, 5, 6])[k]
+        assert len(got['depth_coverage']) == k + 1
+        assert got['minimum_ancestor'] == n
+        assert got['first_smaller'] is None
+        assert got['all_ancestors_at_least_n'] is True
+        assert got['three_power_divides_n'] is True
+        assert got['two_power_divides_n_plus_one'] is True
+
+
+def test_bounded_merger_supplied_starts_expose_smaller_ancestors():
+    # 27 -> 41 -> 62 -> 31.  Also 13 -> 20=T^6(15).
+    a = run('bounded-merger', 3, '--start', 31)
+    assert a['constructed'] is False
+    assert a['first_smaller'] == {'target_index': 0, 'ancestor_depth': 3,
+                                  'ancestor': 27, 'target': 31}
+    assert a['all_ancestors_at_least_n'] is False
+    b = run('bounded-merger', 6, '--start', 15)
+    assert b['forward_targets'][-1] == 20
+    assert b['first_smaller'] is not None
+    assert b['first_smaller']['ancestor'] < 15
+    assert b['all_ancestors_at_least_n'] is False
+
+
+def test_bounded_merger_multiple_and_input_limits():
+    # K=1, M=1 adds another 6 to n=9 and preserves n=3 mod6.
+    got = run('bounded-merger', 1, '--multiple', 1)
+    assert got['n'] == 15
+    assert got['minimum_ancestor'] == 15
+    for args in (('bounded-merger', -1), ('bounded-merger', 17),
+                 ('bounded-merger', 1, '--multiple', -1),
+                 ('bounded-merger', 1, '--start', 0)):
+        bad = subprocess.run([sys.executable, str(CLI), *map(str, args)],
+                             capture_output=True, text=True)
+        assert bad.returncode != 0
+        assert 'bounded-merger needs' in bad.stderr

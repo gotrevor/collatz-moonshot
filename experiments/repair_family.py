@@ -1130,6 +1130,74 @@ def family_table():
             'long_growth_controls': [long_growth(j) for j in (2,4,6,8,10,12,16,20)]}
 
 
+def bounded_merger(depth, multiple=0, start=None):
+    """Inspect all inverse paths of length at most depth to a finite target prefix.
+
+    This is a finite diagnostic.  It does not infer any behavior beyond depth.
+    """
+    if not 0 <= depth <= 16:
+        raise ValueError('bounded-merger needs K in 0..16')
+    if multiple < 0:
+        raise ValueError('bounded-merger needs nonnegative multiple')
+    if start is not None and start <= 0:
+        raise ValueError('bounded-merger needs positive --start')
+    if start is not None and multiple != 0:
+        raise ValueError('bounded-merger cannot combine --start and --multiple')
+    two_power = 2 ** depth
+    three_power = 3 ** depth
+    residue = 0 if depth == 0 else (-pow(three_power, -1, two_power)) % two_power
+    n = (three_power * residue + 6 ** depth * (multiple + 1)
+         if start is None else start)
+    targets = [n]
+    for _ in range(depth):
+        targets.append(research_lifts.step(targets[-1]))
+
+    counts = [0] * (depth + 1)
+    minima = [None] * (depth + 1)
+    first_smaller = None
+    for target_index, target in enumerate(targets):
+        frontier = {target}
+        for ancestor_depth in range(depth + 1):
+            counts[ancestor_depth] += len(frontier)
+            least = min(frontier)
+            old = minima[ancestor_depth]
+            minima[ancestor_depth] = least if old is None else min(old, least)
+            if first_smaller is None and least < n:
+                first_smaller = {'target_index': target_index,
+                                 'ancestor_depth': ancestor_depth,
+                                 'ancestor': least, 'target': target}
+            if ancestor_depth < depth:
+                next_frontier = set()
+                for value in frontier:
+                    even_preimage = 2 * value
+                    assert research_lifts.step(even_preimage) == value
+                    next_frontier.add(even_preimage)
+                    if value % 3 == 2:
+                        odd_preimage = (2 * value - 1) // 3
+                        assert odd_preimage > 0
+                        assert research_lifts.step(odd_preimage) == value
+                        next_frontier.add(odd_preimage)
+                frontier = next_frontier
+
+    result = {'K': depth, 'multiple': multiple if start is None else None,
+              'constructed': start is None, 'n': n,
+              'forward_targets': targets,
+              'three_power_divides_n': n % three_power == 0,
+              'two_power_divides_n_plus_one': (n + 1) % two_power == 0,
+              'n_at_least_six_power': n >= 6 ** depth,
+              'depth_coverage': counts,
+              'minimum_by_ancestor_depth': minima,
+              'minimum_ancestor': min(minima),
+              'first_smaller': first_smaller,
+              'all_ancestors_at_least_n': first_smaller is None}
+    if start is None:
+        assert result['three_power_divides_n']
+        assert result['two_power_divides_n_plus_one']
+        assert result['n_at_least_six_power']
+        assert result['all_ancestors_at_least_n']
+    return result
+
+
 def main():
     if sys.argv[1:] == ['test']:
         raise SystemExit(subprocess.call(['uv', 'run', '--quiet', '--with', 'pytest',
@@ -1183,6 +1251,10 @@ def main():
     refill = sub.add_parser('q1-ray-refill')
     refill.add_argument('K',type=int)
     refill.add_argument('--odd-part-mod64',type=int)
+    merger = sub.add_parser('bounded-merger')
+    merger.add_argument('K', type=int)
+    merger.add_argument('--multiple', type=int, default=0)
+    merger.add_argument('--start', type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -1209,6 +1281,7 @@ def main():
               q1_offset_ray(args.K) if args.command == 'q1-offset-ray' else
               q1_ray_exit(args.j,args.e,args.v) if args.command == 'q1-ray-exit' else
               q1_ray_refill(args.K,args.odd_part_mod64) if args.command == 'q1-ray-refill' else
+              bounded_merger(args.K,args.multiple,args.start) if args.command == 'bounded-merger' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else
