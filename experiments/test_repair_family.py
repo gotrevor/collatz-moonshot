@@ -367,6 +367,62 @@ def test_q1_phase_exit_rejects_invalid_parameters():
         assert 'positive odd u' in bad.stderr
 
 
+def test_q1_run_exit_exact_forced_steps_and_a_contraction():
+    # L=3 gives H=9 and an even post-prefix value 81u-1.
+    for u,prefix,k,x in (
+        (3,[107,161,242],1,121),
+        (1,[35,53,80],4,5),
+        (19,[683,1025,1538],1,769),
+    ):
+        got = run('q1-run-exit',3,u)
+        assert got['H'] == 9
+        assert got['forced_odd_prefix'] == prefix
+        assert (got['k_even_steps'],got['X'],got['X_vs_u']) == (
+            k,x,'grow')
+        assert got['raw_iteration_checked'] is True
+        assert got['family_membership']['in_hard_q1_family'] is False
+
+    # 81*49=3969≡1 mod128, so 81*49-1=3968=128*31.
+    shrink = run('q1-run-exit',3,49)
+    assert shrink['forced_odd_prefix'] == [1763,2645,3968]
+    assert (shrink['k_even_steps'],shrink['X'],shrink['X_vs_u']) == (
+        7,31,'shrink')
+
+
+def test_q1_run_exit_actual_family_expands_and_reset_rank_tracks_q():
+    # s=27 gives q=75,885,675,431 and 9q+1=32*21,342,846,215.
+    u = 21342846215
+    got = run('q1-run-exit',5,u)
+    assert got['family_membership'] == {
+        'q_integral':True, 'q':75885675431,
+        'in_hard_q1_family':True, 's':27, 'n':1079262939463}
+    assert got['H'] == 27
+    assert got['forced_odd_prefix'] == [
+        6915082173659,10372623260489,15558934890734]
+    assert 729*u == 15558934890735
+    assert (got['k_even_steps'],got['X'],got['X_vs_u'],got['X_vs_n']) == (
+        1,7779467445367,'grow','grow')
+
+    # At a normalized phase start R0=(9q+1)^4/32.  Its ordering is
+    # exactly q's ordering, so a smaller reset rank requires q_new<q_old.
+    earlier = run('q1-phase-exit',4,5640846655)  # s=3
+    later = run('q1-phase-exit',5,u)               # s=27
+    q_earlier = earlier['family_membership']['q']
+    q_later = later['family_membership']['q']
+    assert earlier['initial']['R'] == (9*q_earlier+1)**4//32
+    assert later['initial']['R'] == (9*q_later+1)**4//32
+    assert (earlier['initial']['R'] < later['initial']['R']) == (
+        q_earlier < q_later)
+
+
+def test_q1_run_exit_rejects_invalid_parameters():
+    for length,u in ((1,1),(2,1),(4,1),(1025,1),(3,0),(3,2)):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-run-exit',
+                              str(length),str(u)],capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'odd 3<=L<=1023 and positive odd u' in bad.stderr
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

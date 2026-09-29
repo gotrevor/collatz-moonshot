@@ -614,6 +614,47 @@ def q1_phase_exit(length, u):
             'raw_parity_words':{'A':''.join(a_bits),'B':''.join(b_bits)}}
 
 
+def q1_run_exit(length, u):
+    """Follow an odd phase exit through two odd steps and all forced halves.
+
+    This follows only a symbolic, finite local run.  X versus u is diagnostic;
+    it is not a certificate for the original target's convergence.
+    """
+    if length < 3 or length > 1023 or length%2 == 0 or u <= 0 or u%2 == 0:
+        raise ValueError('run-exit requires odd 3<=L<=1023 and positive odd u')
+    phase = q1_phase_exit(length,u)
+    exit_a = phase['final']['A']
+    h = 3**((length+1)//2)
+    even_start = h*h*u-1
+    first_odd_step = research_lifts.step(exit_a)
+    second_odd_step = research_lifts.step(first_odd_step)
+    assert exit_a%2 == first_odd_step%2 == 1
+    assert second_odd_step == even_start and even_start%2 == 0
+    x, even_steps = even_start, 0
+    while x%2 == 0:
+        x //= 2
+        even_steps += 1
+    assert x > 0 and x%2 == 1
+    raw = second_odd_step
+    for _ in range(even_steps):
+        assert raw%2 == 0
+        raw = research_lifts.step(raw)
+    assert raw == x and (h*h*u-1) == (1 << even_steps)*x
+    membership = phase['family_membership']
+    def compare(a,b):
+        return 'shrink' if a < b else 'grow' if a > b else 'equal'
+    return {'L':length, 'u':u, 'H':h,
+            'phase_regular_blocks':phase['regular_two_step_blocks'],
+            'phase_exit_final':phase['final'],
+            'family_membership':membership,
+            'forced_odd_prefix':[exit_a,first_odd_step,even_start],
+            'k_even_steps':even_steps,
+            'X':x, 'X_vs_u':compare(x,u),
+            'X_vs_n':(compare(x,membership['n'])
+                      if membership['in_hard_q1_family'] else None),
+            'raw_iteration_checked':True}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -735,6 +776,9 @@ def main():
     phase = sub.add_parser('q1-phase-exit')
     phase.add_argument('L',type=int)
     phase.add_argument('u',type=int)
+    run_exit = sub.add_parser('q1-run-exit')
+    run_exit.add_argument('L',type=int)
+    run_exit.add_argument('u',type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -756,6 +800,7 @@ def main():
               q1_pair_branch(args.max_depth,args.max_branches) if args.command == 'q1-pair-branch' else
               q1_pair_shadow(args.k,args.variant) if args.command == 'q1-pair-shadow' else
               q1_phase_exit(args.L,args.u) if args.command == 'q1-phase-exit' else
+              q1_run_exit(args.L,args.u) if args.command == 'q1-run-exit' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

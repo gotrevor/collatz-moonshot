@@ -228,3 +228,50 @@ example : ∀ K : ℕ, ∃ s : ℕ, ∀ i ≤ K, ∀ j ≤ K,
     CollatzMoonshot.FrontB.tstep^[i] (cubicN s) ≠
       CollatzMoonshot.FrontB.tstep^[j] (cubicQ1 s) :=
   cubicN_q1_no_bounded_pairwise_meeting
+
+
+-- Q1 re-entry: frozen actual exits and normalized reset cost.
+section Q1ReentryConsumers
+open CollatzMoonshot.FrontB
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair
+
+example (r u : ℕ) : oddExitA r u = 36 * 9 ^ r * u - 1 := rfl
+example (r u : ℕ) : oddExitB r u = (9 * 3 ^ r * u + 7) / 2 := rfl
+example (a b : ℕ) : phaseWeight a b = (a + 1) * (b - 1) ^ 3 := rfl
+
+example (r u : ℕ) (hu : 0 < u) (ho : u % 2 = 1) :
+    tstep^[2] (16 * 9 ^ r * u - 1) = oddExitA r u ∧
+    tstep^[2] (1 + 2 * 3 ^ r * u) = oddExitB r u :=
+  odd_exit_actual_steps r u hu ho
+
+example (r u : ℕ) (hu : 0 < u) (ho : u % 2 = 1) :
+    2 * (oddExitA r u + 1) = (8 * 3 ^ r) * (2 * oddExitB r u - 7) :=
+  odd_exit_affine r u hu ho
+
+example (r u : ℕ) (hu : 0 < u) (ho : u % 2 = 1) :
+    ¬ ∃ j : ℕ, oddExitA r u + 1 = 8 * 3 ^ j * (oddExitB r u - 1) :=
+  odd_exit_no_canonical_reentry r u hu ho
+
+example (r u : ℕ) (hu : 0 < u) :
+    tstep^[2] (oddExitA r u) = 3 ^ (2 * r + 4) * u - 1 :=
+  odd_exit_target_two r u hu
+
+example (r u k x : ℕ) (hu : 0 < u)
+    (hx : 3 ^ (2 * r + 4) * u - 1 = 2 ^ k * x) :
+    tstep^[2 + k] (oddExitA r u) = x :=
+  odd_exit_target_halvings r u k x hu hx
+
+example (r u : ℕ) (hu : 0 < u) (ho : u % 4 = 3) :
+    tstep^[3] (oddExitA r u) = (3 ^ (2 * r + 4) * u - 1) / 2 ∧
+    u < tstep^[3] (oddExitA r u) :=
+  odd_exit_one_halving_expands r u hu ho
+
+example (d : ℕ) (hd : 0 < d) :
+    phaseWeight (8 * d - 1) (d + 1) = 8 * d ^ 4 :=
+  phaseWeight_normalized d hd
+
+example (d e : ℕ) (hd : 0 < d) (he : 0 < e) :
+    phaseWeight (8 * d - 1) (d + 1) <
+      phaseWeight (8 * e - 1) (e + 1) ↔ d < e :=
+  canonical_reset_rank_iff d e hd he
+end Q1ReentryConsumers
