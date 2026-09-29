@@ -514,6 +514,106 @@ def q1_pair_shadow(k, variant='hard9'):
             'strict_descent_at_fifteen':True}
 
 
+def q1_phase_exit(length, u):
+    """Exact regular phase plus two exit steps for a positive affine pair.
+
+    The pair need not come from the hard q1 family; membership is reported.
+    This diagnoses a candidate rank and makes no convergence assertion.
+    """
+    if not 2 <= length <= 1024 or u <= 0 or u%2 == 0:
+        raise ValueError('phase-exit requires 2<=L<=1024 and positive odd u')
+    r = (length-2)//2
+    three_r, nine_r = 3**r, 9**r
+    w = three_r*u
+    initial_a = (1 << (length+1))*u-1
+    initial_b = 1+(1 << (length-2))*u
+    if length%2:
+        exit_a, exit_b = 16*nine_r*u-1, 1+2*w
+        final_a, final_b = 36*nine_r*u-1, (9*w+7)//2
+    else:
+        exit_a, exit_b = 8*nine_r*u-1, 1+w
+        final_a = 18*nine_r*u-1
+        final_b = ((w+1)//4 if w%4 == 3 else (3*w+5)//4)
+    multiplier = 8*three_r
+    assert exit_a+1 == multiplier*(exit_b-1)
+
+    def reentry(a, b):
+        if b <= 1 or (a+1)%(b-1):
+            return {'holds':False, 'j':None, 'multiplier':None}
+        quotient = (a+1)//(b-1)
+        if quotient%8:
+            return {'holds':False, 'j':None, 'multiplier':None}
+        power, j = quotient//8, 0
+        while power > 1 and power%3 == 0:
+            power //= 3
+            j += 1
+        return {'holds':power == 1,
+                'j':j if power == 1 else None,
+                'multiplier':quotient if power == 1 else None}
+
+    def state(a, b):
+        assert a > 0 and b > 0
+        return {'A':a, 'B':b, 'R':(a+1)*(b-1)**3,
+                'reentry_8_times_power3':reentry(a,b)}
+
+    initial = state(initial_a,initial_b)
+    phase_exit = state(exit_a,exit_b)
+    final = state(final_a,final_b)
+    assert initial['reentry_8_times_power3']['j'] == 0
+    assert phase_exit['reentry_8_times_power3']['j'] == r
+    if length%2:
+        # Final J=(A+1)/(B-1)=M*9w/(9w+5) lies strictly between M/3
+        # and M, where M=8*3^r.  No multiplier 8*3^j lies there.
+        assert multiplier*(final_b-1) > final_a+1
+        assert 3*(final_a+1) > multiplier*(final_b-1)
+        assert not final['reentry_8_times_power3']['holds']
+
+    raw_a, raw_b = initial_a, initial_b
+    a_bits, b_bits = [], []
+    for step_index in range(2*r+2):
+        if step_index == 2*r:
+            assert (raw_a,raw_b) == (exit_a,exit_b)
+        a_bits.append(str(raw_a%2))
+        b_bits.append(str(raw_b%2))
+        raw_a,raw_b = research_lifts.step(raw_a),research_lifts.step(raw_b)
+    assert (raw_a,raw_b) == (final_a,final_b)
+
+    q_numerator = (1 << length)*u-1
+    q_integral = q_numerator%9 == 0
+    q = q_numerator//9 if q_integral else None
+    q_constant,q_slope = 1795983881,2744062650
+    in_family = (q_integral and q >= q_constant and
+                 (q-q_constant)%q_slope == 0)
+    s = (q-q_constant)//q_slope if in_family else None
+    n = (128*q-1)//9 if in_family else None
+    if in_family:
+        assert n == 25542881863+39026668800*s
+        assert initial_a == 18*q+1 and initial_b == (9*q+5)//4
+
+    def ratio(numerator, denominator):
+        value = Fraction(numerator,denominator)
+        return [value.numerator,value.denominator]
+
+    odd_identity = None
+    if length%2:
+        lhs, rhs = 2*(final_a+1), multiplier*(2*final_b-7)
+        assert lhs == rhs
+        odd_identity = {'lhs':lhs, 'rhs':rhs, 'holds':True}
+    return {'L':length, 'u':u, 'regular_two_step_blocks':r,
+            'regular_steps':2*r, 'exit_steps':2, 'M':multiplier,
+            'family_membership':{'q_integral':q_integral, 'q':q,
+                                 'in_hard_q1_family':in_family,
+                                 's':s, 'n':n},
+            'initial':initial, 'phase_exit':phase_exit, 'final':final,
+            'rank_ratios':{
+                'exit_over_initial':ratio(phase_exit['R'],initial['R']),
+                'final_over_exit':ratio(final['R'],phase_exit['R']),
+                'final_over_initial':ratio(final['R'],initial['R'])},
+            'odd_L_affine_identity':odd_identity,
+            'raw_iteration_checked':True,
+            'raw_parity_words':{'A':''.join(a_bits),'B':''.join(b_bits)}}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -632,6 +732,9 @@ def main():
     shadow = sub.add_parser('q1-pair-shadow')
     shadow.add_argument('k',type=int)
     shadow.add_argument('--variant',choices=['hard9','carry13'],default='hard9')
+    phase = sub.add_parser('q1-phase-exit')
+    phase.add_argument('L',type=int)
+    phase.add_argument('u',type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -652,6 +755,7 @@ def main():
               second_frontier_cubic(args.s,args.variant) if args.command == 'second-frontier-cubic' else
               q1_pair_branch(args.max_depth,args.max_branches) if args.command == 'q1-pair-branch' else
               q1_pair_shadow(args.k,args.variant) if args.command == 'q1-pair-shadow' else
+              q1_phase_exit(args.L,args.u) if args.command == 'q1-phase-exit' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

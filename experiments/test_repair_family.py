@@ -295,6 +295,78 @@ def test_q1_carry_2adic_shadow_blocks_splices_but_descends():
     assert farther['fifteen_step_endpoint'] < farther['n']
 
 
+def test_q1_phase_exit_small_odd_and_even_controls():
+    # L=5,u=1: (63,9) -> (143,7) after one regular two-step block,
+    # then (323,17).  R=(A+1)(B-1)^3 is 32768,31104,1327104.
+    odd = run('q1-phase-exit',5,1)
+    assert (odd['regular_two_step_blocks'],odd['M']) == (1,24)
+    assert [(odd[stage]['A'],odd[stage]['B'],odd[stage]['R'])
+            for stage in ('initial','phase_exit','final')] == [
+                (63,9,32768),(143,7,31104),(323,17,1327104)]
+    assert odd['rank_ratios'] == {
+        'exit_over_initial':[243,256],
+        'final_over_exit':[128,3],
+        'final_over_initial':[81,2]}
+    assert odd['odd_L_affine_identity'] == {'lhs':648,'rhs':648,'holds':True}
+    assert odd['initial']['reentry_8_times_power3']['j'] == 0
+    assert odd['phase_exit']['reentry_8_times_power3']['j'] == 1
+    assert odd['final']['reentry_8_times_power3']['holds'] is False
+    assert odd['raw_parity_words'] == {'A':'1111','B':'1011'}
+    assert odd['family_membership']['q_integral'] is False
+
+    # L=4,u=1: the even exit carries B=4 -> 2 -> 1.  Rank vanishes even
+    # though the A frontier is 161, so zero rank is not a convergence claim.
+    even = run('q1-phase-exit',4,1)
+    assert [(even[stage]['A'],even[stage]['B'],even[stage]['R'])
+            for stage in ('initial','phase_exit','final')] == [
+                (31,5,2048),(71,4,1944),(161,1,0)]
+    assert even['rank_ratios']['final_over_initial'] == [0,1]
+    assert even['odd_L_affine_identity'] is None
+    assert even['final']['reentry_8_times_power3']['holds'] is False
+    assert even['raw_parity_words'] == {'A':'1111','B':'1000'}
+    assert even['family_membership']['in_hard_q1_family'] is False
+
+
+def test_q1_phase_exit_actual_domain_and_exact_long_threshold():
+    # The small controls above are generic.  At s=3, q=10,028,171,831
+    # and 9q+1=16*5,640,846,655, so L=4 gives actual hard-q frontiers.
+    actual = run('q1-phase-exit',4,5640846655)
+    assert actual['family_membership'] == {
+        'q_integral':True, 'q':10028171831,
+        'in_hard_q1_family':True, 's':3, 'n':142622888263}
+    assert (actual['initial']['A'],actual['initial']['B']) == (
+        180507092959,22563386621)
+    integral_other = run('q1-phase-exit',2,7)
+    assert integral_other['family_membership']['q'] == 3
+    assert integral_other['family_membership']['in_hard_q1_family'] is False
+
+    # For odd L=2r+3 the total rank ratio is
+    # (243/256)^r * (9/256) * (9+5/(3^r*u))^3.
+    # Exact lower/upper inequalities prove the sharp universal boundary:
+    # every u>=1 grows through r<=62; every u>=1 shrinks through r>=63.
+    assert Fraction(243,256)**62 * Fraction(6561,256) > 1
+    w63 = 3**63
+    assert Fraction(243,256)**63 * Fraction(9,256) * (
+        Fraction(9*w63+5,w63)**3) < 1
+    before = run('q1-phase-exit',127,1)
+    after = run('q1-phase-exit',129,1)
+    assert before['regular_two_step_blocks'] == 62
+    assert after['regular_two_step_blocks'] == 63
+    assert Fraction(*before['rank_ratios']['final_over_initial']) > 1
+    assert Fraction(*after['rank_ratios']['final_over_initial']) < 1
+    assert after['family_membership']['in_hard_q1_family'] is False
+    assert before['final']['reentry_8_times_power3']['holds'] is False
+    assert after['final']['reentry_8_times_power3']['holds'] is False
+
+
+def test_q1_phase_exit_rejects_invalid_parameters():
+    for length,u in ((1,1),(1025,1),(4,0),(4,2)):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-phase-exit',
+                              str(length),str(u)],capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'positive odd u' in bad.stderr
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

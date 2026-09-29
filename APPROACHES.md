@@ -412,3 +412,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Q1 bounded-splicing obstruction, 2026-09-29
 
 [Positive class and universal finite-depth obstruction](RESEARCH-2026-09-29-q1-coalescence.md): the remaining slope-compatible auxiliary coalesces on one infinite residue class, but for every cutoff another parameter keeps all target prefixes above all auxiliary prefixes.  Both claims are formalized.  Uniform bounded-depth splicing into Q1 is excluded; a rank for a repair of growing depth still needs a transition out of the separated phase.  The negative theorem does not exclude convergence or all adaptive repair.
+
+### Q1 variable-depth exit and re-entry, 2026-09-29
+
+[Completed-phase audit](RESEARCH-2026-09-29-q1-phase-exit.md), paper plus exact CLI: the polynomial weight decreases across phase plus odd exit exactly from 63 regular rounds onward.  The exit pair cannot immediately re-enter the original `8*3^j` multiplier class, and its auxiliary realizes every finite parity prefix.  Amortization survives; recursive closure and the terminal condition remain missing.  A next mechanism must handle the full affine offset.

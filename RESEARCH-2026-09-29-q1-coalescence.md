@@ -1,5 +1,7 @@
 # The exceptional `q1` slope: sparse merging and arbitrarily long separation
 
+> **Variable-depth follow-through:** [Full phase and re-entry](RESEARCH-2026-09-29-q1-phase-exit.md) shows that sufficiently long phases pay for the bad exit, but the resulting pair cannot immediately return to the original multiplier family.  These new calculations are paper results, with a persistent exact CLI diagnostic.
+
 Here `T(x)=x/2` for even positive integers and `T(x)=(3x+1)/2` for odd
 positive integers.  The hard-64 families in the repository are
 
