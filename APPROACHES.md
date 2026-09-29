@@ -400,3 +400,7 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### NN comparison and symbolic supply steps, 2026-09-28
 
 [Local-to-global control and recursive supply steps](RESEARCH-2026-09-28-nn-borrow-checkpoint.md): prime-power local solvability at 23 does not imply one integer borrowing rule, now formalized.  Two exact affine smaller-input rules cover h=2 modulo 95 and h=1 modulo 79 in the lower five-head family; the first is formalized in Lean.  Both subclasses contain arbitrarily long initial-growth starts.  Closure under their required inputs, and subsequent target-free vertex balance, remain open.
+
+### Goodstein comparison and cubic continuation, 2026-09-29
+
+[Ordinal repair checkpoint](RESEARCH-2026-09-29-ordinal-repair-checkpoint.md): the known semigroup theorem already supplies arbitrary finite 3-free catalysts, so restricted-palette closure is optional.  Universal affine Q lifting is formalized, calibrating how little isolated infinite families establish.  A variable cubic continues the local repair on a CRT class with unbounded initial growth, also formalized.  A complete block returning its borrowed unit and decreasing a rank of the residual defect remains the next target; no such block or rank is established.

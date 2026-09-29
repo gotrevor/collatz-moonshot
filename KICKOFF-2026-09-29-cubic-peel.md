@@ -8,8 +8,7 @@ No Aristotle. Bounded Opus/low. Dependencies warm; storecheckedthissession.
 
 Let a=cubicA s. Then v=5a-2, q1=(3a-1)/64, q2=5(2a-7)/93,
 e1=(3a+1)/58,e2=(2a-7)/21. Both products r_v*r_q1*r_q2 and
-r_a*r_e1*r_e2 equal 4(2a-7)/(3(9a+61)). Allactual Natdefs are affine with
-positive odd3free constants and6-divisible slopes.
+r_a*r_e1*r_e2 equal 4(2a-7)/(3(9a+61)). The seven odd-edge labels are affine with positive odd 3-free constants and 6-divisible slopes. The smaller endpoint m is EVEN in this subclass; preserve its frozen definition and the factor 16.
 
 For certificate equality use `odd_ratio` fromFiveHead, then field_simp/ring
 or norm_num to prove exact polynomial cross equation. `certificateValue` is

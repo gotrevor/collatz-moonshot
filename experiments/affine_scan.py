@@ -11,6 +11,8 @@ In particular, h=2 mod 95 and h=1 mod 79 each meet the sampled set
 """
 
 from importlib.util import spec_from_file_location, module_from_spec
+from fractions import Fraction
+from math import gcd, lcm
 from pathlib import Path
 import argparse
 import json
@@ -112,16 +114,104 @@ def scan():
             'five_head_symbolic_control':five_head_control()}
 
 
+SUPPLY_INPUTS = {
+    'x64':[3349,124032], 'z64':[785,29070],
+    'x79':[3005,151680], 'z79':[5635,284400],
+}
+SUPPLIED_HEADS = {'c64':[16745,620160], 'c79':[10217,515712]}
+
+
+def direct_closure():
+    """Solve all 4-by-2 affine progression intersections over the integers."""
+    rows = []
+    for source,(source_base,source_step) in SUPPLY_INPUTS.items():
+        for head,(head_base,head_step) in SUPPLIED_HEADS.items():
+            divisor = gcd(source_step,head_step)
+            delta = head_base-source_base
+            rows.append({'input':source,'head':head,
+                         'slope_gcd':divisor,'base_difference':delta,
+                         'difference_mod_gcd':delta%divisor,
+                         'integer_parameter_solution_possible':delta%divisor==0})
+    return {'status':'direct-two-class-closure-obstructed',
+            'scope':'exact equality of one input progression and one supplied-head '
+                    'progression; rules using other labels are not excluded',
+            'comparisons':rows,
+            'all_eight_impossible':all(not row['integer_parameter_solution_possible']
+                                       for row in rows)}
+
+
+def generic_root_dilation():
+    """Mechanically lift four complete-neighbor rows by root-matched paths.
+
+    This yields smaller-input rules on sparse subprogressions of the two
+    supply classes.  It does not construct units for the new inputs.
+    """
+    outputs = []
+    for name,(u,target_step) in SUPPLY_INPUTS.items():
+        strict = [row for row in research.quadratic_neighbors(u)['nontrivial_exchanges']
+                  if max(row['after']) < u and
+                  all(label%3 for label in row['before']+row['after'])]
+        strict.sort(key=lambda row:(max(row['after']),sum(row['after']),
+                                    max(row['before'])))
+        if not strict:
+            outputs.append({'input':name,'status':'no-base-strict-row'})
+            continue
+        row = strict[0]
+        b = next(label for label in row['before'] if label != u)
+        x,z = row['after']
+        # q is the deformation parameter.  Replacing t by 3q in the
+        # connected-root construction preserves each label modulo 6.
+        U = [u,3*u*(3*x+1)*(3*u+1)]
+        B = [b,9*u*b*(3*x+1)]
+        X = [x,3*x*(3*x+1)*(3*u+1)]
+        Z = [z,9*x*z*(3*u+1)]
+        zero = lambda L:Fraction(-L[0],L[1])
+        pole = lambda L:Fraction(-(3*L[0]+1),3*L[1])
+        roots = (zero(U)==zero(X) and pole(U)==zero(B) and
+                 pole(X)==zero(Z) and pole(B)==pole(Z))
+        valid = (identity(U,B,X,Z) and roots and
+                 all(base%2 and base%3 and step%6==0
+                     for base,step in (U,B,X,Z)) and
+                 all(L[0]<u and L[1]<U[1] for L in (B,X,Z)))
+        if not valid:
+            raise ValueError(f'generic root dilation failed for {name}')
+        divisor = gcd(U[1],target_step)
+        outputs.append({'input':name,'status':'strict-affine-subprogression',
+                        'base_rule':row,
+                        'coefficients':{'u':U,'b':B,'x':X,'z':Z},
+                        'root_matching_exact':roots,
+                        'polynomial_identity_exact':True,
+                        'target_parameter_period':U[1]//divisor,
+                        'deformation_parameter_step':target_step//divisor,
+                        'borrowing_prerequisites_constructed':False})
+    by_name = {row['input']:row for row in outputs}
+    return {'status':'two-level-supply-rules-only',
+            'scope':'generic dilation of one complete-neighbor base row per input; '
+                    'new smaller labels still require legal borrowing',
+            'rules':outputs,
+            'simultaneous_target_parameter_periods':{
+                '64':lcm(by_name['x64']['target_parameter_period'],
+                         by_name['z64']['target_parameter_period']),
+                '79':lcm(by_name['x79']['target_parameter_period'],
+                         by_name['z79']['target_parameter_period'])}}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=('scan','control','test'))
+    parser.add_argument('command',choices=('scan','control','closure','dilate','test'))
     args = parser.parse_args()
     if args.command == 'test':
         return subprocess.call(['uv','run','--quiet','--with','pytest',
                                 'python3','-m','pytest',
                                 str(Path(__file__).with_name('test_affine_scan.py')),'-q'])
-    result = scan() if args.command == 'scan' else {
-        'five_head_symbolic_control':five_head_control()}
+    if args.command == 'scan':
+        result = scan()
+    elif args.command == 'closure':
+        result = direct_closure()
+    elif args.command == 'dilate':
+        result = generic_root_dilation()
+    else:
+        result = {'five_head_symbolic_control':five_head_control()}
     print(json.dumps(result,indent=2))
     return 0
 

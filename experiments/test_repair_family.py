@@ -103,6 +103,65 @@ def test_lower_prefix_one_odd_step_then_step_eight_descent():
             got['first_obvious_descent_endpoint']) == (8, 24247)
 
 
+def test_two_supply_rows_compose_but_leave_a_high_virtual_frontier():
+    first = run('lower-composite','class95',0)
+    assert (first['h'],first['n'],first['m'],first['c'],first['d']) == (
+        2,41863,29435,16745,24625)
+    assert (first['x'],first['z'],first['b']) == (3349,785,661)
+    assert (first['actual_successor'],first['virtual_successor']) == (62795,313973)
+    assert first['actual_successor_mod64'] == 11
+    assert (first['virtual_successor_mod5'],first['odd_run_mod5']) == (3,4)
+    assert first['central_boundary_after_initial_defect'][-1] == [313973,1]
+    assert [62795,-1] in first['central_boundary_after_initial_defect']
+
+    second = run('lower-composite','class79',0)
+    assert (second['h'],second['n'],second['m'],second['c'],second['d']) == (
+        1,25543,17960,10217,15025)
+    assert (second['x'],second['z'],second['b']) == (3005,5635,2425)
+    assert (second['actual_successor'],second['virtual_successor']) == (38315,191573)
+    assert second['actual_successor_mod64'] == 43
+    assert second['central_boundary_after_initial_defect'][-1] == [191573,1]
+    assert [38315,-1] in second['central_boundary_after_initial_defect']
+
+
+def test_direct_second_frontier_pair_has_no_below_n_base_rule():
+    # The exact denominator formula scans all positive odd c<n and d<n.
+    for family in ('class95','class79'):
+        got = run('second-frontier-pairs',family,0,'--ceiling','n')
+        assert got['scope'] == 'positive odd c,d<n'
+        assert got['pairs'] == []
+        assert got['three_free_pairs'] == []
+
+
+def test_cubic_second_frontier_crt_family_has_legal_labels():
+    # CRT: t=16475 solves 3 mod116, 4 mod7, 14 mod31, with h=3 mod4.
+    got = run('second-frontier-cubic',0)
+    assert got['variant'] == 'hard64'
+    assert (got['t'],got['h'],got['n'],got['m']) == (
+        16475,1565127,25542881863,17959838810)
+    assert (got['actual_frontier_before'],got['virtual_frontier_before']) == (
+        38314322795,191571613973)
+    assert got['borrowed_inputs'] == [1795983881,4119819655]
+    assert got['output_companions'] == [1981775317,3648983123]
+    assert (got['actual_frontier_after'],got['virtual_frontier_after']) == (
+        57471484193,287357420960)
+    assert got['virtual_frontier_after'] == 16*got['m']
+    assert (got['post_six_plus_one'],got['odd_run_length']) == (32327709860,2)
+    assert got['old_restricted_palette_rule'] is False
+
+    # One CRT period raises the odd run to three steps while preserving labels.
+    next_row = run('second-frontier-cubic',1)
+    assert next_row['t'] == 41647
+    assert next_row['borrowed_inputs'] == [4540046531,10414443655]
+    assert next_row['output_companions'] == [5009706517,9224221523]
+    assert (next_row['m'],next_row['odd_run_length']) == (45400465310,3)
+
+    # The old K32 CRT branch is an easy-prefix control, not the default.
+    easy = run('second-frontier-cubic',0,'--variant','easy32')
+    assert (easy['t'],easy['h'],easy['odd_run_length']) == (4540,431302,0)
+    assert easy['borrowed_inputs'] == [989839387,1135299655]
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

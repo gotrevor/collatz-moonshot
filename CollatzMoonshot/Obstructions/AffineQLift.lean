@@ -131,7 +131,7 @@ theorem liftU_shared_iff (u x x' t s : ℕ) (hu : 0 < u) :
 
 /-- Two quadratic exchanges sharing their head label `u` admit a *joint* affine
 deformation, agreeing on the shared label, with the common head unbounded.
-So the exchange equations alone place no obstruction on simultaneity: the
+For this one shared-head constraint, simultaneity is possible: the
 witness is `t = (3x'+1)m`, `s = (3x+1)m`. -/
 theorem affineLift_simultaneous_shared_head
     (u b x z b' x' z' M : ℕ) (hu : 0 < u)
@@ -184,11 +184,10 @@ produces: row one is `(u,b,x,z)` and row two has head `x`.  A joint deformation
 still exists, matching on the shared label `x`, with that label unbounded.
 Witness: `t = (3x₂+1)m`, `s = (3u+1)m`.
 
-Together with `affineLift_simultaneous_shared_head` this settles the question
-the deformation raises: the exchange equations impose only a single linear
-condition per shared label, never an incompatibility.  Any genuine obstruction
-to recursive repair must therefore come from the borrowing/unit bookkeeping,
-not from the quadratic exchanges. -/
+Together with `affineLift_simultaneous_shared_head`, this proves compatibility
+for the two displayed single-shared-label configurations. It does not cover
+multiple shared-label constraints, cyclic diagrams, prescribed progressions,
+or a unit supply. Those can impose additional compatibility conditions. -/
 theorem affineLift_simultaneous_chained
     (u b x z b₂ x₂ z₂ M : ℕ) (hx : 0 < x)
     (hQ1 : u*b*(3*x+1)*(3*z+1) = x*z*(3*u+1)*(3*b+1))
@@ -212,11 +211,11 @@ theorem affineLift_simultaneous_chained
       _ ≤ x + 3*x*(3*x+1)*(3*u+1) * ((3*x₂+1)*(M+1)) := by omega
       _ = x + 3*x*(3*x+1)*(3*u+1)*((3*x₂+1)*(M+1)) := by ring
 
-/-! ### The no-go: the deformation cannot move the data a borrow argument reads
+/-! ### Divisibility and small-modulus invariants of this deformation
 
-Simultaneity is unobstructed (above), so if the deformation route is to fail it
-must fail because the lifted family carries *the same* congruence and divisibility
-data as the original.  It does. -/
+The original label divides its lift, and residues modulo 3 (or modulo 6
+under oddness) are preserved. These facts concern only this deformation;
+they do not establish a no-go for borrowing or a general repair method. -/
 
 /-- Every lifted label is a multiple of the label it deforms.  Hence the
 deformation never removes a prime from a label's support; it can only scale. -/
@@ -245,13 +244,9 @@ theorem affineLift_mod_three (u b x z t : ℕ) :
 /-- If the two head labels `u` and `x` are odd, the deformation fixes every
 label's class mod `6` — for all four labels and every deformation parameter `t`.
 
-This is the no-go for the deformation route.  A repair argument whose deficit is
-a statement about residues mod `2` or mod `3` (borrow counts, the 3-free
-condition, parity of a run) reads exactly the data this theorem shows is
-invariant, so no choice of `t` can ever change it.  Combined with
-`affineLift_simultaneous_shared_head` and `affineLift_simultaneous_chained`,
-which show the exchange equations impose no obstruction at all, the deformation
-is revealed as too flexible to be obstructed and too rigid to repair. -/
+No implication about higher 2-adic valuations, future parity runs,
+compatibility of arbitrary diagrams, or global borrowing follows from this
+modulo-6 statement. -/
 theorem affineLift_mod_six_invariant (u b x z t : ℕ) (hu : u%2=1) (hx : x%2=1) :
     liftU u x t % 6 = u % 6 ∧ liftB u x b t % 6 = b % 6 ∧
     liftX u x t % 6 = x % 6 ∧ liftZ u x z t % 6 = z % 6 := by

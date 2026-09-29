@@ -11,7 +11,7 @@ asserts convergence of any trajectory. -/
 namespace CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair
 
 def cubicN (s : ℕ) : ℕ := 25542881863 + 39026668800*s
-def cubicM (s : ℕ) : ℕ := 8979919405 + 13720313250*s
+def cubicM (s : ℕ) : ℕ := 17959838810 + 27440626500*s
 def cubicA (s : ℕ) : ℕ := 38314322795 + 58540003200*s
 def cubicV (s : ℕ) : ℕ := 191571613973 + 292700016000*s
 def cubicQ1 (s : ℕ) : ℕ := 1795983881 + 2744062650*s
@@ -73,7 +73,7 @@ open CollatzMoonshot.FrontB in
 /-- The two frontier steps: `cubicN` steps onto the actual head `cubicA`, and
 the virtual head `cubicV` steps onto a power-of-two multiple of `cubicM`. -/
 theorem cubic_peel_frontiers (s : ℕ) :
-    tstep (cubicN s) = cubicA s ∧ tstep (cubicV s) = 32*cubicM s := by
+    tstep (cubicN s) = cubicA s ∧ tstep (cubicV s) = 16*cubicM s := by
   have hn := two_tstep_odd (cubicN_odd s)
   have hv := two_tstep_odd (cubicV_odd s)
   simp only [cubicN, cubicA, cubicV, cubicM] at hn hv ⊢
@@ -95,7 +95,7 @@ private lemma exists_lin (N a : ℕ) [NeZero N] (h : Nat.Coprime a N) (y : ZMod 
 /-- Growth congruence: since `cubicP s + 1 = 4*(8081927465 + 12348281925*s)`
 has odd slope, the linear congruence is solvable modulo every `2^j`, and the
 fixed factor `4` lifts the solution to divisibility by `2^(j+2)`. -/
-theorem cubic_peel_growth_congruence (j : ℕ) :
+theorem cubic_peel_growth_divisibility (j : ℕ) :
     ∃ s : ℕ, 2^(j+2) ∣ cubicP s + 1 := by
   have : NeZero (2^j) := ⟨pow_ne_zero j two_ne_zero⟩
   have hcop : Nat.Coprime 12348281925 (2^j) :=
@@ -113,5 +113,14 @@ theorem cubic_peel_growth_congruence (j : ℕ) :
     simp only [cubicP]; ring
   rw [hP, hc, pow_add]
   ring
+
+/-- The original frozen congruence, with its explicit affine expression. -/
+theorem cubic_peel_growth_congruence (j : ℕ) :
+    ∃ s : ℕ, Nat.ModEq (2^(j+2)) (32327709860 + 49393127700*s) 0 := by
+  obtain ⟨s, hs⟩ := cubic_peel_growth_divisibility j
+  have heq : cubicP s + 1 = 32327709860 + 49393127700*s := by
+    simp only [cubicP]
+    omega
+  exact ⟨s, Nat.modEq_zero_iff_dvd.mpr (heq ▸ hs)⟩
 
 end CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair

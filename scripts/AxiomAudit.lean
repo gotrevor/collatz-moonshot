@@ -156,3 +156,17 @@ cycle front.  (As of 2026-09-01 no disclosed `sorry` remains; `sorryAx` must not
 #print axioms CollatzMoonshot.Furstenberg.isClosed_invariant_finite_or_univ
 #print axioms CollatzMoonshot.Furstenberg.dense_orbit_of_not_isOfFinAddOrder
 #print axioms CollatzMoonshot.Assumed.furstenberg_topological_rigidity
+
+-- Cubic continuation: retain the specified smaller endpoint and exact consumer types.
+-- These anchors catch changing a definition while proving a correspondingly altered claim.
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (s : ℕ) : cubicM s = 17959838810 + 27440626500*s := rfl
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (s : ℕ) : CollatzMoonshot.FrontB.tstep (cubicV s) = 16*cubicM s :=
+  (cubic_peel_frontiers s).2
+
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair in
+example (j : ℕ) : ∃ s : ℕ,
+    Nat.ModEq (2^(j+2)) (32327709860 + 49393127700*s) 0 :=
+  cubic_peel_growth_congruence j

@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from collections import Counter
+from fractions import Fraction
 from pathlib import Path
 
 import catalytic_palette
@@ -171,6 +172,124 @@ def lower_growth(j):
             **result}
 
 
+def lower_composite(family, t):
+    """Two local Q rows; no assumption that their auxiliary labels are borrowable."""
+    if t < 0:
+        raise ValueError('lower-composite requires t>=0')
+    if family == 'class95':
+        h = 2+95*t
+        x, z, b = 3349+124032*t, 785+29070*t, 661+24480*t
+    elif family == 'class79':
+        h = 1+79*t
+        x, z, b = 3005+151680*t, 5635+284400*t, 2425+122400*t
+    else:
+        raise ValueError('family must be class95 or class79')
+    n, c, d = 9223+16320*h, 3689+6528*h, 5425+9600*h
+    m = 45*((n-7)//64)+5
+    a, v = (3*n+1)//2, (15*n+1)//2
+    assert all(0 < q < m for q in (c,d,x,z,b))
+    assert all(q%2 and q%3 for q in (n,c,d,x,z,b,v,a))
+    def pair_equal(u,w,p,q):
+        return u*w*(3*p+1)*(3*q+1) == p*q*(3*u+1)*(3*w+1)
+    assert pair_equal(x,z,c,b)
+    assert pair_equal(5*n,c,n,d)
+    assert (5*n)*x*z*(3*n+1)*(3*d+1)*(3*b+1) == (
+        n*d*b*(15*n+1)*(3*x+1)*(3*z+1))
+    boundary = Counter()
+    for sign, q in ((1,n),(1,d),(1,b),(-1,5*n),(-1,x),(-1,z)):
+        boundary[q] += sign
+        boundary[(3*q+1)//2] -= sign
+    central = Counter({5*n:1,n:-1})
+    # Preserve negative coordinates; Counter arithmetic would drop them.
+    for q, coefficient in boundary.items():
+        central[q] += coefficient
+    central = {q: coefficient for q, coefficient in central.items() if coefficient}
+    assert max(central) == v and central[v] == 1
+    assert a%64 == (43 if h%2 else 11)
+    p = 11674+20655*h
+    assert p%5 == 4 and v%5 == 3
+    six = [64*((n-7)//64)+7, 96*((n-7)//64)+11,
+           144*((n-7)//64)+17, 216*((n-7)//64)+26,
+           108*((n-7)//64)+13, 162*((n-7)//64)+20, p]
+    assert v > max(six)
+    return {'family':family,'t':t,'h':h,'n':n,'m':m,'c':c,'d':d,
+            'x':x,'z':z,'b':b,'actual_successor':a,'virtual_successor':v,
+            'actual_successor_mod64':a%64,'all_auxiliaries_below_m':True,
+            'virtual_successor_above_initial_six':True,
+            'virtual_successor_mod5':v%5,'odd_run_mod5':p%5,
+            'central_boundary_after_initial_defect':[
+                [q,central[q]] for q in sorted(central)]}
+
+
+def second_frontier_pairs(family, t, ceiling='m'):
+    """Complete one-row scan with both auxiliaries below the chosen ceiling."""
+    data = lower_composite(family,t)
+    a, v, m = data['actual_successor'], data['virtual_successor'], data['m']
+    assert v == 5*a-2
+    limit = data['n'] if ceiling == 'n' else m
+    pairs = []
+    three_free_pairs = []
+    for c in range(1,limit,2):
+        denominator = 5*a*(3*a-1)-6*(2*a-1)*c
+        if denominator <= 0:
+            break
+        numerator = (5*a-2)*c*(3*a+1)
+        d, remainder = divmod(numerator,denominator)
+        if remainder == 0 and 0 < d < limit and d%2 == 1:
+            assert v*c*(3*a+1)*(3*d+1) == a*d*(3*v+1)*(3*c+1)
+            pairs.append([c,d])
+            if c%3 and d%3:
+                three_free_pairs.append([c,d])
+    return {'family':family,'t':t,'n':data['n'],'m':m,'actual_successor':a,
+            'virtual_successor':v,'scope':f'positive odd c,d<{ceiling}',
+            'pairs':pairs,'three_free_pairs':three_free_pairs}
+
+
+def second_frontier_cubic(s, variant='hard64'):
+    """A cubic scalar identity; the default CRT class has hard odd-run inputs."""
+    if s < 0:
+        raise ValueError('second-frontier-cubic requires s>=0')
+    if variant == 'hard64':
+        t, qden, eden, shift = 16475+25172*s, 64, 58, 61
+        assert t%116 == 3 and t%7 == 4 and t%31 == 14
+    elif variant == 'easy32':
+        t, qden, eden, shift = 4540+5642*s, 32, 26, 29
+        assert t%26 == 16 and t%7 == 4 and t%31 == 14
+    else:
+        raise ValueError('variant must be hard64 or easy32')
+    data = lower_composite('class95',t)
+    a, v, m = data['actual_successor'],data['virtual_successor'],data['m']
+    assert (3*a-1)%qden == 0 and (3*a+1)%eden == 0
+    assert 5*(2*a-7)%93 == 0 and (2*a-7)%21 == 0
+    q1,e1 = (3*a-1)//qden,(3*a+1)//eden
+    q2,e2 = 5*(2*a-7)//93,(2*a-7)//21
+    labels = (q1,q2,e1,e2)
+    assert all(0<u<m and u%2 == 1 and u%3 != 0 for u in labels)
+    def ratio(u):
+        return Fraction(2*u,3*u+1)
+    common = Fraction(4*(2*a-7),3*(9*a+shift))
+    assert ratio(v)*ratio(q1)*ratio(q2) == common
+    assert ratio(a)*ratio(e1)*ratio(e2) == common
+    w, a2 = (3*v+1)//2,(3*a+1)//2
+    assert w == 16*m and w > v and a2 < w
+    p_plus_one = 11675+20655*data['h']
+    run, odd_part = 0, p_plus_one
+    while odd_part%2 == 0:
+        run += 1
+        odd_part //= 2
+    if variant == 'hard64':
+        assert data['h']%4 == 3 and run >= 2
+    return {'variant':variant,'s':s,'t':t,'h':data['h'],'n':data['n'],'m':m,
+            'actual_frontier_before':a,'virtual_frontier_before':v,
+            'borrowed_inputs':[q1,q2],'output_companions':[e1,e2],
+            'actual_frontier_after':a2,'virtual_frontier_after':w,
+            'post_six_plus_one':p_plus_one,'odd_run_length':run,
+            'common_value_numerator':common.numerator,
+            'common_value_denominator':common.denominator,
+            'all_auxiliaries_below_m':True,
+            'old_restricted_palette_rule':False}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -273,6 +392,16 @@ def main():
     lower.add_argument('h', type=int)
     lower_growing = sub.add_parser('lower-growth')
     lower_growing.add_argument('j', type=int)
+    composite = sub.add_parser('lower-composite')
+    composite.add_argument('family', choices=['class95','class79'])
+    composite.add_argument('t', type=int)
+    frontier = sub.add_parser('second-frontier-pairs')
+    frontier.add_argument('family', choices=['class95','class79'])
+    frontier.add_argument('t', type=int)
+    frontier.add_argument('--ceiling',choices=['m','n'],default='m')
+    cubic = sub.add_parser('second-frontier-cubic')
+    cubic.add_argument('s',type=int)
+    cubic.add_argument('--variant',choices=['hard64','easy32'],default='hard64')
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -288,6 +417,9 @@ def main():
               long_growth(args.j) if args.command == 'growth' else
               lower_prefix(args.h) if args.command == 'lower-prefix' else
               lower_growth(args.j) if args.command == 'lower-growth' else
+              lower_composite(args.family,args.t) if args.command == 'lower-composite' else
+              second_frontier_pairs(args.family,args.t,args.ceiling) if args.command == 'second-frontier-pairs' else
+              second_frontier_cubic(args.s,args.variant) if args.command == 'second-frontier-cubic' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else

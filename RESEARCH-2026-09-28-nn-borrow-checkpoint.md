@@ -1,5 +1,7 @@
 # From NN comparison to two symbolic supply rules
 
+**2026-09-29 scope correction:** restricted-palette closure is optional, not a supply-existence prerequisite.  The known semigroup theorem supplies any finite 3-free catalyst.  See [the corrected route](RESEARCH-2026-09-29-unrestricted-supply-addendum.md); target-free vertex balance and termination remain open.
+
 The productive connection is growing finite constructions with a uniform endpoint condition.  NN disjunctivity chooses a location for each requested word; Collatz must handle each prescribed integer.  The [source comparison](RESEARCH-2026-09-28-nn-collatz-bridge.md) identifies the exact NN consumers and the limits of the analogy.  In particular, the CRT mean theorem averages over a varying sample.  It does not supply directed vertex balance in one Collatz certificate.
 
 ## A positive induction step on a residue subclass

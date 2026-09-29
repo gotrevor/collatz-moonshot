@@ -1,5 +1,7 @@
 # Borrowing for the lower five-head family
 
+**2026-09-29 scope correction:** restricted-palette closure is optional, not a supply-existence prerequisite.  The known semigroup theorem supplies any finite 3-free catalyst.  See [the corrected route](RESEARCH-2026-09-29-unrestricted-supply-addendum.md); target-free vertex balance and termination remain open.
+
 ```sh
 ./experiments/catalytic_palette.py borrow 23273 --max-source-label 30000
 ./experiments/catalytic_palette.py test
