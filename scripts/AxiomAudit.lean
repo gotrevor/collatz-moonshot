@@ -275,3 +275,52 @@ example (d e : ℕ) (hd : 0 < d) (he : 0 < e) :
       phaseWeight (8 * e - 1) (e + 1) ↔ d < e :=
   canonical_reset_rank_iff d e hd he
 end Q1ReentryConsumers
+
+
+section CoefficientRayConsumers
+open CollatzMoonshot.FrontB
+open CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair
+
+example (j w : ℕ) : rayA j w = 72 * 3 ^ j * (64 * w) - 5 := rfl
+example (w : ℕ) : rayB w = 64 * w + 1 := rfl
+example (j : ℕ) : raySignature j = (72 * 3 ^ j, -4) := rfl
+example (σ : ℕ × ℤ) (a b : ℕ) :
+    carriesSignature σ a b ↔
+      (a : ℤ) + 1 = (σ.1 : ℤ) * ((b : ℤ) - 1) + σ.2 := Iff.rfl
+example (σ τ : ℕ × ℤ) :
+    rayEdge σ τ ↔
+      ∃ a b : ℕ,
+        0 < a ∧ 0 < b ∧ a > b ∧
+        64 * tstep^[6] a = 81 * a + 85 ∧
+        64 * tstep^[6] b = 27 * b + 37 ∧
+        a < tstep^[6] a ∧ tstep^[6] b < b ∧
+        σ.2 = -4 ∧ τ.2 = -4 ∧ τ.1 = 3 * σ.1 ∧
+        carriesSignature σ a b ∧
+        carriesSignature τ (tstep^[6] a) (tstep^[6] b) := Iff.rfl
+
+example (j w : ℕ) (hw : 0 < w) :
+    tstep^[6] (rayA j w) = 216 * 3 ^ j * (27 * w) - 5 ∧
+    tstep^[6] (rayB w) = 27 * w + 1 :=
+  ray_six_steps j w hw
+
+example (j w : ℕ) (hw : 0 < w) :
+    0 < rayA j w ∧ 0 < rayB w ∧ rayA j w > rayB w ∧
+    64 * tstep^[6] (rayA j w) = 81 * rayA j w + 85 ∧
+    64 * tstep^[6] (rayB w) = 27 * rayB w + 37 ∧
+    rayA j w < tstep^[6] (rayA j w) ∧
+    tstep^[6] (rayB w) < rayB w ∧
+    carriesSignature (raySignature j) (rayA j w) (rayB w) ∧
+    carriesSignature (raySignature (j + 1))
+      (tstep^[6] (rayA j w)) (tstep^[6] (rayB w)) :=
+  ray_edge_witness j w hw
+
+example (j : ℕ) :
+    rayEdge (raySignature j) (raySignature (j + 1)) :=
+  ray_edge_exists j
+
+example {α : Type*} (r : α → α → Prop) (hr : WellFounded r) :
+    ¬ ∃ rank : (ℕ × ℤ) → α,
+      ∀ σ τ : ℕ × ℤ, rayEdge σ τ → r (rank τ) (rank σ) :=
+  no_uniform_ray_rank r hr
+
+end CoefficientRayConsumers

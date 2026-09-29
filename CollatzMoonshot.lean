@@ -100,3 +100,5 @@ import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.Obstructions.CubicCarry
 import CollatzMoonshot.Obstructions.Q1Coalescence
 import CollatzMoonshot.Obstructions.Q1Reentry
+
+import CollatzMoonshot.Obstructions.CoefficientRay

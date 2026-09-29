@@ -420,3 +420,16 @@ The [delegated checkpoint](RESEARCH-2026-09-28-delegated-checkpoint.md) now incl
 ### Q1 full-run and normalized-reset calibration, 2026-09-29
 
 [Actual run and reset cost](RESEARCH-2026-09-29-q1-run-macro.md): Lean proves immediate canonical nonclosure, the next target run, one-halving expansion, and `phaseWeight(8d−1,d+1)=8d^4` with its strict-order equivalence.  A fresh normalized reset therefore requires numerical descent; the phase contraction alone is insufficient.  The inherited-offset route remains open without a reusable transition.  The paper audit also excludes one/two synchronous resets and bounds the depth of any symbolic canonical reset; these stronger extensions are not claimed as Lean theorems.
+
+
+### Q1 inherited-offset projection: closed but not rankable, 2026-09-29
+
+[Projection-ray obstruction](RESEARCH-2026-09-29-q1-projection-cycle.md): the
+closed multiplier-offset state admits an infinite ray of locally realized
+positive six-step blocks, so no coefficient-only rank into any well-founded
+order can strictly decrease on every such block.  Arbitrarily long prefixes
+also occur before descent in the actual hard family (paper CRT proof plus
+exact CLI).  The finite 2-adic fuel is absent from the projection; retaining
+it leaves its exit/reset unproved.  Retire this strict coefficient-only
+template, not all variable-depth repair.  Lean and paper boundaries are
+explicit in the linked note.

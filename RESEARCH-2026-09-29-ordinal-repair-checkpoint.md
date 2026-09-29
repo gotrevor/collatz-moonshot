@@ -2,6 +2,32 @@
 
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
+## Inherited-offset closure verdict
+
+The [exact multiplier-offset projection](RESEARCH-2026-09-29-q1-projection-cycle.md)
+is algebraically closed, but it cannot carry a well-founded rank that strictly
+decreases on every locally admitted six-step block.  Its fixed-offset slice
+contains the ray `(m,d)=(72*3^j,-4)`.  Actual positive target/auxiliary pairs
+realize every edge, with the target increasing and the auxiliary decreasing.
+The coefficient-only state forgets which finite realization supplied an edge.
+
+The arbitrary-horizon hard-family lift is proved on paper and exercised by
+the persistent `q1-offset-ray K` CLI: the entire original target prefix stays
+at or above its start, while the auxiliary remains strictly below it.  The
+formal local-edge theorem and its exact scope are recorded in the projection
+note.  Do not conflate this local theorem with a Lean proof of the CRT lifting.
+
+The missing resource is explicit: each ray block spends six powers of two
+from `B-1`.  Restoring this finite fuel proves termination of this phase,
+not a decrease across its exit.  No reusable full-state induction emerged.
+Retire the coefficient-only strict-per-block template.  A successor must
+exhibit a precise transition through the phase exit, including the reset of
+any fuel or ordinal component, or change the arithmetic mechanism.  More
+prefix scans, coefficient states, or a catalog of negative reference cycles
+do not satisfy that gate.  This verdict does not retire all variable-depth
+repairs, and it does not change the independent open inputs on the pairwise
+and anchored-operator branches.
+
 ## Variable-depth follow-through: account for the reset
 
 [Full-run and reset audit](RESEARCH-2026-09-29-q1-run-macro.md): the long phase can pay for one bad exit, but the target's next full odd/even run has infinite subfamilies above the original start and others below the odd-unit parameter.  Lean now proves the exact exit offset, failure of immediate return to the canonical multiplier family, the next actual run, and one-halving expansion.  It also proves that on fresh normalized states the candidate weight is `8d^4`, so a lower reset weight is equivalent to a smaller `d`.  This rank/reset template has not supplied an induction beyond numerical descent.  A transition preserving and controlling the inherited offset, with full reset cost and terminal condition, remains missing; another fixed-depth extension alone does not qualify.

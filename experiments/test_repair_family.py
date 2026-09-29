@@ -423,6 +423,140 @@ def test_q1_run_exit_rejects_invalid_parameters():
         assert 'odd 3<=L<=1023 and positive odd u' in bad.stderr
 
 
+def test_q1_offset_trace_primitive_update_and_three_step_table():
+    got = run('q1-offset-trace',0,1,'--steps',3)
+    assert [(row['A'],row['B'],row['b'],row['h'],row['k'],row['c'])
+            for row in got['history']] == [
+                (35,8,0,1,8,-29),
+                (53,4,1,1,24,-43),
+                (80,2,2,1,72,-64),
+                (40,1,2,1,72,-32)]
+    assert [(row['word'],row['h'],row['k'],row['c'])
+            for row in got['terminal_three_step_table']] == [
+                ('000',1,8,0),('001',3,8,-4),('010',3,8,-2),
+                ('011',9,8,-10),('100',3,8,-1),('101',9,8,-7),
+                ('110',9,8,-5),('111',27,8,-19)]
+    assert all(row['h']*row['A']-row['k']*row['B'] == row['c']
+               and row['c']%2 == row['A_parity'] for row in got['history'])
+    assert got['positive_A_equals_B_steps'] == []
+    assert got['positive_T3A_equals_B_steps'] == []
+
+
+def test_q1_offset_trace_actual_sign_cross_and_positive_macro():
+    # This is the actual hard-family s=7 instance, not an arbitrary pair.
+    got = run('q1-offset-trace',0,23629975235,'--steps',40)
+    assert got['family_membership']['in_hard_q1_family'] is True
+    assert got['family_membership']['s'] == 7
+    at28,at29 = got['history'][28:30]
+    assert (at28['b'],at28['c']) == (-4,-23)
+    assert (at29['A'],at29['B'],at29['b'],at29['h'],at29['k'],at29['c']) == (
+        842075342,2842004279,-3,27,8,2)
+    assert 29 in got['c_crossings_nonpositive_to_positive']
+
+    # Five admitted steps later the inherited relation returns unchanged:
+    # A-word 11100 has (27A+19)/32; B-word 11001 has (27B+31)/32.
+    start,end = got['history'][35],got['history'][40]
+    assert (start['A'],start['B'],start['b'],start['c']) == (
+        1065751607,3596911667,-3,53)
+    assert (end['A'],end['B'],end['b'],end['c']) == (
+        899227919,3034894220,-3,53)
+    assert ''.join(str(row['A_parity']) for row in got['history'][35:40]) == '11100'
+    assert ''.join(str(row['B_parity']) for row in got['history'][35:40]) == '11001'
+    assert end['A'] == (27*start['A']+19)//32
+    assert end['B'] == (27*start['B']+31)//32
+
+
+def test_q1_offset_negative_cycle_is_only_an_algebraic_control():
+    got = run('q1-offset-trace',0,-5,'--steps',16)
+    assert got['positive_start'] is False
+    assert got['family_membership']['in_hard_q1_family'] is False
+    assert [(row['A'],row['B'],row['b'],row['c'])
+            for row in got['history'][13:17]] == [
+                (-5,-10,-3,-55),(-7,-5,-2,-23),
+                (-10,-7,-2,-34),(-5,-10,-3,-55)]
+    assert got['positive_A_equals_B_steps'] == []
+    assert got['positive_T3A_equals_B_steps'] == []
+
+    # The same three-word pattern has positive affine solutions, but it
+    # preserves 27A-8B=-55 without yielding either endpoint connection.
+    z = 1
+    a,b = 64*z-5,216*z-10
+    a_next,b_next = 72*z-5,243*z-10
+    assert (a,b,a_next,b_next) == (59,206,67,233)
+    assert [a,(3*a+1)//2,(9*a+5)//4,a_next] == [59,89,134,67]
+    assert [b,b//2,(3*(b//2)+1)//2,b_next] == [206,103,155,233]
+    assert (27*64-8*216,27*(-5)-8*(-10)) == (0,-55)
+    assert (27*72-8*243,27*(-5)-8*(-10)) == (0,-55)
+    assert 27*a-8*b == 27*a_next-8*b_next == -55
+    assert a != b and a_next != b
+    assert '111' not in [row['word'] for row in got['terminal_three_step_table']
+                         if (row['h'],row['k'],row['c']) == (27,8,-55)]
+
+
+def test_q1_offset_trace_rejects_invalid_parameters():
+    for r,u,steps in ((-1,1,0),(129,1,0),(0,0,0),(0,2,0),
+                      (0,1,-1),(0,1,1025)):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-offset-trace',
+                              str(r),str(u),'--steps',str(steps)],
+                             capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'offset-trace needs' in bad.stderr
+
+
+def test_q1_offset_ray_exact_modulus_and_checkpoints():
+    u0,e = 23629975235,12348281925
+    for depth in (0,2):
+        got = run('q1-offset-ray',depth)
+        p = 12+6*depth
+        modulus = 2**(p-1)
+        t,u = got['t_residue'],got['u']
+        assert (got['K'],got['P'],got['t_modulus']) == (
+            depth,p,modulus)
+        # This congruence and 0<=t<modulus uniquely specify the inverse.
+        assert 0 <= t < modulus
+        assert ((9*u0+1)//2+9*e*t)%modulus == 0
+        assert u == u0+2*e*t and (9*u+1)%2**p == 0
+        assert got['s'] == 7+8*t
+        assert got['trace_horizon'] == 9+6*depth
+        assert got['six_step_words'] == {'A':'110110','B':'101010'}
+        assert got['verified_six_step_blocks'] == depth
+        assert got['postexit_bounds']['A_min'] >= 36*u-1 > got['n']
+        assert got['postexit_bounds']['B_max'] < got['n']
+        assert got['original_prefix_bounds']['n_min'] == got['n']
+        assert got['original_prefix_bounds']['q_max'] < got['n']
+        assert len(got['checkpoints']) == depth+1
+        for index,row in enumerate(got['checkpoints']):
+            multiplier = 72*3**index
+            assert (row['block'],row['step'],row['b'],row['h'],row['k'],
+                    row['c'],row['m'],row['d']) == (
+                index,9+6*index,2+index,1,multiplier,-multiplier-5,
+                multiplier,-4)
+            assert row['A']+1 == multiplier*(row['B']-1)-4
+
+
+def test_q1_offset_ray_six_step_macro_hand_anchor():
+    # Admitted A-word 110110 and B-word 101010 carry the primitive form
+    # A+5=72(B-1) to A'+5=216(B'-1) on a positive local pair.
+    a_path = [4603,6905,10358,5179,7769,11654,5827]
+    b_path = [65,98,49,74,37,56,28]
+    def shortcut(value):
+        return (3*value+1)//2 if value%2 else value//2
+    assert all(shortcut(a_path[i]) == a_path[i+1] for i in range(6))
+    assert all(shortcut(b_path[i]) == b_path[i+1] for i in range(6))
+    assert ''.join(str(value%2) for value in a_path[:-1]) == '110110'
+    assert ''.join(str(value%2) for value in b_path[:-1]) == '101010'
+    assert a_path[0]+5 == 72*(b_path[0]-1)
+    assert a_path[-1]+5 == 216*(b_path[-1]-1)
+
+
+def test_q1_offset_ray_rejects_invalid_depths():
+    for depth in (-1,129):
+        bad = subprocess.run([sys.executable,str(CLI),'q1-offset-ray',
+                              str(depth)],capture_output=True,text=True)
+        assert bad.returncode != 0
+        assert 'offset-ray requires' in bad.stderr
+
+
 def test_family_table_deduplicates_overlapping_examples():
     # 35 requested slots; 71 appears thrice, 135 twice, 199 twice: 31 starts.
     got = run('family')

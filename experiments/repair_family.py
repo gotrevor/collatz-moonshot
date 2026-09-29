@@ -655,6 +655,166 @@ def q1_run_exit(length, u):
             'raw_iteration_checked':True}
 
 
+def q1_offset_trace(r, u, steps):
+    """Exact inherited relation under paired shortcut steps, with admission.
+
+    The signed relation h*A-k*B=c is updated from parity coefficients before
+    checking the independently iterated vertices.  Negative u is an algebraic
+    control and cannot certify a positive Collatz connection.
+    """
+    if not 0 <= r <= 128 or u == 0 or u%2 == 0 or not 0 <= steps <= 1024:
+        raise ValueError('offset-trace needs 0<=r<=128, nonzero odd u, 0<=steps<=1024')
+    a = 36*9**r*u-1
+    b_vertex = (9*3**r*u+7)//2
+    exponent = r
+    h, k, c = 1, 8*3**r, -28*3**r-1
+    assert h*a-k*b_vertex == c
+
+    # A word w of three shortcut parities has T_w(A)=(3^ones*A+beta)/8.
+    # Its terminal coefficient relation is 3^ones*A-8*B=-beta.  Matching
+    # those coefficients is sufficient only when w is the admitted word.
+    terminal_table = []
+    for mask in range(8):
+        word = format(mask,'03b')
+        beta = 0
+        for index,letter in enumerate(word):
+            if letter == '1':
+                beta = 3*beta+(1 << index)
+        terminal_table.append({'word':word,'h':3**word.count('1'),
+                               'k':8,'c':-beta,'beta':beta})
+
+    history = []
+    for index in range(steps+1):
+        assert h*a-k*b_vertex == c and c%2 == a%2
+        actual_word, after_three = '', a
+        for _ in range(3):
+            actual_word += str(after_three%2)
+            after_three = research_lifts.step(after_three)
+        point_words = [row['word'] for row in terminal_table
+                       if row['h']*a-row['k']*b_vertex == row['c']]
+        coefficient_words = [row['word'] for row in terminal_table
+                             if (h,k,c) == (row['h'],row['k'],row['c'])]
+        actual_three = after_three == b_vertex
+        assert (actual_word in point_words) == actual_three
+        assert not (actual_word in coefficient_words) or actual_three
+        history.append({
+            'step':index, 'A':a, 'B':b_vertex,
+            'b':exponent, 'h':h, 'k':k, 'c':c,
+            'A_parity':a%2, 'B_parity':b_vertex%2,
+            'actual_three_word':actual_word,
+            'terminal_point_words':point_words,
+            'terminal_coefficient_words':coefficient_words,
+            'terminal_A_equals_B':a == b_vertex,
+            'terminal_T3A_equals_B':actual_three,
+            'positive_A_equals_B':a == b_vertex and a > 0,
+            'positive_T3A_equals_B':actual_three and a > 0 and b_vertex > 0,
+        })
+        if index == steps:
+            break
+        parity_a, parity_b = a%2, b_vertex%2
+        multiplier_a, multiplier_b = (3 if parity_a else 1), (3 if parity_b else 1)
+        next_exponent = exponent+parity_a-parity_b
+        next_h = 3**max(-next_exponent,0)
+        next_k = 8*3**max(next_exponent,0)
+        next_c = (Fraction(next_h*multiplier_a*c,2*h) +
+                  Fraction(next_h*parity_a-next_k*parity_b,2))
+        assert next_c.denominator == 1
+        a, b_vertex = research_lifts.step(a), research_lifts.step(b_vertex)
+        exponent,h,k,c = next_exponent,next_h,next_k,next_c.numerator
+
+    if u > 0:
+        phase = q1_phase_exit(2*r+3,u)
+        assert (history[0]['A'],history[0]['B']) == (
+            phase['final']['A'],phase['final']['B'])
+        membership = phase['family_membership']
+    else:
+        membership = {'q_integral':False,'q':None,
+                      'in_hard_q1_family':False,'s':None,'n':None}
+    return {'r':r,'u':u,'steps':steps,
+            'positive_start':u > 0,
+            'family_membership':membership,
+            'terminal_three_step_table':terminal_table,
+            'history':history,
+            'positive_A_equals_B_steps':[row['step'] for row in history
+                                         if row['positive_A_equals_B']],
+            'positive_T3A_equals_B_steps':[row['step'] for row in history
+                                           if row['positive_T3A_equals_B']],
+            'c_crossings_nonpositive_to_positive':[
+                current['step'] for previous,current in zip(history,history[1:])
+                if previous['c'] <= 0 < current['c']]}
+
+
+def q1_offset_ray(depth):
+    """One hard-family 2-adic ray with K inherited six-step blocks.
+
+    The output is a finite exact prefix and its arithmetic checkpoint ledger,
+    not a full-orbit or convergence assertion.
+    """
+    if not 0 <= depth <= 128:
+        raise ValueError('offset-ray requires 0<=K<=128')
+    u0, slope_half = 23629975235, 12348281925
+    exponent = 12+6*depth
+    modulus = 1 << (exponent-1)
+    constant = (9*u0+1)//2
+    coefficient = 9*slope_half
+    assert coefficient%2 == 1
+    t = (-constant*pow(coefficient,-1,modulus))%modulus
+    u = u0+2*slope_half*t
+    s = 7+8*t
+    horizon = 9+6*depth
+    assert (9*u+1)%(1 << exponent) == 0
+    trace = q1_offset_trace(0,u,horizon)
+    membership = trace['family_membership']
+    assert membership['in_hard_q1_family'] and membership['s'] == s
+    n,q = membership['n'],membership['q']
+    history = trace['history']
+    initial_a = 36*u-1
+    assert history[0]['A'] == initial_a and initial_a > n
+    assert all(row['A'] >= initial_a and row['B'] < n for row in history)
+    checkpoints = []
+    for index in range(depth+1):
+        position = 9+6*index
+        row = history[position]
+        multiplier = 72*3**index
+        assert (row['b'],row['h'],row['k'],row['c']) == (
+            2+index,1,multiplier,-multiplier-5)
+        assert row['A']+1 == multiplier*(row['B']-1)-4
+        checkpoints.append({'block':index, 'step':position,
+                            'A':row['A'], 'B':row['B'],
+                            'b':row['b'], 'h':row['h'],
+                            'k':row['k'], 'c':row['c'],
+                            'm':multiplier, 'd':-4})
+        if index < depth:
+            block = history[position:position+6]
+            assert ''.join(str(part['A_parity']) for part in block) == '110110'
+            assert ''.join(str(part['B_parity']) for part in block) == '101010'
+
+    original_n = [n]
+    original_q = [q]
+    for _ in range(8+horizon):
+        original_n.append(research_lifts.step(original_n[-1]))
+    for _ in range(4+horizon):
+        original_q.append(research_lifts.step(original_q[-1]))
+    assert all(original_n[8+i] == row['A'] and
+               original_q[4+i] == row['B']
+               for i,row in enumerate(history))
+    assert all(value >= n for value in original_n)
+    assert all(value < n for value in original_q)
+    return {'K':depth, 'P':exponent, 't_residue':t,
+            't_modulus':modulus, 's':s, 'u':u,
+            'n':n, 'q':q, 'trace_horizon':horizon,
+            'checkpoints':checkpoints,
+            'six_step_words':{'A':'110110','B':'101010'},
+            'verified_six_step_blocks':depth,
+            'postexit_bounds':{'A_min':min(row['A'] for row in history),
+                               'initial_A':initial_a,
+                               'B_max':max(row['B'] for row in history),
+                               'A_ge_initial_gt_n':True,'B_lt_n':True},
+            'original_prefix_bounds':{'n_min':min(original_n),
+                                      'q_max':max(original_q),
+                                      'n_ge_start':True,'q_lt_n':True}}
+
+
 def oriented_rules(witness_path):
     data = json.loads(Path(witness_path).read_text())
     if not isinstance(data.get('witness'), list):
@@ -779,6 +939,12 @@ def main():
     run_exit = sub.add_parser('q1-run-exit')
     run_exit.add_argument('L',type=int)
     run_exit.add_argument('u',type=int)
+    offset = sub.add_parser('q1-offset-trace')
+    offset.add_argument('r',type=int)
+    offset.add_argument('u',type=int)
+    offset.add_argument('--steps',type=int,required=True)
+    ray = sub.add_parser('q1-offset-ray')
+    ray.add_argument('K',type=int)
     comparison = sub.add_parser('compare')
     comparison.add_argument('base_n', type=int)
     comparison.add_argument('base_witness')
@@ -801,6 +967,8 @@ def main():
               q1_pair_shadow(args.k,args.variant) if args.command == 'q1-pair-shadow' else
               q1_phase_exit(args.L,args.u) if args.command == 'q1-phase-exit' else
               q1_run_exit(args.L,args.u) if args.command == 'q1-run-exit' else
+              q1_offset_trace(args.r,args.u,args.steps) if args.command == 'q1-offset-trace' else
+              q1_offset_ray(args.K) if args.command == 'q1-offset-ray' else
               compare_witnesses(args.base_n, args.base_witness, args.other_n,
                                 args.other_witness) if args.command == 'compare' else
               target_tail(args.base_n, args.other_n) if args.command == 'target-tail' else
