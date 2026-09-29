@@ -96,3 +96,4 @@ import CollatzMoonshot.Obstructions.LocalGlobalBorrow23
 import CollatzMoonshot.Obstructions.RecursiveBorrow
 import CollatzMoonshot.Obstructions.AffineQLift
 import CollatzMoonshot.Obstructions.CubicPeel
+import CollatzMoonshot.Obstructions.SignedFlow
