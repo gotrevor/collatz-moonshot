@@ -57,3 +57,46 @@ the refinement note in the kickoff.
   `s = 0..5` before the Lean proofs were written.
 
 No next targets; the parent owns everything else in the repo.
+
+## Checkpoint
+
+* Branch: `main`. HEAD at end of lap: `3e60f4c`
+  ("Prove the five frozen variable-cubic peel statements").
+* Build state: root `lake build` green, 0 errors.
+  `CollatzMoonshot/Obstructions/CubicPeel.lean`: 0 `sorry`, 0 `admit`.
+  `#print axioms` on all five theorems: `propext`, `Classical.choice`,
+  `Quot.sound` only.
+* Committed by this lap: `CollatzMoonshot/Obstructions/CubicPeel.lean` and this
+  document. Nothing else.
+* Left uncommitted, and deliberately untouched (parent session's in-flight
+  research, per the kickoff's ownership split): modifications to
+  `CollatzMoonshot/Obstructions/AffineQLift.lean`,
+  `HANDOFF-2026-09-29-affine-lift.md`,
+  `RESEARCH-2026-09-28-borrow-checkpoint.md`,
+  `RESEARCH-2026-09-28-nn-borrow-checkpoint.md`, four `experiments/*.py`, and the
+  untracked `RESEARCH-2026-09-29-{affine-root-classification,
+  borrowing-closure-audit,head-continuation,ordinal-repair-checkpoint,
+  unrestricted-supply-addendum}.md`.
+* `CollatzMoonshot.lean` already contained `import
+  CollatzMoonshot.Obstructions.CubicPeel` before this lap (parent's edit, still
+  uncommitted); the root build depends on it, so the parent's commit should
+  include it.
+* `DIRECTION.md`'s CURRENT DIRECTIVE is still the 2026-09-13 reflection pause,
+  which predates the operator's scoped kickoff laps. Not edited (altitude laps
+  own it).
+
+## Exact next steps (for whoever picks this up)
+
+This lap's scope is closed; there is no follow-on target inside it. If the
+parent wants more from this file:
+
+1. Reconcile statement 5. If the parent's revised stub had a different intended
+   signature for the growth congruence than
+   `∀ j, ∃ s, 2^(j+2) ∣ cubicP s + 1`, restate it; the `exists_lin` modular
+   inverse plus the `4 → 2^(j+2)` lift transfers verbatim.
+2. Decide `16 * cubicM` (even `cubicM = 17959838810`) vs the committed
+   `32 * cubicM` (odd `cubicM = 8979919405`) in `cubic_peel_frontiers`. Both are
+   true; only the committed one keeps every actual `Nat` def odd and 3-free.
+3. `exists_lin` duplicates `exists_linear_sol` in `LocalGlobalBorrow23.lean`,
+   which is `private` there. De-privatising that one and deleting the copy here
+   is a clean small cleanup.
