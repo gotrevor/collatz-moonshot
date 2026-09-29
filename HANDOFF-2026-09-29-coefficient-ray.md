@@ -55,3 +55,26 @@ No hard-family CRT theorem, no convergence assumption, no strengthening of
 `rayEdge`.  The module continues to claim only a local positive pair per edge
 of the projected signature graph; lifting finite prefixes into the original
 hard family remains outside this file.  Nothing else in the repo was touched.
+
+## Checkpoint
+
+* Branch: `main`
+* HEAD at completion: `2fef69e` "Prove the four frozen coefficient-ray obstruction targets"
+* `CollatzMoonshot/Obstructions/CoefficientRay.lean`: 0 `sorry`, 0 `axiom`.
+* Working tree otherwise carries the parent's pre-existing uncommitted edits
+  (`APPROACHES.md`, `CollatzMoonshot.lean`, `scripts/AxiomAudit.lean`,
+  `experiments/`, research notes).  Those are **not mine** and were left alone.
+
+## Next steps
+
+None for this task — the kickoff's scope is closed and it authorizes no
+successor.  If the parent wants to extend the module later, the natural
+follow-ons, all explicitly out of scope here, are:
+
+1. Lifting finite prefixes of the coefficient ray into the original hard
+   family (paper/CLI result; belongs outside this module).
+2. Generalizing `no_uniform_ray_rank` from state-only ranks to ranks that may
+   read a bounded amount of orbit history.
+3. A hard-family CRT theorem connecting `raySignature` to the real offsets.
+
+`box done --green` was signalled after the green build and clean audit.
