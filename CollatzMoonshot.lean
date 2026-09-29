@@ -83,3 +83,6 @@ import CollatzMoonshot.Obstructions.QuadraticInvariants
 import CollatzMoonshot.Obstructions.CatalyticRepair
 
 import CollatzMoonshot.Obstructions.RepairPalette
+
+import CollatzMoonshot.Obstructions.AnchoredCut
+import CollatzMoonshot.Obstructions.PairDenominatorControl

@@ -380,3 +380,7 @@ The negative-shadow envelope and inverse-basin obstructions are now proved in Le
 ### Catalytic repair and sharp anchored bounds
 
 [Catalytic repair](RESEARCH-2026-09-27-catalytic-repair.md) repairs the stalled certificate for 7 using two fixed unit words and eight quadratic exchanges.  Exact interaction lists expose an obstruction that survives arbitrary catalysts: r5 multiplicity is frozen under quadratic moves, requiring a cubic rule.  The first unit palette also fails at 71 by an explicit conserved index.  The dyadic pair ledger is prefix-collision data; the sharp anchored operator constant equals reciprocal future peak height.  No general terminating repair is established.
+
+### Delegated checkpoint, 2026-09-28
+
+[Three independent branches](RESEARCH-2026-09-28-delegated-checkpoint.md): catalytic repair splits into integer relations and legally borrowable factors; the pairwise branch gains an odd-prime cancellation ledger and a formal closed-cycle counterexample; the anchored finite-cut transfer bound is now proved in Lean.  Each branch retains a separate missing mechanism.
