@@ -1,5 +1,10 @@
 # HANDOFF 2026-09-29 — Q1 coalescence and hard-shadow separation
 
+Checkpoint: branch `main`, HEAD `a2844bb` ("Prove the eight frozen Q1
+coalescence and hard-shadow separation targets").  Root `lake build` green
+(8821 jobs), verified by the pre-commit hook at that commit.  Task complete;
+`box done --green` was signalled.  No work is in flight.
+
 Scope: `CollatzMoonshot/Obstructions/Q1Coalescence.lean` only (plus this doc).
 
 All eight frozen statements are proved; no `sorry`, no new axioms.
@@ -81,3 +86,37 @@ and `U` as opaque atoms, tie them with the small-coefficient identity
 `Nat.eq_of_mul_eq_mul_left` rather than by omega.
 
 Root `lake build` is green.  Nothing is in flight.
+
+## State of the tree at handoff
+
+Committed by this lap (the only files it owns):
+- `CollatzMoonshot/Obstructions/Q1Coalescence.lean` — new, all eight frozen
+  targets proved, 0 `sorry`, 0 new axioms.
+- `HANDOFF-2026-09-29-q1-coalescence.md` — this doc.
+
+Left deliberately uncommitted, because the kickoff assigns them to the parent:
+- `CollatzMoonshot.lean` (modified) — adds
+  `import CollatzMoonshot.Obstructions.Q1Coalescence`.  The root build above
+  was run with this edit in the working tree, so it is known-green; the parent
+  should commit it.
+- `KICKOFF-2026-09-29-q1-coalescence.md`, `RESEARCH-2026-09-29-q1-coalescence.md`
+  (untracked) — parent-owned docs.
+- `experiments/repair_family.py`, `experiments/test_repair_family.py`,
+  `scripts/AxiomAudit.lean` (modified) — pre-existing changes, not touched by
+  this lap.
+
+## Next steps
+
+The bounded task is finished and the operator scope says no successor work, so
+there is nothing to resume here.  For whoever picks up the thread:
+
+1. Parent commits the root import of `CollatzMoonshot.Obstructions.Q1Coalescence`
+   and adds the eight theorems to the `scripts/AxiomAudit.lean` surface if that
+   file is meant to enumerate them.
+2. The open mathematical questions this lap explicitly does **not** settle, in
+   the kickoff's own words: parameter-dependent meetings are not excluded, and
+   no repair rank is supplied.  The `-1/13` synchronous nonmeeting and the
+   15-step easy-descent control remain paper observations with no Lean scope.
+3. `near_one_cycle_le_double` and `tstep_iterate_pow_two_offset` are public and
+   fully general (no progression constants); they are the reusable pieces if a
+   later lap needs cylinder endpoints or near-`1↔2` bounds elsewhere.
