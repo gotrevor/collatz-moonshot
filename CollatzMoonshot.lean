@@ -91,3 +91,4 @@ import CollatzMoonshot.Obstructions.Repair71
 import CollatzMoonshot.Obstructions.PairOrderingControl
 import CollatzMoonshot.Obstructions.BorrowabilityHeight23
 import CollatzMoonshot.Obstructions.FiveHead
+import CollatzMoonshot.Obstructions.UnitSupportBound
