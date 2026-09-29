@@ -1,6 +1,13 @@
 # HANDOFF — arbitrary dyadic ray plus finite orbit prefix (frozen node)
 
-Status: **complete, sorry-free, axiom-clean.** `lake build CollatzMoonshot` green.
+Checkpointed 2026-09-29. Branch `main`, HEAD `5c0e1ef`
+(`efbe346` is the proof commit; `5c0e1ef` only rewords an audit comment so the
+sorry gate sees a clean file). Working tree otherwise carries only
+`experiments/` changes owned by other agents — untouched here.
+
+Status: **complete, sorry-free, axiom-clean.** `lake build CollatzMoonshot` green
+(re-verified by the pre-commit hook on both commits).
+
 
 ## Delivered
 
@@ -57,3 +64,24 @@ Combining this identity with the finite-cut lower bound in `AnchoredCut.lean`
 to get the exact anchored infimum needs the separate 0/1 lemma, i.e. injectivity
 of the prefix and disjointness from the dyadic ray. Those are nonperiodicity
 consequences and are deliberately absent here.
+
+## Exact next steps (none owed by this run)
+
+This node is closed and the treadmill is stopping; `DIRECTION.md`'s CURRENT
+DIRECTIVE (2026-09-13 reflection) is a standing pause on launching further proof
+laps from the deferred list, so **no successor task is queued**. Should the
+operator lift that pause, the natural continuation is the one named in the
+kickoff:
+
+1. Prove the 0/1 lemma for `orbitPrefixCoeff`: it needs injectivity of
+   `j ↦ tstep^[j] n` on `[1, L)` and disjointness of that prefix from the dyadic
+   ray `{2^h n}`. Both are consequences of nonperiodicity of the base, so they
+   must enter as explicit hypotheses — they are deliberately absent from
+   `orbitPrefix_defect`, which holds with multiplicity.
+2. Feed that 0/1 lemma plus `orbitPrefix_defect` into the finite-cut lower bound
+   in `CollatzMoonshot/Obstructions/AnchoredCut.lean` to get the exact anchored
+   infimum.
+
+Nothing in `OrbitPrefix.lean` needs revisiting for either step; its API is
+`transfer_pointCoeff`, `rayCoeff_two_mul`, `rayCoeff_odd_pre`,
+`transfer_rayCoeff_eq`, `transfer_orbitPrefixCoeff`, `telescope_sub`.
