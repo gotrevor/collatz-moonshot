@@ -5,6 +5,24 @@ frozen theorems in `CollatzMoonshot/Obstructions/CubicCarry.lean` compile with
 no `sorry` and no new axioms.  `neighbor` and all five theorem statements are
 unchanged from the staged skeleton.  `SignedFlow` and `CubicPeel` untouched.
 
+## Checkpoint
+
+- Branch: `main`
+- HEAD at completion: `fdc04d6` ("Prove the five frozen cubic-carry prefix identities")
+- Owned files this lap: `CollatzMoonshot/Obstructions/CubicCarry.lean` and this
+  handoff.  Nothing else was staged; the parent's pre-existing working-tree
+  edits (`CollatzMoonshot.lean`, `experiments/*.py`, `scripts/AxiomAudit.lean`,
+  the `KICKOFF-*`/`RESEARCH-*` docs) were left exactly as found.
+- `box done --green` called; stop sentinel at
+  `~/src/.treadmill/collatz-moonshot.stop`.
+
+## Next steps
+
+None for this task — the acceptance condition is met in full and the kickoff
+forbids successor work.  Anything further (a return-debt argument past the
+six-term prefix, a repair rank, or convergence of `cubicN` itself) is parent
+scope and would need its own frozen statements.
+
 ## State
 
 `lake build` green (8820 jobs).  `#print axioms` on each target gives exactly
