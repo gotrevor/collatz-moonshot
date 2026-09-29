@@ -1,5 +1,9 @@
 # HANDOFF 2026-09-29 — Q1 exit / re-entry obstruction
 
+Branch: `main`.  HEAD at write time: `ecf147c` (this work).
+Next steps: **none** — the kickoff froze this as a terminal task with no
+successor.  All eight targets are proved; nothing in this module is open.
+
 Scope: `CollatzMoonshot/Obstructions/Q1Reentry.lean` only (plus this doc).
 Status: **complete and green.** All eight frozen theorems proved, no `sorry`,
 no new axioms (`#print axioms` on all eight: `propext`, `Quot.sound`, and
