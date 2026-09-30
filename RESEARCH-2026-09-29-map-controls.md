@@ -12,7 +12,7 @@
 
 This is step 1 of [the ordinal-repair odds review](REVIEW-2026-09-29-ordinal-repair-odds.md): run the certificate-repair framework on maps where convergence is known to fail, and see whether anything in it is specific to 3x+1.
 
-**Verdict.**  Every ingredient transfers.  Supply, exchanges, signed-flow extraction and the ω^ω obligation rank all exist for 3x−1 and 5x+1, at starts that never reach 1.  The toolkit's only sign-sensitive fact, the unit two-count inequality, separates 3x−1 but not 5x+1.  No 3x+1-specific lever emerged.  Per the review's gate, the certificate-repair route is closed as a proof route; its instruments remain useful as diagnostics.
+**Verdict.**  Every ingredient transfers.  Supply, exchanges, signed-flow extraction and the ω^ω obligation rank all exist for 3x−1 and 5x+1, at starts that never reach 1.  The toolkit's only sign-sensitive fact, the unit two-count inequality, separates 3x−1 but not 5x+1.  No 3x+1-specific lever emerged.  Per the review's gate, the **current** certificate-repair toolkit is retired as a proof route; its instruments remain useful as diagnostics.  This is a research retirement, not an impossibility theorem for repair methods: a method carrying a genuinely distinguishing input would be a new route.
 
 ## Maps and conjugation
 

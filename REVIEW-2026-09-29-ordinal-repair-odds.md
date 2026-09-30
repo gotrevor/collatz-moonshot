@@ -18,7 +18,7 @@ The rank side points the same way.  On fresh normalized states the candidate wei
 
 ## Where the Goodstein analogy breaks
 
-Goodstein's rank is read locally off the hereditary base representation, and its decrease is a one-step check.  Its proof-theoretic height (ε₀) is what places it beyond PA.  Here the height is free (ω^ω suffices), and the local reading is exactly what `BoundedMerger` and the Q1 separation exclude.  The analogy needs a finite representation of `n` whose rank decreases at every step; no candidate exists.
+Goodstein's rank is read off the hereditary base representation, and its decrease is a one-step check.  Its proof-theoretic height (ε₀) is what places it beyond PA.  Here the height is free (ω^ω suffices for the obligation multiset), so height is not where the analogy is tested.  The open requirement is a representation of `n` (or of a repair state) whose rank provably decreases at every step or adaptive block.  `BoundedMerger` and the Q1 separation exclude bounded-depth mergers with smaller seeds, a size comparison inside a bounded window; they do **not** exclude a locally computable rank, which need not be monotone in the integer at all.  *(Corrected 2026-09-29 after Astra's review: an earlier version said these results excluded the local reading.)*  The map controls add one constraint: such a rank's decrease must fail for 3x−1 at 5 and for 5x+1 at 13.  No candidate exists, and none is excluded.
 
 ## Missing control
 
