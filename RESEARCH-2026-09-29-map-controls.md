@@ -74,7 +74,7 @@ The only sign-sensitive fact available is the **unit two-count inequality**.  Si
 | cycle 1 (5x+1) | 2 | 3 | 25 < 32 |
 | cycle 13 (5x+1) | 3 | 4 | 125 < 128 |
 
-It separates 3x−1 and fails to separate 5x+1, whose positive cycles are contracting words exactly as 3x+1 units are.  Separating 3x+1 from 5x+1 needs something about the multiplier beyond this sign.  The known candidates are the drift, \(\log(3/4)<0<\log(5/4)\), on the divergence side, and the Diophantine size of \(|2^m-3^k|\) against the word constant on the cycle side; they are candidates, not a proved exhaustive list.  The certificate-repair toolkit consumes neither.  They are the inputs of Front B and Front A respectively, so a repair proof using them would lean on those fronts for its distinguishing step.
+It separates 3x−1 and fails to separate 5x+1, whose positive cycles are contracting words exactly as 3x+1 units are.  Separating 3x+1 from 5x+1 needs something about the multiplier beyond this sign.  The known candidates are the drift, \(\log(3/4)<0<\log(5/4)\), on the divergence side, and the Diophantine size of \(|2^m-3^k|\) against the word constant on the cycle side; they are candidates, not a proved exhaustive list.  The certificate-repair toolkit consumes neither.  They are the inputs of Front A (divergence) and Front B (cycles) respectively, so a repair proof using them would lean on those fronts for its distinguishing step.
 
 ## Consequence and scope
 
