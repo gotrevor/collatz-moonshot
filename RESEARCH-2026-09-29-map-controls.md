@@ -74,10 +74,11 @@ The only sign-sensitive fact available is the **unit two-count inequality**.  Si
 | cycle 1 (5x+1) | 2 | 3 | 25 < 32 |
 | cycle 13 (5x+1) | 3 | 4 | 125 < 128 |
 
-It separates 3x−1 and fails to separate 5x+1, whose positive cycles are contracting words exactly as 3x+1 units are.  Separating 3x+1 from 5x+1 needs the multiplier's arithmetic.  On the divergence side that is the drift, \(\log(3/4)<0<\log(5/4)\).  On the cycle side it is the Diophantine size of \(|2^m-3^k|\) against the word constant.  The certificate-repair toolkit consumes neither.  They are the inputs of Front A and Front B respectively, so a repair proof would have to import both fronts, and those fronts would then carry the proof.
+It separates 3x−1 and fails to separate 5x+1, whose positive cycles are contracting words exactly as 3x+1 units are.  Separating 3x+1 from 5x+1 needs something about the multiplier beyond this sign.  The known candidates are the drift, \(\log(3/4)<0<\log(5/4)\), on the divergence side, and the Diophantine size of \(|2^m-3^k|\) against the word constant on the cycle side; they are candidates, not a proved exhaustive list.  The certificate-repair toolkit consumes neither.  They are the inputs of Front B and Front A respectively, so a repair proof using them would lean on those fronts for its distinguishing step.
 
 ## Consequence and scope
 
 - The review's step 1 is complete and did not expose a 3x+1-specific lever.  The certificate-repair route (catalytic repair, borrowing, Q and cubic exchanges, completed blocks, ordinal repair) is **closed as a proof route**.  The obstructions of 2026-09-27..29 stand as its record; do not reopen it with another rule family or rank template.
-- **Reopening criterion:** a rule or rank that provably fails on 3x−1 at 5 **and** on 5x+1 at 13, and says why, by consuming the drift or the \(2^m-3^k\) arithmetic.
+- **Reopening criterion:** a rule or rank that provably fails on 3x−1 at 5 **and** on 5x+1 at 13, and names the input that makes it fail there (drift and the \(2^m-3^k\) arithmetic are the known candidates).
+- `BoundedMerger` excludes bounded-depth smaller-seed mergers only; it does not exclude a locally computable rank.  Such a rank is not part of this toolkit and is not retired by this note.
 - **Evidence tiers.**  Certificates, fates, the cubic twin, exchange counts and unit values are exact computations through the shipped CLI, with hand anchors in `experiments/test_research_lifts.py`.  The boundary-evaluation identity and the conjugation transfer are paper arguments.  Nothing new is claimed in Lean.  An optional Lean anchor would be the 3x−1 certificate at 5 together with its cycle, both decidable; no lap is launched for it.
