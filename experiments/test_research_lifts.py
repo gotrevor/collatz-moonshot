@@ -1,4 +1,5 @@
 """Independent hand-computed anchors through the actual research CLI."""
+from fractions import Fraction
 from pathlib import Path
 import json
 import subprocess
@@ -375,3 +376,90 @@ def test_targeted_last_catalyst_interaction():
     # and r1007*r7555=(1007/1511)*(7555/11333)=5035/11333.
     got=run('quadratic-neighbors',7555)
     assert {'before':[1007,7555],'after':[1079,5035]} in got['nontrivial_exchanges']
+
+
+# Known-negative map controls (REVIEW-2026-09-29-ordinal-repair-odds step 1).
+# 3x-1 on positives is 3x+1 on negatives: r_(-u) = 2u/(3u-1) = s_u.
+
+def s_minus(u):
+    return Fraction(2*u, 3*u-1)
+
+
+def t_five(u):
+    return Fraction(2*u, 5*u+1)
+
+
+def test_minus_five_has_a_scalar_certificate():
+    # U(11)=16, U(25)=37, U(37)=55: 2^4*(11/16)*(25/37)*(37/55)
+    # = 16*275/880 = 5.  Yet 5 -> 7 -> 10 -> 5 never reaches 1.
+    got=run('certificate','--twos',4,'--odd-sources',11,25,37,'--multiplier',3,'--offset',-1)
+    assert got['value']=='5'
+    assert got['realizable'] is False
+    fate=run('fate',5,'--multiplier',3,'--offset',-1)
+    assert fate['fate']=='cycle'
+    assert fate['cycle']==[5,7,10]
+    assert fate['orbit_min']==5
+
+
+def test_five_n_plus_one_seventeen_has_a_scalar_certificate():
+    # 5*51+1=256, so t_51=51/128; t_1=2/6=1/3; 2^7*(1/3)*(51/128)=17.
+    # 17 -> 43 -> 108 -> 54 -> 27 -> 68 -> 34 -> 17 is a 5x+1 cycle.
+    got=run('certificate','--twos',7,'--odd-sources',1,51,'--multiplier',5)
+    assert got['value']=='17'
+    assert got['realizable'] is False
+    fate=run('fate',17,'--multiplier',5)
+    assert fate['cycle']==[17,27,34,43,54,68,108]
+
+
+def test_default_map_is_unchanged():
+    # 3 -> 5 -> 8 -> 4 -> 2 -> 1 under 3x+1.
+    assert run('fate',3)=={'n':3,'fate':'reaches_one','steps':5,'orbit_min':1}
+
+
+@pytest.mark.parametrize('q,c,n,value_of',[(3,-1,5,s_minus),(5,1,17,t_five)])
+def test_supply_word_evaluates_exactly(q,c,n,value_of):
+    # Recompute the returned word here, independently of the tool.
+    got=run('supply',n,'--multiplier',q,'--offset',c,'--max-label',200,'--prime-bound',60)
+    assert got['found'] is True
+    value=Fraction(2**got['twos'])
+    for u in got['odd_sources']:
+        value*=value_of(u)
+    assert value==n
+    assert got['fate']['fate']=='cycle'
+    assert got['realizable'] is False
+
+
+def test_cubic_twin_is_a_legal_minus_identity():
+    # a=-b in the CubicPeel cubic, labels negated.  b=4307989:
+    # 5b+2=21539947, (3b+1)/64=201937, 5(2b+7)/93=463225;
+    # b, (3b-1)/58=222827, (2b+7)/21=410285.
+    got=run('cubic-twin',4307989)
+    assert got['left']==['21539947','201937','463225']
+    assert got['right']==['4307989','222827','410285']
+    left=s_minus(21539947)*s_minus(201937)*s_minus(463225)
+    right=s_minus(4307989)*s_minus(222827)*s_minus(410285)
+    assert left==right
+    assert got['equal'] is True and got['positive_odd_three_free'] is True
+
+
+@pytest.mark.parametrize('q,c,pair,other',[
+    (3,1,[7,121],[11,17]),     # r7 r121 = 11/26 = r11 r17
+    (3,-1,[5,147],[7,15]),     # s5 s147 = 21/44 = s7 s15
+    (5,1,[5,91],[7,15]),       # t5 t91 = 35/228 = t7 t15
+])
+def test_two_for_two_exchanges_exist_on_every_map(q,c,pair,other):
+    got=run('exchanges','--multiplier',q,'--offset',c,'--max-label',200)
+    assert any(pair in cls and other in cls for cls in got['all'])
+
+
+def test_unit_sign_separates_minus_but_not_five():
+    # Unit 2^e*prod(u/T(u))=1 with k odd labels: every u/T(u) < 2/q for +1,
+    # > 2/3 for 3x-1.  U8: 3^5=243 < 2^8=256.  3x-1 cycle 5,7,10:
+    # 3^2=9 > 2^3=8.  5x+1 cycle 13,33,83,208,104,52,26: 5^3=125 < 2^7=128.
+    got=run('map-control','--max-label',200)
+    units=got['units']
+    assert units['plus_U8']['value']=='1' and units['plus_U8']['q_pow_k_below_two_pow_steps']
+    assert units['minus_cycle_5']['value']=='1'
+    assert units['minus_cycle_5']['q_pow_k_below_two_pow_steps'] is False
+    assert units['five_cycle_13']['value']=='1'
+    assert units['five_cycle_13']['q_pow_k_below_two_pow_steps'] is True

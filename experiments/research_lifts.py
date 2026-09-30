@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run --quiet python3
+#!/usr/bin/env -S uv run --quiet --with scipy python3
 """Exact controls for three Collatz research proposals, not a convergence test."""
 from collections import Counter, deque
 from fractions import Fraction
@@ -16,7 +16,14 @@ def step(n):
     return (3*n+1)//2 if n%2 else n//2
 
 
-def certificate(twos, odd_sources):
+def map_step(n, multiplier=3, offset=1):
+    """Shortcut qx+c map.  (3,-1) on positive n is 3x+1 on -n, conjugated."""
+    if multiplier < 3 or multiplier%2 == 0 or offset not in (-1,1):
+        raise ValueError('positive odd multiplier >=3, offset +/-1 required')
+    return (multiplier*n+offset)//2 if n%2 else n//2
+
+
+def certificate(twos, odd_sources, multiplier=3, offset=1):
     """Check both commutative value and exact backward-path realization.
 
     A factor 2 is usable at any positive state.  A factor u/T(u) is usable
@@ -24,6 +31,8 @@ def certificate(twos, odd_sources):
     """
     if twos < 0 or any(u < 1 or u%2 == 0 for u in odd_sources):
         raise ValueError('need nonnegative twos and positive odd sources')
+    def step(u):
+        return map_step(u,multiplier,offset)
     value=Fraction(2**twos)*prod((Fraction(u,step(u)) for u in odd_sources),start=Fraction(1))
     counts=Counter(odd_sources)
     sources=tuple(sorted(counts))
@@ -730,15 +739,186 @@ def palette_obstruction():
                         'index':index(5,new_unit13)}}
 
 
+def orbit_fate(n, multiplier=3, offset=1, cap=100000):
+    """Where the positive orbit of n goes: 1, another cycle, or past the cap."""
+    seen={}
+    path=[]
+    x=n
+    while x not in seen and len(path) < cap:
+        if x == 1:
+            return {'n':n,'fate':'reaches_one','steps':len(path),
+                    'orbit_min':min(path+[1])}
+        seen[x]=len(path)
+        path.append(x)
+        x=map_step(x,multiplier,offset)
+    if x in seen:
+        cycle=path[seen[x]:]
+        return {'n':n,'fate':'cycle','cycle':sorted(cycle),'cycle_min':min(cycle),
+                'orbit_min':min(path),'steps_to_cycle':seen[x]}
+    return {'n':n,'fate':'cap','steps':cap,'orbit_min':min(path)}
+
+
+def small_primes(bound):
+    return [p for p in range(3,bound+1) if all(p%d for d in range(2,isqrt(p)+1))]
+
+
+def smooth_exponents(x, primes):
+    """Exponents of 2 and the given odd primes, or None if x has another prime."""
+    exps={}
+    for p in [2]+primes:
+        while x%p == 0:
+            exps[p]=exps.get(p,0)+1
+            x//=p
+    return exps if x == 1 else None
+
+
+def supply(n, multiplier=3, offset=1, max_label=20000, prime_bound=60):
+    """Fewest-label semigroup word 2^e * prod u/T(u) with exact value n.
+
+    Integer program over odd labels u <= max_label with u and T(u) both
+    prime_bound-smooth.  Infeasible means only 'none within these bounds'.
+    The returned word is re-evaluated exactly; realizability as a backward
+    path from 1 and the actual orbit fate of n are reported beside it.
+    """
+    import numpy as np
+    from scipy.optimize import Bounds, LinearConstraint, milp
+    primes=small_primes(prime_bound)
+    coords=[2]+primes
+    index={p:i for i,p in enumerate(coords)}
+    target=smooth_exponents(n,primes)
+    if n < 1 or target is None:
+        raise ValueError('n must be a positive prime_bound-smooth integer')
+    columns=[np.eye(len(coords))[0]]
+    labels=[2]
+    for u in range(1,max_label+1,2):
+        image=map_step(u,multiplier,offset)
+        top,bottom=smooth_exponents(u,primes),smooth_exponents(image,primes)
+        if top is None or bottom is None:
+            continue
+        column=np.zeros(len(coords))
+        for p,e in top.items():
+            column[index[p]]+=e
+        for p,e in bottom.items():
+            column[index[p]]-=e
+        if column.any():
+            columns.append(column)
+            labels.append(u)
+    rhs=np.zeros(len(coords))
+    for p,e in target.items():
+        rhs[index[p]]=e
+    cost=np.ones(len(labels))
+    cost[0]=0
+    solved=milp(cost,constraints=LinearConstraint(np.array(columns).T,rhs,rhs),
+                integrality=np.ones(len(labels)),bounds=Bounds(0,256))
+    base={'n':n,'multiplier':multiplier,'offset':offset,'max_label':max_label,
+          'prime_bound':prime_bound,'candidate_labels':len(labels)-1,
+          'fate':orbit_fate(n,multiplier,offset)}
+    if not solved.success:
+        return {**base,'found':False,'solver':solved.message}
+    counts=[int(round(x)) for x in solved.x]
+    twos=counts[0]
+    sources=sorted(u for u,c in zip(labels[1:],counts[1:]) for _ in range(c))
+    checked=certificate(twos,sources,multiplier,offset)
+    if Fraction(checked['value']) != n:
+        raise AssertionError('solver word does not evaluate to n')
+    components={u:orbit_fate(u,multiplier,offset) for u in sorted(set(sources))}
+    return {**base,'found':True,'twos':twos,'odd_sources':sources,
+            'value':checked['value'],'realizable':checked['realizable'],
+            'label_fates':{u:(f['cycle_min'] if f['fate'] == 'cycle' else f['fate'])
+                           for u,f in components.items()}}
+
+
+def exchanges(multiplier=3, offset=1, max_label=300):
+    """All 2-for-2 scalar exchanges T-ratio(a)T-ratio(b)=T-ratio(c)T-ratio(d)."""
+    classes={}
+    for a in range(1,max_label,2):
+        for b in range(a,max_label,2):
+            value=(Fraction(a,map_step(a,multiplier,offset))*
+                   Fraction(b,map_step(b,multiplier,offset)))
+            classes.setdefault(value,[]).append([a,b])
+    found=[pairs for pairs in classes.values() if len(pairs) > 1]
+    return {'multiplier':multiplier,'offset':offset,'max_label':max_label,
+            'exchange_classes':len(found),'first':found[:5],'all':found}
+
+
+def cubic_twin(b):
+    """The variable cubic of CubicPeel at a=-b, read as a 3x-1 identity.
+
+    r_(-x)=2x/(3x-1), so every rational-function identity among 3x+1 ratios
+    with affine labels holds among 3x-1 ratios with the labels negated.
+    """
+    a=-b
+    left=[5*a-2,Fraction(3*a-1,64),Fraction(5*(2*a-7),93)]
+    right=[a,Fraction(3*a+1,58),Fraction(2*a-7,21)]
+    left,right=[-x for x in left],[-x for x in right]
+    def value(labels):
+        return prod((Fraction(2*x)/(3*x-1) for x in labels),start=Fraction(1))
+    legal=all(x.denominator == 1 and x > 0 and x.numerator%2 == 1 and x.numerator%3
+              for x in left+right)
+    return {'b':b,'left':[str(x) for x in left],'right':[str(x) for x in right],
+            'left_value':str(value(left)),'right_value':str(value(right)),
+            'equal':value(left) == value(right),'positive_odd_three_free':legal}
+
+
+def map_control(max_label=20000):
+    """Known-negative controls for the certificate-repair toolkit.
+
+    3x-1 (= 3x+1 on negatives) and 5x+1 have positive non-convergent starts.
+    If supply and exchanges exist there too, no map-agnostic repair rank
+    can close; it must fail at the cycle starts below.
+    """
+    conjugate=all(Fraction(-2*u,-3*u+1) == Fraction(2*u,3*u-1) for u in range(1,1000,2))
+    units={'plus_U8':(3,1,3,[19,25,29,55,83]),
+           'plus_U13':(3,1,5,[5,7,7,11,17,55,65,83]),
+           'minus_cycle_5':(3,-1,1,[5,7]),
+           'minus_cycle_17':(3,-1,4,[17,25,37,41,55,61,91]),
+           'five_cycle_1':(5,1,3,[1,3]),
+           'five_cycle_13':(5,1,4,[13,33,83])}
+    unit_rows={}
+    for name,(q,c,twos,sources) in units.items():
+        k=len(sources)
+        unit_rows[name]={'value':certificate(twos,sources,q,c)['value'],
+                         'odd_labels':k,'twos':twos,
+                         'q_pow_k_below_two_pow_steps':q**k < 2**(twos+k)}
+    return {'conjugation_r_minus_u_equals_s_u':conjugate,
+            'minus_five_hand_certificate':certificate(4,[11,25,37],3,-1),
+            'supply':[supply(n,q,c,max_label) for q,c,n in
+                      [(3,-1,5),(3,-1,17),(5,1,13),(5,1,17),(5,1,7)]],
+            'cubic_twin':cubic_twin(4307989),
+            'exchange_classes_below_300':{f'{q}x{c:+d}':exchanges(q,c,300)['exchange_classes']
+                                          for q,c in [(3,1),(3,-1),(5,1)]},
+            'units':unit_rows}
+
+
 def main():
     if sys.argv[1:]==['test']:
-        raise SystemExit(subprocess.call(['uv','run','--quiet','--with','pytest','python3','-m',
-            'pytest',str(Path(__file__).with_name('test_research_lifts.py')),'-q']))
+        raise SystemExit(subprocess.call(['uv','run','--quiet','--with','pytest','--with','scipy',
+            'python3','-m','pytest',str(Path(__file__).with_name('test_research_lifts.py')),'-q']))
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('certificate')
     p.add_argument('--twos',type=int,required=True)
     p.add_argument('--odd-sources',type=int,nargs='*',default=[])
+    p.add_argument('--multiplier',type=int,default=3)
+    p.add_argument('--offset',type=int,default=1)
+    p=sub.add_parser('fate')
+    p.add_argument('n',type=int)
+    p.add_argument('--multiplier',type=int,default=3)
+    p.add_argument('--offset',type=int,default=1)
+    p=sub.add_parser('supply')
+    p.add_argument('n',type=int)
+    p.add_argument('--multiplier',type=int,default=3)
+    p.add_argument('--offset',type=int,default=1)
+    p.add_argument('--max-label',type=int,default=20000)
+    p.add_argument('--prime-bound',type=int,default=60)
+    p=sub.add_parser('exchanges')
+    p.add_argument('--multiplier',type=int,default=3)
+    p.add_argument('--offset',type=int,default=1)
+    p.add_argument('--max-label',type=int,default=300)
+    p=sub.add_parser('cubic-twin')
+    p.add_argument('b',type=int)
+    p=sub.add_parser('map-control')
+    p.add_argument('--max-label',type=int,default=20000)
     p=sub.add_parser('pair-energy')
     p.add_argument('word')
     p.add_argument('--multiplier',type=int,default=3)
@@ -791,7 +971,13 @@ def main():
     p.add_argument('--structural',action='store_true')
     p.add_argument('--scan-depth',type=int,default=16)
     a=parser.parse_args()
-    if a.command=='certificate': result=certificate(a.twos,a.odd_sources)
+    if a.command=='certificate': result=certificate(a.twos,a.odd_sources,a.multiplier,a.offset)
+    elif a.command=='fate': result=orbit_fate(a.n,a.multiplier,a.offset)
+    elif a.command=='supply':
+        result=supply(a.n,a.multiplier,a.offset,a.max_label,a.prime_bound)
+    elif a.command=='exchanges': result=exchanges(a.multiplier,a.offset,a.max_label)
+    elif a.command=='cubic-twin': result=cubic_twin(a.b)
+    elif a.command=='map-control': result=map_control(a.max_label)
     elif a.command=='pair-energy': result=pair_energy(a.word,a.multiplier,a.offset)
     elif a.command=='signed-fixed': result=signed_fixed(a.odd_source,a.cutoff)
     elif a.command=='multiplicative-fixed': result=multiplicative_fixed(a.cutoff)

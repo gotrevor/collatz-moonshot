@@ -34,7 +34,7 @@ Conditional probabilities; horizon is the life of this project.
 | Step | Content | P |
 |---|---|---|
 | 0 | Reformulation, supply, well-foundedness | done |
-| 1 | Sign/map control run and informative (diagnostic, not on the critical path) | 70% |
+| 1 | Sign/map control run and informative (diagnostic, not on the critical path) | ✅ ran 2026-09-29: no lever ([map controls](RESEARCH-2026-09-29-map-controls.md)) |
 | 2 | A closed full-state class with a non-circular variable-depth block rule, defined without simulating the orbit to termination | 20% |
 | 3 | Coverage and decrease: every non-terminal state admits a block that lowers the full-state rank | ≤ 0.1% |
 | 4 | Terminal condition and assembly through `SignedFlow` | 90% |
@@ -46,3 +46,7 @@ Step 3 is the conjecture; steps 2, 4 and 5 are research engineering.
 ## Recommendation
 
 Run step 1 once.  Unless it exposes a 3x+1-specific lever, record the repair branch's closed templates as a closed route and stop generating template obstructions.  Twenty-one research notes dated 2026-09-29 each closed one template, and the next will close the same way for the same reason: a bounded reading of a 2-adically adversarial orbit.  The checkpoint's own gate already says this; this review adds the control and the odds.
+
+## Outcome of step 1
+
+Run the same evening: [map controls](RESEARCH-2026-09-29-map-controls.md).  Supply, exchanges, signed flow and the obligation rank all exist for 3x−1 and 5x+1 at starts that never reach 1.  The only sign-sensitive fact separates 3x−1 but not 5x+1.  No 3x+1-specific lever, so the certificate-repair route is closed as a proof route.  The note states the reopening criterion.

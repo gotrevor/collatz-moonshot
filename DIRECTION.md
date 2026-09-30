@@ -1,5 +1,7 @@
 # DIRECTION — collatz-moonshot
 
+> **2026-09-29, certificate-repair route closed as a proof route:** [known-negative map controls](RESEARCH-2026-09-29-map-controls.md) show that supply, exchanges, signed flow and the obligation rank all transfer to 3x−1 and 5x+1 at non-convergent starts.  The one sign-sensitive fact separates 3x−1 but not 5x+1.  **Reopen only for** a rule or rank that provably fails on 3x−1 at 5 and on 5x+1 at 13, by consuming the drift or the `2^m - 3^k` arithmetic.  Review and odds: [REVIEW-2026-09-29-ordinal-repair-odds.md](REVIEW-2026-09-29-ordinal-repair-odds.md).
+
 > **2026-09-22, paper-level graph correction:** [orbit packing and logarithmic shadow](RESEARCH-2026-09-22-packing-shadow.md) gives finite reciprocal correction on divergent orbits, hence `CrossingExists ↔ NoDivergentOrbit`.  The old infinite harmonic-budget subtarget already has full non-divergence strength.  Neither `CrossingExists` nor cycle exclusion is proved; no new proof-lap authorization.
 
 ## Standing objective after 2026-09-19 (Fable): the run-count gap on first-crossing near-cycles
