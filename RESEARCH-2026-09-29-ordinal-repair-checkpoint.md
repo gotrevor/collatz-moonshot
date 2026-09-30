@@ -1,5 +1,10 @@
 # Ordinal repair: supply correction and a cubic continuation
 
+> **Current decision: certificate repair is retired as a proof route.**  The subsequent [map-controls audit](RESEARCH-2026-09-29-map-controls.md) and [odds review](REVIEW-2026-09-29-ordinal-repair-odds.md) supersede the exploratory next steps below.  The tested supply, exchange and obligation-rank ingredients also occur at known nonconvergent starts for 3x−1 and 5x+1; no ingredient establishing complete repair distinguishes the desired map.  Retain the results and diagnostics, but do not extend the rule or rank catalogue without a new distinguishing mechanism that passes those controls.
+>
+> This is a research retirement, not a universal impossibility theorem for repair methods.  The bounded-merger theorem excludes a uniform bound on both meeting depths; it does not exclude every locally computable rank.  Drift and Diophantine separation are candidate distinguishing inputs, not a proved exhaustive list.  The historical findings below retain their stated scopes, and the pairwise and operator branches retain their separate open premises.
+
+
 Trevor's Goodstein comparison suggests ranking structured proof obligations rather than the integers seen along an orbit.  The current work supplies a more precise place to try that idea, but no decreasing rank for full repair has been found.
 
 ## Coverage difficulty check and a wider bounded-depth obstruction
