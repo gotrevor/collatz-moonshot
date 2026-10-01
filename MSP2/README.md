@@ -58,6 +58,7 @@ finer, checkable statement placed underneath `Raccord`.
 | §16.5: left route 1, 22, 13, 202, 121, 1822; Table 8 distances 6, 18, 54, 162, 486 | `Checks.cLeft_values`, `table8_distances` | ✅ checked |
 | §16.2-16.5 Tables 4, 6, 9: row bounds for starts up to 7, 15, 31, 63, 127 | `Checks.tables_4_6_9` | ✅ checked |
 | §16.7.4: Δ₀…Δ₄ = 2, −16, 38, −124, 362 (−16 and 38 match the §16.4 jumps) | `Checks.delta_values` | ✅ checked |
+| TG note (2026-10-01) Route A: the finite-loop-vs-doubling mechanism does not separate `3x+1` from `3x−1`, and for `3x−1` the `Raccord` statement is false (`5 → 14 → 7 → 20 → 10 → 5`) | `Sibling.not_raccordMinus` | ✅ proved |
 | §19: MSP²⁻ loops through −17 (length 11), −5 (length 3), −1 (fixed) | `Checks.msp2Neg_loops` | ✅ checked |
 | §16.2 levels up to 127 are covered | `Checks.raccordLevel_seven` | ✅ proved |
 | The open step ⟺ Collatz | `Headline.raccord_iff_conjecture` | ✅ proved |
