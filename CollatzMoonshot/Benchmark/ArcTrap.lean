@@ -52,13 +52,35 @@ def WinningStrategy (k : ℕ) (s t l : ℝ) (P : ℕ → Set ℝ) : Prop :=
       ∀ r' < 2 ^ k, r' % 2 ^ (k - 1) = ((3 * r - r % 2) / 2 + ⌊c⌋.toNat) % 2 ^ (k - 1) →
         Int.fract c ∈ P r'
 
+/-- **Why soundness needs `0 < k`.**  With `k = 0` the definition never lets the adversary pick
+the parity of the integer part, so this trivial strategy "wins" the arc `[0, 1/10]`.  Soundness at
+`k = 0` would then trap some `ξ > 0` in an arc shorter than `1/3`, which Flatto–Lagarias–Pollington
+1995 (Thm 1.4) rules out. -/
+theorem winningStrategy_zero_tiny :
+    WinningStrategy 0 0 (1 / 10) (1 / 10) (fun _ => {0}) := by
+  refine ⟨by norm_num, ⟨0, by norm_num, ⟨0, rfl⟩⟩, ?_⟩
+  intro r hr a ha
+  obtain rfl : r = 0 := by simpa using hr
+  rw [Set.mem_singleton_iff] at ha
+  subst ha
+  refine ⟨⟨le_rfl, by norm_num, ?_⟩, 0, by simp, by norm_num, ?_⟩
+  · intro x hx
+    obtain ⟨hx0, hx1⟩ := hx
+    have hf : Int.fract x = x := Int.fract_eq_self.mpr ⟨hx0, by linarith⟩
+    rw [hf, if_neg (not_lt.mpr hx0)]
+    constructor <;> linarith
+  · intro r' _ _
+    simp
+
 /-- **Soundness of the game.**  A winning `k`-memory strategy yields some `ξ > 0` whose whole
 `(3/2)^n` orbit has fractional parts in the arc.
 Confidence 90% (the statement's encoding of "both lifts" and of the wrap-around arc needs review).
+`0 < k` is needed: at `k = 0` the encoding pins the parity offset `d` to `0` instead of letting the
+adversary choose it, and `winningStrategy_zero_tiny` then wins a `1/10` arc, against FLP's `1/3`.
 Proof: start at integer part `m₀ ≥ 1` with `m₀ ≡ r` and `a₀ ∈ P r`; the strategy picks nested
 closed intervals `J_n = {ξ : ξ (3/2)^n ∈ [m_n + a_n, m_n + a_n + l]}`, each nonempty because
 `[c, c + l] ⊆ [y, y + 3l/2]`; take `ξ ∈ ⋂ J_n`. -/
-theorem exists_trapped_of_winningStrategy {k : ℕ} {s t l : ℝ} {P : ℕ → Set ℝ}
+theorem exists_trapped_of_winningStrategy {k : ℕ} {s t l : ℝ} {P : ℕ → Set ℝ} (hk : 0 < k)
     (h : WinningStrategy k s t l P) :
     ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x := by
   sorry
