@@ -21,3 +21,10 @@ name = "CollatzMoonshot"
 # Its own library so it never shares a file with the moonshot proper; see MSP2/README.md.
 [[lean_lib]]
 name = "MSP2"
+
+# Shared research-ledger checks (#maze_audit): Maze rows must cite declarations.
+[[require]]
+name = "LeanLedger"
+git = "https://github.com/gotrevor/lean-agent-skills.git"
+rev = "fec556e47718d69a6fa8796c5faab1eeba8974a5"
+subDir = "lean"

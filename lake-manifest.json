@@ -3,6 +3,18 @@
  "packagesDir": ".lake/packages",
  "packages": [
   {
+   "url": "https://github.com/gotrevor/lean-agent-skills.git",
+   "type": "git",
+   "subDir": "lean",
+   "scope": "",
+   "rev": "fec556e47718d69a6fa8796c5faab1eeba8974a5",
+   "name": "LeanLedger",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "fec556e47718d69a6fa8796c5faab1eeba8974a5",
+   "inherited": false,
+   "configFile": "lakefile.toml"
+  },
+  {
    "url": "https://github.com/leanprover/lean4-cli",
    "type": "git",
    "subDir": null,
