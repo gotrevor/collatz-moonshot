@@ -65,6 +65,22 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 **Reading.**  The literature window is `[5/48, 0.2857)`.  Adversarial-parity constructions top out at `7/57 ≈ 0.1228`.  Above that, a construction must use the integer arithmetic of `m`, i.e. the bits beyond the horizon, not treat them as noise.  The note's Mahler section is the same story: bounded lookahead buys nothing.
 
+## Theorem: adversarial-parity constructions cannot reach Mahler's arc
+
+**Statement.**  No memoryless relaxed strategy holds any arc of length at most `1/2`, at any position.  In particular none holds Mahler's `[0, 1/2]`.  Lean: `mahler_barrier` and `no_relaxedStrategy_mahler_arc` (`sorry`, proof route in the docstrings).  Maze row: "adversarial-parity construction of a Z-number".
+
+**Proof.**
+1. **Domination:** the component game dominates every memoryless relaxed strategy (see the 7/57 section).
+2. **Containment:** any arc of length `≤ 1/2` lies in a closed arc `[s, s + 1/2]`, and a smaller arc only helps the adversary.
+3. **Every position, exactly:** `experiments/arc_mahler.py verify` checks that for every `s ∈ [0, 1)` the adversary kills every path within 5 moves.  It runs the same exact AND-OR engine with the position `s` as the symbol: 22 open `s`-pieces plus 22 exact points.  Teeth test: the holdable arc `[0.12, 0.88]` is not reported killed.
+4. **Hand proof for length `t < 1/2`:**
+   - `A` and `A + 1/2` are disjoint, so of any window `1.5C` the adversary leaves at most half in the arc.  Hence `|C|` shrinks by at least `3/4` per move.
+   - Once the window is shorter than the gap `1/2 - t`, it cannot meet both `A` and `A - 1/2`, so the adversary picks the parity that misses.
+
+**What it means.**  This is the constructive side of the 2-adic horizon, made exact.  Seeing each parity only when it arrives, with every unseen parity treated as hostile, a construction cannot even hold an arc of Mahler's length, let alone produce a Z-number.  A Z-number construction must use the actual integer parts.
+
+**Scope.**  Memoryless strategies only.  For `k`-memory strategies the same obstacle as in the 7/57 section applies: the constructor's lift choice feeds into later parities.  The old window-in-arc ladder supports the barrier there too: shortest winnable arc from 0 was 0.827 for `k = 2..6`.
+
 ## What the ladder says about Mahler
 
 For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k = 0, 1` and 0.827 at `k = 2..6`.  Bounded 2-adic memory saturates after two bits, far above Mahler's 1/2.  Every Z-number construction would have to sit in FLP's decoupled regime (`t ≤ 1/2`).  There the integer parts are forced (at most one `ξ` per unit interval), so a finite-memory strategy has nothing to steer.

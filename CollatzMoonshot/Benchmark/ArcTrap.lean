@@ -206,6 +206,28 @@ theorem relaxed_barrier (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : 
     ¬ RelaxedStrategy β (1 - 2 * β) l P := by
   sorry
 
+/-- **Mahler barrier: no memoryless relaxed strategy holds any arc of length at most `1/2`.**  In
+particular none traps an orbit in Mahler's arc `[0, 1/2]`: a construction that treats every unseen
+parity as adversarial cannot produce a Z-number.
+Confidence 90%.  Proof route:
+* Domination by the component game (as for `relaxed_barrier`).
+* Containment: an arc of length `t ≤ 1/2` lies inside `[s, s + 1/2]`, and a smaller arc only helps
+  the adversary.
+* `experiments/arc_mahler.py verify`: for every position `s ∈ [0, 1)` the adversary kills every path
+  within 5 moves.  This is an exact AND-OR search with endpoints affine in `s`: 22 open `s`-pieces and
+  22 exact points.
+* For `t < 1/2` there is also a hand proof.  `A` and `A + 1/2` are disjoint, so the adversary keeps at
+  most half of `1.5 |C|` in the arc and `|C|` shrinks by `3/4` per move.  Once the window is shorter
+  than `1/2 - t` it misses `A` or `A - 1/2`, and the adversary picks the parity that misses.
+Scope: memoryless strategies only; `k`-memory strategies remain open. -/
+theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy s t l P := by
+  sorry
+
+/-- Mahler's own arc. -/
+theorem no_relaxedStrategy_mahler_arc (l : ℝ) (P : Set ℝ) : ¬ RelaxedStrategy 0 (1 / 2) l P :=
+  mahler_barrier 0 (1 / 2) le_rfl l P
+
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.

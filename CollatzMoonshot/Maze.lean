@@ -129,6 +129,9 @@ def register : List Hall := [
   ⟨"negative-shadow score", .refuted,
    "weighted scores on the inverse basin of -1 are unbounded",
    "Obstructions/NegativeShadow.lean", "2026-09-27"⟩,
+  ⟨"adversarial-parity construction of a Z-number", .adversary2adic,
+   "a strategy that treats each unseen parity as adversarial cannot hold any arc of length <= 1/2: the adversary kills [s, s + 1/2] within 5 moves for every s",
+   "Benchmark/ArcTrap.lean; experiments/arc_mahler.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-05"⟩,
   ⟨"adversarial-parity arc trap past 7/57", .adversary2adic,
    "treating each unseen parity bit as adversarial, the 3-cycle 4/19, 6/19, 9/19 forces every memoryless relaxed strategy for ||xi (3/2)^n|| >= beta out once beta > 7/57",
    "Benchmark/ArcTrap.lean; experiments/arc_barrier.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-05"⟩,
@@ -210,6 +213,8 @@ def mazeLinks : List Link := [
    [``Literature.NashidaPositiveAutomatonBarrier, ``Literature.KadirbekovBoundedCorrection,
     ``BoundedMerger.crt_no_bounded_smaller_merge], [``UnboundedRelativeRank]⟩,
   ⟨"negative-shadow score", [``NegativeShadow.inverse_basin_scores_unbounded], []⟩,
+  ⟨"adversarial-parity construction of a Z-number",
+   [``Benchmark.ArcTrap.mahler_barrier, ``Benchmark.ArcTrap.no_relaxedStrategy_mahler_arc], []⟩,
   ⟨"adversarial-parity arc trap past 7/57",
    [``Benchmark.ArcTrap.relaxed_barrier, ``Benchmark.ArcTrap.not_relaxedStrategy_13_100], []⟩,
   ⟨"local-global borrowing at 23",
@@ -248,7 +253,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 26 rows, 18 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 27 rows, 19 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
