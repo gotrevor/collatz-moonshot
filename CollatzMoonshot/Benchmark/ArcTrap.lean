@@ -17,7 +17,7 @@ infinitely many `ξ` (Dubickas 2008, the best constant found); `‖ξ (3/2)^n‖
 countably infinitely many `ξ` (Akiyama–Frougny–Sakarovitch / Akiyama 2008).
 
 **New (2026-10-05, certificate in `experiments/arc_cert_beta_k2.json`):** `‖ξ (3/2)^n‖ ≥ 7349/61440
-≈ 0.1196` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~75%, see the note).  The
+≈ 0.1196` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~85%, see the note).  The
 certificate is a game strategy that remembers the integer part mod 4 (`experiments/arc_trap_k.py`):
 for each residue `r` a finite union `P r` of rational intervals of window left ends, closed under one
 step of `×3/2` for both values of the unseen next bit.
@@ -37,9 +37,16 @@ C. R. Acad. Sci. Paris 292 (1981) 383–384, as cited by Flatto–Lagarias–Pol
 def Pollington1981 : Prop := ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (4 / 65) ξ
 
 /-- Dubickas, *On the powers of 3/2 and other rational numbers*, Math. Nachr. 281 (2008) 951–958,
-abstract: there are infinitely many `ξ` with `{ξ (3/2)^n} ∈ (5/48, 43/48)` for every `n ≥ 0`.  Stated
-weaker (one positive `ξ`, closed arc).  The best published constant this search found (2026-10-05). -/
+Thm 1.3: every interval `(k, k + 1)` contains `ξ` with `‖ξ (3/2)^n‖ > 5/48` for every `n ≥ 0` (proof by
+a two-player game, Lemma 1.4).  Stated weaker (one positive `ξ`, closed arc).  The best published
+constant found (2026-10-05); Dubickas notes Pollington had announced `0.088`. -/
 def Dubickas2008 : Prop := ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (5 / 48) ξ
+
+/-- Dubickas, *On the distance from a rational power to the nearest integer*, J. Number Theory 117
+(2006) 222–239, Cor. 1: for `ξ ≠ 0`, `‖ξ (3/2)^n‖` has a limit point `≤ (1 + T(2/3))/4 = 0.285647…`
+(`T` the Thue–Morse product).  Stated weaker: no `ξ > 0` stays `2857/10000` away from the integers.
+With `Dubickas2008` it brackets `sup_ξ inf_n ‖ξ (3/2)^n‖` in `[5/48, 0.2857)`. -/
+def Dubickas2006 : Prop := ¬ ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (2857 / 10000) ξ
 
 end Literature
 
@@ -94,8 +101,8 @@ theorem exists_trapped_of_winningStrategy {k : ℕ} {s t l : ℝ} {P : ℕ → S
 /-- **New constant.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least `7349/61440 ≈ 0.1196`
 from the integers (Dubickas 2008: `5/48 ≈ 0.1042`; Pollington 1981: `4/65 ≈ 0.0615`).
 Confidence 85% (exact rational fixed point; an independent exact construction tracking the integer
-part ran 250 steps from 5 starts with random valid choices, never stuck, all `‖·‖ ≥ 0.124`; novelty ~75%:
-forward citations of FLP 1995 and Dubickas 2008 checked, Bugeaud's 2012 book unread).
+part ran 250 steps from 5 starts with random valid choices, never stuck, all `‖·‖ ≥ 0.124`; novelty ~85%:
+forward citations of FLP 1995, Dubickas 2006 and 2008 checked; Bugeaud's 2012 book unread).
 Proof: instantiate `exists_trapped_of_winningStrategy` with `k = 2`, `s = 7349/61440`, `t = 1 - 2s`, `l = 23371/230400` and the intervals of
 `experiments/arc_cert_beta_k2.json`; the closure is a finite set of rational inequalities. -/
 theorem exists_farFromIntegers_7349 :

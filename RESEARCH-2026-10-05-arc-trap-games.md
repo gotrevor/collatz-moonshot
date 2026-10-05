@@ -21,7 +21,7 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 ## New result (pending formal proof)
 
-**There is `ξ > 0` with `‖ξ (3/2)^n‖ ≥ 7349/61440 ≈ 0.1196` for every `n ≥ 0`.**  The previous record is **Dubickas's `5/48 ≈ 0.1042`** (Math. Nachr. 281 (2008), infinitely many `ξ` with `{ξ(3/2)^n} ∈ (5/48, 43/48)`), not Pollington's `4/65 ≈ 0.0615` (1981) as first written here.  The ladder brackets it: blind play (`k = 0`, 0.0861) falls short of 5/48 and `k = 2` beats it by about 15%.  Confidence it is unpublished: about 75%.  See *Literature check* below.
+**There is `ξ > 0` with `‖ξ (3/2)^n‖ ≥ 7349/61440 ≈ 0.1196` for every `n ≥ 0`.**  The previous record is **Dubickas's `5/48 ≈ 0.1042`** (Math. Nachr. 281 (2008), infinitely many `ξ` with `{ξ(3/2)^n} ∈ (5/48, 43/48)`), not Pollington's `4/65 ≈ 0.0615` (1981) as first written here.  The ladder brackets it: blind play (`k = 0`, 0.0861) falls short of 5/48 and `k = 2` beats it by about 15%.  Confidence it is unpublished: about 85%.  See *Literature check* below.
 - Certificate: `experiments/arc_cert_beta_k2.json` (`k = 2`, `l = 23371/230400`, four residues with at most six intervals each).  `arc_trap_k.py certificate 2 7349/61440 60 OUT` regenerates it.
 - Independent check: an exact constructor that knows `m` completely ran 250 steps from five starts (`m₀ = 4, 8, ..., 20`), with random valid choices.  It never got stuck, and every `ξ` had `‖·‖ ≥ 0.124`.
 - Blind play (`k = 0`) reaches `β ≈ 0.0861` (`arc_cert_beta_k0.json`).  Remembering 2 bits reaches 0.1196, and `k = 3, 4` add nothing on the 60-width grid.
@@ -38,7 +38,11 @@ For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k =
 - **Forward citations** (`papers followups`) of FLP 1995 (74 papers) and of Dubickas 2008 (19): no constant above 5/48 for `ξ(3/2)^n`.
 - **Direction trap:** Dubickas, JNT 117 (2006), and the multiplicative Markoff–Lagrange papers (Akiyama–Kaneko 2021, Akiyama–Kamae–Kaneko 2022, Kaneko–Steiner 2023) bound `lim sup ‖ξα^n‖` **from below** for every `ξ`, e.g. a limit point in `[0.238, 0.762]`.  That is the opposite quantity: how close to the integers an orbit can stay, not how far.  None competes.
 - **Same direction, other bases:** Dubickas, Results Math. 57 (2010): `‖ζ(5/3)^n‖ > 1/10` and `‖τ(9/4)^n‖ < 14/45` for some `ζ`, `τ` (abstract only; full text paywalled).
-- **Unread:** Bugeaud, *Distribution Modulo One and Diophantine Approximation* (2012), ch. 3; full texts of Dubickas 2006 (JNT), 2008, 2010.  All reachable through the Cornell library.
+- **Full texts read** (`papers/dubickas-2006-…`, `-2008-…`, `-2010-…`):
+  - **2008, Thm 1.3:** every `(k, k + 1)` holds a `ξ` with `‖ξ(3/2)^n‖ > 5/48`.  Dubickas notes Pollington *announced* 0.088.  The proof is a two-player game (Lemma 1.4): an adversary offers `{3, -1}` or `{1, -3}`, the player picks a digit, and the tail `|Σ u_{n+j}(2/3)^j|` must stay below 2.3745.  That is the same shape as our game with an adversarial parity bit.  Ours adds the arc geometry and the memory ladder.
+  - **2006, Cor. 1:** every `ξ ≠ 0` has a limit point of `‖ξ(3/2)^n‖` at most `(1 + T(2/3))/4 ≈ 0.2856`.  So `β* := sup_ξ inf_n ‖ξ(3/2)^n‖` lies in `[5/48, 0.2857)` in the literature, and in `[0.1196, 0.2857)` with our certificate.  Lean: `Literature.Dubickas2006`, `Literature.Dubickas2008`.
+  - **2010:** new bounds only for `p = 2q - 1` with `q ≥ 3` and for `p ≥ 2q + 1`.  Nothing new for `3/2`.
+- **Unread:** Bugeaud 2012, ch. 3 (§3.6, "constructions of pairs `(ξ, α)`… in a prescribed interval").  It postdates Dubickas 2008, and no later paper citing 2008 improves 5/48, so the risk is that the book itself carries an unpublished improvement.
 - **Cardinality:** every start `m₀ ≥ 1` in a winning residue class gives a `ξ` in `[m₀, m₀ + 1)`, so the certificate already yields infinitely many `ξ`, matching Dubickas's statement.  Uncountability (Pollington's form) still needs the branching game.
 
 ## Next
