@@ -21,7 +21,7 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 ## New result (pending formal proof)
 
-**There is `ξ > 0` with `‖ξ (3/2)^n‖ ≥ 7349/61440 ≈ 0.1196` for every `n ≥ 0`.**  The previous record is Pollington's `4/65 ≈ 0.0615` (1981).  A literature check (FLP 1995, AFS, Akiyama 2008, Schleischitz 2017, Dubickas 2009) found nothing better; confidence it is unpublished is about 85%.
+**There is `ξ > 0` with `‖ξ (3/2)^n‖ ≥ 7349/61440 ≈ 0.1196` for every `n ≥ 0`.**  The previous record is **Dubickas's `5/48 ≈ 0.1042`** (Math. Nachr. 281 (2008), infinitely many `ξ` with `{ξ(3/2)^n} ∈ (5/48, 43/48)`), not Pollington's `4/65 ≈ 0.0615` (1981) as first written here.  The ladder brackets it: blind play (`k = 0`, 0.0861) falls short of 5/48 and `k = 2` beats it by about 15%.  Confidence it is unpublished: about 75%.  See *Literature check* below.
 - Certificate: `experiments/arc_cert_beta_k2.json` (`k = 2`, `l = 23371/230400`, four residues with at most six intervals each).  `arc_trap_k.py certificate 2 7349/61440 60 OUT` regenerates it.
 - Independent check: an exact constructor that knows `m` completely ran 250 steps from five starts (`m₀ = 4, 8, ..., 20`), with random valid choices.  It never got stuck, and every `ξ` had `‖·‖ ≥ 0.124`.
 - Blind play (`k = 0`) reaches `β ≈ 0.0861` (`arc_cert_beta_k0.json`).  Remembering 2 bits reaches 0.1196, and `k = 3, 4` add nothing on the 60-width grid.
@@ -32,6 +32,14 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k = 0, 1` and 0.827 at `k = 2..6`.  Bounded 2-adic memory saturates after two bits, far above Mahler's 1/2.  Every Z-number construction would have to sit in FLP's decoupled regime (`t ≤ 1/2`).  There the integer parts are forced (at most one `ξ` per unit interval), so a finite-memory strategy has nothing to steer.
 - **Observation, not theorem:** no `k`-memory strategy wins any arc of length `≤ 1/2`.  A first proof attempt ("the child's integer offset `j` is forced") is incomplete, because the continuous choice of `a` can still move later `j`s.  A Lean `sorry` statement waits on a real argument.
 - **Reading:** this is the horizon in constructive form.  Seeing `k` bits further helps only while the arc has slack (length `> 1/2`).  Mahler's arc has none, so the only way past is to know *all* the bits, i.e. the integer itself.  That is the countable, rigid regime where Z-numbers would have to live.
+
+## Literature check (2026-10-05, second pass)
+
+- **Forward citations** (`papers followups`) of FLP 1995 (74 papers) and of Dubickas 2008 (19): no constant above 5/48 for `ξ(3/2)^n`.
+- **Direction trap:** Dubickas, JNT 117 (2006), and the multiplicative Markoff–Lagrange papers (Akiyama–Kaneko 2021, Akiyama–Kamae–Kaneko 2022, Kaneko–Steiner 2023) bound `lim sup ‖ξα^n‖` **from below** for every `ξ`, e.g. a limit point in `[0.238, 0.762]`.  That is the opposite quantity: how close to the integers an orbit can stay, not how far.  None competes.
+- **Same direction, other bases:** Dubickas, Results Math. 57 (2010): `‖ζ(5/3)^n‖ > 1/10` and `‖τ(9/4)^n‖ < 14/45` for some `ζ`, `τ` (abstract only; full text paywalled).
+- **Unread:** Bugeaud, *Distribution Modulo One and Diophantine Approximation* (2012), ch. 3; full texts of Dubickas 2006 (JNT), 2008, 2010.  All reachable through the Cornell library.
+- **Cardinality:** every start `m₀ ≥ 1` in a winning residue class gives a `ξ` in `[m₀, m₀ + 1)`, so the certificate already yields infinitely many `ξ`, matching Dubickas's statement.  Uncountability (Pollington's form) still needs the branching game.
 
 ## Next
 

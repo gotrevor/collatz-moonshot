@@ -12,11 +12,12 @@ Mahler's Z-numbers are `ξ > 0` with every `{ξ (3/2)^n}` in the arc `[0, 1/2)`.
 the constructive side of the same question: arcs that provably *do* trap some orbit.
 
 **Known (cited):** no arc shorter than `1/3` traps any `ξ > 0` (Flatto–Lagarias–Pollington 1995,
-Thm 1.4); `‖ξ (3/2)^n‖ ≥ 4/65` for uncountably many `ξ` (Pollington 1981); `‖ξ (3/2)^n‖ < 1/3` for
+Thm 1.4); `‖ξ (3/2)^n‖ ≥ 4/65` for uncountably many `ξ` (Pollington 1981); `‖ξ (3/2)^n‖ > 5/48` for
+infinitely many `ξ` (Dubickas 2008, the best constant found); `‖ξ (3/2)^n‖ < 1/3` for
 countably infinitely many `ξ` (Akiyama–Frougny–Sakarovitch / Akiyama 2008).
 
 **New (2026-10-05, certificate in `experiments/arc_cert_beta_k2.json`):** `‖ξ (3/2)^n‖ ≥ 7349/61440
-≈ 0.1196` for some `ξ > 0`, nearly twice Pollington's constant, pending a literature check.  The
+≈ 0.1196` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~75%, see the note).  The
 certificate is a game strategy that remembers the integer part mod 4 (`experiments/arc_trap_k.py`):
 for each residue `r` a finite union `P r` of rational intervals of window left ends, closed under one
 step of `×3/2` for both values of the unseen next bit.
@@ -34,6 +35,11 @@ namespace Literature
 C. R. Acad. Sci. Paris 292 (1981) 383–384, as cited by Flatto–Lagarias–Pollington, Acta Arith. 70
 (1995) p. 128: `Z_{3/2}(4/65, 61/65)` has positive Hausdorff dimension.  Stated weaker (existence). -/
 def Pollington1981 : Prop := ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (4 / 65) ξ
+
+/-- Dubickas, *On the powers of 3/2 and other rational numbers*, Math. Nachr. 281 (2008) 951–958,
+abstract: there are infinitely many `ξ` with `{ξ (3/2)^n} ∈ (5/48, 43/48)` for every `n ≥ 0`.  Stated
+weaker (one positive `ξ`, closed arc).  The best published constant this search found (2026-10-05). -/
+def Dubickas2008 : Prop := ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (5 / 48) ξ
 
 end Literature
 
@@ -86,11 +92,11 @@ theorem exists_trapped_of_winningStrategy {k : ℕ} {s t l : ℝ} {P : ℕ → S
   sorry
 
 /-- **New constant.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least `7349/61440 ≈ 0.1196`
-from the integers (Pollington 1981: `4/65 ≈ 0.0615`).
+from the integers (Dubickas 2008: `5/48 ≈ 0.1042`; Pollington 1981: `4/65 ≈ 0.0615`).
 Confidence 85% (exact rational fixed point; an independent exact construction tracking the integer
-part ran 250 steps from 5 starts with random valid choices, never stuck, all `‖·‖ ≥ 0.124`; novelty
-pending the literature check).  Proof: instantiate `exists_trapped_of_winningStrategy` with `k = 2`,
-`s = 7349/61440`, `t = 1 - 2s`, `l = 23371/230400` and the intervals of
+part ran 250 steps from 5 starts with random valid choices, never stuck, all `‖·‖ ≥ 0.124`; novelty ~75%:
+forward citations of FLP 1995 and Dubickas 2008 checked, Bugeaud's 2012 book unread).
+Proof: instantiate `exists_trapped_of_winningStrategy` with `k = 2`, `s = 7349/61440`, `t = 1 - 2s`, `l = 23371/230400` and the intervals of
 `experiments/arc_cert_beta_k2.json`; the closure is a finite set of rational inequalities. -/
 theorem exists_farFromIntegers_7349 :
     ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (7349 / 61440) ξ := by
