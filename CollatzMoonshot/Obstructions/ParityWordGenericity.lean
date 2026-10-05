@@ -221,9 +221,9 @@ open Filter CollatzMoonshot.Obstructions.ParityWord
 bases*, Ann. of Math. 165 (2007) 547–565: the base-`b` expansion of an irrational algebraic
 number has `p(L)/L → ∞`.  Transcribed for `b = 2` and combined with the standard fact that a
 non-eventually-periodic expansion is irrational: linear complexity along a subsequence forces
-transcendence.  Faithful to the main theorem as recalled; the step most needing an expert check
-is that the source's conclusion is `lim inf p(L)/L = ∞` (so a subsequence with `p(L) ≤ C·L`
-suffices), unchecked against the paper body. -/
+transcendence.  Faithful: checked 2026-10-05 against Theorem 1 of arXiv math/0511674, which
+states `lim inf p(n)/n = +∞`, so a subsequence with `p(L) ≤ C·L` suffices.  The irrationality
+half (a non-eventually-periodic expansion is irrational) is folded in, not cited. -/
 def AdamczewskiBugeaud2007 : Prop :=
   ∀ w : ℕ → Bool, ¬ EventuallyPeriodic w → (∃ C : ℕ, ∃ᶠ L in atTop, complexity w L ≤ C * L) →
     Transcendental ℚ (parityReal w)
