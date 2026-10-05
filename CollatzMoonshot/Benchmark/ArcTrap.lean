@@ -16,8 +16,8 @@ Thm 1.4); `‖ξ (3/2)^n‖ ≥ 4/65` for uncountably many `ξ` (Pollington 1981
 infinitely many `ξ` (Dubickas 2008, the best constant found); `‖ξ (3/2)^n‖ < 1/3` for
 countably infinitely many `ξ` (Akiyama–Frougny–Sakarovitch / Akiyama 2008).
 
-**New (2026-10-05, certificate in `experiments/arc_cert_beta_k2.json`):** `‖ξ (3/2)^n‖ ≥ 7349/61440
-≈ 0.1196` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~85%, see the note).  The
+**New (2026-10-05, certificate in `experiments/arc_cert_beta_1227_k2.json`):** `‖ξ (3/2)^n‖ ≥
+1227/10000` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~85%, see the note).  The
 certificate is a game strategy that remembers the integer part mod 4 (`experiments/arc_trap_k.py`):
 for each residue `r` a finite union `P r` of rational intervals of window left ends, closed under one
 step of `×3/2` for both values of the unseen next bit.
@@ -98,15 +98,15 @@ theorem exists_trapped_of_winningStrategy {k : ℕ} {s t l : ℝ} {P : ℕ → S
     ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x := by
   sorry
 
-/-- **New constant.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least `7349/61440 ≈ 0.1196`
+/-- **New constant.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least `1227/10000`
 from the integers (Dubickas 2008: `5/48 ≈ 0.1042`; Pollington 1981: `4/65 ≈ 0.0615`).
 Confidence 85% (exact rational fixed point; an independent exact construction tracking the integer
 part ran 250 steps from 5 starts with random valid choices, never stuck, all `‖·‖ ≥ 0.124`; novelty ~85%:
 forward citations of FLP 1995, Dubickas 2006 and 2008 checked; Bugeaud's 2012 book unread).
-Proof: instantiate `exists_trapped_of_winningStrategy` with `k = 2`, `s = 7349/61440`, `t = 1 - 2s`, `l = 23371/230400` and the intervals of
-`experiments/arc_cert_beta_k2.json`; the closure is a finite set of rational inequalities. -/
-theorem exists_farFromIntegers_7349 :
-    ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (7349 / 61440) ξ := by
+Proof: instantiate `exists_trapped_of_winningStrategy` with `k = 2`, `s = 1227/10000`,
+`t = 1 - 2s`, `l = 26411/300000` and the intervals of `experiments/arc_cert_beta_1227_k2.json`; the closure is a finite set of rational inequalities. -/
+theorem exists_farFromIntegers_1227 :
+    ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (1227 / 10000) ξ := by
   sorry
 
 end CollatzMoonshot.Benchmark.ArcTrap
