@@ -109,5 +109,6 @@ import CollatzMoonshot.Obstructions.RayRefill
 import CollatzMoonshot.Obstructions.BoundedMerger
 import CollatzMoonshot.Sibling
 import CollatzMoonshot.Literature.LocalRank
+import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.FlattoCeiling
 import CollatzMoonshot.Maze
