@@ -21,3 +21,8 @@ Executed `KICKOFF-2026-10-05-maze.md`.  Full `lake build` green; `#maze_audit` p
 - P_6 prefix-admission family has no Lean statement yet; it stays legacy.
 - The 09-13 relaxation ladder rows are not yet enumerated.
 No successor task.
+
+## Checkpoint
+Branch `main`, HEAD `c66585b` (Maze commit).  `box done --green` signalled; treadmill stopped.
+Next steps (for a future session, not queued): give the P_6 family a Lean statement and move it
+out of `mazeLegacy`; add reopen Props for the legacy walls (Round A, Hercher, Nashida II).
