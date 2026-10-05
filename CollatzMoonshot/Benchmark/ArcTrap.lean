@@ -150,6 +150,16 @@ theorem exists_farFromIntegers_1228 :
     ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (307 / 2500) ξ := by
   sorry
 
+/-- **Above the edge, no memoryless relaxed strategy.**  At `β = 13/100` (arc `[0.13, 0.87]`) no
+width and no state set win.
+Confidence 85%.  Evidence and proof route: a relaxed strategy is dominated by the component game,
+where the constructor keeps a whole component of `W ∩ (arc lifts)` (bigger windows dominate) and
+starts from the full arc.  The exact minimax `experiments/arc_minimax.py depth 13/100 1 30` forces it
+out at depth 15.  A proof transcribes that finite refutation tree, rational endpoints throughout. -/
+theorem not_relaxedStrategy_13_100 (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy (13 / 100) (1 - 2 * (13 / 100)) l P := by
+  sorry
+
 /-- **Conjecture: the relaxed game's value is `7/57`.**  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.
 Confidence 75% for the first half, 65% for the second.  Evidence: bisection to `1e-8` (wins at
