@@ -17,6 +17,7 @@ import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
 import CollatzMoonshot.Benchmark.FlattoCeiling
+import CollatzMoonshot.Obstructions.ParityWordGenericity
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -167,7 +168,19 @@ def register : List Hall := [
    "RESEARCH-2026-10-05-rewriting-lane-landscape.md", "2026-10-05"⟩,
   ⟨"within-horizon refinement of Flatto's Z-number count", .adversary2adic,
    "a start g < 2^n fixes only its first n parities, every residue class is realized, and at least (3/2)^n itineraries are admissible, so the count stays at X^(log2 3/2)",
-   "Benchmark/FlattoCeiling.lean; RESEARCH-2026-10-05-g2-hunt-and-flatto-ceiling.md", "2026-10-05"⟩]
+   "Benchmark/FlattoCeiling.lean; RESEARCH-2026-10-05-g2-hunt-and-flatto-ceiling.md", "2026-10-05"⟩,
+  ⟨"normality of a divergent orbit's parity word", .refuted,
+   "the raw word never contains 11, and the shortcut word's 1-density is forced to at least log 2 / log 3 > 1/2",
+   "Obstructions/ParityWordGenericity.lean; APPROACHES.md", "2026-09-20"⟩,
+  ⟨"disjunctivity of a divergent orbit's parity word", .wall,
+   "open, and it implies arbitrarily long odd runs, so it is a stronger target than the run question it was meant to serve",
+   "Obstructions/ParityWordGenericity.lean; APPROACHES.md", "2026-09-20"⟩,
+  ⟨"irrationality of the parity real", .costume,
+   "irrational iff the shortcut parity word is not eventually periodic, which divergence already forces",
+   "Obstructions/ParityWordGenericity.lean; FrontA/ParityReconstruction.lean", "2026-09-20"⟩,
+  ⟨"transcendence of the parity real via Adamczewski-Bugeaud", .wall,
+   "the criterion needs linear factor complexity (the Sturmian end), which nothing about divergence forces",
+   "Obstructions/ParityWordGenericity.lean; DIRECTION.md 2026-09-19", "2026-09-20"⟩]
 
 /-! ## 4. The audit -/
 
@@ -203,7 +216,20 @@ def mazeLinks : List Link := [
   ⟨"within-horizon refinement of Flatto's Z-number count",
    [``Benchmark.FlattoCeiling.parityWord_injective,
     ``Benchmark.FlattoCeiling.zNumber_parityWord_admissible,
-    ``Benchmark.FlattoCeiling.card_admissible_starts_ge], []⟩]
+    ``Benchmark.FlattoCeiling.card_admissible_starts_ge], []⟩,
+  ⟨"normality of a divergent orbit's parity word",
+   [``Obstructions.ParityWord.rawWord_not_normal,
+    ``Obstructions.ParityWord.accWord_not_normal_of_diverges], []⟩,
+  ⟨"disjunctivity of a divergent orbit's parity word",
+   [``Obstructions.ParityWord.divergentWordDisjunctive_imp_longOddRuns],
+   [``Obstructions.ParityWord.DivergentWordDisjunctive]⟩,
+  ⟨"irrationality of the parity real",
+   [``Obstructions.ParityWord.irrational_parityReal_accWord,
+    ``Obstructions.ParityWord.accWord_not_eventuallyPeriodic], []⟩,
+  ⟨"transcendence of the parity real via Adamczewski-Bugeaud",
+   [``Literature.AdamczewskiBugeaud2007,
+    ``Obstructions.ParityWord.transcendental_parityReal_of_lowComplexity],
+   [``Obstructions.ParityWord.DivergentWordLowComplexity]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -216,7 +242,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 21 rows, 13 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 25 rows, 17 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

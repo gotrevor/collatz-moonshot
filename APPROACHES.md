@@ -363,6 +363,11 @@ associated real is aperiodicity restated (`injective_of_diverges` collapses unbo
 `-> infinity`), and the transcendence machinery (Adamczewski-Bugeaud, `liminf p(n)/n < infinity`)
 fires only on *low* complexity - the Sturmian antipode, already retired here as Christoffel-word
 residue signatures and the Cobham angle.  No lever on the run-count gap node.
+Lean record (`Obstructions/ParityWordGenericity.lean`, four `Maze.lean` rows): `rawWord_not_normal`,
+`rawWord_not_disjunctive`, `accWord_not_normal_of_diverges` (resting on the sorried
+`accOnes_freq_eventually_ge`), `divergentWordDisjunctive_imp_longOddRuns`,
+`irrational_parityReal_accWord`, `transcendental_parityReal_of_lowComplexity` with
+`Literature.AdamczewskiBugeaud2007` and reopen node `DivergentWordLowComplexity`.
 
 
 ## 2026-09-27: negative-reference potential, tested and retired
