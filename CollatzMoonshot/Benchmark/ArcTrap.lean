@@ -154,8 +154,9 @@ theorem exists_farFromIntegers_1228 :
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.
 Confidence 75% for the first half, 65% for the second.  Evidence: bisection to `1e-8` (wins at
 `7/57 - 1e-8`, fails at `7/57`), the same edge at `0..3` bits of memory and over width grids.
-Mechanism (a guess): a period-3 orbit of `x ↦ 3x/2 + d (mod 1)` has denominator dividing
-`8 (27 - 8) = 8 · 19`, and `57 = 3 · 19`. -/
+Mechanism: `4/19 → 6/19 → 9/19` is a 3-cycle of `x ↦ 3x/2 + d (mod 1)` (parities `0, 0, 1/2`), and the
+arc's right edge maps to `1/2 - 3β/2 = 6/19` exactly at `β = 7/57`.  Exact minimax of the
+just-in-time adversarial-parity game forces the constructor out at depth 26 for `β = 0.1229`. -/
 def RelaxedValueIsSevenFiftySevenths : Prop :=
   (∀ β : ℝ, 0 < β → β < 7 / 57 → ∃ l P, RelaxedStrategy β (1 - 2 * β) l P) ∧
   (∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ l P, ¬ RelaxedStrategy β (1 - 2 * β) l P)
