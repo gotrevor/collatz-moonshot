@@ -17,9 +17,10 @@ Halting at y < 1 is ignored, so the windows are supersets (sound for exclusion).
 
 An infinite orbit is either periodic (xi = 0; then y_n lies in [y* - Delta/(rho-1), y*], a finite
 check) or unbounded (xi > 0).  Flatto-Lagarias-Pollington (Acta Arith. 70, 1995): for xi > 0 and
-rho = p/q in lowest terms, p > q >= 2, limsup - liminf of {xi*rho^n} is at least 1/p.  So if the
-windows fit inside one NON-WRAPPING interval of length < 1/p and no small periodic orbit exists,
-the map terminates on every positive integer.
+rho = p/q in lowest terms, p > q >= 2, limsup - liminf of {xi*rho^n} is at least 1/p.  Dubickas
+(Bull. LMS 2006, Thm 1) gives the same bound for {xi*rho^n + eta}, every real eta, so an arc that
+wraps through 0 rotates into [0,1).  If the windows fit in one arc of length < 1/p and no small
+periodic orbit exists, the map terminates on every positive integer.
 
     g2_mahler_triage.py windows SPEC          # one map, JSON
     g2_mahler_triage.py triage TSV [--hits]   # the benchmark list (maps_G2_open.tsv)
@@ -149,13 +150,13 @@ def windows(spec: str) -> dict:
         if x is not None and x in seen:
             cycles.append(y0)
     p = rho.numerator
-    flp = (not wraps) and length < Fr(1, p) and not cycles
+    flp = length < Fr(1, p) and not cycles
     res.update({
         "M": M, "classes": {str(s): str(c) for s, c in cls.items()},
         "ystar": str(ystar), "windows": {str(s): [str(a), str(b)] for s, (a, b) in wins.items()},
         "arc_start": str(start), "arc_length": str(length), "wraps": wraps,
         "flp_bound": f"1/{p}", "small_cycle_starts": cycles,
-        "verdict": "terminates-by-FLP" if flp else ("wraps" if wraps else "window-too-wide"),
+        "verdict": "terminates-by-FLP" if flp else "window-too-wide",
     })
     return res
 

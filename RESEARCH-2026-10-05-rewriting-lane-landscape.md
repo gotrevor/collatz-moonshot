@@ -30,3 +30,19 @@ Example (row 1, `0:1,-1,0;1:1,1,0;2:9,-2,2`, residue 3 halts).  Accelerated onto
 3. **Mixed maps** (some contracting branches) are Collatz-shaped in miniature.  Grade them only after 1–2.
 
 **Gate.**  Before any Lean lap, run `papers followups` on both Zenodo DOIs (they are a week old) and check Nashida's repos for issues/updates.  Outreach to Nashida (the paper invites benchmark results) waits for a first theorem.  Per `docs/notes/` convention, Ren writes the note and Trevor writes the intro.
+
+## Outcome, same day
+
+**Probe 1 (canonicalize and accelerate) dropped.**  Nashida's dichotomy says no certificate exists for an entangled map, even with arbitrary bounded corrections, so re-running his classifier on simplified maps is almost certainly something he has already ruled out (Trevor's call, ~75%).
+
+**Probe 2 (FLP) closed on the whole benchmark.**  `experiments/g2_mahler_triage.py triage maps_G2_open.tsv`:
+- 226 of the 4389 maps are single-ratio (185 at 9/4, 26 at 9/2, 15 at 3/2).  The other 4163 mix ratios or have contracting branches, so FLP does not apply to them.
+- None is excluded.  The best covering arc is 2/p, twice the FLP threshold.  Arcs that wrap through 0 are covered too, via Dubickas's shifted bound.
+- Reading: entanglement means at least two allowed continuations inside an expanding component.  FLP's single short window is effectively the no-branching case, which is exactly the disentangled maps Nashida already settles.  This is a heuristic explanation; it is not proved for all maps.  My earlier 30% was miscalibrated.
+
+**Mahler's 3/2 problem is inside the benchmark.**  Row `0:3,0,1;1:3,1,1;2:3,0,1` (line 1248, `INF-open`) is Mahler's 1968 recursion `g(x) = ⌈3x/2⌉`, halting at `x ≡ 3 (mod 4)`.  Sources: Mahler 1968, doi:10.1017/S1446788700005371, eqs. (2), (11), (13); Dubickas–Mossinghoff 2009, doi:10.1090/S0025-5718-09-02211-X.
+- A Z-number forces an infinite `g`-orbit.  The converse fails: Mahler calls the condition "necessary (but not a sufficient)", and the real condition also forbids parity words such as `10101` (`1 + (2/3)² + (2/3)⁴ = 133/81 > 3/2`).
+- So **termination of this benchmark map implies Mahler's conjecture**.  It is also implied by Dubickas's complexity conjecture (Glasgow Math. J. 51, 2009) and by the normality Conjecture 1.2 of Andrieu–Eliahou–Vivion, arXiv 2510.11723.
+- Neither Nashida paper mentions Mahler, Z-numbers, FLP or Dubickas (both r3 PDFs read).  Lagarias's annotated bibliography, entry 117, states the correspondence as "if and only if", which overstates Mahler.
+
+Lean statement staged: `KICKOFF-2026-10-05-mahler-benchmark.md`.  Outreach shape: Ren writes a `docs/notes/` note once the Lean statement lands; Trevor writes a brief intro to Nashida.
