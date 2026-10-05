@@ -30,12 +30,14 @@ noncomputable def automatonValue {d : ℕ} (α β : Fin d → ℝ) (M : Bool →
   α ⬝ᵥ (n.bits.foldr (fun b v => M b *ᵥ v) β)
 
 /-- **Nashida, Part I** (Zenodo 10.5281/zenodo.23081447, r3 2026-10-02; the automaton-rank
-barrier for entangled maps, Collatz included).  Weaker transcription: only *entrywise
-positive* automata (the source also excludes finite arctic and non-negative automata with a
-primitive dominant block), in every dimension `d`. -/
+barrier for entangled maps, Collatz included).  Weaker transcription: only automata whose
+matrix entries are all at least `2`, which forces the *positive growth* the source assumes (the
+source also excludes finite arctic and non-negative automata with a primitive dominant block), in
+every dimension `d`.  Unchecked against the paper body: the digit order (here least significant
+first) and whether the source's growth condition is exactly exponential growth in digit length. -/
 def NashidaPositiveAutomatonBarrier : Prop :=
   ∀ (d : ℕ) (α β : Fin d → ℝ) (M : Bool → Matrix (Fin d) (Fin d) ℝ),
-    (∀ i, 0 < α i) → (∀ i, 0 < β i) → (∀ b i j, 0 < M b i j) →
+    (∀ i, 0 < α i) → (∀ i, 0 < β i) → (∀ b i j, 2 ≤ M b i j) →
       ¬ ∀ n : ℕ, 1 < n → automatonValue α β M (tstep n) < automatonValue α β M n
 
 /-- **Kadyrbekov & Kadirbekov** (`collatz-matrix-no-go`, Zenodo 10.5281/zenodo.22098492,
