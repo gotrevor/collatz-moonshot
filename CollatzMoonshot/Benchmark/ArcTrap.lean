@@ -160,6 +160,34 @@ theorem not_relaxedStrategy_13_100 (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy (13 / 100) (1 - 2 * (13 / 100)) l P := by
   sorry
 
+/-! ### The quantity itself -/
+
+/-- `E α`: how far an orbit `ξ, ξα, ξα², …` (`ξ > 0`) can stay from the integers, i.e.
+`sup_{ξ > 0} inf_{n ≥ 0} ‖ξ αⁿ‖`.  Using `lim inf` instead of `inf` gives the same value: start the
+orbit at `ξ α^N`.  Whether the supremum is attained for `α = 3/2` is not known to us. -/
+noncomputable def E (α : ℝ) : ℝ :=
+  sSup {β : ℝ | ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, β ≤ |ξ * α ^ n - round (ξ * α ^ n)|}
+
+/-- Calibration: `E 2 = 1/3`.  Confidence 95%.  Proof: `ξ = 1/3` gives `2ⁿ/3 ≡ ±1/3`.  Conversely, if
+`x` and `2x` both lie in `[β, 1 - β]` mod 1 with `β > 1/3`, then `x ∈ [1/6, 1/3] ∪ [2/3, 5/6]`, which
+misses `[β, 1 - β]`. -/
+theorem E_two : E 2 = 1 / 3 := by
+  sorry
+
+/-- Calibration: `E 3 = 1/2`, via `ξ = 1/2` (every `3ⁿ/2` is a half-integer).  Confidence 98%. -/
+theorem E_three : E 3 = 1 / 2 := by
+  sorry
+
+/-- Lower bound from the relaxed-game certificate.  Confidence 90%.  Proof: `exists_farFromIntegers_1228`,
+and `FarFromIntegers β ξ` gives `β ≤ |y - round y|` for each `y = ξ (3/2)^n`; `E (3/2) ≤ 1/2` bounds
+the set. -/
+theorem E_three_halves_ge : 307 / 2500 ≤ E (3 / 2) := by
+  sorry
+
+/-- Upper bound from Dubickas 2006 (Cor. 1).  Confidence 95% given the literature input. -/
+theorem E_three_halves_le (h : Literature.Dubickas2006) : E (3 / 2) ≤ 2857 / 10000 := by
+  sorry
+
 /-- **Barrier: above `7/57` no memoryless relaxed strategy exists.**  Treating each parity bit as
 adversarial caps the construction at `7/57`.
 Confidence 90% (computer-assisted step checked exactly; hand steps below).  Proof route:
