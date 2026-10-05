@@ -16,6 +16,7 @@ import CollatzMoonshot.Obstructions.BorrowabilityHeight23
 import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
+import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.FlattoCeiling
 import CollatzMoonshot.Obstructions.ParityWordGenericity
 
@@ -128,6 +129,9 @@ def register : List Hall := [
   ⟨"negative-shadow score", .refuted,
    "weighted scores on the inverse basin of -1 are unbounded",
    "Obstructions/NegativeShadow.lean", "2026-09-27"⟩,
+  ⟨"adversarial-parity arc trap past 7/57", .adversary2adic,
+   "treating each unseen parity bit as adversarial, the 3-cycle 4/19, 6/19, 9/19 forces every memoryless relaxed strategy for ||xi (3/2)^n|| >= beta out once beta > 7/57",
+   "Benchmark/ArcTrap.lean; experiments/arc_barrier.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-05"⟩,
   ⟨"local-global borrowing at 23", .refuted,
    "every prime power has small companions, yet no integer companion exists below 23",
    "Obstructions/LocalGlobalBorrow23.lean", "2026-09-29"⟩,
@@ -206,6 +210,8 @@ def mazeLinks : List Link := [
    [``Literature.NashidaPositiveAutomatonBarrier, ``Literature.KadirbekovBoundedCorrection,
     ``BoundedMerger.crt_no_bounded_smaller_merge], [``UnboundedRelativeRank]⟩,
   ⟨"negative-shadow score", [``NegativeShadow.inverse_basin_scores_unbounded], []⟩,
+  ⟨"adversarial-parity arc trap past 7/57",
+   [``Benchmark.ArcTrap.relaxed_barrier, ``Benchmark.ArcTrap.not_relaxedStrategy_13_100], []⟩,
   ⟨"local-global borrowing at 23",
    [``each_prime_power_has_small_inputs_23, ``no_global_small_inputs_23], []⟩,
   ⟨"quadratic borrowability height at 23", [``no_strict_quadratic_height_descent_23], []⟩,
@@ -242,7 +248,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 25 rows, 17 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 26 rows, 18 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

@@ -160,9 +160,28 @@ theorem not_relaxedStrategy_13_100 (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy (13 / 100) (1 - 2 * (13 / 100)) l P := by
   sorry
 
-/-- **Conjecture: the relaxed game's value is `7/57`.**  Every `β < 7/57` admits a memoryless relaxed
+/-- **Barrier: above `7/57` no memoryless relaxed strategy exists.**  Treating each parity bit as
+adversarial caps the construction at `7/57`.
+Confidence 90% (computer-assisted step checked exactly; hand steps below).  Proof route:
+* Domination: a relaxed strategy is dominated by the component game.  There the adversary picks
+  `d` each step, the constructor keeps a whole component of `W ∩ (arc lifts)`, and `W` becomes
+  `1.5 · C + d` mod 1.  Integer shifts are irrelevant and a larger window is never worse.
+* Funnel (`experiments/arc_barrier.py verify`): for `β ∈ (7/57, 0.1229]` an adaptive adversary
+  forces, within 13 moves, death or a window inside `[x₀, R₀]` with `x₀ > 10/19`, `R₀ = 1 - 9β/4`.
+  This is an exact AND-OR search with endpoints affine in `β`: 3 open `β`-pieces and 3 split points.
+  The arc's left edge after two `1/2`-steps sits at `9β/4 + 1/4 > 10/19 ⟺ β > 7/57`.
+* Runaway: for `β ∈ (4/35, 4/19)` the block `(0, 1/2, 1/2)` either kills `[x, R₀]` (when
+  `3x/2 ≥ 1 - β`) or maps it to `[g x, R₀]` with `g x = 27x/8 - 5/4`.  The components are unique
+  because `3R₀/2 < 1 + β` and `3R₀/2 > 1 - β`.  `g x - x = (19/8)(x - 10/19)` grows geometrically.
+* Monotonicity: for `β > 0.1229` play the `0.1229` adversary against the larger shadow window. -/
+theorem relaxed_barrier (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy β (1 - 2 * β) l P := by
+  sorry
+
+/-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
+the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.
-Confidence 75% for the first half, 65% for the second.  Evidence: bisection to `1e-8` (wins at
+Confidence 75% for the first half; the second half is `relaxed_barrier`.  Evidence: bisection to `1e-8` (wins at
 `7/57 - 1e-8`, fails at `7/57`), the same edge at `0..3` bits of memory and over width grids.
 Mechanism: `4/19 → 6/19 → 9/19` is a 3-cycle of `x ↦ 3x/2 + d (mod 1)` (parities `0, 0, 1/2`), and the
 arc's right edge maps to `1/2 - 3β/2 = 6/19` exactly at `β = 7/57`.  Exact minimax of the

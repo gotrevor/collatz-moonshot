@@ -40,7 +40,28 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 **Why 7/57: the 3-cycle `4/19 → 6/19 → 9/19`.**  Under `x ↦ 3x/2 + d (mod 1)` with parities `d = 0, 0, 1/2` this is a cycle: `(27/8)(4/19) + 1/2 = 46/38 ≡ 4/19`.  The arc's right edge `1 - β` maps with `d = 0` to `1/2 - 3β/2`.  That equals `6/19` exactly at `β = 7/57`.  So the edge's image lands on the cycle at the measured threshold.  How the adversary turns this into a forced exit is not yet written down.
 
-**Exact barrier evidence (complete minimax, exact rationals).**  Bigger windows dominate, so the constructor's best move is a whole component of `W ∩ (arc lifts)`.  Starting from the full arc dominates every start.  The game is: the adversary reveals the current parity, the constructor picks a component, and the window becomes `1.5 · component + d`.  At `β = 0.1229, 0.124, 0.13, 0.15` the constructor is forced out at depths 26, 19, 14, 9.  At 0.1200 and 0.1228 it survives until the 300 s timeout.  This is a proof, for those `β`, that just-in-time adversarial parity loses.  With lookahead (the adversary commits each parity `L` steps early) the constructor still dies at `β = 0.13`, at depths 15, 18, 22 and 24 for `L = 1..4`.  Each extra bit of lookahead buys about three steps, not survival.  Code and tests: `experiments/arc_minimax.py` (`depth BETA LOOKAHEAD MAXD`).  Open: a uniform-in-`L` argument, i.e. the barrier theorem.  That theorem would be a **barrier: no strategy that treats unseen parity bits as adversarial beats 7/57.**  It would cover Dubickas's Lemma 1.4 game as well (5/48 < 7/57).
+## Theorem: the memoryless adversarial-parity construction stops at 7/57
+
+**Statement.**  For every `β > 7/57` there is no memoryless relaxed strategy for the arc `[β, 1 - β]`.  In Lean this is `relaxed_barrier` (`sorry`, with the proof route in its docstring), and the Maze row is "adversarial-parity arc trap past 7/57".  With the certificates below 7/57, the game's value is `7/57` up to `1e-8` on the lower side.
+
+**The game it rests on.**  A relaxed strategy is dominated by the *component game*: the adversary picks the parity `d` each step, the constructor keeps a whole component `C` of `W ∩ (arc lifts)`, and `W ← 1.5 C + d (mod 1)`.  Since `d` is fresh each step, integer shifts of `W` are irrelevant and a larger window is never worse.
+
+**Proof.**
+1. **Funnel (computer-assisted, exact).**  For `β ∈ (7/57, 0.1229]` an adaptive adversary forces every constructor branch, within 13 moves, either to die or to reach a window inside `[x₀, R₀]` with `x₀ > 10/19` and `R₀ = 1 - 9β/4`.  `experiments/arc_barrier.py verify` runs an AND-OR search whose window endpoints are affine in `β`.  Every comparison is decided on open `β`-pieces (3 pieces), and the 3 split points are checked exactly.  Teeth test: below 7/57 the same search finds no funnel.
+2. **Runaway lemma (by hand).**  Let `β ∈ (4/35, 4/19)`, `g(x) = 27x/8 - 5/4`, and take a window `[x, R₀]` with `10/19 < x < R₀`.  The adversary plays `d = 0, 1/2, 1/2`.
+   - Step 1: the window lies inside the arc, so `C = W` and `W ← [3x/2, 3/2 - 27β/8]`.
+   - Step 2: `3R₀/2 < 1 + β` (since `β > 4/35`) and `3R₀/2 > 1 - β` (since `β < 4/19`), so the only component is `[3x/2, 1 - β]`.  It is empty, and the constructor dies, iff `3x/2 ≥ 1 - β`.  Otherwise `W ← [9x/4 - 1/2, 1 - 3β/2]`, which lies inside the arc.
+   - Step 3: `W ← [g(x), R₀]`, where `g(x) < R₀` follows from step 2's non-emptiness.
+   - Then `g(x) - x = (19/8)(x - 10/19)`, so `x_n - 10/19 = (27/8)^n (x₀ - 10/19)` grows until `3x_n/2 ≥ 1 - β` kills it.
+3. **Monotonicity.**  For `β > 0.1229` the arc is smaller.  Shadow each window by its `β = 0.1229` counterpart and play that adversary; the shadow dies, so the real window dies.
+
+**Where 7/57 comes from.**  The block `(0, 1/2, 1/2)` cycles `10/19 → 15/19 → 13/19`, the mirror image of `4/19 → 6/19 → 9/19` under `x ↦ 1 - x`, which swaps the parities.  The funnel parks the window's left end at the image of the arc's left edge under two `1/2`-steps, `9β/4 + 1/4`.  That lies past the repelling point `10/19` exactly when `β > 7/57`.
+
+**Scope (corrected 2026-10-05).**  The theorem covers memoryless strategies, i.e. every parity treated as adversarial and seen only when it arrives.  It does **not** yet cover `k`-memory strategies.
+- **Why not:** there the adversary commits a high bit `k - 1` steps ahead, and the constructor's later choice of integer lift `J` XORs into the eventual parity.  So the adversary cannot simply force a chosen parity sequence.
+- **Evidence it still holds:** the `k = 1, 2, 3` relaxed games also stop at 7/57 (to `1e-6`).
+- **Retracted:** an earlier line here said "lookahead does not rescue the constructor".  That was measured in a model where the adversary commits *parities* ahead, which is not the `k`-memory game.
+- **Retracted:** a fixed-sequence version of the funnel ("one sequence kills against any lookahead").  It relied on pruning dominated windows, and that pruning is unsound once integer shifts matter.
 
 **Reading.**  The literature window is `[5/48, 0.2857)`.  Adversarial-parity constructions top out at `7/57 ≈ 0.1228`.  Above that, a construction must use the integer arithmetic of `m`, i.e. the bits beyond the horizon, not treat them as noise.  The note's Mahler section is the same story: bounded lookahead buys nothing.
 
