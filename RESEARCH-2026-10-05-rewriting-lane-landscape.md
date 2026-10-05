@@ -45,4 +45,4 @@ Example (row 1, `0:1,-1,0;1:1,1,0;2:9,-2,2`, residue 3 halts).  Accelerated onto
 - So **termination of this benchmark map implies Mahler's conjecture**.  It is also implied by Dubickas's complexity conjecture (Glasgow Math. J. 51, 2009) and by the normality Conjecture 1.2 of Andrieu–Eliahou–Vivion, arXiv 2510.11723.
 - Neither Nashida paper mentions Mahler, Z-numbers, FLP or Dubickas (both r3 PDFs read).  Lagarias's annotated bibliography, entry 117, states the correspondence as "if and only if", which overstates Mahler.
 
-Lean statement staged: `KICKOFF-2026-10-05-mahler-benchmark.md`.  Outreach shape: Ren writes a `docs/notes/` note once the Lean statement lands; Trevor writes a brief intro to Nashida.
+This bears on Nashida Part I §13 **Q2**: *"which entangled maps of Table 5 marked 'open' terminate, and by what arguments?"*  The Lean statement is staged in `KICKOFF-2026-10-05-mahler-benchmark.md`.  The outward artifact is a standalone result file, `docs/notes/mahler-in-g2-benchmark.md`, written as its own short result with no addressee; it is written once that statement lands.  Outreach is a pointer to it.
