@@ -16,6 +16,7 @@ import CollatzMoonshot.Obstructions.BorrowabilityHeight23
 import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
+import CollatzMoonshot.Benchmark.FlattoCeiling
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -163,7 +164,10 @@ def register : List Hall := [
    "RESEARCH-2026-09-22-mechanism-search.md", "2026-09-22"⟩,
   ⟨"richer matrix interpretations of the rewriting system", .wall,
    "barred by Nashida Part II (non-negative affine matrix interpretations)",
-   "RESEARCH-2026-10-05-rewriting-lane-landscape.md", "2026-10-05"⟩]
+   "RESEARCH-2026-10-05-rewriting-lane-landscape.md", "2026-10-05"⟩,
+  ⟨"within-horizon refinement of Flatto's Z-number count", .adversary2adic,
+   "a start g < 2^n fixes only its first n parities, every residue class is realized, and at least (3/2)^n itineraries are admissible, so the count stays at X^(log2 3/2)",
+   "Benchmark/FlattoCeiling.lean; RESEARCH-2026-10-05-g2-hunt-and-flatto-ceiling.md", "2026-10-05"⟩]
 
 /-! ## 4. The audit -/
 
@@ -195,7 +199,11 @@ def mazeLinks : List Link := [
   ⟨"signed flow as a new lever", [``SignedFlow.exists_signed_flow_iff_reachesOne], []⟩,
   ⟨"ballot-coalescence rigidity", [``FrontA.FirstCrossing.not_ballot_ancestor_unique], []⟩,
   ⟨"first-crossing word periodicity",
-   [``FrontA.FirstCrossing.at_primitive, ``FrontA.FirstCrossing.overshoot_modEq], []⟩]
+   [``FrontA.FirstCrossing.at_primitive, ``FrontA.FirstCrossing.overshoot_modEq], []⟩,
+  ⟨"within-horizon refinement of Flatto's Z-number count",
+   [``Benchmark.FlattoCeiling.parityWord_injective,
+    ``Benchmark.FlattoCeiling.zNumber_parityWord_admissible,
+    ``Benchmark.FlattoCeiling.card_admissible_starts_ge], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -208,7 +216,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 20 rows, 12 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 21 rows, 13 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

@@ -1,3 +1,5 @@
+> **2026-10-05 (later), benchmark probes closed:** the cycle hunt found no cycle in any of the 4389 open `G_2` maps up to 10^7.  Improving Flatto's Z-number exponent within the 2-adic horizon is capped at log₂(3/2) (`Benchmark/FlattoCeiling.lean`, Maze row).  [Note](RESEARCH-2026-10-05-g2-hunt-and-flatto-ceiling.md).  Staged, not launched: [Mahler wiring](KICKOFF-2026-10-05-mahler-benchmark.md), [ceiling proofs](KICKOFF-2026-10-05-flatto-ceiling.md).
+
 > **2026-10-05, rewriting lane checked, new target:** the YAH termination-certificate wing is already worked and largely barred by peers (Nashida Parts I-II, Kadirbekov; [landscape](RESEARCH-2026-10-05-rewriting-lane-landscape.md)).  Their barriers also exclude the automaton-computed and bounded-correction local ranks that the 09-29 review left open.  **Candidate target:** Nashida's published benchmark of 4389 open entangled `G_2` maps; probe 1 = canonicalize/accelerate and reclassify.  Closed routes go to `Maze.lean` ([kickoff](KICKOFF-2026-10-05-maze.md)).
 
 # DIRECTION — collatz-moonshot
