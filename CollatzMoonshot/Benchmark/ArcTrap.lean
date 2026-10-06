@@ -436,6 +436,468 @@ def ArcPath (s t : ℝ) (N : ℕ) (p q : ℝ) (a : Fin N → ℤ) : Prop :=
     (∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2) ∧
     f 0 = p ∧ f (Fin.last N) = q
 
+/-! #### Helpers for the forward and backward path counts -/
+
+theorem inArc_iff {s t y : ℝ} (ht : t < 1) :
+    (∃ x ∈ Set.Icc s (s + t), y = Int.fract x) ↔ (0 ≤ y ∧ y < 1 ∧ Int.fract (y - s) ≤ t) := by
+  constructor
+  · rintro ⟨x, ⟨hx1, hx2⟩, rfl⟩
+    refine ⟨Int.fract_nonneg _, Int.fract_lt_one _, ?_⟩
+    rw [show Int.fract x - s = (x - s) + ((-⌊x⌋ : ℤ) : ℝ) by rw [Int.fract]; push_cast; ring,
+      Int.fract_add_intCast, Int.fract_eq_self.2 ⟨by linarith, by linarith⟩]
+    linarith
+  · rintro ⟨h0, h1, h2⟩
+    refine ⟨s + Int.fract (y - s), ⟨by linarith [Int.fract_nonneg (y - s)], by linarith⟩, ?_⟩
+    rw [show s + Int.fract (y - s) = y + ((-⌊y - s⌋ : ℤ) : ℝ) by rw [Int.fract]; push_cast; ring,
+      Int.fract_add_intCast, Int.fract_eq_self.2 ⟨h0, h1⟩]
+
+theorem four_points (w : ℝ) : ∃ j : ℕ, j < 4 ∧ 3 / 4 ≤ Int.fract (w + j / 4) := by
+  set i := ⌊4 * Int.fract w⌋
+  have h0 := Int.fract_nonneg w
+  have h1 := Int.fract_lt_one w
+  have hi0 : 0 ≤ i := Int.floor_nonneg.2 (by linarith)
+  have hi3 : i ≤ 3 := Int.le_of_lt_add_one (Int.floor_lt.2 (by push_cast; linarith))
+  have hl := Int.floor_le (4 * Int.fract w)
+  have hu := Int.lt_floor_add_one (4 * Int.fract w)
+  refine ⟨(3 - i).toNat, by omega, ?_⟩
+  have hc : (((3 - i).toNat : ℕ) : ℝ) = 3 - (i : ℝ) := by
+    rw [show (((3 - i).toNat : ℕ) : ℝ) = (((3 - i).toNat : ℤ) : ℝ) by norm_cast,
+      Int.toNat_of_nonneg (by omega)]
+    push_cast; ring
+  rw [hc, ← Int.floor_add_fract w, show (⌊w⌋ : ℝ) + Int.fract w + (3 - i) / 4 =
+    (Int.fract w + (3 - i) / 4) + (⌊w⌋ : ℤ) by ring, Int.fract_add_intCast,
+    Int.fract_eq_self.2 ⟨by linarith, by linarith⟩]
+  linarith
+
+/-- Four points spaced `1/4` apart cannot all lie in an arc shorter than `3/4`. -/
+theorem quarters_false {b s t : ℝ} (ht : t < 3 / 4)
+    (h : ∀ j : ℕ, j < 4 → ∃ n : ℤ, Int.fract (b + j / 4 + n - s) ≤ t) : False := by
+  obtain ⟨j, hj, hj'⟩ := four_points (b - s)
+  obtain ⟨n, hn⟩ := h j hj
+  rw [show b + j / 4 + n - s = (b - s + j / 4) + n by ring, Int.fract_add_intCast] at hn
+  linarith
+
+/-- The words of forward paths of length `N` from `p`. -/
+def fwdSet (s t : ℝ) (N : ℕ) (p : ℝ) : Set (Fin N → ℤ) := {a | ∃ q, ArcPath s t N p q a}
+
+theorem fwdSet_subset_box (s t : ℝ) (N : ℕ) (p : ℝ) :
+    fwdSet s t N p ⊆ Set.pi Set.univ (fun _ => Set.Icc (-1 : ℤ) 2) := by
+  rintro a ⟨q, f, hf, hstep, -, -⟩ i -
+  obtain ⟨x, -, hx⟩ := hf i.castSucc
+  obtain ⟨y, -, hy⟩ := hf i.succ
+  have h1 := hstep i
+  have := Int.fract_nonneg x; have := Int.fract_lt_one x
+  have := Int.fract_nonneg y; have := Int.fract_lt_one y
+  have hlo : (-2 : ℝ) < a i := by linarith
+  have hhi : (a i : ℝ) < 3 := by linarith
+  constructor
+  · have : (-2 : ℤ) < a i := by exact_mod_cast hlo
+    omega
+  · have : a i < (3 : ℤ) := by exact_mod_cast hhi
+    omega
+
+theorem fwdSet_finite (s t : ℝ) (N : ℕ) (p : ℝ) : (fwdSet s t N p).Finite :=
+  (Set.Finite.pi (fun _ => Set.finite_Icc (-1 : ℤ) 2)).subset (fwdSet_subset_box s t N p)
+
+theorem inArc_of_fwdSet_nonempty {s t : ℝ} {N : ℕ} {p : ℝ} (h : (fwdSet s t N p).Nonempty) :
+    ∃ x ∈ Set.Icc s (s + t), p = Int.fract x := by
+  obtain ⟨a, q, f, hf, -, h0, -⟩ := h
+  rw [← h0]; exact hf 0
+
+theorem fwdSet_zero_ncard (s t p : ℝ) : (fwdSet s t 0 p).ncard ≤ 1 := by
+  rw [Set.ncard_le_one_iff_subsingleton]  -- maybe
+  intro a _ b _
+  exact Subsingleton.elim a b
+
+/-- The child of `p` along digit `c`. -/
+noncomputable def child (p : ℝ) (c : ℤ) : ℝ := 3 / 2 * p - c / 2
+
+theorem fwdSet_succ_subset (s t : ℝ) (N : ℕ) (p : ℝ) :
+    fwdSet s t (N + 1) p ⊆ Fin.cons (⌊3 * p⌋ - 1) '' fwdSet s t N (child p (⌊3 * p⌋ - 1)) ∪
+      Fin.cons ⌊3 * p⌋ '' fwdSet s t N (child p ⌊3 * p⌋) := by
+  rintro a ⟨q, f, hf, hstep, h0, hl⟩
+  have htail : Fin.tail a ∈ fwdSet s t N (child p (a 0)) := by
+    refine ⟨q, fun i => f i.succ, fun i => hf _, fun i => ?_, ?_, ?_⟩
+    · have := hstep i.succ
+      show f i.succ.succ = 3 / 2 * f i.castSucc.succ - (a i.succ : ℝ) / 2
+      rw [Fin.succ_castSucc]; exact this
+    · have := hstep 0
+      simp only [Fin.succ_zero_eq_one', Fin.castSucc_zero] at this
+      rw [child, ← h0]; simpa using this
+    · rw [← hl]; rfl
+  have ha : a = Fin.cons (a 0) (Fin.tail a) := (Fin.cons_self_tail a).symm
+  obtain ⟨x, -, hx⟩ := hf 1
+  have := Int.fract_nonneg x; have := Int.fract_lt_one x
+  have h1 := hstep 0
+  simp only [Fin.castSucc_zero] at h1
+  rw [h0] at h1
+  have e1 : f (Fin.succ 0) = f 1 := rfl
+  rw [e1, hx] at h1
+  have hlo : (a 0 : ℝ) ≤ 3 * p := by linarith
+  have hhi : 3 * p - 2 < (a 0 : ℝ) := by linarith
+  have c1 : a 0 ≤ ⌊3 * p⌋ := Int.le_floor.2 hlo
+  have c2 : ⌊3 * p⌋ - 1 ≤ a 0 := by
+    have := Int.floor_le (3 * p)
+    have : ((⌊3 * p⌋ : ℤ) : ℝ) - 2 < a 0 := by linarith
+    have : ⌊3 * p⌋ - 2 < a 0 := by exact_mod_cast this
+    omega
+  rcases (show a 0 = ⌊3 * p⌋ - 1 ∨ a 0 = ⌊3 * p⌋ by omega) with h | h
+  · left; exact ⟨Fin.tail a, h ▸ htail, by rw [ha, h]; rfl⟩
+  · right; exact ⟨Fin.tail a, h ▸ htail, by rw [ha, h]; rfl⟩
+
+theorem fwdSet_succ_ncard (s t : ℝ) (N : ℕ) (p : ℝ) :
+    (fwdSet s t (N + 1) p).ncard ≤ (fwdSet s t N (child p (⌊3 * p⌋ - 1))).ncard +
+      (fwdSet s t N (child p ⌊3 * p⌋)).ncard := by
+  refine (Set.ncard_le_ncard (fwdSet_succ_subset s t N p)
+    (((fwdSet_finite _ _ _ _).image _).union ((fwdSet_finite _ _ _ _).image _))).trans ?_
+  refine (Set.ncard_union_le _ _).trans ?_
+  rw [Set.ncard_image_of_injective _ (Fin.cons_right_injective _),
+    Set.ncard_image_of_injective _ (Fin.cons_right_injective _)]
+
+theorem fract_le_of_fwdSet_nonempty {s t : ℝ} (ht : t < 1) {N : ℕ} {g : ℝ}
+    (h : (fwdSet s t N g).Nonempty) : Int.fract (g - s) ≤ t :=
+  ((inArc_iff ht).1 (inArc_of_fwdSet_nonempty h)).2.2
+
+theorem fwd_fib (s t : ℝ) (ht : t < 3 / 4) : ∀ n : ℕ, ∀ p : ℝ,
+    (fwdSet s t n p).ncard ≤ Nat.fib (n + 2) ∧ (fwdSet s t (n + 1) p).ncard ≤ Nat.fib (n + 3) := by
+  intro n
+  induction n with
+  | zero =>
+    intro p
+    refine ⟨by simpa using fwdSet_zero_ncard s t p, ?_⟩
+    have := fwdSet_succ_ncard s t 0 p
+    have := fwdSet_zero_ncard s t (child p (⌊3 * p⌋ - 1))
+    have := fwdSet_zero_ncard s t (child p ⌊3 * p⌋)
+    have h3 : Nat.fib 3 = 2 := rfl
+    simp only [zero_add, h3]
+    omega
+  | succ n ih =>
+    intro p
+    refine ⟨(ih p).2, ?_⟩
+    have hp := fwdSet_succ_ncard s t (n + 1) p
+    set y1 := child p (⌊3 * p⌋ - 1) with hy1
+    set y2 := child p ⌊3 * p⌋ with hy2
+    have h1 := fwdSet_succ_ncard s t n y1
+    have h2 := fwdSet_succ_ncard s t n y2
+    set g11 := child y1 (⌊3 * y1⌋ - 1) with hg11
+    set g12 := child y1 ⌊3 * y1⌋ with hg12
+    set g21 := child y2 (⌊3 * y2⌋ - 1) with hg21
+    set g22 := child y2 ⌊3 * y2⌋ with hg22
+    have b11 := (ih g11).1; have b12 := (ih g12).1
+    have b21 := (ih g21).1; have b22 := (ih g22).1
+    have c1 := (ih y1).2; have c2 := (ih y2).2
+    have hfib : Nat.fib (n + 1 + 3) = Nat.fib (n + 2) + Nat.fib (n + 3) := by
+      rw [show n + 1 + 3 = (n + 2) + 2 by ring, Nat.fib_add_two]
+    rw [hfib]
+    have key : ¬ ((fwdSet s t n g11).Nonempty ∧ (fwdSet s t n g12).Nonempty ∧
+        (fwdSet s t n g21).Nonempty ∧ (fwdSet s t n g22).Nonempty) := by
+      rintro ⟨n11, n12, n21, n22⟩
+      have ht1 : t < 1 := by linarith
+      have f11 := fract_le_of_fwdSet_nonempty ht1 n11
+      have f12 := fract_le_of_fwdSet_nonempty ht1 n12
+      have f21 := fract_le_of_fwdSet_nonempty ht1 n21
+      have f22 := fract_le_of_fwdSet_nonempty ht1 n22
+      have hy : y2 = y1 - 1 / 2 := by simp only [hy1, hy2, child]; push_cast; ring
+      obtain ⟨q, hq⟩ := Int.even_or_odd' (⌊3 * y1⌋ - ⌊3 * y2⌋)
+      have fl : ∀ g : ℝ, Int.fract (g - s) ≤ t → ∀ (j : ℕ) (n : ℤ),
+          g12 + (j : ℝ) / 4 + n - s = g - s → Int.fract (g12 + (j : ℝ) / 4 + n - s) ≤ t :=
+        fun g hg j n h => h ▸ hg
+      have e12 : g12 = 3 / 2 * y1 - (⌊3 * y1⌋ : ℝ) / 2 := rfl
+      have e11 : g11 = 3 / 2 * y1 - ((⌊3 * y1⌋ : ℝ) - 1) / 2 := by
+        simp only [hg11, child]; push_cast; ring
+      have e21 : g21 = 3 / 2 * y2 - ((⌊3 * y2⌋ : ℝ) - 1) / 2 := by
+        simp only [hg21, child]; push_cast; ring
+      have e22 : g22 = 3 / 2 * y2 - (⌊3 * y2⌋ : ℝ) / 2 := rfl
+      refine quarters_false (b := g12) (s := s) ht fun j hj => ?_
+      interval_cases j
+      · exact ⟨0, fl g12 f12 0 0 (by push_cast; ring)⟩
+      · rcases hq with hq | hq
+        · have hq' : (⌊3 * y2⌋ : ℝ) = ⌊3 * y1⌋ - 2 * q := by
+            have : ⌊3 * y2⌋ = ⌊3 * y1⌋ - 2 * q := by omega
+            exact_mod_cast this
+          exact ⟨q - 1, fl g22 f22 1 (q - 1) (by rw [e22, e12]; push_cast; linarith)⟩
+        · have hq' : (⌊3 * y2⌋ : ℝ) = ⌊3 * y1⌋ - 2 * q - 1 := by
+            have : ⌊3 * y2⌋ = ⌊3 * y1⌋ - 2 * q - 1 := by omega
+            exact_mod_cast this
+          exact ⟨q, fl g21 f21 1 q (by rw [e21, e12]; push_cast; linarith)⟩
+      · exact ⟨0, fl g11 f11 2 0 (by rw [e11, e12]; push_cast; linarith)⟩
+      · rcases hq with hq | hq
+        · have hq' : (⌊3 * y2⌋ : ℝ) = ⌊3 * y1⌋ - 2 * q := by
+            have : ⌊3 * y2⌋ = ⌊3 * y1⌋ - 2 * q := by omega
+            exact_mod_cast this
+          exact ⟨q - 1, fl g21 f21 3 (q - 1) (by rw [e21, e12]; push_cast; linarith)⟩
+        · have hq' : (⌊3 * y2⌋ : ℝ) = ⌊3 * y1⌋ - 2 * q - 1 := by
+            have : ⌊3 * y2⌋ = ⌊3 * y1⌋ - 2 * q - 1 := by omega
+            exact_mod_cast this
+          exact ⟨q - 1, fl g22 f22 3 (q - 1) (by rw [e22, e12]; push_cast; linarith)⟩
+    simp only [not_and_or, Set.not_nonempty_iff_eq_empty] at key
+    rcases key with h | h | h | h <;> simp only [h, Set.ncard_empty] at h1 h2 <;> omega
+
+theorem arcPath_digit_box {s t : ℝ} {N : ℕ} {p q : ℝ} {a : Fin N → ℤ} (h : ArcPath s t N p q a) :
+    a ∈ Set.pi Set.univ (fun _ => Set.Icc (-1 : ℤ) 2) := by
+  obtain ⟨f, hf, hstep, -, -⟩ := h
+  rw [Set.mem_univ_pi]
+  intro i
+  obtain ⟨x, -, hx⟩ := hf i.castSucc
+  obtain ⟨y, -, hy⟩ := hf i.succ
+  have h1 := hstep i
+  have := Int.fract_nonneg x; have := Int.fract_lt_one x
+  have := Int.fract_nonneg y; have := Int.fract_lt_one y
+  have hlo : (-2 : ℝ) < a i := by linarith
+  have hhi : (a i : ℝ) < 3 := by linarith
+  constructor
+  · have : (-2 : ℤ) < a i := by exact_mod_cast hlo
+    omega
+  · have : a i < (3 : ℤ) := by exact_mod_cast hhi
+    omega
+
+/-- The words of backward paths of length `K` into `q`. -/
+def bwdSet (s t : ℝ) (K : ℕ) (q : ℝ) : Set (Fin K → ℤ) := {a | ∃ p, ArcPath s t K p q a}
+
+theorem bwdSet_finite (s t : ℝ) (K : ℕ) (q : ℝ) : (bwdSet s t K q).Finite :=
+  (Set.Finite.pi (fun _ => Set.finite_Icc (-1 : ℤ) 2)).subset fun _ ⟨_, h⟩ => arcPath_digit_box h
+
+theorem inArc_of_bwdSet_nonempty {s t : ℝ} {K : ℕ} {q : ℝ} (h : (bwdSet s t K q).Nonempty) :
+    ∃ x ∈ Set.Icc s (s + t), q = Int.fract x := by
+  obtain ⟨a, p, f, hf, -, -, hl⟩ := h
+  rw [← hl]; exact hf _
+
+/-- The base of `q`: `3 · fract(p - s) ≡ 2q - 3s` for every predecessor `p`. -/
+noncomputable def bbase (s q : ℝ) : ℝ := Int.fract (2 * q - 3 * s)
+
+/-- The base maps: the base of the predecessor in branch `k`. -/
+noncomputable def phi (s : ℝ) (k : ℕ) (w : ℝ) : ℝ := Int.fract (2 * (w + k) / 3 - s)
+
+/-- The candidate predecessor of `q` in branch `k ∈ {0, 1}`. -/
+noncomputable def bpred (s q : ℝ) (k : ℕ) : ℝ := Int.fract (s + (bbase s q + k) / 3)
+
+theorem bbase_bpred (s q : ℝ) (k : ℕ) : bbase s (bpred s q k) = phi s k (bbase s q) := by
+  show Int.fract (2 * bpred s q k - 3 * s) = _
+  unfold bpred phi
+  rw [Int.fract_eq_fract]
+  refine ⟨-2 * ⌊s + (bbase s q + k) / 3⌋, ?_⟩
+  have := Int.floor_add_fract (s + (bbase s q + k) / 3)
+  push_cast; linarith
+
+/-- Every predecessor in the arc is `bpred s q 0` or `bpred s q 1`, and the second only when the
+base is at most `τ = 3t - 1`. -/
+theorem pred_cases {s t q p : ℝ} (ht : t < 2 / 3) (c : ℤ) (hq : q = 3 / 2 * p - (c : ℝ) / 2)
+    (hp : ∃ x ∈ Set.Icc s (s + t), p = Int.fract x) :
+    p = bpred s q 0 ∨ (p = bpred s q 1 ∧ bbase s q ≤ 3 * t - 1) := by
+  obtain ⟨hp0, hp1, hu⟩ := (inArc_iff (by linarith)).1 hp
+  set u := Int.fract (p - s) with hu_def
+  have hu0 : 0 ≤ u := Int.fract_nonneg _
+  -- 3u ≡ 2q - 3s
+  have h3u : Int.fract (3 * u) = bbase s q := by
+    unfold bbase
+    rw [Int.fract_eq_fract]
+    refine ⟨c - 3 * ⌊p - s⌋, ?_⟩
+    have := Int.floor_add_fract (p - s)
+    rw [hu_def, hq]; push_cast; linarith
+  have hfl := Int.floor_add_fract (3 * u)
+  have hk0 : 0 ≤ ⌊3 * u⌋ := Int.floor_nonneg.2 (by linarith)
+  have hk1 : ⌊3 * u⌋ ≤ 1 := by
+    have : ⌊3 * u⌋ < 2 := Int.floor_lt.2 (by push_cast; linarith)
+    omega
+  -- p = fract (s + u)
+  have hpu : p = Int.fract (s + u) := by
+    rw [eq_comm, Int.fract_eq_iff]
+    refine ⟨hp0, hp1, -⌊p - s⌋, ?_⟩
+    have := Int.floor_add_fract (p - s)
+    rw [hu_def]; push_cast; linarith
+  rcases (show ⌊3 * u⌋ = 0 ∨ ⌊3 * u⌋ = 1 by omega) with h | h
+  · left
+    rw [hpu, bpred, ← h3u]
+    congr 2
+    rw [h] at hfl; push_cast at hfl ⊢; linarith
+  · right
+    refine ⟨?_, ?_⟩
+    · rw [hpu, bpred, ← h3u]
+      congr 2
+      rw [h] at hfl; push_cast at hfl ⊢; linarith
+    · rw [← h3u]; rw [h] at hfl; push_cast at hfl; linarith
+
+/-- The last digit of a backward path is determined by its predecessor. -/
+theorem bwdSet_succ_subset (s t : ℝ) (ht : t < 2 / 3) (j : ℕ) (q : ℝ) :
+    bwdSet s t (j + 1) q ⊆
+      (fun a' => Fin.snoc a' ⌊3 * bpred s q 0 - 2 * q⌋) '' bwdSet s t j (bpred s q 0) ∪
+      (fun a' => Fin.snoc a' ⌊3 * bpred s q 1 - 2 * q⌋) '' bwdSet s t j (bpred s q 1) := by
+  rintro a ⟨p, f, hf, hstep, h0, hl⟩
+  set c := a (Fin.last j)
+  have hq : q = 3 / 2 * f (Fin.last j).castSucc - (c : ℝ) / 2 := by
+    rw [← hl, ← hstep (Fin.last j)]; rfl
+  have hinit : Fin.init a ∈ bwdSet s t j (f (Fin.last j).castSucc) := by
+    refine ⟨p, fun i => f i.castSucc, fun i => hf _, fun i => ?_, h0, rfl⟩
+    have := hstep i.castSucc
+    show f i.castSucc.succ = 3 / 2 * f i.castSucc.castSucc - (a i.castSucc : ℝ) / 2
+    rw [Fin.succ_castSucc]; exact this
+  have hc : ∀ p', f (Fin.last j).castSucc = p' → ⌊3 * p' - 2 * q⌋ = c := by
+    rintro p' rfl
+    rw [hq, show 3 * f (Fin.last j).castSucc - 2 * (3 / 2 * f (Fin.last j).castSucc - (c : ℝ) / 2) =
+      (c : ℝ) by ring, Int.floor_intCast]
+  have ha : a = Fin.snoc (Fin.init a) c := (Fin.snoc_init_self a).symm
+  rcases pred_cases ht c hq (hf _) with h | ⟨h, -⟩
+  · left; exact ⟨Fin.init a, h ▸ hinit, by rw [hc _ h]; exact ha.symm⟩
+  · right; exact ⟨Fin.init a, h ▸ hinit, by rw [hc _ h]; exact ha.symm⟩
+
+theorem bwdSet_succ_ncard (s t : ℝ) (ht : t < 2 / 3) (j : ℕ) (q : ℝ) :
+    (bwdSet s t (j + 1) q).ncard ≤
+      (bwdSet s t j (bpred s q 0)).ncard + (bwdSet s t j (bpred s q 1)).ncard := by
+  refine (Set.ncard_le_ncard (bwdSet_succ_subset s t ht j q)
+    (((bwdSet_finite _ _ _ _).image _).union ((bwdSet_finite _ _ _ _).image _))).trans ?_
+  refine (Set.ncard_union_le _ _).trans ?_
+  exact add_le_add (Set.ncard_image_le (bwdSet_finite _ _ _ _))
+    (Set.ncard_image_le (bwdSet_finite _ _ _ _))
+
+theorem bwdSet_pred1_empty {s t q : ℝ} (ht : t < 2 / 3) (j : ℕ) (hb : 3 * t - 1 < bbase s q) :
+    bwdSet s t j (bpred s q 1) = ∅ := by
+  by_contra hne
+  obtain ⟨-, -, hu⟩ := (inArc_iff (by linarith)).1
+    (inArc_of_bwdSet_nonempty (Set.nonempty_iff_ne_empty.2 hne))
+  have hb0 : 0 ≤ bbase s q := Int.fract_nonneg _
+  have hb1 : bbase s q < 1 := Int.fract_lt_one _
+  have e : Int.fract (bpred s q 1 - s) = (bbase s q + 1) / 3 := by
+    rw [Int.fract_eq_iff]
+    refine ⟨by linarith, by linarith, -⌊s + (bbase s q + ((1 : ℕ) : ℝ)) / 3⌋, ?_⟩
+    have := Int.floor_add_fract (s + (bbase s q + ((1 : ℕ) : ℝ)) / 3)
+    unfold bpred; push_cast at this ⊢; linarith
+  rw [e] at hu
+  linarith
+
+/-- The tree of bases below `b` is everywhere at most `τ` to depth `j`. -/
+def BaseGood (s τ : ℝ) : ℕ → ℝ → Prop
+  | 0, _ => True
+  | j + 1, b => b ≤ τ ∧ BaseGood s τ j (phi s 0 b) ∧ BaseGood s τ j (phi s 1 b)
+
+theorem bwd_count (s t : ℝ) (ht : t < 2 / 3) : ∀ j : ℕ, ∀ q : ℝ,
+    (bwdSet s t j q).ncard ≤ 2 ^ j ∧ (2 ^ j ≤ (bwdSet s t j q).ncard → BaseGood s (3 * t - 1) j (bbase s q)) := by
+  intro j
+  induction j with
+  | zero =>
+    intro q
+    refine ⟨?_, fun _ => trivial⟩
+    rw [pow_zero, Set.ncard_le_one_iff_subsingleton]
+    intro a _ b _; exact Subsingleton.elim a b
+  | succ j ih =>
+    intro q
+    have h := bwdSet_succ_ncard s t ht j q
+    obtain ⟨b0, g0⟩ := ih (bpred s q 0)
+    obtain ⟨b1, g1⟩ := ih (bpred s q 1)
+    refine ⟨by rw [pow_succ]; omega, fun hge => ?_⟩
+    rw [pow_succ] at hge
+    have e0 : 2 ^ j ≤ (bwdSet s t j (bpred s q 0)).ncard := by omega
+    have e1 : 2 ^ j ≤ (bwdSet s t j (bpred s q 1)).ncard := by omega
+    refine ⟨?_, by rw [← bbase_bpred]; exact g0 e0, by rw [← bbase_bpred]; exact g1 e1⟩
+    by_contra hlt
+    rw [bwdSet_pred1_empty ht j (not_le.1 hlt), Set.ncard_empty] at e1
+    have := Nat.one_le_two_pow (n := j)
+    omega
+
+/-- Leaf-side reachability of bases. -/
+def BaseReach (s : ℝ) : ℕ → ℝ → ℝ → Prop
+  | 0, b, w => w = b
+  | j + 1, b, w => ∃ w', BaseReach s j b w' ∧ (w = phi s 0 w' ∨ w = phi s 1 w')
+
+theorem reach_succ_iff (s : ℝ) : ∀ j : ℕ, ∀ b w : ℝ,
+    BaseReach s (j + 1) b w ↔ BaseReach s j (phi s 0 b) w ∨ BaseReach s j (phi s 1 b) w := by
+  intro j
+  induction j with
+  | zero => intro b w; simp [BaseReach]
+  | succ j ih =>
+    intro b w
+    show (∃ w', BaseReach s (j + 1) b w' ∧ _) ↔ (∃ w', BaseReach s j _ w' ∧ _) ∨ (∃ w', BaseReach s j _ w' ∧ _)
+    simp only [ih]
+    constructor
+    · rintro ⟨w', h1 | h1, h2⟩
+      · exact Or.inl ⟨w', h1, h2⟩
+      · exact Or.inr ⟨w', h1, h2⟩
+    · rintro (⟨w', h1, h2⟩ | ⟨w', h1, h2⟩)
+      · exact ⟨w', Or.inl h1, h2⟩
+      · exact ⟨w', Or.inr h1, h2⟩
+
+theorem good_reach (s τ : ℝ) : ∀ j : ℕ, ∀ b : ℝ, BaseGood s τ j b →
+    ∀ i < j, ∀ w, BaseReach s i b w → w ≤ τ := by
+  intro j
+  induction j with
+  | zero => intro b _ i hi; omega
+  | succ j ih =>
+    rintro b ⟨hb, h0, h1⟩ i hi w hw
+    cases i with
+    | zero => rw [show w = b from hw]; exact hb
+    | succ i =>
+      rcases (reach_succ_iff s i b w).1 hw with hw | hw
+      · exact ih _ h0 i (by omega) w hw
+      · exact ih _ h1 i (by omega) w hw
+
+theorem reach_mem (s : ℝ) {b : ℝ} (hb0 : 0 ≤ b) (hb1 : b < 1) :
+    ∀ j : ℕ, ∀ w, BaseReach s j b w → 0 ≤ w ∧ w < 1 := by
+  intro j
+  induction j with
+  | zero => intro w hw; rw [show w = b from hw]; exact ⟨hb0, hb1⟩
+  | succ j _ =>
+    rintro w ⟨w', -, rfl | rfl⟩ <;> exact ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+/-- **Gap contraction.**  The reachable bases at depth `j` leave no forward gap of length
+`(2/3)^j`. -/
+theorem reach_dense (s : ℝ) {b : ℝ} (hb0 : 0 ≤ b) (hb1 : b < 1) :
+    ∀ j : ℕ, ∀ x : ℝ, ∃ w, BaseReach s j b w ∧ Int.fract (w - x) < (2 / 3) ^ j := by
+  intro j
+  induction j with
+  | zero => intro x; exact ⟨b, rfl, by simpa using Int.fract_lt_one (b - x)⟩
+  | succ j ih =>
+    intro x
+    set G : ℝ := (2 / 3) ^ j
+    set y := Int.fract (x + s) with hy
+    have hy0 : 0 ≤ y := Int.fract_nonneg _
+    have hy1 : y < 1 := Int.fract_lt_one _
+    -- `fract (z - x) = fract (z + s - y)` shifted
+    have shift : ∀ z : ℝ, Int.fract (Int.fract z - x) = Int.fract (z + s - y) := by
+      intro z
+      rw [Int.fract_eq_fract]
+      refine ⟨-⌊z⌋ - ⌊x + s⌋, ?_⟩
+      have h1 := Int.floor_add_fract z
+      have h2 := Int.floor_add_fract (x + s)
+      rw [hy]; push_cast; linarith
+    -- reduce to an explicit bound
+    have fin : ∀ w : ℝ, BaseReach s j b w → ∀ k : ℕ, (k = 0 ∨ k = 1) → ∀ e : ℝ, 0 ≤ e → e < 2 / 3 * G →
+        (∃ n : ℤ, 2 * (w + k) / 3 - s + s - y = e + n) →
+        ∃ w, BaseReach s (j + 1) b w ∧ Int.fract (w - x) < (2 / 3) ^ (j + 1) := by
+      rintro w hw k hk e he0 he1 ⟨n, hn⟩
+      refine ⟨phi s k w, ⟨w, hw, ?_⟩, ?_⟩
+      · rcases hk with rfl | rfl
+        · exact Or.inl rfl
+        · exact Or.inr rfl
+      · rw [phi, shift, hn, Int.fract_add_intCast, Int.fract_eq_self.2 ⟨he0, by
+          have : G ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+          linarith⟩, pow_succ]
+        linarith
+    have hG0 : 0 < G := by positivity
+    by_cases hy2 : y < 2 / 3
+    · obtain ⟨w, hw, hwx⟩ := ih (3 * y / 2)
+      obtain ⟨hw0, hw1⟩ := reach_mem s hb0 hb1 j w hw
+      by_cases hle : 3 * y / 2 ≤ w
+      · rw [Int.fract_eq_self.2 ⟨by linarith, by linarith⟩] at hwx
+        exact fin w hw 0 (Or.inl rfl) (2 * (w - 3 * y / 2) / 3) (by linarith) (by linarith) ⟨0, by push_cast; ring⟩
+      · have hfr : Int.fract (w - 3 * y / 2) = w - 3 * y / 2 + 1 := by
+          rw [Int.fract_eq_iff]
+          exact ⟨by linarith, by linarith, -1, by push_cast; ring⟩
+        rw [hfr] at hwx
+        exact fin w hw 1 (Or.inr rfl) (2 * (w - 3 * y / 2 + 1) / 3) (by linarith) (by linarith)
+          ⟨0, by push_cast; ring⟩
+    · push_neg at hy2
+      obtain ⟨w, hw, hwx⟩ := ih (3 * y / 2 - 1)
+      obtain ⟨hw0, hw1⟩ := reach_mem s hb0 hb1 j w hw
+      by_cases hle : 3 * y / 2 - 1 ≤ w
+      · rw [Int.fract_eq_self.2 ⟨by linarith, by linarith⟩] at hwx
+        exact fin w hw 1 (Or.inr rfl) (2 * (w - (3 * y / 2 - 1)) / 3) (by linarith) (by linarith)
+          ⟨0, by push_cast; ring⟩
+      · have hfr : Int.fract (w - (3 * y / 2 - 1)) = w - (3 * y / 2 - 1) + 1 := by
+          rw [Int.fract_eq_iff]
+          exact ⟨by linarith, by linarith, -1, by push_cast; ring⟩
+        rw [hfr] at hwx
+        exact fin w hw 0 (Or.inl rfl) (2 * (w - (3 * y / 2 - 1) + 1) / 3 - 1 / 3) (by linarith) (by linarith)
+          ⟨-1, by push_cast; ring⟩
+
 /-- **Forward paths from a point grow at most like Fibonacci (arcs shorter than `3/4`).**
 Confidence 90% (hand proof).  A point has at most two successors, `y` and `y + 1/2`.  If both branch
 again, their four successors are `z, z + 1/4, z + 1/2, z + 3/4` mod 1, and an arc holding all four
@@ -443,7 +905,9 @@ has length at least `3/4`.  So of two sibling successors at most one branches, a
 `M_n` satisfies `M_n ≤ M_{n-1} + M_{n-2}`. -/
 theorem card_forward_le (s t p : ℝ) (ht : t < 3 / 4) (N : ℕ) :
     Nat.card {a : Fin N → ℤ // ∃ q, ArcPath s t N p q a} ≤ Nat.fib (N + 2) := by
-  sorry
+  change Nat.card (fwdSet s t N p) ≤ _
+  rw [Nat.card_coe_set_eq]
+  exact (fwd_fib s t ht N p).1
 
 /-- **Backward paths into a point lose a branch within `K` steps once `(2/3)^(K-1) < 2 - 3t`.**
 Confidence 85% (hand proof; `arc_entropy.py backward` samples the full depth, never above the
@@ -456,7 +920,27 @@ multiplies the largest circular gap by `2/3`, so the gaps are at most `(2/3)^j`.
 theorem card_backward_le (s t q : ℝ) (ht : t < 2 / 3) (K : ℕ) (hK : 1 ≤ K)
     (hK' : (2 / 3 : ℝ) ^ (K - 1) < 2 - 3 * t) :
     Nat.card {a : Fin K → ℤ // ∃ p, ArcPath s t K p q a} ≤ 2 ^ K - 1 := by
-  sorry
+  change Nat.card (bwdSet s t K q) ≤ _
+  rw [Nat.card_coe_set_eq]
+  obtain ⟨hle, hgood⟩ := bwd_count s t ht K q
+  by_contra hlt
+  have hge : 2 ^ K ≤ (bwdSet s t K q).ncard := by
+    have := Nat.one_le_two_pow (n := K); omega
+  have hg := hgood hge
+  have hb0 : 0 ≤ bbase s q := Int.fract_nonneg _
+  have hb1 : bbase s q < 1 := Int.fract_lt_one _
+  set G : ℝ := (2 / 3) ^ (K - 1)
+  have hG0 : 0 < G := by positivity
+  obtain ⟨w, hw, hwx⟩ := reach_dense s hb0 hb1 (K - 1) (1 - G)
+  obtain ⟨hw0, hw1⟩ := reach_mem s hb0 hb1 _ w hw
+  have hwτ := good_reach s _ K _ hg (K - 1) (by omega) w hw
+  by_cases hle' : 1 - G ≤ w
+  · linarith
+  · have : Int.fract (w - (1 - G)) = w - (1 - G) + 1 := by
+      rw [Int.fract_eq_iff]
+      exact ⟨by linarith, by linarith, -1, by push_cast; ring⟩
+    rw [this] at hwx
+    linarith
 
 /-- **Digit words grow strictly slower than `2^N` on every arc shorter than `2/3`.**
 Confidence 85%.  Proof: every component of a word's cylinder has a left endpoint `ℓ` where some
