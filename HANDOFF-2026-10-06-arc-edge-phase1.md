@@ -49,3 +49,10 @@ single-error piece state (`afsAnchor`, `afsE`, `afsPiece`; type 0 = `k + [e, 1/3
 `afsWord_injective` (`2^n (k_n - k'_n) = 3^n (g - g')`, coprimality).  The new type equals the old
 anchor parity, so the existing `trail`/`NoRunLonger` machinery applies directly; `afsErr` was not
 needed.  Kickoff phases 1 and 2 are both done.
+
+## Blocker (box stuck)
+
+Everything in `KICKOFF-2026-10-06-arc-edge-proofs.md` is done: the headline and the whole phase-2 chain
+use only `propext`, `Classical.choice` and `Quot.sound` (`#print axioms`).  The sorries left in `ArcTrap.lean`
+(the `1227`/`1228` constants, `E`, `relaxed_barrier`, `two_pow_le_card_admissibleWord`, ...) are the ones the kickoff
+says are out of scope ("Do not touch them").  What I need from the operator: the next assignment.
