@@ -274,4 +274,4 @@ For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k =
 1. Lean: prove `exists_trapped_of_winningStrategy` and instantiate the certificate (finite rational checks).  Treadmill-ready.
 2. Uncountability: a variable-width game (widths `l, l/2, ...`) with a branching state.  A positive Hausdorff dimension bound would follow from the branching rate.
 3. Sharpen β: a finer width grid and larger `k`.  The observed `≈ 0.124` suggests room.
-4. Outward: a standalone `docs/notes/` result file once the Lean proof lands (Trevor writes the pointer).
+4. Outward: written 2026-10-06, [`docs/notes/arc-traps-two-thirds-edge.md`](docs/notes/arc-traps-two-thirds-edge.md) (Trevor writes the pointer).
