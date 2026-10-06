@@ -79,31 +79,31 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 **What it means.**  This is the constructive side of the 2-adic horizon, made exact.  Seeing each parity only when it arrives, with every unseen parity treated as hostile, a construction cannot even hold an arc of Mahler's length, let alone produce a Z-number.  A Z-number construction must use the actual integer parts.
 
-**Scope.**  Memoryless strategies only; the finite-memory section below removes that limit up to `16/25`.  For `k`-memory strategies the game-tree argument meets the same obstacle as in the 7/57 section applies: the constructor's lift choice feeds into later parities.  The old window-in-arc ladder supports the barrier there too: shortest winnable arc from 0 was 0.827 for `k = 2..6`.
+**Scope.**  Memoryless strategies only; the finite-memory section below removes that limit up to `13/20`.  For `k`-memory strategies the game-tree argument meets the same obstacle as in the 7/57 section applies: the constructor's lift choice feeds into later parities.  The old window-in-arc ladder supports the barrier there too: shortest winnable arc from 0 was 0.827 for `k = 2..6`.
 
-## Theorem: no finite-memory construction holds an arc of length ≤ 16/25
+## Theorem: no finite-memory construction holds an arc of length ≤ 13/20
 
-**Statement.**  Fix any `k` and any residue `r`.  No construction that traps an orbit in an arc of length `≤ 16/25` near *every* start `m ≡ r (mod 2^k)` exists, at any position of the arc.  Every `k`-memory strategy in any of our games is such a construction, because it reads only `m mod 2^k`.  So memory of any finite size cannot reach Mahler's arc.  Lean: `finiteMemory_barrier`, with corollary `relaxed_barrier_16_25` (it extends `mahler_barrier` from `1/2` to `16/25`) and wiring lemma `trapsResidueClass_of_relaxedStrategy`.
+**Statement.**  Fix any `k` and any residue `r`.  No construction that traps an orbit in an arc of length `≤ 13/20` near *every* start `m ≡ r (mod 2^k)` exists, at any position of the arc.  Every `k`-memory strategy in any of our games is such a construction, because it reads only `m mod 2^k`.  So memory of any finite size cannot reach Mahler's arc.  Lean: `finiteMemory_barrier`, with corollary `relaxed_barrier_13_20` (it extends `mahler_barrier` from `1/2` to `13/20`) and wiring lemma `trapsResidueClass_of_relaxedStrategy`.
 
 **How it was found.**  The `k`-memory relaxed solver (`solve_vw`, `k = 0..5`) holds no arc of length `1/2` at 120 positions × 15 widths.  Bisecting the shortest holdable arc gave `≈ 0.683` (at `s ≈ 0.65`), *identical* for `k = 0, 1, 2, 3`.  Memory that never helps suggested a counting obstruction, not a game-tree one.
 
 **Proof.**
 1. **Digits:** write `g_n = ⌊ξ(3/2)^n⌋` and `f_n` for the fractional part.  Then `a_n = g_{n+1} − 3g_n/2 = 3f_n/2 − f_{n+1}` lies in `{−1/2, 0, 1/2, 1}`.
 2. **Injectivity:** `3^N g_0 = 2^N g_N − Σ 3^{N−1−n} 2^{n+1} a_n`, so `N` digits fix `g_0 mod 2^N`.  Hence the number of trapped floors `g < 2^N` is at most `W_N(I)`, the number of length-`N` digit words with all `f_n ∈ I`.  (Flatto 1992 is the case `I = [0, 1/2)`, where `W_N ~ (3/2)^N`; `FlattoCeiling.lean` is that case.)
-3. **Growth:** `experiments/arc_entropy.py cover 16/25 1000 160` covers every position by 1000 arcs of length `16/25 + 1/1000`.  For each it builds the transfer matrix on interval states, rounded outward to the grid `1/160` (an overcount), and checks exactly a rational `v > 0` with `Mv ≤ cv`.  The worst `c` is `399/200`, so `W_N ≤ C(1.995)^N`.
-4. **Density:** a residue-class construction has at least `2^{N−k}/3 − 1` trapped floors below `2^N + 3`.  That beats `C(1.995)^N` for large `N`.
+3. **Growth:** `experiments/arc_entropy.py cover 13/20 2000 320` covers every position by 2000 arcs of length `13/20 + 1/2000`.  For each it builds the transfer matrix on interval states, rounded outward to the grid `1/320` (an overcount), and checks exactly a rational `v > 0` with `Mv ≤ cv`.  The worst `c` is `999/500`, so `W_N ≤ C(1.998)^N`.
+4. **Density:** a residue-class construction has at least `2^{N−k}/3 − 1` trapped floors below `2^N + 3`.  That beats `C(1.998)^N` for large `N`.
 
 **Checks** (`arc_entropy.py test`, 4 tests):
 - **Mahler's arc:** the bound sits between Flatto's `3/2` and the golden ratio (hand argument: on `[0, 1/2]` two odd floors in a row force `f ≥ 5/9`).
 - **Soundness teeth:** arcs that a strategy provably holds must have growth `≥ 2`, and the certifier refuses all three: Pollington's arc, the 0.1228 arc, and the shortest-arc witness region.
 - **Certify has teeth:** `c = 3/2` is refused on Mahler's arc.
 
-**The two thresholds nearly meet.**  Growth crosses `2` near length `0.65`; the heuristic is `W_N ≈ (3t)^N`, which crosses at `2/3`.  The best game strategy needs `≈ 0.683`.  So between about `0.65` and `0.683`, finite memory fails only for game-specific reasons; below `0.64` it fails for every finite-memory construction, by counting alone.  Reading: the 2-adic horizon has a *size*.  A construction that sees `k` bits works on a set of density `2^{−k}`, and arcs shorter than about `2/3` hold too few orbits for any positive density.  Z-numbers, if they exist, are rarer than any residue class: Flatto's count is `X^0.585`.
+**The two thresholds nearly meet.**  The certificate reaches length `0.65` and fails at `0.66` (grid `1/320`); the heuristic is `W_N ≈ (3t)^N`, which crosses at `2/3`.  The best game strategy needs `≈ 0.683`.  So between about `0.65` and `0.683`, finite memory fails only for game-specific reasons; up to `0.65` it fails for every finite-memory construction, by counting alone.  Reading: the 2-adic horizon has a *size*.  A construction that sees `k` bits works on a set of density `2^{−k}`, and arcs shorter than about `2/3` hold too few orbits for any positive density.  Z-numbers, if they exist, are rarer than any residue class: Flatto's count is `X^0.585`.
 
 ## What the ladder says about Mahler
 
 For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k = 0, 1` and 0.827 at `k = 2..6`.  Bounded 2-adic memory saturates after two bits, far above Mahler's 1/2.  Every Z-number construction would have to sit in FLP's decoupled regime (`t ≤ 1/2`).  There the integer parts are forced (at most one `ξ` per unit interval), so a finite-memory strategy has nothing to steer.
-- **Now a theorem (up to length `16/25`):** see `finiteMemory_barrier` above.  The first proof attempt ("the child's integer offset `j` is forced") was incomplete; counting digit words replaced it.
+- **Now a theorem (up to length `13/20`):** see `finiteMemory_barrier` above.  The first proof attempt ("the child's integer offset `j` is forced") was incomplete; counting digit words replaced it.
 - **Reading:** this is the horizon in constructive form.  Seeing `k` bits further helps only while the arc has slack (length `> 1/2`).  Mahler's arc has none, so the only way past is to know *all* the bits, i.e. the integer itself.  That is the countable, rigid regime where Z-numbers would have to live.
 
 ## Literature check (2026-10-05, second pass)

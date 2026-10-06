@@ -220,7 +220,7 @@ Confidence 90%.  Proof route:
   most half of `1.5 |C|` in the arc and `|C|` shrinks by `3/4` per move.  Once the window is shorter
   than `1/2 - t` it misses `A` or `A - 1/2`, and the adversary picks the parity that misses.
 Scope: memoryless strategies.  `finiteMemory_barrier` covers every finite memory, up to length
-`16/25`. -/
+`13/20`. -/
 theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy s t l P := by
   sorry
@@ -253,7 +253,7 @@ theorem trapsResidueClass_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (ht : t
   sorry
 
 /-- **Finite-memory barrier: no construction that works on a whole residue class mod `2^k` traps
-an orbit in any arc of length at most `16/25`.**  In particular no finite-memory strategy, of any
+an orbit in any arc of length at most `13/20`.**  In particular no finite-memory strategy, of any
 game version, reaches Mahler's arc.  Flatto's `X^{log₂(3/2)}` count of Z-numbers is the
 `[0, 1/2)` case of the counting step below; the rest is new.
 Confidence 85% (exact certificate; the hand steps below).  Proof route:
@@ -262,20 +262,20 @@ Confidence 85% (exact certificate; the hand steps below).  Proof route:
 * Injectivity.  `3^N g_0 = 2^N g_N - Σ 3^{N-1-n} 2^{n+1} a_n`, so the first `N` digits fix
   `g_0 mod 2^N`.  Hence `#{g < 2^N : TrappedFloor s t g}` is at most `W_N`, the number of digit
   words with every `f_n` in the arc.
-* Growth.  `experiments/arc_entropy.py cover 16/25 1000 160` covers every position `s` by the arc
-  `[i/1000, i/1000 + 16/25 + 1/1000]`.  For each it builds the transfer matrix on outward-rounded
-  states (grid `1/160`, an overcount) and checks a rational `v > 0` with `M v ≤ c v` exactly; the
-  worst `c` is `399/200 < 2`.  So `W_N ≤ C (399/200)^N`, and a smaller arc only lowers `W_N`.
+* Growth.  `experiments/arc_entropy.py cover 13/20 2000 320` covers every position `s` by the arc
+  `[i/2000, i/2000 + 13/20 + 1/2000]`.  For each it builds the transfer matrix on outward-rounded
+  states (grid `1/320`, an overcount) and checks a rational `v > 0` with `M v ≤ c v` exactly; the
+  worst `c` is `999/500 < 2`.  So `W_N ≤ C (999/500)^N`, and a smaller arc only lowers `W_N`.
 * Density.  `TrapsResidueClass s t k r` gives at least `2^{N-k}/3 - 1` trapped floors below
-  `2^N + 3`, which beats `C (399/200)^N` for large `N`.
-Measured edge: growth reaches `2` near length `0.65`.  The memoryless game's shortest holdable arc
-is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
-theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 16 / 25) (k r : ℕ) :
+  `2^N + 3`, which beats `C (999/500)^N` for large `N`.
+Measured edge: at grid `1/320` the certificate fails at length `33/50`.  The memoryless game's
+shortest holdable arc is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
+theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 13 / 20) (k r : ℕ) :
     ¬ TrapsResidueClass s t k r := by
   sorry
 
-/-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `16/25`. -/
-theorem relaxed_barrier_16_25 (s t : ℝ) (ht : t ≤ 16 / 25) (l : ℝ) (P : Set ℝ) :
+/-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `13/20`. -/
+theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy s t l P := fun h =>
   finiteMemory_barrier s t ht 0 0 (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 

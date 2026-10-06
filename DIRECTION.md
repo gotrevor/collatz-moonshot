@@ -1,4 +1,4 @@
-> **2026-10-05 (night), finite-memory barrier:** no construction that works on a whole residue class mod 2^k (every k-memory strategy) holds an arc of length ≤ 16/25 at any position.  Its digit words grow at most 1.995^N < 2^N, Flatto's counting extended to every arc (`finiteMemory_barrier`, exact certificate `experiments/arc_entropy.py`).  The game's shortest holdable arc is ≈ 0.683 for k = 0..3.
+> **2026-10-05 (night), finite-memory barrier:** no construction that works on a whole residue class mod 2^k (every k-memory strategy) holds an arc of length ≤ 13/20 at any position.  Its digit words grow at most 1.998^N < 2^N, Flatto's counting extended to every arc (`finiteMemory_barrier`, exact certificate `experiments/arc_entropy.py`).  The game's shortest holdable arc is ≈ 0.683 for k = 0..3.
 
 > **2026-10-05 (late), Mahler barrier:** no memoryless adversarial-parity strategy holds any arc of length ≤ 1/2, at any position, so none produces a Z-number (`mahler_barrier`, Maze row; exact over every position in `experiments/arc_mahler.py`, plus a hand proof for length < 1/2). 
 
