@@ -376,7 +376,7 @@ theorem relaxedStrategy_1228 :
 
 /-- **New constant, sharpened.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least
 `307/2500 = 0.1228` from the integers (Dubickas 2008: `5/48 ≈ 0.1042`).
-Confidence 90% (exact lattice post-fixed point; the independent exact orbit check in
+PROVED 2026-10-06 (`relaxedStrategy_1228`: 22 clamp cells `u = max a c`, checked by `norm_num`; orbit check in
 `test_relaxed_certificate_orbits_stay_far`).  Proof: `exists_trapped_of_relaxedStrategy` with
 `s = 307/2500`, `t = 1 - 2s`, `l = 123/1000` and the eleven intervals of
 `experiments/arc_cert_beta_1228_vw_k0.json` (denominator `2^24`); for `x ∈ [s, 1 - s]`,
@@ -446,28 +446,6 @@ theorem relaxed_barrier (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : 
     ¬ RelaxedStrategy β (1 - 2 * β) l P := by
   sorry
 
-/-- **Mahler barrier: no memoryless relaxed strategy holds any arc of length at most `1/2`.**  In
-particular none traps an orbit in Mahler's arc `[0, 1/2]`: a construction that treats every unseen
-parity as adversarial cannot produce a Z-number.
-Confidence 90%.  Proof route:
-* Domination by the component game (as for `relaxed_barrier`).
-* Containment: an arc of length `t ≤ 1/2` lies inside `[s, s + 1/2]`, and a smaller arc only helps
-  the adversary.
-* `experiments/arc_mahler.py verify`: for every position `s ∈ [0, 1)` the adversary kills every path
-  within 5 moves.  This is an exact AND-OR search with endpoints affine in `s`: 22 open `s`-pieces and
-  22 exact points.
-* For `t < 1/2` there is also a hand proof.  `A` and `A + 1/2` are disjoint, so the adversary keeps at
-  most half of `1.5 |C|` in the arc and `|C|` shrinks by `3/4` per move.  Once the window is shorter
-  than `1/2 - t` it misses `A` or `A - 1/2`, and the adversary picks the parity that misses.
-Scope: memoryless strategies.  `finiteMemory_barrier` covers every finite memory, up to length
-`13/20`. -/
-theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
-    ¬ RelaxedStrategy s t l P := by
-  sorry
-
-/-- Mahler's own arc. -/
-theorem no_relaxedStrategy_mahler_arc (l : ℝ) (P : Set ℝ) : ¬ RelaxedStrategy 0 (1 / 2) l P :=
-  mahler_barrier 0 (1 / 2) le_rfl l P
 
 /-! ### Finite memory: a counting barrier (Flatto's entropy method on an arbitrary arc) -/
 
@@ -534,20 +512,6 @@ theorem two_pow_le_card_admissibleWord (s : ℝ) (hs : 0 ≤ s) (hs' : s ≤ 1 /
     2 ^ N ≤ Nat.card {a : Fin N → ℤ // AdmissibleWord s (2 / 3) N a} := by
   sorry
 
-/-- **The game reaches the edge at the Akiyama–Frougny–Sakarovitch arc.**  A memoryless relaxed
-strategy holds `[2/3 - 10⁻⁶, 4/3 + 10⁻⁶]`, i.e. `‖ξ (3/2)^n‖ ≤ 1/3 + 10⁻⁶`.  This works from every
-integer part, a positive density, whereas AFS give countably many `ξ` with `‖ξ (3/2)^n‖ < 1/3`.
-Confidence 85% (exact lattice post-fixed point `solve_vw` with width `l = 1000003/2000000`; exact
-orbits from `m₀ = 1, 2, 3, 100` stay within `1/3 + 10⁻⁶`, `test_game_reaches_afs_arc`).  The game
-fails on `[2/3, 4/3 + 10⁻⁶]` and on `[2/3 - 10⁻⁶, 4/3]`. -/
-theorem relaxedStrategy_near_afs :
-    ∃ l P, RelaxedStrategy (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) l P := by
-  sorry
-
-theorem trapsResidueClass_near_afs :
-    TrapsResidueClass (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) 0 0 := by
-  obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
-  exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
 
 /-! ### Below `2/3`: digit words grow slower than `2^N` (proved) -/
 
@@ -1615,6 +1579,29 @@ theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Se
     ¬ RelaxedStrategy s t l P := fun h =>
   finiteMemory_barrier s t ht 0 0 (by norm_num) (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
+/-- **Mahler barrier: no memoryless relaxed strategy holds any arc of length at most `1/2`.**  In
+particular none traps an orbit in Mahler's arc `[0, 1/2]`: a construction that treats every unseen
+parity as adversarial cannot produce a Z-number.
+PROVED 2026-10-06 as a corollary of `relaxed_barrier_13_20`.  Original proof route:
+* Domination by the component game (as for `relaxed_barrier`).
+* Containment: an arc of length `t ≤ 1/2` lies inside `[s, s + 1/2]`, and a smaller arc only helps
+  the adversary.
+* `experiments/arc_mahler.py verify`: for every position `s ∈ [0, 1)` the adversary kills every path
+  within 5 moves.  This is an exact AND-OR search with endpoints affine in `s`: 22 open `s`-pieces and
+  22 exact points.
+* For `t < 1/2` there is also a hand proof.  `A` and `A + 1/2` are disjoint, so the adversary keeps at
+  most half of `1.5 |C|` in the arc and `|C|` shrinks by `3/4` per move.  Once the window is shorter
+  than `1/2 - t` it misses `A` or `A - 1/2`, and the adversary picks the parity that misses.
+Scope: memoryless strategies.  `finiteMemory_barrier` covers every finite memory, up to length
+`13/20`. -/
+theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy s t l P :=
+  relaxed_barrier_13_20 s t (by linarith) l P
+
+/-- Mahler's own arc. -/
+theorem no_relaxedStrategy_mahler_arc (l : ℝ) (P : Set ℝ) : ¬ RelaxedStrategy 0 (1 / 2) l P :=
+  mahler_barrier 0 (1 / 2) le_rfl l P
+
 /-- **The finite-memory edge is exactly `2/3`** (stated here; `finiteMemoryEdgeIsTwoThirds` below).  No residue-class construction holds
 an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
 counting obstruction is sharp at the best position.  At other positions the game needs
@@ -1684,6 +1671,28 @@ theorem relaxedStrategy_afs_closed :
       · rw [show (3 * (2 / 3 : ℝ) / 2 + 1 / 2) = (1 / 2 : ℝ) + ((1 : ℤ) : ℝ) by norm_num,
           Int.fract_add_intCast]
         exact h12
+
+/-- A larger arc is held by the same strategy. -/
+theorem RelaxedStrategy.mono {s t s' t' l : ℝ} {P : Set ℝ} (h : RelaxedStrategy s t l P)
+    (hs : s' ≤ s) (ht : s + t ≤ s' + t') : RelaxedStrategy s' t' l P := by
+  refine ⟨h.1, h.2.1, h.2.2.1, fun a ha d hd => ?_⟩
+  obtain ⟨u, h1, h2, ⟨k, hk1, hk2⟩, h4⟩ := h.2.2.2 a ha d hd
+  exact ⟨u, h1, h2, ⟨k, by linarith, by linarith⟩, h4⟩
+
+/-- **The game reaches the edge at the Akiyama–Frougny–Sakarovitch arc.**  A memoryless relaxed
+strategy holds `[2/3 - 10⁻⁶, 4/3 + 10⁻⁶]`, i.e. `‖ξ (3/2)^n‖ ≤ 1/3 + 10⁻⁶`.  This works from every
+integer part, a positive density, whereas AFS give countably many `ξ` with `‖ξ (3/2)^n‖ < 1/3`.
+PROVED 2026-10-06 from `relaxedStrategy_afs_closed` (`RelaxedStrategy.mono`).  Originally: exact lattice post-fixed point `solve_vw` with width `l = 1000003/2000000`; exact
+orbits from `m₀ = 1, 2, 3, 100` stay within `1/3 + 10⁻⁶`, `test_game_reaches_afs_arc`).  The game
+fails on `[2/3, 4/3 + 10⁻⁶]` and on `[2/3 - 10⁻⁶, 4/3]`. -/
+theorem relaxedStrategy_near_afs :
+    ∃ l P, RelaxedStrategy (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) l P :=
+  ⟨_, _, relaxedStrategy_afs_closed.mono (by norm_num) (by norm_num)⟩
+
+theorem trapsResidueClass_near_afs :
+    TrapsResidueClass (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) 0 0 := by
+  obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
+  exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
 
 /-- **Every positive integer part traps the closed AFS arc**: a memoryless construction holds
 `{‖x‖ ≤ 1/3}` from every starting floor.  (The orbit-level fact is essentially Akiyama-Frougny-
