@@ -27,3 +27,15 @@ Bonus: `finiteMemory_barrier` (13/20) is now a corollary (moved after the 2/3 ba
 
 In order: `run_bounded_count_ge` → `afsUnbroken_of_noRunLonger` → `not_afsUnbroken_of_long_run`
 → `card_afsUnbroken_le` → `near_afs_every_floor` → `near_afs_density`.
+
+## Phase 2 progress (same day)
+
+Proved: `run_bounded_count_ge` (ratio induction, `badExt_le`), `afsUnbroken_of_noRunLonger`
+(`trail`, `afsErr_bound`), `not_afsUnbroken_of_long_run`, `card_afsUnbroken_le`
+(`avoidSet_bound`, block peeling).  Branch `ren/g2-hunt-flatto-ceiling`, all committed.
+
+Note: DIRECTION.md's 2026-09-13 directive (no execution laps) predates the 2026-10-06 operator
+kickoff that assigns this work; the kickoff was treated as the newer operator instruction.
+
+Next: `near_afs_every_floor` then `near_afs_density` (connect `afsErr` to real orbits,
+anchor-parity bijection; hardest).
