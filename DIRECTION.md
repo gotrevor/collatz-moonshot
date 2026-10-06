@@ -1,3 +1,5 @@
+> **2026-10-05 (night, latest), below 2/3 by hand:** digit words grow slower than 2^N on every arc shorter than 2/3.  Split each word at an edge hit: forward paths are Fibonacci, and backward trees must lose a branch within log_{3/2}(1/(2−3t)) steps.  So no finite-memory construction holds any arc shorter than 2/3 (`finiteMemory_barrier_two_thirds`).  `FiniteMemoryEdgeIsTwoThirds` reduces to its AFS half.
+
 > **2026-10-05 (night, later), the finite-memory edge is 2/3:** digit-word growth is 1, 3/2 and 2 at arc lengths 1/3 (FLP), 1/2 (Mahler/Flatto) and 2/3.  At 2/3 counting stops (hand proof: at least 2^N words), and a memoryless strategy holds the AFS arc {‖x‖ ≤ 1/3 + 10⁻⁶} from every integer part.  Conjecture `FiniteMemoryEdgeIsTwoThirds`, proved to 13/20.
 
 > **2026-10-05 (night), finite-memory barrier:** no construction that works on a whole residue class mod 2^k (every k-memory strategy) holds an arc of length ≤ 13/20 at any position.  Its digit words grow at most 1.998^N < 2^N, Flatto's counting extended to every arc (`finiteMemory_barrier`, exact certificate `experiments/arc_entropy.py`).  The game's shortest holdable arc is ≈ 0.683 for k = 0..3.

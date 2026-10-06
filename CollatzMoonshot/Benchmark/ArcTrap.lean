@@ -316,6 +316,57 @@ theorem trapsResidueClass_near_afs :
   obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
   exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
 
+/-! ### Below `2/3`: a hand proof that digit words grow slower than `2^N` -/
+
+/-- A digit path of length `N` from `p` to `q` inside the arc: fractional parts `f_0 = p, …,
+f_N = q` in the arc with `f_{i+1} = 3 f_i / 2 - a_i / 2`. -/
+def ArcPath (s t : ℝ) (N : ℕ) (p q : ℝ) (a : Fin N → ℤ) : Prop :=
+  ∃ f : Fin (N + 1) → ℝ, (∀ i, ∃ x ∈ Set.Icc s (s + t), f i = Int.fract x) ∧
+    (∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2) ∧
+    f 0 = p ∧ f (Fin.last N) = q
+
+/-- **Forward paths from a point grow at most like Fibonacci (arcs shorter than `3/4`).**
+Confidence 90% (hand proof).  A point has at most two successors, `y` and `y + 1/2`.  If both branch
+again, their four successors are `z, z + 1/4, z + 1/2, z + 3/4` mod 1, and an arc holding all four
+has length at least `3/4`.  So of two sibling successors at most one branches, and the count
+`M_n` satisfies `M_n ≤ M_{n-1} + M_{n-2}`. -/
+theorem card_forward_le (s t p : ℝ) (ht : t < 3 / 4) (N : ℕ) :
+    Nat.card {a : Fin N → ℤ // ∃ q, ArcPath s t N p q a} ≤ Nat.fib (N + 2) := by
+  sorry
+
+/-- **Backward paths into a point lose a branch within `K` steps once `(2/3)^(K-1) < 2 - 3t`.**
+Confidence 85% (hand proof; `arc_entropy.py backward` samples the full depth, never above the
+bound).  Proof: in the coordinate `v = 3 · ((f - s) mod 1) ∈ [0, 3t]`, the predecessors of `v` are
+the points of `2v/3 - s + ℤ` in `[0, 3t]`.  These are `w = frac(2v/3 - s)` and also `w + 1` exactly
+when `w ≤ τ := 3t - 1`.  In a tree that is full to depth `j`, the depth-`j` values `w` arise from
+one point by `j` rounds of `w ↦ frac(2w/3 - s)` and `w ↦ frac(2w/3 + 2/3 - s)`.  Each round
+multiplies the largest circular gap by `2/3`, so the gaps are at most `(2/3)^j`.  Once
+`(2/3)^j < 1 - τ = 2 - 3t`, some node falls in `(τ, 1)` and has one predecessor. -/
+theorem card_backward_le (s t q : ℝ) (ht : t < 2 / 3) (K : ℕ) (hK : 1 ≤ K)
+    (hK' : (2 / 3 : ℝ) ^ (K - 1) < 2 - 3 * t) :
+    Nat.card {a : Fin K → ℤ // ∃ p, ArcPath s t K p q a} ≤ 2 ^ K - 1 := by
+  sorry
+
+/-- **Digit words grow strictly slower than `2^N` on every arc shorter than `2/3`.**
+Confidence 85%.  Proof: every component of a word's cylinder has a left endpoint `ℓ` where some
+`f_j(ℓ)` is a left edge `b` of the arc (`b = s`, or `b = 0` when the arc wraps).  So the word is a
+backward path of length `j` into `b` followed by a forward path of length `N - j` from just right of
+`b`.  Hence `W_N ≤ 2 Σ_j B_j M_{N-j} ≤ C (N + 1) λ^N` with `λ = max(φ, (2^K - 1)^{1/K}) < 2`, by
+`card_forward_le` and `card_backward_le`. -/
+theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
+    ∃ C lam : ℝ, lam < 2 ∧ ∀ N : ℕ, (Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} : ℝ) ≤
+      C * lam ^ N := by
+  sorry
+
+/-- **Finite-memory barrier, all the way to `2/3`.**  No construction that works on a whole residue
+class mod `2^k` traps orbits in any arc shorter than `2/3`.
+Confidence 85%.  Proof: `admissibleWord_growth_lt_two`, plus the injectivity and density steps of
+`finiteMemory_barrier` (`N` digits fix `g_0 mod 2^N`; a residue class gives `≥ 2^{N-k}/3 - 1`
+trapped floors below `2^N + 3`). -/
+theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ) :
+    ¬ TrapsResidueClass s t k r := by
+  sorry
+
 /-- **Conjecture: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds
 an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
 counting obstruction is sharp at the best position.  At other positions the game needs
@@ -327,6 +378,12 @@ AFS endpoints for `s ∈ [0.60, 0.66]`. -/
 def FiniteMemoryEdgeIsTwoThirds : Prop :=
   (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
   (∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0)
+
+/-- The conjecture is now exactly its second half: arcs just past the AFS arc are held. -/
+theorem finiteMemoryEdgeIsTwoThirds_iff :
+    FiniteMemoryEdgeIsTwoThirds ↔
+      ∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0 :=
+  ⟨fun h => h.2, fun h => ⟨fun s t ht k r => finiteMemory_barrier_two_thirds s t ht k r, h⟩⟩
 
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed

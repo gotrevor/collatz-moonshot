@@ -109,8 +109,29 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 - **Counting stops at 2/3 (hand proof, `two_pow_le_card_admissibleWord`).**  Take a non-wrapping arc `I` of length `2/3`.  `3I/2` has length exactly `1`, so almost every `y ∈ I` has exactly two digits leading into it, and Lebesgue measure is an eigenmeasure with eigenvalue `4/3`.  Cylinders are at most `(2/3)^N · 2/3` long, so at least `2^N` words are admissible.  Numerically the growth is `2` at length `2/3` for every position tested, wrapping arcs included, and `2.0000` on both bounds at the AFS position.  At length `0.6` it varies with position (`1.71`–`1.86`), so "growth `= 3t`" is false in general and exact only at these lengths.
 - **The game reaches 2/3 (`relaxedStrategy_near_afs`).**  A memoryless strategy with one width `≈ 1/2` holds `[2/3 − 10⁻⁶, 4/3 + 10⁻⁶]`, i.e. `‖ξ(3/2)^n‖ ≤ 1/3 + 10⁻⁶`, from every integer part.  Removing the `10⁻⁶` from either end loses.  For `s ∈ [0.60, 0.66]` the game edge is pinned at right end `1/3`, and nothing holds once `s ≥ 0.67`: the AFS arc `{‖x‖ ≤ 1/3}` is the corner.  Memory `k = 2, 4` changes nothing.
 - **Per position the two edges differ.**  The counting edge is `≈ 2/3` at every position (brackets at `s = 0, 0.1, …, 0.9` all contain `2/3`).  The game edge is `0.73`–`0.90` away from the AFS corner, `0.80` at Mahler's position.  So "the game wins exactly when words grow at least as fast as `2^N`" is false position by position, and true for the best arc.
-- **Conjecture (`FiniteMemoryEdgeIsTwoThirds`):** no residue-class construction holds any arc shorter than `2/3`, and every neighbourhood of the AFS arc is held.  Proved part: up to `13/20` (`finiteMemory_barrier`).
+- **Conjecture (`FiniteMemoryEdgeIsTwoThirds`):** no residue-class construction holds any arc shorter than `2/3`, and every neighbourhood of the AFS arc is held.  Proved part: every length `< 2/3` (hand proof, next section; certificate to `13/20`).
 - **Reading:** the 2-adic horizon has an exact size.  Seeing finitely many bits buys a positive-density family of orbits, and positive density needs `2^N` digit words, which needs arc length `2/3`.  Mahler's `1/2` (growth `3/2`, Flatto's count) is a full `1/6` below that.  Seeing past the horizon means producing a zero-density set of orbits, which no finite-state rule can single out.  Maze row: "digit-word counting past arc length 2/3".
+
+## Theorem: below 2/3, by hand
+
+**Statement.**  On every arc of length `t < 2/3`, at any position, digit words grow like `C(N+1)λ^N` with `λ < 2`.  So no construction that works on a whole residue class mod `2^k` holds the arc, for any `k`.  This is the first half of `FiniteMemoryEdgeIsTwoThirds`.  The conjecture is now exactly its second half, that every neighbourhood of the AFS arc is held (`finiteMemoryEdgeIsTwoThirds_iff`).  Lean: `card_forward_le`, `card_backward_le`, `admissibleWord_growth_lt_two`, `finiteMemory_barrier_two_thirds`.
+
+**Proof.**
+1. **Split each word at an edge hit.**  Every component of a word's cylinder has a left endpoint `ℓ` where some `f_j(ℓ)` is a left edge `b` of the arc (`s`, or `0` if the arc wraps).  So the word is a backward path of length `j` into `b` followed by a forward path of length `N − j` from just right of `b`.  Hence `W_N ≤ 2 Σ_j B_j · M_{N−j}`.
+2. **Forward paths are Fibonacci (`t < 3/4`).**  A point has at most two successors, `y` and `y + 1/2`.  If both branch, their four successors are the quarter points `z + {0, 1/4, 1/2, 3/4}` mod 1, which no arc shorter than `3/4` holds.  So `M_n ≤ M_{n−1} + M_{n−2}`, giving `M_n ≤ fib(n + 2)`.
+3. **Backward paths lose a branch (`t < 2/3`).**  Use the coordinate `v = 3((f − s) mod 1) ∈ [0, 3t]`.  The predecessors of `v` are `w = frac(2v/3 − s)`, plus `w + 1` exactly when `w ≤ τ = 3t − 1`.  In a tree that is full to depth `j`, the depth-`j` values `w` are the images of one point under `j` rounds of the two maps `w ↦ frac(2w/3 − s)` and `w ↦ frac(2w/3 + 2/3 − s)`.  The two images of a set with circular gaps `≤ δ` interleave, with gaps `≤ 2δ/3` over a span longer than 1.  So the gaps are `≤ (2/3)^j`.  Once `(2/3)^j < 2 − 3t`, some node lands in `(τ, 1)` and has one predecessor.  Thus `B_K ≤ 2^K − 1` for `K = j + 1`, and `B_n ≤ C(2^K − 1)^{n/K}`.
+4. **Conclude.**  `λ = max(φ, (2^K − 1)^{1/K}) < 2`.  Injectivity and density finish as in `finiteMemory_barrier`.
+
+**Why `2/3` exactly:** at `t = 2/3` we have `τ = 1`, the forbidden arc `(τ, 1)` is empty, and every point has two predecessors.  That is the same fact as the Lebesgue eigenmeasure behind `two_pow_le_card_admissibleWord`.
+
+**Checks** (`arc_entropy.py test`, 13 tests).  They use an independent implementation in actual fractional parts, not the `v` coordinate:
+- **Lemma depth:** the bound `j₀` agrees with hand values (`2` at `1/2`, `8` at `13/20`).
+- **Sampled trees:** backward trees never stay full past `j₀`, and they reach it, so the bound is tight.  At `2/3`, trees never break.
+- **Forward counts:** they stay `≤ fib(N + 2)` at length `0.74`; at `0.8`, `4 > fib(4)` is reached.
+- **Backward cap:** `≤ 2^11 − 1` backward paths at `t = 33/50`, `K = 11`.
+- **Decomposition:** the split-sum dominates the exact word count.
+
+**Status:** hand proof, confidence 85%; Lean statements with `sorry`.  The certificate route (`finiteMemory_barrier`, `13/20`) remains as independent evidence.
 
 ## What the ladder says about Mahler
 

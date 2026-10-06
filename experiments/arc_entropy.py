@@ -14,6 +14,7 @@ v > 0 with M v <= c v (Collatz-Wielandt) certifies W_N <= C c^N.
 
     arc_entropy.py bound S T M          growth bound for the arc [S, S+T] at grid 1/M
     arc_entropy.py cover T G M          certify every arc of length T (all positions, mesh 1/G)
+    arc_entropy.py backward T SAMPLES   sampled full depth of backward point trees vs card_backward_le
     arc_entropy.py edge S M             where growth reaches 2 at position S, vs the game's edge
     arc_entropy.py test
 """
@@ -142,6 +143,63 @@ def cover(t, G, m):
     return worst, None
 
 
+# ---- the hand proof below 2/3: point trees (exact, in actual fractional parts) ----
+
+def in_arc(x, s, t):
+    return (x - s) % 1 <= t
+
+
+def predecessors(q, s, t):
+    """x in [0, 1) in the arc with 3x/2 - a/2 = q for an integer a: x in 2q/3 + Z/3."""
+    x0 = (F(2, 3) * q) % F(1, 3)
+    return [x for x in (x0, x0 + F(1, 3), x0 + F(2, 3)) if in_arc(x, s, t)]
+
+
+def successors(p, s, t):
+    y0 = (F(3, 2) * p) % F(1, 2)
+    return [y for y in (y0, y0 + F(1, 2)) if in_arc(y, s, t)]
+
+
+def tree_count(x, s, t, n, step):
+    level = [x]
+    for _ in range(n):
+        level = [y for z in level for y in step(z, s, t)]
+    return len(level)
+
+
+def word_count(s, t, N):
+    """Exact number of digit words of length N with a nondegenerate cylinder (non-wrapping arc)."""
+    cur = [(s, s + t)]
+    for _ in range(N):
+        nxt = []
+        for lo, hi in cur:
+            for a in DIG:
+                l2, h2 = max(F(3, 2) * lo - a, s), min(F(3, 2) * hi - a, s + t)
+                if l2 < h2:
+                    nxt.append((l2, h2))
+        cur = nxt
+    return len(cur)
+
+
+def lemma_depth(t):
+    """card_backward_le: the first j with (2/3)^j < 2 - 3t; no backward tree is full past depth j."""
+    return next(j for j in range(10 ** 4) if F(2, 3) ** j < 2 - 3 * t)
+
+
+def full_depth(q, s, t, cap):
+    """Depth to which the backward tree into q stays full binary (cap if it never breaks)."""
+    level = [q]
+    for d in range(cap):
+        nxt = []
+        for z in level:
+            pre = predecessors(z, s, t)
+            if len(pre) < 2:
+                return d
+            nxt += pre
+        level = nxt
+    return cap
+
+
 def main(argv):
     if not argv or argv[0] == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", __file__])
@@ -159,6 +217,15 @@ def main(argv):
         print(f"s={float(sp):.4f}  growth reaches 2 at length in [{float(e_up):.4f}, {float(e_lo):.4f}]"
               f"   game holds from {float(g):.4f}", flush=True)
         return 0
+    if argv[0] == "backward":
+        # arc_entropy.py backward T SAMPLES : worst full depth of backward trees vs the lemma
+        import random
+        t, n = F(argv[1]), int(argv[2])
+        random.seed(0)
+        worst = max(full_depth(F(random.randrange(10 ** 6), 10 ** 6), F(random.randrange(10 ** 6), 10 ** 6),
+                               t, lemma_depth(t) + 3) for _ in range(n))
+        print(f"length {t}: backward trees full to depth <= {worst} over {n} samples; lemma bound {lemma_depth(t)}")
+        return 0 if worst <= lemma_depth(t) else 1
     if argv[0] == "cover":
         t, G, m = F(argv[1]), int(argv[2]), int(argv[3])
         worst, fail = cover(t, G, m)
@@ -241,6 +308,61 @@ def test_game_reaches_afs_arc():
         assert max(dist_int(xi * F(3, 2) ** n) for n in range(50)) <= F(1, 3) + e
     assert not win(F(2, 3), F(2, 3) + e)
     assert not win(F(2, 3) - e, F(2, 3) + e)
+
+
+def test_lemma_depth_by_hand():
+    # (2/3)^1 = 0.667 >= 1/2 > (2/3)^2; (2/3)^7 = 0.0585 >= 0.05 > (2/3)^8 = 0.039
+    assert lemma_depth(F(1, 2)) == 2 and lemma_depth(F(13, 20)) == 8
+
+
+def test_backward_trees_break_by_the_lemma_depth():
+    for t in ("1/2", "3/5", "13/20", "33/50"):
+        r = _cli("backward", t, "150")
+        assert r.returncode == 0, r.stdout
+
+
+def test_backward_lemma_has_teeth():
+    # at exactly 2/3 every point has two predecessors (hand: 3I/2 has length 1), so trees never break
+    assert full_depth(F(1, 7), F(0), F(2, 3), 12) == 12
+    assert full_depth(F(2, 7), F(1, 5), F(2, 3), 12) == 12
+
+
+def test_forward_counts_are_fibonacci_bounded():
+    # card_forward_le: below 3/4 sibling successors never both branch, so counts <= fib(N + 2)
+    fib = [0, 1]
+    for _ in range(20):
+        fib.append(fib[-1] + fib[-2])
+    import random
+    random.seed(3)
+    for _ in range(200):
+        s, p = F(random.randrange(1000), 1000), F(random.randrange(1000), 1000)
+        for N in (3, 8):
+            assert tree_count(p, s, F(37, 50), N, successors) <= fib[N + 2]
+    # teeth: at length 0.8 the four quarter points fit, so two steps reach 4 > fib(4) = 3
+    assert any(tree_count(F(i, 400), F(0), F(4, 5), 2, successors) == 4 for i in range(400))
+
+
+def test_backward_count_matches_lemma_bound():
+    # card_backward_le at t = 33/50: K = lemma_depth + 1 = 11 steps leave at most 2^11 - 1 paths
+    import random
+    random.seed(5)
+    t = F(33, 50)
+    K = lemma_depth(t) + 1
+    for _ in range(40):
+        q, s = F(random.randrange(1000), 1000), F(random.randrange(1000), 1000)
+        assert tree_count(q, s, t, K, predecessors) <= 2 ** K - 1
+
+
+def test_decomposition_bounds_the_words():
+    # admissibleWord_growth_lt_two, first step: a word splits at its left-edge hit into a backward path
+    # into s (length j) and a forward path (<= fib(N - j + 2)); the sum must dominate the exact count
+    fib = [0, 1]
+    for _ in range(30):
+        fib.append(fib[-1] + fib[-2])
+    for s0, t in ((F(1, 10), F(33, 50)), (F(1, 5), F(3, 5)), (F(0), F(1, 2))):
+        for N in (6, 10):
+            bound = sum(tree_count(s0, s0, t, j, predecessors) * fib[N - j + 2] for j in range(N + 1))
+            assert word_count(s0, t, N) <= bound
 
 
 if __name__ == "__main__":
