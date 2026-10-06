@@ -1908,12 +1908,85 @@ noncomputable def afsErr (δ : ℝ) {N : ℕ} (w : Fin N → Bool) : ℕ → ℝ
 def AfsUnbroken (δ : ℝ) (N : ℕ) (w : Fin N → Bool) : Prop :=
   ∀ n (h : n < N), AfsStepOk δ (afsErr δ w n) (w ⟨n, h⟩)
 
-/-- Short runs never break the piece.  Confidence 90% (the core of `near_afs_density`).  Proof:
+/-- Length of the run of `b`s ending just before position `n`. -/
+def trail {N : ℕ} (w : Fin N → Bool) (b : Bool) : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => if h : n < N then (if w ⟨n, h⟩ = b then trail w b n + 1 else 0) else 0
+
+theorem trail_spec {N : ℕ} (w : Fin N → Bool) (b : Bool) : ∀ n, n ≤ N →
+    trail w b n ≤ n ∧ ∀ k (hk : k < trail w b n) (h : n - 1 - k < N), w ⟨n - 1 - k, h⟩ = b := by
+  intro n
+  induction n with
+  | zero => intro _; simp [trail]
+  | succ n ih =>
+    intro hn
+    obtain ⟨h1, h2⟩ := ih (by omega)
+    have hnN : n < N := by omega
+    by_cases hb : w ⟨n, hnN⟩ = b
+    · have e : trail w b (n + 1) = trail w b n + 1 := by simp [trail, hnN, hb]
+      refine ⟨by omega, fun k hk _ => ?_⟩
+      rcases Nat.eq_zero_or_pos k with rfl | hk0
+      · simpa using hb
+      · have := h2 (k - 1) (by omega) (by omega)
+        rw [← this]; congr 1; ext; simp; omega
+    · have e : trail w b (n + 1) = 0 := by simp [trail, hnN, hb]
+      refine ⟨by omega, fun k hk _ => by omega⟩
+
+theorem trail_le {R N : ℕ} {w : Fin N → Bool} (hw : NoRunLonger R N w) (b : Bool) (n : ℕ)
+    (hn : n ≤ N) : trail w b n ≤ R := by
+  obtain ⟨h1, h2⟩ := trail_spec w b n hn
+  by_contra hlt
+  push_neg at hlt
+  obtain ⟨k, hk, hne⟩ := hw (n - (R + 1)) (by omega)
+  apply hne
+  have a1 := h2 (R - k) (by omega) (by omega)
+  have a2 := h2 (R - k - 1) (by omega) (by omega)
+  rw [show (⟨n - (R + 1) + k, by omega⟩ : Fin N) = ⟨n - 1 - (R - k), by omega⟩ from
+      Fin.ext (by simp; omega),
+    show (⟨n - (R + 1) + k + 1, by omega⟩ : Fin N) = ⟨n - 1 - (R - k - 1), by omega⟩ from
+      Fin.ext (by simp; omega), a1, a2]
+
+theorem afsErr_bound (δ : ℝ) {N : ℕ} (w : Fin N → Bool) : ∀ n, n ≤ N →
+    |(afsErr δ w n).1| ≤ (3 / 2) ^ trail w false n * |δ| ∧
+      |(afsErr δ w n).2| ≤ (3 / 2) ^ trail w true n * |δ| := by
+  intro n
+  induction n with
+  | zero => intro _; simp [afsErr, trail]
+  | succ n ih =>
+    intro hn
+    have hnN : n < N := by omega
+    obtain ⟨h1, h2⟩ := ih (by omega)
+    simp only [afsErr, dif_pos hnN, afsErrStep, trail]
+    cases hb : w ⟨n, hnN⟩
+    · simp only [Bool.false_eq_true, ↓reduceIte]
+      refine ⟨?_, by simp⟩
+      rw [abs_mul, pow_succ]; norm_num
+      nlinarith [abs_nonneg δ]
+    · simp only [↓reduceIte, Bool.true_eq_false]
+      refine ⟨by simp, ?_⟩
+      rw [abs_mul, pow_succ]; norm_num
+      nlinarith [abs_nonneg δ]
+
+/-- Short runs never break the piece.  PROVED 2026-10-06 (`afsErr_bound`, `trail_le`) (the core of `near_afs_density`).  Proof:
 each coordinate is `0`, `δ` or `δ (3/2)^j` with `j` at most the length of the run it is growing in.
 So `|3e/2 - δ| ≤ (3/2)^(R+1) |δ| + |δ| < 1/6` at every step. -/
 theorem afsUnbroken_of_noRunLonger (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6)
     (w : Fin N → Bool) (hw : NoRunLonger R N w) : AfsUnbroken δ N w := by
-  sorry
+  intro n hn
+  obtain ⟨h1, h2⟩ := afsErr_bound δ w n hn.le
+  have t1 := trail_le hw false n hn.le
+  have t2 := trail_le hw true n hn.le
+  have p1 : (3 / 2 : ℝ) ^ trail w false n ≤ (3 / 2) ^ R := pow_le_pow_right₀ (by norm_num) t1
+  have p2 : (3 / 2 : ℝ) ^ trail w true n ≤ (3 / 2) ^ R := pow_le_pow_right₀ (by norm_num) t2
+  have hd := abs_nonneg δ
+  have b1 : |(afsErr δ w n).1| ≤ (3 / 2) ^ R * |δ| := h1.trans (by nlinarith)
+  have b2 : |(afsErr δ w n).2| ≤ (3 / 2) ^ R * |δ| := h2.trans (by nlinarith)
+  rw [pow_succ] at hR
+  have c1 := abs_le.1 b1
+  have c2 := abs_le.1 b2
+  have d := abs_le.1 (le_refl |δ|)
+  unfold AfsStepOk
+  split_ifs <;> refine ⟨by nlinarith, by nlinarith, by nlinarith, by nlinarith⟩
 
 /-- A flip followed by `m` equal letters always breaks the piece, once
 `|δ| ((3/2)^m - 1) > 1/3`.  Confidence 90%.  Proof: reading `w b` resets the coordinate that the run
