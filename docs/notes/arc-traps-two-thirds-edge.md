@@ -106,7 +106,7 @@ So an error grows by `3/2` along a run of equal parities and resets to `δ` when
 ## What is not claimed
 
 - Nothing here proves Mahler's conjecture or improves the FLP lower bound `1/3` for individual `ξ`.  §2 is a conjecture, with evidence.
-- The lower half of the edge theorem (`t < 2/3` fails) is a hand proof with sorried Lean statements, plus an exact certificate up to `13/20`.  The upper half (`2/3` is held) is proved in Lean, except the soundness lemma `trapsResidueClass_of_relaxedStrategy`, a standard nested-interval argument.
+- Both halves of the edge theorem are now proved in Lean (2026-10-06): `finiteMemory_min_arc_two_thirds` and `finiteMemoryEdgeIsTwoThirds` depend only on the standard axioms.  The lower half runs through `card_forward_le`, `card_backward_le`, `admissibleWord_growth_lt_two` and `finiteMemory_barrier_two_thirds`; the upper half through `trapsResidueClass_of_relaxedStrategy`.  What remains open in the file is off this path: the `1227`/`1228` constants, `relaxed_barrier`, `two_pow_le_card_admissibleWord` (the matching `2^N` lower count), and the near-AFS bounds.
 - **Prior work, by a quick check only.**
   - Flatto (1992) treats only arcs `[0, t)`, with no general positions, no `2/3` and no growth-`2` count; his Z-number count is our length-`1/2` case at position `0`.
   - Akiyama–Frougny–Sakarovitch (2008) own the extremal arc (see §1).

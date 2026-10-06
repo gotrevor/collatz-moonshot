@@ -218,7 +218,7 @@ theorem exists_trapped_of_relaxedStrategy_from {s t l : ℝ} {P : Set ℝ}
       Int.fract_sub_intCast]
 
 /-- **Soundness of the relaxed game.**
-Confidence 90%.  Proof: pick `m₀ ≥ 1` and `a₀ ∈ P`; at step `n` the window is `m_n + [a_n, a_n + l]`,
+PROVED 2026-10-06 (via `exists_trapped_of_relaxedStrategy_from`).  Proof: pick `m₀ ≥ 1` and `a₀ ∈ P`; at step `n` the window is `m_n + [a_n, a_n + l]`,
 `d = (m_n mod 2)/2`, the strategy gives `u_n`, and `m_{n+1} = ⌊3m_n/2⌋ + ⌊c⌋`, `a_{n+1} = fract c` with
 `c = 3u_n/2 + d`, since `3(m_n + u_n)/2 = ⌊3m_n/2⌋ + c`.  The closed intervals
 `J_n = (m_n + [u_n, u_n + 2l/3]) / (3/2)^n` are nested and nonempty; any `ξ ∈ ⋂ J_n` has
@@ -345,7 +345,7 @@ theorem trapsResidueClass_vacuous (s t : ℝ) : TrapsResidueClass s t 0 1 := by
 /-- **A memoryless relaxed strategy traps every unit interval.**  The strategy never reads the
 integer part, so it runs from the window `[m + a, m + a + l]` for every `m ≥ 1`.  The sub-window
 `[u, u + 2l/3]` fits in an arc lift, so `l ≤ 3t/2 ≤ 3/2` and `⌊ξ⌋ < m + 3`.
-Confidence 90% (the construction in `exists_trapped_of_relaxedStrategy`, started at `m`; it is
+PROVED 2026-10-06 (the construction in `exists_trapped_of_relaxedStrategy`, started at `m`; it is
 also what `vw_orbit` in `experiments/arc_trap_k.py` plays from any `m0`).  The `k`-memory games of
 `arc_trap_k.py` give `TrapsResidueClass s t k r` the same way. -/
 theorem trapsResidueClass_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (ht : t ≤ 1)
@@ -362,33 +362,6 @@ theorem trapsResidueClass_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (ht : t
   refine ⟨⌊ξ⌋.toNat, by omega, by omega, ξ, by
     have : (1 : ℝ) ≤ m := by exact_mod_cast hm
     linarith [ha'.1], by omega, h3⟩
-
-/-- **Finite-memory barrier: no construction that works on a whole residue class mod `2^k` traps
-an orbit in any arc of length at most `13/20`.**  In particular no finite-memory strategy, of any
-game version, reaches Mahler's arc.  Flatto's `X^{log₂(3/2)}` count of Z-numbers is the
-`[0, 1/2)` case of the counting step below; the rest is new.
-Confidence 85% (exact certificate; the hand steps below).  Proof route:
-* Digits.  With `g_n = ⌊ξ (3/2)^n⌋` and `f_n` the fractional part, `a_n = g_{n+1} - 3 g_n / 2
-  = 3 f_n / 2 - f_{n+1}` lies in `{-1/2, 0, 1/2, 1}`.
-* Injectivity.  `3^N g_0 = 2^N g_N - Σ 3^{N-1-n} 2^{n+1} a_n`, so the first `N` digits fix
-  `g_0 mod 2^N`.  Hence `#{g < 2^N : TrappedFloor s t g}` is at most `W_N`, the number of digit
-  words with every `f_n` in the arc.
-* Growth.  `experiments/arc_entropy.py cover 13/20 2000 320` covers every position `s` by the arc
-  `[i/2000, i/2000 + 13/20 + 1/2000]`.  For each it builds the transfer matrix on outward-rounded
-  states (grid `1/320`, an overcount) and checks a rational `v > 0` with `M v ≤ c v` exactly; the
-  worst `c` is `999/500 < 2`.  So `W_N ≤ C (999/500)^N`, and a smaller arc only lowers `W_N`.
-* Density.  `TrapsResidueClass s t k r` gives at least `2^{N-k}/3 - 1` trapped floors below
-  `2^N + 3`, which beats `C (999/500)^N` for large `N`.
-Measured edge: at grid `1/320` the certificate fails at length `33/50`.  The memoryless game's
-shortest holdable arc is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
-theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 13 / 20) (k r : ℕ) (hr : r < 2 ^ k) :
-    ¬ TrapsResidueClass s t k r := by
-  sorry
-
-/-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `13/20`. -/
-theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Set ℝ) :
-    ¬ RelaxedStrategy s t l P := fun h =>
-  finiteMemory_barrier s t ht 0 0 (by norm_num) (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
 /-! ### The finite-memory edge is `2/3` -/
 
@@ -427,7 +400,7 @@ theorem trapsResidueClass_near_afs :
   obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
   exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
 
-/-! ### Below `2/3`: a hand proof that digit words grow slower than `2^N` -/
+/-! ### Below `2/3`: digit words grow slower than `2^N` (proved) -/
 
 /-- A digit path of length `N` from `p` to `q` inside the arc: fractional parts `f_0 = p, …,
 f_N = q` in the arc with `f_{i+1} = 3 f_i / 2 - a_i / 2`. -/
@@ -899,7 +872,7 @@ theorem reach_dense (s : ℝ) {b : ℝ} (hb0 : 0 ≤ b) (hb1 : b < 1) :
           ⟨-1, by push_cast; ring⟩
 
 /-- **Forward paths from a point grow at most like Fibonacci (arcs shorter than `3/4`).**
-Confidence 90% (hand proof).  A point has at most two successors, `y` and `y + 1/2`.  If both branch
+PROVED 2026-10-06.  A point has at most two successors, `y` and `y + 1/2`.  If both branch
 again, their four successors are `z, z + 1/4, z + 1/2, z + 3/4` mod 1, and an arc holding all four
 has length at least `3/4`.  So of two sibling successors at most one branches, and the count
 `M_n` satisfies `M_n ≤ M_{n-1} + M_{n-2}`. -/
@@ -910,7 +883,7 @@ theorem card_forward_le (s t p : ℝ) (ht : t < 3 / 4) (N : ℕ) :
   exact (fwd_fib s t ht N p).1
 
 /-- **Backward paths into a point lose a branch within `K` steps once `(2/3)^(K-1) < 2 - 3t`.**
-Confidence 85% (hand proof; `arc_entropy.py backward` samples the full depth, never above the
+PROVED 2026-10-06 (`arc_entropy.py backward` also samples the full depth, never above the
 bound).  Proof: in the coordinate `v = 3 · ((f - s) mod 1) ∈ [0, 3t]`, the predecessors of `v` are
 the points of `2v/3 - s + ℤ` in `[0, 3t]`.  These are `w = frac(2v/3 - s)` and also `w + 1` exactly
 when `w ≤ τ := 3t - 1`.  In a tree that is full to depth `j`, the depth-`j` values `w` arise from
@@ -1225,15 +1198,10 @@ theorem bwd_geom (s t : ℝ) (ht : t < 2 / 3) (K : ℕ) (hK : 1 ≤ K)
         _ = 2 ^ K * ρ ^ N := by
           rw [show N = K + (N - K) by omega, pow_add]; simp only [Nat.add_sub_cancel_left]; ring
 
-/-- **Digit words grow strictly slower than `2^N` on every arc shorter than `2/3`.**
-Confidence 85%.  Proof: every component of a word's cylinder has a left endpoint `ℓ` where some
-`f_j(ℓ)` is a left edge `b` of the arc (`b = s`, or `b = 0` when the arc wraps).  So the word is a
-backward path of length `j` into `b` followed by a forward path of length `N - j` from just right of
-`b`.  Hence `W_N ≤ 2 Σ_j B_j M_{N-j} ≤ C (N + 1) λ^N` with `λ = max(φ, (2^K - 1)^{1/K}) < 2`, by
-`card_forward_le` and `card_backward_le`. -/
-theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
-    ∃ C lam : ℝ, lam < 2 ∧ ∀ N : ℕ, (Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} : ℝ) ≤
-      C * lam ^ N := by
+/-- The growth bound with a nonnegative rate, in `ncard` form. -/
+theorem admissibleWord_growth_pos (s t : ℝ) (ht : t < 2 / 3) :
+    ∃ C lam : ℝ, 0 ≤ lam ∧ lam < 2 ∧ ∀ N : ℕ,
+      ({a : Fin N → ℤ | AdmissibleWord s t N a}.ncard : ℝ) ≤ C * lam ^ N := by
   have h23 : (0 : ℝ) < 2 - 3 * t := by linarith
   obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one h23 (show (2 / 3 : ℝ) < 1 by norm_num)
   set K := n + 1
@@ -1243,9 +1211,7 @@ theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
   have hρ0 : 0 < ρ := by linarith
   have hr0 : 0 ≤ r := by positivity
   have hr1 : r < 1 := by rw [hr, div_lt_one (by linarith)]; linarith
-  refine ⟨4 * 2 ^ K / (1 - r), ρ, hρ2, fun N => ?_⟩
-  rw [show Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} =
-    {a : Fin N → ℤ | AdmissibleWord s t N a}.ncard from Nat.card_coe_set_eq _]
+  refine ⟨4 * 2 ^ K / (1 - r), ρ, by linarith, hρ2, fun N => ?_⟩
   have hB := bwd_geom s t ht K (by omega) hKb ρ (by linarith) hρK
   have hM : ∀ m p, ((fwdSet s t m p).ncard : ℝ) ≤ 2 * (7 / 4) ^ m := fun m p =>
     (by exact_mod_cast (fwd_fib s t (by linarith) m p).1 : ((fwdSet s t m p).ncard : ℝ) ≤
@@ -1285,20 +1251,226 @@ theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
       ≤ 4 * 2 ^ K * (ρ ^ N * (1 / (1 - r))) := by gcongr
     _ = 4 * 2 ^ K / (1 - r) * ρ ^ N := by ring
 
+/-- **Digit words grow strictly slower than `2^N` on every arc shorter than `2/3`.**
+PROVED 2026-10-06 (the `ℓ` is found by lowering the start, `exists_edge_path`).  Proof: every component of a word's cylinder has a left endpoint `ℓ` where some
+`f_j(ℓ)` is a left edge `b` of the arc (`b = s`, or `b = 0` when the arc wraps).  So the word is a
+backward path of length `j` into `b` followed by a forward path of length `N - j` from just right of
+`b`.  Hence `W_N ≤ 2 Σ_j B_j M_{N-j} ≤ C (N + 1) λ^N` with `λ = max(φ, (2^K - 1)^{1/K}) < 2`, by
+`card_forward_le` and `card_backward_le`. -/
+theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
+    ∃ C lam : ℝ, lam < 2 ∧ ∀ N : ℕ, (Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} : ℝ) ≤
+      C * lam ^ N := by
+  obtain ⟨C, lam, -, hl, h⟩ := admissibleWord_growth_pos s t ht
+  exact ⟨C, lam, hl, fun N => by
+    rw [show Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} =
+      {a : Fin N → ℤ | AdmissibleWord s t N a}.ncard from Nat.card_coe_set_eq _]
+    exact h N⟩
+
+/-! #### Injectivity and density for the barrier -/
+
+theorem admissible_finite (s t : ℝ) (N : ℕ) : {a : Fin N → ℤ | AdmissibleWord s t N a}.Finite :=
+  (Set.Finite.pi (fun _ => Set.finite_Icc (-1 : ℤ) 2)).subset fun _ ⟨f, hf, hs⟩ =>
+    arcPath_digit_box ⟨f, hf, hs, rfl, rfl⟩
+
+/-- The digit word of a trapped floor (through a chosen witness `ξ`). -/
+noncomputable def floorWitness (s t : ℝ) (g : ℕ) : ℝ :=
+  open Classical in if h : TrappedFloor s t g then h.choose else 0
+
+theorem floorWitness_spec {s t : ℝ} {g : ℕ} (h : TrappedFloor s t g) :
+    0 < floorWitness s t g ∧ ⌊floorWitness s t g⌋ = (g : ℤ) ∧
+      ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (floorWitness s t g * (3 / 2) ^ n) = Int.fract x := by
+  unfold floorWitness
+  rw [dif_pos h]
+  exact h.choose_spec
+
+noncomputable def floorWord (s t : ℝ) (N g : ℕ) : Fin N → ℤ :=
+  fun i => 2 * ⌊floorWitness s t g * (3 / 2) ^ ((i : ℕ) + 1)⌋ -
+    3 * ⌊floorWitness s t g * (3 / 2) ^ (i : ℕ)⌋
+
+theorem floorWord_admissible {s t : ℝ} {g : ℕ} (h : TrappedFloor s t g) (N : ℕ) :
+    AdmissibleWord s t N (floorWord s t N g) := by
+  obtain ⟨-, -, horb⟩ := floorWitness_spec h
+  refine ⟨fun i => Int.fract (floorWitness s t g * (3 / 2) ^ (i : ℕ)), fun i => ?_, fun i => ?_⟩
+  · obtain ⟨x, hx, he⟩ := horb i
+    exact ⟨x, hx, he⟩
+  · simp only [floorWord, Fin.val_succ, Fin.val_castSucc, Int.fract]
+    push_cast
+    rw [pow_succ]
+    ring
+
+theorem floorWord_dvd {s t : ℝ} {g g' : ℕ} (h : TrappedFloor s t g) (h' : TrappedFloor s t g')
+    (N : ℕ) (heq : floorWord s t N g = floorWord s t N g') : (2 : ℤ) ^ N ∣ (g : ℤ) - g' := by
+  obtain ⟨-, hfl, -⟩ := floorWitness_spec h
+  obtain ⟨-, hfl', -⟩ := floorWitness_spec h'
+  set G : ℕ → ℤ := fun n => ⌊floorWitness s t g * (3 / 2) ^ n⌋
+  set G' : ℕ → ℤ := fun n => ⌊floorWitness s t g' * (3 / 2) ^ n⌋
+  have key : ∀ n, n ≤ N → (2 : ℤ) ^ n * (G n - G' n) = 3 ^ n * ((g : ℤ) - g') := by
+    intro n
+    induction n with
+    | zero => intro _; simp [G, G', hfl, hfl']
+    | succ n ih =>
+      intro hn
+      have hd := congrFun heq ⟨n, by omega⟩
+      simp only [floorWord] at hd
+      have := ih (by omega)
+      rw [pow_succ, pow_succ]
+      have e : 2 * (G (n + 1) - G' (n + 1)) = 3 * (G n - G' n) := by
+        simp only [G, G']; linarith
+      calc (2 : ℤ) ^ n * 2 * (G (n + 1) - G' (n + 1)) = 2 ^ n * (2 * (G (n + 1) - G' (n + 1))) := by ring
+        _ = 2 ^ n * (3 * (G n - G' n)) := by rw [e]
+        _ = 3 * (2 ^ n * (G n - G' n)) := by ring
+        _ = _ := by rw [this]; ring
+  have hk := key N le_rfl
+  have hcop : IsCoprime ((2 : ℤ) ^ N) (3 ^ N) := by
+    apply IsCoprime.pow
+    rw [Int.isCoprime_iff_gcd_eq_one]; rfl
+  exact hcop.dvd_of_dvd_mul_left ⟨G N - G' N, hk.symm⟩
+
+/-- Trapped floors below `2^N` are at most the admissible words of length `N`. -/
+theorem trapped_ncard_le (s t : ℝ) (N : ℕ) :
+    {g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard ≤
+      {a : Fin N → ℤ | AdmissibleWord s t N a}.ncard := by
+  refine Set.ncard_le_ncard_of_injOn (floorWord s t N) (fun g hg => floorWord_admissible hg.2 N)
+    (fun g hg g' hg' he => ?_) (admissible_finite s t N)
+  have hd := floorWord_dvd hg.2 hg'.2 N he
+  obtain ⟨c, hc⟩ := hd
+  have h1 := hg.1; have h2 := hg'.1
+  have hP : (0 : ℤ) < 2 ^ N := by positivity
+  have : c = 0 := by
+    have hlt : ((g : ℤ) - g') < 2 ^ N := by
+      have : (g : ℤ) < 2 ^ N := by exact_mod_cast h1
+      linarith [(Int.natCast_nonneg g')]
+    have hgt : -(2 ^ N : ℤ) < ((g : ℤ) - g') := by
+      have : (g' : ℤ) < 2 ^ N := by exact_mod_cast h2
+      linarith [(Int.natCast_nonneg g)]
+    rw [hc] at hlt hgt
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hneg | hpos
+    · nlinarith
+    · nlinarith
+  rw [this, mul_zero, sub_eq_zero] at hc
+  exact_mod_cast hc
+
+/-- A residue class gives many trapped floors below `2^N`. -/
+theorem trapped_ncard_ge {s t : ℝ} {k r : ℕ} (hr : r < 2 ^ k) (hT : TrapsResidueClass s t k r)
+    (N : ℕ) : 2 ^ N / (3 * 2 ^ k) - 2 ≤ {g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard := by
+  set M := 3 * 2 ^ k with hM
+  set L := 2 ^ N / M - 2
+  have hk1 : 1 ≤ 2 ^ k := Nat.one_le_two_pow
+  have hm : ∀ i : Fin L, ∃ g : ℕ, r + 2 ^ k + i * M ≤ g ∧ g < r + 2 ^ k + i * M + 3 ∧
+      TrappedFloor s t g := fun i =>
+    hT _ (by omega) (by
+      rw [show r + 2 ^ k + i * M = r + 2 ^ k * (1 + 3 * i) by rw [hM]; ring,
+        Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hr])
+  choose g hg1 hg2 hg3 using hm
+  have hdiv : 2 ^ N / M * M ≤ 2 ^ N := Nat.div_mul_le_self _ _
+  have hle : ∀ i : Fin L, g i < 2 ^ N := by
+    intro i
+    have hi : (i : ℕ) + 2 < 2 ^ N / M := by have := i.isLt; omega
+    have h1 : ((i : ℕ) + 2 + 1) * M ≤ 2 ^ N / M * M := Nat.mul_le_mul_right _ hi
+    have h2 : r + 2 ^ k + 3 ≤ 2 * M := by omega
+    have := hg2 i
+    nlinarith
+  have hinj : Function.Injective g := by
+    intro i i' he
+    by_contra hne
+    rcases lt_or_gt_of_ne (fun h => hne (Fin.ext h)) with hlt | hlt
+    · have : ((i : ℕ) + 1) * M ≤ (i' : ℕ) * M := Nat.mul_le_mul_right _ hlt
+      have := hg2 i; have := hg1 i'
+      have hM3 : 3 ≤ M := by omega
+      nlinarith
+    · have : ((i' : ℕ) + 1) * M ≤ (i : ℕ) * M := Nat.mul_le_mul_right _ hlt
+      have := hg2 i'; have := hg1 i
+      have hM3 : 3 ≤ M := by omega
+      nlinarith
+  have := Set.ncard_le_ncard_of_injOn g (s := (Set.univ : Set (Fin L)))
+    (t := {g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}) (fun i _ => ⟨hle i, hg3 i⟩)
+    hinj.injOn (Set.Finite.subset (Set.finite_lt_nat (2 ^ N)) fun x hx => hx.1)
+  simpa [Set.ncard_univ] using this
+
 /-- **Finite-memory barrier, all the way to `2/3`.**  No construction that works on a whole residue
 class mod `2^k` traps orbits in any arc shorter than `2/3`.
-Confidence 85%.  Proof: `admissibleWord_growth_lt_two`, plus the injectivity and density steps of
+PROVED 2026-10-06.  Proof: `admissibleWord_growth_lt_two`, plus the injectivity and density steps of
 `finiteMemory_barrier` (`N` digits fix `g_0 mod 2^N`; a residue class gives `≥ 2^{N-k}/3 - 1`
 trapped floors below `2^N + 3`). -/
 theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ) (hr : r < 2 ^ k) :
     ¬ TrapsResidueClass s t k r := by
-  sorry
+  intro hT
+  obtain ⟨C, lam, hl0, hl2, hW⟩ := admissibleWord_growth_pos s t ht
+  set c : ℝ := 1 / (3 * 2 ^ k)
+  have hc : 0 < c := by positivity
+  -- for every N: c 2^N - 3 ≤ C lam^N
+  have hbound : ∀ N : ℕ, c * 2 ^ N - 3 ≤ C * lam ^ N := by
+    intro N
+    have h1 := trapped_ncard_ge hr hT N
+    have h2 := trapped_ncard_le s t N
+    have h3 := hW N
+    have hq : (2 : ℝ) ^ N / (3 * 2 ^ k) - 1 ≤ ((2 ^ N / (3 * 2 ^ k) : ℕ) : ℝ) := by
+      have := Nat.lt_div_mul_add (a := 2 ^ N) (b := 3 * 2 ^ k) (by positivity)
+      have hpos : (0 : ℝ) < 3 * 2 ^ k := by positivity
+      rw [div_sub_one hpos.ne', div_le_iff₀ hpos]
+      have : ((2 ^ N : ℕ) : ℝ) < ((2 ^ N / (3 * 2 ^ k) * (3 * 2 ^ k) + 3 * 2 ^ k : ℕ) : ℝ) := by
+        exact_mod_cast this
+      push_cast at this
+      linarith
+    have h4 : ((2 ^ N / (3 * 2 ^ k) : ℕ) : ℝ) - 2 ≤
+        ({g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard : ℝ) := by
+      have : 2 ^ N / (3 * 2 ^ k) ≤ {g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard + 2 := by omega
+      have : ((2 ^ N / (3 * 2 ^ k) : ℕ) : ℝ) ≤ ({g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard : ℝ) + 2 := by
+        exact_mod_cast this
+      linarith
+    have h5 : ({g : ℕ | g < 2 ^ N ∧ TrappedFloor s t g}.ncard : ℝ) ≤
+        ({a : Fin N → ℤ | AdmissibleWord s t N a}.ncard : ℝ) := by exact_mod_cast h2
+    have : c * 2 ^ N = (2 : ℝ) ^ N / (3 * 2 ^ k) := by simp only [c]; ring
+    linarith
+  -- divide by 2^N and let N → ∞
+  have hlim : Filter.Tendsto (fun N : ℕ => C * (lam / 2) ^ N + 3 * (1 / 2 : ℝ) ^ N)
+      Filter.atTop (nhds (C * 0 + 3 * 0)) :=
+    ((tendsto_pow_atTop_nhds_zero_of_lt_one (by positivity) (by linarith)).const_mul C).add
+      ((tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)).const_mul 3)
+  simp only [mul_zero, add_zero] at hlim
+  obtain ⟨N, hN⟩ := ((tendsto_order.1 hlim).2 c hc).exists
+  have hb := hbound N
+  have h2N : (0 : ℝ) < 2 ^ N := by positivity
+  have e1 : C * (lam / 2) ^ N * 2 ^ N = C * lam ^ N := by rw [div_pow]; field_simp
+  have e2 : 3 * (1 / 2 : ℝ) ^ N * 2 ^ N = 3 := by rw [div_pow, one_pow]; field_simp
+  have : (C * (lam / 2) ^ N + 3 * (1 / 2) ^ N) * 2 ^ N < c * 2 ^ N :=
+    mul_lt_mul_of_pos_right hN h2N
+  rw [add_mul, e1, e2] at this
+  linarith
+
+/-- **Finite-memory barrier: no construction that works on a whole residue class mod `2^k` traps
+an orbit in any arc of length at most `13/20`.**  In particular no finite-memory strategy, of any
+game version, reaches Mahler's arc.  Flatto's `X^{log₂(3/2)}` count of Z-numbers is the
+`[0, 1/2)` case of the counting step below; the rest is new.
+PROVED 2026-10-06, as a corollary of `finiteMemory_barrier_two_thirds`.  The original certificate route:  Proof route:
+* Digits.  With `g_n = ⌊ξ (3/2)^n⌋` and `f_n` the fractional part, `a_n = g_{n+1} - 3 g_n / 2
+  = 3 f_n / 2 - f_{n+1}` lies in `{-1/2, 0, 1/2, 1}`.
+* Injectivity.  `3^N g_0 = 2^N g_N - Σ 3^{N-1-n} 2^{n+1} a_n`, so the first `N` digits fix
+  `g_0 mod 2^N`.  Hence `#{g < 2^N : TrappedFloor s t g}` is at most `W_N`, the number of digit
+  words with every `f_n` in the arc.
+* Growth.  `experiments/arc_entropy.py cover 13/20 2000 320` covers every position `s` by the arc
+  `[i/2000, i/2000 + 13/20 + 1/2000]`.  For each it builds the transfer matrix on outward-rounded
+  states (grid `1/320`, an overcount) and checks a rational `v > 0` with `M v ≤ c v` exactly; the
+  worst `c` is `999/500 < 2`.  So `W_N ≤ C (999/500)^N`, and a smaller arc only lowers `W_N`.
+* Density.  `TrapsResidueClass s t k r` gives at least `2^{N-k}/3 - 1` trapped floors below
+  `2^N + 3`, which beats `C (999/500)^N` for large `N`.
+Measured edge: at grid `1/320` the certificate fails at length `33/50`.  The memoryless game's
+shortest holdable arc is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
+theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 13 / 20) (k r : ℕ) (hr : r < 2 ^ k) :
+    ¬ TrapsResidueClass s t k r :=
+  finiteMemory_barrier_two_thirds s t (by linarith) k r hr
+
+/-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `13/20`. -/
+theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy s t l P := fun h =>
+  finiteMemory_barrier s t ht 0 0 (by norm_num) (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
 /-- **The finite-memory edge is exactly `2/3`** (stated here; `finiteMemoryEdgeIsTwoThirds` below).  No residue-class construction holds
 an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
 counting obstruction is sharp at the best position.  At other positions the game needs
 `0.73`–`0.90`, while the counting edge stays at `≈ 2/3` everywhere.
-First half: hand proof (`finiteMemory_barrier_two_thirds`, 85%).  Second half: PROVED from the
+First half: PROVED (`finiteMemory_barrier_two_thirds`, 2026-10-06).  Second half: PROVED from the
 closed arc (`relaxedStrategy_afs_closed`, `finiteMemory_min_arc_two_thirds`). -/
 def FiniteMemoryEdgeIsTwoThirds : Prop :=
   (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, r < 2 ^ k → ¬ TrapsResidueClass s t k r) ∧
