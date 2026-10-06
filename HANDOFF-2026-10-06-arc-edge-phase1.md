@@ -39,3 +39,13 @@ kickoff that assigns this work; the kickoff was treated as the newer operator in
 
 Next: `near_afs_every_floor` then `near_afs_density` (connect `afsErr` to real orbits,
 anchor-parity bijection; hardest).
+
+## Phase 2 complete (same day)
+
+Proved `near_afs_every_floor` and `near_afs_density` (both standard axioms only).  Route: a
+single-error piece state (`afsAnchor`, `afsE`, `afsPiece`; type 0 = `k + [e, 1/3+δ]`, type 1 =
+`k + [2/3+δ, 1+e]`), `afsPiece_step_abs` (scaled piece contains the next), `afs_trapped_of_bound`
+(pull back a point of the depth-`N` piece), `afsE_bound` (error ≤ `(3/2)^trail · |δ|`), and
+`afsWord_injective` (`2^n (k_n - k'_n) = 3^n (g - g')`, coprimality).  The new type equals the old
+anchor parity, so the existing `trail`/`NoRunLonger` machinery applies directly; `afsErr` was not
+needed.  Kickoff phases 1 and 2 are both done.

@@ -1647,30 +1647,6 @@ def TrapsToDepth (s t : ℝ) (N g : ℕ) : Prop :=
 def NoRunLonger (R N : ℕ) (w : Fin N → Bool) : Prop :=
   ∀ i : ℕ, ∀ h : i + R < N, ∃ k, ∃ hk : k < R, w ⟨i + k, by omega⟩ ≠ w ⟨i + k + 1, by omega⟩
 
-/-- **Near-AFS density theorem.**  If runs of length `R` cost less than the slack,
-`(3/2)^(R+1) |δ| + |δ| < 1/6`, then at least as many integer parts below `2^N` are trapped to
-depth `N` in the shifted arc as there are binary words of length `N` with no run longer than `R`.
-Confidence 85%.  Proof: start from the piece `g + [0, 1/3 + δ]` (errors `0, δ`).  Under the run
-bound every error is at most `(3/2)^R |δ|`, so every step obeys the recursion's conditions.  The nested
-pieces are nonempty, and they stay in `[g, g + 1)`.  The anchor-parity map is a bijection from
-`g mod 2^N` onto words.
-With `run_bounded_count_ge` this gives density `≥ (1 - 2^{-R})^N`, where
-`2^{-R} ≍ |δ|^{1/log₂(3/2)} = |δ|^{1.7095…}`.  So a typical integer part lives at least
-`~|δ|^{-1.71}` steps.  The worst one lives only `~log_{3/2}(1/|δ|)` steps (`near_afs_every_floor`). -/
-theorem near_afs_density (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6) :
-    Nat.card {w : Fin N → Bool // NoRunLonger R N w} ≤
-      Nat.card {g : Fin (2 ^ N) // TrapsToDepth (2 / 3 + δ) (2 / 3) N g} := by
-  sorry
-
-/-- **Every integer part survives `~log_{3/2}(1/|δ|)` steps near the AFS arc.**  Confidence 90%.
-Proof: the recursion of `near_afs_density` with `R = N`; no word of length `N` has a longer run.
-The component game shows this is the right order: from `[0, 3]` the adversary kills at exactly
-depth `8 + k` at `δ = ±(1/30)(2/3)^k`, `k = 0..8` (from the AFS
-window `[0, 1/2]`: `7 + k` and `6 + k`) (`arc_entropy.py` `test_adversarial_depth_ladder`). -/
-theorem near_afs_every_floor (δ : ℝ) (N g : ℕ) (hN : (3 / 2) ^ (N + 1) * |δ| + |δ| < 1 / 6) :
-    TrapsToDepth (2 / 3 + δ) (2 / 3) N g := by
-  sorry
-
 /-- Prefixes of run-bounded words are run-bounded. -/
 theorem noRunLonger_prefix {R N M : ℕ} (hMN : M ≤ N) {v : Fin N → Bool} (h : NoRunLonger R N v) :
     NoRunLonger R M (fun j : Fin M => v ⟨j, by omega⟩) := by
@@ -2169,6 +2145,222 @@ theorem card_afsUnbroken_le (δ : ℝ) (m N : ℕ) (hm : 1 / 3 < |δ| * ((3 / 2)
   have h1 : ({w : Fin N → Bool | AfsUnbroken δ N w}.ncard : ℝ) ≤ (avoidSet m N).ncard := by
     exact_mod_cast Set.ncard_le_ncard hsub (Set.toFinite _)
   exact h1.trans (avoidSet_bound m hm1 N)
+
+/-! ### The anchor-parity bijection: real orbits -/
+
+/-- Anchor and type of the AFS piece after `n` steps from `g + [0, 1/3 + δ]`. -/
+def afsAnchor (g : ℤ) : ℕ → ℤ × Bool
+  | 0 => (g, false)
+  | n + 1 => ((3 * ((afsAnchor g n).1 / 2) + (afsAnchor g n).1 % 2 +
+      if (afsAnchor g n).2 then 1 else 0), decide ((afsAnchor g n).1 % 2 = 1))
+
+/-- The single free endpoint error of the piece. -/
+noncomputable def afsE (δ : ℝ) (g : ℤ) : ℕ → ℝ
+  | 0 => 0
+  | n + 1 => if decide ((afsAnchor g n).1 % 2 = 1) = (afsAnchor g n).2 then 3 / 2 * afsE δ g n
+      else 3 / 2 * δ
+
+/-- The piece: type `false` is `k + [e, 1/3 + δ]`, type `true` is `k + [2/3 + δ, 1 + e]`. -/
+def afsPiece (δ : ℝ) (τ : Bool) (k : ℤ) (e : ℝ) : Set ℝ :=
+  if τ then Set.Icc (k + 2 / 3 + δ) (k + 1 + e) else Set.Icc (k + e) (k + 1 / 3 + δ)
+
+theorem afsPiece_arc {δ e : ℝ} (hd : |δ| < 1 / 6) (he : |e| < 1 / 6) (τ : Bool) (k : ℤ)
+    {y : ℝ} (hy : y ∈ afsPiece δ τ k e) :
+    ∃ x ∈ Set.Icc (2 / 3 + δ) (2 / 3 + δ + 2 / 3), Int.fract y = Int.fract x := by
+  have a := abs_lt.1 hd; have b := abs_lt.1 he
+  cases τ
+  · simp only [afsPiece, Bool.false_eq_true, ↓reduceIte, Set.mem_Icc] at hy
+    refine ⟨y - ((k - 1 : ℤ) : ℝ), ⟨?_, ?_⟩, (Int.fract_sub_intCast _ _).symm⟩ <;>
+      push_cast <;> linarith
+  · simp only [afsPiece, ↓reduceIte, Set.mem_Icc] at hy
+    refine ⟨y - (k : ℝ), ⟨?_, ?_⟩, (Int.fract_sub_intCast _ _).symm⟩ <;> linarith
+
+theorem afsPiece_nonempty {δ e : ℝ} (hd : |δ| < 1 / 6) (he : |e| < 1 / 6) (τ : Bool) (k : ℤ) :
+    ∃ y, y ∈ afsPiece δ τ k e := by
+  have a := abs_lt.1 hd; have b := abs_lt.1 he
+  cases τ
+  · exact ⟨k + e, by simp only [afsPiece, Bool.false_eq_true, ↓reduceIte, Set.mem_Icc]; constructor <;> linarith⟩
+  · exact ⟨k + 2 / 3 + δ, by simp only [afsPiece, ↓reduceIte, Set.mem_Icc]; constructor <;> linarith⟩
+
+theorem afsPiece_step_abs {δ e : ℝ} (h : 3 / 2 * |e| + |δ| < 1 / 6) (τ : Bool) (k : ℤ) {y : ℝ}
+    (hy : y ∈ afsPiece δ (decide (k % 2 = 1)) (3 * (k / 2) + k % 2 + if τ then 1 else 0)
+      (if decide (k % 2 = 1) = τ then 3 / 2 * e else 3 / 2 * δ)) :
+    2 / 3 * y ∈ afsPiece δ τ k e := by
+  have hd := abs_le.1 (le_refl |δ|)
+  have hee := abs_le.1 (le_refl |e|)
+  have hn0 := abs_nonneg e
+  have hn1 := abs_nonneg δ
+  obtain ⟨j, rfl | rfl⟩ := Int.even_or_odd' k
+  · have h1 : 2 * j % 2 = 0 := by omega
+    have h2 : 2 * j / 2 = j := by omega
+    rw [h1, h2] at hy
+    cases τ <;> simp [afsPiece] at hy ⊢ <;> push_cast at hy ⊢ <;> constructor <;> linarith
+  · have h1 : (2 * j + 1) % 2 = 1 := by omega
+    have h2 : (2 * j + 1) / 2 = j := by omega
+    rw [h1, h2] at hy
+    cases τ <;> simp [afsPiece] at hy ⊢ <;> push_cast at hy ⊢ <;> constructor <;> linarith
+
+theorem afsPiece_step {δ : ℝ} (g : ℤ) (n : ℕ) (h : 3 / 2 * |afsE δ g n| + |δ| < 1 / 6) {y : ℝ}
+    (hy : y ∈ afsPiece δ (afsAnchor g (n + 1)).2 (afsAnchor g (n + 1)).1 (afsE δ g (n + 1))) :
+    2 / 3 * y ∈ afsPiece δ (afsAnchor g n).2 (afsAnchor g n).1 (afsE δ g n) :=
+  afsPiece_step_abs h _ _ hy
+
+/-- If the error stays small to depth `N`, the integer part `g` is trapped to depth `N`. -/
+theorem afs_trapped_of_bound (δ : ℝ) (g : ℤ) (N : ℕ)
+    (hb : ∀ n ≤ N, 3 / 2 * |afsE δ g n| + |δ| < 1 / 6) :
+    ∃ ξ : ℝ, ⌊ξ⌋ = g ∧
+      ∀ n ≤ N, ∃ x ∈ Set.Icc (2 / 3 + δ) (2 / 3 + δ + 2 / 3), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x := by
+  have small : ∀ n ≤ N, |δ| < 1 / 6 ∧ |afsE δ g n| < 1 / 6 := fun n hn => by
+    have := hb n hn; have := abs_nonneg δ; have := abs_nonneg (afsE δ g n)
+    constructor <;> linarith
+  have key : ∀ n ≤ N, ∀ y ∈ afsPiece δ (afsAnchor g n).2 (afsAnchor g n).1 (afsE δ g n),
+      ⌊(2 / 3 : ℝ) ^ n * y⌋ = g ∧ ∀ j ≤ n, ∃ x ∈ Set.Icc (2 / 3 + δ) (2 / 3 + δ + 2 / 3),
+        Int.fract ((2 / 3 : ℝ) ^ n * y * (3 / 2) ^ j) = Int.fract x := by
+    intro n
+    induction n with
+    | zero =>
+      intro hN y hy
+      obtain ⟨h1, h2⟩ := small 0 hN
+      have hy' := hy
+      simp only [afsPiece, afsAnchor, afsE, Bool.false_eq_true, ↓reduceIte, Set.mem_Icc] at hy'
+      have a := abs_lt.1 h1
+      refine ⟨?_, fun j hj => ?_⟩
+      · rw [Int.floor_eq_iff]; simp; constructor <;> linarith
+      · obtain rfl : j = 0 := by omega
+        simpa using afsPiece_arc h1 h2 _ _ hy
+    | succ n ih =>
+      intro hN y hy
+      have hz := afsPiece_step g n (hb n (by omega)) hy
+      obtain ⟨f1, f2⟩ := ih (by omega) _ hz
+      have e1 : (2 / 3 : ℝ) ^ (n + 1) * y = (2 / 3) ^ n * (2 / 3 * y) := by ring
+      refine ⟨by rw [e1]; exact f1, fun j hj => ?_⟩
+      rcases Nat.lt_or_ge j (n + 1) with hj' | hj'
+      · rw [e1]; exact f2 j (by omega)
+      · obtain rfl : j = n + 1 := by omega
+        have e2 : (2 / 3 : ℝ) ^ (n + 1) * y * (3 / 2) ^ (n + 1) = y := by
+          rw [mul_comm _ y, mul_assoc, ← mul_pow]; norm_num
+        rw [e2]
+        exact afsPiece_arc (small _ hN).1 (small _ hN).2 _ _ hy
+  obtain ⟨y, hy⟩ := afsPiece_nonempty (small N le_rfl).1 (small N le_rfl).2
+    (afsAnchor g N).2 (afsAnchor g N).1
+  obtain ⟨f1, f2⟩ := key N le_rfl y hy
+  exact ⟨(2 / 3) ^ N * y, f1, fun n hn => f2 n hn⟩
+
+/-- The anchor-parity word of `g`, length `N`. -/
+def afsWord (g : ℤ) (N : ℕ) : Fin N → Bool := fun i => decide ((afsAnchor g i).1 % 2 = 1)
+
+theorem afsE_bound (δ : ℝ) (g : ℤ) (N : ℕ) : ∀ n ≤ N,
+    |afsE δ g n| ≤ (3 / 2) ^ trail (afsWord g N) (afsAnchor g n).2 n * |δ| := by
+  intro n
+  induction n with
+  | zero => intro _; simp only [afsE, abs_zero]; positivity
+  | succ n ih =>
+    intro hn
+    have hnN : n < N := by omega
+    have ih := ih (by omega)
+    have ht : trail (afsWord g N) (afsAnchor g (n + 1)).2 (n + 1) =
+        trail (afsWord g N) (afsWord g N ⟨n, hnN⟩) n + 1 := by
+      simp [trail, hnN, afsWord, afsAnchor]
+    rw [ht, pow_succ]
+    have hd := abs_nonneg δ
+    have hp : (1 : ℝ) ≤ (3 / 2) ^ trail (afsWord g N) (afsWord g N ⟨n, hnN⟩) n :=
+      one_le_pow₀ (by norm_num)
+    simp only [afsE]
+    split_ifs with hc
+    · have : afsWord g N ⟨n, hnN⟩ = (afsAnchor g n).2 := by simpa [afsWord] using hc
+      rw [this, abs_mul]; norm_num; nlinarith
+    · rw [abs_mul]; norm_num; nlinarith
+
+theorem afsAnchor_diff (g g' : ℤ) (N : ℕ) (hw : afsWord g N = afsWord g' N) : ∀ n ≤ N,
+    (afsAnchor g n).2 = (afsAnchor g' n).2 ∧
+      2 ^ n * ((afsAnchor g n).1 - (afsAnchor g' n).1) = 3 ^ n * (g - g') := by
+  intro n
+  induction n with
+  | zero => intro _; simp [afsAnchor]
+  | succ n ih =>
+    intro hn
+    obtain ⟨h1, h2⟩ := ih (by omega)
+    have hp := congrFun hw ⟨n, by omega⟩
+    simp only [afsWord, decide_eq_decide] at hp
+    simp only [afsAnchor]
+    refine ⟨by simpa using hp, ?_⟩
+    have k2 : 2 * ((3 * ((afsAnchor g n).1 / 2) + (afsAnchor g n).1 % 2 +
+        if (afsAnchor g n).2 then 1 else 0) - (3 * ((afsAnchor g' n).1 / 2) +
+        (afsAnchor g' n).1 % 2 + if (afsAnchor g' n).2 then 1 else 0)) =
+        3 * ((afsAnchor g n).1 - (afsAnchor g' n).1) := by
+      rw [h1]; split_ifs <;> omega
+    rw [pow_succ, pow_succ, mul_assoc, k2, ← mul_assoc, mul_comm _ 3, mul_assoc, h2]; ring
+
+theorem afsWord_injective (N : ℕ) :
+    Function.Injective (fun g : Fin (2 ^ N) => afsWord (g : ℤ) N) := by
+  intro a b hab
+  obtain ⟨_, h⟩ := afsAnchor_diff _ _ N hab N le_rfl
+  have hc : IsCoprime ((2 : ℤ) ^ N) (3 ^ N) :=
+    (Int.isCoprime_iff_gcd_eq_one.2 (by norm_num)).pow
+  have hdvd : (2 : ℤ) ^ N ∣ ((a : ℕ) : ℤ) - ((b : ℕ) : ℤ) :=
+    hc.dvd_of_dvd_mul_left ⟨(afsAnchor ((a : ℕ) : ℤ) N).1 - (afsAnchor ((b : ℕ) : ℤ) N).1, by linear_combination -h⟩
+  have ha := a.2; have hb := b.2
+  have h2 : ((2 ^ N : ℕ) : ℤ) = 2 ^ N := by push_cast; ring
+  rw [← h2] at hdvd
+  obtain ⟨c, hc⟩ := hdvd
+  have : c = 0 := by
+    rcases lt_trichotomy c 0 with h | h | h
+    · nlinarith
+    · exact h
+    · nlinarith
+  subst this
+  exact Fin.ext (by omega)
+
+theorem afs_bound_of_run (δ : ℝ) (R N : ℕ) (G : ℤ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6)
+    {w : Fin N → Bool} (hrun : NoRunLonger R N w) (hw : afsWord G N = w) :
+    ∀ n ≤ N, 3 / 2 * |afsE δ G n| + |δ| < 1 / 6 := by
+  subst hw
+  intro n hn
+  have b := afsE_bound δ G N n hn
+  have t := trail_le hrun (afsAnchor G n).2 n hn
+  have p : (3 / 2 : ℝ) ^ trail (afsWord G N) (afsAnchor G n).2 n ≤ (3 / 2) ^ R :=
+    pow_le_pow_right₀ (by norm_num) t
+  rw [pow_succ] at hR
+  nlinarith [abs_nonneg δ]
+
+/-- **Near-AFS density theorem.**  If runs of length `R` cost less than the slack,
+`(3/2)^(R+1) |δ| + |δ| < 1/6`, then at least as many integer parts below `2^N` are trapped to
+depth `N` in the shifted arc as there are binary words of length `N` with no run longer than `R`.
+PROVED 2026-10-06 (`afs_trapped_of_bound`, `afsWord_injective`).  Proof: start from the piece `g + [0, 1/3 + δ]` (errors `0, δ`).  Under the run
+bound every error is at most `(3/2)^R |δ|`, so every step obeys the recursion's conditions.  The nested
+pieces are nonempty, and they stay in `[g, g + 1)`.  The anchor-parity map is a bijection from
+`g mod 2^N` onto words.
+With `run_bounded_count_ge` this gives density `≥ (1 - 2^{-R})^N`, where
+`2^{-R} ≍ |δ|^{1/log₂(3/2)} = |δ|^{1.7095…}`.  So a typical integer part lives at least
+`~|δ|^{-1.71}` steps.  The worst one lives only `~log_{3/2}(1/|δ|)` steps (`near_afs_every_floor`). -/
+theorem near_afs_density (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6) :
+    Nat.card {w : Fin N → Bool // NoRunLonger R N w} ≤
+      Nat.card {g : Fin (2 ^ N) // TrapsToDepth (2 / 3 + δ) (2 / 3) N g} := by
+  have hbij : Function.Bijective (fun g : Fin (2 ^ N) => afsWord (g : ℤ) N) :=
+    (Fintype.bijective_iff_injective_and_card _).2 ⟨afsWord_injective N, by simp⟩
+  obtain ⟨e, he⟩ : ∃ e : Fin (2 ^ N) ≃ (Fin N → Bool), ∀ g, e g = afsWord ((g : ℕ) : ℤ) N :=
+    ⟨Equiv.ofBijective _ hbij, fun _ => rfl⟩
+  refine Nat.card_le_card_of_injective
+    (fun w => ⟨e.symm w.1, ?_⟩) (fun a b h => Subtype.ext (e.symm.injective (congrArg Subtype.val h)))
+  have hw : afsWord ((e.symm w.1 : ℕ) : ℤ) N = w.1 := by rw [← he]; simp
+  obtain ⟨ξ, h1, h2⟩ := afs_trapped_of_bound δ _ N (afs_bound_of_run δ R N _ hR w.2 hw)
+  exact ⟨ξ, h1, h2⟩
+
+/-- **Every integer part survives `~log_{3/2}(1/|δ|)` steps near the AFS arc.**  PROVED 2026-10-06 (`afs_trapped_of_bound`).
+Proof: the recursion of `near_afs_density` with `R = N`; no word of length `N` has a longer run.
+The component game shows this is the right order: from `[0, 3]` the adversary kills at exactly
+depth `8 + k` at `δ = ±(1/30)(2/3)^k`, `k = 0..8` (from the AFS
+window `[0, 1/2]`: `7 + k` and `6 + k`) (`arc_entropy.py` `test_adversarial_depth_ladder`). -/
+theorem near_afs_every_floor (δ : ℝ) (N g : ℕ) (hN : (3 / 2) ^ (N + 1) * |δ| + |δ| < 1 / 6) :
+    TrapsToDepth (2 / 3 + δ) (2 / 3) N g := by
+  obtain ⟨ξ, h1, h2⟩ := afs_trapped_of_bound δ g N fun n hn => by
+    have b := afsE_bound δ g N n hn
+    have t := (trail_spec (afsWord (g : ℤ) N) (afsAnchor (g : ℤ) n).2 n hn).1
+    have p : (3 / 2 : ℝ) ^ trail (afsWord (g : ℤ) N) (afsAnchor (g : ℤ) n).2 n ≤ (3 / 2) ^ N :=
+      pow_le_pow_right₀ (by norm_num) (by omega)
+    rw [pow_succ] at hN
+    nlinarith [abs_nonneg δ]
+  exact ⟨ξ, h1, h2⟩
 
 /-- **Conjecture: the near-AFS decay rate is `|δ|^{1/log₂(3/2)}`.**
 What is proved: the AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})` up to a log
