@@ -379,10 +379,8 @@ theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ)
 an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
 counting obstruction is sharp at the best position.  At other positions the game needs
 `0.73`–`0.90`, while the counting edge stays at `≈ 2/3` everywhere.
-Confidence 70% (first half: `finiteMemory_barrier` to `13/20`; growth `< 2` below `2/3` at every
-position scanned; `two_pow_le_card_admissibleWord` shows counting stops at `2/3`).  Confidence 75%
-for the second half: `relaxedStrategy_near_afs` at `ε = 10⁻⁶`, and the game edge is pinned at both
-AFS endpoints for `s ∈ [0.60, 0.66]`. -/
+First half: hand proof (`finiteMemory_barrier_two_thirds`, 85%).  Second half: PROVED from the
+closed arc (`relaxedStrategy_afs_closed`, `finiteMemory_min_arc_two_thirds`). -/
 def FiniteMemoryEdgeIsTwoThirds : Prop :=
   (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
   (∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0)
@@ -418,15 +416,66 @@ theorem trapsResidueClass_mono {s t s' t' : ℝ} {k r : ℕ} (h : TrapsResidueCl
   obtain ⟨x, hx, hfx⟩ := hn n
   exact ⟨x, ⟨le_trans hs hx.1, le_trans hx.2 ht⟩, hfx⟩
 
+/-- **The closed AFS arc `{‖x‖ ≤ 1/3}` itself is held, with zero slack.**  Window width `1/2`, two
+window starts `P = {0, 1/2}`.  From `[0, 1/2]` keep `[0, 1/3]` (lift `[-1/3, 1/3]`); its image
+`[0, 1/2] + d` starts at `d`.  From `[1/2, 1]` keep `[2/3, 1]` (lift `[2/3, 4/3]`); its image
+`[1, 3/2] + d` starts at `d` mod 1.  The strategy has no interior, which is why the lattice search
+(inward rounding) and the interval-shaped `relaxedStrategy_afs` both missed it.
+Found by exact minimax of the component game at `s = t = 2/3` (`arc_entropy.py closed`). -/
+theorem relaxedStrategy_afs_closed :
+    RelaxedStrategy (2 / 3) (2 / 3) (1 / 2) ({0, 1 / 2} : Set ℝ) := by
+  have h0 : Int.fract (0 : ℝ) ∈ ({0, 1 / 2} : Set ℝ) := by simp
+  have h12 : Int.fract (1 / 2 : ℝ) ∈ ({0, 1 / 2} : Set ℝ) := by
+    rw [Int.fract_eq_self.2 ⟨by norm_num, by norm_num⟩]; simp
+  refine ⟨by norm_num, ⟨0, by simp⟩, ?_, ?_⟩
+  · rintro x (rfl | rfl | rfl) <;> norm_num
+  · intro a ha d hd
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at ha hd
+    rcases ha with rfl | rfl
+    · refine ⟨0, le_rfl, by norm_num, ⟨-1, by norm_num, by norm_num⟩, ?_⟩
+      rcases hd with rfl | rfl
+      · simp
+      · simpa using h12
+    · refine ⟨2 / 3, by norm_num, by norm_num, ⟨0, by norm_num, by norm_num⟩, ?_⟩
+      rcases hd with rfl | rfl
+      · rw [show (3 * (2 / 3 : ℝ) / 2 + 0) = (0 : ℝ) + ((1 : ℤ) : ℝ) by norm_num,
+          Int.fract_add_intCast]
+        exact h0
+      · rw [show (3 * (2 / 3 : ℝ) / 2 + 1 / 2) = (1 / 2 : ℝ) + ((1 : ℤ) : ℝ) by norm_num,
+          Int.fract_add_intCast]
+        exact h12
+
+/-- **Every positive integer part traps the closed AFS arc**: a memoryless construction holds
+`{‖x‖ ≤ 1/3}` from every starting floor.  (The orbit-level fact is essentially Akiyama-Frougny-
+Sakarovitch 2008; the point here is that it needs no memory, so the `2/3` edge is attained.) -/
+theorem trapsResidueClass_afs_closed : TrapsResidueClass (2 / 3) (2 / 3) 0 0 :=
+  trapsResidueClass_of_relaxedStrategy (by norm_num) relaxedStrategy_afs_closed
+
+/-- **Theorem: the shortest arc any finite-memory construction holds has length exactly `2/3`,
+and the minimum is attained** (at the AFS arc).  First half `finiteMemory_barrier_two_thirds`,
+second half `trapsResidueClass_afs_closed`. -/
+theorem finiteMemory_min_arc_two_thirds :
+    (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
+      TrapsResidueClass (2 / 3) (2 / 3) 0 0 :=
+  ⟨fun s t ht k r => finiteMemory_barrier_two_thirds s t ht k r, trapsResidueClass_afs_closed⟩
+
 /-- **Theorem: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds an
 arc shorter than `2/3` (`finiteMemory_barrier_two_thirds`), and every neighbourhood of the AFS arc
-`{‖x‖ ≤ 1/3}` is held by a memoryless strategy (`relaxedStrategy_afs`). -/
-theorem finiteMemoryEdgeIsTwoThirds : FiniteMemoryEdgeIsTwoThirds := by
-  refine finiteMemoryEdgeIsTwoThirds_iff.2 fun ε hε => ?_
-  rcases le_or_gt ε (1 / 10) with h | h
-  · exact trapsResidueClass_of_relaxedStrategy (by linarith) (relaxedStrategy_afs ε hε h)
-  · exact trapsResidueClass_mono (trapsResidueClass_of_relaxedStrategy (by norm_num)
-      (relaxedStrategy_afs (1 / 10) (by norm_num) le_rfl)) (by linarith) (by linarith)
+`{‖x‖ ≤ 1/3}` is held, already by the closed arc's two-point strategy (`relaxedStrategy_afs_closed`;
+the interval strategy `relaxedStrategy_afs` is superseded). -/
+theorem finiteMemoryEdgeIsTwoThirds : FiniteMemoryEdgeIsTwoThirds :=
+  finiteMemoryEdgeIsTwoThirds_iff.2 fun ε hε =>
+    trapsResidueClass_mono trapsResidueClass_afs_closed (by linarith) (by linarith)
+
+/-- **Conjecture: among arcs of length exactly `2/3`, only the AFS arc is held memorylessly.**
+Confidence 65%.  Evidence: exact minimax of the component game (adversary picks the parity fresh,
+constructor keeps a maximal piece; this dominates every `RelaxedStrategy` of width `≤ 1`) from the
+window `[0, 3]` survives depth 18 only at `s = 2/3`; it dies by depth 7 at `s = 0, 1/6, 1/3, 3/5`,
+by depth 6 at `s = 1/2`, by 8 at `7/10`, by 10 at `13/20`, and by 11 at `2/3 ± 1/100`
+(`arc_entropy.py closed S`).  Counting gives no obstruction here (`two_pow_le_card_admissibleWord`),
+so a proof needs the game, not entropy. -/
+def AfsArcIsolatedAtTwoThirds : Prop :=
+  ∀ s : ℝ, (∃ l P, RelaxedStrategy s (2 / 3) l P) → ∃ k : ℤ, s = 2 / 3 + k
 
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed

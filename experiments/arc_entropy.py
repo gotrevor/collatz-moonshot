@@ -16,6 +16,7 @@ v > 0 with M v <= c v (Collatz-Wielandt) certifies W_N <= C c^N.
     arc_entropy.py cover T G M          certify every arc of length T (all positions, mesh 1/G)
     arc_entropy.py backward T SAMPLES   sampled full depth of backward point trees vs card_backward_le
     arc_entropy.py afs EPS              check the explicit strategy holding {||x|| <= 1/3 + EPS}
+    arc_entropy.py closed S [D]         component game on [S, S+2/3] from [0, 3]: depth survived (cap D)
     arc_entropy.py edge S M             where growth reaches 2 at position S, vs the game's edge
     arc_entropy.py test
 """
@@ -209,6 +210,8 @@ def afs_set(e):
 
 
 def in_set(x, P):
+    if isinstance(P, (set, frozenset)):                 # a finite set of window starts
+        return x in P
     return any(lo <= x < hi for lo, hi in P)
 
 
@@ -235,6 +238,55 @@ def afs_check(e, n=600):
     pts = [lo + (hi - lo) * F(i, n) for lo, hi in P for i in range(n)]
     pts += [hi - F(1, 10 ** 12) for _, hi in P]
     return all(relaxed_move_ok(a, d, afs_move(a, d, e), s, t, l, P) for a in pts for d in (0, F(1, 2)))
+
+
+# ---- the closed AFS arc (e = 0): exact component game, no lattice rounding ----
+
+AFS_CLOSED = frozenset({F(0), F(1, 2)})                  # relaxedStrategy_afs_closed, l = 1/2
+
+
+def afs_closed_move(a):
+    """From [0, 1/2] keep [0, 1/3]; from [1/2, 1] keep [2/3, 1]."""
+    return F(0) if a == 0 else F(2, 3)
+
+
+def components(a, b, s, t):
+    """Maximal pieces of the window [a, b] inside lifts [k + s, k + s + t] (points included)."""
+    out = []
+    for k in range(math.floor(a - s) - 1, math.ceil(b - s) + 1):
+        lo, hi = max(a, k + s), min(b, k + s + t)
+        if lo <= hi:
+            out.append((lo, hi))
+    return out
+
+
+def component_survival(s, t, D, start=(F(0), F(3))):
+    """Depth the constructor survives (capped at D): adversary picks d fresh each step, constructor
+    keeps a maximal piece and the window becomes 3C/2 + d mod 1.  Keeping a maximal piece dominates
+    every fixed-width RelaxedStrategy, so death here at width <= 3 rules all of them out."""
+    memo = {}
+
+    def go(a, b, D):
+        if D == 0:
+            return 0
+        key = (a, b, D)
+        if key not in memo:
+            worst = D
+            for d in (F(0), F(1, 2)):
+                best = 0
+                for lo, hi in components(a, b, s, t):
+                    c = F(3, 2) * lo + d
+                    f = math.floor(c)
+                    best = max(best, 1 + go(c - f, F(3, 2) * hi + d - f, D - 1))
+                    if best == D:
+                        break
+                worst = min(worst, best)
+                if worst == 0:
+                    break
+            memo[key] = worst
+        return memo[key]
+
+    return go(*start, D)
 
 
 def main(argv):
@@ -269,6 +321,12 @@ def main(argv):
         ok = afs_check(e)
         print(f"eps={e}: explicit AFS strategy " + ("holds" if ok else "FAILS"))
         return 0 if ok else 1
+    if argv[0] == "closed":
+        # arc_entropy.py closed S [D] : component game on the length-2/3 arc at position S
+        sp, D = F(argv[1]), int(argv[2]) if len(argv) > 2 else 18
+        n = component_survival(sp, F(2, 3), D)
+        print(f"arc [{sp}, {sp + F(2, 3)}]: constructor survives depth {n}" + (" (cap)" if n == D else ""))
+        return 0
     if argv[0] == "cover":
         t, G, m = F(argv[1]), int(argv[2]), int(argv[3])
         worst, fail = cover(t, G, m)
@@ -419,6 +477,34 @@ def test_afs_strategy_needs_positive_eps():
     # hand: at e = 0 the d = 0 move from the first piece needs u in [2/3, 2/3), which is empty
     assert not afs_check(F(0))
     assert not relaxed_move_ok(F(3, 5), 0, F(2, 3), F(2, 3), F(2, 3), F(1, 2), afs_set(F(0)))
+
+
+
+def test_closed_afs_arc_two_point_strategy():
+    # relaxedStrategy_afs_closed, by hand: from [0, 1/2] the piece [0, 1/3] lies in the lift
+    # [-1/3, 1/3] and maps to [0, 1/2] + d; from [1/2, 1] the piece [2/3, 1] maps to [1, 3/2] + d.
+    # Both images start at d mod 1, back in P = {0, 1/2}.
+    s, t, l = F(2, 3), F(2, 3), F(1, 2)
+    for a in AFS_CLOSED:
+        for d in (F(0), F(1, 2)):
+            assert relaxed_move_ok(a, d, afs_closed_move(a), s, t, l, AFS_CLOSED)
+    # teeth: any other u for a = 1/2 fails (the lift forces u >= 2/3, the window u <= 2/3)
+    assert not relaxed_move_ok(F(1, 2), F(0), F(2, 3) - F(1, 10 ** 9), s, t, l, AFS_CLOSED)
+    assert not relaxed_move_ok(F(1, 2), F(0), F(1, 2), s, t, l, AFS_CLOSED)
+
+
+def test_component_game_holds_closed_arc_and_dies_off_it():
+    # AfsArcIsolatedAtTwoThirds evidence: the AFS arc survives the cap; shifted arcs die
+    r = _cli("closed", "2/3", "18")
+    assert r.returncode == 0 and "depth 18 (cap)" in r.stdout, r.stdout
+    for sp in ("0", "1/2", "197/300", "203/300", "7/10"):
+        r = _cli("closed", sp, "18")
+        assert "(cap)" not in r.stdout, (sp, r.stdout)
+
+
+def test_component_game_has_teeth_at_short_arcs():
+    # hand: an arc of length < 1/2 at s = 0 cannot survive (mahler_barrier), so the engine must kill it
+    assert component_survival(F(0), F(2, 5), 18) < 18
 
 
 if __name__ == "__main__":

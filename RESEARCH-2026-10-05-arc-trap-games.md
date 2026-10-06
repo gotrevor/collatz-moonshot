@@ -146,11 +146,28 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 | `[1/2 − 3ε/2, 2/3)` | `u = max(a, 2/3 − ε) < 2/3` → `3u/2 ∈ [1 − 3ε/2, 1)` (second piece) | same `u` → `3u/2 − 1/2 ∈ [1/2 − 3ε/2, 1/2)` (first piece) |
 | `[5/6 − 3ε/2, 1)` | `u = max(a, 1 − ε) ≤ 1` → `3u/2 − 1 ∈ [1/2 − 3ε/2, 1/2]` | `u = max(a, 8/9 − ε) < 1` → `3u/2 − 1/2 ∈ [5/6 − 3ε/2, 1)` |
 
-**Where `ε > 0` is used:** once, in the top-left cell, which needs the sliver `[2/3 − ε, 2/3)`.  At `ε = 0` this `P` fails (`test_afs_strategy_needs_positive_eps`).  Whether the closed arc `{‖x‖ ≤ 1/3}` itself holds for a residue class is open.  Counting cannot decide it, because growth is exactly `2` there.
+**Where `ε > 0` is used:** once, in the top-left cell, which needs the sliver `[2/3 − ε, 2/3)`.  At `ε = 0` this `P` fails (`test_afs_strategy_needs_positive_eps`), but a different, degenerate `P` works (next section), so this table is superseded.
 
 **How it was found:** the lattice solver's certificates at `ε = 10⁻³, 10⁻⁴, 10⁻⁶` had the same two-piece shape with endpoints affine in `ε`.  Read off, the shape is the strategy above.  `arc_entropy.py afs EPS` checks the witnesses against `RelaxedStrategy`'s exact conditions, endpoints included.
 
 **What it says:** the 2-adic horizon has size exactly `2/3`.  Finite memory buys every arc longer than `2/3` around `{‖x‖ ≤ 1/3}`, and nothing shorter, anywhere.  Mahler's arc is `1/6` inside the line.  Any Z-number construction must produce a zero-density family of integer parts, which no finite-state rule can do.
+
+## Theorem: the edge is attained, at the closed AFS arc (2026-10-06)
+
+**Statement** (`relaxedStrategy_afs_closed`, proved in Lean, no `sorry`; `finiteMemory_min_arc_two_thirds`).  The closed arc `{‖x‖ ≤ 1/3}` is held by a memoryless strategy with window width `1/2` and only two window starts, `P = {0, 1/2}`:
+
+| window | keep | lift | image | next start |
+|---|---|---|---|---|
+| `[0, 1/2]` | `[0, 1/3]` | `[−1/3, 1/3]` | `[0, 1/2] + d` | `d` |
+| `[1/2, 1]` | `[2/3, 1]` | `[2/3, 4/3]` | `[1, 3/2] + d` | `d` |
+
+Whatever the parity, the next window starts at `d ∈ {0, 1/2}`, so the two windows cycle forever.  So every positive integer `m` is the floor of some `ξ ∈ [m, m + 1/3]` with `‖ξ(3/2)^n‖ ≤ 1/3` for all `n` (`trapsResidueClass_afs_closed`; the start window is `m + [0, 1/2]`).  The shortest arc a finite-memory construction holds therefore has length exactly `2/3`, and the minimum is attained.  `finiteMemoryEdgeIsTwoThirds` now follows from monotonicity alone, and `relaxedStrategy_afs` is superseded.
+
+**Why it was missed:** the strategy has no interior.  The lattice solver rounds inward and drops degenerate intervals, and the `ε > 0` table was read off its interval-shaped certificates.  Exact minimax of the component game (the constructor keeps a maximal piece, the adversary picks `d` fresh) at `s = t = 2/3` reached only 5 states from the window `[0, 3]`, and the winning core is exactly this cycle (`arc_entropy.py closed 2/3`).
+
+**Novelty (cheap check):** the orbit-level fact is essentially Akiyama-Frougny-Sakarovitch 2008 (~60% that their rational-base tree already gives one `ξ` per integer).  What is ours is the sharp pairing: nothing shorter than `2/3` for any finite memory, and `2/3` attained.
+
+**Conjecture `AfsArcIsolatedAtTwoThirds` (65%):** among arcs of length exactly `2/3`, only the AFS arc is held memorylessly.  The component game from `[0, 3]` survives depth 18 only at `s = 2/3`; it dies by depth 6 to 11 at `s = 0, 1/6, 1/3, 1/2, 3/5, 13/20, 7/10, 2/3 ± 1/100`.  Counting cannot see this (growth is exactly 2 at every position), so a proof needs the game.  Whether `k`-memory rescues other positions at length `2/3` is open.
 
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
