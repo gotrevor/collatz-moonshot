@@ -1,3 +1,5 @@
+> **2026-10-06 (latest), critical length:** at length exactly 2/3, every non-AFS position tested decays like a critical branching process (S/S0 ≈ 1/(1+cN), c → 0 as s → 2/3); only the AFS arc plateaus.  Conjecture `AfsArcIsUniqueMinimal`: the AFS arc is the unique minimal arc (implies `StrongMahlerConjecture`).
+
 > **2026-10-06 (latest), strong Mahler conjecture:** no orbit fits an arc shorter than 2/3 (`StrongMahlerConjecture`, implies Mahler and E(3/2) ≤ 1/6).  Integer parts behave like random 2-adic integers: exact survivor decay matches the entropy rate λ/2 to 0.5% on three arcs (`experiments/arc_survival.py`).  Only the AFS position beats randomness.
 
 > **2026-10-06 (later), the edge is attained:** the closed AFS arc {‖x‖ ≤ 1/3} is held by a two-window memoryless strategy (windows [0, 1/2] and [1/2, 1], keep [0, 1/3] and [2/3, 1]), proved in Lean (`relaxedStrategy_afs_closed`).  Every positive integer is the floor of some ξ with ‖ξ(3/2)^n‖ ≤ 1/3.  The finite-memory minimum arc length is exactly 2/3, attained (`finiteMemory_min_arc_two_thirds`).  Conjecture: no other length-2/3 arc is held (`AfsArcIsolatedAtTwoThirds`).

@@ -187,6 +187,25 @@ The two independent numbers agree to within 0.5%.  No integer part outlives its 
 
 **Reformulation used along the way:** with digits `b_n = 2a_n ∈ {−1, 0, 1, 2}`, the same series `S(b) = Σ b_n 2^n / 3^{n+1}` gives `{ξ} = S(b)` at the real place and `⌊ξ⌋ = −S(b)` at the 2-adic place.  So a trapped `ξ` is a digit sequence whose real tails stay in the arc and whose 2-adic sum is a nonpositive integer.  This is probably AFS's rational-base numeration in other clothes.
 
+## The critical length: only AFS survives (2026-10-06)
+
+At length exactly `2/3` the growth is `λ = 2`, so the random model is a *critical* branching process: survival probability `~1/(cN)`, and every integer part eventually dies.  Measured with `arc_survival.py profile S 2/3 10 400`, every integer part below `2^10` to depth 400, at 18 positions:
+
+| s | S(50) | S(100) | S(200) | S(400) | c in `S/S0 ≈ 1/(1+cN)` |
+|---|---|---|---|---|---|
+| 0 | 385 | 228 | 121 | 72 | 0.033 |
+| 1/2 | 441 | 234 | 122 | 66 | 0.036 |
+| 3/4 | 475 | 269 | 173 | 120 | 0.019 |
+| 19/30 | 855 | 676 | 512 | 311 | 0.0057 |
+| 13/20 | 1000 | 918 | 803 | 568 | 0.002 |
+| **2/3** | **1023** | **1023** | **1023** | **1023** | **0** |
+| 61/90 | 1014 | 976 | 882 | 800 | 0.0007 |
+| 7/10 | 807 | 598 | 421 | 221 | 0.0091 |
+
+The other ten positions look like the generic rows.  At generic positions `1/S − 1` doubles each time `N` doubles, which is the critical-branching signature.  Near the AFS arc the constant `c(s)` falls toward `0`, but no position plateaus: only `s = 2/3` keeps everyone alive.  Read as a branching process, the AFS arc has offspring variance exactly zero (each window keeps exactly one piece, `relaxedStrategy_afs_closed`).  Everywhere else the variance is positive and the process dies.
+
+**Conjecture `AfsArcIsUniqueMinimal` (35%):** an orbit fits in an arc of length `≤ 2/3` only if the arc is `{‖x‖ ≤ 1/3}` itself.  It implies `StrongMahlerConjecture` (`afsArcIsUniqueMinimal_strongMahler`, proved).  If true, the AFS arc is a rigid minimum, with no slack in any direction.  The confidence is lower than for the strong conjecture because the critical case is exactly where infinitely many integer parts could beat probability 1.
+
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
 Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:

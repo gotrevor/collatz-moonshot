@@ -500,6 +500,29 @@ def StrongMahlerConjecture : Prop :=
   ∀ s t : ℝ, t < 2 / 3 → ¬ ∃ ξ : ℝ, 0 < ξ ∧
     ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x
 
+/-- **Conjecture: the AFS arc is the unique minimal arc.**  An orbit `{ξ(3/2)^n}` fits in an arc of
+length `≤ 2/3` only if that arc is `{‖x‖ ≤ 1/3}` itself.  Strictly stronger than
+`StrongMahlerConjecture` (`afsArcIsUniqueMinimal_strongMahler`).
+Confidence 35% (the critical case is delicate; the heuristic says each integer part dies with
+probability 1, but there are infinitely many of them).  Evidence (`arc_survival.py profile S 2/3 10 400`,
+every integer part below `2^10`, depth 400):
+* At 18 positions, only `s = 2/3` keeps every integer part alive.
+* At generic positions the survivors fit a critical branching process,
+  `S(N)/S(0) ≈ 1/(1 + c N)`: `1/S − 1` doubles with `N` (`s = 0`: 1.66, 3.49, 7.45, 13.2 at
+  `N = 50, 100, 200, 400`), with `c ≈ 0.02`–`0.04`.
+* `c(s) → 0` as `s → 2/3`: `0.0091` at `7/10`, `0.0057` at `19/30`, `0.002` at `13/20`, `0.0007` at `61/90`.
+  So decay slows near the AFS arc, but no position plateaus.
+
+Variance-zero alignment is what lets the AFS arc survive; a critical process with positive variance
+dies. -/
+def AfsArcIsUniqueMinimal : Prop :=
+  ∀ s t : ℝ, t ≤ 2 / 3 → (∃ ξ : ℝ, 0 < ξ ∧
+    ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x) →
+    t = 2 / 3 ∧ ∃ k : ℤ, s = 2 / 3 + k
+
+theorem afsArcIsUniqueMinimal_strongMahler (h : AfsArcIsUniqueMinimal) : StrongMahlerConjecture :=
+  fun s t ht hξ => absurd (h s t ht.le hξ).1 ht.ne
+
 /-- The strong conjecture implies Mahler's: there are no Z-numbers. -/
 theorem strongMahler_no_zNumber (h : StrongMahlerConjecture) :
     ¬ ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, Int.fract (ξ * (3 / 2) ^ n) < 1 / 2 := by

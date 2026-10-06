@@ -10,6 +10,7 @@ S(N) = #{m < 2^K : D(m) >= N} between two depths and prints 2*rate, to compare w
 
     arc_survival.py depth S T M CAP          D(m) for one integer part
     arc_survival.py rate S T K CAP LO HI     survivor decay over m < 2^K, depths LO..HI
+    arc_survival.py profile S T K CAP        S(N) at N = CAP/8, CAP/4, CAP/2, CAP (plateau vs decay)
     arc_survival.py test
 """
 from __future__ import annotations
@@ -62,6 +63,12 @@ def main(argv):
         a, b, r = rate(D, lo, hi)
         print(f"arc [{s}, {s + t}] m < 2^{K}: S({lo})={a} S({hi})={b} 2*rate={2 * r:.4f} max depth {max(D)}")
         return 0
+    if argv[0] == "profile":
+        s, t, K, cap = F(argv[1]), F(argv[2]), int(argv[3]), int(argv[4])
+        D = survivors(s, t, K, cap)
+        pts = [cap // 8, cap // 4, cap // 2, cap]
+        print(f"s={s} t={t} m < 2^{K}: " + " ".join(f"S({n})={sum(d >= n for d in D)}" for n in pts), flush=True)
+        return 0
     print(__doc__)
     return 2
 
@@ -87,6 +94,20 @@ def test_mahler_arc_decays_at_flattos_rate():
 def test_short_arc_dies_everywhere():
     # teeth: FLP, every orbit's range is >= 1/3, so an arc of length 3/10 holds no integer part forever
     assert max(survivors(F(0), F(3, 10), 8, 200)) < 200
+
+
+
+def _profile(sp, K, cap):
+    r = _cli("profile", sp, "2/3", str(K), str(cap))
+    return [int(w.split("=")[1]) for w in r.stdout.split() if w.startswith("S(")]
+
+
+def test_length_two_thirds_plateaus_only_at_afs():
+    # AfsArcIsUniqueMinimal evidence.  Hand: at s = 2/3 every integer part survives (closed strategy);
+    # the random model at lam = 2 is a critical branching process, so elsewhere S(N) must keep falling
+    assert _profile("2/3", 7, 160) == [127] * 4
+    S = _profile("0", 7, 160)
+    assert S[0] > S[1] > S[2] > S[3] and S[3] < S[0] / 2
 
 
 if __name__ == "__main__":
