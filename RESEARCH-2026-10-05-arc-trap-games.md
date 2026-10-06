@@ -36,7 +36,7 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 - The same edge holds at `k = 0, 1, 2, 3`.  **Memory buys nothing in the relaxed game**, whereas the window-in-arc game needed 2 bits to pass 0.1.
 - Two widths per game add nothing over one.
 - Memoryless certificate at `β = 307/2500 = 0.1228`: `experiments/arc_cert_beta_1228_vw_k0.json`, one width `123/1000`, eleven intervals.  Exact 300-step orbits from `m₀ ∈ {1, 2, 3, 4, 5, 8, 13, 100, 1001}` all stay at least 0.12280 from the integers.
-- Lean: `RelaxedStrategy`, `exists_trapped_of_relaxedStrategy` and `exists_farFromIntegers_1228` are PROVED (2026-10-06; the certificate is `relaxedStrategy_1228`, 22 clamp cells).  Open: the conjecture `RelaxedValueIsSevenFiftySevenths` and `relaxed_barrier`.
+- Lean: `RelaxedStrategy`, `exists_trapped_of_relaxedStrategy` and `exists_farFromIntegers_1228` are PROVED (2026-10-06; the certificate is `relaxedStrategy_1228`, 22 clamp cells).  `relaxed_barrier` (no memoryless strategy above `7/57`) is PROVED too (`barrier_core`, 35 node lemmas on one `β`-piece plus the runaway lemma), so the memoryless value is at most `7/57`; the matching lower bound `RelaxedValueIsSevenFiftySevenths` stays open.
 
 **Why 7/57: the 3-cycle `4/19 → 6/19 → 9/19`.**  Under `x ↦ 3x/2 + d (mod 1)` with parities `d = 0, 0, 1/2` this is a cycle: `(27/8)(4/19) + 1/2 = 46/38 ≡ 4/19`.  The arc's right edge `1 - β` maps with `d = 0` to `1/2 - 3β/2`.  That equals `6/19` exactly at `β = 7/57`.  So the edge's image lands on the cycle at the measured threshold.  How the adversary turns this into a forced exit is not yet written down.
 

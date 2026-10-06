@@ -390,16 +390,6 @@ theorem exists_farFromIntegers_1228 :
   rw [hx, this]
   constructor <;> linarith
 
-/-- **Above the edge, no memoryless relaxed strategy.**  At `β = 13/100` (arc `[0.13, 0.87]`) no
-width and no state set win.
-Confidence 85%.  Evidence and proof route: a relaxed strategy is dominated by the component game,
-where the constructor keeps a whole component of `W ∩ (arc lifts)` (bigger windows dominate) and
-starts from the full arc.  The exact minimax `experiments/arc_minimax.py depth 13/100 1 30` forces it
-out at depth 15.  A proof transcribes that finite refutation tree, rational endpoints throughout. -/
-theorem not_relaxedStrategy_13_100 (l : ℝ) (P : Set ℝ) :
-    ¬ RelaxedStrategy (13 / 100) (1 - 2 * (13 / 100)) l P := by
-  sorry
-
 /-! ### The quantity itself -/
 
 /-- `E α`: how far an orbit `ξ, ξα, ξα², …` (`ξ > 0`) can stay from the integers, i.e.
@@ -426,24 +416,6 @@ theorem E_three_halves_ge : 307 / 2500 ≤ E (3 / 2) := by
 
 /-- Upper bound from Dubickas 2006 (Cor. 1).  Confidence 95% given the literature input. -/
 theorem E_three_halves_le (h : Literature.Dubickas2006) : E (3 / 2) ≤ 2857 / 10000 := by
-  sorry
-
-/-- **Barrier: above `7/57` no memoryless relaxed strategy exists.**  Treating each parity bit as
-adversarial caps the construction at `7/57`.
-Confidence 90% (computer-assisted step checked exactly; hand steps below).  Proof route:
-* Domination: a relaxed strategy is dominated by the component game.  There the adversary picks
-  `d` each step, the constructor keeps a whole component of `W ∩ (arc lifts)`, and `W` becomes
-  `1.5 · C + d` mod 1.  Integer shifts are irrelevant and a larger window is never worse.
-* Funnel (`experiments/arc_barrier.py verify`): for `β ∈ (7/57, 0.1229]` an adaptive adversary
-  forces, within 13 moves, death or a window inside `[x₀, R₀]` with `x₀ > 10/19`, `R₀ = 1 - 9β/4`.
-  This is an exact AND-OR search with endpoints affine in `β`: 3 open `β`-pieces and 3 split points.
-  The arc's left edge after two `1/2`-steps sits at `9β/4 + 1/4 > 10/19 ⟺ β > 7/57`.
-* Runaway: for `β ∈ (4/35, 4/19)` the block `(0, 1/2, 1/2)` either kills `[x, R₀]` (when
-  `3x/2 ≥ 1 - β`) or maps it to `[g x, R₀]` with `g x = 27x/8 - 5/4`.  The components are unique
-  because `3R₀/2 < 1 + β` and `3R₀/2 > 1 - β`.  `g x - x = (19/8)(x - 10/19)` grows geometrically.
-* Monotonicity: for `β > 0.1229` play the `0.1229` adversary against the larger shadow window. -/
-theorem relaxed_barrier (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : ℝ) (P : Set ℝ) :
-    ¬ RelaxedStrategy β (1 - 2 * β) l P := by
   sorry
 
 
@@ -1693,6 +1665,976 @@ theorem trapsResidueClass_near_afs :
     TrapsResidueClass (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) 0 0 := by
   obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
   exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
+
+/-! ### The `7/57` barrier: the component game, adversary side
+
+`BarrierGood P l x y`: some window `[a + m, a + m + l]` of the strategy (`a ∈ P`, `m ∈ ℤ`) fits inside
+`[x, y]`.  `barrier_step` is the domination step: whatever parity the adversary names, the strategy's
+sub-window lies in one lift `[K + β, K + 1 - β]`, and the scaled component holds a new window.  The
+node lemmas `barrierNode*` transcribe the adaptive adversary tree of `experiments/arc_barrier.py` on
+the single `β`-piece `(7/57, 7126/58025)`; monotonicity in `β` (`RelaxedStrategy.mono`) covers every
+larger `β`. -/
+
+/-- Some strategy window `[a + m, a + m + l]` fits inside `[x, y]`. -/
+def BarrierGood (P : Set ℝ) (l x y : ℝ) : Prop :=
+  ∃ a ∈ P, ∃ m : ℤ, x ≤ a + m ∧ a + m + l ≤ y
+
+theorem BarrierGood.mono {P : Set ℝ} {l x y x' y' : ℝ} (h : BarrierGood P l x y) (hx : x' ≤ x)
+    (hy : y ≤ y') : BarrierGood P l x' y' := by
+  obtain ⟨a, ha, m, h1, h2⟩ := h
+  exact ⟨a, ha, m, by linarith, by linarith⟩
+
+theorem BarrierGood.shift {P : Set ℝ} {l x y : ℝ} (h : BarrierGood P l x y) (n : ℤ) :
+    BarrierGood P l (x + n) (y + n) := by
+  obtain ⟨a, ha, m, h1, h2⟩ := h
+  exact ⟨a, ha, m + n, by push_cast; linarith, by push_cast; linarith⟩
+
+theorem BarrierGood.add_le {P : Set ℝ} {l x y : ℝ} (h : BarrierGood P l x y) : x + l ≤ y := by
+  obtain ⟨a, ha, m, h1, h2⟩ := h
+  linarith
+
+theorem fract_half_mem (k : ℤ) : Int.fract ((k : ℝ) / 2) ∈ ({0, 1 / 2} : Set ℝ) := by
+  obtain ⟨q, rfl | rfl⟩ := Int.even_or_odd' k
+  · left
+    rw [show ((2 * q : ℤ) : ℝ) / 2 = (q : ℝ) by push_cast; ring, Int.fract_intCast]
+  · right
+    show Int.fract _ = 1 / 2
+    rw [Int.fract_eq_iff]
+    exact ⟨by norm_num, by norm_num, q, by push_cast; ring⟩
+
+/-- **Domination step.**  The adversary names the relative parity `d`; the strategy's next window
+sits inside `1.5 · C + d` for a component `C = [max x (K + β), min y (K + 1 - β)]`. -/
+theorem barrier_step {β l x y : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hG : BarrierGood P l x y) (d : ℝ) (hd : d ∈ ({0, 1 / 2} : Set ℝ)) :
+    ∃ K : ℤ, x < K + 1 - β ∧ (K : ℝ) + β < y ∧
+      BarrierGood P l (3 / 2 * max x (K + β) + d) (3 / 2 * min y (K + 1 - β) + d) := by
+  obtain ⟨a, ha, m, hx, hy⟩ := hG
+  have hl := h.1
+  have hd0 : Int.fract (3 * (m : ℝ) / 2 + d) ∈ ({0, 1 / 2} : Set ℝ) := by
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hd
+    rcases hd with rfl | rfl
+    · convert fract_half_mem (3 * m) using 2; push_cast; ring
+    · convert fract_half_mem (3 * m + 1) using 2; push_cast; ring
+  obtain ⟨u, hu1, hu2, ⟨k, hk1, hk2⟩, hu4⟩ := h.2.2.2 a ha _ hd0
+  refine ⟨k + m, ?_, ?_, ?_⟩
+  · push_cast; linarith
+  · push_cast; linarith
+  · set e := 3 * (m : ℝ) / 2 + d with he
+    set c := 3 * u / 2 + Int.fract e with hc
+    refine ⟨Int.fract c, hu4, ⌊c⌋ + ⌊e⌋, ?_, ?_⟩
+    · have h1 : max x (((k + m : ℤ) : ℝ) + β) ≤ u + m := max_le (by linarith) (by push_cast; linarith)
+      have h2 := Int.fract_add_floor c
+      have h3 := Int.fract_add_floor e
+      push_cast at h1 ⊢
+      linarith
+    · have h1 : u + m + 2 * l / 3 ≤ min y (((k + m : ℤ) : ℝ) + 1 - β) :=
+        le_min (by linarith) (by push_cast; linarith)
+      have h2 := Int.fract_add_floor c
+      have h3 := Int.fract_add_floor e
+      push_cast at h1 ⊢
+      linarith
+
+/-- **Runaway block** `(0, 1/2, 1/2)`: from `[x, R₀]`, `R₀ = 1 - 9β/4`, `x > 10/19`, the adversary
+reaches `[27x/8 - 5/4, R₀]`. -/
+theorem barrier_block {β l x : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) (hx : 10 / 19 < x)
+    (hG : BarrierGood P l x (1 - 9 / 4 * β)) : BarrierGood P l (27 / 8 * x - 5 / 4) (1 - 9 / 4 * β) := by
+  have hxR := hG.add_le
+  have hl := h.1
+  -- step 1, d = 0
+  obtain ⟨K, h1, h2, hG1⟩ := barrier_step h hG 0 (by norm_num)
+  have hK1 : 0 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -1 := by exact_mod_cast (by omega : K ≤ -1)
+    linarith
+  have hK2 : K ≤ 0 := by
+    by_contra hc
+    have : (1 : ℝ) ≤ K := by exact_mod_cast (by omega : 1 ≤ K)
+    linarith
+  have hK0 : ((K : ℤ) : ℝ) = 0 := by exact_mod_cast le_antisymm hK2 hK1
+  simp only [hK0, zero_add] at hG1
+  have hG1' : BarrierGood P l (3 / 2 * x) (3 / 2 * (1 - 9 / 4 * β)) :=
+    hG1.mono (by linarith [le_max_left x β])
+      (by linarith [min_le_left (1 - 9 / 4 * β) (1 - β)])
+  -- step 2, d = 1/2
+  obtain ⟨K, h1, h2, hG2⟩ := barrier_step h hG1' (1 / 2) (by norm_num)
+  have hK1 : 0 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -1 := by exact_mod_cast (by omega : K ≤ -1)
+    linarith
+  have hK2 : K ≤ 0 := by
+    by_contra hc
+    have : (1 : ℝ) ≤ K := by exact_mod_cast (by omega : 1 ≤ K)
+    linarith
+  have hK0 : ((K : ℤ) : ℝ) = 0 := by exact_mod_cast le_antisymm hK2 hK1
+  simp only [hK0, zero_add] at hG2
+  have hG2' : BarrierGood P l (9 / 4 * x - 1 / 2) (1 - 3 / 2 * β) := by
+    have := hG2.shift (-1)
+    refine this.mono ?_ ?_
+    · have := le_max_left (3 / 2 * x) β; push_cast at *; linarith
+    · have := min_le_right (3 / 2 * (1 - 9 / 4 * β)) (1 - β); push_cast at *; linarith
+  -- step 3, d = 1/2
+  obtain ⟨K, h1, h2, hG3⟩ := barrier_step h hG2' (1 / 2) (by norm_num)
+  have hK1 : 0 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -1 := by exact_mod_cast (by omega : K ≤ -1)
+    linarith
+  have hK2 : K ≤ 0 := by
+    by_contra hc
+    have : (1 : ℝ) ≤ K := by exact_mod_cast (by omega : 1 ≤ K)
+    linarith
+  have hK0 : ((K : ℤ) : ℝ) = 0 := by exact_mod_cast le_antisymm hK2 hK1
+  simp only [hK0, zero_add] at hG3
+  have := hG3.shift (-1)
+  refine this.mono ?_ ?_
+  · have := le_max_left (9 / 4 * x - 1 / 2) β; push_cast at *; linarith
+  · have := min_le_left (1 - 3 / 2 * β) (1 - β); push_cast at *; linarith
+
+/-- **Runaway**: `g x = 27x/8 - 5/4` repels from `10/19`, so `[x, R₀]` with `x > 10/19` dies. -/
+theorem barrier_runaway {β l x : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) (hx : 10 / 19 < x)
+    (hG : BarrierGood P l x (1 - 9 / 4 * β)) : False := by
+  have hl := h.1
+  have key : ∀ n : ℕ, ∀ x : ℝ, 1 ≤ (27 / 8 : ℝ) ^ n * (x - 10 / 19) →
+      ¬ BarrierGood P l x (1 - 9 / 4 * β) := by
+    intro n
+    induction n with
+    | zero =>
+      intro x hx hG
+      have := hG.add_le
+      simp at hx
+      linarith
+    | succ n ih =>
+      intro x hx hG
+      have hp : (0 : ℝ) < (27 / 8) ^ n := by positivity
+      have hx0 : 10 / 19 < x := by
+        by_contra hc
+        push_neg at hc
+        have : (27 / 8 : ℝ) ^ (n + 1) * (x - 10 / 19) ≤ 0 :=
+          mul_nonpos_of_nonneg_of_nonpos (by positivity) (by linarith)
+        linarith
+      refine ih (27 / 8 * x - 5 / 4) ?_ (barrier_block h hβ1 hβ2 hx0 hG)
+      have e : (27 / 8 : ℝ) ^ n * (27 / 8 * x - 5 / 4 - 10 / 19) =
+          (27 / 8 : ℝ) ^ (n + 1) * (x - 10 / 19) := by rw [pow_succ]; ring
+      linarith
+  have hδ : 0 < x - 10 / 19 := by linarith
+  obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt (1 / (x - 10 / 19)) (by norm_num : (1 : ℝ) < 27 / 8)
+  rw [div_lt_iff₀ hδ] at hn
+  exact key n x hn.le hG
+
+theorem barrierNode0 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) ((53 / 32 : ℝ) + (-243 / 32 : ℝ) * β) := by
+  intro hG
+  exact barrier_runaway h hβ1 hβ2 (by linarith) (hG.mono le_rfl (by linarith))
+
+theorem barrierNode1 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((23 / 16 : ℝ) + (-81 / 16 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((23 / 16 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((23 / 16 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode0 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode2 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-31 / 64 : ℝ) + (729 / 64 : ℝ) * β) ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((-31 / 64 : ℝ) + (729 / 64 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-31 / 64 : ℝ) + (729 / 64 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode1 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode3 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-21 / 32 : ℝ) + (243 / 32 : ℝ) * β) ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-21 / 32 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-21 / 32 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode2 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode4 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-7 / 16 : ℝ) + (81 / 16 : ℝ) * β) ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-7 / 16 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-7 / 16 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode3 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode5 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-13 / 32 : ℝ) + (243 / 32 : ℝ) * β) ((1 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  exact barrier_runaway h hβ1 hβ2 (by linarith) (hG.mono le_rfl (by linarith))
+
+theorem barrierNode6 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 16 : ℝ) + (81 / 16 : ℝ) * β) ((1 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 16 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 16 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode5 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode7 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 4 : ℝ) + (27 / 8 : ℝ) * β) ((491 / 128 : ℝ) + (-6561 / 256 : ℝ) * β) := by
+  intro hG
+  exact barrier_runaway h hβ1 hβ2 (by linarith) (hG.mono le_rfl (by linarith))
+
+theorem barrierNode8 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) ((185 / 64 : ℝ) + (-2187 / 128 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((185 / 64 : ℝ) + (-2187 / 128 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((185 / 64 : ℝ) + (-2187 / 128 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode7 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode9 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (3 / 2 : ℝ) * β) ((51 / 32 : ℝ) + (-729 / 64 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((51 / 32 : ℝ) + (-729 / 64 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((51 / 32 : ℝ) + (-729 / 64 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode8 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode10 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) ((33 / 16 : ℝ) + (-243 / 32 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((33 / 16 : ℝ) + (-243 / 32 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((33 / 16 : ℝ) + (-243 / 32 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode6 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode9 h hβ1 hβ2 ((hG'.shift (-2)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode11 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) ((11 / 8 : ℝ) + (-81 / 16 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((11 / 8 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((11 / 8 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode10 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode12 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((5 / 4 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((5 / 4 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((5 / 4 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode11 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode13 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) ((3 / 2 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((3 / 8 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode4 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode12 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode14 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) ((1 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode13 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode15 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((5 / 4 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((5 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((5 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode14 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode16 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (243 / 32 : ℝ) * β) ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode15 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode17 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (81 / 16 : ℝ) * β) ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode16 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode15 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode18 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (27 / 8 : ℝ) * β) ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode17 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode15 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode19 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (9 / 4 : ℝ) * β) ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode18 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode15 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode20 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (3 / 2 : ℝ) * β) ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode19 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode15 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode21 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-315 / 128 : ℝ) + (6561 / 256 : ℝ) * β) ((9 / 8 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  exact barrier_runaway h hβ1 hβ2 (by linarith) (hG.mono le_rfl (by linarith))
+
+theorem barrierNode22 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-105 / 64 : ℝ) + (2187 / 128 : ℝ) * β) ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-105 / 64 : ℝ) + (2187 / 128 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-105 / 64 : ℝ) + (2187 / 128 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode21 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode23 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-35 / 32 : ℝ) + (729 / 64 : ℝ) * β) ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-35 / 32 : ℝ) + (729 / 64 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-35 / 32 : ℝ) + (729 / 64 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode22 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode24 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-1 / 16 : ℝ) + (243 / 32 : ℝ) * β) ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((-1 / 16 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-1 / 16 : ℝ) + (243 / 32 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode23 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode1 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode25 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-3 / 8 : ℝ) + (81 / 16 : ℝ) * β) ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-3 / 8 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-3 / 8 : ℝ) + (81 / 16 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode24 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode26 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-1 / 4 : ℝ) + (27 / 8 : ℝ) * β) ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-1 / 4 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-1 / 4 : ℝ) + (27 / 8 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode25 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode27 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((13 / 8 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode26 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode1 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode28 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((0 : ℝ) + (3 / 2 : ℝ) * β) ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (1 / 2 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((0 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((3 / 4 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode27 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode29 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((-1 / 4 : ℝ) + (9 / 4 : ℝ) * β) ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 1 := by
+    by_contra hc
+    have : (2 : ℝ) ≤ K := by exact_mod_cast (by omega : 2 ≤ K)
+    linarith
+  have m1 := le_max_left ((-1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((-1 / 4 : ℝ) + (9 / 4 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((1 / 2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode28 h hβ1 hβ2 ((hG'.shift (0)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode30 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((2 : ℝ) + (-243 / 32 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((2 : ℝ) + (-243 / 32 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((2 : ℝ) + (-243 / 32 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode29 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode31 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((2 : ℝ) + (-81 / 16 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((2 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((2 : ℝ) + (-81 / 16 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode29 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode30 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode32 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((2 : ℝ) + (-27 / 8 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((2 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((2 : ℝ) + (-27 / 8 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode29 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode31 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode33 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((2 : ℝ) + (-9 / 4 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((2 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((2 : ℝ) + (-9 / 4 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode29 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode32 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+theorem barrierNode34 {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) :
+    ¬ BarrierGood P l ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) ((2 : ℝ) + (-3 / 2 : ℝ) * β) := by
+  intro hG
+  obtain ⟨K, h1, h2, hG'⟩ := barrier_step h hG (0 : ℝ) (by norm_num)
+  have hK1 : -1 ≤ K := by
+    by_contra hc
+    have : (K : ℝ) ≤ -2 := by exact_mod_cast (by omega : K ≤ -2)
+    linarith
+  have hK2 : K ≤ 2 := by
+    by_contra hc
+    have : (3 : ℝ) ≤ K := by exact_mod_cast (by omega : 3 ≤ K)
+    linarith
+  have m1 := le_max_left ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m2 := le_max_right ((1 / 2 : ℝ) + (3 / 2 : ℝ) * β) (K + β)
+  have m3 := min_le_left ((2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  have m4 := min_le_right ((2 : ℝ) + (-3 / 2 : ℝ) * β) (K + 1 - β)
+  interval_cases K
+  · push_cast at h1 h2; linarith
+  · push_cast at *
+    exact barrierNode29 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at *
+    exact barrierNode33 h hβ1 hβ2 ((hG'.shift (-1)).mono (by push_cast; linarith) (by push_cast; linarith))
+  · push_cast at h1 h2; linarith
+
+
+/-- The barrier on the single piece `β ∈ (7/57, 7126/58025)`: the strategy's first window lies in
+`1.5 · (arc + k)`, i.e. (by the parity of `k`) in one of the two root windows. -/
+theorem barrier_core {β l : ℝ} {P : Set ℝ} (h : RelaxedStrategy β (1 - 2 * β) l P)
+    (hβ1 : 7 / 57 < β) (hβ2 : β < 7126 / 58025) : False := by
+  obtain ⟨a, ha⟩ := h.2.1
+  obtain ⟨u, hu1, hu2, ⟨k, hk1, hk2⟩, hu4⟩ := h.2.2.2 a ha 0 (by simp)
+  have hl := h.1
+  set c := 3 * u / 2 + 0 with hc
+  have hG : BarrierGood P l (3 / 2 * (k + β)) (3 / 2 * (k + 1 - β)) :=
+    ⟨Int.fract c, hu4, ⌊c⌋, by linarith [Int.fract_add_floor c], by linarith [Int.fract_add_floor c]⟩
+  obtain ⟨q, rfl | rfl⟩ := Int.even_or_odd' k
+  · exact barrierNode20 h hβ1 hβ2 ((hG.shift (-(3 * q))).mono (by push_cast; linarith)
+      (by push_cast; linarith))
+  · exact barrierNode34 h hβ1 hβ2 ((hG.shift (-(3 * q + 1))).mono (by push_cast; linarith)
+      (by push_cast; linarith))
+
+
+/-- **Barrier: above `7/57` no memoryless relaxed strategy exists.**  Treating each parity bit as
+adversarial caps the construction at `7/57`.
+PROVED 2026-10-06 (`barrier_core`: `barrier_step` domination, 35 node lemmas `barrierNode*` on the piece `(7/57, 7126/58025)`, `barrier_runaway`; larger `β` by `RelaxedStrategy.mono`).  Original route:
+* Domination: a relaxed strategy is dominated by the component game.  There the adversary picks
+  `d` each step, the constructor keeps a whole component of `W ∩ (arc lifts)`, and `W` becomes
+  `1.5 · C + d` mod 1.  Integer shifts are irrelevant and a larger window is never worse.
+* Funnel (`experiments/arc_barrier.py verify`): for `β ∈ (7/57, 0.1229]` an adaptive adversary
+  forces, within 13 moves, death or a window inside `[x₀, R₀]` with `x₀ > 10/19`, `R₀ = 1 - 9β/4`.
+  This is an exact AND-OR search with endpoints affine in `β`: 3 open `β`-pieces and 3 split points.
+  The arc's left edge after two `1/2`-steps sits at `9β/4 + 1/4 > 10/19 ⟺ β > 7/57`.
+* Runaway: for `β ∈ (4/35, 4/19)` the block `(0, 1/2, 1/2)` either kills `[x, R₀]` (when
+  `3x/2 ≥ 1 - β`) or maps it to `[g x, R₀]` with `g x = 27x/8 - 5/4`.  The components are unique
+  because `3R₀/2 < 1 + β` and `3R₀/2 > 1 - β`.  `g x - x = (19/8)(x - 10/19)` grows geometrically.
+* Monotonicity: for `β > 0.1229` play the `0.1229` adversary against the larger shadow window. -/
+theorem relaxed_barrier (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy β (1 - 2 * β) l P := by
+  intro h
+  set c : ℝ := (7 / 57 + 7126 / 58025) / 2
+  have h0 : RelaxedStrategy (min β c) (1 - 2 * min β c) l P :=
+    h.mono (min_le_left _ _) (by linarith [min_le_left β c])
+  exact barrier_core h0 (lt_min hβ (by norm_num [c])) (lt_of_le_of_lt (min_le_right _ _) (by norm_num [c]))
+
+/-- **Above the edge, no memoryless relaxed strategy.**  At `β = 13/100` (arc `[0.13, 0.87]`) no
+width and no state set win.
+PROVED 2026-10-06 as a corollary of `relaxed_barrier` (`13/100 > 7/57`).  Original route: a relaxed strategy is dominated by the component game,
+where the constructor keeps a whole component of `W ∩ (arc lifts)` (bigger windows dominate) and
+starts from the full arc.  The exact minimax `experiments/arc_minimax.py depth 13/100 1 30` forces it
+out at depth 15.  A proof transcribes that finite refutation tree, rational endpoints throughout. -/
+theorem not_relaxedStrategy_13_100 (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy (13 / 100) (1 - 2 * (13 / 100)) l P :=
+  relaxed_barrier (13 / 100) (by norm_num) (by norm_num) l P
 
 /-- **Every positive integer part traps the closed AFS arc**: a memoryless construction holds
 `{‖x‖ ≤ 1/3}` from every starting floor.  (The orbit-level fact is essentially Akiyama-Frougny-

@@ -18,3 +18,17 @@ conditions by `norm_num`.  No cell failed; the constant was not shrunk.
 `relaxed_barrier` (7/57).  See its docstring and `experiments/arc_barrier.py`.  Plan: define the
 component game step on closed windows, prove domination, then the runaway lemma
 (`g x = 27x/8 - 5/4`), then transcribe the 13-move funnel.
+
+## Phase 3 (done, same day)
+`relaxed_barrier` and `not_relaxedStrategy_13_100` are proved (standard axioms only).
+- `BarrierGood P l x y`: some strategy window fits in `[x, y]`.  `barrier_step` is the domination
+  step; the relative parity `d` is free because the absolute parity is `fract(3m/2 + d)`.
+- Monotonicity in `β` means only one β-piece is needed: `(7/57, 7126/58025)`.  The adversary tree
+  (35 distinct windows, generated from `arc_barrier.py`'s `children`, both root parities) is
+  `barrierNode0..34`; clean leaves go to `barrier_runaway` (`barrier_block`, `g x = 27x/8 - 5/4`,
+  induction on `(27/8)^n (x - 10/19) ≥ 1`).
+
+All three kickoff phases are complete.  Remaining sorries in ArcTrap.lean are the do-not-touch
+list (`E_*`, `1227`, `exists_trapped_of_winningStrategy`, `relaxedStrategy_afs`,
+`two_pow_le_card_admissibleWord`).  Exit: `box stuck` (the repo-wide gate cannot see a scoped
+completion); next assignment needs an operator kickoff.
