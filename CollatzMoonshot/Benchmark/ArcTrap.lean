@@ -50,6 +50,14 @@ def Dubickas2008 : Prop := ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (5 / 48) ξ
 With `Dubickas2008` it brackets `sup_ξ inf_n ‖ξ (3/2)^n‖` in `[5/48, 0.2857)`. -/
 def Dubickas2006 : Prop := ¬ ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (2857 / 10000) ξ
 
+/-- **Flatto 1992, Thm 6.1** (*Z-numbers and β-transformations*, Contemp. Math. 135, pp. 181–201,
+doi:10.1090/conm/135/1185087): Z-numbers up to `x` number `O(x^{log₂(3/2)})`.  Stated here for
+integer parts below `2^N` (at most one Z-number per unit interval).  Flatto treats only arcs
+`[0, t)`; general positions, the `2/3` edge and `finiteMemoryEdgeIsTwoThirds` are not in it. -/
+def Flatto1992 : Prop :=
+  ∃ C : ℝ, ∀ N : ℕ, (Nat.card {g : Fin (2 ^ N) // ∃ ξ : ℝ, 0 < ξ ∧ ⌊ξ⌋ = ((g : ℕ) : ℤ) ∧
+    ∀ n : ℕ, Int.fract (ξ * (3 / 2) ^ n) < 1 / 2} : ℝ) ≤ C * (3 / 2) ^ N
+
 end Literature
 
 /-- A `k`-memory strategy for the arc `[s, s + t]` with window width `l`: for each residue

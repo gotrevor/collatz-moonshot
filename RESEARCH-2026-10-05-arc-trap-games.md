@@ -152,6 +152,22 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 **What it says:** the 2-adic horizon has size exactly `2/3`.  Finite memory buys every arc longer than `2/3` around `{‖x‖ ≤ 1/3}`, and nothing shorter, anywhere.  Mahler's arc is `1/6` inside the line.  Any Z-number construction must produce a zero-density family of integer parts, which no finite-state rule can do.
 
+## Novelty against Flatto 1992 (read 2026-10-05)
+
+Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:
+- **Thm 6.1:** `|Z(x)| = O(x^{log₂(3/2)})` on `[0, 1/2)`.
+- **Thm 7.2:** the general `p/q` version, for `t ≤ 1/q` only, and with no gain for smaller `t`.
+
+There are no general positions, no entropy as a function of arc length, no `2/3` and no growth `2`.
+
+Against our results:
+- **Growth below 2 under 2/3, and the density-zero barrier:** new.
+- **At least `2^N` words at length 2/3:** new.
+- **Growth exactly `3/2` at length 1/2:** his case at position 0; other positions are new.
+- **The AFS-neighbourhood strategy, and the edge theorem:** not his subject.
+
+Novelty of the edge theorem: ~80% (unread risk: Bugeaud 2012 ch. 3, and later β-transformation papers on "open dynamical systems / holes", where entropy of a map restricted to avoid a hole is a known theme).
+
 ## What the ladder says about Mahler
 
 For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k = 0, 1` and 0.827 at `k = 2..6`.  Bounded 2-adic memory saturates after two bits, far above Mahler's 1/2.  Every Z-number construction would have to sit in FLP's decoupled regime (`t ≤ 1/2`).  There the integer parts are forced (at most one `ξ` per unit interval), so a finite-memory strategy has nothing to steer.
