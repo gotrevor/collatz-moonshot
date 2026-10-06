@@ -15,6 +15,7 @@ v > 0 with M v <= c v (Collatz-Wielandt) certifies W_N <= C c^N.
     arc_entropy.py bound S T M          growth bound for the arc [S, S+T] at grid 1/M
     arc_entropy.py cover T G M          certify every arc of length T (all positions, mesh 1/G)
     arc_entropy.py backward T SAMPLES   sampled full depth of backward point trees vs card_backward_le
+    arc_entropy.py afs EPS              check the explicit strategy holding {||x|| <= 1/3 + EPS}
     arc_entropy.py edge S M             where growth reaches 2 at position S, vs the game's edge
     arc_entropy.py test
 """
@@ -200,6 +201,42 @@ def full_depth(q, s, t, cap):
     return cap
 
 
+# ---- the AFS half: an explicit strategy for {||x|| <= 1/3 + e}, every e > 0 ----
+
+def afs_set(e):
+    """P = [1/2 - 3e/2, 2/3) u [5/6 - 3e/2, 1), half-open (relaxedStrategy_afs)."""
+    return [(F(1, 2) - F(3, 2) * e, F(2, 3)), (F(5, 6) - F(3, 2) * e, ONE)]
+
+
+def in_set(x, P):
+    return any(lo <= x < hi for lo, hi in P)
+
+
+def afs_move(a, d, e):
+    """The hand proof's witness u for window start a and parity d."""
+    if a < F(2, 3):                                   # first piece
+        return max(a, F(2, 3) - e)
+    if d == 0:                                        # second piece
+        return max(a, 1 - e)
+    return max(a, F(8, 9) - e)
+
+
+def relaxed_move_ok(a, d, u, s, t, l, P):
+    """RelaxedStrategy's conditions, exactly as in ArcTrap.lean."""
+    w = 2 * l / 3
+    lift = any(k + s <= u and u + w <= k + s + t for k in range(-1, 3))
+    c = F(3, 2) * u + d
+    return a <= u and u + w <= a + l and lift and in_set(c - math.floor(c), P)
+
+
+def afs_check(e, n=600):
+    """Every a on a fine grid of P plus all endpoints, both parities: the witness works."""
+    s, t, l, P = F(2, 3) - e, F(2, 3) + 2 * e, F(1, 2) + F(3, 2) * e, afs_set(e)
+    pts = [lo + (hi - lo) * F(i, n) for lo, hi in P for i in range(n)]
+    pts += [hi - F(1, 10 ** 12) for _, hi in P]
+    return all(relaxed_move_ok(a, d, afs_move(a, d, e), s, t, l, P) for a in pts for d in (0, F(1, 2)))
+
+
 def main(argv):
     if not argv or argv[0] == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", __file__])
@@ -226,6 +263,12 @@ def main(argv):
                                t, lemma_depth(t) + 3) for _ in range(n))
         print(f"length {t}: backward trees full to depth <= {worst} over {n} samples; lemma bound {lemma_depth(t)}")
         return 0 if worst <= lemma_depth(t) else 1
+    if argv[0] == "afs":
+        # arc_entropy.py afs EPS : check the explicit strategy for {||x|| <= 1/3 + EPS}
+        e = F(argv[1])
+        ok = afs_check(e)
+        print(f"eps={e}: explicit AFS strategy " + ("holds" if ok else "FAILS"))
+        return 0 if ok else 1
     if argv[0] == "cover":
         t, G, m = F(argv[1]), int(argv[2]), int(argv[3])
         worst, fail = cover(t, G, m)
@@ -363,6 +406,19 @@ def test_decomposition_bounds_the_words():
         for N in (6, 10):
             bound = sum(tree_count(s0, s0, t, j, predecessors) * fib[N - j + 2] for j in range(N + 1))
             assert word_count(s0, t, N) <= bound
+
+
+def test_afs_strategy_every_eps():
+    # relaxedStrategy_afs: the hand proof's witnesses satisfy RelaxedStrategy exactly
+    for e in ("1/10", "1/100", "1/1000000", "1/10000000000"):
+        r = _cli("afs", e)
+        assert r.returncode == 0 and "holds" in r.stdout, r.stdout
+
+
+def test_afs_strategy_needs_positive_eps():
+    # hand: at e = 0 the d = 0 move from the first piece needs u in [2/3, 2/3), which is empty
+    assert not afs_check(F(0))
+    assert not relaxed_move_ok(F(3, 5), 0, F(2, 3), F(2, 3), F(2, 3), F(1, 2), afs_set(F(0)))
 
 
 if __name__ == "__main__":

@@ -133,6 +133,25 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 
 **Status:** hand proof, confidence 85%; Lean statements with `sorry`.  The certificate route (`finiteMemory_barrier`, `13/20`) remains as independent evidence.
 
+## Theorem: the finite-memory edge is exactly 2/3
+
+**Statement** (`finiteMemoryEdgeIsTwoThirds`, a Lean proof term over two `sorry`ed hand proofs):
+- **(i)** No construction that works on a whole residue class mod `2^k` holds any arc shorter than `2/3`, at any position (previous section).
+- **(ii)** For every `ε > 0` a memoryless strategy holds `{‖x‖ ≤ 1/3 + ε}` from every integer part.  So for every `ε > 0`, a positive density of integer parts carry a `ξ` with `‖ξ(3/2)^n‖ ≤ 1/3 + ε` for all `n`.  AFS give countably many with `< 1/3`.
+
+**The AFS half, by hand** (`relaxedStrategy_afs`).  Width `l = 1/2 + 3ε/2`; window starts `P = [1/2 − 3ε/2, 2/3) ∪ [5/6 − 3ε/2, 1)`; sub-windows `[u, u + 1/3 + ε]` fit the arc lift iff `u ∈ [2/3 − ε, 1]`.
+
+| start `a` | parity `d = 0` | parity `d = 1/2` |
+|---|---|---|
+| `[1/2 − 3ε/2, 2/3)` | `u = max(a, 2/3 − ε) < 2/3` → `3u/2 ∈ [1 − 3ε/2, 1)` (second piece) | same `u` → `3u/2 − 1/2 ∈ [1/2 − 3ε/2, 1/2)` (first piece) |
+| `[5/6 − 3ε/2, 1)` | `u = max(a, 1 − ε) ≤ 1` → `3u/2 − 1 ∈ [1/2 − 3ε/2, 1/2]` | `u = max(a, 8/9 − ε) < 1` → `3u/2 − 1/2 ∈ [5/6 − 3ε/2, 1)` |
+
+**Where `ε > 0` is used:** once, in the top-left cell, which needs the sliver `[2/3 − ε, 2/3)`.  At `ε = 0` this `P` fails (`test_afs_strategy_needs_positive_eps`).  Whether the closed arc `{‖x‖ ≤ 1/3}` itself holds for a residue class is open.  Counting cannot decide it, because growth is exactly `2` there.
+
+**How it was found:** the lattice solver's certificates at `ε = 10⁻³, 10⁻⁴, 10⁻⁶` had the same two-piece shape with endpoints affine in `ε`.  Read off, the shape is the strategy above.  `arc_entropy.py afs EPS` checks the witnesses against `RelaxedStrategy`'s exact conditions, endpoints included.
+
+**What it says:** the 2-adic horizon has size exactly `2/3`.  Finite memory buys every arc longer than `2/3` around `{‖x‖ ≤ 1/3}`, and nothing shorter, anywhere.  Mahler's arc is `1/6` inside the line.  Any Z-number construction must produce a zero-density family of integer parts, which no finite-state rule can do.
+
 ## What the ladder says about Mahler
 
 For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k = 0, 1` and 0.827 at `k = 2..6`.  Bounded 2-adic memory saturates after two bits, far above Mahler's 1/2.  Every Z-number construction would have to sit in FLP's decoupled regime (`t ≤ 1/2`).  There the integer parts are forced (at most one `ξ` per unit interval), so a finite-memory strategy has nothing to steer.

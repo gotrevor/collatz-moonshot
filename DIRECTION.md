@@ -1,3 +1,5 @@
+> **2026-10-06, the finite-memory edge is exactly 2/3 (theorem, two hand proofs, `finiteMemoryEdgeIsTwoThirds`):** no residue-class construction holds an arc shorter than 2/3.  For every ε > 0 an explicit two-piece memoryless strategy holds {‖x‖ ≤ 1/3 + ε} from every integer part (`relaxedStrategy_afs`).  Open: the closed AFS arc (ε = 0).
+
 > **2026-10-05 (night, latest), below 2/3 by hand:** digit words grow slower than 2^N on every arc shorter than 2/3.  Split each word at an edge hit: forward paths are Fibonacci, and backward trees must lose a branch within log_{3/2}(1/(2−3t)) steps.  So no finite-memory construction holds any arc shorter than 2/3 (`finiteMemory_barrier_two_thirds`).  `FiniteMemoryEdgeIsTwoThirds` reduces to its AFS half.
 
 > **2026-10-05 (night, later), the finite-memory edge is 2/3:** digit-word growth is 1, 3/2 and 2 at arc lengths 1/3 (FLP), 1/2 (Mahler/Flatto) and 2/3.  At 2/3 counting stops (hand proof: at least 2^N words), and a memoryless strategy holds the AFS arc {‖x‖ ≤ 1/3 + 10⁻⁶} from every integer part.  Conjecture `FiniteMemoryEdgeIsTwoThirds`, proved to 13/20.

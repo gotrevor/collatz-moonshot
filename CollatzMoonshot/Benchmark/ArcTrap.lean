@@ -367,7 +367,7 @@ theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ)
     ¬ TrapsResidueClass s t k r := by
   sorry
 
-/-- **Conjecture: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds
+/-- **The finite-memory edge is exactly `2/3`** (stated here; `finiteMemoryEdgeIsTwoThirds` below).  No residue-class construction holds
 an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
 counting obstruction is sharp at the best position.  At other positions the game needs
 `0.73`–`0.90`, while the counting edge stays at `≈ 2/3` everywhere.
@@ -384,6 +384,41 @@ theorem finiteMemoryEdgeIsTwoThirds_iff :
     FiniteMemoryEdgeIsTwoThirds ↔
       ∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0 :=
   ⟨fun h => h.2, fun h => ⟨fun s t ht k r => finiteMemory_barrier_two_thirds s t ht k r, h⟩⟩
+
+/-- **The AFS half, by hand: `{‖x‖ ≤ 1/3 + ε}` is held for every `ε > 0`.**  Window width
+`l = 1/2 + 3ε/2`; window starts `P = [1/2 - 3ε/2, 2/3) ∪ [5/6 - 3ε/2, 1)`.
+Confidence 95% (hand proof; the witnesses are checked against these exact conditions by
+`arc_entropy.py afs`, `test_afs_strategy_every_eps`).  Sub-windows have length `1/3 + ε`, so they
+fit the arc lift `[2/3 - ε, 4/3 + ε]` exactly when `u ∈ [2/3 - ε, 1]`.  The moves:
+* `a < 2/3`, `d = 0`: `u = max a (2/3 - ε) < 2/3` gives `3u/2 ∈ [1 - 3ε/2, 1)`, in the second piece.
+  This is the one place that needs `ε > 0`.
+* `a < 2/3`, `d = 1/2`: the same `u` gives fractional part `3u/2 - 1/2 ∈ [1/2 - 3ε/2, 1/2)`.
+* `a ≥ 5/6 - 3ε/2`, `d = 0`: `u = max a (1 - ε) ≤ 1` gives `3u/2 - 1 ∈ [1/2 - 3ε/2, 1/2]`.
+  It fits because `1 - ε ≤ a + 1/6 + ε/2`, which is why the second piece starts at `5/6 - 3ε/2`.
+* `a ≥ 5/6 - 3ε/2`, `d = 1/2`: `u = max a (8/9 - ε) < 1` gives `3u/2 - 1/2 ∈ [5/6 - 3ε/2, 1)`. -/
+theorem relaxedStrategy_afs (ε : ℝ) (hε : 0 < ε) (hε' : ε ≤ 1 / 10) :
+    RelaxedStrategy (2 / 3 - ε) (2 / 3 + 2 * ε) (1 / 2 + 3 * ε / 2)
+      (Set.Ico (1 / 2 - 3 * ε / 2) (2 / 3) ∪ Set.Ico (5 / 6 - 3 * ε / 2) 1) := by
+  sorry
+
+/-- A larger arc traps at least as much. -/
+theorem trapsResidueClass_mono {s t s' t' : ℝ} {k r : ℕ} (h : TrapsResidueClass s t k r)
+    (hs : s' ≤ s) (ht : s + t ≤ s' + t') : TrapsResidueClass s' t' k r := by
+  intro m hm hmr
+  obtain ⟨g, hg1, hg2, ξ, hξ, hfl, hn⟩ := h m hm hmr
+  refine ⟨g, hg1, hg2, ξ, hξ, hfl, fun n => ?_⟩
+  obtain ⟨x, hx, hfx⟩ := hn n
+  exact ⟨x, ⟨le_trans hs hx.1, le_trans hx.2 ht⟩, hfx⟩
+
+/-- **Theorem: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds an
+arc shorter than `2/3` (`finiteMemory_barrier_two_thirds`), and every neighbourhood of the AFS arc
+`{‖x‖ ≤ 1/3}` is held by a memoryless strategy (`relaxedStrategy_afs`). -/
+theorem finiteMemoryEdgeIsTwoThirds : FiniteMemoryEdgeIsTwoThirds := by
+  refine finiteMemoryEdgeIsTwoThirds_iff.2 fun ε hε => ?_
+  rcases le_or_gt ε (1 / 10) with h | h
+  · exact trapsResidueClass_of_relaxedStrategy (by linarith) (relaxedStrategy_afs ε hε h)
+  · exact trapsResidueClass_mono (trapsResidueClass_of_relaxedStrategy (by norm_num)
+      (relaxedStrategy_afs (1 / 10) (by norm_num) le_rfl)) (by linarith) (by linarith)
 
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
