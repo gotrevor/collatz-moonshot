@@ -1,5 +1,7 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+> **STUCK (2026-10-06 late, strike 1).**  `KICKOFF-2026-10-06-record-constant.md` phases 1-3 are all proved (bb91ccf).  Every remaining `ArcTrap.lean` sorry is on that kickoff's do-not-touch list, and DIRECTION.md forbids other drift without a kickoff.  Ask: a new operator kickoff.  Details in the section at the end of this file, `## 2026-10-06 (late)`.
+
 > **STUCK (2026-10-06, run halted for the operator).**  Blocker: `KICKOFF-2026-10-06-arc-edge-proofs.md`
 > is complete and audited (`finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds` and the near-AFS
 > chain print only the trust base), but the repo-wide stop gate sees 20 open sorries, all kickoff-forbidden
