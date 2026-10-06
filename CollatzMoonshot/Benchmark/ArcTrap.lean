@@ -137,6 +137,86 @@ def RelaxedStrategy (s t l : ℝ) (P : Set ℝ) : Prop :=
   ∀ a ∈ P, ∀ d ∈ ({0, 1 / 2} : Set ℝ), ∃ u : ℝ, a ≤ u ∧ u + 2 * l / 3 ≤ a + l ∧
     (∃ k : ℤ, (k : ℝ) + s ≤ u ∧ u + 2 * l / 3 ≤ k + s + t) ∧ Int.fract (3 * u / 2 + d) ∈ P
 
+/-- **Soundness of the relaxed game, from any integer part `m` and any window start `a ∈ P`.**
+The nested intervals `J_n = (m_n + [u_n, u_n + 2l/3]) / (3/2)^n` of `exists_trapped_of_relaxedStrategy`,
+with `ξ = sup` of their left ends; `ξ ∈ m + [a, a + l]`. -/
+theorem exists_trapped_of_relaxedStrategy_from {s t l : ℝ} {P : Set ℝ}
+    (h : RelaxedStrategy s t l P) (m : ℤ) (a : ℝ) (ha : a ∈ P) :
+    ∃ ξ : ℝ, m + a ≤ ξ ∧ ξ ≤ m + a + l ∧
+      ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x := by
+  obtain ⟨hl, -, -, hstep⟩ := h
+  have hU : ∀ p : {a // a ∈ P} × ℤ, ∃ u : ℝ, p.1.1 ≤ u ∧ u + 2 * l / 3 ≤ p.1.1 + l ∧
+      (∃ k : ℤ, (k : ℝ) + s ≤ u ∧ u + 2 * l / 3 ≤ k + s + t) ∧
+      Int.fract (3 * u / 2 + ((p.2 % 2 : ℤ) : ℝ) / 2) ∈ P := by
+    rintro ⟨⟨a, ha⟩, M⟩
+    have hd : ((M % 2 : ℤ) : ℝ) / 2 ∈ ({0, 1 / 2} : Set ℝ) := by
+      rcases Int.emod_two_eq_zero_or_one M with h | h <;> simp [h]
+    exact hstep a ha _ hd
+  choose U hU1 hU2 hU3 hU4 using hU
+  let step : {a // a ∈ P} × ℤ → {a // a ∈ P} × ℤ := fun p =>
+    (⟨Int.fract (3 * U p / 2 + ((p.2 % 2 : ℤ) : ℝ) / 2), hU4 p⟩,
+      3 * (p.2 / 2) + p.2 % 2 + ⌊3 * U p / 2 + ((p.2 % 2 : ℤ) : ℝ) / 2⌋)
+  let S : ℕ → {a // a ∈ P} × ℤ := fun n => step^[n] (⟨a, ha⟩, m)
+  have hS : ∀ n, S (n + 1) = step (S n) := fun n => Function.iterate_succ_apply' _ _ _
+  -- key identity
+  have key : ∀ n, (3 / 2 : ℝ) * ((S n).2 + U (S n)) = (S (n + 1)).2 + (S (n + 1)).1.1 := by
+    intro n
+    rw [hS n]
+    set p := S n
+    simp only [step]
+    have h1 : p.2 = p.2 % 2 + 2 * (p.2 / 2) := by omega
+    have h2 := Int.floor_add_fract (3 * U p / 2 + ((p.2 % 2 : ℤ) : ℝ) / 2)
+    have h3 : (p.2 : ℝ) = ((p.2 % 2 : ℤ) : ℝ) + 2 * ((p.2 / 2 : ℤ) : ℝ) := by
+      exact_mod_cast h1
+    push_cast
+    rw [h3]
+    linarith
+  set Lo : ℕ → ℝ := fun n => ((S n).2 + U (S n)) / (3 / 2) ^ n
+  set Hi : ℕ → ℝ := fun n => ((S n).2 + U (S n) + 2 * l / 3) / (3 / 2) ^ n
+  have hpos : ∀ n : ℕ, (0 : ℝ) < (3 / 2) ^ n := fun n => by positivity
+  have hLo : ∀ n, Lo n ≤ Lo (n + 1) := by
+    intro n
+    simp only [Lo]
+    rw [div_le_div_iff₀ (hpos n) (hpos _), pow_succ]
+    have := key n
+    have := hU1 (S (n + 1))
+    have := hpos n
+    nlinarith
+  have hHi : ∀ n, Hi (n + 1) ≤ Hi n := by
+    intro n
+    simp only [Hi]
+    rw [div_le_div_iff₀ (hpos _) (hpos n), pow_succ]
+    have := key n
+    have := hU2 (S (n + 1))
+    have := hpos n
+    nlinarith
+  have hLH : ∀ n, Lo n ≤ Hi n := by
+    intro n
+    simp only [Lo, Hi]
+    exact div_le_div_of_nonneg_right (by linarith) (hpos n).le
+  have hLm : Monotone Lo := monotone_nat_of_le_succ hLo
+  have hHa : Antitone Hi := antitone_nat_of_succ_le hHi
+  have hLH' : ∀ i j, Lo i ≤ Hi j := fun i j =>
+    (hLm (le_max_left i j)).trans ((hLH _).trans (hHa (le_max_right i j)))
+  have hbdd : BddAbove (Set.range Lo) := ⟨Hi 0, by rintro _ ⟨i, rfl⟩; exact hLH' i 0⟩
+  refine ⟨⨆ n, Lo n, ?_, ?_, ?_⟩
+  · refine le_trans ?_ (le_ciSup hbdd 0)
+    simp only [Lo, S, Function.iterate_zero, id, pow_zero, div_one]
+    linarith [hU1 (⟨a, ha⟩, m)]
+  · refine (ciSup_le fun i => hLH' i 0).trans ?_
+    simp only [Hi, S, Function.iterate_zero, id, pow_zero, div_one]
+    linarith [hU2 (⟨a, ha⟩, m)]
+  · intro n
+    have h1 : Lo n ≤ ⨆ n, Lo n := le_ciSup hbdd n
+    have h2 : (⨆ n, Lo n) ≤ Hi n := ciSup_le fun i => hLH' i n
+    simp only [Lo, Hi] at h1 h2
+    rw [div_le_iff₀ (hpos n)] at h1
+    rw [le_div_iff₀ (hpos n)] at h2
+    obtain ⟨k, hk1, hk2⟩ := hU3 (S n)
+    refine ⟨(⨆ n, Lo n) * (3 / 2) ^ n - ((S n).2 + k), ⟨by linarith, by linarith⟩, ?_⟩
+    rw [show ((S n).2 : ℝ) + (k : ℝ) = ((((S n).2 + k : ℤ)) : ℝ) by push_cast; ring,
+      Int.fract_sub_intCast]
+
 /-- **Soundness of the relaxed game.**
 Confidence 90%.  Proof: pick `m₀ ≥ 1` and `a₀ ∈ P`; at step `n` the window is `m_n + [a_n, a_n + l]`,
 `d = (m_n mod 2)/2`, the strategy gives `u_n`, and `m_{n+1} = ⌊3m_n/2⌋ + ⌊c⌋`, `a_{n+1} = fract c` with
@@ -145,7 +225,10 @@ Confidence 90%.  Proof: pick `m₀ ≥ 1` and `a₀ ∈ P`; at step `n` the wind
 `ξ (3/2)^n ∈ m_n + [u_n, u_n + 2l/3]`, inside a lift of the arc, and `ξ ≥ m₀ / 1 > 0`. -/
 theorem exists_trapped_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (h : RelaxedStrategy s t l P) :
     ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x := by
-  sorry
+  obtain ⟨a, ha⟩ := h.2.1
+  have ha0 := (h.2.2.1 ha).1
+  obtain ⟨ξ, h1, -, h3⟩ := exists_trapped_of_relaxedStrategy_from h 1 a ha
+  exact ⟨ξ, by push_cast at h1; linarith, h3⟩
 
 /-- **New constant, sharpened.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least
 `307/2500 = 0.1228` from the integers (Dubickas 2008: `5/48 ≈ 0.1042`).
@@ -267,7 +350,18 @@ also what `vw_orbit` in `experiments/arc_trap_k.py` plays from any `m0`).  The `
 `arc_trap_k.py` give `TrapsResidueClass s t k r` the same way. -/
 theorem trapsResidueClass_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (ht : t ≤ 1)
     (h : RelaxedStrategy s t l P) : TrapsResidueClass s t 0 0 := by
-  sorry
+  intro m hm _
+  obtain ⟨a, ha⟩ := h.2.1
+  have ha' := h.2.2.1 ha
+  obtain ⟨u, -, -, ⟨k, hk1, hk2⟩, -⟩ := h.2.2.2 a ha 0 (by simp)
+  obtain ⟨ξ, h1, h2, h3⟩ := exists_trapped_of_relaxedStrategy_from h m a ha
+  push_cast at h1 h2
+  have hl : l ≤ 3 / 2 := by linarith
+  have hf1 : (m : ℤ) ≤ ⌊ξ⌋ := Int.le_floor.2 (by push_cast; linarith [ha'.1])
+  have hf2 : ⌊ξ⌋ < (m : ℤ) + 3 := Int.floor_lt.2 (by push_cast; linarith [ha'.2])
+  refine ⟨⌊ξ⌋.toNat, by omega, by omega, ξ, by
+    have : (1 : ℝ) ≤ m := by exact_mod_cast hm
+    linarith [ha'.1], by omega, h3⟩
 
 /-- **Finite-memory barrier: no construction that works on a whole residue class mod `2^k` traps
 an orbit in any arc of length at most `13/20`.**  In particular no finite-memory strategy, of any
