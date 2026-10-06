@@ -4,7 +4,7 @@
 
 **Abstract.**  Mahler asked whether some `ξ > 0` has every fractional part `{ξ(3/2)ⁿ}` in the arc `[0, 1/2)`.  Flatto–Lagarias–Pollington (1995) showed that no arc shorter than `1/3` can hold such an orbit.  We ask the same question for constructions that only ever read finitely many low bits of the integer part `⌊ξ(3/2)ⁿ⌋`.  The answer is exactly `2/3`.  No such construction holds any arc shorter than `2/3`, at any position.  The closed arc `{x : ‖x‖ ≤ 1/3}` is held, from every starting integer, by a two-state strategy that needs no memory at all.  Both halves are proved in Lean.  We then conjecture that `2/3` is the true edge for every `ξ`.  That conjecture contains Mahler's problem.  We give exact computational evidence that integer parts behave like random 2-adic integers here, and a decay law near the extremal arc.
 
-All statements live in [`CollatzMoonshot/Benchmark/ArcTrap.lean`](../../CollatzMoonshot/Benchmark/ArcTrap.lean); line links below are as of commit `89af075`.  Everything in §1 and §4 is proved in Lean; §2 and §3 are conjectures with evidence.
+All statements live in [`CollatzMoonshot/Benchmark/ArcTrap.lean`](../../CollatzMoonshot/Benchmark/ArcTrap.lean); line links below are as of commit `c3ee166`.  Everything in §1 and §4 is proved in Lean; §2 and §3 are conjectures with evidence.
 
 ## Setting
 
@@ -14,46 +14,46 @@ Fix an arc `I = [s, s + t]` mod 1.  Write `g_n = ⌊ξ(3/2)ⁿ⌋` and `f_n = {�
 
 so **the first `N` digits fix `g_0 mod 2ᴺ`**.  This is the 2-adic horizon.  The real place sees the digits through `f_n`; the integer part sees them only modulo `2ᴺ`.
 
-A *finite-memory construction* is a rule that reads the integer part mod `2ᵏ` and builds nested intervals of `ξ`.  What any such rule delivers, if it works on a whole residue class, is [`TrapsResidueClass s t k r`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L250): every `m ≡ r (mod 2ᵏ)` has a trapped orbit with integer part in `[m, m + 3)`.  The memoryless version is the game [`RelaxedStrategy`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L135).  There an adversary picks the parity offset `d ∈ {0, 1/2}` fresh at each step, and the constructor keeps a sub-window inside a lift of the arc.  Its soundness, [`trapsResidueClass_of_relaxedStrategy`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L351), is a standard nested-interval argument, proved in Lean.
+A *finite-memory construction* is a rule that reads the integer part mod `2ᵏ` and builds nested intervals of `ξ`.  What any such rule delivers, if it works on a whole residue class, is [`TrapsResidueClass s t k r`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L250): every `m ≡ r (mod 2ᵏ)` has a trapped orbit with integer part in `[m, m + 3)`.  The memoryless version is the game [`RelaxedStrategy`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L135).  There an adversary picks the parity offset `d ∈ {0, 1/2}` fresh at each step, and the constructor keeps a sub-window inside a lift of the arc.  Its soundness, [`trapsResidueClass_of_relaxedStrategy`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L450), is a standard nested-interval argument, proved in Lean.
 
 ## 1. The edge theorem
 
-**Theorem** ([`finiteMemory_min_arc_two_thirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1548), proved in Lean).  For every arc of length `t < 2/3`, every `k` and every `r < 2ᵏ`, `TrapsResidueClass s t k r` fails.  The closed arc `[2/3, 4/3]`, that is `{‖x‖ ≤ 1/3}`, satisfies `TrapsResidueClass (2/3) (2/3) 0 0`.
+**Theorem** ([`finiteMemory_min_arc_two_thirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2648), proved in Lean).  For every arc of length `t < 2/3`, every `k` and every `r < 2ᵏ`, `TrapsResidueClass s t k r` fails.  The closed arc `[2/3, 4/3]`, that is `{‖x‖ ≤ 1/3}`, satisfies `TrapsResidueClass (2/3) (2/3) 0 0`.
 
-So the shortest arc a finite-memory construction holds has length exactly `2/3`, and the minimum is attained.  [`finiteMemoryEdgeIsTwoThirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1557) is the "every neighbourhood of the AFS arc is held" form, by monotonicity.
+So the shortest arc a finite-memory construction holds has length exactly `2/3`, and the minimum is attained.  [`finiteMemoryEdgeIsTwoThirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2657) is the "every neighbourhood of the AFS arc is held" form, by monotonicity.
 
 ### Below `2/3`: counting
 
-If a construction works on a residue class mod `2ᵏ`, then about `2^{N−k}/3` integer parts below `2ᴺ` are trapped.  By injectivity they need that many distinct admissible digit words of length `N`.  On an arc shorter than `2/3`, admissible words grow like `C(N + 1)λᴺ` with `λ < 2` ([`admissibleWord_growth_lt_two`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1260)), so the count fails for large `N` ([`finiteMemory_barrier_two_thirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1396)).  The growth bound combines two path counts:
+If a construction works on a residue class mod `2ᵏ`, then about `2^{N−k}/3` integer parts below `2ᴺ` are trapped.  By injectivity they need that many distinct admissible digit words of length `N`.  On an arc shorter than `2/3`, admissible words grow like `C(N + 1)λᴺ` with `λ < 2` ([`admissibleWord_growth_lt_two`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1345)), so the count fails for large `N` ([`finiteMemory_barrier_two_thirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1481)).  The growth bound combines two path counts:
 
-- Forward paths grow at most like Fibonacci when `t < 3/4` ([`card_forward_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L879)).  Of two sibling successors, at most one can branch again, because four grandchildren spaced by `1/4` need an arc of length `3/4`.
-- Backward paths lose a branch within `K` steps once `(2/3)^{K−1} < 2 − 3t` ([`card_backward_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L893)).
+- Forward paths grow at most like Fibonacci when `t < 3/4` ([`card_forward_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L964)).  Of two sibling successors, at most one can branch again, because four grandchildren spaced by `1/4` need an arc of length `3/4`.
+- Backward paths lose a branch within `K` steps once `(2/3)^{K−1} < 2 − 3t` ([`card_backward_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L978)).
 
-All of these are proved in Lean.  An independent exact computation (`experiments/arc_entropy.py cover`) confirms the word-growth bound at every position up to length `13/20`; the `13/20` statement [`finiteMemory_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1460) is now a corollary.  At length exactly `2/3` counting gives nothing: every non-wrapping arc of length `2/3` admits at least `2ᴺ` words ([`two_pow_le_card_admissibleWord`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L384)), because `3I/2` has length exactly `1`.
+All of these are proved in Lean.  An independent exact computation (`experiments/arc_entropy.py cover`) confirms the word-growth bound at every position up to length `13/20`; the `13/20` statement [`finiteMemory_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1545) is now a corollary.  At length exactly `2/3` counting gives nothing: every non-wrapping arc of length `2/3` admits at least `2ᴺ` words ([`two_pow_le_card_admissibleWord`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L483)), because `3I/2` has length exactly `1`.
 
 For comparison, the same counting puts the Flatto–Lagarias–Pollington edge at `1/3` (one word), and Mahler's arc (length `1/2`) at growth `3/2`, which is Flatto's `x^{log₂(3/2)}` count of Z-numbers.
 
 ### At `2/3`: a two-state strategy
 
-**Theorem** ([`relaxedStrategy_afs_closed`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1516), proved in Lean).  `RelaxedStrategy (2/3) (2/3) (1/2) {0, 1/2}` holds.
+**Theorem** ([`relaxedStrategy_afs_closed`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1624), proved in Lean).  `RelaxedStrategy (2/3) (2/3) (1/2) {0, 1/2}` holds.
 
 The windows are `[0, 1/2]` and `[1/2, 1]` past the current integer part `m`.
 
 - From `m + [0, 1/2]`, keep `m + [0, 1/3]`.  It lies in the arc's lift `[−1/3, 1/3]`, and times `3/2` it is `⌊3m/2⌋ + d + [0, 1/2]`.
 - From `m + [1/2, 1]`, keep `m + [2/3, 1]`.  It lies in the lift `[2/3, 4/3]`, and times `3/2` it is `⌊3m/2⌋ + d + [1, 3/2]`.
 
-Whatever parity the adversary picks, the next window starts at `d ∈ {0, 1/2}` mod 1, so the two windows cycle forever.  Hence every positive integer `m` is the integer part of some `ξ ∈ [m, m + 1/3]` with `‖ξ(3/2)ⁿ‖ ≤ 1/3` for all `n` (start from the window `m + [0, 1/2]`).  The Lean form, [`trapsResidueClass_afs_closed`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1542), records the weaker `[m, m + 3)` that every memoryless strategy gives.  The strategy has no interior, which is why lattice searches with inward rounding miss it.  We found it by exact minimax of the game (`experiments/arc_entropy.py closed`).
+Whatever parity the adversary picks, the next window starts at `d ∈ {0, 1/2}` mod 1, so the two windows cycle forever.  Hence every positive integer `m` is the integer part of some `ξ ∈ [m, m + 1/3]` with `‖ξ(3/2)ⁿ‖ ≤ 1/3` for all `n` (start from the window `m + [0, 1/2]`).  The Lean form, [`trapsResidueClass_afs_closed`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2642), records the weaker `[m, m + 3)` that every memoryless strategy gives.  The strategy has no interior, which is why lattice searches with inward rounding miss it.  We found it by exact minimax of the game (`experiments/arc_entropy.py closed`).
 
 The arc `{‖x‖ ≤ 1/3}` is the one in Akiyama–Frougny–Sakarovitch (2008), who use rational-base numeration to give countably many `ξ` with `‖ξ(3/2)ⁿ‖ < 1/3`.  The orbit-level fact here is probably already implicit in their tree.  What we add is the pairing with the lower bound: a memoryless rule, from every integer, at exactly the length below which no finite-memory rule works.
 
 ## 2. Conjecture: `2/3` is the true edge
 
-**Conjecture** ([`StrongMahlerConjecture`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1590), confidence 60%).  For `t < 2/3`, no `ξ > 0` has every `{ξ(3/2)ⁿ}` in an arc of length `t`.
+**Conjecture** ([`StrongMahlerConjecture`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2690), confidence 60%).  For `t < 2/3`, no `ξ > 0` has every `{ξ(3/2)ⁿ}` in an arc of length `t`.
 
 Proved consequences:
 
-- No Z-numbers, which is Mahler's conjecture ([`strongMahler_no_zNumber`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1618)).
-- `sup_ξ inf_n ‖ξ(3/2)ⁿ‖ ≤ 1/6` ([`strongMahler_far_le_one_sixth`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2397)).  The best published upper bound is Dubickas (2006), `≈ 0.2857`.
+- No Z-numbers, which is Mahler's conjecture ([`strongMahler_no_zNumber`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2718)).
+- `sup_ξ inf_n ‖ξ(3/2)ⁿ‖ ≤ 1/6` ([`strongMahler_far_le_one_sixth`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3497)).  The best published upper bound is Dubickas (2006), `≈ 0.2857`.
 
 The known bounds on the shortest arc holding some orbit are `1/3` (FLP) below and `2/3` (attained, §1) above.  The conjecture says the upper one is right.  It is at least as hard as Mahler's problem.  Proving the random model below on short intervals of integers would prove it, and we know no route to that.
 
@@ -85,8 +85,8 @@ At generic positions `1/S − 1` doubles each time `N` doubles, the critical-bra
 
 Two conjectures record this.
 
-- [`AfsArcIsolatedAtTwoThirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1568) (65%): among arcs of length `2/3`, only the AFS arc is held memorylessly.  The exact component game from the window `[0, 3]` survives depth 18 only at `s = 2/3`.  It dies by depth 6–11 elsewhere, including at `2/3 ± 1/100`.
-- [`AfsArcIsUniqueMinimal`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1609) (35%): an orbit fits in an arc of length `≤ 2/3` only if the arc is `{‖x‖ ≤ 1/3}`.  It implies the strong conjecture ([`afsArcIsUniqueMinimal_strongMahler`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1614), proved).
+- [`AfsArcIsolatedAtTwoThirds`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2668) (65%): among arcs of length `2/3`, only the AFS arc is held memorylessly.  The exact component game from the window `[0, 3]` survives depth 18 only at `s = 2/3`.  It dies by depth 6–11 elsewhere, including at `2/3 ± 1/100`.
+- [`AfsArcIsUniqueMinimal`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2709) (35%): an orbit fits in an arc of length `≤ 2/3` only if the arc is `{‖x‖ ≤ 1/3}`.  It implies the strong conjecture ([`afsArcIsUniqueMinimal_strongMahler`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2714), proved).
 
 ## 4. Near the AFS arc: a decay law
 
@@ -95,13 +95,13 @@ Shift the AFS arc by `δ`, to `[2/3 + δ, 4/3 + δ]`.  A piece of a trapped inte
 - anchor parity `0`: `(e_L, e_R) ↦ (3e_L/2, δ)`;
 - anchor parity `1`: `(e_L, e_R) ↦ (δ, 3e_R/2)`.
 
-So an error grows by `3/2` along a run of equal parities and resets to `δ` when the parity flips ([`afsErrStep`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1868), checked exactly in `test_endpoint_error_recursion_is_exact`).  The anchor parities of the integer parts below `2ᴺ` run through every binary word of length `N` once.  Consequences, all proved in Lean:
+So an error grows by `3/2` along a run of equal parities and resets to `δ` when the parity flips ([`afsErrStep`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2968), checked exactly in `test_endpoint_error_recursion_is_exact`).  The anchor parities of the integer parts below `2ᴺ` run through every binary word of length `N` once.  Consequences, all proved in Lean:
 
-- **Every integer part survives `≈ log_{3/2}(1/|δ|)` steps** ([`near_afs_every_floor`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2354)).  This order is sharp: the adversarial game kills at exactly depth `8 + j` at `δ = ±(1/30)(2/3)ʲ`, `j = 0..8`.
-- **A typical integer part survives at least `≈ |δ|^{−1/log₂(3/2)} = |δ|^{−1.7095…}` steps** ([`near_afs_density`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2336) with [`run_bounded_count_ge`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1779)).
-- **The AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})` up to a logarithm** ([`afsUnbroken_of_noRunLonger`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1949), [`card_afsUnbroken_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2132)).
+- **Every integer part survives `≈ log_{3/2}(1/|δ|)` steps** ([`near_afs_every_floor`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3454)).  This order is sharp: the adversarial game kills at exactly depth `8 + j` at `δ = ±(1/30)(2/3)ʲ`, `j = 0..8`.
+- **A typical integer part survives at least `≈ |δ|^{−1/log₂(3/2)} = |δ|^{−1.7095…}` steps** ([`near_afs_density`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3436) with [`run_bounded_count_ge`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2879)).
+- **The AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})` up to a logarithm** ([`afsUnbroken_of_noRunLonger`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3049), [`card_afsUnbroken_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3232)).
 
-**Conjecture** ([`NearAfsDecayExponent`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2391), 55%).  The critical decay constant is `c(δ) = Θ(|δ|^{1/log₂(3/2)})`.  Measured: `c = 0.0070` at `δ = 1/30` and `0.0036` at `δ = 1/45`.  That is a ratio of `1.94` per rung of `2/3` in `δ`, against a predicted `2`.  The gap from the proved break rate to `c` is real.  Most breaks are harmless changes of shape (break rate `≈ 0.08` against `c ≈ 0.007` at `δ = 1/30`).  The pieces of one integer part also share bits, so standard critical-branching theorems do not apply directly.
+**Conjecture** ([`NearAfsDecayExponent`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3491), 55%).  The critical decay constant is `c(δ) = Θ(|δ|^{1/log₂(3/2)})`.  Measured: `c = 0.0070` at `δ = 1/30` and `0.0036` at `δ = 1/45`.  That is a ratio of `1.94` per rung of `2/3` in `δ`, against a predicted `2`.  The gap from the proved break rate to `c` is real.  Most breaks are harmless changes of shape (break rate `≈ 0.08` against `c ≈ 0.007` at `δ = 1/30`).  The pieces of one integer part also share bits, so standard critical-branching theorems do not apply directly.
 
 ## What is not claimed
 
