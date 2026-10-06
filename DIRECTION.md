@@ -1,3 +1,5 @@
+> **2026-10-05 (night, later), the finite-memory edge is 2/3:** digit-word growth is 1, 3/2 and 2 at arc lengths 1/3 (FLP), 1/2 (Mahler/Flatto) and 2/3.  At 2/3 counting stops (hand proof: at least 2^N words), and a memoryless strategy holds the AFS arc {‖x‖ ≤ 1/3 + 10⁻⁶} from every integer part.  Conjecture `FiniteMemoryEdgeIsTwoThirds`, proved to 13/20.
+
 > **2026-10-05 (night), finite-memory barrier:** no construction that works on a whole residue class mod 2^k (every k-memory strategy) holds an arc of length ≤ 13/20 at any position.  Its digit words grow at most 1.998^N < 2^N, Flatto's counting extended to every arc (`finiteMemory_barrier`, exact certificate `experiments/arc_entropy.py`).  The game's shortest holdable arc is ≈ 0.683 for k = 0..3.
 
 > **2026-10-05 (late), Mahler barrier:** no memoryless adversarial-parity strategy holds any arc of length ≤ 1/2, at any position, so none produces a Z-number (`mahler_barrier`, Maze row; exact over every position in `experiments/arc_mahler.py`, plus a hand proof for length < 1/2). 

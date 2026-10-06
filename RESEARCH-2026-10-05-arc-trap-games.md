@@ -98,7 +98,19 @@ The last row is the striking one.  The parity-blind game dies exactly where the 
 - **Soundness teeth:** arcs that a strategy provably holds must have growth `≥ 2`, and the certifier refuses all three: Pollington's arc, the 0.1228 arc, and the shortest-arc witness region.
 - **Certify has teeth:** `c = 3/2` is refused on Mahler's arc.
 
-**The two thresholds nearly meet.**  The certificate reaches length `0.65` and fails at `0.66` (grid `1/320`); the heuristic is `W_N ≈ (3t)^N`, which crosses at `2/3`.  The best game strategy needs `≈ 0.683`.  So between about `0.65` and `0.683`, finite memory fails only for game-specific reasons; up to `0.65` it fails for every finite-memory construction, by counting alone.  Reading: the 2-adic horizon has a *size*.  A construction that sees `k` bits works on a set of density `2^{−k}`, and arcs shorter than about `2/3` hold too few orbits for any positive density.  Z-numbers, if they exist, are rarer than any residue class: Flatto's count is `X^0.585`.
+**The edge is 2/3, and it is sharp at the best position.**  (This replaces a first reading at a coarse `1/60` position grid, which put the game edge at `0.683` and suggested a gap.)
+
+| arc length | digit-word growth | meaning |
+|---|---|---|
+| `1/3` | `1` | FLP's edge: nothing shorter traps any orbit |
+| `1/2` | `3/2` | Mahler's arc; Flatto's exponent `log₂(3/2)` (exact at *every* position: one digit fits per step) |
+| `2/3` | `2` | counting stops excluding residue classes; the game starts winning |
+
+- **Counting stops at 2/3 (hand proof, `two_pow_le_card_admissibleWord`).**  Take a non-wrapping arc `I` of length `2/3`.  `3I/2` has length exactly `1`, so almost every `y ∈ I` has exactly two digits leading into it, and Lebesgue measure is an eigenmeasure with eigenvalue `4/3`.  Cylinders are at most `(2/3)^N · 2/3` long, so at least `2^N` words are admissible.  Numerically the growth is `2` at length `2/3` for every position tested, wrapping arcs included, and `2.0000` on both bounds at the AFS position.  At length `0.6` it varies with position (`1.71`–`1.86`), so "growth `= 3t`" is false in general and exact only at these lengths.
+- **The game reaches 2/3 (`relaxedStrategy_near_afs`).**  A memoryless strategy with one width `≈ 1/2` holds `[2/3 − 10⁻⁶, 4/3 + 10⁻⁶]`, i.e. `‖ξ(3/2)^n‖ ≤ 1/3 + 10⁻⁶`, from every integer part.  Removing the `10⁻⁶` from either end loses.  For `s ∈ [0.60, 0.66]` the game edge is pinned at right end `1/3`, and nothing holds once `s ≥ 0.67`: the AFS arc `{‖x‖ ≤ 1/3}` is the corner.  Memory `k = 2, 4` changes nothing.
+- **Per position the two edges differ.**  The counting edge is `≈ 2/3` at every position (brackets at `s = 0, 0.1, …, 0.9` all contain `2/3`).  The game edge is `0.73`–`0.90` away from the AFS corner, `0.80` at Mahler's position.  So "the game wins exactly when words grow at least as fast as `2^N`" is false position by position, and true for the best arc.
+- **Conjecture (`FiniteMemoryEdgeIsTwoThirds`):** no residue-class construction holds any arc shorter than `2/3`, and every neighbourhood of the AFS arc is held.  Proved part: up to `13/20` (`finiteMemory_barrier`).
+- **Reading:** the 2-adic horizon has an exact size.  Seeing finitely many bits buys a positive-density family of orbits, and positive density needs `2^N` digit words, which needs arc length `2/3`.  Mahler's `1/2` (growth `3/2`, Flatto's count) is a full `1/6` below that.  Seeing past the horizon means producing a zero-density set of orbits, which no finite-state rule can single out.  Maze row: "digit-word counting past arc length 2/3".
 
 ## What the ladder says about Mahler
 

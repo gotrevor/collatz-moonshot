@@ -14,6 +14,7 @@ v > 0 with M v <= c v (Collatz-Wielandt) certifies W_N <= C c^N.
 
     arc_entropy.py bound S T M          growth bound for the arc [S, S+T] at grid 1/M
     arc_entropy.py cover T G M          certify every arc of length T (all positions, mesh 1/G)
+    arc_entropy.py edge S M             where growth reaches 2 at position S, vs the game's edge
     arc_entropy.py test
 """
 from __future__ import annotations
@@ -34,8 +35,10 @@ def pieces(s, t):
     return [(s, s + t)] if s + t <= 1 else [(s, ONE), (F(0), s + t - 1)]
 
 
-def matrix(s, t, m):
-    """Integer transfer matrix on the outward-rounded interval states reachable from the arc pieces."""
+def matrix(s, t, m, inner=False):
+    """Integer transfer matrix on the interval states reachable from the arc pieces.  Outward rounding
+    (default) overcounts words, so its growth is an upper bound.  inner=True rounds inward and keeps
+    one piece per digit: every counted word is genuinely admissible, so its growth is a lower bound."""
     A = pieces(s, t)
 
     def step(S):
@@ -44,7 +47,12 @@ def matrix(s, t, m):
             L, H = F(3, 2) * S[0] - a, F(3, 2) * S[1] - a
             for p0, p1 in A:
                 lo, hi = max(L, p0), min(H, p1)
-                if lo <= hi:
+                if inner:
+                    lo, hi = F(math.ceil(lo * m), m), F(math.floor(hi * m), m)
+                    if lo < hi:
+                        out.append((lo, hi))
+                        break
+                elif lo <= hi:
                     out.append((max(F(math.floor(lo * m), m), p0), min(F(math.ceil(hi * m), m), p1)))
         return out
 
@@ -74,9 +82,41 @@ def certify(M, c):
     return all(sum(M[i][j] * q[j] for j in range(len(M)) if M[i][j]) <= c * q[i] for i in range(len(M)))
 
 
-def growth(s, t, m):
+def growth(s, t, m, inner=False):
     """Float spectral radius (the number certify() tries to beat)."""
-    return float(max(abs(np.linalg.eigvals(np.array(matrix(F(s), F(t), m), dtype=float)))))
+    return float(max(abs(np.linalg.eigvals(np.array(matrix(F(s), F(t), m, inner), dtype=float)))))
+
+
+def entropy_edge(s, m, lo=F(1, 3), hi=F(1), steps=14):
+    """Bracket the arc length where the true digit-word growth at position s reaches 2:
+    (length where the upper bound reaches 2, length where the lower bound reaches 2)."""
+    out = []
+    for inner in (False, True):
+        a, b = lo, hi
+        for _ in range(steps):
+            mid = (a + b) / 2
+            if growth(s, mid, m, inner) >= 2:
+                b = mid
+            else:
+                a = mid
+        out.append(b)
+    return tuple(out)
+
+
+def game_edge(s, widths=12, lo=F(1, 3), hi=F(1), steps=12):
+    """Shortest arc length at position s that a memoryless relaxed strategy holds, with the constructor
+    free to use any of `widths` window widths (bisection; returns the smallest winning length)."""
+    from arc_trap_k import solve_vw
+    a, b = lo, hi
+    for _ in range(steps):
+        mid = (a + b) / 2
+        L = [mid * F(3, 2) * F(j, widths) for j in range(1, widths)]
+        P, fx = solve_vw(0, F(s), mid, L, iters=3000)
+        if fx and any(x for row in P for x in row):
+            b = mid
+        else:
+            a = mid
+    return b
 
 
 def bound(s, t, m, c=F(2)):
@@ -110,6 +150,14 @@ def main(argv):
         b = bound(s, t, m)
         print(f"arc [{s}, {s + t}] grid 1/{m}: growth {growth(s, t, m):.4f}; certified < 2: "
               + (f"yes, W_N = O({b}^N)" if b else "no"))
+        return 0
+    if argv[0] == "edge":
+        # arc_entropy.py edge S M : entropy-edge bracket vs game edge at position S
+        sp, m = F(argv[1]), int(argv[2])
+        e_up, e_lo = entropy_edge(sp, m)
+        g = game_edge(sp)
+        print(f"s={float(sp):.4f}  growth reaches 2 at length in [{float(e_up):.4f}, {float(e_lo):.4f}]"
+              f"   game holds from {float(g):.4f}", flush=True)
         return 0
     if argv[0] == "cover":
         t, G, m = F(argv[1]), int(argv[2]), int(argv[3])
@@ -156,6 +204,43 @@ def test_certify_has_teeth():
     M = matrix(F(0), F(1, 2), 40)
     assert not certify(M, F(3, 2))   # below the true growth: must fail
     assert certify(M, F(17, 10))
+
+
+def test_two_thirds_is_critical():
+    # hand (two_pow_le_card_admissibleWord): at non-wrapping length 2/3 Lebesgue is an eigenmeasure with
+    # eigenvalue 4/3 and cylinders are <= (2/3)^N long, so W_N >= 2^N: the upper bound must reach 2 and
+    # the certifier must refuse; just below, at 13/20, it must accept
+    assert growth(0, F(2, 3), 160) >= 2 - 1e-9
+    assert growth(F(1, 6), F(2, 3), 160) >= 2 - 1e-9
+    assert bound(0, F(2, 3), 160) is None
+    assert bound(F(1, 6), F(13, 20), 160) is not None
+
+
+def test_lower_bound_below_upper():
+    # inner rounding undercounts, outer overcounts; on Mahler's arc both must straddle Flatto's 3/2
+    assert growth(0, F(1, 2), 160, inner=True) <= 1.5 + 1e-9 <= growth(0, F(1, 2), 160) + 2e-9
+
+
+def test_game_reaches_afs_arc():
+    # the arc {||x|| <= 1/3 + e} (Akiyama-Frougny-Sakarovitch's 1/3, set by hand) is held from every integer
+    # part; removing e from either end loses
+    from arc_trap_k import solve_vw, vw_orbit, dist_int
+    e = F(1, 10 ** 6)
+
+    def win(s, t):
+        L = [t * F(3, 4)]
+        P, fx = solve_vw(0, s, t, L, iters=4000)
+        return (P, L) if fx and any(x for row in P for x in row) else None
+
+    got = win(F(2, 3) - e, F(2, 3) + 2 * e)
+    assert got
+    P, L = got
+    for m0 in (1, 2, 100):
+        xi = vw_orbit(P, 0, F(2, 3) - e, F(2, 3) + 2 * e, L, m0, 50)
+        assert m0 <= xi < m0 + 3
+        assert max(dist_int(xi * F(3, 2) ** n) for n in range(50)) <= F(1, 3) + e
+    assert not win(F(2, 3), F(2, 3) + e)
+    assert not win(F(2, 3) - e, F(2, 3) + e)
 
 
 if __name__ == "__main__":

@@ -279,6 +279,55 @@ theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Se
     ¬ RelaxedStrategy s t l P := fun h =>
   finiteMemory_barrier s t ht 0 0 (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
+/-! ### The finite-memory edge is `2/3` -/
+
+/-- A digit word `a` of length `N` is admissible for the arc `[s, s + t]` when some sequence of
+fractional parts in the arc follows it: `f_{i+1} = 3 f_i / 2 - a_i / 2` (digit `a_i / 2`). -/
+def AdmissibleWord (s t : ℝ) (N : ℕ) (a : Fin N → ℤ) : Prop :=
+  ∃ f : Fin (N + 1) → ℝ, (∀ i, ∃ x ∈ Set.Icc s (s + t), f i = Int.fract x) ∧
+    ∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2
+
+/-- **Counting cannot pass `2/3`.**  For every arc of length `2/3` that does not wrap, at least
+`2^N` digit words are admissible, so the counting step of `finiteMemory_barrier` fails there.
+The same arithmetic puts Flatto–Lagarias–Pollington's edge at `1/3` (one word) and Flatto's
+Z-number exponent at `log₂(3/2)` (length `1/2`).
+Confidence 85% (hand proof; `arc_entropy.py` brackets the growth at `2` for every position tested,
+wrapping arcs included).  Proof: let `(Pφ)(f) = Σ_a φ(3f/2 - a/2)` over admissible digits.  Since
+`3/2 · I` has length exactly `1`, almost every `y ∈ I` has exactly two half-integers `a/2` with
+`y + a/2 ∈ 3I/2`, so `∫_I Pφ = (2/3) · 2 · ∫_I φ`.  Hence
+`Σ_w |C_w| = ∫_I P^N 1 = (4/3)^N · 2/3`.  Each cylinder `C_w` has length at most `(2/3)^N · 2/3`,
+because `f ↦ f_N` has slope `(3/2)^N` into `I`.  Dividing gives at least `2^N` words. -/
+theorem two_pow_le_card_admissibleWord (s : ℝ) (hs : 0 ≤ s) (hs' : s ≤ 1 / 3) (N : ℕ) :
+    2 ^ N ≤ Nat.card {a : Fin N → ℤ // AdmissibleWord s (2 / 3) N a} := by
+  sorry
+
+/-- **The game reaches the edge at the Akiyama–Frougny–Sakarovitch arc.**  A memoryless relaxed
+strategy holds `[2/3 - 10⁻⁶, 4/3 + 10⁻⁶]`, i.e. `‖ξ (3/2)^n‖ ≤ 1/3 + 10⁻⁶`.  This works from every
+integer part, a positive density, whereas AFS give countably many `ξ` with `‖ξ (3/2)^n‖ < 1/3`.
+Confidence 85% (exact lattice post-fixed point `solve_vw` with width `l = 1000003/2000000`; exact
+orbits from `m₀ = 1, 2, 3, 100` stay within `1/3 + 10⁻⁶`, `test_game_reaches_afs_arc`).  The game
+fails on `[2/3, 4/3 + 10⁻⁶]` and on `[2/3 - 10⁻⁶, 4/3]`. -/
+theorem relaxedStrategy_near_afs :
+    ∃ l P, RelaxedStrategy (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) l P := by
+  sorry
+
+theorem trapsResidueClass_near_afs :
+    TrapsResidueClass (2 / 3 - 1 / 10 ^ 6) (2 / 3 + 2 / 10 ^ 6) 0 0 := by
+  obtain ⟨l, P, h⟩ := relaxedStrategy_near_afs
+  exact trapsResidueClass_of_relaxedStrategy (by norm_num) h
+
+/-- **Conjecture: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds
+an arc shorter than `2/3`, and arcs just past the AFS arc `{‖x‖ ≤ 1/3}` are held.  So the
+counting obstruction is sharp at the best position.  At other positions the game needs
+`0.73`–`0.90`, while the counting edge stays at `≈ 2/3` everywhere.
+Confidence 70% (first half: `finiteMemory_barrier` to `13/20`; growth `< 2` below `2/3` at every
+position scanned; `two_pow_le_card_admissibleWord` shows counting stops at `2/3`).  Confidence 75%
+for the second half: `relaxedStrategy_near_afs` at `ε = 10⁻⁶`, and the game edge is pinned at both
+AFS endpoints for `s ∈ [0.60, 0.66]`. -/
+def FiniteMemoryEdgeIsTwoThirds : Prop :=
+  (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
+  (∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0)
+
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.
