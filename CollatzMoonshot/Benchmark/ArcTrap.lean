@@ -1671,13 +1671,222 @@ theorem near_afs_every_floor (δ : ℝ) (N g : ℕ) (hN : (3 / 2) ^ (N + 1) * |�
     TrapsToDepth (2 / 3 + δ) (2 / 3) N g := by
   sorry
 
-/-- Words with bounded runs are not rare: at least `2^N (1 - 2^{-R})^N` of them.  Confidence 85%
+/-- Prefixes of run-bounded words are run-bounded. -/
+theorem noRunLonger_prefix {R N M : ℕ} (hMN : M ≤ N) {v : Fin N → Bool} (h : NoRunLonger R N v) :
+    NoRunLonger R M (fun j : Fin M => v ⟨j, by omega⟩) := by
+  intro i hi
+  obtain ⟨k, hk, hne⟩ := h i (by omega)
+  exact ⟨k, hk, hne⟩
+
+theorem noRunLonger_short {R N : ℕ} (hN : N ≤ R) (w : Fin N → Bool) : NoRunLonger R N w := by
+  intro i h; exfalso; omega
+
+/-- The bad extensions: good prefix, bad word. -/
+def badExt (R N : ℕ) : Set (Fin (N + 1) → Bool) :=
+  {v | NoRunLonger R N (fun j : Fin N => v ⟨j, by omega⟩) ∧ ¬ NoRunLonger R (N + 1) v}
+
+theorem badExt_window {R N : ℕ} {v : Fin (N + 1) → Bool} (hv : v ∈ badExt R N) :
+    R ≤ N ∧ ∀ k (hk : k ≤ R) (h : N - R + k < N + 1), v ⟨N - R + k, h⟩ = v ⟨N - R, by omega⟩ := by
+  obtain ⟨hi, hb⟩ := hv
+  simp only [NoRunLonger, not_forall, not_exists, not_not] at hb
+  obtain ⟨i, hiR, hall⟩ := hb
+  have hiN : i + R = N := by
+    by_contra hne
+    obtain ⟨k, hk, hne'⟩ := hi i (by omega)
+    exact hne' (hall k hk)
+  refine ⟨by omega, fun k hk _ => ?_⟩
+  induction k with
+  | zero => rfl
+  | succ k ih =>
+    have := hall k (by omega)
+    rw [← ih (by omega) (by omega)]
+    have e1 : (⟨N - R + (k + 1), by omega⟩ : Fin (N + 1)) = ⟨i + k + 1, by omega⟩ := Fin.ext (by simp; omega)
+    have e2 : (⟨N - R + k, by omega⟩ : Fin (N + 1)) = ⟨i + k, by omega⟩ := Fin.ext (by simp; omega)
+    rw [e1, e2]; exact this.symm
+
+theorem badExt_eq {R N : ℕ} {v : Fin (N + 1) → Bool} (hv : v ∈ badExt R N) (j : ℕ)
+    (hj1 : N - R ≤ j) (hj2 : j ≤ N) : v ⟨j, by omega⟩ = v ⟨N - R, by omega⟩ := by
+  obtain ⟨hRN, hw⟩ := badExt_window hv
+  have := hw (j - (N - R)) (by omega) (by omega)
+  rw [← this]; exact congrArg v (Fin.ext (by simp; omega))
+
+noncomputable def runCount (R N : ℕ) : ℕ := {w : Fin N → Bool | NoRunLonger R N w}.ncard
+
+theorem runCount_short {R N : ℕ} (hN : N ≤ R) : runCount R N = 2 ^ N := by
+  unfold runCount
+  rw [show {w : Fin N → Bool | NoRunLonger R N w} = Set.univ from
+    Set.eq_univ_of_forall (noRunLonger_short hN), Set.ncard_univ, Nat.card_fun]
+  simp
+
+theorem two_mul_runCount_le (R N : ℕ) :
+    2 * runCount R N ≤ runCount R (N + 1) + (badExt R N).ncard := by
+  set T : Set (Fin (N + 1) → Bool) := {v | NoRunLonger R N (fun j : Fin N => v ⟨j, by omega⟩)}
+  have hT : T = (fun p : (Fin N → Bool) × Bool => Fin.snoc p.1 p.2) ''
+      ({w : Fin N → Bool | NoRunLonger R N w} ×ˢ Set.univ) := by
+    ext v
+    constructor
+    · intro hv
+      refine ⟨(Fin.init v, v (Fin.last N)), ⟨hv, trivial⟩, Fin.snoc_init_self v⟩
+    · rintro ⟨⟨w, b⟩, ⟨hw, -⟩, rfl⟩
+      simpa [T, Fin.snoc] using hw
+  have hTc : T.ncard = 2 * runCount R N := by
+    rw [hT, Set.ncard_image_of_injective _ (fun p q h => by
+      simpa [Prod.ext_iff] using (Fin.snoc_injective2 h)), Set.ncard_prod, Set.ncard_univ]
+    simp [runCount, mul_comm]
+  have hsub : T ⊆ {w : Fin (N + 1) → Bool | NoRunLonger R (N + 1) w} ∪ badExt R N := by
+    intro v hv
+    by_cases h : NoRunLonger R (N + 1) v
+    · exact Or.inl h
+    · exact Or.inr ⟨hv, h⟩
+  rw [← hTc]
+  exact (Set.ncard_le_ncard hsub (Set.toFinite _)).trans (Set.ncard_union_le _ _)
+
+theorem badExt_le {R N : ℕ} (hRN : R < N) : (badExt R N).ncard ≤ runCount R (N - R) := by
+  refine Set.ncard_le_ncard_of_injOn (fun v : Fin (N + 1) → Bool => fun j : Fin (N - R) => v ⟨j, by omega⟩)
+    (fun v hv => ?_) (fun v hv v' hv' he => ?_) (Set.toFinite _)
+  · have := noRunLonger_prefix (M := N - R) (by omega) hv.1
+    exact this
+  · obtain ⟨-, hw⟩ := badExt_window hv
+    obtain ⟨-, hw'⟩ := badExt_window hv'
+    have hpre : ∀ j (hj : j < N - R), v ⟨j, by omega⟩ = v' ⟨j, by omega⟩ := fun j hj =>
+      congrFun he ⟨j, hj⟩
+    have flip : ∀ u : Fin (N + 1) → Bool, u ∈ badExt R N →
+        u ⟨N - R, by omega⟩ ≠ u ⟨N - R - 1, by omega⟩ := by
+      intro u hu heq
+      obtain ⟨k, hk, hne⟩ := hu.1 (N - R - 1) (by omega)
+      apply hne
+      simp only
+      rcases Nat.eq_zero_or_pos k with rfl | hk0
+      · rw [show (⟨N - R - 1 + 0, by omega⟩ : Fin (N + 1)) = ⟨N - R - 1, by omega⟩ from
+          Fin.ext (by simp), badExt_eq hu (N - R - 1 + 0 + 1) (by omega) (by omega), heq]
+      · rw [badExt_eq hu (N - R - 1 + k) (by omega) (by omega),
+          badExt_eq hu (N - R - 1 + k + 1) (by omega) (by omega)]
+    have h0 : v ⟨N - R, by omega⟩ = v' ⟨N - R, by omega⟩ := by
+      have f1 := flip v hv
+      have f2 := flip v' hv'
+      have hp := hpre (N - R - 1) (by omega)
+      revert f1 f2 hp
+      cases v ⟨N - R, by omega⟩ <;> cases v' ⟨N - R, by omega⟩ <;>
+        cases v ⟨N - R - 1, by omega⟩ <;> cases v' ⟨N - R - 1, by omega⟩ <;> simp
+    funext j
+    by_cases hj : (j : ℕ) < N - R
+    · exact hpre j hj
+    · rw [show j = ⟨(j : ℕ), by omega⟩ from rfl, badExt_eq hv j (by omega) (by omega),
+        badExt_eq hv' j (by omega) (by omega), h0]
+
+theorem badExt_R_le (R : ℕ) : (badExt R R).ncard ≤ 2 := by
+  have := Set.ncard_le_ncard_of_injOn (fun v : Fin (R + 1) → Bool => v 0)
+    (s := badExt R R) (t := Set.univ) (fun _ _ => trivial) (fun v hv v' hv' he => ?_) (Set.toFinite _)
+  · simpa [Set.ncard_univ] using this
+  · obtain ⟨-, hw⟩ := badExt_window hv
+    obtain ⟨-, hw'⟩ := badExt_window hv'
+    funext j
+    have a := hw j (by omega) (by omega)
+    have b := hw' j (by omega) (by omega)
+    simp only [Nat.sub_self, zero_add] at a b
+    have he' : v ⟨0, by omega⟩ = v' ⟨0, by omega⟩ := he
+    rw [show j = ⟨(j : ℕ), by omega⟩ from rfl, a, b, he']
+
+theorem two_mul_le_two_pow (R : ℕ) (hR : 1 ≤ R) : 2 * R ≤ 2 ^ R := by
+  induction R with
+  | zero => omega
+  | succ R ih =>
+    rcases Nat.eq_zero_or_pos R with rfl | h
+    · norm_num
+    · have := ih h; rw [pow_succ]; omega
+
+/-- Words with bounded runs are not rare: at least `2^N (1 - 2^{-R})^N` of them.  PROVED 2026-10-06
+(ratio induction `c_{N+1} ≥ 2 c_N - c_{N-R}`, `badExt_le`); originally confidence 85%
 (checked for `R ≤ 11`, `N < 200` in `test_run_bounded_count_bound`).  Proof sketch: the count obeys
 the `R`-bonacci recursion, and its growth rate `φ_R ≥ 2 - 2^{1-R}`, i.e. `φ_R/2 ≥ 1 - 2^{-R}`;
 induct on `N` with the ratio of consecutive counts. -/
 theorem run_bounded_count_ge (R N : ℕ) (hR : 1 ≤ R) :
     (2 : ℝ) ^ N * (1 - (1 / 2) ^ R) ^ N ≤ Nat.card {w : Fin N → Bool // NoRunLonger R N w} := by
-  sorry
+  rw [show Nat.card {w : Fin N → Bool // NoRunLonger R N w} = runCount R N from
+    Nat.card_coe_set_eq _]
+  set ε : ℝ := (1 / 2) ^ R with hε
+  set lam : ℝ := 2 * (1 - ε) with hlam
+  have hε0 : 0 < ε := by positivity
+  have hε1 : ε ≤ 1 / 2 := by
+    rw [hε]; exact pow_le_of_le_one (by norm_num) (by norm_num) (by omega) |>.trans (by norm_num)
+  have hlam0 : 0 ≤ lam := by rw [hlam]; linarith
+  have hlam2 : lam ≤ 2 := by rw [hlam]; linarith
+  -- (1 - ε)^R ≥ 1/2
+  have hbern : (1 / 2 : ℝ) ≤ (1 - ε) ^ R := by
+    have hb := one_add_mul_le_pow (a := -ε) (by linarith) R
+    rw [← sub_eq_add_neg] at hb
+    have h2R : (2 * R : ℝ) ≤ 2 ^ R := by exact_mod_cast two_mul_le_two_pow R hR
+    have hRε : (R : ℝ) * ε ≤ 1 / 2 := by
+      rw [hε, one_div_pow, mul_one_div, div_le_iff₀ (by positivity)]; linarith
+    linarith
+  -- lam^R * ε * 2 ≥ 1 ... i.e. lam^R (2 - lam) ≥ 1
+  have hkey : 1 ≤ lam ^ R * (2 - lam) := by
+    have e : lam ^ R * (2 - lam) = 2 * ((1 - ε) ^ R * (2 ^ R * ε)) := by
+      rw [hlam, mul_pow]; ring
+    have e2 : (2 : ℝ) ^ R * ε = 1 := by rw [hε, ← mul_pow]; norm_num
+    rw [e, e2]; linarith
+  -- ratio step
+  have step : ∀ N, lam * runCount R N ≤ runCount R (N + 1) := by
+    intro N
+    induction N using Nat.strong_induction_on with
+    | _ N ih =>
+      rcases lt_trichotomy N R with hlt | heq | hgt
+      · rw [runCount_short hlt.le, runCount_short (by omega)]
+        push_cast; rw [pow_succ]
+        have : (0 : ℝ) ≤ 2 ^ N := by positivity
+        nlinarith
+      · subst heq
+        have h1 := two_mul_runCount_le N N
+        have h2 := badExt_R_le N
+        rw [runCount_short le_rfl] at h1 ⊢
+        have h3 : (2 : ℝ) * 2 ^ N - 2 ≤ runCount N (N + 1) := by
+          have : 2 * 2 ^ N ≤ runCount N (N + 1) + 2 := by omega
+          have : ((2 * 2 ^ N : ℕ) : ℝ) ≤ ((runCount N (N + 1) + 2 : ℕ) : ℝ) := by exact_mod_cast this
+          push_cast at this; linarith
+        have : lam * ((2 ^ N : ℕ) : ℝ) = 2 * 2 ^ N - 2 := by
+          rw [hlam]; push_cast
+          have : (2 : ℝ) ^ N * ε = 1 := by rw [hε, ← mul_pow]; norm_num
+          linear_combination (-2) * this
+        rw [this]; exact h3
+      · -- iterate the ratio back R steps
+        have back : ∀ j, j ≤ R → lam ^ j * runCount R (N - j) ≤ runCount R N := by
+          intro j
+          induction j with
+          | zero => intro _; simp
+          | succ j ihj =>
+            intro hj
+            have hstep := ih (N - (j + 1)) (by omega)
+            rw [show N - (j + 1) + 1 = N - j by omega] at hstep
+            have := ihj (by omega)
+            rw [pow_succ]
+            have hp : 0 ≤ lam ^ j := pow_nonneg hlam0 _
+            nlinarith
+        have hb := back R le_rfl
+        have h1 := two_mul_runCount_le R N
+        have h2 := badExt_le hgt
+        have h3 : (2 : ℝ) * runCount R N - runCount R (N - R) ≤ runCount R (N + 1) := by
+          have : 2 * runCount R N ≤ runCount R (N + 1) + runCount R (N - R) := by omega
+          have : ((2 * runCount R N : ℕ) : ℝ) ≤ ((runCount R (N + 1) + runCount R (N - R) : ℕ) : ℝ) := by
+            exact_mod_cast this
+          push_cast at this; linarith
+        -- lam c_N ≤ 2 c_N - c_{N-R}  ⇐  c_{N-R} ≤ (2 - lam) c_N  ⇐ lam^R (2 - lam) ≥ 1
+        have hc0 : (0 : ℝ) ≤ runCount R (N - R) := Nat.cast_nonneg _
+        have : (runCount R (N - R) : ℝ) ≤ (2 - lam) * runCount R N := by
+          have hl : 0 ≤ 2 - lam := by linarith
+          calc (runCount R (N - R) : ℝ) ≤ lam ^ R * (2 - lam) * runCount R (N - R) := by nlinarith
+            _ = (2 - lam) * (lam ^ R * runCount R (N - R)) := by ring
+            _ ≤ (2 - lam) * runCount R N := mul_le_mul_of_nonneg_left hb hl
+        linarith
+  have hfin : ∀ N, lam ^ N ≤ runCount R N := by
+    intro N
+    induction N with
+    | zero => rw [runCount_short (by omega)]; simp
+    | succ N ih =>
+      rw [pow_succ]
+      have := step N
+      nlinarith
+  calc (2 : ℝ) ^ N * (1 - ε) ^ N = lam ^ N := by rw [hlam, mul_pow]
+    _ ≤ _ := hfin N
 
 /-- One step of the endpoint-error recursion (letter = anchor parity). -/
 noncomputable def afsErrStep (δ : ℝ) (e : ℝ × ℝ) (b : Bool) : ℝ × ℝ :=
