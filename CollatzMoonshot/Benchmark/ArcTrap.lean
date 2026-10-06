@@ -942,6 +942,289 @@ theorem card_backward_le (s t q : ℝ) (ht : t < 2 / 3) (K : ℕ) (hK : 1 ≤ K)
     rw [this] at hwx
     linarith
 
+/-! #### Helpers for the growth bound -/
+
+/-- **Left edge.**  Every admissible word has a path that touches a left edge of the arc,
+`fract s` or `0`: lower the start until some `f_j` hits an edge. -/
+theorem exists_edge_path {s t : ℝ} (ht : t < 1) {N : ℕ} {a : Fin N → ℤ}
+    (h : AdmissibleWord s t N a) :
+    ∃ f : Fin (N + 1) → ℝ, (∀ i, ∃ x ∈ Set.Icc s (s + t), f i = Int.fract x) ∧
+      (∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2) ∧
+      ∃ j : Fin (N + 1), f j = Int.fract s ∨ f j = 0 := by
+  obtain ⟨f, hf, hstep⟩ := h
+  have hf' : ∀ i, 0 ≤ f i ∧ f i < 1 ∧ Int.fract (f i - s) ≤ t := fun i => (inArc_iff ht).1 (hf i)
+  set e : Fin (N + 1) → ℝ := fun i => min (f i) (Int.fract (f i - s)) / (3 / 2) ^ (i : ℕ) with he
+  obtain ⟨j, -, hj⟩ := Finset.exists_min_image Finset.univ e Finset.univ_nonempty
+  set δ := e j
+  have hpos : ∀ n : ℕ, (0 : ℝ) < (3 / 2) ^ n := fun n => by positivity
+  have hδ0 : 0 ≤ δ := div_nonneg (le_min (hf' j).1 (Int.fract_nonneg _)) (hpos _).le
+  have hd : ∀ i : Fin (N + 1), (3 / 2 : ℝ) ^ (i : ℕ) * δ ≤ min (f i) (Int.fract (f i - s)) := by
+    intro i
+    have := hj i (Finset.mem_univ _)
+    rw [he] at this
+    simp only at this
+    rw [le_div_iff₀ (hpos _)] at this
+    linarith
+  refine ⟨fun i => f i - (3 / 2) ^ (i : ℕ) * δ, fun i => ?_, fun i => ?_, j, ?_⟩
+  · obtain ⟨h0, h1, h2⟩ := hf' i
+    have hdi := hd i
+    have hm1 := min_le_left (f i) (Int.fract (f i - s))
+    have hm2 := min_le_right (f i) (Int.fract (f i - s))
+    have hdp : 0 ≤ (3 / 2 : ℝ) ^ (i : ℕ) * δ := mul_nonneg (hpos _).le hδ0
+    refine (inArc_iff ht).2 ⟨by linarith, by linarith, ?_⟩
+    have : Int.fract (f i - (3 / 2) ^ (i : ℕ) * δ - s) =
+        Int.fract (f i - s) - (3 / 2) ^ (i : ℕ) * δ := by
+      rw [Int.fract_eq_iff]
+      refine ⟨by linarith, by linarith [Int.fract_lt_one (f i - s)], ⌊f i - s⌋, ?_⟩
+      have := Int.floor_add_fract (f i - s)
+      linarith
+    rw [this]; linarith
+  · simp only [Fin.val_succ, Fin.val_castSucc, pow_succ]
+    rw [hstep i]; ring
+  · simp only
+    have h0 := (hf' j).1
+    have h1 := (hf' j).2.1
+    have hdj : (3 / 2 : ℝ) ^ (j : ℕ) * δ = min (f j) (Int.fract (f j - s)) := by
+      simp only [δ, he]
+      field_simp
+    rw [hdj]
+    rcases min_choice (f j) (Int.fract (f j - s)) with hm | hm
+    · right; rw [hm]; ring
+    · left
+      rw [hm, eq_comm, Int.fract_eq_iff]
+      have hm2 : Int.fract (f j - s) ≤ f j := hm ▸ min_le_left _ _
+      refine ⟨by linarith, by linarith [Int.fract_nonneg (f j - s)], -⌊f j - s⌋, ?_⟩
+      have := Int.floor_add_fract (f j - s)
+      push_cast; linarith
+
+/-- Prefix and suffix of a word at position `j`. -/
+def wpre {N : ℕ} (j : Fin (N + 1)) (a : Fin N → ℤ) : Fin j → ℤ :=
+  fun i => a ⟨i, by have := j.isLt; omega⟩
+
+def wsuf {N : ℕ} (j : Fin (N + 1)) (a : Fin N → ℤ) : Fin (N - j) → ℤ :=
+  fun i => a ⟨j + i, by have := i.isLt; omega⟩
+
+theorem wpre_wsuf_injective {N : ℕ} (j : Fin (N + 1)) {a b : Fin N → ℤ}
+    (h1 : wpre j a = wpre j b) (h2 : wsuf j a = wsuf j b) : a = b := by
+  funext k
+  by_cases hk : (k : ℕ) < j
+  · have := congrFun h1 ⟨k, hk⟩
+    simpa [wpre] using this
+  · have := congrFun h2 ⟨k - j, by have := k.isLt; omega⟩
+    simp only [wsuf] at this
+    convert this using 2 <;> ext <;> simp <;> omega
+
+/-- The edge pieces: words that split at `j` into a backward path into `b` and a forward path
+out of `b`. -/
+def edgePiece (s t : ℝ) (N : ℕ) (j : Fin (N + 1)) (b : ℝ) : Set (Fin N → ℤ) :=
+  {a | wpre j a ∈ bwdSet s t j b ∧ wsuf j a ∈ fwdSet s t (N - j) b}
+
+theorem edgePiece_ncard (s t : ℝ) (N : ℕ) (j : Fin (N + 1)) (b : ℝ) :
+    (edgePiece s t N j b).ncard ≤ (bwdSet s t j b).ncard * (fwdSet s t (N - j) b).ncard := by
+  rw [← Set.ncard_prod]
+  refine Set.ncard_le_ncard_of_injOn (fun a => (wpre j a, wsuf j a)) (fun a ha => ha)
+    (fun a _ b _ h => ?_) ((bwdSet_finite _ _ _ _).prod (fwdSet_finite _ _ _ _))
+  simp only [Prod.mk.injEq] at h
+  exact wpre_wsuf_injective j h.1 h.2
+
+theorem edgePiece_finite (s t : ℝ) (N : ℕ) (j : Fin (N + 1)) (b : ℝ) :
+    (edgePiece s t N j b).Finite := by
+  refine Set.Finite.of_finite_image (f := fun a => (wpre j a, wsuf j a)) ?_ ?_
+  · refine ((bwdSet_finite s t j b).prod (fwdSet_finite s t (N - j) b)).subset ?_
+    rintro _ ⟨a, ha, rfl⟩; exact ha
+  · intro a _ b _ h
+    simp only [Prod.mk.injEq] at h
+    exact wpre_wsuf_injective j h.1 h.2
+
+/-- Split a path at an interior point. -/
+theorem split_path {s t : ℝ} {N : ℕ} {a : Fin N → ℤ} (f : Fin (N + 1) → ℝ)
+    (hf : ∀ i, ∃ x ∈ Set.Icc s (s + t), f i = Int.fract x)
+    (hstep : ∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2) (j : Fin (N + 1)) :
+    wpre j a ∈ bwdSet s t j (f j) ∧ wsuf j a ∈ fwdSet s t (N - j) (f j) := by
+  have hj := j.isLt
+  constructor
+  · refine ⟨f 0, fun i => f ⟨i, by omega⟩, fun i => hf _, fun i => ?_, rfl, ?_⟩
+    · have := hstep ⟨i, by omega⟩
+      simp only [wpre]
+      convert this using 3 <;> first | exact congrArg f (Fin.ext (by simp)) | (simp <;> omega)
+    · simp
+  · refine ⟨f (Fin.last N), fun i => f ⟨j + i, by omega⟩, fun i => hf _, fun i => ?_, by simp, ?_⟩
+    · have := hstep ⟨j + i, by omega⟩
+      simp only [wsuf]
+      convert this using 3 <;> first | exact congrArg f (Fin.ext (by simp)) | (simp <;> omega)
+    · exact congrArg f (Fin.ext (by simp; omega))
+
+theorem admissible_ncard_le (s t : ℝ) (ht : t < 1) (N : ℕ) :
+    {a : Fin N → ℤ | AdmissibleWord s t N a}.ncard ≤
+      ∑ j : Fin (N + 1), ((bwdSet s t j (Int.fract s)).ncard * (fwdSet s t (N - j) (Int.fract s)).ncard
+        + (bwdSet s t j 0).ncard * (fwdSet s t (N - j) 0).ncard) := by
+  have hsub : {a : Fin N → ℤ | AdmissibleWord s t N a} ⊆
+      ⋃ j : Fin (N + 1), (edgePiece s t N j (Int.fract s) ∪ edgePiece s t N j 0) := by
+    intro a ha
+    obtain ⟨f, hf, hstep, j, hj⟩ := exists_edge_path ht ha
+    have := split_path f hf hstep j
+    refine Set.mem_iUnion.2 ⟨j, ?_⟩
+    rcases hj with hj | hj
+    · left; rw [← hj]; exact this
+    · right; rw [← hj]; exact this
+  have hfin : (⋃ j : Fin (N + 1), (edgePiece s t N j (Int.fract s) ∪ edgePiece s t N j 0)).Finite :=
+    Set.finite_iUnion fun j => (edgePiece_finite _ _ _ _ _).union (edgePiece_finite _ _ _ _ _)
+  refine (Set.ncard_le_ncard hsub hfin).trans ((Set.ncard_iUnion_le_of_fintype _).trans ?_)
+  refine Finset.sum_le_sum fun j _ => (Set.ncard_union_le _ _).trans ?_
+  exact add_le_add (edgePiece_ncard _ _ _ _ _) (edgePiece_ncard _ _ _ _ _)
+
+/-- Split an arc path at an interior point, keeping endpoints. -/
+theorem split_arcPath {s t : ℝ} {N : ℕ} {a : Fin N → ℤ} (f : Fin (N + 1) → ℝ)
+    (hf : ∀ i, ∃ x ∈ Set.Icc s (s + t), f i = Int.fract x)
+    (hstep : ∀ i : Fin N, f i.succ = 3 / 2 * f i.castSucc - (a i : ℝ) / 2) (j : Fin (N + 1)) :
+    ArcPath s t j (f 0) (f j) (wpre j a) ∧ ArcPath s t (N - j) (f j) (f (Fin.last N)) (wsuf j a) := by
+  have hj := j.isLt
+  constructor
+  · refine ⟨fun i => f ⟨i, by omega⟩, fun i => hf _, fun i => ?_, rfl, ?_⟩
+    · have := hstep ⟨i, by omega⟩
+      simp only [wpre]
+      convert this using 3 <;> first | exact congrArg f (Fin.ext (by simp)) | (simp <;> omega)
+    · simp
+  · refine ⟨fun i => f ⟨j + i, by omega⟩, fun i => hf _, fun i => ?_, by simp, ?_⟩
+    · have := hstep ⟨j + i, by omega⟩
+      simp only [wsuf]
+      convert this using 3 <;> first | exact congrArg f (Fin.ext (by simp)) | (simp <;> omega)
+    · exact congrArg f (Fin.ext (by simp; omega))
+
+/-- A backward path is determined by its endpoint and digits. -/
+theorem arcPath_start_unique {s t : ℝ} {K : ℕ} {p p' q : ℝ} {a : Fin K → ℤ}
+    (h : ArcPath s t K p q a) (h' : ArcPath s t K p' q a) : p = p' := by
+  obtain ⟨f, -, hs, h0, hl⟩ := h
+  obtain ⟨f', -, hs', h0', hl'⟩ := h'
+  have key : ∀ m i : ℕ, (hi : i ≤ K) → i + m = K →
+      f ⟨i, by omega⟩ = f' ⟨i, by omega⟩ := by
+    intro m
+    induction m with
+    | zero =>
+      intro i hi him
+      have e : (⟨i, by omega⟩ : Fin (K + 1)) = Fin.last K := Fin.ext (by simp; omega)
+      rw [e, hl, hl']
+    | succ m ih =>
+      intro i hi him
+      have h1 := hs ⟨i, by omega⟩
+      have h2 := hs' ⟨i, by omega⟩
+      have h3 := ih (i + 1) (by omega) (by omega)
+      simp only [Fin.succ_mk, Fin.castSucc_mk] at h1 h2
+      linarith
+  rw [← h0, ← h0']
+  exact key K 0 (by omega) (by omega)
+
+/-- **Backward submultiplicativity.** -/
+theorem bwd_submult (s t : ℝ) {N : ℕ} (j : Fin (N + 1)) (q : ℝ) (X : ℕ)
+    (hX : ∀ q', (bwdSet s t j q').ncard ≤ X) :
+    (bwdSet s t N q).ncard ≤ (bwdSet s t (N - j) q).ncard * X := by
+  classical
+  set T := bwdSet s t (N - j) q
+  let r : (Fin (N - j) → ℤ) → ℝ := fun σ => Classical.epsilon (fun p => ArcPath s t (N - j) p q σ)
+  let F : (Fin (N - j) → ℤ) → Set (Fin N → ℤ) :=
+    fun σ => {a | wsuf j a = σ ∧ wpre j a ∈ bwdSet s t j (r σ)}
+  have hFinj : ∀ σ, Set.InjOn (wpre j) (F σ) := by
+    intro σ a ha b hb h
+    exact wpre_wsuf_injective j h (ha.1.trans hb.1.symm)
+  have hFfin : ∀ σ, (F σ).Finite := fun σ =>
+    Set.Finite.of_finite_image ((bwdSet_finite s t j (r σ)).subset (by
+      rintro _ ⟨a, ha, rfl⟩; exact ha.2)) (hFinj σ)
+  have hsub : bwdSet s t N q ⊆ ⋃ σ ∈ (bwdSet_finite s t (N - j) q).toFinset, F σ := by
+    rintro a ⟨p, f, hf, hstep, h0, hl⟩
+    obtain ⟨h1, h2⟩ := split_arcPath f hf hstep j
+    rw [hl] at h2
+    have hσ : wsuf j a ∈ T := ⟨f j, h2⟩
+    have hr : r (wsuf j a) = f j :=
+      arcPath_start_unique (Classical.epsilon_spec (p := fun p => ArcPath s t (N - j) p q (wsuf j a))
+        ⟨f j, h2⟩) h2
+    refine Set.mem_biUnion (x := wsuf j a) (by simpa using hσ) ⟨rfl, ?_⟩
+    rw [hr]; exact ⟨f 0, h1⟩
+  have hfin : (⋃ σ ∈ (bwdSet_finite s t (N - j) q).toFinset, F σ).Finite :=
+    Set.Finite.biUnion (Finset.finite_toSet _) fun σ _ => hFfin σ
+  refine (Set.ncard_le_ncard hsub hfin).trans ((Finset.set_ncard_biUnion_le _ _).trans ?_)
+  rw [Set.ncard_eq_toFinset_card _ (bwdSet_finite s t (N - j) q), ← smul_eq_mul, ← Finset.sum_const]
+  refine Finset.sum_le_sum fun σ _ => ?_
+  exact (Set.ncard_le_ncard_of_injOn (wpre j) (fun a ha => ha.2) (hFinj σ)
+    (bwdSet_finite _ _ _ _)).trans (hX _)
+
+theorem bwd_count_le (s t : ℝ) (ht : t < 2 / 3) (j : ℕ) (q : ℝ) :
+    (bwdSet s t j q).ncard ≤ 2 ^ j :=
+  (bwd_count s t ht j q).1
+
+theorem fib_le_real : ∀ n : ℕ, (Nat.fib (n + 2) : ℝ) ≤ 2 * (7 / 4) ^ n ∧
+    (Nat.fib (n + 3) : ℝ) ≤ 2 * (7 / 4) ^ (n + 1) := by
+  intro n
+  induction n with
+  | zero => norm_num [Nat.fib_add_two]
+  | succ n ih =>
+    refine ⟨ih.2, ?_⟩
+    rw [show n + 1 + 3 = (n + 2) + 2 by ring, Nat.fib_add_two]
+    push_cast
+    have hx : (0 : ℝ) ≤ (7 / 4) ^ n := by positivity
+    have h1 := ih.1; have h2 := ih.2
+    rw [show n + 2 + 1 = n + 3 by ring]
+    rw [pow_succ] at h2
+    rw [pow_succ, pow_succ]
+    linarith
+
+theorem rho_exists (K : ℕ) : ∃ ρ : ℝ, 7 / 4 < ρ ∧ ρ < 2 ∧ (2 : ℝ) ^ K - 1 ≤ ρ ^ K := by
+  set ε : ℝ := 1 / (K * 2 ^ K + 8) with hε
+  have hden : (0 : ℝ) < K * 2 ^ K + 8 := by positivity
+  have hε0 : 0 < ε := by positivity
+  have hε1 : ε ≤ 1 / 8 := by
+    rw [hε]; apply one_div_le_one_div_of_le (by norm_num); have : (0 : ℝ) ≤ K * 2 ^ K := by positivity
+    linarith
+  have hKε : (K : ℝ) * 2 ^ K * ε ≤ 1 := by
+    rw [hε, mul_one_div, div_le_one hden]; linarith
+  refine ⟨2 - ε, by linarith, by linarith, ?_⟩
+  have hb := one_add_mul_le_pow (a := -(ε / 2)) (by linarith) K
+  have : (2 - ε) ^ K = 2 ^ K * (1 + -(ε / 2)) ^ K := by
+    rw [← mul_pow]; congr 1; ring
+  rw [this]
+  have h2 : (0 : ℝ) ≤ 2 ^ K := by positivity
+  nlinarith
+
+theorem bwd_geom (s t : ℝ) (ht : t < 2 / 3) (K : ℕ) (hK : 1 ≤ K)
+    (hKb : (2 / 3 : ℝ) ^ (K - 1) < 2 - 3 * t) (ρ : ℝ) (hρ1 : 1 ≤ ρ)
+    (hρK : (2 : ℝ) ^ K - 1 ≤ ρ ^ K) : ∀ N q, ((bwdSet s t N q).ncard : ℝ) ≤ 2 ^ K * ρ ^ N := by
+  intro N
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+    intro q
+    by_cases hNK : N < K
+    · have h1 : ((bwdSet s t N q).ncard : ℝ) ≤ 2 ^ N := by exact_mod_cast bwd_count_le s t ht N q
+      have h2 : (2 : ℝ) ^ N ≤ 2 ^ K := pow_le_pow_right₀ (by norm_num) hNK.le
+      have h3 : (1 : ℝ) ≤ ρ ^ N := one_le_pow₀ hρ1
+      have h4 : (0 : ℝ) ≤ 2 ^ K := by positivity
+      nlinarith
+    · push_neg at hNK
+      set j : Fin (N + 1) := ⟨N - K, by omega⟩
+      have hX : ∀ q', (bwdSet s t j q').ncard ≤ ⌊(2 : ℝ) ^ K * ρ ^ (N - K)⌋₊ := fun q' =>
+        Nat.le_floor (ih (N - K) (by omega) q')
+      have hsm := bwd_submult s t j q _ hX
+      have hjK : N - (j : ℕ) = K := by simp [j]; omega
+      have hBK : (bwdSet s t (N - j) q).ncard ≤ 2 ^ K - 1 := by
+        rw [hjK]
+        have := card_backward_le s t q ht K hK hKb
+        rwa [show Nat.card {a : Fin K → ℤ // ∃ p, ArcPath s t K p q a} = (bwdSet s t K q).ncard
+          from Nat.card_coe_set_eq _] at this
+      have hfl : (⌊(2 : ℝ) ^ K * ρ ^ (N - K)⌋₊ : ℝ) ≤ 2 ^ K * ρ ^ (N - K) :=
+        Nat.floor_le (by positivity)
+      have hcast : ((2 ^ K - 1 : ℕ) : ℝ) = (2 : ℝ) ^ K - 1 := by
+        rw [Nat.cast_sub (Nat.one_le_two_pow), Nat.cast_pow]; norm_num
+      have e1 : ((bwdSet s t N q).ncard : ℝ) ≤
+          ((2 ^ K - 1 : ℕ) : ℝ) * (⌊(2 : ℝ) ^ K * ρ ^ (N - K)⌋₊ : ℝ) := by
+        exact_mod_cast hsm.trans (Nat.mul_le_mul_right _ hBK)
+      rw [hcast] at e1
+      have hpos : (0 : ℝ) ≤ 2 ^ K - 1 := by
+        have : (1 : ℝ) ≤ 2 ^ K := one_le_pow₀ (by norm_num); linarith
+      have e2 : ((2 : ℝ) ^ K - 1) * (⌊(2 : ℝ) ^ K * ρ ^ (N - K)⌋₊ : ℝ) ≤
+          ρ ^ K * (2 ^ K * ρ ^ (N - K)) :=
+        mul_le_mul hρK hfl (Nat.cast_nonneg _) (by positivity)
+      calc ((bwdSet s t N q).ncard : ℝ) ≤ ρ ^ K * (2 ^ K * ρ ^ (N - K)) := e1.trans e2
+        _ = 2 ^ K * ρ ^ N := by
+          rw [show N = K + (N - K) by omega, pow_add]; simp only [Nat.add_sub_cancel_left]; ring
+
 /-- **Digit words grow strictly slower than `2^N` on every arc shorter than `2/3`.**
 Confidence 85%.  Proof: every component of a word's cylinder has a left endpoint `ℓ` where some
 `f_j(ℓ)` is a left edge `b` of the arc (`b = s`, or `b = 0` when the arc wraps).  So the word is a
@@ -951,7 +1234,56 @@ backward path of length `j` into `b` followed by a forward path of length `N - j
 theorem admissibleWord_growth_lt_two (s t : ℝ) (ht : t < 2 / 3) :
     ∃ C lam : ℝ, lam < 2 ∧ ∀ N : ℕ, (Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} : ℝ) ≤
       C * lam ^ N := by
-  sorry
+  have h23 : (0 : ℝ) < 2 - 3 * t := by linarith
+  obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one h23 (show (2 / 3 : ℝ) < 1 by norm_num)
+  set K := n + 1
+  have hKb : (2 / 3 : ℝ) ^ (K - 1) < 2 - 3 * t := by simpa [K] using hn
+  obtain ⟨ρ, hρ1, hρ2, hρK⟩ := rho_exists K
+  set r : ℝ := 7 / (4 * ρ) with hr
+  have hρ0 : 0 < ρ := by linarith
+  have hr0 : 0 ≤ r := by positivity
+  have hr1 : r < 1 := by rw [hr, div_lt_one (by linarith)]; linarith
+  refine ⟨4 * 2 ^ K / (1 - r), ρ, hρ2, fun N => ?_⟩
+  rw [show Nat.card {a : Fin N → ℤ // AdmissibleWord s t N a} =
+    {a : Fin N → ℤ | AdmissibleWord s t N a}.ncard from Nat.card_coe_set_eq _]
+  have hB := bwd_geom s t ht K (by omega) hKb ρ (by linarith) hρK
+  have hM : ∀ m p, ((fwdSet s t m p).ncard : ℝ) ≤ 2 * (7 / 4) ^ m := fun m p =>
+    (by exact_mod_cast (fwd_fib s t (by linarith) m p).1 : ((fwdSet s t m p).ncard : ℝ) ≤
+      Nat.fib (m + 2)).trans (fib_le_real m).1
+  have h0 := admissible_ncard_le s t (by linarith) N
+  have h1 : ({a : Fin N → ℤ | AdmissibleWord s t N a}.ncard : ℝ) ≤
+      ∑ j : Fin (N + 1), (4 * 2 ^ K) * (ρ ^ N * r ^ (N - (j : ℕ))) := by
+    refine (Nat.cast_le.2 h0).trans ?_
+    push_cast
+    refine Finset.sum_le_sum fun j _ => ?_
+    have hj := j.isLt
+    have eq : ρ ^ (j : ℕ) * (7 / 4) ^ (N - (j : ℕ)) = ρ ^ N * r ^ (N - (j : ℕ)) := by
+      rw [hr, show (7 / 4 : ℝ) = 7 / (4 * ρ) * ρ by field_simp, mul_pow]
+      have : ρ ^ N = ρ ^ (j : ℕ) * ρ ^ (N - (j : ℕ)) := by rw [← pow_add]; congr 1; omega
+      rw [this]; ring
+    have b1 := hB j (Int.fract s); have b2 := hB j 0
+    have m1 := hM (N - j) (Int.fract s); have m2 := hM (N - j) 0
+    have p1 : (0 : ℝ) ≤ (bwdSet s t j (Int.fract s)).ncard := Nat.cast_nonneg _
+    have p2 : (0 : ℝ) ≤ (bwdSet s t j 0).ncard := Nat.cast_nonneg _
+    have p3 : (0 : ℝ) ≤ (fwdSet s t (N - j) (Int.fract s)).ncard := Nat.cast_nonneg _
+    have p4 : (0 : ℝ) ≤ (fwdSet s t (N - j) 0).ncard := Nat.cast_nonneg _
+    calc _ ≤ (2 ^ K * ρ ^ (j : ℕ)) * (2 * (7 / 4) ^ (N - j)) +
+          (2 ^ K * ρ ^ (j : ℕ)) * (2 * (7 / 4) ^ (N - j)) :=
+          add_le_add (mul_le_mul b1 m1 p3 (by positivity)) (mul_le_mul b2 m2 p4 (by positivity))
+      _ = 4 * 2 ^ K * (ρ ^ (j : ℕ) * (7 / 4) ^ (N - (j : ℕ))) := by ring
+      _ = _ := by rw [eq]
+  have h2 : ∑ j : Fin (N + 1), r ^ (N - (j : ℕ)) ≤ 1 / (1 - r) := by
+    rw [Fin.sum_univ_eq_sum_range (fun j => r ^ (N - j)) (N + 1)]
+    have := Finset.sum_range_reflect (fun i => r ^ i) (N + 1)
+    simp only [Nat.add_sub_cancel] at this
+    rw [this, Finset.range_eq_Ico]
+    simpa using geom_sum_Ico_le_of_lt_one (m := 0) (n := N + 1) hr0 hr1
+  refine h1.trans ?_
+  rw [← Finset.mul_sum, ← Finset.mul_sum]
+  have hρN : 0 ≤ ρ ^ N := by positivity
+  calc 4 * 2 ^ K * (ρ ^ N * ∑ j : Fin (N + 1), r ^ (N - (j : ℕ)))
+      ≤ 4 * 2 ^ K * (ρ ^ N * (1 / (1 - r))) := by gcongr
+    _ = 4 * 2 ^ K / (1 - r) * ρ ^ N := by ring
 
 /-- **Finite-memory barrier, all the way to `2/3`.**  No construction that works on a whole residue
 class mod `2^k` traps orbits in any arc shorter than `2/3`.
