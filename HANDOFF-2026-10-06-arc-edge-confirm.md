@@ -32,3 +32,8 @@ this kickoff's scope).  The kickoff was a bounded subset and this run had no `--
 kickoff should be launched with `--done-when 'sorry-free:<target>'`.  Since every remaining sorry is either
 kickoff-forbidden or under the 2026-09-13 "awaiting a new idea" directive, this lap exits with `box stuck`
 (second strike after the phase-2 lap's, so the run halts for the operator).
+
+**Operator ask:** pick the next kickoff.  Recommended: `exists_farFromIntegers_1228` together with the
+corollary batch (`mahler_barrier`, `relaxedStrategy_near_afs`, `trapsResidueClass_near_afs`), launched with
+`--done-when 'sorry-free:CollatzMoonshot/Benchmark/ArcTrap.lean'` scoped to those names, or explicitly name
+the sorries it may touch.
