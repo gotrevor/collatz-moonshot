@@ -13,7 +13,7 @@ All statements live in [`CollatzMoonshot/Benchmark/ArcTrap.lean`](../../CollatzM
   - Dubickas (2008, Math. Nachr., Thm 1.3): `5/48` ([`Literature.Dubickas2008`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L45)).  His proof is also a two-player game, with an adversary choosing between digit pairs.
 - **Upper bound** (every `ξ` comes close): Dubickas (2006, JNT, Cor. 1) shows some limit point of `‖ξ(3/2)ⁿ‖` is `≤ 0.2857` ([`Literature.Dubickas2006`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L51)).
 
-So the literature brackets `β*` in `[5/48, 0.2857)`.  This note moves the lower end to `0.1228`.
+So the literature brackets `β*` in `[5/48, 0.2857)`.  This note moves the lower end to `0.1228`.  In Lean, `β*` is [`E`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L398) `(3/2)`, with `E α = sup_{ξ>0} inf_n ‖ξαⁿ‖`.  The bracket `0.1228 ≤ E(3/2) ≤ 0.2857` is [`E_three_halves_ge`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L466) and [`E_three_halves_le`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L471) (the latter from the cited Dubickas 2006 input).  The calibrations [`E_two`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L416) (`E 2 = 1/3`) and [`E_three`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L454) (`E 3 = 1/2`) check that the definition measures what it should.
 
 ## 1. The constant
 
@@ -25,7 +25,7 @@ So the literature brackets `β*` in `[5/48, 0.2857)`.  This note moves the lower
 
 ## 2. The barrier
 
-**Theorem** ([`relaxed_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2621)).  For `7/57 < β < 1/2`, no width `l` and no set `P` give a `RelaxedStrategy` for the arc `[β, 1 − β]`.
+**Theorem** ([`relaxed_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2680)).  For `7/57 < β < 1/2`, no width `l` and no set `P` give a `RelaxedStrategy` for the arc `[β, 1 − β]`.
 
 **Mechanism.**  `4/19 → 6/19 → 9/19` is a 3-cycle of `x ↦ 3x/2 + d (mod 1)` with parities `0, 0, 1/2`.  The arc's right edge maps to `1/2 − 3β/2`, which equals `6/19` exactly at `β = 7/57`.  The proof has three steps:
 
@@ -33,9 +33,9 @@ So the literature brackets `β*` in `[5/48, 0.2857)`.  This note moves the lower
 - **Funnel:** within 13 moves, an adaptive adversary forces death or a window inside `[x₀, 1 − 9β/4]` with `x₀ > 10/19`, using 35 node lemmas (`barrierNode*`) on one `β`-piece.
 - **Runaway:** in the funnel's terminal window, the block of parities `(0, 1/2, 1/2)` pushes the left end away from `10/19` geometrically, by `x ↦ 27x/8 − 5/4`, until the window dies.
 
-Larger `β` follows by monotonicity.  The corollaries [`not_relaxedStrategy_13_100`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2635) and [`mahler_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1569) are also proved; no memoryless strategy holds any arc of length `≤ 1/2`, so this game can never produce a Z-number.
+Larger `β` follows by monotonicity.  The corollaries [`not_relaxedStrategy_13_100`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L2694) and [`mahler_barrier`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L1628) are also proved; no memoryless strategy holds any arc of length `≤ 1/2`, so this game can never produce a Z-number.
 
-**Conjecture** ([`RelaxedValueIsSevenFiftySevenths`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3511), 75% for the open half).  The game's value is exactly `7/57`: every `β < 7/57` is winnable.  Certificates win up to `7/57 − 10⁻⁸`, and the edge is the same with 0 to 3 bits of memory.
+**Conjecture** ([`RelaxedValueIsSevenFiftySevenths`](../../CollatzMoonshot/Benchmark/ArcTrap.lean#L3570), 75% for the open half).  The game's value is exactly `7/57`: every `β < 7/57` is winnable.  Certificates win up to `7/57 − 10⁻⁸`, and the edge is the same with 0 to 3 bits of memory.
 
 ## What is not claimed
 

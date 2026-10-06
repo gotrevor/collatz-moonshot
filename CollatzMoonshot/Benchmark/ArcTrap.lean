@@ -398,25 +398,84 @@ orbit at `ξ α^N`.  Whether the supremum is attained for `α = 3/2` is not know
 noncomputable def E (α : ℝ) : ℝ :=
   sSup {β : ℝ | ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, β ≤ |ξ * α ^ n - round (ξ * α ^ n)|}
 
-/-- Calibration: `E 2 = 1/3`.  Confidence 95%.  Proof: `ξ = 1/3` gives `2ⁿ/3 ≡ ±1/3`.  Conversely, if
+/-- Calibration: `E 2 = 1/3`.  PROVED.  Proof: `ξ = 1/3` gives `2ⁿ/3 ≡ ±1/3`.  Conversely, if
 `x` and `2x` both lie in `[β, 1 - β]` mod 1 with `β > 1/3`, then `x ∈ [1/6, 1/3] ∪ [2/3, 5/6]`, which
 misses `[β, 1 - β]`. -/
+theorem E_bdd (α : ℝ) :
+    BddAbove {β : ℝ | ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, β ≤ |ξ * α ^ n - round (ξ * α ^ n)|} :=
+  ⟨1 / 2, fun _ ⟨_, _, h⟩ => (h 0).trans (abs_sub_round _)⟩
+
+theorem E_le_half (α : ℝ) : E α ≤ 1 / 2 :=
+  csSup_le ⟨0, 1, one_pos, fun _ => abs_nonneg _⟩ fun _ ⟨_, _, h⟩ => (h 0).trans (abs_sub_round _)
+
+theorem E_ge_of_far {α β ξ : ℝ} (hξ : 0 < ξ)
+    (h : ∀ n : ℕ, β ≤ Int.fract (ξ * α ^ n) ∧ Int.fract (ξ * α ^ n) ≤ 1 - β) : β ≤ E α :=
+  le_csSup (E_bdd α) ⟨ξ, hξ, fun n => by
+    rw [abs_sub_round_eq_min]; exact le_min (h n).1 (by linarith [(h n).2])⟩
+
 theorem E_two : E 2 = 1 / 3 := by
-  sorry
+  apply le_antisymm
+  · refine csSup_le ⟨0, 1, one_pos, fun _ => abs_nonneg _⟩ fun β ⟨ξ, _, h⟩ => ?_
+    have h0 := h 0
+    have h1 := h 1
+    simp only [pow_zero, mul_one, pow_one] at h0 h1
+    set r := round ξ
+    have hr := abs_sub_round ξ
+    rcases le_total 0 (ξ - r) with he | he
+    · have := h1.trans (round_le (ξ * 2) (2 * r + 1))
+      push_cast at this
+      rw [abs_le] at hr
+      rw [abs_of_nonneg he] at h0
+      rw [show ξ * 2 - (2 * (r : ℝ) + 1) = -(1 - 2 * (ξ - r)) by ring, abs_neg,
+        abs_of_nonneg (by linarith)] at this
+      linarith
+    · have := h1.trans (round_le (ξ * 2) (2 * r - 1))
+      push_cast at this
+      rw [abs_le] at hr
+      rw [abs_of_nonpos he] at h0
+      rw [show ξ * 2 - (2 * (r : ℝ) - 1) = 1 + 2 * (ξ - r) by ring,
+        abs_of_nonneg (by linarith)] at this
+      linarith
+  · refine E_ge_of_far (ξ := 1 / 3) (by norm_num) fun n => ?_
+    have hmod : 2 ^ n % 3 = 1 ∨ 2 ^ n % 3 = 2 := by
+      have : 2 ^ n % 3 ≠ 0 := by
+        intro h0
+        have : 3 ∣ 2 ^ n := Nat.dvd_of_mod_eq_zero h0
+        exact absurd (Nat.Prime.dvd_of_dvd_pow (by norm_num) this) (by norm_num)
+      omega
+    have hk := Nat.div_add_mod (2 ^ n) 3
+    rcases hmod with h1 | h1 <;>
+    · have e : (1 / 3 : ℝ) * 2 ^ n = ((2 ^ n / 3 : ℕ) : ℝ) + ((2 ^ n % 3 : ℕ) : ℝ) / 3 := by
+        have := congrArg (fun m : ℕ => (m : ℝ)) hk; push_cast at this ⊢; linarith
+      rw [e, add_comm, Int.fract_add_natCast, h1, Int.fract_eq_self.2 ⟨by norm_num, by norm_num⟩]
+      norm_num
 
-/-- Calibration: `E 3 = 1/2`, via `ξ = 1/2` (every `3ⁿ/2` is a half-integer).  Confidence 98%. -/
+/-- Calibration: `E 3 = 1/2`, via `ξ = 1/2` (every `3ⁿ/2` is a half-integer).  PROVED. -/
 theorem E_three : E 3 = 1 / 2 := by
-  sorry
+  apply le_antisymm (E_le_half 3)
+  refine E_ge_of_far (ξ := 1 / 2) (by norm_num) fun n => ?_
+  obtain ⟨k, hk⟩ : Odd (3 ^ n) := Odd.pow (by decide)
+  have : (1 / 2 : ℝ) * 3 ^ n = (k : ℝ) + 1 / 2 := by
+    have := congrArg (fun m : ℕ => (m : ℝ)) hk; push_cast at this; rw [this]; ring
+  rw [this, add_comm, Int.fract_add_natCast, Int.fract_eq_self.2 ⟨by norm_num, by norm_num⟩]
+  norm_num
 
-/-- Lower bound from the relaxed-game certificate.  Confidence 90%.  Proof: `exists_farFromIntegers_1228`,
+/-- Lower bound from the relaxed-game certificate.  PROVED.  Proof: `exists_farFromIntegers_1228`,
 and `FarFromIntegers β ξ` gives `β ≤ |y - round y|` for each `y = ξ (3/2)^n`; `E (3/2) ≤ 1/2` bounds
 the set. -/
 theorem E_three_halves_ge : 307 / 2500 ≤ E (3 / 2) := by
-  sorry
+  obtain ⟨ξ, hξ, h⟩ := exists_farFromIntegers_1228
+  exact E_ge_of_far hξ h
 
-/-- Upper bound from Dubickas 2006 (Cor. 1).  Confidence 95% given the literature input. -/
+/-- Upper bound from Dubickas 2006 (Cor. 1).  PROVED from the literature input. -/
 theorem E_three_halves_le (h : Literature.Dubickas2006) : E (3 / 2) ≤ 2857 / 10000 := by
-  sorry
+  refine csSup_le ⟨0, 1, one_pos, fun _ => abs_nonneg _⟩ fun β ⟨ξ, hξ, hn⟩ => ?_
+  by_contra hβ
+  refine h ⟨ξ, hξ, fun n => ?_⟩
+  have := hn n
+  rw [abs_sub_round_eq_min] at this
+  constructor <;> linarith [min_le_left (Int.fract (ξ * (3 / 2) ^ n)) (1 - Int.fract (ξ * (3 / 2) ^ n)),
+    min_le_right (Int.fract (ξ * (3 / 2) ^ n)) (1 - Int.fract (ξ * (3 / 2) ^ n))]
 
 
 /-! ### Finite memory: a counting barrier (Flatto's entropy method on an arbitrary arc) -/
