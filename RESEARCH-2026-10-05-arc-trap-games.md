@@ -221,6 +221,20 @@ The new anchor is `(3k − p)/2 + (previous parity)`, which is the AFS integer m
 
 **Conjecture `NearAfsDecayExponent` (55%):** the critical decay constant is `c(δ) = Θ(|δ|^{1/log₂(3/2)})`.  Inside the horizon (1023 integer parts drawn uniformly below `2^N`, so the parities are exactly uniform), `c = 0.0070` at `δ = 1/30` and `0.0036` at `δ = 1/45`.  That is a ratio of `1.94` per rung, against a predicted `2`.  Beyond the horizon (all integer parts below `2^10`) the law looks the same, with `c` about 1.3–1.45 times larger.  The rung `δ = 1/30, 1/45, 2/135, 4/405` gives `0.0102, 0.0047, 0.0025, 0.0014`.  The matching upper bound concerns the transfer operator only, so it is on the provable side of the horizon.
 
+## The upper bound: event rate pinned, decay constant still open (2026-10-06)
+
+**Proved by hand, with sorried Lean statements:** the AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})`, up to a logarithm.
+- Words with runs `≤ R` keep the piece unbroken (`afsUnbroken_of_noRunLonger`).
+- A flip followed by `m` equal letters always breaks it once `|δ|((3/2)^m − 1) > 1/3` (`not_afsUnbroken_of_long_run`).  Cutting the word into disjoint blocks of length `m + 1` gives at most `2^N (1 − 2^{−m})^{⌊N/(m+1)⌋}` unbroken words (`card_afsUnbroken_le`).
+- `R` and `m` are both `log_{3/2}(1/|δ|) + O(1)`.
+- Checked exhaustively at `δ = 1/30` (`R = 2`, `m = 6`): the unbroken words number 200/256, 2304/4096 and 26384/65536 at `N = 8, 12, 16`, between the bounds (`test_afs_event_rate_bounds`).
+
+**Not proved: `c(δ) ≍ |δ|^{1.71}` (`NearAfsDecayExponent`).**  I put the full proof at ~50% earlier, and that was too high: it is now ~20%.  Two obstacles:
+1. **Breaks are not deaths.**  At `δ = 1/30` the piece breaks about `0.08` times per step, while the decay constant is `c ≈ 0.007`.  Most breaks are shape changes the piece survives.  The rate of *fatal* events has the same exponent heuristically, but proving that needs a classification of what a broken piece becomes.
+2. **The pieces are coupled.**  All pieces of one integer part draw their parities from the same bits.  Two anchors differing by `D` have parities differing by `D mod 2`, deterministically.  So the process is not a Galton–Watson process, and Kolmogorov's `1/(σ²N)` survival theorem does not apply.  A proof would need a martingale (piece count weighted by an eigenfunction) with conditional variance proportional to its size, and the coupling makes that variance hard to bound below.
+
+No mechanism is known for either.  This is a dead end for now.
+
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
 Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:

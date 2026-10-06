@@ -588,7 +588,65 @@ theorem run_bounded_count_ge (R N : ℕ) (hR : 1 ≤ R) :
     (2 : ℝ) ^ N * (1 - (1 / 2) ^ R) ^ N ≤ Nat.card {w : Fin N → Bool // NoRunLonger R N w} := by
   sorry
 
-/-- **Conjecture: the near-AFS decay rate is `|δ|^{1/log₂(3/2)}`.**  At length `2/3` the survivors
+/-- One step of the endpoint-error recursion (letter = anchor parity). -/
+noncomputable def afsErrStep (δ : ℝ) (e : ℝ × ℝ) (b : Bool) : ℝ × ℝ :=
+  if b then (δ, 3 / 2 * e.2) else (3 / 2 * e.1, δ)
+
+/-- The step is exact (one piece, of the same shape) under these conditions on the errors. -/
+def AfsStepOk (δ : ℝ) (e : ℝ × ℝ) (b : Bool) : Prop :=
+  if b then -1 / 6 < 3 / 2 * e.1 - δ ∧ 3 / 2 * e.1 - δ ≤ 1 / 6 ∧
+      -1 / 3 ≤ 3 / 2 * e.2 - δ ∧ 3 / 2 * e.2 - δ ≤ 1 / 3
+  else -1 / 3 ≤ 3 / 2 * e.1 - δ ∧ 3 / 2 * e.1 - δ ≤ 1 / 3 ∧
+      -1 / 6 ≤ 3 / 2 * e.2 - δ ∧ 3 / 2 * e.2 - δ < 1 / 6
+
+/-- Errors after reading the first `n` letters, from the start piece `g + [0, 1/3 + δ]`. -/
+noncomputable def afsErr (δ : ℝ) {N : ℕ} (w : Fin N → Bool) : ℕ → ℝ × ℝ
+  | 0 => (0, δ)
+  | n + 1 => if h : n < N then afsErrStep δ (afsErr δ w n) (w ⟨n, h⟩) else afsErr δ w n
+
+/-- The AFS-shaped piece survives the whole word unbroken. -/
+def AfsUnbroken (δ : ℝ) (N : ℕ) (w : Fin N → Bool) : Prop :=
+  ∀ n (h : n < N), AfsStepOk δ (afsErr δ w n) (w ⟨n, h⟩)
+
+/-- Short runs never break the piece.  Confidence 90% (the core of `near_afs_density`).  Proof:
+each coordinate is `0`, `δ` or `δ (3/2)^j` with `j` at most the length of the run it is growing in.
+So `|3e/2 - δ| ≤ (3/2)^(R+1) |δ| + |δ| < 1/6` at every step. -/
+theorem afsUnbroken_of_noRunLonger (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6)
+    (w : Fin N → Bool) (hw : NoRunLonger R N w) : AfsUnbroken δ N w := by
+  sorry
+
+/-- A flip followed by `m` equal letters always breaks the piece, once
+`|δ| ((3/2)^m - 1) > 1/3`.  Confidence 90%.  Proof: reading `w b` resets the coordinate that the run
+then grows to `δ`.  At the `j`-th letter of the run the check reads `3e/2 - δ = δ((3/2)^j - 1)`, and
+the continuation window is `[-1/3, 1/3]`. -/
+theorem not_afsUnbroken_of_long_run (δ : ℝ) (m N : ℕ) (hm : 1 / 3 < |δ| * ((3 / 2) ^ m - 1))
+    (hm1 : 1 ≤ m) (w : Fin N → Bool) (b : ℕ) (hb : b + m < N) (hflip : w ⟨b, by omega⟩ ≠ w ⟨b + 1, by omega⟩)
+    (hrun : ∀ j (hj : 1 ≤ j ∧ j ≤ m), w ⟨b + j, by omega⟩ = w ⟨b + 1, by omega⟩) :
+    ¬ AfsUnbroken δ N w := by
+  sorry
+
+/-- **The AFS rigidity breaks at rate `Θ(|δ|^{1/log₂(3/2)})`, up to a logarithm.**  The words that
+keep the AFS piece unbroken for `N` steps number between the run-bounded words
+(`afsUnbroken_of_noRunLonger`, `run_bounded_count_ge`: at least `2^N (1 - 2^{-R})^N`) and
+`2^N (1 - 2^{-m})^{⌊N/(m+1)⌋}`.  Here `R` and `m` are both `log_{3/2}(1/|δ|) + O(1)`.
+Confidence 90%.  Proof of the upper bound: cut the positions into `⌊N/(m+1)⌋` disjoint blocks of
+length `m + 1`.  In each block the pattern "flip, then `m` equal letters" has probability `2^{-m}`
+independently, and any occurrence breaks the piece (`not_afsUnbroken_of_long_run`).
+Checked exhaustively at `δ = 1/30` (`R = 2`, `m = 6`), `N = 8, 12, 14` (`test_afs_event_rate_bounds`). -/
+theorem card_afsUnbroken_le (δ : ℝ) (m N : ℕ) (hm : 1 / 3 < |δ| * ((3 / 2) ^ m - 1)) :
+    (Nat.card {w : Fin N → Bool // AfsUnbroken δ N w} : ℝ) ≤
+      2 ^ N * (1 - (1 / 2) ^ m) ^ (N / (m + 1)) := by
+  sorry
+
+/-- **Conjecture: the near-AFS decay rate is `|δ|^{1/log₂(3/2)}`.**
+What is proved: the AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})` up to a log
+(`card_afsUnbroken_le`, `near_afs_density`).  What is missing: turning that event rate into the
+critical decay constant.  Two things block it.  (1) Most breaks are harmless shape changes: at
+`δ = 1/30` the break rate is `≈ 0.08` per step, while `c ≈ 0.007`.  (2) The pieces of one integer
+part draw their parities from the same bits.  Two pieces whose anchors differ by `D` have parities
+differing by `D mod 2`, so Kolmogorov's critical-branching theorem does not apply directly.  No
+mechanism is known for either.
+  At length `2/3` the survivors
 decay as a critical branching process, `S(N)/S(0) ≈ 1/(1 + c(δ) N)` (`AfsArcIsUniqueMinimal`), and
 `c(δ) = Θ(|δ|^{1/log₂(3/2)})`: events (a death, or a branch) need a run of length
 `R(δ) = log_{3/2}(1/|δ|) + O(1)`, which a fair parity sequence produces at rate `2^{-R}`.

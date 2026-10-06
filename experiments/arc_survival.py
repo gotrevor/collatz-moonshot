@@ -83,6 +83,20 @@ def afs_error_orbit(delta, g, N, grow=F(3, 2)):
     return "ok", N
 
 
+def afs_unbroken(delta, w):
+    """Word-level recursion of near_afs_density: errors (eL, eR) start (0, delta); letter 0 maps them
+    to (3eL/2, delta), letter 1 to (delta, 3eR/2); each step must pass AfsStepOk."""
+    eL, eR = F(0), delta
+    for b in w:
+        L, Rr = F(3, 2) * eL - delta, F(3, 2) * eR - delta
+        ok = (-F(1, 6) < L <= F(1, 6) and -F(1, 3) <= Rr <= F(1, 3)) if b else \
+             (-F(1, 3) <= L <= F(1, 3) and -F(1, 6) <= Rr < F(1, 6))
+        if not ok:
+            return False
+        eL, eR = (delta, F(3, 2) * eR) if b else (F(3, 2) * eL, delta)
+    return True
+
+
 def survivors(s, t, K, cap):
     return [depth(m, s, t, cap) for m in range(1, 2 ** K)]
 
@@ -176,6 +190,19 @@ def test_near_afs_density_small_case():
     d, N = F(1, 30), 8
     trapped = sum(depth(g, F(2, 3) + d, F(2, 3), N) >= N for g in range(2 ** N))
     assert run_bounded_count(2, N) <= trapped
+
+
+
+def test_afs_event_rate_bounds():
+    # near_afs_event_rate at delta = 1/30.  Hand: R = 2 since (3/2)^3/30 + 1/30 < 1/6 <= (3/2)^4/30 + 1/30;
+    # m = 6 since (1/30)((3/2)^6 - 1) = 0.346 > 1/3 >= (1/30)((3/2)^5 - 1) = 0.220.
+    from itertools import product
+    d, R, m = F(1, 30), 2, 6
+    for N in (8, 12, 14):
+        unbroken = sum(afs_unbroken(d, w) for w in product((0, 1), repeat=N))
+        assert run_bounded_count(R, N) <= unbroken <= 2 ** N * (1 - F(1, 2 ** m)) ** (N // (m + 1))
+    # the forcing pattern really breaks: a flip then six equal letters
+    assert not afs_unbroken(d, (1, 0, 0, 0, 0, 0, 0)) and afs_unbroken(d, (1, 0, 0, 0, 0, 0))
 
 
 if __name__ == "__main__":
