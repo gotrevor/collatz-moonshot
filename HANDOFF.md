@@ -611,3 +611,13 @@ Full story: `FRONT-B-ROUTES.md` §2026-08-23; machinery: `CollatzMoonshot/FrontB
 - Alternative threads: `BoundedDen` on primitive words (**~5% after the census** - a new
   family needs new combinatorial input), Front A route map (`FRONT-A-ROUTES.md`),
   `PI02-SKETCH.md`.
+
+## 2026-10-06 STUCK (strike 1): arc-edge kickoff complete
+
+- WHAT: `KICKOFF-2026-10-06-arc-edge-proofs.md` phases 1 and 2 are fully proved (commits `4cb69b1`, `ed622ac`);
+  `finiteMemory_min_arc_two_thirds`, `near_afs_every_floor`, `near_afs_density` use only standard axioms.
+- WHY blocked: the remaining `ArcTrap.lean` sorries (`1227`/`1228` constants, `E`, `relaxed_barrier`,
+  `two_pow_le_card_admissibleWord`) are explicitly out of scope per the kickoff ("Do not touch them";
+  `E` is Trevor's question).
+- NEED from operator: the next assignment, or permission to attack those sorries.
+- Verify fast: `#print axioms` on the three theorems above; read the kickoff's Rules section.
