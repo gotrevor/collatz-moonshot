@@ -477,6 +477,44 @@ so a proof needs the game, not entropy. -/
 def AfsArcIsolatedAtTwoThirds : Prop :=
   ∀ s : ℝ, (∃ l P, RelaxedStrategy s (2 / 3) l P) → ∃ k : ℤ, s = 2 / 3 + k
 
+/-- **Conjecture (strong Mahler): no orbit `{ξ(3/2)^n}` fits in any arc shorter than `2/3`.**
+So the finite-memory edge (`finiteMemory_min_arc_two_thirds`) would be the true edge for every
+`ξ`.  It implies Mahler's conjecture (`strongMahler_no_zNumber`) and `E(3/2) ≤ 1/6`
+(`strongMahler_far_le_one_sixth`; Dubickas 2006 has `0.2857`).  The known bounds are `1/3` (FLP)
+below and `2/3`, attained by AFS (`relaxedStrategy_afs_closed`), above.
+Confidence 60% (it contains Mahler's problem; the heuristic below is the standard one for Z-numbers,
+extended to all arcs).  Heuristic: `N` digits fix `⌊ξ⌋ mod 2^N` and an arc of length `< 2/3` admits
+`~λ^N` words with `λ < 2` (`admissibleWord_growth_lt_two`), so a "random" integer part survives `N`
+steps with probability `~(λ/2)^N`, and the expected number of survivors below any fixed `X` tends to
+`0`.  Evidence that integer parts really are random here (`experiments/arc_survival.py rate`):
+`2 × (survivor decay rate)` matches the entropy growth `λ`, which `arc_entropy.py` computes
+independently.
+* `[0, 1/2]`: `1.5012` (`m < 2^15`) against `λ ∈ [1.4986, 1.5079]`.
+* `[1/6, 23/30]`: `1.7279` against `[1.7183, 1.7270]`.
+* `[7/10, 13/10]`: `1.9326` against `[1.9223, 1.9281]`.
+
+No integer part survives beyond its random-model lifetime.  At the critical length (`[0, 2/3]`,
+`λ = 2`) survivors decay polynomially, roughly as a critical branching process.  The AFS position
+alone survives with no decay, which is exact alignment beating randomness. -/
+def StrongMahlerConjecture : Prop :=
+  ∀ s t : ℝ, t < 2 / 3 → ¬ ∃ ξ : ℝ, 0 < ξ ∧
+    ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x
+
+/-- The strong conjecture implies Mahler's: there are no Z-numbers. -/
+theorem strongMahler_no_zNumber (h : StrongMahlerConjecture) :
+    ¬ ∃ ξ : ℝ, 0 < ξ ∧ ∀ n : ℕ, Int.fract (ξ * (3 / 2) ^ n) < 1 / 2 := by
+  rintro ⟨ξ, hξ, hz⟩
+  exact h 0 (1 / 2) (by norm_num) ⟨ξ, hξ, fun n =>
+    ⟨Int.fract (ξ * (3 / 2) ^ n), ⟨Int.fract_nonneg _, by linarith [hz n]⟩,
+      (Int.fract_fract _).symm⟩⟩
+
+/-- The strong conjecture caps the distance constant: `E(3/2) ≤ 1/6`. -/
+theorem strongMahler_far_le_one_sixth (h : StrongMahlerConjecture) (β : ℝ) (hβ : 1 / 6 < β) :
+    ¬ ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers β ξ := by
+  rintro ⟨ξ, hξ, hf⟩
+  exact h β (1 - 2 * β) (by linarith) ⟨ξ, hξ, fun n =>
+    ⟨Int.fract (ξ * (3 / 2) ^ n), ⟨(hf n).1, by linarith [(hf n).2]⟩, (Int.fract_fract _).symm⟩⟩
+
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.

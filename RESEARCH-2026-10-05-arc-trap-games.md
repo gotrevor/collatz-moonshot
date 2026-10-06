@@ -169,6 +169,24 @@ Whatever the parity, the next window starts at `d ∈ {0, 1/2}`, so the two wind
 
 **Conjecture `AfsArcIsolatedAtTwoThirds` (65%):** among arcs of length exactly `2/3`, only the AFS arc is held memorylessly.  The component game from `[0, 3]` survives depth 18 only at `s = 2/3`; it dies by depth 6 to 11 at `s = 0, 1/6, 1/3, 1/2, 3/5, 13/20, 7/10, 2/3 ± 1/100`.  Counting cannot see this (growth is exactly 2 at every position), so a proof needs the game.  Whether `k`-memory rescues other positions at length `2/3` is open.
 
+## Conjecture: 2/3 is the true edge for every ξ (2026-10-06)
+
+**Statement** (`StrongMahlerConjecture`, 60%): no orbit `{ξ(3/2)^n}` fits in an arc shorter than `2/3`.  It implies Mahler's conjecture (`strongMahler_no_zNumber`, proved from it) and `E(3/2) ≤ 1/6` (`strongMahler_far_le_one_sixth`; Dubickas 2006 has `0.2857`).  Read this way, the finite-memory theorem is the positive-density shadow of the conjecture.
+
+**Heuristic, made quantitative.**  `N` digits fix `⌊ξ⌋ mod 2^N`, and the arc admits `~λ^N` words.  If integer parts behaved like random 2-adic integers, each would survive `N` steps with probability `(λ/2)^N`.  `experiments/arc_survival.py` measures the survivor decay exactly, over all integer parts below `2^K`:
+
+| arc | `2 × decay rate` | entropy `λ` (`arc_entropy.py`, inner/outer) |
+|---|---|---|
+| `[0, 1/2]` (Mahler) | 1.5012 (`m < 2^15`, depths 10–25) | [1.4986, 1.5079] |
+| `[1/6, 23/30]` | 1.7279 (`2^14`, 15–45) | [1.7183, 1.7270] |
+| `[7/10, 13/10]` | 1.9326 (`2^13`, 30–150) | [1.9223, 1.9281] |
+
+The two independent numbers agree to within 0.5%.  No integer part outlives its random-model lifetime: the best below `2^13` on `[7/10, 13/10]` reaches depth 226, against a predicted ~260.  At the critical length (`[0, 2/3]`, `λ = 2`) survivors decay slowly, roughly like `N^{-0.7}`, as a critical branching process would.  Only the AFS position shows no decay at all: exact alignment of `3I/2` with the parity lattice `Z/2` beats randomness there, and nowhere else we looked.
+
+**Where the difficulty sits:** proving the random model on short intervals (the residues of admissible words equidistributed in `[0, X) ⊂ Z/2^N` for fixed `X`) would prove the conjecture, and with it Mahler's.  It is exactly as hard.  What the probe adds is that the integers show no hidden structure for a construction to exploit, at any of the lengths tested.
+
+**Reformulation used along the way:** with digits `b_n = 2a_n ∈ {−1, 0, 1, 2}`, the same series `S(b) = Σ b_n 2^n / 3^{n+1}` gives `{ξ} = S(b)` at the real place and `⌊ξ⌋ = −S(b)` at the 2-adic place.  So a trapped `ξ` is a digit sequence whose real tails stay in the arc and whose 2-adic sum is a nonpositive integer.  This is probably AFS's rational-base numeration in other clothes.
+
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
 Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:
