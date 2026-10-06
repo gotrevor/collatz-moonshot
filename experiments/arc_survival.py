@@ -41,6 +41,48 @@ def depth(m, s, t, cap):
     return n
 
 
+def run_bounded_count(R, N):
+    """Binary words of length N with no run of equal letters longer than R (DP on the current run)."""
+    if N == 0:
+        return 1
+    row = {1: 2}
+    for _ in range(N - 1):
+        nxt = {}
+        for r, c in row.items():
+            if r + 1 <= R:
+                nxt[r + 1] = nxt.get(r + 1, 0) + c
+            nxt[1] = nxt.get(1, 0) + c
+        row = nxt
+    return sum(row.values())
+
+
+def afs_error_orbit(delta, g, N, grow=F(3, 2)):
+    """Follow the piece g + [0, 1/3 + delta] with the endpoint-error recursion of near_afs_density.
+    Returns ("ok", N), ("cond", n) when the recursion's conditions fail first, or ("MISMATCH", n)."""
+    s, t = F(2, 3) + delta, F(2, 3)
+    k, side, eL, eR = g, 0, F(0), delta
+    for n in range(N):
+        a = k + (eL if side == 0 else F(2, 3) + eL)
+        b = k + (F(1, 3) if side == 0 else 1) + eR
+        par = k % 2
+        L, Rr = F(3, 2) * eL - delta, F(3, 2) * eR - delta
+        ok = (-F(1, 3) <= L <= F(1, 3) and -F(1, 6) <= Rr < F(1, 6)) if par == 0 else \
+             (-F(1, 6) < L <= F(1, 6) and -F(1, 3) <= Rr <= F(1, 3))
+        if not ok:
+            return "cond", n
+        img = lifts(F(3, 2) * a, F(3, 2) * b, s, t)
+        base = F(3, 2) * k + side
+        if par == 0:
+            eL, eR, side, k = grow * eL, delta, 0, base
+        else:
+            eL, eR, side, k = delta, grow * eR, 1, base - F(1, 2)
+        k = int(k)
+        want = (k + (eL if side == 0 else F(2, 3) + eL), k + (F(1, 3) if side == 0 else 1) + eR)
+        if img != [want]:
+            return "MISMATCH", n
+    return "ok", N
+
+
 def survivors(s, t, K, cap):
     return [depth(m, s, t, cap) for m in range(1, 2 ** K)]
 
@@ -108,6 +150,32 @@ def test_length_two_thirds_plateaus_only_at_afs():
     assert _profile("2/3", 7, 160) == [127] * 4
     S = _profile("0", 7, 160)
     assert S[0] > S[1] > S[2] > S[3] and S[3] < S[0] / 2
+
+
+
+def test_endpoint_error_recursion_is_exact():
+    # near_afs_density's recursion, checked against exact lift cuts while its conditions hold
+    for delta in (F(1, 30), F(-1, 30), F(1, 200), F(-3, 500)):
+        for g in range(1, 200):
+            assert afs_error_orbit(delta, g, 25)[0] in ("ok", "cond")
+    # teeth: a wrong growth factor is caught
+    assert any(afs_error_orbit(F(1, 30), g, 25, grow=F(2))[0] == "MISMATCH" for g in range(1, 50))
+
+
+def test_run_bounded_count_bound():
+    # hand: length 4, runs <= 2: 16 minus 0000 0001 1000 1111 1110 0111 = 10; runs <= 1: only 0101, 1010
+    assert run_bounded_count(2, 4) == 10 and run_bounded_count(1, 7) == 2
+    # run_bounded_count_ge
+    for R in range(1, 12):
+        for N in range(1, 200):
+            assert run_bounded_count(R, N) >= 2 ** N * (1 - F(1, 2 ** R)) ** N
+
+
+def test_near_afs_density_small_case():
+    # near_afs_density at delta = 1/30: (3/2)^3/30 + 1/30 < 1/6 allows R = 2
+    d, N = F(1, 30), 8
+    trapped = sum(depth(g, F(2, 3) + d, F(2, 3), N) >= N for g in range(2 ** N))
+    assert run_bounded_count(2, N) <= trapped
 
 
 if __name__ == "__main__":

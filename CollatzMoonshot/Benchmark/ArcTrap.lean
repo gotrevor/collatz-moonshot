@@ -531,6 +531,86 @@ theorem strongMahler_no_zNumber (h : StrongMahlerConjecture) :
     ⟨Int.fract (ξ * (3 / 2) ^ n), ⟨Int.fract_nonneg _, by linarith [hz n]⟩,
       (Int.fract_fract _).symm⟩⟩
 
+/-! ### Near the AFS arc: the endpoint-error recursion
+
+Shift the AFS arc by `δ`: lifts `[k - 1/3 + δ, k + 1/3 + δ]`.  A piece anchored at an integer `k`
+is `k + [e_L, 1/3 + e_R]` (type 0) or `k + [2/3 + e_L, 1 + e_R]` (type 1); at `δ = 0`,
+`e_L = e_R = 0` is `relaxedStrategy_afs_closed`.  Multiplying by `3/2` and cutting by the lifts:
+
+* anchor parity `0`: `(e_L, e_R) ↦ (3e_L/2, δ)`, type 0;
+* anchor parity `1`: `(e_L, e_R) ↦ (δ, 3e_R/2)`, type 1;
+* the new anchor is `(3k - p)/2 + (previous parity)`.
+
+This is exact while `3e_L/2 - δ` and `3e_R/2 - δ` stay in the windows checked by
+`arc_survival.py` (`test_endpoint_error_recursion_is_exact`).  So an error grows by `3/2` along a run
+of equal parities and resets to `δ` when the parity changes.  A run of length `R` costs `(3/2)^R |δ|`.
+The anchor parities of `g < 2^N` run through every string in `{0,1}^N` exactly once (a triangular
+bijection, as for `finiteMemory_barrier`). -/
+
+/-- `g` is the integer part of some `ξ` whose first `N + 1` orbit points lie in the arc. -/
+def TrapsToDepth (s t : ℝ) (N g : ℕ) : Prop :=
+  ∃ ξ : ℝ, ⌊ξ⌋ = (g : ℤ) ∧
+    ∀ n ≤ N, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x
+
+/-- No run of equal letters longer than `R` in a word of length `N`. -/
+def NoRunLonger (R N : ℕ) (w : Fin N → Bool) : Prop :=
+  ∀ i : ℕ, ∀ h : i + R < N, ∃ k, ∃ hk : k < R, w ⟨i + k, by omega⟩ ≠ w ⟨i + k + 1, by omega⟩
+
+/-- **Near-AFS density theorem.**  If runs of length `R` cost less than the slack,
+`(3/2)^(R+1) |δ| + |δ| < 1/6`, then at least as many integer parts below `2^N` are trapped to
+depth `N` in the shifted arc as there are binary words of length `N` with no run longer than `R`.
+Confidence 85%.  Proof: start from the piece `g + [0, 1/3 + δ]` (errors `0, δ`).  Under the run
+bound every error is at most `(3/2)^R |δ|`, so every step obeys the recursion's conditions.  The nested
+pieces are nonempty, and they stay in `[g, g + 1)`.  The anchor-parity map is a bijection from
+`g mod 2^N` onto words.
+With `run_bounded_count_ge` this gives density `≥ (1 - 2^{-R})^N`, where
+`2^{-R} ≍ |δ|^{1/log₂(3/2)} = |δ|^{1.7095…}`.  So a typical integer part lives at least
+`~|δ|^{-1.71}` steps.  The worst one lives only `~log_{3/2}(1/|δ|)` steps (`near_afs_every_floor`). -/
+theorem near_afs_density (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1) * |δ| + |δ| < 1 / 6) :
+    Nat.card {w : Fin N → Bool // NoRunLonger R N w} ≤
+      Nat.card {g : Fin (2 ^ N) // TrapsToDepth (2 / 3 + δ) (2 / 3) N g} := by
+  sorry
+
+/-- **Every integer part survives `~log_{3/2}(1/|δ|)` steps near the AFS arc.**  Confidence 90%.
+Proof: the recursion of `near_afs_density` with `R = N`; no word of length `N` has a longer run.
+The component game shows this is the right order: from `[0, 3]` the adversary kills at exactly
+depth `8 + k` at `δ = ±(1/30)(2/3)^k`, `k = 0..8` (from the AFS
+window `[0, 1/2]`: `7 + k` and `6 + k`) (`arc_entropy.py` `test_adversarial_depth_ladder`). -/
+theorem near_afs_every_floor (δ : ℝ) (N g : ℕ) (hN : (3 / 2) ^ (N + 1) * |δ| + |δ| < 1 / 6) :
+    TrapsToDepth (2 / 3 + δ) (2 / 3) N g := by
+  sorry
+
+/-- Words with bounded runs are not rare: at least `2^N (1 - 2^{-R})^N` of them.  Confidence 85%
+(checked for `R ≤ 11`, `N < 200` in `test_run_bounded_count_bound`).  Proof sketch: the count obeys
+the `R`-bonacci recursion, and its growth rate `φ_R ≥ 2 - 2^{1-R}`, i.e. `φ_R/2 ≥ 1 - 2^{-R}`;
+induct on `N` with the ratio of consecutive counts. -/
+theorem run_bounded_count_ge (R N : ℕ) (hR : 1 ≤ R) :
+    (2 : ℝ) ^ N * (1 - (1 / 2) ^ R) ^ N ≤ Nat.card {w : Fin N → Bool // NoRunLonger R N w} := by
+  sorry
+
+/-- **Conjecture: the near-AFS decay rate is `|δ|^{1/log₂(3/2)}`.**  At length `2/3` the survivors
+decay as a critical branching process, `S(N)/S(0) ≈ 1/(1 + c(δ) N)` (`AfsArcIsUniqueMinimal`), and
+`c(δ) = Θ(|δ|^{1/log₂(3/2)})`: events (a death, or a branch) need a run of length
+`R(δ) = log_{3/2}(1/|δ|) + O(1)`, which a fair parity sequence produces at rate `2^{-R}`.
+Confidence 55%.  Evidence inside the horizon (the conjecture's own setting): 1023 integer parts drawn
+uniformly below `2^N`, so the parities are exactly uniform.
+* `δ = 1/30`: survival `0.659, 0.444, 0.258, 0.153` at `N = 100, 200, 400, 800`, so `c ≈ 0.0070`.
+* `δ = 1/45`: `0.640, 0.438, 0.264, 0.144` at `N = 200, 400, 800, 1600`, so `c ≈ 0.0036`.
+* One rung of `2/3` in `δ` divides `c` by `1.94`; predicted `2`.
+* Controls: `δ = 0` keeps `1.000`; a generic position (`s = 1/6`) gives `c ≈ 0.024`.
+
+Beyond the horizon (all integer parts below `2^10`, `profile`) the same law holds with `c` about
+`1.3`–`1.45` times larger.
+* `δ = 1/30, 1/45, 2/135, 4/405`: `c = 0.0102, 0.0047, 0.0025, 0.0014`.
+* Mirror side `δ = -1/30, -1/45, -2/135`: `c = 0.0058, 0.0042, 0.0017`.
+
+`near_afs_density` proves the lower bound on lifetimes inside the 2-adic horizon.  The matching upper
+bound is a statement about the transfer operator, not about the integers. -/
+def NearAfsDecayExponent : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∀ δ : ℝ, δ ≠ 0 → |δ| ≤ 1 / 30 →
+    ∀ N : ℕ, (Nat.card {g : Fin (2 ^ N) // TrapsToDepth (2 / 3 + δ) (2 / 3) N g} : ℝ) ≤
+      2 ^ N * (C / (C + |δ| ^ (1 / Real.logb 2 (3 / 2)) * N))
+
 /-- The strong conjecture caps the distance constant: `E(3/2) ≤ 1/6`. -/
 theorem strongMahler_far_le_one_sixth (h : StrongMahlerConjecture) (β : ℝ) (hβ : 1 / 6 < β) :
     ¬ ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers β ξ := by

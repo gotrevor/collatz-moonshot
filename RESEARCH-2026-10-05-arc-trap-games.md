@@ -206,6 +206,21 @@ The other ten positions look like the generic rows.  At generic positions `1/S �
 
 **Conjecture `AfsArcIsUniqueMinimal` (35%):** an orbit fits in an arc of length `≤ 2/3` only if the arc is `{‖x‖ ≤ 1/3}` itself.  It implies `StrongMahlerConjecture` (`afsArcIsUniqueMinimal_strongMahler`, proved).  If true, the AFS arc is a rigid minimum, with no slack in any direction.  The confidence is lower than for the strong conjecture because the critical case is exactly where infinitely many integer parts could beat probability 1.
 
+## Near the AFS arc: the decay rate is |δ|^{1/log₂(3/2)} (2026-10-06)
+
+**Mechanism (exact).**  Shift the AFS arc by `δ`.  A piece anchored at an integer `k` is `k + [e_L, 1/3 + e_R]` or `k + [2/3 + e_L, 1 + e_R]`.  One step of `×3/2` and cutting by the arc's lifts gives:
+
+- anchor parity 0: `(e_L, e_R) ↦ (3e_L/2, δ)`
+- anchor parity 1: `(e_L, e_R) ↦ (δ, 3e_R/2)`
+
+The new anchor is `(3k − p)/2 + (previous parity)`, which is the AFS integer map.  So an endpoint error grows by `3/2` along a run of equal parities and resets to `δ` when the parity flips.  A run of length `R` costs `(3/2)^R |δ|`, and it breaks the piece (death or branching) once that reaches a constant.  The recursion was checked exactly against the lift cuts while its conditions hold: 0 mismatches over ~800 orbits, and a wrong growth factor is caught (`test_endpoint_error_recursion_is_exact`).
+
+**Consequences.**
+- **Worst case:** every integer part survives `~log_{3/2}(1/|δ|)` steps (`near_afs_every_floor`), and that is the right order.  The adversary kills at exactly `8 + k` steps at `δ = ±(1/30)(2/3)^k`, `k = 0..8`, from the window `[0, 3]` (`test_adversarial_depth_ladder`).
+- **Typical case:** the anchor parities of `g < 2^N` run through `{0,1}^N` bijectively.  So the density of integer parts trapped to depth `N` is at least the density of words with runs `≤ R(δ)`, which is at least `(1 − 2^{−R})^N` (`near_afs_density`, `run_bounded_count_ge`).  Since `2^{−R(δ)} ≍ |δ|^{1/log₂(3/2)} = |δ|^{1.7095…}`, a typical integer part lives at least `~|δ|^{−1.71}` steps.  That is exponentially longer than the worst case, and the exponent is the reciprocal of Flatto's `log₂(3/2)`.
+
+**Conjecture `NearAfsDecayExponent` (55%):** the critical decay constant is `c(δ) = Θ(|δ|^{1/log₂(3/2)})`.  Inside the horizon (1023 integer parts drawn uniformly below `2^N`, so the parities are exactly uniform), `c = 0.0070` at `δ = 1/30` and `0.0036` at `δ = 1/45`.  That is a ratio of `1.94` per rung, against a predicted `2`.  Beyond the horizon (all integer parts below `2^10`) the law looks the same, with `c` about 1.3–1.45 times larger.  The rung `δ = 1/30, 1/45, 2/135, 4/405` gives `0.0102, 0.0047, 0.0025, 0.0014`.  The matching upper bound concerns the transfer operator only, so it is on the provable side of the horizon.
+
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
 Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:

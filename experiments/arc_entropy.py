@@ -507,5 +507,14 @@ def test_component_game_has_teeth_at_short_arcs():
     assert component_survival(F(0), F(2, 5), 18) < 18
 
 
+
+def test_adversarial_depth_ladder():
+    # near_afs_every_floor: shrinking delta by (2/3)^2 buys exactly two more steps (log_{3/2} scaling).
+    # From the AFS window [0, 1/2]; from [0, 3] the same ladder reads 8 + k for k = 0..8 (2026-10-06 run).
+    for sign, base in ((1, 7), (-1, 6)):
+        depths = [component_survival(F(2, 3) + sign * F(1, 30) * F(2, 3) ** k, F(2, 3), 30,
+                                     start=(F(0), F(1, 2))) for k in (0, 2, 4, 6)]
+        assert depths == [base, base + 2, base + 4, base + 6], depths
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

@@ -1,3 +1,5 @@
+> **2026-10-06 (latest), near-AFS decay:** an exact endpoint-error recursion (errors grow ×3/2 along parity runs, reset on flips) gives worst-case lifetime log_{3/2}(1/|δ|) (`near_afs_every_floor`) and typical lifetime ≥ |δ|^{−1/log₂(3/2)} (`near_afs_density`).  The measured critical decay constant matches |δ|^{1.71} (`NearAfsDecayExponent`, rung ratio 1.94 vs 2).
+
 > **2026-10-06 (latest), critical length:** at length exactly 2/3, every non-AFS position tested decays like a critical branching process (S/S0 ≈ 1/(1+cN), c → 0 as s → 2/3); only the AFS arc plateaus.  Conjecture `AfsArcIsUniqueMinimal`: the AFS arc is the unique minimal arc (implies `StrongMahlerConjecture`).
 
 > **2026-10-06 (latest), strong Mahler conjecture:** no orbit fits an arc shorter than 2/3 (`StrongMahlerConjecture`, implies Mahler and E(3/2) ≤ 1/6).  Integer parts behave like random 2-adic integers: exact survivor decay matches the entropy rate λ/2 to 0.5% on three arcs (`experiments/arc_survival.py`).  Only the AFS position beats randomness.
