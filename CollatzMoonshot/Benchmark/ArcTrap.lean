@@ -246,9 +246,18 @@ def TrappedFloor (s t : ℝ) (g : ℕ) : Prop :=
     ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x
 
 /-- What a finite-memory construction delivers.  A strategy that reads only `m mod 2^k` wins from
-every start `m ≡ r`, so every such `m` has a trapped orbit within `3` of it. -/
+every start `m ≡ r`, so every such `m` has a trapped orbit within `3` of it.
+It holds vacuously when `r ≥ 2^k`, so every barrier below assumes `r < 2^k`. -/
 def TrapsResidueClass (s t : ℝ) (k r : ℕ) : Prop :=
   ∀ m : ℕ, 0 < m → m % 2 ^ k = r → ∃ g : ℕ, m ≤ g ∧ g < m + 3 ∧ TrappedFloor s t g
+
+/-- Why the barriers need `r < 2 ^ k`: with no `m` in the class, `TrapsResidueClass` holds for
+every arc, even an empty one. -/
+theorem trapsResidueClass_vacuous (s t : ℝ) : TrapsResidueClass s t 0 1 := by
+  intro m _ h
+  exfalso
+  simp only [pow_zero] at h
+  omega
 
 /-- **A memoryless relaxed strategy traps every unit interval.**  The strategy never reads the
 integer part, so it runs from the window `[m + a, m + a + l]` for every `m ≥ 1`.  The sub-window
@@ -278,14 +287,14 @@ Confidence 85% (exact certificate; the hand steps below).  Proof route:
   `2^N + 3`, which beats `C (999/500)^N` for large `N`.
 Measured edge: at grid `1/320` the certificate fails at length `33/50`.  The memoryless game's
 shortest holdable arc is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
-theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 13 / 20) (k r : ℕ) :
+theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 13 / 20) (k r : ℕ) (hr : r < 2 ^ k) :
     ¬ TrapsResidueClass s t k r := by
   sorry
 
 /-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `13/20`. -/
 theorem relaxed_barrier_13_20 (s t : ℝ) (ht : t ≤ 13 / 20) (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy s t l P := fun h =>
-  finiteMemory_barrier s t ht 0 0 (trapsResidueClass_of_relaxedStrategy (by linarith) h)
+  finiteMemory_barrier s t ht 0 0 (by norm_num) (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
 /-! ### The finite-memory edge is `2/3` -/
 
@@ -371,7 +380,7 @@ class mod `2^k` traps orbits in any arc shorter than `2/3`.
 Confidence 85%.  Proof: `admissibleWord_growth_lt_two`, plus the injectivity and density steps of
 `finiteMemory_barrier` (`N` digits fix `g_0 mod 2^N`; a residue class gives `≥ 2^{N-k}/3 - 1`
 trapped floors below `2^N + 3`). -/
-theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ) :
+theorem finiteMemory_barrier_two_thirds (s t : ℝ) (ht : t < 2 / 3) (k r : ℕ) (hr : r < 2 ^ k) :
     ¬ TrapsResidueClass s t k r := by
   sorry
 
@@ -382,14 +391,14 @@ counting obstruction is sharp at the best position.  At other positions the game
 First half: hand proof (`finiteMemory_barrier_two_thirds`, 85%).  Second half: PROVED from the
 closed arc (`relaxedStrategy_afs_closed`, `finiteMemory_min_arc_two_thirds`). -/
 def FiniteMemoryEdgeIsTwoThirds : Prop :=
-  (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
+  (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, r < 2 ^ k → ¬ TrapsResidueClass s t k r) ∧
   (∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0)
 
 /-- The conjecture is now exactly its second half: arcs just past the AFS arc are held. -/
 theorem finiteMemoryEdgeIsTwoThirds_iff :
     FiniteMemoryEdgeIsTwoThirds ↔
       ∀ ε : ℝ, 0 < ε → TrapsResidueClass (2 / 3 - ε) (2 / 3 + 2 * ε) 0 0 :=
-  ⟨fun h => h.2, fun h => ⟨fun s t ht k r => finiteMemory_barrier_two_thirds s t ht k r, h⟩⟩
+  ⟨fun h => h.2, fun h => ⟨fun s t ht k r hr => finiteMemory_barrier_two_thirds s t ht k r hr, h⟩⟩
 
 /-- **The AFS half, by hand: `{‖x‖ ≤ 1/3 + ε}` is held for every `ε > 0`.**  Window width
 `l = 1/2 + 3ε/2`; window starts `P = [1/2 - 3ε/2, 2/3) ∪ [5/6 - 3ε/2, 1)`.
@@ -455,9 +464,9 @@ theorem trapsResidueClass_afs_closed : TrapsResidueClass (2 / 3) (2 / 3) 0 0 :=
 and the minimum is attained** (at the AFS arc).  First half `finiteMemory_barrier_two_thirds`,
 second half `trapsResidueClass_afs_closed`. -/
 theorem finiteMemory_min_arc_two_thirds :
-    (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, ¬ TrapsResidueClass s t k r) ∧
+    (∀ s t : ℝ, t < 2 / 3 → ∀ k r : ℕ, r < 2 ^ k → ¬ TrapsResidueClass s t k r) ∧
       TrapsResidueClass (2 / 3) (2 / 3) 0 0 :=
-  ⟨fun s t ht k r => finiteMemory_barrier_two_thirds s t ht k r, trapsResidueClass_afs_closed⟩
+  ⟨fun s t ht k r hr => finiteMemory_barrier_two_thirds s t ht k r hr, trapsResidueClass_afs_closed⟩
 
 /-- **Theorem: the finite-memory edge is exactly `2/3`.**  No residue-class construction holds an
 arc shorter than `2/3` (`finiteMemory_barrier_two_thirds`), and every neighbourhood of the AFS arc
