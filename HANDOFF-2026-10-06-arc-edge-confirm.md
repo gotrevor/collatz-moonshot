@@ -24,3 +24,11 @@ rows and outstanding bullet, and a ranked list of candidate next kickoffs (`PEND
 candidate is `exists_farFromIntegers_1228` (the `0.1228` record constant): soundness is now proved, so only
 a finite eleven-interval certificate remains.  Cheapest: `mahler_barrier` and `relaxedStrategy_near_afs`
 are now corollaries of proved theorems.
+
+## Exit
+
+`box done` was signalled, but the repo-wide self-stop gate declines it (20 open sorries in source, all outside
+this kickoff's scope).  The kickoff was a bounded subset and this run had no `--done-when`; a future scoped
+kickoff should be launched with `--done-when 'sorry-free:<target>'`.  Since every remaining sorry is either
+kickoff-forbidden or under the 2026-09-13 "awaiting a new idea" directive, this lap exits with `box stuck`
+(second strike after the phase-2 lap's, so the run halts for the operator).
