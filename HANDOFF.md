@@ -1,5 +1,13 @@
 # HANDOFF: Front A barriered backward tree pull 🌲 (2026-08-23)
 
+> **STUCK (2026-10-06, run halted for the operator).**  Blocker: `KICKOFF-2026-10-06-arc-edge-proofs.md`
+> is complete and audited (`finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds` and the near-AFS
+> chain print only the trust base), but the repo-wide stop gate sees 20 open sorries, all kickoff-forbidden
+> or under DIRECTION's "awaiting a new idea" directive.  **Operator ask:** pick the next kickoff.  Recommended:
+> `exists_farFromIntegers_1228` (0.1228 record constant; finite eleven-interval certificate left) plus the
+> corollary batch `mahler_barrier`, `relaxedStrategy_near_afs`, `trapsResidueClass_near_afs`, launched with
+> `--done-when` scoped to those names.  Details: `HANDOFF-2026-10-06-arc-edge-confirm.md`, `PENDING_WORK.md` top.
+
 > **Current pointer (2026-08-24):** this file is historical. Read `DIRECTION.md` first.
 > The parity-reconstruction project is complete (BASELINE / RE-SCOPE), and the live project
 > is `FRONT-A-PARADOXICAL.md`.
