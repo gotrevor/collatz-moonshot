@@ -219,7 +219,8 @@ Confidence 90%.  Proof route:
 * For `t < 1/2` there is also a hand proof.  `A` and `A + 1/2` are disjoint, so the adversary keeps at
   most half of `1.5 |C|` in the arc and `|C|` shrinks by `3/4` per move.  Once the window is shorter
   than `1/2 - t` it misses `A` or `A - 1/2`, and the adversary picks the parity that misses.
-Scope: memoryless strategies only; `k`-memory strategies remain open. -/
+Scope: memoryless strategies.  `finiteMemory_barrier` covers every finite memory, up to length
+`16/25`. -/
 theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
     ¬ RelaxedStrategy s t l P := by
   sorry
@@ -227,6 +228,56 @@ theorem mahler_barrier (s t : ℝ) (ht : t ≤ 1 / 2) (l : ℝ) (P : Set ℝ) :
 /-- Mahler's own arc. -/
 theorem no_relaxedStrategy_mahler_arc (l : ℝ) (P : Set ℝ) : ¬ RelaxedStrategy 0 (1 / 2) l P :=
   mahler_barrier 0 (1 / 2) le_rfl l P
+
+/-! ### Finite memory: a counting barrier (Flatto's entropy method on an arbitrary arc) -/
+
+/-- `g` is the integer part of some `ξ > 0` whose whole orbit `{ξ (3/2)^n}` lies in the arc
+`[s, s + t]` (mod 1). -/
+def TrappedFloor (s t : ℝ) (g : ℕ) : Prop :=
+  ∃ ξ : ℝ, 0 < ξ ∧ ⌊ξ⌋ = (g : ℤ) ∧
+    ∀ n : ℕ, ∃ x ∈ Set.Icc s (s + t), Int.fract (ξ * (3 / 2) ^ n) = Int.fract x
+
+/-- What a finite-memory construction delivers.  A strategy that reads only `m mod 2^k` wins from
+every start `m ≡ r`, so every such `m` has a trapped orbit within `3` of it. -/
+def TrapsResidueClass (s t : ℝ) (k r : ℕ) : Prop :=
+  ∀ m : ℕ, 0 < m → m % 2 ^ k = r → ∃ g : ℕ, m ≤ g ∧ g < m + 3 ∧ TrappedFloor s t g
+
+/-- **A memoryless relaxed strategy traps every unit interval.**  The strategy never reads the
+integer part, so it runs from the window `[m + a, m + a + l]` for every `m ≥ 1`.  The sub-window
+`[u, u + 2l/3]` fits in an arc lift, so `l ≤ 3t/2 ≤ 3/2` and `⌊ξ⌋ < m + 3`.
+Confidence 90% (the construction in `exists_trapped_of_relaxedStrategy`, started at `m`; it is
+also what `vw_orbit` in `experiments/arc_trap_k.py` plays from any `m0`).  The `k`-memory games of
+`arc_trap_k.py` give `TrapsResidueClass s t k r` the same way. -/
+theorem trapsResidueClass_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (ht : t ≤ 1)
+    (h : RelaxedStrategy s t l P) : TrapsResidueClass s t 0 0 := by
+  sorry
+
+/-- **Finite-memory barrier: no construction that works on a whole residue class mod `2^k` traps
+an orbit in any arc of length at most `16/25`.**  In particular no finite-memory strategy, of any
+game version, reaches Mahler's arc.  Flatto's `X^{log₂(3/2)}` count of Z-numbers is the
+`[0, 1/2)` case of the counting step below; the rest is new.
+Confidence 85% (exact certificate; the hand steps below).  Proof route:
+* Digits.  With `g_n = ⌊ξ (3/2)^n⌋` and `f_n` the fractional part, `a_n = g_{n+1} - 3 g_n / 2
+  = 3 f_n / 2 - f_{n+1}` lies in `{-1/2, 0, 1/2, 1}`.
+* Injectivity.  `3^N g_0 = 2^N g_N - Σ 3^{N-1-n} 2^{n+1} a_n`, so the first `N` digits fix
+  `g_0 mod 2^N`.  Hence `#{g < 2^N : TrappedFloor s t g}` is at most `W_N`, the number of digit
+  words with every `f_n` in the arc.
+* Growth.  `experiments/arc_entropy.py cover 16/25 1000 160` covers every position `s` by the arc
+  `[i/1000, i/1000 + 16/25 + 1/1000]`.  For each it builds the transfer matrix on outward-rounded
+  states (grid `1/160`, an overcount) and checks a rational `v > 0` with `M v ≤ c v` exactly; the
+  worst `c` is `399/200 < 2`.  So `W_N ≤ C (399/200)^N`, and a smaller arc only lowers `W_N`.
+* Density.  `TrapsResidueClass s t k r` gives at least `2^{N-k}/3 - 1` trapped floors below
+  `2^N + 3`, which beats `C (399/200)^N` for large `N`.
+Measured edge: growth reaches `2` near length `0.65`.  The memoryless game's shortest holdable arc
+is `≈ 0.683` (at `s ≈ 0.65`), the same for `0..3` bits of memory. -/
+theorem finiteMemory_barrier (s t : ℝ) (ht : t ≤ 16 / 25) (k r : ℕ) :
+    ¬ TrapsResidueClass s t k r := by
+  sorry
+
+/-- The memoryless corollary.  It extends `mahler_barrier` from length `1/2` to `16/25`. -/
+theorem relaxed_barrier_16_25 (s t : ℝ) (ht : t ≤ 16 / 25) (l : ℝ) (P : Set ℝ) :
+    ¬ RelaxedStrategy s t l P := fun h =>
+  finiteMemory_barrier s t ht 0 0 (trapsResidueClass_of_relaxedStrategy (by linarith) h)
 
 /-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
 the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed

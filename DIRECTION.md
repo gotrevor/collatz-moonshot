@@ -1,4 +1,6 @@
-> **2026-10-05 (late), Mahler barrier:** no memoryless adversarial-parity strategy holds any arc of length ≤ 1/2, at any position, so none produces a Z-number (`mahler_barrier`, Maze row; exact over every position in `experiments/arc_mahler.py`, plus a hand proof for length < 1/2).  k-memory strategies are still open.
+> **2026-10-05 (night), finite-memory barrier:** no construction that works on a whole residue class mod 2^k (every k-memory strategy) holds an arc of length ≤ 16/25 at any position.  Its digit words grow at most 1.995^N < 2^N, Flatto's counting extended to every arc (`finiteMemory_barrier`, exact certificate `experiments/arc_entropy.py`).  The game's shortest holdable arc is ≈ 0.683 for k = 0..3.
+
+> **2026-10-05 (late), Mahler barrier:** no memoryless adversarial-parity strategy holds any arc of length ≤ 1/2, at any position, so none produces a Z-number (`mahler_barrier`, Maze row; exact over every position in `experiments/arc_mahler.py`, plus a hand proof for length < 1/2). 
 
 > **2026-10-05 (evening), new tool and a candidate new constant:** certified k-memory nested-interval games for `{ξ(3/2)^n}` in an arc.  They give `‖ξ(3/2)^n‖ ≥ 0.1228` for some ξ (memoryless relaxed game); above 7/57 no memoryless adversarial-parity strategy exists (`relaxed_barrier`, Maze row) (record: Dubickas 2008, 5/48 ≈ 0.104) and reproduce the FLP and AFS thresholds as controls.  Bounded 2-adic memory saturates far above Mahler's 1/2.  [Note](RESEARCH-2026-10-05-arc-trap-games.md), Lean `Benchmark/ArcTrap.lean` (sorried; proof is treadmill-ready).
 
