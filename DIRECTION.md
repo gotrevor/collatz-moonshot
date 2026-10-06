@@ -678,6 +678,24 @@ of these two nodes only.
 
 ## CURRENT DIRECTIVE — awaiting a new idea; no execution lap selected
 
+**2026-10-06 update (confirm lap after the arc-edge kickoff).**  `KICKOFF-2026-10-06-arc-edge-proofs.md`
+is complete, phases 1 and 2: `finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds` and the
+near-AFS chain (`near_afs_density`, `near_afs_every_floor`, `card_afsUnbroken_le`) print only
+`propext, Classical.choice, Quot.sound`; no target statement changed since `485ba54`.
+- **Objective:** none open.  The next execution lap needs a new operator kickoff.
+- **Mandated next move:** none for a grind lap; exit with `box done`.
+- **Forbidden drift:** the other `ArcTrap.lean` sorries (`1227`/`1228`, `E` and its calibrations,
+  `relaxed_barrier`, `mahler_barrier`, `two_pow_le_card_admissibleWord`, `relaxedStrategy_near_afs`,
+  the superseded `relaxedStrategy_afs`) and the conjecture nodes (`AfsArcIsolatedAtTwoThirds`,
+  `StrongMahlerConjecture`, `NearAfsDecayExponent`) stay untouched without a kickoff naming them;
+  never build on `E` (Trevor's question).
+- **Why:** the kickoff scoped the run to the edge theorem, and the 2026-09-13 judgment below still
+  governs the Collatz fronts.  Candidate next kickoffs, ranked, are in `PENDING_WORK.md`.
+
+Directive history:
+- 2026-09-13: whole-repository reflection; awaiting a new idea, no execution lap.
+- 2026-10-06: arc-edge kickoff done and audited; awaiting the next operator kickoff.
+
 Set by the **2026-09-13 whole-repository reflection**, reconciled through
 `6a33554`, from baseline `5a54acc`. This supersedes all older assignments and
 rankings in handoffs, route maps, source docstrings, and PENDING_WORK history.

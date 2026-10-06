@@ -1,5 +1,7 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-06, arc-trap edge theorem proved (Benchmark lane, kickoff `KICKOFF-2026-10-06-arc-edge-proofs.md`, done and audited):** no finite-memory construction holds an arc of `{ξ(3/2)^n}` shorter than `2/3`, and the AFS arc `{‖x‖ ≤ 1/3}` attains the edge (`finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds`), plus the near-AFS lifetime bounds (`near_afs_density`, `near_afs_every_floor`, `card_afsUnbroken_le`).  All print only the trust base; no target statement changed since `485ba54`.  Write-up: [`docs/notes/arc-traps-two-thirds-edge.md`](docs/notes/arc-traps-two-thirds-edge.md).  Awaiting the next operator kickoff (`DIRECTION.md` → CURRENT DIRECTIVE).
+
 > **2026-09-29, variable-depth reset audit:** [Full-run results](RESEARCH-2026-09-29-q1-run-macro.md).  The exit, immediate re-entry obstruction, one-halving expansion, and normalized-reset rank calibration are proved in Lean.  Long-phase contraction survives, but resetting that rank still requires size descent; no reusable full-state induction step was found.
 
 > **2026-09-29, Q1 bounded splicing resolved:** [Coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md).  Lean proves a sparse 18-step descent class and, for every cutoff, a hard-family parameter whose target and auxiliary prefixes remain separated by the starting value.  No bounded-depth splice into Q1 covers the family.  Growing-depth repair and its rank remain open.
@@ -362,6 +364,12 @@ repository's policy for established literature; neither choice would prove the m
 global finiteness of acyclic paradoxical segments.
 
 ## What's happened (newest first)
+- **2026-10-06 (arc-edge kickoff, phases 1-2 + confirm lap):** `ArcTrap.lean` hand proofs closed in kickoff
+  order: nested-interval soundness (`exists_trapped_of_relaxedStrategy_from`), the Fibonacci forward bound
+  (`card_forward_le`), the backward gap contraction (`card_backward_le`), word growth `< 2^N` below `2/3`
+  (`admissibleWord_growth_lt_two`), the residue-class barrier (`finiteMemory_barrier_two_thirds`), then the
+  near-AFS chain (`run_bounded_count_ge` → `card_afsUnbroken_le` → `near_afs_density`, `near_afs_every_floor`).
+  Confirm lap re-ran `#print axioms` (trust base only) and a statement diff against `485ba54` (no change).
 - **2026-09-19 (attended Fable session + three one-lap Opus-low helpers — the first-crossing near-cycle route):**
   `StoppingCorrect` failures are *near-cycles*: `overshoot_identity` / `three_mul_overshoot_lt`
   (`D·n + 2^m·E = numer`, `3E < a`), the run-product bound `run_product_bound`
@@ -562,6 +570,9 @@ global finiteness of acyclic paradoxical segments.
 
 ## Outstanding
 ### Short-term (mirror PENDING_WORK top)
+- **2026-10-06 — arc-edge kickoff COMPLETE; awaiting the next kickoff.**  Ranked candidates for it are in
+  `PENDING_WORK.md` (cheapest: `mahler_barrier` is now a corollary of `relaxed_barrier_13_20`; deepest:
+  `AfsArcIsolatedAtTwoThirds`).  The other `ArcTrap.lean` sorries stay untouched until a kickoff names them.
 - **2026-09-13 — reflection DONE; awaiting a new idea.** No current bounded
   objective clears the new-mathematics bar. The ranking in `DIRECTION.md` is
   not an execution queue. Reopening requires an exact statement and evidenced
@@ -643,6 +654,9 @@ excluded from the math-axiom count below.  Re-run from real `#print axioms` on 2
 | `noNontrivialCycle_of_unboundedParadoxicalStarts` | fidelity guard (this repo) | — | 0 ✅ trust base only |
 | `infinite_paradoxical_of_tstep_cycle` | non-vacuity anchor (this repo) | — | 0 ✅ trust base only |
 | `acyclicParadoxical_seven_eight` | sharpness witness | — | 0 ✅ kernel `decide`, no `native_decide` |
+| `Benchmark.ArcTrap.finiteMemory_min_arc_two_thirds` | new: finite-memory min arc length is `2/3`, attained | — | 0 ✅ trust base only (re-run 2026-10-06) |
+| `Benchmark.ArcTrap.finiteMemoryEdgeIsTwoThirds` | new: the edge conjecture, both halves | — | 0 ✅ trust base only |
+| `Benchmark.ArcTrap.near_afs_density` / `near_afs_every_floor` / `card_afsUnbroken_le` | new: near-AFS lifetime bounds | — | 0 ✅ trust base only |
 
 **Correction on record (2026-09-01).**  `rozier_terracol_3_2` previously claimed *unboundedly
 large* paradoxical starts `2^k n`.  That is strictly stronger than Rozier–Terracol Thm 3.2:
@@ -664,5 +678,5 @@ No 🔴 appears on any unconditional headline.
 - Routes: `FRONT-A-PARADOXICAL.md` (historical route; awaiting new mechanism), `FRONT-A-PARITY-RECONSTRUCTION.md` (done),
   `FRONT-A-ROUTES.md`,
   `FRONT-B-ROUTES.md`, `FRONT-A-HARMONIC-DUAL.md` (done)
-- Newest baton: `HANDOFF-2026-09-13-whole-board-reflection.md` · scratchpad: `PENDING_WORK.md`
+- Newest baton: `HANDOFF-2026-10-06-arc-edge-confirm.md` (arc-trap lane); Collatz fronts: `HANDOFF-2026-09-13-whole-board-reflection.md` · scratchpad: `PENDING_WORK.md`
 - Findings: `ON-LINE-FINDINGS-2026-08-25-log23-effective-measure.md`, `…-rhin-wu-explicit-construction.md`

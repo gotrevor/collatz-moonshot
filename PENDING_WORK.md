@@ -1,5 +1,39 @@
 # PENDING_WORK
 
+## 2026-10-06 — arc-edge kickoff: DONE, audited; candidates for the next kickoff
+
+`KICKOFF-2026-10-06-arc-edge-proofs.md` is complete through phase 2.  Confirm lap (fresh context)
+re-checked from real output: `lake build CollatzMoonshot.Benchmark.ArcTrap CollatzMoonshot.Maze` green
+(8762 jobs); `#print axioms` of `finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds`,
+`finiteMemory_barrier_two_thirds`, `near_afs_density`, `near_afs_every_floor`, `card_afsUnbroken_le`,
+`relaxedStrategy_afs_closed`, `relaxed_barrier_13_20` = `propext, Classical.choice, Quot.sound`;
+a statement diff of every declaration present at `485ba54` against HEAD shows no change.
+
+Advance on the crux: the crux (the `< 2^N` word-growth bound below `2/3`) is a theorem; nothing open
+remains on the kickoff's path.  Remaining `ArcTrap.lean` sorries are out of the kickoff's scope and were
+not touched.  Ranked candidates for the operator's next kickoff (value × odds / cost):
+
+1. **`exists_farFromIntegers_1228`: the record constant** (`‖ξ(3/2)^n‖ ≥ 0.1228` for some `ξ`, against
+   Dubickas 2008's `5/48 ≈ 0.104`).  Soundness is now proved (`exists_trapped_of_relaxedStrategy`), so
+   what is left is a finite certificate: `RelaxedStrategy (307/2500) (943/1250) (123/1000) P` with `P` the
+   eleven dyadic intervals (denominator `2^24`) in `experiments/arc_cert_beta_1228_vw_k0.json`.  Per
+   interval and parity, pick `u` (clamp form) and check the image interval lands in some member of `P`.
+   Odds ~90%, 1-2 laps.  This is the file's main new-mathematics claim still sorried.
+2. **Corollary batch (minutes):** `mahler_barrier` is `relaxed_barrier_13_20 s t (by linarith) l P`
+   once moved below it (only `no_relaxedStrategy_mahler_arc` and the `Maze` row use it);
+   `relaxedStrategy_near_afs` follows from `relaxedStrategy_afs_closed` by monotonicity of
+   `RelaxedStrategy` in the arc (`s' ≤ s`, `s + t ≤ s' + t'`; prove the lemma), and with it
+   `trapsResidueClass_near_afs`.
+3. **`AfsArcIsolatedAtTwoThirds`** (65%): uniqueness of the attaining arc for memoryless play.  Research;
+   counting gives nothing at `t = 2/3`, so it needs the game.  A proof would sharpen the edge theorem to
+   "attained only at AFS".
+4. **`two_pow_le_card_admissibleWord`** (85%): the matching `2^N` lower count (transfer operator,
+   `∫ P φ = (4/3) ∫ φ`).  Measure-theoretic; moderate.
+5. Computation-heavy refutation trees: `not_relaxedStrategy_13_100` (depth 15), `relaxed_barrier` (7/57).
+   `relaxedStrategy_afs` (interval strategy) is superseded by the closed one; low value.
+Excluded: `E` and its calibrations (Trevor's question).
+
+
 ## 2026-09-22 — summability/crossing bridge: DONE, nothing owed
 
 `KICKOFF-2026-09-22-summability-crossing.md` is fully discharged (commits
