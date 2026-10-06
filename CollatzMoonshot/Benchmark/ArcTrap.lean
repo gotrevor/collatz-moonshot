@@ -1988,28 +1988,187 @@ theorem afsUnbroken_of_noRunLonger (δ : ℝ) (R N : ℕ) (hR : (3 / 2) ^ (R + 1
   unfold AfsStepOk
   split_ifs <;> refine ⟨by nlinarith, by nlinarith, by nlinarith, by nlinarith⟩
 
+theorem afsErr_succ (δ : ℝ) {N : ℕ} (w : Fin N → Bool) (n : ℕ) (h : n < N) :
+    afsErr δ w (n + 1) = afsErrStep δ (afsErr δ w n) (w ⟨n, h⟩) := by
+  simp [afsErr, h]
+
 /-- A flip followed by `m` equal letters always breaks the piece, once
-`|δ| ((3/2)^m - 1) > 1/3`.  Confidence 90%.  Proof: reading `w b` resets the coordinate that the run
+`|δ| ((3/2)^m - 1) > 1/3`.  PROVED 2026-10-06.  Proof: reading `w b` resets the coordinate that the run
 then grows to `δ`.  At the `j`-th letter of the run the check reads `3e/2 - δ = δ((3/2)^j - 1)`, and
 the continuation window is `[-1/3, 1/3]`. -/
 theorem not_afsUnbroken_of_long_run (δ : ℝ) (m N : ℕ) (hm : 1 / 3 < |δ| * ((3 / 2) ^ m - 1))
     (hm1 : 1 ≤ m) (w : Fin N → Bool) (b : ℕ) (hb : b + m < N) (hflip : w ⟨b, by omega⟩ ≠ w ⟨b + 1, by omega⟩)
     (hrun : ∀ j (hj : 1 ≤ j ∧ j ≤ m), w ⟨b + j, by omega⟩ = w ⟨b + 1, by omega⟩) :
     ¬ AfsUnbroken δ N w := by
-  sorry
+  intro hU
+  have hpow : (1 : ℝ) ≤ (3 / 2) ^ m := one_le_pow₀ (by norm_num)
+  have habs : |δ * ((3 / 2) ^ m - 1)| = |δ| * ((3 / 2) ^ m - 1) := by
+    rw [abs_mul, abs_of_nonneg (show (0:ℝ) ≤ (3 / 2) ^ m - 1 by linarith)]
+  have hok := hU (b + m) hb
+  rw [hrun m ⟨hm1, le_rfl⟩] at hok
+  cases hy : w ⟨b + 1, by omega⟩
+  · -- run of `false`: the first coordinate grows
+    have hx : w ⟨b, by omega⟩ = true := by
+      rw [hy] at hflip; simpa using hflip
+    have grow : ∀ j, 1 ≤ j → j ≤ m → (afsErr δ w (b + j)).1 = δ * (3 / 2) ^ (j - 1) := by
+      intro j hj1 hjm
+      induction j with
+      | zero => omega
+      | succ j ih =>
+        rcases Nat.eq_zero_or_pos j with rfl | hj0
+        · rw [afsErr_succ δ w b (by omega), hx]; simp [afsErrStep]
+        · rw [show b + (j + 1) = b + j + 1 by ring, afsErr_succ δ w (b + j) (by omega),
+            hrun j ⟨hj0, by omega⟩, hy]
+          simp only [afsErrStep, Bool.false_eq_true, ↓reduceIte]
+          rw [ih hj0 (by omega), show j + 1 - 1 = (j - 1) + 1 by omega, pow_succ]; ring
+    rw [hy] at hok
+    simp only [AfsStepOk, Bool.false_eq_true, ↓reduceIte] at hok
+    rw [grow m hm1 le_rfl] at hok
+    have e : 3 / 2 * (δ * (3 / 2) ^ (m - 1)) - δ = δ * ((3 / 2) ^ m - 1) := by
+      rw [show m = (m - 1) + 1 by omega, pow_succ]; simp only [Nat.add_sub_cancel]; ring
+    rw [e] at hok
+    have := abs_le.2 ⟨by linarith [hok.1], hok.2.1⟩
+    linarith
+  · have hx : w ⟨b, by omega⟩ = false := by
+      rw [hy] at hflip; simpa using hflip
+    have grow : ∀ j, 1 ≤ j → j ≤ m → (afsErr δ w (b + j)).2 = δ * (3 / 2) ^ (j - 1) := by
+      intro j hj1 hjm
+      induction j with
+      | zero => omega
+      | succ j ih =>
+        rcases Nat.eq_zero_or_pos j with rfl | hj0
+        · rw [afsErr_succ δ w b (by omega), hx]; simp [afsErrStep]
+        · rw [show b + (j + 1) = b + j + 1 by ring, afsErr_succ δ w (b + j) (by omega),
+            hrun j ⟨hj0, by omega⟩, hy]
+          simp only [afsErrStep, ↓reduceIte]
+          rw [ih hj0 (by omega), show j + 1 - 1 = (j - 1) + 1 by omega, pow_succ]; ring
+    rw [hy] at hok
+    simp only [AfsStepOk, ↓reduceIte] at hok
+    rw [grow m hm1 le_rfl] at hok
+    have e : 3 / 2 * (δ * (3 / 2) ^ (m - 1)) - δ = δ * ((3 / 2) ^ m - 1) := by
+      rw [show m = (m - 1) + 1 by omega, pow_succ]; simp only [Nat.add_sub_cancel]; ring
+    rw [e] at hok
+    have := abs_le.2 ⟨by linarith [hok.2.2.1], hok.2.2.2⟩
+    linarith
+
+/-- The breaking pattern at `b`: a flip, then `m` equal letters. -/
+def BreakAt (m N : ℕ) (w : Fin N → Bool) (b : ℕ) (hb : b + m < N) : Prop :=
+  w ⟨b, by omega⟩ ≠ w ⟨b + m, hb⟩ ∧ ∀ j (hj : 1 ≤ j ∧ j ≤ m), w ⟨b + j, by omega⟩ = w ⟨b + m, hb⟩
+
+/-- Words with no breaking pattern at any block start `b ≡ 0 mod (m + 1)`. -/
+def avoidSet (m N : ℕ) : Set (Fin N → Bool) :=
+  {w | ∀ b (hb : b + m < N), (m + 1) ∣ b → ¬ BreakAt m N w b hb}
+
+def goodBlock (m : ℕ) : Set (Fin (m + 1) → Bool) :=
+  {u | ¬ BreakAt m (m + 1) u 0 (by omega)}
+
+theorem goodBlock_ncard (m : ℕ) (hm : 1 ≤ m) : (goodBlock m).ncard ≤ 2 ^ (m + 1) - 2 := by
+  let p : Bool → Fin (m + 1) → Bool := fun x j => if (j : ℕ) = 0 then x else !x
+  have hp : ∀ x, p x ∈ (goodBlock m)ᶜ := by
+    intro x
+    simp only [goodBlock, Set.mem_compl_iff, Set.mem_setOf_eq, not_not, BreakAt]
+    refine ⟨by cases x <;> simp [p] <;> omega, fun j hj => ?_⟩
+    simp only [p, Fin.val_mk]; rw [if_neg (by omega), if_neg (by omega)]
+  have hne : p true ≠ p false := by
+    intro h; have := congrFun h 0; simp [p] at this
+  have h2 : 2 ≤ (goodBlock m)ᶜ.ncard := by
+    have : ({p true, p false} : Set _) ⊆ (goodBlock m)ᶜ := by
+      intro u hu; rcases hu with rfl | rfl <;> exact hp _
+    have := Set.ncard_le_ncard this (Set.toFinite _)
+    rwa [Set.ncard_pair hne] at this
+  have htot := Set.ncard_add_ncard_compl (goodBlock m)
+  rw [Nat.card_fun] at htot
+  simp at htot
+  omega
+
+theorem avoidSet_short {m N : ℕ} (hN : N < m + 1) : (avoidSet m N).ncard ≤ 2 ^ N := by
+  calc (avoidSet m N).ncard ≤ (Set.univ : Set (Fin N → Bool)).ncard :=
+        Set.ncard_le_ncard (Set.subset_univ _) (Set.toFinite _)
+    _ = 2 ^ N := by rw [Set.ncard_univ, Nat.card_fun]; simp
+
+theorem avoidSet_step (m N : ℕ) (hm : 1 ≤ m) :
+    (avoidSet m (N + (m + 1))).ncard ≤ (2 ^ (m + 1) - 2) * (avoidSet m N).ncard := by
+  have := Set.ncard_le_ncard_of_injOn
+    (fun w : Fin (N + (m + 1)) → Bool =>
+      ((fun j : Fin (m + 1) => w ⟨j, by omega⟩), (fun j : Fin N => w ⟨m + 1 + j, by omega⟩)))
+    (s := avoidSet m (N + (m + 1))) (t := goodBlock m ×ˢ avoidSet m N) ?_ ?_ (Set.toFinite _)
+  · rw [Set.ncard_prod] at this
+    exact this.trans (Nat.mul_le_mul_right _ (goodBlock_ncard m hm))
+  · intro w hw
+    refine ⟨fun hB => hw 0 (by omega) (dvd_zero _) ?_, fun b hb hdiv hB => ?_⟩
+    · exact ⟨hB.1, fun j hj => hB.2 j hj⟩
+    · refine hw (m + 1 + b) (by omega) (dvd_add (dvd_refl _) hdiv) ⟨?_, fun j hj => ?_⟩
+      · have := hB.1; simpa [Nat.add_assoc] using this
+      · have := hB.2 j hj; simpa [Nat.add_assoc] using this
+  · intro w _ w' _ h
+    simp only [Prod.mk.injEq] at h
+    funext k
+    by_cases hk : (k : ℕ) < m + 1
+    · have := congrFun h.1 ⟨k, hk⟩; simpa using this
+    · have := congrFun h.2 ⟨k - (m + 1), by omega⟩
+      simp only at this
+      rw [show k = ⟨m + 1 + (k - (m + 1)), by omega⟩ from Fin.ext (by simp; omega)]
+      exact this
+
+theorem avoidSet_bound (m : ℕ) (hm1 : 1 ≤ m) : ∀ N : ℕ,
+    ((avoidSet m N).ncard : ℝ) ≤ 2 ^ N * (1 - (1 / 2) ^ m) ^ (N / (m + 1)) := by
+  have hblock : ((2 ^ (m + 1) - 2 : ℕ) : ℝ) = 2 ^ (m + 1) * (1 - (1 / 2) ^ m) := by
+    have : 2 ≤ 2 ^ (m + 1) := by
+      calc 2 = 2 ^ 1 := by norm_num
+        _ ≤ 2 ^ (m + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    rw [Nat.cast_sub this]; push_cast
+    have h : (2 : ℝ) ^ m * (1 / 2) ^ m = 1 := by rw [← mul_pow]; norm_num
+    rw [pow_succ]; linear_combination 2 * h
+  have hε : (0 : ℝ) ≤ 1 - (1 / 2) ^ m := by
+    have : ((1 : ℝ) / 2) ^ m ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+    linarith
+  intro N
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+    by_cases hN : N < m + 1
+    · rw [Nat.div_eq_of_lt hN, pow_zero, mul_one]
+      exact_mod_cast avoidSet_short hN
+    · push_neg at hN
+      obtain ⟨N', rfl⟩ : ∃ N', N = N' + (m + 1) := ⟨N - (m + 1), by omega⟩
+      have hstep : ((avoidSet m (N' + (m + 1))).ncard : ℝ) ≤
+          ((2 ^ (m + 1) - 2 : ℕ) : ℝ) * (avoidSet m N').ncard := by
+        exact_mod_cast avoidSet_step m N' hm1
+      have hih := ih N' (by omega)
+      rw [hblock] at hstep
+      have hdiv : (N' + (m + 1)) / (m + 1) = N' / (m + 1) + 1 := by
+        rw [Nat.add_div_right _ (by omega)]
+      rw [hdiv, pow_add, pow_succ]
+      have hp : (0 : ℝ) ≤ 2 ^ (m + 1) * (1 - (1 / 2) ^ m) := by positivity
+      calc ((avoidSet m (N' + (m + 1))).ncard : ℝ)
+          ≤ 2 ^ (m + 1) * (1 - (1 / 2) ^ m) * (avoidSet m N').ncard := hstep
+        _ ≤ 2 ^ (m + 1) * (1 - (1 / 2) ^ m) * (2 ^ N' * (1 - (1 / 2) ^ m) ^ (N' / (m + 1))) :=
+          mul_le_mul_of_nonneg_left hih hp
+        _ = _ := by ring
 
 /-- **The AFS rigidity breaks at rate `Θ(|δ|^{1/log₂(3/2)})`, up to a logarithm.**  The words that
 keep the AFS piece unbroken for `N` steps number between the run-bounded words
 (`afsUnbroken_of_noRunLonger`, `run_bounded_count_ge`: at least `2^N (1 - 2^{-R})^N`) and
 `2^N (1 - 2^{-m})^{⌊N/(m+1)⌋}`.  Here `R` and `m` are both `log_{3/2}(1/|δ|) + O(1)`.
-Confidence 90%.  Proof of the upper bound: cut the positions into `⌊N/(m+1)⌋` disjoint blocks of
+PROVED 2026-10-06 (`avoidSet_bound`).  Proof of the upper bound: cut the positions into `⌊N/(m+1)⌋` disjoint blocks of
 length `m + 1`.  In each block the pattern "flip, then `m` equal letters" has probability `2^{-m}`
 independently, and any occurrence breaks the piece (`not_afsUnbroken_of_long_run`).
 Checked exhaustively at `δ = 1/30` (`R = 2`, `m = 6`), `N = 8, 12, 14` (`test_afs_event_rate_bounds`). -/
 theorem card_afsUnbroken_le (δ : ℝ) (m N : ℕ) (hm : 1 / 3 < |δ| * ((3 / 2) ^ m - 1)) :
     (Nat.card {w : Fin N → Bool // AfsUnbroken δ N w} : ℝ) ≤
       2 ^ N * (1 - (1 / 2) ^ m) ^ (N / (m + 1)) := by
-  sorry
+  have hm1 : 1 ≤ m := by
+    by_contra h0; push_neg at h0
+    interval_cases m; simp at hm; linarith
+  rw [show Nat.card {w : Fin N → Bool // AfsUnbroken δ N w} = {w | AfsUnbroken δ N w}.ncard from
+    Nat.card_coe_set_eq _]
+  have hsub : {w : Fin N → Bool | AfsUnbroken δ N w} ⊆ avoidSet m N := by
+    intro w hw b hb _ hB
+    have h1 := hB.2 1 ⟨le_rfl, hm1⟩
+    refine not_afsUnbroken_of_long_run δ m N hm hm1 w b hb (by rw [h1]; exact hB.1)
+      (fun j hj => (hB.2 j hj).trans h1.symm) hw
+  have h1 : ({w : Fin N → Bool | AfsUnbroken δ N w}.ncard : ℝ) ≤ (avoidSet m N).ncard := by
+    exact_mod_cast Set.ncard_le_ncard hsub (Set.toFinite _)
+  exact h1.trans (avoidSet_bound m hm1 N)
 
 /-- **Conjecture: the near-AFS decay rate is `|δ|^{1/log₂(3/2)}`.**
 What is proved: the AFS piece breaks at rate `Θ(|δ|^{1/log₂(3/2)})` up to a log
