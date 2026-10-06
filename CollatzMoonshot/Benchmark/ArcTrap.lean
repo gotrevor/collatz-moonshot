@@ -230,6 +230,150 @@ theorem exists_trapped_of_relaxedStrategy {s t l : ℝ} {P : Set ℝ} (h : Relax
   obtain ⟨ξ, h1, -, h3⟩ := exists_trapped_of_relaxedStrategy_from h 1 a ha
   exact ⟨ξ, by push_cast at h1; linarith, h3⟩
 
+
+/-- One cell of the `1228` certificate: from `a ∈ [lo, hi]`, the clamp `u = max a c` works, landing
+`fract (3u/2 + d)` in `[A, B]` (with `3u/2 + d - n ∈ [A, B]`). -/
+theorem cell1228 {s t l lo hi c A B d a : ℝ} (n : ℤ) (ha : a ∈ Set.Icc lo hi) (h0 : 0 ≤ l)
+    (h1 : c ≤ lo + l / 3) (h2 : s ≤ c) (h3 : hi + 2 * l / 3 ≤ s + t) (h4 : c + 2 * l / 3 ≤ s + t)
+    (h5 : A ≤ 3 * c / 2 + d - n) (h6 : 3 * hi / 2 + d - n ≤ B) (h7 : 3 * c / 2 + d - n ≤ B)
+    (h8 : 0 ≤ A) (h9 : B < 1) :
+    ∃ u : ℝ, a ≤ u ∧ u + 2 * l / 3 ≤ a + l ∧
+      (∃ k : ℤ, (k : ℝ) + s ≤ u ∧ u + 2 * l / 3 ≤ k + s + t) ∧
+      Int.fract (3 * u / 2 + d) ∈ Set.Icc A B := by
+  obtain ⟨ha1, ha2⟩ := ha
+  refine ⟨max a c, le_max_left _ _, ?_, ⟨0, ?_, ?_⟩, ?_⟩
+  · rcases le_total a c with h | h
+    · rw [max_eq_right h]; linarith
+    · rw [max_eq_left h]; linarith
+  · push_cast; linarith [le_max_right a c]
+  · push_cast
+    rcases le_total a c with h | h
+    · rw [max_eq_right h]; linarith
+    · rw [max_eq_left h]; linarith
+  · have hA : A ≤ 3 * max a c / 2 + d - n := by linarith [le_max_right a c]
+    have hB : 3 * max a c / 2 + d - n ≤ B := by
+      rcases le_total a c with h | h
+      · rw [max_eq_right h]; linarith
+      · rw [max_eq_left h]; linarith
+    rw [show Int.fract (3 * max a c / 2 + d) = 3 * max a c / 2 + d - n from
+      (Int.fract_eq_iff).2 ⟨by linarith, by linarith, n, by ring⟩]
+    exact ⟨hA, hB⟩
+
+/-- The eleven window-start intervals of `experiments/arc_cert_beta_1228_vw_k0.json`. -/
+def P1228 : Set ℝ :=
+  Set.Icc (1468449 / 16777216 : ℝ) (2060359 / 16777216 : ℝ) ∪
+    Set.Icc (2089827 / 16777216 : ℝ) (269809 / 2097152 : ℝ) ∪
+    Set.Icc (404309 / 2097152 : ℝ) (809427 / 4194304 : ℝ) ∪
+    Set.Icc (2941753 / 8388608 : ℝ) (2943371 / 8388608 : ℝ) ∪
+    Set.Icc (3481371 / 8388608 : ℝ) (3515693 / 8388608 : ℝ) ∪
+    Set.Icc (7060855 / 16777216 : ℝ) (1913191 / 4194304 : ℝ) ∪
+    Set.Icc (7682233 / 16777216 : ℝ) (7750877 / 16777216 : ℝ) ∪
+    Set.Icc (8826877 / 16777216 : ℝ) (8830113 / 16777216 : ℝ) ∪
+    Set.Icc (11475911 / 16777216 : ℝ) (11479147 / 16777216 : ℝ) ∪
+    Set.Icc (12555147 / 16777216 : ℝ) (788987 / 1048576 : ℝ) ∪
+    Set.Icc (3163315 / 4194304 : ℝ) (6622585 / 8388608 : ℝ)
+
+theorem relaxedStrategy_1228 :
+    RelaxedStrategy (307 / 2500) (943 / 1250) (123 / 1000) P1228 := by
+  have S0 : Set.Icc (1468449 / 16777216 : ℝ) (2060359 / 16777216 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S1 : Set.Icc (2089827 / 16777216 : ℝ) (269809 / 2097152 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S2 : Set.Icc (404309 / 2097152 : ℝ) (809427 / 4194304 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S3 : Set.Icc (2941753 / 8388608 : ℝ) (2943371 / 8388608 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S4 : Set.Icc (3481371 / 8388608 : ℝ) (3515693 / 8388608 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S5 : Set.Icc (7060855 / 16777216 : ℝ) (1913191 / 4194304 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S6 : Set.Icc (7682233 / 16777216 : ℝ) (7750877 / 16777216 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S7 : Set.Icc (8826877 / 16777216 : ℝ) (8830113 / 16777216 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S8 : Set.Icc (11475911 / 16777216 : ℝ) (11479147 / 16777216 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S9 : Set.Icc (12555147 / 16777216 : ℝ) (788987 / 1048576 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  have S10 : Set.Icc (3163315 / 4194304 : ℝ) (6622585 / 8388608 : ℝ) ⊆ P1228 := by
+    intro x hx; simp only [P1228, Set.mem_union]; tauto
+  refine ⟨by norm_num, ⟨_, S0 ⟨le_refl _, by norm_num⟩⟩, ?_, ?_⟩
+  · intro x hx
+    simp only [P1228, Set.mem_union, Set.mem_Icc] at hx
+    constructor <;> rcases hx with ((((((((((h | h) | h) | h) | h) | h) | h) | h) | h) | h) | h) <;>
+      linarith [h.1, h.2]
+  intro a ha d hd
+  simp only [P1228, Set.mem_union] at ha
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hd
+  rcases ha with ((((((((((h | h) | h) | h) | h) | h) | h) | h) | h) | h) | h) <;>
+    rcases hd with rfl | rfl
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (404309 / 3145728 : ℝ)) (A := (404309 / 2097152 : ℝ)) (B := (809427 / 4194304 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (307 / 2500 : ℝ)) (A := (11475911 / 16777216 : ℝ)) (B := (11479147 / 16777216 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S8 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (404309 / 3145728 : ℝ)) (A := (404309 / 2097152 : ℝ)) (B := (809427 / 4194304 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (4166539 / 25165824 : ℝ)) (A := (12555147 / 16777216 : ℝ)) (B := (788987 / 1048576 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S9 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (2941753 / 12582912 : ℝ)) (A := (2941753 / 8388608 : ℝ)) (B := (2943371 / 8388608 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S3 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (1066163 / 6291456 : ℝ)) (A := (3163315 / 4194304 : ℝ)) (B := (6622585 / 8388608 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S10 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (8826877 / 25165824 : ℝ)) (A := (8826877 / 16777216 : ℝ)) (B := (8830113 / 16777216 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S7 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (9857057 / 25165824 : ℝ)) (A := (1468449 / 16777216 : ℝ)) (B := (2060359 / 16777216 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S0 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (11475911 / 25165824 : ℝ)) (A := (11475911 / 16777216 : ℝ)) (B := (11479147 / 16777216 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S8 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (10478435 / 25165824 : ℝ)) (A := (2089827 / 16777216 : ℝ)) (B := (269809 / 2097152 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S1 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (11475911 / 25165824 : ℝ)) (A := (11475911 / 16777216 : ℝ)) (B := (11479147 / 16777216 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S8 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (484295 / 1048576 : ℝ)) (A := (404309 / 2097152 : ℝ)) (B := (809427 / 4194304 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (4185049 / 8388608 : ℝ)) (A := (12555147 / 16777216 : ℝ)) (B := (788987 / 1048576 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S9 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (484295 / 1048576 : ℝ)) (A := (404309 / 2097152 : ℝ)) (B := (809427 / 4194304 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (3163315 / 6291456 : ℝ)) (A := (3163315 / 4194304 : ℝ)) (B := (6622585 / 8388608 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S10 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (7136057 / 12582912 : ℝ)) (A := (2941753 / 8388608 : ℝ)) (B := (2943371 / 8388608 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S3 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (18245665 / 25165824 : ℝ)) (A := (1468449 / 16777216 : ℝ)) (B := (2060359 / 16777216 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S0 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (5738495 / 8388608 : ℝ)) (A := (8826877 / 16777216 : ℝ)) (B := (8830113 / 16777216 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S7 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (18867043 / 25165824 : ℝ)) (A := (2089827 / 16777216 : ℝ)) (B := (269809 / 2097152 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S1 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (19864519 / 25165824 : ℝ)) (A := (11475911 / 16777216 : ℝ)) (B := (11479147 / 16777216 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S8 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 0) (c := (2501461 / 3145728 : ℝ)) (A := (404309 / 2097152 : ℝ)) (B := (809427 / 4194304 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 307 / 2500) (t := 943 / 1250) (l := 123 / 1000) (d := 1 / 2) (c := (19864519 / 25165824 : ℝ)) (A := (11475911 / 16777216 : ℝ)) (B := (11479147 / 16777216 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S8 h4⟩
+
 /-- **New constant, sharpened.**  Some `ξ > 0` keeps every `(3/2)^n ξ` at distance at least
 `307/2500 = 0.1228` from the integers (Dubickas 2008: `5/48 ≈ 0.1042`).
 Confidence 90% (exact lattice post-fixed point; the independent exact orbit check in
@@ -239,7 +383,12 @@ Confidence 90% (exact lattice post-fixed point; the independent exact orbit chec
 `Int.fract x = x`. -/
 theorem exists_farFromIntegers_1228 :
     ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (307 / 2500) ξ := by
-  sorry
+  obtain ⟨ξ, hξ, h⟩ := exists_trapped_of_relaxedStrategy relaxedStrategy_1228
+  refine ⟨ξ, hξ, fun n => ?_⟩
+  obtain ⟨x, ⟨hx1, hx2⟩, hx⟩ := h n
+  have : Int.fract x = x := Int.fract_eq_self.2 ⟨by linarith, by linarith⟩
+  rw [hx, this]
+  constructor <;> linarith
 
 /-- **Above the edge, no memoryless relaxed strategy.**  At `β = 13/100` (arc `[0.13, 0.87]`) no
 width and no state set win.
