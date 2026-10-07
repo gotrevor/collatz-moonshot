@@ -350,6 +350,14 @@ def test_memory_helps_off_centre():
     assert not any(_wins_vw_s(2, s, t, [t * F(j, 400)]) for j in range(77, 125, 3))
 
 
+def test_live_everywhere_off_centre():
+    # KRelaxedLiveEverywhere evidence (2026-10-07, tool output as regression): the off-centre k = 3
+    # winner's greatest fixed point is live at every residue, never at only some
+    s, t = F(2, 5), F(87, 100)
+    P, fx = solve_vw(3, s, t, [t * F(86, 400)], N=1 << 20)
+    assert fx and all(row[0] for row in P)
+
+
 def _wins_vw_s(k, s, t, L):
     P, fx = solve_vw(k, s, t, L, N=1 << 20)
     return fx and any(x for row in P for x in row)

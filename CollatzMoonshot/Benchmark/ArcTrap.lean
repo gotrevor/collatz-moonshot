@@ -3872,4 +3872,22 @@ theorem not_kRelaxedStrategy_138 {β l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (h
     ¬ KRelaxedStrategy β (1 - 2 * β) l k P :=
   not_kRelaxedStrategy_of_obliviousKill (by norm_num) hk hβ (by linarith) obliviousKill_138 hne
 
+/-- **Open: is a live `k`-strategy live at every residue?**  `not_kRelaxedStrategy_138` needs the
+strategy live at the class of one specific `m`, while `FiniteMemoryRelaxedValue` allows any live
+residue.  The adversary picks the top bit of each new residue, but the constructor's floor choices
+perturb the carries below it (for `k = 2` the low bit is `a + p + c mod 2`, with `c` the constructor's
+floor), so a strategy might steer clear of some classes.  Confidence 65%.  Evidence: the greatest
+`solve_vw` fixed points for the off-centre `k = 3` winner (`MemoryHelpsOffCentre`, widths
+`87/100 · j/400`, `j = 86, 92`) are live at all 8 residues, and at `j = 80` at none
+(regression `test_live_everywhere_off_centre`); no partially live winner has been seen. -/
+def KRelaxedLiveEverywhere : Prop :=
+  ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
+    (∃ r < 2 ^ k, (P r).Nonempty) → ∀ r < 2 ^ k, (P r).Nonempty
+
+/-- Given `KRelaxedLiveEverywhere`, `FiniteMemoryRelaxedValue` holds on `[0.138, 1/2)` for every `k`. -/
+theorem finiteMemoryRelaxedValue_ge_138 (hL : KRelaxedLiveEverywhere) {k : ℕ} (hk : 1 ≤ k) {β : ℝ}
+    (hβ : 69 / 500 ≤ β) (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
+  not_kRelaxedStrategy_138 hk hβ (hL _ _ _ k P hk hS hne _ (Nat.mod_lt _ (by positivity))) hS
+
 end CollatzMoonshot.Benchmark.ArcTrap
