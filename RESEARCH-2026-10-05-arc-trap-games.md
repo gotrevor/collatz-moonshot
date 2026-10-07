@@ -361,3 +361,11 @@ Hence `finiteMemoryRelaxedValue_ge_013`: given `KRelaxedLiveEverywhere`, no `k`-
 **What is left for `FiniteMemoryRelaxedValue`:** the same certificate pattern at each `β` in `(7/57, 0.13)`, plus `KRelaxedLiveEverywhere` and the two path bridges.  Any single `β₀` closes `[β₀, 1/2)` by monotonicity.  Every `β > 7/57` needs either a parametric family of kills as `β ↓ 7/57`, or an argument that depth is bounded only by a function of `β − 7/57`.
 
 **Floor of the small-width route.**  Component kills from `[m, m + 1)` (beam width 10000, 15 min each) found nothing at `0.1275`, `0.125`, `0.1235` or `0.1229`.  At `0.13`, from widths `1.75` and `2.11` they also found nothing (the hit is from `3/2`), and the relaxed range `[0, 1/2]` found nothing either.  So for small widths, oblivious certificates appear to stop in `(0.125, 0.13]`.  Below that, a `k`-uniform proof needs an adaptive adversary at small widths.  The exact component kill depth there grows about 2 steps per memory bit (19, 21, 22, 27, 28, 32 at `1/8`).
+
+**Prior-art check: the OpenAI manuscript drop** (`~/src/openai-math`, 722 manuscripts, 372 result families; 2026-10-07).  I grepped `CONTENTS.md` and all 7,729 TeX sources for Mahler's 3/2 problem, Z-numbers, `(3/2)^n`, Flatto, Pollington, Dubickas, Collatz/Syracuse, delay games, safety or positional games, and fractional parts or nearest-integer distance.  Nothing bears on `‖ξ(3/2)^n‖` or on finite-memory versus full-information strategies.
+- The `(3/2)^n` hits are growth bounds in unrelated proofs (Catalan irrationality, trilinear Hilbert).
+- Pollington appears only through Duffin–Schaeffer (result 022).
+- The game results (104, 105, 277) are about finite mean-payoff, parity and approximation games.
+- The Bernoulli-convolution classification (153) needs algebraic units, and `3/2` is not an algebraic integer.
+
+Novelty estimate for this thread unchanged.
