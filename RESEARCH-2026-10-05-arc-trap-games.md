@@ -307,3 +307,27 @@ For arcs `[0, t]` (Mahler's position) the shortest winnable `t` is 0.857 at `k =
 2. Uncountability: a variable-width game (widths `l, l/2, ...`) with a branching state.  A positive Hausdorff dimension bound would follow from the branching rate.
 3. Sharpen β: a finer width grid and larger `k`.  The observed `≈ 0.124` suggests room.
 4. Outward: written 2026-10-06, [`docs/notes/arc-traps-two-thirds-edge.md`](docs/notes/arc-traps-two-thirds-edge.md) (Trevor writes the pointer).
+
+## 2026-10-07: oblivious kills give a uniform-in-k bound; adaptive kills grow ~2 steps per bit
+
+**Mechanism 6: oblivious kill (alive above ~0.130, dead below).**  Choose the binary digits of `m` in advance so that every `ξ ∈ [m, m+3)` comes within `β` of an integer at some `n`.  Such an `m` refutes `TrapsResidueClass` at its class for **every** `k` at once (`not_trapsResidueClass_of_obliviousKill`, `not_kRelaxedStrategy_of_obliviousKill`).  Earlier the oblivious route had been closed because random `m` survive to `0.138`.  Random sampling is the wrong instrument for an adversary, though, and a beam search over the digits (`experiments/arc_oblivious.py`) finds kills at:
+
+| β | kill depth | m |
+|---|---|---|
+| 3/20 | 20 | 428158 |
+| 29/200 | 25 | 9282354 |
+| 7/50 | 36 | 11429738494 |
+| 69/500 | 51 | 356318813878270 |
+
+`arc_fullinfo.survives` re-checks each one independently: it dies at the depth listed and survives one step less.  The digits start `0 1111111111`, so `m + 2 ≡ 0 (mod 2^11)`: the kill opens with the all-zero parity word, the runaway from `0`.  The depth fits `≈ 0.38/(β − 0.130)`, so the oblivious threshold sits near `0.130`.  That is above `7/57` and right at the `13/100` of `FullInformationBeatsSevenFiftySevenths` (now 50%).  Beams at `0.135` and `0.136` had 100 to 360 surviving components at depth 50 and were not converging.
+
+Net: **every finite memory stops at or below 0.138** (`not_kRelaxedStrategy_138`, through the 95% bridge and the 99% certificate `obliviousKill_138`).  The open range for `FiniteMemoryRelaxedValue` shrank from `(7/57, 1/6]` to `(7/57, 0.138)`.  Caveat: the bound is stated for strategies live at the class of `m`.  It is not yet known whether a `k`-strategy live at one residue is live at all of them; the constructor's floor choices perturb the carries, so the adversary cannot obviously steer the residue.
+
+**Adaptive kill depth vs k** (exact component game, `arc_kmemory.py kill`):
+
+| β | k = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| 0.13 | 14 | 16 | 17 | 21 | 23 | 25 | 27 | (>300 s) |
+| 0.135 | 12 | 15 | 16 | 17 | 18 | 21 | 22 | 27 |
+
+The growth is about 2 steps per bit, with kill depth always greater than the lookahead `k − 1`.  Below the oblivious threshold, this delayed adaptivity is the only lever left.  The principal line at `k = 6`, `β = 0.135` has 3 early branch points, an all-zero residue stretch (`r = 000000`, the runaway from 0) and a final non-branching collapse.

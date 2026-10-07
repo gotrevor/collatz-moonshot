@@ -3752,12 +3752,15 @@ no `k`-memory relaxed strategy holds `[β, 1 - β]` from any residue.  Proved fo
 prove it for all `k`.
 Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12` (and at `0.1235`, `0.125` for
 `k = 8, 10`); the exact `k`-memory component game (`experiments/arc_kmemory.py`) kills every residue at
-`β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`.
-Difficulty locus: the kill depth grows with `k`, and no fixed (oblivious) parity sequence can kill,
-because with full information every tested integer part survives far above `7/57`
-(`FullInformationBeatsSevenFiftySevenths`).  So a proof must use the adversary's adaptivity, delayed
-by `k - 1` steps, quantitatively in `k`.  The residue-class route is closed
-(`not_trapsBarrier_of_fullInformation`), and no general memory reduction exists
+`β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`; at `β = 0.13` within 14, 16, 17, 21, 23, 25,
+27 steps for `k = 1, …, 7`, and at `β = 0.135` within 12, 15, 16, 17, 18, 21, 22, 27 for `k = 1, …, 8`
+(about two extra steps per bit of memory).
+Uniform in `k` above `0.138`: an oblivious kill (`obliviousKill_138`, `not_kRelaxedStrategy_138`)
+bounds every memory size at once, so the open range is `(7/57, 0.138)`.
+Difficulty locus: oblivious kills get deep fast as `β` falls (depth 20, 25, 36, 51 at `0.15`, `0.145`,
+`0.14`, `0.138`; a `c/(β - β₀)` fit puts their threshold near `0.130`), so below about `0.13` no fixed
+parity sequence kills (`FullInformationBeatsSevenFiftySevenths`), and a proof must use the adversary's
+adaptivity, delayed by `k - 1` steps, quantitatively in `k`.  No general memory reduction exists
 (`MemoryHelpsOffCentre`). -/
 def FiniteMemoryRelaxedValue : Prop :=
   ∀ k : ℕ, 1 ≤ k → ∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ (l : ℝ) (P : ℕ → Set ℝ),
@@ -3794,7 +3797,10 @@ def MemoryHelpsOffCentre : Prop :=
     ∀ (l : ℝ) (P : Set ℝ), ¬ RelaxedStrategy (2 / 5) (87 / 100) l P
 
 /-- **Conjecture: with full information, every integer part beats `7/57`.**  Every `m ≥ 1` is within
-`3` of the integer part of some `ξ` with `‖ξ (3/2)^n‖ ≥ 13/100` for all `n`.  Confidence 75%.
+`3` of the integer part of some `ξ` with `‖ξ (3/2)^n‖ ≥ 13/100` for all `n`.  Confidence 50% (was 75%
+before adversarial search: chosen digits kill at `0.138` (`obliviousKill_138`), below every random
+sample, and the kill depths 20, 25, 36, 51 at `0.15`, `0.145`, `0.14`, `0.138` extrapolate to a
+threshold near `0.130`, right at this statement's `13/100`).
 Evidence (`experiments/arc_fullinfo.py`): the exact interval tree from `[m, m + 1)` keeps some branch
 `0.14`-far for 200 steps for every `m < 200` (worst `m = 175` at `0.1422`, stable from depth 50 to 200),
 and for 150 random `m` at each of `10³, 10⁶, 10¹², 10³⁰` the worst `β_m` (depth 150) is `0.138`–`0.142`.
@@ -3810,5 +3816,60 @@ structure. -/
 theorem not_trapsBarrier_of_fullInformation (h : FullInformationBeatsSevenFiftySevenths) :
     ¬ ∀ k r : ℕ, r < 2 ^ k → ¬ TrapsResidueClass (13 / 100) (74 / 100) k r :=
   fun hb => hb 0 0 (by norm_num) h
+
+/-! ### Oblivious kills: one integer part that defeats every memory size -/
+
+/-- **An oblivious kill.**  No `ξ ∈ [M, M + 3)` keeps every `{ξ (3/2)^n}` in `[β, 1 - β]`.  Only
+`M mod 2^N` matters for the first `N` steps, so a kill found by a finite search is a fact about a
+whole residue class, chosen in advance, with no adaptivity. -/
+def ObliviousKill (β : ℝ) (M : ℕ) : Prop :=
+  ∀ ξ : ℝ, (M : ℝ) ≤ ξ → ξ < M + 3 → ∃ n : ℕ, Int.fract (ξ * (3 / 2) ^ n) ∉ Set.Icc β (1 - β)
+
+/-- An oblivious kill at `β₀` refutes the residue-class property at every `β ≥ β₀`, for every memory
+size `k`, at the class of `M`. -/
+theorem not_trapsResidueClass_of_obliviousKill {β₀ β : ℝ} {M : ℕ} (hM : 0 < M) (hβ₀ : β₀ ≤ β)
+    (hβ : 0 < β) (h : ObliviousKill β₀ M) (k : ℕ) :
+    ¬ TrapsResidueClass β (1 - 2 * β) k (M % 2 ^ k) := by
+  intro hT
+  obtain ⟨g, hg1, hg2, ξ, -, hfl, hall⟩ := hT M hM rfl
+  have h1 : (g : ℝ) ≤ ξ := by
+    have := Int.floor_le ξ; rw [hfl] at this; exact_mod_cast this
+  have h2 : ξ < g + 1 := by
+    have := Int.lt_floor_add_one ξ; rw [hfl] at this; exact_mod_cast this
+  have hgM : (M : ℝ) ≤ g := by exact_mod_cast hg1
+  have hgM' : (g : ℝ) + 1 ≤ M + 3 := by exact_mod_cast (show g + 1 ≤ M + 3 by omega)
+  obtain ⟨n, hn⟩ := h ξ (by linarith) (by linarith)
+  obtain ⟨x, hx, hfx⟩ := hall n
+  apply hn
+  have hx' : Int.fract x = x := Int.fract_eq_self.2 ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  rw [hfx, hx']
+  exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+
+/-- So an oblivious kill bounds **every** finite memory: no `k`-memory relaxed strategy at any
+`β ≥ β₀` is live at the residue of `M`.  (Through `trapsResidueClass_of_kRelaxedStrategy`.) -/
+theorem not_kRelaxedStrategy_of_obliviousKill {β₀ β l : ℝ} {M k : ℕ} {P : ℕ → Set ℝ} (hM : 0 < M)
+    (hk : 1 ≤ k) (hβ₀ : β₀ ≤ β) (hβ : 0 < β) (h : ObliviousKill β₀ M)
+    (hne : (P (M % 2 ^ k)).Nonempty) : ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
+  not_trapsResidueClass_of_obliviousKill hM hβ₀ hβ h k
+    (trapsResidueClass_of_kRelaxedStrategy hk (by linarith) (Nat.mod_lt _ (by positivity)) hS hne)
+
+/-- **An oblivious kill at `0.138`**, below every random integer part sampled before
+(`FullInformationBeatsSevenFiftySevenths` evidence: worst random `β_m ≈ 0.138`).  Every `ξ` in
+`[M, M + 3)`, `M = 356318813878270`, has `‖ξ (3/2)^n‖ < 69/500` for some `n ≤ 51`.  Confidence 99%.
+Evidence: found by a beam search over the binary digits of `M` (`experiments/arc_oblivious.py`), then
+re-checked by the independent exact interval tree `arc_fullinfo.survives` (dies at depth `51`,
+survives depth `50`).  A finite rational-interval certificate, a treadmill candidate.  The same
+search kills `3/20` (depth `20`), `29/200` (`25`) and `7/50` (`36`); kill depth grows fast as `β`
+falls, and below `0.138` the open question is where the oblivious threshold sits. -/
+theorem obliviousKill_138 : ObliviousKill (69 / 500) 356318813878270 := by
+  sorry
+
+/-- **No finite memory reaches `0.138`** at the class of `356318813878270`: a uniform-in-`k` bound,
+where every earlier finite-memory barrier fixed `k`.  So the finite-memory value lies in
+`[7/57, 0.138]` for every `k`. -/
+theorem not_kRelaxedStrategy_138 {β l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (hβ : 69 / 500 ≤ β) (hne : (P (356318813878270 % 2 ^ k)).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P :=
+  not_kRelaxedStrategy_of_obliviousKill (by norm_num) hk hβ (by linarith) obliviousKill_138 hne
 
 end CollatzMoonshot.Benchmark.ArcTrap
