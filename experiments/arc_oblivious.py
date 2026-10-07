@@ -12,7 +12,7 @@ Found 2026-10-07: kills at 3/20 (depth 20), 29/200 (25), 7/50 (36), 69/500 (51,
 m = 356318813878270), 0.1379 (53), 0.1378 (62), 0.1377 (66, m = 31982856860489480190, exp 1.0), each
 re-checked by arc_fullinfo.survives; none at 0.137, 0.1365, 0.136 with width 20000.
 
-    arc_oblivious.py search BETA DEPTH WIDTH [EXP [START_WIDTH]]
+    arc_oblivious.py search BETA DEPTH WIDTH [EXP [START_WIDTH [OFFSET]]]
     arc_oblivious.py relaxed BETA L DEPTH WIDTH [EXP [L2]]   (L2: every width in [L, L2])
     arc_oblivious.py test
 """
@@ -22,15 +22,17 @@ import subprocess
 import sys
 from fractions import Fraction as F
 
-def search(beta, depth, width, exp=0.5, start=3, log=False):
+def search(beta, depth, width, exp=0.5, start=3, log=False, offset=0):
     """(kill depth, m) for the first kill the beam finds, else (None, None).
+
+    The start set is [m + offset, m + offset + start).
 
     Integer arithmetic: with beta = p/q, endpoints of V are numerators over q * 2^t, so x 3/2 is a
     numerator x 3 and the digit-t shift 3^t is 3^t * q * 2^t."""
-    beta, start = F(beta), F(start)
-    q = beta.denominator * start.denominator
+    beta, start, offset = F(beta), F(start), F(offset)
+    q = beta.denominator * start.denominator * offset.denominator
     p = int(beta * q)
-    beam = [(0, [(0, int(start * q))])]
+    beam = [(0, [(int(offset * q), int((offset + start) * q))])]
     for t in range(depth):
         den = q << t
         sh = 3 ** t * den
@@ -146,7 +148,8 @@ def main(argv):
     if argv[0] == "search":
         exp = float(argv[4]) if len(argv) > 4 else 0.5
         start = F(argv[5]) if len(argv) > 5 else 3
-        print(search(F(argv[1]), int(argv[2]), int(argv[3]), exp, start=start, log=True))
+        offset = F(argv[6]) if len(argv) > 6 else 0
+        print(search(F(argv[1]), int(argv[2]), int(argv[3]), exp, start=start, log=True, offset=offset))
         return 0
     print(__doc__)
     return 2
@@ -209,6 +212,22 @@ def test_start_width_matters():
     t, m = search(F(13, 100), 45, 1000, 1.0, start=1)
     assert t == 38
     assert search(F(13, 100), 45, 1000, 1.0, start=3) == (None, None)
+
+
+TILES_1229 = [(568234, 21), (58965761, 27), (1077873, 22), (17399807417632, 47), (1019278, 22),
+              (8143102, 27), (480341, 21), (3, 4)]
+
+
+def test_tiles_1229():
+    # obliviousKillAt_1229_tiles: [m_i + i/8, m_i + i/8 + 1/4] dies within D_i at 0.1229, for i < 8;
+    # closed intervals, judged by the independent interval tree
+    from arc_fullinfo import survives
+    b = F(1229, 10000)
+    for i, (m, d) in enumerate(TILES_1229):
+        lo = m + F(i, 8)
+        assert not survives(lo, lo + F(1, 4), b, d) and survives(lo, lo + F(1, 4), b, d - 1)
+    # control: the hardest tile does not die at 0.12285 by the same depth
+    assert survives(TILES_1229[3][0] + F(3, 8), TILES_1229[3][0] + F(5, 8), F(12285, 100000), 47)
 
 
 if __name__ == "__main__":

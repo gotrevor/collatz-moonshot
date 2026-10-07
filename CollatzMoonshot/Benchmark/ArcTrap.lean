@@ -3758,7 +3758,10 @@ Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12, 1
 Uniform in `k` from `0.13` up (`finiteMemoryRelaxedValue_ge_013`, given `KRelaxedLiveEverywhere`):
 oblivious certificates per window width bound every memory size at once, so the open range is
 `(7/57, 0.13)`.  Relaxed kills already reach `0.1229` at width `3/20`
-(`relaxedObliviousKill_1229_width_3_20`).  At `β = 1/8` the kill depths
+(`relaxedObliviousKill_1229_width_3_20`), and at `0.1229` every width `l ≤ (1/9)(2/3)^k` dies with no
+liveness hypothesis (`not_kRelaxedStrategy_1229_small_width`: the adversary sees the start before
+choosing the high digits, then narrow-start kills finish it).  So at `0.1229` the open widths are
+`((1/9)(2/3)^k, 1.11]` minus `3/20`.  At `β = 1/8` the kill depths
 are 19, 21, 22, 27, 28, 32 for `k = 1, …, 6`.
 Difficulty locus: oblivious kills stop near `0.1375` (depths 20, 25, 36, 51, 53, 62, 66 at `0.15`,
 `0.145`, `0.14`, `0.138`, `0.1379`, `0.1378`, `0.1377`; width-20000 beams under three scores find none at
@@ -4058,5 +4061,132 @@ theorem finiteMemoryRelaxedValue_ge_013 (hL : KRelaxedLiveEverywhere) {k : ℕ} 
       (relaxedObliviousKillRange_013_a.kill h1.le h2) (live _) h0
   · exact not_kRelaxedStrategy_of_relaxedObliviousKill hk
       (relaxedObliviousKillRange_013_b.kill h2.le (by linarith)) (live _) h0
+
+/-! ### Receding horizon: narrow-start kills, no liveness hypothesis -/
+
+/-- An oblivious kill within `D` moves from the closed window `[N + c, N + c + w]`. -/
+def ObliviousKillAt (β c w : ℝ) (N : ℤ) (D : ℕ) : Prop :=
+  ∀ η : ℝ, (N : ℝ) + c ≤ η → η ≤ N + c + w → ∃ n ≤ D, Int.fract (η * (3 / 2) ^ n) ∉ Set.Icc β (1 - β)
+
+/-- Shifting by a multiple of `2^D` leaves the first `D` fractional parts alone. -/
+theorem fract_three_halves_pow_add (η : ℝ) (j : ℤ) {n D : ℕ} (h : n ≤ D) :
+    Int.fract ((η + 2 ^ D * j) * (3 / 2) ^ n) = Int.fract (η * (3 / 2) ^ n) := by
+  obtain ⟨e, rfl⟩ := Nat.exists_eq_add_of_le h
+  have : (η + 2 ^ (n + e) * j) * (3 / 2) ^ n = η * (3 / 2) ^ n + ((3 ^ n * 2 ^ e * j : ℤ) : ℝ) := by
+    push_cast; rw [pow_add, div_pow]; field_simp
+  rw [this, Int.fract_add_intCast]
+
+/-- **Soundness from a chosen start.**  Playing a `k`-memory relaxed strategy on the actual integer
+parts from `M + a`, `a ∈ P (M mod 2^k)`, runs forever.  Confidence 95% (the bookkeeping of
+`exists_relaxedPath_of_kRelaxedStrategy`, which starts the same way). -/
+theorem exists_relaxedPath_from_mem {β l : ℝ} {k M : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (h : KRelaxedStrategy β (1 - 2 * β) l k P) {a : ℝ} (ha : a ∈ P (M % 2 ^ k)) :
+    ∃ V : ℕ → ℝ, V 0 = M + a ∧ ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l / 3 ∧
+      (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2 := by
+  sorry
+
+/-- **A relaxed run traps a point within `l` of its start** (the nested intervals of
+`exists_trapped_of_relaxedPath`: the first kept window is `[u₀, u₀ + 2l/3] ⊆ [V 0, V 0 + l]`).
+Confidence 97%. -/
+theorem exists_trapped_of_relaxedPath_from {β l : ℝ} (hl : 0 < l) (V : ℕ → ℝ)
+    (hV : ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l / 3 ∧
+      (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2) :
+    ∃ ξ : ℝ, V 0 ≤ ξ ∧ ξ ≤ V 0 + l ∧ ∀ n, Int.fract (ξ * (3 / 2) ^ n) ∈ Set.Icc β (1 - β) := by
+  sorry
+
+/-- `3^k` is invertible mod `2^D`. -/
+theorem exists_three_pow_mul_eq (k D : ℕ) (N : ℤ) : ∃ M' : ℕ, ∃ j : ℤ, (3 : ℤ) ^ k * M' = N + 2 ^ D * j := by
+  have hc : Nat.Coprime 3 (2 ^ D) := Nat.Coprime.pow_right _ (by norm_num)
+  set u : (ZMod (2 ^ D))ˣ := ZMod.unitOfCoprime 3 hc ^ k with hu
+  have hu3 : ((u : (ZMod (2 ^ D))ˣ) : ZMod (2 ^ D)) = 3 ^ k := by
+    rw [hu, Units.val_pow_eq_pow_val, ZMod.coe_unitOfCoprime]; push_cast; rfl
+  refine ⟨((N : ZMod (2 ^ D)) * ↑u⁻¹).val, ?_⟩
+  have h0 : (((3 : ℤ) ^ k * (((N : ZMod (2 ^ D)) * ↑u⁻¹).val : ℕ) - N : ℤ) : ZMod (2 ^ D)) = 0 := by
+    push_cast
+    rw [ZMod.natCast_zmod_val, ← hu3, mul_left_comm, Units.mul_inv, mul_one, sub_self]
+  obtain ⟨j, hj⟩ := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).1 h0
+  exact ⟨j, by push_cast at hj; linarith⟩
+
+/-- **Receding horizon.**  Against a `k`-memory relaxed strategy of width `l`, the adversary fixes the
+low `k` digits to a live residue `r`, sees the start `a ∈ P r`, and only then chooses the higher digits.
+The trapped point satisfies `ξ (3/2)^k ∈ 3^k M' + (r + a)(3/2)^k + [0, l (3/2)^k]`, and `3^k M'` reaches
+every class mod `2^D`, so oblivious kills from narrow windows at every offset finish it.  No
+`KRelaxedLiveEverywhere`: the adversary chooses which live residue to play. -/
+theorem not_kRelaxedStrategy_of_narrowKills {β l w : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (hkill : ∀ c : ℝ, ∃ N : ℤ, ∃ D : ℕ, ObliviousKillAt β c w N D) (hw : l * (3 / 2) ^ k ≤ w)
+    (hne : ∃ r < 2 ^ k, (P r).Nonempty) : ¬ KRelaxedStrategy β (1 - 2 * β) l k P := by
+  intro hS
+  obtain ⟨r, hr, a, ha⟩ := hne
+  obtain ⟨N, D, hK⟩ := hkill ((r + a) * (3 / 2) ^ k)
+  obtain ⟨M', j, hj⟩ := exists_three_pow_mul_eq k D N
+  have hM : (r + 2 ^ k * M') % 2 ^ k = r := by
+    rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hr]
+  obtain ⟨V, hV0, hV⟩ := exists_relaxedPath_from_mem (M := r + 2 ^ k * M') hk hS (hM ▸ ha)
+  obtain ⟨ξ, hξ0, hξ1, hall⟩ := exists_trapped_of_relaxedPath_from hS.1 V hV
+  have hjR : (3 : ℝ) ^ k * M' = N + 2 ^ D * j := by exact_mod_cast hj
+  have h32 : (2 : ℝ) ^ k * (3 / 2) ^ k = 3 ^ k := by rw [div_pow]; field_simp
+  have hpos : (0 : ℝ) ≤ (3 / 2) ^ k := by positivity
+  set η := ξ * (3 / 2) ^ k - 2 ^ D * j with hη
+  have hξη : ξ * (3 / 2) ^ k = η + 2 ^ D * j := by rw [hη]; ring
+  push_cast at hV0
+  have key : ξ * (3 / 2) ^ k = (N : ℝ) + (r + a) * (3 / 2) ^ k + 2 ^ D * j +
+      (ξ - (r + 2 ^ k * M' + a)) * (3 / 2) ^ k := by
+    have : (2 : ℝ) ^ k * M' * (3 / 2) ^ k = N + 2 ^ D * j := by rw [← hjR, ← h32]; ring
+    linear_combination this
+  have hδ0 : 0 ≤ (ξ - (r + 2 ^ k * M' + a)) * (3 / 2) ^ k :=
+    mul_nonneg (by rw [hV0] at hξ0; linarith) hpos
+  have hδ1 : (ξ - (r + 2 ^ k * M' + a)) * (3 / 2) ^ k ≤ l * (3 / 2) ^ k :=
+    mul_le_mul_of_nonneg_right (by rw [hV0] at hξ1; linarith) hpos
+  obtain ⟨n, hn, hout⟩ := hK η (by linarith) (by linarith)
+  apply hout
+  rw [← fract_three_halves_pow_add η j hn, ← hξη, mul_assoc, ← pow_add]
+  exact hall (k + n)
+
+/-- Kills shrink with their window. -/
+theorem ObliviousKillAt.mono {β c w c' w' : ℝ} {N N' : ℤ} {D : ℕ} (h : ObliviousKillAt β c w N D)
+    (h₁ : (N : ℝ) + c ≤ N' + c') (h₂ : (N' : ℝ) + c' + w' ≤ N + c + w) : ObliviousKillAt β c' w' N' D :=
+  fun η h₃ h₄ => h η (by linarith) (by linarith)
+
+/-- **Eight narrow kills `10⁻⁴` above `7/57`**: for `i < 8`, every `η ∈ [m_i + i/8, m_i + i/8 + 1/4]`
+has `‖η (3/2)^n‖ < 0.1229` for some `n ≤ D_i`, with `m = 568234, 58965761, 1077873, 17399807417632,
+1019278, 8143102, 480341, 3` and `D = 21, 27, 22, 47, 22, 27, 21, 4`.  Confidence 99%:
+`arc_oblivious.py search 0.1229 150 2000 1.0 1/4 i/8`, re-checked on closed windows by
+`arc_fullinfo.survives` (`test_tiles_1229`).  Start width is everything: from width `1/4` kills reach
+`0.1229` at every offset, from width `1/2` at offsets `0, 1/2` they stop between `0.1229` and
+`0.1235`, from width `1` near `0.128`, from width `3` near `0.1375`.  At `0.12285` the tile at offset
+`3/8` gave no kill (beam 2000, depth 150). -/
+theorem obliviousKillAt_1229_tiles (i : ℕ) (hi : i < 8) :
+    ObliviousKillAt (1229 / 10000) (i / 8) (1 / 4)
+      (![568234, 58965761, 1077873, 17399807417632, 1019278, 8143102, 480341, 3] ⟨i, hi⟩)
+      (![21, 27, 22, 47, 22, 27, 21, 4] ⟨i, hi⟩) := by
+  sorry
+
+/-- The eight tiles cover every offset with a window of width `1/9`. -/
+theorem obliviousKillAt_1229 (c : ℝ) : ∃ N : ℤ, ∃ D : ℕ, ObliviousKillAt (1229 / 10000) c (1 / 9) N D := by
+  have hf0 := Int.fract_nonneg c
+  have hf1 := Int.fract_lt_one c
+  have hz0 : 0 ≤ ⌊8 * Int.fract c⌋ := Int.floor_nonneg.2 (by positivity)
+  have hz8 : ⌊8 * Int.fract c⌋ < 8 := Int.floor_lt.2 (by push_cast; linarith)
+  have hzl : (⌊8 * Int.fract c⌋ : ℝ) ≤ 8 * Int.fract c := Int.floor_le _
+  have hzu : 8 * Int.fract c < ⌊8 * Int.fract c⌋ + 1 := Int.lt_floor_add_one _
+  set i := (⌊8 * Int.fract c⌋).toNat with hi
+  have hiz : ((i : ℤ) : ℝ) = (⌊8 * Int.fract c⌋ : ℝ) := by rw [hi, Int.toNat_of_nonneg hz0]
+  push_cast at hiz
+  have hi8 : i < 8 := by omega
+  have hc : c = ⌊c⌋ + Int.fract c := (Int.floor_add_fract c).symm
+  obtain ⟨N, D, T⟩ : ∃ N : ℤ, ∃ D : ℕ, ObliviousKillAt (1229 / 10000) (i / 8) (1 / 4) N D :=
+    ⟨_, _, obliviousKillAt_1229_tiles i hi8⟩
+  refine ⟨N - ⌊c⌋, D, T.mono ?_ ?_⟩
+  · push_cast; linarith
+  · push_cast; linarith
+
+/-- **No finite memory holds `[0.1229, 0.8771]` at small width**: for every `k`, a `k`-memory relaxed
+strategy needs `l (3/2)^k > 1/9`.  Unconditional (no `KRelaxedLiveEverywhere`), modulo the two bridges
+and the tile certificate.  The gap left at `0.1229`: widths `(1/9)(2/3)^k < l`, below the relaxed
+kills' `3/20` (`relaxedObliviousKill_1229_width_3_20`). -/
+theorem not_kRelaxedStrategy_1229_small_width {k : ℕ} (hk : 1 ≤ k) {β l : ℝ} (hβ : 1229 / 10000 ≤ β)
+    (hl : l * (3 / 2) ^ k ≤ 1 / 9) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
+  not_kRelaxedStrategy_of_narrowKills hk obliviousKillAt_1229 hl hne (hS.mono hβ)
 
 end CollatzMoonshot.Benchmark.ArcTrap

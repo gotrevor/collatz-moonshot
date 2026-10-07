@@ -369,3 +369,20 @@ Hence `finiteMemoryRelaxedValue_ge_013`: given `KRelaxedLiveEverywhere`, no `k`-
 - The Bernoulli-convolution classification (153) needs algebraic units, and `3/2` is not an algebraic integer.
 
 Novelty estimate for this thread unchanged.
+
+## Mechanism 8: receding horizon, and the start-width curve (2026-10-07)
+
+**Start width is everything, measured.**  Oblivious kills from `[m + c, m + c + w]` (`arc_oblivious.py search BETA D 2000 1.0 W C`, every kill re-judged by `arc_fullinfo.survives`):
+
+| start width `w` | lowest `β` killed | notes |
+|---|---|---|
+| 3 | ≈ 0.1375 | `obliviousKill_1377` |
+| 1 | ≈ 0.128 | 0.13 at depth 38 |
+| 1/2 | between 0.1229 and 0.1235 | offset 0: 0.1235 at depth 58, 0.1229 none; offset 3/4: 0.1229 at 42; 0.1232 at depth 67 |
+| 1/4 | ≤ 0.1229 at all 8 offsets `i/8` (max depth 47) | 0.12285 fails at offset 3/8; 0.12282, 0.12281 fail at offset 0 |
+
+So the narrow-start floor sits within `5·10⁻⁵` of `7/57 ≈ 0.122807`, with offset `3/8` the hardest.
+
+**Receding horizon (`not_kRelaxedStrategy_of_narrowKills`).**  The adversary sets the low `k` digits to any live residue `r`, sees the strategy's start `a ∈ P r`, and only then chooses the high digits.  The trapped point has `ξ (3/2)^k ∈ 3^k M' + (r + a)(3/2)^k + [0, l (3/2)^k]`, and `3^k M'` reaches every class mod `2^D`.  So kills from width-`w` windows at every offset defeat every `k` with `l (3/2)^k ≤ w`.  This needs no `KRelaxedLiveEverywhere`, because the adversary chooses which live residue to play.  At `0.1229` the 8 tiles give `w = 1/9`: `not_kRelaxedStrategy_1229_small_width`.
+
+**What it does not do.**  For fixed `l` the window `l (3/2)^k` grows with `k`, and once it passes ~1 the kill is a unit-start kill again (floor ≈ 0.128).  Doing the trick at a later time `n` gives the same width.  So at `0.1229` the open widths are `((1/9)(2/3)^k, 1.11]` minus `3/20`.  For large `k` that is essentially everything.  The constructor's lookahead is exactly what keeps the start window wide.  Beating it needs the adversary to shrink the constructor's spread *during* the k-step lookahead with adaptively chosen digits (the `D(k)` data says this works for small `k`), not only after it.
