@@ -262,7 +262,10 @@ Lean: `KRelaxedStrategy` (the `solve_vw` game with `k` bits), `FiniteMemoryRelax
 1. Memory reduction `Q_s = P_s ∩ P_{s+2^{k−1}}`: needs one move good for four residues; false in general (off-centre example).
 2. Delay-robust adversary (at every branch, all but one component dies for *every* parity sequence): would give an oblivious kill, contradicted by the full-information survival.
 3. Random adversary: the constructor sees committed parities `k − 1` steps ahead and can correlate its branch choice with them, so "the right parity arrives with probability 1/2" is not independent of its choices.
-Open target: an adversary that plays the memoryless strategy on a predicted line and absorbs mispredictions, with a potential that decreases over each block of `O(k)` steps.
+4. Holds: after each branch, play a parity word that keeps every child unbranched and no larger, so the constructor's lookahead sees only uninformative parities; then resume the memoryless kill on the branch actually taken.  Dead at `β = 0.1229` (scratch search, words up to length 6): the first branch points' children are wider than 1 (`[0.184, 1.316]`, `[0.684, 1.816]`) and branch again under every parity, so no child of them admits even one unbranched word of length 8.
+5. Delay-game theory (Holtmann–Kaiser–Thomas 2010; Klein–Zimmermann 2015): for a finite-state safety game, winning with some finite delay implies winning with delay at most exponential in the state count.  Our windows are not finite-state at fixed `β` (endpoint denominators grow), and a lattice abstraction would have `10⁴`+ states, so the bound is useless numerically.  It is the right genre for prior art: "no finite delay suffices, infinite lookahead does" is the delay-games separation between bounded and continuous uniformization.
+
+Open target: an adversary that plays the memoryless strategy on a predicted line and absorbs mispredictions, with a potential that decreases over each block of `O(k)` steps.  Proof odds with the moves above: ~5%; truth: 85%.
 
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
