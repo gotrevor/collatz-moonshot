@@ -3904,4 +3904,44 @@ theorem finiteMemoryRelaxedValue_ge_138 (hL : KRelaxedLiveEverywhere) {k : ℕ} 
     ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
   not_kRelaxedStrategy_138 hk hβ (hL _ _ _ k P hk hS hne _ (Nat.mod_lt _ (by positivity))) hS
 
+/-! ### Relaxed oblivious kills: fixed window width -/
+
+/-- **A relaxed oblivious kill** for window width `l`: no run of the relaxed move, in actual numbers
+(integer parts included), starts with a left end in `[M, M + 1)` and lasts forever.  The move keeps
+`u ∈ [V, V + l/3]` with `[u, u + 2l/3]` inside a lift of `[β, 1 - β]`, and the next left end is `3u/2`.
+This is weaker for the constructor than `ObliviousKill`, which lets it keep whole components. -/
+def RelaxedObliviousKill (β l : ℝ) (M : ℕ) : Prop :=
+  ¬ ∃ V : ℕ → ℝ, (M : ℝ) ≤ V 0 ∧ V 0 < M + 1 ∧ ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l / 3 ∧
+    (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2
+
+/-- **Soundness, path form.**  A `k`-memory relaxed strategy live at the class of `M` runs forever
+from some left end in `[M, M + 1)`: play it on the actual integer parts of the orbit, whose residues
+it reads.  Confidence 95% (the nested-interval bookkeeping of
+`trapsResidueClass_of_kRelaxedStrategy`, without passing to the limit point). -/
+theorem exists_relaxedPath_of_kRelaxedStrategy {β l : ℝ} {k M : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (h : KRelaxedStrategy β (1 - 2 * β) l k P) (hne : (P (M % 2 ^ k)).Nonempty) :
+    ∃ V : ℕ → ℝ, (M : ℝ) ≤ V 0 ∧ V 0 < M + 1 ∧ ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l / 3 ∧
+      (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2 := by
+  sorry
+
+/-- A relaxed oblivious kill at width `l` defeats every memory size at that width. -/
+theorem not_kRelaxedStrategy_of_relaxedObliviousKill {β l : ℝ} {k M : ℕ} {P : ℕ → Set ℝ}
+    (hk : 1 ≤ k) (h : RelaxedObliviousKill β l M) (hne : (P (M % 2 ^ k)).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
+  h (exists_relaxedPath_of_kRelaxedStrategy hk hS hne)
+
+/-- **A relaxed oblivious kill at `β = 1/8`, `l = 1/8`**, the memoryless optimum's width and far
+below the component-game threshold `≈ 0.1375`: from `M = 604160` every relaxed run dies within 22
+moves.  Confidence 99%.  Evidence: beam search over the digits of `M` (`arc_oblivious.py`
+relaxed mode), and an independent check in this file's own residue bookkeeping (state `(r mod 2^K, a)`,
+the `KRelaxedStrategy` update), which dies at depth 22, while `M + 1` and `β = 0.12` survive. -/
+theorem relaxedObliviousKill_1_8 : RelaxedObliviousKill (1 / 8) (1 / 8) 604160 := by
+  sorry
+
+/-- **No finite memory holds `[1/8, 7/8]` at width `1/8`** (at the class of `604160`), for every `k`. -/
+theorem not_kRelaxedStrategy_1_8_width_1_8 {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (hne : (P (604160 % 2 ^ k)).Nonempty) :
+    ¬ KRelaxedStrategy (1 / 8) (1 - 2 * (1 / 8)) (1 / 8) k P :=
+  not_kRelaxedStrategy_of_relaxedObliviousKill hk relaxedObliviousKill_1_8 hne
+
 end CollatzMoonshot.Benchmark.ArcTrap
