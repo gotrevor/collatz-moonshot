@@ -3750,7 +3750,7 @@ theorem kRelaxedStrategy_one {s t l : ℝ} {P : ℕ → Set ℝ} (h : KRelaxedSt
 no `k`-memory relaxed strategy holds `[β, 1 - β]` from any residue.  Proved for `k = 1`
 (`finiteMemoryRelaxedValue_one`).  Confidence 85% that it is true; ~10% that the present methods
 prove it for all `k`.
-Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12` (and at `0.1235`, `0.125` for
+Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12, 14` (and at `0.1235`, `0.125` for
 `k = 8, 10`); the exact `k`-memory component game (`experiments/arc_kmemory.py`) kills every residue at
 `β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`; at `β = 0.13` within 14, 16, 17, 21, 23, 25,
 27 steps for `k = 1, …, 7`, and at `β = 0.135` within 12, 15, 16, 17, 18, 21, 22, 27 for `k = 1, …, 8`
