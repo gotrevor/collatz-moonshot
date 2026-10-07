@@ -3705,4 +3705,110 @@ theorem relaxedValueIsSevenFiftySevenths : RelaxedValueIsSevenFiftySevenths :=
   ⟨fun β _ hβ => (relaxedStrategy_exists_iff β (by linarith)).2 hβ.le,
     fun β hβ hβ' l P => relaxed_barrier β hβ hβ' l P⟩
 
+/-! ### Finite memory past `7/57`?  The horizon question for the far-from-integers game -/
+
+/-- **`k`-memory relaxed strategy** (`solve_vw` in `experiments/arc_trap_k.py`, `k ≥ 1`).  `P r` holds the
+window left ends allowed when the integer part `m` has `m ≡ r (mod 2^k)`, so the parity
+`d = (r mod 2)/2` is known.  The child's integer part is `⌊3m/2⌋ + ⌊3u/2 + d⌋`; its residue mod
+`2^(k-1)` is determined by `r` and the move, its top bit is not, so the child must be allowed for both
+values `b` of that bit.  `k = 1` is the memoryless game (`kRelaxedStrategy_one`). -/
+def KRelaxedStrategy (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) : Prop :=
+  0 < l ∧ (∀ r, P r ⊆ Set.Ico 0 1) ∧
+  ∀ r < 2 ^ k, ∀ a ∈ P r, ∃ u : ℝ, a ≤ u ∧ u + 2 * l / 3 ≤ a + l ∧
+    (∃ j : ℤ, (j : ℝ) + s ≤ u ∧ u + 2 * l / 3 ≤ j + s + t) ∧
+    ∀ b < 2, Int.fract (3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2) ∈
+      P (((3 * r - r % 2) / 2 + (⌊3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋).toNat) % 2 ^ (k - 1) +
+        b * 2 ^ (k - 1))
+
+/-- With one bit of memory the strategy only learns the parity it was going to be told anyway:
+`P 0 ∩ P 1` is a memoryless relaxed strategy. -/
+theorem kRelaxedStrategy_one {s t l : ℝ} {P : ℕ → Set ℝ} (h : KRelaxedStrategy s t l 1 P)
+    (hne : (P 0 ∪ P 1).Nonempty) : RelaxedStrategy s t l (P 0 ∩ P 1) := by
+  obtain ⟨hl, hP, hm⟩ := h
+  have key : ∀ r < 2, ∀ a ∈ P r, ∃ u : ℝ, a ≤ u ∧ u + 2 * l / 3 ≤ a + l ∧
+      (∃ j : ℤ, (j : ℝ) + s ≤ u ∧ u + 2 * l / 3 ≤ j + s + t) ∧
+      Int.fract (3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2) ∈ P 0 ∩ P 1 := by
+    intro r hr a ha
+    obtain ⟨u, h1, h2, h3, h4⟩ := hm r (by simpa using hr) a ha
+    refine ⟨u, h1, h2, h3, ?_, ?_⟩
+    · simpa [Nat.mod_one] using h4 0 (by norm_num)
+    · simpa [Nat.mod_one] using h4 1 (by norm_num)
+  refine ⟨hl, ?_, fun x hx => hP 0 hx.1, ?_⟩
+  · obtain ⟨a, ha⟩ := hne
+    rcases ha with ha | ha
+    · obtain ⟨u, -, -, -, h4⟩ := key 0 (by norm_num) a ha; exact ⟨_, h4⟩
+    · obtain ⟨u, -, -, -, h4⟩ := key 1 (by norm_num) a ha; exact ⟨_, h4⟩
+  intro a ha d hd
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hd
+  rcases hd with rfl | rfl
+  · obtain ⟨u, h1, h2, h3, h4⟩ := key 0 (by norm_num) a ha.1
+    exact ⟨u, h1, h2, h3, by simpa using h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := key 1 (by norm_num) a ha.2
+    exact ⟨u, h1, h2, h3, by norm_num at h4 ⊢; exact h4⟩
+
+/-- **Conjecture: no finite memory passes `7/57`.**  For every `k ≥ 1` and `β > 7/57` (with `β < 1/2`),
+no `k`-memory relaxed strategy holds `[β, 1 - β]` from any residue.  Proved for `k = 1`
+(`finiteMemoryRelaxedValue_one`).  Confidence 85% that it is true; ~10% that the present methods
+prove it for all `k`.
+Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12` (and at `0.1235`, `0.125` for
+`k = 8, 10`); the exact `k`-memory component game (`experiments/arc_kmemory.py`) kills every residue at
+`β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`.
+Difficulty locus: the kill depth grows with `k`, and no fixed (oblivious) parity sequence can kill,
+because with full information every tested integer part survives far above `7/57`
+(`FullInformationBeatsSevenFiftySevenths`).  So a proof must use the adversary's adaptivity, delayed
+by `k - 1` steps, quantitatively in `k`.  The residue-class route is closed
+(`not_trapsBarrier_of_fullInformation`), and no general memory reduction exists
+(`MemoryHelpsOffCentre`). -/
+def FiniteMemoryRelaxedValue : Prop :=
+  ∀ k : ℕ, 1 ≤ k → ∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ (l : ℝ) (P : ℕ → Set ℝ),
+    (∃ r < 2 ^ k, (P r).Nonempty) → ¬ KRelaxedStrategy β (1 - 2 * β) l k P
+
+/-- The `k = 1` case of `FiniteMemoryRelaxedValue`. -/
+theorem finiteMemoryRelaxedValue_one (β : ℝ) (hβ : 7 / 57 < β) (hβ' : β < 1 / 2) (l : ℝ)
+    (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 1, (P r).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l 1 P := by
+  intro h
+  obtain ⟨r, hr, a, ha⟩ := hne
+  have : (P 0 ∪ P 1).Nonempty := by
+    interval_cases r
+    · exact ⟨a, Or.inl ha⟩
+    · exact ⟨a, Or.inr ha⟩
+  exact relaxed_barrier β hβ hβ' l _ (kRelaxedStrategy_one h this)
+
+/-- **Soundness of `k`-memory strategies.**  A `k`-memory relaxed strategy with `P r` nonempty traps a
+floor in `[m, m + 3)` for every `m ≡ r (mod 2^k)`, as `trapsResidueClass_of_relaxedStrategy` does for
+`k = 0`.  Confidence 95% (the same nested intervals, tracking `m mod 2^k`). -/
+theorem trapsResidueClass_of_kRelaxedStrategy {s t l : ℝ} {k r : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (ht : t ≤ 1) (hr : r < 2 ^ k) (h : KRelaxedStrategy s t l k P) (hne : (P r).Nonempty) :
+    TrapsResidueClass s t k r := by
+  sorry
+
+/-- **Conjecture: memory helps off the symmetric position.**  For the arc `[2/5, 2/5 + 87/100]`
+(it wraps), three bits of memory win and no memoryless strategy does.  Confidence 80%.  Evidence:
+`solve_vw` wins at `k = 3` (width `87/100 · 86/400`) and loses at `k = 0, 1, 2` for all 132 widths
+`87/100 · j/400`, `j = 5, 8, …, 398` (regression `test_memory_helps_off_centre`); bisected shortest arcs at
+`s = 2/5` are `0.916, 0.907, 0.841` for `k = 0, 2, 3`, and `s = 1/10, 1/5, 3/10` show smaller gains.
+So any proof of `FiniteMemoryRelaxedValue` must use the symmetric arc, not a general reduction. -/
+def MemoryHelpsOffCentre : Prop :=
+  (∃ (l : ℝ) (P : ℕ → Set ℝ), (∃ r < 2 ^ 3, (P r).Nonempty) ∧ KRelaxedStrategy (2 / 5) (87 / 100) l 3 P) ∧
+    ∀ (l : ℝ) (P : Set ℝ), ¬ RelaxedStrategy (2 / 5) (87 / 100) l P
+
+/-- **Conjecture: with full information, every integer part beats `7/57`.**  Every `m ≥ 1` is within
+`3` of the integer part of some `ξ` with `‖ξ (3/2)^n‖ ≥ 13/100` for all `n`.  Confidence 75%.
+Evidence (`experiments/arc_fullinfo.py`): the exact interval tree from `[m, m + 1)` keeps some branch
+`0.14`-far for 200 steps for every `m < 200` (worst `m = 175` at `0.1422`, stable from depth 50 to 200),
+and for 150 random `m` at each of `10³, 10⁶, 10¹², 10³⁰` the worst `β_m` (depth 150) is `0.138`–`0.142`.
+Read with `FiniteMemoryRelaxedValue`: bounded 2-adic memory stops at `7/57`, full knowledge of the
+integer part does not, and the gap is the horizon's price. -/
+def FullInformationBeatsSevenFiftySevenths : Prop :=
+  TrapsResidueClass (13 / 100) (74 / 100) 0 0
+
+/-- **The residue-class route cannot reach a `7/57` barrier.**  If every integer part beats `7/57`
+with full information, then the residue-class property (`TrapsResidueClass`, which the `2/3` barrier
+uses) holds above `7/57`, so a finite-memory barrier at `7/57` must use the strategy's positional
+structure. -/
+theorem not_trapsBarrier_of_fullInformation (h : FullInformationBeatsSevenFiftySevenths) :
+    ¬ ∀ k r : ℕ, r < 2 ^ k → ¬ TrapsResidueClass (13 / 100) (74 / 100) k r :=
+  fun hb => hb 0 0 (by norm_num) h
+
 end CollatzMoonshot.Benchmark.ArcTrap

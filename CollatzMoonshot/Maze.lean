@@ -138,6 +138,12 @@ def register : List Hall := [
   ⟨"adversarial-parity arc trap past 7/57", .adversary2adic,
    "treating each unseen parity bit as adversarial, the 3-cycle 4/19, 6/19, 9/19 forces every memoryless relaxed strategy for ||xi (3/2)^n|| >= beta out once beta > 7/57",
    "Benchmark/ArcTrap.lean; experiments/arc_barrier.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-05"⟩,
+  ⟨"residue-class or oblivious-parity route to a finite-memory 7/57 barrier", .wall,
+   "with full information every tested integer part keeps some xi 0.138-far (m < 200 to depth 200; random m up to 10^30), so TrapsResidueClass holds above 7/57 and no fixed parity sequence kills; a finite-memory barrier must use the delayed adaptive adversary, whose kill depth grows with k (26, 30, 33 for k = 1, 2, 3); REOPEN IF a delay-robust adversary mechanism uniform in k is found",
+   "Benchmark/ArcTrap.lean; experiments/arc_fullinfo.py; experiments/arc_kmemory.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-06"⟩,
+  ⟨"general memory reduction for relaxed arc games", .refuted,
+   "off the symmetric position memory helps: the arc [2/5, 2/5 + 87/100] is won with 3 bits and lost with 0 to 2 (all 132 widths), so a k-memory barrier cannot come from reducing any strategy to a memoryless one",
+   "Benchmark/ArcTrap.lean; experiments/arc_trap_k.py (test_memory_helps_off_centre)", "2026-10-06"⟩,
   ⟨"local-global borrowing at 23", .refuted,
    "every prime power has small companions, yet no integer companion exists below 23",
    "Obstructions/LocalGlobalBorrow23.lean", "2026-09-29"⟩,
@@ -224,7 +230,14 @@ def mazeLinks : List Link := [
    [``Benchmark.ArcTrap.two_pow_le_card_admissibleWord, ``Benchmark.ArcTrap.trapsResidueClass_near_afs,
      ``Benchmark.ArcTrap.relaxedStrategy_afs_closed], []⟩,
   ⟨"adversarial-parity arc trap past 7/57",
-   [``Benchmark.ArcTrap.relaxed_barrier, ``Benchmark.ArcTrap.not_relaxedStrategy_13_100], []⟩,
+   [``Benchmark.ArcTrap.relaxed_barrier, ``Benchmark.ArcTrap.not_relaxedStrategy_13_100,
+     ``Benchmark.ArcTrap.relaxedStrategy_exists_iff], []⟩,
+  ⟨"residue-class or oblivious-parity route to a finite-memory 7/57 barrier",
+   [``Benchmark.ArcTrap.not_trapsBarrier_of_fullInformation,
+     ``Benchmark.ArcTrap.FullInformationBeatsSevenFiftySevenths,
+     ``Benchmark.ArcTrap.finiteMemoryRelaxedValue_one], [``Benchmark.ArcTrap.FiniteMemoryRelaxedValue]⟩,
+  ⟨"general memory reduction for relaxed arc games",
+   [``Benchmark.ArcTrap.MemoryHelpsOffCentre, ``Benchmark.ArcTrap.kRelaxedStrategy_one], []⟩,
   ⟨"local-global borrowing at 23",
    [``each_prime_power_has_small_inputs_23, ``no_global_small_inputs_23], []⟩,
   ⟨"quadratic borrowability height at 23", [``no_strict_quadratic_height_descent_23], []⟩,
@@ -261,7 +274,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 28 rows, 20 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 30 rows, 22 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

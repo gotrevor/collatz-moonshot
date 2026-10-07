@@ -235,6 +235,35 @@ The new anchor is `(3k − p)/2 + (previous parity)`, which is the AFS integer m
 
 No mechanism is known for either.  This is a dead end for now.
 
+## Theorem: the memoryless value is exactly 7/57, attained (2026-10-06, evening)
+
+**Statement** (`relaxedStrategy_exists_iff`, proved): for `β < 1/2` a memoryless relaxed strategy for `[β, 1 − β]` exists iff `β ≤ 7/57`.  So `relaxedValueIsSevenFiftySevenths` holds, and `7/57 ≤ E(3/2)` (`E_three_halves_ge_757`).
+
+**How it fell out.**  Near the edge, `solve_vw` (lattice `2^-40`, width `1/8`) returns the *same* seven intervals for every `β ∈ [7/57 − 10⁻³, 7/57 − 10⁻⁶]`.  Their endpoints are rationals with denominators dividing `8·9·19`: `[13/152, 22/171]`, `[29/152, 11/57]`, `[53/152, 20/57]`, `[565/1368, 79/171]`, `[239/456, 10/19]`, `[311/456, 13/19]`, `[1021/1368, 15/19]`.  Checked with closed intervals (`experiments/arc_value_757.py`), this set is a strategy at `β = 7/57` exactly and fails at `7/57 + 10⁻¹²`.  The solver's "fails at 7/57" came from `inter` discarding one-point intersections.  Lean: `P757`, `relaxedStrategy_757` (18 clamp cells via `cell1228`; four (interval, parity) pairs split once).  `10/19`, `13/19`, `15/19` are right ends of `P757`: the certificate lives on the barrier's cycle grid.
+
+## Does finite memory pass 7/57?  (2026-10-06, evening)
+
+Lean: `KRelaxedStrategy` (the `solve_vw` game with `k` bits), `FiniteMemoryRelaxedValue` (conjecture, 85% true), `finiteMemoryRelaxedValue_one` (proved: one bit = memoryless, `kRelaxedStrategy_one`), `trapsResidueClass_of_kRelaxedStrategy` (soundness, `sorry`, 95%).
+
+**Evidence that it does not.**
+- `solve_vw` loses at `7/57 + 10⁻⁶` (widths `j/200`, `j = 16..29`) for `k = 0..6, 8, 10, 12`, and at `0.1235`, `0.125` for `k = 8, 10, 12`.
+- Exact `k`-memory component game (`experiments/arc_kmemory.py`; the adversary picks the new top bit after seeing the constructor's component, and that bit becomes a parity `k − 1` steps later): at `β = 0.1229`, every residue is killed from `[0, 3]` within **26, 30, 33** steps for `k = 1, 2, 3`.  `k = 1` reproduces the earlier minimax's 26.
+- The `k = 2` kill ends in the mirror runaway (windows near `[3β/2, …] → [9β/4 + …]`, the `4/19 → 6/19 → 9/19` side) with no branching in its last 14 steps, so delay costs nothing there.  The cost is paid at branch points before it.
+
+**Why it is hard (difficulty locus).**
+- **Every window is adversary-winning above 7/57** (the barrier, with "a larger window is never worse").  So a wrong parity never lets the constructor escape; it only costs the adversary time.  Delay matters only at branch points (two components).
+- **No oblivious kill exists.**  With full information (`experiments/arc_fullinfo.py`), every integer part keeps some branch alive far above 7/57: `m < 200` from `[m, m+1)` at depth 200 has worst `β_m = 0.1422` (`m = 175`), stable from depth 50; 150 random `m` at each of `10³, 10⁶, 10¹², 10³⁰` give worst `0.138–0.142`, median `0.16`.  A fixed parity sequence is just a choice of `m`, so it cannot kill.  Lean: `FullInformationBeatsSevenFiftySevenths` (75%).
+- **So the residue-class route is closed** (`not_trapsBarrier_of_fullInformation`, Maze row): `TrapsResidueClass` holds above 7/57 if the full-information numbers are right, and the 2/3-style counting cannot see 7/57.  A proof must use the positional strategy and the adversary's adaptivity delayed by `k − 1` steps, quantitatively in `k` (the kill depth grows ~3.5 per bit).
+- **No general memory reduction** (`MemoryHelpsOffCentre`, Maze row): at `[2/5, 2/5 + 0.87]` three bits win where `0..2` lose on all 132 widths; bisected shortest arcs at `s = 2/5` are `0.916, 0.907, 0.841` for `k = 0, 2, 3` (small gains at `s = 1/10, 1/5, 3/10`, none at `s = 0, 1/20, 1/2`).  The symmetric arc must be used.
+
+**Reading.**  If both conjectures hold, the horizon has an exact price on this problem: bounded 2-adic memory stops at `7/57 ≈ 0.1228`, full knowledge of the integer part reaches about `0.138` for *every* integer part, and about `0.16` for a typical one.  The best orbits found to depth 400 sit near `0.17` and drift down toward `1/6` as depth grows, consistent with `StrongMahlerConjecture` (`E(3/2) ≤ 1/6`).
+
+**Mechanisms tried for all `k` and why they fail.**
+1. Memory reduction `Q_s = P_s ∩ P_{s+2^{k−1}}`: needs one move good for four residues; false in general (off-centre example).
+2. Delay-robust adversary (at every branch, all but one component dies for *every* parity sequence): would give an oblivious kill, contradicted by the full-information survival.
+3. Random adversary: the constructor sees committed parities `k − 1` steps ahead and can correlate its branch choice with them, so "the right parity arrives with probability 1/2" is not independent of its choices.
+Open target: an adversary that plays the memoryless strategy on a predicted line and absorbs mispredictions, with a potential that decreases over each block of `O(k)` steps.
+
 ## Novelty against Flatto 1992 (read 2026-10-05)
 
 Flatto (`papers/flatto-1992-z-numbers-beta-transformations.md`, Lean `Literature.Flatto1992`) treats only arcs `[0, t)`.  For 3/2 his results are:
