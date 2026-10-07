@@ -16,9 +16,10 @@ Thm 1.4); `‖ξ (3/2)^n‖ ≥ 4/65` for uncountably many `ξ` (Pollington 1981
 infinitely many `ξ` (Dubickas 2008, the best constant found); `‖ξ (3/2)^n‖ < 1/3` for
 countably infinitely many `ξ` (Akiyama–Frougny–Sakarovitch / Akiyama 2008).
 
-**New (2026-10-05):** `‖ξ (3/2)^n‖ ≥ 307/2500 = 0.1228` via the memoryless *relaxed* game
-(`exists_farFromIntegers_1228`, certificate `experiments/arc_cert_beta_1228_vw_k0.json`), whose value
-appears to be exactly `7/57` (`RelaxedValueIsSevenFiftySevenths`).  First pass, window-in-arc game:
+**New (2026-10-05/06):** `‖ξ (3/2)^n‖ ≥ 7/57` via the memoryless *relaxed* game
+(`exists_farFromIntegers_757`, seven-interval certificate `relaxedStrategy_757`), and `7/57` is exactly
+that game's value (`relaxedStrategy_exists_iff`: won iff `β ≤ 7/57`).  Earlier step: `307/2500`
+(`exists_farFromIntegers_1228`).  First pass, window-in-arc game:
 `1227/10000` for some `ξ > 0`, beating Dubickas's `5/48 ≈ 0.1042` (novelty ~85%, see the note).  The
 certificate is a game strategy that remembers the integer part mod 4 (`experiments/arc_trap_k.py`):
 for each residue `r` a finite union `P r` of rational intervals of window left ends, closed under one
@@ -3559,16 +3560,149 @@ theorem strongMahler_far_le_one_sixth (h : StrongMahlerConjecture) (β : ℝ) (h
   exact h β (1 - 2 * β) (by linarith) ⟨ξ, hξ, fun n =>
     ⟨Int.fract (ξ * (3 / 2) ^ n), ⟨(hf n).1, by linarith [(hf n).2]⟩, (Int.fract_fract _).symm⟩⟩
 
-/-- **Conjecture: the relaxed game's value is `7/57`.**  The second conjunct is `relaxed_barrier`;
-the first, that every `β < 7/57` is winnable, rests on certificates up to `7/57 - 1e-8`.  Every `β < 7/57` admits a memoryless relaxed
+/-- **The relaxed game's value is `7/57`.**  Every `β < 7/57` admits a memoryless relaxed
 strategy for `[β, 1 - β]`, and no width admits one at `β > 7/57`.
-Confidence 75% for the first half; the second half is `relaxed_barrier`.  Evidence: bisection to `1e-8` (wins at
-`7/57 - 1e-8`, fails at `7/57`), the same edge at `0..3` bits of memory and over width grids.
+PROVED 2026-10-06 (`relaxedValueIsSevenFiftySevenths`; sharper: `relaxedStrategy_exists_iff`, the value is
+attained at `β = 7/57` by the seven-interval certificate `relaxedStrategy_757`).  The lattice solver had
+reported a loss at `7/57` itself only because it drops one-point intersections.
 Mechanism: `4/19 → 6/19 → 9/19` is a 3-cycle of `x ↦ 3x/2 + d (mod 1)` (parities `0, 0, 1/2`), and the
 arc's right edge maps to `1/2 - 3β/2 = 6/19` exactly at `β = 7/57`.  Exact minimax of the
 just-in-time adversarial-parity game forces the constructor out at depth 26 for `β = 0.1229`. -/
 def RelaxedValueIsSevenFiftySevenths : Prop :=
   (∀ β : ℝ, 0 < β → β < 7 / 57 → ∃ l P, RelaxedStrategy β (1 - 2 * β) l P) ∧
   (∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ l P, ¬ RelaxedStrategy β (1 - 2 * β) l P)
+
+/-! ### The memoryless value is exactly `7/57`, and it is attained -/
+
+/-- The seven window-start intervals of the `7/57` certificate (width `l = 1/8`).  Found by `solve_vw` near
+`7/57`, where the lattice fixed point stops moving with `β`; its endpoints are the rationals below
+(denominators divide `8 · 9 · 19`). -/
+def P757 : Set ℝ :=
+  Set.Icc (13 / 152 : ℝ) (22 / 171 : ℝ) ∪
+    Set.Icc (29 / 152 : ℝ) (11 / 57 : ℝ) ∪
+    Set.Icc (53 / 152 : ℝ) (20 / 57 : ℝ) ∪
+    Set.Icc (565 / 1368 : ℝ) (79 / 171 : ℝ) ∪
+    Set.Icc (239 / 456 : ℝ) (10 / 19 : ℝ) ∪
+    Set.Icc (311 / 456 : ℝ) (13 / 19 : ℝ) ∪
+    Set.Icc (1021 / 1368 : ℝ) (15 / 19 : ℝ)
+
+/-- **The memoryless relaxed game is won at exactly `β = 7/57`.**  Eighteen clamp cells `u = max a c`
+(`cell1228`), four of the fourteen (interval, parity) pairs split once.  Closed-interval check and
+exact orbit play: `experiments/arc_value_757.py`. -/
+theorem relaxedStrategy_757 : RelaxedStrategy (7 / 57) (43 / 57) (1 / 8) P757 := by
+  have S0 : Set.Icc (13 / 152 : ℝ) (22 / 171 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S1 : Set.Icc (29 / 152 : ℝ) (11 / 57 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S2 : Set.Icc (53 / 152 : ℝ) (20 / 57 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S3 : Set.Icc (565 / 1368 : ℝ) (79 / 171 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S4 : Set.Icc (239 / 456 : ℝ) (10 / 19 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S5 : Set.Icc (311 / 456 : ℝ) (13 / 19 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  have S6 : Set.Icc (1021 / 1368 : ℝ) (15 / 19 : ℝ) ⊆ P757 := by
+    intro x hx; simp only [P757, Set.mem_union]; tauto
+  refine ⟨by norm_num, ⟨_, S0 ⟨le_refl _, by norm_num⟩⟩, ?_, ?_⟩
+  · intro x hx
+    simp only [P757, Set.mem_union, Set.mem_Icc] at hx
+    constructor <;> rcases hx with ((((((h | h) | h) | h) | h) | h) | h) <;>
+      linarith [h.1, h.2]
+  intro a ha d hd
+  simp only [P757, Set.mem_union] at ha
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hd
+  rcases ha with ((((((h | h) | h) | h) | h) | h) | h) <;>
+    rcases hd with rfl | rfl
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (29 / 228 : ℝ)) (A := (29 / 152 : ℝ)) (B := (11 / 57 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S1 h4⟩
+  · rcases le_total a (7 / 57 : ℝ) with hm | hm
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (7 / 57 : ℝ)) (A := (311 / 456 : ℝ)) (B := (13 / 19 : ℝ)) 0 ⟨h.1, hm⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S5 h4⟩
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (337 / 2052 : ℝ)) (A := (1021 / 1368 : ℝ)) (B := (15 / 19 : ℝ)) 0 ⟨hm, h.2⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S6 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (53 / 228 : ℝ)) (A := (53 / 152 : ℝ)) (B := (20 / 57 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (337 / 2052 : ℝ)) (A := (1021 / 1368 : ℝ)) (B := (15 / 19 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S6 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (239 / 684 : ℝ)) (A := (239 / 456 : ℝ)) (B := (10 / 19 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S4 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (89 / 228 : ℝ)) (A := (13 / 152 : ℝ)) (B := (22 / 171 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S0 h4⟩
+  · rcases le_total a (26 / 57 : ℝ) with hm | hm
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (311 / 684 : ℝ)) (A := (311 / 456 : ℝ)) (B := (13 / 19 : ℝ)) 0 ⟨h.1, hm⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S5 h4⟩
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (1021 / 2052 : ℝ)) (A := (1021 / 1368 : ℝ)) (B := (15 / 19 : ℝ)) 0 ⟨hm, h.2⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S6 h4⟩
+  · rcases le_total a (215 / 513 : ℝ) with hm | hm
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (89 / 228 : ℝ)) (A := (13 / 152 : ℝ)) (B := (22 / 171 : ℝ)) 1 ⟨h.1, hm⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S0 h4⟩
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (35 / 76 : ℝ)) (A := (29 / 152 : ℝ)) (B := (11 / 57 : ℝ)) 1 ⟨hm, h.2⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S1 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (1021 / 2052 : ℝ)) (A := (1021 / 1368 : ℝ)) (B := (15 / 19 : ℝ)) 0 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S6 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (43 / 76 : ℝ)) (A := (53 / 152 : ℝ)) (B := (20 / 57 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S2 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (55 / 76 : ℝ)) (A := (13 / 152 : ℝ)) (B := (22 / 171 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S0 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (467 / 684 : ℝ)) (A := (239 / 456 : ℝ)) (B := (10 / 19 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S4 h4⟩
+  · rcases le_total a (386 / 513 : ℝ) with hm | hm
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (55 / 76 : ℝ)) (A := (13 / 152 : ℝ)) (B := (22 / 171 : ℝ)) 1 ⟨h.1, hm⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S0 h4⟩
+    · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 0) (c := (181 / 228 : ℝ)) (A := (29 / 152 : ℝ)) (B := (11 / 57 : ℝ)) 1 ⟨hm, h.2⟩
+        (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+      exact ⟨u, h1, h2, h3, S1 h4⟩
+  · obtain ⟨u, h1, h2, h3, h4⟩ := cell1228 (s := 7 / 57) (t := 43 / 57) (l := 1 / 8) (d := 1 / 2) (c := (539 / 684 : ℝ)) (A := (311 / 456 : ℝ)) (B := (13 / 19 : ℝ)) 1 h
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    exact ⟨u, h1, h2, h3, S5 h4⟩
+
+/-- **`‖ξ (3/2)^n‖ ≥ 7/57` for some `ξ > 0`**, the exact limit of memoryless constructions
+(`relaxed_barrier`).  Supersedes `exists_farFromIntegers_1228` (`307/2500 < 7/57`). -/
+theorem exists_farFromIntegers_757 : ∃ ξ : ℝ, 0 < ξ ∧ FarFromIntegers (7 / 57) ξ := by
+  obtain ⟨ξ, hξ, h⟩ := exists_trapped_of_relaxedStrategy relaxedStrategy_757
+  refine ⟨ξ, hξ, fun n => ?_⟩
+  obtain ⟨x, ⟨hx1, hx2⟩, hx⟩ := h n
+  have : Int.fract x = x := Int.fract_eq_self.2 ⟨by linarith, by linarith⟩
+  rw [hx, this]
+  constructor <;> linarith
+
+/-- `7/57 ≤ E(3/2)`. -/
+theorem E_three_halves_ge_757 : 7 / 57 ≤ E (3 / 2) := by
+  obtain ⟨ξ, hξ, h⟩ := exists_farFromIntegers_757
+  exact E_ge_of_far hξ h
+
+/-- **The memoryless relaxed game's value is exactly `7/57`, and it is attained.**  For `0 < β < 1/2`,
+a memoryless relaxed strategy for `[β, 1 - β]` exists iff `β ≤ 7/57`: one certificate
+(`relaxedStrategy_757`, monotonicity) below, `relaxed_barrier` above. -/
+theorem relaxedStrategy_exists_iff (β : ℝ) (hβ' : β < 1 / 2) :
+    (∃ l P, RelaxedStrategy β (1 - 2 * β) l P) ↔ β ≤ 7 / 57 := by
+  constructor
+  · rintro ⟨l, P, h⟩
+    by_contra hb
+    exact relaxed_barrier β (not_le.1 hb) hβ' l P h
+  · intro hb
+    exact ⟨1 / 8, P757, relaxedStrategy_757.mono hb (by linarith)⟩
+
+/-- `RelaxedValueIsSevenFiftySevenths` holds. -/
+theorem relaxedValueIsSevenFiftySevenths : RelaxedValueIsSevenFiftySevenths :=
+  ⟨fun β _ hβ => (relaxedStrategy_exists_iff β (by linarith)).2 hβ.le,
+    fun β hβ hβ' l P => relaxed_barrier β hβ hβ' l P⟩
 
 end CollatzMoonshot.Benchmark.ArcTrap

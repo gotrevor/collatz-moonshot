@@ -341,5 +341,18 @@ def test_relaxed_edge_regression():
     assert not any(_wins_vw(0, F(7, 57) + F(1, 10 ** 6), [F(j, 200)]) for j in range(16, 30))
 
 
+def test_memory_helps_off_centre():
+    # 2026-10-06: off the symmetric position memory does help.  Arc [2/5, 2/5 + 87/100]: k = 3 wins,
+    # k = 0..2 lose at every width t*j/400, j = 5, 8, ..., 398 (full scan in the research note; here
+    # the band around the k = 3 winners).  Tool output, recorded as a regression.
+    s, t = F(2, 5), F(87, 100)
+    assert _wins_vw_s(3, s, t, [t * F(86, 400)])
+    assert not any(_wins_vw_s(2, s, t, [t * F(j, 400)]) for j in range(77, 125, 3))
+
+
+def _wins_vw_s(k, s, t, L):
+    P, fx = solve_vw(k, s, t, L, N=1 << 20)
+    return fx and any(x for row in P for x in row)
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
