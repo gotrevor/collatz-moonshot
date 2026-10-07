@@ -16,39 +16,39 @@ m = 356318813878270), each re-checked by arc_fullinfo.survives.
 """
 from __future__ import annotations
 
-import math
 import subprocess
 import sys
 from fractions import Fraction as F
 
-H3 = F(3, 2)
-
-
-def step(ivs, beta):
-    out = []
-    for lo, hi in ivs:
-        for j in range(math.floor(lo) - 1, math.floor(hi) + 1):
-            a, c = max(lo, j + beta), min(hi, j + 1 - beta)
-            if a <= c:
-                out.append((H3 * a, H3 * c))
-    return out
-
-
 def search(beta, depth, width, exp=0.5, start=3, log=False):
-    """(kill depth, m) for the first kill the beam finds, else (None, None)."""
-    beam = [((), [(F(0), F(start))])]
+    """(kill depth, m) for the first kill the beam finds, else (None, None).
+
+    Integer arithmetic: with beta = p/q, endpoints of V are numerators over q * 2^t, so x 3/2 is a
+    numerator x 3 and the digit-t shift 3^t is 3^t * q * 2^t."""
+    beta = F(beta)
+    p, q = beta.numerator, beta.denominator
+    beam = [(0, [(0, start * q)])]
     for t in range(depth):
+        den = q << t
+        sh = 3 ** t * den
+        lo_off, hi_off = p << t, (q - p) << t
+        nd = (q << (t + 1)) * 1.5 ** (t + 1)
         cand = []
-        p = 3 ** t
-        sc = H3 ** (t + 1)
-        for digs, ivs in beam:
+        for m, ivs in beam:
             for d in (0, 1):
-                nxt = step([(lo + d * p, hi + d * p) for lo, hi in ivs], beta)
+                nxt = []
+                for lo, hi in ivs:
+                    if d:
+                        lo, hi = lo + sh, hi + sh
+                    for j in range(lo // den - 1, hi // den + 1):
+                        a, c = max(lo, j * den + lo_off), min(hi, j * den + hi_off)
+                        if a <= c:
+                            nxt.append((3 * a, 3 * c))
+                m2 = m | (d << t)
                 if not nxt:
-                    digs = digs + (d,)
-                    return t + 1, sum(x << i for i, x in enumerate(digs))
-                score = sum(float((hi - lo) / sc) ** exp for lo, hi in nxt)
-                cand.append((score, len(nxt), digs + (d,), nxt))
+                    return t + 1, m2
+                score = sum(((c - a) / nd) ** exp for a, c in nxt)
+                cand.append((score, len(nxt), m2, nxt))
         cand.sort(key=lambda c: (c[0], c[1]))
         beam = [(c[2], c[3]) for c in cand[:width]]
         if log and t % 10 == 9:
