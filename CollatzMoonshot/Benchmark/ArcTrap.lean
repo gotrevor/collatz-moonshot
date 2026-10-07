@@ -3755,11 +3755,12 @@ Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12, 1
 `β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`; at `β = 0.13` within 14, 16, 17, 21, 23, 25,
 27 steps for `k = 1, …, 7`, and at `β = 0.135` within 12, 15, 16, 17, 18, 21, 22, 27 for `k = 1, …, 8`
 (about two extra steps per bit of memory).
-Uniform in `k` above `0.138`: an oblivious kill (`obliviousKill_138`, `not_kRelaxedStrategy_138`)
-bounds every memory size at once, so the open range is `(7/57, 0.138)`.
-Difficulty locus: oblivious kills get deep fast as `β` falls (depth 20, 25, 36, 51 at `0.15`, `0.145`,
-`0.14`, `0.138`; a `c/(β - β₀)` fit puts their threshold near `0.130`), so below about `0.13` no fixed
-parity sequence kills (`FullInformationBeatsSevenFiftySevenths`), and a proof must use the adversary's
+Uniform in `k` from `0.1377` up: an oblivious kill (`obliviousKill_1377`, `not_kRelaxedStrategy_1377`)
+bounds every memory size at once, so the open range is `(7/57, 0.1377)`.  At `β = 1/8` the kill depths
+are 19, 21, 22, 27, 28, 32 for `k = 1, …, 6`.
+Difficulty locus: oblivious kills stop near `0.1375` (depths 20, 25, 36, 51, 53, 62, 66 at `0.15`,
+`0.145`, `0.14`, `0.138`, `0.1379`, `0.1378`, `0.1377`; width-20000 beams under three scores find none at
+`0.137`, `0.1365`, `0.136` to depth 70 to 90).  So in `(7/57, 0.1375)` no fixed parity sequence kills (`FullInformationBeatsSevenFiftySevenths`), and a proof must use the adversary's
 adaptivity, delayed by `k - 1` steps, quantitatively in `k`.  No general memory reduction exists
 (`MemoryHelpsOffCentre`). -/
 def FiniteMemoryRelaxedValue : Prop :=
@@ -3797,10 +3798,10 @@ def MemoryHelpsOffCentre : Prop :=
     ∀ (l : ℝ) (P : Set ℝ), ¬ RelaxedStrategy (2 / 5) (87 / 100) l P
 
 /-- **Conjecture: with full information, every integer part beats `7/57`.**  Every `m ≥ 1` is within
-`3` of the integer part of some `ξ` with `‖ξ (3/2)^n‖ ≥ 13/100` for all `n`.  Confidence 50% (was 75%
-before adversarial search: chosen digits kill at `0.138` (`obliviousKill_138`), below every random
-sample, and the kill depths 20, 25, 36, 51 at `0.15`, `0.145`, `0.14`, `0.138` extrapolate to a
-threshold near `0.130`, right at this statement's `13/100`).
+`3` of the integer part of some `ξ` with `‖ξ (3/2)^n‖ ≥ 13/100` for all `n`.  Confidence 80%.
+Adversarial digit search beats random sampling only slightly: kills reach `0.1377`
+(`obliviousKill_1377`) and stop near `0.1375` (none at `0.137`, `0.1365`, `0.136`), well above
+this statement's `13/100`.
 Evidence (`experiments/arc_fullinfo.py`): the exact interval tree from `[m, m + 1)` keeps some branch
 `0.14`-far for 200 steps for every `m < 200` (worst `m = 175` at `0.1422`, stable from depth 50 to 200),
 and for 150 random `m` at each of `10³, 10⁶, 10¹², 10³⁰` the worst `β_m` (depth 150) is `0.138`–`0.142`.
@@ -3871,6 +3872,19 @@ theorem not_kRelaxedStrategy_138 {β l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (h
     (hβ : 69 / 500 ≤ β) (hne : (P (356318813878270 % 2 ^ k)).Nonempty) :
     ¬ KRelaxedStrategy β (1 - 2 * β) l k P :=
   not_kRelaxedStrategy_of_obliviousKill (by norm_num) hk hβ (by linarith) obliviousKill_138 hne
+
+/-- **An oblivious kill at `0.1377`**, the lowest found: every `ξ ∈ [M, M + 3)`,
+`M = 31982856860489480190`, has `‖ξ (3/2)^n‖ < 1377/10000` for some `n ≤ 66`.  Confidence 99%.
+Evidence: `arc_oblivious.py search 1377/10000 250 20000 1.0`, re-checked by `arc_fullinfo.survives`
+(dies at depth 66, survives 65).  Beams of width 20000 find no kill at `0.137`, `0.1365`, `0.136`. -/
+theorem obliviousKill_1377 : ObliviousKill (1377 / 10000) 31982856860489480190 := by
+  sorry
+
+/-- **No finite memory reaches `0.1377`** at the class of `31982856860489480190`. -/
+theorem not_kRelaxedStrategy_1377 {β l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (hβ : 1377 / 10000 ≤ β) (hne : (P (31982856860489480190 % 2 ^ k)).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P :=
+  not_kRelaxedStrategy_of_obliviousKill (by norm_num) hk hβ (by linarith) obliviousKill_1377 hne
 
 /-- **Open: is a live `k`-strategy live at every residue?**  `not_kRelaxedStrategy_138` needs the
 strategy live at the class of one specific `m`, while `FiniteMemoryRelaxedValue` allows any live

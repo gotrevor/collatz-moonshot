@@ -9,7 +9,8 @@ keeps the `width` digit prefixes with the smallest score sum(len_y ** exp), len_
 pulled back to xi.
 
 Found 2026-10-07: kills at 3/20 (depth 20), 29/200 (25), 7/50 (36), 69/500 (51,
-m = 356318813878270), each re-checked by arc_fullinfo.survives.
+m = 356318813878270), 0.1379 (53), 0.1378 (62), 0.1377 (66, m = 31982856860489480190, exp 1.0), each
+re-checked by arc_fullinfo.survives; none at 0.137, 0.1365, 0.136 with width 20000.
 
     arc_oblivious.py search BETA DEPTH WIDTH [EXP]
     arc_oblivious.py test
@@ -84,6 +85,11 @@ def test_recorded_kill_138():
     assert _dies_exactly_at(356318813878270, F(69, 500), 51)
     # only m mod 2^51 matters for 51 steps
     assert _dies_exactly_at(356318813878270 + 2 ** 51, F(69, 500), 51)
+
+
+def test_recorded_kill_1377():
+    # obliviousKill_1377, the lowest kill found (2026-10-07)
+    assert _dies_exactly_at(31982856860489480190, F(1377, 10000), 66)
 
 
 def test_no_kill_below_seven_57():
