@@ -337,3 +337,25 @@ The growth is about 2 steps per bit, with kill depth always greater than the loo
 **k = 14 lattice probe:** `solve_vw` at `7/57 + 10⁻⁶`, widths `j/200` for `j = 16..29`: no width wins (3950 s).  Exact adaptive kill depth at `β = 1/8`: 19, 21, 22, 27, 28 for `k = 1..5`.
 
 **Correction: the oblivious threshold is near 0.1375, not 0.130.**  The `c/(β − β₀)` fit was wrong.  With the integer engine (beam width 20000), kills land at `0.1379` (depth 53), `0.1378` (62) and `0.1377` (66, `m = 31982856860489480190`, score exponent 1.0; re-checked by `arc_fullinfo`).  No kill appears at `0.137` (exponents 0.5, 1, 2), `0.1365` or `0.136` by depth 70 to 90, with 600 to 1100 surviving components.  So adversarial digits beat random sampling (worst `0.138`) only slightly.  `FullInformationBeatsSevenFiftySevenths` at `0.13` goes back up to 80%.  The finite-memory open range is `(7/57, 0.1377)`.  Kill depth at `β = 1/8`, `k = 6`: 32.
+
+## 2026-10-07 (cont.): relaxed oblivious kills, per-width certificates, and the bound at 0.13
+
+**Mechanism 7: kill the relaxed game, not the component game.**  A `k`-strategy at width `l` that is live at the class of `M` yields a relaxed run starting in `[M, M + 1)`: windows `[V, V + l]`, `u ∈ [V, V + l/3]` with `[u, u + 2l/3]` in a lift, next `V = 3u/2` (`exists_relaxedPath_of_kRelaxedStrategy`, 95%).  The run traps a point `ξ ∈ [M, M + 1 + l)` (`exists_trapped_of_relaxedPath`, 97%).  So we need either:
+
+- a relaxed kill for the given width (`RelaxedObliviousKill`), or a whole width range at once (`RelaxedObliviousKillRange`: spread `l₂/3`, margin `2l₁/3`); or
+- a component kill from the narrower start `[M, M + 1 + l₀)`, which covers every `l ≤ l₀`.
+
+**The start width was the whole story.**  The component kills that stalled near `0.1375` started from `[m, m + 3)`.  From `[m, m + 1)` the same beam kills `0.14` (depth 12), `0.138` (16), `0.135` (21) and `0.13` (depth 38, m = 68612676266; checked by `arc_fullinfo`).  The control finds no kill at `0.12` or `7/57`.
+
+**At β = 0.13, every width is covered:**
+
+| widths | certificate | depth |
+|---|---|---|
+| `l ≤ 1/2` | component kill from `[M, M + 3/2)`, M = 13060715579013119 | 56 |
+| `[1/2, 3/4]` | relaxed range kill, M = 2^20 | 5 |
+| `[3/4, 1.11]` | relaxed range kill, M = 2^20 + 8 | 7 |
+| `l > 1.11` | `2l/3 > 1 − 2β` cannot fit the arc | – |
+
+Hence `finiteMemoryRelaxedValue_ge_013`: given `KRelaxedLiveEverywhere`, no `k`-memory strategy holds `[β, 1 − β]` for any `β ≥ 0.13`, for every `k`.  `KRelaxedStrategy.mono` gives monotonicity in `β`.  Relaxed kills at a single width reach `0.1229` (`l = 3/20`, depth 25, M = 13187072; independent residue-bookkeeping judge `relaxed_check`) and `1/8` (`l = 1/8`, depth 22, M = 604160).  At `0.1229` the widths `1/8` and `1/10` have no kill yet.
+
+**What is left for `FiniteMemoryRelaxedValue`:** the same certificate pattern at each `β` in `(7/57, 0.13)`, plus `KRelaxedLiveEverywhere` and the two path bridges.  Any single `β₀` closes `[β₀, 1/2)` by monotonicity.  Every `β > 7/57` needs either a parametric family of kills as `β ↓ 7/57`, or an argument that depth is bounded only by a function of `β − 7/57`.

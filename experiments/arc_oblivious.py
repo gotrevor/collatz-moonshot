@@ -12,8 +12,8 @@ Found 2026-10-07: kills at 3/20 (depth 20), 29/200 (25), 7/50 (36), 69/500 (51,
 m = 356318813878270), 0.1379 (53), 0.1378 (62), 0.1377 (66, m = 31982856860489480190, exp 1.0), each
 re-checked by arc_fullinfo.survives; none at 0.137, 0.1365, 0.136 with width 20000.
 
-    arc_oblivious.py search BETA DEPTH WIDTH [EXP]
-    arc_oblivious.py relaxed BETA L DEPTH WIDTH [EXP]
+    arc_oblivious.py search BETA DEPTH WIDTH [EXP [START_WIDTH]]
+    arc_oblivious.py relaxed BETA L DEPTH WIDTH [EXP [L2]]   (L2: every width in [L, L2])
     arc_oblivious.py test
 """
 from __future__ import annotations
@@ -27,9 +27,10 @@ def search(beta, depth, width, exp=0.5, start=3, log=False):
 
     Integer arithmetic: with beta = p/q, endpoints of V are numerators over q * 2^t, so x 3/2 is a
     numerator x 3 and the digit-t shift 3^t is 3^t * q * 2^t."""
-    beta = F(beta)
-    p, q = beta.numerator, beta.denominator
-    beam = [(0, [(0, start * q)])]
+    beta, start = F(beta), F(start)
+    q = beta.denominator * start.denominator
+    p = int(beta * q)
+    beam = [(0, [(0, int(start * q))])]
     for t in range(depth):
         den = q << t
         sh = 3 ** t * den
@@ -58,18 +59,20 @@ def search(beta, depth, width, exp=0.5, start=3, log=False):
     return None, None
 
 
-def search_relaxed(beta, l, depth, width, exp=1.0, log=False):
+def search_relaxed(beta, l, depth, width, exp=1.0, log=False, l2=None):
     """Relaxed oblivious kill (RelaxedObliviousKill): reachable LEFT ENDS V of width-l windows, in actual
     numbers.  Move u in [V, V + l/3] with [u, u + 2l/3] in a lift of [beta, 1 - beta]; next 3u/2.
-    Start: [m, m + 1).  Numerators over Q * 2^t with Q = 3 * den(beta) * den(l)."""
+    Start: [m, m + 1).  Numerators over Q * 2^t with Q = 3 * den(beta) * den(l) * den(l2).
+    With l2: every width in [l, l2] at once (RelaxedObliviousKillRange): spread l2/3, margin 2l/3."""
     beta, l = F(beta), F(l)
-    Q = beta.denominator * l.denominator * 3
-    P, L3 = int(beta * Q), int(l * Q) // 3
+    l2 = l if l2 is None else F(l2)
+    Q = beta.denominator * l.denominator * l2.denominator * 3
+    P, L3, S3 = int(beta * Q), int(l * Q) // 3, int(l2 * Q) // 3
     beam = [(0, [(0, Q)])]
     for t in range(depth):
         den = Q << t
         sh = 3 ** t * den
-        lo_off, hi_off, spread = P << t, (Q - P - 2 * L3) << t, L3 << t
+        lo_off, hi_off, spread = P << t, (Q - P - 2 * L3) << t, S3 << t
         nd = float(den) * 2 * 1.5 ** (t + 1)
         cand = []
         for m, ivs in beam:
@@ -93,7 +96,7 @@ def search_relaxed(beta, l, depth, width, exp=1.0, log=False):
                 m2 = m | (d << t)
                 if not mg:
                     return t + 1, m2
-                score = sum(((c - a) / nd + float(l) / 1.5 ** (t + 1)) ** exp for a, c in mg)
+                score = sum(((c - a) / nd + float(l2) / 1.5 ** (t + 1)) ** exp for a, c in mg)
                 cand.append((score, len(mg), m2, mg))
         cand.sort(key=lambda c: (c[0], c[1]))
         beam = [(c[2], c[3]) for c in cand[:width]]
@@ -102,11 +105,12 @@ def search_relaxed(beta, l, depth, width, exp=1.0, log=False):
     return None, None
 
 
-def relaxed_check(beta, l, m, depth):
+def relaxed_check(beta, l, m, depth, l2=None):
     """Independent judge in KRelaxedStrategy's own bookkeeping: state (r mod 2^K, fractional left end),
     child fract(3u/2 + d), residue ((3r - r%2)/2 + floor) mod 2^(K-1), K > depth.  First dead depth or None."""
     import math
     beta, l = F(beta), F(l)
+    l2 = l if l2 is None else F(l2)
     K = depth + 2
     st = {m % (1 << K): [(F(0), F(1))]}
     for t in range(1, depth + 1):
@@ -115,7 +119,7 @@ def relaxed_check(beta, l, m, depth):
             d = F(r % 2, 2)
             for A, B in ivs:
                 for j in (0, 1, 2):
-                    a, c = max(A, j + beta), min(B + l / 3, j + 1 - beta - 2 * l / 3)
+                    a, c = max(A, j + beta), min(B + l2 / 3, j + 1 - beta - 2 * l / 3)
                     if a > c:
                         continue
                     lo, hi = F(3, 2) * a + d, F(3, 2) * c + d
@@ -136,11 +140,13 @@ def main(argv):
         return subprocess.call([sys.executable, "-m", "pytest", "-q", __file__])
     if argv[0] == "relaxed":
         exp = float(argv[5]) if len(argv) > 5 else 1.0
-        print(search_relaxed(F(argv[1]), F(argv[2]), int(argv[3]), int(argv[4]), exp, log=True))
+        l2 = F(argv[6]) if len(argv) > 6 else None
+        print(search_relaxed(F(argv[1]), F(argv[2]), int(argv[3]), int(argv[4]), exp, log=True, l2=l2))
         return 0
     if argv[0] == "search":
         exp = float(argv[4]) if len(argv) > 4 else 0.5
-        print(search(F(argv[1]), int(argv[2]), int(argv[3]), exp, log=True))
+        start = F(argv[5]) if len(argv) > 5 else 3
+        print(search(F(argv[1]), int(argv[2]), int(argv[3]), exp, start=start, log=True))
         return 0
     print(__doc__)
     return 2
@@ -187,6 +193,22 @@ def test_relaxed_no_kill_below_seven_57():
     # control: relaxedStrategy_757 (l = 1/8) survives every start below 7/57
     assert relaxed_check(F(12, 100), F(1, 8), 604160, 30) is None
     assert search_relaxed(F(12, 100), F(1, 8), 30, 300) == (None, None)
+
+
+def test_certificates_013():
+    # finiteMemoryRelaxedValue_ge_013's three certificates, judged by the independent checkers
+    from arc_fullinfo import survives
+    m, b = 13060715579013119, F(13, 100)
+    assert not survives(F(m), F(m) + F(3, 2), b, 56) and survives(F(m), F(m) + F(3, 2), b, 55)
+    assert relaxed_check(b, F(1, 2), 1048576, 20, l2=F(3, 4)) == 5
+    assert relaxed_check(b, F(3, 4), 1048584, 20, l2=F(111, 100)) == 7
+
+
+def test_start_width_matters():
+    # from [m, m + 1) component kills reach 0.13; the same beam from [m, m + 3) does not by depth 45
+    t, m = search(F(13, 100), 45, 1000, 1.0, start=1)
+    assert t == 38
+    assert search(F(13, 100), 45, 1000, 1.0, start=3) == (None, None)
 
 
 if __name__ == "__main__":

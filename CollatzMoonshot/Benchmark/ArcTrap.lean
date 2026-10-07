@@ -3755,8 +3755,10 @@ Evidence: `solve_vw` loses at `7/57 + 10⁻⁶` for `k = 0, …, 6, 8, 10, 12, 1
 `β = 0.1229` within 26, 30, 33 steps for `k = 1, 2, 3`; at `β = 0.13` within 14, 16, 17, 21, 23, 25,
 27 steps for `k = 1, …, 7`, and at `β = 0.135` within 12, 15, 16, 17, 18, 21, 22, 27 for `k = 1, …, 8`
 (about two extra steps per bit of memory).
-Uniform in `k` from `0.1377` up: an oblivious kill (`obliviousKill_1377`, `not_kRelaxedStrategy_1377`)
-bounds every memory size at once, so the open range is `(7/57, 0.1377)`.  At `β = 1/8` the kill depths
+Uniform in `k` from `0.13` up (`finiteMemoryRelaxedValue_ge_013`, given `KRelaxedLiveEverywhere`):
+oblivious certificates per window width bound every memory size at once, so the open range is
+`(7/57, 0.13)`.  Relaxed kills already reach `0.1229` at width `3/20`
+(`relaxedObliviousKill_1229_width_3_20`).  At `β = 1/8` the kill depths
 are 19, 21, 22, 27, 28, 32 for `k = 1, …, 6`.
 Difficulty locus: oblivious kills stop near `0.1375` (depths 20, 25, 36, 51, 53, 62, 66 at `0.15`,
 `0.145`, `0.14`, `0.138`, `0.1379`, `0.1378`, `0.1377`; width-20000 beams under three scores find none at
@@ -3943,5 +3945,118 @@ theorem not_kRelaxedStrategy_1_8_width_1_8 {k : ℕ} {P : ℕ → Set ℝ} (hk :
     (hne : (P (604160 % 2 ^ k)).Nonempty) :
     ¬ KRelaxedStrategy (1 / 8) (1 - 2 * (1 / 8)) (1 / 8) k P :=
   not_kRelaxedStrategy_of_relaxedObliviousKill hk relaxedObliviousKill_1_8 hne
+
+/-- **A relaxed oblivious kill `10⁻⁴` above `7/57`**, at width `3/20`: from `M = 13187072` every
+relaxed run for `[0.1229, 0.8771]` dies within 25 moves.  Confidence 99%.  Evidence:
+`arc_oblivious.py relaxed`, re-checked by `relaxed_check` (dies at 25; `M + 1` and `β = 0.12` survive).
+At `β = 0.1229` widths `3/20` and `1/5` die this way; `1/8` and `1/10` gave no kill within 300 s of
+beam (width 2000).  As `l → 0` the relaxed game tends to the component game, whose oblivious kills
+stop near `0.1375`, so oblivious kills alone cannot settle `FiniteMemoryRelaxedValue` at small widths. -/
+theorem relaxedObliviousKill_1229_width_3_20 :
+    RelaxedObliviousKill (1229 / 10000) (3 / 20) 13187072 := by
+  sorry
+
+/-- **No finite memory holds `[0.1229, 0.8771]` at width `3/20`** (at the class of `13187072`). -/
+theorem not_kRelaxedStrategy_1229_width_3_20 {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (hne : (P (13187072 % 2 ^ k)).Nonempty) :
+    ¬ KRelaxedStrategy (1229 / 10000) (1 - 2 * (1229 / 10000)) (3 / 20) k P :=
+  not_kRelaxedStrategy_of_relaxedObliviousKill hk relaxedObliviousKill_1229_width_3_20 hne
+
+/-! ### Component kills from a narrow start cover every small width -/
+
+/-- An oblivious kill from the start window `[M, M + w)`.  `ObliviousKill β M` is `w = 3`. -/
+def ObliviousKillFrom (β w : ℝ) (M : ℕ) : Prop :=
+  ∀ ξ : ℝ, (M : ℝ) ≤ ξ → ξ < M + w → ∃ n : ℕ, Int.fract (ξ * (3 / 2) ^ n) ∉ Set.Icc β (1 - β)
+
+/-- **A relaxed run traps a point.**  The kept sub-windows `[u_n, u_n + 2l/3]` pulled back by
+`(2/3)^n` are nested compact intervals, so some `ξ ∈ [M, M + 1 + l)` has every `ξ (3/2)^n` in
+`[u_n, u_n + 2l/3]`, inside a lift of `[β, 1 - β]`.  Confidence 97% (nested intervals). -/
+theorem exists_trapped_of_relaxedPath {β l : ℝ} {M : ℕ} (hl : 0 < l) (V : ℕ → ℝ)
+    (h0 : (M : ℝ) ≤ V 0) (h1 : V 0 < M + 1) (hV : ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l / 3 ∧
+      (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2) :
+    ∃ ξ : ℝ, (M : ℝ) ≤ ξ ∧ ξ < M + 1 + l ∧ ∀ n, Int.fract (ξ * (3 / 2) ^ n) ∈ Set.Icc β (1 - β) := by
+  sorry
+
+/-- So a component kill from `[M, M + 1 + l₀)` is a relaxed oblivious kill at every width
+`0 < l ≤ l₀`: one certificate for the whole small-width range, where relaxed kills alone fail. -/
+theorem relaxedObliviousKill_of_obliviousKillFrom {β l l₀ : ℝ} {M : ℕ} (hl : 0 < l) (hll : l ≤ l₀)
+    (h : ObliviousKillFrom β (1 + l₀) M) : RelaxedObliviousKill β l M := by
+  rintro ⟨V, h0, h1, hV⟩
+  obtain ⟨ξ, hξ0, hξ1, hall⟩ := exists_trapped_of_relaxedPath hl V h0 h1 hV
+  obtain ⟨n, hn⟩ := h ξ hξ0 (by linarith)
+  exact hn (hall n)
+
+/-- A relaxed oblivious kill for every width in `[l₁, l₂]` at once: the run may spread by `l₂/3` but
+must keep the margin `2l₁/3`, so each width's runs are runs here. -/
+def RelaxedObliviousKillRange (β l₁ l₂ : ℝ) (M : ℕ) : Prop :=
+  ¬ ∃ V : ℕ → ℝ, (M : ℝ) ≤ V 0 ∧ V 0 < M + 1 ∧ ∀ n, ∃ u : ℝ, V n ≤ u ∧ u ≤ V n + l₂ / 3 ∧
+    (∃ j : ℤ, (j : ℝ) + β ≤ u ∧ u + 2 * l₁ / 3 ≤ j + 1 - β) ∧ V (n + 1) = 3 * u / 2
+
+theorem RelaxedObliviousKillRange.kill {β l₁ l₂ l : ℝ} {M : ℕ} (h : RelaxedObliviousKillRange β l₁ l₂ M)
+    (h₁ : l₁ ≤ l) (h₂ : l ≤ l₂) : RelaxedObliviousKill β l M := by
+  rintro ⟨V, h0, h1, hV⟩
+  refine h ⟨V, h0, h1, fun n => ?_⟩
+  obtain ⟨u, hu1, hu2, ⟨j, hj1, hj2⟩, hn⟩ := hV n
+  exact ⟨u, hu1, by linarith, ⟨j, hj1, by linarith⟩, hn⟩
+
+/-- Relaxed strategies only get easier on a longer arc. -/
+theorem KRelaxedStrategy.mono {β β₀ l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (hβ : β₀ ≤ β)
+    (h : KRelaxedStrategy β (1 - 2 * β) l k P) : KRelaxedStrategy β₀ (1 - 2 * β₀) l k P := by
+  refine ⟨h.1, h.2.1, fun r hr a ha => ?_⟩
+  obtain ⟨u, h1, h2, ⟨j, hj1, hj2⟩, h4⟩ := h.2.2 r hr a ha
+  exact ⟨u, h1, h2, ⟨j, by linarith, by linarith⟩, h4⟩
+
+/-- The window width of a live relaxed strategy fits in the arc: `2l/3 ≤ t`. -/
+theorem KRelaxedStrategy.width_le {s t l : ℝ} {k r : ℕ} {P : ℕ → Set ℝ} (hr : r < 2 ^ k)
+    (h : KRelaxedStrategy s t l k P) (hne : (P r).Nonempty) : 2 * l / 3 ≤ t := by
+  obtain ⟨a, ha⟩ := hne
+  obtain ⟨u, -, -, ⟨j, hj1, hj2⟩, -⟩ := h.2.2 r hr a ha
+  linarith
+
+/-- **Certificate 1 at `0.13`** (small widths): every `ξ ∈ [M, M + 3/2)`, `M = 13060715579013119`,
+has `‖ξ (3/2)^n‖ < 0.13` for some `n ≤ 56`.  Confidence 99%: `arc_oblivious.py search 13/100 200
+10000 1.0 3/2`, re-checked by `arc_fullinfo.survives` (dies at 56, survives 55).  Note the start
+width: from `[M, M + 3)` component kills stop near `0.1375`, from `[M, M + 1)` they reach `0.13`. -/
+theorem obliviousKillFrom_013 : ObliviousKillFrom (13 / 100) (3 / 2) 13060715579013119 := by
+  sorry
+
+/-- **Certificate 2 at `0.13`**: widths `[1/2, 3/4]` from `M = 2^20` die within 5 moves.  Confidence
+99%: `arc_oblivious.py relaxed`, re-checked by `relaxed_check` (depth 5). -/
+theorem relaxedObliviousKillRange_013_a : RelaxedObliviousKillRange (13 / 100) (1 / 2) (3 / 4) 1048576 := by
+  sorry
+
+/-- **Certificate 3 at `0.13`**: widths `[3/4, 111/100]` from `M = 2^20 + 8` die within 7 moves.
+Confidence 99%: `arc_oblivious.py relaxed`, re-checked by `relaxed_check` (depth 7). -/
+theorem relaxedObliviousKillRange_013_b :
+    RelaxedObliviousKillRange (13 / 100) (3 / 4) (111 / 100) 1048584 := by
+  sorry
+
+/-- **No finite memory reaches `0.13`.**  Given that live strategies are live at every residue
+(`KRelaxedLiveEverywhere`), `FiniteMemoryRelaxedValue` holds on `[0.13, 1/2)` for every `k`.  Three
+oblivious certificates cover every window width: one component kill from `[M, M + 3/2)` for
+`l ≤ 1/2` (through `exists_trapped_of_relaxedPath`), two relaxed range kills for `[1/2, 3/4]` and
+`[3/4, 1.11]`, and `l > 1.11` cannot fit the arc.  So the finite-memory value lies in `[7/57, 0.13]`
+for every `k`, where full information reaches `0.14` for typical integer parts. -/
+theorem finiteMemoryRelaxedValue_ge_013 (hL : KRelaxedLiveEverywhere) {k : ℕ} (hk : 1 ≤ k) {β : ℝ}
+    (hβ : 13 / 100 ≤ β) (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := by
+  intro hS
+  have h0 := hS.mono hβ
+  have hl : 0 < l := hS.1
+  have live : ∀ M : ℕ, (P (M % 2 ^ k)).Nonempty := fun M =>
+    hL _ _ _ k P hk h0 hne _ (Nat.mod_lt _ (by positivity))
+  have hw : 2 * l / 3 ≤ 1 - 2 * (13 / 100 : ℝ) := by
+    obtain ⟨r, hr, hr'⟩ := hne
+    exact h0.width_le hr hr'
+  rcases le_or_gt l (1 / 2) with h1 | h1
+  · exact not_kRelaxedStrategy_of_relaxedObliviousKill hk
+      (relaxedObliviousKill_of_obliviousKillFrom (l₀ := 1 / 2) hl h1
+        (show ObliviousKillFrom (13 / 100) (1 + 1 / 2) 13060715579013119 by
+          norm_num; exact obliviousKillFrom_013)) (live _) h0
+  rcases le_or_gt l (3 / 4) with h2 | h2
+  · exact not_kRelaxedStrategy_of_relaxedObliviousKill hk
+      (relaxedObliviousKillRange_013_a.kill h1.le h2) (live _) h0
+  · exact not_kRelaxedStrategy_of_relaxedObliviousKill hk
+      (relaxedObliviousKillRange_013_b.kill h2.le (by linarith)) (live _) h0
 
 end CollatzMoonshot.Benchmark.ArcTrap
