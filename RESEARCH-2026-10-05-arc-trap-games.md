@@ -419,3 +419,13 @@ No position lets the larger memory escape.  Depth does not raise the maximum: at
 | `[1/32, 343/2048]` price (max d1) | 10 (14) | 15 (19) | 15 (22) | 10 (24) | 13 (29) |
 
 The worst windows come in mirror pairs (`x ↔ 1 − x`, residue bits flipped).  They are narrow, and the smaller memory kills them fast at the projected residue.  The fear was that the price is the kill depth in disguise, `d1 ≈ D(k+1)` against `d0 ≈ 3`, which would refute `DelayCostBounded` since `D(k)` must be unbounded below 0.128.  That is not what happens.  The deepest kills grow with `k` while the price stays at most 15, so `d0` grows alongside `d1` at the costly residues.
+
+**Local price of committing early** (`arc_kmemory.py lag BETA K DMAX LAYERS split`).  In the exact `k`-game, compare the adaptive depth `d(s) = 1 + max_c min_b d(child)` with the committed depth `d_u(s) = 1 + min_b max_c d(child)`, where one bit serves every component.  `(k+1)`-memory is by definition the `k`-game committed early at every move, so `d_u − d` is the one-step price.  At `β = 1/8`, positions reachable in 8 moves, by number of components:
+
+| k | 1 component (free by definition) | 2 components, free | 2 components, priced (max price) | 3 components |
+|---|---|---|---|---|
+| 1 | 540 | 87 | 41 (5) | 2, free |
+| 2 | 1080 | 213 | 43 (10) | 4 (≤ 1) |
+| 3 | 2160 | 376 | 136 (3) | 8 (≤ 1) |
+
+There is always a single bit that kills.  At branch points one bit is optimal for both components 70 to 80% of the time.  **Killed:** "free branch points are mirror-symmetric splits" (the arc is symmetric, so a window centred on an integer splits into mirror images).  No reachable branch point has two equal components.  Freedom comes from slack in the less critical branch, not from symmetry.  Still missing: why the one-step prices do not compound along a kill (total price ≤ 16 while depths reach 30).

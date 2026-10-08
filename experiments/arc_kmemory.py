@@ -13,6 +13,7 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
 
     arc_kmemory.py kill BETA K DMAX
     arc_kmemory.py depths BETA K DMAX      per-residue kill depths
+    arc_kmemory.py lag BETA K DMAX LAYERS [split]  local price of committing one bit before the constructor moves
     arc_kmemory.py track BETA LO HI K DMAX  one window over every residue: (max price, its r, max d1, min d0)
     arc_kmemory.py gaps BETA K DMAX LAYERS [WORST]  extra kill depth one more step of delay costs, per state
                                              (WORST > 0: list the WORST costliest states)
@@ -160,6 +161,41 @@ def delay_gaps(beta, k, dmax, layers, worst=0):
     return dict(sorted(hist.items(), key=str))
 
 
+def lag_costs(beta, k, dmax, layers, split=False):
+    """Local price of committing early, in the k-game.  At each state s reachable from [0, 3] within
+    `layers` moves, adaptive depth d(s) = 1 + max_c min_b d(child(c, b)) against committed depth
+    d_u(s) = 1 + min_b max_c d(child(c, b)) (one bit for every component, then adaptive again).
+    Returns {d_u - d: count} ('uniform fails' when no single bit kills within dmax)."""
+    dep = make_depth(beta, k)
+    ch = make_children(beta, k)
+    half = 1 << (k - 1)
+    seen, frontier = set(), [(F(0), F(3), r) for r in range(1 << k)]
+    for _ in range(layers + 1):
+        nxt = []
+        for st in frontier:
+            if st in seen:
+                continue
+            seen.add(st)
+            for nl, nh, base in ch(*st):
+                nxt += [(nl, nh, base + bit * half) for bit in (0, 1)]
+        frontier = nxt
+    hist = {}
+    for st in seen:
+        d = dep(st, dmax)
+        kids = ch(*st)
+        if d is None or not kids:
+            continue
+        unif = []
+        for bit in (0, 1):
+            ds = [dep((nl, nh, base + bit * half), dmax) for nl, nh, base in kids]
+            unif.append(None if None in ds else 1 + max(ds))
+        unif = [u for u in unif if u is not None]
+        key = (min(unif) - d) if unif else "uniform fails"
+        key = (len(kids), key) if split else key
+        hist[key] = hist.get(key, 0) + 1
+    return dict(sorted(hist.items(), key=str))
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -188,6 +224,9 @@ def main(argv):
                 print(f"gap {g}  [{float(lo):.5f}, {float(hi):.5f}] w={float(hi - lo):.5f}  r={r:0{int(argv[2]) + 1}b}  d0={d0} d1={d1}")
         else:
             print(out)
+        return 0
+    if argv[0] == "lag":
+        print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))
         return 0
     if argv[0] == "track":
         print(track_window(F(argv[1]), F(argv[2]), F(argv[3]), int(argv[4]), int(argv[5])))
