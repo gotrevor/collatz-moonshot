@@ -407,6 +407,6 @@ Exact optimal depths are 14, 16, 17, 21, 23, 25 (0.13) and 19, 21, 22, 27 (0.125
 | k → k+1 | 1→2 | 2→3 | 3→4 | 4→5 | 5→6 |
 |---|---|---|---|---|---|
 | β = 0.13 | 10 | 10 | 12 | 13 | 13 |
-| β = 0.125 | 15 | 15 | 15 | 16 | (running) |
+| β = 0.125 | 15 | 15 | 15 | 16 | out of memory (24 GB, killed) |
 
 No position lets the larger memory escape.  Depth does not raise the maximum: at 0.125, `k = 2→3`, it is 15 at `LAYERS = 8, 12, 16` (≈2.6k, 17k, 100k positions).  Most positions cost 0 to 2; the maxima sit on a few dozen positions.  If the price is bounded by a constant `c(β)` for all `k`, then the checked memoryless kill lifts to every `k` (`ArcDelay.DelayCostBounded`, `advKills_of_delayCost`, `finiteMemoryRelaxedValue_of_delayCost`).  The memoryless base case at 0.13 is checked in Lean (`advKills_013_one`, `native_decide`).  A plain memory-reduction Prop would restate the conjecture (vacuous below 7/57, equivalent above), so the content is the uniform constant.
