@@ -17,6 +17,7 @@ import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
 import CollatzMoonshot.Benchmark.ArcTrap
+import CollatzMoonshot.Benchmark.ArcDelay
 import CollatzMoonshot.Benchmark.FlattoCeiling
 import CollatzMoonshot.Obstructions.ParityWordGenericity
 
@@ -144,6 +145,9 @@ def register : List Hall := [
   ⟨"general memory reduction for relaxed arc games", .refuted,
    "off the symmetric position memory helps: the arc [2/5, 2/5 + 87/100] is won with 3 bits and lost with 0 to 2 (all 132 widths), so a k-memory barrier cannot come from reducing any strategy to a memoryless one",
    "Benchmark/ArcTrap.lean; experiments/arc_trap_k.py (test_memory_helps_off_centre)", "2026-10-06"⟩,
+  ⟨"one greedy cone adversary for every memory size", .refuted,
+   "an adversary that picks each digit to minimise the measure (or count, max, sqrt) of the constructor's committed cone never kills at 0.13 for k = 1 unless it looks exactly 4 digits past the commitment (then 22, 31, 38, 40, 45, 43 for k = 1..6, against exact 14..25), fails again at 6 digits, and fails at 0.125 for every k = 1..4 (exact kills at 19..27): the winning adaptive play is strategic, not a potential descent; the induction route lives on as DelayCostBounded",
+   "Benchmark/ArcDelay.lean; experiments/arc_greedy.py; RESEARCH-2026-10-05-arc-trap-games.md", "2026-10-07"⟩,
   ⟨"local-global borrowing at 23", .refuted,
    "every prime power has small companions, yet no integer companion exists below 23",
    "Obstructions/LocalGlobalBorrow23.lean", "2026-09-29"⟩,
@@ -244,6 +248,9 @@ def mazeLinks : List Link := [
      ``Benchmark.ArcTrap.finiteMemoryRelaxedValue_one], [``Benchmark.ArcTrap.FiniteMemoryRelaxedValue]⟩,
   ⟨"general memory reduction for relaxed arc games",
    [``Benchmark.ArcTrap.MemoryHelpsOffCentre, ``Benchmark.ArcTrap.kRelaxedStrategy_one], []⟩,
+  ⟨"one greedy cone adversary for every memory size",
+   [``Benchmark.ArcDelay.advKills, ``Benchmark.ArcDelay.advKills_013_one],
+   [``Benchmark.ArcDelay.DelayCostBounded]⟩,
   ⟨"local-global borrowing at 23",
    [``each_prime_power_has_small_inputs_23, ``no_global_small_inputs_23], []⟩,
   ⟨"quadratic borrowability height at 23", [``no_strict_quadratic_height_descent_23], []⟩,
@@ -280,7 +287,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 30 rows, 22 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 31 rows, 23 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

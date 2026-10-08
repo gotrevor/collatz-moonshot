@@ -12,6 +12,8 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
 30 (k = 2), 33 (k = 3) steps.  k = 1 reproduces the 26 of the earlier memoryless minimax.
 
     arc_kmemory.py kill BETA K DMAX
+    arc_kmemory.py depths BETA K DMAX      per-residue kill depths
+    arc_kmemory.py gaps BETA K DMAX LAYERS  extra kill depth one more step of delay costs, per state
     arc_kmemory.py test
 """
 from __future__ import annotations
@@ -62,11 +64,79 @@ def kill_depth(beta, k, dmax):
     return None
 
 
+def residue_depths(beta, k, dmax):
+    """Per residue r < 2^k: least D such that the adversary kills [0, 3] at r within D (None if > dmax)."""
+    adv = make(beta, k)
+    out = []
+    for r in range(1 << k):
+        out.append(next((D for D in range(1, dmax + 1) if adv(F(0), F(3), r, D)), None))
+    return out
+
+
+def make_children(beta, k):
+    half = 1 << (k - 1)
+
+    def children(lo, hi, r):
+        d = H if r % 2 else F(0)
+        out = []
+        for j in range(math.floor(lo) - 1, math.floor(hi) + 1):
+            a, b = max(lo, j + beta), min(hi, j + 1 - beta)
+            if a <= b:
+                nl, nh = F(3, 2) * a + d, F(3, 2) * b + d
+                sh = math.floor(nl)
+                base = ((3 * r - r % 2) // 2 + sh) % half if half > 1 else 0
+                out.append((nl - sh, nh - sh, base))
+        return out
+
+    return children
+
+
+def delay_gaps(beta, k, dmax, layers):
+    """Cost of one more step of delay, state by state.  Over the (k+1)-game states reachable from
+    ([0, 3], r) within `layers` moves (any constructor component, either adversary bit), compare the
+    kill depth d1 in the (k+1)-game with d0 at the projected k-state (window, r mod 2^k) in the k-game.
+    Returns {d1 - d0: count}, with 'k+1 survives' counting states killable in the k-game but not
+    within dmax in the (k+1)-game."""
+    adv0, adv1 = make(beta, k), make(beta, k + 1)
+    ch1 = make_children(beta, k + 1)
+    half1 = 1 << k
+
+    def depth(adv, st):
+        return next((D for D in range(1, dmax + 1) if adv(*st, D)), None)
+
+    seen = set()
+    frontier = [(F(0), F(3), r) for r in range(1 << (k + 1))]
+    for _ in range(layers + 1):
+        nxt = []
+        for st in frontier:
+            if st in seen:
+                continue
+            seen.add(st)
+            for nl, nh, base in ch1(*st):
+                nxt += [(nl, nh, base + bit * half1) for bit in (0, 1)]
+        frontier = nxt
+    hist = {}
+    for lo, hi, r in seen:
+        d0 = depth(adv0, (lo, hi, r % (1 << k)))
+        if d0 is None:
+            continue
+        d1 = depth(adv1, (lo, hi, r))
+        key = "k+1 survives" if d1 is None else d1 - d0
+        hist[key] = hist.get(key, 0) + 1
+    return dict(sorted(hist.items(), key=str))
+
+
 def main(argv):
     if not argv or argv[0] == "test":
         return subprocess.call([sys.executable, "-m", "pytest", "-q", __file__])
     if argv[0] == "kill":
         print(kill_depth(F(argv[1]), int(argv[2]), int(argv[3])))
+        return 0
+    if argv[0] == "gaps":
+        print(delay_gaps(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4])))
+        return 0
+    if argv[0] == "depths":
+        print(residue_depths(F(argv[1]), int(argv[2]), int(argv[3])))
         return 0
     print(__doc__)
     return 2

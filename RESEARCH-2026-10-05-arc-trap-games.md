@@ -386,3 +386,16 @@ So the narrow-start floor sits within `5·10⁻⁵` of `7/57 ≈ 0.122807`, with
 **Receding horizon (`not_kRelaxedStrategy_of_narrowKills`).**  The adversary sets the low `k` digits to any live residue `r`, sees the strategy's start `a ∈ P r`, and only then chooses the high digits.  The trapped point has `ξ (3/2)^k ∈ 3^k M' + (r + a)(3/2)^k + [0, l (3/2)^k]`, and `3^k M'` reaches every class mod `2^D`.  So kills from width-`w` windows at every offset defeat every `k` with `l (3/2)^k ≤ w`.  This needs no `KRelaxedLiveEverywhere`, because the adversary chooses which live residue to play.  At `0.1229` the 8 tiles give `w = 1/9`: `not_kRelaxedStrategy_1229_small_width`.
 
 **What it does not do.**  For fixed `l` the window `l (3/2)^k` grows with `k`, and once it passes ~1 the kill is a unit-start kill again (floor ≈ 0.128).  Doing the trick at a later time `n` gives the same width.  So at `0.1229` the open widths are `((1/9)(2/3)^k, 1.11]` minus `3/20`.  For large `k` that is essentially everything.  The constructor's lookahead is exactly what keeps the start window wide.  Beating it needs the adversary to shrink the constructor's spread *during* the k-step lookahead with adaptively chosen digits (the `D(k)` data says this works for small `k`), not only after it.
+
+## Mechanism 9 (dead): one k-independent greedy adversary (2026-10-07)
+
+`experiments/arc_greedy.py`: the delay-k component game in ξ coordinates, an exact constructor (DFS) against a deterministic adversary that picks each digit to minimise a potential of the *cone* (the oblivious tree from the constructor's kept component through the committed cuts, optionally looking `E` digits further, minimising over them).
+
+| rule | 0.13, k = 1..6 | 0.125, k = 1..4 |
+|---|---|---|
+| measure, `E = 0, 2` | survives (k = 1) | – |
+| count / max / sqrt, `E = 0, 2` | survives (k = 1) | – |
+| measure, `E = 4` | kills at 22, 31, 38, 40, 45, 43 | survives at every k |
+| measure, `E = 6` | survives at every k | – |
+
+Exact optimal depths are 14, 16, 17, 21, 23, 25 (0.13) and 19, 21, 22, 27 (0.125).  The only rule that kills at 0.13 breaks when it looks further, and dies inside the open range even at `k = 1`.  So there is no simple potential-minimising adversary; the winning play is genuinely strategic.  Recorded in the Maze ("one greedy cone adversary for every memory size").
