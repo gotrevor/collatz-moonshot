@@ -13,7 +13,9 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
 
     arc_kmemory.py kill BETA K DMAX
     arc_kmemory.py depths BETA K DMAX      per-residue kill depths
-    arc_kmemory.py gaps BETA K DMAX LAYERS  extra kill depth one more step of delay costs, per state
+    arc_kmemory.py track BETA LO HI K DMAX  one window over every residue: (max price, its r, max d1, min d0)
+    arc_kmemory.py gaps BETA K DMAX LAYERS [WORST]  extra kill depth one more step of delay costs, per state
+                                             (WORST > 0: list the WORST costliest states)
     arc_kmemory.py test
 """
 from __future__ import annotations
@@ -91,18 +93,45 @@ def make_children(beta, k):
     return children
 
 
-def delay_gaps(beta, k, dmax, layers):
+def make_depth(beta, k):
+    """Exact kill depth per state with one memo entry per state (`make`'s lru_cache keeps one per
+    (state, D), which ran out of memory at k = 6): depth = 1 + max over components of the min over the
+    adversary's bits; `None` when above `cap`."""
+    ch = make_children(beta, k)
+    half = 1 << (k - 1)
+    exact, lower = {}, {}
+
+    def dep(st, cap):
+        if st in exact:
+            return exact[st] if exact[st] <= cap else None
+        if cap <= 0 or lower.get(st, 0) >= cap:
+            return None
+        worst = 0
+        for nl, nh, base in ch(*st):
+            best = None
+            for bit in (0, 1):
+                d = dep((nl, nh, base + bit * half), cap - 1 if best is None else best - 1)
+                if d is not None:
+                    best = d
+            if best is None:
+                lower[st] = max(lower.get(st, 0), cap)
+                return None
+            worst = max(worst, best)
+        exact[st] = worst + 1
+        return worst + 1
+
+    return dep
+
+
+def delay_gaps(beta, k, dmax, layers, worst=0):
     """Cost of one more step of delay, state by state.  Over the (k+1)-game states reachable from
     ([0, 3], r) within `layers` moves (any constructor component, either adversary bit), compare the
     kill depth d1 in the (k+1)-game with d0 at the projected k-state (window, r mod 2^k) in the k-game.
     Returns {d1 - d0: count}, with 'k+1 survives' counting states killable in the k-game but not
     within dmax in the (k+1)-game."""
-    adv0, adv1 = make(beta, k), make(beta, k + 1)
+    dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
     ch1 = make_children(beta, k + 1)
     half1 = 1 << k
-
-    def depth(adv, st):
-        return next((D for D in range(1, dmax + 1) if adv(*st, D)), None)
 
     seen = set()
     frontier = [(F(0), F(3), r) for r in range(1 << (k + 1))]
@@ -115,15 +144,34 @@ def delay_gaps(beta, k, dmax, layers):
             for nl, nh, base in ch1(*st):
                 nxt += [(nl, nh, base + bit * half1) for bit in (0, 1)]
         frontier = nxt
-    hist = {}
+    hist, rows = {}, []
     for lo, hi, r in seen:
-        d0 = depth(adv0, (lo, hi, r % (1 << k)))
+        d0 = dep0((lo, hi, r % (1 << k)), dmax)
         if d0 is None:
             continue
-        d1 = depth(adv1, (lo, hi, r))
+        d1 = dep1((lo, hi, r), dmax)
         key = "k+1 survives" if d1 is None else d1 - d0
         hist[key] = hist.get(key, 0) + 1
+        if d1 is not None:
+            rows.append((d1 - d0, lo, hi, r, d0, d1))
+    if worst:
+        rows.sort(reverse=True)
+        return rows[:worst]
     return dict(sorted(hist.items(), key=str))
+
+
+def track_window(beta, lo, hi, k, dmax):
+    """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
+    dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
+    best, arg, top, low = None, None, 0, None
+    for r in range(1 << (k + 1)):
+        d0, d1 = dep0((lo, hi, r % (1 << k)), dmax), dep1((lo, hi, r), dmax)
+        if d0 is None or d1 is None:
+            continue
+        top, low = max(top, d1), d0 if low is None else min(low, d0)
+        if best is None or d1 - d0 > best:
+            best, arg = d1 - d0, r
+    return best, arg, top, low
 
 
 def main(argv):
@@ -133,7 +181,16 @@ def main(argv):
         print(kill_depth(F(argv[1]), int(argv[2]), int(argv[3])))
         return 0
     if argv[0] == "gaps":
-        print(delay_gaps(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4])))
+        worst = int(argv[5]) if len(argv) > 5 else 0
+        out = delay_gaps(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), worst)
+        if worst:
+            for g, lo, hi, r, d0, d1 in out:
+                print(f"gap {g}  [{float(lo):.5f}, {float(hi):.5f}] w={float(hi - lo):.5f}  r={r:0{int(argv[2]) + 1}b}  d0={d0} d1={d1}")
+        else:
+            print(out)
+        return 0
+    if argv[0] == "track":
+        print(track_window(F(argv[1]), F(argv[2]), F(argv[3]), int(argv[4]), int(argv[5])))
         return 0
     if argv[0] == "depths":
         print(residue_depths(F(argv[1]), int(argv[2]), int(argv[3])))
@@ -151,6 +208,13 @@ def test_memoryless_depth_matches_earlier_minimax():
 
 def test_two_bits_still_killed():
     assert kill_depth(F(1229, 10000), 2, 40) == 30
+
+
+def test_memo_depth_matches_iterative_deepening():
+    # two implementations of the same game (lru_cache per (state, D) vs one memo entry per state)
+    for k in (1, 2, 3):
+        dep = make_depth(F(13, 100), k)
+        assert [dep((F(0), F(3), r), 40) for r in range(1 << k)] == residue_depths(F(13, 100), k, 40)
 
 
 def test_below_edge_not_killed():

@@ -410,3 +410,12 @@ Exact optimal depths are 14, 16, 17, 21, 23, 25 (0.13) and 19, 21, 22, 27 (0.125
 | β = 0.125 | 15 | 15 | 15 | 16 | out of memory (24 GB, killed) |
 
 No position lets the larger memory escape.  Depth does not raise the maximum: at 0.125, `k = 2→3`, it is 15 at `LAYERS = 8, 12, 16` (≈2.6k, 17k, 100k positions).  Most positions cost 0 to 2; the maxima sit on a few dozen positions.  If the price is bounded by a constant `c(β)` for all `k`, then the checked memoryless kill lifts to every `k` (`ArcDelay.DelayCostBounded`, `advKills_of_delayCost`, `finiteMemoryRelaxedValue_of_delayCost`).  The memoryless base case at 0.13 is checked in Lean (`advKills_013_one`, `native_decide`).  A plain memory-reduction Prop would restate the conjecture (vacuous below 7/57, equivalent above), so the content is the uniform constant.
+
+**Tracking the costliest windows** (`arc_kmemory.py track`, one window over every residue; `make_depth` keeps one memo entry per state, which got `k = 5→6` through where the per-`(state, D)` cache died at 24 GB):
+
+| window, β = 1/8 | 1→2 | 2→3 | 3→4 | 4→5 | 5→6 |
+|---|---|---|---|---|---|
+| `[3/16, 543/2048]` price (max d1) | 15 (18) | 2 (18) | 10 (23) | 7 (26) | 13 (30) |
+| `[1/32, 343/2048]` price (max d1) | 10 (14) | 15 (19) | 15 (22) | 10 (24) | 13 (29) |
+
+The worst windows come in mirror pairs (`x ↔ 1 − x`, residue bits flipped).  They are narrow, and the smaller memory kills them fast at the projected residue.  The fear was that the price is the kill depth in disguise, `d1 ≈ D(k+1)` against `d0 ≈ 3`, which would refute `DelayCostBounded` since `D(k)` must be unbounded below 0.128.  That is not what happens.  The deepest kills grow with `k` while the price stays at most 15, so `d0` grows alongside `d1` at the costly residues.

@@ -53,13 +53,17 @@ theorem advKills_013_one : (List.range 2).all (fun r => advKills (13 / 100) 1 14
   native_decide
 
 /-- **Conjecture: one move of delay has bounded price.**  From every position, the `(k+1)`-memory
-adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 25%.
+adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 30%.
 Evidence (`arc_kmemory.py gaps`, every state reachable in 8 moves from `[0, 3]`, depth cap 60): at
 `β = 0.13` the largest price is 10, 10, 12, 13, 13 for `k = 1→2, …, 5→6`, and at `β = 0.125` it is 15,
 15, 15, 16 for `k = 1→2, …, 4→5` (over about 1300 to 21000 states each), with no state where the
 larger memory escapes.  The worst prices are rare (a few dozen states) and creep up slowly; most states
 cost 0 to 2.  The maximum does not grow with depth: at `β = 0.125`, `k = 2→3`, it is 15 over the
-positions reachable within 8, 12 and 16 moves (about 2600, 17000 and 100000 states).  It is the quantitative form of the measured growth of
+positions reachable within 8, 12 and 16 moves (about 2600, 17000 and 100000 states).  The costliest
+windows do not carry a growing price: tracked over every residue (`arc_kmemory.py track`, `β = 1/8`),
+`[3/16, 543/2048]` costs 15, 2, 10, 7, 13 and `[1/32, 343/2048]` costs 10, 15, 15, 10, 13 for
+`k = 1→2, …, 5→6`, while their deepest kill grows 18 → 30 and 14 → 29.  So the price is not the kill
+depth in disguise: both depths grow together.  It is the quantitative form of the measured growth of
 the kill depth (about two moves per bit).  A single memory-reduction statement at fixed `β` would only
 restate `FiniteMemoryRelaxedValue` (vacuous below `7/57`, equivalent above), so the content is the
 uniform constant.  Dead alternative: no simple potential-minimising adversary works for every `k`
