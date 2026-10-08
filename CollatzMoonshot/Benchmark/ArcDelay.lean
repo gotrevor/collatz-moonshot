@@ -63,7 +63,10 @@ positions reachable within 8, 12 and 16 moves (about 2600, 17000 and 100000 stat
 windows do not carry a growing price: tracked over every residue (`arc_kmemory.py track`, `β = 1/8`),
 `[3/16, 543/2048]` costs 15, 2, 10, 7, 13 and `[1/32, 343/2048]` costs 10, 15, 15, 10, 13 for
 `k = 1→2, …, 5→6`, while their deepest kill grows 18 → 30 and 14 → 29.  So the price is not the kill
-depth in disguise: both depths grow together.  It is the quantitative form of the measured growth of
+depth in disguise: both depths grow together.  Locally (`arc_kmemory.py lag`, `β = 1/8`, `k = 1, 2, 3`)
+some single bit always kills.  At positions with two components one bit is optimal for both 70 to 80%
+of the time, with prices of at most 5, 10, 3.  This freedom is not mirror symmetry: no reachable split
+has two equal components.  What stays open is why these one-step prices do not add up along a kill.  It is the quantitative form of the measured growth of
 the kill depth (about two moves per bit).  A single memory-reduction statement at fixed `β` would only
 restate `FiniteMemoryRelaxedValue` (vacuous below `7/57`, equivalent above), so the content is the
 uniform constant.  Dead alternative: no simple potential-minimising adversary works for every `k`
