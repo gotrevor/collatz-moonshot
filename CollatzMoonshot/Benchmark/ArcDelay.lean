@@ -58,7 +58,8 @@ Evidence (`arc_kmemory.py gaps`, every state reachable in 8 moves from `[0, 3]`,
 `β = 0.13` the largest price is 10, 10, 12, 13, 13 for `k = 1→2, …, 5→6`, and at `β = 0.125` it is 15,
 15, 15, 16 for `k = 1→2, …, 4→5` (over about 1300 to 21000 states each), with no state where the
 larger memory escapes.  The worst prices are rare (a few dozen states) and creep up slowly; most states
-cost 0 to 2.  It is the quantitative form of the measured growth of
+cost 0 to 2.  The maximum does not grow with depth: at `β = 0.125`, `k = 2→3`, it is 15 over the
+positions reachable within 8, 12 and 16 moves (about 2600, 17000 and 100000 states).  It is the quantitative form of the measured growth of
 the kill depth (about two moves per bit).  A single memory-reduction statement at fixed `β` would only
 restate `FiniteMemoryRelaxedValue` (vacuous below `7/57`, equivalent above), so the content is the
 uniform constant.  Dead alternative: no simple potential-minimising adversary works for every `k`
