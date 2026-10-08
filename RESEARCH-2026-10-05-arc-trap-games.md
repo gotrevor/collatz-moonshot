@@ -399,3 +399,14 @@ So the narrow-start floor sits within `5·10⁻⁵` of `7/57 ≈ 0.122807`, with
 | measure, `E = 6` | survives at every k | – |
 
 Exact optimal depths are 14, 16, 17, 21, 23, 25 (0.13) and 19, 21, 22, 27 (0.125).  The only rule that kills at 0.13 breaks when it looks further, and dies inside the open range even at `k = 1`.  So there is no simple potential-minimising adversary; the winning play is genuinely strategic.  Recorded in the Maze ("one greedy cone adversary for every memory size").
+
+## Mechanism 10: induction on memory, the price of one step of delay (2026-10-07)
+
+`(k+1)`-memory is the `k`-memory game with every adversary bit committed one move earlier, and the projection `(window, r) ↦ (window, r mod 2^k)` sends `(k+1)`-positions to `k`-positions.  `arc_kmemory.py gaps BETA K DMAX LAYERS` compares kill depths `d1` (`(k+1)`-game) and `d0` (projected `k`-game) over every position reachable from `[0, 3]` within `LAYERS` moves (all components, both bits).  Maximum price `d1 − d0`, `LAYERS = 8`, depth cap 60:
+
+| k → k+1 | 1→2 | 2→3 | 3→4 | 4→5 | 5→6 |
+|---|---|---|---|---|---|
+| β = 0.13 | 10 | 10 | 12 | 13 | 13 |
+| β = 0.125 | 15 | 15 | 15 | 16 | (running) |
+
+No position lets the larger memory escape.  Most positions cost 0 to 2; the maxima sit on a few dozen positions.  If the price is bounded by a constant `c(β)` for all `k`, then the checked memoryless kill lifts to every `k` (`ArcDelay.DelayCostBounded`, `advKills_of_delayCost`, `finiteMemoryRelaxedValue_of_delayCost`).  The memoryless base case at 0.13 is checked in Lean (`advKills_013_one`, `native_decide`).  A plain memory-reduction Prop would restate the conjecture (vacuous below 7/57, equivalent above), so the content is the uniform constant.
