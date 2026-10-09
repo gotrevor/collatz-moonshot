@@ -70,6 +70,47 @@ theorem advKills_endgame_18 : advKills (1 / 8) 1 11 (11 / 64) (5 / 16) 0 = true 
     advKills (1 / 8) 1 10 (11 / 64) (5 / 16) 0 = false := by
   native_decide
 
+/-- The kill relation with every adversary bit forced to `0`: the parities are then the committed
+residue's own. -/
+def obKills (β : ℚ) (k : ℕ) : ℕ → ℚ → ℚ → ℕ → Bool
+  | 0, _, _, _ => false
+  | D + 1, lo, hi, r => (children β k lo hi r).all fun c => obKills β k D c.1 c.2.1 c.2.2
+
+/-- **The free ride.**  A bit the adversary sets after move `n` enters the residue at position `k - 1`
+and sinks one position per move (carries only go up).  So it first becomes a parity at move `n + k`.
+Within `D ≤ k` moves the adversary has no say: its kills are those of the committed residue alone.
+Confidence 95%.  Consequence: from `[0, 3]` at every residue the kill depth exceeds `k`, since some
+residue's committed parities let the constructor survive `k` moves.  So `StartDelayCostBounded β c`
+needs `c ≥ 1` just to pay for the ride.  Measured: the escape window of the stall below costs about
+one move per bit and `[0, 3]` about two. -/
+theorem advKills_eq_obKills {β : ℚ} {k D : ℕ} (h : D ≤ k) (lo hi : ℚ) (r : ℕ) :
+    advKills β k D lo hi r = obKills β k D lo hi r := by
+  sorry
+
+/-- **The stall at the real integer `-2`, `β = 0.13`.**  Every critical line of the `k`-game
+(`k = 4`, every residue; `β = 1/8`, `k = 3`) has the same shape (`experiments/arc_kmemory.py`, line and
+residue printouts):
+1. A short opening.
+2. The residue reaches `-1 mod 2^k`.
+3. A stall of 4 to 5 two-way splits at residue `-2` or `0` (the 2-adic fixed points of
+   `m ↦ (3m - p)/2 + sh`), where the window is genuine small reals receding from the fixed point `0`.
+   The adversary commits 1-bits that need no information.
+4. A tail.
+
+During a stall the constructor's only escape is the same state every move:
+`E = [17/400, 61/200]` (the image of the band piece `[1.5β + 1/2, 1 - β]`) at residue `-2`.  Its depth
+for `k = 1, …, 9` is `9, 9, 12, 12, 12, 12, 14, 16, 17`.  The plateau is not `k`-uniform: by
+`advKills_eq_obKills` a kill within `D ≤ k` is the real kill of `[-1.9575, -1.695]`, which survives 30
+real steps.  So the plateau had to break, and it does at `k = 7`, into one move per bit.  At residue `-1`,
+`[0, 3]` has depth `14, 16, 17, 19, 22, 22` (`k = 1, …, 6`).
+Dead: "the constructor's choices are illusory".  At every split node of the optimal tree (`1/8`,
+`k = 1, 2`; `0.13`, `k = 1, 3`) every piece survives 10 moves under some parity string.  Splits per
+critical line grow one per bit (`1/8`: 6, 7, 8; `0.13`: 6, 7, 8, 9; `0.1229`: 7, 10), and the opening run
+of consecutive splits lengthens by one per bit (`0.13`: 5, 6, 7 for `k = 2, 3, 4`), before a fixed tail. -/
+theorem advKills_stall_013 : advKills (13 / 100) 3 12 (17 / 400) (61 / 200) 6 = true ∧
+    advKills (13 / 100) 3 11 (17 / 400) (61 / 200) 6 = false := by
+  native_decide
+
 /-- **Conjecture: one move of delay has bounded price.**  From every position, the `(k+1)`-memory
 adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 30%.
 Stronger than the induction needs (`StartDelayCostBounded`).

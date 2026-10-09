@@ -19,6 +19,9 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
     arc_kmemory.py track BETA LO HI K DMAX  one window over every residue: (max price, its r, max d1, min d0)
     arc_kmemory.py gaps BETA K DMAX LAYERS [WORST]  extra kill depth one more step of delay costs, per state
                                              (WORST > 0: list the WORST costliest states)
+    arc_kmemory.py lines BETA K DMAX         signed residues along each critical line (* = a split)
+    arc_kmemory.py depthat BETA LO HI N KMAX DMAX  one window at the integer N, depth for k = 1..KMAX
+    arc_kmemory.py endgame BETA K DMAX       endgame entry windows of the optimal kill tree
     arc_kmemory.py test
 """
 from __future__ import annotations
@@ -302,6 +305,34 @@ def endgame_entries(beta, k, dmax):
     return out
 
 
+def critical_residues(beta, k, dmax, r0):
+    """The k-game's critical line from ([0, 3], r0): the constructor keeps the component whose best
+    reply is deepest, the adversary its best bit.  Per move: (signed residue, components)."""
+    dep, ch = make_depth(beta, k), make_children(beta, k)
+    half, mod = 1 << (k - 1), 1 << k
+    st, out = (F(0), F(3), r0), []
+    while dep(st, dmax):
+        kids = ch(*st)
+        out.append((st[2] - mod if st[2] >= mod // 2 else st[2], len(kids)))
+        best = None
+        for a, b, c in kids:
+            dd = [(dep((a, b, c + bit * half), dmax), bit) for bit in (0, 1)]
+            dd = [x for x in dd if x[0] is not None]
+            if dd:
+                x, bit = min(dd)
+                if best is None or x > best[0]:
+                    best = (x, (a, b, c + bit * half))
+        if best is None:
+            break
+        st = best[1]
+    return out
+
+
+def depth_at_integer(beta, lo, hi, n, kmax, dmax):
+    """Kill depth of ([lo, hi], n mod 2^k) for k = 1..kmax: the window sitting at the integer n."""
+    return [make_depth(beta, k)((lo, hi, n % (1 << k)), dmax) for k in range(1, kmax + 1)]
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -347,6 +378,15 @@ def main(argv):
         for (lo, hi), v in sorted(out.items(), key=lambda x: x[0][1] - x[0][0]):
             print(f"  [{lo}, {hi}] w={float(hi - lo):.4f} lo={float(lo):.4f}  depths {sorted({d for _, d in v})}  residues {sorted(r for r, _ in v)}")
         return 0
+    if argv[0] == "lines":
+        k = int(argv[2])
+        for r0 in range(1 << k):
+            line = critical_residues(F(argv[1]), k, int(argv[3]), r0)
+            print(f"r0={r0}: " + " ".join(f"{x}{'*' if n > 1 else ''}" for x, n in line))
+        return 0
+    if argv[0] == "depthat":
+        print(depth_at_integer(F(argv[1]), F(argv[2]), F(argv[3]), int(argv[4]), int(argv[5]), int(argv[6])))
+        return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))
         return 0
@@ -382,6 +422,20 @@ def test_below_edge_not_killed():
     # teeth: below 7/57 the constructor wins (relaxedStrategy_757), so no kill may appear within the
     # depth that kills at 0.1229 (a deeper search here grows without bound)
     assert kill_depth(F(7, 57) - F(1, 1000), 1, 26) is None
+
+
+def test_stall_escape_depth_plateau_then_breaks():
+    # E = image of [1.5b + 1/2, 1 - b] at the integer -2, beta = 0.13 (advKills_stall_013 checks k = 3)
+    b = F(13, 100)
+    E = (F(3, 2) * (F(3, 2) * b + H) - 1, F(3, 2) * (1 - b) - 1)
+    assert E == (F(17, 400), F(61, 200))
+    assert depth_at_integer(b, E[0], E[1], -2, 7, 45) == [9, 9, 12, 12, 12, 12, 14]
+
+
+def test_critical_line_stalls_at_minus_two():
+    line = critical_residues(F(13, 100), 4, 45, 5)
+    assert [x for x, _ in line[4:8]] == [-2, -2, -2, -2]
+    assert all(n == 2 for _, n in line[4:8])
 
 
 if __name__ == "__main__":
