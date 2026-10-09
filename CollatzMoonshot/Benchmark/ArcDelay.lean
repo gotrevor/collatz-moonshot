@@ -131,7 +131,24 @@ about two moves per bit from `[0, 3]`.  The proof shape is two finite checks (th
 from each phase) plus the residue arithmetic that lets the adversary realize any parity string after
 `k` moves.  Confidence 90%.  If true, the induction route reduces to an **opening** lemma: from `[0, 3]`
 at every residue, reach the hold basin (a window inside the cycle at residue `-1/5 mod 2^k`) within
-`k + C` moves. -/
+`k + C` moves.
+
+At `β = 0.1229` the hold costs the same one move per bit with a larger constant (the hold window has
+width `0.289`, over Mechanism 8's `1/4`): depth `22, 25, 28, 29, 31`, i.e. `k + 21, 23, 25, 25, 26`, for
+`k = 1, …, 5`.
+
+**The opening, measured.**  Forcing the hold basin or a kill from `[0, 3]` at `β = 0.13` takes `6, 10, 14,
+15, 17, 19, 21, 22` moves for `k = 1, …, 8`, i.e. `k + 5, 8, 11, 11, 12, 13, 14, 14`: still creeping.
+Every critical reach line has one shape:
+1. The residue reaches `-1`.
+2. A stall at the real integer `-2` or `0`.
+3. A fixed exit: `E` (after one fresh top bit), then six more moves into the hold, or a fixed six-move death.
+
+**Why these states.**  `(-1/5, 1/5)` is a decomposition of the real number `0` into a 2-adic integer
+part and a fraction.  The stall windows at `-2` and `0` are real neighbourhoods of `0` too.  So the
+adversary plays toward the fixed point `0` of `×3/2` on `ℝ × ℤ₂`.  There its digits are a known rational
+expansion, which costs nothing to commit early.  What stays open is a `k`-uniform reason the residue can
+be steered to `-1` despite the constructor's branching in the last `k` moves. -/
 theorem advKills_hold_013 (k : ℕ) (hk : 1 ≤ k) (r : ℕ) (hr : r < 2 ^ k) (h5 : 2 ^ k ∣ 5 * r + 1) :
     advKills (13 / 100) k (k + 12) (17 / 400) (61 / 200) r = true := by
   sorry
