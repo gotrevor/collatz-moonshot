@@ -83,8 +83,13 @@ non-increasing from the root (at `β = 1/8`: rises on 0 of 96, 2 of 162 and 1 of
 `k = 1→2, 2→3, 3→4`, by at most 3).  Along each critical line the whole price is paid in the opening
 from the wide start (3 components), stays flat, and is 0 for the last dozen moves.  The root prices are
 the kill-depth increments, at most 5 so far (`β = 1/8`: 2, 1, 5, 1, 4; `β = 0.13`: 2, 1, 4, 2, 2, 2).
-The prices up to 16 seen over all reachable positions sit off the optimal tree, where the
-adversary has already misplayed. -/
+At `β = 0.13` rises are 0/89, 2/136, 2/316, 2/568 (`k = 1→2 … 4→5`, by at most 2); at `1/8`,
+`k = 4→5`, 19/609 by 1.  The prices up to 16 seen over all reachable positions sit off the optimal
+tree, where the adversary has already misplayed.  The endgame is stereotyped: on every critical line
+the window stops splitting at width `0.117` or `0.141` (`β = 1/8`, 8 to 14 moves left) or `0.131`
+(`β = 0.1229`, 15 moves left), the same across `k`.  From there the constructor has no choices, so the
+rest is an oblivious narrow-start kill (Mechanism 8).  The opening's job is to commit bits that serve
+as that kill's prefix. -/
 def StartDelayCostBounded (β : ℚ) (c : ℕ) : Prop :=
   ∀ k, 1 ≤ k → ∀ (D r : ℕ), r < 2 ^ (k + 1) →
     advKills β k D 0 3 (r % 2 ^ k) = true → advKills β (k + 1) (D + c) 0 3 r = true

@@ -210,7 +210,7 @@ def price_path(beta, k, dmax, r):
     while True:
         d1, d0 = dep1(st, dmax), dep0((st[0], st[1], st[2] % half1), dmax)
         kids = ch1(*st)
-        out.append((d1, d0, None if None in (d0, d1) else d1 - d0, len(kids)))
+        out.append((d1, d0, None if None in (d0, d1) else d1 - d0, len(kids), st[1] - st[0]))
         if d1 is None or not kids:
             return out
         best = None
@@ -304,7 +304,9 @@ def main(argv):
     if argv[0] == "path":
         for r in range(1 << (int(argv[2]) + 1)):
             p = price_path(F(argv[1]), int(argv[2]), int(argv[3]), r)
-            print(f"r={r}: prices " + " ".join(str(x[2]) for x in p) + "   comps " + "".join(str(x[3]) for x in p))
+            entry = max((i for i, x in enumerate(p) if x[3] > 1), default=-1) + 1
+            print(f"r={r}: prices " + " ".join(str(x[2]) for x in p) + "   comps " + "".join(str(x[3]) for x in p)
+                  + f"   endgame from move {entry}: width {float(p[entry][4]):.4f}, {p[entry][0]} moves left")
         return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))
