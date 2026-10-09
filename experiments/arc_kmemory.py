@@ -23,6 +23,7 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
     arc_kmemory.py depthat BETA LO HI N KMAX DMAX  one window at the integer N, depth for k = 1..KMAX
     arc_kmemory.py endgame BETA K DMAX       endgame entry windows of the optimal kill tree
     arc_kmemory.py holds BETA L              single-piece periodic holds over parity words of length <= L
+    arc_kmemory.py reach BETA K DMAX         moves to force the hold basin or a kill from [0, 3], per residue
     arc_kmemory.py test
 """
 from __future__ import annotations
@@ -384,6 +385,44 @@ def holds(beta, L):
     return found, split
 
 
+def hold_reach(beta, k, dmax):
+    """Moves the adversary needs to force, from [0, 3] at each residue, either a kill or the hold basin:
+    a window inside E at residue -1/5 mod 2^k, or inside E's cycle partner P at -4/5 (`holds`)."""
+    E = (F(3, 2) * (F(3, 2) * beta + H) - 1, F(3, 2) * (1 - beta) - 1)
+    P = window_step(beta, E, H)[0]
+    mod, half, ch = 1 << k, 1 << (k - 1), make_children(beta, k)
+    rE, rP = -pow(5, -1, mod) % mod, -4 * pow(5, -1, mod) % mod
+
+    def inb(st):
+        lo, hi, r = st
+        return (E[0] <= lo and hi <= E[1] and r == rE) or (P[0] <= lo and hi <= P[1] and r == rP)
+
+    exact, lower = {}, {}
+
+    def dep(st, cap):
+        if inb(st):
+            return 0
+        if st in exact:
+            return exact[st] if exact[st] <= cap else None
+        if cap <= 0 or lower.get(st, 0) >= cap:
+            return None
+        worst = 0
+        for nl, nh, base in ch(*st):
+            best = None
+            for bit in (0, 1):
+                d = dep((nl, nh, base + bit * half), cap - 1 if best is None else best - 1)
+                if d is not None:
+                    best = d
+            if best is None:
+                lower[st] = max(lower.get(st, 0), cap)
+                return None
+            worst = max(worst, best)
+        exact[st] = worst + 1
+        return worst + 1
+
+    return [dep((F(0), F(3), r), dmax) for r in range(mod)]
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -443,6 +482,9 @@ def main(argv):
         for word, p, w in found:
             print(f"hold: word {word}, orbit point {p}, window [{w[0]}, {w[1]}]")
         print(f"{split} other periodic orbits split as their window grows")
+        return 0
+    if argv[0] == "reach":
+        print(hold_reach(F(argv[1]), int(argv[2]), int(argv[3])))
         return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))
@@ -504,6 +546,10 @@ def test_the_hold_is_word_10_on_E():
     assert window_step(b, window_step(b, E, H)[0], 0) == [E]
     assert depth_at_integer(b, E[0], E[1], 0, 1, 40) and (5 * 3 + 1) % 16 == 0
     assert make_depth(b, 4)((E[0], E[1], 3), 40) == 15
+
+
+def test_hold_reach_from_the_start():
+    assert [max(hold_reach(F(13, 100), k, 40)) for k in (1, 2, 3)] == [6, 10, 14]
 
 
 if __name__ == "__main__":
