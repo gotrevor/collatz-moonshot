@@ -138,7 +138,9 @@ width `0.289`, over Mechanism 8's `1/4`): depth `22, 25, 28, 29, 31`, i.e. `k + 
 `k = 1, …, 5`.
 
 **The opening, measured.**  Forcing the hold basin or a kill from `[0, 3]` at `β = 0.13` takes `6, 10, 14,
-15, 17, 19, 21, 22` moves for `k = 1, …, 8`, i.e. `k + 5, 8, 11, 11, 12, 13, 14, 14`: still creeping.
+15, 17, 19, 21, 22, 26, 29` moves for `k = 1, …, 10`, i.e. `k + 5, 8, 11, 11, 12, 13, 14, 14, 17, 19`.
+That is not levelling off: about two moves per bit, the same rate as the kill depth itself.  So the hold
+moves the difficulty without shrinking it.  The opening still needs one step of delay at bounded price.
 Every critical reach line has one shape:
 1. The residue reaches `-1`.
 2. A stall at the real integer `-2` or `0`.
