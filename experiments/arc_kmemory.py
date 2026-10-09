@@ -22,10 +22,12 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
     arc_kmemory.py lines BETA K DMAX         signed residues along each critical line (* = a split)
     arc_kmemory.py depthat BETA LO HI N KMAX DMAX  one window at the integer N, depth for k = 1..KMAX
     arc_kmemory.py endgame BETA K DMAX       endgame entry windows of the optimal kill tree
+    arc_kmemory.py holds BETA L              single-piece periodic holds over parity words of length <= L
     arc_kmemory.py test
 """
 from __future__ import annotations
 
+import itertools
 import math
 import subprocess
 import sys
@@ -333,6 +335,55 @@ def depth_at_integer(beta, lo, hi, n, kmax, dmax):
     return [make_depth(beta, k)((lo, hi, n % (1 << k)), dmax) for k in range(1, kmax + 1)]
 
 
+def window_step(beta, w, d):
+    """One move of the window under parity shift d: the components, each scaled and renormalized."""
+    lo, hi = w
+    out = []
+    for j in range(math.floor(lo) - 1, math.floor(hi) + 1):
+        a, b = max(lo, j + beta), min(hi, j + 1 - beta)
+        if a <= b:
+            nl, nh = F(3, 2) * a + d, F(3, 2) * b + d
+            sh = math.floor(nl)
+            out.append((nl - sh, nh - sh))
+    return out
+
+
+def holds(beta, L):
+    """Single-piece periodic holds: for each primitive parity word s of length <= L and each periodic
+    orbit of x -> 1.5x + s_i/2 (mod 1) inside the band, grow a tiny window around it under s repeated.
+    A hold is a window cycle with one component at every move (the constructor never chooses).
+    Returns ([(word, period point, hold window)], number of orbits whose window splits)."""
+    found, split = [], 0
+    for q in range(1, L + 1):
+        for s in itertools.product((0, 1), repeat=q):
+            if q > 1 and any(s == s[i:] + s[:i] for i in range(1, q) if q % i == 0):
+                continue
+            c = sum(F(s[i], 2) * F(3, 2) ** (q - 1 - i) for i in range(q))
+            g = F(3, 2) ** q
+            for mm in range(-int(g) - 2, 3):
+                p = (c + mm) / (1 - g)
+                if not 0 <= p < 1:
+                    continue
+                orbit = [p]
+                for i in range(q - 1):
+                    orbit.append((F(3, 2) * orbit[-1] + F(s[i], 2)) % 1)
+                if not all(beta < x < 1 - beta for x in orbit):
+                    continue
+                w, seen, n = (p - F(1, 10 ** 6), p + F(1, 10 ** 6)), {}, 0
+                while (w, n % q) not in seen and n <= 3000:
+                    seen[(w, n % q)] = n
+                    kids = window_step(beta, w, F(s[n % q], 2))
+                    if len(kids) != 1:
+                        break
+                    w, n = kids[0], n + 1
+                else:
+                    if n <= 3000:
+                        found.append(("".join(map(str, s)), p, w))
+                        continue
+                split += 1
+    return found, split
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -387,6 +438,12 @@ def main(argv):
     if argv[0] == "depthat":
         print(depth_at_integer(F(argv[1]), F(argv[2]), F(argv[3]), int(argv[4]), int(argv[5]), int(argv[6])))
         return 0
+    if argv[0] == "holds":
+        found, split = holds(F(argv[1]), int(argv[2]))
+        for word, p, w in found:
+            print(f"hold: word {word}, orbit point {p}, window [{w[0]}, {w[1]}]")
+        print(f"{split} other periodic orbits split as their window grows")
+        return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))
         return 0
@@ -436,6 +493,17 @@ def test_critical_line_stalls_at_minus_two():
     line = critical_residues(F(13, 100), 4, 45, 5)
     assert [x for x, _ in line[4:8]] == [-2, -2, -2, -2]
     assert all(n == 2 for _, n in line[4:8])
+
+
+def test_the_hold_is_word_10_on_E():
+    b = F(13, 100)
+    found, _ = holds(b, 6)
+    assert [(w, p) for w, p, _ in found] == [("10", F(1, 5))]
+    # the hold window is E (or E's cycle partner), at residue -1/5 = ...0011
+    E = (F(17, 400), F(61, 200))
+    assert window_step(b, window_step(b, E, H)[0], 0) == [E]
+    assert depth_at_integer(b, E[0], E[1], 0, 1, 40) and (5 * 3 + 1) % 16 == 0
+    assert make_depth(b, 4)((E[0], E[1], 3), 40) == 15
 
 
 if __name__ == "__main__":

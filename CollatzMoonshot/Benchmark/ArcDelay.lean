@@ -111,6 +111,38 @@ theorem advKills_stall_013 : advKills (13 / 100) 3 12 (17 / 400) (61 / 200) 6 = 
     advKills (13 / 100) 3 11 (17 / 400) (61 / 200) 6 = false := by
   native_decide
 
+/-- **The hold: a waiting room that costs one move per bit, for every `k`.**  The parity word `10`
+holds the window `E = [1.5(1.5β + 1/2) - 1, 1.5(1 - β) - 1]` on a single-piece 2-cycle:
+1. Clip `E` to `[β, 1.5(1-β) - 1]`.
+2. Apply `x ↦ 1.5x + 1/2`.
+3. Clip at `1 - β`.
+4. Apply `x ↦ 1.5x`, which gives `E + 1`.
+
+The cycle runs around the periodic orbit `{1/5, 4/5}` (valid for `β < 1/5`).  The residue that realizes
+it is the 2-adic integer `m = -1/5 = …00110011`, the solution of `(9m + 1)/4 = m`.  This is the only
+single-piece periodic hold among the words of length `≤ 10` at `β = 0.13` and at `0.1229`; 3675 and 4516
+other periodic orbits split as their window grows.
+
+The constructor never has a choice in the hold, so the adversary loses nothing by committing early.  It
+holds through the `k` committed moves and then plays an oblivious kill string from the hold window.
+Measured depth from `(E, -1/5 mod 2^k)` at `β = 0.13`, `k = 1, …, 8`: `10, 11, 12, 15, 17, 18, 19, 20`.
+That is `k + 12` from `k = 5` on: exactly the free ride (`advKills_eq_obKills`) and no more.  Compare
+about two moves per bit from `[0, 3]`.  The proof shape is two finite checks (the cycle, a kill string
+from each phase) plus the residue arithmetic that lets the adversary realize any parity string after
+`k` moves.  Confidence 90%.  If true, the induction route reduces to an **opening** lemma: from `[0, 3]`
+at every residue, reach the hold basin (a window inside the cycle at residue `-1/5 mod 2^k`) within
+`k + C` moves. -/
+theorem advKills_hold_013 (k : ℕ) (hk : 1 ≤ k) (r : ℕ) (hr : r < 2 ^ k) (h5 : 2 ^ k ∣ 5 * r + 1) :
+    advKills (13 / 100) k (k + 12) (17 / 400) (61 / 200) r = true := by
+  sorry
+
+/-- Instances of `advKills_hold_013`: the residues `1, 3, 3, 3` are `-1/5` mod `2, 4, 8, 16`. -/
+theorem advKills_hold_013_small : advKills (13 / 100) 1 13 (17 / 400) (61 / 200) 1 = true ∧
+    advKills (13 / 100) 2 14 (17 / 400) (61 / 200) 3 = true ∧
+    advKills (13 / 100) 3 15 (17 / 400) (61 / 200) 3 = true ∧
+    advKills (13 / 100) 4 16 (17 / 400) (61 / 200) 3 = true := by
+  native_decide
+
 /-- **Conjecture: one move of delay has bounded price.**  From every position, the `(k+1)`-memory
 adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 30%.
 Stronger than the induction needs (`StartDelayCostBounded`).
