@@ -269,6 +269,39 @@ def price_monotone(beta, k, dmax):
     return edges, rises, big, roots
 
 
+def endgame_entries(beta, k, dmax):
+    """Over the k-game's optimal kill tree from [0, 3] (every component, the adversary's best bit), the
+    endgame entries: states from which every optimal-tree descendant has at most one component, whose
+    parent has a descendant that splits.  Returns {(lo, hi): set of (r, depth)}."""
+    dep, ch = make_depth(beta, k), make_children(beta, k)
+    half = 1 << (k - 1)
+
+    def best(nl, nh, base):
+        kids = [(nl, nh, base + b * half) for b in (0, 1)]
+        return min(kids, key=lambda c: (dep(c, dmax) is None, dep(c, dmax) or 0))
+
+    calm = {}
+
+    def is_calm(st):
+        if st not in calm:
+            kids = ch(*st)
+            calm[st] = len(kids) <= 1 and all(is_calm(best(*c)) for c in kids if dep(best(*c), dmax) is not None)
+        return calm[st]
+
+    out, seen = {}, set()
+    stack = [(F(0), F(3), r) for r in range(1 << k)]
+    while stack:
+        st = stack.pop()
+        if st in seen or dep(st, dmax) is None:
+            continue
+        seen.add(st)
+        if is_calm(st):
+            out.setdefault((st[0], st[1]), set()).add((st[2], dep(st, dmax)))
+            continue
+        stack += [best(*c) for c in ch(*st)]
+    return out
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -307,6 +340,12 @@ def main(argv):
             entry = max((i for i, x in enumerate(p) if x[3] > 1), default=-1) + 1
             print(f"r={r}: prices " + " ".join(str(x[2]) for x in p) + "   comps " + "".join(str(x[3]) for x in p)
                   + f"   endgame from move {entry}: width {float(p[entry][4]):.4f}, {p[entry][0]} moves left")
+        return 0
+    if argv[0] == "endgame":
+        out = endgame_entries(F(argv[1]), int(argv[2]), int(argv[3]))
+        print(f"{len(out)} windows, {sum(len(v) for v in out.values())} (window, residue) entries")
+        for (lo, hi), v in sorted(out.items(), key=lambda x: x[0][1] - x[0][0]):
+            print(f"  [{lo}, {hi}] w={float(hi - lo):.4f} lo={float(lo):.4f}  depths {sorted({d for _, d in v})}  residues {sorted(r for r, _ in v)}")
         return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))

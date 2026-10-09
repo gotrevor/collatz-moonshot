@@ -52,6 +52,24 @@ residues within 14 moves, the exact depth `arc_kmemory.py kill 0.13 1 40` report
 theorem advKills_013_one : (List.range 2).all (fun r => advKills (13 / 100) 1 14 0 3 r) = true := by
   native_decide
 
+/-- **The endgame window at `β = 1/8`, checked.**  Every endgame entry of the `k`-game's optimal kill
+tree for `k = 1, 2, 3` (`arc_kmemory.py endgame`: states after which no optimal-tree descendant splits)
+lies in `[11/64, 5/16]` or its mirror `[11/16, 53/64]`.  This is the image of the split piece
+`[25/32, 7/8]` that touches the gap edge.  The memoryless adversary kills the window within 11 moves at
+residue 0, the depth every entry shows.  Entries are anchored at a gap-edge image
+(`1.5β`, `1.5β + 1/2`, `1.5(1-β)`, `1.5(1-β) - 1/2` mod 1, since split pieces touch a gap), so the library
+is one width per anchor.  Largest entry widths, `k = 1, 2, 3, 4`:
+* `β = 1/8`: `0.141, 0.141, 0.141, 0.183` (at `k = 4`, `[1289/2048, 13/16]`, memoryless depth 13 / 17 at residue 0 / 1).
+* `β = 0.13`: `0.116, 0.209, 0.116, 0.209`.
+* `β = 0.1229`: `0.131, 0.131` (`k = 1, 2`).
+All are below the width `1/4` that Mechanism 8 kills at every offset (`obliviousKillAt_1229_tiles`).  So the
+endgame is never the obstacle.  The obstacle is the parity string the opening must have committed:
+no one string kills both mirror windows (mirroring flips every parity), and for `[11/64, 5/16]` only 4 of the `2^11`
+strings kill within 11, and 78 of the `2^14` within 14. -/
+theorem advKills_endgame_18 : advKills (1 / 8) 1 11 (11 / 64) (5 / 16) 0 = true ∧
+    advKills (1 / 8) 1 10 (11 / 64) (5 / 16) 0 = false := by
+  native_decide
+
 /-- **Conjecture: one move of delay has bounded price.**  From every position, the `(k+1)`-memory
 adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 30%.
 Stronger than the induction needs (`StartDelayCostBounded`).
