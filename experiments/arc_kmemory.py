@@ -13,6 +13,8 @@ Measured at beta = 0.1229 from W = [0, 3], every residue: the adversary kills wi
 
     arc_kmemory.py kill BETA K DMAX
     arc_kmemory.py depths BETA K DMAX      per-residue kill depths
+    arc_kmemory.py mono BETA K DMAX          does the price ever rise along the (k+1) optimal kill tree?
+    arc_kmemory.py path BETA K DMAX          price along the (k+1)-game's critical line, every start residue
     arc_kmemory.py lag BETA K DMAX LAYERS [split]  local price of committing one bit before the constructor moves
     arc_kmemory.py track BETA LO HI K DMAX  one window over every residue: (max price, its r, max d1, min d0)
     arc_kmemory.py gaps BETA K DMAX LAYERS [WORST]  extra kill depth one more step of delay costs, per state
@@ -196,6 +198,77 @@ def lag_costs(beta, k, dmax, layers, split=False):
     return dict(sorted(hist.items(), key=str))
 
 
+def price_path(beta, k, dmax, r):
+    """The (k+1)-game's critical line from ([0, 3], r): the constructor keeps the component whose best
+    reply is deepest (ties: largest price), the adversary plays its best bit.  Per move: (d1, d0, price,
+    components), with d0 the k-game depth at the projected residue.  (k+1)-memory is the k-game with
+    every bit committed one move early, so the price is what those early commitments have added up to."""
+    dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
+    ch1 = make_children(beta, k + 1)
+    half1 = 1 << k
+    st, out = (F(0), F(3), r), []
+    while True:
+        d1, d0 = dep1(st, dmax), dep0((st[0], st[1], st[2] % half1), dmax)
+        kids = ch1(*st)
+        out.append((d1, d0, None if None in (d0, d1) else d1 - d0, len(kids)))
+        if d1 is None or not kids:
+            return out
+        best = None
+        for nl, nh, base in kids:
+            reply = min(((dep1((nl, nh, base + b * half1), dmax), (nl, nh, base + b * half1)) for b in (0, 1)),
+                        key=lambda x: (x[0] is None, x[0] or 0))
+            dd = reply[0]
+            if dd is None:
+                continue
+            nxt = reply[1]
+            pr = dd - (dep0((nxt[0], nxt[1], nxt[2] % half1), dmax) or 0)
+            if best is None or (dd, pr) > best[0]:
+                best = ((dd, pr), nxt)
+        if best is None:
+            return out
+        st = best[1]
+
+
+def price_monotone(beta, k, dmax):
+    """Over the whole (k+1)-game optimal kill tree from [0, 3] (every component, the adversary's best bit),
+    does the price d1 - d0 ever rise from a position to its child?  Returns (edges, rises, largest rise,
+    root prices)."""
+    dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
+    ch1 = make_children(beta, k + 1)
+    half1 = 1 << k
+
+    def price(st):
+        d1, d0 = dep1(st, dmax), dep0((st[0], st[1], st[2] % half1), dmax)
+        return None if None in (d0, d1) else d1 - d0
+
+    edges = rises = big = 0
+    seen = set()
+    roots = []
+    stack = []
+    for r in range(1 << (k + 1)):
+        st = (F(0), F(3), r)
+        roots.append(price(st))
+        stack.append(st)
+    while stack:
+        st = stack.pop()
+        if st in seen:
+            continue
+        seen.add(st)
+        g = price(st)
+        for nl, nh, base in ch1(*st):
+            kids = [(nl, nh, base + b * half1) for b in (0, 1)]
+            kid = min(kids, key=lambda c: (dep1(c, dmax) is None, dep1(c, dmax) or 0))
+            if dep1(kid, dmax) is None:
+                continue
+            gk = price(kid)
+            edges += 1
+            if g is not None and gk is not None and gk > g:
+                rises += 1
+                big = max(big, gk - g)
+            stack.append(kid)
+    return edges, rises, big, roots
+
+
 def track_window(beta, lo, hi, k, dmax):
     """For one window, over every (k+1)-residue r: (max price d1 - d0, its r, max d1, min d0)."""
     dep0, dep1 = make_depth(beta, k), make_depth(beta, k + 1)
@@ -224,6 +297,14 @@ def main(argv):
                 print(f"gap {g}  [{float(lo):.5f}, {float(hi):.5f}] w={float(hi - lo):.5f}  r={r:0{int(argv[2]) + 1}b}  d0={d0} d1={d1}")
         else:
             print(out)
+        return 0
+    if argv[0] == "mono":
+        print(price_monotone(F(argv[1]), int(argv[2]), int(argv[3])))
+        return 0
+    if argv[0] == "path":
+        for r in range(1 << (int(argv[2]) + 1)):
+            p = price_path(F(argv[1]), int(argv[2]), int(argv[3]), r)
+            print(f"r={r}: prices " + " ".join(str(x[2]) for x in p) + "   comps " + "".join(str(x[3]) for x in p))
         return 0
     if argv[0] == "lag":
         print(lag_costs(F(argv[1]), int(argv[2]), int(argv[3]), int(argv[4]), len(argv) > 5))

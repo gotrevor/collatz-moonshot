@@ -54,6 +54,7 @@ theorem advKills_013_one : (List.range 2).all (fun r => advKills (13 / 100) 1 14
 
 /-- **Conjecture: one move of delay has bounded price.**  From every position, the `(k+1)`-memory
 adversary kills within `c` moves of the `k`-memory adversary at the projected residue.  Confidence 30%.
+Stronger than the induction needs (`StartDelayCostBounded`).
 Evidence (`arc_kmemory.py gaps`, every state reachable in 8 moves from `[0, 3]`, depth cap 60): at
 `β = 0.13` the largest price is 10, 10, 12, 13, 13 for `k = 1→2, …, 5→6`, and at `β = 0.125` it is 15,
 15, 15, 16 for `k = 1→2, …, 4→5` (over about 1300 to 21000 states each), with no state where the
@@ -75,8 +76,24 @@ def DelayCostBounded (β : ℚ) (c : ℕ) : Prop :=
   ∀ k, 1 ≤ k → ∀ (D : ℕ) (lo hi : ℚ) (r : ℕ), 0 ≤ lo → r < 2 ^ (k + 1) →
     advKills β k D lo hi (r % 2 ^ k) = true → advKills β (k + 1) (D + c) lo hi r = true
 
+/-- **Conjecture: one move of delay has bounded price from the start.**  The weaker form of
+`DelayCostBounded` the induction actually uses: only the start window `[0, 3]`.  Confidence 35%.
+Evidence (`arc_kmemory.py mono`, `path`): on the `(k+1)`-game's optimal kill tree the price is nearly
+non-increasing from the root (at `β = 1/8`: rises on 0 of 96, 2 of 162 and 1 of 325 edges for
+`k = 1→2, 2→3, 3→4`, by at most 3).  Along each critical line the whole price is paid in the opening
+from the wide start (3 components), stays flat, and is 0 for the last dozen moves.  The root prices are
+the kill-depth increments, at most 5 so far (`β = 1/8`: 2, 1, 5, 1, 4; `β = 0.13`: 2, 1, 4, 2, 2, 2).
+The prices up to 16 seen over all reachable positions sit off the optimal tree, where the
+adversary has already misplayed. -/
+def StartDelayCostBounded (β : ℚ) (c : ℕ) : Prop :=
+  ∀ k, 1 ≤ k → ∀ (D r : ℕ), r < 2 ^ (k + 1) →
+    advKills β k D 0 3 (r % 2 ^ k) = true → advKills β (k + 1) (D + c) 0 3 r = true
+
+theorem DelayCostBounded.start {β : ℚ} {c : ℕ} (h : DelayCostBounded β c) : StartDelayCostBounded β c :=
+  fun k hk D r hr => h k hk D 0 3 r le_rfl hr
+
 /-- Bounded delay cost lifts a memoryless kill to every memory size. -/
-theorem advKills_of_delayCost {β : ℚ} {c D : ℕ} (h : DelayCostBounded β c)
+theorem advKills_of_delayCost {β : ℚ} {c D : ℕ} (h : StartDelayCostBounded β c)
     (h1 : ∀ r < 2, advKills β 1 D 0 3 r = true) :
     ∀ k, 1 ≤ k → ∀ r < 2 ^ k, advKills β k (D + (k - 1) * c) 0 3 r = true := by
   intro k hk
@@ -84,7 +101,7 @@ theorem advKills_of_delayCost {β : ℚ} {c D : ℕ} (h : DelayCostBounded β c)
   | base => simpa using h1
   | succ k hk ih =>
     intro r hr
-    have := h k hk _ 0 3 r le_rfl hr (ih _ (Nat.mod_lt _ (by positivity)))
+    have := h k hk _ r hr (ih _ (Nat.mod_lt _ (by positivity)))
     have e : D + k * c = D + (k - 1) * c + c := by
       obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
       simp [add_mul, add_assoc]
@@ -103,7 +120,7 @@ theorem not_kRelaxedStrategy_of_advKills {β : ℚ} {k D : ℕ} (hk : 1 ≤ k)
 /-- **The induction route to `FiniteMemoryRelaxedValue`**: a bounded delay cost and a memoryless
 kill at each rational `β` past `7/57` give the conjecture. -/
 theorem finiteMemoryRelaxedValue_of_delayCost
-    (h : ∀ β : ℚ, 7 / 57 < β → β < 1 / 2 → ∃ c D : ℕ, DelayCostBounded β c ∧
+    (h : ∀ β : ℚ, 7 / 57 < β → β < 1 / 2 → ∃ c D : ℕ, StartDelayCostBounded β c ∧
       ∀ r < 2, advKills β 1 D 0 3 r = true) : FiniteMemoryRelaxedValue := by
   intro k hk β hβ hβ' l P hne hS
   obtain ⟨q, hq1, hq2⟩ := exists_rat_btwn hβ
