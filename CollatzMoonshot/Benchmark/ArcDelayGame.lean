@@ -226,7 +226,13 @@ above (`l = 0.155`) the set erodes over 6 steps.  The `k = 2` descent (dead at s
 endpoint rationals (`0.12296, 0.16650, 0.34517, 0.38872, 0.49908, 0.67926, 0.74863, …`), shared out among the
 residues, and through step 5 the memoryless set equals the intersection of the two parity-`0` residue sets of the
 `k = 2` descent, cut for cut (step 6 differs).  So memory redistributes and delays the same cuts rather than
-creating new ones.  Not by itself the mechanism: the delay game has the same preimage maps and still widens. -/
+creating new ones.  Not by itself the mechanism: the delay game has the same preimage maps and still widens.
+**The edge is a bounded-depth kill.**  The memoryless descent empties in 7 steps at `l = u(β) + ε` for
+`ε = 10⁻³, 10⁻⁴, 10⁻⁵` (`β = 0.12` and `0.105`, `N = 2^22`; 8 steps at `ε = 10⁻²`).  So, unlike the `7/57`
+barrier (whose funnel needs the runaway lemma at the open end), the exclusion half has a finite AND-OR
+certificate of depth 7 with endpoints affine in `(β, l)`, open exactly at `l = u(β)`: a symbolic relaxed
+descent over polygons in the `(β, l)` plane (the 2D analogue of `experiments/arc_barrier.py`) would produce
+it, and a treadmill could transcribe it into node lemmas. -/
 def RelaxedWidthBand : Prop :=
   ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 →
     ((∃ P : Set ℝ, RelaxedStrategy β (1 - 2 * β) l P) ↔
