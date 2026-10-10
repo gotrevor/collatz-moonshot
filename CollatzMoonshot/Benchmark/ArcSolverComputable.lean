@@ -831,7 +831,7 @@ chain of `ArcSolverInclusion`, and (c) as `stepCode_sound` (treadmill run
 `collatz-moonshot-20261010-004552-559000`).  History: before (c) was proved, the evidence was the Python and
 Rust sweeps below.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
 its composition with rounding (`rounded_fattened_post_fixed`), the width net (`width_net`), the residue
-chain (A), (B), the descent, and the forward bridge.  Trusted, not proved: (c) `solve_vw`'s computed step containing
+chain (A), (B), the descent, and the forward bridge.  Before `stepCode_sound`, (c) was trusted: `solve_vw`'s computed step containing
 `stepOpen` (a fact about the Python: audited line by line against `vw_targets` / `vw_good_u` / `vw_aset` /
 `round_in`, and cross-checked by an independent brute-force open-move search, `brute_open_move`: 140 open
 starts on random lattice strategies at `k = 2, 3`, all in the solver's step; a version demanding only ONE

@@ -114,6 +114,7 @@ import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.ArcDelay
 import CollatzMoonshot.Benchmark.ArcDelayGame
 import CollatzMoonshot.Benchmark.ArcFattening
+import CollatzMoonshot.Benchmark.ArcCentered
 import CollatzMoonshot.Benchmark.ArcSolverInclusion
 import CollatzMoonshot.Benchmark.ArcSolverComputable
 import CollatzMoonshot.Benchmark.FlattoCeiling
