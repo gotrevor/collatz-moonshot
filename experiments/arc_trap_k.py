@@ -249,6 +249,48 @@ def split_seeds(k, s, t, L, xs=(F(1, 4), F(1, 2), F(3, 4)), N=1 << 20):
                     yield b, x, Q
 
 
+def lift_witnesses(k, s, t, l, N=1 << 20):
+    """Per base b of the greatest fixed point (one width l): the exact usable-u sets of both lifts (legal
+    moves into both top-bit children, u reachable from a start in [0, 1)), the nearest pair (u, v), its
+    gap, one shared start a, and each move's floor and successor base.  ArcOverlap.sharedStart_iff
+    consumes the minimal gap: a shared start exists iff it is at most l/3."""
+    L = [l]
+    G, _ = solve_vw(k, s, t, L, N=N)
+    h = 1 << (k - 1)
+    out = []
+    for b in range(h):
+        sets = []
+        for r in (b, b + h):
+            d = HALF if r % 2 else F(0)
+            sets.append(inter(vw_good_u(G, r, k, 0, d, s, t, L), [(F(0), 1 + l / 3)]))
+        best = None
+        for u0, u1 in sets[0]:
+            for v0, v1 in sets[1]:
+                if max(u0, v0) <= min(u1, v1):
+                    u = v = max(u0, v0)
+                elif u1 < v0:
+                    u, v = u1, v0
+                else:
+                    u, v = u0, v1
+                if best is None or abs(u - v) < abs(best[0] - best[1]):
+                    best = (u, v)
+        rec = {"base": b, "usable_u": [[[str(x), str(y)] for x, y in S] for S in sets]}
+        if best:
+            u, v = best
+            a_lo, a_hi = max(max(u, v) - l / 3, F(0)), min(min(u, v), ONE)
+            moves = []
+            for r, w in ((b, u), (b + h, v)):
+                d = HALF if r % 2 else F(0)
+                c = F(3, 2) * w + d
+                J = c.numerator // c.denominator
+                moves.append({"residue": r, "u": str(w), "floor": J,
+                              "successor_base": ((3 * r - r % 2) // 2 + J) % h})
+            rec.update(gap=str(abs(u - v)), gap_over_l=float(abs(u - v) / l),
+                       shared_a=str(a_lo) if a_lo <= a_hi else None, moves=moves)
+        out.append(rec)
+    return out
+
+
 def vw_orbit(P, k, s, t, L, m0, steps):
     """Independent check: play the certificate against the TRUE integer parts from m0 and return the
     exact xi (left end of the final window).  Raises if the strategy ever has no move."""
@@ -371,6 +413,15 @@ def main(argv):
                 continue
             dodge = [m for m in range(1 << k) if nonempty(solve_vw(k, s, t, L, N=1 << 20, forbidden={m})[0])]
             print(f"j {j} live {live} dodgeable {dodge}", flush=True)
+        return 0
+    if argv[0] == "witnesses":
+        # witnesses K S T J OUT.json : lift_witnesses for width t*J/400 (exact rationals as strings)
+        import json
+        k, S, T, j = int(argv[1]), F(argv[2]), F(argv[3]), int(argv[4])
+        w = lift_witnesses(k, S, T, T * F(j, 400))
+        with open(argv[5], "w") as fh:
+            json.dump({"k": k, "s": str(S), "t": str(T), "l": str(T * F(j, 400)), "bases": w}, fh, indent=1)
+        print(f"{len(w)} bases, max gap/l {max(x.get('gap_over_l', 9) for x in w):.3f}")
         return 0
     if argv[0] == "check":
         k, s, t, l = int(argv[1]), F(argv[2]), F(argv[3]), F(argv[4])
@@ -522,6 +573,15 @@ def test_breaking_a_shared_start_kills_a_lift():
     assert list(split_seeds(3, s, t, [t * F(86, 400)])) == []
     G = solve_vw(3, s, t, [t * F(86, 400)], N=1 << 20)[0]
     assert len(good_bases(G, 3)) == 4  # the control: the uncapped winner has every base good
+
+
+def test_lift_witnesses_meet_the_overlap_criterion():
+    # Astra's request 2026-10-09: k = 4, arc (1/2, 9/10), j = 64 (no class good at level k - 2).  Every
+    # base's nearest usable pair is within l/3 and comes with a shared start in [0, 1)
+    s, t = F(1, 2), F(9, 10)
+    l = t * F(64, 400)
+    w = lift_witnesses(4, s, t, l)
+    assert len(w) == 8 and all(F(x["gap"]) <= l / 3 and x["shared_a"] is not None for x in w)
 
 
 if __name__ == "__main__":

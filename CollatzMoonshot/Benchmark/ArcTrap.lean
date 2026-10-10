@@ -3973,7 +3973,11 @@ greatest fixed points (`k = 3, 4, 5`, five arcs) NO class is good at level `k - 
 so there the two lifts use different moves and the obligation is `ArcOverlap`'s `|u - v| ≤ l/3`.
 That obligation holds with slack: across the same 233, the closest legal landing points of the two lifts
 (in `c = 3u/2 + d`, arc band applied) are at most `0.33 l` apart, against the `l/2` allowed.  Dead route:
-target density (every shared-start set `l/2`-dense), true in only 21 of 233. -/
+target density (every shared-start set `l/2`-dense), true in only 21 of 233.
+Exact witnesses (`arc_trap_k.py witnesses`, JSON in `experiments/witnesses_*.json`): at `k = 5`, arc
+`(23/50, 22/25)`, `j = 40` and `k = 4`, arc `(1/2, 9/10)`, `j = 64` (no class good at level `k - 2`), the
+nearest usable pair has the SAME gap at every base (`0.082 l` and `0.019 l`), the same floor for both
+lifts, and successor bases exactly `2^(k-2)` apart. -/
 def KRelaxedAllBasesGood : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) →
