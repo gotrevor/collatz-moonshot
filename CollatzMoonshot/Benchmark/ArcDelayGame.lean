@@ -82,7 +82,7 @@ def DelayLookaheadCollapses : Prop :=
 open ArcTrap in
 /-- **Conjecture: on the symmetric arc, memory never widens the window.**  A live `k`-memory strategy at
 width `l` gives a live `(k - 1)`-memory strategy at some width `l' ≥ l`.  So the upper edge of the
-winning widths does not depend on `k`, and only the lower edge moves.  Confidence 65%.
+winning widths does not depend on `k`, and only the lower edge moves.  Confidence 70%.
 Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of winning widths per `k`):
 * `β = 7/57 - 1/100` (`N = 2^16`, step `1/2000`): upper edge `0.197` for every `k = 1, …, 6`; lower edge
   `0.123, 0.082, 0.055, 0.0365, 0.0245, 0.0165`, a factor `2/3` per bit (one move of growth per bit of
@@ -92,7 +92,10 @@ Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of win
 * `β = 7/57 - 1/10000` (`N = 2^20`, step `1/20000`): upper edge `0.1322` for every `k = 1, …, 6`, lower
   edges `0.12285, 0.0819, 0.0546, 0.0364, 0.0243, 0.0162`.
 * Upper edges only (`k = 1, …, 8`, widths `≥ 1/10`, `N = 2^16`): `0.2620, 0.2135, 0.1495, 0.1365` at
-  `β = 0.10, 0.11, 0.12, 0.122`, each the same for all eight `k`.
+  `β = 0.10, 0.11, 0.12, 0.122`, each the same for all eight `k`; at `β = 0.12` also `k = 10, 12`
+  (`0.1495`, widths `[0.148, 0.152]`).
+* Slightly asymmetric arc `[0.115, 0.89]` (margins `0.115` and `0.11`): upper edge `0.190` for every
+  `k = 1, …, 6` (`0.2125` on the symmetric `[0.11, 0.89]`, same scan).
 * The memoryless lower edge is `7/57` itself at every `β` measured: `(0.122810, 0.122815]` at
   `β = 0.10` and `0.11` (`N = 2^20`, step `10⁻⁵/2`), against `7/57 = 0.1228070…`.  The `k`-memory lower edge
   is `(2/3)^(k-1) · 7/57` (compare `ArcTrap.not_kRelaxedStrategy_1229_small_width`, the proved
@@ -104,7 +107,12 @@ Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of win
   `t · j/400`): `k = 1, 2` never win; the upper edge is `0.252` at `k = 3` and `0.548` at `k = 4, 5, 6`, so
   there memory widens the window, and the statement is false off-centre.  The lower edge still moves by
   about `2/3` per bit (`0.1305, 0.0870, 0.0609`).
-So a proof must use the symmetry of the arc.  By induction it gives a memoryless winner, which
+* Shifted gap, fixed gap width `0.22` (arc `[0.11 + ε, 0.89 + ε]`, `N = 2^15`, widths `i/200`): `ε = 0.01`
+  upper edge `0.190` for every `k = 1, …, 6`; `ε = 0.08` (margins `0.19` and `0.03`) upper edge `0.275` for
+  every `k`, lower edges `0.25, 0.17, 0.115, 0.075, 0.05, 0.035`; `ε = 0.03, 0.05`: no winner at any `k ≤ 6`.
+So exact symmetry is NOT what the statement needs (it is stated for the symmetric arc only because that is
+where `FiniteMemoryRelaxedValue` lives).  What the off-centre counterexample lacks is a gap around the
+integers: its gap is `[0.27, 0.40]`.  A proof must use that.  By induction it gives a memoryless winner, which
 `ArcTrap.relaxed_barrier` excludes above `7/57` at every width
 (`finiteMemoryRelaxedValue_of_upperEdge`).  It is a one-bit induction step, unlike
 `ArcDelay.DelayCostBounded`, which needs a bounded price at every position. -/

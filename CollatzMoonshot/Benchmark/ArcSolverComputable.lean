@@ -630,16 +630,124 @@ theorem descendsEmpty_excludes {k N : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {s t l : 
     rw [hlow _ (child_lt hk _ _ two_pos)] at this
     exact this
 
+
+/-- The residue projection of a rounded set is a union of half-open residue cells. -/
+theorem residualize_roundIn_cells (k N : ℕ) (hN : 0 < N) (S : Set ℝ) (r : ℕ) :
+    ∀ a ∈ ArcFattening.residualize k (roundIn N S) r, ∃ i : ℕ, (i : ℝ) / N ≤ a ∧
+      a < ((i : ℝ) + 1) / N ∧
+      Set.Ico ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ ArcFattening.residualize k (roundIn N S) r := by
+  rintro a ⟨x, ⟨i, hi1, hi2, hiS⟩, hres, rfl⟩
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  set m := ⌊x⌋ with hm
+  have hm1 : (m : ℝ) ≤ x := Int.floor_le x
+  have hm2 : x < m + 1 := Int.lt_floor_add_one x
+  have hA : (i : ℝ) < (m + 1) * N := by
+    have := (div_le_iff₀ hN').1 hi1; nlinarith
+  have hB : (m : ℝ) * N < i + 1 := by
+    have := (lt_div_iff₀ hN').1 hi2; nlinarith
+  have hA' : i < (m + 1) * N := by exact_mod_cast hA
+  have hB' : m * N < i + 1 := by exact_mod_cast hB
+  have hA2 : i < m * N + N := by rw [add_mul, one_mul] at hA'; exact hA'
+  have hc : (((i - m * N).toNat : ℕ) : ℝ) = (i : ℝ) - m * N := by
+    have : ((i - m * N).toNat : ℤ) = i - m * N := Int.toNat_of_nonneg (by omega)
+    exact_mod_cast this
+  refine ⟨(i - m * N).toNat, ?_, ?_, ?_⟩
+  · rw [hc, Int.fract, div_le_iff₀ hN']
+    have := (div_le_iff₀ hN').1 hi1; nlinarith
+  · rw [hc, Int.fract, lt_div_iff₀ hN']
+    have := (lt_div_iff₀ hN').1 hi2; nlinarith
+  · intro a' ⟨ha1, ha2⟩
+    rw [hc] at ha1 ha2
+    have hlt1 : a' < 1 := by
+      have h' : (i : ℝ) - m * N + 1 ≤ N := by
+        have : i - m * N + 1 ≤ (N : ℤ) := by omega
+        exact_mod_cast this
+      have : ((i : ℝ) - m * N + 1) / N ≤ 1 := by rw [div_le_one hN']; exact h'
+      linarith
+    have hge0 : 0 ≤ a' := by
+      have : (0 : ℝ) ≤ (i - m * N) / N := by
+        apply div_nonneg _ hN'.le
+        have : (0 : ℤ) ≤ i - m * N := by omega
+        exact_mod_cast this
+      linarith
+    have hfl : ⌊(m : ℝ) + a'⌋ = m := by
+      rw [Int.floor_eq_iff]; constructor <;> linarith
+    refine ⟨m + a', ⟨i, ?_, ?_, hiS⟩, ?_, ?_⟩
+    · have := (div_le_iff₀ hN').1 ha1; rw [div_le_iff₀ hN']; nlinarith
+    · have := (lt_div_iff₀ hN').1 ha2; rw [lt_div_iff₀ hN']; nlinarith
+    · simp only [ArcFattening.residue] at hres ⊢
+      rw [hfl]; exact hres
+    · rw [Int.fract, hfl]; ring
+
 /-- **End to end with the code in Lean**: an empty computed sweep excludes every live `k`-memory relaxed
 strategy at `β` (any width).  Follows `ArcSolverInclusion.no_kRelaxedStrategy_of_sweep`'s proof with
 `ArcFattening.kToLiftedBridge`, using `descendsEmpty_excludes` in place of the abstract descent. -/
 theorem no_kRelaxedStrategy_of_codeSweep {k N fuel : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {β e0 δ : ℚ}
     (he0 : 0 < e0) (hNe : (1 : ℚ) / N ≤ e0 / 96) (hδ : 0 < δ) (hδe : δ ≤ e0 / 2)
-    (hβ0 : e0 / 2 ≤ β) (hβ1 : β ≤ 1 / 2)
+    (hβ0 : e0 / 2 ≤ β) (_hβ1 : β ≤ 1 / 2)
     (hsweep : sweepEmpty k N (β - e0 / 2) δ fuel = true)
     {l : ℝ} {P : ℕ → Set ℝ} (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
     ¬ ArcTrap.KRelaxedStrategy (β : ℝ) (1 - 2 * β) l k P := by
-  sorry
+  intro hS
+  have hl : 0 < l := hS.1
+  have he0' : (0 : ℝ) < e0 := by exact_mod_cast he0
+  have hδ' : (0 : ℝ) < δ := by exact_mod_cast hδ
+  have hδe' : (δ : ℝ) ≤ e0 / 2 := by exact_mod_cast hδe
+  have hNe'' : 1 / (N : ℝ) ≤ e0 / 96 := by
+    have := (Rat.cast_le (K := ℝ)).2 hNe; push_cast at this; exact this
+  have hL := ArcFattening.kToLiftedBridge (β : ℝ) (1 - 2 * β) l k P hk hS
+  have hPne := ArcFattening.physicalize_live hS.2.1 hne
+  obtain ⟨i, hi1, hi2⟩ := width_net hl.le he0' hδ' hδe'
+  set e := (i : ℝ) * δ - l with he
+  have he_pos : 0 < e := by linarith
+  have hNe' : 1 / (N : ℝ) ≤ e / 48 := by linarith
+  obtain ⟨hpost, hTne⟩ := rounded_fattened_post_fixed hL he_pos hN hNe'
+  set S := thick (e / 12) ((fun x => x - e / 2) '' ArcFattening.physicalize k P)
+  set T := roundIn N S
+  have hwid : l + e = (i : ℝ) * δ := by rw [he]; ring
+  obtain ⟨β', hβ'⟩ : ∃ x : ℚ, x = β - e0 / 2 := ⟨_, rfl⟩
+  rw [← hβ'] at hsweep
+  have hβR : (β' : ℝ) = β - e0 / 2 := by rw [hβ']; push_cast; ring
+  have hpost' : T ⊆ roundIn N (stepOpen ((β' : ℚ) : ℝ) (((1 - 2 * β' : ℚ)) : ℝ) (((i * δ : ℚ)) : ℝ)
+      (2 ^ (k - 1)) T) := by
+    refine hpost.trans (roundIn_mono ?_)
+    have : (((i * δ : ℚ)) : ℝ) = l + e := by rw [hwid]; push_cast; ring
+    rw [this]
+    exact stepOpen_arc_mono (s' := ((β' : ℚ) : ℝ)) (t' := (((1 - 2 * β' : ℚ)) : ℝ))
+      (by rw [hβR]; linarith) (by push_cast; rw [hβR]; linarith) T
+  have hQ := residualize_post_fixed hk hN hpost'
+  have hi1' : 1 ≤ i := by
+    by_contra h0
+    have : i = 0 := by omega
+    subst this; simp at hi1; linarith
+  have hi2' : (i : ℝ) * δ ≤ 3 * (1 - 2 * β + e0) / 2 := by
+    obtain ⟨r0, hr0, hP0⟩ := hne
+    have := hS.width_le hr0 hP0
+    linarith
+  -- the sweep at width i δ
+  have hiq : (i : ℚ) * δ ≤ 3 * (1 - 2 * β') / 2 := by
+    have : (((i : ℚ) * δ : ℚ) : ℝ) ≤ ((3 * (1 - 2 * β') / 2 : ℚ) : ℝ) := by
+      push_cast; rw [hβR]; linarith
+    exact_mod_cast this
+  have hE : descendsEmpty k N β' (1 - 2 * β') (((i - 1 + 1 : ℕ) : ℚ) * δ) fuel (fun _ => [(0, 1)]) = true := by
+    unfold sweepEmpty at hsweep
+    refine List.all_eq_true.1 hsweep (i - 1) (List.mem_range.2 ?_)
+    have h1 : (i : ℚ) ≤ 3 * (1 - 2 * β') / 2 / δ := by rw [le_div_iff₀ hδ]; exact hiq
+    have h2 : (i : ℤ) ≤ ⌊3 * (1 - 2 * β') / 2 / δ⌋ := Int.le_floor.2 (by exact_mod_cast h1)
+    omega
+  rw [show i - 1 + 1 = i by omega] at hE
+  have hβ'0 : 0 ≤ β' := by rw [hβ']; linarith
+  have hlq : (0 : ℚ) < i * δ := by positivity
+  have hl32 : (i : ℚ) * δ ≤ 3 / 2 := by
+    have : (1 - 2 * β') ≤ 1 := by rw [hβ']; linarith
+    linarith
+  have hempty := descendsEmpty_excludes hk hN hβ'0 (by rw [hβ']; linarith) hlq hl32 hE
+    (Q := ArcFattening.residualize k T)
+    (fun r => (ArcFattening.residualize_subset k T r))
+    (fun r => residualize_roundIn_cells k N hN S r) hQ
+  obtain ⟨r, -, a, ha⟩ := ArcFattening.residualize_live (k := k) (hTne hPne)
+  rw [hempty r] at ha
+  exact ha
 
 /-- The computation, `k = 1`: `β = 7/57 + 1/1000`, `e0 = 1/1000`, `δ = 1/2500`, `N = 2^17`. -/
 theorem sweep_7_57_plus_k1 : sweepEmpty 1 (2 ^ 17) (7 / 57 + 1 / 2000) (1 / 2500) 400 = true := by
