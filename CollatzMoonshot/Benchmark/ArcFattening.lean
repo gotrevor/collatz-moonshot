@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
+import CollatzMoonshot.Benchmark.ArcTrap
 
 namespace CollatzMoonshot.Benchmark.ArcFattening
 
@@ -50,5 +51,32 @@ theorem fatten_translation {e M : ℝ} {P : Set ℝ}
     ∀ y ∈ fatten e P, y + M ∈ fatten e P := by
   rintro y ⟨x, hx, z, hz, rfl⟩
   exact ⟨x + M, hP x hx, z, hz, by ring⟩
+
+/-- Read the integer residue of a physical start using Euclidean remainder, also for
+negative starts. -/
+noncomputable def residue (k : ℕ) (x : ℝ) : ℕ := (⌊x⌋ % (2 ^ k : ℤ)).toNat
+
+/-- Periodic real-coordinate realization of a family of fractional start sets. -/
+def physicalize (k : ℕ) (P : ℕ → Set ℝ) : Set ℝ :=
+  {x | Int.fract x ∈ P (residue k x)}
+
+/-- Project a physical strategy to integer residues and fractional starts. -/
+def residualize (k : ℕ) (P : Set ℝ) (r : ℕ) : Set ℝ :=
+  {a | ∃ x ∈ P, residue k x = r ∧ Int.fract x = a}
+
+/-- Open bridge, reviewed by Opus on 2026-10-10; confidence 92%, not a theorem.
+The key arithmetic is that replacing m by m+2^k*q adds 3*2^(k-1)*q to floor(3m/2),
+so the two children are permuted modulo 2^k.  k>=1 is essential. -/
+def KToLiftedBridge : Prop :=
+  ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k →
+    ArcTrap.KRelaxedStrategy s t l k P →
+    LiftedStrategy s t l (2 ^ (k - 1)) (physicalize k P)
+
+/-- Open converse bridge; confidence 92%, not a theorem.  No periodicity assumption
+is proposed: each physical witness supplies a move and both projected children. -/
+def LiftedToKBridge : Prop :=
+  ∀ (s t l : ℝ) (k : ℕ) (P : Set ℝ), 1 ≤ k →
+    LiftedStrategy s t l (2 ^ (k - 1)) P →
+    ArcTrap.KRelaxedStrategy s t l k (residualize k P)
 
 end CollatzMoonshot.Benchmark.ArcFattening
