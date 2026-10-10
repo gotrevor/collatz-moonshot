@@ -334,6 +334,38 @@ def width_sweep(k, beta, e0, step, N):
     return out
 
 
+def solver_step(P, r, k, s, t, L):
+    """The un-rounded step solve_vw applies at residue r (first width): starts with a good u."""
+    d = HALF if r % 2 else F(0)
+    return norm(sum((vw_aset(P, r, k, 0, j, d, s, t, L) for j in range(len(L))), []))
+
+
+def brute_open_move(P, r, k, s, t, l, a, mu, grid=400):
+    """Independent check of ArcSolverInclusion.stepOpen in residue form: search u = a + i*(l/3)/grid
+    for a move whose whole interval [u - mu, u + mu] (sampled at 5 points) is legal, inside an arc lift,
+    and lands in BOTH top-bit children.  Written without the solver's interval code."""
+    n, half = 1 << k, 1 << (k - 1)
+    d = HALF if r % 2 else F(0)
+    w = 2 * l / 3
+
+    def ok(u):
+        if not (a <= u and u + w <= a + l):
+            return False
+        if not any(m + s <= u and u + w <= m + s + t for m in range(-1, 5)):
+            return False
+        c = F(3, 2) * u + d
+        J = c.numerator // c.denominator
+        fr = c - J
+        base = ((3 * r - r % 2) // 2 + J) % half
+        return all(any(lo <= fr <= hi for lo, hi in P[base + b * half][0]) for b in (0, 1))
+
+    for i in range(grid + 1):
+        u = a + (l / 3) * F(i, grid)
+        if all(ok(u + mu * F(q, 2)) for q in (-2, -1, 0, 1, 2)):
+            return True
+    return False
+
+
 def vw_orbit(P, k, s, t, L, m0, steps):
     """Independent check: play the certificate against the TRUE integer parts from m0 and return the
     exact xi (left end of the final window).  Raises if the strategy ever has no move."""
@@ -658,6 +690,29 @@ def test_width_sweep_above_7_57_is_empty_with_a_live_control():
     assert width_sweep(1, F(7, 57) + F(1, 1000), F(1, 1000), F(1, 2500), 1 << 17) == []
     b = F(7, 57) - F(1, 10 ** 4)
     assert any(nonempty(solve_vw(1, b, 1 - 2 * b, [F(j, 1000)], N=1 << 15)[0]) for j in range(100, 140))
+
+
+def test_solver_step_contains_open_moves():
+    # 2026-10-10, hypothesis (c) of ArcSolverInclusion.no_kRelaxedStrategy_7_57_plus: every start the
+    # brute-force search finds an open move for is in solve_vw's step.  Random lattice strategies at k = 2, 3;
+    # also count the converse direction so the check is not vacuous
+    import random
+    rng = random.Random(4)
+    s, t = F(2, 5), F(87, 100)
+    found = 0
+    for k in (2, 3):
+        l = t * F(86, 400)
+        for _ in range(6):
+            P = [[norm([(F(a, 64), F(a + rng.randint(2, 24), 64)) for a in rng.sample(range(64), 3)])]
+                 for _ in range(1 << k)]
+            for r in range(1 << k):
+                acc = solver_step(P, r, k, s, t, [l])
+                for _ in range(8):
+                    a = F(rng.randint(0, 999), 1000)
+                    if brute_open_move(P, r, k, s, t, l, a, F(1, 10 ** 4), grid=60):
+                        found += 1
+                        assert any(lo <= a <= hi for lo, hi in acc)
+    assert found >= 20
 
 
 if __name__ == "__main__":

@@ -124,7 +124,11 @@ theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (
 Confidence 85%.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
 its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
 (b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
-`stepOpen` (a fact about the Python).  Given those, it reduces to a finite computation, which came out
+`stepOpen` (a fact about the Python: audited line by line against `vw_targets` / `vw_good_u` / `vw_aset` /
+`round_in`, and cross-checked by an independent brute-force open-move search, `brute_open_move`: 140 open
+starts on random lattice strategies at `k = 2, 3`, all in the solver's step; a version demanding only ONE
+child finds 100 the solver rightly rejects, so the check has teeth.  Test
+`test_solver_step_contains_open_moves`).  Given those, it reduces to a finite computation, which came out
 empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): widened arc
 `β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
 (`e0 N / 48 ≈ 2.7`), `k = 1, 2, 3`.  Positive control: at `N = 2^15` the solver finds winners at
