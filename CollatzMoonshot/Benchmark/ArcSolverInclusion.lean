@@ -330,8 +330,58 @@ theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (
     rw [add_mul, div_mul_cancel₀ _ hδ.ne'] at h2
     linarith
 
+/-- Widening the arc keeps the open step (each move stays inside a lift of the larger arc). -/
+theorem stepOpen_arc_mono {s t s' t' l h : ℝ} (hs : s' ≤ s) (hst : s + t ≤ s' + t') (P : Set ℝ) :
+    stepOpen s t l h P ⊆ stepOpen s' t' l h P := by
+  rintro x ⟨v, μ, hμ, hv⟩
+  refine ⟨v, μ, hμ, fun q hq => ?_⟩
+  obtain ⟨⟨h1, h2, j, hj1, hj2⟩, hb⟩ := hv q hq
+  exact ⟨⟨h1, h2, j, by linarith, by linarith⟩, hb⟩
+
+/-- **End to end, modulo the forward bridge and the code.**  If the code operator `C w` (width `w`)
+contains the rounded open step on the widened arc `[β - e0/2, 1 - β + e0/2]`, the grid satisfies
+`1/N ≤ e0/96`, and the solver descent empties at every width `i δ` of a mesh with `δ ≤ e0/2`, then no
+live `k`-memory relaxed strategy holds `[β, 1 - β]` at any width.  Uses `KToLiftedBridge` (Astra) for the
+physical encoding; everything else here is proved. -/
+theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k N : ℕ} (hk : 1 ≤ k)
+    (hN : 0 < N) {β e0 δ : ℝ} (he0 : 0 < e0) (hNe : 1 / N ≤ e0 / 96) (hδ : 0 < δ) (hδe : δ ≤ e0 / 2)
+    (C : ℝ → (ℕ → Set ℝ) → ℕ → Set ℝ)
+    (hC : ∀ w P r, roundInRes N (resStepOpen (β - e0 / 2) (1 - 2 * β + e0) w k P r) ⊆ C w P r)
+    (hsweep : ∀ i : ℕ, ∃ n, ∀ r, descend (C (i * δ)) n r = ∅)
+    {l : ℝ} {P : ℕ → Set ℝ} (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy β (1 - 2 * β) l k P := by
+  intro hS
+  have hl : 0 < l := hS.1
+  -- physical encoding and the width net
+  have hL := hbridge β (1 - 2 * β) l k P hk hS
+  have hPne := ArcFattening.physicalize_live hS.2.1 hne
+  obtain ⟨i, hi1, hi2⟩ := width_net hl.le he0 hδ hδe
+  set e := (i : ℝ) * δ - l with he
+  have he_pos : 0 < e := by linarith
+  have hNe' : 1 / (N : ℝ) ≤ e / 48 := by linarith
+  -- fatten, round: a physical rounded post-fixed point at width l + e = i δ
+  obtain ⟨hpost, hTne⟩ := rounded_fattened_post_fixed hL he_pos hN hNe'
+  set T := roundIn N (thick (e / 12) ((fun x => x - e / 2) '' ArcFattening.physicalize k P))
+  have hwid : l + e = (i : ℝ) * δ := by rw [he]; ring
+  have hpost' : T ⊆ roundIn N (stepOpen (β - e0 / 2) (1 - 2 * β + e0) ((i : ℝ) * δ)
+      (2 ^ (k - 1)) T) := by
+    refine hpost.trans (roundIn_mono ?_)
+    rw [← hwid]
+    exact stepOpen_arc_mono (by linarith) (by linarith) T
+  -- project to residues and run the abstract solver
+  have hQ := residualize_post_fixed hk hN hpost'
+  obtain ⟨n, hn⟩ := hsweep i
+  have hkeep := descend_keeps (C := C ((i : ℝ) * δ)) (hC _)
+    (fun r => (ArcFattening.residualize_subset k T r).trans Set.Ico_subset_Icc_self) hQ n
+  obtain ⟨r, -, a, ha⟩ := ArcFattening.residualize_live (k := k) (hTne hPne)
+  have := hkeep r ha
+  rw [hn r] at this
+  exact this
+
 /-- **No `k`-memory relaxed strategy, `k = 1, …, 6`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
-Confidence 85%.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
+Confidence 85%.  It is `no_kRelaxedStrategy_of_sweep` (PROVED, axiom-clean) applied with `KToLiftedBridge`
+(open, Astra), the code operator of `solve_vw` / `arc_sweep` (inclusion (c), trusted) and the empty sweep
+below.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
 its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
 (b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
 `stepOpen` (a fact about the Python: audited line by line against `vw_targets` / `vw_good_u` / `vw_aset` /
