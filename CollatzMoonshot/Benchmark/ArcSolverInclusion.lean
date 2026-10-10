@@ -25,9 +25,10 @@ interval code, which drops degenerate intervals: hence the nondegenerate move in
 
 namespace CollatzMoonshot.Benchmark.ArcSolverInclusion
 
-/-- The `1/N` grid cells wholly inside `S`. -/
+/-- The `1/N` grid cells wholly inside `S` (a point belongs to its half-open cell, so a cell ending at an
+integer never leaks its endpoint into the next residue). -/
 def roundIn (N : ℕ) (S : Set ℝ) : Set ℝ :=
-  {x | ∃ i : ℤ, (i : ℝ) / N ≤ x ∧ x ≤ ((i : ℝ) + 1) / N ∧ Set.Icc ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ S}
+  {x | ∃ i : ℤ, (i : ℝ) / N ≤ x ∧ x < ((i : ℝ) + 1) / N ∧ Set.Icc ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ S}
 
 /-- Legal move `v` from start `x` (window width `l`, arc `[s, s + t]` mod 1). -/
 def Legal (s t l x v : ℝ) : Prop :=
@@ -59,7 +60,7 @@ theorem thick_subset_roundIn {N : ℕ} (hN : 0 < N) {σ ρ : ℝ} (hσ : σ + 1 
   have hN' : (0 : ℝ) < N := by exact_mod_cast hN
   refine ⟨⌊y * N⌋, ?_, ?_, ?_⟩
   · rw [div_le_iff₀ hN']; exact Int.floor_le _
-  · rw [le_div_iff₀ hN']; exact (Int.lt_floor_add_one _).le
+  · rw [lt_div_iff₀ hN']; exact Int.lt_floor_add_one _
   · intro z ⟨hz1, hz2⟩
     refine ⟨x, hx, ?_⟩
     have hy1 : (⌊y * N⌋ : ℝ) / N ≤ y := by rw [div_le_iff₀ hN']; exact Int.floor_le _
@@ -125,17 +126,68 @@ def resStepOpen (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) (r : ℕ) : Set �
       P (((3 * r - r % 2) / 2 + (⌊3 * (u + q) / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋).toNat) % 2 ^ (k - 1) +
         b * 2 ^ (k - 1))}
 
-/-- Grid cells of `[0, 1]` wholly inside `A` (residue coordinates). -/
+/-- Half-open grid cells of `[0, 1)` wholly inside `A` (residue coordinates).  The solver's closed
+intervals contain these, so it over-includes, the safe direction for emptiness. -/
 def roundInRes (N : ℕ) (A : Set ℝ) : Set ℝ :=
-  {a | ∃ i : ℕ, i < N ∧ (i : ℝ) / N ≤ a ∧ a ≤ ((i : ℝ) + 1) / N ∧
-    Set.Icc ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ A}
+  {a | ∃ i : ℕ, i < N ∧ (i : ℝ) / N ≤ a ∧ a < ((i : ℝ) + 1) / N ∧
+    Set.Ico ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ A}
 
-/-- (A) Projection commutes with rounding, as an inclusion.  Confidence 90%: a physical cell lies in one
-unit interval, but a cell ending at an integer projects its right endpoint to fraction `0` of the NEXT
-residue, so the statement may need `Ico` cells or a measure-zero exception. -/
+/-- (A) Projection commutes with rounding, as an inclusion.  With half-open cells a physical cell lies in
+one unit interval `[m, m + 1)` and projects onto one residue cell.  (The closed-cell version was false:
+a cell ending at `m + 1` projects its endpoint to fraction `0` of the next residue.) -/
 theorem residualize_roundIn_subset (k N : ℕ) (hN : 0 < N) (S : Set ℝ) (r : ℕ) :
     ArcFattening.residualize k (roundIn N S) r ⊆ roundInRes N (ArcFattening.residualize k S r) := by
-  sorry
+  rintro a ⟨x, ⟨i, hi1, hi2, hiS⟩, hres, rfl⟩
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  set m := ⌊x⌋ with hm
+  have hm1 : (m : ℝ) ≤ x := Int.floor_le x
+  have hm2 : x < m + 1 := Int.lt_floor_add_one x
+  -- the cell index relative to the unit interval [m, m + 1)
+  have hA : (i : ℝ) < (m + 1) * N := by
+    have := (div_le_iff₀ hN').1 hi1; nlinarith
+  have hB : (m : ℝ) * N < i + 1 := by
+    have := (lt_div_iff₀ hN').1 hi2; nlinarith
+  have hA' : i < (m + 1) * N := by exact_mod_cast hA
+  have hB' : m * N < i + 1 := by exact_mod_cast hB
+  have hA2 : i < m * N + N := by rw [add_mul, one_mul] at hA'; exact hA'
+  refine ⟨(i - m * N).toNat, ?_, ?_, ?_, ?_⟩
+  · omega
+  · have hc : (((i - m * N).toNat : ℕ) : ℝ) = (i : ℝ) - m * N := by
+      have : ((i - m * N).toNat : ℤ) = i - m * N := Int.toNat_of_nonneg (by omega)
+      exact_mod_cast this
+    rw [hc, Int.fract, div_le_iff₀ hN']
+    have := (div_le_iff₀ hN').1 hi1; nlinarith
+  · have hc : (((i - m * N).toNat : ℕ) : ℝ) = (i : ℝ) - m * N := by
+      have : ((i - m * N).toNat : ℤ) = i - m * N := Int.toNat_of_nonneg (by omega)
+      exact_mod_cast this
+    rw [hc, Int.fract, lt_div_iff₀ hN']
+    have := (lt_div_iff₀ hN').1 hi2; nlinarith
+  · have hc : (((i - m * N).toNat : ℕ) : ℝ) = (i : ℝ) - m * N := by
+      have : ((i - m * N).toNat : ℤ) = i - m * N := Int.toNat_of_nonneg (by omega)
+      exact_mod_cast this
+    intro a' ⟨ha1, ha2⟩
+    rw [hc] at ha1 ha2
+    have hlt1 : a' < 1 := by
+      have h' : (i : ℝ) - m * N + 1 ≤ N := by
+        have : i - m * N + 1 ≤ (N : ℤ) := by omega
+        exact_mod_cast this
+      have : ((i : ℝ) - m * N + 1) / N ≤ 1 := by rw [div_le_one hN']; exact h'
+      linarith
+    have hge0 : 0 ≤ a' := by
+      have : (0 : ℝ) ≤ (i - m * N) / N := by
+        apply div_nonneg _ hN'.le
+        have : (0 : ℤ) ≤ i - m * N := by omega
+        exact_mod_cast this
+      linarith
+    refine ⟨m + a', hiS ⟨?_, ?_⟩, ?_, ?_⟩
+    · have := (div_le_iff₀ hN').1 ha1; rw [div_le_iff₀ hN']; nlinarith
+    · have := (lt_div_iff₀ hN').1 ha2; rw [le_div_iff₀ hN']; nlinarith
+    · have hfl : ⌊(m : ℝ) + a'⌋ = m := by
+        rw [Int.floor_eq_iff]; constructor <;> linarith
+      simp only [ArcFattening.residue] at hres ⊢
+      rw [hfl]; exact hres
+    · rw [Int.fract, show ⌊(m : ℝ) + a'⌋ = m by rw [Int.floor_eq_iff]; constructor <;> linarith]
+      ring
 
 /-- (B) The projected physical open step lies inside the residue-form open step.  Confidence 92%: the
 same carry arithmetic as `ArcFattening.integer_carry_shift_mod` (the two physical children are the two
@@ -174,7 +226,7 @@ theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (
     rw [add_mul, div_mul_cancel₀ _ hδ.ne'] at h2
     linarith
 
-/-- **No `k`-memory relaxed strategy, `k = 1, …, 4`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
+/-- **No `k`-memory relaxed strategy, `k = 1, …, 6`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
 Confidence 85%.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
 its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
 (b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
@@ -185,10 +237,11 @@ child finds 100 the solver rightly rejects, so the check has teeth.  Test
 `test_solver_step_contains_open_moves`).  Given those, it reduces to a finite computation, which came out
 empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): widened arc
 `β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
-(`e0 N / 96 ≈ 1.4`), `k = 1, …, 4`, empty in BOTH the Python solver and the independent Rust one
-(`experiments/arc_sweep_rs`, written from `stepOpen` / `roundIn`, not from the Python).  Positive control: at `N = 2^15` the solver finds winners at
+(`e0 N / 96 ≈ 1.4`), `k = 1, …, 6`, empty in BOTH the Python solver and the independent Rust one
+(`experiments/arc_sweep_rs`, written from `stepOpen` / `roundIn`, not from the Python); Rust alone is also
+empty at `k = 7, 8`.  Positive control: at `N = 2^15` the solver finds winners at
 `7/57 - 1/10000` for `k = 0, 1, 2`.  Unlike `finiteMemoryRelaxedValue_ge_013`, no liveness hypothesis. -/
-theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 4) (l : ℝ) (P : ℕ → Set ℝ)
+theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 6) (l : ℝ) (P : ℕ → Set ℝ)
     (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
     ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 1000) (1 - 2 * (7 / 57 + 1 / 1000)) l k P := by
   sorry
