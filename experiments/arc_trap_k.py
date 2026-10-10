@@ -163,13 +163,27 @@ def round_in(ivs, N):
     return out
 
 
-def solve_vw(k, s, t, L, iters=5000, N=1 << 24, forbidden=(), trace=None):
+def complement01(ivs):
+    """[0, 1) minus a normalized interval union (closed endpoints kept on both sides: a superset, so
+    it is only used as a cap, never as a certificate)."""
+    out, x = [], F(0)
+    for lo, hi in norm(ivs):
+        if lo > x:
+            out.append((x, lo))
+        x = max(x, hi)
+    if x < ONE:
+        out.append((x, ONE))
+    return out
+
+
+def solve_vw(k, s, t, L, iters=5000, N=1 << 24, forbidden=(), trace=None, cap=None):
     """Greatest post-fixed point on the 1/N lattice: the sets only shrink and the lattice is finite, so
     this terminates; the result satisfies P <= step(P), which is all soundness needs.  `forbidden`
     residues start empty, so the result is the largest strategy that avoids them (KRelaxedLiveEverywhere
     asks whether that is always empty).  `trace`, a list, collects the live residues per iteration."""
     n, q = 1 << k, len(L)
-    P = [[[] if r in forbidden else [(F(0), ONE)] for _ in range(q)] for r in range(n)]
+    P = [[[] if r in forbidden else list((cap or {}).get(r, [(F(0), ONE)])) for _ in range(q)]
+         for r in range(n)]
     for _ in range(iters):
         if trace is not None:
             trace.append([r for r in range(n) if any(P[r])])
@@ -214,6 +228,25 @@ def saturate_vw(P, k, s, t, L, rounds=200, N=1 << 20, trace=None):
             return P, True
         P = new
     return P, False
+
+
+def split_seeds(k, s, t, L, xs=(F(1, 4), F(1, 2), F(3, 4)), N=1 << 20):
+    """Overlap-breaking seeds: for each base b of the greatest fixed point G, split the shared starts
+    C = G(b) ∩ G(b + 2^(k-1)) at x, cap each lift away from one side, and descend.  Yields
+    (b, x, Q) for every result with both lifts live and base b NOT good (none seen through k = 5)."""
+    h = 1 << (k - 1)
+    G, _ = solve_vw(k, s, t, L, N=N)
+    if not nonempty(G):
+        return
+    for b in range(h):
+        C = inter(G[b][0], G[b + h][0])
+        for x in xs:
+            lo, hi = inter(C, [(F(0), x)]), inter(C, [(x, ONE)])
+            for cb, ch in ((hi, lo), (lo, hi)):
+                cap = {b: inter(G[b][0], complement01(cb)), b + h: inter(G[b + h][0], complement01(ch))}
+                Q, _ = solve_vw(k, s, t, L, N=N, cap=cap)
+                if Q[b][0] and Q[b + h][0] and b not in good_bases(Q, k):
+                    yield b, x, Q
 
 
 def vw_orbit(P, k, s, t, L, m0, steps):
@@ -480,6 +513,15 @@ def test_saturation_restores_the_dodged_base():
     tr = []
     S, fx = saturate_vw(Q, 6, s, t, L, rounds=2, trace=tr)
     assert tr == [31, 32]
+
+
+def test_breaking_a_shared_start_kills_a_lift():
+    # 2026-10-09 (with Astra): capping the two lifts of a base onto opposite sides of their shared starts
+    # never leaves both live without a shared start (k = 3..5 sweep: 0 seeds); here the k = 3 winner
+    s, t = F(2, 5), F(87, 100)
+    assert list(split_seeds(3, s, t, [t * F(86, 400)])) == []
+    G = solve_vw(3, s, t, [t * F(86, 400)], N=1 << 20)[0]
+    assert len(good_bases(G, 3)) == 4  # the control: the uncapped winner has every base good
 
 
 if __name__ == "__main__":

@@ -3953,7 +3953,13 @@ fixed point among 371 winners (`k = 2, …, 5`; four arcs, `j ≡ 4 mod 6`) has 
 `k = 6` dodge (`not_kRelaxedLiveEverywhereStrong`) the greatest fixed point has all 32 good while the
 dodging strategy lacks exactly base `27`.  Mechanism sketch: the start is free, so a class `m` is live
 as soon as a move from some `a` reaches a good base `⌊3m/2⌋ + J`, `J ∈ {0, 1}`, and `m ↦ ⌊3m/2⌋` is
-exactly two-to-one from `ℤ/2^k` onto `ℤ/2^(k-1)`. -/
+exactly two-to-one from `ℤ/2^k` onto `ℤ/2^(k-1)`.
+Split-mask probe (2026-10-09, with Astra; `arc_trap_k.split_seeds`): cap the two lifts of a base onto
+opposite sides of their shared starts and take the greatest strategy under the cap.  Over `k = 3, 4, 5`
+(10 arcs, every 40th width) no result keeps both lifts live without a shared start; every descent
+kills a lift outright.  So on the `1/2^20` lattice the only deficiency seen is a whole dead base (the
+`k = 6` dodges, eleven seeds on three arcs, each restored by one predecessor layer:
+`ArcReview.PredecessorSaturationAllBases`).  Thin (Cantor-like) strategies are invisible to the solver. -/
 def KRelaxedAllBasesGood : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) →
