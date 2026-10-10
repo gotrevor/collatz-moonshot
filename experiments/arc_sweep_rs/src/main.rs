@@ -176,9 +176,11 @@ impl Game {
         for &(lo, hi) in v {
             let x = lo.mul(nq);
             let y = hi.mul(nq);
-            // strict interior: first cell start > lo unless lo == 0; last cell end < hi unless hi == 1
+            // the start set is open at both ends: cells start strictly after lo (unless lo == 0, the clip
+            // point) and may END AT hi (an Ico cell [i/N, (i+1)/N) with (i+1)/N <= hi lies inside (lo, hi)).
+            // 2026-10-10 fix: was ceil(hi N) - 1, which dropped that last cell (unsafe for emptiness).
             let i0 = if lo == Q::int(0) { 0 } else { x.floor() + 1 };
-            let i1 = if hi == Q::int(1) { self.n_grid } else { y.ceil() - 1 };
+            let i1 = y.floor();
             if i0 < i1 {
                 out.push((Q::new(i0, self.n_grid), Q::new(i1, self.n_grid)));
             }
