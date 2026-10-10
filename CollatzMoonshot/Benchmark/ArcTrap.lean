@@ -3898,7 +3898,12 @@ perturb the carries below it (for `k = 2` the low bit is `a + p + c mod 2`, with
 floor), so a strategy might steer clear of some classes.  Confidence 65%.  Evidence: the greatest
 `solve_vw` fixed points for the off-centre `k = 3` winner (`MemoryHelpsOffCentre`, widths
 `87/100 · j/400`, `j = 86, 92`) are live at all 8 residues, and at `j = 80` at none
-(regression `test_live_everywhere_off_centre`); no partially live winner has been seen. -/
+(regression `test_live_everywhere_off_centre`); no partially live winner has been seen.
+Dead route: carry combinatorics alone.  Let the constructor choose the floor `sh ∈ {0, 1, 2}` freely per
+residue, with both top-bit children required live.  Then it can keep its live set off any one class, and
+off any adjacent pair `{m, m + 1}`, forever, for every `k = 3, …, 14` (a safety-game fixed point).  So a
+proof must use the geometry that ties `sh` to the fractional position (`sh = ⌊3u/2 + p/2⌋` with `u` in the
+band). -/
 def KRelaxedLiveEverywhere : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) → ∀ r < 2 ^ k, (P r).Nonempty

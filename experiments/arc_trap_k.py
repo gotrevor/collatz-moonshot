@@ -235,6 +235,22 @@ def dist_int(x):
     return min(f, 1 - f)
 
 
+def carry_avoidable(k, forbidden, shs=(0, 1, 2)):
+    """Residues from which a constructor that picks its floor sh freely per residue keeps every live
+    residue out of `forbidden` forever.  Both top-bit children of the next base must stay live (greatest
+    fixed point of a safety game).  Nonempty means carry combinatorics alone cannot force liveness at
+    `forbidden`."""
+    mod, half = 1 << k, 1 << (k - 1)
+    W = set(range(mod)) - set(forbidden)
+    while True:
+        W2 = {r for r in W if any(
+            (b := ((3 * r - r % 2) // 2 + sh) % half if half > 1 else 0) in W and b + half in W
+            for sh in shs)}
+        if W2 == W:
+            return W
+        W = W2
+
+
 def nonempty(P):
     return any(P)
 
@@ -275,6 +291,14 @@ def main(argv):
                 return 0
         print("no certificate")
         return 1
+    if argv[0] == "carry-avoid":
+        # arc_trap_k.py carry-avoid KMAX : how many classes m (pairs {m, m+1}) a free-floor constructor avoids
+        for k in range(1, int(argv[1]) + 1):
+            mod = 1 << k
+            one = sum(1 for m in range(mod) if carry_avoidable(k, {m}))
+            two = sum(1 for m in range(mod) if carry_avoidable(k, {m, (m + 1) % mod}))
+            print(f"k={k}: avoidable classes {one}/{mod}, avoidable pairs {two}/{mod}")
+        return 0
     if argv[0] == "check":
         k, s, t, l = int(argv[1]), F(argv[2]), F(argv[3]), F(argv[4])
         P, fixed = solve(k, s, t, l)
@@ -361,6 +385,13 @@ def test_live_everywhere_off_centre():
 def _wins_vw_s(k, s, t, L):
     P, fx = solve_vw(k, s, t, L, N=1 << 20)
     return fx and any(x for row in P for x in row)
+
+def test_carries_alone_cannot_force_liveness():
+    # k = 1, 2: the free-floor constructor cannot dodge an adjacent pair; from k = 3 it dodges everything
+    assert not carry_avoidable(2, {0, 1}) and carry_avoidable(2, {0})
+    for k in (3, 6):
+        assert all(carry_avoidable(k, {m, (m + 1) % (1 << k)}) for m in range(1 << k))
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
