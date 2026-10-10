@@ -146,6 +146,56 @@ def physicalize (k : ℕ) (P : ℕ → Set ℝ) : Set ℝ :=
 def residualize (k : ℕ) (P : Set ℝ) (r : ℕ) : Set ℝ :=
   {a | ∃ x ∈ P, residue k x = r ∧ Int.fract x = a}
 
+/-- The physical realization is invariant under any integer multiple of its memory period. -/
+theorem physicalize_shift (k : ℕ) (P : ℕ → Set ℝ) (x : ℝ) (q : ℤ) :
+    x + (((2 ^ k : ℤ) * q : ℤ) : ℝ) ∈ physicalize k P ↔ x ∈ physicalize k P := by
+  simp only [physicalize, Set.mem_setOf_eq, residue]
+  rw [Int.fract_add_intCast, Int.floor_add_intCast]
+  simp [Int.add_emod, Int.mul_emod]
+
+/-- Every physical point projects to a valid memory residue. -/
+theorem residue_lt (k : ℕ) (x : ℝ) : residue k x < 2 ^ k := by
+  have hm : 0 ≤ ⌊x⌋ % (2 ^ k : ℤ) := Int.emod_nonneg _ (by positivity)
+  unfold residue
+  rw [Int.toNat_lt hm]
+  exact_mod_cast Int.emod_lt_of_pos ⌊x⌋ (show (0 : ℤ) < 2 ^ k by positivity)
+
+/-- Projection satisfies the fractional-domain restriction required by KRelaxedStrategy. -/
+theorem residualize_subset (k : ℕ) (P : Set ℝ) (r : ℕ) :
+    residualize k P r ⊆ Set.Ico 0 1 := by
+  rintro a ⟨x, hx, hr, rfl⟩
+  exact ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+/-- A live physical set stays live after projecting to memory residues. -/
+theorem residualize_live {k : ℕ} {P : Set ℝ} (hne : P.Nonempty) :
+    ∃ r < 2 ^ k, (residualize k P r).Nonempty := by
+  obtain ⟨x, hx⟩ := hne
+  exact ⟨residue k x, residue_lt k x, Int.fract x, x, hx, rfl, rfl⟩
+
+/-- A valid fractional start embeds at its canonical integer representative. -/
+theorem mem_physicalize_of_mem {k r : ℕ} {P : ℕ → Set ℝ} {a : ℝ}
+    (hr : r < 2 ^ k) (ha : a ∈ P r) (ha01 : a ∈ Set.Ico 0 1) :
+    (r : ℝ) + a ∈ physicalize k P := by
+  have hfloor : ⌊(r : ℝ) + a⌋ = (r : ℤ) := by
+    rw [show (r : ℝ) = ((r : ℤ) : ℝ) by simp, Int.floor_intCast_add,
+      Int.floor_eq_zero_iff.mpr ha01, add_zero]
+  have hfract : Int.fract ((r : ℝ) + a) = a := by
+    rw [add_comm, show (r : ℝ) = ((r : ℤ) : ℝ) by simp,
+      Int.fract_add_intCast, Int.fract_eq_self.mpr ha01]
+  have hres : residue k ((r : ℝ) + a) = r := by
+    simp only [residue, hfloor]
+    norm_cast
+    simp [Nat.mod_eq_of_lt hr]
+  change Int.fract ((r : ℝ) + a) ∈ P (residue k ((r : ℝ) + a))
+  simpa only [hfract, hres] using ha
+
+/-- A live family of valid fractional starts has a live physical realization. -/
+theorem physicalize_live {k : ℕ} {P : ℕ → Set ℝ}
+    (hP : ∀ r, P r ⊆ Set.Ico 0 1) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    (physicalize k P).Nonempty := by
+  obtain ⟨r, hr, a, ha⟩ := hne
+  exact ⟨(r : ℝ) + a, mem_physicalize_of_mem hr ha (hP r ha)⟩
+
 /-- Open bridge, reviewed by Opus on 2026-10-10; confidence 92%, not a theorem.
 The key arithmetic is that replacing m by m+2^k*q adds 3*2^(k-1)*q to floor(3m/2),
 so the two children are permuted modulo 2^k.  k>=1 is essential. -/
