@@ -3891,28 +3891,58 @@ theorem not_kRelaxedStrategy_1377 {β l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (
     ¬ KRelaxedStrategy β (1 - 2 * β) l k P :=
   not_kRelaxedStrategy_of_obliviousKill (by norm_num) hk hβ (by linarith) obliviousKill_1377 hne
 
-/-- **Open: is a live `k`-strategy live at every residue?**  `not_kRelaxedStrategy_138` needs the
+/-- **Refuted (90%): every live `k`-strategy is live at every residue.**  This was the original form of
+`KRelaxedLiveEverywhere`; the weaker form below (some strategy is live everywhere) is all the kills use.  `not_kRelaxedStrategy_138` needs the
 strategy live at the class of one specific `m`, while `FiniteMemoryRelaxedValue` allows any live
 residue.  The adversary picks the top bit of each new residue, but the constructor's floor choices
 perturb the carries below it (for `k = 2` the low bit is `a + p + c mod 2`, with `c` the constructor's
-floor), so a strategy might steer clear of some classes.  Confidence 65%.  Evidence: the greatest
+floor), so a strategy might steer clear of some classes.  Evidence for the strong form at small `k`: the greatest
 `solve_vw` fixed points for the off-centre `k = 3` winner (`MemoryHelpsOffCentre`, widths
 `87/100 · j/400`, `j = 86, 92`) are live at all 8 residues, and at `j = 80` at none
 (regression `test_live_everywhere_off_centre`); no partially live winner has been seen.
+Direct test of this statement (2026-10-09, `arc_trap_k.py live-forbid`): start the fixed point with one
+class `m` empty, so it computes the largest strategy avoiding `m`.  Over 224 winners (`k = 1, …, 4`; four
+symmetric arcs `β = 0.11, …, 0.122` and twelve random off-centre arcs, widths `t · j/400`), forbidding any
+single class empties the fixed point every time, within 3 or 4 iterations (a few classes die, then all at
+once).  Regression `test_forbidding_any_class_kills_the_strategy`.
+**Counterexample at `k = 6`**: the off-centre arc `[2/5, 2/5 + 87/100]`, widths `87/100 · j/400`,
+`j = 100, 130`, has a strategy live at 63 of the 64 classes, dead only at `27`, and another dead only at
+`59` (both `≡ -5 mod 32`).  Each converges in 39 iterations, and 36 true-integer orbit checks
+(`vw_orbit`, 60 moves) never get stuck.  The 90% is solver soundness (inward-rounded post-fixed point),
+not a Lean certificate.  The same arc's unforbidden fixed point is live at all 64 classes, and over 48
+winners at `k = 5, 6` (including the symmetric arcs `β = 0.11, 0.122`) no other class is dodgeable.
 Dead route: carry combinatorics alone.  Let the constructor choose the floor `sh ∈ {0, 1, 2}` freely per
 residue, with both top-bit children required live.  Then it can keep its live set off any one class, and
 off any adjacent pair `{m, m + 1}`, forever, for every `k = 3, …, 14` (a safety-game fixed point).  So a
 proof must use the geometry that ties `sh` to the fractional position (`sh = ⌊3u/2 + p/2⌋` with `u` in the
-band). -/
-def KRelaxedLiveEverywhere : Prop :=
+band).  The geometry in fact pins `sh ∈ {0, 1}` on the symmetric arc, yet the carry game with
+`sh ∈ {0, 1}` still dodges every class and every adjacent pair from `k = 4`; what the carry game
+lacks is that `sh` is a function of the position, not a free choice per residue. -/
+def KRelaxedLiveEverywhereStrong : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) → ∀ r < 2 ^ k, (P r).Nonempty
+
+/-- The `k = 6` counterexample above.  Confidence 90%. -/
+theorem not_kRelaxedLiveEverywhereStrong : ¬ KRelaxedLiveEverywhereStrong := by
+  sorry
+
+/-- **Open: a live `k`-strategy can be made live at every residue.**  The strategies form a family closed
+under unions, so this says the greatest one (the union of all) is live everywhere.  Confidence 70%.
+Every winner measured so far satisfies it: 224 at `k ≤ 4` and 48 at `k = 5, 6` (`arc_trap_k.py
+live-forbid`, the unforbidden fixed point), including the `k = 6` arc that refutes the strong form
+(`not_kRelaxedLiveEverywhereStrong`).  What a proof must explain is that a dodging strategy is never
+maximal. -/
+def KRelaxedLiveEverywhere : Prop :=
+  ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
+    (∃ r < 2 ^ k, (P r).Nonempty) →
+      ∃ Q : ℕ → Set ℝ, KRelaxedStrategy s t l k Q ∧ ∀ r < 2 ^ k, (Q r).Nonempty
 
 /-- Given `KRelaxedLiveEverywhere`, `FiniteMemoryRelaxedValue` holds on `[0.138, 1/2)` for every `k`. -/
 theorem finiteMemoryRelaxedValue_ge_138 (hL : KRelaxedLiveEverywhere) {k : ℕ} (hk : 1 ≤ k) {β : ℝ}
     (hβ : 69 / 500 ≤ β) (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
-    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS =>
-  not_kRelaxedStrategy_138 hk hβ (hL _ _ _ k P hk hS hne _ (Nat.mod_lt _ (by positivity))) hS
+    ¬ KRelaxedStrategy β (1 - 2 * β) l k P := fun hS => by
+  obtain ⟨Q, hQ, hQl⟩ := hL _ _ _ k P hk hS hne
+  exact not_kRelaxedStrategy_138 hk hβ (hQl _ (Nat.mod_lt _ (by positivity))) hQ
 
 /-! ### Relaxed oblivious kills: fixed window width -/
 
@@ -4039,7 +4069,7 @@ theorem relaxedObliviousKillRange_013_b :
     RelaxedObliviousKillRange (13 / 100) (3 / 4) (111 / 100) 1048584 := by
   sorry
 
-/-- **No finite memory reaches `0.13`.**  Given that live strategies are live at every residue
+/-- **No finite memory reaches `0.13`.**  Given that some strategy is live at every residue
 (`KRelaxedLiveEverywhere`), `FiniteMemoryRelaxedValue` holds on `[0.13, 1/2)` for every `k`.  Three
 oblivious certificates cover every window width: one component kill from `[M, M + 3/2)` for
 `l ≤ 1/2` (through `exists_trapped_of_relaxedPath`), two relaxed range kills for `[1/2, 3/4]` and
@@ -4049,13 +4079,12 @@ theorem finiteMemoryRelaxedValue_ge_013 (hL : KRelaxedLiveEverywhere) {k : ℕ} 
     (hβ : 13 / 100 ≤ β) (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
     ¬ KRelaxedStrategy β (1 - 2 * β) l k P := by
   intro hS
-  have h0 := hS.mono hβ
+  obtain ⟨Q, h0, hQl⟩ := hL _ _ _ k P hk (hS.mono hβ) hne
   have hl : 0 < l := hS.1
-  have live : ∀ M : ℕ, (P (M % 2 ^ k)).Nonempty := fun M =>
-    hL _ _ _ k P hk h0 hne _ (Nat.mod_lt _ (by positivity))
+  have live : ∀ M : ℕ, (Q (M % 2 ^ k)).Nonempty := fun M =>
+    hQl _ (Nat.mod_lt _ (by positivity))
   have hw : 2 * l / 3 ≤ 1 - 2 * (13 / 100 : ℝ) := by
-    obtain ⟨r, hr, hr'⟩ := hne
-    exact h0.width_le hr hr'
+    exact h0.width_le (pow_pos (by norm_num) k) (hQl 0 (pow_pos (by norm_num) k))
   rcases le_or_gt l (1 / 2) with h1 | h1
   · exact not_kRelaxedStrategy_of_relaxedObliviousKill hk
       (relaxedObliviousKill_of_obliviousKillFrom (l₀ := 1 / 2) hl h1

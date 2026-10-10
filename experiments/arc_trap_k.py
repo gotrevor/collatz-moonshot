@@ -163,12 +163,16 @@ def round_in(ivs, N):
     return out
 
 
-def solve_vw(k, s, t, L, iters=5000, N=1 << 24):
+def solve_vw(k, s, t, L, iters=5000, N=1 << 24, forbidden=(), trace=None):
     """Greatest post-fixed point on the 1/N lattice: the sets only shrink and the lattice is finite, so
-    this terminates; the result satisfies P <= step(P), which is all soundness needs."""
+    this terminates; the result satisfies P <= step(P), which is all soundness needs.  `forbidden`
+    residues start empty, so the result is the largest strategy that avoids them (KRelaxedLiveEverywhere
+    asks whether that is always empty).  `trace`, a list, collects the live residues per iteration."""
     n, q = 1 << k, len(L)
-    P = [[[(F(0), ONE)] for _ in range(q)] for _ in range(n)]
+    P = [[[] if r in forbidden else [(F(0), ONE)] for _ in range(q)] for r in range(n)]
     for _ in range(iters):
+        if trace is not None:
+            trace.append([r for r in range(n) if any(P[r])])
         new = []
         for r in range(n):
             row = []
@@ -252,7 +256,7 @@ def carry_avoidable(k, forbidden, shs=(0, 1, 2)):
 
 
 def nonempty(P):
-    return any(P)
+    return any(x for row in P for x in row)
 
 
 def main(argv):
@@ -298,6 +302,19 @@ def main(argv):
             one = sum(1 for m in range(mod) if carry_avoidable(k, {m}))
             two = sum(1 for m in range(mod) if carry_avoidable(k, {m, (m + 1) % mod}))
             print(f"k={k}: avoidable classes {one}/{mod}, avoidable pairs {two}/{mod}")
+        return 0
+    if argv[0] == "live-forbid":
+        # live-forbid K S T JLO JHI JSTEP: for each winning width t*j/400, the residues m such that some
+        # strategy avoids class m (KRelaxedLiveEverywhere predicts none)
+        k, s, t = int(argv[1]), F(argv[2]), F(argv[3])
+        for j in range(int(argv[4]), int(argv[5]) + 1, int(argv[6])):
+            L = [t * F(j, 400)]
+            P, fx = solve_vw(k, s, t, L, N=1 << 20)
+            live = [r for r in range(1 << k) if P[r][0]]
+            if not (fx and live):
+                continue
+            dodge = [m for m in range(1 << k) if nonempty(solve_vw(k, s, t, L, N=1 << 20, forbidden={m})[0])]
+            print(f"j {j} live {live} dodgeable {dodge}", flush=True)
         return 0
     if argv[0] == "check":
         k, s, t, l = int(argv[1]), F(argv[2]), F(argv[3]), F(argv[4])
@@ -391,6 +408,29 @@ def test_carries_alone_cannot_force_liveness():
     assert not carry_avoidable(2, {0, 1}) and carry_avoidable(2, {0})
     for k in (3, 6):
         assert all(carry_avoidable(k, {m, (m + 1) % (1 << k)}) for m in range(1 << k))
+
+
+def test_forbidding_any_class_kills_the_strategy():
+    # 2026-10-09, geometric liveness: the k = 3 off-centre winners admit no strategy avoiding any one
+    # class, though the carry game with a free floor in {0, 1} dodges every class from k = 4 on
+    s, t = F(2, 5), F(87, 100)
+    L = [t * F(86, 400)]
+    assert nonempty(solve_vw(3, s, t, L, N=1 << 20)[0])
+    assert not any(nonempty(solve_vw(3, s, t, L, N=1 << 20, forbidden={m})[0]) for m in range(8))
+    assert all(carry_avoidable(4, {m}, shs=(0, 1)) for m in range(16))
+
+
+def test_strong_liveness_fails_at_k6():
+    # 2026-10-09: not_kRelaxedLiveEverywhereStrong.  A k = 6 strategy live at 63 of 64 classes (dead only
+    # at 27 = -5 mod 32), while the greatest fixed point is live at all 64 (the weak form survives)
+    s, t = F(2, 5), F(87, 100)
+    L = [t * F(100, 400)]
+    P, fx = solve_vw(6, s, t, L, N=1 << 20)
+    assert fx and all(P[r][0] for r in range(64))
+    Q, fx = solve_vw(6, s, t, L, N=1 << 20, forbidden={27})
+    assert fx and [r for r in range(64) if not Q[r][0]] == [27]
+    for m0 in (64 + 1, 64 * 7 + 26, 64 * 123 + 59):
+        vw_orbit(Q, 6, s, t, L, m0, 60)
 
 
 if __name__ == "__main__":
