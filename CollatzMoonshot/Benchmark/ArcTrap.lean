@@ -3960,6 +3960,14 @@ opposite sides of their shared starts and take the greatest strategy under the c
 kills a lift outright.  So on the `1/2^20` lattice the only deficiency seen is a whole dead base (the
 `k = 6` dodges, eleven seeds on three arcs, each restored by one predecessor layer:
 `ArcReview.PredecessorSaturationAllBases`).  Thin (Cantor-like) strategies are invisible to the solver.
+Open route to solver completeness at fixed `k` (with Astra, 2026-10-09; hand-reviewed, NOT proved): by
+`ArcFattening.LiftedStrategy.fatten` (with the arc widened by `e/2` per end, starts `|z| ≤ e/12`, moves
+perturbed by `|q| ≤ e/24`), a winner at `(β, l)` gives winners with positive move and start margins at arc
+`β - e0/2` for every width in `[l + e0/2, l + e0]` (`KRelaxedStrategy.mono` for the arc).  So lattice
+emptiness of `solve_vw` at every width of a mesh finer than `e0/2` up to `3t'/2` (`t' = t + e0`), on a grid
+fine for margins `≍ e0`, would exclude every winner, thin or fat, at `β`.  Needs `ArcFattening`'s
+`KToLiftedBridge` / `LiftedToKBridge` and a proof that `solve_vw`'s rounded step contains the margin
+strategy.  Uniform-in-`k` liveness is a separate target.
 How the one-layer repair works (2026-10-09): call a class `c mod 2^j` good at level `j` when all its lifts
 mod `2^k` share a start (level `k - 1` is this Prop).  The `k = 6` dodge's dead base `27` moves to bases
 `f + J` with `f = ⌊3·27/2⌋`; for `J = 0, 1, 2` the pairs `(8, 24), (9, 25), (10, 26)` are good at level
