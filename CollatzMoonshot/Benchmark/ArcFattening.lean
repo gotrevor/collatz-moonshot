@@ -98,6 +98,46 @@ theorem LiftedStrategy.fattenCore {s t l h e : ℝ} {P : Set ℝ}
 negative starts. -/
 noncomputable def residue (k : ℕ) (x : ℝ) : ℕ := (⌊x⌋ % (2 ^ k : ℤ)).toNat
 
+/-- Integer-coordinate decomposition behind the residue bridge, valid also at negative m. -/
+theorem physical_child_decomposition (m : ℤ) (u : ℝ) :
+    3 * ((m : ℝ) + u) / 2 =
+      (3 * u / 2 + ((m % 2 : ℤ) : ℝ) / 2) + (((3 * m - m % 2) / 2 : ℤ) : ℝ) := by
+  have hm : 2 * ((3 * m - m % 2) / 2) = 3 * m - m % 2 := by omega
+  have hmr : (2 : ℝ) * (((3 * m - m % 2) / 2 : ℤ) : ℝ) =
+      3 * (m : ℝ) - ((m % 2 : ℤ) : ℝ) := by exact_mod_cast hm
+  linarith
+
+/-- Physical and normalized moves have the same successor fractional coordinate. -/
+theorem physical_child_fract (m : ℤ) (u : ℝ) :
+    Int.fract (3 * ((m : ℝ) + u) / 2) =
+      Int.fract (3 * u / 2 + ((m % 2 : ℤ) : ℝ) / 2) := by
+  rw [physical_child_decomposition, Int.fract_add_intCast]
+
+/-- The physical successor floor is the sum used in the residue transition. -/
+theorem physical_child_floor (m : ℤ) (u : ℝ) :
+    ⌊3 * ((m : ℝ) + u) / 2⌋ =
+      ⌊3 * u / 2 + ((m % 2 : ℤ) : ℝ) / 2⌋ + (3 * m - m % 2) / 2 := by
+  rw [physical_child_decomposition, Int.floor_add_intCast]
+
+/-- Changing the integer representative by 2*h*q changes its successor integer carry
+by 3*h*q.  This is the arithmetic underlying the two-lift permutation. -/
+theorem integer_carry_shift (m h q : ℤ) :
+    (3 * (m + 2 * h * q) - (m + 2 * h * q) % 2) / 2 =
+      (3 * m - m % 2) / 2 + 3 * h * q := by
+  have hp : (m + 2 * h * q) % 2 = m % 2 := by
+    simp [Int.add_emod, Int.mul_emod]
+  rw [hp]
+  rw [show 3 * (m + 2 * h * q) - m % 2 =
+    (3 * m - m % 2) + (3 * h * q) * 2 by ring]
+  exact Int.add_mul_ediv_right _ _ (by decide)
+
+/-- In particular the successor base modulo h is independent of the integer representative. -/
+theorem integer_carry_shift_mod (m h q : ℤ) :
+    ((3 * (m + 2 * h * q) - (m + 2 * h * q) % 2) / 2) % h =
+      ((3 * m - m % 2) / 2) % h := by
+  rw [integer_carry_shift]
+  simp [Int.add_emod, Int.mul_emod]
+
 /-- Periodic real-coordinate realization of a family of fractional start sets. -/
 def physicalize (k : ℕ) (P : ℕ → Set ℝ) : Set ℝ :=
   {x | Int.fract x ∈ P (residue k x)}
