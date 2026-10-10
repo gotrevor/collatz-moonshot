@@ -789,5 +789,65 @@ def test_upper_edge_memoryless():
     assert "live []" in _rust_nocarry("solve", 4, "1/10", "4/5", "31/100", 16)
     assert "live []" not in _rust_nocarry("solve", 6, "1/10", "4/5", "31/100", 16)
 
+
+def delay_witness(k, s, t, l, logn, carry_check=False):
+    """Extract a delay-game winner as explicit moves (2026-10-10, tandem test with Astra): run the Rust solver
+    with ARC_NOCARRY=1 ARC_DUMP=1, then for every word w and interval of P(w) list each (floor J, u-piece,
+    covered starts, child words).  Exact check: at 41 sample starts per interval some piece gives a legal u
+    whose child lies in both top-bit lifts.  `carry_check` re-checks the SAME sets with the k-memory child
+    index (3w - w%2)/2 + J, i.e. the naive identification of words with residues.  Returns (rows, failures)."""
+    import os
+    os.environ["ARC_DUMP"] = "1"
+    try:
+        out = _rust_nocarry("solve", k, s, t, l, logn)
+    finally:
+        del os.environ["ARC_DUMP"]
+    s, t, l = F(s), F(t), F(l)
+    half, w, l3 = 1 << (k - 1), 2 * l / 3, l / 3
+    P = {}
+    for line in out.splitlines():
+        if line.startswith("P "):
+            _, r, *ivs = line.split()
+            P[int(r)] = [tuple(F(x) for x in iv.strip("[]").split(",")) for iv in ivs]
+    arc = [(m + s, m + s + t - w) for m in range(-2, 6)]
+    def child(r, J):
+        return ((3 * r - r % 2) // 2 + J) % half if carry_check else (r >> 1) % half
+    rows, fails = [], 0
+    for r in range(1 << k):
+        d = HALF if r % 2 else F(0)
+        for a0, a1 in P[r]:
+            pieces = []
+            for J in range(6):
+                b = child(r, J)
+                tgt = inter(P[b], P[b + half])
+                us = [((J + lo - d) * F(2, 3), (J + hi - d) * F(2, 3)) for lo, hi in tgt]
+                for g0, g1 in inter(norm(us), norm(arc)):
+                    c0, c1 = max(a0, g0 - l3), min(a1, g1)
+                    if c0 <= c1:
+                        pieces.append(dict(J=J, u=(g0, g1), covers=(c0, c1), child_words=(b, b + half)))
+            rows.append(dict(word=r, interval=(a0, a1), pieces=pieces))
+            for i in range(41):
+                a = a0 + (a1 - a0) * F(i, 40)
+                ok = False
+                for pc in pieces:
+                    lo, hi = max(a, pc["u"][0]), min(a + l3, pc["u"][1])
+                    if lo <= hi:
+                        c, (b0, b1) = 3 * lo / 2 + d - pc["J"], pc["child_words"]
+                        if any(x <= c <= y for x, y in P[b0]) and any(x <= c <= y for x, y in P[b1]):
+                            ok = True
+                            break
+                fails += not ok
+    return rows, fails
+
+
+def test_delay_witness_b10_l31_k6():
+    # The carry-free winner that refutes the upper-edge property in the delay game (ArcDelayGame), as explicit
+    # moves: 64 words, 154 intervals, 212 (interval, floor, u-piece) triples on N = 2^12 (same shape to 2^20).
+    rows, fails = delay_witness(6, "1/10", "4/5", "31/100", 12)
+    assert len(rows) == 154 and sum(len(x["pieces"]) for x in rows) == 212 and fails == 0
+    # teeth: the same sets, read as residues with the carry index, are not a k-memory strategy
+    _, fails_carry = delay_witness(6, "1/10", "4/5", "31/100", 12, carry_check=True)
+    assert fails_carry > 1000
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

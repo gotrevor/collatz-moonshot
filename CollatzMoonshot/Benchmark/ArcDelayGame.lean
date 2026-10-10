@@ -201,4 +201,25 @@ def KRelaxedMemorylessAboveLowerEdge : Prop :=
     (∃ r < 2 ^ k, (P r).Nonempty) → KRelaxedStrategy β (1 - 2 * β) l k P →
       ∃ Q : Set ℝ, RelaxedStrategy β (1 - 2 * β) l Q
 
+open ArcTrap in
+/-- **Conjecture: the memoryless winning widths are exactly `[7/57, u(β)]` on `1/10 ≤ β ≤ 7/57`,** with
+`u(β) = min (3/4 - 39β/8) (15/16 - 105β/16)`.  The two pieces cross at `β = 1/9`, and `u(7/57) = 5/38`, so at the
+threshold the band is `[7/57, 5/38]`, of positive length: the transition at `7/57` is not a pinch.
+Confidence 80% for the formula (the existence direction holds whenever the solver's inward-rounded descent is
+nonempty there; the exclusion direction is the open half).
+Evidence (2026-10-10, `arc_sweep solve 1`, `N = 2^20`, bisection to `10⁻⁵`): `u = 0.262494 … 0.262500` at
+`β = 0.10` (formula `0.2625`), `0.238120 …` at `0.105` (`0.238125`), `0.213747 …` at `0.11` (`0.21375`),
+`0.182809 …` at `0.115` (`0.1828125`), `0.149997 …` at `0.12` (`0.15`), `0.136869 …` at `0.122` (`0.136875`),
+`0.132227 …` at `7/57 - 10⁻⁴` (`0.13224`).  Astra's independent `β = 0.07` probe (`0.408`, `N = 2^15`) fits the
+first piece (`0.40875`), so it extends below `1/10`; at `β = 0.06, 0.05, 0.02` (`0.524, 0.562, 0.674`) a
+different wide band has taken over.  By `KRelaxedUpperEdgeMemoryless` the same `u` is the upper edge for
+every memory `k` (measured for `k ≤ 12`).
+Why it matters: rational affine edges are what a finite node-lemma refutation produces (`barrier_core`
+has endpoints affine in `β`), so the exclusion `l > u(β)` is a treadmill-shaped target, and the two
+coefficient pairs `(39/8, 3/4)` and `(105/16, 15/16)` name the parity words of the critical kills. -/
+def RelaxedWidthBand : Prop :=
+  ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 →
+    ((∃ P : Set ℝ, RelaxedStrategy β (1 - 2 * β) l P) ↔
+      (7 / 57 ≤ l ∧ l ≤ min (3 / 4 - 39 * β / 8) (15 / 16 - 105 * β / 16)))
+
 end CollatzMoonshot.Benchmark.ArcDelayGame

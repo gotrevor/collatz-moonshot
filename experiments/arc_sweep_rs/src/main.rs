@@ -236,6 +236,13 @@ fn main() {
             let (p, fx, it) = g.solve_n(5000);
             let live: Vec<usize> = (0..p.len()).filter(|&r| !p[r].is_empty()).collect();
             println!("converged {} live {:?} iters {}", fx, live, it);
+            // ARC_DUMP=1: print each residue's interval list (exact rationals), for witness extraction
+            if env::var("ARC_DUMP").map(|v| v == "1").unwrap_or(false) {
+                for (r, iv) in p.iter().enumerate() {
+                    let v: Vec<String> = iv.iter().map(|(x, y)| format!("[{}/{},{}/{}]", x.n, x.d, y.n, y.d)).collect();
+                    println!("P {} {}", r, v.join(" "));
+                }
+            }
         }
         Some("sweep") => {
             let (kmin, kmax): (u32, u32) = (a[2].parse().unwrap(), a[3].parse().unwrap());
