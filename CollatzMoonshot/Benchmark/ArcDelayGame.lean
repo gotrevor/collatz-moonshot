@@ -162,7 +162,8 @@ lattice lower edge sits just above the true one), and at `0.1230` (the first gri
 Exact (2026-10-10, `experiments/arc_band.py point`, no lattice): at `β = 1/10`, `l = 7/57` is live after 80
 steps (`[5/57, 7/57]` survives), and below it the kill depth GROWS: `7, 11, 19, 25, 30, 36` steps at
 `l = 0.11, 0.12, 0.1227, 0.1228, 0.122806, 0.1228069`.  That is about `log_{3/2}(1/ε)`, so unlike the upper edge
-(`RelaxedAboveUpperEdge`, depth `≤ 8`) there is no finite cover.  The proof shape is `relaxed_barrier`'s: an
+(`RelaxedAboveUpperEdge`, depth `≤ 8`) a finite cover is not expected (the list alone does not prove unbounded depth;
+the exact 3-step recurrence below does, on its cell).  The proof shape is `relaxed_barrier`'s: an
 AND-OR funnel with endpoints affine in `l`, plus a runaway lemma.
 The runaway, located (symbolic descent near `(1/10, 7/57 - 10⁻⁷)`): the slow death is a small interval
 `[L, R]` around `11/57` (with partners near `20/57`, `10/19 = 30/57`, `39/57`).  From step 3 on, every 3 descent

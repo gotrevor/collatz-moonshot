@@ -113,6 +113,7 @@ import CollatzMoonshot.Literature.LocalRank
 import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.ArcDelay
 import CollatzMoonshot.Benchmark.ArcDelayGame
+import CollatzMoonshot.Benchmark.ArcBandCertificate
 import CollatzMoonshot.Benchmark.ArcFattening
 import CollatzMoonshot.Benchmark.ArcCentered
 import CollatzMoonshot.Benchmark.ArcCarryCompatibility
