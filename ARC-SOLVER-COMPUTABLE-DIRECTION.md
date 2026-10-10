@@ -39,8 +39,12 @@ Target file: `CollatzMoonshot/Benchmark/ArcSolverComputable.lean`.  Done when it
    `List.range imax` index `i` corresponds to width `(i + 1) δ`.  Casts ℚ → ℝ throughout.
 5. Add `sweep_7_57_plus_k2 … k6` by `native_decide` and the corollaries
    `no_kRelaxedStrategy_7_57_plus_k2 … k6` on the `_k1` template.  Measured `#eval` costs: k=1 ~5 s,
-   k=3 ~25 s; k=6 is being timed (expect minutes).  If a `native_decide` exceeds ~20 min, stop at the
+   k=3 ~25 s; k=6 `#eval` = `true` in 345 s, 5.7 GB RSS (pre-fix olean, cost indicator).  If a `native_decide` exceeds ~20 min, stop at the
    largest k that fits and record that in the handoff.
+
+6. Pin Astra's hand-computed rounding regression (2026-10-10; the old `ceil(hi N) - 1` rule gave only
+   `[(1/4, 1/2)]`): `theorem roundCode_regression : roundCode 4 [(1/8, 3/4)] = [(1/4, 3/4)] := by
+   native_decide` (or `decide`), with a docstring naming the bug it pins.
 
 ## Rules
 

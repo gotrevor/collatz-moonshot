@@ -737,5 +737,17 @@ def test_rust_agrees_with_python():
     assert "nonempty []" in _rust("sweep", 1, 1, "7057/57000", "1/1000", "1/2500", 17)
 
 
+
+def test_rust_round_keeps_cell_ending_at_hi():
+    # Astra's hand-computed regression (2026-10-10).  Open start interval (1/8, 3/4), N = 4: the half-open
+    # cells inside are [1/4, 1/2) and [1/2, 3/4), so the closed output is [(1/4, 3/4)].  The old upper
+    # index ceil(hi N) - 1 = 2 returned only [(1/4, 1/2)], an under-inclusion (unsafe for emptiness).
+    assert _rust("round", 2, "1/8", "3/4").split() == ["(1/4,3/4)"]
+    # teeth: a cell crossing hi is not kept, and a cell starting at lo > 0 is not kept
+    assert _rust("round", 2, "1/8", "7/10").split() == ["(1/4,1/2)"]
+    assert _rust("round", 2, "1/4", "3/4").split() == ["(1/2,3/4)"]
+    # the clip point 0 keeps its first cell
+    assert _rust("round", 2, "0", "1/2").split() == ["(0/1,1/2)"]
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

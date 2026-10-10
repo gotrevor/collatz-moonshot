@@ -168,8 +168,8 @@ impl Game {
         norm(starts)
     }
 
-    /// Grid cells [i/N, (i+1)/N] wholly inside the OPEN interior of the union (strict at both ends,
-    /// except at the clip points 0 and 1 where the start set is closed by definition).
+    /// Closed grid cells [i/N, (i+1)/N] for the half-open cells [i/N, (i+1)/N) inside each open start
+    /// interval (lo, hi): cells start strictly after lo (except at the clip point 0) and may end at hi.
     fn round_in(&self, v: &Ivs) -> Ivs {
         let nq = Q::int(self.n_grid);
         let mut out = Vec::new();
@@ -249,8 +249,15 @@ fn main() {
                 println!("k {} widths {} nonempty {:?}", k, count, bad);
             }
         }
+        Some("round") => {
+            // round LOGN LO HI: the rounding of one open start interval, for regression tests
+            let g = Game { k: 1, s: Q::int(0), t: Q::int(1), l: Q::int(1), n_grid: 1i128 << a[2].parse::<u32>().unwrap() };
+            let out = g.round_in(&vec![(Q::parse(&a[3]), Q::parse(&a[4]))]);
+            let v: Vec<String> = out.iter().map(|(x, y)| format!("({}/{},{}/{})", x.n, x.d, y.n, y.d)).collect();
+            println!("{}", v.join(" "));
+        }
         _ => {
-            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN");
+            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN | round LOGN LO HI");
             std::process::exit(2);
         }
     }
