@@ -232,6 +232,57 @@ impl Game {
     }
 }
 
+
+/// k-memory component game (`ArcDelayGame.KComponentStrategy`): windows of positions mod 2^k, the
+/// constructor keeps a component inside an arc lift, the adversary picks the top bit of the 3/2-image.
+/// Memo per window: survives up to `tu` moves, dies by `ff` (survival is monotone in the depth).
+struct Comp {
+    s: Q,
+    e: Q,
+    mh: Q,
+    memo: std::collections::HashMap<(i128, i128, i128, i128), (usize, usize)>,
+}
+
+impl Comp {
+    fn surv(&mut self, x: Q, y: Q, d: usize) -> bool {
+        if d == 0 {
+            return true;
+        }
+        let key = (x.n, x.d, y.n, y.d);
+        let (tu, ff) = *self.memo.get(&key).unwrap_or(&(0, usize::MAX));
+        if d <= tu {
+            return true;
+        }
+        if d >= ff {
+            return false;
+        }
+        let mut ok = false;
+        for j in (x.floor() - 1)..=y.floor() {
+            let lo = Q::int(j).add(self.s);
+            let hi = Q::int(j).add(self.e);
+            let a = if x > lo { x } else { lo };
+            let b = if y < hi { y } else { hi };
+            if a < b {
+                let h = Q::new(3, 2);
+                let (na, nb) = (h.mul(a), h.mul(b));
+                let sh = Q::int(na.div(self.mh).floor()).mul(self.mh);
+                let (ca, cb) = (na.sub(sh), nb.sub(sh));
+                if self.surv(ca, cb, d - 1) && self.surv(ca.add(self.mh), cb.add(self.mh), d - 1) {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        let ent = self.memo.entry(key).or_insert((0, usize::MAX));
+        if ok {
+            ent.0 = ent.0.max(d);
+        } else {
+            ent.1 = ent.1.min(d);
+        }
+        ok
+    }
+}
+
 fn main() {
     let a: Vec<String> = env::args().collect();
     match a.get(1).map(|s| s.as_str()) {
@@ -295,8 +346,25 @@ fn main() {
             let v: Vec<String> = out.iter().map(|(x, y)| format!("({}/{},{}/{})", x.n, x.d, y.n, y.d)).collect();
             println!("{}", v.join(" "));
         }
+        Some("component") => {
+            // component K BETA MAXD: first depth at which every start residue of the k-memory
+            // component game dies (exact rationals; i128 overflow panics, see Cargo.toml)
+            let k: u32 = a[2].parse().unwrap();
+            let beta = Q::parse(&a[3]);
+            let maxd: usize = a[4].parse().unwrap();
+            let mut c = Comp { s: beta, e: Q::int(1).sub(beta), mh: Q::int(1i128 << (k - 1)), memo: Default::default() };
+            let mut dead = None;
+            for dd in 1..=maxd {
+                let any = (0..(1i128 << k)).any(|r| c.surv(Q::int(r).add(c.s), Q::int(r).add(c.e), dd));
+                if !any {
+                    dead = Some(dd);
+                    break;
+                }
+            }
+            println!("k {} beta {}/{} dead {:?} memo {}", k, beta.n, beta.d, dead, c.memo.len());
+        }
         _ => {
-            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN | round LOGN LO HI");
+            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN | round LOGN LO HI | component K BETA MAXD");
             std::process::exit(2);
         }
     }

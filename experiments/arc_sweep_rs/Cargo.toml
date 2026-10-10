@@ -7,3 +7,4 @@ description = "Independent re-implementation of the rounded relaxed k-memory arc
 
 [profile.release]
 opt-level = 3
+overflow-checks = true

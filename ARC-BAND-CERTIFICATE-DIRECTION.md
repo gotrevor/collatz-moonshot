@@ -21,7 +21,9 @@ For `p ∈ S` with witnesses `m, a`, let `r = (m % 2^k).toNat` and take `u, j` f
 Use the component index `J = m + j`: the sub-window `[m + u, m + u + 2l/3]` lies in `p` and in
 `[J + β, J + 1 - β]`, so `max p.1 (J + β) < min p.2 (J + 1 - β)` (strict because `l > 0`).  For the child at
 shift `z`, the witnesses are `m' = ⌊3(m + u)/2⌋ + z 2^(k-1)` and `a' = Int.fract (3u/2 + (r % 2)/2)`.  The
-identity `Int.fract (3(m+u)/2) = Int.fract (3u/2 + (m % 2)/2)` holds because `3m/2 = (3m - m%2)/2 + 3(m%2)/2`.
+identity `Int.fract (3(m+u)/2) = Int.fract (3u/2 + (m % 2)/2)` holds because `3m/2 = (3m - m%2)/2 + (m%2)/2`
+(the first term an integer).  Reuse `ArcFattening.physical_child_decomposition`, `physical_child_fract` and
+`physical_child_floor`, which prove exactly these identities (their residue helpers cover negative `m`).
 And `m' mod 2^k` equals `((3r - r%2)/2 + ⌊3u/2 + (r%2)/2⌋.toNat) % 2^(k-1) + b 2^(k-1)` for one bit `b < 2`,
 which the relaxed step covers.  Here `(3m - m%2)/2 ≡ (3r - r%2)/2 (mod 2^(k-1))` because `m ≡ r (mod 2^k)`,
 and the floor is `≥ 0` because `u ≥ a ≥ 0`.
