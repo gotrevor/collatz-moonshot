@@ -112,7 +112,13 @@ Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of win
   every `k`, lower edges `0.25, 0.17, 0.115, 0.075, 0.05, 0.035`; `ε = 0.03, 0.05`: no winner at any `k ≤ 6`.
 So exact symmetry is NOT what the statement needs (it is stated for the symmetric arc only because that is
 where `FiniteMemoryRelaxedValue` lives).  What the off-centre counterexample lacks is a gap around the
-integers: its gap is `[0.27, 0.40]`.  A proof must use that.  By induction it gives a memoryless winner, which
+integers: its gap is `[0.27, 0.40]`.  A proof must use that.
+* **The carries are essential.**  In the pure delay game (`KDelayStrategy`, `ARC_NOCARRY=1`, same scans) the
+  property FAILS on the symmetric arc: at `β = 0.10` the upper edge is `0.262` for `k = 1, 2, 4` but `0.3495`
+  for `k = 6, 8` (at `β = 0.12` it stays `0.1495` for `k ≤ 8`).  The `k`-memory game keeps `0.262` through
+  `k = 8`.  So knowing the next parities outright (delay game) is worth more than knowing the residue
+  (parities conditional on one's own future floors), and a proof must use the 2-adic carry structure.
+By induction it gives a memoryless winner, which
 `ArcTrap.relaxed_barrier` excludes above `7/57` at every width
 (`finiteMemoryRelaxedValue_of_upperEdge`).  It is a one-bit induction step, unlike
 `ArcDelay.DelayCostBounded`, which needs a bounded price at every position. -/
