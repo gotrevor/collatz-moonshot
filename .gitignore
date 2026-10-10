@@ -11,3 +11,4 @@
 # Source-paper PDFs stay local and are never redistributed from this repository.
 *.pdf
 __pycache__/
+experiments/arc_sweep_rs/target/

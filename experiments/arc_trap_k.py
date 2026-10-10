@@ -499,9 +499,10 @@ def main(argv):
         print(f"{len(w)} bases, max gap/l {max(x.get('gap_over_l', 9) for x in w):.3f}")
         return 0
     if argv[0] == "width-sweep":
-        # width-sweep KMAX BETA E0 STEP LOGN : width_sweep for k = 1..KMAX
+        # width-sweep KMAX BETA E0 STEP LOGN [KMIN] : width_sweep for k = KMIN..KMAX
         beta, e0, step, N = F(argv[2]), F(argv[3]), F(argv[4]), 1 << int(argv[5])
-        for k in range(1, int(argv[1]) + 1):
+        kmin = int(argv[6]) if len(argv) > 6 else 1
+        for k in range(kmin, int(argv[1]) + 1):
             print(f"k {k} nonempty widths {[str(x) for x in width_sweep(k, beta, e0, step, N)]}", flush=True)
         return 0
     if argv[0] == "check":
@@ -713,6 +714,27 @@ def test_solver_step_contains_open_moves():
                         found += 1
                         assert any(lo <= a <= hi for lo, hi in acc)
     assert found >= 20
+
+
+def _rust(*args):
+    """Run the independent Rust re-implementation (experiments/arc_sweep_rs), building it if needed."""
+    import pathlib
+    crate = pathlib.Path(__file__).parent / "arc_sweep_rs"
+    subprocess.run(["cargo", "build", "--release", "--quiet"], cwd=crate, check=True)
+    out = subprocess.run([str(crate / "target/release/arc_sweep"), *map(str, args)], capture_output=True,
+                         text=True, check=True)
+    return out.stdout
+
+
+def test_rust_agrees_with_python():
+    # 2026-10-10: a second instrument written from the Lean spec (stepOpen, roundIn), not from this file.
+    # Known winner / loser / just-below-7/57 controls, then the k = 1 sweep above 7/57
+    l = F(87, 100) * F(86, 400)
+    assert "live [0, 1, 2, 3, 4, 5, 6, 7]" in _rust("solve", 3, "2/5", "87/100", l, 20)
+    assert "live []" in _rust("solve", 2, "2/5", "87/100", l, 20)
+    b = F(7, 57) - F(1, 10 ** 4)
+    assert "live [0, 1]" in _rust("solve", 1, b, 1 - 2 * b, "123/1000", 15)
+    assert "nonempty []" in _rust("sweep", 1, 1, "7057/57000", "1/1000", "1/2500", 17)
 
 
 if __name__ == "__main__":

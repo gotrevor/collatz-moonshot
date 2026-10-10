@@ -1,0 +1,9 @@
+[package]
+name = "arc_sweep"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Independent re-implementation of the rounded relaxed k-memory arc game (ArcSolverInclusion spec)"
+
+[profile.release]
+opt-level = 3
