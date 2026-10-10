@@ -9,8 +9,8 @@ import CollatzMoonshot.Benchmark.ArcTrap
 namespace CollatzMoonshot.Benchmark.ArcFattening
 
 /-- Real-coordinate version of the two-child game.  The finite-memory interpretation uses
-a set periodic with period 2^k and child displacement h = 2^(k-1).  Equivalence with
-ArcTrap.KRelaxedStrategy, including normalization across integers, is not proved here. -/
+a set periodic with period 2^k and child displacement h = 2^(k-1).  The forward conversion
+from ArcTrap.KRelaxedStrategy is proved in kToLiftedBridge; the converse remains an open target. -/
 def LiftedStrategy (s t l h : ℝ) (P : Set ℝ) : Prop :=
   0 < l ∧ ∀ x ∈ P, ∃ v : ℝ, x ≤ v ∧ v + 2 * l / 3 ≤ x + l ∧
     (∃ j : ℤ, (j : ℝ) + s ≤ v ∧ v + 2 * l / 3 ≤ j + s + t) ∧
@@ -239,9 +239,9 @@ theorem physicalize_live {k : ℕ} {P : ℕ → Set ℝ}
   obtain ⟨r, hr, a, ha⟩ := hne
   exact ⟨(r : ℝ) + a, mem_physicalize_of_mem hr ha (hP r ha)⟩
 
-/-- Open bridge, reviewed by Opus on 2026-10-10; confidence 92%, not a theorem.
-The key arithmetic is that replacing m by m+2^k*q adds 3*2^(k-1)*q to floor(3m/2),
-so the two children are permuted modulo 2^k.  k>=1 is essential. -/
+/-- Forward bridge signature, proved by kToLiftedBridge below.
+Replacing m by m+2^k*q adds 3*2^(k-1)*q to floor(3m/2), so the two children
+are permuted modulo 2^k.  k>=1 is essential. -/
 def KToLiftedBridge : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k →
     ArcTrap.KRelaxedStrategy s t l k P →
@@ -296,5 +296,62 @@ theorem children_are_lifts_nat (k : ℕ) (hk : 1 ≤ k) (m J : ℤ) (hJ : 0 ≤ 
     simp only [Int.toNat_natCast]
     rw [show (2 : ℤ).toNat = 2 by decide]
   simpa [Set.image_insert_eq, Set.image_singleton, H, hsum] using hi
+
+/-- Every finite-memory winning strategy realizes a physical two-child strategy. -/
+theorem kToLiftedBridge : KToLiftedBridge := by
+  intro s t l k P hk hP
+  refine ⟨hP.1, ?_⟩
+  intro x hx
+  set m := ⌊x⌋ with hm
+  set r := residue k x with hrdef
+  have hxm : Int.fract x = x - m := rfl
+  obtain ⟨u, hu1, hu2, ⟨j, hj1, hj2⟩, hu⟩ :=
+    hP.2.2 r (residue_lt k x) (Int.fract x) hx
+  refine ⟨(m : ℝ) + u, by rw [hxm] at hu1; linarith,
+    by rw [hxm] at hu2; linarith,
+    ⟨j + m, by push_cast; linarith, by push_cast; linarith⟩, ?_⟩
+  intro b hb
+  set hI : ℤ := 2 ^ (k - 1) with hhI
+  have h2k : (2 : ℤ) ^ k = 2 * hI := memory_period k hk
+  have hr : (r : ℤ) = m % (2 * hI) := by
+    rw [← h2k]
+    exact residue_int k x
+  have hpar : (r : ℤ) % 2 = m % 2 := by
+    rw [hr]; exact Int.emod_emod_of_dvd m ⟨hI, by ring⟩
+  have hparR : ((r % 2 : ℕ) : ℝ) = ((m % 2 : ℤ) : ℝ) := by
+    have h' : ((r % 2 : ℕ) : ℤ) = m % 2 := by push_cast; exact hpar
+    rw [show ((r % 2 : ℕ) : ℝ) = (((r % 2 : ℕ) : ℤ) : ℝ) from
+      (Int.cast_natCast _).symm, h']
+  set c := 3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2 with hc
+  have hc0 : 0 ≤ c := by
+    have hu0 : 0 ≤ u := le_trans (Int.fract_nonneg x) hu1
+    dsimp [c]; positivity
+  have hJ0 : 0 ≤ ⌊c⌋ := Int.floor_nonneg.mpr hc0
+  set A := (3 * m - m % 2) / 2 + ⌊c⌋ with hA
+  set B := ((3 * r - r % 2) / 2 + (⌊c⌋).toNat) % 2 ^ (k - 1) with hB
+  have hpair := children_are_lifts_nat k hk m ⌊c⌋ hJ0
+  change ({(A % (2 ^ k : ℤ)).toNat, ((A + hI) % (2 ^ k : ℤ)).toNat} : Set ℕ) =
+    {B, B + 2 ^ (k - 1)} at hpair
+  have hmem : ((A + (b : ℤ) * hI) % (2 ^ k : ℤ)).toNat ∈
+      ({(A % (2 ^ k : ℤ)).toNat, ((A + hI) % (2 ^ k : ℤ)).toNat} : Set ℕ) := by
+    interval_cases b <;> simp
+  rw [hpair] at hmem
+  have hbcast : (b : ℝ) * 2 ^ (k - 1) = ((b * hI : ℤ) : ℝ) := by
+    rw [hhI]; push_cast; ring
+  have hfl : ⌊3 * ((m : ℝ) + u) / 2 + (b : ℝ) * 2 ^ (k - 1)⌋ = A + b * hI := by
+    rw [hbcast, Int.floor_add_intCast, physical_child_floor, ← hparR]
+    dsimp [A, c]
+    ring
+  have hfrac : Int.fract (3 * ((m : ℝ) + u) / 2 + (b : ℝ) * 2 ^ (k - 1)) = Int.fract c := by
+    rw [hbcast, Int.fract_add_intCast, physical_child_fract, ← hparR]
+  change Int.fract (3 * ((m : ℝ) + u) / 2 + (b : ℝ) * 2 ^ (k - 1)) ∈
+    P (residue k (3 * ((m : ℝ) + u) / 2 + (b : ℝ) * 2 ^ (k - 1)))
+  rw [hfrac]
+  simp only [residue, hfl]
+  rcases hmem with h | h
+  · rw [h]
+    simpa [B, c] using hu 0 (by norm_num)
+  · rw [h]
+    simpa [B, c] using hu 1 (by norm_num)
 
 end CollatzMoonshot.Benchmark.ArcFattening
