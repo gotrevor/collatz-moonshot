@@ -52,6 +52,48 @@ theorem fatten_translation {e M : ℝ} {P : Set ℝ}
   rintro y ⟨x, hx, z, hz, rfl⟩
   exact ⟨x + M, hP x hx, z, hz, by ring⟩
 
+/-- A smaller fattening whose starts and successor landings admit uniform move margins. -/
+def fattenCore (e : ℝ) (P : Set ℝ) : Set ℝ :=
+  {y | ∃ x ∈ P, ∃ z : ℝ, |z| ≤ e / 12 ∧ y = x - e / 2 + z}
+
+/-- Robust interface for a future rounded-solver inclusion proof.  Every core start has
+an entire interval of legal moves of radius e/24.  Each child is within e/16 of a core
+center, leaving e/48 before the core boundary at radius e/12.  For e>0 these margins
+are strictly positive.  Neither residue encoding nor lattice rounding is asserted here. -/
+theorem LiftedStrategy.robust_fatten {s t l h e : ℝ} {P : Set ℝ}
+    (hP : LiftedStrategy s t l h P) (he : 0 ≤ e) :
+    ∀ y ∈ fattenCore e P, ∃ v : ℝ, ∀ q : ℝ, |q| ≤ e / 24 →
+      y ≤ v + q ∧ v + q + 2 * (l + e) / 3 ≤ y + (l + e) ∧
+      (∃ j : ℤ, (j : ℝ) + (s - e / 2) ≤ v + q ∧
+        v + q + 2 * (l + e) / 3 ≤ j + (s - e / 2) + (t + e)) ∧
+      ∀ b : ℕ, b < 2 → ∃ x ∈ P,
+        |3 * (v + q) / 2 + b * h - (x - e / 2)| ≤ e / 16 := by
+  rintro y ⟨x, hx, z, hz, rfl⟩
+  obtain ⟨hz1, hz2⟩ := abs_le.mp hz
+  obtain ⟨v, hv1, hv2, ⟨j, hj1, hj2⟩, hv⟩ := hP.2 x hx
+  refine ⟨v - e / 3, ?_⟩
+  intro q hq
+  obtain ⟨hq1, hq2⟩ := abs_le.mp hq
+  refine ⟨by linarith, by linarith, ⟨j, by linarith, by linarith⟩, ?_⟩
+  intro b hb
+  refine ⟨3 * v / 2 + b * h, hv b hb, ?_⟩
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- In particular, the core itself is a strategy on the widened arc. -/
+theorem LiftedStrategy.fattenCore {s t l h e : ℝ} {P : Set ℝ}
+    (hP : LiftedStrategy s t l h P) (he : 0 ≤ e) :
+    LiftedStrategy (s - e / 2) (t + e) (l + e) h (fattenCore e P) := by
+  refine ⟨by linarith [hP.1], ?_⟩
+  intro y hy
+  obtain ⟨v, hv⟩ := hP.robust_fatten he y hy
+  obtain ⟨hv1, hv2, hj, hb⟩ := hv 0 (by simp; positivity)
+  simp only [add_zero] at hv1 hv2 hj hb
+  refine ⟨v, hv1, hv2, hj, ?_⟩
+  intro b hb'
+  obtain ⟨x, hx, hdist⟩ := hb b hb'
+  exact ⟨x, hx, 3 * v / 2 + b * h - (x - e / 2), by linarith, by ring⟩
+
 /-- Read the integer residue of a physical start using Euclidean remainder, also for
 negative starts. -/
 noncomputable def residue (k : ℕ) (x : ℝ) : ℕ := (⌊x⌋ % (2 ^ k : ℤ)).toNat
