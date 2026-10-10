@@ -138,6 +138,49 @@ theorem integer_carry_shift_mod (m h q : ℤ) :
   rw [integer_carry_shift]
   simp [Int.add_emod, Int.mul_emod]
 
+/-- The two residues spaced by h are precisely the two lifts of the base modulo h. -/
+theorem residue_pair_lifts (A h : ℤ) (hh : 0 < h) :
+    ({A % (2 * h), (A + h) % (2 * h)} : Set ℤ) = {A % h, A % h + h} := by
+  let z := A % (2 * h)
+  have hz0 : 0 ≤ z := Int.emod_nonneg _ (by omega)
+  have hz2 : z < 2 * h := Int.emod_lt_of_pos _ (by omega)
+  have hzmod : z % h = A % h := Int.emod_emod_of_dvd A ⟨2, by ring⟩
+  have hshift : (A + h) % (2 * h) = (z + h) % (2 * h) := by
+    simp only [Int.add_emod, z, Int.emod_emod]
+  rcases lt_or_ge z h with hzh | hzh
+  · have hb : A % h = z := by rw [← hzmod, Int.emod_eq_of_lt hz0 hzh]
+    have hc : (A + h) % (2 * h) = z + h := by
+      rw [hshift, Int.emod_eq_of_lt (by omega) (by omega)]
+    rw [hb, hc]
+  · have hb : A % h = z - h := by
+      calc
+        A % h = z % h := hzmod.symm
+        _ = ((z - h) + h) % h := by congr 1 <;> ring
+        _ = (z - h) % h := by simp
+        _ = z - h := Int.emod_eq_of_lt (by omega) (by omega)
+    have hc : (A + h) % (2 * h) = z - h := by
+      rw [hshift, show z + h = (z - h) + 2 * h by ring, Int.add_emod_right]
+      exact Int.emod_eq_of_lt (by omega) (by omega)
+    rw [hb, hc, sub_add_cancel]
+    exact Set.pair_comm _ _
+
+/-- Shared bridge interface: the physical children are the two lifts of the canonical
+residue's successor base, as an unordered pair.  Taking h=2^(k-1) gives the memory game. -/
+theorem children_are_lifts (m J h : ℤ) (hh : 0 < h) :
+    let r := m % (2 * h)
+    let base := ((3 * r - r % 2) / 2 + J) % h
+    ({((3 * m - m % 2) / 2 + J) % (2 * h),
+      ((3 * m - m % 2) / 2 + J + h) % (2 * h)} : Set ℤ) = {base, base + h} := by
+  dsimp only
+  have he : m % (2 * h) + 2 * h * (m / (2 * h)) = m :=
+    Int.emod_add_mul_ediv _ _
+  have hc := integer_carry_shift_mod (m % (2 * h)) h (m / (2 * h))
+  rw [he] at hc
+  have hb : ((3 * m - m % 2) / 2 + J) % h =
+      ((3 * (m % (2 * h)) - m % (2 * h) % 2) / 2 + J) % h := by
+    simp only [Int.add_emod, Int.emod_emod, hc]
+  rw [residue_pair_lifts _ h hh, hb]
+
 /-- Periodic real-coordinate realization of a family of fractional start sets. -/
 def physicalize (k : ℕ) (P : ℕ → Set ℝ) : Set ℝ :=
   {x | Int.fract x ∈ P (residue k x)}
