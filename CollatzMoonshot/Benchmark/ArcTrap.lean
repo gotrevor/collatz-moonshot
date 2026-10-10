@@ -3967,7 +3967,10 @@ mod `2^k` share a start (level `k - 1` is this Prop).  The `k = 6` dodge's dead 
 level down the ladder rather than closing.  Ladders (good classes mod `2^6, …, 2^0`): greatest fixed point
 `64, 32, 16, 8, 4, 2, 1` at `j = 100` but `64, 32, 16, 8, 3, 0, 0` at `j = 130`; dodge `62, 31, 15, 4, 0, 0, 0`.
 Dead route: a common core (one interval inside every base's shared starts, level 0).  It is often empty:
-the greatest fixed point at `j = 130`, every dodge, and the symmetric `β = 0.11` arc at every `k`. -/
+the greatest fixed point at `j = 130`, every dodge, and the symmetric `β = 0.11` arc at every `k`.
+Dead route: level `k - 2` goodness everywhere (which would make every repair a single move).  In 10 of 233
+greatest fixed points (`k = 3, 4, 5`, five arcs) NO class is good at level `k - 2`, though every base is good,
+so there the two lifts use different moves and the obligation is `ArcOverlap`'s `|u - v| ≤ l/3`. -/
 def KRelaxedAllBasesGood : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) →
