@@ -197,6 +197,50 @@ theorem residualize_stepOpen_subset {s t l : ℝ} {k : ℕ} (hk : 1 ≤ k) (T : 
       resStepOpen s t l k (ArcFattening.residualize k T) r := by
   sorry
 
+theorem roundInRes_mono {N : ℕ} {A A' : Set ℝ} (h : A ⊆ A') : roundInRes N A ⊆ roundInRes N A' := by
+  rintro a ⟨i, hi, h1, h2, h3⟩
+  exact ⟨i, hi, h1, h2, h3.trans h⟩
+
+theorem resStepOpen_mono {s t l : ℝ} {k : ℕ} {P P' : ℕ → Set ℝ} (h : ∀ r, P r ⊆ P' r) (r : ℕ) :
+    resStepOpen s t l k P r ⊆ resStepOpen s t l k P' r := by
+  rintro a ⟨u, μ, hμ, hu⟩
+  exact ⟨u, μ, hμ, fun q hq => ⟨(hu q hq).1, (hu q hq).2.1, (hu q hq).2.2.1,
+    fun b hb => h _ ((hu q hq).2.2.2 b hb)⟩⟩
+
+theorem residualize_mono {k : ℕ} {S S' : Set ℝ} (h : S ⊆ S') (r : ℕ) :
+    ArcFattening.residualize k S r ⊆ ArcFattening.residualize k S' r := by
+  rintro a ⟨x, hx, h1, h2⟩
+  exact ⟨x, h hx, h1, h2⟩
+
+/-- A physical rounded post-fixed point projects to a residue-form rounded post-fixed point
+(from (A) and (B)). -/
+theorem residualize_post_fixed {s t l : ℝ} {k N : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {T : Set ℝ}
+    (hT : T ⊆ roundIn N (stepOpen s t l (2 ^ (k - 1)) T)) (r : ℕ) :
+    ArcFattening.residualize k T r ⊆
+      roundInRes N (resStepOpen s t l k (ArcFattening.residualize k T) r) :=
+  (residualize_mono hT r).trans ((residualize_roundIn_subset k N hN _ r).trans
+    (roundInRes_mono (residualize_stepOpen_subset hk T r)))
+
+/-- The solver as an abstract operator: start from `[0, 1]` at every residue and intersect with `C`. -/
+def descend (C : (ℕ → Set ℝ) → ℕ → Set ℝ) : ℕ → ℕ → Set ℝ
+  | 0 => fun _ => Set.Icc 0 1
+  | n + 1 => fun r => descend C n r ∩ C (descend C n) r
+
+/-- **Descent keeps every residue-form rounded post-fixed point**, for any code operator `C` that contains
+the rounded open step.  So the only trusted claim left about `solve_vw` / `arc_sweep` is that their step is
+such a `C` (hypothesis (c)); then a nonempty `Q` forces a nonempty solver output, and an empty solver
+contradicts it. -/
+theorem descend_keeps {s t l : ℝ} {k N : ℕ} {C : (ℕ → Set ℝ) → ℕ → Set ℝ}
+    (hC : ∀ P r, roundInRes N (resStepOpen s t l k P r) ⊆ C P r) {Q : ℕ → Set ℝ}
+    (hQ0 : ∀ r, Q r ⊆ Set.Icc 0 1) (hQ : ∀ r, Q r ⊆ roundInRes N (resStepOpen s t l k Q r)) :
+    ∀ n r, Q r ⊆ descend C n r := by
+  intro n
+  induction n with
+  | zero => exact hQ0
+  | succ n ih =>
+    intro r a ha
+    exact ⟨ih r ha, hC _ r (roundInRes_mono (resStepOpen_mono ih r) (hQ r ha))⟩
+
 /-- **Enumeration ranges** behind (C): on a sub-arc of `[0, 1]` with `l ≤ 3/2`, every legal move from a start
 in `[0, 1]` uses arc lift `j ∈ {-1, 0, 1}` and floor `⌊c⌋ ∈ {0, 1, 2}`.  The Python enumerates `j = -1 … 4`
 and `J = 0 … 4`, the Rust `j = -2 … 5` and `J = 0 … 5`, so neither misses a move. -/
