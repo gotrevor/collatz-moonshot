@@ -36,3 +36,5 @@ the failing width, do not change parameters to make it pass.
 
 - `#eval sweepEmpty 1 (2^20) (7/57 + 1/20000) (1/20001) 600` = `true`, 44 s, 5.7 GB RSS (2026-10-10).  At `2^17`, `k = 3`
   cost about 5 times `k = 1`, so expect a few minutes for `k = 3` here.
+- DONE (2026-10-10): `no_kRelaxedStrategy_7_57_plus_tenth` proved in `ArcSolverComputable` for `k = 1, 2, 3`; full module
+  build 1912 s (all three sweeps together).  Axioms: `propext`, `Classical.choice`, `Quot.sound`, three `native_decide`.

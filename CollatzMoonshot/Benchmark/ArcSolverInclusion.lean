@@ -388,19 +388,4 @@ theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k
   rw [hn r] at this
   exact this
 
-/-- **Ten times closer: no 1-, 2- or 3-memory relaxed strategy at `β = 7/57 + 1/10000`, any width.**
-Confidence 85% (one instrument at this `β`).  Same reduction as
-`ArcSolverComputable.no_kRelaxedStrategy_7_57_plus` (proved for `k ≤ 6` at `7/57 + 1/1000`): (c) is now a theorem
-(`ArcSolverComputable.stepCode_sound`), so only the sweep remains, a `native_decide` of
-`ArcSolverComputable.sweepEmpty k (2^20) (7/57 + 1/20000) (1/20001) fuel` for `k = 1, 2, 3` (about 8 times the
-`2^17` sweep's widths at 8 times the grid).
-Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
-`β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
-(`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`; re-run on the rounding-fixed binary (8bdeb92), unchanged.  Positive control on the same grid: winners at
-`7/57 - 1/100000` (`k = 1` at widths `0.1231, 0.1234`; `k = 3` at all of `0.1225 … 0.1234`). -/
-theorem no_kRelaxedStrategy_7_57_plus_tenth {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 3) (l : ℝ)
-    (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
-    ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 10000) (1 - 2 * (7 / 57 + 1 / 10000)) l k P := by
-  sorry
-
 end CollatzMoonshot.Benchmark.ArcSolverInclusion

@@ -856,4 +856,58 @@ theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk6 : k ≤ 6) (
     no_kRelaxedStrategy_7_57_plus_k3 l P hne, no_kRelaxedStrategy_7_57_plus_k4 l P hne,
     no_kRelaxedStrategy_7_57_plus_k5 l P hne, no_kRelaxedStrategy_7_57_plus_k6 l P hne]
 
+/-- The computation at `β = 7/57 + 1/10000`, `k = 1`: `e0 = 1/10000`, `δ = 1/20001`, `N = 2^20`. -/
+theorem sweep_7_57_tenth_k1 : sweepEmpty 1 (2 ^ 20) (7 / 57 + 1 / 20000) (1 / 20001) 600 = true := by
+  native_decide
+
+/-- **No 1-memory relaxed strategy at `β = 7/57 + 1/10000`**, any width. -/
+theorem no_kRelaxedStrategy_7_57_tenth_k1 (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 1, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy ((7 / 57 + 1 / 10000 : ℚ) : ℝ) (1 - 2 * (7 / 57 + 1 / 10000 : ℚ)) l 1 P :=
+  no_kRelaxedStrategy_of_codeSweep (N := 2 ^ 20) (fuel := 600) (e0 := 1 / 10000) (δ := 1 / 20001)
+    (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by convert sweep_7_57_tenth_k1 using 3; norm_num) hne
+
+/-- The computation at `β = 7/57 + 1/10000`, `k = 2`: `e0 = 1/10000`, `δ = 1/20001`, `N = 2^20`. -/
+theorem sweep_7_57_tenth_k2 : sweepEmpty 2 (2 ^ 20) (7 / 57 + 1 / 20000) (1 / 20001) 600 = true := by
+  native_decide
+
+/-- **No 2-memory relaxed strategy at `β = 7/57 + 1/10000`**, any width. -/
+theorem no_kRelaxedStrategy_7_57_tenth_k2 (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 2, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy ((7 / 57 + 1 / 10000 : ℚ) : ℝ) (1 - 2 * (7 / 57 + 1 / 10000 : ℚ)) l 2 P :=
+  no_kRelaxedStrategy_of_codeSweep (N := 2 ^ 20) (fuel := 600) (e0 := 1 / 10000) (δ := 1 / 20001)
+    (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by convert sweep_7_57_tenth_k2 using 3; norm_num) hne
+
+/-- The computation at `β = 7/57 + 1/10000`, `k = 3`: `e0 = 1/10000`, `δ = 1/20001`, `N = 2^20`. -/
+theorem sweep_7_57_tenth_k3 : sweepEmpty 3 (2 ^ 20) (7 / 57 + 1 / 20000) (1 / 20001) 600 = true := by
+  native_decide
+
+/-- **No 3-memory relaxed strategy at `β = 7/57 + 1/10000`**, any width. -/
+theorem no_kRelaxedStrategy_7_57_tenth_k3 (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 3, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy ((7 / 57 + 1 / 10000 : ℚ) : ℝ) (1 - 2 * (7 / 57 + 1 / 10000 : ℚ)) l 3 P :=
+  no_kRelaxedStrategy_of_codeSweep (N := 2 ^ 20) (fuel := 600) (e0 := 1 / 10000) (δ := 1 / 20001)
+    (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by convert sweep_7_57_tenth_k3 using 3; norm_num) hne
+
+/-- **Ten times closer: no 1-, 2- or 3-memory relaxed strategy at `β = 7/57 + 1/10000`, any width.**
+PROVED (2026-10-10), modulo the three `native_decide` sweeps `sweep_7_57_tenth_k1 … k3`.  Same reduction as
+`no_kRelaxedStrategy_7_57_plus` (proved for `k ≤ 6` at `7/57 + 1/1000`): (c) is now a theorem
+(`stepCode_sound`), so only the sweep remains, a `native_decide` of
+`sweepEmpty k (2^20) (7/57 + 1/20000) (1/20001) fuel` for `k = 1, 2, 3` (about 8 times the
+`2^17` sweep's widths at 8 times the grid).
+Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
+`β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
+(`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`; re-run on the rounding-fixed binary (8bdeb92), unchanged.  Positive control on the same grid: winners at
+`7/57 - 1/100000` (`k = 1` at widths `0.1231, 0.1234`; `k = 3` at all of `0.1225 … 0.1234`). -/
+theorem no_kRelaxedStrategy_7_57_plus_tenth {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 3) (l : ℝ)
+    (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 10000) (1 - 2 * (7 / 57 + 1 / 10000)) l k P := by
+  have e : ((7 / 57 + 1 / 10000 : ℚ) : ℝ) = 7 / 57 + 1 / 10000 := by push_cast; ring
+  rw [← e]
+  interval_cases k
+  exacts [no_kRelaxedStrategy_7_57_tenth_k1 l P hne, no_kRelaxedStrategy_7_57_tenth_k2 l P hne,
+    no_kRelaxedStrategy_7_57_tenth_k3 l P hne]
+
+#print axioms no_kRelaxedStrategy_7_57_plus_tenth
+
 end CollatzMoonshot.Benchmark.ArcSolverComputable
