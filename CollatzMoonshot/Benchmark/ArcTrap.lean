@@ -3970,7 +3970,10 @@ Dead route: a common core (one interval inside every base's shared starts, level
 the greatest fixed point at `j = 130`, every dodge, and the symmetric `β = 0.11` arc at every `k`.
 Dead route: level `k - 2` goodness everywhere (which would make every repair a single move).  In 10 of 233
 greatest fixed points (`k = 3, 4, 5`, five arcs) NO class is good at level `k - 2`, though every base is good,
-so there the two lifts use different moves and the obligation is `ArcOverlap`'s `|u - v| ≤ l/3`. -/
+so there the two lifts use different moves and the obligation is `ArcOverlap`'s `|u - v| ≤ l/3`.
+That obligation holds with slack: across the same 233, the closest legal landing points of the two lifts
+(in `c = 3u/2 + d`, arc band applied) are at most `0.33 l` apart, against the `l/2` allowed.  Dead route:
+target density (every shared-start set `l/2`-dense), true in only 21 of 233. -/
 def KRelaxedAllBasesGood : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) →
