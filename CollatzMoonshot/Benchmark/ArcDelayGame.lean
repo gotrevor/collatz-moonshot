@@ -227,6 +227,11 @@ endpoint rationals (`0.12296, 0.16650, 0.34517, 0.38872, 0.49908, 0.67926, 0.748
 residues, and through step 5 the memoryless set equals the intersection of the two parity-`0` residue sets of the
 `k = 2` descent, cut for cut (step 6 differs).  So memory redistributes and delays the same cuts rather than
 creating new ones.  Not by itself the mechanism: the delay game has the same preimage maps and still widens.
+Measured more widely (`k = 2, 3, 4` at `(β, l) = (0.12, 0.155), (0.10, 0.263), (0.11, 0.22)`): the memoryless
+survivor set after `n` steps equals the intersection, over residues of the same parity, of the `k`-memory survivor
+sets after `n` steps, for every `n ≤ n₁ - 2`, where `n₁` (7, 7, 6) is the memoryless death step, independent of
+`k`.  It fails at the last two steps, after which memory keeps sets alive for about two more moves per bit
+(deaths at `10, 11, 13`; `9, 11, 14`; `7, 9, 11`).
 **The edge is a bounded-depth kill.**  The memoryless descent empties in 7 steps at `l = u(β) + ε` for
 `ε = 10⁻³, 10⁻⁴, 10⁻⁵` (`β = 0.12` and `0.105`, `N = 2^22`; 8 steps at `ε = 10⁻²`).  So, unlike the `7/57`
 barrier (whose funnel needs the runaway lemma at the open end), the exclusion half has a finite AND-OR
