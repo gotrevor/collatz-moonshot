@@ -3959,7 +3959,15 @@ opposite sides of their shared starts and take the greatest strategy under the c
 (10 arcs, every 40th width) no result keeps both lifts live without a shared start; every descent
 kills a lift outright.  So on the `1/2^20` lattice the only deficiency seen is a whole dead base (the
 `k = 6` dodges, eleven seeds on three arcs, each restored by one predecessor layer:
-`ArcReview.PredecessorSaturationAllBases`).  Thin (Cantor-like) strategies are invisible to the solver. -/
+`ArcReview.PredecessorSaturationAllBases`).  Thin (Cantor-like) strategies are invisible to the solver.
+How the one-layer repair works (2026-10-09): call a class `c mod 2^j` good at level `j` when all its lifts
+mod `2^k` share a start (level `k - 1` is this Prop).  The `k = 6` dodge's dead base `27` moves to bases
+`f + J` with `f = ⌊3·27/2⌋`; for `J = 0, 1, 2` the pairs `(8, 24), (9, 25), (10, 26)` are good at level
+`k - 2` (all four lifts share a start).  So a SINGLE move serves both dead lifts, and the obligation drops one
+level down the ladder rather than closing.  Ladders (good classes mod `2^6, …, 2^0`): greatest fixed point
+`64, 32, 16, 8, 4, 2, 1` at `j = 100` but `64, 32, 16, 8, 3, 0, 0` at `j = 130`; dodge `62, 31, 15, 4, 0, 0, 0`.
+Dead route: a common core (one interval inside every base's shared starts, level 0).  It is often empty:
+the greatest fixed point at `j = 130`, every dodge, and the symmetric `β = 0.11` arc at every `k`. -/
 def KRelaxedAllBasesGood : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) →
