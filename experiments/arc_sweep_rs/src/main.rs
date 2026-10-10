@@ -245,11 +245,19 @@ fn main() {
             let n_grid = 1i128 << a[7].parse::<u32>().unwrap();
             let bp = beta.sub(e0.div(Q::int(2)));
             let tp = Q::int(1).sub(Q::int(2).mul(bp));
-            let top = Q::new(3, 2).mul(tp);
+            let mut top = Q::new(3, 2).mul(tp);
+            // optional LMIN LMAX: restrict to widths in [LMIN, LMAX] (exploration, not the certified sweep)
+            let lmin = a.get(8).map(|x| Q::parse(x));
+            if let Some(x) = a.get(9).map(|x| Q::parse(x)) {
+                if x < top { top = x; }
+            }
             for k in kmin..=kmax {
                 let mut bad: Vec<String> = Vec::new();
                 let mut count = 0;
                 let mut l = step;
+                if let Some(m) = lmin {
+                    while l < m { l = l.add(step); }
+                }
                 while l <= top {
                     let g = Game { k, s: bp, t: tp, l, n_grid };
                     let (p, fx) = g.solve(5000);
@@ -260,6 +268,7 @@ fn main() {
                     l = l.add(step);
                 }
                 println!("k {} widths {} nonempty {:?}", k, count, bad);
+                std::io::Write::flush(&mut std::io::stdout()).unwrap();
             }
         }
         Some("round") => {

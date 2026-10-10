@@ -79,4 +79,42 @@ def DelayLookaheadCollapses : Prop :=
       ∃ (l' : ℝ) (Q : ℕ → Set ℝ), (∃ w < 2 ^ K, (Q w).Nonempty) ∧
         KDelayStrategy (β - e0) (1 - 2 * (β - e0)) l' K Q
 
+open ArcTrap in
+/-- **Conjecture: on the symmetric arc, memory never widens the window.**  A live `k`-memory strategy at
+width `l` gives a live `(k - 1)`-memory strategy at some width `l' ≥ l`.  So the upper edge of the
+winning widths does not depend on `k`, and only the lower edge moves.  Confidence 55%.
+Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of winning widths per `k`):
+* `β = 7/57 - 1/100` (`N = 2^16`, step `1/2000`): upper edge `0.197` for every `k = 1, …, 6`; lower edge
+  `0.123, 0.082, 0.055, 0.0365, 0.0245, 0.0165`, a factor `2/3` per bit (one move of growth per bit of
+  lookahead); every band is a full interval.
+* `β = 7/57 - 1/1000` (`N = 2^18`, step `1/5000`): upper edge `0.138` for every `k`; lower edges the same
+  as at `1/100` (`0.123 · (2/3)^(k-1)`).
+* Known-false sibling, the off-centre arc `[2/5, 2/5 + 87/100]` (`MemoryHelpsOffCentre`, widths
+  `t · j/400`): `k = 1, 2` never win; the upper edge is `0.252` at `k = 3` and `0.548` at `k = 4, 5, 6`, so
+  there memory widens the window, and the statement is false off-centre.  The lower edge still moves by
+  about `2/3` per bit (`0.1305, 0.0870, 0.0609`).
+So a proof must use the symmetry of the arc.  By induction it gives a memoryless winner, which
+`ArcTrap.relaxed_barrier` excludes above `7/57` at every width
+(`finiteMemoryRelaxedValue_of_upperEdge`).  It is a one-bit induction step, unlike
+`ArcDelay.DelayCostBounded`, which needs a bounded price at every position. -/
+def KRelaxedUpperEdgeMemoryless : Prop :=
+  ∀ (β l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 0 < β → β < 1 / 2 → 2 ≤ k →
+    (∃ r < 2 ^ k, (P r).Nonempty) → KRelaxedStrategy β (1 - 2 * β) l k P →
+      ∃ (l' : ℝ) (Q : ℕ → Set ℝ), l ≤ l' ∧ (∃ r < 2 ^ (k - 1), (Q r).Nonempty) ∧
+        KRelaxedStrategy β (1 - 2 * β) l' (k - 1) Q
+
+open ArcTrap in
+/-- The upper-edge conjecture implies `FiniteMemoryRelaxedValue`: step memory down to `1`, then the
+memoryless barrier. -/
+theorem finiteMemoryRelaxedValue_of_upperEdge (h : KRelaxedUpperEdgeMemoryless) :
+    FiniteMemoryRelaxedValue := by
+  intro k hk
+  induction k, hk using Nat.le_induction with
+  | base => exact finiteMemoryRelaxedValue_one
+  | succ k hk ih =>
+    intro β hβ hβ' l P hne hS
+    obtain ⟨l', Q, -, hQne, hQ⟩ := h β l (k + 1) P (by linarith [show (0 : ℝ) < 7 / 57 by norm_num])
+      hβ' (by omega) hne hS
+    exact ih β hβ hβ' l' Q (by simpa using hQne) (by simpa using hQ)
+
 end CollatzMoonshot.Benchmark.ArcDelayGame
