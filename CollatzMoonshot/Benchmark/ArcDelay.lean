@@ -204,6 +204,17 @@ def StartDelayCostBounded (β : ℚ) (c : ℕ) : Prop :=
   ∀ k, 1 ≤ k → ∀ (D r : ℕ), r < 2 ^ (k + 1) →
     advKills β k D 0 3 (r % 2 ^ k) = true → advKills β (k + 1) (D + c) 0 3 r = true
 
+/-- **The start is one full band.**  The worst kill depth from `[0, 3]` over all residues equals the worst
+depth from a single full-band image `W₁ = 3/2 [β, 1 - β] + d` (either shift `d`), for `k = 1, …, 6` at
+`β = 0.13` (`14, 16, 17, 21, 23, 25` both ways).  So the delay price only has to be bounded at `W₁`.
+Per-residue depths from `W₁` spread out with `k` (at `k = 6`: 17 to 25, mode 23).
+Dead: a "return to the start" recursion.  No line of `W₁`'s optimal kill tree revisits `W₁`
+(`k = 2, …, 5`): the adversary never again lets the constructor hold a whole band.
+Checked here for `k = 1`. -/
+theorem advKills_fullBand_013_one :
+    (List.range 2).all (fun r => advKills (13 / 100) 1 14 (39 / 200) (261 / 200) r) = true := by
+  native_decide
+
 theorem DelayCostBounded.start {β : ℚ} {c : ℕ} (h : DelayCostBounded β c) : StartDelayCostBounded β c :=
   fun k hk D r hr => h k hk D 0 3 r le_rfl hr
 
