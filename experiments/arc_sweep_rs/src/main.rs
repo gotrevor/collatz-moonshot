@@ -37,6 +37,9 @@ impl Q {
         let s = if d < 0 { -1 } else { 1 };
         Q { n: s * n / g, d: s * d / g }
     }
+    fn to_f64(self) -> f64 {
+        self.n as f64 / self.d as f64
+    }
     fn int(n: i128) -> Q {
         Q { n, d: 1 }
     }
@@ -214,6 +217,13 @@ impl Game {
                 a.len() == b.len() && a.iter().zip(b.iter()).all(|(x, y)| x.0 == y.0 && x.1 == y.1)
             });
             p = next;
+            // ARC_TRACE=1: print every residue's survivor set after each descent step
+            if env::var("ARC_TRACE").map(|v| v == "1").unwrap_or(false) {
+                for (r, iv) in p.iter().enumerate() {
+                    let v: Vec<String> = iv.iter().map(|(x, y)| format!("[{:.5},{:.5}]", x.to_f64(), y.to_f64())).collect();
+                    println!("T {} {} {}", it + 1, r, v.join(" "));
+                }
+            }
             if same || p.iter().all(|x| x.is_empty()) {
                 return (p, true, it + 1);
             }

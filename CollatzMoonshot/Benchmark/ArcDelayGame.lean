@@ -218,7 +218,15 @@ Why it matters: rational affine edges are what a finite node-lemma refutation pr
 has endpoints affine in `β`), so the exclusion `l > u(β)` is a treadmill-shaped target, and the two
 coefficient pairs `(39/8, 3/4)` and `(105/16, 15/16)` name the parity words of the critical kills.  Both slopes are
 `(3/2)^n + 3/2` (`39/8 = 27/8 + 3/2`, `105/16 = 81/16 + 3/2`, `n = 3, 4`), and the constants have denominator `2^n`:
-the edge reads as a squeeze between the gap met after one move and the gap met after `n` moves. -/
+the edge reads as a squeeze between the gap met after one move and the gap met after `n` moves.
+Descent anatomy (2026-10-10, `ARC_TRACE=1 arc_sweep solve`, `β = 0.12`, `N = 2^16`).  At the edge (`l = 0.1495`) the
+memoryless fixed point at residue `0` is `[0.0702, 0.1246] [0.1704, 0.3468] [0.3926, 0.5202] [0.6636, 0.7803]`; its
+outer ends are `β - l/3` and the band edge `1 - β - 2l/3`, so `u(β)` is decided by the three internal gaps.  Just
+above (`l = 0.155`) the set erodes over 6 steps.  The `k = 2` descent (dead at step 10) uses exactly the same
+endpoint rationals (`0.12296, 0.16650, 0.34517, 0.38872, 0.49908, 0.67926, 0.74863, …`), shared out among the
+residues, and through step 5 the memoryless set equals the intersection of the two parity-`0` residue sets of the
+`k = 2` descent, cut for cut (step 6 differs).  So memory redistributes and delays the same cuts rather than
+creating new ones.  Not by itself the mechanism: the delay game has the same preimage maps and still widens. -/
 def RelaxedWidthBand : Prop :=
   ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 →
     ((∃ P : Set ℝ, RelaxedStrategy β (1 - 2 * β) l P) ↔
