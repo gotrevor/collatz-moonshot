@@ -254,4 +254,47 @@ def LiftedToKBridge : Prop :=
     LiftedStrategy s t l (2 ^ (k - 1)) P →
     ArcTrap.KRelaxedStrategy s t l k (residualize k P)
 
+theorem nat_carry_cast (r : ℕ) :
+    (((3 * r - r % 2) / 2 : ℕ) : ℤ) = (3 * (r : ℤ) - (r : ℤ) % 2) / 2 := by
+  have hr : r % 2 ≤ 3 * r := by omega
+  rw [Int.natCast_ediv, Int.ofNat_sub hr]
+  norm_cast
+
+theorem memory_period (k : ℕ) (hk : 1 ≤ k) :
+    (2 ^ k : ℤ) = 2 * 2 ^ (k - 1) := by
+  conv_lhs => rw [show k = (k - 1) + 1 by omega, pow_succ]
+  ring
+
+theorem residue_int (k : ℕ) (x : ℝ) :
+    (residue k x : ℤ) = ⌊x⌋ % (2 ^ k : ℤ) := by
+  exact Int.toNat_of_nonneg (Int.emod_nonneg _ (by positivity))
+
+/-- Natural-index version of the child permutation, for the exact indices in KRelaxedStrategy. -/
+theorem children_are_lifts_nat (k : ℕ) (hk : 1 ≤ k) (m J : ℤ) (hJ : 0 ≤ J) :
+    let r := (m % (2 ^ k : ℤ)).toNat
+    let H := 2 ^ (k - 1)
+    let B := ((3 * r - r % 2) / 2 + J.toNat) % H
+    ({(((3 * m - m % 2) / 2 + J) % (2 ^ k : ℤ)).toNat,
+      (((3 * m - m % 2) / 2 + J + (2 ^ (k - 1) : ℤ)) % (2 ^ k : ℤ)).toNat} : Set ℕ) =
+        {B, B + H} := by
+  intro r H B
+  have hM := memory_period k hk
+  have hr : (r : ℤ) = m % (2 ^ k : ℤ) :=
+    Int.toNat_of_nonneg (Int.emod_nonneg _ (by positivity))
+  have hb : (B : ℤ) =
+      ((3 * (m % (2 ^ k : ℤ)) - m % (2 ^ k : ℤ) % 2) / 2 + J) % (2 ^ (k - 1) : ℤ) := by
+    change (((((3 * r - r % 2) / 2 + J.toNat) % (2 ^ (k - 1)) : ℕ) : ℤ)) = _
+    rw [Int.natCast_emod, Int.natCast_add, nat_carry_cast, Int.toNat_of_nonneg hJ, hr]
+    norm_cast
+  have hp := children_are_lifts m J (2 ^ (k - 1)) (by positivity)
+  dsimp only at hp
+  rw [← hM] at hp
+  rw [← hb] at hp
+  have hi := congrArg (Set.image Int.toNat) hp
+  have hsum : ((B : ℤ) + (2 ^ (k - 1) : ℤ)).toNat = B + 2 ^ (k - 1) := by
+    rw [Int.toNat_add (by positivity) (by positivity), Int.toNat_pow_of_nonneg (by decide)]
+    simp only [Int.toNat_natCast]
+    rw [show (2 : ℤ).toNat = 2 by decide]
+  simpa [Set.image_insert_eq, Set.image_singleton, H, hsum] using hi
+
 end CollatzMoonshot.Benchmark.ArcFattening
