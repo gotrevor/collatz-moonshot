@@ -290,14 +290,20 @@ component game `ArcTrap.relaxed_barrier` already kills.  Confidence 70% (below t
 the constructor may vary the width, and at `k = ∞` this is the orbit problem itself, whose true threshold
 is unknown).
 Evidence (2026-10-10, exact rational AND-OR search, `k`-memory component game from every start residue, the
-first depth at which every start dies): `β = 0.13`: `14, 16, 17, 21` (`k = 1, 2, 3, 4`); `β = 1/8`: `19, 21, 22`
-(`k = 1, 2, 3`); `β = 0.123` (just above `7/57 ≈ 0.12281`): `25, 29` (`k = 1, 2`).  The depth grows with `k`
+first depth at which every start dies): `β = 0.13`: `14, 16, 17, 21, 23` (`k = 1, …, 5`); `β = 1/8`: `19, 21, 22`
+(`k = 1, 2, 3`); `β = 0.123` (just above `7/57 ≈ 0.12281`): `25, 29, 32` (`k = 1, 2, 3`).  The depth grows with `k`
 (about two moves per bit, as in the fixed-width game), and it grows as `β ↓ 7/57`, as the `k = 1` runaway predicts.
 Why it is a better target than the fixed-width game: one parameter fewer, and the `k = 1` proof (funnel
 plus the `(0, 1/2, 1/2)` runaway from `10/19`) is already in Lean.  In the runaway the constructor's
 components are unique, so its carries are forced and the adversary can set each top bit to produce the
-parity it wants `k - 1` moves later.  The runaway therefore transfers to every `k` verbatim; what stays
-open is a `k`-uniform funnel into the runaway's clean set. -/
+parity it wants `k - 1` moves later.  But the first `k - 1` parities after the window turns clean were
+committed earlier.  So the runaway transfers to every `k` only from a clean window whose committed bits
+already spell the block pattern, and what stays open is a `k`-uniform funnel that arrives there.
+Dead: an oblivious adversary.  At `β = 0.13` no periodic parity word of period `≤ 6` (any phase, played
+against a constructor who knows it) kills the memoryless component game within 40 moves; at `β = 0.3`, 122
+of the 126 words do (control).  So near `7/57` the adversary's adaptivity is essential, and a `k`-uniform
+proof has to use the carries: a constructor who reads a fixed word ahead, with no carries (the delay
+game's picture), beats every such word. -/
 def ComponentKValue : Prop :=
   ∀ k : ℕ, 1 ≤ k → ∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ S : Set (ℝ × ℝ), ¬ KComponentStrategy β k S
 
