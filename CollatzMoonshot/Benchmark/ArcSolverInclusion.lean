@@ -107,6 +107,60 @@ theorem rounded_fattened_post_fixed {s t l h e : ℝ} {N : ℕ} {P : Set ℝ}
     exact ⟨x - e / 2, thick_subset_roundIn hN (σ := 0) (by linarith) C
       ⟨x - e / 2, ⟨x, hx, rfl⟩, by simp⟩⟩
 
+/-! ### From the physical rounded post-fixed point to the solver's residue form
+
+Chain (Astra's simplification, 2026-10-10: only the forward bridge `KToLiftedBridge` is needed):
+`T ⊆ roundIn N (stepOpen T)` (physical, proved above for fattened strategies) gives
+`residualize T ⊆ roundInRes N (residualize (stepOpen T))` (A, grid commutes with integers)
+`⊆ roundInRes N (resStepOpen (residualize T))` (B, the carry permutation of the two lifts), and the
+code computes a superset of `roundInRes ∘ resStepOpen` (C, trusted; enumeration ranges proved below),
+so monotone descent from the full sets keeps `residualize T`, and an empty solver contradicts it. -/
+
+/-- Residue-form open step, with `KRelaxedStrategy`'s own successor formula. -/
+def resStepOpen (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) (r : ℕ) : Set ℝ :=
+  {a | ∃ u μ : ℝ, 0 < μ ∧ ∀ q : ℝ, |q| ≤ μ →
+    a ≤ u + q ∧ u + q + 2 * l / 3 ≤ a + l ∧
+    (∃ j : ℤ, (j : ℝ) + s ≤ u + q ∧ u + q + 2 * l / 3 ≤ j + s + t) ∧
+    ∀ b < 2, Int.fract (3 * (u + q) / 2 + ((r % 2 : ℕ) : ℝ) / 2) ∈
+      P (((3 * r - r % 2) / 2 + (⌊3 * (u + q) / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋).toNat) % 2 ^ (k - 1) +
+        b * 2 ^ (k - 1))}
+
+/-- Grid cells of `[0, 1]` wholly inside `A` (residue coordinates). -/
+def roundInRes (N : ℕ) (A : Set ℝ) : Set ℝ :=
+  {a | ∃ i : ℕ, i < N ∧ (i : ℝ) / N ≤ a ∧ a ≤ ((i : ℝ) + 1) / N ∧
+    Set.Icc ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ A}
+
+/-- (A) Projection commutes with rounding, as an inclusion.  Confidence 90%: a physical cell lies in one
+unit interval, but a cell ending at an integer projects its right endpoint to fraction `0` of the NEXT
+residue, so the statement may need `Ico` cells or a measure-zero exception. -/
+theorem residualize_roundIn_subset (k N : ℕ) (hN : 0 < N) (S : Set ℝ) (r : ℕ) :
+    ArcFattening.residualize k (roundIn N S) r ⊆ roundInRes N (ArcFattening.residualize k S r) := by
+  sorry
+
+/-- (B) The projected physical open step lies inside the residue-form open step.  Confidence 92%: the
+same carry arithmetic as `ArcFattening.integer_carry_shift_mod` (the two physical children are the two
+lifts of the base, in some order). -/
+theorem residualize_stepOpen_subset {s t l : ℝ} {k : ℕ} (hk : 1 ≤ k) (T : Set ℝ) (r : ℕ) :
+    ArcFattening.residualize k (stepOpen s t l (2 ^ (k - 1)) T) r ⊆
+      resStepOpen s t l k (ArcFattening.residualize k T) r := by
+  sorry
+
+/-- **Enumeration ranges** behind (C): on a sub-arc of `[0, 1]` with `l ≤ 3/2`, every legal move from a start
+in `[0, 1]` uses arc lift `j ∈ {-1, 0, 1}` and floor `⌊c⌋ ∈ {0, 1, 2}`.  The Python enumerates `j = -1 … 4`
+and `J = 0 … 4`, the Rust `j = -2 … 5` and `J = 0 … 5`, so neither misses a move. -/
+theorem enum_ranges {s t l a u d : ℝ} {j : ℤ} (hs : 0 ≤ s) (hst : s + t ≤ 1) (hl0 : 0 ≤ l)
+    (hl : l ≤ 3 / 2) (ha0 : 0 ≤ a) (ha1 : a ≤ 1) (hu : a ≤ u) (hu' : u ≤ a + l / 3) (hd0 : 0 ≤ d)
+    (hd : d ≤ 1 / 2) (hj1 : (j : ℝ) + s ≤ u) (hj2 : u + 2 * l / 3 ≤ j + s + t) :
+    -1 ≤ j ∧ j ≤ 1 ∧ 0 ≤ ⌊3 * u / 2 + d⌋ ∧ ⌊3 * u / 2 + d⌋ ≤ 2 := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have : (-1 : ℝ) ≤ j := by linarith
+    exact_mod_cast this
+  · have : (j : ℝ) < 2 := by linarith
+    have : j < 2 := by exact_mod_cast this
+    omega
+  · exact Int.floor_nonneg.mpr (by linarith)
+  · exact Int.floor_le_iff.mpr (by push_cast; linarith)
+
 /-- **Width net.**  A winner of width `l` fattened by any `e ∈ [e0/2, e0]` has width in
 `[l + e0/2, l + e0]`, and a mesh of step `δ ≤ e0/2` hits that interval. -/
 theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (hδe : δ ≤ e0 / 2) :
