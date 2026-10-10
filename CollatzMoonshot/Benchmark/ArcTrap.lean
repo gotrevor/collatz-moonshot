@@ -3930,7 +3930,10 @@ theorem not_kRelaxedLiveEverywhereStrong : ¬ KRelaxedLiveEverywhereStrong := by
   sorry
 
 /-- **Open: a live `k`-strategy can be made live at every residue.**  The strategies form a family closed
-under unions, so this says the greatest one (the union of all) is live everywhere.  Confidence 70%.
+under unions, so this says the greatest one (the union of all) is live everywhere.  Confidence 75%.
+Edge scan (2026-10-09): eight arcs (three named, five random), widths `t · j/400` for every even `j`, `k = 3, …, 6`:
+2016 winning cases, every greatest fixed point live at all classes, including the widths where memory `k`
+first wins (the only place a failure can occur, by `KRelaxedStrategy.lift`).
 Every winner measured so far satisfies it: 224 at `k ≤ 4` and 48 at `k = 5, 6` (`arc_trap_k.py
 live-forbid`, the unforbidden fixed point), including the `k = 6` arc that refutes the strong form
 (`not_kRelaxedLiveEverywhereStrong`).  What a proof must explain is that a dodging strategy is never
