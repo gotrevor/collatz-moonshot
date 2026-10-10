@@ -39,7 +39,15 @@ Measurements (2026-10-10, exact rational Rust solver, `N = 2^20` / `2^15` grids)
   So the two games share the threshold `7/57` as far as measured, although neither dominates.
 * They are different games: over 60 random arcs (`k = 2, 3, 4`, `N = 2^14`) they disagree once, at
   `k = 4`, arc `[1/20, 1/20 + 79/100]`, width `1501/8000`, where the delay game wins (all 16 words live)
-  and the `k`-memory game loses (`test_delay_game_controls`). -/
+  and the `k`-memory game loses (`test_delay_game_controls`).
+* Kill depth (descent steps from `[0, 1]` everywhere until empty, `arc_sweep solve`, `N = 2^16`; the
+  relaxed fixed-width game).  At `β = 0.13`, widths `1/8, 3/20, 1/5`, the two games take IDENTICAL step
+  counts for `k = 1, …, 5` (e.g. `5, 7, 8, 10, 12` at width `1/8`), then the delay game resists longer
+  (`k = 8`: 18 vs 16; width `1/5`: 20 vs 16).  The `k`-memory game, `k = 5, …, 12`: `12, 14, 15, 16, 17,
+  20, 21, 23` (`0.13`, width `1/8`) and `15, 17, 18, 21, 22, 25, 28, 31` (`1/8`, width `1/8`).
+  Dead: "the adversary pays only the free ride" (depth `k + C`).  It looked true at `k = 5, …, 8`
+  (`+1` per bit), but the plateau breaks at `k = 9, 10`, and the long-run rate is 1.5 to 2.3 moves per bit,
+  as in the component game (`ArcDelay`). -/
 def KDelayStrategy (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) : Prop :=
   0 < l ∧ (∀ w, P w ⊆ Set.Ico 0 1) ∧
   ∀ w < 2 ^ k, ∀ a ∈ P w, ∃ u : ℝ, a ≤ u ∧ u + 2 * l / 3 ≤ a + l ∧

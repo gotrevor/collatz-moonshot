@@ -195,9 +195,16 @@ impl Game {
     }
 
     fn solve(&self, max_iter: usize) -> (Vec<Ivs>, bool) {
+        let (p, fx, _) = self.solve_n(max_iter);
+        (p, fx)
+    }
+
+    /// As `solve`, also returning the number of descent steps taken (for an emptying descent, a proxy
+    /// for the adversary's kill depth).
+    fn solve_n(&self, max_iter: usize) -> (Vec<Ivs>, bool, usize) {
         let n = 1usize << self.k;
         let mut p: Vec<Ivs> = vec![vec![(Q::int(0), Q::int(1))]; n];
-        for _ in 0..max_iter {
+        for it in 0..max_iter {
             let mut next = Vec::with_capacity(n);
             for r in 0..n {
                 let acc = self.round_in(&self.step_open(&p, r));
@@ -208,10 +215,10 @@ impl Game {
             });
             p = next;
             if same || p.iter().all(|x| x.is_empty()) {
-                return (p, true);
+                return (p, true, it + 1);
             }
         }
-        (p, false)
+        (p, false, max_iter)
     }
 }
 
@@ -226,9 +233,9 @@ fn main() {
                 l: Q::parse(&a[5]),
                 n_grid: 1i128 << a[6].parse::<u32>().unwrap(),
             };
-            let (p, fx) = g.solve(5000);
+            let (p, fx, it) = g.solve_n(5000);
             let live: Vec<usize> = (0..p.len()).filter(|&r| !p[r].is_empty()).collect();
-            println!("converged {} live {:?}", fx, live);
+            println!("converged {} live {:?} iters {}", fx, live, it);
         }
         Some("sweep") => {
             let (kmin, kmax): (u32, u32) = (a[2].parse().unwrap(), a[3].parse().unwrap());
