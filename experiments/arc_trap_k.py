@@ -775,5 +775,19 @@ def test_delay_game_controls():
     # above 7/57 the delay game also empties (k = 2, the full sweep is in ArcDelayGame's docstring)
     assert "nonempty []" in _rust_nocarry("sweep", 2, 2, "7057/57000", "1/1000", "1/2500", 17)
 
+
+def test_upper_edge_memoryless():
+    # ArcDelayGame.KRelaxedUpperEdgeMemoryless (2026-10-10): on [beta, 1 - beta] the widest winning width does
+    # not move with memory.  beta = 0.12: 0.1495 wins and 0.1505 loses, at k = 1 and at k = 4
+    for k in (1, 4):
+        assert "live []" not in _rust("solve", k, "3/25", "19/25", "299/2000", 16)
+        assert "live []" in _rust("solve", k, "3/25", "19/25", "301/2000", 16)
+    # teeth: the same check fails in the pure delay game.  beta = 0.1, width 0.31 is far above the k-memory
+    # upper edge 0.262 (k = 1 and k = 6 lose), but the delay game wins there at k = 6 (not at k = 4)
+    for k in (1, 6):
+        assert "live []" in _rust("solve", k, "1/10", "4/5", "31/100", 16)
+    assert "live []" in _rust_nocarry("solve", 4, "1/10", "4/5", "31/100", 16)
+    assert "live []" not in _rust_nocarry("solve", 6, "1/10", "4/5", "31/100", 16)
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
