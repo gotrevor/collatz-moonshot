@@ -115,8 +115,8 @@ where `FiniteMemoryRelaxedValue` lives).  What the off-centre counterexample lac
 integers: its gap is `[0.27, 0.40]`.  A proof must use that.
 * **The carries are essential.**  In the pure delay game (`KDelayStrategy`, `ARC_NOCARRY=1`, same scans) the
   property FAILS on the symmetric arc: at `β = 0.10` the upper edge is `0.262` for `k = 1, 2, 4` but `0.3495`
-  for `k = 6, 8` (at `β = 0.12` it stays `0.1495` for `k ≤ 8`).  The `k`-memory game keeps `0.262` through
-  `k = 8`.  So knowing the next parities outright (delay game) is worth more than knowing the residue
+  for `k = 6, 8` (at `β = 0.12` it stays `0.1495` for `k ≤ 8`, and `k = 10` has no winner above `0.15`).
+  The `k`-memory game keeps `0.262` through `k = 12` (`k = 9, …, 12`: widths `[0.26, 0.36]`, step `1/1000`).  So knowing the next parities outright (delay game) is worth more than knowing the residue
   (parities conditional on one's own future floors), and a proof must use the 2-adic carry structure.
 By induction it gives a memoryless winner, which
 `ArcTrap.relaxed_barrier` excludes above `7/57` at every width
