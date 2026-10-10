@@ -3922,7 +3922,10 @@ def KRelaxedLiveEverywhereStrong : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
     (∃ r < 2 ^ k, (P r).Nonempty) → ∀ r < 2 ^ k, (P r).Nonempty
 
-/-- The `k = 6` counterexample above.  Confidence 90%. -/
+/-- The `k = 6` counterexample above.  Confidence 90%.  Greedy maximal dodge (forbid classes one at a
+time while the fixed point stays nonempty): at both `j = 100` and `j = 130` the largest avoidable set is
+`{27, 59}`, the two lifts of the single base `-5 mod 32`, and nothing else.  So the dodge is one base
+the constructor never lands on (a choice of floor it never needs), not a sparse live set. -/
 theorem not_kRelaxedLiveEverywhereStrong : ¬ KRelaxedLiveEverywhereStrong := by
   sorry
 
