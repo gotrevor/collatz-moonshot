@@ -96,10 +96,10 @@ Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of win
 * Upper edges only (`k = 1, …, 8`, widths `≥ 1/10`, `N = 2^16`): `0.2620, 0.2135, 0.1495, 0.1365` at
   `β = 0.10, 0.11, 0.12, 0.122`, each the same for all eight `k`; at `β = 0.12` also `k = 10, 12`
   (`0.1495`, widths `[0.148, 0.152]`).
-* Independent probes (Astra, 2026-10-10, `k = 1, …, 4`, step `1/1000`, `N = 2^15`, widths from `0.125`): largest
-  winning width the same for all four `k` at `β = 0.02` (`0.674`), `0.05` (`0.562`), `0.06` (`0.524`), `0.07`
-  (`0.408`), `0.10` (`0.262`); just above the `β ≈ 0.0668` wide-band transition, `k = 4, …, 8` win at none of 17
-  widths in `[0.43, 0.51]`.  Coordinates for a proof: `ArcCentered.lifted_iff_centered` (Astra; centre
+* Independent probes (Astra, 2026-10-10, `k = 1, …, 4`, step `1/1000`, `N = 2^15`, widths from `0.125`, except
+  `β = 0.05` from `0.56`): largest winning width the same for all four `k` at `β = 0.02` (`0.674`), `0.05`
+  (`0.562`), `0.06` (`0.524`), `0.07` (`0.408`), `0.10` (`0.262`); at `β = 2003/30000`, `k = 4, …, 8` win at none
+  of the 17 widths `0.43, 0.435, …, 0.51` (`N = 2^16`).  Coordinates for a proof: `ArcCentered.lifted_iff_centered` (Astra; centre
   `y = x + l/2`, move centre `z`, `|z - y| ≤ l/6`, band radius `R = (1 - 2β)/2 - l/3`, `R + 2 · l/6 = (1 - 2β)/2`).
 * Slightly asymmetric arc `[0.115, 0.89]` (margins `0.115` and `0.11`): upper edge `0.190` for every
   `k = 1, …, 6` (`0.2125` on the symmetric `[0.11, 0.89]`, same scan).
