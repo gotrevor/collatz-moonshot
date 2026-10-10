@@ -33,6 +33,11 @@ and the floor is `≥ 0` because `u ≥ a ≥ 0`.
 
 ## Item 2: the band certificate (larger)
 
+Checkpoint (2026-10-10): the affine evaluation layer and rational triangle vertex oracle are implemented
+in `ArcBandCertificate.lean`.  Its three outcomes have kernel proofs, including strict positivity at every
+strict barycentric combination when the three vertex values are nonnegative and one is positive.  Next is
+the symbolic interval-list descent and its pointwise superset theorem.
+
 The math: `ArcDelayGame.RelaxedAboveUpperEdge`'s docstring and `experiments/arc_band.py` (read both).
 Astra (Codex) reviewed the tool and the boundary argument on 2026-10-10 and found no defect.
 
