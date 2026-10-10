@@ -3968,6 +3968,12 @@ emptiness of `solve_vw` at every width of a mesh finer than `e0/2` up to `3t'/2`
 fine for margins `≍ e0`, would exclude every winner, thin or fat, at `β`.  Needs `ArcFattening`'s
 `KToLiftedBridge` / `LiftedToKBridge` and a proof that `solve_vw`'s rounded step contains the margin
 strategy.  Uniform-in-`k` liveness is a separate target.
+Solver-inclusion check (2026-10-10, `arc_trap_k.fatten_residue` / `rounded_post_fixed_failures`): the
+fattened `k = 3` off-centre winner, converted to residue form (a start pushed below its integer part
+moves to residue `r - 1`), is a post-fixed point of the rounded step at `N = 2^20` for `e = 1/100` down to
+`10⁻⁶`, and the greatest fixed point contains it; the unfattened winner at the widened parameters is not
+post-fixed.  At `N = 2^16` inclusion breaks once `e N / 24` falls to `≈ 0.14`; every case with
+`e N / 24 ≥ 1` (the margin bound's regime) passed.  Evidence for the step, on fat strategies only.
 How the one-layer repair works (2026-10-09): call a class `c mod 2^j` good at level `j` when all its lifts
 mod `2^k` share a start (level `k - 1` is this Prop).  The `k = 6` dodge's dead base `27` moves to bases
 `f + J` with `f = ⌊3·27/2⌋`; for `J = 0, 1, 2` the pairs `(8, 24), (9, 25), (10, 26)` are good at level

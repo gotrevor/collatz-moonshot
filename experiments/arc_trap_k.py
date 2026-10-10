@@ -291,6 +291,33 @@ def lift_witnesses(k, s, t, l, N=1 << 20):
     return out
 
 
+def fatten_residue(P, k, e):
+    """ArcFattening's e/2 scheme in residue form (first width only): start y = x - e/2 + z with
+    |z| <= e/12.  A start pushed below its integer part moves to residue r - 1 with fraction + 1."""
+    n = 1 << k
+    out = [[] for _ in range(n)]
+    for r in range(n):
+        for lo, hi in P[r][0]:
+            a, b = lo - e / 2 - e / 12, hi - e / 2 + e / 12
+            if b > 0:
+                out[r].append((max(a, F(0)), b))
+            if a < 0:
+                out[(r - 1) % n].append((a + 1, min(b, F(0)) + 1))
+    return [[norm(x)] for x in out]
+
+
+def rounded_post_fixed_failures(P, k, s, t, L, N):
+    """Residues where P is NOT inside solve_vw's rounded step of itself (empty list: P is a lattice
+    post-fixed point, so solve_vw's greatest fixed point contains it)."""
+    bad = []
+    for r in range(1 << k):
+        d = HALF if r % 2 else F(0)
+        acc = round_in(norm(sum((vw_aset(P, r, k, 0, j, d, s, t, L) for j in range(len(L))), [])), N)
+        if inter(norm(P[r][0]), acc) != norm(P[r][0]):
+            bad.append(r)
+    return bad
+
+
 def vw_orbit(P, k, s, t, L, m0, steps):
     """Independent check: play the certificate against the TRUE integer parts from m0 and return the
     exact xi (left end of the final window).  Raises if the strategy ever has no move."""
@@ -582,6 +609,25 @@ def test_lift_witnesses_meet_the_overlap_criterion():
     l = t * F(64, 400)
     w = lift_witnesses(4, s, t, l)
     assert len(w) == 8 and all(F(x["gap"]) <= l / 3 and x["shared_a"] is not None for x in w)
+
+
+def test_fattened_winner_is_inside_the_rounded_solver():
+    # 2026-10-10, solver-inclusion step of the fattening completeness route (with Astra): the fattened
+    # k = 3 winner at arc widened by e/2 per end, width l + e, is a post-fixed point of the rounded step,
+    # so the solver's greatest fixed point contains it; the UNfattened winner there is not (teeth)
+    s, t, k, N = F(2, 5), F(87, 100), 3, 1 << 20
+    l, e = t * F(86, 400), F(1, 100)
+    G = solve_vw(k, s, t, [l], N=N)[0]
+    Fz = [[round_in(x[0], N)] for x in fatten_residue(G, k, e)]
+    s2, t2, L2 = s - e / 2, t + e, [l + e]
+    assert rounded_post_fixed_failures(Fz, k, s2, t2, L2, N) == []
+    G2 = solve_vw(k, s2, t2, L2, N=N)[0]
+    assert all(inter(Fz[r][0], G2[r][0]) == Fz[r][0] for r in range(8))
+    assert rounded_post_fixed_failures(G, k, s2, t2, L2, N) != []
+    # a grid too coarse for the margin (e N / 24 << 1) breaks inclusion
+    e = F(1, 10 ** 5)
+    Fz = [[round_in(x[0], 1 << 16)] for x in fatten_residue(G, k, e)]
+    assert rounded_post_fixed_failures(Fz, k, s - e / 2, t + e, [l + e], 1 << 16) != []
 
 
 if __name__ == "__main__":
