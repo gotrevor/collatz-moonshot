@@ -155,4 +155,22 @@ def KRelaxedLowerEdge : Prop :=
     l < (2 / 3) ^ (k - 1) * (7 / 57) → (∃ r < 2 ^ k, (P r).Nonempty) →
       ¬ KRelaxedStrategy β (1 - 2 * β) l k P
 
+open ArcTrap in
+/-- **Conjecture: above width `7/57`, memory changes the kill depth but not the winner.**  On the symmetric
+arc with `β ≥ 1/10` and `l ≥ 7/57`, a live `k`-memory strategy gives a memoryless one at the SAME `(β, l)`.
+The same-width form of `KRelaxedUpperEdgeMemoryless`; with `RelaxedLowerEdge` and `KRelaxedLowerEdge` it
+says memory helps only windows narrower than `7/57`.  Confidence 60%.
+Evidence (2026-10-10): for `l ≥ 0.123` the winning widths of `k = 1, …, 8` coincide cell for cell at
+`β = 0.10, 0.11, 0.12, 0.122` (e.g. at `0.10`: `[0.1230, 0.2620]`, 279 grid widths, for every `k`), and for
+`k ≤ 6` at `7/57 - 10⁻², 10⁻³, 10⁻⁴`.
+Dead mechanism: "too wide to survive any parity word".  Just above the upper edge the kill depth GROWS with
+`k`: `7, 9, 11, 14, 16, 25` (`k = 1, 2, 3, 4, 6, 8`; `β = 0.1`, `l = 0.263`, `N = 2^16` descent steps) and
+`7, 10, 11, 13, 17, 21` (`β = 0.12`, `l = 0.15`).  So the adversary adapts with delay and pays about two
+moves per bit, as below `7/57` in `β`; it never needs to stop winning.  Off-centre this fails outright
+(`[2/5, 2/5 + 87/100]`: no memoryless winner at any width, `k = 4` wins on `[0.13, 0.548]`). -/
+def KRelaxedMemorylessAboveLowerEdge : Prop :=
+  ∀ (β l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → 1 / 10 ≤ β → β < 1 / 2 → 7 / 57 ≤ l →
+    (∃ r < 2 ^ k, (P r).Nonempty) → KRelaxedStrategy β (1 - 2 * β) l k P →
+      ∃ Q : Set ℝ, RelaxedStrategy β (1 - 2 * β) l Q
+
 end CollatzMoonshot.Benchmark.ArcDelayGame
