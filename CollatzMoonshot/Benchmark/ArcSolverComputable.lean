@@ -93,14 +93,225 @@ def sweepEmpty (k N : ℕ) (β' δ : ℚ) (fuel : ℕ) : Bool :=
   (List.range imax).all fun i =>
     descendsEmpty k N β' t' ((i + 1 : ℕ) * δ) fuel fun _ => [(0, 1)]
 
+/-! ### `normIv` and `interIv` -/
+
+/-- The merge step of `normIv`. -/
+def mstep (acc : IvList) (p : ℚ × ℚ) : IvList :=
+  match acc with
+  | [] => [p]
+  | q :: rest => if p.1 ≤ q.2 then (q.1, max q.2 p.2) :: rest else p :: q :: rest
+
+theorem normIv_eq (L : IvList) : normIv L =
+    (((L.filter fun p => decide (p.1 < p.2)).mergeSort (fun p q => decide (p.1 ≤ q.1))).foldl
+      mstep []).reverse := rfl
+
+/-- `p` is covered by a piece of `acc`. -/
+def Cov (acc : IvList) (q : ℚ × ℚ) : Prop := ∃ p ∈ acc, p.1 ≤ q.1 ∧ q.2 ≤ p.2
+
+theorem cov_mstep {acc : IvList} {q : ℚ × ℚ} (h : Cov acc q) (x : ℚ × ℚ) : Cov (mstep acc x) q := by
+  obtain ⟨p, hp, h1, h2⟩ := h
+  match acc, hp with
+  | a :: rest, hp =>
+    unfold mstep
+    simp only
+    split_ifs with hx
+    · rcases List.mem_cons.1 hp with rfl | hp
+      · exact ⟨_, List.mem_cons_self, h1, h2.trans (le_max_left _ _)⟩
+      · exact ⟨p, List.mem_cons_of_mem _ hp, h1, h2⟩
+    · exact ⟨p, List.mem_cons_of_mem _ hp, h1, h2⟩
+
+theorem cov_foldl {acc : IvList} {q : ℚ × ℚ} (h : Cov acc q) (xs : IvList) :
+    Cov (xs.foldl mstep acc) q := by
+  induction xs generalizing acc with
+  | nil => exact h
+  | cons x xs ih => exact ih (cov_mstep h x)
+
+theorem mem_mstep_fst {acc : IvList} {x p : ℚ × ℚ} (hp : p ∈ mstep acc x) :
+    p.1 = x.1 ∨ ∃ p' ∈ acc, p.1 = p'.1 := by
+  unfold mstep at hp
+  match acc with
+  | [] => simp at hp; exact Or.inl (by rw [hp])
+  | a :: rest =>
+    simp only at hp
+    split_ifs at hp with hx
+    · rcases List.mem_cons.1 hp with rfl | hp
+      · exact Or.inr ⟨a, List.mem_cons_self, rfl⟩
+      · exact Or.inr ⟨p, List.mem_cons_of_mem _ hp, rfl⟩
+    · rcases List.mem_cons.1 hp with rfl | hp
+      · exact Or.inl rfl
+      · exact Or.inr ⟨p, hp, rfl⟩
+
+theorem cov_mstep_self {acc : IvList} {x : ℚ × ℚ} (hle : ∀ p ∈ acc, p.1 ≤ x.1) :
+    Cov (mstep acc x) x := by
+  unfold mstep
+  match acc with
+  | [] => exact ⟨x, by simp, le_rfl, le_rfl⟩
+  | a :: rest =>
+    simp only
+    split_ifs with hx
+    · exact ⟨_, List.mem_cons_self, hle a List.mem_cons_self, le_max_right _ _⟩
+    · exact ⟨x, List.mem_cons_self, le_rfl, le_rfl⟩
+
+theorem cov_foldl_self (xs : IvList) (hs : xs.Pairwise (fun p q => p.1 ≤ q.1)) :
+    ∀ acc : IvList, (∀ x ∈ xs, ∀ p ∈ acc, p.1 ≤ x.1) → ∀ x ∈ xs, Cov (xs.foldl mstep acc) x := by
+  induction xs with
+  | nil => simp
+  | cons y ys ih =>
+    intro acc hacc x hx
+    have hs' := List.pairwise_cons.1 hs
+    rcases List.mem_cons.1 hx with rfl | hx
+    · exact cov_foldl (cov_mstep_self (hacc x List.mem_cons_self)) ys
+    · refine ih hs'.2 _ (fun z hz p hp => ?_) x hx
+      rcases mem_mstep_fst hp with h | ⟨p', hp', h⟩
+      · rw [h]; exact hs'.1 z hz
+      · rw [h]; exact hacc z (List.mem_cons_of_mem _ hz) p' hp'
+
+/-- Invariant of the merge: nondegenerate pieces, later pieces strictly to the right. -/
+def MInv (acc : IvList) : Prop :=
+  (∀ p ∈ acc, p.1 < p.2) ∧ acc.Pairwise (fun p q => q.2 < p.1)
+
+theorem minv_mstep {acc : IvList} {x : ℚ × ℚ} (h : MInv acc) (hx : x.1 < x.2)
+    (hle : ∀ p ∈ acc, p.1 ≤ x.1) : MInv (mstep acc x) := by
+  obtain ⟨h1, h2⟩ := h
+  unfold mstep
+  match acc with
+  | [] => exact ⟨by simpa using hx, by simp⟩
+  | a :: rest =>
+    simp only
+    have ha := h1 a List.mem_cons_self
+    have hp := List.pairwise_cons.1 h2
+    split_ifs with hxa
+    · refine ⟨?_, ?_⟩
+      · intro p hp'
+        rcases List.mem_cons.1 hp' with rfl | hp'
+        · exact lt_of_lt_of_le ha (le_max_left _ _)
+        · exact h1 p (List.mem_cons_of_mem _ hp')
+      · exact List.pairwise_cons.2 ⟨fun q hq => hp.1 q hq, hp.2⟩
+    · push Not at hxa
+      refine ⟨?_, ?_⟩
+      · intro p hp'
+        rcases List.mem_cons.1 hp' with rfl | hp'
+        · exact hx
+        · exact h1 p hp'
+      · refine List.pairwise_cons.2 ⟨fun q hq => ?_, h2⟩
+        rcases List.mem_cons.1 hq with rfl | hq
+        · exact hxa
+        · exact (hp.1 q hq).trans (ha.trans hxa)
+
+theorem minv_foldl (xs : IvList) (hs : xs.Pairwise (fun p q => p.1 ≤ q.1)) (hnd : ∀ x ∈ xs, x.1 < x.2) :
+    ∀ acc : IvList, MInv acc → (∀ x ∈ xs, ∀ p ∈ acc, p.1 ≤ x.1) → MInv (xs.foldl mstep acc) := by
+  induction xs with
+  | nil => simp
+  | cons y ys ih =>
+    intro acc h hacc
+    have hs' := List.pairwise_cons.1 hs
+    refine ih hs'.2 (fun z hz => hnd z (List.mem_cons_of_mem _ hz)) _
+      (minv_mstep h (hnd y List.mem_cons_self) (hacc y List.mem_cons_self)) (fun z hz p hp => ?_)
+    rcases mem_mstep_fst hp with h | ⟨p', hp', h⟩
+    · rw [h]; exact hs'.1 z hz
+    · rw [h]; exact hacc z (List.mem_cons_of_mem _ hz) p' hp'
+
+theorem sorted_aux (L : IvList) :
+    ((L.filter fun p => decide (p.1 < p.2)).mergeSort (fun p q => decide (p.1 ≤ q.1))).Pairwise
+      (fun p q => p.1 ≤ q.1) := by
+  have := List.pairwise_mergeSort (le := fun p q : ℚ × ℚ => decide (p.1 ≤ q.1))
+    (fun a b c h1 h2 => by simp at *; linarith) (fun a b => by simp; exact le_total _ _)
+    (L.filter fun p => decide (p.1 < p.2))
+  exact this.imp (fun h => by simpa using h)
+
+/-- Every nondegenerate input interval lies inside one output piece. -/
+theorem normIv_cover {L : IvList} {q : ℚ × ℚ} (hq : q ∈ L) (hlt : q.1 < q.2) :
+    ∃ p ∈ normIv L, p.1 ≤ q.1 ∧ q.2 ≤ p.2 := by
+  rw [normIv_eq]
+  obtain ⟨p, hp, h⟩ := cov_foldl_self _ (sorted_aux L) [] (by simp) q
+    (List.mem_mergeSort.2 (List.mem_filter.2 ⟨hq, by simpa using hlt⟩))
+  exact ⟨p, List.mem_reverse.2 hp, h⟩
+
+theorem normIv_minv (L : IvList) : MInv ((((L.filter fun p => decide (p.1 < p.2)).mergeSort
+      (fun p q => decide (p.1 ≤ q.1))).foldl mstep [])) :=
+  minv_foldl _ (sorted_aux L) (fun x hx => by
+    have := List.mem_filter.1 (List.mem_mergeSort.1 hx); simpa using this.2) [] ⟨by simp, by simp⟩ (by simp)
+
+/-- Output pieces are nondegenerate. -/
+theorem normIv_lt {L : IvList} {p : ℚ × ℚ} (hp : p ∈ normIv L) : p.1 < p.2 := by
+  rw [normIv_eq, List.mem_reverse] at hp
+  exact (normIv_minv L).1 p hp
+
+/-- Distinct output pieces are separated by a gap. -/
+theorem normIv_sep {L : IvList} {p q : ℚ × ℚ} (hp : p ∈ normIv L) (hq : q ∈ normIv L) (hpq : p ≠ q) :
+    p.2 < q.1 ∨ q.2 < p.1 := by
+  rw [normIv_eq, List.mem_reverse] at hp hq
+  have hS : (((L.filter fun p => decide (p.1 < p.2)).mergeSort
+      (fun p q => decide (p.1 ≤ q.1))).foldl mstep []).Pairwise
+      (fun p q : ℚ × ℚ => p.2 < q.1 ∨ q.2 < p.1) :=
+    (normIv_minv L).2.imp (fun h => Or.inr h)
+  have : Std.Symm (fun p q : ℚ × ℚ => p.2 < q.1 ∨ q.2 < p.1) := ⟨fun a b h => h.symm⟩
+  exact hS.forall hp hq hpq
+
+theorem exists_gap (xs : List ℝ) {z y : ℝ} (h : z < y) :
+    ∃ m, z < m ∧ m ≤ y ∧ ∀ e ∈ xs, z < e → m ≤ e := by
+  induction xs with
+  | nil => exact ⟨y, h, le_rfl, by simp⟩
+  | cons e xs ih =>
+    obtain ⟨m, h1, h2, h3⟩ := ih
+    by_cases he : z < e
+    · refine ⟨min m e, lt_min h1 he, (min_le_left _ _).trans h2, ?_⟩
+      intro e' he' hz
+      rcases List.mem_cons.1 he' with rfl | he'
+      · exact min_le_right _ _
+      · exact (min_le_left _ _).trans (h3 e' he' hz)
+    · refine ⟨m, h1, h2, ?_⟩
+      intro e' he' hz
+      rcases List.mem_cons.1 he' with rfl | he'
+      · exact absurd hz he
+      · exact h3 e' he' hz
+
+theorem mem_ivSet_normIv {L : IvList} {q : ℚ × ℚ} (hq : q ∈ L) (hlt : q.1 < q.2) {x : ℝ}
+    (h1 : ((q.1 : ℚ) : ℝ) ≤ x) (h2 : x ≤ ((q.2 : ℚ) : ℝ)) : x ∈ ivSet (normIv L) := by
+  obtain ⟨p, hp, hp1, hp2⟩ := normIv_cover hq hlt
+  exact ⟨p, hp, le_trans (by exact_mod_cast hp1) h1, le_trans h2 (by exact_mod_cast hp2)⟩
+
+/-- A right neighbourhood: a point `z` of `[x, y) ⊆ ivSet A` lies in an interval of `A` reaching
+strictly past it, indeed past a uniform `m > z` (the nearest endpoint above `z`). -/
+theorem exists_right_piece {A : IvList} {x y z : ℝ} (hA : Set.Ico x y ⊆ ivSet A) (hz : z ∈ Set.Ico x y)
+    (m : ℝ) (hm : z < m) (hmy : m ≤ y)
+    (hgap : ∀ e ∈ A.flatMap (fun p => [((p.1 : ℚ) : ℝ), ((p.2 : ℚ) : ℝ)]), z < e → m ≤ e) :
+    ∃ a ∈ A, ((a.1 : ℚ) : ℝ) ≤ z ∧ m ≤ ((a.2 : ℚ) : ℝ) := by
+  obtain ⟨a, ha, h1, h2⟩ := hA (show (z + m) / 2 ∈ Set.Ico x y from
+    ⟨by linarith [hz.1], by linarith⟩)
+  have hmem1 : ((a.1 : ℚ) : ℝ) ∈ A.flatMap (fun p => [((p.1 : ℚ) : ℝ), ((p.2 : ℚ) : ℝ)]) :=
+    List.mem_flatMap.2 ⟨a, ha, by simp⟩
+  have hmem2 : ((a.2 : ℚ) : ℝ) ∈ A.flatMap (fun p => [((p.1 : ℚ) : ℝ), ((p.2 : ℚ) : ℝ)]) :=
+    List.mem_flatMap.2 ⟨a, ha, by simp⟩
+  refine ⟨a, ha, ?_, hgap _ hmem2 (by linarith)⟩
+  by_contra hc
+  have := hgap _ hmem1 (by linarith)
+  linarith
+
 /-! ### Targets (treadmill)  -/
 
 /-- Intersections lose only isolated points: any interval `[x, y)` with `x < y` lying in both unions lies
 in `interIv`.  (A finite union of closed intervals covering `[z, z + η)` has one interval containing `z`
 and a right neighbourhood; the two such intervals meet in a nondegenerate piece.) -/
-theorem Ico_subset_ivSet_interIv {A B : IvList} {x y : ℝ} (hxy : x < y)
+theorem Ico_subset_ivSet_interIv {A B : IvList} {x y : ℝ} (_hxy : x < y)
     (hA : Set.Ico x y ⊆ ivSet A) (hB : Set.Ico x y ⊆ ivSet B) : Set.Ico x y ⊆ ivSet (interIv A B) := by
-  sorry
+  intro z hz
+  obtain ⟨m, hm, hmy, hgap⟩ := exists_gap ((A ++ B).flatMap
+    (fun p => [((p.1 : ℚ) : ℝ), ((p.2 : ℚ) : ℝ)])) hz.2
+  obtain ⟨a, ha, ha1, ha2⟩ := exists_right_piece hA hz m hm hmy
+    (fun e he hze => hgap e (by rw [List.flatMap_append]; exact List.mem_append_left _ he) hze)
+  obtain ⟨b, hb, hb1, hb2⟩ := exists_right_piece hB hz m hm hmy
+    (fun e he hze => hgap e (by rw [List.flatMap_append]; exact List.mem_append_right _ he) hze)
+  have hlt : max a.1 b.1 < min a.2 b.2 := by
+    have : ((max a.1 b.1 : ℚ) : ℝ) < ((min a.2 b.2 : ℚ) : ℝ) := by
+      push_cast
+      exact lt_of_le_of_lt (max_le ha1 hb1) (lt_of_lt_of_le hm (le_min ha2 hb2))
+    exact_mod_cast this
+  refine mem_ivSet_normIv (q := (max a.1 b.1, min a.2 b.2)) ?_ hlt ?_ ?_
+  · refine List.mem_flatMap.2 ⟨a, ha, List.mem_filterMap.2 ⟨b, hb, ?_⟩⟩
+    simp [hlt]
+  · push_cast; exact max_le ha1 hb1
+  · push_cast; exact le_min (by linarith) (by linarith)
 
 /-- **(c), proved instead of trusted.**  The code step contains the rounded open step, on any sub-arc
 of `[0, 1]` with width at most `3/2` (where `ArcSolverInclusion.enum_ranges` bounds the floors and
