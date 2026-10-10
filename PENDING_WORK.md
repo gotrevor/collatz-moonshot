@@ -1,5 +1,15 @@
 # PENDING_WORK
 
+## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: steps 1-4 done, step 5 in progress
+
+`ArcSolverComputable.lean` is sorry-free.  Trusted hypothesis (c) is now the theorem `stepCode_sound`
+(the Lean-transcribed solver step contains `roundInRes ∘ resStepOpen`); `descendsEmpty_excludes` and
+`no_kRelaxedStrategy_of_codeSweep` proved.  `no_kRelaxedStrategy_7_57_plus_k1/k2/k3` depend only on
+`propext, Classical.choice, Quot.sound` plus their `native_decide` sweep.  Step 5: k=4 native_decide
+measured 149 s standalone; k=5, 6 being timed (see HANDOFF-2026-10-10-arc-solver-computable.md).
+Next: add k=4..6 corollaries as timing allows; then `ArcSolverInclusion.no_kRelaxedStrategy_7_57_plus`
+(owned elsewhere) can be discharged from these by `interval_cases k`.
+
 ## 2026-10-06 — arc-edge kickoff: DONE, audited; candidates for the next kickoff
 
 `KICKOFF-2026-10-06-arc-edge-proofs.md` is complete through phase 2.  Confirm lap (fresh context)
