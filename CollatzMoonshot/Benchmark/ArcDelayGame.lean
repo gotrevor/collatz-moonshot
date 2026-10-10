@@ -216,7 +216,9 @@ different wide band has taken over.  By `KRelaxedUpperEdgeMemoryless` the same `
 every memory `k` (measured for `k ≤ 12`).
 Why it matters: rational affine edges are what a finite node-lemma refutation produces (`barrier_core`
 has endpoints affine in `β`), so the exclusion `l > u(β)` is a treadmill-shaped target, and the two
-coefficient pairs `(39/8, 3/4)` and `(105/16, 15/16)` name the parity words of the critical kills. -/
+coefficient pairs `(39/8, 3/4)` and `(105/16, 15/16)` name the parity words of the critical kills.  Both slopes are
+`(3/2)^n + 3/2` (`39/8 = 27/8 + 3/2`, `105/16 = 81/16 + 3/2`, `n = 3, 4`), and the constants have denominator `2^n`:
+the edge reads as a squeeze between the gap met after one move and the gap met after `n` moves. -/
 def RelaxedWidthBand : Prop :=
   ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 →
     ((∃ P : Set ℝ, RelaxedStrategy β (1 - 2 * β) l P) ↔
