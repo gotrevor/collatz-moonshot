@@ -1,6 +1,6 @@
 # PENDING_WORK
 
-## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: steps 1-4 done, step 5 in progress
+## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: ALL STEPS DONE (k=1..6)
 
 `ArcSolverComputable.lean` is sorry-free.  Trusted hypothesis (c) is now the theorem `stepCode_sound`
 (the Lean-transcribed solver step contains `roundInRes ∘ resStepOpen`); `descendsEmpty_excludes` and

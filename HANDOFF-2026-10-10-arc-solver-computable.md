@@ -5,6 +5,6 @@ Executed `ARC-SOLVER-COMPUTABLE-DIRECTION.md`:
 2. `stepCode_sound` — TRUE as stated, proved (`good_of_start`, `piece_of_cover`, `cell_subset_roundCode`).
 3. `descendsEmpty_excludes` (via `descendsEmpty_aux`, `resStepOpen_mono_lt`, `child_lt`).
 4. `no_kRelaxedStrategy_of_codeSweep` (new `residualize_roundIn_cells` for the half-open cells).
-5. k=1,2,3 sweeps + corollaries in file. k=4: 149 s standalone native_decide. k=5,6: see below.
+5. k=1..6 sweeps + corollaries in file (native_decide standalone: k=4 149 s, k=5 246 s, k=6 584 s). DIRECTION COMPLETE.
 
 Note: commit 4f6cf33 (another session's ArcDelayGame commit) swept in step 3's diff.

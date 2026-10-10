@@ -56,7 +56,9 @@ def KDelayStrategy (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) : Prop :=
 
 /-- **Conjecture: finite lookahead does not pass `7/57` on the symmetric arc.**  The delay-game
 analogue of `ArcTrap.FiniteMemoryRelaxedValue`.  Confidence 75% (as the `k`-memory conjecture,
-discounted because the two games are not comparable).
+discounted because the two games are not comparable).  Exploratory extension (2026-10-10, no widening,
+`β = 7057/57000`, widths `i/1000`, `N = 2^16`): empty at every width for `k = 10` and `k = 12`, although at
+`β = 0.10` the delay game's lookahead opens a second band of wide windows (`KRelaxedUpperEdgeMemoryless`).
 Why it is worth stating separately: after the `k`-independent rounding of `ArcSolverInclusion` (grid
 `e0 N ≥ 96`, no `k` in it) the delay game is a safety game on a finite arena with lookahead `k`.  For
 such games Klein and Zimmermann show that if any finite lookahead wins, a lookahead exponential in the
