@@ -128,4 +128,31 @@ theorem finiteMemoryRelaxedValue_of_upperEdge (h : KRelaxedUpperEdgeMemoryless) 
       hβ' (by omega) hne hS
     exact ih β hβ hβ' l' Q (by simpa using hQne) (by simpa using hQ)
 
+open ArcTrap in
+/-- **Conjecture: the memoryless relaxed game needs width `7/57`, whatever the arc.**  For `β ≥ 1/10` no
+memoryless relaxed strategy holds `[β, 1 - β]` at a width `l < 7/57`.  Confidence 75%.
+Evidence (2026-10-10, `arc_sweep sweep 1 1 β 0 1/200000 20 0.1226 0.1230`): the `k = 1` winning widths
+start in `(0.122810, 0.122815]` at both `β = 0.10` and `β = 0.11` (`N = 2^20` rounds inward, so a
+lattice lower edge sits just above the true one), and at `0.1230` (the first grid width above `7/57`) for
+`β = 7/57 - 1/100, 7/57 - 1/1000, 0.12, 0.122` on coarser grids.  The same number as the `β`-threshold
+(`relaxed_barrier`) but a different statement: here `β` is well below `7/57`.  Monotone in `β`
+(`RelaxedStrategy.mono`), so `β = 1/10` is the whole claim.  A finite refutation in the style of
+`barrier_core` (node lemmas with endpoints affine in `l`) is the expected proof shape. -/
+def RelaxedLowerEdge : Prop :=
+  ∀ (β l : ℝ) (P : Set ℝ), 1 / 10 ≤ β → β < 1 / 2 → l < 7 / 57 → ¬ RelaxedStrategy β (1 - 2 * β) l P
+
+open ArcTrap in
+/-- **Conjecture: each bit of memory buys a factor `2/3` in width.**  For `β ≥ 1/10` no live `k`-memory
+relaxed strategy at width `l < (2/3)^(k-1) · 7/57`.  Confidence 65%.  Lower edges measured
+(`KRelaxedUpperEdgeMemoryless` evidence): `0.123, 0.082, 0.055, 0.0365, 0.0245, 0.0165` for
+`k = 1, …, 6` at `β = 7/57 - 1/100`, the same at `7/57 - 1/1000` and `7/57 - 1/10000` (`0.12285,
+0.0819, 0.0546, 0.0364, 0.0243, 0.0162`), each the previous times `2/3` up to the grid step.  The proved
+`ArcTrap.not_kRelaxedStrategy_1229_small_width` is this shape with the constant `(1/9)(2/3)` in place of
+`7/57`, at `β ≥ 0.1229`.  Off-centre the lower edge also moves by `2/3` per bit, so unlike the upper edge
+this one need not use symmetry: one move of growth (`3/2`) per bit of lookahead. -/
+def KRelaxedLowerEdge : Prop :=
+  ∀ (β l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → 1 / 10 ≤ β → β < 1 / 2 →
+    l < (2 / 3) ^ (k - 1) * (7 / 57) → (∃ r < 2 ^ k, (P r).Nonempty) →
+      ¬ KRelaxedStrategy β (1 - 2 * β) l k P
+
 end CollatzMoonshot.Benchmark.ArcDelayGame
