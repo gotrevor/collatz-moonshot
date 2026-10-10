@@ -120,7 +120,7 @@ theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (
     rw [add_mul, div_mul_cancel₀ _ hδ.ne'] at h2
     linarith
 
-/-- **No 1-, 2- or 3-memory relaxed strategy holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
+/-- **No `k`-memory relaxed strategy, `k = 1, …, 4`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
 Confidence 85%.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
 its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
 (b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
@@ -131,11 +131,23 @@ child finds 100 the solver rightly rejects, so the check has teeth.  Test
 `test_solver_step_contains_open_moves`).  Given those, it reduces to a finite computation, which came out
 empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): widened arc
 `β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
-(`e0 N / 48 ≈ 2.7`), `k = 1, 2, 3`.  Positive control: at `N = 2^15` the solver finds winners at
+(`e0 N / 96 ≈ 1.4`), `k = 1, …, 4`, empty in BOTH the Python solver and the independent Rust one
+(`experiments/arc_sweep_rs`, written from `stepOpen` / `roundIn`, not from the Python).  Positive control: at `N = 2^15` the solver finds winners at
 `7/57 - 1/10000` for `k = 0, 1, 2`.  Unlike `finiteMemoryRelaxedValue_ge_013`, no liveness hypothesis. -/
-theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 3) (l : ℝ) (P : ℕ → Set ℝ)
+theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 4) (l : ℝ) (P : ℕ → Set ℝ)
     (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
     ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 1000) (1 - 2 * (7 / 57 + 1 / 1000)) l k P := by
+  sorry
+
+/-- **Ten times closer: no 1-, 2- or 3-memory relaxed strategy at `β = 7/57 + 1/10000`, any width.**
+Confidence 80% (one instrument at this `β`).  Same hypotheses as `no_kRelaxedStrategy_7_57_plus`.
+Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
+`β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
+(`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`.  Positive control on the same grid: winners at
+`7/57 - 1/100000` (`k = 1` at widths `0.1231, 0.1234`; `k = 3` at all of `0.1225 … 0.1234`). -/
+theorem no_kRelaxedStrategy_7_57_plus_tenth {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 3) (l : ℝ)
+    (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 10000) (1 - 2 * (7 / 57 + 1 / 10000)) l k P := by
   sorry
 
 end CollatzMoonshot.Benchmark.ArcSolverInclusion
