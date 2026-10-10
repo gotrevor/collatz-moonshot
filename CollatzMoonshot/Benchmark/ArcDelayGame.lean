@@ -82,13 +82,24 @@ def DelayLookaheadCollapses : Prop :=
 open ArcTrap in
 /-- **Conjecture: on the symmetric arc, memory never widens the window.**  A live `k`-memory strategy at
 width `l` gives a live `(k - 1)`-memory strategy at some width `l' ≥ l`.  So the upper edge of the
-winning widths does not depend on `k`, and only the lower edge moves.  Confidence 55%.
+winning widths does not depend on `k`, and only the lower edge moves.  Confidence 65%.
 Evidence (2026-10-10, `arc_sweep sweep 1 6 β 0 STEP LOGN 0 2/5`, the set of winning widths per `k`):
 * `β = 7/57 - 1/100` (`N = 2^16`, step `1/2000`): upper edge `0.197` for every `k = 1, …, 6`; lower edge
   `0.123, 0.082, 0.055, 0.0365, 0.0245, 0.0165`, a factor `2/3` per bit (one move of growth per bit of
   lookahead); every band is a full interval.
 * `β = 7/57 - 1/1000` (`N = 2^18`, step `1/5000`): upper edge `0.138` for every `k`; lower edges the same
   as at `1/100` (`0.123 · (2/3)^(k-1)`).
+* `β = 7/57 - 1/10000` (`N = 2^20`, step `1/20000`): upper edge `0.1322` for every `k = 1, …, 6`, lower
+  edges `0.12285, 0.0819, 0.0546, 0.0364, 0.0243, 0.0162`.
+* Upper edges only (`k = 1, …, 8`, widths `≥ 1/10`, `N = 2^16`): `0.2620, 0.2135, 0.1495, 0.1365` at
+  `β = 0.10, 0.11, 0.12, 0.122`, each the same for all eight `k`.
+* The memoryless lower edge is `7/57` itself at every `β` measured: `(0.122810, 0.122815]` at
+  `β = 0.10` and `0.11` (`N = 2^20`, step `10⁻⁵/2`), against `7/57 = 0.1228070…`.  The `k`-memory lower edge
+  is `(2/3)^(k-1) · 7/57` (compare `ArcTrap.not_kRelaxedStrategy_1229_small_width`, the proved
+  `(1/9)(2/3)^k`).
+* So the winning region is `(2/3)^(k-1) · 7/57 ≤ l ≤ u(β)` with `u` independent of `k`, and `u(β)` stays
+  near `0.132` as `β → 7/57`: no band pinches.  Every band, at every `k`, dies at once at `7/57` with
+  positive span, a width-independent transition like the memoryless barrier's (funnel and runaway).
 * Known-false sibling, the off-centre arc `[2/5, 2/5 + 87/100]` (`MemoryHelpsOffCentre`, widths
   `t · j/400`): `k = 1, 2` never win; the upper edge is `0.252` at `k = 3` and `0.548` at `k = 4, 5, 6`, so
   there memory widens the window, and the statement is false off-centre.  The lower edge still moves by
