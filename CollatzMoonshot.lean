@@ -112,5 +112,6 @@ import CollatzMoonshot.Sibling
 import CollatzMoonshot.Literature.LocalRank
 import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.ArcDelay
+import CollatzMoonshot.Benchmark.ArcSolverInclusion
 import CollatzMoonshot.Benchmark.FlattoCeiling
 import CollatzMoonshot.Maze

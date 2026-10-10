@@ -318,6 +318,22 @@ def rounded_post_fixed_failures(P, k, s, t, L, N):
     return bad
 
 
+def width_sweep(k, beta, e0, step, N):
+    """The finite computation behind ArcSolverInclusion.no_kRelaxedStrategy_7_57_plus: solve the
+    symmetric arc widened to beta' = beta - e0/2 at every width i*step <= 3t'/2 (step <= e0/2 for the
+    width net).  Returns the widths whose lattice fixed point is nonempty or unconverged (empty list:
+    no winner, given the fattening and bridge hypotheses)."""
+    bp = beta - e0 / 2
+    tp = 1 - 2 * bp
+    out, l = [], step
+    while l <= F(3, 2) * tp:
+        P, fx = solve_vw(k, bp, tp, [l], N=N)
+        if not fx or nonempty(P):
+            out.append(l)
+        l += step
+    return out
+
+
 def vw_orbit(P, k, s, t, L, m0, steps):
     """Independent check: play the certificate against the TRUE integer parts from m0 and return the
     exact xi (left end of the final window).  Raises if the strategy ever has no move."""
@@ -449,6 +465,12 @@ def main(argv):
         with open(argv[5], "w") as fh:
             json.dump({"k": k, "s": str(S), "t": str(T), "l": str(T * F(j, 400)), "bases": w}, fh, indent=1)
         print(f"{len(w)} bases, max gap/l {max(x.get('gap_over_l', 9) for x in w):.3f}")
+        return 0
+    if argv[0] == "width-sweep":
+        # width-sweep KMAX BETA E0 STEP LOGN : width_sweep for k = 1..KMAX
+        beta, e0, step, N = F(argv[2]), F(argv[3]), F(argv[4]), 1 << int(argv[5])
+        for k in range(1, int(argv[1]) + 1):
+            print(f"k {k} nonempty widths {[str(x) for x in width_sweep(k, beta, e0, step, N)]}", flush=True)
         return 0
     if argv[0] == "check":
         k, s, t, l = int(argv[1]), F(argv[2]), F(argv[3]), F(argv[4])
@@ -628,6 +650,14 @@ def test_fattened_winner_is_inside_the_rounded_solver():
     e = F(1, 10 ** 5)
     Fz = [[round_in(x[0], 1 << 16)] for x in fatten_residue(G, k, e)]
     assert rounded_post_fixed_failures(Fz, k, s - e / 2, t + e, [l + e], 1 << 16) != []
+
+
+def test_width_sweep_above_7_57_is_empty_with_a_live_control():
+    # 2026-10-10 (no_kRelaxedStrategy_7_57_plus): k = 1 is empty over the full width net just above 7/57,
+    # while the same solver finds a k = 1 winner just below it (the control that gives the sweep teeth)
+    assert width_sweep(1, F(7, 57) + F(1, 1000), F(1, 1000), F(1, 2500), 1 << 17) == []
+    b = F(7, 57) - F(1, 10 ** 4)
+    assert any(nonempty(solve_vw(1, b, 1 - 2 * b, [F(j, 1000)], N=1 << 15)[0]) for j in range(100, 140))
 
 
 if __name__ == "__main__":
