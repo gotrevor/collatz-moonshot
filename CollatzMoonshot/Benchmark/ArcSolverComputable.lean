@@ -783,4 +783,26 @@ theorem no_kRelaxedStrategy_7_57_plus_k3 (l : ℝ) (P : ℕ → Set ℝ) (hne : 
     (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
     (by norm_num) (by convert sweep_7_57_plus_k3 using 3; norm_num) hne
 
+/-- The computation, `k = 4` (same parameters as `sweep_7_57_plus_k1`). -/
+theorem sweep_7_57_plus_k4 : sweepEmpty 4 (2 ^ 17) (7 / 57 + 1 / 2000) (1 / 2500) 400 = true := by
+  native_decide
+
+/-- **No 4-memory relaxed strategy at `β = 7/57 + 1/1000`**, any width. -/
+theorem no_kRelaxedStrategy_7_57_plus_k4 (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 4, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy ((7 / 57 + 1 / 1000 : ℚ) : ℝ) (1 - 2 * (7 / 57 + 1 / 1000 : ℚ)) l 4 P :=
+  no_kRelaxedStrategy_of_codeSweep (N := 2 ^ 17) (fuel := 400) (e0 := 1 / 1000) (δ := 1 / 2500)
+    (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by convert sweep_7_57_plus_k4 using 3; norm_num) hne
+
+/-- The computation, `k = 5` (same parameters as `sweep_7_57_plus_k1`). -/
+theorem sweep_7_57_plus_k5 : sweepEmpty 5 (2 ^ 17) (7 / 57 + 1 / 2000) (1 / 2500) 400 = true := by
+  native_decide
+
+/-- **No 5-memory relaxed strategy at `β = 7/57 + 1/1000`**, any width. -/
+theorem no_kRelaxedStrategy_7_57_plus_k5 (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ 5, (P r).Nonempty) :
+    ¬ ArcTrap.KRelaxedStrategy ((7 / 57 + 1 / 1000 : ℚ) : ℝ) (1 - 2 * (7 / 57 + 1 / 1000 : ℚ)) l 5 P :=
+  no_kRelaxedStrategy_of_codeSweep (N := 2 ^ 17) (fuel := 400) (e0 := 1 / 1000) (δ := 1 / 2500)
+    (by norm_num) (by positivity) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (by convert sweep_7_57_plus_k5 using 3; norm_num) hne
+
 end CollatzMoonshot.Benchmark.ArcSolverComputable
