@@ -341,13 +341,15 @@ theorem stepOpen_arc_mono {s t s' t' l h : ℝ} (hs : s' ≤ s) (hst : s + t ≤
 /-- **End to end, modulo the forward bridge and the code.**  If the code operator `C w` (width `w`)
 contains the rounded open step on the widened arc `[β - e0/2, 1 - β + e0/2]`, the grid satisfies
 `1/N ≤ e0/96`, and the solver descent empties at every width `i δ` of a mesh with `δ ≤ e0/2`, then no
-live `k`-memory relaxed strategy holds `[β, 1 - β]` at any width.  Uses `KToLiftedBridge` (Astra) for the
-physical encoding; everything else here is proved. -/
+live `k`-memory relaxed strategy holds `[β, 1 - β]` at any width.  The sweep hypothesis covers exactly the
+computed widths `1 ≤ i`, `i δ ≤ 3t'/2` (`t' = 1 - 2β + e0`).  Pass `ArcFattening.kToLiftedBridge` (Astra,
+proved) for the physical encoding. -/
 theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k N : ℕ} (hk : 1 ≤ k)
     (hN : 0 < N) {β e0 δ : ℝ} (he0 : 0 < e0) (hNe : 1 / N ≤ e0 / 96) (hδ : 0 < δ) (hδe : δ ≤ e0 / 2)
     (C : ℝ → (ℕ → Set ℝ) → ℕ → Set ℝ)
     (hC : ∀ w P r, roundInRes N (resStepOpen (β - e0 / 2) (1 - 2 * β + e0) w k P r) ⊆ C w P r)
-    (hsweep : ∀ i : ℕ, ∃ n, ∀ r, descend (C (i * δ)) n r = ∅)
+    (hsweep : ∀ i : ℕ, 1 ≤ i → (i : ℝ) * δ ≤ 3 * (1 - 2 * β + e0) / 2 →
+      ∃ n, ∀ r, descend (C (i * δ)) n r = ∅)
     {l : ℝ} {P : ℕ → Set ℝ} (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
     ¬ ArcTrap.KRelaxedStrategy β (1 - 2 * β) l k P := by
   intro hS
@@ -370,7 +372,15 @@ theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k
     exact stepOpen_arc_mono (by linarith) (by linarith) T
   -- project to residues and run the abstract solver
   have hQ := residualize_post_fixed hk hN hpost'
-  obtain ⟨n, hn⟩ := hsweep i
+  have hi1' : 1 ≤ i := by
+    by_contra h0
+    have : i = 0 := by omega
+    subst this; simp at hi1; linarith
+  have hi2' : (i : ℝ) * δ ≤ 3 * (1 - 2 * β + e0) / 2 := by
+    obtain ⟨r0, hr0, hP0⟩ := hne
+    have := hS.width_le hr0 hP0
+    linarith
+  obtain ⟨n, hn⟩ := hsweep i hi1' hi2'
   have hkeep := descend_keeps (C := C ((i : ℝ) * δ)) (hC _)
     (fun r => (ArcFattening.residualize_subset k T r).trans Set.Ico_subset_Icc_self) hQ n
   obtain ⟨r, -, a, ha⟩ := ArcFattening.residualize_live (k := k) (hTne hPne)
@@ -379,11 +389,11 @@ theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k
   exact this
 
 /-- **No `k`-memory relaxed strategy, `k = 1, …, 6`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
-Confidence 85%.  It is `no_kRelaxedStrategy_of_sweep` (PROVED, axiom-clean) applied with `KToLiftedBridge`
-(open, Astra), the code operator of `solve_vw` / `arc_sweep` (inclusion (c), trusted) and the empty sweep
+Confidence 90%.  It is `no_kRelaxedStrategy_of_sweep` (PROVED, axiom-clean) applied with
+`ArcFattening.kToLiftedBridge` (PROVED, Astra), the code operator of `solve_vw` / `arc_sweep` (inclusion (c), trusted) and the empty sweep
 below.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
-its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
-(b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
+its composition with rounding (`rounded_fattened_post_fixed`), the width net (`width_net`), the residue
+chain (A), (B), the descent, and the forward bridge.  Trusted, not proved: (c) `solve_vw`'s computed step containing
 `stepOpen` (a fact about the Python: audited line by line against `vw_targets` / `vw_good_u` / `vw_aset` /
 `round_in`, and cross-checked by an independent brute-force open-move search, `brute_open_move`: 140 open
 starts on random lattice strategies at `k = 2, 3`, all in the solver's step; a version demanding only ONE
@@ -401,7 +411,8 @@ theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 6) (
   sorry
 
 /-- **Ten times closer: no 1-, 2- or 3-memory relaxed strategy at `β = 7/57 + 1/10000`, any width.**
-Confidence 80% (one instrument at this `β`).  Same hypotheses as `no_kRelaxedStrategy_7_57_plus`.
+Confidence 85% (one instrument at this `β`).  Same reduction as `no_kRelaxedStrategy_7_57_plus`: only (c)
+and the sweep's execution are not kernel-checked.
 Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
 `β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
 (`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`.  Positive control on the same grid: winners at

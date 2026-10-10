@@ -3965,9 +3965,10 @@ Open route to solver completeness at fixed `k` (with Astra, 2026-10-09; hand-rev
 perturbed by `|q| ≤ e/24`), a winner at `(β, l)` gives winners with positive move and start margins at arc
 `β - e0/2` for every width in `[l + e0/2, l + e0]` (`KRelaxedStrategy.mono` for the arc).  So lattice
 emptiness of `solve_vw` at every width of a mesh finer than `e0/2` up to `3t'/2` (`t' = t + e0`), on a grid
-fine for margins `≍ e0`, would exclude every winner, thin or fat, at `β`.  Needs `ArcFattening`'s
-`KToLiftedBridge` / `LiftedToKBridge` and a proof that `solve_vw`'s rounded step contains the margin
-strategy.  Uniform-in-`k` liveness is a separate target.
+fine for margins `≍ e0`, would exclude every winner, thin or fat, at `β`.  NOW PROVED end to end
+(2026-10-10) as `ArcSolverInclusion.no_kRelaxedStrategy_of_sweep` with `ArcFattening.kToLiftedBridge`
+(Astra); the only unproved input is that the solver code contains the abstract rounded step.  Results:
+`ArcSolverInclusion.no_kRelaxedStrategy_7_57_plus` (`k ≤ 6`).  Uniform-in-`k` is a separate target.
 Solver-inclusion check (2026-10-10, `arc_trap_k.fatten_residue` / `rounded_post_fixed_failures`): the
 fattened `k = 3` off-centre winner, converted to residue form (a start pushed below its integer part
 moves to residue `r - 1`), is a post-fixed point of the rounded step at `N = 2^20` for `e = 1/100` down to
