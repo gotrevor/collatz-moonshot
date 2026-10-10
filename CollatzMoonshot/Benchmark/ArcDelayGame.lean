@@ -308,12 +308,233 @@ game's picture), beats every such word. -/
 def ComponentKValue : Prop :=
   ∀ k : ℕ, 1 ≤ k → ∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ S : Set (ℝ × ℝ), ¬ KComponentStrategy β k S
 
+private lemma split_mod_two (n q : ℕ) (hq : 0 < q) :
+    ∃ b < 2, n % (2 * q) = n % q + b * q := by
+  let x := n % (2 * q)
+  refine ⟨x / q, ?_, ?_⟩
+  · have hx : x < 2 * q := Nat.mod_lt _ (by positivity)
+    exact (Nat.div_lt_iff_lt_mul hq).2 (by simpa [mul_comm] using hx)
+  · have hlow : x % q = n % q := by
+      dsimp [x]
+      rw [Nat.mod_mod_of_dvd n ⟨2, by omega⟩]
+    calc
+      x = x % q + q * (x / q) := (Nat.mod_add_div x q).symm
+      _ = n % q + (x / q) * q := by rw [hlow, mul_comm]
+
+private lemma shifted_half_mod (m : ℤ) (q : ℕ) (hq : 0 < q) :
+    let r := m % (2 * q : ℕ)
+    ((3 * m - m % 2) / 2) % q = ((3 * r - r % 2) / 2) % q := by
+  dsimp
+  let t := m / (2 * (q : ℤ))
+  have hm : m = m % (2 * (q : ℤ)) + 2 * (q : ℤ) * t := by
+    rw [Int.emod_add_mul_ediv]
+  conv_lhs => rw [hm]
+  have hmod2 : (m % (2 * (q : ℤ)) + 2 * (q : ℤ) * t) % 2 =
+      m % (2 * (q : ℤ)) % 2 := by
+    rw [Int.add_emod]
+    rw [show 2 * (q : ℤ) * t = ((q : ℤ) * t) * 2 by ring, Int.mul_emod_left, add_zero,
+      Int.emod_emod]
+  rw [hmod2]
+  have hdiv :
+      (3 * (m % (2 * (q : ℤ)) + 2 * (q : ℤ) * t) - m % (2 * (q : ℤ)) % 2) / 2 =
+        (3 * (m % (2 * (q : ℤ))) - m % (2 * (q : ℤ)) % 2) / 2 + 3 * (q : ℤ) * t := by
+    rw [show 3 * (m % (2 * (q : ℤ)) + 2 * (q : ℤ) * t) - m % (2 * (q : ℤ)) % 2 =
+      (3 * (m % (2 * (q : ℤ))) - m % (2 * (q : ℤ)) % 2) +
+        2 * (3 * (q : ℤ) * t) by ring]
+    rw [Int.add_ediv_of_dvd_right (by exact dvd_mul_right 2 _),
+      Int.mul_ediv_cancel_left _ (by norm_num)]
+  rw [hdiv, show 3 * (q : ℤ) * t = (q : ℤ) * (3 * t) by ring, Int.add_emod,
+    Int.mul_emod_right, add_zero, Int.emod_emod]
+
+private lemma floor_three_halves_int_add (m : ℤ) (u : ℝ) :
+    ⌊3 * ((m : ℝ) + u) / 2⌋ =
+      (3 * m - m % 2) / 2 + ⌊3 * u / 2 + ((m % 2).toNat : ℝ) / 2⌋ := by
+  have hm0 : 0 ≤ m % 2 := Int.emod_nonneg _ (by norm_num)
+  have hcastI : ((m % 2).toNat : ℤ) = m % 2 := Int.toNat_of_nonneg hm0
+  have hcast : ((m % 2).toNat : ℝ) = ((m % 2 : ℤ) : ℝ) := by exact_mod_cast hcastI
+  have heven : 2 ∣ 3 * m - m % 2 := by
+    rw [Int.dvd_iff_emod_eq_zero]
+    omega
+  have hdecomp : (3 * (m : ℝ)) / 2 =
+      (((3 * m - m % 2) / 2 : ℤ) : ℝ) + ((m % 2 : ℤ) : ℝ) / 2 := by
+    have hid := Int.ediv_mul_cancel heven
+    have hidR := congrArg (fun z : ℤ => (z : ℝ)) hid
+    push_cast at hidR
+    linarith
+  rw [show 3 * ((m : ℝ) + u) / 2 = (((3 * m - m % 2) / 2 : ℤ) : ℝ) +
+      (3 * u / 2 + ((m % 2).toNat : ℝ) / 2) by rw [hcast]; linarith [hdecomp]]
+  rw [Int.floor_intCast_add]
+
+private lemma fract_three_halves_int_add (m : ℤ) (u : ℝ) :
+    Int.fract (3 * ((m : ℝ) + u) / 2) =
+      Int.fract (3 * u / 2 + ((m % 2).toNat : ℝ) / 2) := by
+  have hm0 : 0 ≤ m % 2 := Int.emod_nonneg _ (by norm_num)
+  have hcastI : ((m % 2).toNat : ℤ) = m % 2 := Int.toNat_of_nonneg hm0
+  have hcast : ((m % 2).toNat : ℝ) = ((m % 2 : ℤ) : ℝ) := by exact_mod_cast hcastI
+  have heven : 2 ∣ 3 * m - m % 2 := by
+    rw [Int.dvd_iff_emod_eq_zero]
+    omega
+  have hdecomp : (3 * (m : ℝ)) / 2 =
+      (((3 * m - m % 2) / 2 : ℤ) : ℝ) + ((m % 2 : ℤ) : ℝ) / 2 := by
+    have hid := Int.ediv_mul_cancel heven
+    have hidR := congrArg (fun z : ℤ => (z : ℝ)) hid
+    push_cast at hidR
+    linarith
+  rw [show 3 * ((m : ℝ) + u) / 2 = (((3 * m - m % 2) / 2 : ℤ) : ℝ) +
+      (3 * u / 2 + ((m % 2).toNat : ℝ) / 2) by rw [hcast]; linarith [hdecomp]]
+  exact Int.fract_intCast_add _ _
+
+private lemma residue_mod_two (m : ℤ) (k : ℕ) (hk : 1 ≤ k) :
+    (m % (2 ^ k : ℕ)).toNat % 2 = (m % 2).toNat := by
+  have hp : (0 : ℤ) < (2 ^ k : ℕ) := by positivity
+  have hx : 0 ≤ m % (2 ^ k : ℕ) := Int.emod_nonneg _ hp.ne'
+  have heq : (m % (2 ^ k : ℕ)) % 2 = m % 2 := by
+    rw [Int.emod_emod_of_dvd]
+    exact_mod_cast (pow_dvd_pow 2 hk)
+  have ht := congrArg Int.toNat heq
+  rw [Int.toNat_emod hx (by norm_num : (0 : ℤ) ≤ 2)] at ht
+  exact ht
+
 open ArcTrap in
 /-- **Domination: the component game implies the fixed-width conjecture.**  From a live `k`-memory
 relaxed strategy `P`, the windows containing some `[m + a, m + a + l]` with `a ∈ P (m mod 2^k)` form a
 `KComponentStrategy`: the relaxed sub-window lies in one component, and its child's integer part is
 `≡ (3r - r % 2)/2 + J (mod 2^(k-1))` with the top bit free, which is what `∀ z` asks for. -/
 theorem finiteMemoryRelaxedValue_of_componentK (h : ComponentKValue) : FiniteMemoryRelaxedValue := by
-  sorry
+  intro k hk β hβ hβ' l P hne hP
+  let S : Set (ℝ × ℝ) := {p | ∃ m : ℤ, ∃ a ∈ P (m % (2 ^ k : ℕ)).toNat,
+    p.1 ≤ (m : ℝ) + a ∧ (m : ℝ) + a + l ≤ p.2}
+  apply h k hk β hβ hβ' S
+  refine ⟨?_, ?_⟩
+  · obtain ⟨r, hr, a, ha⟩ := hne
+    refine ⟨((r : ℝ) + a, (r : ℝ) + a + l), ?_⟩
+    refine ⟨(r : ℤ), a, ?_, le_rfl, le_rfl⟩
+    have hi : (((r : ℤ) % (2 ^ k : ℕ)).toNat) = r := by
+      have hz : (0 : ℤ) ≤ r := by positivity
+      have hri : (r : ℤ) < (2 ^ k : ℕ) := by exact_mod_cast hr
+      rw [Int.emod_eq_of_lt hz hri, Int.toNat_natCast]
+    rwa [hi]
+  · rintro p ⟨m, a, ha, hpa, hap⟩
+    obtain ⟨hl, hsub, hstep⟩ := hP
+    let r := (m % (2 ^ k : ℕ)).toNat
+    have hr : r < 2 ^ k := by
+      dsimp [r]
+      rw [Int.toNat_lt (Int.emod_nonneg _ (by positivity))]
+      exact Int.emod_lt_of_pos _ (by positivity)
+    have ha01 := hsub r ha
+    obtain ⟨u, hau, hul, ⟨j, hju, huj⟩, huP⟩ := hstep r hr a ha
+    refine ⟨m + j, ?_, ?_⟩
+    · apply lt_of_lt_of_le (b := (m : ℝ) + u + 2 * l / 3)
+      · have hleft : max p.1 ((m + j : ℤ) + β) ≤ (m : ℝ) + u := by
+          apply max_le
+          · linarith
+          · push_cast
+            linarith
+        have hpos : 0 < 2 * l / 3 := by positivity
+        linarith
+      · apply le_min
+        · linarith
+        · push_cast
+          linarith
+    · intro z
+      let q := 2 ^ (k - 1)
+      have hq : 0 < q := by positivity
+      have hkpow : 2 ^ k = 2 * q := by
+        have hkeq : k = (k - 1) + 1 := by omega
+        rw [hkeq, pow_succ]
+        simp [q, mul_comm]
+      let v : ℝ := 3 * ((m : ℝ) + u) / 2
+      let m' : ℤ := ⌊v⌋ + z * q
+      let a' : ℝ := Int.fract v
+      have hu0 : 0 ≤ u := ha01.1.trans hau
+      have harg : 0 ≤ 3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2 := by positivity
+      have hfloor : 0 ≤ ⌊3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋ :=
+        (Int.floor_nonneg.mpr harg)
+      have hpar : r % 2 = (m % 2).toNat := by
+        exact residue_mod_two m k hk
+      have hm' : m' = (3 * m - m % 2) / 2 +
+          ⌊3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋ + z * q := by
+        dsimp [m', v]
+        rw [floor_three_halves_int_add, hpar]
+      let base : ℕ := ((3 * r - r % 2) / 2 +
+        (⌊3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2⌋).toNat) % q
+      have hlow : (m' % (2 * q : ℕ)).toNat % q = base := by
+        have hmod0 : (0 : ℤ) ≤ m' % (2 * q : ℕ) := Int.emod_nonneg _ (by positivity)
+        have heq : (m' % (2 * q : ℕ)) % q = (base : ℤ) := by
+          rw [Int.emod_emod_of_dvd _ ⟨2, by omega⟩]
+          dsimp [base]
+          rw [hm', Int.add_emod, Int.add_emod]
+          simp only [Int.mul_emod_left, Int.zero_emod, add_zero, Int.emod_emod]
+          rw [Int.add_emod]
+          rw [shifted_half_mod m q hq]
+          have hrInt : (r : ℤ) = m % (2 * q : ℕ) := by
+            dsimp [r]
+            rw [Int.toNat_of_nonneg (Int.emod_nonneg _ (by positivity))]
+            congr 2
+            exact_mod_cast hkpow
+          rw [← hrInt]
+          have hrmod : (r : ℤ) % 2 = (r % 2 : ℕ) := by norm_cast
+          rw [hrmod]
+          have hshiftcast : (3 * (r : ℤ) - (r % 2 : ℕ)) / 2 =
+              (((3 * r - r % 2) / 2 : ℕ) : ℤ) := by
+            have hle : r % 2 ≤ 3 * r := by omega
+            rw [show 3 * (r : ℤ) - (r % 2 : ℕ) = ((3 * r - r % 2 : ℕ) : ℤ) by
+              rw [Int.ofNat_sub hle]; norm_num]
+            exact (Int.natCast_ediv _ _).symm
+          rw [Int.toNat_of_nonneg hfloor]
+          rw [hshiftcast]
+          have hshiftcast' : ((3 * r - r % 2 : ℕ) : ℤ) / 2 =
+              (((3 * r - r % 2) / 2 : ℕ) : ℤ) := (Int.natCast_ediv _ _).symm
+          rw [hshiftcast', ← Int.add_emod]
+        have ht := congrArg Int.toNat heq
+        rw [Int.toNat_emod hmod0 (by positivity : (0 : ℤ) ≤ q), Int.toNat_natCast] at ht
+        exact ht
+      obtain ⟨b, hb, hbEq⟩ := split_mod_two (m' % (2 * q : ℕ)).toNat q hq
+      have hindex : (m' % (2 ^ k : ℕ)).toNat = base + b * q := by
+        rw [hkpow]
+        have hn : (m' % (2 * q : ℕ)).toNat < 2 * q := by
+          rw [Int.toNat_lt (Int.emod_nonneg _ (by positivity))]
+          exact Int.emod_lt_of_pos _ (by positivity)
+        rw [← Nat.mod_eq_of_lt hn, hbEq, hlow]
+      have ha' : a' ∈ P (m' % (2 ^ k : ℕ)).toNat := by
+        rw [hindex]
+        dsimp [base, q]
+        have haval : a' = Int.fract (3 * u / 2 + ((r % 2 : ℕ) : ℝ) / 2) := by
+          dsimp [a', v]
+          rw [fract_three_halves_int_add, ← hpar]
+        rw [haval]
+        exact huP b hb
+      refine ⟨m', a', ha', ?_, ?_⟩
+      · dsimp [m', a', v]
+        push_cast
+        have hv := Int.floor_add_fract (3 * ((m : ℝ) + u) / 2)
+        have hmax : max p.1 ((m + j : ℤ) + β) ≤ (m : ℝ) + u := by
+          apply max_le
+          · linarith
+          · push_cast
+            linarith
+        push_cast at hmax
+        have hqcast : ((q : ℕ) : ℝ) = (2 : ℝ) ^ (k - 1) := by simp [q]
+        have hvz : (⌊3 * ((m : ℝ) + u) / 2⌋ : ℝ) + (z : ℝ) * q +
+            Int.fract (3 * ((m : ℝ) + u) / 2) =
+            3 * ((m : ℝ) + u) / 2 + (z : ℝ) * q := by linarith
+        rw [hqcast] at hvz ⊢
+        nlinarith [show (0 : ℝ) < 2 by norm_num]
+      · dsimp [m', a', v]
+        push_cast
+        have hv := Int.floor_add_fract (3 * ((m : ℝ) + u) / 2)
+        have hmin : (m : ℝ) + u + 2 * l / 3 ≤
+            min p.2 ((m + j : ℤ) + 1 - β) := by
+          apply le_min
+          · linarith
+          · push_cast
+            linarith
+        push_cast at hmin
+        have hqcast : ((q : ℕ) : ℝ) = (2 : ℝ) ^ (k - 1) := by simp [q]
+        have hvz : (⌊3 * ((m : ℝ) + u) / 2⌋ : ℝ) + (z : ℝ) * q +
+            Int.fract (3 * ((m : ℝ) + u) / 2) =
+            3 * ((m : ℝ) + u) / 2 + (z : ℝ) * q := by linarith
+        rw [hqcast] at hvz ⊢
+        nlinarith [show (0 : ℝ) < 2 by norm_num]
 
 end CollatzMoonshot.Benchmark.ArcDelayGame

@@ -6,6 +6,9 @@ Two targets, in this order.  Done when both are proved and `#print axioms` for e
 1. `ArcDelayGame.finiteMemoryRelaxedValue_of_componentK` (`CollatzMoonshot/Benchmark/ArcDelayGame.lean`).
 2. `ArcBandCertificate.relaxedAboveUpperEdge` (`CollatzMoonshot/Benchmark/ArcBandCertificate.lean`).
 
+Item 1 is complete (2026-10-10): the component strategy is constructed with the prescribed absolute
+windows, and the floor/fractional-part and binary carry identities are proved in Lean.  Item 2 is next.
+
 Never weaken a statement.  Commit green after each milestone.  Edit only: the proof of item 1 (plus helper
 lemmas placed directly above it), `ArcBandCertificate.lean`, new files `ArcBandCertificate*.lean` (root-import
 them in `CollatzMoonshot.lean`), and this file.  Do not edit `experiments/` (the Python tool is the spec).
