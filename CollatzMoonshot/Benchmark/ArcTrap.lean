@@ -3937,6 +3937,16 @@ def KRelaxedLiveEverywhere : Prop :=
     (∃ r < 2 ^ k, (P r).Nonempty) →
       ∃ Q : ℕ → Set ℝ, KRelaxedStrategy s t l k Q ∧ ∀ r < 2 ^ k, (Q r).Nonempty
 
+/-- **More memory never hurts**: forgetting the top bit turns a `k`-strategy into a `(k + 1)`-strategy.  The
+`(k + 1)` move lands in one specific lift of the `k`-target base, and the `k`-strategy already has both
+lifts live.  Confidence 97% (residue arithmetic; `test_awareness_never_hurts` checks it on the solver).
+So a counterexample to `KRelaxedLiveEverywhere` can only occur at the least memory that wins: a strategy
+live everywhere at `k` lifts to one live everywhere at `k + 1`, and every `k = 0` strategy is live
+everywhere. -/
+theorem KRelaxedStrategy.lift {s t l : ℝ} {k : ℕ} {P : ℕ → Set ℝ} (hk : 1 ≤ k)
+    (h : KRelaxedStrategy s t l k P) : KRelaxedStrategy s t l (k + 1) (fun r => P (r % 2 ^ k)) := by
+  sorry
+
 /-- Given `KRelaxedLiveEverywhere`, `FiniteMemoryRelaxedValue` holds on `[0.138, 1/2)` for every `k`. -/
 theorem finiteMemoryRelaxedValue_ge_138 (hL : KRelaxedLiveEverywhere) {k : ℕ} (hk : 1 ≤ k) {β : ℝ}
     (hβ : 69 / 500 ≤ β) (l : ℝ) (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
