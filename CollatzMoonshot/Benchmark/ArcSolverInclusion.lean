@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Benchmark.ArcTrap
+import CollatzMoonshot.Benchmark.ArcFattening
 
 /-!
 # Rounded-operator inclusion for the relaxed arc game (physical coordinates)
@@ -80,6 +81,32 @@ theorem roundIn_post_fixed {N : ℕ} (hN : 0 < N) {s t l h σ ρ : ℝ} {C : Set
     roundIn N (thick ρ C) ⊆ roundIn N (stepOpen s t l h (roundIn N (thick ρ C))) :=
   roundIn_mono (hR.trans (stepOpen_mono (thick_subset_roundIn hN hσ C)))
 
+/-- **Fattened strategies survive the rounded solver** (composition with Astra's
+`ArcFattening.LiftedStrategy.robust_fatten`).  Shift the old starts by `-e/2` to get the core `C`;
+its `e/12`-thickening is `fattenCore e P`.  With grid `1/N ≤ e/48`, the rounded fattened strategy is a
+post-fixed point of the rounded step on the widened arc and width `l + e`, so the solver's greatest
+fixed point there contains it; it is nonempty whenever `P` is. -/
+theorem rounded_fattened_post_fixed {s t l h e : ℝ} {N : ℕ} {P : Set ℝ}
+    (hP : ArcFattening.LiftedStrategy s t l h P) (he : 0 < e) (hN : 0 < N) (hNe : 1 / N ≤ e / 48) :
+    let C := (fun x => x - e / 2) '' P
+    roundIn N (thick (e / 12) C) ⊆
+        roundIn N (stepOpen (s - e / 2) (t + e) (l + e) h (roundIn N (thick (e / 12) C))) ∧
+      (P.Nonempty → (roundIn N (thick (e / 12) C)).Nonempty) := by
+  intro C
+  refine ⟨roundIn_post_fixed hN (σ := e / 16) (by linarith) ?_, ?_⟩
+  · rintro y ⟨c, ⟨x, hx, rfl⟩, hy⟩
+    have hyF : y ∈ ArcFattening.fattenCore e P :=
+      ⟨x, hx, y - (x - e / 2), hy, by ring⟩
+    obtain ⟨v, hv⟩ := hP.robust_fatten he.le y hyF
+    refine ⟨v, e / 24, by positivity, fun q hq => ?_⟩
+    obtain ⟨h1, h2, hj, hb⟩ := hv q hq
+    refine ⟨⟨h1, h2, hj⟩, fun b hb' => ?_⟩
+    obtain ⟨x', hx', hd⟩ := hb b hb'
+    exact ⟨x' - e / 2, ⟨x', hx', rfl⟩, hd⟩
+  · rintro ⟨x, hx⟩
+    exact ⟨x - e / 2, thick_subset_roundIn hN (σ := 0) (by linarith) C
+      ⟨x - e / 2, ⟨x, hx, rfl⟩, by simp⟩⟩
+
 /-- **Width net.**  A winner of width `l` fattened by any `e ∈ [e0/2, e0]` has width in
 `[l + e0/2, l + e0]`, and a mesh of step `δ ≤ e0/2` hits that interval. -/
 theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (hδe : δ ≤ e0 / 2) :
@@ -94,9 +121,10 @@ theorem width_net {l e0 δ : ℝ} (hl : 0 ≤ l) (he0 : 0 < e0) (hδ : 0 < δ) (
     linarith
 
 /-- **No 1-, 2- or 3-memory relaxed strategy holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
-Confidence 85%: conditional on (a) `ArcFattening`'s robust fattening with the `e/2` arc widening,
-(b) its residue/physical bridges, and (c) `solve_vw`'s computed step containing `stepOpen` (Python).
-Given those, `roundIn_post_fixed` and `width_net` reduce it to a finite computation, which came out
+Confidence 85%.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
+its composition with rounding (`rounded_fattened_post_fixed`), and the width net (`width_net`).  Open:
+(b) the residue/physical bridges (`ArcFattening`, Astra) and (c) `solve_vw`'s computed step containing
+`stepOpen` (a fact about the Python).  Given those, it reduces to a finite computation, which came out
 empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): widened arc
 `β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
 (`e0 N / 48 ≈ 2.7`), `k = 1, 2, 3`.  Positive control: at `N = 2^15` the solver finds winners at
