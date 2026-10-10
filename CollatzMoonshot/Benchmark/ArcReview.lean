@@ -31,7 +31,12 @@ def saturate (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ) : ℕ → ℕ → Set
 finitely many predecessor layers to have a common start at every pair of lifts.
 This is stronger than weak liveness.  The first control is the known k=6 dodging strategy:
 remove its forbidden-class constraint and ask whether saturation restores the missing base.
-Its failure would retire this mechanism, not weak liveness itself. -/
+Its failure would retire this mechanism, not weak liveness itself.
+**First control passed (2026-10-09, `arc_trap_k.saturate_vw`):** from the `k = 6` dodge (arc
+`[2/5, 2/5 + 87/100]`, widths `j = 100, 130`, base `27` missing), ONE predecessor layer restores base
+`27` (good bases `31 → 32`), and saturation converges in 36 rounds to a strategy live at all 64 classes.
+That limit is strictly inside the greatest fixed point.  Regression `test_saturation_restores_the_dodged_base`.
+Confidence 60%: one discriminating instance; no other non-maximal seed is known to test. -/
 def PredecessorSaturationAllBases : Prop :=
   ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k →
     KRelaxedStrategy s t l k P → (∃ r < 2 ^ k, (P r).Nonempty) →

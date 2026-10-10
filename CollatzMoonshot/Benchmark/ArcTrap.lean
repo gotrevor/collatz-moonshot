@@ -3904,7 +3904,9 @@ Direct test of this statement (2026-10-09, `arc_trap_k.py live-forbid`): start t
 class `m` empty, so it computes the largest strategy avoiding `m`.  Over 224 winners (`k = 1, …, 4`; four
 symmetric arcs `β = 0.11, …, 0.122` and twelve random off-centre arcs, widths `t · j/400`), forbidding any
 single class empties the fixed point every time, within 3 or 4 iterations (a few classes die, then all at
-once).  Regression `test_forbidding_any_class_kills_the_strategy`.
+once).  These are emptiness results on the `1/2^20` lattice (the solver rounds inward), so a thin exact
+dodge could be missed; the `k = 6` counterexample below is the sound (nonempty, certificate) direction.
+Regression `test_forbidding_any_class_kills_the_strategy`.
 **Counterexample at `k = 6`**: the off-centre arc `[2/5, 2/5 + 87/100]`, widths `87/100 · j/400`,
 `j = 100, 130`, has a strategy live at 63 of the 64 classes, dead only at `27`, and another dead only at
 `59` (both `≡ -5 mod 32`).  Each converges in 39 iterations, and 36 true-integer orbit checks

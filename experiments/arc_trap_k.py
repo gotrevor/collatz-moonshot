@@ -193,6 +193,29 @@ def solve_vw(k, s, t, L, iters=5000, N=1 << 24, forbidden=(), trace=None):
     return P, False
 
 
+def saturate_vw(P, k, s, t, L, rounds=200, N=1 << 20, trace=None):
+    """Predecessor saturation (ArcReview.saturate): repeatedly add every start with a legal move whose
+    both top-bit children lie in the current set.  Starting from a post-fixed point, every stage is one
+    (new starts move into the old set), so the limit is a strategy.  `trace` collects the good-base
+    count per round."""
+    n, q = 1 << k, len(L)
+    for _ in range(rounds):
+        if trace is not None:
+            trace.append(len(good_bases(P, k)) if k >= 1 else None)
+        new = []
+        for r in range(n):
+            d = HALF if r % 2 else F(0)
+            row = []
+            for i in range(q):
+                acc = norm(sum((vw_aset(P, r, k, i, j, d, s, t, L) for j in range(q)), []))
+                row.append(norm(P[r][i] + round_in(acc, N)))
+            new.append(row)
+        if new == P:
+            return P, True
+        P = new
+    return P, False
+
+
 def vw_orbit(P, k, s, t, L, m0, steps):
     """Independent check: play the certificate against the TRUE integer parts from m0 and return the
     exact xi (left end of the final window).  Raises if the strategy ever has no move."""
@@ -446,6 +469,17 @@ def test_all_bases_good_but_the_dodge_lacks_one():
     assert len(good_bases(solve_vw(6, s, t, L, N=1 << 20)[0], 6)) == 32
     Q = solve_vw(6, s, t, L, N=1 << 20, forbidden={27, 59})[0]
     assert sorted(set(range(32)) - set(good_bases(Q, 6))) == [27]
+
+
+def test_saturation_restores_the_dodged_base():
+    # 2026-10-09, ArcReview.PredecessorSaturationAllBases first control: one predecessor layer over the
+    # k = 6 dodge (base 27 missing) makes every base good again
+    s, t = F(2, 5), F(87, 100)
+    L = [t * F(100, 400)]
+    Q = solve_vw(6, s, t, L, N=1 << 20, forbidden={27, 59})[0]
+    tr = []
+    S, fx = saturate_vw(Q, 6, s, t, L, rounds=2, trace=tr)
+    assert tr == [31, 32]
 
 
 if __name__ == "__main__":
