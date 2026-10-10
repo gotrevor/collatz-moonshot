@@ -158,8 +158,12 @@ start in `(0.122810, 0.122815]` at both `β = 0.10` and `β = 0.11` (`N = 2^20` 
 lattice lower edge sits just above the true one), and at `0.1230` (the first grid width above `7/57`) for
 `β = 7/57 - 1/100, 7/57 - 1/1000, 0.12, 0.122` on coarser grids.  The same number as the `β`-threshold
 (`relaxed_barrier`) but a different statement: here `β` is well below `7/57`.  Monotone in `β`
-(`RelaxedStrategy.mono`), so `β = 1/10` is the whole claim.  A finite refutation in the style of
-`barrier_core` (node lemmas with endpoints affine in `l`) is the expected proof shape. -/
+(`RelaxedStrategy.mono`), so `β = 1/10` is the whole claim.
+Exact (2026-10-10, `experiments/arc_band.py point`, no lattice): at `β = 1/10`, `l = 7/57` is live after 80
+steps (`[5/57, 7/57]` survives), and below it the kill depth GROWS: `7, 11, 19, 25, 30, 36` steps at
+`l = 0.11, 0.12, 0.1227, 0.1228, 0.122806, 0.1228069`.  That is about `log_{3/2}(1/ε)`, so unlike the upper edge
+(`RelaxedAboveUpperEdge`, depth `≤ 8`) there is no finite cover.  The proof shape is `relaxed_barrier`'s: an
+AND-OR funnel with endpoints affine in `l`, plus a runaway lemma whose expansion rate is `3/2`. -/
 def RelaxedLowerEdge : Prop :=
   ∀ (β l : ℝ) (P : Set ℝ), 1 / 10 ≤ β → β < 1 / 2 → l < 7 / 57 → ¬ RelaxedStrategy β (1 - 2 * β) l P
 
@@ -233,14 +237,33 @@ sets after `n` steps, for every `n ≤ n₁ - 2`, where `n₁` (7, 7, 6) is the 
 `k`.  It fails at the last two steps, after which memory keeps sets alive for about two more moves per bit
 (deaths at `10, 11, 13`; `9, 11, 14`; `7, 9, 11`).
 **The edge is a bounded-depth kill.**  The memoryless descent empties in 7 steps at `l = u(β) + ε` for
-`ε = 10⁻³, 10⁻⁴, 10⁻⁵` (`β = 0.12` and `0.105`, `N = 2^22`; 8 steps at `ε = 10⁻²`).  So, unlike the `7/57`
-barrier (whose funnel needs the runaway lemma at the open end), the exclusion half has a finite AND-OR
-certificate of depth 7 with endpoints affine in `(β, l)`, open exactly at `l = u(β)`: a symbolic relaxed
-descent over polygons in the `(β, l)` plane (the 2D analogue of `experiments/arc_barrier.py`) would produce
-it, and a treadmill could transcribe it into node lemmas. -/
+`ε = 10⁻³, 10⁻⁴, 10⁻⁵` (`β = 0.12` and `0.105`, `N = 2^22`; 8 steps at `ε = 10⁻²`).  The exclusion above the
+edge is now certified symbolically (`RelaxedAboveUpperEdge`), so the open parts of this band are the lower
+exclusion (`RelaxedLowerEdge`, a runaway, not a finite cover) and the existence direction.
+Confidence 85% after that certificate. -/
 def RelaxedWidthBand : Prop :=
   ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 →
     ((∃ P : Set ℝ, RelaxedStrategy β (1 - 2 * β) l P) ↔
       (7 / 57 ≤ l ∧ l ≤ min (3 / 4 - 39 * β / 8) (15 / 16 - 105 * β / 16)))
+
+open ArcTrap in
+/-- **Conjecture (computationally certified): no memoryless relaxed strategy above the upper edge.**  The
+exclusion half of `RelaxedWidthBand` above `u(β)`.  Confidence 95%.
+Certificate (2026-10-10, `experiments/arc_band.py cover`, `test_cover_above_edge`): an exact descent
+`P₀ = [0, 1]`, `P_{n+1} = P_n ∩ A₀ ∩ A₁`, `A_d = {a | [a, a + l/3] meets G ∩ (2/3)(P_n + j - d), j ≤ 2}`,
+`G = [β, 1 - β - 2l/3] ∪ [1 + β, 2 - β - 2l/3]`, over closed intervals (an over-approximation, so emptiness
+is sound), with every endpoint affine in `(β, l)`.  It runs on convex polygons and splits one along any
+comparison that changes sign inside it.  Over the two pieces `u(β) < l ≤ 3/2 - 3β` (`β ∈ [1/12, 1/9]` and
+`[1/9, 7/57]`), all 35 + 21 leaf polygons empty, within 7 and 8 steps respectively.  Above `3/2 - 3β` the
+gate `G` is empty.  The 28 split lines all have a `β` term (none is horizontal), so a point on a split
+line, or on `β = 1/10`, is reached by `RelaxedStrategy.mono` from a leaf interior just to its left.
+Known-answer control: at `(β, l) = (0.12, 0.1501), (0.105, 0.2382), (0.1, 0.2626)` the exact point descent
+empties in 6 steps; at `0.1495, 0.2380, 0.2624` it is live after 12 (`test_measure_twice_edge_point`).  The
+live set at `(0.12, 0.1495)` is `P₀ ∩ P₁` of the Rust `k = 1` fixed point, interval for interval.
+Proof shape: a Lean twin of the checker over affine forms (one soundness lemma for the symbolic step, then
+`native_decide` per polygon), or node lemmas transcribed by a treadmill. -/
+def RelaxedAboveUpperEdge : Prop :=
+  ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 → min (3 / 4 - 39 * β / 8) (15 / 16 - 105 * β / 16) < l →
+    ∀ P : Set ℝ, ¬ RelaxedStrategy β (1 - 2 * β) l P
 
 end CollatzMoonshot.Benchmark.ArcDelayGame
