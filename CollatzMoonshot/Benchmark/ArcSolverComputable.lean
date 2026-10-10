@@ -313,14 +313,247 @@ theorem Ico_subset_ivSet_interIv {A B : IvList} {x y : ℝ} (_hxy : x < y)
   · push_cast; exact max_le ha1 hb1
   · push_cast; exact le_min (by linarith) (by linarith)
 
+/-! ### The solver step -/
+
+/-- A cell `[i/N, (i+1)/N]` lying in a piece `p ∈ M` that starts strictly before it (or at `0`) is kept
+by `roundCode`. -/
+theorem cell_subset_roundCode {N : ℕ} (hN : 0 < N) {M : IvList} {p : ℚ × ℚ} (hp : p ∈ M) (i : ℕ)
+    (h1 : ((p.1 : ℚ) : ℝ) < (i : ℝ) / N ∨ p.1 = 0) (h2 : ((i : ℝ) + 1) / N ≤ ((p.2 : ℚ) : ℝ)) :
+    Set.Icc ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ ivSet (roundCode N M) := by
+  have hN' : (0 : ℚ) < N := by exact_mod_cast hN
+  set i0 : ℤ := if p.1 = 0 then 0 else ⌊p.1 * (N : ℚ)⌋ + 1 with hi0
+  set i1 : ℤ := ⌊p.2 * (N : ℚ)⌋ with hi1
+  have hA : i0 ≤ i := by
+    rw [hi0]; split_ifs with h0
+    · positivity
+    · rcases h1 with h1 | h1
+      · have : p.1 < (i : ℚ) / N := by exact_mod_cast (show ((p.1 : ℚ) : ℝ) < ((i : ℚ) : ℝ) / ((N : ℚ) : ℝ) by push_cast; exact h1)
+        rw [lt_div_iff₀ hN'] at this
+        have : ⌊p.1 * (N : ℚ)⌋ < (i : ℤ) := Int.floor_lt.2 (by push_cast; exact this)
+        omega
+      · exact absurd h1 h0
+  have hB : (i : ℤ) + 1 ≤ i1 := by
+    have : ((i : ℚ) + 1) / N ≤ p.2 := by exact_mod_cast (show (((i : ℚ) + 1 : ℚ) : ℝ) / ((N : ℚ) : ℝ) ≤ ((p.2 : ℚ) : ℝ) by push_cast; exact h2)
+    rw [div_le_iff₀ hN'] at this
+    exact Int.le_floor.2 (by push_cast; exact this)
+  have hlt : i0 < i1 := by omega
+  have hmem : ((i0 : ℚ) / N, (i1 : ℚ) / N) ∈ M.filterMap (fun p =>
+      let i0 : ℤ := if p.1 = 0 then 0 else ⌊p.1 * (N : ℚ)⌋ + 1
+      let i1 : ℤ := ⌊p.2 * (N : ℚ)⌋
+      if i0 < i1 then some ((i0 : ℚ) / N, (i1 : ℚ) / N) else none) :=
+    List.mem_filterMap.2 ⟨p, hp, by simp only; rw [← hi0, ← hi1, if_pos hlt]⟩
+  have hNr : (0 : ℝ) < N := by exact_mod_cast hN
+  intro x hx
+  refine mem_ivSet_normIv hmem ?_ ?_ ?_
+  · show (i0 : ℚ) / N < (i1 : ℚ) / N
+    exact div_lt_div_of_pos_right (by exact_mod_cast hlt) hN'
+  · show (((i0 : ℚ) / N : ℚ) : ℝ) ≤ x
+    push_cast
+    refine le_trans (div_le_div_of_nonneg_right ?_ hNr.le) hx.1
+    exact_mod_cast hA
+  · show x ≤ (((i1 : ℚ) / N : ℚ) : ℝ)
+    push_cast
+    refine le_trans hx.2 (div_le_div_of_nonneg_right ?_ hNr.le)
+    exact_mod_cast hB
+
+/-- A half-open stretch `[x, y)` covered by intervals of `L` that each start strictly before the point
+(or at `0`) lies in one piece of `normIv L`, which starts strictly before `x` (or at `0`). -/
+theorem piece_of_cover {L : IvList} {x y : ℝ} (hx0 : 0 ≤ x) (hxy : x < y)
+    (hL : ∀ z ∈ Set.Ico x y, ∃ q ∈ L, ((q.1 : ℚ) : ℝ) ≤ z ∧ z < ((q.2 : ℚ) : ℝ) ∧
+      (((q.1 : ℚ) : ℝ) < z ∨ q.1 = 0)) :
+    ∃ p ∈ normIv L, (((p.1 : ℚ) : ℝ) < x ∨ p.1 = 0) ∧ y ≤ ((p.2 : ℚ) : ℝ) := by
+  obtain ⟨q, hq, hq1, hq2, hq3⟩ := hL x ⟨le_rfl, hxy⟩
+  have hqlt : q.1 < q.2 := by exact_mod_cast hq1.trans_lt hq2
+  obtain ⟨p, hp, hp1, hp2⟩ := normIv_cover hq hqlt
+  have hp1' : ((p.1 : ℚ) : ℝ) ≤ q.1 := by exact_mod_cast hp1
+  have hp2' : ((q.2 : ℚ) : ℝ) ≤ p.2 := by exact_mod_cast hp2
+  refine ⟨p, hp, ?_, ?_⟩
+  · rcases hq3 with h | h
+    · exact Or.inl (by linarith)
+    · rcases lt_or_eq_of_le hp1 with h' | h'
+      · left; rw [h] at h'; have : ((p.1 : ℚ) : ℝ) < 0 := by exact_mod_cast h'
+        linarith
+      · exact Or.inr (h'.trans h)
+  · by_contra hc
+    push Not at hc
+    obtain ⟨m, hm, hmy, hgap⟩ := exists_gap ((normIv L).map fun p => ((p.1 : ℚ) : ℝ)) hc
+    obtain ⟨w, hw⟩ : ∃ w : ℝ, w = ((p.2 : ℚ) : ℝ) / 2 + m / 2 := ⟨_, rfl⟩
+    obtain ⟨q', hq', h1, h2, -⟩ := hL w ⟨by linarith, by linarith⟩
+    have hq'lt : q'.1 < q'.2 := by exact_mod_cast h1.trans_lt h2
+    obtain ⟨p', hp', hp1', hp2'⟩ := normIv_cover hq' hq'lt
+    have e1 : ((p'.1 : ℚ) : ℝ) ≤ w := le_trans (by exact_mod_cast hp1') h1
+    have e2 : w ≤ ((p'.2 : ℚ) : ℝ) := le_trans h2.le (by exact_mod_cast hp2')
+    have hne : p ≠ p' := by
+      rintro rfl; linarith
+    rcases normIv_sep hp hp' hne with h | h
+    · have hh : ((p.2 : ℚ) : ℝ) < p'.1 := by exact_mod_cast h
+      have := hgap _ (List.mem_map.2 ⟨p', hp', rfl⟩) hh
+      linarith
+    · have hh : ((p'.2 : ℚ) : ℝ) < p.1 := by exact_mod_cast h
+      have := normIv_lt hp
+      have : ((p.1 : ℚ) : ℝ) < p.2 := by exact_mod_cast this
+      linarith
+/-- The arc pieces of `stepCode` (move intervals whose window fits a lift of the arc). -/
+def arcIv (s t l : ℚ) : IvList :=
+  let w := 2 * l / 3
+  if w < t then normIv ((List.range 8).map fun i => ((i : ℚ) - 2 + s, (i : ℚ) - 2 + s + t - w))
+  else []
+
+/-- The good-move pieces of `stepCode`. -/
+def goodIv (k : ℕ) (s t l : ℚ) (P : ℕ → IvList) (r : ℕ) : IvList :=
+  let half := 2 ^ (k - 1)
+  let d : ℚ := if r % 2 = 1 then 1 / 2 else 0
+  (List.range 6).flatMap fun J =>
+    let b := ((3 * r - r % 2) / 2 + J) % half
+    let tgt := interIv (P b) (P (b + half))
+    interIv (normIv (tgt.map fun p => (((J : ℚ) + p.1 - d) * 2 / 3, ((J : ℚ) + p.2 - d) * 2 / 3)))
+      (arcIv s t l)
+
+theorem stepCode_eq (k : ℕ) (s t l : ℚ) (P : ℕ → IvList) (r : ℕ) :
+    stepCode k s t l P r =
+      normIv ((goodIv k s t l P r).map fun g => (max (g.1 - l / 3) 0, min g.2 1)) := rfl
+
+theorem dq_cast (r : ℕ) :
+    (((if r % 2 = 1 then 1 / 2 else 0 : ℚ) : ℚ) : ℝ) = ((r % 2 : ℕ) : ℝ) / 2 := by
+  rcases Nat.mod_two_eq_zero_or_one r with h | h <;> simp [h]
+
+/-- **The move side of `stepCode_sound`.**  A start `z ∈ [0, 1]` with an open interval of good legal
+moves around `u` sees `u` inside a good piece, so `z` lies in that piece's open start set. -/
+theorem good_of_start {k : ℕ} {s t l : ℚ} (hs : 0 ≤ s) (hst : s + t ≤ 1)
+    (hl0 : 0 < l) (hl : l ≤ 3 / 2) (P : ℕ → IvList) (r : ℕ) {z : ℝ} (hz0 : 0 ≤ z) (hz1 : z ≤ 1)
+    (hz : z ∈ resStepOpen s t l k (fun r => ivSet (P r)) r) :
+    ∃ g ∈ goodIv k s t l P r, ((g.1 : ℚ) : ℝ) - (l : ℝ) / 3 < z ∧ z < ((g.2 : ℚ) : ℝ) := by
+  obtain ⟨u, μ, hμ, hu⟩ := hz
+  have hs' : (0 : ℝ) ≤ s := by exact_mod_cast hs
+  have hst' : (s : ℝ) + t ≤ 1 := by exact_mod_cast hst
+  have hl0' : (0 : ℝ) < l := by exact_mod_cast hl0
+  have hl' : (l : ℝ) ≤ 3 / 2 := by
+    have := (Rat.cast_le (K := ℝ)).2 hl; push_cast at this; exact this
+  set d : ℝ := ((r % 2 : ℕ) : ℝ) / 2 with hd
+  have hd0 : 0 ≤ d := by positivity
+  have hd1 : d ≤ 1 / 2 := by
+    have : ((r % 2 : ℕ) : ℝ) ≤ 1 := by exact_mod_cast Nat.lt_succ_iff.1 (Nat.mod_lt r two_pos)
+    rw [hd]; linarith
+  obtain ⟨hzu, hul, ⟨j0, hj01, hj02⟩, -⟩ := hu 0 (by simp [hμ.le])
+  simp only [add_zero] at hzu hul hj01 hj02
+  have hp := (hu μ (by rw [abs_of_pos hμ])).2.1
+  have hm := (hu (-μ) (by rw [abs_neg, abs_of_pos hμ])).1
+  have hμl : μ ≤ l / 6 := by linarith
+  obtain ⟨-, -, hJ0, hJ2⟩ := enum_ranges hs' hst' hl0'.le hl' hz0 hz1 hzu (by linarith) hd0 hd1
+    hj01 hj02
+  set J0 := ⌊3 * u / 2 + d⌋ with hJ0def
+  have hfl := Int.lt_floor_add_one (3 * u / 2 + d)
+  rw [← hJ0def] at hfl
+  set ε := min μ (((J0 : ℝ) + 1 - (3 * u / 2 + d)) * 2 / 3) with hε
+  have hεpos : 0 < ε := lt_min hμ (by linarith)
+  have hεμ : ε ≤ μ := min_le_left _ _
+  have hεJ : ε ≤ ((J0 : ℝ) + 1 - (3 * u / 2 + d)) * 2 / 3 := min_le_right _ _
+  have hvq : ∀ v ∈ Set.Ico u (u + ε), |v - u| ≤ μ := fun v hv => by
+    rw [abs_le]; constructor <;> linarith [hv.1, hv.2]
+  have hvfl : ∀ v ∈ Set.Ico u (u + ε), ⌊3 * v / 2 + d⌋ = J0 := fun v hv => by
+    rw [Int.floor_eq_iff]; constructor <;> linarith [hv.1, hv.2, Int.floor_le (3 * u / 2 + d)]
+  set Jn := J0.toNat with hJn
+  have hJn' : (Jn : ℤ) = J0 := Int.toNat_of_nonneg hJ0
+  have hJnR : ((Jn : ℚ) : ℝ) = (J0 : ℝ) := by
+    rw [Rat.cast_natCast]; exact_mod_cast hJn'
+  have hJnR' : ((Jn : ℕ) : ℝ) = (J0 : ℝ) := by exact_mod_cast hJn'
+  have hJ6 : Jn < 6 := by omega
+  -- the arc side
+  have hw : 2 * l / 3 < t := by
+    by_contra hc
+    push Not at hc
+    have hc' : (t : ℝ) ≤ 2 * l / 3 := by exact_mod_cast hc
+    obtain ⟨-, -, ⟨j1, hj11, hj12⟩, -⟩ := hu (ε / 2) (by
+      rw [abs_of_pos (by linarith)]; linarith)
+    have e0 : u = j0 + s := by linarith
+    have e1 : u + ε / 2 = j1 + s := by linarith
+    have : ((j1 - j0 : ℤ) : ℝ) = ε / 2 := by push_cast; linarith
+    have h1 : (0 : ℝ) < ((j1 - j0 : ℤ) : ℝ) := by rw [this]; linarith
+    have h1' : 0 < j1 - j0 := by exact_mod_cast h1
+    have h2 : (1 : ℝ) ≤ ((j1 - j0 : ℤ) : ℝ) := by exact_mod_cast h1'
+    linarith
+  have hArc : Set.Ico u (u + ε) ⊆ ivSet (arcIv s t l) := by
+    intro v hv
+    obtain ⟨h1, h2, ⟨j, hj1, hj2⟩, -⟩ := hu (v - u) (hvq v hv)
+    simp only [add_sub_cancel] at h1 h2 hj1 hj2
+    obtain ⟨hjm, hjp, -, -⟩ := enum_ranges hs' hst' hl0'.le hl' hz0 hz1 h1 (by linarith) hd0 hd1
+      hj1 hj2
+    unfold arcIv
+    simp only
+    rw [if_pos hw]
+    have hidx : (((j + 2).toNat : ℕ) : ℝ) - 2 = j := by
+      have : (((j + 2).toNat : ℤ)) = j + 2 := Int.toNat_of_nonneg (by omega)
+      have : (((j + 2).toNat : ℕ) : ℝ) = (j : ℝ) + 2 := by exact_mod_cast this
+      linarith
+    have hmemq : (((j + 2).toNat : ℚ) - 2 + s, ((j + 2).toNat : ℚ) - 2 + s + t - 2 * l / 3) ∈
+        (List.range 8).map (fun i : ℕ => ((i : ℚ) - 2 + s, (i : ℚ) - 2 + s + t - 2 * l / 3)) :=
+      List.mem_map.2 ⟨(j + 2).toNat, List.mem_range.2 (by omega), rfl⟩
+    refine mem_ivSet_normIv hmemq ?_ ?_ ?_
+    · show ((j + 2).toNat : ℚ) - 2 + s < ((j + 2).toNat : ℚ) - 2 + s + t - 2 * l / 3
+      linarith
+    · show ((((j + 2).toNat : ℚ) - 2 + s : ℚ) : ℝ) ≤ v
+      push_cast; rw [hidx]; exact hj1
+    · show v ≤ ((((j + 2).toNat : ℚ) - 2 + s + t - 2 * l / 3 : ℚ) : ℝ)
+      push_cast; rw [hidx]; linarith
+  -- the target side
+  set b := ((3 * r - r % 2) / 2 + Jn) % 2 ^ (k - 1) with hb
+  set y0 := 3 * u / 2 + d - J0 with hy0
+  have hT : Set.Ico y0 (y0 + 3 * ε / 2) ⊆ ivSet (interIv (P b) (P (b + 2 ^ (k - 1)))) := by
+    have hboth : ∀ b' < 2, Set.Ico y0 (y0 + 3 * ε / 2) ⊆ ivSet (P (b + b' * 2 ^ (k - 1))) := by
+      intro b' hb' y hy
+      have hv : u + (y - y0) * 2 / 3 ∈ Set.Ico u (u + ε) := ⟨by linarith [hy.1], by linarith [hy.2]⟩
+      have := (hu ((y - y0) * 2 / 3) (by have := hvq _ hv; simpa using this)).2.2.2 b' hb'
+      have hfl' := hvfl _ hv
+      rw [hfl', Int.fract, hfl'] at this
+      rw [hb]
+      rw [← hJn] at this
+      convert this using 2
+      rw [hy0]; ring
+    exact Ico_subset_ivSet_interIv (by linarith) (by simpa using hboth 0 two_pos)
+      (by simpa using hboth 1 one_lt_two)
+  have hX : Set.Ico u (u + ε) ⊆ ivSet (normIv ((interIv (P b) (P (b + 2 ^ (k - 1)))).map fun p =>
+      (((Jn : ℚ) + p.1 - (if r % 2 = 1 then 1 / 2 else 0 : ℚ)) * 2 / 3,
+        ((Jn : ℚ) + p.2 - (if r % 2 = 1 then 1 / 2 else 0 : ℚ)) * 2 / 3))) := by
+    intro v hv
+    obtain ⟨p, hp, hp1, hp2⟩ := hT (show 3 * v / 2 + d - J0 ∈ Set.Ico y0 (y0 + 3 * ε / 2) from
+      ⟨by linarith [hv.1], by linarith [hv.2]⟩)
+    have hplt := normIv_lt (show p ∈ normIv _ from hp)
+    refine mem_ivSet_normIv (List.mem_map.2 ⟨p, hp, rfl⟩) (by simp only; linarith) ?_ ?_
+    · push_cast; rw [hJnR', dq_cast]; linarith
+    · push_cast; rw [hJnR', dq_cast]; linarith
+  obtain ⟨g, hg, hg1, hg2⟩ := Ico_subset_ivSet_interIv (by linarith) hX hArc
+    (show u ∈ Set.Ico u (u + ε) from ⟨le_rfl, by linarith⟩)
+  refine ⟨g, List.mem_flatMap.2 ⟨Jn, List.mem_range.2 hJ6, hg⟩, by linarith, by linarith⟩
+
 /-- **(c), proved instead of trusted.**  The code step contains the rounded open step, on any sub-arc
 of `[0, 1]` with width at most `3/2` (where `ArcSolverInclusion.enum_ranges` bounds the floors and
 lifts the code enumerates). -/
-theorem stepCode_sound {k N : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {s t l : ℚ} (hs : 0 ≤ s) (hst : s + t ≤ 1)
+theorem stepCode_sound {k N : ℕ} (_hk : 1 ≤ k) (hN : 0 < N) {s t l : ℚ} (hs : 0 ≤ s) (hst : s + t ≤ 1)
     (hl0 : 0 < l) (hl : l ≤ 3 / 2) (P : ℕ → IvList) (r : ℕ) :
     roundInRes N (resStepOpen s t l k (fun r => ivSet (P r)) r) ⊆
       ivSet (roundCode N (stepCode k s t l P r)) := by
-  sorry
+  rintro a ⟨i, hi, h1, h2, hcell⟩
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  have hx0 : (0 : ℝ) ≤ (i : ℝ) / N := by positivity
+  have hxy : (i : ℝ) / N < ((i : ℝ) + 1) / N := div_lt_div_of_pos_right (by linarith) hN'
+  have hy1 : ((i : ℝ) + 1) / N ≤ 1 := by
+    rw [div_le_one hN']; exact_mod_cast hi
+  obtain ⟨p, hp, hp1, hp2⟩ := piece_of_cover
+    (L := (goodIv k s t l P r).map fun g => (max (g.1 - l / 3) 0, min g.2 1)) hx0 hxy (by
+      intro z hz
+      have hz0 : 0 ≤ z := hx0.trans hz.1
+      have hz1 : z < 1 := lt_of_lt_of_le hz.2 hy1
+      obtain ⟨g, hg, hg1, hg2⟩ := good_of_start hs hst hl0 hl P r hz0 hz1.le (hcell hz)
+      refine ⟨_, List.mem_map.2 ⟨g, hg, rfl⟩, ?_, ?_, ?_⟩
+      · push_cast; exact max_le (by linarith) hz0
+      · push_cast; exact lt_min hg2 hz1
+      · rcases le_total (g.1 - l / 3) 0 with h | h
+        · right; exact max_eq_right h
+        · left; push_cast
+          have h' : (0 : ℝ) ≤ ((g.1 : ℚ) : ℝ) - (l : ℝ) / 3 := by exact_mod_cast h
+          rw [max_eq_left h']; exact hg1)
+  rw [stepCode_eq]
+  exact cell_subset_roundCode hN hp i hp1 hp2 ⟨h1, h2.le⟩
 
 /-- The code descent keeps every residue-form rounded post-fixed point made of half-open grid cells
 (the analogue of `ArcSolverInclusion.descend_keeps` for the computed iteration); in particular
