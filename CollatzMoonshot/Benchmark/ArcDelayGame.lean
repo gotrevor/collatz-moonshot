@@ -163,7 +163,14 @@ Exact (2026-10-10, `experiments/arc_band.py point`, no lattice): at `β = 1/10`,
 steps (`[5/57, 7/57]` survives), and below it the kill depth GROWS: `7, 11, 19, 25, 30, 36` steps at
 `l = 0.11, 0.12, 0.1227, 0.1228, 0.122806, 0.1228069`.  That is about `log_{3/2}(1/ε)`, so unlike the upper edge
 (`RelaxedAboveUpperEdge`, depth `≤ 8`) there is no finite cover.  The proof shape is `relaxed_barrier`'s: an
-AND-OR funnel with endpoints affine in `l`, plus a runaway lemma whose expansion rate is `3/2`. -/
+AND-OR funnel with endpoints affine in `l`, plus a runaway lemma.
+The runaway, located (symbolic descent near `(1/10, 7/57 - 10⁻⁷)`): the slow death is a small interval
+`[L, R]` around `11/57` (with partners near `20/57`, `10/19 = 30/57`, `39/57`).  From step 3 on, every 3 descent
+steps map it EXACTLY to `[(8/27) L + 2/9 - 19 l/27, (8/27) R + 11/81]`, with no `β` term.  Fixed points:
+`L* = 6/19 - l` and `R* = 11/57`, so the interval survives iff `6/19 - l ≤ 11/57`, i.e. `l ≥ 7/57`.  For a
+strategy `P` this is a self-improving bound: `inf` and `sup` of `P` near `11/57` satisfy `a ≥ 6/19 - l` and
+`b ≤ 11/57`, so `l < 7/57` empties it.  The descent then dies one step later.  The same `10/19` as the
+`β`-barrier's runaway, and `57 = 3 · 19` in both thresholds. -/
 def RelaxedLowerEdge : Prop :=
   ∀ (β l : ℝ) (P : Set ℝ), 1 / 10 ≤ β → β < 1 / 2 → l < 7 / 57 → ¬ RelaxedStrategy β (1 - 2 * β) l P
 
@@ -265,5 +272,41 @@ Proof shape: a Lean twin of the checker over affine forms (one soundness lemma f
 def RelaxedAboveUpperEdge : Prop :=
   ∀ β l : ℝ, 1 / 10 ≤ β → β ≤ 7 / 57 → min (3 / 4 - 39 * β / 8) (15 / 16 - 105 * β / 16) < l →
     ∀ P : Set ℝ, ¬ RelaxedStrategy β (1 - 2 * β) l P
+
+/-- **The `k`-memory component game** (no window width).  A state is a window `[x, y]` of positions
+`X = ξ (3/2)^n`.  The constructor keeps one component `[max x (j + β), min y (j + 1 - β)]` of the window
+inside an arc lift.  Its image under `3/2` is known modulo `2^(k-1)`, and the adversary picks the lift:
+every shift by `z 2^(k-1)` must stay in `S`.  For `k = 1` this is the component game of
+`ArcTrap.relaxed_barrier`.  Absolute windows carry no extra information: a shift by `2^k` permutes the
+moves (`j ↦ j + 2^k`) and moves the children by `3 · 2^(k-1)`, which the `∀ z` already absorbs. -/
+def KComponentStrategy (β : ℝ) (k : ℕ) (S : Set (ℝ × ℝ)) : Prop :=
+  S.Nonempty ∧ ∀ p ∈ S, ∃ j : ℤ, max p.1 (j + β) < min p.2 (j + 1 - β) ∧
+    ∀ z : ℤ, (3 / 2 * max p.1 (j + β) + z * 2 ^ (k - 1),
+      3 / 2 * min p.2 (j + 1 - β) + z * 2 ^ (k - 1)) ∈ S
+
+/-- **Conjecture: no finite memory wins the component game past `7/57`.**  A width-free strengthening of
+`ArcTrap.FiniteMemoryRelaxedValue` (`finiteMemoryRelaxedValue_of_componentK`), and `k = 1` is the
+component game `ArcTrap.relaxed_barrier` already kills.  Confidence 70% (below the relaxed conjecture's 80%:
+the constructor may vary the width, and at `k = ∞` this is the orbit problem itself, whose true threshold
+is unknown).
+Evidence (2026-10-10, exact rational AND-OR search, `k`-memory component game from every start residue, the
+first depth at which every start dies): `β = 0.13`: `14, 16, 17, 21` (`k = 1, 2, 3, 4`); `β = 1/8`: `19, 21, 22`
+(`k = 1, 2, 3`); `β = 0.123` (just above `7/57 ≈ 0.12281`): `25, 29` (`k = 1, 2`).  The depth grows with `k`
+(about two moves per bit, as in the fixed-width game), and it grows as `β ↓ 7/57`, as the `k = 1` runaway predicts.
+Why it is a better target than the fixed-width game: one parameter fewer, and the `k = 1` proof (funnel
+plus the `(0, 1/2, 1/2)` runaway from `10/19`) is already in Lean.  In the runaway the constructor's
+components are unique, so its carries are forced and the adversary can set each top bit to produce the
+parity it wants `k - 1` moves later.  The runaway therefore transfers to every `k` verbatim; what stays
+open is a `k`-uniform funnel into the runaway's clean set. -/
+def ComponentKValue : Prop :=
+  ∀ k : ℕ, 1 ≤ k → ∀ β : ℝ, 7 / 57 < β → β < 1 / 2 → ∀ S : Set (ℝ × ℝ), ¬ KComponentStrategy β k S
+
+open ArcTrap in
+/-- **Domination: the component game implies the fixed-width conjecture.**  From a live `k`-memory
+relaxed strategy `P`, the windows containing some `[m + a, m + a + l]` with `a ∈ P (m mod 2^k)` form a
+`KComponentStrategy`: the relaxed sub-window lies in one component, and its child's integer part is
+`≡ (3r - r % 2)/2 + J (mod 2^(k-1))` with the top bit free, which is what `∀ z` asks for. -/
+theorem finiteMemoryRelaxedValue_of_componentK (h : ComponentKValue) : FiniteMemoryRelaxedValue := by
+  sorry
 
 end CollatzMoonshot.Benchmark.ArcDelayGame
