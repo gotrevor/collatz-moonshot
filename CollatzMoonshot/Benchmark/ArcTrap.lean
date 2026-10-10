@@ -3943,6 +3943,32 @@ def KRelaxedLiveEverywhere : Prop :=
     (∃ r < 2 ^ k, (P r).Nonempty) →
       ∃ Q : ℕ → Set ℝ, KRelaxedStrategy s t l k Q ∧ ∀ r < 2 ^ k, (Q r).Nonempty
 
+/-- **Every base is good**: some strategy has, at every base `b < 2^(k-1)`, a common start for both lifts
+`b` and `b + 2^(k-1)`.  This is the target set a move must hit (both lifts, since the adversary picks the
+top bit), so it is the natural inductive invariant behind `KRelaxedLiveEverywhere`, which it implies
+(`KRelaxedAllBasesGood.liveEverywhere`).  Confidence 70%.  Evidence (2026-10-09): every greatest
+fixed point among 371 winners (`k = 2, …, 5`; four arcs, `j ≡ 4 mod 6`) has all bases good, and at the
+`k = 6` dodge (`not_kRelaxedLiveEverywhereStrong`) the greatest fixed point has all 32 good while the
+dodging strategy lacks exactly base `27`.  Mechanism sketch: the start is free, so a class `m` is live
+as soon as a move from some `a` reaches a good base `⌊3m/2⌋ + J`, `J ∈ {0, 1}`, and `m ↦ ⌊3m/2⌋` is
+exactly two-to-one from `ℤ/2^k` onto `ℤ/2^(k-1)`. -/
+def KRelaxedAllBasesGood : Prop :=
+  ∀ (s t l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → KRelaxedStrategy s t l k P →
+    (∃ r < 2 ^ k, (P r).Nonempty) →
+      ∃ Q : ℕ → Set ℝ, KRelaxedStrategy s t l k Q ∧
+        ∀ b < 2 ^ (k - 1), (Q b ∩ Q (b + 2 ^ (k - 1))).Nonempty
+
+theorem KRelaxedAllBasesGood.liveEverywhere (h : KRelaxedAllBasesGood) : KRelaxedLiveEverywhere := by
+  intro s t l k P hk hP hne
+  obtain ⟨Q, hQ, hg⟩ := h s t l k P hk hP hne
+  refine ⟨Q, hQ, fun r hr => ?_⟩
+  have hpow : 2 ^ k = 2 ^ (k - 1) + 2 ^ (k - 1) := by
+    rw [← two_mul, ← pow_succ']; congr 1; omega
+  rcases lt_or_ge r (2 ^ (k - 1)) with h1 | h1
+  · exact (hg r h1).mono Set.inter_subset_left
+  · have := (hg (r - 2 ^ (k - 1)) (by omega)).mono Set.inter_subset_right
+    rwa [Nat.sub_add_cancel h1] at this
+
 /-- **More memory never hurts**: forgetting the top bit turns a `k`-strategy into a `(k + 1)`-strategy.  The
 `(k + 1)` move lands in one specific lift of the `k`-target base, and the `k`-strategy already has both
 lifts live.  Confidence 97% (residue arithmetic; `test_awareness_never_hurts` checks it on the solver).

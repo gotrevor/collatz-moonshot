@@ -433,5 +433,20 @@ def test_strong_liveness_fails_at_k6():
         vw_orbit(Q, 6, s, t, L, m0, 60)
 
 
+def good_bases(P, k):
+    """Bases b < 2^(k-1) whose two lifts share a start (KRelaxedAllBasesGood, first width)."""
+    h = 1 << (k - 1)
+    return [b for b in range(h) if inter(P[b][0], P[b + h][0])]
+
+
+def test_all_bases_good_but_the_dodge_lacks_one():
+    # 2026-10-09: the greatest fixed point has every base good; the k = 6 dodge lacks exactly base 27
+    s, t = F(2, 5), F(87, 100)
+    L = [t * F(100, 400)]
+    assert len(good_bases(solve_vw(6, s, t, L, N=1 << 20)[0], 6)) == 32
+    Q = solve_vw(6, s, t, L, N=1 << 20, forbidden={27, 59})[0]
+    assert sorted(set(range(32)) - set(good_bases(Q, 6))) == [27]
+
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
