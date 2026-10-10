@@ -388,34 +388,12 @@ theorem no_kRelaxedStrategy_of_sweep (hbridge : ArcFattening.KToLiftedBridge) {k
   rw [hn r] at this
   exact this
 
-/-- **No `k`-memory relaxed strategy, `k = 1, …, 6`, holds `[β, 1 - β]` at `β = 7/57 + 1/1000`, at any width.**
-Confidence 90%.  It is `no_kRelaxedStrategy_of_sweep` (PROVED, axiom-clean) applied with
-`ArcFattening.kToLiftedBridge` (PROVED, Astra), the code operator of `solve_vw` / `arc_sweep` (inclusion (c), trusted) and the empty sweep
-below.  Proved pieces: robust fattening (`ArcFattening.LiftedStrategy.robust_fatten`, Astra),
-its composition with rounding (`rounded_fattened_post_fixed`), the width net (`width_net`), the residue
-chain (A), (B), the descent, and the forward bridge.  Trusted, not proved: (c) `solve_vw`'s computed step containing
-`stepOpen` (a fact about the Python: audited line by line against `vw_targets` / `vw_good_u` / `vw_aset` /
-`round_in`, and cross-checked by an independent brute-force open-move search, `brute_open_move`: 140 open
-starts on random lattice strategies at `k = 2, 3`, all in the solver's step; a version demanding only ONE
-child finds 100 the solver rightly rejects, so the check has teeth.  Test
-`test_solver_step_contains_open_moves`).  Given those, it reduces to a finite computation, which came out
-empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): widened arc
-`β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
-(`e0 N / 96 ≈ 1.4`), `k = 1, …, 6`, empty in BOTH the Python solver and the independent Rust one
-(`experiments/arc_sweep_rs`, written from `stepOpen` / `roundIn`, not from the Python); Rust alone is also
-empty at `k = 7, 8`.  Re-run on the rounding-fixed Rust binary (8bdeb92: `round_in` had dropped an Ico cell
-ending at `hi`): unchanged, empty at `k = 4, …, 8`.  Third instrument: the Lean `IvList` operator
-(`ArcSolverComputable.sweepEmpty 6 (2^17) (7/57 + 1/2000) (1/2500) 400`) evaluates to `true` (345 s, 5.7 GB),
-and `ArcSolverComputable` is where (c) gets kernel-checked.  Positive control: at `N = 2^15` the solver finds winners at
-`7/57 - 1/10000` for `k = 0, 1, 2`.  Unlike `finiteMemoryRelaxedValue_ge_013`, no liveness hypothesis. -/
-theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 6) (l : ℝ) (P : ℕ → Set ℝ)
-    (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
-    ¬ ArcTrap.KRelaxedStrategy (7 / 57 + 1 / 1000) (1 - 2 * (7 / 57 + 1 / 1000)) l k P := by
-  sorry
-
 /-- **Ten times closer: no 1-, 2- or 3-memory relaxed strategy at `β = 7/57 + 1/10000`, any width.**
-Confidence 85% (one instrument at this `β`).  Same reduction as `no_kRelaxedStrategy_7_57_plus`: only (c)
-and the sweep's execution are not kernel-checked.
+Confidence 85% (one instrument at this `β`).  Same reduction as
+`ArcSolverComputable.no_kRelaxedStrategy_7_57_plus` (proved for `k ≤ 6` at `7/57 + 1/1000`): (c) is now a theorem
+(`ArcSolverComputable.stepCode_sound`), so only the sweep remains, a `native_decide` of
+`ArcSolverComputable.sweepEmpty k (2^20) (7/57 + 1/20000) (1/20001) fuel` for `k = 1, 2, 3` (about 8 times the
+`2^17` sweep's widths at 8 times the grid).
 Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
 `β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
 (`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`; re-run on the rounding-fixed binary (8bdeb92), unchanged.  Positive control on the same grid: winners at

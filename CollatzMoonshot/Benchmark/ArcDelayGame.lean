@@ -35,7 +35,7 @@ Measurements (2026-10-10, exact rational Rust solver, `N = 2^20` / `2^15` grids)
 * Positive control below `7/57` (`β = 7/57 - 10⁻⁵`, `N = 2^15`, widths `0.1225, 0.1231, 0.1234`):
   identical live sets in both games for `k = 1, …, 4` (winners only at `0.1225`, `k ≥ 2`).
 * Above `7/57`: `ARC_NOCARRY=1 arc_sweep sweep 1 8 7057/57000 1/1000 1/2500 17` is empty at all 2825
-  widths for every `k = 1, …, 8`, as the `k`-memory game is (`ArcSolverInclusion.no_kRelaxedStrategy_7_57_plus`).
+  widths for every `k = 1, …, 8`, as the `k`-memory game is (`ArcSolverComputable.no_kRelaxedStrategy_7_57_plus`).
   So the two games share the threshold `7/57` as far as measured, although neither dominates.
 * They are different games: over 60 random arcs (`k = 2, 3, 4`, `N = 2^14`) they disagree once, at
   `k = 4`, arc `[1/20, 1/20 + 79/100]`, width `1501/8000`, where the delay game wins (all 16 words live)
