@@ -167,7 +167,13 @@ Dead mechanism: "too wide to survive any parity word".  Just above the upper edg
 `k`: `7, 9, 11, 14, 16, 25` (`k = 1, 2, 3, 4, 6, 8`; `β = 0.1`, `l = 0.263`, `N = 2^16` descent steps) and
 `7, 10, 11, 13, 17, 21` (`β = 0.12`, `l = 0.15`).  So the adversary adapts with delay and pays about two
 moves per bit, as below `7/57` in `β`; it never needs to stop winning.  Off-centre this fails outright
-(`[2/5, 2/5 + 87/100]`: no memoryless winner at any width, `k = 4` wins on `[0.13, 0.548]`). -/
+(`[2/5, 2/5 + 87/100]`: no memoryless winner at any width, `k = 4` wins on `[0.13, 0.548]`).
+Not a set-level reduction: memory does enlarge the strategy (`solve_vw`, `N = 2^16`).  At `β = 0.11`,
+`l = 0.15` the greatest `k = 2` fixed point has 4 different residue sets, each strictly larger than the
+memoryless one (residue `0` fills the memoryless gap `[0.1286, 0.1658]`), and `k = 3` has 8.  At
+`β = 0.11`, `l = 0.2`, `k = 3` is exactly the lift of `k = 2` (memory saturates).  Dead route, "once one
+more bit stops helping, no further bit helps": false in general, since off-centre `k = 1, 2` are both empty
+(saturated) and `k = 3` wins.  On the symmetric arc that propagation is this conjecture again. -/
 def KRelaxedMemorylessAboveLowerEdge : Prop :=
   ∀ (β l : ℝ) (k : ℕ) (P : ℕ → Set ℝ), 1 ≤ k → 1 / 10 ≤ β → β < 1 / 2 → 7 / 57 ≤ l →
     (∃ r < 2 ^ k, (P r).Nonempty) → KRelaxedStrategy β (1 - 2 * β) l k P →
