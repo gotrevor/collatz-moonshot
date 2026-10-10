@@ -195,7 +195,67 @@ lifts of the base, in some order). -/
 theorem residualize_stepOpen_subset {s t l : ℝ} {k : ℕ} (hk : 1 ≤ k) (T : Set ℝ) (r : ℕ) :
     ArcFattening.residualize k (stepOpen s t l (2 ^ (k - 1)) T) r ⊆
       resStepOpen s t l k (ArcFattening.residualize k T) r := by
-  sorry
+  rintro a ⟨x, ⟨v, μ, hμ, hv⟩, hres, rfl⟩
+  set m := ⌊x⌋ with hm
+  have hxm : Int.fract x = x - m := rfl
+  refine ⟨v - m, μ, hμ, fun q hq => ?_⟩
+  obtain ⟨⟨h1, h2, j, hj1, hj2⟩, hb⟩ := hv q hq
+  set w := v - m + q with hw
+  refine ⟨by rw [hxm]; linarith, by rw [hxm]; linarith, ⟨j - m, by push_cast; linarith,
+    by push_cast; linarith⟩, fun b' hb' => ?_⟩
+  -- integer bookkeeping
+  set hI : ℤ := 2 ^ (k - 1) with hhI
+  have hIpos : 0 < hI := by positivity
+  have h2k : (2 : ℤ) ^ k = 2 * hI := by
+    rw [hhI, ← pow_succ']; congr 1; omega
+  have hr : (r : ℤ) = m % (2 * hI) := by
+    have : r = (⌊x⌋ % (2 ^ k : ℤ)).toNat := hres.symm
+    rw [this, Int.toNat_of_nonneg (Int.emod_nonneg _ (by positivity)), ← h2k]
+  have hpar : (r : ℤ) % 2 = m % 2 := by
+    rw [hr]; exact Int.emod_emod_of_dvd m ⟨hI, by ring⟩
+  have hparR : (((r % 2 : ℕ) : ℝ)) = (((m % 2 : ℤ)) : ℝ) := by
+    have h' : ((r % 2 : ℕ) : ℤ) = m % 2 := by push_cast; exact hpar
+    rw [show ((r % 2 : ℕ) : ℝ) = (((r % 2 : ℕ) : ℤ) : ℝ) from (Int.cast_natCast _).symm, h']
+  set c := 3 * w / 2 + ((r % 2 : ℕ) : ℝ) / 2 with hc
+  have hc0 : 0 ≤ c := by
+    have : (0 : ℝ) ≤ ((r % 2 : ℕ) : ℝ) := by positivity
+    have : 0 ≤ w := by rw [hw]; linarith [Int.floor_le x]
+    rw [hc]; positivity
+  have hJ0 : 0 ≤ ⌊c⌋ := Int.floor_nonneg.mpr hc0
+  set A := (3 * m - m % 2) / 2 + ⌊c⌋ with hA
+  -- the target index, as an integer
+  have hidx : ((((3 * r - r % 2) / 2 + (⌊c⌋).toNat) % 2 ^ (k - 1) + b' * 2 ^ (k - 1) : ℕ) : ℤ) =
+      ((3 * (r : ℤ) - (r : ℤ) % 2) / 2 + ⌊c⌋) % hI + b' * hI := by
+    have hsub : r % 2 ≤ 3 * r := by omega
+    push_cast [Nat.cast_sub hsub, Int.toNat_of_nonneg hJ0]
+    rfl
+  -- pick the physical child that carries this lift
+  have hlifts := ArcFattening.children_are_lifts m ⌊c⌋ hI hIpos
+  simp only at hlifts
+  have hmem : ((3 * (r : ℤ) - (r : ℤ) % 2) / 2 + ⌊c⌋) % hI + b' * hI ∈
+      ({A % (2 * hI), (A + hI) % (2 * hI)} : Set ℤ) := by
+    rw [hA, hlifts, ← hr]
+    interval_cases b' <;> simp
+  obtain ⟨b, hb2, hbeq⟩ : ∃ b : ℕ, b < 2 ∧ (A + b * hI) % (2 * hI) =
+      ((3 * (r : ℤ) - (r : ℤ) % 2) / 2 + ⌊c⌋) % hI + b' * hI := by
+    rcases hmem with h | h
+    · exact ⟨0, by norm_num, by simpa using h.symm⟩
+    · exact ⟨1, by norm_num, by simpa using h.symm⟩
+  have hyT := hb b hb2
+  refine ⟨3 * (v + q) / 2 + b * 2 ^ (k - 1), hyT, ?_, ?_⟩
+  · -- residue of the chosen child
+    have hvq : v + q = (m : ℝ) + w := by rw [hw]; ring
+    have hfl : ⌊3 * (v + q) / 2 + (b : ℝ) * 2 ^ (k - 1)⌋ = A + b * hI := by
+      have : (b : ℝ) * 2 ^ (k - 1) = ((b * hI : ℤ) : ℝ) := by rw [hhI]; push_cast; ring
+      rw [this, Int.floor_add_intCast, hvq, ArcFattening.physical_child_floor, hA, hc, hparR]
+      ring
+    simp only [ArcFattening.residue]
+    rw [hfl, h2k, hbeq]
+    have := hidx
+    omega
+  · have hvq : v + q = (m : ℝ) + w := by rw [hw]; ring
+    have : (b : ℝ) * 2 ^ (k - 1) = ((b * hI : ℤ) : ℝ) := by rw [hhI]; push_cast; ring
+    rw [this, Int.fract_add_intCast, hvq, ArcFattening.physical_child_fract, hc, hparR]
 
 theorem roundInRes_mono {N : ℕ} {A A' : Set ℝ} (h : A ⊆ A') : roundInRes N A ⊆ roundInRes N A' := by
   rintro a ⟨i, hi, h1, h2, h3⟩
