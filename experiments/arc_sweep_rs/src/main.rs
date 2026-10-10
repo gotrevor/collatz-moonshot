@@ -120,6 +120,10 @@ struct Game {
     n_grid: i128,
 }
 
+fn nocarry() -> bool {
+    env::var("ARC_NOCARRY").map(|v| v == "1").unwrap_or(false)
+}
+
 impl Game {
     /// Open set of starts with an open move interval into both lifts (residue r), as closed-interval
     /// closures: a in (g0 - l/3, g1) for each good-move component (g0, g1).
@@ -140,7 +144,9 @@ impl Game {
         let arc = norm(arc);
         let mut good: Ivs = Vec::new();
         for j in 0..6i128 {
-            let b = ((3 * r - r % 2) / 2 + j as usize) % half;
+            // ARC_NOCARRY=1: the pure delay game (the residue is the next k parities, shifted out one per
+            // move; the constructor's floor j adds no carry).  A model, not the k-memory game.
+            let b = if nocarry() { (r >> 1) % half } else { ((3 * r - r % 2) / 2 + j as usize) % half };
             let tgt = inter(&p[b], &p[b + half]);
             // c in [j + lo, j + hi]  <=>  u in [(j + lo - d)/(3/2), (j + hi - d)/(3/2)]
             let us: Ivs = tgt

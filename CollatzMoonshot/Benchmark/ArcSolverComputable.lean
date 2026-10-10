@@ -555,6 +555,56 @@ theorem stepCode_sound {k N : ℕ} (_hk : 1 ≤ k) (hN : 0 < N) {s t l : ℚ} (h
   rw [stepCode_eq]
   exact cell_subset_roundCode hN hp i hp1 hp2 ⟨h1, h2.le⟩
 
+
+theorem child_lt {k : ℕ} (hk : 1 ≤ k) (x b : ℕ) (hb : b < 2) :
+    x % 2 ^ (k - 1) + b * 2 ^ (k - 1) < 2 ^ k := by
+  have h2 : 2 ^ k = 2 * 2 ^ (k - 1) := by rw [← pow_succ']; congr 1; omega
+  have := Nat.mod_lt x (show 0 < 2 ^ (k - 1) by positivity)
+  interval_cases b <;> omega
+
+/-- `resStepOpen` only reads residues below `2^k`. -/
+theorem resStepOpen_mono_lt {s t l : ℝ} {k : ℕ} (hk : 1 ≤ k) {P P' : ℕ → Set ℝ}
+    (h : ∀ r < 2 ^ k, P r ⊆ P' r) (r : ℕ) :
+    resStepOpen s t l k P r ⊆ resStepOpen s t l k P' r := by
+  rintro a ⟨u, μ, hμ, hu⟩
+  exact ⟨u, μ, hμ, fun q hq => ⟨(hu q hq).1, (hu q hq).2.1, (hu q hq).2.2.1,
+    fun b hb => h _ (child_lt hk _ _ hb) ((hu q hq).2.2.2 b hb)⟩⟩
+
+theorem descendsEmpty_aux {k N : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {s t l : ℚ} (hs : 0 ≤ s)
+    (hst : s + t ≤ 1) (hl0 : 0 < l) (hl : l ≤ 3 / 2) {Q : ℕ → Set ℝ}
+    (hcells : ∀ r, ∀ a ∈ Q r, ∃ i : ℕ, (i : ℝ) / N ≤ a ∧ a < ((i : ℝ) + 1) / N ∧
+      Set.Ico ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ Q r)
+    (hQ : ∀ r, Q r ⊆ roundInRes N (resStepOpen s t l k Q r)) :
+    ∀ fuel (P : ℕ → IvList), (∀ r < 2 ^ k, Q r ⊆ ivSet (P r)) →
+      descendsEmpty k N s t l fuel P = true → ∀ r < 2 ^ k, Q r = ∅ := by
+  intro fuel
+  induction fuel with
+  | zero => intro P _ h; simp [descendsEmpty] at h
+  | succ n ih =>
+    intro P hP hE
+    rw [descendsEmpty] at hE
+    split_ifs at hE with hall
+    · intro r hr
+      have := List.all_eq_true.1 hall r (List.mem_range.2 hr)
+      have hPr : P r = [] := by simpa using this
+      apply Set.eq_empty_of_subset_empty
+      intro a ha
+      obtain ⟨p, hp, -⟩ := hP r hr ha
+      rw [hPr] at hp; simp at hp
+    · refine ih _ ?_ hE
+      intro r hr a ha
+      have hget : ((List.range (2 ^ k)).map (descendStep k N s t l P)).getD r [] =
+          descendStep k N s t l P r := by
+        simp [List.getD_eq_getElem?_getD, hr]
+      simp only [hget, descendStep]
+      obtain ⟨i, h1, h2, hC⟩ := hcells r a ha
+      have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+      refine Ico_subset_ivSet_interIv (div_lt_div_of_pos_right (by linarith) hN')
+        (hC.trans (hP r hr)) ?_ ⟨h1, h2⟩
+      intro b hb
+      exact stepCode_sound hk hN hs hst hl0 hl P r
+        (roundInRes_mono (resStepOpen_mono_lt hk (fun r' hr' => hP r' hr') r) (hQ r (hC hb)))
+
 /-- The code descent keeps every residue-form rounded post-fixed point made of half-open grid cells
 (the analogue of `ArcSolverInclusion.descend_keeps` for the computed iteration); in particular
 `descendsEmpty … = true` forces every such `Q` to be empty. -/
@@ -566,7 +616,19 @@ theorem descendsEmpty_excludes {k N : ℕ} (hk : 1 ≤ k) (hN : 0 < N) {s t l : 
       Set.Ico ((i : ℝ) / N) (((i : ℝ) + 1) / N) ⊆ Q r)
     (hQ : ∀ r, Q r ⊆ roundInRes N (resStepOpen s t l k Q r)) :
     ∀ r, Q r = ∅ := by
-  sorry
+  have hlow := descendsEmpty_aux hk hN hs hst hl0 hl hcells hQ fuel _ (fun r _ a ha =>
+    ⟨(0, 1), List.mem_singleton_self _, by simpa using (hQ0 r ha).1,
+      by simpa using (hQ0 r ha).2.le⟩) hE
+  intro r
+  by_cases hr : r < 2 ^ k
+  · exact hlow r hr
+  · apply Set.eq_empty_of_subset_empty
+    intro a ha
+    obtain ⟨i, -, h1, h2, hC⟩ := hQ r ha
+    obtain ⟨u, μ, hμ, hu⟩ := hC ⟨h1, h2⟩
+    have := (hu 0 (by simp [hμ.le])).2.2.2 0 two_pos
+    rw [hlow _ (child_lt hk _ _ two_pos)] at this
+    exact this
 
 /-- **End to end with the code in Lean**: an empty computed sweep excludes every live `k`-memory relaxed
 strategy at `β` (any width).  Follows `ArcSolverInclusion.no_kRelaxedStrategy_of_sweep`'s proof with

@@ -749,5 +749,31 @@ def test_rust_round_keeps_cell_ending_at_hi():
     # the clip point 0 keeps its first cell
     assert _rust("round", 2, "0", "1/2").split() == ["(0/1,1/2)"]
 
+
+def _rust_nocarry(*args):
+    import os
+    os.environ["ARC_NOCARRY"] = "1"
+    try:
+        return _rust(*args)
+    finally:
+        del os.environ["ARC_NOCARRY"]
+
+
+def test_delay_game_controls():
+    # ArcDelayGame.KDelayStrategy (2026-10-10): the pure delay game, residue = next k parities, no carry.
+    # Off-centre sibling: lookahead alone gives the memory benefit (k = 2 loses, k = 3 wins).
+    l = F(87, 100) * F(86, 400)
+    assert "live []" in _rust_nocarry("solve", 2, "2/5", "87/100", l, 20)
+    assert "live [0, 1, 2, 3, 4, 5, 6, 7]" in _rust_nocarry("solve", 3, "2/5", "87/100", l, 20)
+    # teeth: the games differ.  k = 4, arc [1/20, 1/20 + 79/100], width 1501/8000 (found by a 60-arc random
+    # scan, the only disagreement): the delay game wins, the k-memory game loses
+    assert "live []" in _rust("solve", 4, "1/20", "79/100", "1501/8000", 14)
+    assert "live [0, 1, 2" in _rust_nocarry("solve", 4, "1/20", "79/100", "1501/8000", 14)
+    # positive control below 7/57
+    b = F(7, 57) - F(1, 10 ** 5)
+    assert "live [0, 1, 2, 3]" in _rust_nocarry("solve", 2, b, 1 - 2 * b, "1225/10000", 15)
+    # above 7/57 the delay game also empties (k = 2, the full sweep is in ArcDelayGame's docstring)
+    assert "nonempty []" in _rust_nocarry("sweep", 2, 2, "7057/57000", "1/1000", "1/2500", 17)
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
