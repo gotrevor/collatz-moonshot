@@ -403,7 +403,10 @@ empty (2026-10-10, `arc_trap_k.py width-sweep 3 7057/57000 1/1000 1/2500 17`): w
 `β' = β - e0/2 = 7/57 + 1/2000`, `e0 = 1/1000`, all 2825 widths `i/2500 ≤ 3t'/2`, grid `N = 2^17`
 (`e0 N / 96 ≈ 1.4`), `k = 1, …, 6`, empty in BOTH the Python solver and the independent Rust one
 (`experiments/arc_sweep_rs`, written from `stepOpen` / `roundIn`, not from the Python); Rust alone is also
-empty at `k = 7, 8`.  Positive control: at `N = 2^15` the solver finds winners at
+empty at `k = 7, 8`.  Re-run on the rounding-fixed Rust binary (8bdeb92: `round_in` had dropped an Ico cell
+ending at `hi`): unchanged, empty at `k = 4, …, 8`.  Third instrument: the Lean `IvList` operator
+(`ArcSolverComputable.sweepEmpty 6 (2^17) (7/57 + 1/2000) (1/2500) 400`) evaluates to `true` (345 s, 5.7 GB),
+and `ArcSolverComputable` is where (c) gets kernel-checked.  Positive control: at `N = 2^15` the solver finds winners at
 `7/57 - 1/10000` for `k = 0, 1, 2`.  Unlike `finiteMemoryRelaxedValue_ge_013`, no liveness hypothesis. -/
 theorem no_kRelaxedStrategy_7_57_plus {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 6) (l : ℝ) (P : ℕ → Set ℝ)
     (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
@@ -415,7 +418,7 @@ Confidence 85% (one instrument at this `β`).  Same reduction as `no_kRelaxedStr
 and the sweep's execution are not kernel-checked.
 Computation (2026-10-10, Rust only: `arc_sweep sweep 1 3 70057/570000 1/10000 1/20001 20`): widened arc
 `β' = 7/57 + 1/20000`, all 22629 widths `i/20001 ≤ 3t'/2` (mesh below `e0/2`), grid `N = 2^20`
-(`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`.  Positive control on the same grid: winners at
+(`e0 N ≈ 105 ≥ 96`), empty for `k = 1, 2, 3`; re-run on the rounding-fixed binary (8bdeb92), unchanged.  Positive control on the same grid: winners at
 `7/57 - 1/100000` (`k = 1` at widths `0.1231, 0.1234`; `k = 3` at all of `0.1225 … 0.1234`). -/
 theorem no_kRelaxedStrategy_7_57_plus_tenth {k : ℕ} (hk : 1 ≤ k) (hk3 : k ≤ 3) (l : ℝ)
     (P : ℕ → Set ℝ) (hne : ∃ r < 2 ^ k, (P r).Nonempty) :
