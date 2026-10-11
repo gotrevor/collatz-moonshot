@@ -303,7 +303,8 @@ along the adversary's kill tree its maximum is `2, 2, 5, 4, 5, 7` (`k = 2, …, 
 quantity is the effective memory of a state, the least `m` with `D_m(s mod 2^m) = D_k(s)`.  Along the kill
 tree it wears down to `1` (the proved memoryless game) by move `T(k) = 5, 6, 10, 12, 13, 15` (`k = 2, …, 7`), and
 `D_k - T(k) = 11, 11, 11, 11, 12, 12`.  So all the `k`-dependence is the wear-down, and the tail is a near-constant
-memoryless kill.  The maximum effective memory plateaus, then collapses about one bit per move (`k = 7`:
+memoryless kill.  Near the threshold (`β = 0.123`): `T(k) = 6, 10` and `D_k - T(k) = 23, 22` (`k = 2, 3`), a longer
+but again near-constant tail, as the `k = 1` depth `25` there predicts.  The maximum effective memory plateaus, then collapses about one bit per move (`k = 7`:
 `5, 4, 3, 2, 1` at moves `11, …, 15`).  A `k`-uniform proof would bound the wear-down: the adversary strips one
 bit of effective memory every `O(1)` moves.
 Why it is a better target than the fixed-width game: one parameter fewer, and the `k = 1` proof (funnel
