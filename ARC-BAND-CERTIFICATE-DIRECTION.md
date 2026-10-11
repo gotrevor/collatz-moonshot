@@ -7,7 +7,11 @@ Two targets, in this order.  Done when both are proved and `#print axioms` for e
 2. `ArcBandCertificate.relaxedAboveUpperEdge` (`CollatzMoonshot/Benchmark/ArcBandCertificate.lean`).
 
 Item 1 is complete (2026-10-10): the component strategy is constructed with the prescribed absolute
-windows, and the floor/fractional-part and binary carry identities are proved in Lean.  Item 2 is next.
+windows, and the floor/fractional-part and binary carry identities are proved in Lean.
+
+Item 2 is complete (2026-10-11): `ArcBandCertificate.relaxedAboveUpperEdge` is proved from a Lean
+transcription of the symbolic interval descent, a pointwise superset theorem, the checked triangle trees,
+and the finite-zero left-shift argument.  Both ordered targets are complete.
 
 Never weaken a statement.  Commit green after each milestone.  Edit only: the proof of item 1 (plus helper
 lemmas placed directly above it), `ArcBandCertificate.lean`, new files `ArcBandCertificate*.lean` (root-import
@@ -33,10 +37,14 @@ and the floor is `≥ 0` because `u ≥ a ≥ 0`.
 
 ## Item 2: the band certificate (larger)
 
-Checkpoint (2026-10-10): the affine evaluation layer and rational triangle vertex oracle are implemented
-in `ArcBandCertificate.lean`.  Its three outcomes have kernel proofs, including strict positivity at every
-strict barycentric combination when the three vertex values are nonnegative and one is positive.  Next is
-the symbolic interval-list descent and its pointwise superset theorem.
+Complete (2026-10-11): `ArcBandCertificate.lean` implements the affine interval-list computation and proves
+that every successful symbolic step evaluates to a superset of the semantic relaxed-strategy operator.
+The generated triangle trees are checked by `certificate0` and `certificate1`; coefficient identities and
+positive-multiple edge checks turn the vertex oracle into pointwise signs on each strict triangle interior.
+All comparison forms have nonzero `β` coefficient, so `exists_beta_avoiding` shifts boundary points left
+past the finite zero set and `RelaxedStrategy.mono` transports a hypothetical strategy to a certified leaf.
+The headline theorem depends only on `propext`, `Classical.choice`, `Quot.sound`, and the two expected
+per-certificate `native_decide` axioms.
 
 The math: `ArcDelayGame.RelaxedAboveUpperEdge`'s docstring and `experiments/arc_band.py` (read both).
 Astra (Codex) reviewed the tool and the boundary argument on 2026-10-10 and found no defect.
