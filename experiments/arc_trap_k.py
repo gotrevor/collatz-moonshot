@@ -738,6 +738,18 @@ def test_rust_agrees_with_python():
 
 
 
+
+def test_component_memory_wears_down():
+    # 2026-10-11, k-memory component game at beta = 0.13.  projdiff: D_2(s) - D_1(s mod 2) over all 42636
+    # reachable states (matched bin for bin by an independent Python port) is in [0, 10]: memory never hurts.
+    out = _rust("projdiff", 2, "13/100")
+    assert "reachable 42636" in out and "hist {0: 19794," in out and "10: 194}" in out
+    # effmem: along the adversary's kill tree, the least m with D_m(s mod 2^m) = D_k(s).  At k = 3 the starts
+    # need all 3 bits (the measure can report memory > 1), and from move 6 on every state is memoryless.
+    lines = _rust("effmem", 3, "13/100").splitlines()
+    assert lines[0].endswith("[0, 4, 4]")
+    assert all(line.endswith(", 0, 0]") for line in lines[6:]) and not lines[5].endswith(", 0, 0]")
+
 def test_rust_round_keeps_cell_ending_at_hi():
     # Astra's hand-computed regression (2026-10-10).  Open start interval (1/8, 3/4), N = 4: the half-open
     # cells inside are [1/4, 1/2) and [1/2, 3/4), so the closed output is [(1/4, 3/4)].  The old upper

@@ -281,6 +281,30 @@ impl Comp {
         }
         ok
     }
+
+    /// children pairs of every constructor move from (x, y)
+    fn moves(&self, x: Q, y: Q) -> Vec<((Q, Q), (Q, Q))> {
+        let mut out = Vec::new();
+        for j in (x.floor() - 1)..=y.floor() {
+            let lo = Q::int(j).add(self.s);
+            let hi = Q::int(j).add(self.e);
+            let a = if x > lo { x } else { lo };
+            let b = if y < hi { y } else { hi };
+            if a < b {
+                let h = Q::new(3, 2);
+                let (na, nb) = (h.mul(a), h.mul(b));
+                let sh = Q::int(na.div(self.mh).floor()).mul(self.mh);
+                let (ca, cb) = (na.sub(sh), nb.sub(sh));
+                out.push(((ca, cb), (ca.add(self.mh), cb.add(self.mh))));
+            }
+        }
+        out
+    }
+
+    /// first depth at which (x, y) dies, or None within cap
+    fn death(&mut self, x: Q, y: Q, cap: usize) -> Option<usize> {
+        (1..=cap).find(|&d| !self.surv(x, y, d))
+    }
 }
 
 fn main() {
@@ -363,8 +387,94 @@ fn main() {
             }
             println!("k {} beta {}/{} dead {:?} memo {}", k, beta.n, beta.d, dead, c.memo.len());
         }
+        Some("effmem") => {
+            // effmem K BETA: along the adversary's kill tree (all constructor moves, the child with the smaller
+            // death depth), the effective memory of each state s: least m with D_m(s mod 2^m) = D_k(s).
+            // Prints, per tree level (moves from a start), the histogram of effective memory.
+            let k: u32 = a[2].parse().unwrap();
+            let beta = Q::parse(&a[3]);
+            let mk = |k: u32| Comp { s: beta, e: Q::int(1).sub(beta), mh: Q::int(1i128 << (k - 1)), memo: Default::default() };
+            let mut g: Vec<Comp> = (1..=k).map(mk).collect();
+            let starts: Vec<(Q, Q)> = (0..(1i128 << k)).map(|r| (Q::int(r).add(beta), Q::int(r).add(Q::int(1).sub(beta)))).collect();
+            let key = |q: &(Q, Q)| (q.0.n, q.0.d, q.1.n, q.1.d);
+            let mut seen: std::collections::HashSet<(i128, i128, i128, i128)> = starts.iter().map(key).collect();
+            let mut fr = starts.clone();
+            let mut level = 0;
+            while !fr.is_empty() {
+                let mut hist = vec![0usize; k as usize + 1];
+                let mut nf = Vec::new();
+                for &(x, y) in &fr {
+                    let dk = g[k as usize - 1].death(x, y, 300);
+                    let mut eff = k;
+                    for m in 1..k {
+                        let mm = Q::int(1i128 << m);
+                        let sh = Q::int(x.div(mm).floor()).mul(mm);
+                        if g[m as usize - 1].death(x.sub(sh), y.sub(sh), 300) == dk { eff = m; break; }
+                    }
+                    hist[eff as usize] += 1;
+                    let c = &mut g[k as usize - 1];
+                    for (c0, c1) in c.moves(x, y) {
+                        let (d0, d1) = (c.death(c0.0, c0.1, 300), c.death(c1.0, c1.1, 300));
+                        let ch = if d1 < d0 { c1 } else { c0 };
+                        if seen.insert(key(&ch)) { nf.push(ch); }
+                    }
+                }
+                println!("level {} states {} effmem(1..k) {:?}", level, fr.len(), &hist[1..]);
+                fr = nf;
+                level += 1;
+            }
+        }
+        Some("projdiff") => {
+            // projdiff K BETA: over every state reachable from the starts within the start death depth,
+            // histogram of D_k(s) - D_{k-1}(s mod 2^(k-1)) (does one bit of memory cost a bounded delay?)
+            let k: u32 = a[2].parse().unwrap();
+            let beta = Q::parse(&a[3]);
+            let mk = |k: u32| Comp { s: beta, e: Q::int(1).sub(beta), mh: Q::int(1i128 << (k - 1)), memo: Default::default() };
+            let (mut c, mut p) = (mk(k), mk(k - 1));
+            let starts: Vec<(Q, Q)> = (0..(1i128 << k)).map(|r| (Q::int(r).add(c.s), Q::int(r).add(c.e))).collect();
+            let d0 = starts.iter().map(|&(x, y)| c.death(x, y, 200).unwrap()).max().unwrap();
+            let key = |q: &(Q, Q)| (q.0.n, q.0.d, q.1.n, q.1.d);
+            let mut seen: std::collections::HashSet<(i128, i128, i128, i128)> = starts.iter().map(key).collect();
+            let kt = env::var("ARC_KILLTREE").map(|v| v == "1").unwrap_or(false);
+            let mut all = starts.clone();
+            let mut fr = starts.clone();
+            for _ in 0..d0 {
+                let mut nf = Vec::new();
+                for &(x, y) in &fr {
+                    for (c0, c1) in c.moves(x, y) {
+                        // ARC_KILLTREE=1: only the adversary's optimal child (smaller death depth, ties to c0)
+                        let kids = if kt {
+                            let (d0, d1) = (c.death(c0.0, c0.1, 200), c.death(c1.0, c1.1, 200));
+                            vec![if d1 < d0 { c1 } else { c0 }]
+                        } else { vec![c0, c1] };
+                        for ch in kids {
+                            if seen.insert(key(&ch)) { nf.push(ch); all.push(ch); }
+                        }
+                    }
+                }
+                assert!(all.len() < 20_000_000, "reachable set over 20M states");
+                fr = nf;
+            }
+            let m = Q::int(1i128 << (k - 1));
+            let mut hist: std::collections::BTreeMap<i64, usize> = Default::default();
+            let mut worst: Vec<String> = Vec::new();
+            let mut wmax = i64::MIN;
+            for &(x, y) in &all {
+                let dk = c.death(x, y, 200).unwrap() as i64;
+                let sh = Q::int(x.div(m).floor()).mul(m);
+                let dp = p.death(x.sub(sh), y.sub(sh), 200).map(|v| v as i64).unwrap_or(9999);
+                let df = dk - dp;
+                *hist.entry(df).or_default() += 1;
+                if df > wmax { wmax = df; worst.clear(); }
+                if df == wmax && worst.len() < 6 {
+                    worst.push(format!("[{}/{},{}/{}] Dk {} Dk-1 {}", x.n, x.d, y.n, y.d, dk, dp));
+                }
+            }
+            println!("k {} beta {}/{} d0 {} reachable {} hist {:?}", k, beta.n, beta.d, d0, all.len(), hist);
+            println!("worst {}: {}", wmax, worst.join(" ; "));
+        }
         _ => {
-            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN | round LOGN LO HI | component K BETA MAXD");
+            eprintln!("usage: arc_sweep sweep KMIN KMAX BETA E0 STEP LOGN | solve K S T L LOGN | round LOGN LO HI | component K BETA MAXD | projdiff K BETA");
             std::process::exit(2);
         }
     }

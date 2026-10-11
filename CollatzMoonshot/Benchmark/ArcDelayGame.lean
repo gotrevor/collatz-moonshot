@@ -297,6 +297,15 @@ first depth at which every start dies; Python, then the Rust `arc_sweep componen
 grows with `k` (about 1.5 to 2 moves per bit, as in the fixed-width game), and it grows as `β ↓ 7/57`, as the
 `k = 1` runaway predicts.  Search limit: `k = 5` at `0.123` took 50M memo entries (5.4 GB); `k = 6` there would need
 about 25 GB without a smaller state encoding.
+Anatomy of the kill (2026-10-11, `arc_sweep projdiff` / `effmem`, `β = 0.13`).  Memory never hurts:
+`D_k(s) ≥ D_{k-1}(s mod 2^(k-1))` on every reachable state (`D` = death depth).  Pointwise the gap is not uniform:
+along the adversary's kill tree its maximum is `2, 2, 5, 4, 5, 7` (`k = 2, …, 7`), always at a start.  The useful
+quantity is the effective memory of a state, the least `m` with `D_m(s mod 2^m) = D_k(s)`.  Along the kill
+tree it wears down to `1` (the proved memoryless game) by move `T(k) = 5, 6, 10, 12, 13, 15` (`k = 2, …, 7`), and
+`D_k - T(k) = 11, 11, 11, 11, 12, 12`.  So all the `k`-dependence is the wear-down, and the tail is a near-constant
+memoryless kill.  The maximum effective memory plateaus, then collapses about one bit per move (`k = 7`:
+`5, 4, 3, 2, 1` at moves `11, …, 15`).  A `k`-uniform proof would bound the wear-down: the adversary strips one
+bit of effective memory every `O(1)` moves.
 Why it is a better target than the fixed-width game: one parameter fewer, and the `k = 1` proof (funnel
 plus the `(0, 1/2, 1/2)` runaway from `10/19`) is already in Lean.  In the runaway the constructor's
 components are unique, so its carries are forced and the adversary can set each top bit to produce the
