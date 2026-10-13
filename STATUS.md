@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical bounded-ratio rewiring in progress:** the restriction of `U` to `ℕ` is
+> now a kernel-checked permutation, with exact integer-power compatibility.  The complete
+> no-rewiring branch (at most one infinite nonnegative orbit) proves every conclusion of Theorem R
+> with empty change set.  The remaining target is the sparse geometric cut-and-splice construction
+> for at least two infinite orbits.  Read `HANDOFF-amusical-rewire.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;

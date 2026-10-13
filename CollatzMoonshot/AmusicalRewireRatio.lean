@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalRewireRatio.Restriction
 
 /-!
 # Bounded-ratio rewiring of `U` (Theorem R)
@@ -38,8 +38,9 @@ and has a single infinite orbit containing all of `U`'s infinite orbits. -/
 theorem exists_boundedRatio_rewire :
     ∃ τ : Equiv.Perm ℕ,
       (∀ n : ℕ, (amusicalOrbit n).Finite → (τ n : ℤ) = amusical n) ∧
-      (∃ C : ℕ, ∀ N : ℕ, ((Finset.range N).filter fun n => (τ n : ℤ) ≠ amusical n).card ≤
-        C * (Nat.log 2 N + 1) ^ 2) ∧
+      (∃ C : ℕ, ∀ N : ℕ,
+        ((Finset.range N).filter fun n => (τ n : ℤ) ≠ amusical n).card ≤
+          C * (Nat.log 2 N + 1) ^ 2) ∧
       (∀ n : ℕ, (τ n : ℤ) ≤ 3 * amusical n + 3 ∧ amusical n ≤ 3 * (τ n : ℤ) + 3) ∧
       ∀ a b : ℕ, (amusicalOrbit a).Infinite → (amusicalOrbit b).Infinite →
         ∃ j : ℤ, (τ ^ j) a = b := by
