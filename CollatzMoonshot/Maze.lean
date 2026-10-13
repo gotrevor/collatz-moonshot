@@ -22,6 +22,7 @@ import CollatzMoonshot.AmusicalChains
 import CollatzMoonshot.AmusicalReversal
 import CollatzMoonshot.AmusicalContinuousReversor
 import CollatzMoonshot.AmusicalLogBalance
+import CollatzMoonshot.AmusicalSeventh
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -207,7 +208,10 @@ def register : List Hall := [
    "AmusicalContinuousReversor.lean; agent report reversor.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)", .refuted,
    "Haar is conformal, not invariant, and Û is totally dissipative; only ½/⅓ log balance survives",
-   "AmusicalLogBalance.lean; agent report equidist.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalLogBalance.lean; agent report equidist.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: seventh orbit from density, window or crossing statistics", .siblingTransfer,
+   "U rewired on a density-0 set has the same statistics and only the cycles plus one orbit",
+   "AmusicalSeventh.lean; agent report seventh.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -281,7 +285,12 @@ def mazeLinks : List Link := [
   ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)",
    [``CollatzMoonshot.Amusical.logWeight_even_balance,
     ``CollatzMoonshot.Amusical.logWeight_three_balance,
-    ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_logDensityZero], []⟩]
+    ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_logDensityZero], []⟩,
+  ⟨"amusical: seventh orbit from density, window or crossing statistics",
+   [``CollatzMoonshot.Amusical.rewire_single_orbit,
+    ``CollatzMoonshot.Amusical.sparse_sweep,
+    ``CollatzMoonshot.Amusical.amusical_pow_classUnion_invariant,
+    ``CollatzMoonshot.Amusical.atLeastSeven_of_orbit8_not_cofinite], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -294,7 +303,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 32 rows, 24 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 33 rows, 25 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

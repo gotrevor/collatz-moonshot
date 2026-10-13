@@ -261,3 +261,26 @@ Lean: `AmusicalLogBalance.lean` (targets).  Weight `n` by `1/n`: `W_N(S) = Σ_{n
   `ν(W) > 0`.  Unions of orbits are measurably not equidistributed (minimum `≡ 0 mod 4` union
   has `0.262` of its log weight on `0 mod 4`, model `0.2608`), but proving any such union
   non-equidistributed already proves a seventh orbit.  Odds this lane gives (a): `< 1%`.
+
+## 11. Seventh orbit (2026-10-13, "seventh" agent, checked)
+
+Lean: `AmusicalSeventh.lean` (targets).  A seventh orbit ⇔ no orbit of `U` is cofinite in `ℕ`.
+No contradiction found from a cofinite orbit of `8`; believed `≥ 7` orbits at 99.5%, `14` an orbit
+minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both stay above `2⁸⁰⁰⁰`).
+
+* **Sparse sweeping (unconditional).**  An infinite orbit visits `≤ ηX` numbers below `X` within
+  any time window of length `2cX log X` (window minima are separated, and window order is a
+  residue condition for `n ≥ 2·324^L`).  Under a cofinite orbit, `|t(n)| ≳ n log n` off density `η`.
+* **Records (under H, paper only).**  Forward survivors are exactly the upper records of the time
+  function, backward survivors the lower records; `8` is the only point that is both.
+* **Cycle-like itinerary (under H, paper only).**  In one time direction the even-step frequency of
+  `8`'s itinerary must be `log₂(4/3) ≈ 0.415` on infinitely many prefixes, the frequency of a
+  cycle; such `2`-adic integers form a Haar-null set of dimension `≤ 0.9868`.  Ruling it out for
+  `8` is a Collatz-type statement about one integer.
+* **Residue transitivity.**  Every `Uᵐ` has a strongly connected residue graph, so no nontrivial
+  union of classes is `Uᵐ`-invariant, and under H `t mod m` is never eventually periodic.
+* **The barrier (rewiring).**  A permutation of `ℕ` with at-most-doubling steps can be changed on a
+  density-`0` set so all infinite orbits fuse into one.  For `U` this keeps every density,
+  log-density, window and crossing statistic, so statistics cannot prove a seventh orbit; a proof
+  needs the exact RCWA structure everywhere plus a global mechanism, and the only known global
+  mechanism, reversal, is excluded (Theorem NR, Theorem C).
