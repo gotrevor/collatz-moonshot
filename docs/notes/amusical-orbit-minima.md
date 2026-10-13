@@ -51,8 +51,9 @@ Call `n` an **`L`-window minimum** if `n ≤ U^t(n)` and `n ≤ U^{−t}(n)` for
 
 *Proof idea.*  On a residue class mod `4^L·3^L` the first `L` forward and backward branches are
 fixed, so `U^{±t}` is affine there; past a size threshold the window condition becomes a
-congruence condition; the good classes are counted per direction (Haar measure is exactly
-preserved) and combined by the Chinese remainder theorem.
+congruence condition; the good classes are counted per direction (forward steps preserve
+2-adic Haar measure on `ℤ₂`, backward steps 3-adic Haar measure on `ℤ₃`) and combined by the
+Chinese remainder theorem.
 
 `δ_1 = 1/3` is the density of local minima (the classes `±2 mod 6`), which Conway computes in
 his "Congruence Paradox" (2013, Appendix 2)

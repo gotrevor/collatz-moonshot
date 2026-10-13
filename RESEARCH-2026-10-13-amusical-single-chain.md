@@ -42,8 +42,11 @@ cannot prove there are infinitely many.  All the first-order tools are of that k
   where `U^N` decreases can drop by up to `(3/4)^N`, and that factor swamps the gain.
 * **Conformal measures.**  A `U`-invariant set with residue densities defines a measure on `K`
   with the same Jacobian (`2/3` on `E`, `4/3` on `A, B`) as Haar.  Its density with respect to
-  Haar is `Û`-invariant, so under ergodicity it is Haar: an invariant set's residue statistics
-  cannot tell one orbit from many.
+  Haar is `Û`-invariant.  (Corrected 2026-10-13, §10: Haar on `ℤ₂ × ℤ₃` is conformal, not
+  invariant, and `Û` is totally dissipative for it, with wandering set the formal orbit minima of
+  measure `c`; so an invariant density may be any function of the wandering point and absolute
+  continuity forces almost nothing.)  Either way an invariant set's residue statistics cannot
+  tell one orbit from many.
 * **Level crossings.**  Below any level, the drift `+0.0589` per step is exactly paid for by
   up-crossing overshoots plus down-crossing undershoots (a telescoping identity), with about
   `X/6` entries into `[1, X]` in total.  This is consistent for any number of chains.
@@ -238,3 +241,23 @@ residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically co
 * **Q1 (no bijective continuous reversor at all): believed ~93%, open**
   (`AmusicalNoContinuousReversor`).  Exact computation kills every window-`≤ 2` table; window-`3`
   survivors of the cycle test fail numerically on small integers.
+
+## 10. Log-weighted balance and fat orbits (2026-10-13, "equidist" agent, checked)
+
+Lean: `AmusicalLogBalance.lean` (targets).  Weight `n` by `1/n`: `W_N(S) = Σ_{n ∈ S, n ≤ N} 1/n`.
+
+* **Exact balance (paper proof checked).**  For any union `S` of orbits in `ℕ_{>0}`,
+  `W_N(S ∩ 2ℤ) = W_N(S)/2 + O(1)` and `W_N(S ∩ 3ℤ) = W_N(S)/3 + O(1)`.  Proof: `U` maps the evens
+  of `S` onto the multiples of `3` with weight factor `2/3` and the odds onto the non-multiples
+  with factor `4/3 + O(1/n²)`; cutoffs move by bounded log-factors; so with `e, o` the even and odd
+  weights, `e + o = (2/3)e + (4/3)o + O(1)`, i.e. `e = o + O(1)`.
+* **Reduction.**  If every orbit has upper log density `0`, Klamkin (a) holds (finitely many
+  orbits partition `ℕ`, whose log density is `1`).  Stronger than the density-`0` reduction.
+* **Correction to the brief.**  Haar on `ℤ₂ × ℤ₃` is not `Û`-invariant (evens, measure `1/2`,
+  map onto `ℤ₂ × 3ℤ₃`, measure `1/3`); it is conformal with Jacobian `1/slope`, and `Û` is totally
+  dissipative, with wandering set the formal two-sided orbit minima, of measure exactly `c ≈
+  0.04978`: the conjectured density of orbit minima is the Haar measure of the wandering set.
+  So the hoped "fat orbits equidistribute" theorem has no ergodic engine; a fat orbit only gets
+  `ν(W) > 0`.  Unions of orbits are measurably not equidistributed (minimum `≡ 0 mod 4` union
+  has `0.262` of its log weight on `0 mod 4`, model `0.2608`), but proving any such union
+  non-equidistributed already proves a seventh orbit.  Odds this lane gives (a): `< 1%`.

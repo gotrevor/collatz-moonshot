@@ -21,6 +21,7 @@ import CollatzMoonshot.AmusicalReturns
 import CollatzMoonshot.AmusicalChains
 import CollatzMoonshot.AmusicalReversal
 import CollatzMoonshot.AmusicalContinuousReversor
+import CollatzMoonshot.AmusicalLogBalance
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -203,7 +204,10 @@ def register : List Hall := [
    "AmusicalReversal.lean; GaussianRelative.lean; agent report relative.md", "2026-10-13"⟩,
   ⟨"amusical: reversor determined by residues ((2,3)-adically continuous)", .refuted,
    "even-step frequencies are dyadic forward, triadic backward: no linear growth; one prime: const",
-   "AmusicalContinuousReversor.lean; agent report reversor.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalContinuousReversor.lean; agent report reversor.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)", .refuted,
+   "Haar is conformal, not invariant, and Û is totally dissipative; only ½/⅓ log balance survives",
+   "AmusicalLogBalance.lean; agent report equidist.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -273,7 +277,11 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.no_continuous_linear_reversor,
     ``CollatzMoonshot.Amusical.reversor_const_of_twoAdicContinuous,
     ``CollatzMoonshot.Amusical.reversor_const_of_threeAdicContinuous,
-    ``CollatzMoonshot.Amusical.AmusicalNoContinuousReversor], []⟩]
+    ``CollatzMoonshot.Amusical.AmusicalNoContinuousReversor], []⟩,
+  ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)",
+   [``CollatzMoonshot.Amusical.logWeight_even_balance,
+    ``CollatzMoonshot.Amusical.logWeight_three_balance,
+    ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_logDensityZero], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -286,7 +294,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 31 rows, 23 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 32 rows, 24 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
