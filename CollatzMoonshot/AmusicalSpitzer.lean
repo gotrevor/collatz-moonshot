@@ -7,6 +7,7 @@ import CollatzMoonshot.AmusicalConstant
 import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.CyclicMinimum
 import Mathlib.Combinatorics.Enumerative.Composition
+import Mathlib.Combinatorics.Enumerative.InclusionExclusion
 
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
@@ -701,6 +702,41 @@ theorem ofFn_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
   · simp
   · intro n h₁ h₂
     simp [rotateWord]
+
+/-- Successive cyclic word rotations add their offsets. -/
+theorem rotateWord_rotateWord {L : ℕ} (w : Fin L → Bool) (r s : ℕ) :
+    rotateWord (rotateWord w r) s = rotateWord w (r + s) := by
+  apply List.ofFn_injective
+  rw [ofFn_rotateWord, ofFn_rotateWord, ofFn_rotateWord, List.rotate_rotate]
+
+/-- Successive rotations indexed by `Fin L` add in the cyclic group `Fin L`. -/
+theorem rotateWord_fin_add {L : ℕ} [NeZero L]
+    (w : Fin L → Bool) (a b : Fin L) :
+    rotateWord (rotateWord w a) b = rotateWord w (a + b : Fin L) := by
+  rw [rotateWord_rotateWord]
+  apply List.ofFn_injective
+  rw [ofFn_rotateWord, ofFn_rotateWord]
+  simp only [Fin.add_def]
+  simpa using (List.rotate_mod (List.ofFn w) (a.val + b.val)).symm
+
+/-- Rotation by a fixed offset is injective on finite words. -/
+theorem rotateWord_injective {L : ℕ} (r : ℕ) :
+    Function.Injective (fun w : Fin L → Bool => rotateWord w r) := by
+  intro w v h
+  apply List.ofFn_injective
+  apply List.rotate_injective r
+  simpa only [ofFn_rotateWord] using congrArg List.ofFn h
+
+/-- Rotation by a fixed offset, packaged as a permutation of finite words. -/
+noncomputable def rotateWordEquiv (L r : ℕ) :
+    (Fin L → Bool) ≃ (Fin L → Bool) :=
+  Equiv.ofBijective (fun w => rotateWord w r)
+    ((Fintype.bijective_iff_injective_and_card _).2
+      ⟨rotateWord_injective r, rfl⟩)
+
+@[simp]
+theorem rotateWordEquiv_apply (L r : ℕ) (w : Fin L → Bool) :
+    rotateWordEquiv L r w = rotateWord w r := rfl
 
 theorem fwdScoreList_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
     fwdScoreList (rotateWord w r) = (fwdScoreList w).rotate r := by
@@ -1935,6 +1971,327 @@ theorem bwdTwoMarkIntersection_sum {m n : ℕ} (hm : 0 < m) (hn : 0 < n) :
   intro v hv
   simp only [bwdGood_append_and_swap_iff hm hn, bwdWordWeight_append]
   split_ifs <;> simp_all
+
+/-! ## Finite inclusion--exclusion and the logarithmic composition coefficients -/
+
+/-- Translating every cyclic start by `a` is the same as rotating the underlying forward word
+by `a`. -/
+theorem forall_unanchor_fwd_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) (w : Fin L → Bool) :
+    (∀ r ∈ unanchorCyclicFinset a s, FwdGood L (rotateWord w r)) ↔
+      ∀ r ∈ s, FwdGood L (rotateWord (rotateWord w a) r) := by
+  constructor
+  · intro h r hr
+    rw [rotateWord_fin_add]
+    exact h (a + r) (by simpa using hr)
+  · intro h r hr
+    have hs : r - a ∈ s := (mem_unanchorCyclicFinset a r s).mp hr
+    have := h (r - a) hs
+    rw [rotateWord_fin_add] at this
+    simpa [add_comm] using this
+
+/-- Weighted mass of the simultaneous forward-survival events based at a set of cyclic starts. -/
+noncomputable def fwdCyclicIntersectionMass (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  ∑ w : Fin L → Bool,
+    if ∀ r ∈ s, FwdGood L (rotateWord w r) then fwdWordWeight w else 0
+
+open Classical in
+/-- The forward cyclic-intersection mass is invariant under translating all starts. -/
+theorem fwdCyclicIntersectionMass_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    fwdCyclicIntersectionMass L (unanchorCyclicFinset a s) =
+      fwdCyclicIntersectionMass L s := by
+  rw [fwdCyclicIntersectionMass, fwdCyclicIntersectionMass]
+  calc
+    (∑ w : Fin L → Bool,
+        if ∀ r ∈ unanchorCyclicFinset a s, FwdGood L (rotateWord w r) then
+          fwdWordWeight w else 0) =
+      ∑ w : Fin L → Bool,
+        if ∀ r ∈ s, FwdGood L (rotateWord (rotateWord w a) r) then
+          fwdWordWeight (rotateWord w a) else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · exact forall_unanchor_fwd_iff a s w
+      · exact fwdWordWeight_rotateWord w a
+      · rfl
+    _ = _ := by
+      let F : (Fin L → Bool) → ℝ := fun w =>
+        if ∀ r ∈ s, FwdGood L (rotateWord w r) then fwdWordWeight w else 0
+      change (∑ w : Fin L → Bool, F (rotateWord w a)) = ∑ w : Fin L → Bool, F w
+      simpa only [rotateWordEquiv_apply] using (rotateWordEquiv L a).sum_comp F
+
+/-- The signed forward intersection contribution appearing in inclusion--exclusion. -/
+noncomputable def fwdCyclicContribution (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  (-1 : ℝ) ^ (s.card + 1) * fwdCyclicIntersectionMass L s
+
+open Classical in
+/-- Signed forward intersection contributions are rotation invariant. -/
+theorem fwdCyclicContribution_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    fwdCyclicContribution L (unanchorCyclicFinset a s) =
+      fwdCyclicContribution L s := by
+  simp [fwdCyclicContribution, fwdCyclicIntersectionMass_unanchor]
+
+/-- The finite set of words that survive forward from the cyclic start `r`. -/
+def fwdGoodRotationWords (L : ℕ) (r : Fin L) : Finset (Fin L → Bool) :=
+  Finset.univ.filter fun w => FwdGood L (rotateWord w r)
+
+@[simp]
+theorem mem_fwdGoodRotationWords {L : ℕ} (r : Fin L) (w : Fin L → Bool) :
+    w ∈ fwdGoodRotationWords L r ↔ FwdGood L (rotateWord w r) := by
+  simp [fwdGoodRotationWords]
+
+open Classical in
+/-- The union of the forward cyclic-survival events is exactly endpoint positivity. -/
+theorem fwdGoodRotationWords_biUnion (L : ℕ) :
+    (Finset.univ : Finset (Fin L)).biUnion (fwdGoodRotationWords L) =
+      Finset.univ.filter FwdEndpointPositive := by
+  ext w
+  rw [Finset.mem_biUnion, Finset.mem_filter]
+  simp only [Finset.mem_univ, mem_fwdGoodRotationWords, true_and]
+  rw [fwdEndpointPositive_iff_exists_goodRotation]
+  constructor
+  · rintro ⟨r, hr⟩
+    exact ⟨r, r.isLt, hr⟩
+  · rintro ⟨r, hr, hw⟩
+    exact ⟨⟨r, hr⟩, hw⟩
+
+open Classical in
+/-- The weighted intersection of the finite forward event sets is the named cyclic mass. -/
+theorem fwdGoodRotationWords_inf_sum {L : ℕ}
+    (s : Finset (Fin L)) (hs : s.Nonempty) :
+    (∑ w ∈ s.inf' hs (fwdGoodRotationWords L), fwdWordWeight w) =
+      fwdCyclicIntersectionMass L s := by
+  have hinf : s.inf' hs (fwdGoodRotationWords L) =
+      Finset.univ.filter fun w => ∀ r ∈ s, FwdGood L (rotateWord w r) := by
+    ext w
+    simp [fwdGoodRotationWords]
+  rw [hinf, fwdCyclicIntersectionMass]
+  rw [Finset.sum_filter]
+
+open Classical in
+/-- Finite inclusion--exclusion for the cyclic cover of forward endpoint-positive words. -/
+theorem fwdPosTerm_eq_cyclicContribution_sum (L : ℕ) :
+    fwdPosTerm L =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, fwdCyclicContribution L s.1 := by
+  calc
+    fwdPosTerm L =
+        ∑ w ∈ Finset.univ.filter FwdEndpointPositive, fwdWordWeight w := by
+      rw [fwdPosTerm_eq_weighted_word_sum]
+      rw [Finset.sum_filter]
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · rfl
+      · rfl
+      · rfl
+    _ = ∑ w ∈ (Finset.univ : Finset (Fin L)).biUnion
+          (fwdGoodRotationWords L), fwdWordWeight w := by
+      apply Finset.sum_congr
+      · exact (fwdGoodRotationWords_biUnion L).symm
+      · intro w _hw
+        rfl
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          (-1 : ℤ) ^ (t.1.card + 1) •
+            ∑ w ∈ t.1.inf' (Finset.mem_filter.mp t.2).2
+              (fwdGoodRotationWords L), fwdWordWeight w :=
+      Finset.inclusion_exclusion_sum_biUnion
+        (Finset.univ : Finset (Fin L)) (fwdGoodRotationWords L) fwdWordWeight
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          fwdCyclicContribution L t.1 := by
+      apply Finset.sum_congr rfl
+      intro t _ht
+      rw [fwdCyclicContribution,
+        fwdGoodRotationWords_inf_sum t.1 (Finset.mem_filter.mp t.2).2]
+      norm_num
+    _ = _ := by
+      change (∑ t ∈ ((Finset.univ : Finset (Fin L)).powerset.filter
+          (·.Nonempty)).attach, fwdCyclicContribution L t.1) = _
+      rw [Finset.sum_attach]
+      exact (Finset.sum_subtype
+        (p := fun x : Finset (Fin L) => x.Nonempty)
+        ((Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty))
+        (by simp) (fwdCyclicContribution L))
+
+open Classical in
+/-- The forward endpoint coefficients are the logarithmic composition polynomial in the
+survival coefficients. -/
+theorem fwdPosTerm_div_eq_composition_sum (n : ℕ) :
+    fwdPosTerm (n + 1) / (n + 1 : ℝ) =
+      ∑ c : Composition (n + 1),
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+  have hcyc := cyclicFinset_sum_eq_composition n
+    (fwdCyclicContribution (n + 1))
+    (fwdCyclicContribution_unanchor (L := n + 1))
+  rw [← fwdPosTerm_eq_cyclicContribution_sum] at hcyc
+  rw [hcyc]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  rw [mul_div_cancel_left₀ _ hn]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  rw [fwdCyclicContribution, card_compositionStarts, fwdCyclicIntersectionMass,
+    fwdCompositionStartsIntersection_sum (Nat.zero_lt_succ n)]
+
+/-- Backward analogue of `forall_unanchor_fwd_iff`. -/
+theorem forall_unanchor_bwd_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) (w : Fin L → Bool) :
+    (∀ r ∈ unanchorCyclicFinset a s, BwdGood L (rotateWord w r)) ↔
+      ∀ r ∈ s, BwdGood L (rotateWord (rotateWord w a) r) := by
+  constructor
+  · intro h r hr
+    rw [rotateWord_fin_add]
+    exact h (a + r) (by simpa using hr)
+  · intro h r hr
+    have hs : r - a ∈ s := (mem_unanchorCyclicFinset a r s).mp hr
+    have := h (r - a) hs
+    rw [rotateWord_fin_add] at this
+    simpa [add_comm] using this
+
+/-- Weighted mass of simultaneous backward-survival events at cyclic starts. -/
+noncomputable def bwdCyclicIntersectionMass (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  ∑ w : Fin L → Bool,
+    if ∀ r ∈ s, BwdGood L (rotateWord w r) then bwdWordWeight w else 0
+
+open Classical in
+/-- The backward cyclic-intersection mass is invariant under translating all starts. -/
+theorem bwdCyclicIntersectionMass_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    bwdCyclicIntersectionMass L (unanchorCyclicFinset a s) =
+      bwdCyclicIntersectionMass L s := by
+  rw [bwdCyclicIntersectionMass, bwdCyclicIntersectionMass]
+  calc
+    (∑ w : Fin L → Bool,
+        if ∀ r ∈ unanchorCyclicFinset a s, BwdGood L (rotateWord w r) then
+          bwdWordWeight w else 0) =
+      ∑ w : Fin L → Bool,
+        if ∀ r ∈ s, BwdGood L (rotateWord (rotateWord w a) r) then
+          bwdWordWeight (rotateWord w a) else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · exact forall_unanchor_bwd_iff a s w
+      · exact (bwdWordWeight_rotateWord w a).symm
+      · rfl
+    _ = _ := by
+      let F : (Fin L → Bool) → ℝ := fun w =>
+        if ∀ r ∈ s, BwdGood L (rotateWord w r) then bwdWordWeight w else 0
+      change (∑ w : Fin L → Bool, F (rotateWord w a)) = ∑ w : Fin L → Bool, F w
+      simpa only [rotateWordEquiv_apply] using (rotateWordEquiv L a).sum_comp F
+
+/-- The signed backward intersection contribution appearing in inclusion--exclusion. -/
+noncomputable def bwdCyclicContribution (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  (-1 : ℝ) ^ (s.card + 1) * bwdCyclicIntersectionMass L s
+
+open Classical in
+/-- Signed backward intersection contributions are rotation invariant. -/
+theorem bwdCyclicContribution_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    bwdCyclicContribution L (unanchorCyclicFinset a s) =
+      bwdCyclicContribution L s := by
+  simp [bwdCyclicContribution, bwdCyclicIntersectionMass_unanchor]
+
+/-- The finite set of words that survive backward from the cyclic start `r`. -/
+def bwdGoodRotationWords (L : ℕ) (r : Fin L) : Finset (Fin L → Bool) :=
+  Finset.univ.filter fun w => BwdGood L (rotateWord w r)
+
+@[simp]
+theorem mem_bwdGoodRotationWords {L : ℕ} (r : Fin L) (w : Fin L → Bool) :
+    w ∈ bwdGoodRotationWords L r ↔ BwdGood L (rotateWord w r) := by
+  simp [bwdGoodRotationWords]
+
+open Classical in
+/-- The union of the backward cyclic-survival events is exactly endpoint positivity. -/
+theorem bwdGoodRotationWords_biUnion (L : ℕ) :
+    (Finset.univ : Finset (Fin L)).biUnion (bwdGoodRotationWords L) =
+      Finset.univ.filter BwdEndpointPositive := by
+  ext w
+  rw [Finset.mem_biUnion, Finset.mem_filter]
+  simp only [Finset.mem_univ, mem_bwdGoodRotationWords, true_and]
+  rw [bwdEndpointPositive_iff_exists_goodRotation]
+  constructor
+  · rintro ⟨r, hr⟩
+    exact ⟨r, r.isLt, hr⟩
+  · rintro ⟨r, hr, hw⟩
+    exact ⟨⟨r, hr⟩, hw⟩
+
+open Classical in
+/-- The weighted intersection of the finite backward event sets is the named cyclic mass. -/
+theorem bwdGoodRotationWords_inf_sum {L : ℕ}
+    (s : Finset (Fin L)) (hs : s.Nonempty) :
+    (∑ w ∈ s.inf' hs (bwdGoodRotationWords L), bwdWordWeight w) =
+      bwdCyclicIntersectionMass L s := by
+  have hinf : s.inf' hs (bwdGoodRotationWords L) =
+      Finset.univ.filter fun w => ∀ r ∈ s, BwdGood L (rotateWord w r) := by
+    ext w
+    simp [bwdGoodRotationWords]
+  rw [hinf, bwdCyclicIntersectionMass]
+  rw [Finset.sum_filter]
+
+open Classical in
+/-- Finite inclusion--exclusion for the cyclic cover of backward endpoint-positive words. -/
+theorem bwdPosTerm_eq_cyclicContribution_sum (L : ℕ) :
+    bwdPosTerm L =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, bwdCyclicContribution L s.1 := by
+  calc
+    bwdPosTerm L =
+        ∑ w ∈ Finset.univ.filter BwdEndpointPositive, bwdWordWeight w := by
+      rw [bwdPosTerm_eq_weighted_word_sum]
+      rw [Finset.sum_filter]
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · rfl
+      · rfl
+      · rfl
+    _ = ∑ w ∈ (Finset.univ : Finset (Fin L)).biUnion
+          (bwdGoodRotationWords L), bwdWordWeight w := by
+      apply Finset.sum_congr
+      · exact (bwdGoodRotationWords_biUnion L).symm
+      · intro w _hw
+        rfl
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          (-1 : ℤ) ^ (t.1.card + 1) •
+            ∑ w ∈ t.1.inf' (Finset.mem_filter.mp t.2).2
+              (bwdGoodRotationWords L), bwdWordWeight w :=
+      Finset.inclusion_exclusion_sum_biUnion
+        (Finset.univ : Finset (Fin L)) (bwdGoodRotationWords L) bwdWordWeight
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          bwdCyclicContribution L t.1 := by
+      apply Finset.sum_congr rfl
+      intro t _ht
+      rw [bwdCyclicContribution,
+        bwdGoodRotationWords_inf_sum t.1 (Finset.mem_filter.mp t.2).2]
+      norm_num
+    _ = _ := by
+      change (∑ t ∈ ((Finset.univ : Finset (Fin L)).powerset.filter
+          (·.Nonempty)).attach, bwdCyclicContribution L t.1) = _
+      rw [Finset.sum_attach]
+      exact (Finset.sum_subtype
+        (p := fun x : Finset (Fin L) => x.Nonempty)
+        ((Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty))
+        (by simp) (bwdCyclicContribution L))
+
+open Classical in
+/-- The backward endpoint coefficients are the logarithmic composition polynomial in the
+survival coefficients. -/
+theorem bwdPosTerm_div_eq_composition_sum (n : ℕ) :
+    bwdPosTerm (n + 1) / (n + 1 : ℝ) =
+      ∑ c : Composition (n + 1),
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+  have hcyc := cyclicFinset_sum_eq_composition n
+    (bwdCyclicContribution (n + 1))
+    (bwdCyclicContribution_unanchor (L := n + 1))
+  rw [← bwdPosTerm_eq_cyclicContribution_sum] at hcyc
+  rw [hcyc]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  rw [mul_div_cancel_left₀ _ hn]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  rw [bwdCyclicContribution, card_compositionStarts, bwdCyclicIntersectionMass,
+    bwdCompositionStartsIntersection_sum (Nat.zero_lt_succ n)]
 
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by

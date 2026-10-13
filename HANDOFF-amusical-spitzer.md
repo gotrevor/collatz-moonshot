@@ -1,6 +1,70 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, cyclic anchor double count)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, finite logarithmic coefficients)
 
-## Current checkpoint: marked cyclic subsets reindex exactly to compositions
+## Current checkpoint: cyclic inclusion--exclusion is reduced to compositions
+
+This review lap reconstructed the route from the ratified definitions and closed the finite
+inclusion--exclusion step in both directions.  Fixed-offset word rotation is now packaged as the
+permutation `rotateWordEquiv`, and the new translation lemmas show that shifting every cyclic
+start by `a` is equivalent to rotating the sampled word by `a`.  Weight invariance therefore
+proves that `fwdCyclicContribution` and `bwdCyclicContribution` satisfy the exact hypothesis of
+`cyclicFinset_sum_eq_composition`.
+
+Mathlib's `Finset.inclusion_exclusion_sum_biUnion` is now applied to the concrete finite cyclic
+cover.  The union is identified with endpoint positivity by the already-proved strict rotation
+criterion, each intersection is identified with the named cyclic mass, and the anchored
+composition factorization evaluates that mass.  The resulting kernel-checked identities are
+
+```text
+fwdPosTerm (n+1)/(n+1)
+  = Σ c : Composition (n+1), (-1)^(c.length+1)/c.length * Πᵢ fwdSurv(cᵢ),
+
+bwdPosTerm (n+1)/(n+1)
+  = Σ c : Composition (n+1), (-1)^(c.length+1)/c.length * Πᵢ bwdSurv(cᵢ).
+```
+
+These are precisely the positive-degree coefficients of `log Q` for the two survival generating
+series.  No ratified statement changed, no axiom or `native_decide` was added, and the scoped file
+still has exactly its one disclosed target `sorry` at `windowDensityLimit`.
+
+## Verification
+
+Exact checks run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdPosTerm_div_eq_composition_sum
+```
+
+The focused gate ended `FORMALIZE-TIER GREEN`; the new headline identity's axiom audit is exactly
+`[Classical.choice, Quot.sound, propext]`, and the gate reports only the existing
+`windowDensityLimit` proof debt.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single `sorry`.  Package either composition
+identity as the formal logarithmic-derivative recurrence
+
+```text
+n * surv n = Σ k in 1..n, posTerm k * surv (n-k).
+```
+
+The cleanest current route is to define the survival `PowerSeries ℝ`, identify the displayed
+composition sum with the coefficient of `PowerSeries.logOf`, and use
+`PowerSeries.derivative_subst` plus `PowerSeries.deriv_log`; an elementary marked-composition
+proof of the same recurrence is an acceptable fallback.  From the recurrence, evaluate the
+generating function on `0 ≤ x < 1`, rewrite `posTerm k = 1 - nonposTerm k`, and obtain
+
+```text
+(1-x) Q(x) = exp (-Σ nonposTerm k / k * x^k).
+```
+
+Monotonicity of prefix survival and Abel's theorem then identify the coefficient limit with the
+boundary value.  Apply this forward and backward, multiply the limits, and finish with the
+already-proved summability, Haar duality, and `minimaConstant_eq_directionalFactors`.  Do not
+re-open cyclic set counting or intersection factorization: those steps are now complete.
+
+## Previous checkpoint: marked cyclic subsets reindex exactly to compositions
 
 This lap closed the genuinely cyclic set-counting step left by the preceding checkpoint.  The
 new `anchorCyclicFinset` / `unanchorCyclicFinset` translate an arbitrary marked start to zero
