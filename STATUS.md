@@ -1,5 +1,32 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical returns target COMPLETE:** `CollatzMoonshot/AmusicalReturns.lean` is
+> sorry-free with all four pinned results proved.  The final two proofs establish the logarithmic
+> return-defect bound by distinct-orbit rearrangement and construct arbitrarily large non-minima
+> in every class modulo `2^k 3^l` by a CRT-selected forced contracting suffix.  The 8710-job
+> scoped gate is FORMALIZE-tier green with no proof debt; both new headline theorems use only
+> `propext`, `Classical.choice`, and `Quot.sound`.  Read `HANDOFF-amusical-returns.md`.
+
+> **2026-10-13, amusical exits/minima FORMALIZED:** `exits_eq_strictMinima` now proves the exact
+> finite-cardinality identity with its pinned statement unchanged.  Exits map to their least
+> natural orbit member; strict minima map back to the maximum finite forward visit below the
+> cutoff.  Orbit injectivity handles both uniqueness and the periodic case.  The 8710-job scoped
+> gate is FORMALIZE-tier green, and the theorem uses only `propext`, `Classical.choice`, and
+> `Quot.sound`.  Two target sorries remain; read `HANDOFF-amusical-returns.md`.
+
+> **2026-10-13, amusical exits/minima infrastructure:** the positivity, aperiodicity/injectivity,
+> exit-injectivity, strict-minimum injectivity, and finite-bounded-forward-visit lemmas needed by
+> `exits_eq_strictMinima` are now kernel-checked in `AmusicalReturns.lean`.  The remaining step is
+> the explicit last-visit/orbit-minimum bijection.  Three target sorries remain; read
+> `HANDOFF-amusical-returns.md`.
+
+> **2026-10-13, amusical dense returns FORMALIZED:**
+> `exists_denseLinearReturns_of_finitelyManyOrbits` now proves the pinned strong recurrence
+> statement: under finitely many nonnegative orbits, one infinite orbit has, for frequently many
+> `X`, at least `εX/2-1` distinct times of magnitude at least `εX/4` landing in `[0,X)`.
+> The proof removes a centered integer interval from the positive-density family of chosen return
+> times.  Three sorries remain in `AmusicalReturns.lean`; read `HANDOFF-amusical-returns.md`.
+
 > **2026-10-13, amusical orbit-minimum density bound FORMALIZED:**
 > `windowDensity_two_hundred_lt` now proves `fwdSurv 200 * bwdSurv 200 < 1/20` by identifying
 > semantic weighted word counts with the linear-size integer lattice DP and applying its exact
