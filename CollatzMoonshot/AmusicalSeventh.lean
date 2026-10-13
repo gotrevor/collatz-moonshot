@@ -105,7 +105,7 @@ theorem amusical_pow_classUnion_invariant (m M : ℕ) (hm : 0 < m) (hM : 0 < M)
     (R : Set (ZMod M))
     (h : (amusical^[m]) '' {n : ℤ | (n : ZMod M) ∈ R} = {n : ℤ | (n : ZMod M) ∈ R}) :
     R = ∅ ∨ R = Set.univ := by
-  sorry
+  exact amusical_pow_classUnion_invariant_of_image_eq m M hm hM R h
 
 /-- **Target (the rewiring barrier).**  A permutation of `ℕ` whose steps at most double (as `U` and
 `U⁻¹` do on `ℕ`) agrees, off a set of density `0` and on every finite orbit, with a permutation in

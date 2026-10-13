@@ -1,5 +1,55 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 review lap: full residue transitivity closed
+
+### Concrete advance
+
+- Proved the ratified `amusical_pow_classUnion_invariant` statement for every positive `m` and
+  `M`, without changing its type.  Exactly one target sorry now remains: `sparse_sweep`.
+- The fresh review replaced the handoff's proposed simultaneous three-factor CRT construction
+  with a smaller proof.  If `S : ℤ → Prop` is periodic modulo `M` and invariant under a long
+  `amusical` iterate, exact forward cylinders remove `ordProj[2] M` from its period and exact
+  backward cylinders remove `ordProj[3] M`.
+- For the remaining period coprime to `6`, the all-`A` branch word and the word consisting of one
+  `B` followed by `A`s induce a translation `δ` satisfying
+  `4^m · δ ≡ -2 · 3^(m-1)`.  Thus `δ` is a unit, so invariance under its translation makes
+  `S` constant.
+- Added the proof engine `amusical_pow_classUnion_invariant_of_image_eq` and its cylinder/period
+  helpers to `CollatzMoonshot/AmusicalSeventh/Residue.lean`.  No new axiom, `native_decide`, or
+  sorry was introduced.
+
+### Verification
+
+- Exhaustive review control: the induced residue graph is strongly connected for
+  `1 ≤ M ≤ 80`, `1 ≤ m ≤ 6` (correctly enumerating inputs modulo `M · 4^m`).
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Residue.lean` (green).
+- `lake build CollatzMoonshot.AmusicalSeventh.Residue` (8710 jobs, green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; only the original `sparse_sweep`
+  sorry warning).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.amusical_pow_classUnion_invariant` (8713 jobs,
+  `FORMALIZE-TIER GREEN`; axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- `git diff --check` (clean).  The ratified theorem statement is unchanged from kickoff commit
+  `5fa5871`; only its proof body changed this lap.
+
+### Current blocker
+
+There is no external blocker.  The sole scoped obligation is now `sparse_sweep`.  Its proof needs
+the quantitative finite-residue tail estimate from the paper, not merely the existing asymptotic
+`windowMinDensity`: for `L` logarithmic in `X`, all but `ε(K)X + O(12^L)` points below `X` must
+have their `L`-window minimum within `K` orbit steps.  The existing window modules provide exact
+cylinder transport and the separation theorem, but do not yet package that offset-tail estimate.
+
+### Next highest-value attack
+
+Formalize Lemma W first as a checked finite-residue statement: above an explicit exponential
+threshold, the comparisons `amusical^[i] n < n` and `amusicalInv^[i] n < n` for `i ≤ L` depend
+only on the corresponding multiplicative slope, hence only on `n mod 12^L`.  Reuse the exact
+affine formulas in `AmusicalWindow.lean`, and verify the paper's proposed `2 · 324^L` threshold
+rather than assuming it.  Then state the finite Chernoff/counting lemma over those residue classes;
+that is the route-decisive input to the final packing argument.
+
 ## 2026-10-13 lap: three-primary residue transitivity closed
 
 ### Concrete advance
