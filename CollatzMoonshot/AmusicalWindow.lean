@@ -236,6 +236,59 @@ theorem amusicalBackwardWord_add_pow_three_mul (L : ℕ) (n k : ℤ) :
   rw [hd, pow_succ]
   simp [Int.add_emod, Int.mul_emod]
 
+/-! ## Stabilization on a residue class
+
+The affine formula is useful for density only after identifying which side of the diagonal
+its slope lies on.  The following elementary lemma packages the threshold argument once and
+for all: two integral affine functions with distinct slopes have their eventual order decided
+exactly by their slopes. -/
+
+theorem eventually_affine_le_iff_slope_lt {a b c d : ℤ} (hab : a ≠ b) :
+    ∃ K : ℤ, ∀ k : ℤ, K ≤ k → (c + a * k ≤ d + b * k ↔ a < b) := by
+  rcases lt_or_gt_of_ne hab with hlt | hgt
+  · refine ⟨max 0 (c - d), fun k hk => ⟨fun _ => hlt, fun _ => ?_⟩⟩
+    have hk0 : 0 ≤ k := le_trans (le_max_left _ _) hk
+    have hkcd : c - d ≤ k := le_trans (le_max_right _ _) hk
+    have hgap : 1 ≤ b - a := by omega
+    have hmul : k ≤ (b - a) * k := by
+      simpa [one_mul] using mul_le_mul_of_nonneg_right hgap hk0
+    nlinarith
+  · refine ⟨max 0 (d - c + 1), fun k hk => ⟨fun h => ?_, fun h => by omega⟩⟩
+    have hk0 : 0 ≤ k := le_trans (le_max_left _ _) hk
+    have hkdc : d - c + 1 ≤ k := le_trans (le_max_right _ _) hk
+    have hgap : 1 ≤ a - b := by omega
+    have hmul : k ≤ (a - b) * k := by
+      simpa [one_mul] using mul_le_mul_of_nonneg_right hgap hk0
+    nlinarith
+
+/-- On one forward residue class, comparison with the starting point eventually depends only
+on the exact forward slope. -/
+theorem amusical_iterate_eventually_ge_iff_slope (L t : ℕ) (ht : t ≤ L) (n : ℤ)
+    (hne : (4 : ℤ) ^ L ≠
+      (4 : ℤ) ^ (L - t) * 3 ^ t * 2 ^ amusicalForwardEvenCount t n) :
+    ∃ K : ℤ, ∀ k : ℤ, K ≤ k →
+      (n + (4 : ℤ) ^ L * k ≤ amusical^[t] (n + (4 : ℤ) ^ L * k) ↔
+        (4 : ℤ) ^ L <
+          (4 : ℤ) ^ (L - t) * 3 ^ t * 2 ^ amusicalForwardEvenCount t n) := by
+  obtain ⟨K, hK⟩ := eventually_affine_le_iff_slope_lt hne
+  refine ⟨K, fun k hk => ?_⟩
+  rw [amusical_iterate_add_pow_four_mul_slope L t ht]
+  exact hK k hk
+
+/-- On one backward residue class, comparison with the starting point eventually depends only
+on the exact backward slope. -/
+theorem amusicalInv_iterate_eventually_ge_iff_slope (L t : ℕ) (ht : t ≤ L) (n : ℤ)
+    (hne : (3 : ℤ) ^ L ≠
+      (3 : ℤ) ^ (L - t) * 2 ^ (t + amusicalBackwardFourCount t n)) :
+    ∃ K : ℤ, ∀ k : ℤ, K ≤ k →
+      (n + (3 : ℤ) ^ L * k ≤ amusicalInv^[t] (n + (3 : ℤ) ^ L * k) ↔
+        (3 : ℤ) ^ L <
+          (3 : ℤ) ^ (L - t) * 2 ^ (t + amusicalBackwardFourCount t n)) := by
+  obtain ⟨K, hK⟩ := eventually_affine_le_iff_slope_lt hne
+  refine ⟨K, fun k hk => ?_⟩
+  rw [amusicalInv_iterate_add_pow_three_mul_slope L t ht]
+  exact hK k hk
+
 theorem amusical_iterate_add_pow_four_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
     ∃ a : ℤ, 0 < a ∧ amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n + a * k := by
   induction L generalizing t n k with
