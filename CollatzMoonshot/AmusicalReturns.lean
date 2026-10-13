@@ -9,8 +9,9 @@ import CollatzMoonshot.Obstructions.Amusical
 # Returns, exits and residues: witnesses for the closed amusical routes
 
 Statements from the 2026-10-13 research agents (reports in `RESEARCH-2026-10-13-amusical-
-single-chain.md` §7), each proved on paper there.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-returns.md`): close every `sorry` in this file.
+single-chain.md` §7), each proved on paper there.  All four were kernel-checked
+2026-10-13 by the returns treadmill (`KICKOFF-2026-10-13-amusical-returns.md`,
+`HANDOFF-amusical-returns.md`).
 
 * `exists_large_nonOrbitMin`: every residue class mod `2^k 3^l` contains arbitrarily large
   non-minima, so no congruence certifies an orbit minimum (the provable half of
@@ -317,7 +318,7 @@ theorem pow_two_mul_le_pow_three_mul_amusicalInv_iterate {z : ℤ} (hz : 0 ≤ z
         _ ≤ 3 * (3 ^ k * amusicalInv^[k] (amusicalInv z)) := by omega
         _ = 3 * 3 ^ k * amusicalInv^[k] (amusicalInv z) := by ring
 
-/-- **Target.**  Every residue class mod `2^k 3^l` has arbitrarily large non-minima.  Paper
+/-- **Proved.**  Every residue class mod `2^k 3^l` has arbitrarily large non-minima.  Paper
 proof: by CRT choose `n` in the class whose 2-adic digits after the forced prefix make the next
 `K` steps all of type `4m+1 ↦ 3m+1`, which contracts toward `1`; for `K` large compared with the
 prefix length the orbit drops below `n`. -/
@@ -456,7 +457,7 @@ theorem exists_large_nonOrbitMin (k l c T : ℕ) :
   exact (not_lt_of_ge (by exact_mod_cast hle)) hym
 
 open Classical in
-/-- **Target.**  Exits equal strict minima: each infinite orbit meeting `[1, X]` has exactly one
+/-- **Proved.**  Exits equal strict minima: each infinite orbit meeting `[1, X]` has exactly one
 last forward visit there and exactly one strict minimum there; cycles have neither. -/
 theorem exits_eq_strictMinima (X : ℕ) :
     ((Finset.Icc 1 X).filter fun n : ℕ =>
@@ -557,7 +558,7 @@ theorem exits_eq_strictMinima (X : ℕ) :
     rw [orbitMinNat_eq_of_orbit_eq hnorbit, orbitMinNat_eq_of_strictMin hm'.2]
 
 open Classical in
-/-- **Target.**  The strong form of the linear-recurrence reduction: finitely many orbits give an
+/-- **Proved.**  The strong form of the linear-recurrence reduction: finitely many orbits give an
 infinite orbit with, for infinitely many `X`, at least `εX/2 − 1` times `j` with `|j| ≥ εX/4`
 and value in `[0, X)`.  Equivalent to positive upper density of that orbit. -/
 theorem exists_denseLinearReturns_of_finitelyManyOrbits (h : ¬ AmusicalInfinitelyManyOrbits) :
@@ -935,7 +936,7 @@ theorem initial_reciprocal_sum_bound (j : ℕ) :
       exact initial_reciprocal_le_log i
     _ = _ := log_sum_telescope j
 
-/-- **Target.**  The return defect: along an aperiodic orbit from `x ≥ 2`, odd steps multiply by
+/-- **Proved.**  The return defect: along an aperiodic orbit from `x ≥ 2`, odd steps multiply by
 `(3/4)(1 ± 1/(3z))` with distinct `z ≥ 2`, so the linear form in `log 2`, `log 3` and
 `log (U^j x / x)` is at most `Σ_{z=2}^{j+1} 1/(3z−1) ≤ (1/3) log((6j+7)/7)`. -/
 theorem return_defect_bound {x : ℤ} (hx : 2 ≤ x) (hinf : (amusicalOrbit x).Infinite) (j : ℕ) :

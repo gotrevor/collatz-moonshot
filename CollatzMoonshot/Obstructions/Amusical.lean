@@ -20,7 +20,8 @@ The Lean witnesses behind the amusical rows of `Maze.lean`.  Narrative:
   orbit-invariant function with infinitely many values on `ℕ` exists exactly when there are
   infinitely many orbits.
 * **Residues cannot certify minima.**  `MinimaNotResidueDetermined`, believed, with the
-  `χ²` evidence in its docstring.
+  `χ²` evidence in its docstring; its provable half (every class mod `2^k 3^l` has arbitrarily
+  large non-minima) is `exists_large_nonOrbitMin` in `AmusicalReturns.lean`, proved.
 * **The wall.**  `NoLinearRecurrence` reopens the route, via
   `amusicalInfinitelyManyOrbits_of_noLinearRecurrence`.
 -/
