@@ -18,6 +18,7 @@ import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
 import CollatzMoonshot.Obstructions.Amusical
 import CollatzMoonshot.AmusicalReturns
+import CollatzMoonshot.AmusicalChains
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -191,7 +192,10 @@ def register : List Hall := [
    "Obstructions/Amusical.lean; agent report adelic.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: Diophantine bounds on linear returns", .refuted,
    "the return form n log 2 - j log 3 + log(y/x) is O(log j), not small; sums have ~0.585j terms",
-   "AmusicalReturns.lean; agent report diophantine.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalReturns.lean; agent report diophantine.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: chain-connectivity statistics (records, excursions, pairs)", .wall,
+   "finite-step statistics agree in both worlds; the span bound gives only sublinear recurrence",
+   "AmusicalChains.lean; agent report chains.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -247,7 +251,12 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩,
   ⟨"amusical: Diophantine bounds on linear returns",
    [``CollatzMoonshot.Amusical.return_defect_bound,
-    ``CollatzMoonshot.Amusical.exists_denseLinearReturns_of_finitelyManyOrbits], []⟩]
+    ``CollatzMoonshot.Amusical.exists_denseLinearReturns_of_finitelyManyOrbits], []⟩,
+  ⟨"amusical: chain-connectivity statistics (records, excursions, pairs)",
+   [``CollatzMoonshot.Amusical.IsWindowMin.iterate_eq_of_isWindowMin,
+    ``CollatzMoonshot.Amusical.exists_sublinearlyRecurrent_of_finitelyManyOrbits,
+    ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_atLeastLinearGrowth],
+   [``CollatzMoonshot.Amusical.AtLeastLinearGrowth]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -260,7 +269,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 28 rows, 20 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 29 rows, 21 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
