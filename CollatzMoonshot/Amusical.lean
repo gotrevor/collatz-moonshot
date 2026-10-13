@@ -331,4 +331,126 @@ theorem amusicalOrbitOfEightInfinite_of_evenDensityHalf (h : EightEvenDensityHal
   have := Nat.pow_lt_pow_left (show 2 * 16 < 3 * 11 by norm_num) he0
   omega
 
+/-! ## A two-sided window for the even share of a cycle through `8`
+
+The orbit of `8` avoids every small cycle, so its odd values are `≥ 11`, where an odd step
+multiplies by a ratio in `[8/11, 10/13]`.  Around a cycle the ratios multiply to `1`, which pins
+the even share `e/p` to `[log(13/10)/log(39/20), log(11/8)/log(33/16)] ≈ [0.393, 0.440]`, a
+window around the large-value threshold `log₂(4/3) ≈ 0.415`.
+
+Reading the cycle backwards adds nothing: `U⁻¹` reads residues mod `3`, and
+`even_iff_amusical_mod_three` says `x` is even exactly when `U x` is a multiple of `3`, so along
+any cycle the backward share of multiples of `3` equals the forward even share. -/
+
+/-- `x` is even exactly when `U x` is a multiple of `3`. -/
+theorem even_iff_amusical_mod_three (x : ℤ) : x % 2 = 0 ↔ amusical x % 3 = 0 := by
+  unfold amusical; split_ifs <;> omega
+
+/-- The small cycles `{0}, {1}, {2,3}, {4,6,9,7,5}` together are closed under `U⁻¹`. -/
+theorem small_of_amusical_small {y : ℤ} (h0 : 0 ≤ amusical y) (h10 : amusical y < 10)
+    (h8 : amusical y ≠ 8) : 0 ≤ y ∧ y < 10 ∧ y ≠ 8 := by
+  unfold amusical at h0 h10 h8; split_ifs at h0 h10 h8 <;> omega
+
+theorem small_of_iterate_small (k : ℕ) : ∀ x : ℤ,
+    0 ≤ amusical^[k] x → amusical^[k] x < 10 → amusical^[k] x ≠ 8 → 0 ≤ x ∧ x < 10 ∧ x ≠ 8 := by
+  induction k with
+  | zero => intro x h0 h10 h8; exact ⟨h0, h10, h8⟩
+  | succ k ih =>
+    intro x h0 h10 h8
+    rw [Function.iterate_succ_apply] at h0 h10 h8
+    obtain ⟨h0', h10', h8'⟩ := ih _ h0 h10 h8
+    exact small_of_amusical_small h0' h10' h8'
+
+/-- Every odd value on the orbit of `8` is at least `11`. -/
+theorem eleven_le_orbit_eight_of_odd (k : ℕ) (h : ¬ amusical^[k] 8 % 2 = 0) :
+    11 ≤ amusical^[k] 8 := by
+  have h4 := four_le_orbit_eight k
+  by_contra hlt
+  have hne : amusical^[k] 8 ≠ 8 := by omega
+  have := small_of_iterate_small k 8 (by omega) (by omega) hne
+  omega
+
+theorem odd_step_lower {x : ℤ} (h11 : 11 ≤ x) (h : ¬ x % 2 = 0) : 8 * x ≤ 11 * amusical x := by
+  unfold amusical; split_ifs <;> omega
+
+theorem odd_step_upper {x : ℤ} (h11 : 11 ≤ x) (h : ¬ x % 2 = 0) : 13 * amusical x ≤ 10 * x := by
+  unfold amusical; split_ifs <;> omega
+
+/-- Running product, lower side: if every odd step multiplies by at least `a/b`, then
+`(3/2)^e (a/b)^o · 8 ≤ U^[k] 8`. -/
+theorem orbit_product_lower {a b : ℤ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hodd : ∀ k : ℕ, ¬ amusical^[k] 8 % 2 = 0 →
+      a * amusical^[k] 8 ≤ b * amusical (amusical^[k] 8)) (k : ℕ) :
+    3 ^ evenCount k * a ^ oddCount k * 8 ≤ 2 ^ evenCount k * b ^ oddCount k * amusical^[k] 8 := by
+  induction k with
+  | zero => simp [evenCount, oddCount]
+  | succ k ih =>
+    rw [evenCount_succ, oddCount_succ, Function.iterate_succ_apply']
+    split_ifs with h
+    · have hs := two_mul_amusical_of_even h
+      calc (3 : ℤ) ^ (evenCount k + 1) * a ^ (oddCount k + 0) * 8
+          = 3 * (3 ^ evenCount k * a ^ oddCount k * 8) := by ring
+        _ ≤ 3 * (2 ^ evenCount k * b ^ oddCount k * amusical^[k] 8) := by linarith
+        _ = 2 ^ evenCount k * b ^ oddCount k * (3 * amusical^[k] 8) := by ring
+        _ = 2 ^ evenCount k * b ^ oddCount k * (2 * amusical (amusical^[k] 8)) := by rw [hs]
+        _ = 2 ^ (evenCount k + 1) * b ^ (oddCount k + 0) * amusical (amusical^[k] 8) := by
+          ring
+    · have hs := hodd k h
+      calc (3 : ℤ) ^ (evenCount k + 0) * a ^ (oddCount k + 1) * 8
+          = a * (3 ^ evenCount k * a ^ oddCount k * 8) := by ring
+        _ ≤ a * (2 ^ evenCount k * b ^ oddCount k * amusical^[k] 8) :=
+          mul_le_mul_of_nonneg_left ih ha
+        _ = 2 ^ evenCount k * b ^ oddCount k * (a * amusical^[k] 8) := by ring
+        _ ≤ 2 ^ evenCount k * b ^ oddCount k * (b * amusical (amusical^[k] 8)) :=
+          mul_le_mul_of_nonneg_left hs (by positivity)
+        _ = 2 ^ (evenCount k + 0) * b ^ (oddCount k + 1) * amusical (amusical^[k] 8) := by
+          ring
+
+/-- Running product, upper side: if every odd step multiplies by at most `d/c`, then
+`U^[k] 8 ≤ (3/2)^e (d/c)^o · 8`. -/
+theorem orbit_product_upper {c d : ℤ} (hc : 0 ≤ c) (hd : 0 ≤ d)
+    (hodd : ∀ k : ℕ, ¬ amusical^[k] 8 % 2 = 0 →
+      c * amusical (amusical^[k] 8) ≤ d * amusical^[k] 8) (k : ℕ) :
+    2 ^ evenCount k * c ^ oddCount k * amusical^[k] 8 ≤ 3 ^ evenCount k * d ^ oddCount k * 8 := by
+  induction k with
+  | zero => simp [evenCount, oddCount]
+  | succ k ih =>
+    rw [evenCount_succ, oddCount_succ, Function.iterate_succ_apply']
+    have hB : (0 : ℤ) ≤ 2 ^ evenCount k * c ^ oddCount k := by positivity
+    split_ifs with h
+    · have hs := two_mul_amusical_of_even h
+      calc (2 : ℤ) ^ (evenCount k + 1) * c ^ (oddCount k + 0) * amusical (amusical^[k] 8)
+          = 2 ^ evenCount k * c ^ oddCount k * (2 * amusical (amusical^[k] 8)) := by ring
+        _ = 3 * (2 ^ evenCount k * c ^ oddCount k * amusical^[k] 8) := by rw [hs]; ring
+        _ ≤ 3 * (3 ^ evenCount k * d ^ oddCount k * 8) := by linarith
+        _ = 3 ^ (evenCount k + 1) * d ^ (oddCount k + 0) * 8 := by ring
+    · have hs := hodd k h
+      calc (2 : ℤ) ^ (evenCount k + 0) * c ^ (oddCount k + 1) * amusical (amusical^[k] 8)
+          = 2 ^ evenCount k * c ^ oddCount k * (c * amusical (amusical^[k] 8)) := by ring
+        _ ≤ 2 ^ evenCount k * c ^ oddCount k * (d * amusical^[k] 8) :=
+          mul_le_mul_of_nonneg_left hs hB
+        _ = d * (2 ^ evenCount k * c ^ oddCount k * amusical^[k] 8) := by ring
+        _ ≤ d * (3 ^ evenCount k * d ^ oddCount k * 8) := mul_le_mul_of_nonneg_left ih hd
+        _ = 3 ^ (evenCount k + 0) * d ^ (oddCount k + 1) * 8 := by ring
+
+/-- **The even-share window.**  If `8` has period `p` with `e` even steps, then
+`(3/2)^e (8/11)^(p-e) ≤ 1 ≤ (3/2)^e (10/13)^(p-e)`, so
+`0.3928 < log(13/10)/log(39/20) ≤ e/p ≤ log(11/8)/log(33/16) < 0.4400`. -/
+theorem periodic_eight_even_window {p : ℕ} (hper : amusical^[p] 8 = 8) :
+    3 ^ evenCount p * 8 ^ (p - evenCount p) ≤ 2 ^ evenCount p * 11 ^ (p - evenCount p) ∧
+      2 ^ evenCount p * 13 ^ (p - evenCount p) ≤ 3 ^ evenCount p * 10 ^ (p - evenCount p) := by
+  have hlo := orbit_product_lower (a := 8) (b := 11) (by norm_num) (by norm_num)
+    (fun k h => odd_step_lower (eleven_le_orbit_eight_of_odd k h) h) p
+  have hhi := orbit_product_upper (c := 13) (d := 10) (by norm_num) (by norm_num)
+    (fun k h => odd_step_upper (eleven_le_orbit_eight_of_odd k h) h) p
+  rw [hper, oddCount_eq] at hlo hhi
+  constructor
+  · have h' : ((3 ^ evenCount p * 8 ^ (p - evenCount p) : ℕ) : ℤ) ≤
+        ((2 ^ evenCount p * 11 ^ (p - evenCount p) : ℕ) : ℤ) := by
+      push_cast; omega
+    exact_mod_cast h'
+  · have h' : ((2 ^ evenCount p * 13 ^ (p - evenCount p) : ℕ) : ℤ) ≤
+        ((3 ^ evenCount p * 10 ^ (p - evenCount p) : ℕ) : ℤ) := by
+      push_cast; omega
+    exact_mod_cast h'
+
 end CollatzMoonshot.Amusical
