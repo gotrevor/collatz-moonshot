@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalWindow.Count
 
 /-!
 # Window minima of the amusical permutation
@@ -16,7 +17,7 @@ For large `n` the first `L` forward branches of `n` depend only on `n mod 2^(2L)
 the first `L` backward branches only on `n mod 3^L`, and the CRT makes the two independent.  Each
 forward step is `×3/2` or `×3/4` with frequency `1/2` each, each backward step `×2/3` or `×4/3`
 with frequency `1/3, 2/3`, and for large `n` the window condition is that every prefix product
-exceeds `1`.  So the density should be `fwdSurv L * bwdSurv L`, the two survival probabilities
+exceeds `1`.  The resulting density is `fwdSurv L * bwdSurv L`, the two survival probabilities
 of the multiplicative walks.  Exact values: `δ₁ = 1/3` (Conway's "congruence paradox": the local
 minima are `±2 mod 6`), `δ₂ = 2/9`, `δ₃ = 1/6`, `δ₄ = 4/27`; then `δ₁₀ ≈ 0.0883`,
 `δ₂₀ ≈ 0.0676`, `δ₄₀ ≈ 0.0566`, decreasing to `p_f · p_b ≈ 0.0498`.  Empirical counts over
@@ -124,6 +125,38 @@ theorem amusicalBackwardFourCount_eq_count (t : ℕ) (n : ℤ) :
         ext i
         simp [Function.iterate_succ_apply]
       · by_cases h : n % 3 = 0 <;> simp [h]
+
+/-- The marked forward letters and the even branches partition every prefix. -/
+theorem amusicalForwardWord_true_card_add_evenCount (L t : ℕ) (ht : t ≤ L) (n : ℤ) :
+    (Finset.univ.filter fun i : Fin L =>
+      i.val < t ∧ amusicalForwardWord L n i = true).card +
+        amusicalForwardEvenCount t n = t := by
+  rw [amusicalForwardEvenCount_eq_count]
+  have hcard := card_filter_fin_lt_eq_count L t ht
+    (fun j => amusical^[j] n % 2 ≠ 0)
+  have hword :
+      (Finset.univ.filter fun i : Fin L =>
+        i.val < t ∧ amusicalForwardWord L n i = true).card =
+          Nat.count (fun j => amusical^[j] n % 2 ≠ 0) t := by
+    rw [← hcard]
+    apply congrArg Finset.card
+    apply Finset.filter_congr
+    intro i _
+    simp [amusicalForwardWord]
+  rw [hword]
+  exact count_not_add_count (fun j => amusical^[j] n % 2 = 0) t
+
+/-- The number of marked backward letters is the recursive `×4/3` branch count. -/
+theorem amusicalBackwardWord_true_card_eq_fourCount (L t : ℕ) (ht : t ≤ L) (n : ℤ) :
+    (Finset.univ.filter fun i : Fin L =>
+      i.val < t ∧ amusicalBackwardWord L n i = true).card =
+        amusicalBackwardFourCount t n := by
+  rw [amusicalBackwardFourCount_eq_count]
+  rw [← card_filter_fin_lt_eq_count L t ht]
+  apply congrArg Finset.card
+  apply Finset.filter_congr
+  intro i _
+  simp [amusicalBackwardWord]
 
 theorem amusicalForwardMultiplier_eq (t : ℕ) (n : ℤ) :
     amusicalForwardMultiplier t n =
@@ -236,6 +269,253 @@ theorem amusicalBackwardWord_add_pow_three_mul (L : ℕ) (n k : ℤ) :
   rw [hd, pow_succ]
   simp [Int.add_emod, Int.mul_emod]
 
+/-! ## Exact branch-word fibers -/
+
+open Finset WindowCount
+
+theorem amusicalForwardWord_succ (L : ℕ) (n : ℤ) :
+    amusicalForwardWord (L + 1) n =
+      Fin.cons (decide (n % 2 ≠ 0)) (amusicalForwardWord L (amusical n)) := by
+  funext i
+  refine Fin.cases ?_ (fun j => ?_) i
+  · simp [amusicalForwardWord]
+  · simp [amusicalForwardWord, Function.iterate_succ_apply]
+
+theorem amusicalBackwardWord_succ (L : ℕ) (n : ℤ) :
+    amusicalBackwardWord (L + 1) n =
+      Fin.cons (decide (n % 3 ≠ 0)) (amusicalBackwardWord L (amusicalInv n)) := by
+  funext i
+  refine Fin.cases ?_ (fun j => ?_) i
+  · simp [amusicalBackwardWord]
+  · simp [amusicalBackwardWord, Function.iterate_succ_apply]
+
+theorem amusicalForwardWord_emod (L : ℕ) (x : ℤ) :
+    amusicalForwardWord L x = amusicalForwardWord L (x % 4 ^ L) := by
+  conv_lhs => rw [← Int.emod_add_mul_ediv x (4 ^ L)]
+  exact amusicalForwardWord_add_pow_four_mul L _ _
+
+theorem amusicalBackwardWord_emod (L : ℕ) (x : ℤ) :
+    amusicalBackwardWord L x = amusicalBackwardWord L (x % 3 ^ L) := by
+  conv_lhs => rw [← Int.emod_add_mul_ediv x (3 ^ L)]
+  exact amusicalBackwardWord_add_pow_three_mul L _ _
+
+/-- An affine map with slope coprime to `N` is injective modulo `N` on `[0, N)`. -/
+theorem injMod_affine (N : ℕ) (u e : ℤ) (hu : IsCoprime u (N : ℤ)) :
+    ∀ a < N, ∀ b < N, (u * (a : ℤ) + e) % N = (u * (b : ℤ) + e) % N → a = b := by
+  intro a ha b hb h
+  have h1 : (N : ℤ) ∣ u * ((b : ℤ) - a) := by
+    have hdiv := Int.ModEq.dvd h
+    rw [show u * (b : ℤ) + e - (u * a + e) = u * ((b : ℤ) - a) by ring] at hdiv
+    exact hdiv
+  have h2 : (N : ℤ) ∣ (b : ℤ) - a := hu.symm.dvd_of_dvd_mul_left h1
+  have h3 := Int.eq_zero_of_abs_lt_dvd h2 (by rw [abs_lt]; constructor <;> omega)
+  omega
+
+theorem count_congr' {p q : ℕ → Prop} [DecidablePred p] [DecidablePred q]
+    (h : ∀ n, p n ↔ q n) (X : ℕ) : Nat.count p X = Nat.count q X := by
+  rw [Nat.count_eq_card_filter_range, Nat.count_eq_card_filter_range]
+  exact congrArg _ (Finset.filter_congr fun n _ => h n)
+
+theorem count_false' (X : ℕ) : Nat.count (fun _ => False) X = 0 := by
+  rw [Nat.count_eq_card_filter_range]
+  simp
+
+/-- Every forward word of length `L` has exactly `2^L` residue classes modulo `4^L`. -/
+theorem count_amusicalForwardWord_eq (L : ℕ) (w : Fin L → Bool) :
+    Nat.count (fun r : ℕ => amusicalForwardWord L r = w) (4 ^ L) = 2 ^ L := by
+  induction L with
+  | zero =>
+    simp only [pow_zero]
+    rw [Nat.count_one]
+    simp [Subsingleton.elim (amusicalForwardWord 0 0) w]
+  | succ L ih =>
+    obtain ⟨b, w', rfl⟩ : ∃ b w', w = Fin.cons b w' :=
+      ⟨w 0, Fin.tail w, (Fin.cons_self_tail w).symm⟩
+    set N := 4 ^ L with hN
+    have hNpos : 0 < N := by positivity
+    let g : ℤ → Prop := fun x => amusicalForwardWord L x = w'
+    have hg : ∀ x, g x ↔ g (x % (N : ℕ)) := fun x => by
+      simp only [g, hN]
+      push_cast
+      rw [← amusicalForwardWord_emod]
+    have hcop : IsCoprime (3 : ℤ) (N : ℕ) := by
+      rw [hN]
+      push_cast
+      exact IsCoprime.pow_right ⟨-1, 1, by norm_num⟩
+    have key : ∀ e : ℤ, Nat.count (fun m : ℕ => g (3 * (m : ℤ) + e)) N = 2 ^ L :=
+      fun e => by
+        rw [count_comp_of_injMod N hNpos g hg _ (injMod_affine N 3 e hcop)]
+        exact ih w'
+    rw [pow_succ', count_four_mul_decomp, pow_succ]
+    have hE : ∀ m : ℕ,
+        (amusicalForwardWord (L + 1) ((2 * m : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = false ∧ g (3 * (m : ℤ) + 0)) := fun m => by
+      rw [amusicalForwardWord_succ, Fin.cons_inj]
+      push_cast
+      rw [amusical_two_mul, add_zero]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp
+    have hO1 : ∀ m : ℕ,
+        (amusicalForwardWord (L + 1) ((4 * m + 1 : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = true ∧ g (3 * (m : ℤ) + 1)) := fun m => by
+      rw [amusicalForwardWord_succ, Fin.cons_inj]
+      push_cast
+      rw [amusical_four_mul_add_one]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp <;> omega
+    have hO3 : ∀ m : ℕ,
+        (amusicalForwardWord (L + 1) ((4 * m + 3 : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = true ∧ g (3 * (m : ℤ) + 2)) := fun m => by
+      rw [amusicalForwardWord_succ, Fin.cons_inj]
+      push_cast
+      rw [amusical_four_mul_add_three]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp <;> omega
+    rw [count_congr' hE, count_congr' hO1, count_congr' hO3]
+    cases b
+    · simp only [true_and, Bool.false_eq_true, false_and, count_false']
+      rw [two_mul, Nat.count_add, key 0]
+      have htail : Nat.count (fun m : ℕ => g (3 * ((N + m : ℕ) : ℤ) + 0)) N = 2 ^ L := by
+        rw [← key (3 * N)]
+        apply count_congr'
+        intro m
+        push_cast
+        ring_nf
+      rw [htail]
+      ring
+    · simp only [true_and, Bool.true_eq_false, false_and, count_false']
+      rw [key 1, key 2]
+      ring
+
+/-- A backward word with `b` marked steps has exactly `2^b` residue classes modulo `3^L`. -/
+theorem count_amusicalBackwardWord_eq (L : ℕ) (w : Fin L → Bool) :
+    Nat.count (fun r : ℕ => amusicalBackwardWord L r = w) (3 ^ L) =
+      2 ^ (Finset.univ.filter fun i : Fin L => w i = true).card := by
+  induction L with
+  | zero =>
+    simp only [pow_zero]
+    rw [Nat.count_one]
+    simp [Subsingleton.elim (amusicalBackwardWord 0 0) w]
+  | succ L ih =>
+    obtain ⟨b, w', rfl⟩ : ∃ b w', w = Fin.cons b w' :=
+      ⟨w 0, Fin.tail w, (Fin.cons_self_tail w).symm⟩
+    set N := 3 ^ L with hN
+    have hNpos : 0 < N := by positivity
+    let g : ℤ → Prop := fun x => amusicalBackwardWord L x = w'
+    have hg : ∀ x, g x ↔ g (x % (N : ℕ)) := fun x => by
+      simp only [g, hN]
+      push_cast
+      rw [← amusicalBackwardWord_emod]
+    have key : ∀ u e : ℤ, IsCoprime u (3 : ℤ) →
+        Nat.count (fun m : ℕ => g (u * (m : ℤ) + e)) N =
+          2 ^ (Finset.univ.filter fun i : Fin L => w' i = true).card := fun u e hu => by
+      have hcop : IsCoprime u (N : ℕ) := by
+        rw [hN]
+        push_cast
+        exact hu.pow_right
+      rw [count_comp_of_injMod N hNpos g hg _ (injMod_affine N u e hcop)]
+      exact ih w'
+    rw [pow_succ', count_three_mul_decomp]
+    have hE : ∀ m : ℕ,
+        (amusicalBackwardWord (L + 1) ((3 * m : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = false ∧ g (2 * (m : ℤ) + 0)) := fun m => by
+      rw [amusicalBackwardWord_succ, Fin.cons_inj]
+      push_cast
+      have hform : amusicalInv (3 * (m : ℤ)) = 2 * m + 0 := by
+        unfold amusicalInv
+        split_ifs <;> omega
+      rw [hform]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp
+    have hO1 : ∀ m : ℕ,
+        (amusicalBackwardWord (L + 1) ((3 * m + 1 : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = true ∧ g (4 * (m : ℤ) + 1)) := fun m => by
+      rw [amusicalBackwardWord_succ, Fin.cons_inj]
+      push_cast
+      have hform : amusicalInv (3 * (m : ℤ) + 1) = 4 * m + 1 := by
+        unfold amusicalInv
+        split_ifs <;> omega
+      rw [hform]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp
+    have hO2 : ∀ m : ℕ,
+        (amusicalBackwardWord (L + 1) ((3 * m + 2 : ℕ) : ℤ) = Fin.cons b w') ↔
+          (b = true ∧ g (4 * (m : ℤ) + 3)) := fun m => by
+      rw [amusicalBackwardWord_succ, Fin.cons_inj]
+      push_cast
+      have hform : amusicalInv (3 * (m : ℤ) + 2) = 4 * m + 3 := by
+        unfold amusicalInv
+        split_ifs <;> omega
+      rw [hform]
+      simp only [g]
+      constructor <;> rintro ⟨rfl, h2⟩ <;> refine ⟨?_, h2⟩ <;> simp
+    rw [count_congr' hE, count_congr' hO1, count_congr' hO2, Fin.card_filter_univ_succ]
+    cases b
+    · simp only [true_and, Bool.false_eq_true, false_and, Fin.cons_zero, Fin.cons_succ,
+        if_false, count_false']
+      rw [key 2 0 ⟨-1, 1, by norm_num⟩]
+      simp
+    · simp only [true_and, Bool.true_eq_false, false_and, Fin.cons_zero, Fin.cons_succ,
+        if_true, count_false']
+      rw [key 4 1 ⟨1, -1, by norm_num⟩, key 4 3 ⟨1, -1, by norm_num⟩]
+      ring
+
+/-- The forward affine slope cannot equal the diagonal slope at a positive time. -/
+theorem amusical_forward_slope_ne (L t e : ℕ) (ht1 : 1 ≤ t) :
+    (4 : ℤ) ^ L ≠ (4 : ℤ) ^ (L - t) * 3 ^ t * 2 ^ e := by
+  intro h
+  obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+  have hmod := congrArg (fun z : ℤ => z % 3) h
+  have hfour : ∀ k : ℕ, (4 : ℤ) ^ k % 3 = 1 := by
+    intro k
+    induction k with
+    | zero => norm_num
+    | succ k ih => rw [pow_succ, Int.mul_emod, ih]; norm_num
+  rw [hfour] at hmod
+  rw [pow_succ, mul_assoc, Int.mul_emod] at hmod
+  norm_num [Int.mul_emod] at hmod
+
+/-- The backward affine slope cannot equal the diagonal slope at a positive time. -/
+theorem amusical_backward_slope_ne (L t f : ℕ) (ht1 : 1 ≤ t) (ht : t ≤ L) :
+    (3 : ℤ) ^ L ≠ (3 : ℤ) ^ (L - t) * 2 ^ (t + f) := by
+  intro h
+  obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+  obtain ⟨d, hd⟩ : ∃ d, L = d + 1 := ⟨L - 1, by omega⟩
+  subst L
+  have hmod := congrArg (fun z : ℤ => z % 2) h
+  have hthree : ∀ k : ℕ, (3 : ℤ) ^ k % 2 = 1 := by
+    intro k
+    induction k with
+    | zero => norm_num
+    | succ k ih => rw [pow_succ, Int.mul_emod, ih]; norm_num
+  rw [hthree] at hmod
+  rw [show s + 1 + f = (s + f) + 1 by omega, pow_succ] at hmod
+  norm_num [Int.mul_emod] at hmod
+
+/-- After cancelling the fixed residue-class factor, the forward slope inequality is exactly
+the prefix-survival inequality used in `fwdSurv`. -/
+theorem amusical_forward_slope_lt_iff (L t o e : ℕ) (ht : t ≤ L) (hoe : o + e = t) :
+    (4 : ℤ) ^ L < 4 ^ (L - t) * 3 ^ t * 2 ^ e ↔ 2 ^ (t + o) < 3 ^ t := by
+  have hpow : (4 : ℕ) ^ L = 4 ^ (L - t) * 4 ^ t := by
+    rw [← pow_add, Nat.sub_add_cancel ht]
+  have hfour : (4 : ℕ) ^ t = 2 ^ (t + o) * 2 ^ e := by
+    rw [← pow_add, show t + o + e = 2 * t by omega, pow_mul]
+    norm_num
+  exact_mod_cast (show (4 : ℕ) ^ L < 4 ^ (L - t) * 3 ^ t * 2 ^ e ↔
+      2 ^ (t + o) < 3 ^ t by
+    rw [hpow, mul_assoc, Nat.mul_lt_mul_left (by positivity : 0 < 4 ^ (L - t))]
+    rw [hfour, Nat.mul_lt_mul_right (by positivity : 0 < 2 ^ e)])
+
+/-- After cancellation, the backward slope inequality is exactly the prefix-survival inequality
+used in `bwdSurv`. -/
+theorem amusical_backward_slope_lt_iff (L t f : ℕ) (ht : t ≤ L) :
+    (3 : ℤ) ^ L < 3 ^ (L - t) * 2 ^ (t + f) ↔ 3 ^ t < 2 ^ (t + f) := by
+  have hpow : (3 : ℕ) ^ L = 3 ^ (L - t) * 3 ^ t := by
+    rw [← pow_add, Nat.sub_add_cancel ht]
+  exact_mod_cast (show (3 : ℕ) ^ L < 3 ^ (L - t) * 2 ^ (t + f) ↔
+      3 ^ t < 2 ^ (t + f) by
+    rw [hpow, Nat.mul_lt_mul_left (by positivity : 0 < 3 ^ (L - t))])
+
 /-! ## Stabilization on a residue class
 
 The affine formula is useful for density only after identifying which side of the diagonal
@@ -288,6 +568,34 @@ theorem amusicalInv_iterate_eventually_ge_iff_slope (L t : ℕ) (ht : t ≤ L) (
   refine ⟨K, fun k hk => ?_⟩
   rw [amusicalInv_iterate_add_pow_three_mul_slope L t ht]
   exact hK k hk
+
+/-- The eventual forward comparison on a residue class is exactly the prefix condition appearing
+in `fwdSurv`. -/
+theorem amusical_iterate_eventually_ge_iff_word (L t : ℕ) (ht1 : 1 ≤ t) (ht : t ≤ L)
+    (n : ℤ) :
+    ∃ K : ℤ, ∀ k : ℤ, K ≤ k →
+      (n + (4 : ℤ) ^ L * k ≤ amusical^[t] (n + (4 : ℤ) ^ L * k) ↔
+        2 ^ (t + (Finset.univ.filter fun i : Fin L =>
+          i.val < t ∧ amusicalForwardWord L n i = true).card) < 3 ^ t) := by
+  obtain ⟨K, hK⟩ := amusical_iterate_eventually_ge_iff_slope L t ht n
+    (amusical_forward_slope_ne L t (amusicalForwardEvenCount t n) ht1)
+  refine ⟨K, fun k hk => (hK k hk).trans ?_⟩
+  exact amusical_forward_slope_lt_iff L t _ _ ht
+    (amusicalForwardWord_true_card_add_evenCount L t ht n)
+
+/-- The eventual backward comparison on a residue class is exactly the prefix condition appearing
+in `bwdSurv`. -/
+theorem amusicalInv_iterate_eventually_ge_iff_word (L t : ℕ) (ht1 : 1 ≤ t) (ht : t ≤ L)
+    (n : ℤ) :
+    ∃ K : ℤ, ∀ k : ℤ, K ≤ k →
+      (n + (3 : ℤ) ^ L * k ≤ amusicalInv^[t] (n + (3 : ℤ) ^ L * k) ↔
+        3 ^ t < 2 ^ (t + (Finset.univ.filter fun i : Fin L =>
+          i.val < t ∧ amusicalBackwardWord L n i = true).card)) := by
+  obtain ⟨K, hK⟩ := amusicalInv_iterate_eventually_ge_iff_slope L t ht n
+    (amusical_backward_slope_ne L t (amusicalBackwardFourCount t n) ht1 ht)
+  refine ⟨K, fun k hk => (hK k hk).trans ?_⟩
+  rw [amusicalBackwardWord_true_card_eq_fourCount L t ht n]
+  exact amusical_backward_slope_lt_iff L t _ ht
 
 theorem amusical_iterate_add_pow_four_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
     ∃ a : ℤ, 0 < a ∧ amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n + a * k := by
@@ -364,10 +672,9 @@ theorem windowDensity_values :
   decide +kernel
 
 open Classical in
-/-- **Believed (~95%), proof not yet written: the window-minimum density.**  The `L`-window
-minima among `0, …, X-1` have density `fwdSurv L * bwdSurv L`.  English proof in the module
-docstring: Matthews-Watts residue classes for both directions, the CRT, and a size threshold
-past which the additive offsets cannot flip a prefix comparison. -/
+/-- The `L`-window minima among `0, …, X-1` have density `fwdSurv L * bwdSurv L`.
+The proof uses Matthews--Watts residue classes for both directions, the CRT, and a size
+threshold past which the additive offsets cannot flip a prefix comparison. -/
 def WindowMinDensity (L : ℕ) : Prop :=
   Filter.Tendsto
     (fun X : ℕ => (((Finset.range X).filter fun n : ℕ => IsWindowMin L n).card : ℝ) / X)
@@ -464,16 +771,269 @@ theorem windowMinDensity_one : WindowMinDensity 1 := by
     rw [div_le_iff₀ hXpos, hX']
     linarith
 
+/-! ## Eventual periodic characterization -/
+
+/-- The forward survival condition on a branch word. -/
+abbrev FwdGood (L : ℕ) (w : Fin L → Bool) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L →
+    2 ^ (t + ((Finset.univ.filter fun i : Fin L => i.val < t ∧ w i = true).card)) < 3 ^ t
+
+/-- The backward survival condition on a branch word. -/
+abbrev BwdGood (L : ℕ) (w : Fin L → Bool) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L →
+    3 ^ t < 2 ^ (t + ((Finset.univ.filter fun i : Fin L => i.val < t ∧ w i = true).card))
+
+/-- A uniform bound for all additive offsets over one complete joint residue system. -/
+def windowBound (L : ℕ) : ℕ :=
+  ∑ c ∈ Finset.range (4 ^ L * 3 ^ L), ∑ t ∈ Finset.range (L + 1),
+    ((amusical^[t] (c : ℤ) - c).natAbs + (amusicalInv^[t] (c : ℤ) - c).natAbs)
+
+theorem add_mul_le_add_mul_iff {α β k c y : ℤ} (hne : α ≠ β) (hk : |y - c| < k) :
+    c + α * k ≤ y + β * k ↔ α < β := by
+  have hk' := abs_lt.mp hk
+  rcases lt_or_gt_of_ne hne with h | h
+  · refine ⟨fun _ => h, fun _ => ?_⟩
+    have : α * k + k ≤ β * k := by nlinarith
+    linarith
+  · refine ⟨fun h' => ?_, fun h' => absurd h' (not_lt.mpr h.le)⟩
+    exfalso
+    have : β * k + k ≤ α * k := by nlinarith
+    linarith
+
+/-- Above an explicit finite threshold, the window-minimum condition is exactly the conjunction
+of the forward and backward survival tests on the two branch words. -/
+theorem isWindowMin_iff_of_large (L n : ℕ)
+    (hn : 4 ^ L * 3 ^ L * (windowBound L + 1) ≤ n) :
+    IsWindowMin L n ↔ FwdGood L (amusicalForwardWord L n) ∧
+      BwdGood L (amusicalBackwardWord L n) := by
+  set M := 4 ^ L * 3 ^ L with hM
+  have hMpos : 0 < M := by positivity
+  set c := n % M with hc
+  set q := n / M with hq
+  have hcM : c < M := Nat.mod_lt _ hMpos
+  have hqge : windowBound L + 1 ≤ q := (Nat.le_div_iff_mul_le hMpos).mpr (by linarith)
+  have hnq : (n : ℤ) = c + M * q := by
+    have h := Nat.mod_add_div n M
+    exact_mod_cast h.symm
+  have hnF : (n : ℤ) = c + 4 ^ L * (3 ^ L * q) := by
+    rw [hnq, hM]
+    push_cast
+    ring
+  have hnB : (n : ℤ) = c + 3 ^ L * (4 ^ L * q) := by
+    rw [hnq, hM]
+    push_cast
+    ring
+  have hpatF : amusicalForwardWord L n = amusicalForwardWord L c := by
+    rw [hnF, amusicalForwardWord_add_pow_four_mul]
+  have hpatB : amusicalBackwardWord L n = amusicalBackwardWord L c := by
+    rw [hnB, amusicalBackwardWord_add_pow_three_mul]
+  rw [hpatF, hpatB]
+  have hbound : ∀ t, t ≤ L → |amusical^[t] (c : ℤ) - c| < q ∧
+      |amusicalInv^[t] (c : ℤ) - c| < q := by
+    intro t ht
+    have h1 : (amusical^[t] (c : ℤ) - c).natAbs +
+        (amusicalInv^[t] (c : ℤ) - c).natAbs ≤ windowBound L := by
+      unfold windowBound
+      refine le_trans ?_ (Finset.single_le_sum (fun _ _ => Nat.zero_le _)
+        (Finset.mem_range.mpr hcM))
+      exact Finset.single_le_sum
+        (f := fun t => (amusical^[t] (c : ℤ) - c).natAbs +
+          (amusicalInv^[t] (c : ℤ) - c).natAbs)
+        (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr (by omega))
+    have h2 : ((amusical^[t] (c : ℤ) - c).natAbs : ℤ) +
+        ((amusicalInv^[t] (c : ℤ) - c).natAbs : ℤ) ≤ windowBound L := by
+      exact_mod_cast h1
+    have h3 : (windowBound L : ℤ) + 1 ≤ q := by exact_mod_cast hqge
+    rw [Int.natCast_natAbs, Int.natCast_natAbs] at h2
+    have hf := abs_nonneg (amusical^[t] (c : ℤ) - c)
+    have hb := abs_nonneg (amusicalInv^[t] (c : ℤ) - c)
+    constructor <;> linarith
+  have hq3 : (q : ℤ) ≤ 3 ^ L * q :=
+    le_mul_of_one_le_left (by positivity) (one_le_pow₀ (by norm_num))
+  have hq4 : (q : ℤ) ≤ 4 ^ L * q :=
+    le_mul_of_one_le_left (by positivity) (one_le_pow₀ (by norm_num))
+  have hF : ∀ t, 1 ≤ t → t ≤ L → ((n : ℤ) ≤ amusical^[t] n ↔
+      2 ^ (t + ((Finset.univ.filter fun i : Fin L =>
+        i.val < t ∧ amusicalForwardWord L c i = true).card)) < 3 ^ t) := by
+    intro t ht1 ht
+    rw [hnF, amusical_iterate_add_pow_four_mul_slope L t ht]
+    rw [show (4 : ℤ) ^ (L - t) * 3 ^ t * 2 ^ amusicalForwardEvenCount t c * (3 ^ L * q) =
+      (4 ^ (L - t) * 3 ^ t * 2 ^ amusicalForwardEvenCount t c) * (3 ^ L * q) by ring]
+    rw [add_mul_le_add_mul_iff
+      (amusical_forward_slope_ne L t (amusicalForwardEvenCount t c) ht1)
+      (lt_of_lt_of_le (hbound t ht).1 hq3)]
+    exact amusical_forward_slope_lt_iff L t _ _ ht
+      (amusicalForwardWord_true_card_add_evenCount L t ht c)
+  have hB : ∀ t, 1 ≤ t → t ≤ L → ((n : ℤ) ≤ amusicalInv^[t] n ↔
+      3 ^ t < 2 ^ (t + ((Finset.univ.filter fun i : Fin L =>
+        i.val < t ∧ amusicalBackwardWord L c i = true).card))) := by
+    intro t ht1 ht
+    rw [hnB, amusicalInv_iterate_add_pow_three_mul_slope L t ht]
+    rw [add_mul_le_add_mul_iff
+      (amusical_backward_slope_ne L t (amusicalBackwardFourCount t c) ht1 ht)
+      (lt_of_lt_of_le (hbound t ht).2 hq4)]
+    rw [amusicalBackwardWord_true_card_eq_fourCount L t ht c]
+    exact amusical_backward_slope_lt_iff L t _ ht
+  unfold IsWindowMin
+  constructor
+  · intro h
+    exact ⟨fun t h1 h2 => (hF t h1 h2).mp (h t h1 h2).1,
+      fun t h1 h2 => (hB t h1 h2).mp (h t h1 h2).2⟩
+  · rintro ⟨h1, h2⟩ t ht1 ht2
+    exact ⟨(hF t ht1 ht2).mpr (h1 t ht1 ht2),
+      (hB t ht1 ht2).mpr (h2 t ht1 ht2)⟩
+
+theorem amusicalForwardWord_natCast_mod (L n : ℕ) :
+    amusicalForwardWord L (n : ℤ) = amusicalForwardWord L ((n % 4 ^ L : ℕ) : ℤ) := by
+  rw [amusicalForwardWord_emod L (n : ℤ)]
+  push_cast
+  rfl
+
+theorem amusicalBackwardWord_natCast_mod (L n : ℕ) :
+    amusicalBackwardWord L (n : ℤ) = amusicalBackwardWord L ((n % 3 ^ L : ℕ) : ℤ) := by
+  rw [amusicalBackwardWord_emod L (n : ℤ)]
+  push_cast
+  rfl
+
+/-! ## Counting good residue classes -/
+
+theorem count_fwdGood (L : ℕ) :
+    Nat.count (fun r : ℕ => FwdGood L (amusicalForwardWord L r)) (4 ^ L) =
+      ∑ w : Fin L → Bool, if FwdGood L w then 2 ^ L else 0 := by
+  classical
+  rw [Nat.count_eq_card_filter_range, Finset.card_eq_sum_card_fiberwise
+    (f := fun r : ℕ => amusicalForwardWord L r) (t := Finset.univ)
+      (fun _ _ => Finset.mem_coe.mpr (Finset.mem_univ _))]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  rw [Finset.filter_filter]
+  split_ifs with hw
+  · rw [← count_amusicalForwardWord_eq L w, Nat.count_eq_card_filter_range]
+    congr 1
+    apply Finset.filter_congr
+    intro r _
+    exact ⟨fun h => h.2, fun h => ⟨h ▸ hw, h⟩⟩
+  · rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    rintro r _ ⟨h1, h2⟩
+    exact hw (h2 ▸ h1)
+
+theorem count_bwdGood (L : ℕ) :
+    Nat.count (fun r : ℕ => BwdGood L (amusicalBackwardWord L r)) (3 ^ L) =
+      ∑ w : Fin L → Bool, if BwdGood L w then
+        2 ^ (Finset.univ.filter fun i : Fin L => w i = true).card else 0 := by
+  classical
+  rw [Nat.count_eq_card_filter_range, Finset.card_eq_sum_card_fiberwise
+    (f := fun r : ℕ => amusicalBackwardWord L r) (t := Finset.univ)
+      (fun _ _ => Finset.mem_coe.mpr (Finset.mem_univ _))]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  rw [Finset.filter_filter]
+  split_ifs with hw
+  · rw [← count_amusicalBackwardWord_eq L w, Nat.count_eq_card_filter_range]
+    congr 1
+    apply Finset.filter_congr
+    intro r _
+    exact ⟨fun h => h.2, fun h => ⟨h ▸ hw, h⟩⟩
+  · rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    rintro r _ ⟨h1, h2⟩
+    exact hw (h2 ▸ h1)
+
+theorem fwdSurv_mul (L : ℕ) :
+    (4 : ℚ) ^ L * fwdSurv L =
+      (Nat.count (fun r : ℕ => FwdGood L (amusicalForwardWord L r)) (4 ^ L) : ℚ) := by
+  classical
+  rw [count_fwdGood]
+  unfold fwdSurv
+  rw [Finset.mul_sum]
+  push_cast
+  refine Finset.sum_congr rfl fun w _ => ?_
+  split_ifs
+  · rw [← mul_pow]
+    norm_num
+  · simp
+
+theorem bwdSurv_mul (L : ℕ) :
+    (3 : ℚ) ^ L * bwdSurv L =
+      (Nat.count (fun r : ℕ => BwdGood L (amusicalBackwardWord L r)) (3 ^ L) : ℚ) := by
+  classical
+  rw [count_bwdGood]
+  unfold bwdSurv
+  rw [Finset.mul_sum]
+  push_cast
+  refine Finset.sum_congr rfl fun w _ => ?_
+  split_ifs
+  · have hab : (Finset.univ.filter fun i : Fin L => w i = true).card +
+        (Finset.univ.filter fun i : Fin L => w i = false).card = L := by
+      have h := Finset.card_filter_add_card_filter_not (s := (Finset.univ : Finset (Fin L)))
+        (fun i => w i = true)
+      simpa using h
+    set a := (Finset.univ.filter fun i : Fin L => w i = true).card
+    set b := (Finset.univ.filter fun i : Fin L => w i = false).card
+    have h3 : (3 : ℚ) ^ L = 3 ^ a * 3 ^ b := by rw [← pow_add, hab]
+    rw [h3]
+    calc
+      (3 : ℚ) ^ a * 3 ^ b * ((2 / 3) ^ a * (1 / 3) ^ b) =
+          (3 * (2 / 3)) ^ a * (3 * (1 / 3)) ^ b := by
+            rw [mul_pow, mul_pow]
+            ring
+      _ = 2 ^ a := by norm_num
+  · simp
+
 /-- **Target (treadmill, `KICKOFF-2026-10-13-amusical-window.md`).**  The window-minimum
 density holds for every `L`.  Proof plan in the kickoff: on each residue class mod
 `4^L · 3^L` the first `L` forward and backward branches are fixed, so `U^t` and `U^-t` are
 affine there; past a size threshold the window condition is a congruence condition; the good
 classes number `4^L · 3^L · fwdSurv L · bwdSurv L` (Haar counting per direction, CRT across). -/
 theorem windowMinDensity (L : ℕ) : WindowMinDensity L := by
-  sorry
+  classical
+  unfold WindowMinDensity
+  set M := 4 ^ L * 3 ^ L with hM
+  have hMpos : 0 < M := by positivity
+  set N₀ := M * (windowBound L + 1) with hN₀
+  let F : ℕ → Prop := fun r => FwdGood L (amusicalForwardWord L r)
+  let B : ℕ → Prop := fun r => BwdGood L (amusicalBackwardWord L r)
+  let P : ℕ → Prop := fun n => F n ∧ B n
+  have hPcrt : ∀ n, P n ↔ F (n % 4 ^ L) ∧ B (n % 3 ^ L) := fun n => by
+    simp only [P, F, B]
+    rw [← amusicalForwardWord_natCast_mod, ← amusicalBackwardWord_natCast_mod]
+  have hPper : ∀ n, P n ↔ P (n % M) := fun n => by
+    rw [hPcrt, hPcrt (n % M), Nat.mod_mod_of_dvd n (dvd_mul_right (4 ^ L) (3 ^ L)),
+      Nat.mod_mod_of_dvd n (dvd_mul_left (3 ^ L) (4 ^ L))]
+  have hG : Nat.count P M = Nat.count F (4 ^ L) * Nat.count B (3 ^ L) := by
+    rw [count_congr' hPcrt]
+    exact WindowCount.count_crt _ _ (Nat.Coprime.pow _ _ (by norm_num)) F B
+  set G := Nat.count P M with hGdef
+  have hq : (fwdSurv L * bwdSurv L : ℚ) = (G : ℚ) / M := by
+    rw [eq_div_iff (by positivity), hG]
+    push_cast
+    rw [← fwdSurv_mul, ← bwdSurv_mul, hM]
+    push_cast
+    ring
+  have hδ : ((fwdSurv L * bwdSurv L : ℚ) : ℝ) = (G : ℝ) / M := by
+    rw [hq]
+    push_cast
+    rfl
+  rw [hδ]
+  have hcard : ∀ X : ℕ,
+      ((Finset.range X).filter fun n : ℕ => IsWindowMin L n).card =
+        Nat.count (fun n : ℕ => IsWindowMin L n) X := fun X => by
+    rw [Nat.count_eq_card_filter_range]
+  simp only [hcard]
+  have hPadd : ∀ n : ℕ, P (n + M) ↔ P n := by
+    intro n
+    rw [hPper (n + M), hPper n]
+    simp
+  have hblock : ∀ a : ℕ, Nat.count (fun k => P (a + k)) M = G := by
+    intro a
+    rw [count_block_eq_of_add_periodic P hPadd a, hGdef]
+  have hPdensity : Filter.Tendsto (fun X : ℕ => (Nat.count P X : ℝ) / X)
+      Filter.atTop (nhds ((G : ℝ) / M)) :=
+    tendsto_count_div_of_periodic_blocks P hMpos hblock
+  apply tendsto_count_div_of_eventually_congr (fun n : ℕ => IsWindowMin L n) P
+    (A := N₀) _ hPdensity
+  intro n hn
+  exact isWindowMin_iff_of_large L n hn
 
 open Classical in
-/-- **Unconditional window bound** (modulo `windowMinDensity`): orbit minima have upper
+/-- **Unconditional window bound:** orbit minima have upper
 density at most `fwdSurv L * bwdSurv L` for every `L`, hence at most `p_f · p_b ≈ 0.0498`. -/
 theorem orbitMin_density_le (L : ℕ) {ε : ℝ} (hε : 0 < ε) : ∀ᶠ X : ℕ in Filter.atTop,
     (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤

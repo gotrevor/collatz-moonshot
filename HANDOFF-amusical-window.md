@@ -1,68 +1,53 @@
-# HANDOFF: amusical window density (2026-10-13, affine threshold checkpoint)
+# HANDOFF: amusical window density (2026-10-13, target complete)
 
 ## Concrete advance
 
-The residue-class threshold step is now packaged and kernel-checked in
-`CollatzMoonshot/AmusicalWindow.lean`.
+`CollatzMoonshot/AmusicalWindow.lean` is now sorry-free.  The ratified theorem
+`windowMinDensity (L : ℕ) : WindowMinDensity L` is proved without changing its statement or
+the definitions of `IsWindowMin`, `fwdSurv`, `bwdSurv`, or `WindowMinDensity`.
 
-- `amusicalForwardWord` and `amusicalBackwardWord` record the actual forward and backward
-  branch traces, using exactly the Boolean conventions of `fwdSurv` and `bwdSurv`.
-- `amusicalForwardEvenCount_eq_count` and `amusicalBackwardFourCount_eq_count` identify the
-  recursive slope counters with counts along the orbit trace. These make the exponent in the
-  exact affine slopes accessible to prefix-cardinality arguments.
-- `amusicalForwardWord_add_pow_four_mul` proves that the length-`L` forward word is constant
-  on every class modulo `4^L`.
-- `amusicalBackwardWord_add_pow_three_mul` proves the analogous constancy modulo `3^L`.
-- `eventually_affine_le_iff_slope_lt` proves, constructively over `ℤ`, that the eventual order
-  of two affine functions with unequal integral slopes is exactly their slope order.
-- `amusical_iterate_eventually_ge_iff_slope` and
-  `amusicalInv_iterate_eventually_ge_iff_slope` apply that lemma to the exact forward and
-  backward residue-class formulas. Thus, once slope inequality is discharged, every fixed
-  residue/time comparison stabilizes beyond an explicit existential threshold. This is the
-  analytic core of kickoff step 3, independent of the still-open finite counting.
+The completed route is the one prescribed by the kickoff:
 
-Thus both residue-dependence assertions in kickoff steps 1 and 2 are now explicit statements,
-not only consequences left implicit in the affine formulas. No ratified definition or target
-was changed, and no new axiom, certificate, `sorry`, or heartbeat override was added.
+- Every forward word of length `L` has exactly `2^L` fibers modulo `4^L`.
+- A backward word has exactly `2^b` fibers modulo `3^L`, where `b` is its number of marked
+  (`×4/3`) branches.
+- The affine slopes are never equal to the diagonal at positive times, and their order is
+  exactly the prefix inequality appearing in `fwdSurv` or `bwdSurv`.
+- `windowBound` gives one explicit threshold beyond which `IsWindowMin` is precisely the
+  conjunction of the forward and backward word-survival predicates.
+- A finite CRT count factors the good joint residue classes, while general periodic-count and
+  finite-perturbation lemmas establish the resulting natural density.
 
-One Aristotle project was submitted for the complete target while this work proceeded:
-`e94297bf-c4a8-41e0-bff8-722bef5437c0`. It was still `RUNNING` at checkpoint time. A later lap
-may inspect and kernel-check it, but should not trust or wait on it instead of advancing the
-proof.
+The reusable elementary counting and density infrastructure lives in the new module
+`CollatzMoonshot/AmusicalWindow/Count.lean`.  The in-flight Aristotle project
+`e94297bf-c4a8-41e0-bff8-722bef5437c0` supplied a partial snapshot during the lap; only lemmas
+ported into the repository and independently accepted by the local kernel were retained.
+
+No new axiom, certificate, `native_decide`, `sorry`, or heartbeat override was introduced.
+The pre-existing untracked `CLAUDE.local.md` was left untouched.
 
 ## Exact verification
 
 ```text
-lake env lean CollatzMoonshot/AmusicalWindow.lean
+python3 scripts/amusical/window.py
+lake build CollatzMoonshot.AmusicalWindow
+rg -n '(^|[^[:alnum:]_])sorry([^[:alnum:]_]|$)|(^|[^[:alnum:]_])axiom([^[:alnum:]_]|$)|native_decide|maxHeartbeats' \
+  CollatzMoonshot/AmusicalWindow.lean CollatzMoonshot/AmusicalWindow/Count.lean
 git diff --check
 ~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-window \
-  --target CollatzMoonshot.AmusicalWindow
+  --target CollatzMoonshot.AmusicalWindow \
+  --axioms CollatzMoonshot.Amusical.windowMinDensity
 ```
 
-Verdict: `FORMALIZE-TIER GREEN` (8707 jobs). The gate reports exactly the one pre-existing
-proof debt, `windowMinDensity`.
+The source scan has no matches.  The gate verdict is `FORMALIZE-TIER GREEN` (8708 jobs), and
+the headline theorem reports only Lean's standard foundational axioms:
+`Classical.choice`, `Quot.sound`, and `propext`.
 
 ## Current blocker
 
-The remaining route-decisive lemma is still the exact fiber count for the two branch-word maps over
-complete residue systems: every forward word has `2^L` preimages modulo `4^L`, while a backward
-word with `b` true positions has `2^b` preimages modulo `3^L`. Prefix filter-cardinalities must
-also be tied to the two `Nat.count` characterizations. For the threshold lemmas just landed,
-the hypotheses that the integral slopes are unequal remain to be discharged from
-`3^t ≠ 2^e` (`t ≥ 1`), followed by cancellation of the common prime-power factor; then the
-finitely many residue/time thresholds can be maximized. CRT product count and the
-periodic-density squeeze remain downstream.
-
-The scoped file still has its single original `sorry`, at `windowMinDensity`; the host
-completion predicate is not yet met.
+None.  The host predicate `sorry-free:CollatzMoonshot/AmusicalWindow.lean` is met.
 
 ## Next highest-value attack
 
-Prove the forward and backward branch-word fiber counts by induction on `L`, using the explicit
-formulas in `Amusical.lean`: the forward first branch splits a class mod `4^(L+1)` into two
-equipotent halves and advances to a class mod `4^L`; the backward first branch has one residue
-for the divisible-by-three branch and two for the nondivisible branch. Then rewrite the prefix
-cards in `fwdSurv`/`bwdSurv` through the counter lemmas. In parallel, the small slope side-goal
-can be closed with the standard parity proof of `3^t ≠ 2^e` plus power cancellation, allowing
-the new stabilization lemmas to be invoked without hypotheses. The fiber counts remain the
-highest-value attack because they unlock the finite good-class count before CRT and asymptotics.
+No further work is in scope for this lap.  The host can accept the committed checkpoint and stop
+the amusical-window treadmill objective.
