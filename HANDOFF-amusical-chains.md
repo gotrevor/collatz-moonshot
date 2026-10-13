@@ -1,5 +1,41 @@
 # HANDOFF — amusical chains
 
+## 2026-10-13 treadmill lap: survival invariant formalized
+
+Concrete advance:
+
+- Added exact finite-horizon rational-state walks `fwdWalk` and `bwdWalk` in
+  `AmusicalChains.lean`.
+- Proved the shared load-bearing estimates `fwdWalk_ge` and `bwdWalk_ge`:
+  whenever `0 < a < b`, survival for every remaining horizon is at least
+  `1 - a/b`.  The proofs are by induction and kernel-check both cases from the
+  kickoff: when both children survive their weighted exponential deficits
+  average exactly to the parent deficit; when the downward child crosses the
+  boundary, its failed inequality supplies precisely the missing estimate.
+- This isolates the remaining work for `fwdSurv_ge` and `bwdSurv_ge` to a
+  semantic bridge between the existing `Fin L → Bool` word sums and the new
+  head-recursive walks.  No statement was changed, and no axiom or native
+  certificate was added.
+
+Verification in this lap:
+
+- `lake env lean CollatzMoonshot/AmusicalChains.lean` passed, reporting only
+  the same three disclosed target sorries.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-chains
+  --target CollatzMoonshot.AmusicalChains` passed (see commit checkpoint).
+
+Current blocker / next highest-value attack:
+
+1. Define generalized semantic word sums whose current rational height is
+   `a/b`, split them on the *first* Boolean letter using `Fin.cases` (or prove a
+   head analogue of `sum_bool_snoc`), and prove by induction that they equal
+   `fwdWalk` / `bwdWalk`.  Specializing the forced first upward step gives
+   `fwdSurv (L+1) = (1/2) * fwdWalk L 2 3` and
+   `bwdSurv (L+1) = (2/3) * bwdWalk L 3 4`; the new lemmas then yield `1/6`.
+   Handle `L=0` directly.  This should close both survival targets together.
+2. Then attack `exists_sublinearlyRecurrent_of_finitelyManyOrbits` using the
+   counting route already described below.
+
 ## 2026-10-13 treadmill lap
 
 Concrete advance:

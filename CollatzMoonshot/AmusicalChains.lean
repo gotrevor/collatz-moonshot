@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
+import CollatzMoonshot.AmusicalBound
 
 /-!
 # Chain connectivity: what one chain can and cannot carry
@@ -23,6 +24,109 @@ From the 2026-10-13 "chains" research agent (research note §7).  Treadmill targ
 namespace CollatzMoonshot.Amusical
 
 open CollatzMoonshot.Obstructions.Amusical
+
+/-! The survival estimates are most transparent with the current multiplicative
+height retained as a rational number `a / b`.  These recursors are the finite
+horizon walks before translating back to the word sums `fwdSurv` and
+`bwdSurv`. -/
+
+def fwdWalk : ℕ → ℕ → ℕ → ℚ
+  | 0, _, _ => 1
+  | L + 1, a, b =>
+      (if 2 * a < 3 * b then (1 / 2 : ℚ) * fwdWalk L (2 * a) (3 * b) else 0) +
+      (if 4 * a < 3 * b then (1 / 2 : ℚ) * fwdWalk L (4 * a) (3 * b) else 0)
+
+def bwdWalk : ℕ → ℕ → ℕ → ℚ
+  | 0, _, _ => 1
+  | L + 1, a, b =>
+      (if 3 * a < 2 * b then (1 / 3 : ℚ) * bwdWalk L (3 * a) (2 * b) else 0) +
+      (if 3 * a < 4 * b then (2 / 3 : ℚ) * bwdWalk L (3 * a) (4 * b) else 0)
+
+theorem fwdWalk_ge (L a b : ℕ) (ha : 0 < a) (hab : a < b) :
+    1 - (a : ℚ) / b ≤ fwdWalk L a b := by
+  induction L generalizing a b with
+  | zero => simp [fwdWalk, div_nonneg]
+  | succ L ih =>
+      have hb : 0 < b := lt_trans ha hab
+      have h2 : 2 * a < 3 * b := by omega
+      rw [fwdWalk, if_pos h2]
+      by_cases h4 : 4 * a < 3 * b
+      · rw [if_pos h4]
+        have hpos2 : 0 < 2 * a := by positivity
+        have hpos4 : 0 < 4 * a := by positivity
+        have hleft := ih (2 * a) (3 * b) hpos2 h2
+        have hright := ih (4 * a) (3 * b) hpos4 h4
+        norm_num [Nat.cast_mul] at hleft hright
+        have hbq : (0 : ℚ) < b := by exact_mod_cast hb
+        calc
+          1 - (a : ℚ) / b =
+              (1 / 2 : ℚ) * (1 - (2 * a : ℕ) / (3 * b)) +
+                (1 / 2 : ℚ) * (1 - (4 * a : ℕ) / (3 * b)) := by
+                  norm_num [Nat.cast_mul]
+                  field_simp
+                  ring
+          _ ≤ (1 / 2 : ℚ) * fwdWalk L (2 * a) (3 * b) +
+                (1 / 2 : ℚ) * fwdWalk L (4 * a) (3 * b) := by
+                  gcongr
+                  · simpa [Nat.cast_mul] using ih (2 * a) (3 * b) hpos2 h2
+                  · simpa [Nat.cast_mul] using ih (4 * a) (3 * b) hpos4 h4
+      · rw [if_neg h4]
+        have hleft := ih (2 * a) (3 * b) (by positivity) h2
+        norm_num [Nat.cast_mul] at hleft
+        have hbq : (0 : ℚ) < b := by exact_mod_cast hb
+        have h4' : 3 * b ≤ 4 * a := by omega
+        calc
+          1 - (a : ℚ) / b ≤ (1 / 2 : ℚ) * (1 - (2 * a : ℕ) / (3 * b)) := by
+            have h4q : (3 : ℚ) * b ≤ 4 * a := by exact_mod_cast h4'
+            push_cast
+            field_simp
+            linarith
+          _ ≤ (1 / 2 : ℚ) * fwdWalk L (2 * a) (3 * b) := by
+            gcongr
+            simpa [Nat.cast_mul] using ih (2 * a) (3 * b) (by positivity) h2
+          _ = _ := by ring
+
+theorem bwdWalk_ge (L a b : ℕ) (ha : 0 < a) (hab : a < b) :
+    1 - (a : ℚ) / b ≤ bwdWalk L a b := by
+  induction L generalizing a b with
+  | zero => simp [bwdWalk, div_nonneg]
+  | succ L ih =>
+      have hb : 0 < b := lt_trans ha hab
+      have h4 : 3 * a < 4 * b := by omega
+      rw [bwdWalk, if_pos h4]
+      by_cases h2 : 3 * a < 2 * b
+      · rw [if_pos h2]
+        have hleft := ih (3 * a) (2 * b) (by positivity) h2
+        have hright := ih (3 * a) (4 * b) (by positivity) h4
+        norm_num [Nat.cast_mul] at hleft hright
+        have hbq : (0 : ℚ) < b := by exact_mod_cast hb
+        calc
+          1 - (a : ℚ) / b =
+              (1 / 3 : ℚ) * (1 - (3 * a : ℕ) / (2 * b)) +
+                (2 / 3 : ℚ) * (1 - (3 * a : ℕ) / (4 * b)) := by
+                  norm_num [Nat.cast_mul]
+                  field_simp
+                  ring
+          _ ≤ (1 / 3 : ℚ) * bwdWalk L (3 * a) (2 * b) +
+                (2 / 3 : ℚ) * bwdWalk L (3 * a) (4 * b) := by
+                  gcongr
+                  · simpa [Nat.cast_mul] using ih (3 * a) (2 * b) (by positivity) h2
+                  · simpa [Nat.cast_mul] using ih (3 * a) (4 * b) (by positivity) h4
+      · rw [if_neg h2]
+        have hright := ih (3 * a) (4 * b) (by positivity) h4
+        norm_num [Nat.cast_mul] at hright
+        have hbq : (0 : ℚ) < b := by exact_mod_cast hb
+        have h2' : 2 * b ≤ 3 * a := by omega
+        calc
+          1 - (a : ℚ) / b ≤ (2 / 3 : ℚ) * (1 - (3 * a : ℕ) / (4 * b)) := by
+            have h2q : (2 : ℚ) * b ≤ 3 * a := by exact_mod_cast h2'
+            push_cast
+            field_simp
+            linarith
+          _ ≤ (2 / 3 : ℚ) * bwdWalk L (3 * a) (4 * b) := by
+            gcongr
+            simpa [Nat.cast_mul] using ih (3 * a) (4 * b) (by positivity) h4
+          _ = _ := by ring
 
 /-- **Target.**  Two `L`-window minima at most `L` steps apart on one orbit coincide:
 `n ≤ U^t n` and `U^t n ≤ U^-t (U^t n) = n`. -/
