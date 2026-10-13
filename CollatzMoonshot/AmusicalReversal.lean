@@ -71,6 +71,69 @@ theorem reversing_zpow_fixed {α : Type*} {σ ι : Equiv.Perm α} (hι : ι * ι
     _ = (σ ^ k) ((σ ^ (-k)) x) := by rw [← h1]
     _ = x := by rw [← Equiv.Perm.mul_apply, ← zpow_add, add_neg_cancel, zpow_zero]; rfl
 
+private lemma orbit_inter_fixedPoints_no_three {α : Type*} {σ ι : Equiv.Perm α}
+    (hι : ι * ι = 1) (hrev : ι * σ * ι = σ⁻¹) (x : α) {u v w : α}
+    (hu : u ∈ Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι)
+    (hv : v ∈ Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι)
+    (hw : w ∈ Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι)
+    (huv : u ≠ v) (huw : u ≠ w) (hvw : v ≠ w) : False := by
+  rcases hu with ⟨⟨ku, rfl⟩, hu⟩
+  rcases hv with ⟨⟨kv, rfl⟩, hv⟩
+  rcases hw with ⟨⟨kw, rfl⟩, hw⟩
+  have huv' : (σ ^ (kv - ku)) ((σ ^ ku) x) = (σ ^ kv) x := by
+    rw [← Equiv.Perm.mul_apply, ← zpow_add]
+    congr 2
+    omega
+  have huw' : (σ ^ (kw - ku)) ((σ ^ ku) x) = (σ ^ kw) x := by
+    rw [← Equiv.Perm.mul_apply, ← zpow_add]
+    congr 2
+    omega
+  have hv' : ι ((σ ^ (kv - ku)) ((σ ^ ku) x)) = (σ ^ (kv - ku)) ((σ ^ ku) x) := by
+    rw [huv']; exact hv
+  have hw' : ι ((σ ^ (kw - ku)) ((σ ^ ku) x)) = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
+    rw [huw']; exact hw
+  have hdu := reversing_zpow_fixed hι hrev hu hv'
+  have hdw := reversing_zpow_fixed hι hrev hu hw'
+  let p := Function.minimalPeriod (fun y => σ • y) ((σ ^ ku) x)
+  have hdu' : (p : ℤ) ∣ 2 * (kv - ku) :=
+    MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
+      (σ ^ (2 * (kv - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdu)
+  have hdw' : (p : ℤ) ∣ 2 * (kw - ku) :=
+    MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
+      (σ ^ (2 * (kw - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdw)
+  rcases dvd_of_dvd_two_mul_pair hdu' hdw' with hd | hd | hd
+  · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr hd
+    exact huv (hh.symm.trans huv')
+  · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr hd
+    exact huw (hh.symm.trans huw')
+  · rw [show kw - ku - (kv - ku) = kw - kv by omega] at hd
+    have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr hd
+    change (σ ^ (kw - kv)) ((σ ^ ku) x) = (σ ^ ku) x at hh
+    apply hvw
+    calc
+      (σ ^ kv) x = (σ ^ (kv - ku)) ((σ ^ ku) x) := huv'.symm
+      _ = (σ ^ (kv - ku)) ((σ ^ (kw - kv)) ((σ ^ ku) x)) := by rw [hh]
+      _ = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
+        rw [← Equiv.Perm.mul_apply, ← zpow_add]
+        congr 1
+        ring
+      _ = (σ ^ kw) x := huw'
+
+private lemma orbit_inter_fixedPoints_finite {α : Type*} {σ ι : Equiv.Perm α}
+    (hι : ι * ι = 1) (hrev : ι * σ * ι = σ⁻¹) (x : α) :
+    (Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι).Finite := by
+  classical
+  let S := Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι
+  by_contra hfin
+  have hinf : S.Infinite := hfin
+  obtain ⟨u, hu, _⟩ := hinf.exists_notMem_finset ∅
+  obtain ⟨v, hv, hvu⟩ := hinf.exists_notMem_finset {u}
+  obtain ⟨w, hw, hwu⟩ := hinf.exists_notMem_finset {u, v}
+  have huv : u ≠ v := by simpa [eq_comm] using hvu
+  have huw_and_hvw : u ≠ w ∧ v ≠ w := by simpa [eq_comm] using hwu
+  exact orbit_inter_fixedPoints_no_three hι hrev x hu hv hw huv
+    huw_and_hvw.1 huw_and_hvw.2
+
 /-- **Target.**  An orbit of a reversible permutation meets the fixed set of the reversor in at
 most two points (at most one if the orbit is infinite; `k ≡ 0, p/2 (mod p)` on a `p`-cycle). -/
 theorem orbit_inter_fixedPoints_ncard_le_two {α : Type*} {σ ι : Equiv.Perm α}
@@ -78,52 +141,27 @@ theorem orbit_inter_fixedPoints_ncard_le_two {α : Type*} {σ ι : Equiv.Perm α
     (Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι).ncard ≤ 2 := by
   classical
   let S := Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι
-  by_cases hS : S.Finite
-  · by_contra hle
-    have hlt : 2 < S.ncard := Nat.lt_of_not_ge hle
-    rcases (Set.two_lt_ncard_iff hS).mp hlt with
-      ⟨u, v, w, ⟨⟨ku, rfl⟩, hu⟩, ⟨⟨kv, rfl⟩, hv⟩, ⟨⟨kw, rfl⟩, hw⟩,
-        huv, huw, hvw⟩
-    have huv' : (σ ^ (kv - ku)) ((σ ^ ku) x) = (σ ^ kv) x := by
+  have hS : S.Finite := orbit_inter_fixedPoints_finite hι hrev x
+  by_contra hle
+  have hlt : 2 < S.ncard := Nat.lt_of_not_ge hle
+  rcases (Set.two_lt_ncard_iff hS).mp hlt with
+    ⟨u, v, w, hu, hv, hw, huv, huw, hvw⟩
+  exact orbit_inter_fixedPoints_no_three hι hrev x hu hv hw huv huw hvw
+
+private lemma neg_zpow_apply_eq_of_zpow_apply_eq {α : Type*} {σ : Equiv.Perm α}
+    {x : α} {j k : ℤ} (h : (σ ^ j) x = (σ ^ k) x) :
+    (σ ^ (-j)) x = (σ ^ (-k)) x := by
+  apply (σ ^ (j + k)).injective
+  calc
+    (σ ^ (j + k)) ((σ ^ (-j)) x) = (σ ^ k) x := by
       rw [← Equiv.Perm.mul_apply, ← zpow_add]
-      congr 2
-      omega
-    have huw' : (σ ^ (kw - ku)) ((σ ^ ku) x) = (σ ^ kw) x := by
+      congr 1
+      ring
+    _ = (σ ^ j) x := h.symm
+    _ = (σ ^ (j + k)) ((σ ^ (-k)) x) := by
       rw [← Equiv.Perm.mul_apply, ← zpow_add]
-      congr 2
-      omega
-    have hv' : ι ((σ ^ (kv - ku)) ((σ ^ ku) x)) = (σ ^ (kv - ku)) ((σ ^ ku) x) := by
-      rw [huv']; exact hv
-    have hw' : ι ((σ ^ (kw - ku)) ((σ ^ ku) x)) = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
-      rw [huw']; exact hw
-    have hdu := reversing_zpow_fixed hι hrev hu hv'
-    have hdw := reversing_zpow_fixed hι hrev hu hw'
-    let p := Function.minimalPeriod (fun y => σ • y) ((σ ^ ku) x)
-    have hdu' : (p : ℤ) ∣ 2 * (kv - ku) :=
-      MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
-        (σ ^ (2 * (kv - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdu)
-    have hdw' : (p : ℤ) ∣ 2 * (kw - ku) :=
-      MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
-        (σ ^ (2 * (kw - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdw)
-    rcases dvd_of_dvd_two_mul_pair hdu' hdw' with h | h | h
-    · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
-      exact huv (hh.symm.trans huv')
-    · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
-      exact huw (hh.symm.trans huw')
-    · rw [show kw - ku - (kv - ku) = kw - kv by omega] at h
-      have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
-      change (σ ^ (kw - kv)) ((σ ^ ku) x) = (σ ^ ku) x at hh
-      apply hvw
-      calc
-        (σ ^ kv) x = (σ ^ (kv - ku)) ((σ ^ ku) x) := huv'.symm
-        _ = (σ ^ (kv - ku)) ((σ ^ (kw - kv)) ((σ ^ ku) x)) := by rw [hh]
-        _ = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
-          rw [← Equiv.Perm.mul_apply, ← zpow_add]
-          congr 1
-          ring
-        _ = (σ ^ kw) x := huw'
-  · rw [Set.Infinite.ncard hS]
-    omega
+      congr 1
+      ring
 
 /-- **Target.**  Klamkin's problem (a) is equivalent to the existence of a sign-preserving
 reversing involution of `U` with infinitely many nonnegative fixed points.  (`⇐`: the orbit
@@ -132,7 +170,146 @@ theorem infinitelyManyOrbits_iff_reversor :
     AmusicalInfinitelyManyOrbits ↔ ∃ ι : Equiv.Perm ℤ, ι * ι = 1 ∧
       ι * amusicalPerm * ι = amusicalPerm⁻¹ ∧ (∀ x, 0 ≤ ι x ↔ 0 ≤ x) ∧
       {x : ℤ | 0 ≤ x ∧ ι x = x}.Infinite := by
-  sorry
+  classical
+  constructor
+  · intro h
+    let choosePoint : Set ℤ → ℤ := fun O =>
+      if hO : O.Nonempty then Classical.choose hO else 0
+    have hchoose_mem : ∀ {O : Set ℤ}, O.Nonempty → choosePoint O ∈ O := by
+      intro O hO
+      simp only [choosePoint, dif_pos hO]
+      exact Classical.choose_spec hO
+    let base : ℤ → ℤ := fun x => choosePoint (amusicalOrbit x)
+    have hbase_mem (x : ℤ) : base x ∈ amusicalOrbit x := by
+      apply hchoose_mem
+      exact ⟨x, mem_amusicalOrbit_self x⟩
+    have hbase_orbit (x : ℤ) : amusicalOrbit (base x) = amusicalOrbit x :=
+      amusicalOrbit_eq_of_mem (hbase_mem x)
+    have hbase_eq_of_orbit {x y : ℤ} (hxy : amusicalOrbit x = amusicalOrbit y) :
+        base x = base y := by
+      simp only [base]
+      rw [hxy]
+    have hexp (x : ℤ) : ∃ k : ℤ, (amusicalPerm ^ k) (base x) = x := by
+      have hx : x ∈ amusicalOrbit (base x) := by
+        rw [hbase_orbit]
+        exact mem_amusicalOrbit_self x
+      exact hx
+    let coord : ℤ → ℤ := fun x => Classical.choose (hexp x)
+    have hcoord (x : ℤ) : (amusicalPerm ^ coord x) (base x) = x :=
+      Classical.choose_spec (hexp x)
+    let reflect : ℤ → ℤ := fun x => (amusicalPerm ^ (-coord x)) (base x)
+    have hreflect_of (x : ℤ) (k : ℤ) (hk : (amusicalPerm ^ k) (base x) = x) :
+        reflect x = (amusicalPerm ^ (-k)) (base x) := by
+      apply neg_zpow_apply_eq_of_zpow_apply_eq
+      exact (hcoord x).trans hk.symm
+    have hreflect_mem (x : ℤ) : reflect x ∈ amusicalOrbit x := by
+      rw [← hbase_orbit]
+      exact ⟨-coord x, rfl⟩
+    have hreflect_orbit (x : ℤ) : amusicalOrbit (reflect x) = amusicalOrbit x :=
+      amusicalOrbit_eq_of_mem (hreflect_mem x)
+    have hbase_reflect (x : ℤ) : base (reflect x) = base x :=
+      hbase_eq_of_orbit (hreflect_orbit x)
+    have hinvolutive : Function.Involutive reflect := by
+      intro x
+      have hrep : (amusicalPerm ^ (-coord x)) (base (reflect x)) = reflect x := by
+        rw [hbase_reflect]
+      calc
+        reflect (reflect x) = (amusicalPerm ^ (-(-coord x))) (base (reflect x)) :=
+          hreflect_of (reflect x) (-coord x) hrep
+        _ = (amusicalPerm ^ coord x) (base x) := by rw [neg_neg, hbase_reflect]
+        _ = x := hcoord x
+    have hbase_amusical (x : ℤ) : base (amusical x) = base x := by
+      apply hbase_eq_of_orbit
+      exact CollatzMoonshot.Obstructions.Amusical.amusicalOrbit_amusical x
+    have hreflect_amusical (x : ℤ) : reflect (amusical x) = amusicalInv (reflect x) := by
+      have hrep : (amusicalPerm ^ (1 + coord x)) (base (amusical x)) = amusical x := by
+        rw [hbase_amusical, zpow_add, zpow_one, Equiv.Perm.mul_apply, hcoord]
+        rfl
+      calc
+        reflect (amusical x) =
+            (amusicalPerm ^ (-(1 + coord x))) (base (amusical x)) :=
+          hreflect_of (amusical x) (1 + coord x) hrep
+        _ = (amusicalPerm ^ (-1 : ℤ)) ((amusicalPerm ^ (-coord x)) (base x)) := by
+          rw [hbase_amusical, ← Equiv.Perm.mul_apply, ← zpow_add]
+          congr 1
+          ring
+        _ = amusicalInv (reflect x) := by simp [reflect, amusicalPerm]
+    let ι : Equiv.Perm ℤ :=
+      { toFun := reflect
+        invFun := reflect
+        left_inv := hinvolutive
+        right_inv := hinvolutive }
+    have hιι : ι * ι = 1 := by
+      ext x
+      exact hinvolutive x
+    have hrev : ι * amusicalPerm * ι = amusicalPerm⁻¹ := by
+      ext x
+      change reflect (amusical (reflect x)) = amusicalInv x
+      rw [hreflect_amusical, hinvolutive]
+    have horbit_nonneg : ∀ {x y : ℤ}, 0 ≤ x → y ∈ amusicalOrbit x → 0 ≤ y := by
+      intro x y hx hy
+      exact CollatzMoonshot.Obstructions.Amusical.amusicalOrbit_subset_of_closed
+        (S := Set.Ici (0 : ℤ))
+        (fun z hz => amusical_nonneg hz)
+        (fun z hz => CollatzMoonshot.Obstructions.Amusical.amusicalInv_nonneg hz)
+        hx hy
+    have hsign : ∀ x, 0 ≤ ι x ↔ 0 ≤ x := by
+      intro x
+      constructor
+      · intro hx
+        have hx' := horbit_nonneg hx (hreflect_mem (reflect x))
+        simpa [ι, hinvolutive x] using hx'
+      · intro hx
+        exact horbit_nonneg hx (hreflect_mem x)
+    have hchoose_inj : Set.InjOn choosePoint
+        {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x} := by
+      rintro O ⟨x, hx, rfl⟩ P ⟨y, hy, rfl⟩ heq
+      have hbx := hchoose_mem (O := amusicalOrbit x) ⟨x, mem_amusicalOrbit_self x⟩
+      have hby := hchoose_mem (O := amusicalOrbit y) ⟨y, mem_amusicalOrbit_self y⟩
+      calc
+        amusicalOrbit x = amusicalOrbit (choosePoint (amusicalOrbit x)) :=
+          (amusicalOrbit_eq_of_mem hbx).symm
+        _ = amusicalOrbit (choosePoint (amusicalOrbit y)) := by rw [heq]
+        _ = amusicalOrbit y := amusicalOrbit_eq_of_mem hby
+    have himage : (choosePoint ''
+        {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x}).Infinite := by
+      exact h.image hchoose_inj
+    refine ⟨ι, hιι, hrev, hsign, himage.mono ?_⟩
+    rintro z ⟨O, ⟨x, hx, rfl⟩, rfl⟩
+    have hzmem := hchoose_mem (O := amusicalOrbit x) ⟨x, mem_amusicalOrbit_self x⟩
+    have hznonneg : 0 ≤ choosePoint (amusicalOrbit x) := horbit_nonneg hx hzmem
+    have hzorbit : amusicalOrbit (choosePoint (amusicalOrbit x)) = amusicalOrbit x :=
+      amusicalOrbit_eq_of_mem hzmem
+    have hzbase : base (choosePoint (amusicalOrbit x)) = choosePoint (amusicalOrbit x) := by
+      simp only [base]
+      rw [hzorbit]
+    have hzrep : (amusicalPerm ^ (0 : ℤ))
+        (base (choosePoint (amusicalOrbit x))) = choosePoint (amusicalOrbit x) := by
+      simp [hzbase]
+    have hzfixed : reflect (choosePoint (amusicalOrbit x)) = choosePoint (amusicalOrbit x) := by
+      calc
+        reflect (choosePoint (amusicalOrbit x)) = (amusicalPerm ^ (0 : ℤ))
+            (base (choosePoint (amusicalOrbit x))) :=
+          hreflect_of (choosePoint (amusicalOrbit x)) 0 hzrep
+        _ = choosePoint (amusicalOrbit x) := by simp [hzbase]
+    exact ⟨hznonneg, hzfixed⟩
+  · rintro ⟨ι, hι, hrev, _hsign, hfixed⟩
+    rw [AmusicalInfinitelyManyOrbits]
+    by_contra hfin
+    rw [Set.not_infinite] at hfin
+    apply hfixed
+    refine Set.Finite.of_finite_fibers amusicalOrbit (hfin.subset ?_) ?_
+    · rintro O ⟨x, hx, rfl⟩
+      exact ⟨x, hx.1, rfl⟩
+    · intro O hO
+      rcases hO with ⟨x, hx, rfl⟩
+      refine (orbit_inter_fixedPoints_finite hι hrev x).subset ?_
+      rintro y ⟨hy, hyO⟩
+      have horbit : amusicalOrbit y = amusicalOrbit x := by simpa using hyO
+      refine ⟨?_, hy.2⟩
+      change y ∈ amusicalOrbit x
+      rw [← horbit]
+      exact mem_amusicalOrbit_self y
 
 /-- **Target (Theorem NR).**  No bijection of `ℤ` that is affine with rational slope on each of
 finitely many pieces (`c · ι x = a · x + b` on piece `j`) conjugates `U` to `U⁻¹`.  Paper proof:
