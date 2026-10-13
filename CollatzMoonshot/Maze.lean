@@ -26,6 +26,8 @@ import CollatzMoonshot.AmusicalSeventh
 import CollatzMoonshot.AmusicalTwin
 import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.AmusicalWindowThree
+import CollatzMoonshot.AmusicalGlobal
+import CollatzMoonshot.AmusicalRewireRatio
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -220,7 +222,17 @@ def register : List Hall := [
    "AmusicalTwin.lean; AmusicalSeventh.lean; agent report twin.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: residue reversor killed by escape (normal backward itinerary)", .wall,
    "sound, but needs one integer with a normal backward itinerary; finite checks stop at cycles",
-   "AmusicalEscape.lean; AmusicalWindowThree.lean; agent report q1.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalEscape.lean; AmusicalWindowThree.lean; agent report q1.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: coarse-local global invariants for a seventh orbit", .siblingTransfer,
+   "U rewired at O(log² N) points with bounded ratio has one orbit and shares them all",
+   "AmusicalRewireRatio.lean; AmusicalGlobal.lean; agent report global.md (2026-10-13)",
+   "2026-10-13"⟩,
+  ⟨"amusical: maps commuting with U move orbits", .refuted,
+   "the window-2 centralizer is 0, ±1, ±id, ±U; window 3 adds one numerically non-integral pair",
+   "AmusicalGlobal.lean; agent report global.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: survival densities (never undercut later)", .wall,
+   "decisive and changed by rewiring, but needs late drops to be rare: orbit typicality",
+   "AmusicalGlobal.lean; agent report global.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -310,7 +322,18 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.not_reversor_of_evenFrequency_lt,
     ``CollatzMoonshot.Amusical.not_reversor_of_backwardNormal,
     ``CollatzMoonshot.Amusical.no_window3_bijective_reversor],
-   [``CollatzMoonshot.Amusical.BackwardNormal]⟩]
+   [``CollatzMoonshot.Amusical.BackwardNormal]⟩,
+  ⟨"amusical: coarse-local global invariants for a seventh orbit",
+   [``CollatzMoonshot.Amusical.exists_boundedRatio_rewire,
+    ``CollatzMoonshot.Amusical.abs_le_four_pow_mul_iterate_sub,
+    ``CollatzMoonshot.Amusical.amusical_iterate_eq_add_finite,
+    ``CollatzMoonshot.Amusical.exists_many_returns], []⟩,
+  ⟨"amusical: maps commuting with U move orbits",
+   [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_commuting,
+    ``CollatzMoonshot.Amusical.commuting_window_two], []⟩,
+  ⟨"amusical: survival densities (never undercut later)",
+   [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_survival],
+   [``CollatzMoonshot.Amusical.FwdSurvivor, ``CollatzMoonshot.Amusical.BwdSurvivor]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -323,7 +346,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 35 rows, 27 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 38 rows, 30 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

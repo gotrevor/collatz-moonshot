@@ -280,8 +280,9 @@ minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both st
 * **Residue transitivity.**  Every `Uᵐ` has a strongly connected residue graph, so no nontrivial
   union of classes is `Uᵐ`-invariant, and under H `t mod m` is never eventually periodic.
 * **The barrier (rewiring).**  A permutation of `ℕ` with at-most-doubling steps can be changed on a
-  density-`0` set so all infinite orbits fuse into one.  For `U` this keeps every density,
-  log-density, window and crossing statistic, so statistics cannot prove a seventh orbit; a proof
+  density-`0` set so all infinite orbits fuse into one.  For `U` this keeps every
+  finite-window statistic (density, log-density, window, crossing), so those cannot prove a
+  seventh orbit.  Infinite-horizon statistics such as survival do change (§14); a proof
   needs the exact RCWA structure everywhere plus a global mechanism, and the only known global
   mechanism, reversal, is excluded (Theorem NR, Theorem C).
 
@@ -330,3 +331,33 @@ exists rises from ~93% to ~97%.
 * **Meta (wall).**  A finite set of non-periodic integers never certifies that a table fails,
   since every finite residue datum is CRT-consistent with integrality.  So exact kills beyond the
   cycle and surjectivity tests need a global mechanism or infinite-orbit input.
+
+## 14. Global mechanisms (2026-10-13, "global" agent, checked)
+
+Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (targets).  No global mechanism found; a
+seventh orbit stays open.  Every mechanism is a transversal, an infinite set meeting each orbit
+at most `K` times (Klamkin (a) ⇔ one exists).
+
+* **Theorem R (bounded-ratio rewiring).**  Some permutation `τ` of `ℕ` agrees with `U` except at
+  `O(log² N)` points below `N`, has `τ/U ∈ [1/3, 3]` up to `+3`, and fuses all infinite orbits
+  into one.  The construction cuts each orbit at first passage of scales `Y_{k+1} ≥ 8 Y_k`,
+  then glues the segments at matching scales along an Eulerian trail.  This kills every
+  *coarse-local* invariant: flux, rotation-number analogues, crossing counts, finite-depth
+  Cartesian-tree and record statistics.
+* **Kohl's mirror (Lemma K).**  `|x| ≤ 4^ℓ (|Uˡ x − x| + 1)` (tight).  So `U` has no translation
+  piece, since `v₃` of every slope of `Uˡ` is `ℓ`; Kohl's one-orbit `ω` is built from such
+  pieces.  The rewired `τ` obeys the same time separation (0 violations in 5855 pairs), so this
+  does not bite.  The survivor is the "anti-Kohl" conjecture (~95%): an RCWA permutation whose
+  slopes all have `v_p = 1` has no orbit containing a residue-class tail.
+* **No residue-definable transversal (Proposition P).**  Every residue class has points whose
+  forward orbit revisits the class `K + 1` times.
+* **Survival (Proposition S).**  Survivor lower densities with `a + b > f_L + b_L − f_L b_L`
+  (`≈ 0.397` in the limit) give Klamkin (a).  Survival is an infinite-horizon statistic, and
+  rewiring changes it (FS density `0.213` for `U`, `0.056` for `τ`).  So it is the right
+  statistic, but proving it means showing late drops are rare: the typicality wall.
+* **Commuting maps.**  An orbit-moving map commuting with `U` would separate orbits, and Theorem
+  C's law obstruction does not apply (both Bernoulli laws can be preserved).
+  * The window-2 centralizer is exactly `0, ±1, ±id, ±U`; I re-derived this independently with
+    `scripts/amusical/central_w2.py`.
+  * Window 3 adds one exotic `±` pair, non-integral only numerically.
+  * Believed (~85%): the continuous centralizer is `{0, ±1, ±Uʲ}`.
