@@ -10,8 +10,8 @@ import CollatzMoonshot.AmusicalWindow
 
 `minimaConstant = exp(-Σ_{k≥1} E[min(1, 2^(k+O_k)/3^k)] / k) ≈ 0.049780`, `O_k ~ Bin(k, 1/2)`:
 the conjectured density of orbit minima, and (given `windowMinDensity` and
-`WindowDensityLimit`) an unconditional upper bound on it.  Kept apart from `AmusicalWindow.lean`
-while a treadmill owns that file.
+`WindowDensityLimit`) an upper bound on it.  `windowMinDensity` is proved, so the bound rests on
+`WindowDensityLimit` alone.
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -42,7 +42,7 @@ def WindowDensityLimit : Prop :=
 
 open Classical in
 /-- Orbit minima have upper density at most `minimaConstant`, given the window densities and
-their limit (both believed; the first is the treadmill target `windowMinDensity`). -/
+their limit (`windowMinDensity` is proved; `WindowDensityLimit` is believed). -/
 theorem orbitMin_density_le_minimaConstant (hlim : WindowDensityLimit) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ X : ℕ in Filter.atTop,
       (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤ minimaConstant + ε := by
