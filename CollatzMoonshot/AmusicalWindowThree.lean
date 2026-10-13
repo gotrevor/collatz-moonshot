@@ -110,13 +110,132 @@ private theorem amusicalForwardPeriod_is_pow_two (t : ℕ) (m : ℤ) :
       · exact ⟨e + 1, by rw [he, pow_succ']⟩
       · exact ⟨e + 2, by rw [he, pow_add]; norm_num; ring⟩
 
+private def symbolBits (s : Fin 3) : ℕ :=
+  if s = 0 then 1 else 2
+
+private def symbolError (s : Fin 3) : ℤ :=
+  if s = 1 then 1 else if s = 2 then -1 else 0
+
+private def wordBits : List (Fin 3) → ℕ
+  | [] => 0
+  | s :: w => symbolBits s + wordBits w
+
+private def wordNumerator : List (Fin 3) → ℤ
+  | [] => 0
+  | s :: w => 3 ^ w.length * symbolError s + 2 ^ symbolBits s * wordNumerator w
+
+private def orbitWord : ℕ → ℤ → List (Fin 3)
+  | 0, _ => []
+  | p + 1, y => stepSym y :: orbitWord p (amusical y)
+
+private theorem orbitWord_length (p : ℕ) (y : ℤ) : (orbitWord p y).length = p := by
+  induction p generalizing y with
+  | zero => simp [orbitWord]
+  | succ p ih => simp [orbitWord, ih]
+
+private theorem step_affine (x : ℤ) :
+    (2 : ℤ) ^ symbolBits (stepSym x) * amusical x = 3 * x + symbolError (stepSym x) := by
+  unfold stepSym symbolBits symbolError amusical
+  split_ifs <;> norm_num <;> omega
+
+private theorem iterate_affine (p : ℕ) (y : ℤ) :
+    (2 : ℤ) ^ wordBits (orbitWord p y) * amusical^[p] y =
+      3 ^ p * y + wordNumerator (orbitWord p y) := by
+  induction p generalizing y with
+  | zero => simp [orbitWord, wordBits, wordNumerator]
+  | succ p ih =>
+      simp only [orbitWord, wordBits, wordNumerator, Function.iterate_succ_apply]
+      rw [pow_add, mul_assoc, ih]
+      rw [orbitWord_length, pow_succ]
+      have hs := step_affine y
+      linear_combination (3 : ℤ) ^ p * hs
+
+private theorem wordBits_bounds (w : List (Fin 3)) :
+    w.length ≤ wordBits w ∧ wordBits w ≤ 2 * w.length := by
+  induction w with
+  | nil => simp [wordBits]
+  | cons s w ih =>
+      simp only [List.length_cons, wordBits]
+      have hs : 1 ≤ symbolBits s ∧ symbolBits s ≤ 2 := by
+        fin_cases s <;> decide
+      omega
+
+private theorem wordNumerator_abs_le (w : List (Fin 3)) :
+    |wordNumerator w| ≤ (4 : ℤ) ^ w.length - 3 ^ w.length := by
+  induction w with
+  | nil => simp [wordNumerator]
+  | cons s w ih =>
+      have h34 : (3 : ℤ) ^ w.length ≤ 4 ^ w.length := by
+        exact (pow_le_pow_left₀ (by norm_num : (0 : ℤ) ≤ 3)
+          (by norm_num : (3 : ℤ) ≤ 4)) w.length
+      have h4 : 0 ≤ (4 : ℤ) ^ w.length := pow_nonneg (by norm_num) _
+      fin_cases s
+      · simp [wordNumerator, symbolBits, symbolError]
+        calc
+          2 * |wordNumerator w| ≤ 2 * (4 ^ w.length - 3 ^ w.length) := by omega
+          _ ≤ 4 ^ (w.length + 1) - 3 ^ (w.length + 1) := by
+            rw [pow_succ, pow_succ]
+            omega
+      · simp [wordNumerator, symbolBits, symbolError]
+        calc
+          |3 ^ w.length + 4 * wordNumerator w| ≤
+              |(3 : ℤ) ^ w.length| + |4 * wordNumerator w| := abs_add_le _ _
+          _ = 3 ^ w.length + 4 * |wordNumerator w| := by
+            rw [abs_of_nonneg (pow_nonneg (by norm_num) _), abs_mul]
+            norm_num
+          _ ≤ 3 ^ w.length + 4 * (4 ^ w.length - 3 ^ w.length) := by omega
+          _ = 4 ^ (w.length + 1) - 3 ^ (w.length + 1) := by
+            rw [pow_succ, pow_succ]
+            ring
+      · simp [wordNumerator, symbolBits, symbolError]
+        calc
+          |-(3 : ℤ) ^ w.length + 4 * wordNumerator w| ≤
+              |-((3 : ℤ) ^ w.length)| + |4 * wordNumerator w| := abs_add_le _ _
+          _ = 3 ^ w.length + 4 * |wordNumerator w| := by
+            rw [abs_neg, abs_of_nonneg (pow_nonneg (by norm_num) _), abs_mul]
+            norm_num
+          _ ≤ 3 ^ w.length + 4 * (4 ^ w.length - 3 ^ w.length) := by omega
+          _ = 4 ^ (w.length + 1) - 3 ^ (w.length + 1) := by
+            rw [pow_succ, pow_succ]
+            ring
+
+private theorem wordNumerator_abs_lt_four_pow (w : List (Fin 3)) :
+    |wordNumerator w| < (4 : ℤ) ^ w.length := by
+  have h3 : 0 < (3 : ℤ) ^ w.length := pow_pos (by norm_num) _
+  exact lt_of_le_of_lt (wordNumerator_abs_le w) (by omega)
+
+-- The kernel evaluates 4,693 integers at twelve periods; the interval recursion exceeds the
+-- default elaborator depth but does not enumerate itinerary words.
+set_option maxRecDepth 10000 in
+private theorem periodic_bounded_check :
+    ∀ y : ↥(Finset.Icc (-2346 : ℤ) 2346), ∀ p : ↥(Finset.Icc 1 12),
+      amusical^[p.1] y.1 = y.1 → |y.1| ∈ knownCycleMembers := by
+  decide +kernel
+
 /-- **Target.**  Every integer of period at most `12` lies on a known cycle.  Paper proof: on the
 cylinder of its itinerary word `w`, a period-`p` point is `x_w = N_w / (2^e − 3^p)`, and
 `|x_w| ≤ 483` for every word with `p ≤ 12` (`scripts/amusical/perbound.py`); then check
 `|y| ≤ 483` by `decide +kernel`. -/
 theorem amusical_periodic_mem (y : ℤ) (p : ℕ) (hp : 1 ≤ p) (hp12 : p ≤ 12)
     (h : amusical^[p] y = y) : |y| ∈ knownCycleMembers := by
-  sorry
+  have hbits := wordBits_bounds (orbitWord p y)
+  rw [orbitWord_length] at hbits
+  have hN := wordNumerator_abs_lt_four_pow (orbitWord p y)
+  rw [orbitWord_length, abs_lt] at hN
+  have haff := iterate_affine p y
+  rw [h] at haff
+  let e := wordBits (orbitWord p y)
+  change p ≤ e ∧ e ≤ 2 * p at hbits
+  have he_lower : 1 ≤ e := by omega
+  have he_upper : e ≤ 24 := by omega
+  change -(4 : ℤ) ^ p < wordNumerator (orbitWord p y) ∧
+    wordNumerator (orbitWord p y) < 4 ^ p at hN
+  change (2 : ℤ) ^ e * y = 3 ^ p * y + wordNumerator (orbitWord p y) at haff
+  have hy : -2346 ≤ y ∧ y ≤ 2346 := by
+    constructor <;>
+      interval_cases p <;> interval_cases e <;> norm_num at haff hN ⊢ <;> omega
+  exact periodic_bounded_check ⟨y, Finset.mem_Icc.mpr hy⟩
+    ⟨p, Finset.mem_Icc.mpr ⟨hp, hp12⟩⟩ h
 
 /-- **Target.**  Every finite word is the start of the forward itinerary of some integer (the
 set of such integers is a class mod `2^e`, nonempty by the Chinese remainder theorem). -/

@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, window-3 periodic classification FORMALIZED:**
+> `amusical_periodic_mem` is proved without itinerary-word enumeration. The actual orbit's affine
+> recurrence gives the uniform bound `|y| <= 2346` for periods at most 12, and one kernel check
+> classifies that bounded range into the known cycles. One scoped target remains:
+> `no_window3_bijective_reversor`. Read `HANDOFF-amusical-w3.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;
