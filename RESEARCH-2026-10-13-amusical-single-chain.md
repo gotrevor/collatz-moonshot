@@ -70,19 +70,25 @@ grows with `j`.
 
 ## 4. Levers worth a further look (odds of each yielding a real dent)
 
+Test applied to each: does the argument also apply to `ℕ`?  If so it cannot work.
+
+
 1. **Window minima, upper half (in progress, ~60%).**  `WindowMinDensity L` gives the
    unconditional upper bound `upper density(orbit minima) ≤ δ_L` for every `L`, so
    `≤ p_f · p_b ≈ 0.0498`.  Pure congruence counting; it bounds the number of orbits from
    *above*, not from below.
-2. **Time asymmetry (~5%).**  Forward drift `0.0589` and backward drift `0.0566` differ.  A
-   chain that recurs to linear size must balance forward and backward excursions at every
-   scale; whether the two survival exponents (`p_f = 0.210`, `p_b = 0.237`) can be balanced
-   inside a single chain is untested.
-3. **Rational-orbit structure (~5%).**  `Û` acts on all of `ℤ_(6)` (rationals with
-   denominators prime to `6`).  Integers form a sub-lattice of bounded height.  A height
-   function that is finite on the integers, controlled by `Û`, and unbounded along every
-   aperiodic shift orbit would separate orbits.  The natural candidate, archimedean size, is
-   exactly what the dynamics does not control.
+2. **Time asymmetry: dead (~1%, tested 2026-10-13).**  The drifts `0.0589` forward and `0.0566`
+   backward measure the same steps under two densities (2-adic residues forward, 3-adic
+   backward), and the Jacobian converts one into the other exactly.  Among integers up to `X`,
+   multiples of `3` have share `1/3`; among integers up to `2X/3`, evens have share `1/2`; both
+   counts are `X/3`.  The asymmetry balances on `ℕ`, so it cannot separate one chain from many.
+3. **Rational height: dead as stated (~1%), with a by-product.**  `Û` preserves the denominator
+   `q` of every `x ∈ ℤ_(6)`, so the rationals split into invariant layers `D_q = (1/q)·ℤ`.  On
+   numerators, `D_q` carries the permutation `U_q(2n) = 3n`, `U_q(r) = (3r + q)/4` for
+   `r ≡ q (mod 4)`, `U_q(r) = (3r − q)/4` for `r ≡ 3q (mod 4)`: the `qx+1`-style relatives of
+   Collatz's permutation, with `U_1 = U`.  Every periodic shift word lives in the layer of its
+   rational's denominator, a divisor of `2^|w| − 3^p`.  The denominator is the only invariant
+   this structure supplies, and it is constant on the integers.
 4. **Compare a solvable relative.**  Simons 2022 §5.4: for `P(a, b, c, d)` with `b | d`, there
    are provably infinitely many divergent orbits, because one residue class is forward-invariant
    with strict growth.  `U` has no forward-invariant class (both `×3/2` and `×3/4` branches
