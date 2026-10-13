@@ -287,7 +287,7 @@ minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both st
 
 ## 12. Statistical twins (2026-10-13, "twin" agent, checked)
 
-Lean: `AmusicalTwin.lean`.  No residue-class twin of `U` with finitely many orbits found; believed
+Lean: `AmusicalTwin.lean` (all proved, axiom-clean).  No residue-class twin of `U` with finitely many orbits found; believed
 none with all slopes `3/2^k` (~97%), but proving that is at least as hard as Klamkin (a), since
 `U` is its own twin (a costume).
 

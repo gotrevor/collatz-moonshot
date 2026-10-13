@@ -25,8 +25,8 @@ arguments.  Findings:
   point per cycle).
 
 Paper proofs: agent report `twin.md` (2026-10-13), summarized in
-`RESEARCH-2026-10-13-amusical-single-chain.md` §12.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-twin.md`): close every `sorry` here.
+`RESEARCH-2026-10-13-amusical-single-chain.md` §12.  Kernel-checked
+2026-10-13 by the twin treadmill (`HANDOFF-amusical-twin.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -60,13 +60,13 @@ theorem twinW_twinWInv (m : ℤ) : twinW (twinWInv m) = m := by
   unfold twinWInv twinW
   split_ifs <;> omega
 
-/-- **Target.**  The twin is a bijection: its three branches land in the classes `0, 1, 2 mod 3`
+/-- **Proved.**  The twin is a bijection: its three branches land in the classes `0, 1, 2 mod 3`
 and each is a bijection onto its class. -/
 theorem twinW_bijective : Function.Bijective twinW := by
   exact ⟨Function.LeftInverse.injective twinWInv_twinW,
     Function.RightInverse.surjective twinW_twinWInv⟩
 
-/-- **Target.**  `U` has no `3`-cycle: `U³ n = n` forces `U n = n`.  Paper proof: on each class
+/-- **Proved.**  `U` has no `3`-cycle: `U³ n = n` forces `U n = n`.  Paper proof: on each class
 mod `64` with a fixed branch word, `U³ n = (27 n + b)/2^w` with `w ∈ {3, …, 6}`, so a solution
 is `n = b/(2^w − 27)` with `|b|` bounded; check the finitely many candidates (`|n| ≤ 200`
 suffices; all are the fixed points `0, ±1`). -/
@@ -75,7 +75,7 @@ theorem amusical_no_threeCycle (n : ℤ) (h : amusical^[3] n = n) : amusical n =
   unfold amusical at h ⊢
   split_ifs at h ⊢ <;> omega
 
-/-- **Target.**  `U` and its twin are not conjugate by any bijection of `ℤ`: a conjugacy carries
+/-- **Proved.**  `U` and its twin are not conjugate by any bijection of `ℤ`: a conjugacy carries
 the twin's `3`-cycle to a `3`-cycle of `U`. -/
 theorem twinW_not_conj_amusical :
     ¬ ∃ φ : ℤ → ℤ, Function.Injective φ ∧ ∀ n, φ (twinW n) = amusical (φ n) := by
