@@ -204,6 +204,62 @@ theorem amusicalInfinitelyManyOrbits_of_minima
   exact ⟨m, hm.1, rfl⟩
 
 open Classical in
+/-- **Open (Venturini 1997 asserts it; Lagarias 2021 conjecture C5 in this form).**  Every
+orbit of a nonnegative integer has natural density `0`. -/
+def AmusicalOrbitsZeroDensity : Prop :=
+  ∀ x : ℤ, 0 ≤ x → Filter.Tendsto
+    (fun X : ℕ => (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x).card : ℝ) / X)
+    Filter.atTop (nhds 0)
+
+open Classical in
+/-- Zero-density orbits force infinitely many orbits (the remark in Tavares 2013, §0): finitely
+many orbits would cover `ℕ`, so one of them would have upper density at least `1/k`. -/
+theorem amusicalInfinitelyManyOrbits_of_zeroDensity (h : AmusicalOrbitsZeroDensity) :
+    AmusicalInfinitelyManyOrbits := by
+  by_contra hfin
+  rw [AmusicalInfinitelyManyOrbits, Set.not_infinite] at hfin
+  set T := hfin.toFinset with hT
+  have hmem : ∀ O ∈ T, ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x := fun O hO => by
+    simpa [hT] using hO
+  choose! seed hseed0 hseedO using hmem
+  set k := T.card
+  have hev : ∀ᶠ X : ℕ in Filter.atTop, ∀ O ∈ T,
+      (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ O).card : ℝ) / X < 1 / (k + 1) := by
+    rw [Filter.eventually_all_finset]
+    intro O hO
+    have hpos : (0 : ℝ) < 1 / (k + 1) := by positivity
+    have := (h (seed O) (hseed0 O hO)).eventually (gt_mem_nhds hpos)
+    simpa [← hseedO O hO] using this
+  obtain ⟨X, hX⟩ := (hev.and (Filter.eventually_ge_atTop 1)).exists
+  obtain ⟨hX, hX1⟩ := hX
+  have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+  have hcover : Finset.range X ⊆
+      T.biUnion fun O => (Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ O := by
+    intro n hn
+    rw [Finset.mem_biUnion]
+    refine ⟨amusicalOrbit n, ?_, Finset.mem_filter.2 ⟨hn, mem_amusicalOrbit_self _⟩⟩
+    simp [hT]
+    exact ⟨n, by positivity, rfl⟩
+  have hcard : (X : ℝ) ≤ ∑ O ∈ T,
+      (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ O).card : ℝ) := by
+    have := (Finset.card_le_card hcover).trans Finset.card_biUnion_le
+    rw [Finset.card_range] at this
+    exact_mod_cast this
+  have hsum : ∑ O ∈ T, (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ O).card : ℝ) ≤
+      ∑ _O ∈ T, (X : ℝ) / (k + 1) := by
+    apply Finset.sum_le_sum
+    intro O hO
+    have := hX O hO
+    rw [div_lt_iff₀ hXpos] at this
+    rw [div_eq_mul_one_div (X : ℝ)]
+    linarith
+  rw [Finset.sum_const, nsmul_eq_mul] at hsum
+  have hk : (k : ℝ) * ((X : ℝ) / (k + 1)) < X := by
+    rw [mul_div_assoc', div_lt_iff₀ (by positivity)]
+    nlinarith
+  linarith
+
+open Classical in
 /-- **Conjecture (2026-10-13), a quantitative form of `AmusicalInfinitelyManyOrbits`.**  Orbit
 minima have natural density `p_f · p_b ≈ 0.0498`.
 
