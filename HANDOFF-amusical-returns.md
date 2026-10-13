@@ -1,5 +1,38 @@
 # HANDOFF: amusical returns treadmill
 
+## 2026-10-13: all four amusical returns targets proved
+
+`CollatzMoonshot/AmusicalReturns.lean` is now sorry-free with all four ratified statements and
+`stepWeight` unchanged.  This checkpoint closes the two targets that remained at the start of
+the lap:
+
+- `return_defect_bound` telescopes the exact one-step logarithmic errors, bounds each by
+  `1/(3z-1)`, rearranges the distinct orbit values against `2, ..., j+1`, and telescopes a
+  logarithmic majorant.
+- `exists_large_nonOrbitMin` chooses a post-prefix value by CRT, congruent to `U^k(c)` modulo
+  `3^(k+l)` and to `1` modulo `4^(2k+1)`.  Pulling it back `k` steps preserves the requested
+  class modulo `2^k 3^l`; the forced `4m+1 ↦ 3m+1` suffix then reaches a smaller orbit member.
+
+Together with the already-closed `exits_eq_strictMinima` and
+`exists_denseLinearReturns_of_finitelyManyOrbits`, this completes the kickoff objective.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalReturns.lean` passes with no proof-debt warning.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-returns --target
+  CollatzMoonshot.AmusicalReturns --axioms CollatzMoonshot.Amusical.exists_large_nonOrbitMin`
+  passed: 8710 jobs, `FORMALIZE-TIER GREEN`, no declarations with `sorry`; the axiom ledger is
+  exactly `[propext, Classical.choice, Quot.sound]`.
+- The same scoped gate with `--axioms CollatzMoonshot.Amusical.return_defect_bound` passed; its
+  ledger is also exactly `[propext, Classical.choice, Quot.sound]`.
+- `git diff --check` passes.
+
+Current blocker: none.  The scoped `sorry-free:CollatzMoonshot/AmusicalReturns.lean` completion
+predicate is met.
+
+Next highest-value attack: no work remains under this kickoff.  Preserve the frozen statements
+and hand control back to the operator for a new bounded objective.
+
 ## 2026-10-13: exits equal strict minima proved
 
 `exits_eq_strictMinima` is now proved with its ratified statement unchanged.  The forward map sends

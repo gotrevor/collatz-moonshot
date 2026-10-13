@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical returns target COMPLETE:** `CollatzMoonshot/AmusicalReturns.lean` is
+> sorry-free with all four pinned results proved.  The final two proofs establish the logarithmic
+> return-defect bound by distinct-orbit rearrangement and construct arbitrarily large non-minima
+> in every class modulo `2^k 3^l` by a CRT-selected forced contracting suffix.  The 8710-job
+> scoped gate is FORMALIZE-tier green with no proof debt; both new headline theorems use only
+> `propext`, `Classical.choice`, and `Quot.sound`.  Read `HANDOFF-amusical-returns.md`.
+
 > **2026-10-13, amusical exits/minima FORMALIZED:** `exits_eq_strictMinima` now proves the exact
 > finite-cardinality identity with its pinned statement unchanged.  Exits map to their least
 > natural orbit member; strict minima map back to the maximum finite forward visit below the
