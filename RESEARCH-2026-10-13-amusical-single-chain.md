@@ -144,3 +144,33 @@ model of `AmusicalMinimaDensity`.  No congruence certifies a global minimum, mat
 theory: a residue class controls only finitely many steps, and survival past step `L` costs
 about `1.5^-L` (Cramér root `θ = 1`).  Certifying individual minima runs into the orbit-of-8
 wall.
+
+## 7. Research-agent sweep (2026-10-13)
+
+Four parallel agents; reports staged at `~/personal/tmp/amusical-agents/out/*.md` (session
+scratch, not in the repo).  Outcomes, each recorded in `Maze.lean`:
+
+* **Literature.**  No proof that any non-trivial residue-class-affine permutation has infinitely
+  many orbits; every known proof uses finite order, fixed classes, class cycles, or a class union
+  `S` with `σ(S) ⊊ S` (Simons §5.4).  For `U`, any class union with `U(S) ⊆ S` has `U(S) = S`
+  (transition graph mod `M` strongly connected for `M ≤ 400`; the same checker flags Simons's
+  example).  Lagarias 2003 (entry on Venturini 1992): for such permutations even the existence
+  of one infinite orbit is open; for `U` this gives the dichotomy
+  `amusicalInfinitelyManyOrbits_or_exists_infinite`.  Prior art to cite: Simons 2022 §5.1
+  measured the minima ratio `.05X0` empirically, no formula; Conway 2013 App. 2 computes the
+  `L = 1` local-minimum density.  Novelty of `c`, its derivation, `L ≥ 2` window densities and
+  the shift conjugacy for `U`: not found (~75-85%).
+* **Adelic.**  Each branch preserves `|·|_∞ |·|_2 |·|_3` (`amusical_branch_product_formula`),
+  so `Û` preserves Haar on `ℝ × ℤ₂ × ℤ₃` with `ℤ` a covolume-1 lattice.  That restates mass
+  conservation; almost every point drifts off both ways (no recurrence); the orbit-minimum set is
+  a fundamental domain with positive measure and empty interior (congruences give only upper
+  bounds); integers collapse to the fixed point of the solenoid quotient, so `×2 ×3` rigidity
+  sees nothing.  Haar density of the minimum set `0.04978–0.04983`, matching `c`.
+* **Diophantine.**  At a return the form `n log 2 − j log 3 + log(y/x)` is `O(log j)`
+  (`return_defect_bound`), so Baker/Rhin gives nothing beyond cycles (Simons needs `y = x`); the
+  sums have `≈ 0.585 j` terms, above any subspace-theorem rigidity threshold; a linear return
+  needs `≥ 6.47 ln j` symbol runs (elementary), while real ones have `≈ 2j/3`.  Strong form of
+  the reduction: `exists_denseLinearReturns_of_finitelyManyOrbits`, equivalent to positive upper
+  density of one orbit.  Believed (~90%): each aperiodic orbit has finitely many linear returns
+  (seeds 8, 14, 40, 64: last return with `C = 1000` at `j ≤ 197`).
+* **Chains** (connectivity statistics, the seven-orbit question): pending.
