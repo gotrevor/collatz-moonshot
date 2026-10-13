@@ -46,9 +46,16 @@ def gaussH (z : ℤ × ℤ) : ℤ × ℤ :=
 /-- Complex conjugation on `ℤ × ℤ`. -/
 def conj (z : ℤ × ℤ) : ℤ × ℤ := (z.1, -z.2)
 
+set_option maxHeartbeats 2000000 in
 /-- **Target.**  `conj ∘ H ∘ conj ∘ H = id`, i.e. `conj ∘ H ∘ conj = H⁻¹` once `H` is a bijection. -/
 theorem conj_gaussH_conj_gaussH (z : ℤ × ℤ) : conj (gaussH (conj (gaussH z))) = z := by
-  sorry
+  rcases z with ⟨a, b⟩
+  generalize hr : (a + 7 * b) % 25 = r
+  have hr0 : 0 ≤ r := by rw [← hr]; omega
+  have hr25 : r < 25 := by rw [← hr]; omega
+  interval_cases r <;>
+    simp only [conj, gaussH, yOf, hr] <;>
+    split_ifs <;> norm_num at * <;> omega
 
 /-- `H` is a bijection, with inverse `conj ∘ H ∘ conj`. -/
 def gaussPerm : Equiv.Perm (ℤ × ℤ) where
@@ -70,10 +77,74 @@ def conjPerm : Equiv.Perm (ℤ × ℤ) where
   left_inv := fun w => by simp [conj]
   right_inv := fun w => by simp [conj]
 
+/-- A nonzero return time makes the full integer-power orbit finite. -/
+private theorem zpow_orbit_finite_of_period {α : Type*} (σ : Equiv.Perm α) (x : α) {p : ℤ}
+    (hp : p ≠ 0) (hperiod : (σ ^ p) x = x) :
+    (Set.range fun k : ℤ => (σ ^ k) x).Finite := by
+  let f : ℤ → α := fun k => (σ ^ k) x
+  have hf : Function.Periodic f p := fun k => by
+    dsimp [f]
+    rw [zpow_add, Equiv.Perm.mul_apply, hperiod]
+  rw [← hf.image_uIcc hp 0]
+  exact Set.Finite.image _ (Set.finite_uIcc (0 : ℤ) (0 + p))
+
 /-- **Target.**  `H` has infinitely many orbits: each meets the real axis `Fix(conj) = ℤ × {0}`
 in at most two points (`orbit_inter_fixedPoints_ncard_le_two`). -/
 theorem gauss_infinitely_many_orbits :
     {O : Set (ℤ × ℤ) | ∃ z, O = Set.range fun k : ℤ => (gaussPerm ^ k) z}.Infinite := by
-  sorry
+  let orbit (z : ℤ × ℤ) : Set (ℤ × ℤ) := Set.range fun k : ℤ => (gaussPerm ^ k) z
+  let orbits : Set (Set (ℤ × ℤ)) := {O | ∃ z, O = orbit z}
+  change orbits.Infinite
+  by_contra hnot
+  have horbits : orbits.Finite := by
+    by_contra hfinite
+    exact hnot hfinite
+  let orbitOf (n : ℤ) : orbits := ⟨orbit (n, 0), ⟨(n, 0), rfl⟩⟩
+  letI : Finite orbits := horbits
+  obtain ⟨O, hfiber⟩ := Finite.exists_infinite_fiber orbitOf
+  letI : Infinite (orbitOf ⁻¹' {O}) := hfiber
+  obtain ⟨⟨n, hn⟩, ⟨m, hm⟩, hnm'⟩ := exists_pair_ne (orbitOf ⁻¹' {O})
+  have hnm : n ≠ m := fun h => hnm' (Subtype.ext h)
+  have hnO : orbitOf n = O := by simpa using hn
+  have hmO : orbitOf m = O := by simpa using hm
+  have horbit_eq : orbit (m, 0) = orbit (n, 0) := by
+    exact congrArg Subtype.val (hmO.trans hnO.symm)
+  have hm_mem : (m, 0) ∈ orbit (n, 0) := by
+    rw [← horbit_eq]
+    exact ⟨0, by simp⟩
+  obtain ⟨k, hk⟩ := hm_mem
+  change (gaussPerm ^ k) (n, 0) = (m, 0) at hk
+  have hk0 : k ≠ 0 := by
+    intro hzero
+    subst k
+    simp only [zpow_zero, Equiv.Perm.one_apply] at hk
+    exact hnm (Prod.mk.inj hk).1
+  have hι : conjPerm * conjPerm = 1 := by
+    apply Equiv.ext
+    intro z
+    rcases z with ⟨a, b⟩
+    simp [conjPerm, conj]
+  have hrev : conjPerm * gaussPerm * conjPerm = gaussPerm⁻¹ := by
+    apply Equiv.ext
+    intro z
+    rfl
+  have hperiod : (gaussPerm ^ (2 * k)) (n, 0) = (n, 0) := by
+    apply CollatzMoonshot.Amusical.reversing_zpow_fixed hι hrev
+    · simp [conjPerm, conj]
+    · rw [hk]
+      simp [conjPerm, conj]
+  have horbit_finite : (orbit (n, 0)).Finite := by
+    exact zpow_orbit_finite_of_period gaussPerm (n, 0) (mul_ne_zero (by norm_num) hk0) hperiod
+  have hfiber_set : (orbitOf ⁻¹' {O}).Infinite := Set.infinite_coe_iff.mp hfiber
+  have himage_infinite : ((fun q : ℤ => (q, (0 : ℤ))) '' (orbitOf ⁻¹' {O})).Infinite :=
+    hfiber_set.image (fun _ _ _ _ h => (Prod.mk.inj h).1)
+  have himage_subset : (fun q : ℤ => (q, (0 : ℤ))) '' (orbitOf ⁻¹' {O}) ⊆ orbit (n, 0) := by
+    rintro _ ⟨q, hq, rfl⟩
+    have hqO : orbitOf q = O := by simpa using hq
+    have hqeq : orbit (q, 0) = orbit (n, 0) :=
+      congrArg Subtype.val (hqO.trans hnO.symm)
+    rw [← hqeq]
+    exact ⟨0, by simp⟩
+  exact (himage_infinite.mono himage_subset) horbit_finite
 
 end CollatzMoonshot.GaussianRelative
