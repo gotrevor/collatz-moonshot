@@ -29,7 +29,8 @@ noncomputable def spitzerTerm (k : ℕ) : ℝ :=
 noncomputable def minimaConstant : ℝ :=
   Real.exp (-∑' k : ℕ, spitzerTerm (k + 1) / (k + 1))
 
-/-- **Believed (~97%): the window densities decrease to `minimaConstant`.**  Sparre Andersen's
+/-- **Proved on paper, Lean formalization pending: the window densities decrease to
+`minimaConstant`.**  Sparre Andersen's
 theorem gives `lim fwdSurv L = exp(-Σ P(S_k ≤ 0)/k)` and `lim bwdSurv L = exp(-Σ P(B_k ≤ 0)/k)`
 for the two multiplicative walks (no ties: `3^k ≠ 2^m`).  The backward walk is the forward walk
 reversed and tilted by `e^{-S}` (the Haar balance `E[e^{-S_1}] = 1`), so the two series merge

@@ -1033,8 +1033,8 @@ theorem windowMinDensity (L : ℕ) : WindowMinDensity L := by
   exact isWindowMin_iff_of_large L n hn
 
 open Classical in
-/-- **Unconditional window bound:** orbit minima have upper
-density at most `fwdSurv L * bwdSurv L` for every `L`, hence at most `p_f · p_b ≈ 0.0498`. -/
+/-- **Unconditional window bound:** orbit minima have upper density at most
+`fwdSurv L * bwdSurv L` for every `L`; the limit `p_f · p_b ≈ 0.0498` is `WindowDensityLimit`. -/
 theorem orbitMin_density_le (L : ℕ) {ε : ℝ} (hε : 0 < ε) : ∀ᶠ X : ℕ in Filter.atTop,
     (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤
       ((fwdSurv L * bwdSurv L : ℚ) : ℝ) + ε :=
