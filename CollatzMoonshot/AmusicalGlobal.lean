@@ -38,6 +38,78 @@ close every `sorry` here.
 
 namespace CollatzMoonshot.Amusical
 
+/-- The affine error in one forward branch is at most one. -/
+private theorem amusical_step_affine (x : ℤ) :
+    ∃ e : ℤ, |e| ≤ 1 ∧ 2 ^ stepBits x * amusical x = 3 * x + e := by
+  unfold stepBits amusical
+  split_ifs <;>
+    first
+    | exact ⟨0, by norm_num, by omega⟩
+    | exact ⟨1, by norm_num, by omega⟩
+    | exact ⟨-1, by norm_num, by omega⟩
+
+/-- Iterating the branch formula produces a uniformly bounded affine error. -/
+private theorem amusical_iterate_affine (l : ℕ) (x : ℤ) :
+    ∃ B : ℕ, ∃ c : ℤ, l ≤ B ∧ B ≤ 2 * l ∧ |c| < 4 ^ l ∧
+      2 ^ B * amusical^[l] x = 3 ^ l * x + c := by
+  induction l with
+  | zero =>
+      exact ⟨0, 0, by norm_num⟩
+  | succ l ih =>
+      obtain ⟨B, c, hBl, hB, hc, heq⟩ := ih
+      obtain ⟨e, he, hstep⟩ := amusical_step_affine (amusical^[l] x)
+      refine ⟨B + stepBits (amusical^[l] x), 3 * c + 2 ^ B * e, ?_, ?_, ?_, ?_⟩
+      · unfold stepBits
+        split_ifs <;> omega
+      · unfold stepBits
+        split_ifs <;> omega
+      · have hpowNat : 2 ^ B ≤ (4 : ℕ) ^ l := by
+          calc
+            2 ^ B ≤ 2 ^ (2 * l) := Nat.pow_le_pow_right (by norm_num) hB
+            _ = 4 ^ l := by
+              rw [show 2 * l = l * 2 by omega, pow_mul]
+              simp [pow_two, ← mul_pow]
+        have hpow : (2 : ℤ) ^ B ≤ 4 ^ l := by exact_mod_cast hpowNat
+        calc
+          |3 * c + 2 ^ B * e| ≤ |3 * c| + |2 ^ B * e| := abs_add_le _ _
+          _ = 3 * |c| + 2 ^ B * |e| := by
+            rw [abs_mul, abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 3),
+              abs_of_nonneg (by positivity : (0 : ℤ) ≤ 2 ^ B)]
+          _ ≤ 3 * |c| + 4 ^ l := by
+            have he' : 2 ^ B * |e| ≤ (2 : ℤ) ^ B := by
+              exact mul_le_of_le_one_right (by positivity) he
+            omega
+          _ < 4 ^ (l + 1) := by
+            rw [pow_succ]
+            have hfour : (0 : ℤ) < 4 ^ l := by positivity
+            omega
+      · rw [Function.iterate_succ_apply', pow_succ, pow_add]
+        calc
+          2 ^ B * 2 ^ stepBits (amusical^[l] x) * amusical (amusical^[l] x) =
+              2 ^ B * (3 * amusical^[l] x + e) := by rw [mul_assoc, hstep]
+          _ = 3 * (2 ^ B * amusical^[l] x) + 2 ^ B * e := by ring
+          _ = 3 * (3 ^ l * x + c) + 2 ^ B * e := by rw [heq]
+          _ = 3 ^ (l + 1) * x + (3 * c + 2 ^ B * e) := by ring
+
+/-- The analogous affine ledger for backward iteration. -/
+private theorem amusicalInv_iterate_affine (l : ℕ) (x : ℤ) :
+    ∃ B : ℕ, ∃ c : ℤ, l ≤ B ∧ B ≤ 2 * l ∧ |c| < 4 ^ l ∧
+      3 ^ l * amusicalInv^[l] x = 2 ^ B * x + c := by
+  obtain ⟨B, c, hBl, hB, hc, heq⟩ := amusical_iterate_affine l (amusicalInv^[l] x)
+  have hcancel : amusical^[l] (amusicalInv^[l] x) = x := by
+    rw [amusical_iterate_eq_perm_pow, amusicalInv_iterate_eq_perm_pow]
+    simp
+  refine ⟨B, -c, hBl, hB, by simpa, ?_⟩
+  rw [hcancel] at heq
+  omega
+
+private theorem one_le_abs_three_pow_sub_two_pow (l B : ℕ) (hB : 1 ≤ B) :
+    1 ≤ |(3 : ℤ) ^ l - 2 ^ B| := by
+  have h3 : Odd ((3 : ℤ) ^ l) := Odd.pow (by decide)
+  have h2 : Even ((2 : ℤ) ^ B) := (even_two).pow_of_ne_zero (by omega)
+  obtain ⟨k, hk⟩ := h3.sub_even h2
+  exact Int.one_le_abs (by omega)
+
 /-- **Target (Lemma K).**  A point is at most `4^ℓ` times its `ℓ`-step displacement, forward and
 backward.  Paper proof: on the cylinder of its word, `2^B Uˡ x = 3ˡ x + c` with `B ≤ 2ℓ` and
 `|c| ≤ ∑_{j<ℓ} 3^(ℓ−1−j) 4^j < 4^ℓ`, and `|3ˡ − 2^B| ≥ 1`; backward,
@@ -45,13 +117,63 @@ backward.  Paper proof: on the cylinder of its word, `2^B Uˡ x = 3ˡ x + c` wit
 theorem abs_le_four_pow_mul_iterate_sub (ℓ : ℕ) (hℓ : 1 ≤ ℓ) (x : ℤ) :
     |x| ≤ 4 ^ ℓ * (|amusical^[ℓ] x - x| + 1) ∧
       |x| ≤ 4 ^ ℓ * (|amusicalInv^[ℓ] x - x| + 1) := by
-  sorry
+  obtain ⟨B, c, hBℓ, hB, hc, heq⟩ := amusical_iterate_affine ℓ x
+  obtain ⟨B', c', hBℓ', hB', hc', heq'⟩ := amusicalInv_iterate_affine ℓ x
+  have hpowNat : 2 ^ B ≤ (4 : ℕ) ^ ℓ := by
+    calc
+      2 ^ B ≤ 2 ^ (2 * ℓ) := Nat.pow_le_pow_right (by norm_num) hB
+      _ = 4 ^ ℓ := by
+        rw [show 2 * ℓ = ℓ * 2 by omega, pow_mul]
+        simp [pow_two, ← mul_pow]
+  have hpow : (2 : ℤ) ^ B ≤ 4 ^ ℓ := by exact_mod_cast hpowNat
+  have hpow' : (3 : ℤ) ^ ℓ ≤ 4 ^ ℓ :=
+    pow_le_pow_left₀ (a := (3 : ℤ)) (b := 4) (by norm_num) (by norm_num) ℓ
+  constructor
+  · have hslope := one_le_abs_three_pow_sub_two_pow ℓ B (hℓ.trans hBℓ)
+    have hid : ((3 : ℤ) ^ ℓ - 2 ^ B) * x =
+        2 ^ B * (amusical^[ℓ] x - x) - c := by
+      linear_combination -heq
+    calc
+      |x| ≤ |(3 ^ ℓ - 2 ^ B) * x| := by
+        rw [abs_mul]
+        nlinarith [abs_nonneg x]
+      _ = |2 ^ B * (amusical^[ℓ] x - x) - c| := by rw [hid]
+      _ = |2 ^ B * (amusical^[ℓ] x - x) + -c| := by ring
+      _ ≤ |2 ^ B * (amusical^[ℓ] x - x)| + |-c| := abs_add_le _ _
+      _ = |2 ^ B * (amusical^[ℓ] x - x)| + |c| := by rw [abs_neg]
+      _ = 2 ^ B * |amusical^[ℓ] x - x| + |c| := by
+        rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 2 ^ B)]
+      _ ≤ 4 ^ ℓ * (|amusical^[ℓ] x - x| + 1) := by
+        nlinarith [abs_nonneg (amusical^[ℓ] x - x)]
+  · have hslope := one_le_abs_three_pow_sub_two_pow ℓ B' (hℓ.trans hBℓ')
+    have hid : ((2 : ℤ) ^ B' - 3 ^ ℓ) * x =
+        3 ^ ℓ * (amusicalInv^[ℓ] x - x) - c' := by
+      linear_combination -heq'
+    calc
+      |x| ≤ |(2 ^ B' - 3 ^ ℓ) * x| := by
+        rw [abs_mul, abs_sub_comm]
+        nlinarith [abs_nonneg x]
+      _ = |3 ^ ℓ * (amusicalInv^[ℓ] x - x) - c'| := by rw [hid]
+      _ = |3 ^ ℓ * (amusicalInv^[ℓ] x - x) + -c'| := by ring
+      _ ≤ |3 ^ ℓ * (amusicalInv^[ℓ] x - x)| + |-c'| := abs_add_le _ _
+      _ = |3 ^ ℓ * (amusicalInv^[ℓ] x - x)| + |c'| := by rw [abs_neg]
+      _ = 3 ^ ℓ * |amusicalInv^[ℓ] x - x| + |c'| := by
+        rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℤ) ≤ 3 ^ ℓ)]
+      _ ≤ 4 ^ ℓ * (|amusicalInv^[ℓ] x - x| + 1) := by
+        nlinarith [abs_nonneg (amusicalInv^[ℓ] x - x)]
 
 /-- **Target.**  No power of `U` has a translation piece: `Uˡ x = x + d` has finitely many
 solutions (all with `|x| ≤ 4^ℓ (|d| + 1)`, by Lemma K). -/
 theorem amusical_iterate_eq_add_finite (ℓ : ℕ) (hℓ : 1 ≤ ℓ) (d : ℤ) :
     {x : ℤ | amusical^[ℓ] x = x + d}.Finite := by
-  sorry
+  let C : ℤ := 4 ^ ℓ * (|d| + 1)
+  refine (Set.finite_Icc (-C) C).subset ?_
+  intro x hx
+  have hbound := (abs_le_four_pow_mul_iterate_sub ℓ hℓ x).1
+  change amusical^[ℓ] x = x + d at hx
+  rw [hx] at hbound
+  have hbound' : |x| ≤ C := by simpa [C] using hbound
+  exact (abs_le.mp hbound')
 
 /-- **Target (Proposition P).**  Every residue class contains points `x ≥ N` whose first `T`
 forward iterates visit the class at least `K + 1` times, so no eventually periodic infinite set
