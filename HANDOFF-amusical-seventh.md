@@ -1,5 +1,45 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 lap: two-primary residue transitivity closed
+
+### Concrete advance
+
+- Added `CollatzMoonshot/AmusicalSeventh/Residue.lean` and proved the full residue-transitivity
+  theorem for every power-of-two modulus, `amusical_pow_classUnion_invariant_pow_two`.
+- Proved generic image-equality infrastructure: equality of a set with its image under a
+  permutation makes membership invariant under every multiple of the given iterate.
+- Proved `exists_amusical_mul_iterate_modEq_pow_two`: after a time constrained to be a multiple
+  of any positive `m`, a point in any prescribed class modulo `2^b` can land in any prescribed
+  output class.  The proof uses the exact forward-cylinder formula; its slope `3^t` is a unit
+  modulo `2^b`.
+- No ratified statement changed, no axiom or `native_decide` was introduced, and no new `sorry`
+  was added.  The two original targets remain open.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Residue.lean` (green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; only the two original target
+  sorry warnings).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.amusical_pow_classUnion_invariant_pow_two` (`FORMALIZE-TIER GREEN`;
+  axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- `git diff --check` (clean).
+
+### Current blocker
+
+There is no external blocker.  For `amusical_pow_classUnion_invariant`, the `2`-primary factor is
+now complete.  The symmetric backward-cylinder argument should close the `3`-primary factor.
+The route-decisive remaining part is transitivity modulo the factor coprime to `6`, where branch
+words must generate a translation in the finite affine group.  `sparse_sweep` remains untouched.
+
+### Next highest-value attack
+
+Prove `exists_amusical_mul_iterate_modEq_pow_three` from
+`amusicalInv_iterate_add_pow_three_mul_slope`, then package the power-of-three class-union
+corollary.  After that isolate a coprime-modulus affine-word translation lemma and combine the
+three components by CRT to discharge the ratified theorem.
+
 ## 2026-10-13 lap: rewiring barrier closed
 
 ### Concrete advance
