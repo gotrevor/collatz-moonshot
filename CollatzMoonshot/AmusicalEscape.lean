@@ -178,7 +178,93 @@ theorem evenFrequency_of_backwardNormal (ι : ℤ → ℤ) (n : ℤ) (hn : Backw
     Filter.Tendsto (fun k : ℕ =>
       (((Finset.range k).filter fun j => stepSym (ι (amusicalInv^[j] n)) = 0).card : ℝ) / k)
       Filter.atTop (nhds (1 / 3)) := by
-  sorry
+  let block : ℕ → (Fin w → Fin 3) :=
+    fun j i => stepSym (amusicalInv^[j + 1 + i] n)
+  let good : Finset (Fin w → Fin 3) := Finset.univ.filter fun b => f b = 0
+  have hcount (k : ℕ) :
+      Nat.count (fun j => f (block j) = 0) k =
+        ∑ b ∈ good, Nat.count (fun j => ∀ i, block j i = b i) k := by
+    rw [Nat.count_eq_card_filter_range]
+    rw [Finset.card_eq_sum_card_fiberwise
+      (s := (Finset.range k).filter fun j => f (block j) = 0)
+      (t := good) (f := block) (by
+        intro j hj
+        have hj' : j ∈ Finset.range k ∧ f (block j) = 0 := Finset.mem_filter.mp hj
+        exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hj'.2⟩)]
+    apply Finset.sum_congr rfl
+    intro b hb
+    rw [Nat.count_eq_card_filter_range]
+    congr 1
+    ext j
+    have hfb : f b = 0 := by simpa [good] using hb
+    simp only [Finset.mem_filter, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨hjk, _⟩, hjb⟩
+      exact ⟨hjk, fun i => congrFun hjb i⟩
+    · rintro ⟨hjk, hjb⟩
+      have heq : block j = b := funext hjb
+      exact ⟨⟨hjk, by rw [heq, hfb]⟩, heq⟩
+  have hblocks : Filter.Tendsto (fun k : ℕ =>
+      ∑ b ∈ good, (Nat.count (fun j => ∀ i, block j i = b i) k : ℝ) / k)
+      Filter.atTop (nhds (∑ _b ∈ good, (3 : ℝ)⁻¹ ^ w)) := by
+    apply tendsto_finsetSum good
+    intro b hb
+    simpa only [block, Nat.count_eq_card_filter_range] using hn w b
+  have hgood : Filter.Tendsto (fun k : ℕ =>
+      (Nat.count (fun j => f (block j) = 0) k : ℝ) / k)
+      Filter.atTop (nhds (1 / 3)) := by
+    have hlim : (∑ _b ∈ good, (3 : ℝ)⁻¹ ^ w) = 1 / 3 := by
+      have hcard : good.card = 3 ^ (w - 1) := by simpa [good] using hbal
+      rw [Finset.sum_const, nsmul_eq_mul, hcard]
+      push_cast
+      rw [show w = (w - 1) + 1 by omega, pow_add]
+      have hpow : (3 : ℝ) ^ (w - 1) * (3 : ℝ)⁻¹ ^ (w - 1) = 1 := by
+        rw [← mul_pow]
+        norm_num
+      have he : w - 1 + 1 - 1 = w - 1 := by omega
+      rw [he, pow_one, ← mul_assoc, hpow]
+      norm_num
+    rw [← hlim]
+    convert hblocks using 1
+    funext k
+    rw [hcount]
+    push_cast
+    exact Finset.sum_div good
+      (fun b => (Nat.count (fun j => ∀ i, block j i = b i) k : ℝ)) k
+  let out : ℕ → Prop := fun j => stepSym (ι (amusicalInv^[j] n)) = 0
+  have hshift (k : ℕ) : Nat.count out (s + k) =
+      Nat.count out s + Nat.count (fun j => f (block j) = 0) k := by
+    rw [Nat.count_add]
+    congr 1
+    congr 1
+    funext j
+    simp only [out]
+    rw [hf (s + j) (by omega)]
+    simp only [Nat.add_sub_cancel_left]
+    rfl
+  simp_rw [← Nat.count_eq_card_filter_range]
+  apply (Filter.tendsto_add_atTop_iff_nat s).1
+  have hzero : Filter.Tendsto (fun k : ℕ => (Nat.count out s : ℝ) / (s + k))
+      Filter.atTop (nhds 0) := by
+    simpa [Nat.cast_add, add_comm] using (Filter.tendsto_add_atTop_iff_nat s).2
+      (tendsto_const_div_atTop_nhds_zero_nat (Nat.count out s : ℝ))
+  have hscale : Filter.Tendsto (fun k : ℕ => (k : ℝ) / (k + s))
+      Filter.atTop (nhds 1) := tendsto_natCast_div_add_atTop (s : ℝ)
+  have ht := hzero.add (hgood.mul hscale)
+  have ht' : Filter.Tendsto (fun k : ℕ =>
+      (Nat.count out (k + s) : ℝ) / (k + s)) Filter.atTop (nhds (1 / 3)) := by
+    have hev : (fun k : ℕ => (Nat.count out s : ℝ) / (s + k) +
+        (Nat.count (fun j => f (block j) = 0) k : ℝ) / k * ((k : ℝ) / (k + s)))
+        =ᶠ[Filter.atTop] fun k => (Nat.count out (k + s) : ℝ) / (k + s) := by
+      filter_upwards [Filter.eventually_ge_atTop 1] with k hk
+      rw [add_comm k s, hshift]
+      push_cast
+      have hk0 : (k : ℝ) ≠ 0 := by positivity
+      field_simp
+      ring
+    convert ht.congr' hev using 1
+    all_goals norm_num
+  simpa only [out, Nat.cast_add] using ht'
 
 /-- **Target (Theorem N).**  An injective reversor whose even steps are a balanced block code of
 the backward itinerary forces every non-periodic integer's backward itinerary to be abnormal.

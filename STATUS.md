@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical normality bridge FORMALIZED:**
+> `evenFrequency_of_backwardNormal` now derives output frequency `1/3` by exact fiber counting,
+> finite-sum convergence, balancedness, and a proved finite-shift density argument.  The scoped
+> 8714-job gate is FORMALIZE-tier green, and the theorem uses only `Classical.choice`,
+> `Quot.sound`, and `propext`.  Only the two analytic escape lemmas remain; read
+> `HANDOFF-amusical-escape.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;
