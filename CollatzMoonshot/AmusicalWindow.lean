@@ -978,7 +978,7 @@ theorem bwdSurv_mul (L : ℕ) :
   · simp
 
 /-- **The window-minimum density, for every `L`** (proved 2026-10-13 by treadmill from
-`KICKOFF-2026-10-13-amusical-window.md`; axiom-clean). on each residue class mod
+`KICKOFF-2026-10-13-amusical-window.md`; axiom-clean).  Proof: on each residue class mod
 `4^L · 3^L` the first `L` forward and backward branches are fixed, so `U^t` and `U^-t` are
 affine there; past a size threshold the window condition is a congruence condition; the good
 classes number `4^L · 3^L · fwdSurv L · bwdSurv L` (Haar counting per direction, CRT across). -/

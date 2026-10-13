@@ -59,4 +59,15 @@ def AmusicalMinimaDensityExact : Prop :=
     (fun X : ℕ => (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X)
     Filter.atTop (nhds minimaConstant)
 
+open Classical in
+/-- **Unconditional:** orbit minima have upper density at most `4/27 ≈ 0.148`
+(`windowMinDensity 4` with `windowDensity_values`).  Longer windows give
+`δ₁₀ ≈ 0.088`, `δ₄₀ ≈ 0.057`, decreasing to `minimaConstant ≈ 0.0498`. -/
+theorem orbitMin_density_le_four_twentySevenths {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ X : ℕ in Filter.atTop,
+      (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤ 4 / 27 + ε := by
+  have h4 : ((fwdSurv 4 * bwdSurv 4 : ℚ) : ℝ) = 4 / 27 := by
+    rw [windowDensity_values.2.2.2]; norm_num
+  simpa [h4] using orbitMin_density_le 4 hε
+
 end CollatzMoonshot.Amusical
