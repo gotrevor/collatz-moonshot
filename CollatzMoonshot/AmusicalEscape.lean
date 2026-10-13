@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalContinuousReversor
+import CollatzMoonshot.FrontA.PowSeparation
 
 /-!
 # Escape: a non-periodic orbit cannot spend too many bits
@@ -70,6 +71,23 @@ theorem escape_backward (m : ℤ) (hm : ∀ k ≥ 1, amusical^[k] m ≠ m) (δ :
     (K : ℕ) : ∃ k ≥ K, (Real.logb 2 3 - δ) * k ≤ (bwdBits m k : ℝ) := by
   sorry
 
+private theorem stepBits_add_evenIndicator (x : ℤ) :
+    stepBits x + (if stepSym x = 0 then 1 else 0) = 2 := by
+  unfold stepBits stepSym
+  split_ifs <;> simp_all
+
+private theorem fwdBits_add_evenCount (m : ℤ) (k : ℕ) :
+    fwdBits m k + ((Finset.range k).filter fun j => stepSym (amusical^[j] m) = 0).card =
+      2 * k := by
+  induction k with
+  | zero => simp [fwdBits]
+  | succ k ih =>
+      rw [← Nat.count_eq_card_filter_range] at ih ⊢
+      rw [fwdBits, Finset.sum_range_succ, Nat.count_succ]
+      rw [fwdBits] at ih
+      have hs := stepBits_add_evenIndicator (amusical^[k] m)
+      split_ifs at hs ⊢ <;> omega
+
 /-- **Target.**  An orbit whose even steps have limiting frequency `c < 2 − log₂ 3` spends
 `2 − c > log₂ 3` bits per step, so it is periodic by `escape_forward`. -/
 theorem periodic_of_evenFrequency_lt (m : ℤ) (c : ℝ) (hc : c < 2 - Real.logb 2 3)
@@ -77,7 +95,34 @@ theorem periodic_of_evenFrequency_lt (m : ℤ) (c : ℝ) (hc : c < 2 - Real.logb
       (((Finset.range k).filter fun j => stepSym (amusical^[j] m) = 0).card : ℝ) / k)
       Filter.atTop (nhds c)) :
     ∃ p ≥ 1, amusical^[p] m = m := by
-  sorry
+  by_contra hn
+  push Not at hn
+  let δ := (2 - c - Real.logb 2 3) / 2
+  have hδ : 0 < δ := by dsimp [δ]; linarith
+  have hbits : Filter.Tendsto (fun k : ℕ => (fwdBits m k : ℝ) / k)
+      Filter.atTop (nhds (2 - c)) := by
+    apply (tendsto_const_nhds.sub h).congr'
+    filter_upwards [Filter.eventually_ge_atTop 1] with k hk
+    have hid := fwdBits_add_evenCount m k
+    have hidR : (fwdBits m k : ℝ) +
+        ((Finset.range k).filter fun j => stepSym (amusical^[j] m) = 0).card = 2 * k := by
+      exact_mod_cast hid
+    have hk0 : (k : ℝ) ≠ 0 := by positivity
+    field_simp
+    linarith
+  have hev : ∀ᶠ k : ℕ in Filter.atTop,
+      Real.logb 2 3 + δ < (fwdBits m k : ℝ) / k := by
+    have hlim : Real.logb 2 3 + δ = (2 - c) - δ := by dsimp [δ]; ring
+    apply hbits.eventually
+    apply lt_mem_nhds
+    rw [hlim]
+    linarith
+  obtain ⟨K, hK⟩ := Filter.eventually_atTop.1 hev
+  obtain ⟨k, hkK, hk⟩ := escape_forward m hn δ hδ (max K 1)
+  have hkpos : 0 < (k : ℝ) := by exact_mod_cast (le_trans (le_max_right _ _) hkK)
+  have hlow := hK k (le_trans (le_max_left _ _) hkK)
+  rw [lt_div_iff₀ hkpos] at hlow
+  exact (not_lt_of_ge hk) hlow
 
 /-- **Target (Theorem N, core).**  No injective reversor sends a non-periodic `n` to a point
 whose even steps have limiting frequency `c < 2 − log₂ 3`.  Paper proof: `ι (U⁻ʲ n) = Uʲ (ι n)`,
@@ -89,7 +134,28 @@ theorem not_reversor_of_evenFrequency_lt {ι : ℤ → ℤ} (hrev : IsAmusicalRe
     (hfreq : Filter.Tendsto (fun k : ℕ =>
       (((Finset.range k).filter fun j => stepSym (ι (amusicalInv^[j] n)) = 0).card : ℝ) / k)
       Filter.atTop (nhds c)) : False := by
-  sorry
+  have hback (x : ℤ) : ι (amusicalInv x) = amusical (ι x) := by
+    calc
+      ι (amusicalInv x) = amusical (amusicalInv (ι (amusicalInv x))) :=
+        (amusical_amusicalInv _).symm
+      _ = amusical (ι (amusical (amusicalInv x))) := by rw [hrev]
+      _ = amusical (ι x) := by rw [amusical_amusicalInv]
+  have hiter : ∀ j : ℕ, ι (amusicalInv^[j] n) = amusical^[j] (ι n) := by
+    intro j
+    induction j with
+    | zero => simp
+    | succ j ih =>
+        rw [Function.iterate_succ_apply', hback, ih]
+        exact (Function.iterate_succ_apply' _ _ _).symm
+  obtain ⟨p, hp1, hp⟩ := periodic_of_evenFrequency_lt (ι n) c hc
+    (by simpa only [hiter] using hfreq)
+  apply hn p hp1
+  have hbi : amusicalInv^[p] n = n := by
+    apply hinj
+    rw [hiter, hp]
+  have hi := congrArg (amusical^[p]) hbi
+  rw [amusical_iterate_amusicalInv_iterate] at hi
+  exact hi.symm
 
 /-- The backward itinerary of `n` is *normal*: each block `b` of length `w` occurs as
 `stepSym (U⁻ʲ⁻¹ n), …, stepSym (U⁻ʲ⁻ʷ n)` with limiting frequency `3⁻ʷ`.  Open for every
@@ -124,6 +190,10 @@ theorem not_reversor_of_backwardNormal {ι : ℤ → ℤ} (hrev : IsAmusicalReve
     (hf : ∀ j ≥ s, stepSym (ι (amusicalInv^[j] n)) =
       f (fun i => stepSym (amusicalInv^[j - s + 1 + i] n)))
     (hbal : (Finset.univ.filter fun b => f b = 0).card = 3 ^ (w - 1)) : False := by
-  sorry
+  apply not_reversor_of_evenFrequency_lt hrev hinj n hn (1 / 3)
+  · have hlog : Real.logb 2 3 < (5 : ℝ) / 3 := by
+      exact (CollatzMoonshot.FrontA.logb_two_three_lt_iff 5 3 (by norm_num)).2 (by norm_num)
+    linarith
+  · exact evenFrequency_of_backwardNormal ι n hnorm s w hw f hf hbal
 
 end CollatzMoonshot.Amusical
