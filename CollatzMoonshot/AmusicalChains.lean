@@ -9,8 +9,8 @@ import CollatzMoonshot.AmusicalBound
 /-!
 # Chain connectivity: what one chain can and cannot carry
 
-From the 2026-10-13 "chains" research agent (research note §7).  Treadmill target
-(`KICKOFF-2026-10-13-amusical-chains.md`): close every `sorry` here.
+From the 2026-10-13 "chains" research agent (research note §7).  All targets kernel-checked
+2026-10-13 by the chains treadmill (`HANDOFF-amusical-chains.md`).
 
 * Window minima are spread out along an orbit (`IsWindowMin.iterate_eq_of_isWindowMin`).
 * The window densities are uniformly positive: `fwdSurv L ≥ 1/6`, `bwdSurv L ≥ 1/6`, by the
@@ -365,7 +365,7 @@ theorem bwdSurv_eq_bwdWalk (L : ℕ) : bwdSurv L = bwdWalk L 1 1 := by
     latticeUnmarked
   simp
 
-/-- **Target.**  Two `L`-window minima at most `L` steps apart on one orbit coincide:
+/-- **Proved.**  Two `L`-window minima at most `L` steps apart on one orbit coincide:
 `n ≤ U^t n` and `U^t n ≤ U^-t (U^t n) = n`. -/
 theorem IsWindowMin.iterate_eq_of_isWindowMin {L t : ℕ} {n : ℤ} (h : IsWindowMin L n)
     (ht : 0 < t) (htL : t ≤ L) (h' : IsWindowMin L (amusical^[t] n)) : amusical^[t] n = n := by
@@ -377,7 +377,7 @@ theorem IsWindowMin.iterate_eq_of_isWindowMin {L t : ℕ} {n : ℤ} (h : IsWindo
     rwa [amusical_iterate_eq_perm_pow]
   · exact (h t ht htL).1
 
-/-- **Target.**  The forward survival probability is at least `1/6` for every `L`. -/
+/-- **Proved.**  The forward survival probability is at least `1/6` for every `L`. -/
 theorem fwdSurv_ge (L : ℕ) : 1 / 6 ≤ fwdSurv L := by
   cases L with
   | zero => rw [fwdSurv_eq_fwdWalk]; norm_num [fwdWalk]
@@ -388,7 +388,7 @@ theorem fwdSurv_ge (L : ℕ) : 1 / 6 ≤ fwdSurv L := by
       norm_num at h ⊢
       linarith
 
-/-- **Target.**  The backward survival probability is at least `1/6` for every `L`. -/
+/-- **Proved.**  The backward survival probability is at least `1/6` for every `L`. -/
 theorem bwdSurv_ge (L : ℕ) : 1 / 6 ≤ bwdSurv L := by
   cases L with
   | zero => rw [bwdSurv_eq_bwdWalk]; norm_num [bwdWalk]
@@ -527,7 +527,7 @@ theorem windowMin_on_orbit_card_mul_le (L X J : ℕ) (x : ℤ) (C : ℝ) (hC : 0
         exact le_trans hjX.le (hceil.trans hceilJ)
       exact_mod_cast hreal
 
-/-- **Target.**  The sublinear recurrence: finitely many orbits would force some infinite orbit
+/-- **Proved.**  The sublinear recurrence: finitely many orbits would force some infinite orbit
 to come back below `|j|/C` at arbitrarily late times, for every `C`.  Paper proof: at least
 `δ_L X − o(X) ≥ X/37` window minima lie below `X`; on one chain their times are more than `L`
 apart, so `k` chains span time `≥ L X/37 − O(k)`; one chain has `|j| ≥ L X/(75k)` with value
@@ -685,7 +685,7 @@ theorem exists_sublinearlyRecurrent_of_finitelyManyOrbits (h : ¬ AmusicalInfini
   push_cast at hlower htotalR
   nlinarith
 
-/-- **Target.**  A seventh orbit, or the orbit of `8` is infinite: if the orbit of `8` were a
+/-- **Proved.**  A seventh orbit, or the orbit of `8` is infinite: if the orbit of `8` were a
 cycle, the least integer outside it and the five known cycles would start a seventh orbit. -/
 theorem atLeastSeven_or_orbitEight_infinite :
     AmusicalAtLeastSevenOrbits ∨ (amusicalOrbit 8).Infinite := by

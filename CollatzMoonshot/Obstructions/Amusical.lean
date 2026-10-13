@@ -214,7 +214,8 @@ orbits.  Nobody can prove this: beyond the five known cycles and the orbit of `8
 any further orbit means showing a number never meets the orbit of `8`, and Conway (2013,
 Appendix 1) notes that `8` and `14` might share an orbit.  Its negation says the orbit of `8`
 together with the known cycles is all of `ℕ`, so the orbit of `8` would have density `1`.
-Implied by `AmusicalInfinitelyManyOrbits`. -/
+Implied by `AmusicalInfinitelyManyOrbits`.  Proved: it holds unless the orbit of `8` is
+infinite (`atLeastSeven_or_orbitEight_infinite` in `AmusicalChains.lean`). -/
 def AmusicalAtLeastSevenOrbits : Prop :=
   ∃ s : Finset ℤ, s.card = 7 ∧ (∀ x ∈ s, 0 ≤ x) ∧
     (s : Set ℤ).Pairwise fun a b => amusicalOrbit a ≠ amusicalOrbit b

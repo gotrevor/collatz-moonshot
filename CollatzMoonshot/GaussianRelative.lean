@@ -25,7 +25,7 @@ no residue-class union is a growth cone.  Unlike `U`, it is reversible:
 (`reversing_zpow_fixed`).  Theorem NR (`no_piecewiseAffine_reversor`) shows `U` admits no such
 reversor: in rank one the unbalance sits on the non-swappable primes `2, 3`.
 
-Treadmill target (`KICKOFF-2026-10-13-amusical-reversal.md`): close every `sorry` here.
+Both targets kernel-checked 2026-10-13 by the gauss treadmill (`HANDOFF-amusical-gauss.md`).
 -/
 
 namespace CollatzMoonshot.GaussianRelative
@@ -47,7 +47,7 @@ def gaussH (z : ℤ × ℤ) : ℤ × ℤ :=
 def conj (z : ℤ × ℤ) : ℤ × ℤ := (z.1, -z.2)
 
 set_option maxHeartbeats 2000000 in
-/-- **Target.**  `conj ∘ H ∘ conj ∘ H = id`, i.e. `conj ∘ H ∘ conj = H⁻¹` once `H` is a bijection. -/
+/-- **Proved.**  `conj ∘ H ∘ conj ∘ H = id`, i.e. `conj ∘ H ∘ conj = H⁻¹` once `H` is a bijection. -/
 theorem conj_gaussH_conj_gaussH (z : ℤ × ℤ) : conj (gaussH (conj (gaussH z))) = z := by
   rcases z with ⟨a, b⟩
   generalize hr : (a + 7 * b) % 25 = r
@@ -88,7 +88,7 @@ private theorem zpow_orbit_finite_of_period {α : Type*} (σ : Equiv.Perm α) (x
   rw [← hf.image_uIcc hp 0]
   exact Set.Finite.image _ (Set.finite_uIcc (0 : ℤ) (0 + p))
 
-/-- **Target.**  `H` has infinitely many orbits: each meets the real axis `Fix(conj) = ℤ × {0}`
+/-- **Proved.**  `H` has infinitely many orbits: each meets the real axis `Fix(conj) = ℤ × {0}`
 in at most two points (`orbit_inter_fixedPoints_ncard_le_two`). -/
 theorem gauss_infinitely_many_orbits :
     {O : Set (ℤ × ℤ) | ∃ z, O = Set.range fun k : ℤ => (gaussPerm ^ k) z}.Infinite := by
