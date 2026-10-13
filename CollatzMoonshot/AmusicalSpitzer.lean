@@ -321,11 +321,94 @@ sample space. -/
 def wordTrueCount {L : ℕ} (w : Fin L → Bool) : ℕ :=
   (Finset.univ.filter fun i => w i = true).card
 
+/-- Permuting the positions of a Boolean word does not change its number of marked letters. -/
+theorem wordTrueCount_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    wordTrueCount (w ∘ e) = wordTrueCount w := by
+  unfold wordTrueCount
+  apply Finset.card_bijective e e.bijective
+  intro i
+  simp [Function.comp_apply]
+
+/-- In particular, cyclic rotation preserves the number of marked letters. -/
+theorem wordTrueCount_rotate {L : ℕ} (w : Fin L → Bool) :
+    wordTrueCount (w ∘ finRotate L) = wordTrueCount w :=
+  wordTrueCount_comp_equiv w (finRotate L)
+
+/-- Product weight of a word for the forward walk. -/
+noncomputable def fwdWordWeight {L : ℕ} (_w : Fin L → Bool) : ℝ :=
+  (1 / 2 : ℝ) ^ L
+
+/-- Product weight of a word for the backward walk. -/
+noncomputable def bwdWordWeight {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (L - wordTrueCount w)
+
+/-- The forward product weight of a word is invariant under any permutation of its letters. -/
+theorem fwdWordWeight_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    fwdWordWeight (w ∘ e) = fwdWordWeight w := rfl
+
+/-- The backward product weight of a word is invariant under any permutation of its letters. -/
+theorem bwdWordWeight_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    bwdWordWeight (w ∘ e) = bwdWordWeight w := by
+  unfold bwdWordWeight
+  rw [wordTrueCount_comp_equiv]
+
+theorem fwdWordWeight_rotate {L : ℕ} (w : Fin L → Bool) :
+    fwdWordWeight (w ∘ finRotate L) = fwdWordWeight w :=
+  fwdWordWeight_comp_equiv w (finRotate L)
+
+theorem bwdWordWeight_rotate {L : ℕ} (w : Fin L → Bool) :
+    bwdWordWeight (w ∘ finRotate L) = bwdWordWeight w :=
+  bwdWordWeight_comp_equiv w (finRotate L)
+
+/-- A block with `k` letters and `o` marked letters can never have multiplicative score one
+when `k` is positive.  This applies to every nonempty contiguous block of either walk because
+its score depends only on these two counts. -/
+theorem wordBlock_endpoint_ne (k o : ℕ) (hk : 0 < k) :
+    (2 : ℕ) ^ (k + o) ≠ 3 ^ k :=
+  walk_endpoint_ne k o hk
+
+/-- Every nonempty block has one of the two strict score signs. -/
+theorem wordBlock_endpoint_lt_or_gt (k o : ℕ) (hk : 0 < k) :
+    (2 : ℕ) ^ (k + o) < 3 ^ k ∨ 3 ^ k < 2 ^ (k + o) :=
+  lt_or_gt_of_ne (wordBlock_endpoint_ne k o hk)
+
 theorem wordTrueCount_cons {L : ℕ} (b : Bool) (w : Fin L → Bool) :
     wordTrueCount (Fin.cons b w) = (if b then 1 else 0) + wordTrueCount w := by
   simp only [wordTrueCount]
   rw [Finset.card_filter, Finset.card_filter, Fin.sum_univ_succ]
   simp
+
+/-- Marked-letter counts add under concatenation. -/
+theorem wordTrueCount_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    wordTrueCount (Fin.append u v) = wordTrueCount u + wordTrueCount v := by
+  unfold wordTrueCount
+  repeat' rw [Finset.card_filter]
+  rw [Fin.sum_univ_add]
+  simp
+
+theorem wordTrueCount_le {L : ℕ} (w : Fin L → Bool) : wordTrueCount w ≤ L := by
+  unfold wordTrueCount
+  calc
+    (Finset.univ.filter fun i => w i = true).card ≤ Finset.univ.card :=
+      Finset.card_filter_le _ _
+    _ = L := Fintype.card_fin L
+
+/-- Forward word weights multiply under concatenation. -/
+theorem fwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    fwdWordWeight (Fin.append u v) = fwdWordWeight u * fwdWordWeight v := by
+  unfold fwdWordWeight
+  rw [pow_add]
+
+/-- Backward word weights multiply under concatenation. -/
+theorem bwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    bwdWordWeight (Fin.append u v) = bwdWordWeight u * bwdWordWeight v := by
+  have hu := wordTrueCount_le u
+  have hv := wordTrueCount_le v
+  have hsub : m + n - (wordTrueCount u + wordTrueCount v) =
+      (m - wordTrueCount u) + (n - wordTrueCount v) := by omega
+  unfold bwdWordWeight
+  rw [wordTrueCount_append, pow_add, hsub, pow_add]
+  ring
 
 /-- Split a sum over Boolean words according to its first letter. -/
 theorem sum_boolWords_succ {M : Type*} [AddCommMonoid M] (L : ℕ)
@@ -439,6 +522,33 @@ theorem bwdSurv_cast_eq_word_sum (k : ℕ) :
     rw [hfalse]
     norm_num
   · norm_num
+
+/-! The same four identities in the named product-weight interface used by the cyclic
+decomposition.  Keeping this interface separate leaves the ratified statements above unchanged. -/
+
+theorem fwdPosTerm_eq_weighted_word_sum (k : ℕ) :
+    fwdPosTerm k = ∑ w : Fin k → Bool,
+      if 2 ^ (k + wordTrueCount w) < 3 ^ k then fwdWordWeight w else 0 := by
+  rw [fwdPosTerm_eq_word_sum]
+  rfl
+
+theorem bwdPosTerm_eq_weighted_word_sum (k : ℕ) :
+    bwdPosTerm k = ∑ w : Fin k → Bool,
+      if 3 ^ k < 2 ^ (k + wordTrueCount w) then bwdWordWeight w else 0 := by
+  rw [bwdPosTerm_eq_word_sum]
+  rfl
+
+theorem fwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
+    (fwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if FwdGood k w then fwdWordWeight w else 0 := by
+  rw [fwdSurv_cast_eq_word_sum]
+  rfl
+
+theorem bwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
+    (bwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if BwdGood k w then bwdWordWeight w else 0 := by
+  rw [bwdSurv_cast_eq_word_sum]
+  rfl
 
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
