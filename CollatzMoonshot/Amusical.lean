@@ -125,6 +125,44 @@ theorem amusical_small_cycles :
       amusical 4 = 6 ∧ amusical 6 = 9 ∧ amusical 9 = 7 ∧ amusical 7 = 5 ∧ amusical 5 = 4 := by
   decide
 
+/-- The 12-cycle `44 → 66 → 99 → 74 → 111 → 83 → 62 → 93 → 70 → 105 → 79 → 59 → 44`, the
+largest known cycle.  Atkin (SIAM Review 8 (1966) 234-236) and Conway 2013 list it with these
+twelve members; Lagarias's annotated bibliography (2003, entry Klamkin 1963) gives its smallest
+element as `144`, which contradicts this computation (`144` does not return within 500 steps). -/
+theorem amusical_cycle_fortyFour :
+    (List.range 13).map (fun k => amusical^[k] 44) =
+      [44, 66, 99, 74, 111, 83, 62, 93, 70, 105, 79, 59, 44] := by
+  decide
+
+/-- `U` is odd, so its cycles on the negatives mirror those on the positives. -/
+theorem amusical_neg (n : ℤ) : amusical (-n) = -amusical n := by
+  unfold amusical; split_ifs <;> omega
+
+/-- The twenty nonnegative integers known to lie on finite cycles: `{0}`, `{1}`, `{2, 3}`,
+`{4, 6, 9, 7, 5}` and the 12-cycle through `44`.  Conway 2013 (Appendix 1) lists the nineteen
+positive ones as the conjectured complete list. -/
+def knownCycleMembers : Finset ℤ :=
+  {0, 1, 2, 3, 4, 5, 6, 7, 9, 44, 59, 62, 66, 70, 74, 79, 83, 93, 99, 105, 111}
+
+/-- **Open (Klamkin 1963, problem (b)).**  The known cycles are all the cycles on the
+nonnegative integers.  By `amusical_neg` this settles the negatives too.  Implies
+`AmusicalOrbitOfEightInfinite` (`8 ∉ knownCycleMembers`) and `AmusicalFinitelyManyCycles`. -/
+def AmusicalNoOtherCycles : Prop :=
+  ∀ n : ℤ, 0 ≤ n → n ∈ Function.periodicPts amusical → n ∈ knownCycleMembers
+
+/-- **Open (Klamkin 1963, problem (a); Atkin 1966 heuristic; Venturini 1997 / Lagarias 2021
+conjecture C4 for the whole class of permutational generalized Collatz maps).**  `U` has only
+finitely many periodic points. -/
+def AmusicalFinitelyManyCycles : Prop :=
+  (Function.periodicPts amusical).Finite
+
+/-- The number of strict local minima on the cycle through a periodic `n` of period `p`: the
+indices `i < p` with `U⁻¹ x > x < U x` for `x = U^[i] n`.  Simons calls a cycle with `m` of
+them an *m-cycle* (arXiv:2205.10582, §1.3). -/
+def cycleLocalMinCount (n : ℤ) (p : ℕ) : ℕ :=
+  ((Finset.range p).filter fun i =>
+    amusical^[i] n < amusical^[i + 1] n ∧ amusical^[i] n < amusicalInv (amusical^[i] n)).card
+
 /-- The number of even values among `U^[0] 8, …, U^[k-1] 8`. -/
 def evenCount (k : ℕ) : ℕ :=
   ((Finset.range k).filter fun i => amusical^[i] 8 % 2 = 0).card

@@ -111,5 +111,6 @@ import CollatzMoonshot.Sibling
 import CollatzMoonshot.Amusical
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
+import CollatzMoonshot.Literature.AmusicalCycles
 import CollatzMoonshot.Literature.LocalRank
 import CollatzMoonshot.Maze
