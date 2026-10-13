@@ -561,7 +561,8 @@ theorem latticeDensity_two_hundred_lt :
     20 * fwdLatticeNum 200 * bwdLatticeNum 200 < 2 ^ 200 * 3 ^ 200 := by
   decide +kernel
 
-/-- **Target (treadmill).**  `δ₂₀₀ < 1/20`.  Exact value `0.04988761510…`
+/-- **`δ₂₀₀ < 1/20`** (proved 2026-10-13 by treadmill from
+`KICKOFF-2026-10-13-amusical-bound.md`; axiom-clean).  Exact value `0.04988761510…`
 (`scripts/amusical/window.py`-style lattice computation, 2026-10-13). -/
 theorem windowDensity_two_hundred_lt : fwdSurv 200 * bwdSurv 200 < 1 / 20 := by
   have hf := fwdSurv_mul_two 200
