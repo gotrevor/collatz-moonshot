@@ -43,6 +43,7 @@ theorem exits_eq_strictMinima (X : ℕ) :
         ∀ j : ℤ, j ≠ 0 → (n : ℤ) < (amusicalPerm ^ j) n).card := by
   sorry
 
+open Classical in
 /-- **Target.**  The strong form of the linear-recurrence reduction: finitely many orbits give an
 infinite orbit with, for infinitely many `X`, at least `εX/2 − 1` times `j` with `|j| ≥ εX/4`
 and value in `[0, X)`.  Equivalent to positive upper density of that orbit. -/
@@ -51,7 +52,111 @@ theorem exists_denseLinearReturns_of_finitelyManyOrbits (h : ¬ AmusicalInfinite
       ∃ᶠ X : ℕ in Filter.atTop, ∃ S : Finset ℤ, ε * X / 2 - 1 ≤ S.card ∧
         ∀ j ∈ S, ε * X / 4 ≤ |(j : ℝ)| ∧ 0 ≤ (amusicalPerm ^ j) x ∧
           (amusicalPerm ^ j) x < X := by
-  sorry
+  have hz : ¬ AmusicalOrbitsZeroDensity := fun hz =>
+    h (amusicalInfinitelyManyOrbits_of_zeroDensity hz)
+  simp only [AmusicalOrbitsZeroDensity, not_forall] at hz
+  obtain ⟨x, hx0, hnt⟩ := hz
+  set f : ℕ → ℝ := fun X =>
+    (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x).card : ℝ) / X with hf
+  have hf0 : ∀ X, 0 ≤ f X := fun X => by positivity
+  obtain ⟨ε, hε, hfreq⟩ : ∃ ε : ℝ, 0 < ε ∧ ∃ᶠ X in Filter.atTop, ε ≤ f X := by
+    by_contra hne
+    push Not at hne
+    apply hnt
+    rw [tendsto_order]
+    refine ⟨fun a ha => Filter.Eventually.of_forall fun X => lt_of_lt_of_le ha (hf0 X), ?_⟩
+    intro a ha
+    simpa [Filter.not_frequently, not_le] using hne a ha
+  refine ⟨x, hx0, ?_, ε, hε, ?_⟩
+  · intro hfin
+    set N := hfin.toFinset.card
+    have hbound : ∀ X,
+        ((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x).card ≤ N := by
+      intro X
+      refine Finset.card_le_card_of_injOn (fun n : ℕ => (n : ℤ)) ?_ ?_
+      · intro n hn
+        simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hn
+        simpa using hn.2
+      · intro a _ b _ hab; simpa using hab
+    have hlim : ∀ᶠ X : ℕ in Filter.atTop, f X < ε := by
+      have ht : Filter.Tendsto (fun X : ℕ => (N : ℝ) / X) Filter.atTop (nhds 0) :=
+        tendsto_const_div_atTop_nhds_zero_nat _
+      filter_upwards [ht.eventually (gt_mem_nhds hε), Filter.eventually_ge_atTop 1] with X hX hX1
+      refine lt_of_le_of_lt ?_ hX
+      have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+      exact div_le_div_of_nonneg_right (by exact_mod_cast hbound X) hXpos.le
+    exact (hfreq.and_eventually hlim).exists.elim fun X hX => absurd hX.1 (not_le.2 hX.2)
+  · refine (hfreq.and_eventually (Filter.eventually_ge_atTop 1)).mono ?_
+    rintro X ⟨hXε, hX1⟩
+    have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+    set A := (Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x
+    have hA : ε * X ≤ A.card := by
+      have := hXε
+      simp only [hf] at this
+      rwa [le_div_iff₀ hXpos] at this
+    let g : ℕ → ℤ := fun n =>
+      if hn : (n : ℤ) ∈ amusicalOrbit x then Classical.choose hn else 0
+    have hg : ∀ n ∈ A, (amusicalPerm ^ g n) x = n := by
+      intro n hn
+      have hn' : (n : ℤ) ∈ amusicalOrbit x := (Finset.mem_filter.1 hn).2
+      simp only [g, dif_pos hn']
+      exact Classical.choose_spec hn'
+    have hginj : Set.InjOn g A := by
+      intro a ha b hb hab
+      have hab' := (hg a ha).symm.trans
+        ((congrArg (fun j => (amusicalPerm ^ j) x) hab).trans (hg b hb))
+      exact_mod_cast hab'
+    set q : ℕ := Nat.ceil (ε * X / 4)
+    have hqpos : 0 < q := by
+      apply Nat.ceil_pos.2
+      positivity
+    set B := A.image g
+    set S := B.filter fun j : ℤ => (q : ℤ) ≤ |j|
+    refine ⟨S, ?_, ?_⟩
+    · have hB : B.card = A.card := Finset.card_image_of_injOn hginj
+      have hbad : (B.filter fun j : ℤ => ¬ (q : ℤ) ≤ |j|).card ≤ 2 * q - 1 := by
+        calc
+          _ ≤ (Finset.Icc (-(q : ℤ) + 1) ((q : ℤ) - 1)).card := by
+            apply Finset.card_le_card
+            intro z hz
+            simp only [Finset.mem_filter, Finset.mem_Icc] at hz ⊢
+            have hzabs : |z| < (q : ℤ) := by omega
+            have hzrange := (abs_lt.mp hzabs)
+            omega
+          _ ≤ 2 * q - 1 := by
+            rw [Int.card_Icc]
+            omega
+      have hsplit := Finset.card_filter_add_card_filter_not (s := B)
+        (fun j : ℤ => (q : ℤ) ≤ |j|)
+      have hq : (q : ℝ) < ε * X / 4 + 1 := Nat.ceil_lt_add_one (by positivity)
+      have hcast : ((2 * q - 1 : ℕ) : ℝ) = 2 * (q : ℝ) - 1 := by
+        rw [Nat.cast_sub (by omega : 1 ≤ 2 * q)]
+        push_cast
+        rfl
+      have hbadR : ((B.filter fun j : ℤ => ¬ (q : ℤ) ≤ |j|).card : ℝ) ≤
+          ε * X / 2 + 1 := by
+        have : ((B.filter fun j : ℤ => ¬ (q : ℤ) ≤ |j|).card : ℝ) ≤
+            (2 * q - 1 : ℕ) := by exact_mod_cast hbad
+        rw [hcast] at this
+        linarith
+      have hsplitR : (S.card : ℝ) +
+          ((B.filter fun j : ℤ => ¬ (q : ℤ) ≤ |j|).card : ℝ) = B.card := by
+        exact_mod_cast hsplit
+      have hBR : (B.card : ℝ) = A.card := by exact_mod_cast hB
+      linarith
+    · intro j hj
+      have hj' := Finset.mem_filter.1 hj
+      obtain ⟨n, hnA, rfl⟩ := Finset.mem_image.1 hj'.1
+      have hqceil : ε * X / 4 ≤ (q : ℝ) := Nat.le_ceil _
+      have hqabs : ((q : ℤ) : ℝ) ≤ ((|g n| : ℤ) : ℝ) := by
+        exact_mod_cast hj'.2
+      have hn0 : 0 ≤ (n : ℤ) := by positivity
+      have hnX : (n : ℤ) < X := by
+        exact_mod_cast Finset.mem_range.1 (Finset.mem_filter.1 hnA).1
+      rw [hg n hnA]
+      refine ⟨?_, hn0, hnX⟩
+      push_cast at hqabs ⊢
+      exact hqceil.trans hqabs
 
 /-- The 2-adic weight of the first `j` steps from `x`: `1` per even step, `2` per odd step, so
 `U^j x ≈ 3^j x / 2^(stepWeight x j)`. -/

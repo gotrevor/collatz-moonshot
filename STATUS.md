@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical dense returns FORMALIZED:**
+> `exists_denseLinearReturns_of_finitelyManyOrbits` now proves the pinned strong recurrence
+> statement: under finitely many nonnegative orbits, one infinite orbit has, for frequently many
+> `X`, at least `εX/2-1` distinct times of magnitude at least `εX/4` landing in `[0,X)`.
+> The proof removes a centered integer interval from the positive-density family of chosen return
+> times.  Three sorries remain in `AmusicalReturns.lean`; read `HANDOFF-amusical-returns.md`.
+
 > **2026-10-13, amusical orbit-minimum density bound FORMALIZED:**
 > `windowDensity_two_hundred_lt` now proves `fwdSurv 200 * bwdSurv 200 < 1/20` by identifying
 > semantic weighted word counts with the linear-size integer lattice DP and applying its exact
