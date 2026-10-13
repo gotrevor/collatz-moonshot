@@ -2,21 +2,23 @@
 
 ## Concrete advance
 
-Kickoff plan step 1 is now formalized in `CollatzMoonshot/AmusicalSpitzer.lean`.
+Kickoff plan step 2 is now formalized in `CollatzMoonshot/AmusicalSpitzer.lean`, and the exact
+finite-word interface needed for step 3 is in place.
 
-- `fwdNonposTerm`, `bwdNonposTerm`, `fwdPosTerm`, and `bwdPosTerm` give the four exact
-  binomial endpoint masses for the two multiplicative walks.
-- `walk_endpoint_ne` proves that neither walk can tie its starting height at positive time,
-  reusing the repository's proved `three_pow_ne_two_pow` parity lemma.
-- `spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm` proves the Haar-duality identity
-  `spitzerTerm k = fwdNonposTerm k + bwdNonposTerm k` for `k > 0`, term by term across the
-  binomial sum.  On the backward side the tilted mass is exactly
-  `choose k o * 2^o / 3^k`.
-- `fwdNonposTerm_add_fwdPosTerm` and `bwdNonposTerm_add_bwdPosTerm` prove that each walk's two
-  endpoint masses sum to one.  The backward normalization is the binomial identity
-  `(1 + 2)^k = 3^k`.
+- `wordTrueCount`, `wordTrueCount_cons`, and `sum_boolWords_succ` set up first-letter
+  decomposition of Boolean increment words.
+- `sum_boolWords_by_trueCount` proves, for values in any additive commutative monoid, that a
+  sum over length-`L` Boolean words depending only on the number of marked letters is the
+  corresponding binomial sum.  Its induction is the finite Pascal recurrence.
+- `fwdPosTerm_eq_word_sum` and `bwdPosTerm_eq_word_sum` rewrite both positive-endpoint
+  probabilities as weighted sums on exactly the same Boolean-word spaces used by survival.
+- `fwdSurv_cast_eq_word_sum` and `bwdSurv_cast_eq_word_sum` rewrite the rational survival
+  quantities, after casting to reals, as those same finite weighted sums with `FwdGood` and
+  `BwdGood` indicators.
 
-All four new theorems have axiom footprint exactly `propext`, `Classical.choice`, and
+Together with the previous lap's endpoint partition and Haar-duality lemmas, all four finite
+probabilities entering Sparre--Andersen now share one explicit sample-space representation.
+All five new headline theorems have axiom footprint exactly `propext`, `Classical.choice`, and
 `Quot.sound`.  No `native_decide` or new axiom was introduced.
 
 ## Verification
@@ -26,32 +28,33 @@ Exact commands run:
 ```text
 lake env lean CollatzMoonshot/AmusicalSpitzer.lean
 /Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer
-lake env lean /dev/stdin   # #print axioms on the four new theorems
+lake env lean /dev/stdin   # #print axioms on the five new headline theorems
 git diff --check
 ```
 
 The target gate ended `FORMALIZE-TIER GREEN` (8715 jobs).  The only proof-debt warning is the
-pre-existing target `windowDensityLimit` at line 124.
+pre-existing target `windowDensityLimit` at line 253.
 
 ## Current blocker
 
 `windowDensityLimit` still has its single disclosed `sorry`.  The route-decisive missing result
-is now cleanly downstream of finite-time duality: prove Sparre--Andersen's generating-function
-identity for the weighted finite Boolean words underlying `fwdSurv` and `bwdSurv`, then pass to
-the boundary using exponential endpoint tails / Abel convergence.  No usable Sparre--Andersen or
-Spitzer formalization was found in the mounted Lean reference corpus or sibling repositories.
+is the weighted cyclic decomposition behind Sparre--Andersen.  In the new common finite-word
+language, prove for each walk the coefficient recurrence
+
+```text
+L * survive L = sum_{k=1}^L positiveEndpoint k * survive (L-k).
+```
+
+The common sample spaces and weights are now kernel-checked; what remains is the genuinely
+combinatorial partition/cycle lemma, followed by the analytic boundary passage.  No usable
+Sparre--Andersen or Spitzer formalization was found in the mounted Lean reference corpus or
+sibling repositories.
 
 ## Next highest-value attack
 
-State and prove a generic finite weighted cyclic-decomposition lemma for an i.i.d. finite-step
-walk with no zero partial sums.  Specialize it first to the forward Boolean walk and derive the
-coefficient recurrence
-
-```text
-L * survive L = sum_{k=1}^L positiveEndpoint k * survive (L-k)
-```
-
-(with the conventional indexing checked against `L = 1,2`).  This recurrence is the algebraic
-core of the exponential generating-function identity and avoids measure theory.  Once it is
-kernel-checked, repeat the same generic specialization for backward weights; the duality lemmas
-landed here will then combine their limiting exponents into `minimaConstant`.
+Define word concatenation, cyclic rotation, and strict-positive partial sums for a generic
+finite real-valued increment alphabet.  Prove the weighted finite cyclic-decomposition lemma
+first (weights must be invariant under permutation), then specialize it using
+`fwdPosTerm_eq_word_sum` / `fwdSurv_cast_eq_word_sum` and their backward counterparts.  Check
+the recurrence at `L = 1,2` by kernel evaluation before beginning the generating-function and
+Abel-limit layer.

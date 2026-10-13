@@ -120,6 +120,135 @@ theorem bwdNonposTerm_add_bwdPosTerm (k : ℕ) (hk : 0 < k) :
       rw [← htotal]
       norm_num
 
+/-! ## Finite-word probability interface
+
+The Sparre--Andersen recurrence is a weighted identity on finite words.  The following
+regrouping lemma puts the endpoint binomial sums and the prefix-survival sums on that common
+sample space. -/
+
+/-- Number of marked (`true`) letters in a finite Boolean word. -/
+def wordTrueCount {L : ℕ} (w : Fin L → Bool) : ℕ :=
+  (Finset.univ.filter fun i => w i = true).card
+
+theorem wordTrueCount_cons {L : ℕ} (b : Bool) (w : Fin L → Bool) :
+    wordTrueCount (Fin.cons b w) = (if b then 1 else 0) + wordTrueCount w := by
+  simp only [wordTrueCount]
+  rw [Finset.card_filter, Finset.card_filter, Fin.sum_univ_succ]
+  simp
+
+/-- Split a sum over Boolean words according to its first letter. -/
+theorem sum_boolWords_succ {M : Type*} [AddCommMonoid M] (L : ℕ)
+    (F : (Fin (L + 1) → Bool) → M) :
+    (∑ w : Fin (L + 1) → Bool, F w) =
+      ∑ b : Bool, ∑ w : Fin L → Bool, F (Fin.cons b w) := by
+  calc
+    _ = ∑ p : Bool × (Fin L → Bool),
+          F ((Fin.consEquiv fun _ : Fin (L + 1) => Bool) p) :=
+      ((Fin.consEquiv fun _ : Fin (L + 1) => Bool).sum_comp F).symm
+    _ = _ := by rw [Fintype.sum_prod_type]; rfl
+
+theorem sum_boolWords_by_trueCount_succ {M : Type*} [AddCommMonoid M]
+    (L : ℕ) (f : ℕ → M) :
+    (∑ w : Fin (L + 1) → Bool, f (wordTrueCount w)) =
+      ∑ w : Fin L → Bool,
+        (f (wordTrueCount w) + f (wordTrueCount w + 1)) := by
+  rw [sum_boolWords_succ]
+  simp [wordTrueCount_cons, add_comm, ← Finset.sum_add_distrib]
+
+/-- Regroup any finite Boolean-word sum depending only on the number of marked letters into
+the corresponding binomial sum. -/
+theorem sum_boolWords_by_trueCount {M : Type*} [AddCommMonoid M]
+    (L : ℕ) (f : ℕ → M) :
+    (∑ w : Fin L → Bool, f (wordTrueCount w)) =
+      ∑ o ∈ Finset.range (L + 1), L.choose o • f o := by
+  induction L generalizing f with
+  | zero => simp [wordTrueCount]
+  | succ L ih =>
+      rw [sum_boolWords_by_trueCount_succ]
+      rw [Finset.sum_add_distrib, ih f, ih (fun o => f (o + 1))]
+      rw [Finset.sum_range_succ' (fun o => L.choose o • f o) L,
+        Finset.sum_range_succ (fun o => L.choose o • f (o + 1)) L,
+        Finset.sum_range_succ (fun o => (L + 1).choose o • f o) (L + 1),
+        Finset.sum_range_succ' (fun o => (L + 1).choose o • f o) L]
+      simp only [Nat.choose_zero_right, Nat.choose_self, one_nsmul,
+        Nat.choose_succ_succ, add_nsmul]
+      calc
+        _ = f 0 + f (L + 1) +
+            ((∑ x ∈ Finset.range L, L.choose x • f (x + 1)) +
+              ∑ x ∈ Finset.range L, L.choose (x + 1) • f (x + 1)) := by ac_rfl
+        _ = f 0 + f (L + 1) +
+            ∑ x ∈ Finset.range L,
+              (L.choose x • f (x + 1) + L.choose (x + 1) • f (x + 1)) := by
+          rw [Finset.sum_add_distrib]
+        _ = _ := by simp only [Nat.succ_eq_add_one]; ac_rfl
+
+/-- The forward positive-endpoint mass, expressed on the same Boolean-word sample space as
+`fwdSurv`. -/
+theorem fwdPosTerm_eq_word_sum (k : ℕ) :
+    fwdPosTerm k = ∑ w : Fin k → Bool,
+      if 2 ^ (k + wordTrueCount w) < 3 ^ k then (1 / 2 : ℝ) ^ k else 0 := by
+  rw [sum_boolWords_by_trueCount k (fun o =>
+    if 2 ^ (k + o) < 3 ^ k then (1 / 2 : ℝ) ^ k else 0)]
+  unfold fwdPosTerm
+  apply Finset.sum_congr rfl
+  intro o ho
+  simp only [nsmul_eq_mul]
+  split_ifs
+  · rw [one_div, inv_pow, div_eq_mul_inv]
+  · simp
+
+/-- The backward positive-endpoint mass, expressed on the same weighted Boolean-word sample
+space as `bwdSurv`. -/
+theorem bwdPosTerm_eq_word_sum (k : ℕ) :
+    bwdPosTerm k = ∑ w : Fin k → Bool,
+      if 3 ^ k < 2 ^ (k + wordTrueCount w) then
+        (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (k - wordTrueCount w) else 0 := by
+  rw [sum_boolWords_by_trueCount k (fun o => if 3 ^ k < 2 ^ (k + o) then
+    (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (k - o) else 0)]
+  unfold bwdPosTerm
+  apply Finset.sum_congr rfl
+  intro o ho
+  simp only [nsmul_eq_mul]
+  split_ifs
+  · have ho' : o ≤ k := Nat.le_of_lt_succ (Finset.mem_range.mp ho)
+    rw [show k = o + (k - o) by omega, pow_add]
+    rw [div_pow, div_pow]
+    rw [show o + (k - o) - o = k - o by omega]
+    ring
+  · simp
+
+/-- Forward survival, cast to reals, is its finite weighted sum over good Boolean words. -/
+theorem fwdSurv_cast_eq_word_sum (k : ℕ) :
+    (fwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if FwdGood k w then (1 / 2 : ℝ) ^ k else 0 := by
+  unfold fwdSurv
+  push_cast
+  apply Finset.sum_congr rfl
+  intro w hw
+  split_ifs <;> norm_num
+
+/-- Backward survival, cast to reals, is its finite weighted sum over good Boolean words. -/
+theorem bwdSurv_cast_eq_word_sum (k : ℕ) :
+    (bwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if BwdGood k w then
+        (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (k - wordTrueCount w) else 0 := by
+  unfold bwdSurv wordTrueCount
+  push_cast
+  apply Finset.sum_congr rfl
+  intro w hw
+  split_ifs
+  · have hcard := Finset.card_filter_add_card_filter_not
+      (s := (Finset.univ : Finset (Fin k))) (fun i => w i = true)
+    have hfalse : (Finset.univ.filter fun i : Fin k => w i = false).card =
+        k - (Finset.univ.filter fun i : Fin k => w i = true).card := by
+      have hcard' : (Finset.univ.filter fun i : Fin k => w i = true).card +
+          (Finset.univ.filter fun i : Fin k => w i = false).card = k := by
+        simpa using hcard
+      omega
+    rw [hfalse]
+    norm_num
+  · norm_num
+
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
   sorry
