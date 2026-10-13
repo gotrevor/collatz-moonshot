@@ -6,8 +6,11 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalConstant
 import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.CyclicMinimum
+import Mathlib.Analysis.Calculus.SmoothSeries
+import Mathlib.Analysis.Complex.AbelLimit
 import Mathlib.Combinatorics.Enumerative.Composition
 import Mathlib.Combinatorics.Enumerative.InclusionExclusion
+import Mathlib.RingTheory.PowerSeries.Log
 
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
@@ -2293,9 +2296,1114 @@ theorem bwdPosTerm_div_eq_composition_sum (n : ℕ) :
   rw [bwdCyclicContribution, card_compositionStarts, bwdCyclicIntersectionMass,
     bwdCompositionStartsIntersection_sum (Nat.zero_lt_succ n)]
 
+/-! ## Formal Sparre--Andersen renewal equations -/
+
+/-- Compositions of `n` with `k` blocks are positive `k`-vectors summing to `n`. -/
+noncomputable def compositionLengthEquiv (n k : ℕ) :
+    {c : Composition n // c.length = k} ≃
+      {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} where
+  toFun c :=
+    ⟨fun i => c.1.blocksFun (Fin.cast c.2.symm i),
+      ⟨fun i => c.1.one_le_blocksFun (Fin.cast c.2.symm i), by
+        let e : Fin k ≃ Fin c.1.length := finCongr c.2.symm
+        calc
+          (∑ i : Fin k, c.1.blocksFun (Fin.cast c.2.symm i)) =
+              ∑ i : Fin c.1.length, c.1.blocksFun i := e.sum_comp c.1.blocksFun
+          _ = n := c.1.sum_blocksFun⟩⟩
+  invFun v :=
+    ⟨{ blocks := List.ofFn v.1
+       blocks_pos := by
+         simpa only [List.forall_mem_ofFn_iff] using v.2.1
+       blocks_sum := by
+         rw [List.sum_ofFn]
+         exact v.2.2 }, by
+      exact List.length_ofFn⟩
+  left_inv c := by
+    rcases c with ⟨c, hc⟩
+    subst k
+    apply Subtype.ext
+    apply Composition.ext
+    simp [Composition.blocksFun]
+  right_inv v := by
+    apply Subtype.ext
+    funext i
+    simp [Composition.blocksFun]
+
+private def vectorExtend (k : ℕ) (v : Fin k → ℕ) (i : ℕ) : ℕ :=
+  if hi : i < k then v ⟨i, hi⟩ else 0
+
+private noncomputable def vectorFinsupp (k : ℕ) (v : Fin k → ℕ) : ℕ →₀ ℕ :=
+  Finsupp.onFinset (Finset.range k) (vectorExtend k v) (by
+    intro i hi
+    by_contra hik
+    have hnlt : ¬i < k := by simpa using hik
+    simp [vectorExtend, hnlt] at hi)
+
+@[simp]
+private theorem vectorFinsupp_apply_lt (k : ℕ) (v : Fin k → ℕ) (i : ℕ) (hi : i < k) :
+    vectorFinsupp k v i = v ⟨i, hi⟩ := by
+  simp [vectorFinsupp, vectorExtend, hi]
+
+private theorem vectorFinsupp_support_subset (k : ℕ) (v : Fin k → ℕ) :
+    (vectorFinsupp k v).support ⊆ Finset.range k :=
+  Finsupp.support_onFinset_subset
+
+private noncomputable def antidiagVectorEquiv (k n : ℕ) :
+    (Finset.finsuppAntidiag (Finset.range k) n) ≃
+      {v : Fin k → ℕ // ∑ i, v i = n} where
+  toFun l := ⟨fun i => l.1 i, by
+    rw [Fin.sum_univ_eq_sum_range]
+    exact (Finset.mem_finsuppAntidiag.mp l.2).1⟩
+  invFun v := by
+    refine ⟨vectorFinsupp k v.1, Finset.mem_finsuppAntidiag.mpr ⟨?_, ?_⟩⟩
+    · calc
+        (Finset.range k).sum (vectorFinsupp k v.1) =
+            ∑ i : Fin k, vectorFinsupp k v.1 i :=
+          (Fin.sum_univ_eq_sum_range (vectorFinsupp k v.1) k).symm
+        _ = ∑ i : Fin k, v.1 i := by
+          apply Finset.sum_congr rfl
+          intro i _hi
+          exact vectorFinsupp_apply_lt k v.1 i i.isLt
+        _ = n := v.2
+    · exact vectorFinsupp_support_subset k v.1
+  left_inv l := by
+    apply Subtype.ext
+    apply Finsupp.ext
+    intro i
+    by_cases hi : i < k
+    · exact vectorFinsupp_apply_lt k (fun j => l.1 j) i hi
+    · have hsupp := (Finset.mem_finsuppAntidiag.mp l.2).2
+      have hil : l.1 i = 0 := by
+        rw [← Finsupp.notMem_support_iff]
+        intro himem
+        exact hi (Finset.mem_range.mp (hsupp himem))
+      simp [vectorFinsupp, vectorExtend, hi, hil]
+  right_inv v := by
+    apply Subtype.ext
+    funext i
+    exact vectorFinsupp_apply_lt k v.1 i i.isLt
+
+@[simp]
+private theorem antidiagVectorEquiv_apply (k n : ℕ)
+    (l : Finset.finsuppAntidiag (Finset.range k) n) (i : Fin k) :
+    (antidiagVectorEquiv k n l).1 i = l.1 i := rfl
+
+private def positiveVectorEquiv (k n : ℕ) :
+    {v : {v : Fin k → ℕ // ∑ i, v i = n} // ∀ i, 0 < v.1 i} ≃
+      {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} where
+  toFun v := ⟨v.1.1, v.2, v.1.2⟩
+  invFun v := ⟨⟨v.1, v.2.2⟩, v.2.1⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+open Classical in
+/-- If `φ` has zero constant coefficient, coefficients of `φ ^ k` are indexed by the
+compositions with exactly `k` positive blocks. -/
+theorem coeff_pow_eq_composition_length_sum
+    (φ : PowerSeries ℝ) (hφ : PowerSeries.constantCoeff φ = 0) (k n : ℕ) :
+    PowerSeries.coeff n (φ ^ k) =
+      ∑ c : {c : Composition n // c.length = k},
+        ∏ i : Fin c.1.length, PowerSeries.coeff (c.1.blocksFun i) φ := by
+  letI : Fintype {v : Fin k → ℕ // ∑ i, v i = n} :=
+    Fintype.ofEquiv _ (antidiagVectorEquiv k n)
+  letI : Fintype {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} :=
+    Fintype.ofEquiv _ (positiveVectorEquiv k n)
+  rw [PowerSeries.coeff_pow]
+  calc
+    (∑ l ∈ Finset.finsuppAntidiag (Finset.range k) n,
+        ∏ i ∈ Finset.range k, PowerSeries.coeff (l i) φ) =
+      ∑ l : Finset.finsuppAntidiag (Finset.range k) n,
+        ∏ i : Fin k, PowerSeries.coeff (l.1 i) φ := by
+      rw [← Finset.sum_attach]
+      apply Finset.sum_congr rfl
+      intro l _hl
+      exact (Fin.prod_univ_eq_prod_range
+        (fun i => PowerSeries.coeff (l.1 i) φ) k).symm
+    _ = ∑ v : {v : Fin k → ℕ // ∑ i, v i = n},
+        ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ := by
+      simpa only [antidiagVectorEquiv_apply] using
+        (antidiagVectorEquiv k n).sum_comp
+          (fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ)
+    _ = ∑ v : {v : {v : Fin k → ℕ // ∑ i, v i = n} // ∀ i, 0 < v.1 i},
+        ∏ i : Fin k, PowerSeries.coeff (v.1.1 i) φ := by
+      let S := {v : Fin k → ℕ // ∑ i, v i = n}
+      let P : S → Prop := fun v => ∀ i, 0 < v.1 i
+      let F : S → ℝ := fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ
+      change (∑ v : S, F v) = ∑ v : {v : S // P v}, F v.1
+      rw [← Finset.sum_subtype
+        (p := P) (Finset.univ.filter P) (by simp) F]
+      symm
+      apply Finset.sum_subset (Finset.filter_subset _ _)
+      intro v _hv hv
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, P] at hv
+      push Not at hv
+      obtain ⟨i, hi⟩ := hv
+      have hzero : v.1 i = 0 := by omega
+      apply Finset.prod_eq_zero (Finset.mem_univ i)
+      rw [hzero, PowerSeries.coeff_zero_eq_constantCoeff, hφ]
+    _ = ∑ v : {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n},
+        ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ := by
+      exact (positiveVectorEquiv k n).sum_comp
+        (fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ)
+    _ = _ := by
+      rw [← (compositionLengthEquiv n k).sum_comp]
+      apply Finset.sum_congr rfl
+      intro c _hc
+      rcases c with ⟨c, hc⟩
+      subst k
+      rfl
+
+private def compositionLengthSigmaEquiv (n : ℕ) :
+    (Σ k : Fin (n + 1), {c : Composition n // c.length = k}) ≃ Composition n where
+  toFun p := p.2.1
+  invFun c := ⟨⟨c.length, Nat.lt_succ_of_le c.length_le⟩, ⟨c, rfl⟩⟩
+  left_inv p := by
+    rcases p with ⟨k, c, hc⟩
+    have hk : (⟨c.length, Nat.lt_succ_of_le c.length_le⟩ : Fin (n + 1)) = k :=
+      Fin.ext hc
+    cases hk
+    rfl
+  right_inv _ := rfl
+
+open Classical in
+/-- The positive-degree coefficient of `log (1 + φ)` is its finite composition
+polynomial when `φ` has zero constant coefficient. -/
+theorem coeff_log_subst_eq_composition_sum
+    (φ : PowerSeries ℝ) (hφ : PowerSeries.constantCoeff φ = 0) (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n ((PowerSeries.log ℝ).subst φ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) / c.length *
+          ∏ i : Fin c.length, PowerSeries.coeff (c.blocksFun i) φ := by
+  have hsupp : Function.support (fun k : ℕ =>
+      PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ k)) ⊆
+      (Finset.range (n + 1) : Set ℕ) := by
+    intro k hk
+    simp only [Function.mem_support] at hk
+    by_contra hkrange
+    have hnk : n < k := by simpa [Finset.mem_range, not_lt] using hkrange
+    have hpow : PowerSeries.coeff n (φ ^ k) = 0 := by
+      rw [coeff_pow_eq_composition_length_sum φ hφ]
+      apply Finset.sum_eq_zero
+      rintro ⟨c, hc⟩ _hmem
+      exact False.elim (Nat.not_lt_of_ge c.length_le (hc.symm ▸ hnk))
+    simp [hpow] at hk
+  rw [PowerSeries.coeff_subst' (PowerSeries.HasSubst.of_constantCoeff_zero' hφ),
+    finsum_eq_sum_of_support_subset _ hsupp]
+  calc
+    (∑ k ∈ Finset.range (n + 1),
+        PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ k)) =
+      ∑ k : Fin (n + 1),
+        PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ (k : ℕ)) := by
+      exact (Fin.sum_univ_eq_sum_range (fun k =>
+        PowerSeries.coeff k (PowerSeries.log ℝ) •
+          PowerSeries.coeff n (φ ^ k)) (n + 1)).symm
+    _ = ∑ k : Fin (n + 1),
+        ∑ c : {c : Composition n // c.length = k},
+          PowerSeries.coeff k (PowerSeries.log ℝ) *
+            ∏ i : Fin c.1.length, PowerSeries.coeff (c.1.blocksFun i) φ := by
+      apply Finset.sum_congr rfl
+      intro k _hk
+      rw [coeff_pow_eq_composition_length_sum φ hφ (k : ℕ)]
+      simp only [smul_eq_mul, Finset.mul_sum]
+    _ = ∑ p : Σ k : Fin (n + 1), {c : Composition n // c.length = k},
+        PowerSeries.coeff p.1 (PowerSeries.log ℝ) *
+          ∏ i : Fin p.2.1.length, PowerSeries.coeff (p.2.1.blocksFun i) φ := by
+      rw [Fintype.sum_sigma]
+    _ = ∑ c : Composition n,
+        PowerSeries.coeff ((compositionLengthSigmaEquiv n).symm c).1
+            (PowerSeries.log ℝ) *
+          ∏ i : Fin ((compositionLengthSigmaEquiv n).symm c).2.1.length,
+            PowerSeries.coeff
+              (((compositionLengthSigmaEquiv n).symm c).2.1.blocksFun i) φ := by
+      exact ((compositionLengthSigmaEquiv n).symm.sum_comp
+        (fun p => PowerSeries.coeff p.1 (PowerSeries.log ℝ) *
+          ∏ i : Fin p.2.1.length,
+            PowerSeries.coeff (p.2.1.blocksFun i) φ)).symm
+    _ = ∑ c : Composition n,
+        PowerSeries.coeff c.length (PowerSeries.log ℝ) *
+          ∏ i : Fin c.length, PowerSeries.coeff (c.blocksFun i) φ := by
+      apply Finset.sum_congr rfl
+      intro c _hc
+      rfl
+    _ = _ := by
+      apply Finset.sum_congr rfl
+      intro c _hc
+      have hclen : c.length ≠ 0 := (c.length_pos_of_pos hn).ne'
+      rw [PowerSeries.coeff_log, if_neg hclen]
+      norm_num [map_div₀, map_pow]
+
+/-- The formal logarithm has derivative `(1 + X)⁻¹`, in multiplicative form. -/
+theorem one_add_X_mul_derivative_log :
+    (1 + PowerSeries.X : PowerSeries ℝ) *
+        (PowerSeries.derivative ℝ) (PowerSeries.log ℝ) = 1 := by
+  rw [PowerSeries.deriv_log]
+  ext (_ | n)
+  · norm_num
+  · simp [add_mul]
+    rw [pow_succ]
+    ring
+
+/-- Formal logarithmic differentiation: `Q (log Q)' = Q'` for a series with constant
+coefficient one. -/
+theorem mul_derivative_logOf (Q : PowerSeries ℝ)
+    (hQ : PowerSeries.constantCoeff Q = 1) :
+    Q * (PowerSeries.derivative ℝ) (PowerSeries.logOf Q) =
+      (PowerSeries.derivative ℝ) Q := by
+  let φ := Q - 1
+  have hφ : PowerSeries.constantCoeff φ = 0 := by
+    dsimp [φ]
+    rw [map_sub, map_one, hQ, sub_self]
+  have hsubst : PowerSeries.HasSubst φ :=
+    PowerSeries.HasSubst.of_constantCoeff_zero' hφ
+  have hinv : Q *
+      ((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ = 1 := by
+    have hsub := congrArg (fun f : PowerSeries ℝ => f.subst φ)
+      one_add_X_mul_derivative_log
+    rw [PowerSeries.subst_mul hsubst,
+      PowerSeries.subst_add hsubst,
+      PowerSeries.subst_X hsubst] at hsub
+    have hone : PowerSeries.subst φ (1 : PowerSeries ℝ) = 1 := by
+      rw [← PowerSeries.coe_substAlgHom hsubst]
+      exact map_one (PowerSeries.substAlgHom hsubst)
+    rw [hone] at hsub
+    convert hsub using 1 <;> dsimp [φ] <;> ring
+  rw [PowerSeries.logOf_eq, PowerSeries.derivative_subst hsubst]
+  calc
+    Q * (((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ *
+        (PowerSeries.derivative ℝ) φ) =
+      (Q * ((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ) *
+        (PowerSeries.derivative ℝ) φ := by ring
+    _ = (PowerSeries.derivative ℝ) Q := by
+      rw [hinv, one_mul]
+      dsimp [φ]
+      simp
+
+/-- The generating power series of forward survival probabilities. -/
+noncomputable def fwdSurvivalSeries : PowerSeries ℝ :=
+  PowerSeries.mk fun n => (fwdSurv n : ℝ)
+
+@[simp]
+theorem coeff_fwdSurvivalSeries (n : ℕ) :
+    PowerSeries.coeff n fwdSurvivalSeries = (fwdSurv n : ℝ) := by
+  simp [fwdSurvivalSeries]
+
+@[simp]
+theorem fwdSurv_zero : (fwdSurv 0 : ℝ) = 1 := by
+  have hq : fwdSurv 0 = 1 := by
+    rw [fwdSurv]
+    calc
+      (∑ w : Fin 0 → Bool,
+          if ∀ t : ℕ, 1 ≤ t → t ≤ 0 →
+              2 ^ (t + (Finset.univ.filter fun i : Fin 0 =>
+                i.val < t ∧ w i = true).card) < 3 ^ t then
+            (1 / 2 : ℚ) ^ 0 else 0) = ∑ _w : Fin 0 → Bool, (1 : ℚ) := by
+        apply Finset.sum_congr rfl
+        intro w _hw
+        rw [if_pos]
+        · norm_num
+        · intro t ht ht0
+          omega
+      _ = 1 := by simp
+  exact_mod_cast hq
+
+@[simp]
+theorem constantCoeff_fwdSurvivalSeries :
+    PowerSeries.constantCoeff fwdSurvivalSeries = 1 := by
+  rw [← PowerSeries.coeff_zero_eq_constantCoeff_apply]
+  simp
+
+private theorem constantCoeff_fwdSurvivalSeries_sub_one :
+    PowerSeries.constantCoeff (fwdSurvivalSeries - 1) = 0 := by
+  rw [map_sub, map_one, constantCoeff_fwdSurvivalSeries, sub_self]
+
+private theorem coeff_fwdSurvivalSeries_sub_one (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (fwdSurvivalSeries - 1) = (fwdSurv n : ℝ) := by
+  rw [map_sub, coeff_fwdSurvivalSeries, PowerSeries.coeff_one, if_neg hn.ne']
+  simp
+
+open Classical in
+/-- Positive coefficients of the formal logarithm of the forward survival series are the
+forward endpoint-positive probabilities divided by time. -/
+theorem coeff_logOf_fwdSurvivalSeries (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (PowerSeries.logOf fwdSurvivalSeries) =
+      fwdPosTerm n / n := by
+  rw [PowerSeries.logOf_eq,
+    coeff_log_subst_eq_composition_sum
+      (fwdSurvivalSeries - 1) constantCoeff_fwdSurvivalSeries_sub_one n hn]
+  have hcomp : fwdPosTerm n / (n : ℝ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+    have hbase := fwdPosTerm_div_eq_composition_sum (n - 1)
+    have hcast : ((n - 1 : ℕ) : ℝ) + 1 = n := by
+      exact_mod_cast Nat.sub_add_cancel hn
+    rw [Nat.sub_add_cancel hn, hcast] at hbase
+    exact hbase
+  rw [hcomp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  have hprod :
+      (∏ i : Fin c.length,
+          PowerSeries.coeff (c.blocksFun i) (fwdSurvivalSeries - 1)) =
+        ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+    apply Finset.prod_congr rfl
+    intro i _hi
+    rw [coeff_fwdSurvivalSeries_sub_one]
+    exact c.one_le_blocksFun i
+  rw [hprod]
+  ring
+
+open Classical in
+/-- The forward survival probabilities satisfy the Sparre--Andersen renewal recurrence. -/
+theorem fwdSurv_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (fwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) * fwdPosTerm (n - k + 1) := by
+  have h := congrArg (PowerSeries.coeff n)
+    (mul_derivative_logOf fwdSurvivalSeries constantCoeff_fwdSurvivalSeries)
+  rw [PowerSeries.coeff_mul, PowerSeries.coeff_derivative,
+    coeff_fwdSurvivalSeries] at h
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk] at h
+  simp only [coeff_fwdSurvivalSeries, PowerSeries.coeff_derivative] at h
+  have hterm : ∀ k ∈ Finset.range (n + 1),
+      PowerSeries.coeff (n - k + 1) (PowerSeries.logOf fwdSurvivalSeries) *
+          (((n - k : ℕ) : ℝ) + 1) = fwdPosTerm (n - k + 1) := by
+    intro k hk
+    rw [coeff_logOf_fwdSurvivalSeries]
+    · have hcast : ((n - k + 1 : ℕ) : ℝ) = ((n - k : ℕ) : ℝ) + 1 := by
+        norm_num
+      rw [← hcast]
+      field_simp
+    · omega
+  have hsum :
+      (∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) *
+          (PowerSeries.coeff (n - k + 1) (PowerSeries.logOf fwdSurvivalSeries) *
+            (((n - k : ℕ) : ℝ) + 1))) =
+        ∑ k ∈ Finset.range (n + 1),
+          (fwdSurv k : ℝ) * fwdPosTerm (n - k + 1) := by
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [hterm k hk]
+  rw [hsum] at h
+  nlinarith
+
+/-- The generating power series of backward survival probabilities. -/
+noncomputable def bwdSurvivalSeries : PowerSeries ℝ :=
+  PowerSeries.mk fun n => (bwdSurv n : ℝ)
+
+@[simp]
+theorem coeff_bwdSurvivalSeries (n : ℕ) :
+    PowerSeries.coeff n bwdSurvivalSeries = (bwdSurv n : ℝ) := by
+  simp [bwdSurvivalSeries]
+
+@[simp]
+theorem bwdSurv_zero : (bwdSurv 0 : ℝ) = 1 := by
+  have hq : bwdSurv 0 = 1 := by
+    rw [bwdSurv]
+    calc
+      (∑ w : Fin 0 → Bool,
+          if ∀ t : ℕ, 1 ≤ t → t ≤ 0 →
+              3 ^ t < 2 ^ (t + (Finset.univ.filter fun i : Fin 0 =>
+                i.val < t ∧ w i = true).card) then
+            (2 / 3 : ℚ) ^ (Finset.univ.filter fun i : Fin 0 => w i = true).card *
+              (1 / 3 : ℚ) ^ (Finset.univ.filter fun i : Fin 0 => w i = false).card
+          else 0) = ∑ _w : Fin 0 → Bool, (1 : ℚ) := by
+        apply Finset.sum_congr rfl
+        intro w _hw
+        rw [if_pos]
+        · norm_num
+        · intro t ht ht0
+          omega
+      _ = 1 := by simp
+  exact_mod_cast hq
+
+@[simp]
+theorem constantCoeff_bwdSurvivalSeries :
+    PowerSeries.constantCoeff bwdSurvivalSeries = 1 := by
+  rw [← PowerSeries.coeff_zero_eq_constantCoeff_apply]
+  simp
+
+private theorem constantCoeff_bwdSurvivalSeries_sub_one :
+    PowerSeries.constantCoeff (bwdSurvivalSeries - 1) = 0 := by
+  rw [map_sub, map_one, constantCoeff_bwdSurvivalSeries, sub_self]
+
+private theorem coeff_bwdSurvivalSeries_sub_one (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (bwdSurvivalSeries - 1) = (bwdSurv n : ℝ) := by
+  rw [map_sub, coeff_bwdSurvivalSeries, PowerSeries.coeff_one, if_neg hn.ne']
+  simp
+
+open Classical in
+/-- Positive coefficients of the formal logarithm of the backward survival series are the
+backward endpoint-positive probabilities divided by time. -/
+theorem coeff_logOf_bwdSurvivalSeries (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (PowerSeries.logOf bwdSurvivalSeries) =
+      bwdPosTerm n / n := by
+  rw [PowerSeries.logOf_eq,
+    coeff_log_subst_eq_composition_sum
+      (bwdSurvivalSeries - 1) constantCoeff_bwdSurvivalSeries_sub_one n hn]
+  have hcomp : bwdPosTerm n / (n : ℝ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+    have hbase := bwdPosTerm_div_eq_composition_sum (n - 1)
+    have hcast : ((n - 1 : ℕ) : ℝ) + 1 = n := by
+      exact_mod_cast Nat.sub_add_cancel hn
+    rw [Nat.sub_add_cancel hn, hcast] at hbase
+    exact hbase
+  rw [hcomp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  have hprod :
+      (∏ i : Fin c.length,
+          PowerSeries.coeff (c.blocksFun i) (bwdSurvivalSeries - 1)) =
+        ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+    apply Finset.prod_congr rfl
+    intro i _hi
+    rw [coeff_bwdSurvivalSeries_sub_one]
+    exact c.one_le_blocksFun i
+  rw [hprod]
+  ring
+
+open Classical in
+/-- The backward survival probabilities satisfy the Sparre--Andersen renewal recurrence. -/
+theorem bwdSurv_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (bwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) * bwdPosTerm (n - k + 1) := by
+  have h := congrArg (PowerSeries.coeff n)
+    (mul_derivative_logOf bwdSurvivalSeries constantCoeff_bwdSurvivalSeries)
+  rw [PowerSeries.coeff_mul, PowerSeries.coeff_derivative,
+    coeff_bwdSurvivalSeries] at h
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk] at h
+  simp only [coeff_bwdSurvivalSeries, PowerSeries.coeff_derivative] at h
+  have hterm : ∀ k ∈ Finset.range (n + 1),
+      PowerSeries.coeff (n - k + 1) (PowerSeries.logOf bwdSurvivalSeries) *
+          (((n - k : ℕ) : ℝ) + 1) = bwdPosTerm (n - k + 1) := by
+    intro k hk
+    rw [coeff_logOf_bwdSurvivalSeries]
+    · have hcast : ((n - k + 1 : ℕ) : ℝ) = ((n - k : ℕ) : ℝ) + 1 := by
+        norm_num
+      rw [← hcast]
+      field_simp
+    · omega
+  have hsum :
+      (∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) *
+          (PowerSeries.coeff (n - k + 1) (PowerSeries.logOf bwdSurvivalSeries) *
+            (((n - k : ℕ) : ℝ) + 1))) =
+        ∑ k ∈ Finset.range (n + 1),
+          (bwdSurv k : ℝ) * bwdPosTerm (n - k + 1) := by
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [hterm k hk]
+  rw [hsum] at h
+  nlinarith
+
+/-! ## Abelian boundary passage and directional limits -/
+
+open Classical in
+theorem sum_fwdWordWeight_one :
+    (∑ v : Fin 1 → Bool, fwdWordWeight v) = 1 := by
+  simp [fwdWordWeight]
+
+open Classical in
+theorem sum_bwdWordWeight_one :
+    (∑ v : Fin 1 → Bool, bwdWordWeight v) = 1 := by
+  unfold bwdWordWeight
+  change (∑ v : Fin 1 → Bool,
+    (fun o : ℕ => (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (1 - o)) (wordTrueCount v)) = 1
+  rw [sum_boolWords_by_trueCount 1
+    (fun o : ℕ => (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (1 - o))]
+  norm_num [Finset.sum_range_succ]
+
+theorem fwdWordWeight_nonneg {L : ℕ} (w : Fin L → Bool) :
+    0 ≤ fwdWordWeight w := by
+  unfold fwdWordWeight
+  positivity
+
+theorem bwdWordWeight_nonneg {L : ℕ} (w : Fin L → Bool) :
+    0 ≤ bwdWordWeight w := by
+  unfold bwdWordWeight
+  positivity
+
+open Classical in
+theorem fwdSurv_succ_le (L : ℕ) :
+    (fwdSurv (L + 1) : ℝ) ≤ (fwdSurv L : ℝ) := by
+  rw [fwdSurv_cast_eq_weighted_word_sum, fwdSurv_cast_eq_weighted_word_sum]
+  calc
+    (∑ w : Fin (L + 1) → Bool, if FwdGood (L + 1) w then fwdWordWeight w else 0) =
+        ∑ p : (Fin L → Bool) × (Fin 1 → Bool),
+          if FwdGood (L + 1) (Fin.append p.1 p.2) then
+            fwdWordWeight (Fin.append p.1 p.2) else 0 := by
+      exact ((Fin.appendEquiv L 1).sum_comp (fun w =>
+        if FwdGood (L + 1) w then fwdWordWeight w else 0)).symm
+    _ = ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if FwdGood (L + 1) (Fin.append u v) then
+            fwdWordWeight (Fin.append u v) else 0 := by
+      rw [Fintype.sum_prod_type]
+    _ ≤ ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if FwdGood L u then fwdWordWeight (Fin.append u v) else 0 := by
+      apply Finset.sum_le_sum
+      intro u _hu
+      apply Finset.sum_le_sum
+      intro v _hv
+      split_ifs with huv hu
+      · exact le_rfl
+      · exact False.elim (hu (FwdGood.of_append_left huv))
+      · exact fwdWordWeight_nonneg _
+      · exact le_rfl
+    _ = ∑ u : Fin L → Bool, if FwdGood L u then fwdWordWeight u else 0 := by
+      apply Finset.sum_congr rfl
+      intro u _hu
+      split_ifs
+      · simp_rw [fwdWordWeight_append]
+        rw [← Finset.mul_sum, sum_fwdWordWeight_one, mul_one]
+      · simp
+
+open Classical in
+theorem bwdSurv_succ_le (L : ℕ) :
+    (bwdSurv (L + 1) : ℝ) ≤ (bwdSurv L : ℝ) := by
+  rw [bwdSurv_cast_eq_weighted_word_sum, bwdSurv_cast_eq_weighted_word_sum]
+  calc
+    (∑ w : Fin (L + 1) → Bool, if BwdGood (L + 1) w then bwdWordWeight w else 0) =
+        ∑ p : (Fin L → Bool) × (Fin 1 → Bool),
+          if BwdGood (L + 1) (Fin.append p.1 p.2) then
+            bwdWordWeight (Fin.append p.1 p.2) else 0 := by
+      exact ((Fin.appendEquiv L 1).sum_comp (fun w =>
+        if BwdGood (L + 1) w then bwdWordWeight w else 0)).symm
+    _ = ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if BwdGood (L + 1) (Fin.append u v) then
+            bwdWordWeight (Fin.append u v) else 0 := by
+      rw [Fintype.sum_prod_type]
+    _ ≤ ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if BwdGood L u then bwdWordWeight (Fin.append u v) else 0 := by
+      apply Finset.sum_le_sum
+      intro u _hu
+      apply Finset.sum_le_sum
+      intro v _hv
+      split_ifs with huv hu
+      · exact le_rfl
+      · exact False.elim (hu (BwdGood.of_append_left huv))
+      · exact bwdWordWeight_nonneg _
+      · exact le_rfl
+    _ = ∑ u : Fin L → Bool, if BwdGood L u then bwdWordWeight u else 0 := by
+      apply Finset.sum_congr rfl
+      intro u _hu
+      split_ifs
+      · simp_rw [bwdWordWeight_append]
+        rw [← Finset.mul_sum, sum_bwdWordWeight_one, mul_one]
+      · simp
+
+theorem antitone_fwdSurv : Antitone fun L : ℕ => (fwdSurv L : ℝ) :=
+  antitone_nat_of_succ_le fwdSurv_succ_le
+
+theorem antitone_bwdSurv : Antitone fun L : ℕ => (bwdSurv L : ℝ) :=
+  antitone_nat_of_succ_le bwdSurv_succ_le
+
+noncomputable def shiftedPowerSeries (q : ℕ → ℝ) (x : ℝ) : ℝ :=
+  q 0 + ∑' n : ℕ, q (n + 1) * x ^ (n + 1)
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_shiftedPowerSeries (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (shiftedPowerSeries q)
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) x := by
+  let r : ℝ := (|x| + 1) / 2
+  have hr0 : 0 ≤ r := by dsimp [r]; positivity
+  have hxr : |x| < r := by dsimp [r]; linarith
+  have hrpos : 0 < r := (abs_nonneg x).trans_lt hxr
+  have hr1 : r < 1 := by dsimp [r]; linarith
+  have hrnorm : ‖r‖ < 1 := by simpa [Real.norm_eq_abs, abs_of_nonneg hr0]
+  have hu : Summable (fun n : ℕ => (n + 1 : ℝ) * r ^ n) := by
+    have hn := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hrnorm
+    have hg := summable_geometric_of_lt_one hr0 hr1
+    simpa [pow_one, add_mul] using hn.add hg
+  have hseries := hasDerivAt_tsum_of_isPreconnected
+    (g := fun (n : ℕ) (y : ℝ) => q (n + 1) * y ^ (n + 1))
+    (g' := fun (n : ℕ) (y : ℝ) => (n + 1 : ℝ) * q (n + 1) * y ^ n)
+    (u := fun n : ℕ => (n + 1 : ℝ) * r ^ n)
+    hu isOpen_Ioo Set.ordConnected_Ioo.isPreconnected
+    (fun n y _hy => by
+      simpa [Nat.add_sub_cancel, mul_comm, mul_left_comm, mul_assoc] using
+        (hasDerivAt_pow (n + 1) y).const_mul (q (n + 1)))
+    (fun n y hy => by
+      have hay : |y| < r := abs_lt.mpr hy
+      rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_pow]
+      have hn0 : (0 : ℝ) ≤ n + 1 := by positivity
+      rw [abs_of_nonneg hn0]
+      calc
+        (n + 1 : ℝ) * |q (n + 1)| * |y| ^ n ≤
+            (n + 1 : ℝ) * 1 * r ^ n := by
+          gcongr
+          · exact hq (n + 1)
+        _ = (n + 1 : ℝ) * r ^ n := by ring)
+    (show (0 : ℝ) ∈ Set.Ioo (-r) r by simp [hrpos])
+    (show Summable (fun n : ℕ => q (n + 1) * (0 : ℝ) ^ (n + 1)) by simp)
+    (show x ∈ Set.Ioo (-r) r by exact abs_lt.mp hxr)
+  unfold shiftedPowerSeries
+  exact hseries.const_add (q 0)
+
+noncomputable def defectCoeff (a : ℕ → ℝ) : ℕ → ℝ
+  | 0 => 0
+  | n + 1 => a (n + 1) / (n + 1)
+
+noncomputable def defectPowerSeries (a : ℕ → ℝ) (x : ℝ) : ℝ :=
+  shiftedPowerSeries (defectCoeff a) x
+
+theorem abs_defectCoeff_le_one (a : ℕ → ℝ) (ha : ∀ n, |a n| ≤ 1) :
+    ∀ n, |defectCoeff a n| ≤ 1 := by
+  intro n
+  cases n with
+  | zero => simp [defectCoeff]
+  | succ n =>
+      rw [defectCoeff, abs_div]
+      apply (div_le_one (by positivity : (0 : ℝ) < |(n + 1 : ℝ)|)).2
+      calc
+        |a (n + 1)| ≤ 1 := ha (n + 1)
+        _ ≤ |(n + 1 : ℝ)| := by
+          rw [abs_of_nonneg (by positivity)]
+          norm_num
+
+theorem hasDerivAt_defectPowerSeries (a : ℕ → ℝ)
+    (ha : ∀ n, |a n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (defectPowerSeries a)
+      (∑' n : ℕ, a (n + 1) * x ^ n) x := by
+  have h := hasDerivAt_shiftedPowerSeries (defectCoeff a)
+    (abs_defectCoeff_le_one a ha) hx
+  unfold defectPowerSeries
+  convert h using 1
+  apply tsum_congr
+  intro n
+  rw [defectCoeff]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  field_simp
+
+theorem summable_powerSeries_of_abs_le_one (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    Summable fun n : ℕ => q n * x ^ n := by
+  apply Summable.of_norm_bounded (summable_geometric_of_lt_one (abs_nonneg x) hx)
+  intro n
+  rw [norm_mul, Real.norm_eq_abs, norm_pow, Real.norm_eq_abs]
+  calc
+    |q n| * |x| ^ n ≤ 1 * |x| ^ n := by gcongr; exact hq n
+    _ = |x| ^ n := one_mul _
+
+theorem shiftedPowerSeries_eq_tsum (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    shiftedPowerSeries q x = ∑' n : ℕ, q n * x ^ n := by
+  have hsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hsplit := hsum.sum_add_tsum_nat_add 1
+  unfold shiftedPowerSeries
+  simpa [Finset.sum_range_succ] using hsplit
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_shiftedPowerSeries_of_recurrence
+    (q a : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (shiftedPowerSeries q)
+      (shiftedPowerSeries q x *
+        ∑' n : ℕ, (1 - a (n + 1)) * x ^ n) x := by
+  have hgabs : ∀ n : ℕ, |1 - a (n + 1)| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (sub_nonneg.mpr (ha1 (n + 1)))]
+    linarith [ha0 (n + 1)]
+  have hqsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hgsum := summable_powerSeries_of_abs_le_one (fun n => 1 - a (n + 1)) hgabs hx
+  have hcauchy := tsum_mul_tsum_eq_tsum_sum_range_of_summable_norm hqsum.norm hgsum.norm
+  have hvalue :
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) =
+        shiftedPowerSeries q x *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := by
+    calc
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) =
+          ∑' n : ℕ,
+            (∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1))) * x ^ n := by
+        apply tsum_congr
+        intro n
+        rw [hrec n]
+      _ = ∑' n : ℕ, ∑ k ∈ Finset.range (n + 1),
+            (q k * x ^ k) * ((1 - a (n - k + 1)) * x ^ (n - k)) := by
+        apply tsum_congr
+        intro n
+        rw [Finset.sum_mul]
+        apply Finset.sum_congr rfl
+        intro k hk
+        have hkn : k ≤ n := Nat.le_of_lt_succ (Finset.mem_range.mp hk)
+        have hpow : x ^ n = x ^ k * x ^ (n - k) := by
+          rw [← pow_add, Nat.add_sub_of_le hkn]
+        rw [hpow]
+        ring
+      _ = (∑' n : ℕ, q n * x ^ n) *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := hcauchy.symm
+      _ = shiftedPowerSeries q x *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := by
+        rw [shiftedPowerSeries_eq_tsum q hq hx]
+  exact (hasDerivAt_shiftedPowerSeries q hq hx).congr_deriv hvalue
+
+theorem one_sub_defectSeries_eq (a : ℕ → ℝ)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    (∑' n : ℕ, (1 - a (n + 1)) * x ^ n) =
+      1 / (1 - x) - ∑' n : ℕ, a (n + 1) * x ^ n := by
+  have haabs : ∀ n : ℕ, |a (n + 1)| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (ha0 (n + 1))]
+    exact ha1 (n + 1)
+  have hasum := summable_powerSeries_of_abs_le_one (fun n => a (n + 1)) haabs hx
+  have hgeom : Summable fun n : ℕ => x ^ n :=
+    summable_geometric_of_norm_lt_one (by simpa [Real.norm_eq_abs] using hx)
+  calc
+    (∑' n : ℕ, (1 - a (n + 1)) * x ^ n) =
+        (∑' n : ℕ, (x ^ n - a (n + 1) * x ^ n)) := by
+      apply tsum_congr
+      intro n
+      ring
+    _ = (∑' n : ℕ, x ^ n) - (∑' n : ℕ, a (n + 1) * x ^ n) :=
+      hgeom.tsum_sub hasum
+    _ = 1 / (1 - x) - (∑' n : ℕ, a (n + 1) * x ^ n) := by
+      rw [tsum_geometric_of_norm_lt_one (by simpa [Real.norm_eq_abs] using hx)]
+      simp [div_eq_mul_inv]
+
+noncomputable def integratingFactor (q a : ℕ → ℝ) (x : ℝ) : ℝ :=
+  (1 - x) * shiftedPowerSeries q x * Real.exp (defectPowerSeries a x)
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_integratingFactor
+    (q a : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (integratingFactor q a) 0 x := by
+  have haabs : ∀ n, |a n| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (ha0 n)]
+    exact ha1 n
+  have hQ := hasDerivAt_shiftedPowerSeries_of_recurrence q a hq ha0 ha1 hrec hx
+  have hA := hasDerivAt_defectPowerSeries a haabs hx
+  have hprod := (((hasDerivAt_const x 1).sub (hasDerivAt_id x)).mul hQ).mul hA.exp
+  have hvalue :
+      (((0 - 1) * shiftedPowerSeries q x +
+          (1 - x) * (shiftedPowerSeries q x *
+            ∑' n : ℕ, (1 - a (n + 1)) * x ^ n)) *
+          Real.exp (defectPowerSeries a x) +
+        ((1 - x) * shiftedPowerSeries q x) *
+          (Real.exp (defectPowerSeries a x) *
+            ∑' n : ℕ, a (n + 1) * x ^ n)) = 0 := by
+    rw [one_sub_defectSeries_eq a ha0 ha1 hx]
+    have hxlt : x < 1 := (le_abs_self x).trans_lt hx
+    have hden : 1 - x ≠ 0 := sub_ne_zero.mpr (ne_of_gt hxlt)
+    field_simp
+    ring
+  apply (hprod.congr_deriv hvalue).congr_of_eventuallyEq
+  exact Filter.Eventually.of_forall fun y => by
+    simp [integratingFactor]
+
+set_option maxHeartbeats 800000 in
+theorem sparreAndersen_generating_identity
+    (q a : ℕ → ℝ) (hq0 : q 0 = 1) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    (1 - x) * shiftedPowerSeries q x =
+      Real.exp (-defectPowerSeries a x) := by
+  have hdiff : DifferentiableOn ℝ (integratingFactor q a) (Set.Ioo (-1) 1) := by
+    intro y hy
+    exact (hasDerivAt_integratingFactor q a hq ha0 ha1 hrec
+      (abs_lt.mpr hy)).differentiableAt.differentiableWithinAt
+  have hderiv : Set.EqOn (deriv (integratingFactor q a)) 0 (Set.Ioo (-1) 1) := by
+    intro y hy
+    exact (hasDerivAt_integratingFactor q a hq ha0 ha1 hrec
+      (abs_lt.mpr hy)).deriv
+  have hconst := isOpen_Ioo.is_const_of_deriv_eq_zero
+    Set.ordConnected_Ioo.isPreconnected hdiff hderiv (abs_lt.mp hx)
+    (show (0 : ℝ) ∈ Set.Ioo (-1) 1 by norm_num)
+  have hzero : integratingFactor q a 0 = 1 := by
+    simp [integratingFactor, shiftedPowerSeries, defectPowerSeries,
+      defectCoeff, hq0]
+  rw [hzero] at hconst
+  have hexp : Real.exp (defectPowerSeries a x) ≠ 0 := Real.exp_ne_zero _
+  rw [integratingFactor] at hconst
+  calc
+    (1 - x) * shiftedPowerSeries q x =
+        1 / Real.exp (defectPowerSeries a x) := (eq_div_iff hexp).2 hconst
+    _ = Real.exp (-defectPowerSeries a x) := by
+      simp [Real.exp_neg, div_eq_mul_inv]
+
+def differenceCoeff (q : ℕ → ℝ) : ℕ → ℝ
+  | 0 => q 0
+  | n + 1 => q (n + 1) - q n
+
+theorem sum_range_succ_differenceCoeff (q : ℕ → ℝ) (n : ℕ) :
+    (∑ i ∈ Finset.range (n + 1), differenceCoeff q i) = q n := by
+  induction n with
+  | zero => simp [differenceCoeff]
+  | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      simp [differenceCoeff]
+
+theorem summable_differencePowerSeries (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    Summable fun n : ℕ => differenceCoeff q n * x ^ n := by
+  have hgeom := (summable_geometric_of_lt_one (abs_nonneg x) hx).mul_left 2
+  apply Summable.of_norm_bounded hgeom
+  intro n
+  rw [norm_mul, Real.norm_eq_abs, norm_pow, Real.norm_eq_abs]
+  have hd : |differenceCoeff q n| ≤ 2 := by
+    cases n with
+    | zero => simpa [differenceCoeff] using (hq 0).trans (by norm_num : (1 : ℝ) ≤ 2)
+    | succ n =>
+        rw [differenceCoeff]
+        exact (abs_sub _ _).trans (by linarith [hq (n + 1), hq n])
+  gcongr
+
+set_option maxHeartbeats 800000 in
+theorem differencePowerSeries_eq (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    (∑' n : ℕ, differenceCoeff q n * x ^ n) =
+      (1 - x) * shiftedPowerSeries q x := by
+  have hqsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hnextBase := summable_powerSeries_of_abs_le_one (fun n => q (n + 1)) (fun n => hq (n + 1)) hx
+  have hnext : Summable fun n : ℕ => q (n + 1) * x ^ (n + 1) := by
+    exact (hnextBase.mul_right x).congr (fun n => by rw [pow_succ]; ring)
+  have hcurrent : Summable fun n : ℕ => q n * x ^ (n + 1) := by
+    exact (hqsum.mul_right x).congr (fun n => by rw [pow_succ]; ring)
+  have hdiff := summable_differencePowerSeries q hq hx
+  have hsplit := hdiff.sum_add_tsum_nat_add 1
+  have hcurrentValue :
+      (∑' n : ℕ, q n * x ^ (n + 1)) =
+        x * ∑' n : ℕ, q n * x ^ n := by
+    rw [← tsum_mul_left]
+    apply tsum_congr
+    intro n
+    rw [pow_succ]
+    ring
+  calc
+    (∑' n : ℕ, differenceCoeff q n * x ^ n) =
+        differenceCoeff q 0 +
+          ∑' n : ℕ, differenceCoeff q (n + 1) * x ^ (n + 1) := by
+      simpa [Finset.sum_range_succ] using hsplit.symm
+    _ = q 0 + ∑' n : ℕ,
+        (q (n + 1) * x ^ (n + 1) - q n * x ^ (n + 1)) := by
+      rw [differenceCoeff]
+      congr 1
+      apply tsum_congr
+      intro n
+      rw [differenceCoeff]
+      ring
+    _ = q 0 + ((∑' n : ℕ, q (n + 1) * x ^ (n + 1)) -
+        ∑' n : ℕ, q n * x ^ (n + 1)) := by
+      rw [hnext.tsum_sub hcurrent]
+    _ = shiftedPowerSeries q x - x * (∑' n : ℕ, q n * x ^ n) := by
+      rw [hcurrentValue]
+      rw [shiftedPowerSeries]
+      ring
+    _ = shiftedPowerSeries q x - x * shiftedPowerSeries q x := by
+      rw [← shiftedPowerSeries_eq_tsum q hq hx]
+    _ = (1 - x) * shiftedPowerSeries q x := by ring
+
+theorem tendsto_one_sub_mul_shiftedPowerSeries
+    (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1) {l : ℝ}
+    (hqlim : Filter.Tendsto q Filter.atTop (nhds l)) :
+    Filter.Tendsto (fun x : ℝ => (1 - x) * shiftedPowerSeries q x)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1)) (nhds l) := by
+  have hpartialShift : Filter.Tendsto
+      (fun n => ∑ i ∈ Finset.range (n + 1), differenceCoeff q i)
+      Filter.atTop (nhds l) :=
+    hqlim.congr' (Filter.Eventually.of_forall fun n =>
+      (sum_range_succ_differenceCoeff q n).symm)
+  have hpartial : Filter.Tendsto
+      (fun n => ∑ i ∈ Finset.range n, differenceCoeff q i)
+      Filter.atTop (nhds l) :=
+    (Filter.tendsto_add_atTop_iff_nat 1).mp (by simpa using hpartialShift)
+  have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt hpartial
+  apply habel.congr'
+  have hpos : ∀ᶠ x : ℝ in nhdsWithin (1 : ℝ) (Set.Iio 1), 0 < x :=
+    (show ∀ᶠ x : ℝ in nhds (1 : ℝ), 0 < x from
+      eventually_gt_nhds (by norm_num)).filter_mono inf_le_left
+  filter_upwards [hpos, self_mem_nhdsWithin] with x hx0 hx1
+  exact differencePowerSeries_eq q hq (abs_lt.mpr ⟨by linarith, hx1⟩)
+
+theorem defectPowerSeries_eq (a : ℕ → ℝ) (x : ℝ) :
+    defectPowerSeries a x =
+      x * ∑' n : ℕ, (a (n + 1) / (n + 1 : ℝ)) * x ^ n := by
+  rw [defectPowerSeries, shiftedPowerSeries]
+  simp only [defectCoeff, zero_add]
+  rw [← tsum_mul_left]
+  apply tsum_congr
+  intro n
+  rw [pow_succ]
+  ring
+
+theorem tendsto_defectPowerSeries (a : ℕ → ℝ)
+    (hsum : Summable fun n : ℕ => a (n + 1) / (n + 1 : ℝ)) :
+    Filter.Tendsto (defectPowerSeries a)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1))
+      (nhds (∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))) := by
+  have hpartial := hsum.hasSum.tendsto_sum_nat
+  have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt hpartial
+  have hid : Filter.Tendsto (fun x : ℝ => x)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1)) (nhds 1) :=
+    continuousAt_id.mono_left inf_le_left
+  have hmul := hid.mul habel
+  simpa only [one_mul] using hmul.congr' (Filter.Eventually.of_forall fun x =>
+    (defectPowerSeries_eq a x).symm)
+
+set_option maxHeartbeats 800000 in
+theorem sparreAndersen_limit
+    (q a : ℕ → ℝ) (l : ℝ)
+    (hq0 : q 0 = 1) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    (hqlim : Filter.Tendsto q Filter.atTop (nhds l))
+    (hasum : Summable fun n : ℕ => a (n + 1) / (n + 1 : ℝ)) :
+    Filter.Tendsto q Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))))) := by
+  have hleft := tendsto_one_sub_mul_shiftedPowerSeries q hq hqlim
+  have hA := tendsto_defectPowerSeries a hasum
+  have hright : Filter.Tendsto
+      (fun x : ℝ => Real.exp (-defectPowerSeries a x))
+      (nhdsWithin (1 : ℝ) (Set.Iio 1))
+      (nhds (Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))))) :=
+    (Real.continuous_exp.tendsto _).comp hA.neg
+  have hpos : ∀ᶠ x : ℝ in nhdsWithin (1 : ℝ) (Set.Iio 1), 0 < x :=
+    (show ∀ᶠ x : ℝ in nhds (1 : ℝ), 0 < x from
+      eventually_gt_nhds (by norm_num)).filter_mono inf_le_left
+  have heq :
+      (fun x : ℝ => Real.exp (-defectPowerSeries a x)) =ᶠ[
+        nhdsWithin (1 : ℝ) (Set.Iio 1)]
+      (fun x : ℝ => (1 - x) * shiftedPowerSeries q x) := by
+    filter_upwards [hpos, self_mem_nhdsWithin] with x hx0 hx1
+    exact (sparreAndersen_generating_identity q a hq0 hq ha0 ha1 hrec
+      (abs_lt.mpr ⟨by linarith, hx1⟩)).symm
+  have hright' := hright.congr' heq
+  have hl : l = Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))) :=
+    tendsto_nhds_unique hleft hright'
+  rwa [hl] at hqlim
+
+open Classical in
+theorem fwdSurv_nonneg (n : ℕ) : 0 ≤ (fwdSurv n : ℝ) := by
+  rw [fwdSurv_cast_eq_weighted_word_sum]
+  apply Finset.sum_nonneg
+  intro w _hw
+  split_ifs
+  · exact fwdWordWeight_nonneg w
+  · exact le_rfl
+
+open Classical in
+theorem bwdSurv_nonneg (n : ℕ) : 0 ≤ (bwdSurv n : ℝ) := by
+  rw [bwdSurv_cast_eq_weighted_word_sum]
+  apply Finset.sum_nonneg
+  intro w _hw
+  split_ifs
+  · exact bwdWordWeight_nonneg w
+  · exact le_rfl
+
+theorem abs_fwdSurv_le_one (n : ℕ) : |(fwdSurv n : ℝ)| ≤ 1 := by
+  rw [abs_of_nonneg (fwdSurv_nonneg n)]
+  calc
+    (fwdSurv n : ℝ) ≤ (fwdSurv 0 : ℝ) := antitone_fwdSurv (Nat.zero_le n)
+    _ = 1 := fwdSurv_zero
+
+theorem abs_bwdSurv_le_one (n : ℕ) : |(bwdSurv n : ℝ)| ≤ 1 := by
+  rw [abs_of_nonneg (bwdSurv_nonneg n)]
+  calc
+    (bwdSurv n : ℝ) ≤ (bwdSurv 0 : ℝ) := antitone_bwdSurv (Nat.zero_le n)
+    _ = 1 := bwdSurv_zero
+
+theorem fwdPosTerm_nonneg (n : ℕ) : 0 ≤ fwdPosTerm n := by
+  unfold fwdPosTerm
+  apply Finset.sum_nonneg
+  intro o _ho
+  split_ifs <;> positivity
+
+theorem bwdPosTerm_nonneg (n : ℕ) : 0 ≤ bwdPosTerm n := by
+  unfold bwdPosTerm
+  apply Finset.sum_nonneg
+  intro o _ho
+  split_ifs <;> positivity
+
+theorem fwdNonposTerm_le_one (n : ℕ) : fwdNonposTerm n ≤ 1 := by
+  cases n with
+  | zero => norm_num [fwdNonposTerm, Finset.sum_range_succ]
+  | succ n =>
+      linarith [fwdNonposTerm_add_fwdPosTerm (n + 1) (by omega),
+        fwdPosTerm_nonneg (n + 1)]
+
+theorem bwdNonposTerm_le_one (n : ℕ) : bwdNonposTerm n ≤ 1 := by
+  cases n with
+  | zero => norm_num [bwdNonposTerm, Finset.sum_range_succ]
+  | succ n =>
+      linarith [bwdNonposTerm_add_bwdPosTerm (n + 1) (by omega),
+        bwdPosTerm_nonneg (n + 1)]
+
+theorem fwdSurv_nonpos_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (fwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) * (1 - fwdNonposTerm (n - k + 1)) := by
+  rw [fwdSurv_recurrence]
+  apply Finset.sum_congr rfl
+  intro k hk
+  congr 1
+  linarith [fwdNonposTerm_add_fwdPosTerm (n - k + 1) (by omega)]
+
+theorem bwdSurv_nonpos_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (bwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) * (1 - bwdNonposTerm (n - k + 1)) := by
+  rw [bwdSurv_recurrence]
+  apply Finset.sum_congr rfl
+  intro k hk
+  congr 1
+  linarith [bwdNonposTerm_add_bwdPosTerm (n - k + 1) (by omega)]
+
+theorem tendsto_fwdSurv :
+    Filter.Tendsto (fun n : ℕ => (fwdSurv n : ℝ)) Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ,
+        fwdNonposTerm (n + 1) / (n + 1 : ℝ))))) := by
+  let l : ℝ := ⨅ n : ℕ, (fwdSurv n : ℝ)
+  have hbdd : BddBelow (Set.range fun n : ℕ => (fwdSurv n : ℝ)) := by
+    refine ⟨0, ?_⟩
+    rintro _ ⟨n, rfl⟩
+    exact fwdSurv_nonneg n
+  have hlim : Filter.Tendsto (fun n : ℕ => (fwdSurv n : ℝ)) Filter.atTop (nhds l) :=
+    by simpa [l] using tendsto_atTop_ciInf antitone_fwdSurv hbdd
+  exact sparreAndersen_limit
+    (fun n => (fwdSurv n : ℝ)) fwdNonposTerm l fwdSurv_zero
+    abs_fwdSurv_le_one fwdNonposTerm_nonneg fwdNonposTerm_le_one
+    fwdSurv_nonpos_recurrence hlim summable_fwdNonposSeries
+
+theorem tendsto_bwdSurv :
+    Filter.Tendsto (fun n : ℕ => (bwdSurv n : ℝ)) Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ,
+        bwdNonposTerm (n + 1) / (n + 1 : ℝ))))) := by
+  let l : ℝ := ⨅ n : ℕ, (bwdSurv n : ℝ)
+  have hbdd : BddBelow (Set.range fun n : ℕ => (bwdSurv n : ℝ)) := by
+    refine ⟨0, ?_⟩
+    rintro _ ⟨n, rfl⟩
+    exact bwdSurv_nonneg n
+  have hlim : Filter.Tendsto (fun n : ℕ => (bwdSurv n : ℝ)) Filter.atTop (nhds l) :=
+    by simpa [l] using tendsto_atTop_ciInf antitone_bwdSurv hbdd
+  exact sparreAndersen_limit
+    (fun n => (bwdSurv n : ℝ)) bwdNonposTerm l bwdSurv_zero
+    abs_bwdSurv_le_one bwdNonposTerm_nonneg bwdNonposTerm_le_one
+    bwdSurv_nonpos_recurrence hlim summable_bwdNonposSeries
+
+
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
-  sorry
+  rw [WindowDensityLimit, minimaConstant_eq_directionalFactors]
+  simpa only [Rat.cast_mul] using tendsto_fwdSurv.mul tendsto_bwdSurv
 
 open Classical in
 /-- Orbit minima have upper density at most `minimaConstant ≈ 0.049780`. -/
