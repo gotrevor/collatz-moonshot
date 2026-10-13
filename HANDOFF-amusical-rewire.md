@@ -1,5 +1,43 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-13 — two-sided escape and first-passage infrastructure
+
+The target still has its original `sorry`; the main-case construction remains open.  This lap
+kernel-checked the load-bearing passage facts in
+`CollatzMoonshot/AmusicalRewireRatio/Passage.lean`:
+
+- `injective_eventually_abs_gt` proves that an injective `ℤ`-indexed sequence in `ℕ` eventually
+  leaves every bounded interval in both time directions, by taking the finite preimage of an
+  initial interval and bounding its `natAbs` image.
+- `amusicalNatPerm_zpow_eventually_gt_of_infinite` specializes this to every infinite natural
+  amusical orbit, using the existing integer-orbit injectivity theorem.
+- `exists_forward_backward_above`, `forwardPassage`, and `backwardPassage` construct least
+  passages above any height; `forwardPassage_before_le` and `backwardPassage_before_le` prove
+  the required minimality on all earlier times.
+- `amusical_step_bounds`, `amusicalInv_step_bounds`, and their natural-permutation versions prove
+  the uniform affine one-step bounds needed to locate passage endpoints at a geometric scale.
+
+Exact verification:
+
+```text
+lake env lean CollatzMoonshot/AmusicalRewireRatio/Passage.lean
+# passes
+git diff --check
+# passes
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-rewire \
+  --target CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8713 jobs).
+# FORMALIZE-TIER GREEN; only the target declaration retains a sorry.
+```
+
+Current blocker: enumerate the infinite natural orbits and build the explicit segment successor
+permutation.  Escape/existence is no longer part of that blocker.
+
+Next attack: combine passage minimality with `amusicalNatPerm_step_bounds` and
+`amusicalNatPerm_symm_step_bounds` to package forward/backward cut endpoints in one scale
+interval (assuming the chosen orbit representative is below the scale).  Then define finite
+segments between consecutive cuts and the Eulerian recursion from the kickoff.
+
 ## 2026-10-13 — nonnegative restriction and degenerate branch closed
 
 The target `exists_boundedRatio_rewire` still has its original `sorry`.  This lap isolated and

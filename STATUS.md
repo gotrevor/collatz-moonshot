@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical rewiring passage checkpoint:** every infinite nonnegative amusical orbit
+> now kernel-provably escapes every bounded interval in both time directions.  Least forward and
+> backward passages, their minimality, and uniform affine bounds for `U` and `U⁻¹` are formalized
+> in `AmusicalRewireRatio/Passage.lean`.  The remaining Theorem R blocker is the explicit sparse
+> segment-splicing permutation.  Read `HANDOFF-amusical-rewire.md`.
+
 > **2026-10-13, amusical bounded-ratio rewiring in progress:** the restriction of `U` to `ℕ` is
 > now a kernel-checked permutation, with exact integer-power compatibility.  The complete
 > no-rewiring branch (at most one infinite nonnegative orbit) proves every conclusion of Theorem R
