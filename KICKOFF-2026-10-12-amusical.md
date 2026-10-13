@@ -56,7 +56,6 @@ interested in that.
 
 - Statements first: every conclusion gets a Lean declaration the same turn (repo `AGENTS.md`).
 - Work in `worktrees/amusical` on `ren/amusical`.  `lake build CollatzMoonshot.Amusical` (or the
-  module you touched), never the whole project.  Commit green work; pushing `ren/amusical` is
-  fine, never `main`.
+  module you touched), never the whole project.  Commit green work and push `ren/amusical`.  fine, never `main`.
 - This is an attended, interactive lane.  Ask before any run longer than ~30 min, and propose a
   treadmill for long proof grinds instead of grinding here.
