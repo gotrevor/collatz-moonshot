@@ -109,4 +109,54 @@ theorem amusicalOrbitOfEightInfinite_iff :
       rw [← Function.iterate_add_apply, Nat.add_sub_cancel' h.le]
       exact hij
 
+/-! ## Drift: the even-step share along the orbit of `8`
+
+Even steps multiply by exactly `3/2`; odd steps by `3/4 ± 1/(4x)`.  For large values the orbit
+grows iff the share of even steps exceeds `log₂(4/3) ≈ 0.415`.  That threshold is only a
+large-value statement: `amusical_small_cycles` exhibits the cycle `2 → 3 → 2` with even share
+`1/2` and the cycle `4 → 6 → 9 → 7 → 5 → 4` with share `2/5`.  The orbit of `8` avoids every
+small cycle, so its values stay `≥ 4` and the odd-step ratios stay in `[11/16, 13/16]`; that
+is the content of `periodic_eight_even_bound`. -/
+
+/-- The cycles of `U` below `10`: the fixed points `0, 1`, the 2-cycle `{2, 3}` and the 5-cycle
+`{4, 6, 9, 7, 5}`.  `8` lies on none of them. -/
+theorem amusical_small_cycles :
+    amusical 0 = 0 ∧ amusical 1 = 1 ∧ amusical 2 = 3 ∧ amusical 3 = 2 ∧
+      amusical 4 = 6 ∧ amusical 6 = 9 ∧ amusical 9 = 7 ∧ amusical 7 = 5 ∧ amusical 5 = 4 := by
+  decide
+
+/-- The number of even values among `U^[0] 8, …, U^[k-1] 8`. -/
+def evenCount (k : ℕ) : ℕ :=
+  ((Finset.range k).filter fun i => amusical^[i] 8 % 2 = 0).card
+
+/-- **Believed (~95%), proof not yet written.**  If `8` were periodic with period `p` and `e`
+even steps per period, then `(3/2)^e (11/16)^(p-e) ≤ 1`.
+
+English proof: the orbit of `8` is positive and avoids the invariant set `{0, 1, 2, 3}` (a
+bijection's cycles are disjoint, and `8` is not in them), so every value is `≥ 4`.  An odd step
+from `x` multiplies by `3/4 ± 1/(4x) ≥ 11/16`.  Around a cycle the product of the step ratios
+is `1`, so `1 ≥ (3/2)^e (11/16)^(p-e)`. -/
+theorem periodic_eight_even_bound {p : ℕ} (hp : 0 < p) (hper : amusical^[p] 8 = 8) :
+    3 ^ evenCount p * 11 ^ (p - evenCount p) ≤ 2 ^ evenCount p * 16 ^ (p - evenCount p) := by
+  sorry
+
+/-- **Open, normality-type.**  The even values have density `1/2` along the orbit of `8`.
+
+This is the heuristic behind `AmusicalOrbitOfEightInfinite`: if the orbit's residues mod `4`
+look like independent fair digits, the evens have density `1/2`, well above the large-value
+threshold `log₂(4/3) ≈ 0.415`.  It is a frequency statement about one specific orbit, the same
+kind of statement as the normality of a specific real number. -/
+def EightEvenDensityHalf : Prop :=
+  Filter.Tendsto (fun k : ℕ => (evenCount k : ℝ) / k) Filter.atTop (nhds (1 / 2))
+
+/-- **Believed (~95%), proof not yet written.**  Even density `1/2` forces the orbit of `8` to be
+infinite.
+
+English proof: if `8` had period `p` with `e` even steps per period, then
+`evenCount (m * p) = m * e`, so the density would be `e / p`, forcing `2e = p`.  Then
+`periodic_eight_even_bound` gives `33^e ≤ 32^e`, so `e = 0` and `p = 0`, a contradiction. -/
+theorem amusicalOrbitOfEightInfinite_of_evenDensityHalf (h : EightEvenDensityHalf) :
+    AmusicalOrbitOfEightInfinite := by
+  sorry
+
 end CollatzMoonshot.Amusical
