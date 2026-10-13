@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalContinuousReversor.Itinerary
 
 /-!
 # Reversors of `U` that are determined by residues
@@ -47,7 +47,29 @@ def IsAmusicalReversor (ι : ℤ → ℤ) : Prop :=
 itinerary of `ι n` is `stepSym (ι (U⁻ᵏ n))`, and the forward itinerary fixes an integer. -/
 theorem reversor_eq_of_stepSym_eq {ι ι' : ℤ → ℤ} (h : IsAmusicalReversor ι)
     (h' : IsAmusicalReversor ι') (hs : ∀ n, stepSym (ι n) = stepSym (ι' n)) : ι = ι' := by
-  sorry
+  have back {κ : ℤ → ℤ} (hκ : IsAmusicalReversor κ) (n : ℤ) :
+      κ (amusicalInv n) = amusical (κ n) := by
+    calc
+      κ (amusicalInv n) = amusical (amusicalInv (κ (amusicalInv n))) :=
+        (amusical_amusicalInv _).symm
+      _ = amusical (κ (amusical (amusicalInv n))) := by rw [hκ]
+      _ = amusical (κ n) := by rw [amusical_amusicalInv]
+  have iterBack {κ : ℤ → ℤ} (hκ : IsAmusicalReversor κ) :
+      ∀ k n, κ (amusicalInv^[k] n) = amusical^[k] (κ n) := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        intro n
+        rw [Function.iterate_succ_apply']
+        rw [back hκ, ih]
+        exact (Function.iterate_succ_apply' _ k _).symm
+  funext n
+  apply eq_of_stepSym_iterate_eq
+  intro i
+  change stepSym (amusical^[i] (ι n)) = stepSym (amusical^[i] (ι' n))
+  rw [← iterBack h i n, ← iterBack h' i n]
+  exact hs _
 
 /-- **Target (Theorem A).**  A reversor that is continuous 2-adically alone is constant, with
 value `-1`, `0` or `1` (the fixed points of `U⁻¹` among constants).  Paper proof: a forward

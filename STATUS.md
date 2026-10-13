@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical continuous reversor Lemma S FORMALIZED:**
+> `reversor_eq_of_stepSym_eq` is proved with its ratified statement unchanged.  A new exact
+> itinerary lemma shows that agreement through `L` forward step symbols forces congruence modulo
+> `2^L`, hence the complete itinerary determines an integer.  Three scoped targets remain
+> (Theorems A, A′, and C); read `HANDOFF-amusical-contrev.md`.
+
 > **2026-10-13, amusical chain-connectivity objective COMPLETE:**
 > `AmusicalChains.lean` is sorry-free.  Uniform survival is proved at
 > `fwdSurv L ≥ 1/6` and `bwdSurv L ≥ 1/6`; distinct `L`-window minima on
