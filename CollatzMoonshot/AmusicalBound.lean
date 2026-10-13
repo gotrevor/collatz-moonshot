@@ -17,6 +17,76 @@ definitions, then an exact rational evaluation.  Plan: `KICKOFF-2026-10-13-amusi
 
 namespace CollatzMoonshot.Amusical
 
+/-! ## A linear-size lattice computation
+
+The rows below store integer numerators.  At time `t`, entry `o` is the total
+weight of surviving prefixes with exactly `o` marked letters.  Forward letters
+both have weight one (the common denominator is `2^t`); backward unmarked and
+marked letters have weights one and two (common denominator `3^t`).  Passing
+the preceding entry explicitly makes one row step linear rather than rebuilding
+the preceding row at every output coordinate during kernel reduction. -/
+
+def fwdLatticeStep (t o prev : ℕ) : List ℕ → List ℕ
+  | [] => []
+  | x :: xs =>
+      (if 2 ^ (t + 1 + o) < 3 ^ (t + 1) then x + prev else 0) ::
+        fwdLatticeStep t (o + 1) x xs
+
+def bwdLatticeStep (t o prev : ℕ) : List ℕ → List ℕ
+  | [] => []
+  | x :: xs =>
+      (if 3 ^ (t + 1) < 2 ^ (t + 1 + o) then x + 2 * prev else 0) ::
+        bwdLatticeStep t (o + 1) x xs
+
+def fwdLatticeRow : ℕ → List ℕ
+  | 0 => [1]
+  | t + 1 => fwdLatticeStep t 0 0 (fwdLatticeRow t ++ [0])
+
+def bwdLatticeRow : ℕ → List ℕ
+  | 0 => [1]
+  | t + 1 => bwdLatticeStep t 0 0 (bwdLatticeRow t ++ [0])
+
+def fwdLatticeNum (L : ℕ) : ℕ := (fwdLatticeRow L).sum
+def bwdLatticeNum (L : ℕ) : ℕ := (bwdLatticeRow L).sum
+
+theorem fwdLatticeStep_length (t o prev : ℕ) (xs : List ℕ) :
+    (fwdLatticeStep t o prev xs).length = xs.length := by
+  induction xs generalizing o prev with
+  | nil => rfl
+  | cons x xs ih => simp [fwdLatticeStep, ih]
+
+theorem bwdLatticeStep_length (t o prev : ℕ) (xs : List ℕ) :
+    (bwdLatticeStep t o prev xs).length = xs.length := by
+  induction xs generalizing o prev with
+  | nil => rfl
+  | cons x xs ih => simp [bwdLatticeStep, ih]
+
+/-- Each computed row has exactly one coordinate for every possible mark count. -/
+theorem fwdLatticeRow_length (t : ℕ) : (fwdLatticeRow t).length = t + 1 := by
+  induction t with
+  | zero => rfl
+  | succ t ih => simp [fwdLatticeRow, fwdLatticeStep_length, ih]
+
+/-- Each computed row has exactly one coordinate for every possible mark count. -/
+theorem bwdLatticeRow_length (t : ℕ) : (bwdLatticeRow t).length = t + 1 := by
+  induction t with
+  | zero => rfl
+  | succ t ih => simp [bwdLatticeRow, bwdLatticeStep_length, ih]
+
+/-- The lattice recurrence reproduces the four small window-density controls. -/
+theorem latticeDensity_values :
+    fwdLatticeNum 1 * bwdLatticeNum 1 * 3 = 2 ^ 1 * 3 ^ 1 ∧
+      fwdLatticeNum 2 * bwdLatticeNum 2 * 9 = 2 * (2 ^ 2 * 3 ^ 2) ∧
+      fwdLatticeNum 3 * bwdLatticeNum 3 * 6 = 2 ^ 3 * 3 ^ 3 ∧
+      fwdLatticeNum 4 * bwdLatticeNum 4 * 27 = 4 * (2 ^ 4 * 3 ^ 4) := by
+  decide +kernel
+
+/-- Exact kernel evaluation of the 200-step lattice, still separated from the
+word-sum definitions by the combinatorial bridge below. -/
+theorem latticeDensity_two_hundred_lt :
+    20 * fwdLatticeNum 200 * bwdLatticeNum 200 < 2 ^ 200 * 3 ^ 200 := by
+  decide +kernel
+
 /-- **Target (treadmill).**  `δ₂₀₀ < 1/20`.  Exact value `0.04988761510…`
 (`scripts/amusical/window.py`-style lattice computation, 2026-10-13). -/
 theorem windowDensity_two_hundred_lt : fwdSurv 200 * bwdSurv 200 < 1 / 20 := by
