@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
+import Mathlib.Data.ZMod.QuotientGroup
 
 /-!
 # Time reversal: the mechanism the amusical permutation lacks
@@ -25,6 +26,30 @@ Treadmill target (`KICKOFF-2026-10-13-amusical-reversal.md`): close every `sorry
 -/
 
 namespace CollatzMoonshot.Amusical
+
+private lemma dvd_of_dvd_two_mul_pair {p d e : ℤ} (hd : p ∣ 2 * d) (he : p ∣ 2 * e) :
+    p ∣ d ∨ p ∣ e ∨ p ∣ e - d := by
+  rcases hd with ⟨q, hq⟩
+  rcases he with ⟨r, hr⟩
+  rcases Int.even_or_odd' q with ⟨s, hs | hs⟩
+  · left
+    refine ⟨s, ?_⟩
+    have h : 2 * d = 2 * (p * s) := by rw [hq, hs]; ring
+    exact Int.eq_of_mul_eq_mul_left (by norm_num : (2 : ℤ) ≠ 0) h
+  rcases Int.even_or_odd' r with ⟨t, ht | ht⟩
+  · right; left
+    refine ⟨t, ?_⟩
+    have h : 2 * e = 2 * (p * t) := by rw [hr, ht]; ring
+    exact Int.eq_of_mul_eq_mul_left (by norm_num : (2 : ℤ) ≠ 0) h
+  · right; right
+    refine ⟨t - s, ?_⟩
+    have h : 2 * e - 2 * d = p * (2 * t + 1) - p * (2 * s + 1) := by rw [hq, hr, hs, ht]
+    have h' : 2 * (e - d) = 2 * (p * (t - s)) := by
+      calc
+        2 * (e - d) = 2 * e - 2 * d := by ring
+        _ = p * (2 * t + 1) - p * (2 * s + 1) := h
+        _ = 2 * (p * (t - s)) := by ring
+    exact Int.eq_of_mul_eq_mul_left (by norm_num : (2 : ℤ) ≠ 0) h'
 
 /-- **The reversal lemma.**  If `ι` is an involution reversing `σ` and both `x` and `σ^k x` are
 fixed by `ι`, then `σ^(2k) x = x`. -/
@@ -51,7 +76,54 @@ most two points (at most one if the orbit is infinite; `k ≡ 0, p/2 (mod p)` on
 theorem orbit_inter_fixedPoints_ncard_le_two {α : Type*} {σ ι : Equiv.Perm α}
     (hι : ι * ι = 1) (hrev : ι * σ * ι = σ⁻¹) (x : α) :
     (Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι).ncard ≤ 2 := by
-  sorry
+  classical
+  let S := Set.range (fun k : ℤ => (σ ^ k) x) ∩ Function.fixedPoints ι
+  by_cases hS : S.Finite
+  · by_contra hle
+    have hlt : 2 < S.ncard := Nat.lt_of_not_ge hle
+    rcases (Set.two_lt_ncard_iff hS).mp hlt with
+      ⟨u, v, w, ⟨⟨ku, rfl⟩, hu⟩, ⟨⟨kv, rfl⟩, hv⟩, ⟨⟨kw, rfl⟩, hw⟩,
+        huv, huw, hvw⟩
+    have huv' : (σ ^ (kv - ku)) ((σ ^ ku) x) = (σ ^ kv) x := by
+      rw [← Equiv.Perm.mul_apply, ← zpow_add]
+      congr 2
+      omega
+    have huw' : (σ ^ (kw - ku)) ((σ ^ ku) x) = (σ ^ kw) x := by
+      rw [← Equiv.Perm.mul_apply, ← zpow_add]
+      congr 2
+      omega
+    have hv' : ι ((σ ^ (kv - ku)) ((σ ^ ku) x)) = (σ ^ (kv - ku)) ((σ ^ ku) x) := by
+      rw [huv']; exact hv
+    have hw' : ι ((σ ^ (kw - ku)) ((σ ^ ku) x)) = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
+      rw [huw']; exact hw
+    have hdu := reversing_zpow_fixed hι hrev hu hv'
+    have hdw := reversing_zpow_fixed hι hrev hu hw'
+    let p := Function.minimalPeriod (fun y => σ • y) ((σ ^ ku) x)
+    have hdu' : (p : ℤ) ∣ 2 * (kv - ku) :=
+      MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
+        (σ ^ (2 * (kv - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdu)
+    have hdw' : (p : ℤ) ∣ 2 * (kw - ku) :=
+      MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mp (show
+        (σ ^ (2 * (kw - ku))) • ((σ ^ ku) x) = (σ ^ ku) x from hdw)
+    rcases dvd_of_dvd_two_mul_pair hdu' hdw' with h | h | h
+    · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
+      exact huv (hh.symm.trans huv')
+    · have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
+      exact huw (hh.symm.trans huw')
+    · rw [show kw - ku - (kv - ku) = kw - kv by omega] at h
+      have hh := MulAction.zpow_smul_eq_iff_minimalPeriod_dvd.mpr h
+      change (σ ^ (kw - kv)) ((σ ^ ku) x) = (σ ^ ku) x at hh
+      apply hvw
+      calc
+        (σ ^ kv) x = (σ ^ (kv - ku)) ((σ ^ ku) x) := huv'.symm
+        _ = (σ ^ (kv - ku)) ((σ ^ (kw - kv)) ((σ ^ ku) x)) := by rw [hh]
+        _ = (σ ^ (kw - ku)) ((σ ^ ku) x) := by
+          rw [← Equiv.Perm.mul_apply, ← zpow_add]
+          congr 1
+          ring
+        _ = (σ ^ kw) x := huw'
+  · rw [Set.Infinite.ncard hS]
+    omega
 
 /-- **Target.**  Klamkin's problem (a) is equivalent to the existence of a sign-preserving
 reversing involution of `U` with infinitely many nonnegative fixed points.  (`⇐`: the orbit
