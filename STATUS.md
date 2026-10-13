@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical commuting mechanism FORMALIZED:**
+> `infinitelyManyOrbits_of_commuting` is proved with its ratified statement unchanged. A
+> commuting strictly increasing map commutes with all integer powers, transports orbit minima,
+> and generates a strictly increasing infinite family of nonnegative minima. Three target
+> sorries remain in `AmusicalGlobal.lean`; the 8715-job scoped gate is FORMALIZE-tier green.
+> Read `HANDOFF-amusical-global.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;

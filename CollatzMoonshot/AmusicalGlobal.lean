@@ -217,7 +217,50 @@ theorem infinitelyManyOrbits_of_commuting {g : ℤ → ℤ} (hg : ∀ n, g (amus
     (hmono : StrictMono g) (hgt : ∀ n, 0 < n → n < g n) (hpos : ∀ n, 0 ≤ n → 0 ≤ g n)
     (hinf : ∃ n, 0 < n ∧ IsOrbitMin n ∧ (amusicalOrbit n).Infinite) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  have hgInv : ∀ n, g (amusicalInv n) = amusicalInv (g n) := by
+    intro n
+    apply amusical_injective
+    rw [amusical_amusicalInv, ← hg, amusical_amusicalInv]
+  have hcomm : ∀ (j : ℤ) (n : ℤ),
+      g ((amusicalPerm ^ j) n) = (amusicalPerm ^ j) (g n) := by
+    intro j
+    induction j using Int.induction_on with
+    | zero => intro n; simp
+    | succ j ih =>
+        intro n
+        rw [zpow_add_one, Equiv.Perm.mul_apply, ih, Equiv.Perm.mul_apply]
+        exact congrArg (fun z => (amusicalPerm ^ (j : ℤ)) z) (hg n)
+    | pred j ih =>
+        intro n
+        rw [zpow_sub_one, Equiv.Perm.mul_apply, ih, Equiv.Perm.mul_apply]
+        exact congrArg (fun z => (amusicalPerm ^ (-(j : ℤ))) z) (hgInv n)
+  have hmin_map : ∀ {n : ℤ}, IsOrbitMin n → IsOrbitMin (g n) := by
+    intro n hn y hy
+    obtain ⟨j, rfl⟩ := hy
+    change g n ≤ (amusicalPerm ^ j) (g n)
+    rw [← hcomm]
+    exact hmono.monotone (hn _ ⟨j, rfl⟩)
+  obtain ⟨m, hmpos, hmmin, _⟩ := hinf
+  have hseq : StrictMono (fun k : ℕ => g^[k] m) :=
+    hmono.strictMono_iterate_of_lt_map (hgt m hmpos)
+  have hmins : ∀ k : ℕ, IsOrbitMin (g^[k] m) := by
+    intro k
+    induction k with
+    | zero => simpa using hmmin
+    | succ k ih =>
+        rw [Function.iterate_succ_apply']
+        exact hmin_map ih
+  have hnonneg : ∀ k : ℕ, 0 ≤ g^[k] m := by
+    intro k
+    induction k with
+    | zero => simpa using hmpos.le
+    | succ k ih =>
+        rw [Function.iterate_succ_apply']
+        exact hpos _ ih
+  apply amusicalInfinitelyManyOrbits_of_minima
+  refine (Set.infinite_range_of_injective hseq.injective).mono ?_
+  rintro _ ⟨k, rfl⟩
+  exact ⟨hnonneg k, hmins k⟩
 
 /-- **Target (window-2 centralizer).**  A map commuting with `U` whose step symbol reads
 `stepSym n` and `stepSym (U n)` is one of `0, 1, −1, id, −id, U, −U`.  Paper proof: the forward
