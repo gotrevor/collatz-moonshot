@@ -26,14 +26,19 @@ What is known about the cycles of Collatz's permutation `U`, as of the 2026-10-1
 * **Keller 1999** (Missouri J. Math. Sci. 11, 152-157, via Lagarias 2003 entry 94): every
   "type V" permutation `g_p` has finitely many cycles of each period; `g_3` is conjugate to `U`.
   For `U` this is elementary: each length-`p` branch pattern fixes at most one rational point.
-* **Not yet read:** M. Tavares, *A remark about the density of the orbits of the Collatz
-  permutation*, Discrete Math. 313 (2013) 2139-2145, doi:10.1016/j.disc.2013.05.003;
-  G. Venturini, *On a generalization of the 3x+1 problem*, Adv. Appl. Math. 19 (1997) 295-305,
-  doi:10.1006/aama.1996.0496 (source of conjectures C4/C5 in Lagarias 2021).  Both are free on
-  ScienceDirect but bot-walled.
+* **Venturini 1997** (Adv. Appl. Math. 19, 295-305, §6): characterizes the permutational maps
+  (Theorem 4: disjoint image classes and `Σ 1/t_r = 1`), lists the cycles of `U`, reports
+  `U^321(8) > 10^9` and `U^-354(8) > 10^9`, and asserts without proof that his estimate (16)
+  shows every orbit has density `0`, hence infinitely many orbits.
+* **Tavares 2013** (Discrete Math. 313, 2139-2145, doi:10.1016/j.disc.2013.05.003): Theorem 1, an
+  orbit `O` has density `0` iff `{n ∈ A : T^N n < n}` has density `0` for some thread
+  `A = {T^(jN) x : j ∈ ℤ}` of `O` (via Levy-group density preservation); Proposition 11, the upper
+  density of `{n : T^N n < n}` tends to `0`; Question 1 / Proposition 14, a sufficient condition
+  for the orbit minima to have positive upper density.  Klamkin's problem (a) stays open.
 
-`AmusicalNoOtherCycles` and `AmusicalFinitelyManyCycles` (in `CollatzMoonshot.Amusical`) are the
-open problems; Klamkin's orbit-of-8 question is `AmusicalOrbitOfEightInfinite`.
+`AmusicalNoOtherCycles`, `AmusicalFinitelyManyCycles` and `AmusicalInfinitelyManyOrbits` (in
+`CollatzMoonshot.Amusical`) are the open problems; Klamkin's orbit-of-8 question is
+`AmusicalOrbitOfEightInfinite`.
 -/
 
 namespace CollatzMoonshot.Literature

@@ -150,11 +150,29 @@ nonnegative integers.  By `amusical_neg` this settles the negatives too.  Implie
 def AmusicalNoOtherCycles : Prop :=
   ∀ n : ℤ, 0 ≤ n → n ∈ Function.periodicPts amusical → n ∈ knownCycleMembers
 
-/-- **Open (Klamkin 1963, problem (a); Atkin 1966 heuristic; Venturini 1997 / Lagarias 2021
-conjecture C4 for the whole class of permutational generalized Collatz maps).**  `U` has only
-finitely many periodic points. -/
+/-- **Open (Atkin 1966 heuristic; Lagarias 2021 conjecture C4, after Venturini 1997, for the
+whole class of permutational generalized Collatz maps).**  `U` has only finitely many periodic
+points.  Not Klamkin's problem (a), which counts all orbits: see
+`AmusicalInfinitelyManyOrbits`. -/
 def AmusicalFinitelyManyCycles : Prop :=
   (Function.periodicPts amusical).Finite
+
+/-- The two-sided orbit `{U^j x : j ∈ ℤ}` of `x`. -/
+def amusicalOrbit (x : ℤ) : Set ℤ :=
+  Set.range fun j : ℤ => (amusicalPerm ^ j) x
+
+/-- **Open (Klamkin 1963, problem (a), asked as "does `P` consist of finitely many cycles?",
+counting the infinite cycle through `8`; Tavares 2013 calls it the Klamkin Problem).**  `U` has
+infinitely many orbits on the nonnegative integers.
+
+Believed true: Venturini (Adv. Appl. Math. 19 (1997), p. 303) says his estimate (16) "may" prove
+every orbit has density `0`, which forces infinitely many orbits, but gives no proof.  Tavares
+(Discrete Math. 313 (2013) 2139-2145, Theorem 1) reduces zero density of an orbit `O` to zero
+density of `{n ∈ A : U^N n < n}` inside one residue thread `A = {U^(jN) x}` of `O`, and leaves
+the problem open.  Unlike `AmusicalOrbitOfEightInfinite`, this is a statement about all orbits
+at once, so a counting or density argument could settle it. -/
+def AmusicalInfinitelyManyOrbits : Prop :=
+  {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x}.Infinite
 
 /-- The number of strict local minima on the cycle through a periodic `n` of period `p`: the
 indices `i < p` with `U⁻¹ x > x < U x` for `x = U^[i] n`.  Simons calls a cycle with `m` of
