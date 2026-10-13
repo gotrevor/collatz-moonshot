@@ -1053,6 +1053,163 @@ theorem bwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Boo
 its positive blocks are the gaps between a nonempty family of marked cyclic starts.  The
 following equivalence separates a word into the Boolean words on those blocks. -/
 
+/-! The first reindexing needed for cyclic inclusion--exclusion: a composition is the same
+as a nonempty family of cyclic starts together with a distinguished start at zero. -/
+
+/-- The cyclic starts marked by a composition, omitting its virtual right endpoint. -/
+def compositionStarts {L : ℕ} (c : Composition L) : Finset (Fin L) :=
+  Finset.univ.filter fun r ↦ r.castSucc ∈ c.boundaries
+
+@[simp]
+theorem mem_compositionStarts {L : ℕ} (c : Composition L) (r : Fin L) :
+    r ∈ compositionStarts c ↔ r.castSucc ∈ c.boundaries := by
+  simp [compositionStarts]
+
+/-- The `i`-th genuine (non-virtual) start of a composition. -/
+def compositionStart {L : ℕ} (c : Composition L) (i : ℕ) (hi : i < c.length) : Fin L :=
+  ⟨c.sizeUpTo i, by
+    calc
+      c.sizeUpTo i < c.sizeUpTo (i + 1) := c.sizeUpTo_strict_mono hi
+      _ ≤ c.sizeUpTo c.length := c.monotone_sizeUpTo (by omega)
+      _ = L := c.sizeUpTo_length⟩
+
+@[simp]
+theorem coe_compositionStart {L : ℕ} (c : Composition L) (i : ℕ)
+    (hi : i < c.length) : (compositionStart c i hi : ℕ) = c.sizeUpTo i := rfl
+
+theorem compositionStart_mem {L : ℕ} (c : Composition L) (i : ℕ)
+    (hi : i < c.length) : compositionStart c i hi ∈ compositionStarts c := by
+  rw [mem_compositionStarts]
+  unfold Composition.boundaries
+  rw [Finset.mem_map]
+  refine ⟨⟨i, by omega⟩, Finset.mem_univ _, ?_⟩
+  apply Fin.ext
+  rfl
+
+/-- The marked starts are exactly the partial sums before the positive blocks. -/
+theorem mem_compositionStarts_iff {L : ℕ} (c : Composition L) (r : Fin L) :
+    r ∈ compositionStarts c ↔
+      ∃ (i : ℕ) (hi : i < c.length), r = compositionStart c i hi := by
+  rw [mem_compositionStarts]
+  constructor
+  · intro hr
+    rw [Composition.boundaries, Finset.mem_map] at hr
+    obtain ⟨j, _hj, hj⟩ := hr
+    have hjne : (j : ℕ) ≠ c.length := by
+      intro heq
+      have hjlast : j = Fin.last c.length := by ext; simpa using heq
+      subst j
+      change c.boundary (Fin.last c.length) = r.castSucc at hj
+      rw [c.boundary_last] at hj
+      exact Fin.castSucc_ne_last r hj.symm
+    have hjlt : (j : ℕ) < c.length := by omega
+    refine ⟨j, hjlt, ?_⟩
+    apply Fin.ext
+    simpa [Composition.boundary] using congrArg Fin.val hj.symm
+  · rintro ⟨i, hi, rfl⟩
+    exact (mem_compositionStarts c _).mp (compositionStart_mem c i hi)
+
+theorem zero_mem_compositionStarts {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (⟨0, hL⟩ : Fin L) ∈ compositionStarts c := by
+  rw [mem_compositionStarts]
+  simpa using c.toCompositionAsSet.zero_mem
+
+theorem map_compositionStarts_eq_erase_boundaries {L : ℕ} (c : Composition L) :
+    (compositionStarts c).map Fin.castSuccEmb = c.boundaries.erase (Fin.last L) := by
+  ext r
+  rw [Finset.mem_map]
+  constructor
+  · rintro ⟨i, hi, rfl⟩
+    exact Finset.mem_erase.mpr
+      ⟨Fin.castSucc_ne_last i, (mem_compositionStarts c i).mp hi⟩
+  · intro hr
+    obtain ⟨hrlast, hr⟩ := Finset.mem_erase.mp hr
+    obtain ⟨i, rfl⟩ := Fin.eq_castSucc_of_ne_last hrlast
+    exact ⟨i, (mem_compositionStarts c i).mpr hr, rfl⟩
+
+/-- A composition has exactly one marked cyclic start per block. -/
+theorem card_compositionStarts {L : ℕ} (c : Composition L) :
+    (compositionStarts c).card = c.length := by
+  rw [← Finset.card_map (s := compositionStarts c) Fin.castSuccEmb,
+    map_compositionStarts_eq_erase_boundaries,
+    Finset.card_erase_of_mem (show Fin.last L ∈ c.boundaries from
+      c.toCompositionAsSet.getLast_mem), c.card_boundaries_eq_succ_length]
+  omega
+
+theorem compositionStarts_injective {L : ℕ} :
+    Function.Injective (compositionStarts : Composition L → Finset (Fin L)) := by
+  intro c d h
+  apply (compositionEquiv L).injective
+  apply CompositionAsSet.ext
+  change c.boundaries = d.boundaries
+  have hc : insert (Fin.last L) (c.boundaries.erase (Fin.last L)) = c.boundaries :=
+    Finset.insert_erase c.toCompositionAsSet.getLast_mem
+  have hd : insert (Fin.last L) (d.boundaries.erase (Fin.last L)) = d.boundaries :=
+    Finset.insert_erase d.toCompositionAsSet.getLast_mem
+  rw [← hc, ← hd, ← map_compositionStarts_eq_erase_boundaries,
+    ← map_compositionStarts_eq_erase_boundaries, h]
+
+/-- An auxiliary cardinality equivalence between compositions and anchored subsets. -/
+def anchoredFinsetEquiv (n : ℕ) :
+    Composition (n + 1) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} := by
+  let e : Composition (n + 1) ≃ Finset (Fin n) :=
+    (compositionEquiv (n + 1)).trans (compositionAsSetEquiv (n + 1))
+  let f : Finset (Fin n) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} :=
+    { toFun := fun s ↦
+        ⟨(finSuccEquiv n).symm.finsetCongr (Finset.insertNone s), by simp⟩
+      invFun := fun s ↦
+        Finset.eraseNone ((finSuccEquiv n).finsetCongr s.1)
+      left_inv := by
+        intro s
+        ext j
+        simp [Equiv.finsetCongr_apply]
+      right_inv := by
+        rintro ⟨s, hs⟩
+        apply Subtype.ext
+        change (finSuccEquiv n).symm.finsetCongr
+            (Finset.insertNone (Finset.eraseNone ((finSuccEquiv n).finsetCongr s))) = s
+        ext i
+        simp only [Equiv.finsetCongr_apply, Finset.mem_map_equiv, Finset.mem_insertNone]
+        rcases hi : finSuccEquiv n i with _ | j
+        · rw [finSuccEquiv_eq_none] at hi
+          subst i
+          simpa using hs
+        · have hij : i = j.succ := finSuccEquiv_eq_some.mp hi
+          subst i
+          simp [Finset.mem_eraseNone] }
+  exact e.trans f
+
+/-- Compositions of `n+1` are canonically equivalent to cyclic-start sets containing zero.
+The forward map is definitionally `compositionStarts`, so its card and boundary API apply
+without transporting through an unrelated enumeration. -/
+noncomputable def compositionStartsEquiv (n : ℕ) :
+    Composition (n + 1) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} :=
+  Equiv.ofBijective
+    (fun c ↦ ⟨compositionStarts c, zero_mem_compositionStarts (Nat.zero_lt_succ n) c⟩)
+    ((Fintype.bijective_iff_injective_and_card _).mpr ⟨
+      fun _c _d h ↦ compositionStarts_injective (congrArg Subtype.val h),
+      Fintype.card_congr (anchoredFinsetEquiv n)⟩)
+
+@[simp]
+theorem compositionStartsEquiv_apply (n : ℕ) (c : Composition (n + 1)) :
+    (compositionStartsEquiv n c).1 = compositionStarts c := rfl
+
+@[simp]
+theorem compositionStartsEquiv_apply_card (n : ℕ) (c : Composition (n + 1)) :
+    (compositionStartsEquiv n c).1.card = c.length := card_compositionStarts c
+
+/-- Quantifying over the anchored subset is the same as quantifying over the block-boundary
+indices.  This is the interface between finite-set inclusion--exclusion and compositions. -/
+theorem forall_mem_compositionStarts_iff {L : ℕ} (c : Composition L) (P : Fin L → Prop) :
+    (∀ r ∈ compositionStarts c, P r) ↔
+      ∀ (i : ℕ) (hi : i < c.length), P (compositionStart c i hi) := by
+  constructor
+  · intro h i hi
+    exact h _ (compositionStart_mem c i hi)
+  · intro h r hr
+    obtain ⟨i, hi, rfl⟩ := (mem_compositionStarts_iff c r).mp hr
+    exact h i hi
+
 /-- A word of length `L` is equivalently a family of words indexed by the blocks of a
 composition of `L`. -/
 def wordBlocksEquiv {L : ℕ} (c : Composition L) :
@@ -1536,6 +1693,49 @@ theorem bwdCompositionBoundaryIntersection_sum {L : ℕ} (hL : 0 < L)
       · rfl
     _ = ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) :=
       bwdCompositionIntersection_sum hL c
+
+open Classical in
+/-- Forward composition factorization indexed by the actual anchored subset of cyclic starts.
+This is the form consumed by finite-set inclusion--exclusion. -/
+theorem fwdCompositionStartsIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r ∈ compositionStarts c, FwdGood L (rotateWord w r) then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  rw [← fwdCompositionBoundaryIntersection_sum hL c]
+  apply Finset.sum_congr rfl
+  intro w _hw
+  apply if_congr
+  · rw [forall_mem_compositionStarts_iff]
+    constructor
+    · intro h r hr
+      simpa using h r hr
+    · intro h r hr
+      simpa using h r hr
+  · rfl
+  · rfl
+
+open Classical in
+/-- Backward analogue of `fwdCompositionStartsIntersection_sum`. -/
+theorem bwdCompositionStartsIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r ∈ compositionStarts c, BwdGood L (rotateWord w r) then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  rw [← bwdCompositionBoundaryIntersection_sum hL c]
+  apply Finset.sum_congr rfl
+  intro w _hw
+  apply if_congr
+  · rw [forall_mem_compositionStarts_iff]
+    constructor
+    · intro h r hr
+      simpa using h r hr
+    · intro h r hr
+      simpa using h r hr
+  · rfl
+  · rfl
 
 /-- The weighted intersection of two forward survival events based at two cyclic marks
 factors into the two block-survival masses. -/

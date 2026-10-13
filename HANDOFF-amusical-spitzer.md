@@ -1,6 +1,66 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, composition-weight factorization)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, anchored cyclic subsets)
 
-## Current checkpoint: every composition-indexed weighted intersection factors
+## Current checkpoint: compositions are canonically anchored cyclic-start sets
+
+This lap closed the linear-boundary half of the cyclic inclusion--exclusion reindexing.  The
+new `compositionStarts c` is the finset of genuine block-boundary starts of a composition,
+with the virtual endpoint removed.  The file now proves:
+
+- `mem_compositionStarts_iff`: the marked starts are exactly the partial sums
+  `c.sizeUpTo i` for `i < c.length`;
+- `card_compositionStarts`: the number of starts is exactly the number of blocks;
+- `compositionStarts_injective`: the anchored start set determines the composition;
+- `compositionStartsEquiv`: for positive length `n+1`, compositions are canonically
+  equivalent to finsets of `Fin (n+1)` containing zero, and its forward map is definitionally
+  `compositionStarts`;
+- `forall_mem_compositionStarts_iff`: quantifying over the anchored finset is exactly
+  quantifying over the old block-boundary indices;
+- `fwdCompositionStartsIntersection_sum` and
+  `bwdCompositionStartsIntersection_sum`: the already-proved weighted intersection
+  factorization now has the actual finite-set event shape consumed by Mathlib's
+  `Finset.inclusion_exclusion_sum_biUnion`.
+
+Thus anchored nonempty cyclic subsets no longer need an ad hoc enumeration, and the subset
+cardinality/sign in inclusion--exclusion is already identified with `c.length`.  No ratified
+statement changed, no axiom or `native_decide` was added, and the scoped file still has exactly
+its one disclosed target `sorry` at `windowDensityLimit`.
+
+## Verification
+
+Exact checks run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdCompositionStartsIntersection_sum
+```
+
+The focused gate ended `FORMALIZE-TIER GREEN`.  The new anchored intersection theorem's axiom
+audit is exactly `[Classical.choice, Quot.sound, propext]`; the gate reports only the existing
+`windowDensityLimit` proof debt.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single `sorry`.  The remaining finite
+reindexing is the genuinely cyclic anchor count.  For a nonempty subset `s : Finset (Fin L)`,
+count pairs `(s, a)` with `a ∈ s`, rotate `s` so that `a` becomes zero, and transport the
+result through `compositionStartsEquiv`.  Each `s` occurs `s.card` times on the marked-pair
+side, while each anchored composition has `L` possible absolute anchors.  Prove the resulting
+weighted double-counting identity, using rotation invariance of word weights/events, to turn
+the inclusion--exclusion subset sum into
+
+```text
+positiveEndpoint L / L =
+  sum over positive compositions c of L of
+    (-1)^(c.length+1) / c.length * product_i (survive (c.blocksFun i)).
+```
+
+Then package that composition identity as the renewal recurrence, derive the two survival
+generating functions, and take the boundary limits with the already-proved summability and
+`minimaConstant_eq_directionalFactors`.  Do not re-prove the anchored subset equivalence or
+return to the refuted pointwise cut identity.
+
+## Previous checkpoint: every composition-indexed weighted intersection factors
 
 This reflection lap audited the full remaining proof graph rather than extending the preceding
 list interface mechanically.  The finite cyclic-union route is still faithful to the ratified
