@@ -1,5 +1,45 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 lap: rewiring properness and annulus crossing
+
+### Concrete advance
+
+- Added `CollatzMoonshot/AmusicalSeventh/Rewire.lean`, imported by the scoped target.
+- Proved the generic kernel-checked lemma `perm_zpow_apply_injective_of_infinite`: the integer
+  parametrization of any infinite permutation orbit is injective.
+- Derived `finite_orbit_times_le` and `exists_nat_iterate_gt`: an infinite orbit visits every
+  bounded subset at only finitely many integer times and is unbounded in both time directions.
+- Proved `exists_forward_backward_mem_Ico`, the first quantitative load-bearing input to
+  `rewire_single_orbit`: under the ratified doubling bound, every infinite orbit crosses
+  `[Y, 2Y)` both forward and backward whenever its starting point is below `Y`.
+- No ratified statement was changed. The three target sorries remain explicit.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Rewire.lean` (green; one non-finding style
+  suggestion concerning a local `NeZero` instance).
+- `lake build CollatzMoonshot.AmusicalSeventh.Rewire CollatzMoonshot.AmusicalSeventh` (8711 jobs,
+  green; only the three expected target-sorry warnings and inherited publish-tier suggestions).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh` (8711 jobs, `FORMALIZE-TIER GREEN`; exactly the three expected
+  target sorries remain).
+
+### Current blocker
+
+`rewire_single_orbit` still needs the global combinatorial construction. The analytic/properness
+part is now closed. The remaining work is to enumerate infinite orbit classes, choose annular cuts
+with a quantitative `O((log N)^2)` support bound, split the original bi-infinite lines into finite
+segments, enumerate those segments by `ℤ`, and package the successor relation as an
+`Equiv.Perm ℕ` while proving agreement on finite orbits and density zero.
+
+### Next highest-value attack
+
+Define the equivalence relation `a ~ b ↔ ∃ j : ℤ, (σ ^ j) a = b` on the infinite-orbit subtype and
+obtain a countable transversal ordered by least natural representative. For orbit number `i`, use
+`exists_forward_backward_mem_Ico` at scales `4^k`, `k ≥ i`, to select two cuts. First prove the
+standalone counting lemma that these selected cut values have density zero; only then build and
+verify the segment-splicing permutation.
+
 ## 2026-10-13 lap: cofinite reformulation closed
 
 ### Concrete advance

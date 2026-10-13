@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
+import CollatzMoonshot.AmusicalSeventh.Rewire
 
 /-!
 # Toward a seventh orbit: what a cofinite orbit would need, and why statistics cannot refute it
