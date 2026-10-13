@@ -61,6 +61,113 @@ theorem amusicalInv_add_three_mul (n k : ℤ) :
   unfold amusicalInv
   split_ifs <;> omega
 
+/-- Product of the exact translation factors encountered along a forward orbit prefix. -/
+def amusicalForwardMultiplier : ℕ → ℤ → ℤ
+  | 0, _ => 1
+  | t + 1, n => (if n % 2 = 0 then 6 else 3) * amusicalForwardMultiplier t (amusical n)
+
+/-- Product of the exact translation factors encountered along a backward orbit prefix. -/
+def amusicalBackwardMultiplier : ℕ → ℤ → ℤ
+  | 0, _ => 1
+  | t + 1, n => (if n % 3 = 0 then 2 else 4) * amusicalBackwardMultiplier t (amusicalInv n)
+
+/-- Number of even branches in a forward orbit prefix. -/
+def amusicalForwardEvenCount : ℕ → ℤ → ℕ
+  | 0, _ => 0
+  | t + 1, n => (if n % 2 = 0 then 1 else 0) + amusicalForwardEvenCount t (amusical n)
+
+/-- Number of `×4/3` branches in a backward orbit prefix. -/
+def amusicalBackwardFourCount : ℕ → ℤ → ℕ
+  | 0, _ => 0
+  | t + 1, n => (if n % 3 = 0 then 0 else 1) + amusicalBackwardFourCount t (amusicalInv n)
+
+theorem amusicalForwardMultiplier_eq (t : ℕ) (n : ℤ) :
+    amusicalForwardMultiplier t n =
+      (3 : ℤ) ^ t * 2 ^ amusicalForwardEvenCount t n := by
+  induction t generalizing n with
+  | zero => simp [amusicalForwardMultiplier, amusicalForwardEvenCount]
+  | succ t ih =>
+      rw [amusicalForwardMultiplier, amusicalForwardEvenCount, ih, pow_succ]
+      by_cases h : n % 2 = 0 <;> simp [h] <;> ring
+
+theorem amusicalBackwardMultiplier_eq (t : ℕ) (n : ℤ) :
+    amusicalBackwardMultiplier t n =
+      (2 : ℤ) ^ (t + amusicalBackwardFourCount t n) := by
+  induction t generalizing n with
+  | zero => simp [amusicalBackwardMultiplier, amusicalBackwardFourCount]
+  | succ t ih =>
+      rw [amusicalBackwardMultiplier, amusicalBackwardFourCount, ih]
+      by_cases h : n % 3 = 0 <;> simp [h] <;> ring
+
+theorem amusicalForwardMultiplier_pos (t : ℕ) (n : ℤ) :
+    0 < amusicalForwardMultiplier t n := by
+  induction t generalizing n with
+  | zero => simp [amusicalForwardMultiplier]
+  | succ t ih =>
+      simp only [amusicalForwardMultiplier]
+      by_cases h : n % 2 = 0 <;> simp [h] <;> have := ih (amusical n) <;> omega
+
+theorem amusicalBackwardMultiplier_pos (t : ℕ) (n : ℤ) :
+    0 < amusicalBackwardMultiplier t n := by
+  induction t generalizing n with
+  | zero => simp [amusicalBackwardMultiplier]
+  | succ t ih =>
+      simp only [amusicalBackwardMultiplier]
+      by_cases h : n % 3 = 0 <;> simp [h] <;> have := ih (amusicalInv n) <;> omega
+
+/-- Exact forward affine slope on a residue class modulo `4^L`. -/
+theorem amusical_iterate_add_pow_four_mul_exact (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n +
+      (4 : ℤ) ^ (L - t) * amusicalForwardMultiplier t n * k := by
+  induction L generalizing t n k with
+  | zero =>
+      obtain rfl : t = 0 := by omega
+      simp [amusicalForwardMultiplier]
+  | succ L ih =>
+      cases t with
+      | zero => simp [amusicalForwardMultiplier]
+      | succ t =>
+          have ht' : t ≤ L := by omega
+          let d : ℤ := if n % 2 = 0 then 6 else 3
+          have hih := ih t ht' (amusical n) (d * k)
+          rw [Function.iterate_succ_apply, Function.iterate_succ_apply, pow_succ']
+          rw [show n + 4 * 4 ^ L * k = n + 4 * (4 ^ L * k) by ring]
+          rw [amusical_add_four_mul]
+          by_cases h : n % 2 = 0 <;> simp [d, h, amusicalForwardMultiplier] at hih ⊢ <;>
+            convert hih using 1 <;> ring
+
+/-- Exact backward affine slope on a residue class modulo `3^L`. -/
+theorem amusicalInv_iterate_add_pow_three_mul_exact (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    amusicalInv^[t] (n + (3 : ℤ) ^ L * k) = amusicalInv^[t] n +
+      (3 : ℤ) ^ (L - t) * amusicalBackwardMultiplier t n * k := by
+  induction L generalizing t n k with
+  | zero =>
+      obtain rfl : t = 0 := by omega
+      simp [amusicalBackwardMultiplier]
+  | succ L ih =>
+      cases t with
+      | zero => simp [amusicalBackwardMultiplier]
+      | succ t =>
+          have ht' : t ≤ L := by omega
+          let d : ℤ := if n % 3 = 0 then 2 else 4
+          have hih := ih t ht' (amusicalInv n) (d * k)
+          rw [Function.iterate_succ_apply, Function.iterate_succ_apply, pow_succ']
+          rw [show n + 3 * 3 ^ L * k = n + 3 * (3 ^ L * k) by ring]
+          rw [amusicalInv_add_three_mul]
+          by_cases h : n % 3 = 0 <;> simp [d, h, amusicalBackwardMultiplier] at hih ⊢ <;>
+            convert hih using 1 <;> ring
+
+theorem amusical_iterate_add_pow_four_mul_slope (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n +
+      (4 : ℤ) ^ (L - t) * 3 ^ t * 2 ^ amusicalForwardEvenCount t n * k := by
+  rw [amusical_iterate_add_pow_four_mul_exact L t ht, amusicalForwardMultiplier_eq]
+  ring
+
+theorem amusicalInv_iterate_add_pow_three_mul_slope (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    amusicalInv^[t] (n + (3 : ℤ) ^ L * k) = amusicalInv^[t] n +
+      (3 : ℤ) ^ (L - t) * 2 ^ (t + amusicalBackwardFourCount t n) * k := by
+  rw [amusicalInv_iterate_add_pow_three_mul_exact L t ht, amusicalBackwardMultiplier_eq]
+
 theorem amusical_iterate_add_pow_four_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
     ∃ a : ℤ, 0 < a ∧ amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n + a * k := by
   induction L generalizing t n k with
