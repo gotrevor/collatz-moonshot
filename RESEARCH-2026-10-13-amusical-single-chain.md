@@ -391,3 +391,35 @@ the residue-transitive core (`U`, the twins); credence ~93%.
   windows whose slope product is within polynomial factors of 1.
 * **Search.**  4,540 random members (`p = 2, 3, 5`) all show linearly growing orbit counts.
 * **Literature.**  The conjecture does not appear in Kohl's thesis or the RCWA manual.
+
+## 16. A residue-transitive member with infinitely many orbits (2026-10-13, "transitive" agent, checked)
+
+Lean: `AmusicalPingPong.lean` (the abstract engine theorem and `U`'s Theorem L are targets).  This
+is the first residue-transitive RCWA permutation in the anti-Kohl class with *provably*
+infinitely many orbits.  The agent found no prior example (~80% that it is new).
+
+* **`PP(0)`.**  Modulus `13300`, `9711` pieces, slopes `3/4, 3/2, 3, 21/5, 15, 75/7` (all `v₃ = 1`).
+  * Four linear "engine" pieces run a two-counter ping-pong on `(v₅, v₇)`, with phase `x mod 19`.
+  * Seeds (`v₅` odd, `7 ∤ x`, `x · 8^(v₅ x) ≡ 1 mod 19`) stay in the engine forever.  Seeds prime to
+    `3` start distinct orbits, at density `2/399`.
+  * No orbit contains a class tail (steering argument).
+  * The filler pieces (slopes `3/2^d`) make the map a bijection that is residue-transitive at every
+    modulus.  That proof is computer-assisted: four hand lemmas plus two exact finite checks.
+* **My independent checks** (`scripts/amusical/pp57/`):
+  * domains and images partition `ℤ` exactly;
+  * strongly connected at 8 moduli the agent did not test (`13300 · {3, 8, 27, 5, 7, 19, 11, 13}`, up
+    to `359100`), with teeth: `κ` is NOT strongly connected, `U` is;
+  * Lemma E: 902 of 902 odd-`A` seeds stay in the engine for 120 steps, and 181 of 181 even-`A`
+    controls leak.
+  * Credence: infinitely many orbits ~97%; transitive at every modulus ~88%.
+* **Why it cannot transfer to `U`** (agent Theorems L and M, paper proofs, not re-derived).
+  * `U` is *weakly sign-uniform*: for each prime, its slopes never change valuation sign.
+  * For such transitive maps no orbit stays in the linear pieces forever (Theorem L).
+  * The Cesàro limit of `σ̂ⁿ_* Haar` has full support on `Ẑ` (Theorem M).  So there is no open cone
+    (killing Theorem T in every variant) and no open transversal (Proposition P generalized).
+  * Hence a certificate for `U` must have empty interior in `Ẑ`.  The example lives exactly where
+    `U` does not: at primes (5 and 7) where slope valuations change sign.
+* **Further no-gos.**
+  * No coarse valuation clock exists for any member of the class.
+  * Commuting RCWA maps of a transitive map are surjective.
+  * The bounded-ratio rewiring (§14) extends to the whole class.

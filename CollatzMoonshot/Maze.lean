@@ -29,6 +29,7 @@ import CollatzMoonshot.AmusicalWindowThree
 import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalAntiKohl
+import CollatzMoonshot.AmusicalPingPong
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -239,7 +240,10 @@ def register : List Hall := [
    "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)", .refuted,
    "slopes 3/2 and 2/3 alone allow a conjugated translation, which has one orbit",
-   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: eventually-linear ping-pong engine (two counters)", .refuted,
+   "gives ∞ orbits for a residue-transitive map, but U's one linear piece 2n ↦ 3n only lowers v₂",
+   "AmusicalPingPong.lean; agent report transitive.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -348,7 +352,10 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.atLeastSevenOrbits_of_antiKohl],
    [``CollatzMoonshot.Amusical.AntiKohlConjecture]⟩,
   ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)",
-   [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩]
+   [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩,
+  ⟨"amusical: eventually-linear ping-pong engine (two counters)",
+   [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_pingPong,
+    ``CollatzMoonshot.Amusical.amusical_not_eventually_linear], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -361,7 +368,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 40 rows, 32 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 41 rows, 33 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
