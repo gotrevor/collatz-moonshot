@@ -1,6 +1,54 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, strict cyclic cover)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, two-mark intersections)
 
-## Current checkpoint: kernel-checked cyclic-minimum theorem and word-level cover
+## Current checkpoint: the first cyclic intersection term factors exactly
+
+This lap advanced the cyclic-union inclusion--exclusion route past the one-mark cover.  In
+`CollatzMoonshot/AmusicalSpitzer.lean`, the new restriction lemmas
+`FwdGood.of_append_left` and `BwdGood.of_append_left` show that the initial block of any
+surviving concatenation survives.  Combining this with the existing append closure proves
+
+```text
+Good (u ++ v) ∧ Good (v ++ u)  ↔  Good u ∧ Good v
+```
+
+for positive-length blocks, in both directions (`fwdGood_append_and_swap_iff` and
+`bwdGood_append_and_swap_iff`).  Thus simultaneous survival from two cyclic marks is exactly
+separate survival on the two intervening arcs; there is no independence assumption hidden in
+the factorization.
+
+The weighted form is also proved.  `fwdTwoMarkIntersection_sum` and
+`bwdTwoMarkIntersection_sum` sum over every pair of Boolean blocks, use product-weight
+factorization, and identify the result exactly with
+`fwdSurv m * fwdSurv n` and `bwdSurv m * bwdSurv n`.  This is the first genuinely nontrivial
+intersection term required by the standard cyclic inclusion--exclusion proof.
+
+## Verification
+
+Exact commands run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdTwoMarkIntersection_sum
+```
+
+The target gate ended `FORMALIZE-TIER GREEN`; the new weighted factorization's axiom audit is
+exactly `[Classical.choice, Quot.sound, propext]`.  The only proof-debt warning remains the
+pre-existing `windowDensityLimit`.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` is still the scoped file's single `sorry`.  Generalize the proved
+two-block equivalence to an ordered nonempty composition of the circle: survival from every
+marked boundary is equivalent to survival of every positive-length gap block.  The weighted
+intersection then factors as the product of the corresponding `fwdSurv` or `bwdSurv` values.
+Summing these composition-indexed intersection terms with finite inclusion--exclusion gives
+the cyclic-union coefficient identity, from which the verified renewal recurrence follows.
+After that, derive the two generating functions and take the boundary limit using the existing
+summability and `minimaConstant_eq_directionalFactors`.  Do not return to the refuted pointwise
+cut identity.
+
+## Previous checkpoint: kernel-checked cyclic-minimum theorem and word-level cover
 
 This review lap reconstructed the proposed recurrence route and closed its first genuinely
 cyclic step.  The new generic module `CollatzMoonshot/CyclicMinimum.lean` proves:

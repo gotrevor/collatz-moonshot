@@ -825,6 +825,50 @@ theorem BwdGood.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
     · simpa using (bwdGood_iff_prefix_positive u).mp hu m hm le_rfl
     · exact (bwdGood_iff_prefix_positive v).mp hv s hs0 hsn
 
+/-- The left block of a forward-surviving concatenation survives. -/
+theorem FwdGood.of_append_left {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (h : FwdGood (m + n) (Fin.append u v)) : FwdGood m u := by
+  rw [fwdGood_iff_prefix_positive]
+  intro t ht0 htm
+  have htL : t ≤ m + n := by omega
+  rw [← Fin.take_append_left t htm u v]
+  exact (fwdGood_iff_prefix_positive (Fin.append u v)).mp h t ht0 htL
+
+/-- The left block of a backward-surviving concatenation survives. -/
+theorem BwdGood.of_append_left {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (h : BwdGood (m + n) (Fin.append u v)) : BwdGood m u := by
+  rw [bwdGood_iff_prefix_positive]
+  intro t ht0 htm
+  have htL : t ≤ m + n := by omega
+  rw [← Fin.take_append_left t htm u v]
+  exact (bwdGood_iff_prefix_positive (Fin.append u v)).mp h t ht0 htL
+
+/-- Two forward cyclic starts at the endpoints of positive-length blocks both survive
+exactly when the two intervening blocks survive separately.  This is the two-mark
+intersection step in the cyclic inclusion--exclusion proof of Sparre--Andersen. -/
+theorem fwdGood_append_and_swap_iff {m n : ℕ} (hm : 0 < m) (hn : 0 < n)
+    (u : Fin m → Bool) (v : Fin n → Bool) :
+    (FwdGood (m + n) (Fin.append u v) ∧
+      FwdGood (n + m) (Fin.append v u)) ↔
+      FwdGood m u ∧ FwdGood n v := by
+  constructor
+  · rintro ⟨huv, hvu⟩
+    exact ⟨FwdGood.of_append_left huv, FwdGood.of_append_left hvu⟩
+  · rintro ⟨hu, hv⟩
+    exact ⟨hu.append hm hv, hv.append hn hu⟩
+
+/-- Backward analogue of `fwdGood_append_and_swap_iff`. -/
+theorem bwdGood_append_and_swap_iff {m n : ℕ} (hm : 0 < m) (hn : 0 < n)
+    (u : Fin m → Bool) (v : Fin n → Bool) :
+    (BwdGood (m + n) (Fin.append u v) ∧
+      BwdGood (n + m) (Fin.append v u)) ↔
+      BwdGood m u ∧ BwdGood n v := by
+  constructor
+  · rintro ⟨huv, hvu⟩
+    exact ⟨BwdGood.of_append_left huv, BwdGood.of_append_left hvu⟩
+  · rintro ⟨hu, hv⟩
+    exact ⟨hu.append hm hv, hv.append hn hu⟩
+
 /-- Forward word weights multiply under concatenation. -/
 theorem fwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
     fwdWordWeight (Fin.append u v) = fwdWordWeight u * fwdWordWeight v := by
@@ -981,6 +1025,39 @@ theorem bwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
       if BwdGood k w then bwdWordWeight w else 0 := by
   rw [bwdSurv_cast_eq_word_sum]
   rfl
+
+/-- The weighted intersection of two forward survival events based at two cyclic marks
+factors into the two block-survival masses. -/
+theorem fwdTwoMarkIntersection_sum {m n : ℕ} (hm : 0 < m) (hn : 0 < n) :
+    (∑ u : Fin m → Bool, ∑ v : Fin n → Bool,
+      if FwdGood (m + n) (Fin.append u v) ∧
+          FwdGood (n + m) (Fin.append v u) then
+        fwdWordWeight (Fin.append u v) else 0) =
+      (fwdSurv m : ℝ) * fwdSurv n := by
+  rw [fwdSurv_cast_eq_weighted_word_sum, fwdSurv_cast_eq_weighted_word_sum,
+    Fintype.sum_mul_sum]
+  apply Finset.sum_congr rfl
+  intro u hu
+  apply Finset.sum_congr rfl
+  intro v hv
+  simp only [fwdGood_append_and_swap_iff hm hn, fwdWordWeight_append]
+  split_ifs <;> simp_all
+
+/-- Backward analogue of `fwdTwoMarkIntersection_sum`. -/
+theorem bwdTwoMarkIntersection_sum {m n : ℕ} (hm : 0 < m) (hn : 0 < n) :
+    (∑ u : Fin m → Bool, ∑ v : Fin n → Bool,
+      if BwdGood (m + n) (Fin.append u v) ∧
+          BwdGood (n + m) (Fin.append v u) then
+        bwdWordWeight (Fin.append u v) else 0) =
+      (bwdSurv m : ℝ) * bwdSurv n := by
+  rw [bwdSurv_cast_eq_weighted_word_sum, bwdSurv_cast_eq_weighted_word_sum,
+    Fintype.sum_mul_sum]
+  apply Finset.sum_congr rfl
+  intro u hu
+  apply Finset.sum_congr rfl
+  intro v hv
+  simp only [bwdGood_append_and_swap_iff hm hn, bwdWordWeight_append]
+  split_ifs <;> simp_all
 
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
