@@ -406,6 +406,127 @@ theorem windowDensity_ge (L : ℕ) : 1 / 36 ≤ fwdSurv L * bwdSurv L := by
   calc (1 : ℚ) / 36 = 1 / 6 * (1 / 6) := by norm_num
     _ ≤ fwdSurv L * bwdSurv L := mul_le_mul h1 h2 (by norm_num) (by linarith)
 
+/-- Two `L`-window minima at increasing orbit indices no more than `L` apart coincide. -/
+theorem IsWindowMin.eq_of_orbit_indices_of_lt {L : ℕ} {x n m : ℤ} {i j : ℤ}
+    (hn : IsWindowMin L n) (hm : IsWindowMin L m)
+    (hi : (amusicalPerm ^ i) x = n) (hj : (amusicalPerm ^ j) x = m)
+    (hij : i < j) (hdist : j - i ≤ (L : ℤ)) : n = m := by
+  set t := (j - i).toNat with ht
+  have hji0 : 0 ≤ j - i := by omega
+  have htcast : (t : ℤ) = j - i := by simp [t, Int.toNat_of_nonneg hji0]
+  have htpos : 0 < t := by
+    exact_mod_cast (show (0 : ℤ) < (t : ℤ) by rw [htcast]; omega)
+  have htL : t ≤ L := by exact_mod_cast (show (t : ℤ) ≤ L by rwa [htcast])
+  have hiter : amusical^[t] n = m := by
+    rw [amusical_iterate_eq_perm_pow, ← hi, ← hj, ← Equiv.Perm.mul_apply, ← zpow_add]
+    congr 2
+    omega
+  have heq := hn.iterate_eq_of_isWindowMin htpos htL (hiter ▸ hm)
+  exact heq.symm.trans hiter
+
+/-- Two `L`-window minima represented at orbit indices at distance at most `L` coincide. -/
+theorem IsWindowMin.eq_of_orbit_indices {L : ℕ} {x n m : ℤ} {i j : ℤ}
+    (hn : IsWindowMin L n) (hm : IsWindowMin L m)
+    (hi : (amusicalPerm ^ i) x = n) (hj : (amusicalPerm ^ j) x = m)
+    (hdist : |j - i| ≤ (L : ℤ)) : n = m := by
+  rcases lt_trichotomy i j with hij | rfl | hji
+  · exact hn.eq_of_orbit_indices_of_lt hm hi hj hij
+      (by simpa [abs_of_nonneg (show 0 ≤ j - i by omega)] using hdist)
+  · exact hi.symm.trans hj
+  · exact (hm.eq_of_orbit_indices_of_lt hn hj hi hji
+      (by simpa [abs_of_nonpos (show j - i ≤ 0 by omega)] using hdist)).symm
+
+/-- Packing bound for window minima on one orbit.  Around every chosen orbit index put the
+`L+1` consecutive indices beginning there.  The preceding separation lemma makes these blocks
+disjoint, while a uniform index bound puts all blocks in one integer interval. -/
+theorem windowMin_card_mul_le {L m : ℕ} {x : ℤ} (S : Finset ℕ)
+    (hwin : ∀ n ∈ S, IsWindowMin L (n : ℤ))
+    (htime : ∀ n ∈ S, ∃ j : ℤ, (amusicalPerm ^ j) x = n ∧ |j| ≤ (m : ℤ)) :
+    S.card * (L + 1) ≤ 2 * (m + L) + 1 := by
+  classical
+  choose! g hg hgabs using htime
+  let D := S.product (Finset.range (L + 1))
+  let shift : ℕ × ℕ → ℤ := fun p => g p.1 + p.2
+  have hinj : Set.InjOn shift D := by
+    rintro ⟨n, r⟩ hnr ⟨n', r'⟩ hnr' heq
+    change (n, r) ∈ S.product (Finset.range (L + 1)) at hnr
+    change (n', r') ∈ S.product (Finset.range (L + 1)) at hnr'
+    have hnr0 := Finset.mem_product.mp hnr
+    have hnr0' := Finset.mem_product.mp hnr'
+    have hrL := Finset.mem_range.mp hnr0.2
+    have hrL' := Finset.mem_range.mp hnr0'.2
+    have hdist : |g n' - g n| ≤ (L : ℤ) := by
+      dsimp only [shift] at heq
+      have hr : (r : ℤ) ≤ L := by exact_mod_cast (show r ≤ L by omega)
+      have hr' : (r' : ℤ) ≤ L := by exact_mod_cast (show r' ≤ L by omega)
+      rw [abs_le]
+      constructor <;> omega
+    have hnn' : (n : ℤ) = n' :=
+      (hwin n hnr0.1).eq_of_orbit_indices (hwin n' hnr0'.1) (hg n hnr0.1)
+        (hg n' hnr0'.1) hdist
+    have hn : n = n' := by exact_mod_cast hnn'
+    subst n'
+    have hr : r = r' := by
+      dsimp only [shift] at heq
+      omega
+    subst r'
+    rfl
+  have hsubset : D.image shift ⊆ Finset.Icc (-(m + L : ℕ) : ℤ) (m + L : ℕ) := by
+    intro z hz
+    obtain ⟨⟨n, r⟩, hnr, rfl⟩ := Finset.mem_image.mp hz
+    change (n, r) ∈ S.product (Finset.range (L + 1)) at hnr
+    have hnr0 := Finset.mem_product.mp hnr
+    have hrL := Finset.mem_range.mp hnr0.2
+    have habs := hgabs n hnr0.1
+    have hbounds := abs_le.mp habs
+    have hr : (r : ℤ) ≤ L := by exact_mod_cast (show r ≤ L by omega)
+    simp only [Finset.mem_Icc, shift]
+    push_cast at hbounds hr ⊢
+    omega
+  calc
+    S.card * (L + 1) = D.card := by simp [D]
+    _ = (D.image shift).card := (Finset.card_image_of_injOn hinj).symm
+    _ ≤ (Finset.Icc (-(m + L : ℕ) : ℤ) (m + L : ℕ)).card :=
+      Finset.card_le_card hsubset
+    _ = 2 * (m + L) + 1 := by rw [Int.card_Icc]; omega
+
+open Classical in
+/-- Quantitative form of the packing bound when large orbit indices grow at most linearly in
+the value they represent. -/
+theorem windowMin_on_orbit_card_mul_le (L X J : ℕ) (x : ℤ) (C : ℝ) (hC : 0 < C)
+    (hlinear : ∀ j : ℤ, (J : ℤ) ≤ |j| →
+      |(j : ℝ)| < C * (((amusicalPerm ^ j) x : ℤ) : ℝ)) :
+    ((Finset.range X).filter fun n : ℕ =>
+      IsWindowMin L (n : ℤ) ∧ (n : ℤ) ∈ amusicalOrbit x).card * (L + 1) ≤
+      2 * (Nat.ceil (C * X) + J + L) + 1 := by
+  classical
+  let S := (Finset.range X).filter fun n : ℕ =>
+    IsWindowMin L (n : ℤ) ∧ (n : ℤ) ∈ amusicalOrbit x
+  apply windowMin_card_mul_le S (m := Nat.ceil (C * X) + J)
+  · intro n hn
+    exact (Finset.mem_filter.mp hn).2.1
+  · intro n hn
+    have hn' := Finset.mem_filter.mp hn
+    obtain ⟨j, hj⟩ := hn'.2.2
+    refine ⟨j, hj, ?_⟩
+    by_cases hsmall : |j| < (J : ℤ)
+    · push_cast
+      omega
+    · have hJ : (J : ℤ) ≤ |j| := le_of_not_gt hsmall
+      have hjlin := hlinear j hJ
+      change (amusicalPerm ^ j) x = (n : ℤ) at hj
+      rw [hj] at hjlin
+      have hnX : (n : ℝ) < X := by exact_mod_cast Finset.mem_range.mp hn'.1
+      have hjX : |(j : ℝ)| < C * X := lt_trans hjlin (mul_lt_mul_of_pos_left hnX hC)
+      have hceil : C * X ≤ Nat.ceil (C * X) := Nat.le_ceil _
+      have hceilJ : (Nat.ceil (C * X) : ℝ) ≤ (Nat.ceil (C * X) + J : ℕ) := by
+        exact_mod_cast Nat.le_add_right (Nat.ceil (C * X)) J
+      push_cast at hceilJ
+      have hreal : |(j : ℝ)| ≤ (Nat.ceil (C * X) + J : ℕ) := by
+        push_cast
+        exact le_trans hjX.le (hceil.trans hceilJ)
+      exact_mod_cast hreal
+
 /-- **Target.**  The sublinear recurrence: finitely many orbits would force some infinite orbit
 to come back below `|j|/C` at arbitrarily late times, for every `C`.  Paper proof: at least
 `δ_L X − o(X) ≥ X/37` window minima lie below `X`; on one chain their times are more than `L`
@@ -414,7 +535,155 @@ apart, so `k` chains span time `≥ L X/37 − O(k)`; one chain has `|j| ≥ L X
 theorem exists_sublinearlyRecurrent_of_finitelyManyOrbits (h : ¬ AmusicalInfinitelyManyOrbits) :
     ∃ x : ℤ, 0 ≤ x ∧ (amusicalOrbit x).Infinite ∧ ∀ C : ℝ, 0 < C → ∀ J : ℕ,
       ∃ j : ℤ, (J : ℤ) ≤ |j| ∧ C * (((amusicalPerm ^ j) x : ℤ) : ℝ) ≤ |(j : ℝ)| := by
-  sorry
+  classical
+  rw [AmusicalInfinitelyManyOrbits, Set.not_infinite] at h
+  set T := h.toFinset with hT
+  have hmem : ∀ O ∈ T, ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x := fun O hO => by
+    simpa [hT] using hO
+  choose! seed hseed0 hseedO using hmem
+  by_contra hrec
+  have hfail : ∀ O ∈ T, O.Infinite → ∃ C : ℝ, 0 < C ∧ ∃ J : ℕ, ∀ j : ℤ,
+      (J : ℤ) ≤ |j| → |(j : ℝ)| < C * (((amusicalPerm ^ j) (seed O) : ℤ) : ℝ) := by
+    intro O hO hOinf
+    have hseedinf : (amusicalOrbit (seed O)).Infinite := by rwa [← hseedO O hO]
+    have hn : ¬ (∀ C : ℝ, 0 < C → ∀ J : ℕ, ∃ j : ℤ,
+        (J : ℤ) ≤ |j| ∧
+          C * (((amusicalPerm ^ j) (seed O) : ℤ) : ℝ) ≤ |(j : ℝ)|) := by
+      intro hsub
+      exact hrec ⟨seed O, hseed0 O hO, hseedinf, hsub⟩
+    push Not at hn
+    exact hn
+  have hdata : ∀ O ∈ T, ∃ C : ℝ, 0 < C ∧ ∃ J : ℕ, O.Infinite → ∀ j : ℤ,
+      (J : ℤ) ≤ |j| → |(j : ℝ)| < C * (((amusicalPerm ^ j) (seed O) : ℤ) : ℝ) := by
+    intro O hO
+    by_cases hOinf : O.Infinite
+    · obtain ⟨C, hC, J, hJ⟩ := hfail O hO hOinf
+      exact ⟨C, hC, J, fun _ => hJ⟩
+    · exact ⟨1, by norm_num, 0, fun h => absurd h hOinf⟩
+  choose! C hC J hlinear using hdata
+  let A : ℝ := ∑ O ∈ T, C O
+  have hA0 : 0 ≤ A := by
+    apply Finset.sum_nonneg
+    intro O hO
+    exact (hC O hO).le
+  obtain ⟨L, hL⟩ := exists_nat_gt (75 * A)
+  let gap : ℝ := (L + 1) / 37 - 2 * A
+  have hgap : 0 < gap := by
+    dsimp only [gap]
+    nlinarith
+  let K : ℕ := ∑ O ∈ T,
+    (2 * (J O + L + 1) + 1 + O.ncard * (L + 1))
+  have hdelta : (1 / 37 : ℝ) < ((fwdSurv L * bwdSurv L : ℚ) : ℝ) := by
+    have hge : (1 / 36 : ℝ) ≤ ((fwdSurv L * bwdSurv L : ℚ) : ℝ) := by
+      have hcast := (Rat.cast_le (K := ℝ)).2 (windowDensity_ge L)
+      norm_num at hcast ⊢
+      exact hcast
+    norm_num at hge ⊢
+    linarith
+  have hdensity : ∀ᶠ X : ℕ in Filter.atTop,
+      (1 / 37 : ℝ) <
+        (((Finset.range X).filter fun n : ℕ => IsWindowMin L n).card : ℝ) / X :=
+    (windowMinDensity L).eventually (lt_mem_nhds hdelta)
+  have hlarge := hdensity.and
+    (Filter.eventually_ge_atTop (Nat.ceil ((K : ℝ) / gap) + 1))
+  obtain ⟨X, hXdensity, hXlarge⟩ := hlarge.exists
+  have hXpos : (0 : ℝ) < X := by
+    have : (0 : ℕ) < Nat.ceil ((K : ℝ) / gap) + 1 := by omega
+    exact_mod_cast lt_of_lt_of_le this hXlarge
+  have hKX : (K : ℝ) < gap * X := by
+    have hceil := Nat.le_ceil ((K : ℝ) / gap)
+    have hratio : (K : ℝ) / gap < X := by
+      have hXlarge' : ((Nat.ceil ((K : ℝ) / gap) + 1 : ℕ) : ℝ) ≤ X := by
+        exact_mod_cast hXlarge
+      push_cast at hXlarge'
+      linarith
+    rw [div_lt_iff₀ hgap] at hratio
+    nlinarith
+  let S := (Finset.range X).filter fun n : ℕ => IsWindowMin L n
+  let F : Set ℤ → Finset ℕ := fun O =>
+    (Finset.range X).filter fun n : ℕ => IsWindowMin L n ∧ (n : ℤ) ∈ O
+  have hcover : S ⊆ T.biUnion F := by
+    intro n hn
+    have hn' := Finset.mem_filter.mp hn
+    rw [Finset.mem_biUnion]
+    refine ⟨amusicalOrbit n, ?_, ?_⟩
+    · simp [hT]
+      exact ⟨n, by positivity, rfl⟩
+    · simp only [F, Finset.mem_filter, hn'.1, hn'.2, true_and]
+      exact mem_amusicalOrbit_self n
+  have hcard : S.card ≤ ∑ O ∈ T, (F O).card :=
+    (Finset.card_le_card hcover).trans Finset.card_biUnion_le
+  have hFbound : ∀ O ∈ T, (F O).card * (L + 1) ≤
+      2 * (Nat.ceil (C O * X) + J O + L) + 1 + O.ncard * (L + 1) := by
+    intro O hO
+    by_cases hOinf : O.Infinite
+    · have hb := windowMin_on_orbit_card_mul_le L X (J O) (seed O) (C O) (hC O hO)
+          (hlinear O hO hOinf)
+      rw [← hseedO O hO] at hb
+      exact le_add_right hb
+    · have hOfin : O.Finite := Set.not_infinite.mp hOinf
+      have hcardO : (F O).card ≤ O.ncard := by
+        have hi : (F O).card ≤ hOfin.toFinset.card := by
+          refine Finset.card_le_card_of_injOn (fun n : ℕ => (n : ℤ)) ?_ ?_
+          · intro n hn
+            exact hOfin.mem_toFinset.mpr (Finset.mem_filter.mp hn).2.2
+          · intro a _ b _ hab
+            exact Int.ofNat_inj.mp hab
+        rwa [← Set.ncard_eq_toFinset_card O hOfin] at hi
+      have := Nat.mul_le_mul_right (L + 1) hcardO
+      omega
+  let R : Set ℤ → ℕ := fun O =>
+    2 * (Nat.ceil (C O * X) + J O + L) + 1 + O.ncard * (L + 1)
+  have htotal : S.card * (L + 1) ≤ ∑ O ∈ T, R O := by
+    calc
+      S.card * (L + 1) ≤ (∑ O ∈ T, (F O).card) * (L + 1) :=
+        Nat.mul_le_mul_right (L + 1) hcard
+      _ = ∑ O ∈ T, (F O).card * (L + 1) := by rw [Finset.sum_mul]
+      _ ≤ ∑ O ∈ T, R O := by
+        apply Finset.sum_le_sum
+        intro O hO
+        exact hFbound O hO
+  have hpoint : ∀ O ∈ T, ((R O : ℕ) : ℝ) ≤
+      2 * C O * X + (2 * (J O + L + 1) + 1 + O.ncard * (L + 1) : ℕ) := by
+    intro O hO
+    have hceil := Nat.ceil_lt_add_one (mul_nonneg (hC O hO).le (by positivity : (0 : ℝ) ≤ X))
+    dsimp only [R]
+    push_cast at hceil ⊢
+    nlinarith
+  have hsum : ((∑ O ∈ T, R O : ℕ) : ℝ) ≤ 2 * A * X + K := by
+    calc
+      ((∑ O ∈ T, R O : ℕ) : ℝ) = ∑ O ∈ T, ((R O : ℕ) : ℝ) := by
+        push_cast
+        rfl
+      _ ≤ ∑ O ∈ T,
+          (2 * C O * X + (2 * (J O + L + 1) + 1 + O.ncard * (L + 1) : ℕ)) := by
+        apply Finset.sum_le_sum
+        intro O hO
+        exact hpoint O hO
+      _ = 2 * A * X + K := by
+        simp only [A, K]
+        push_cast
+        rw [Finset.sum_add_distrib]
+        congr 1
+        rw [Finset.mul_sum, Finset.sum_mul]
+  have htotalR : (S.card : ℝ) * (L + 1) ≤ 2 * A * X + K := by
+    have hcast : ((S.card * (L + 1) : ℕ) : ℝ) ≤
+        ((∑ O ∈ T, R O : ℕ) : ℝ) := by exact_mod_cast htotal
+    calc
+      (S.card : ℝ) * (L + 1) = ((S.card * (L + 1) : ℕ) : ℝ) := by push_cast; rfl
+      _ ≤ ((∑ O ∈ T, R O : ℕ) : ℝ) := hcast
+      _ ≤ 2 * A * X + K := hsum
+  have hdensS : (1 / 37 : ℝ) < (S.card : ℝ) / X := by
+    simpa only [S] using hXdensity
+  have hSX : (1 / 37 : ℝ) * X < S.card := (lt_div_iff₀ hXpos).mp hdensS
+  have hlower : X * ((L + 1 : ℕ) : ℝ) / 37 < (S.card : ℝ) * (L + 1) := by
+    have hLpos : (0 : ℝ) < (L + 1 : ℕ) := by positivity
+    have := mul_lt_mul_of_pos_right hSX hLpos
+    norm_num at this ⊢
+    nlinarith
+  dsimp only [gap] at hKX
+  push_cast at hlower htotalR
+  nlinarith
 
 /-- **Target.**  A seventh orbit, or the orbit of `8` is infinite: if the orbit of `8` were a
 cycle, the least integer outside it and the five known cycles would start a seventh orbit. -/

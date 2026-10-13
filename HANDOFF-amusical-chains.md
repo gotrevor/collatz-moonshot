@@ -1,5 +1,55 @@
 # HANDOFF — amusical chains
 
+## 2026-10-13 treadmill lap: scoped chains objective complete
+
+Concrete advance:
+
+- Proved the sole remaining theorem
+  `exists_sublinearlyRecurrent_of_finitelyManyOrbits`, so
+  `CollatzMoonshot/AmusicalChains.lean` is now sorry-free.
+- Formalized the route-decisive time-packing argument.  The new
+  `IsWindowMin.eq_of_orbit_indices` turns the already proved local separation
+  theorem into separation of arbitrary integer orbit indices, and
+  `windowMin_card_mul_le` packs `L+1` disjoint index blocks around the window
+  minima on one orbit.
+- Proved `windowMin_on_orbit_card_mul_le`: failure of sublinear recurrence on
+  an aperiodic orbit bounds its `L`-window minima below `X` by an explicit
+  linear term with leading coefficient `2 C/(L+1)`.
+- In the headline proof, a finite finset `T` contains every nonnegative orbit.
+  Assuming every infinite member of `T` fails sublinear recurrence supplies
+  finitely many coefficients `C_O`; choosing `L > 75 ∑ C_O`, summing the
+  packing bounds (with finite orbits absorbed by their `ncard`), and taking a
+  sufficiently large `X` contradicts `windowMinDensity L` together with
+  `windowDensity_ge L ≥ 1/36`.
+- No ratified statement changed, and no axiom or native certificate was added.
+  The downstream closer
+  `amusicalInfinitelyManyOrbits_of_atLeastLinearGrowth` remains unchanged and
+  now rests on a complete proof chain.
+
+Verification in this lap:
+
+- `lake env lean CollatzMoonshot/AmusicalChains.lean` passed with no warning.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-chains
+  --target CollatzMoonshot.AmusicalChains --axioms
+  CollatzMoonshot.Amusical.exists_sublinearlyRecurrent_of_finitelyManyOrbits`:
+  **FORMALIZE-TIER GREEN**, 8711 jobs; axioms are exactly
+  `Classical.choice`, `Quot.sound`, `propext`, and the scoped module reports no
+  proof debt.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-chains
+  --axioms
+  CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_atLeastLinearGrowth`:
+  **FORMALIZE-TIER GREEN**, full 8842-job build; the downstream theorem has the
+  same three-axiom ledger.  The full build reports only the pre-existing
+  sorries in the separately owned `AmusicalSpitzer.lean` and
+  `AmusicalReturns.lean` treadmills.
+
+Current blocker / next highest-value attack:
+
+- None for this kickoff.  All four ratified targets are proved and
+  `CollatzMoonshot/AmusicalChains.lean` is sorry-free.  Do not continue into
+  `AmusicalSpitzer.lean` or `AmusicalReturns.lean`; they belong to other
+  treadmills.
+
 ## 2026-10-13 treadmill lap: both survival bounds proved
 
 Concrete advance:
