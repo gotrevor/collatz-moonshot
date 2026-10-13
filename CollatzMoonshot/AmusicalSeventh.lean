@@ -41,7 +41,43 @@ orbit.  Paper proof: pick a nonnegative `n` outside `knownCycleMembers` and outs
 orbit (each is contained in `knownCycleMembers`); add `n` to `{0, 1, 2, 4, 44, 8}`. -/
 theorem atLeastSeven_of_orbit8_not_cofinite
     (h : ({n : ℤ | 0 ≤ n} \ amusicalOrbit 8).Infinite) : AmusicalAtLeastSevenOrbits := by
-  sorry
+  have hknown : (knownCycleMembers : Set ℤ).Finite := Finset.finite_toSet _
+  obtain ⟨n, hn0, hn⟩ := h.sdiff hknown |>.nonempty
+  have hclosed : ∀ a ∈ ({0, 1, 2, 4, 44} : Finset ℤ),
+      amusicalOrbit a ⊆ (knownCycleMembers : Set ℤ) := by
+    intro a ha
+    apply amusicalOrbit_subset_of_closed (S := (knownCycleMembers : Set ℤ))
+        (by decide) (by decide)
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl <;> decide
+  have hnorb : ∀ a ∈ ({0, 1, 2, 4, 44, 8} : Finset ℤ),
+      amusicalOrbit n ≠ amusicalOrbit a := by
+    intro a ha heq
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl | rfl
+    all_goals first
+      | exact hn (hclosed _ (by decide) (heq ▸ mem_amusicalOrbit_self n))
+      | exact hn0.2 (heq ▸ mem_amusicalOrbit_self n)
+  refine ⟨insert n {0, 1, 2, 4, 44, 8}, ?_, ?_, ?_⟩
+  · have : n ∉ ({0, 1, 2, 4, 44, 8} : Finset ℤ) := by
+      intro hn'
+      exact hnorb n (by simpa using hn') rfl
+    simp [this]
+  · intro x hx
+    simp only [Finset.mem_insert] at hx
+    rcases hx with rfl | hx
+    · exact hn0.1
+    · simp only [Finset.mem_singleton] at hx
+      rcases hx with rfl | rfl | rfl | rfl | rfl | rfl <;> norm_num
+  · intro a ha b hb hab
+    change a ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at ha
+    change b ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at hb
+    rcases Finset.mem_insert.mp ha with rfl | ha
+    · exact hnorb b (Finset.mem_insert.mp hb |>.resolve_left hab.symm)
+    · rcases Finset.mem_insert.mp hb with hbn | hb
+      · subst b
+        exact (hnorb a ha).symm
+      · exact amusical_six_distinct_orbits a ha b hb hab
 
 /-- **Target (sparse sweeping).**  For every `η > 0` there is `c > 0` such that, for all large `X`,
 every infinite orbit spends at most `ηX` of the times `|j| ≤ cX log X` below `X`.  Paper proof: for
