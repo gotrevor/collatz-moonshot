@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalConstant
 import CollatzMoonshot.CycleDiophantine
+import CollatzMoonshot.CyclicMinimum
 
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
@@ -443,6 +444,321 @@ theorem bwdGood_iff_prefix_positive {L : ℕ} (w : Fin L → Bool) :
     simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
   · intro hw t ht0 htL
     simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+
+/-! ## Additive score interface for the cyclic-minimum lemma -/
+
+/-- Additive logarithmic score of one forward letter. -/
+noncomputable def fwdStepScore (b : Bool) : ℝ :=
+  Real.log 3 - (if b then 2 else 1) * Real.log 2
+
+/-- Additive logarithmic scores of the letters in a forward word. -/
+noncomputable def fwdScoreList {L : ℕ} (w : Fin L → Bool) : List ℝ :=
+  List.ofFn fun i => fwdStepScore (w i)
+
+/-- Total additive logarithmic score of a forward word. -/
+noncomputable def fwdScore {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  ∑ i, fwdStepScore (w i)
+
+/-- The forward additive score written in terms of length and marked-letter count. -/
+theorem fwdScore_eq {L : ℕ} (w : Fin L → Bool) :
+    fwdScore w =
+      (L : ℝ) * Real.log 3 - (L + wordTrueCount w : ℕ) * Real.log 2 := by
+  induction L with
+  | zero => simp [fwdScore, wordTrueCount]
+  | succ L ih =>
+      have hcount : wordTrueCount w =
+          (if w 0 then 1 else 0) + wordTrueCount (Fin.tail w) := by
+        rw [← Fin.cons_self_tail w, wordTrueCount_cons]
+        simp
+      rw [fwdScore, Fin.sum_univ_succ]
+      change fwdStepScore (w 0) + fwdScore (Fin.tail w) = _
+      rw [ih, hcount]
+      cases w 0 <;> simp [fwdStepScore] <;> ring
+
+theorem fwdScoreList_sum {L : ℕ} (w : Fin L → Bool) :
+    (fwdScoreList w).sum =
+      (L : ℝ) * Real.log 3 - (L + wordTrueCount w : ℕ) * Real.log 2 := by
+  rw [fwdScoreList, List.sum_ofFn]
+  exact fwdScore_eq w
+
+theorem fwdScoreList_sum_eq_score {L : ℕ} (w : Fin L → Bool) :
+    (fwdScoreList w).sum = fwdScore w := by
+  rw [fwdScoreList, List.sum_ofFn]
+  rfl
+
+/-- The additive score has the same strict sign as the forward multiplicative score. -/
+theorem fwdEndpointPositive_iff_score_pos {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔ 0 < fwdScore w := by
+  rw [FwdEndpointPositive, fwdScore_eq]
+  constructor
+  · intro h
+    have hR : (2 : ℝ) ^ (L + wordTrueCount w) < (3 : ℝ) ^ L := by
+      exact_mod_cast h
+    have hlog := Real.log_lt_log (by positivity) hR
+    rw [Real.log_pow, Real.log_pow] at hlog
+    push_cast at hlog ⊢
+    linarith
+  · intro h
+    have hlog : Real.log ((2 : ℝ) ^ (L + wordTrueCount w)) <
+        Real.log ((3 : ℝ) ^ L) := by
+      rw [Real.log_pow, Real.log_pow]
+      push_cast at h ⊢
+      linarith
+    have hR : (2 : ℝ) ^ (L + wordTrueCount w) < (3 : ℝ) ^ L :=
+      (Real.log_lt_log_iff (by positivity) (by positivity)).mp hlog
+    exact_mod_cast hR
+
+theorem fwdScoreList_take {L t : ℕ} (ht : t ≤ L) (w : Fin L → Bool) :
+    (fwdScoreList w).take t = fwdScoreList (Fin.take t ht w) := by
+  unfold fwdScoreList
+  rw [← Fin.ofFn_take_eq_take_ofFn ht (fun i => fwdStepScore (w i))]
+  rfl
+
+/-- Forward survival is strict positivity of every prefix of the additive score list. -/
+theorem fwdGood_iff_strictlyPositivePrefixes {L : ℕ} (w : Fin L → Bool) :
+    FwdGood L w ↔ CollatzMoonshot.StrictlyPositivePrefixes (fwdScoreList w) := by
+  rw [fwdGood_iff_prefix_positive]
+  constructor
+  · intro hw t ht0 htlen
+    have htL : t ≤ L := by simpa [fwdScoreList] using htlen
+    rw [fwdScoreList_take htL, fwdScoreList_sum_eq_score]
+    exact (fwdEndpointPositive_iff_score_pos _).mp (hw t ht0 htL)
+  · intro hw t ht0 htL
+    apply (fwdEndpointPositive_iff_score_pos _).mpr
+    rw [← fwdScoreList_sum_eq_score, ← fwdScoreList_take htL]
+    exact hw t ht0 (by simpa [fwdScoreList])
+
+/-- The backward additive score reverses the forward logarithmic score. -/
+noncomputable def bwdStepScore (b : Bool) : ℝ := -fwdStepScore b
+
+/-- Additive logarithmic scores of the letters in a backward word. -/
+noncomputable def bwdScoreList {L : ℕ} (w : Fin L → Bool) : List ℝ :=
+  List.ofFn fun i => bwdStepScore (w i)
+
+/-- Total additive logarithmic score of a backward word. -/
+noncomputable def bwdScore {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  ∑ i, bwdStepScore (w i)
+
+theorem bwdScore_eq_neg_fwdScore {L : ℕ} (w : Fin L → Bool) :
+    bwdScore w = -fwdScore w := by
+  simp [bwdScore, bwdStepScore, fwdScore]
+
+theorem bwdScoreList_sum_eq_score {L : ℕ} (w : Fin L → Bool) :
+    (bwdScoreList w).sum = bwdScore w := by
+  rw [bwdScoreList, List.sum_ofFn]
+  rfl
+
+/-- The additive score has the same strict sign as the backward multiplicative score. -/
+theorem bwdEndpointPositive_iff_score_pos {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔ 0 < bwdScore w := by
+  rw [BwdEndpointPositive, bwdScore_eq_neg_fwdScore, fwdScore_eq]
+  constructor
+  · intro h
+    have hR : (3 : ℝ) ^ L < (2 : ℝ) ^ (L + wordTrueCount w) := by
+      exact_mod_cast h
+    have hlog := Real.log_lt_log (by positivity) hR
+    rw [Real.log_pow, Real.log_pow] at hlog
+    push_cast at hlog ⊢
+    linarith
+  · intro h
+    have hlog : Real.log ((3 : ℝ) ^ L) <
+        Real.log ((2 : ℝ) ^ (L + wordTrueCount w)) := by
+      rw [Real.log_pow, Real.log_pow]
+      push_cast at h ⊢
+      linarith
+    have hR : (3 : ℝ) ^ L < (2 : ℝ) ^ (L + wordTrueCount w) :=
+      (Real.log_lt_log_iff (by positivity) (by positivity)).mp hlog
+    exact_mod_cast hR
+
+theorem bwdScoreList_take {L t : ℕ} (ht : t ≤ L) (w : Fin L → Bool) :
+    (bwdScoreList w).take t = bwdScoreList (Fin.take t ht w) := by
+  unfold bwdScoreList
+  rw [← Fin.ofFn_take_eq_take_ofFn ht (fun i => bwdStepScore (w i))]
+  rfl
+
+/-- Backward survival is strict positivity of every prefix of the additive score list. -/
+theorem bwdGood_iff_strictlyPositivePrefixes {L : ℕ} (w : Fin L → Bool) :
+    BwdGood L w ↔ CollatzMoonshot.StrictlyPositivePrefixes (bwdScoreList w) := by
+  rw [bwdGood_iff_prefix_positive]
+  constructor
+  · intro hw t ht0 htlen
+    have htL : t ≤ L := by simpa [bwdScoreList] using htlen
+    rw [bwdScoreList_take htL, bwdScoreList_sum_eq_score]
+    exact (bwdEndpointPositive_iff_score_pos _).mp (hw t ht0 htL)
+  · intro hw t ht0 htL
+    apply (bwdEndpointPositive_iff_score_pos _).mpr
+    rw [← bwdScoreList_sum_eq_score, ← bwdScoreList_take htL]
+    exact hw t ht0 (by simpa [bwdScoreList])
+
+/-- Every nonempty forward word has nonzero additive score. -/
+theorem fwdScore_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    fwdScore w ≠ 0 := by
+  rcases wordBlock_endpoint_lt_or_gt L (wordTrueCount w) hL with hf | hb
+  · exact ne_of_gt ((fwdEndpointPositive_iff_score_pos w).mp hf)
+  · have hbpos : 0 < bwdScore w :=
+      (bwdEndpointPositive_iff_score_pos w).mp hb
+    rw [bwdScore_eq_neg_fwdScore] at hbpos
+    exact ne_of_lt (by linarith)
+
+theorem fwdScoreList_sum_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    (fwdScoreList w).sum ≠ 0 := by
+  rw [fwdScoreList_sum_eq_score]
+  exact fwdScore_ne_zero w hL
+
+theorem fwdScoreList_eq_map {L : ℕ} (w : Fin L → Bool) :
+    fwdScoreList w = (List.ofFn w).map fwdStepScore := by
+  rw [fwdScoreList, List.map_ofFn]
+  rfl
+
+/-- Every nonempty contiguous block of a forward score list has nonzero sum. -/
+theorem fwdScoreList_block_ne_zero {L : ℕ} (w : Fin L → Bool) (i n : ℕ)
+    (hn : 0 < n) (hin : i + n ≤ L) :
+    (((fwdScoreList w).drop i).take n).sum ≠ 0 := by
+  let letters := ((List.ofFn w).drop i).take n
+  have hlen : letters.length = n := by
+    simp only [letters, List.length_take, List.length_drop, List.length_ofFn]
+    rw [min_eq_left]
+    omega
+  have hv := fwdScoreList_sum_ne_zero letters.get (by simpa [hlen] using hn)
+  rw [fwdScoreList_eq_map, List.ofFn_get] at hv
+  rw [fwdScoreList_eq_map, ← List.map_drop, ← List.map_take]
+  simpa only [letters] using hv
+
+/-- Prefix sums of every forward score list are pairwise distinct. -/
+theorem fwdScoreList_prefixSums_ne {L : ℕ} (w : Fin L → Bool) :
+    ∀ i j : ℕ, i < j → j ≤ (fwdScoreList w).length →
+      ((fwdScoreList w).take i).sum ≠ ((fwdScoreList w).take j).sum := by
+  apply CollatzMoonshot.prefixSums_ne_of_blocks_ne_zero
+  intro i n hn hin
+  apply fwdScoreList_block_ne_zero w i n hn
+  simpa [fwdScoreList] using hin
+
+/-- Every nonempty backward word has nonzero additive score. -/
+theorem bwdScore_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    bwdScore w ≠ 0 := by
+  rw [bwdScore_eq_neg_fwdScore]
+  exact neg_ne_zero.mpr (fwdScore_ne_zero w hL)
+
+theorem bwdScoreList_sum_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    (bwdScoreList w).sum ≠ 0 := by
+  rw [bwdScoreList_sum_eq_score]
+  exact bwdScore_ne_zero w hL
+
+theorem bwdScoreList_eq_map {L : ℕ} (w : Fin L → Bool) :
+    bwdScoreList w = (List.ofFn w).map bwdStepScore := by
+  rw [bwdScoreList, List.map_ofFn]
+  rfl
+
+/-- Every nonempty contiguous block of a backward score list has nonzero sum. -/
+theorem bwdScoreList_block_ne_zero {L : ℕ} (w : Fin L → Bool) (i n : ℕ)
+    (hn : 0 < n) (hin : i + n ≤ L) :
+    (((bwdScoreList w).drop i).take n).sum ≠ 0 := by
+  let letters := ((List.ofFn w).drop i).take n
+  have hlen : letters.length = n := by
+    simp only [letters, List.length_take, List.length_drop, List.length_ofFn]
+    rw [min_eq_left]
+    omega
+  have hv := bwdScoreList_sum_ne_zero letters.get (by simpa [hlen] using hn)
+  rw [bwdScoreList_eq_map, List.ofFn_get] at hv
+  rw [bwdScoreList_eq_map, ← List.map_drop, ← List.map_take]
+  simpa only [letters] using hv
+
+/-- Prefix sums of every backward score list are pairwise distinct. -/
+theorem bwdScoreList_prefixSums_ne {L : ℕ} (w : Fin L → Bool) :
+    ∀ i j : ℕ, i < j → j ≤ (bwdScoreList w).length →
+      ((bwdScoreList w).take i).sum ≠ ((bwdScoreList w).take j).sum := by
+  apply CollatzMoonshot.prefixSums_ne_of_blocks_ne_zero
+  intro i n hn hin
+  apply bwdScoreList_block_ne_zero w i n hn
+  simpa [bwdScoreList] using hin
+
+/-- A forward-positive word has a cyclic score rotation with every prefix positive. -/
+theorem fwdEndpointPositive_iff_exists_goodScoreRotation {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔
+      ∃ r < L, CollatzMoonshot.StrictlyPositivePrefixes ((fwdScoreList w).rotate r) := by
+  rw [fwdEndpointPositive_iff_score_pos, ← fwdScoreList_sum_eq_score]
+  simpa [fwdScoreList] using
+    (CollatzMoonshot.sum_pos_iff_exists_rotate_strictlyPositivePrefixes
+      (fwdScoreList w) (fwdScoreList_prefixSums_ne w))
+
+/-- A backward-positive word has a cyclic score rotation with every prefix positive. -/
+theorem bwdEndpointPositive_iff_exists_goodScoreRotation {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔
+      ∃ r < L, CollatzMoonshot.StrictlyPositivePrefixes ((bwdScoreList w).rotate r) := by
+  rw [bwdEndpointPositive_iff_score_pos, ← bwdScoreList_sum_eq_score]
+  simpa [bwdScoreList] using
+    (CollatzMoonshot.sum_pos_iff_exists_rotate_strictlyPositivePrefixes
+      (bwdScoreList w) (bwdScoreList_prefixSums_ne w))
+
+/-- Rotate a finite word by rotating its list of letters. -/
+def rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) : Fin L → Bool :=
+  fun i => ((List.ofFn w).rotate r).get (Fin.cast (by simp) i)
+
+theorem ofFn_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    List.ofFn (rotateWord w r) = (List.ofFn w).rotate r := by
+  apply List.ext_get
+  · simp
+  · intro n h₁ h₂
+    simp [rotateWord]
+
+theorem fwdScoreList_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    fwdScoreList (rotateWord w r) = (fwdScoreList w).rotate r := by
+  rw [fwdScoreList_eq_map, ofFn_rotateWord, fwdScoreList_eq_map, List.map_rotate]
+
+theorem bwdScoreList_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    bwdScoreList (rotateWord w r) = (bwdScoreList w).rotate r := by
+  rw [bwdScoreList_eq_map, ofFn_rotateWord, bwdScoreList_eq_map, List.map_rotate]
+
+theorem wordTrueCount_eq_count_true {L : ℕ} (w : Fin L → Bool) :
+    wordTrueCount w = (List.ofFn w).count true := by
+  induction L with
+  | zero => simp [wordTrueCount]
+  | succ L ih =>
+      rw [← Fin.cons_self_tail w, wordTrueCount_cons, List.ofFn_cons]
+      simp only [List.count_cons]
+      rw [ih]
+      cases w 0 <;> simp [Nat.add_comm]
+
+/-- Cyclic list rotation preserves the marked-letter count. -/
+theorem wordTrueCount_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    wordTrueCount (rotateWord w r) = wordTrueCount w := by
+  rw [wordTrueCount_eq_count_true, ofFn_rotateWord, wordTrueCount_eq_count_true]
+  exact (List.rotate_perm (List.ofFn w) r).count_eq true
+
+theorem fwdWordWeight_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    fwdWordWeight (rotateWord w r) = fwdWordWeight w := rfl
+
+/-- Arbitrary cyclic list rotation preserves backward word weight. -/
+theorem bwdWordWeight_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    bwdWordWeight (rotateWord w r) = bwdWordWeight w := by
+  unfold bwdWordWeight
+  rw [wordTrueCount_rotateWord]
+
+/-- Concrete strict cyclic cover for forward words. -/
+theorem fwdEndpointPositive_iff_exists_goodRotation {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔ ∃ r < L, FwdGood L (rotateWord w r) := by
+  rw [fwdEndpointPositive_iff_exists_goodScoreRotation]
+  constructor
+  · rintro ⟨r, hr, hscore⟩
+    refine ⟨r, hr, (fwdGood_iff_strictlyPositivePrefixes _).mpr ?_⟩
+    rwa [fwdScoreList_rotateWord]
+  · rintro ⟨r, hr, hgood⟩
+    refine ⟨r, hr, ?_⟩
+    rw [← fwdScoreList_rotateWord]
+    exact (fwdGood_iff_strictlyPositivePrefixes _).mp hgood
+
+/-- Concrete strict cyclic cover for backward words. -/
+theorem bwdEndpointPositive_iff_exists_goodRotation {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔ ∃ r < L, BwdGood L (rotateWord w r) := by
+  rw [bwdEndpointPositive_iff_exists_goodScoreRotation]
+  constructor
+  · rintro ⟨r, hr, hscore⟩
+    refine ⟨r, hr, (bwdGood_iff_strictlyPositivePrefixes _).mpr ?_⟩
+    rwa [bwdScoreList_rotateWord]
+  · rintro ⟨r, hr, hgood⟩
+    refine ⟨r, hr, ?_⟩
+    rw [← bwdScoreList_rotateWord]
+    exact (bwdGood_iff_strictlyPositivePrefixes _).mp hgood
 
 /-- Concatenating two forward-positive blocks gives a forward-positive block. -/
 theorem FwdEndpointPositive.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}

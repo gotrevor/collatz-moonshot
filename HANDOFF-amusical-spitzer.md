@@ -1,6 +1,76 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, prefix-word interface)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, strict cyclic cover)
 
-## Current checkpoint: prefix survival and concatenation
+## Current checkpoint: kernel-checked cyclic-minimum theorem and word-level cover
+
+This review lap reconstructed the proposed recurrence route and closed its first genuinely
+cyclic step.  The new generic module `CollatzMoonshot/CyclicMinimum.lean` proves:
+
+- `prefixSums_ne_of_blocks_ne_zero`: nonzero sums for all nonempty contiguous blocks imply
+  pairwise-distinct prefix sums;
+- `exists_rotate_strictlyPositivePrefixes`: a positive-total, no-tie list has a rotation whose
+  every nonempty prefix has positive sum;
+- `sum_pos_iff_exists_rotate_strictlyPositivePrefixes`: the exact iff form used below.
+
+`CollatzMoonshot/AmusicalSpitzer.lean` now instantiates this theorem for both walks.  The additive
+log-score interface is proved equivalent to the existing multiplicative endpoint and survival
+predicates.  In particular, every nonempty contiguous score block is proved nonzero from
+`wordBlock_endpoint_lt_or_gt`, so the generic theorem's no-tie premise is discharged rather than
+assumed.  The load-bearing conclusions are:
+
+- `fwdEndpointPositive_iff_exists_goodRotation` and
+  `bwdEndpointPositive_iff_exists_goodRotation`: a word has positive endpoint exactly when one
+  of its concrete cyclic rotations survives;
+- `fwdWordWeight_rotateWord` and `bwdWordWeight_rotateWord`: every such arbitrary rotation
+  preserves its product weight.
+
+No ratified statement changed, and no new axiom was introduced.
+
+## Adversarial route finding
+
+Exact `Fraction` enumeration of all Boolean words verified both weighted coefficient recurrences
+
+```text
+L * survive L = sum_{k=1}^L positiveEndpoint k * survive (L-k)
+```
+
+for every `1 <= L <= 14`.  It also refuted a tempting *pointwise same-word* proof: for the
+forward word `(true, false, false, true)` there is one good cyclic rotation but two cuts whose
+prefix has positive endpoint and whose suffix survives.  Therefore do not try to prove the
+recurrence by equating those two statistics word by word.  A global marked-word bijection would
+need a genuine reassembly map; the source-backed alternative is the standard cyclic-union
+inclusion--exclusion proof.
+
+## Verification
+
+Exact commands run in this lap:
+
+```text
+lake build CollatzMoonshot.CyclicMinimum
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdEndpointPositive_iff_exists_goodRotation
+git diff --check
+```
+
+The target gate ended `FORMALIZE-TIER GREEN`.  Its only proof-debt warning is the pre-existing
+`windowDensityLimit`; the headline cyclic-cover theorem's axiom audit is exactly
+`[Classical.choice, Quot.sound, propext]`.  The checkpoint commit also passed the repository
+pre-commit hook's full `lake build`.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single disclosed `sorry`.  The cyclic cover,
+block no-tie argument, arbitrary rotation invariance, concatenation factorization, finite-word
+sum identities, and analytic summability are now kernel-checked.
+
+Next formalize the intersection term in the cyclic-union inclusion--exclusion proof.  For ordered
+cyclic marks, show that simultaneous survival from those starts factors into surviving blocks at
+the cyclic gap lengths; transfer product weights with `*_rotateWord` and `*_append`.  Summing over
+marks/compositions gives the verified coefficient recurrence above.  Then derive the two survival
+generating functions and take the boundary limit using the existing summability results and
+`minimaConstant_eq_directionalFactors`.  Do not repeat the log-score, no-tie, cyclic-cover, or
+rotation-weight work, and do not revive the refuted pointwise cut identity.
+
+## Previous checkpoint: prefix survival and concatenation
 
 The survival predicates now use the same actual finite blocks as the cyclic decomposition,
 rather than re-expanding an ad hoc filtered count at every use.  All additions are proved in
@@ -16,7 +86,7 @@ rather than re-expanding an ad hoc filtered count at every use.  All additions a
 - `FwdGood.append` and `BwdGood.append` prove the survival factorization when the left block is
   nonempty, precisely the form needed after cutting off the first positive cyclic block.
 
-No ratified statement changed.  The current lap ran:
+No ratified statement changed.  That lap ran:
 
 ```text
 lake env lean CollatzMoonshot/AmusicalSpitzer.lean
@@ -26,18 +96,7 @@ git diff --check
 ```
 
 Both target gates ended `FORMALIZE-TIER GREEN`; the axiom audit for `FwdGood.append` is exactly
-`[propext, Classical.choice, Quot.sound]`.  The only proof-debt warning is the pre-existing
-`windowDensityLimit` target.  The checkpoint commit also passed the repository pre-commit hook's
-full `lake build` (8840 jobs).
-
-`windowDensityLimit` remains the scoped file's single disclosed `sorry`.  The route-decisive
-blocker remains the weighted marked cyclic-decomposition bijection and its recurrence
-`L * survive L = sum_{k=1}^L positiveEndpoint k * survive (L-k)`.  The next lap should prove the
-unweighted bijection using `FwdEndpointPositive` / `BwdEndpointPositive` for the first block and
-the new prefix equivalences plus `.append` lemmas for the surviving tail, then transfer weights
-with the already-proved rotation invariance and weight factorization.  After the recurrences,
-derive the generating functions and take the boundary limit using the proved summability and
-`minimaConstant_eq_directionalFactors`.
+`[propext, Classical.choice, Quot.sound]`.  The only proof-debt warning was `windowDensityLimit`.
 
 ## Previous checkpoint: cyclic weight interface
 
