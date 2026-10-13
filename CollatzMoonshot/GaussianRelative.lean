@@ -9,7 +9,7 @@ import CollatzMoonshot.AmusicalReversal
 # A Gaussian relative of the amusical permutation with infinitely many orbits
 
 Found by the 2026-10-13 "relative" research agent; checked independently
-(`tmp/amusical/gauss/check_H.py`: integral, injective and reversible on `|a|, |b| ≤ 60`, and a
+(`scripts/amusical/gauss_check.py`: integral, injective and reversible on `|a|, |b| ≤ 60`, and a
 perturbed constant fails).  Write `z = a + bi ∈ ℤ[i]` as a pair, `π = 2 + i`, `π̄ = 2 − i`.
 
 * on `a + 2b ≡ 0 (mod 5)` (`z ≡ 0 mod π̄`):  `H z = 1 + π² z / π̄ = 1 + (2 + 11i) z / 5`;

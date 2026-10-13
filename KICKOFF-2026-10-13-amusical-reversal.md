@@ -48,7 +48,7 @@ your own file or `CollatzMoonshot/AmusicalReversal/*.lean` (R), `CollatzMoonshot
    Strategy: reduce to residues — write `z = (a, b)`, case on `(a + 7b) % 25` (25 cases, which
    determine `(a + 2b) % 5`), and in each case show the four exact divisions and the final
    equality by `omega` (all divisions are by the literals 5 or 25).  Independent numeric check:
-   `tmp/amusical/gauss/check_H.py` in the main worktree (0 failures on `|a|,|b| ≤ 60`).
+   `scripts/amusical/gauss_check.py` (0 failures on `|a|,|b| ≤ 60`).
 2. **`gauss_infinitely_many_orbits`.**  `conjPerm * gaussPerm * conjPerm = gaussPerm⁻¹` and
    `conjPerm * conjPerm = 1` from item 1.  Real integers `(n, 0)` are conj-fixed.  Each orbit
    contains at most two of them (local version of the two-point lemma via `reversing_zpow_fixed`),
