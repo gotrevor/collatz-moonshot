@@ -58,6 +58,84 @@ theorem amusicalInfinitelyManyOrbits_of_logDensityZero
     (h : ∀ x : ℤ, 0 ≤ x → Filter.Tendsto (fun N : ℕ => logWeight (amusicalOrbit x) N / Real.log N)
       Filter.atTop (nhds 0)) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  classical
+  by_contra hfin
+  rw [AmusicalInfinitelyManyOrbits, Set.not_infinite] at hfin
+  set T := hfin.toFinset with hT
+  have hmem : ∀ O ∈ T, ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x := fun O hO => by
+    simpa [hT] using hO
+  choose! seed hseed0 hseedO using hmem
+  set k := T.card
+  have hev : Filter.Eventually (λ N : ℕ => ∀ O ∈ T,
+      logWeight O N / Real.log N < 1 / (k + 1)) Filter.atTop := by
+    rw [Filter.eventually_all_finset]
+    intro O hO
+    have hpos : (0 : ℝ) < 1 / (k + 1) := by positivity
+    have := (h (seed O) (hseed0 O hO)).eventually (gt_mem_nhds hpos)
+    simpa [← hseedO O hO] using this
+  obtain ⟨N, hN, hN2⟩ := (hev.and (Filter.eventually_ge_atTop 2)).exists
+  have hlog : 0 < Real.log N := Real.log_pos (by exact_mod_cast hN2)
+  have hpoint (n : ℤ) (hn : n ∈ Finset.Icc (1 : ℤ) N) :
+      (1 : ℝ) / n ≤ ∑ O ∈ T, if n ∈ O then (1 : ℝ) / n else 0 := by
+    have hn0 : 0 ≤ n := le_trans (by norm_num) (Finset.mem_Icc.1 hn).1
+    have hO : amusicalOrbit n ∈ T := by
+      simp [hT]
+      exact ⟨n, hn0, rfl⟩
+    calc
+      (1 : ℝ) / n = if n ∈ amusicalOrbit n then (1 : ℝ) / n else 0 := by
+        simp [mem_amusicalOrbit_self]
+      _ ≤ ∑ O ∈ T, if n ∈ O then (1 : ℝ) / n else 0 := by
+        apply Finset.single_le_sum (f := fun O => if n ∈ O then (1 : ℝ) / n else 0)
+        · intro O hOT
+          split_ifs <;> positivity
+        · exact hO
+  have htotal : (harmonic N : ℝ) ≤ ∑ O ∈ T, logWeight O N := by
+    calc
+      (harmonic N : ℝ) = ∑ n ∈ Finset.Icc (1 : ℤ) N, (1 : ℝ) / n := by
+        rw [harmonic, Rat.cast_sum]
+        apply Finset.sum_bij (fun i _ => ((i + 1 : ℕ) : ℤ))
+        · intro i hi
+          simp only [Finset.mem_range] at hi
+          simp only [Finset.mem_Icc]
+          constructor
+          · omega
+          · exact_mod_cast Nat.succ_le_iff.2 hi
+        · intro i hi j hj hij
+          have : i + 1 = j + 1 := by exact_mod_cast hij
+          omega
+        · intro n hn
+          have hn' := Finset.mem_Icc.1 hn
+          refine ⟨Int.toNat n - 1, by simp only [Finset.mem_range]; omega, ?_⟩
+          omega
+        · intro i hi
+          norm_num
+      _ ≤ ∑ n ∈ Finset.Icc (1 : ℤ) N,
+          ∑ O ∈ T, if n ∈ O then (1 : ℝ) / n else 0 := by
+        exact Finset.sum_le_sum fun n hn => hpoint n hn
+      _ = ∑ O ∈ T, logWeight O N := by
+        rw [Finset.sum_comm]
+        apply Finset.sum_congr rfl
+        intro O hO
+        simp [logWeight, Finset.sum_filter]
+  have hsum : ∑ O ∈ T, logWeight O N ≤ ∑ _O ∈ T, Real.log N / (k + 1) := by
+    apply Finset.sum_le_sum
+    intro O hO
+    have hsmall := hN O hO
+    rw [div_lt_iff₀ hlog] at hsmall
+    exact (by simpa [div_eq_mul_inv, mul_comm] using hsmall :
+      logWeight O N < Real.log N / (k + 1)).le
+  rw [Finset.sum_const, nsmul_eq_mul] at hsum
+  change ∑ O ∈ T, logWeight O N ≤ (k : ℝ) * (Real.log N / (k + 1)) at hsum
+  have hkp : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have hk : (k : ℝ) * (Real.log N / (k + 1)) < Real.log N := by
+    rw [mul_div_assoc', div_lt_iff₀ hkp]
+    nlinarith
+  have := log_add_one_le_harmonic N
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (lt_of_lt_of_le (by norm_num) hN2)
+  have hNspos : (0 : ℝ) < N + 1 := by positivity
+  have hloglt : Real.log N < Real.log (N + 1) :=
+    Real.strictMonoOn_log hNpos hNspos (by exact_mod_cast Nat.lt_succ_self N)
+  norm_num [Nat.cast_add, Nat.cast_one] at this
+  linarith
 
 end CollatzMoonshot.Amusical
