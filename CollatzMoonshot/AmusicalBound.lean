@@ -17,6 +17,16 @@ definitions, then an exact rational evaluation.  Plan: `KICKOFF-2026-10-13-amusi
 
 namespace CollatzMoonshot.Amusical
 
+open Classical in
+/-- Split a sum over words by the last letter.  Unlike direct reduction of a
+`Fintype` of functions, this identity scales inductively and is the entry point
+for connecting the word sums to the lattice rows. -/
+theorem sum_bool_snoc {n : ℕ} (f : (Fin (n + 1) → Bool) → ℚ) :
+    ∑ w, f w = ∑ b : Bool, ∑ u : Fin n → Bool, f (Fin.snoc u b) := by
+  refine ((Fintype.sum_equiv (Fin.snocEquiv (fun _ : Fin (n + 1) => Bool))
+    (fun x => f (Fin.snoc x.2 x.1)) f (fun _ => rfl)).symm).trans ?_
+  exact Fintype.sum_prod_type _
+
 /-! ## A linear-size lattice computation
 
 The rows below store integer numerators.  At time `t`, entry `o` is the total
@@ -61,6 +71,47 @@ theorem bwdLatticeStep_length (t o prev : ℕ) (xs : List ℕ) :
   | nil => rfl
   | cons x xs ih => simp [bwdLatticeStep, ih]
 
+/-- A coordinate of a forward lattice step only uses the two adjacent
+coordinates of the preceding row.  The explicit `prev` argument is the
+coordinate immediately to the left of the input list. -/
+theorem fwdLatticeStep_getD (t o prev k : ℕ) (xs : List ℕ) (hk : k < xs.length) :
+    (fwdLatticeStep t o prev xs).getD k 0 =
+      if 2 ^ (t + 1 + (o + k)) < 3 ^ (t + 1) then
+        xs.getD k 0 + if k = 0 then prev else xs.getD (k - 1) 0
+      else 0 := by
+  induction xs generalizing o prev k with
+  | nil => simp at hk
+  | cons x xs ih =>
+      cases k with
+      | zero => simp [fwdLatticeStep]
+      | succ k =>
+          simp only [List.length_cons, Nat.succ_lt_succ_iff] at hk
+          rw [fwdLatticeStep, List.getD_cons_succ, ih (o := o + 1) (prev := x) k hk]
+          cases k <;> simp [Nat.add_left_comm, Nat.add_comm]
+
+/-- Backward lattice coordinates satisfy the analogous adjacent-coordinate
+recurrence, with weight two on a newly marked letter. -/
+theorem bwdLatticeStep_getD (t o prev k : ℕ) (xs : List ℕ) (hk : k < xs.length) :
+    (bwdLatticeStep t o prev xs).getD k 0 =
+      if 3 ^ (t + 1) < 2 ^ (t + 1 + (o + k)) then
+        xs.getD k 0 + 2 * (if k = 0 then prev else xs.getD (k - 1) 0)
+      else 0 := by
+  induction xs generalizing o prev k with
+  | nil => simp at hk
+  | cons x xs ih =>
+      cases k with
+      | zero => simp [bwdLatticeStep]
+      | succ k =>
+          simp only [List.length_cons, Nat.succ_lt_succ_iff] at hk
+          rw [bwdLatticeStep, List.getD_cons_succ, ih (o := o + 1) (prev := x) k hk]
+          cases k <;> simp [Nat.add_left_comm, Nat.add_comm]
+
+private theorem getD_append_zero (xs : List ℕ) (k : ℕ) (hk : k ≤ xs.length) :
+    (xs ++ [0]).getD k 0 = xs.getD k 0 := by
+  rcases hk.lt_or_eq with hk | rfl
+  · exact List.getD_append xs [0] 0 k hk
+  · simp
+
 /-- Each computed row has exactly one coordinate for every possible mark count. -/
 theorem fwdLatticeRow_length (t : ℕ) : (fwdLatticeRow t).length = t + 1 := by
   induction t with
@@ -72,6 +123,44 @@ theorem bwdLatticeRow_length (t : ℕ) : (bwdLatticeRow t).length = t + 1 := by
   induction t with
   | zero => rfl
   | succ t ih => simp [bwdLatticeRow, bwdLatticeStep_length, ih]
+
+/-- Coordinate form of the forward row recurrence. -/
+theorem fwdLatticeRow_succ_getD (t o : ℕ) (ho : o ≤ t + 1) :
+    (fwdLatticeRow (t + 1)).getD o 0 =
+      if 2 ^ (t + 1 + o) < 3 ^ (t + 1) then
+        (fwdLatticeRow t).getD o 0 +
+          if o = 0 then 0 else (fwdLatticeRow t).getD (o - 1) 0
+      else 0 := by
+  rw [fwdLatticeRow, fwdLatticeStep_getD]
+  · rw [getD_append_zero _ o]
+    · by_cases h : o = 0
+      · simp [h]
+      · have hp : o - 1 ≤ (fwdLatticeRow t).length := by
+          rw [fwdLatticeRow_length]
+          omega
+        rw [getD_append_zero _ _ hp]
+        simp
+    · simpa [fwdLatticeRow_length] using ho
+  · simpa [fwdLatticeRow_length] using Nat.lt_succ_of_le ho
+
+/-- Coordinate form of the backward row recurrence. -/
+theorem bwdLatticeRow_succ_getD (t o : ℕ) (ho : o ≤ t + 1) :
+    (bwdLatticeRow (t + 1)).getD o 0 =
+      if 3 ^ (t + 1) < 2 ^ (t + 1 + o) then
+        (bwdLatticeRow t).getD o 0 +
+          2 * (if o = 0 then 0 else (bwdLatticeRow t).getD (o - 1) 0)
+      else 0 := by
+  rw [bwdLatticeRow, bwdLatticeStep_getD]
+  · rw [getD_append_zero _ o]
+    · by_cases h : o = 0
+      · simp [h]
+      · have hp : o - 1 ≤ (bwdLatticeRow t).length := by
+          rw [bwdLatticeRow_length]
+          omega
+        rw [getD_append_zero _ _ hp]
+        simp
+    · simpa [bwdLatticeRow_length] using ho
+  · simpa [bwdLatticeRow_length] using Nat.lt_succ_of_le ho
 
 /-- The lattice recurrence reproduces the four small window-density controls. -/
 theorem latticeDensity_values :

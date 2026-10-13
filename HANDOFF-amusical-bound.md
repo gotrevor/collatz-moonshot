@@ -1,42 +1,38 @@
-# HANDOFF: amusical 200-step lattice certificate (2026-10-13)
+# HANDOFF: amusical word-to-lattice bridge (2026-10-13)
 
 ## Concrete advance
 
-`CollatzMoonshot/AmusicalBound.lean` now contains a kernel-efficient integer lattice DP:
+The existing kernel-efficient integer lattice DP and its 200-step inequality remain intact.
+This lap proved the recurrence interface needed by the combinatorial bridge:
 
-- `fwdLatticeRow` stores counts of surviving forward prefixes by number of marked letters;
-- `bwdLatticeRow` stores backward weight numerators, using transition weights `1` and `2`;
-- both row lengths are proved to be `t + 1`;
-- `latticeDensity_values` reproduces the ratified densities for `L = 1,2,3,4` using
-  `decide +kernel`;
-- `latticeDensity_two_hundred_lt` proves
-  `20 * fwdLatticeNum 200 * bwdLatticeNum 200 < 2^200 * 3^200` using
-  `decide +kernel`.  The cold file check took about 29 seconds, and a warm repeat about 9
-  seconds.  No `native_decide`, axiom, or extra `sorry` was added.
+- `sum_bool_snoc` splits a sum over `(Fin (n+1) → Bool)` into the last letter and a length-`n`
+  prefix via `Fin.snocEquiv`, without asking the kernel to enumerate the function space;
+- `fwdLatticeStep_getD` and `bwdLatticeStep_getD` prove the exact adjacent-coordinate formula
+  for a step, including the explicit left-neighbor accumulator;
+- `fwdLatticeRow_succ_getD` and `bwdLatticeRow_succ_getD` lift those formulas to rows, with
+  the zero boundary and final appended zero discharged;
+- the backward formula visibly carries the required factor `2` for a newly marked letter.
 
-The step functions pass the previous coordinate explicitly.  This is important: it makes
-kernel reduction of each row linear instead of recomputing a recursive preceding row for every
-coordinate.
+These lemmas are kernel-checked and add no axiom, `native_decide`, or new `sorry`.
 
 ## Exact verification
 
 ```text
 lake env lean CollatzMoonshot/AmusicalBound.lean
-# passes; warning only at the pre-existing target sorry
+# passes; warning only at the scoped target sorry
 
 git diff --check
 # passes
 
-~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-bound \
-  --target CollatzMoonshot.AmusicalBound
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-bound --target CollatzMoonshot.AmusicalBound
 # Build completed successfully (8709 jobs); FORMALIZE-TIER GREEN
-# reports exactly the pre-existing sorry at AmusicalBound.lean:92
+# reports exactly the scoped sorry at AmusicalBound.lean:181
 ```
 
 ## Current blocker
 
-The sole remaining `sorry` is still `windowDensity_two_hundred_lt`.  Its numerical content is
-now certified.  What remains is the combinatorial bridge, for every `L`:
+The sole remaining `sorry` is `windowDensity_two_hundred_lt`.  Its numerical content is
+certified.  What remains is the semantic half of the combinatorial bridge, for every `L`:
 
 ```lean
 fwdSurv L = (fwdLatticeNum L : ℚ) / 2^L
@@ -48,12 +44,12 @@ the kernel to enumerate function spaces.
 
 ## Next highest-value attack
 
-Prove a generic one-letter extension lemma using `Fin.consEquiv`, as recommended by
-`reference/lean-decide-stuck-on-pi-fintype.md`.  Organize surviving words by their mark count and
-induct on `L`; the new full-prefix condition is exactly the guard in `fwdLatticeStep` or
-`bwdLatticeStep`.  First prove the coordinate invariant for `List.getD`; summing it yields the two
-displayed bridge equalities.  Then rewrite the target, clear the positive denominators, and apply
-`latticeDensity_two_hundred_lt`.
+Define semantic forward/backward coordinates as weighted counts of surviving words with exactly
+`o` marked letters.  Apply `sum_bool_snoc`; old prefix conditions are unchanged under `Fin.snoc`,
+and the sole new condition is the full-prefix guard.  Prove that these semantic coordinates obey
+`fwdLatticeRow_succ_getD` / `bwdLatticeRow_succ_getD`, then identify the rows by induction and sum
+over `o`.  This yields the two displayed bridge equalities.  Finally rewrite the target, clear the
+positive denominators, and apply `latticeDensity_two_hundred_lt`.
 
 Do not change `fwdSurv`, `bwdSurv`, or either ratified theorem statement.  The untracked
 `CLAUDE.local.md` predates this lap and must remain uncommitted.
