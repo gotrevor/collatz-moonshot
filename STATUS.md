@@ -1,5 +1,16 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical chain-connectivity objective COMPLETE:**
+> `AmusicalChains.lean` is sorry-free.  Uniform survival is proved at
+> `fwdSurv L ≥ 1/6` and `bwdSurv L ≥ 1/6`; distinct `L`-window minima on
+> one aperiodic orbit have indices more than `L` apart; and finite total orbit
+> count now kernel-implies an infinite nonnegative orbit with sublinear
+> recurrence.  Consequently the unchanged conditional closer
+> `amusicalInfinitelyManyOrbits_of_atLeastLinearGrowth` is fully proved.  The
+> 8711-job scoped gate and 8842-job full gate are FORMALIZE-tier green, and the
+> headline/downstream axiom ledgers contain exactly `Classical.choice`,
+> `Quot.sound`, and `propext`.  Read `HANDOFF-amusical-chains.md`.
+
 > **2026-10-13, amusical returns target COMPLETE:** `CollatzMoonshot/AmusicalReturns.lean` is
 > sorry-free with all four pinned results proved.  The final two proofs establish the logarithmic
 > return-defect bound by distinct-orbit rearrangement and construct arbitrarily large non-minima

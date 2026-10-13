@@ -1,5 +1,17 @@
 # PENDING_WORK
 
+## 2026-10-13 — amusical chains objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-chains.md` is fully discharged.  All four ratified
+targets are proved, including the two uniform survival bounds and the
+finite-orbits-to-sublinear-recurrence counting theorem;
+`CollatzMoonshot/AmusicalChains.lean` is sorry-free.  The scoped and full gates
+are green with the trust-base-only axiom ledger recorded in
+`HANDOFF-amusical-chains.md`.
+
+No stretch objective was assigned.  `AmusicalSpitzer.lean` and
+`AmusicalReturns.lean` remain owned by other treadmills and were not edited.
+
 ## 2026-10-13 — amusical `1/20` objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-bound.md` is fully discharged.  The semantic word counts are proved
