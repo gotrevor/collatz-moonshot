@@ -44,6 +44,65 @@ theorem amusicalInv_iterate_eq_perm_pow (t : ℕ) (n : ℤ) :
   | succ t ih =>
     rw [Function.iterate_succ_apply', ih, pow_succ, mul_inv_rev, Equiv.Perm.mul_apply]; rfl
 
+/-! ## Residue-class affine structure
+
+The next four lemmas are the algebraic core of the Matthews--Watts residue argument.  They
+make no asymptotic approximation: on a class modulo `4^L` (respectively `3^L`), every iterate
+through time `L` is an affine function of the class parameter, with positive integral slope.
+-/
+
+theorem amusical_add_four_mul (n k : ℤ) :
+    amusical (n + 4 * k) = amusical n + (if n % 2 = 0 then 6 * k else 3 * k) := by
+  unfold amusical
+  split_ifs <;> omega
+
+theorem amusicalInv_add_three_mul (n k : ℤ) :
+    amusicalInv (n + 3 * k) = amusicalInv n + (if n % 3 = 0 then 2 * k else 4 * k) := by
+  unfold amusicalInv
+  split_ifs <;> omega
+
+theorem amusical_iterate_add_pow_four_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    ∃ a : ℤ, 0 < a ∧ amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n + a * k := by
+  induction L generalizing t n k with
+  | zero =>
+      obtain rfl : t = 0 := by omega
+      exact ⟨1, by omega, by simp⟩
+  | succ L ih =>
+      cases t with
+      | zero => exact ⟨(4 : ℤ) ^ (L + 1), by positivity, by simp⟩
+      | succ t =>
+          have ht' : t ≤ L := by omega
+          let d : ℤ := if n % 2 = 0 then 6 else 3
+          obtain ⟨a, ha, hiter⟩ := ih t ht' (amusical n) (d * k)
+          refine ⟨a * d, mul_pos ha ?_, ?_⟩
+          · dsimp [d]; split <;> omega
+          · rw [Function.iterate_succ_apply, Function.iterate_succ_apply, pow_succ']
+            rw [show n + 4 * 4 ^ L * k = n + 4 * (4 ^ L * k) by ring]
+            rw [amusical_add_four_mul]
+            by_cases h : n % 2 = 0 <;> simp [d, h] at hiter ⊢ <;>
+              convert hiter using 1 <;> ring
+
+theorem amusicalInv_iterate_add_pow_three_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
+    ∃ a : ℤ, 0 < a ∧ amusicalInv^[t] (n + (3 : ℤ) ^ L * k) = amusicalInv^[t] n + a * k := by
+  induction L generalizing t n k with
+  | zero =>
+      obtain rfl : t = 0 := by omega
+      exact ⟨1, by omega, by simp⟩
+  | succ L ih =>
+      cases t with
+      | zero => exact ⟨(3 : ℤ) ^ (L + 1), by positivity, by simp⟩
+      | succ t =>
+          have ht' : t ≤ L := by omega
+          let d : ℤ := if n % 3 = 0 then 2 else 4
+          obtain ⟨a, ha, hiter⟩ := ih t ht' (amusicalInv n) (d * k)
+          refine ⟨a * d, mul_pos ha ?_, ?_⟩
+          · dsimp [d]; split <;> omega
+          · rw [Function.iterate_succ_apply, Function.iterate_succ_apply, pow_succ']
+            rw [show n + 3 * 3 ^ L * k = n + 3 * (3 ^ L * k) by ring]
+            rw [amusicalInv_add_three_mul]
+            by_cases h : n % 3 = 0 <;> simp [d, h] at hiter ⊢ <;>
+              convert hiter using 1 <;> ring
+
 /-- Every orbit minimum is an `L`-window minimum. -/
 theorem IsOrbitMin.isWindowMin {m : ℤ} (h : IsOrbitMin m) (L : ℕ) : IsWindowMin L m := by
   intro t _ _
