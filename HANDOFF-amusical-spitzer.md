@@ -1,6 +1,66 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, anchored cyclic subsets)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, cyclic anchor double count)
 
-## Current checkpoint: compositions are canonically anchored cyclic-start sets
+## Current checkpoint: marked cyclic subsets reindex exactly to compositions
+
+This lap closed the genuinely cyclic set-counting step left by the preceding checkpoint.  The
+new `anchorCyclicFinset` / `unanchorCyclicFinset` translate an arbitrary marked start to zero
+and back.  They preserve membership and cardinality, and `markedCyclicFinsetEquiv` proves the
+exact equivalence
+
+```text
+{(s,a) | a ∈ s}  ≃  Fin L × {t | 0 ∈ t}.
+```
+
+Together with the fiberwise enumeration of marks, this yields
+`cyclicFinset_double_count`: every nonempty set `s` occurs `s.card` times on the marked side,
+while every anchored set occurs `L` times on the absolute-anchor side.  The derived
+`cyclicFinset_sum_eq_composition` combines that count with `compositionStartsEquiv`, giving the
+load-bearing formula for every rotation-invariant contribution `G`:
+
+```text
+Σ (nonempty s), G(s)
+  = L * Σ (c : Composition L), G(compositionStarts c) / c.length.
+```
+
+Thus the subset-cardinality sign and the reciprocal block count required by cyclic
+inclusion--exclusion are now both kernel-checked.  No ratified statement changed, no axiom or
+`native_decide` was added, and the scoped file still has exactly its one disclosed target
+`sorry` at `windowDensityLimit`.
+
+## Verification
+
+Exact checks run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.cyclicFinset_sum_eq_composition
+```
+
+The focused gate ended `FORMALIZE-TIER GREEN`.  The new complete reindexing theorem's axiom
+audit is exactly `[propext, Classical.choice, Quot.sound]`; the gate reports only the existing
+`windowDensityLimit` proof debt.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single `sorry`.  Instantiate the new abstract
+reindexing with the actual inclusion--exclusion contribution
+
+```text
+(-1)^(s.card+1) * Σ_w 1[∀ r ∈ s, Good (rotateWord w r)] * wordWeight(w).
+```
+
+First prove this functional is invariant under `unanchorCyclicFinset`; the missing bridge is
+the composition law for `rotateWord` modulo `L`, followed by reindexing words by the inverse
+rotation and using `fwdWordWeight_rotateWord` / `bwdWordWeight_rotateWord`.  Then
+`cyclicFinset_sum_eq_composition` and the already-proved
+`fwdCompositionStartsIntersection_sum` / backward analogue produce the exact alternating
+composition coefficient identity.  Package that identity as the renewal recurrence, derive
+the two survival generating functions, and take the boundary limits with the already-proved
+summability and `minimaConstant_eq_directionalFactors`.  Do not re-prove the marked-set count,
+the anchored subset equivalence, or return to the refuted pointwise cut identity.
+
+## Previous checkpoint: compositions are canonically anchored cyclic-start sets
 
 This lap closed the linear-boundary half of the cyclic inclusion--exclusion reindexing.  The
 new `compositionStarts c` is the finset of genuine block-boundary starts of a composition,

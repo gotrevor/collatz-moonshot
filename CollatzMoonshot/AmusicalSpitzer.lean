@@ -1198,6 +1198,172 @@ theorem compositionStartsEquiv_apply (n : ℕ) (c : Composition (n + 1)) :
 theorem compositionStartsEquiv_apply_card (n : ℕ) (c : Composition (n + 1)) :
     (compositionStartsEquiv n c).1.card = c.length := card_compositionStarts c
 
+/-! The second reindexing needed for cyclic inclusion--exclusion: mark one start in an
+arbitrary nonempty cyclic-start set, then translate that marked start to zero. -/
+
+/-- Translate a cyclic-start set so that the start `a` moves to zero. -/
+def anchorCyclicFinset {L : ℕ} [NeZero L] (a : Fin L) (s : Finset (Fin L)) :
+    Finset (Fin L) :=
+  (finCycle a).symm.finsetCongr s
+
+/-- Undo `anchorCyclicFinset`, translating zero back to the absolute start `a`. -/
+def unanchorCyclicFinset {L : ℕ} [NeZero L] (a : Fin L) (s : Finset (Fin L)) :
+    Finset (Fin L) :=
+  (finCycle a).finsetCongr s
+
+@[simp]
+theorem mem_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a x : Fin L) (s : Finset (Fin L)) :
+    x ∈ anchorCyclicFinset a s ↔ x + a ∈ s := by
+  simp [anchorCyclicFinset]
+
+@[simp]
+theorem mem_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a x : Fin L) (s : Finset (Fin L)) :
+    x ∈ unanchorCyclicFinset a s ↔ x - a ∈ s := by
+  simp [unanchorCyclicFinset]
+
+@[simp]
+theorem zero_mem_anchorCyclicFinset_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    0 ∈ anchorCyclicFinset a s ↔ a ∈ s := by
+  simp
+
+@[simp]
+theorem anchor_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    anchorCyclicFinset a (unanchorCyclicFinset a s) = s := by
+  ext x
+  simp
+
+@[simp]
+theorem unanchor_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    unanchorCyclicFinset a (anchorCyclicFinset a s) = s := by
+  ext x
+  simp
+
+@[simp]
+theorem card_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    (anchorCyclicFinset a s).card = s.card := by
+  simp [anchorCyclicFinset]
+
+@[simp]
+theorem card_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    (unanchorCyclicFinset a s).card = s.card := by
+  simp [unanchorCyclicFinset]
+
+/-- Marking an element of an arbitrary cyclic-start set is equivalent to choosing an
+absolute anchor and a translated cyclic-start set containing zero. -/
+def markedCyclicFinsetEquiv (L : ℕ) [NeZero L] :
+    {p : Finset (Fin L) × Fin L // p.2 ∈ p.1} ≃
+      Fin L × {s : Finset (Fin L) // 0 ∈ s} where
+  toFun p :=
+    (p.1.2, ⟨anchorCyclicFinset p.1.2 p.1.1,
+      (zero_mem_anchorCyclicFinset_iff p.1.2 p.1.1).2 p.2⟩)
+  invFun p :=
+    ⟨(unanchorCyclicFinset p.1 p.2.1, p.1),
+      (mem_unanchorCyclicFinset p.1 p.1 p.2.1).2 (by simpa using p.2.2)⟩
+  left_inv p := by
+    apply Subtype.ext
+    apply Prod.ext
+    · exact unanchor_anchorCyclicFinset p.1.2 p.1.1
+    · rfl
+  right_inv p := by
+    apply Prod.ext
+    · rfl
+    · apply Subtype.ext
+      exact anchor_unanchorCyclicFinset p.1 p.2.1
+
+/-- The same marked cyclic-start sets, arranged into fibers over their underlying nonempty
+sets.  Each fiber has cardinality equal to the number of marked starts. -/
+def markedCyclicFinsetFiberEquiv (L : ℕ) :
+    {p : Finset (Fin L) × Fin L // p.2 ∈ p.1} ≃
+      Σ s : {s : Finset (Fin L) // s.Nonempty}, {a : Fin L // a ∈ s.1} where
+  toFun p := ⟨⟨p.1.1, ⟨p.1.2, p.2⟩⟩, ⟨p.1.2, p.2⟩⟩
+  invFun p := ⟨(p.1.1, p.2.1), p.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Summing over a marked start multiplies the contribution of a nonempty start-set by its
+cardinality. -/
+theorem sum_markedCyclicFinset_eq_card_mul (L : ℕ)
+    (F : Finset (Fin L) → ℝ) :
+    (∑ p : {p : Finset (Fin L) × Fin L // p.2 ∈ p.1}, F p.1.1) =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, (s.1.card : ℝ) * F s.1 := by
+  calc
+    _ = ∑ p : Σ s : {s : Finset (Fin L) // s.Nonempty}, {a : Fin L // a ∈ s.1},
+          F ((markedCyclicFinsetFiberEquiv L).symm p).1.1 :=
+      ((markedCyclicFinsetFiberEquiv L).symm.sum_comp _).symm
+    _ = _ := by
+      rw [Fintype.sum_sigma]
+      simp [markedCyclicFinsetFiberEquiv]
+
+/-- **Cyclic marked-set double count.**  A rotation-invariant contribution summed over a
+nonempty start-set with one distinguished start can instead be summed over its absolute anchor
+and its translate containing zero.  Thus the two sides acquire factors `s.card` and `L`. -/
+theorem cyclicFinset_double_count (L : ℕ) [NeZero L]
+    (F : Finset (Fin L) → ℝ)
+    (hF : ∀ (a : Fin L) (s : Finset (Fin L)),
+      F (unanchorCyclicFinset a s) = F s) :
+    (∑ s : {s : Finset (Fin L) // s.Nonempty}, (s.1.card : ℝ) * F s.1) =
+      L * ∑ s : {s : Finset (Fin L) // 0 ∈ s}, F s.1 := by
+  rw [← sum_markedCyclicFinset_eq_card_mul]
+  calc
+    (∑ p : {p : Finset (Fin L) × Fin L // p.2 ∈ p.1}, F p.1.1) =
+        ∑ p : Fin L × {s : Finset (Fin L) // 0 ∈ s},
+          F ((markedCyclicFinsetEquiv L).symm p).1.1 :=
+      ((markedCyclicFinsetEquiv L).symm.sum_comp _).symm
+    _ = ∑ p : Fin L × {s : Finset (Fin L) // 0 ∈ s}, F p.2.1 := by
+      apply Finset.sum_congr rfl
+      intro p _hp
+      exact hF p.1 p.2.1
+    _ = _ := by
+      rw [Fintype.sum_prod_type]
+      simp
+
+/-- Rotation-invariant sums over nonempty cyclic-start sets can be reindexed by anchored sets;
+the reciprocal cardinality compensates for the choice of marked start. -/
+theorem cyclicFinset_sum_eq_anchored (L : ℕ) [NeZero L]
+    (G : Finset (Fin L) → ℝ)
+    (hG : ∀ (a : Fin L) (s : Finset (Fin L)),
+      G (unanchorCyclicFinset a s) = G s) :
+    (∑ s : {s : Finset (Fin L) // s.Nonempty}, G s.1) =
+      L * ∑ s : {s : Finset (Fin L) // 0 ∈ s}, G s.1 / s.1.card := by
+  have h := cyclicFinset_double_count L
+    (fun s => G s / (s.card : ℝ)) (fun a s => by simp [hG])
+  rw [← h]
+  apply Finset.sum_congr rfl
+  intro s _hs
+  rw [mul_div_cancel₀]
+  exact_mod_cast Finset.card_ne_zero.mpr s.2
+
+/-- Replace the anchored cyclic-start sets in the double count by their canonical positive
+compositions.  The reciprocal start-set cardinality becomes the reciprocal block count. -/
+theorem anchoredCyclicFinset_sum_eq_composition (n : ℕ)
+    (G : Finset (Fin (n + 1)) → ℝ) :
+    (∑ s : {s : Finset (Fin (n + 1)) // 0 ∈ s}, G s.1 / s.1.card) =
+      ∑ c : Composition (n + 1), G (compositionStarts c) / c.length := by
+  rw [← (compositionStartsEquiv n).sum_comp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  simp only [compositionStartsEquiv_apply]
+  rw [card_compositionStarts]
+
+/-- The complete cyclic-anchor reindexing: a rotation-invariant sum over arbitrary nonempty
+start-sets is `n+1` times the composition sum, with reciprocal block-count weights. -/
+theorem cyclicFinset_sum_eq_composition (n : ℕ)
+    (G : Finset (Fin (n + 1)) → ℝ)
+    (hG : ∀ (a : Fin (n + 1)) (s : Finset (Fin (n + 1))),
+      G (unanchorCyclicFinset a s) = G s) :
+    (∑ s : {s : Finset (Fin (n + 1)) // s.Nonempty}, G s.1) =
+      (n + 1) * ∑ c : Composition (n + 1), G (compositionStarts c) / c.length := by
+  rw [cyclicFinset_sum_eq_anchored (n + 1) G hG,
+    anchoredCyclicFinset_sum_eq_composition]
+  norm_num
+
 /-- Quantifying over the anchored subset is the same as quantifying over the block-boundary
 indices.  This is the interface between finite-set inclusion--exclusion and compositions. -/
 theorem forall_mem_compositionStarts_iff {L : ℕ} (c : Composition L) (P : Fin L → Prop) :
