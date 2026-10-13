@@ -226,7 +226,7 @@ residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically co
 `stepSym (ι n)` depend only on `n mod 2^c₀ 3^d₀`; then it is determined by that finite table
 (Lemma S) and equals flip ∘ a cellular automaton on the Matthews–Watts shift.
 
-* **Theorem C (proved on paper, checked by me).**  No injective continuous reversor grows at most
+* **Theorem C (kernel-checked 2026-10-13, with A, A′ and Lemma S).**  No injective continuous reversor grows at most
   linearly.  Mechanism: the far-future step symbols of `ι n` are a window function of the past
   symbols of `n` (uniform on three letters), so the even-step frequency `q` is a fraction over a
   power of `3`, never `1/2`; along `L` disjoint windows the event densities are `ρ^L` vs `2^{−L}`

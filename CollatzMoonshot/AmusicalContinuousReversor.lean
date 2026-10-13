@@ -30,8 +30,8 @@ last few base-2 and base-3 digits of `n`.  Such a reversor is determined by one 
   (~93%), open.
 
 Paper proofs: agent report `reversor.md` (2026-10-13), summarized in
-`RESEARCH-2026-10-13-amusical-single-chain.md` §9.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-contrev.md`): close every proof hole here.
+`RESEARCH-2026-10-13-amusical-single-chain.md` §9.  All four kernel-checked 2026-10-13
+by the contrev treadmill (`HANDOFF-amusical-contrev.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -45,7 +45,7 @@ def stepSym (n : ℤ) : Fin 3 :=
 def IsAmusicalReversor (ι : ℤ → ℤ) : Prop :=
   ∀ n, ι (amusical n) = amusicalInv (ι n)
 
-/-- **Target (Lemma S).**  A reversor is determined by the step symbols of its values: the forward
+/-- **Proved (Lemma S).**  A reversor is determined by the step symbols of its values: the forward
 itinerary of `ι n` is `stepSym (ι (U⁻ᵏ n))`, and the forward itinerary fixes an integer. -/
 theorem reversor_eq_of_stepSym_eq {ι ι' : ℤ → ℤ} (h : IsAmusicalReversor ι)
     (h' : IsAmusicalReversor ι') (hs : ∀ n, stepSym (ι n) = stepSym (ι' n)) : ι = ι' := by
@@ -73,7 +73,7 @@ theorem reversor_eq_of_stepSym_eq {ι ι' : ℤ → ℤ} (h : IsAmusicalReversor
   rw [← iterBack h i n, ← iterBack h' i n]
   exact hs _
 
-/-- **Target (Theorem A).**  A reversor that is continuous 2-adically alone is constant, with
+/-- **Proved (Theorem A).**  A reversor that is continuous 2-adically alone is constant, with
 value `-1`, `0` or `1` (the fixed points of `U⁻¹` among constants).  Paper proof: a forward
 cylinder of length `k` around `n` is mapped by `Uᵏ` onto a class mod `3ᵏ`, which meets every
 class mod `2^c`; pull a point agreeing with `Uᵏ y` 2-adically back, and use
@@ -140,7 +140,7 @@ theorem reversor_const_of_twoAdicContinuous {ι : ℤ → ℤ} (h : IsAmusicalRe
   unfold amusicalInv at hv
   split_ifs at hv <;> omega
 
-/-- **Target (Theorem A′).**  The 3-adic mirror of Theorem A: backward cylinders are classes
+/-- **Proved (Theorem A′).**  The 3-adic mirror of Theorem A: backward cylinders are classes
 mod `3ᵏ`; `U⁻ᵏ` maps them onto classes mod a power of `2`, and each `U⁻¹`-step loses one
 trit. -/
 theorem reversor_const_of_threeAdicContinuous {ι : ℤ → ℤ} (h : IsAmusicalReversor ι)
@@ -198,7 +198,7 @@ theorem reversor_const_of_threeAdicContinuous {ι : ℤ → ℤ} (h : IsAmusical
   unfold amusicalInv at hv
   split_ifs at hv <;> omega
 
-/-- **Target (Theorem C).**  No injective reversor whose step symbols are determined by residues
+/-- **Proved (Theorem C).**  No injective reversor whose step symbols are determined by residues
 mod `2^c₀ 3^d₀` grows at most linearly.  (Residue-determined step symbols are equivalent to
 `(2,3)`-adic uniform continuity, by Lemma S.)  Paper proof: for `k ≥ c₀` the step symbol of
 `Uᵏ (ι n) = ι (U⁻ᵏ n)` is a fixed function `f` of the backward symbols
