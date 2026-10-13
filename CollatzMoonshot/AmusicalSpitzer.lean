@@ -4,6 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalConstant
+import CollatzMoonshot.CycleDiophantine
+import CollatzMoonshot.CyclicMinimum
+import Mathlib.Analysis.Calculus.SmoothSeries
+import Mathlib.Analysis.Complex.AbelLimit
+import Mathlib.Combinatorics.Enumerative.Composition
+import Mathlib.Combinatorics.Enumerative.InclusionExclusion
+import Mathlib.RingTheory.PowerSeries.Log
 
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
@@ -17,9 +24,3386 @@ The real content is Sparre Andersen's theorem for the two multiplicative walks.
 
 namespace CollatzMoonshot.Amusical
 
+/-! ## Haar duality at one fixed time -/
+
+/-- The probability that the forward multiplicative walk is at or below its start after `k`
+steps.  There are `choose k o` words with `o` steps of type `×3/4`, each of mass `2⁻ᵏ`. -/
+noncomputable def fwdNonposTerm (k : ℕ) : ℝ :=
+  ∑ o ∈ Finset.range (k + 1),
+    if 3 ^ k < 2 ^ (k + o) then (Nat.choose k o : ℝ) / 2 ^ k else 0
+
+/-- The probability that the backward multiplicative walk is at or below its start after `k`
+steps.  Haar tilting changes the forward mass `choose k o / 2^k` into
+`choose k o * 2^o / 3^k` on the complementary side of the no-tie cut. -/
+noncomputable def bwdNonposTerm (k : ℕ) : ℝ :=
+  ∑ o ∈ Finset.range (k + 1),
+    if 2 ^ (k + o) < 3 ^ k then (Nat.choose k o : ℝ) * 2 ^ o / 3 ^ k else 0
+
+/-- The forward probability of finishing strictly above the start after `k` steps. -/
+noncomputable def fwdPosTerm (k : ℕ) : ℝ :=
+  ∑ o ∈ Finset.range (k + 1),
+    if 2 ^ (k + o) < 3 ^ k then (Nat.choose k o : ℝ) / 2 ^ k else 0
+
+/-- The backward probability of finishing strictly above the start after `k` steps. -/
+noncomputable def bwdPosTerm (k : ℕ) : ℝ :=
+  ∑ o ∈ Finset.range (k + 1),
+    if 3 ^ k < 2 ^ (k + o) then (Nat.choose k o : ℝ) * 2 ^ o / 3 ^ k else 0
+
+/-- No endpoint of either multiplicative walk is tied with its start at positive time. -/
+theorem walk_endpoint_ne (k o : ℕ) (hk : 0 < k) :
+    (2 : ℕ) ^ (k + o) ≠ 3 ^ k := by
+  exact Ne.symm (three_pow_ne_two_pow (a := k) (b := k + o) hk)
+
+/-- **Haar duality, termwise form.**  At each positive time, the Spitzer contribution splits
+exactly into the forward and backward probabilities of finishing at or below the start. -/
+theorem spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm (k : ℕ) (hk : 0 < k) :
+    spitzerTerm k = fwdNonposTerm k + bwdNonposTerm k := by
+  rw [spitzerTerm, fwdNonposTerm, bwdNonposTerm, ← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro o ho
+  have hone : (0 : ℝ) < 2 ^ k := by positivity
+  have hthree : (0 : ℝ) < 3 ^ k := by positivity
+  have hneNat : (2 : ℕ) ^ (k + o) ≠ 3 ^ k := walk_endpoint_ne k o hk
+  rcases lt_or_gt_of_ne hneNat with hlt | hgt
+  · rw [if_neg (by exact_mod_cast (not_lt_of_ge hlt.le)), if_pos (by exact_mod_cast hlt)]
+    rw [min_eq_right (by
+      apply (div_le_one hthree).2
+      exact_mod_cast hlt.le)]
+    field_simp
+    ring
+  · rw [if_pos (by exact_mod_cast hgt), if_neg (by exact_mod_cast (not_lt_of_ge hgt.le))]
+    rw [min_eq_left (by
+      apply (one_le_div hthree).2
+      exact_mod_cast hgt.le)]
+    ring
+
+/-! ## Summability of the Spitzer series -/
+
+/-- The elementary square-root majorant used to obtain exponential decay of the Spitzer
+terms. -/
+theorem min_one_le_sqrt (x : ℝ) : min 1 x ≤ √x := by
+  rcases le_total x 1 with hx | hx
+  · rw [min_eq_right hx]
+    exact Real.le_sqrt_self_iff.mpr hx
+  · rw [min_eq_left hx]
+    exact Real.one_le_sqrt.mpr hx
+
+/-- Square root commutes with natural powers of a nonnegative real. -/
+theorem sqrt_pow_of_nonneg (x : ℝ) (hx : 0 ≤ x) (n : ℕ) :
+    √(x ^ n) = (√x) ^ n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ, Real.sqrt_mul (pow_nonneg hx n), ih, pow_succ]
+
+/-- Factor the square root of a walk's Radon--Nikodym weight into its independent-step
+factors. -/
+theorem sqrt_walk_weight (k o : ℕ) :
+    √((2 : ℝ) ^ (k + o) / 3 ^ k) =
+      (√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o := by
+  calc
+    √((2 : ℝ) ^ (k + o) / 3 ^ k) =
+        √(((2 : ℝ) / 3) ^ k * 2 ^ o) := by
+          congr 1
+          rw [pow_add, div_pow]
+          ring
+    _ = √(((2 : ℝ) / 3) ^ k) * √((2 : ℝ) ^ o) := by
+      rw [Real.sqrt_mul (by positivity)]
+    _ = (√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o := by
+      rw [sqrt_pow_of_nonneg _ (by positivity), sqrt_pow_of_nonneg _ (by positivity)]
+
+/-- A strict geometric rate dominating `spitzerTerm`.  Numerically this is about
+`0.985598`. -/
+noncomputable def spitzerRate : ℝ :=
+  √((2 : ℝ) / 3) * (1 + √(2 : ℝ)) / 2
+
+theorem spitzerRate_nonneg : 0 ≤ spitzerRate := by
+  unfold spitzerRate
+  positivity
+
+theorem spitzerRate_lt_one : spitzerRate < 1 := by
+  have hb : √(2 : ℝ) < 3 / 2 := by
+    rw [Real.sqrt_lt (by norm_num) (by norm_num)]
+    norm_num
+  have ha_sq : (√((2 : ℝ) / 3)) ^ 2 = 2 / 3 :=
+    Real.sq_sqrt (by norm_num)
+  have hb_sq : (√(2 : ℝ)) ^ 2 = 2 := Real.sq_sqrt (by norm_num)
+  have hsq : (√((2 : ℝ) / 3) * (1 + √(2 : ℝ))) ^ 2 < (2 : ℝ) ^ 2 := by
+    rw [mul_pow, ha_sq]
+    nlinarith
+  have hprod : √((2 : ℝ) / 3) * (1 + √(2 : ℝ)) < 2 :=
+    (sq_lt_sq₀ (by positivity) (by positivity)).mp hsq
+  unfold spitzerRate
+  linarith
+
+theorem spitzerTerm_nonneg (k : ℕ) : 0 ≤ spitzerTerm k := by
+  unfold spitzerTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  positivity
+
+/-- The Spitzer contributions decay geometrically, by the square-root moment of the walk. -/
+theorem spitzerTerm_le_rate_pow (k : ℕ) : spitzerTerm k ≤ spitzerRate ^ k := by
+  unfold spitzerTerm
+  calc
+    (∑ o ∈ Finset.range (k + 1),
+        (Nat.choose k o : ℝ) / 2 ^ k * min 1 ((2 : ℝ) ^ (k + o) / 3 ^ k)) ≤
+        ∑ o ∈ Finset.range (k + 1),
+          (Nat.choose k o : ℝ) / 2 ^ k * √((2 : ℝ) ^ (k + o) / 3 ^ k) := by
+      apply Finset.sum_le_sum
+      intro o ho
+      exact mul_le_mul_of_nonneg_left (min_one_le_sqrt _) (by positivity)
+    _ = ∑ o ∈ Finset.range (k + 1),
+          (Nat.choose k o : ℝ) / 2 ^ k *
+            ((√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o) := by
+      apply Finset.sum_congr rfl
+      intro o ho
+      rw [sqrt_walk_weight]
+    _ = ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) *
+          ∑ o ∈ Finset.range (k + 1),
+            (Nat.choose k o : ℝ) * (√(2 : ℝ)) ^ o := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro o ho
+      ring
+    _ = ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) * (1 + √(2 : ℝ)) ^ k := by
+      have hbinom := add_pow (√(2 : ℝ)) 1 k
+      simp only [one_pow, mul_one] at hbinom
+      rw [add_comm] at hbinom
+      congr 1
+      simpa only [mul_comm] using hbinom.symm
+    _ = spitzerRate ^ k := by
+      unfold spitzerRate
+      calc
+        ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) * (1 + √(2 : ℝ)) ^ k =
+            (√((2 : ℝ) / 3) * (1 + √(2 : ℝ))) ^ k / 2 ^ k := by
+          rw [mul_pow]
+          ring
+        _ = (√((2 : ℝ) / 3) * (1 + √(2 : ℝ)) / 2) ^ k := by
+          rw [div_pow]
+
+/-- The series appearing in the definition of `minimaConstant` is summable. -/
+theorem summable_spitzerSeries :
+    Summable (fun k : ℕ => spitzerTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (spitzerTerm_nonneg _) (by positivity)
+  · intro k
+    calc
+      spitzerTerm (k + 1) / (k + 1) ≤ spitzerTerm (k + 1) := by
+        apply div_le_self
+        · exact spitzerTerm_nonneg _
+        · exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega : k + 1 ≠ 0)
+      _ ≤ spitzerRate ^ (k + 1) := spitzerTerm_le_rate_pow _
+      _ ≤ spitzerRate ^ k := by
+        rw [pow_succ]
+        exact mul_le_of_le_one_right (pow_nonneg spitzerRate_nonneg k) spitzerRate_lt_one.le
+  · exact summable_geometric_of_lt_one spitzerRate_nonneg spitzerRate_lt_one
+
+theorem fwdNonposTerm_nonneg (k : ℕ) : 0 ≤ fwdNonposTerm k := by
+  unfold fwdNonposTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  split_ifs <;> positivity
+
+theorem bwdNonposTerm_nonneg (k : ℕ) : 0 ≤ bwdNonposTerm k := by
+  unfold bwdNonposTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  split_ifs <;> positivity
+
+theorem fwdNonposTerm_le_spitzerTerm (k : ℕ) (hk : 0 < k) :
+    fwdNonposTerm k ≤ spitzerTerm k := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm k hk]
+  exact le_add_of_nonneg_right (bwdNonposTerm_nonneg k)
+
+theorem bwdNonposTerm_le_spitzerTerm (k : ℕ) (hk : 0 < k) :
+    bwdNonposTerm k ≤ spitzerTerm k := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm k hk]
+  exact le_add_of_nonneg_left (fwdNonposTerm_nonneg k)
+
+/-- The forward nonpositive endpoint series is summable. -/
+theorem summable_fwdNonposSeries :
+    Summable (fun k : ℕ => fwdNonposTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (fwdNonposTerm_nonneg _) (by positivity)
+  · intro k
+    exact div_le_div_of_nonneg_right
+      (fwdNonposTerm_le_spitzerTerm _ (by omega)) (by positivity)
+  · exact summable_spitzerSeries
+
+/-- The backward nonpositive endpoint series is summable. -/
+theorem summable_bwdNonposSeries :
+    Summable (fun k : ℕ => bwdNonposTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (bwdNonposTerm_nonneg _) (by positivity)
+  · intro k
+    exact div_le_div_of_nonneg_right
+      (bwdNonposTerm_le_spitzerTerm _ (by omega)) (by positivity)
+  · exact summable_spitzerSeries
+
+/-- Pointwise Haar duality for the normalized Spitzer series. -/
+theorem spitzerSeries_eq_fwd_add_bwd (k : ℕ) :
+    spitzerTerm (k + 1) / (k + 1) =
+      fwdNonposTerm (k + 1) / (k + 1) + bwdNonposTerm (k + 1) / (k + 1) := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm (k + 1) (by omega)]
+  ring
+
+/-- The two directional endpoint series merge exactly into the series defining
+`minimaConstant`. -/
+theorem tsum_spitzerSeries_eq_fwd_add_bwd :
+    (∑' k : ℕ, spitzerTerm (k + 1) / (k + 1)) =
+      (∑' k : ℕ, fwdNonposTerm (k + 1) / (k + 1)) +
+        ∑' k : ℕ, bwdNonposTerm (k + 1) / (k + 1) := by
+  rw [← Summable.tsum_add summable_fwdNonposSeries summable_bwdNonposSeries]
+  apply tsum_congr
+  exact spitzerSeries_eq_fwd_add_bwd
+
+/-- The constant factors into the two directional Sparre--Andersen limits. -/
+theorem minimaConstant_eq_directionalFactors :
+    minimaConstant =
+      Real.exp (-(∑' k : ℕ, fwdNonposTerm (k + 1) / (k + 1))) *
+        Real.exp (-(∑' k : ℕ, bwdNonposTerm (k + 1) / (k + 1))) := by
+  rw [minimaConstant, tsum_spitzerSeries_eq_fwd_add_bwd, neg_add, Real.exp_add]
+
+/-- At positive time, the forward endpoint is either strictly positive or nonpositive, and the
+two binomial masses sum to one. -/
+theorem fwdNonposTerm_add_fwdPosTerm (k : ℕ) (hk : 0 < k) :
+    fwdNonposTerm k + fwdPosTerm k = 1 := by
+  rw [fwdNonposTerm, fwdPosTerm, ← Finset.sum_add_distrib]
+  calc
+    _ = ∑ o ∈ Finset.range (k + 1), (Nat.choose k o : ℝ) / 2 ^ k := by
+      apply Finset.sum_congr rfl
+      intro o ho
+      have hne : (2 : ℕ) ^ (k + o) ≠ 3 ^ k := walk_endpoint_ne k o hk
+      rcases lt_or_gt_of_ne hne with hlt | hgt
+      · rw [if_neg (by exact_mod_cast (not_lt_of_ge hlt.le)), if_pos (by exact_mod_cast hlt)]
+        ring
+      · rw [if_pos (by exact_mod_cast hgt), if_neg (by exact_mod_cast (not_lt_of_ge hgt.le))]
+        ring
+    _ = (∑ o ∈ Finset.range (k + 1), (Nat.choose k o : ℝ)) / 2 ^ k := by
+      rw [Finset.sum_div]
+    _ = 1 := by
+      rw [← Nat.cast_sum, Nat.sum_range_choose]
+      norm_num
+
+/-- At positive time, the backward endpoint is either strictly positive or nonpositive, and the
+two tilted binomial masses sum to one. -/
+theorem bwdNonposTerm_add_bwdPosTerm (k : ℕ) (hk : 0 < k) :
+    bwdNonposTerm k + bwdPosTerm k = 1 := by
+  rw [bwdNonposTerm, bwdPosTerm, ← Finset.sum_add_distrib]
+  calc
+    _ = ∑ o ∈ Finset.range (k + 1), (Nat.choose k o : ℝ) * 2 ^ o / 3 ^ k := by
+      apply Finset.sum_congr rfl
+      intro o ho
+      have hne : (2 : ℕ) ^ (k + o) ≠ 3 ^ k := walk_endpoint_ne k o hk
+      rcases lt_or_gt_of_ne hne with hlt | hgt
+      · rw [if_pos (by exact_mod_cast hlt), if_neg (by exact_mod_cast (not_lt_of_ge hlt.le))]
+        ring
+      · rw [if_neg (by exact_mod_cast (not_lt_of_ge hgt.le)), if_pos (by exact_mod_cast hgt)]
+        ring
+    _ = (∑ o ∈ Finset.range (k + 1), (Nat.choose k o : ℝ) * 2 ^ o) / 3 ^ k := by
+      rw [Finset.sum_div]
+    _ = 1 := by
+      have hbinom := add_pow (2 : ℝ) 1 k
+      simp only [one_pow, mul_one] at hbinom
+      rw [add_comm] at hbinom
+      have htotal : (3 : ℝ) ^ k =
+          ∑ o ∈ Finset.range (k + 1), (Nat.choose k o : ℝ) * 2 ^ o := by
+        norm_num [mul_comm] at hbinom ⊢
+        exact hbinom
+      rw [← htotal]
+      norm_num
+
+/-! ## Finite-word probability interface
+
+The Sparre--Andersen recurrence is a weighted identity on finite words.  The following
+regrouping lemma puts the endpoint binomial sums and the prefix-survival sums on that common
+sample space. -/
+
+/-- Number of marked (`true`) letters in a finite Boolean word. -/
+def wordTrueCount {L : ℕ} (w : Fin L → Bool) : ℕ :=
+  (Finset.univ.filter fun i => w i = true).card
+
+/-- Permuting the positions of a Boolean word does not change its number of marked letters. -/
+theorem wordTrueCount_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    wordTrueCount (w ∘ e) = wordTrueCount w := by
+  unfold wordTrueCount
+  apply Finset.card_bijective e e.bijective
+  intro i
+  simp [Function.comp_apply]
+
+/-- In particular, cyclic rotation preserves the number of marked letters. -/
+theorem wordTrueCount_rotate {L : ℕ} (w : Fin L → Bool) :
+    wordTrueCount (w ∘ finRotate L) = wordTrueCount w :=
+  wordTrueCount_comp_equiv w (finRotate L)
+
+/-- Product weight of a word for the forward walk. -/
+noncomputable def fwdWordWeight {L : ℕ} (_w : Fin L → Bool) : ℝ :=
+  (1 / 2 : ℝ) ^ L
+
+/-- Product weight of a word for the backward walk. -/
+noncomputable def bwdWordWeight {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (L - wordTrueCount w)
+
+/-- The forward product weight of a word is invariant under any permutation of its letters. -/
+theorem fwdWordWeight_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    fwdWordWeight (w ∘ e) = fwdWordWeight w := rfl
+
+/-- The backward product weight of a word is invariant under any permutation of its letters. -/
+theorem bwdWordWeight_comp_equiv {L : ℕ} (w : Fin L → Bool) (e : Fin L ≃ Fin L) :
+    bwdWordWeight (w ∘ e) = bwdWordWeight w := by
+  unfold bwdWordWeight
+  rw [wordTrueCount_comp_equiv]
+
+theorem fwdWordWeight_rotate {L : ℕ} (w : Fin L → Bool) :
+    fwdWordWeight (w ∘ finRotate L) = fwdWordWeight w :=
+  fwdWordWeight_comp_equiv w (finRotate L)
+
+theorem bwdWordWeight_rotate {L : ℕ} (w : Fin L → Bool) :
+    bwdWordWeight (w ∘ finRotate L) = bwdWordWeight w :=
+  bwdWordWeight_comp_equiv w (finRotate L)
+
+/-- A block with `k` letters and `o` marked letters can never have multiplicative score one
+when `k` is positive.  This applies to every nonempty contiguous block of either walk because
+its score depends only on these two counts. -/
+theorem wordBlock_endpoint_ne (k o : ℕ) (hk : 0 < k) :
+    (2 : ℕ) ^ (k + o) ≠ 3 ^ k :=
+  walk_endpoint_ne k o hk
+
+/-- Every nonempty block has one of the two strict score signs. -/
+theorem wordBlock_endpoint_lt_or_gt (k o : ℕ) (hk : 0 < k) :
+    (2 : ℕ) ^ (k + o) < 3 ^ k ∨ 3 ^ k < 2 ^ (k + o) :=
+  lt_or_gt_of_ne (wordBlock_endpoint_ne k o hk)
+
+theorem wordTrueCount_cons {L : ℕ} (b : Bool) (w : Fin L → Bool) :
+    wordTrueCount (Fin.cons b w) = (if b then 1 else 0) + wordTrueCount w := by
+  simp only [wordTrueCount]
+  rw [Finset.card_filter, Finset.card_filter, Fin.sum_univ_succ]
+  simp
+
+/-- Marked-letter counts add under concatenation. -/
+theorem wordTrueCount_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    wordTrueCount (Fin.append u v) = wordTrueCount u + wordTrueCount v := by
+  unfold wordTrueCount
+  repeat' rw [Finset.card_filter]
+  rw [Fin.sum_univ_add]
+  simp
+
+theorem wordTrueCount_le {L : ℕ} (w : Fin L → Bool) : wordTrueCount w ≤ L := by
+  unfold wordTrueCount
+  calc
+    (Finset.univ.filter fun i => w i = true).card ≤ Finset.univ.card :=
+      Finset.card_filter_le _ _
+    _ = L := Fintype.card_fin L
+
+/-- Taking a prefix turns the filtered count used in `FwdGood` and `BwdGood` into the
+ordinary marked-letter count of a shorter word. -/
+theorem wordTrueCount_take {L : ℕ} (w : Fin L → Bool) (t : ℕ) (ht : t ≤ L) :
+    wordTrueCount (Fin.take t ht w) =
+      (Finset.univ.filter fun i : Fin L => i.val < t ∧ w i = true).card := by
+  unfold wordTrueCount
+  refine Finset.card_bij (fun i _ => Fin.castLE ht i) ?_ ?_ ?_
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi ⊢
+    exact ⟨i.isLt, hi⟩
+  · intro i₁ hi₁ i₂ hi₂ h
+    exact Fin.castLE_injective ht h
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
+    refine ⟨⟨i, hi.1⟩, ?_, ?_⟩
+    · apply Finset.mem_filter.mpr
+      refine ⟨Finset.mem_univ _, ?_⟩
+      have heq : Fin.castLE ht ⟨i, hi.1⟩ = i := by ext; rfl
+      simpa only [Fin.take_apply, heq] using hi.2
+    · rfl
+
+/-- A forward word finishes strictly above its starting point. -/
+def FwdEndpointPositive {L : ℕ} (w : Fin L → Bool) : Prop :=
+  2 ^ (L + wordTrueCount w) < 3 ^ L
+
+/-- A backward word finishes strictly above its starting point. -/
+def BwdEndpointPositive {L : ℕ} (w : Fin L → Bool) : Prop :=
+  3 ^ L < 2 ^ (L + wordTrueCount w)
+
+/-- Forward survival is exactly strict positivity of every nonempty prefix word. -/
+theorem fwdGood_iff_prefix_positive {L : ℕ} (w : Fin L → Bool) :
+    FwdGood L w ↔
+      ∀ (t : ℕ) (ht0 : 0 < t) (htL : t ≤ L),
+        FwdEndpointPositive (Fin.take t htL w) := by
+  constructor
+  · intro hw t ht0 htL
+    simpa only [FwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+  · intro hw t ht0 htL
+    simpa only [FwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+
+/-- Backward survival is exactly strict positivity of every nonempty prefix word. -/
+theorem bwdGood_iff_prefix_positive {L : ℕ} (w : Fin L → Bool) :
+    BwdGood L w ↔
+      ∀ (t : ℕ) (ht0 : 0 < t) (htL : t ≤ L),
+        BwdEndpointPositive (Fin.take t htL w) := by
+  constructor
+  · intro hw t ht0 htL
+    simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+  · intro hw t ht0 htL
+    simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+
+/-! ## Additive score interface for the cyclic-minimum lemma -/
+
+/-- Additive logarithmic score of one forward letter. -/
+noncomputable def fwdStepScore (b : Bool) : ℝ :=
+  Real.log 3 - (if b then 2 else 1) * Real.log 2
+
+/-- Additive logarithmic scores of the letters in a forward word. -/
+noncomputable def fwdScoreList {L : ℕ} (w : Fin L → Bool) : List ℝ :=
+  List.ofFn fun i => fwdStepScore (w i)
+
+/-- Total additive logarithmic score of a forward word. -/
+noncomputable def fwdScore {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  ∑ i, fwdStepScore (w i)
+
+/-- The forward additive score written in terms of length and marked-letter count. -/
+theorem fwdScore_eq {L : ℕ} (w : Fin L → Bool) :
+    fwdScore w =
+      (L : ℝ) * Real.log 3 - (L + wordTrueCount w : ℕ) * Real.log 2 := by
+  induction L with
+  | zero => simp [fwdScore, wordTrueCount]
+  | succ L ih =>
+      have hcount : wordTrueCount w =
+          (if w 0 then 1 else 0) + wordTrueCount (Fin.tail w) := by
+        rw [← Fin.cons_self_tail w, wordTrueCount_cons]
+        simp
+      rw [fwdScore, Fin.sum_univ_succ]
+      change fwdStepScore (w 0) + fwdScore (Fin.tail w) = _
+      rw [ih, hcount]
+      cases w 0 <;> simp [fwdStepScore] <;> ring
+
+theorem fwdScoreList_sum {L : ℕ} (w : Fin L → Bool) :
+    (fwdScoreList w).sum =
+      (L : ℝ) * Real.log 3 - (L + wordTrueCount w : ℕ) * Real.log 2 := by
+  rw [fwdScoreList, List.sum_ofFn]
+  exact fwdScore_eq w
+
+theorem fwdScoreList_sum_eq_score {L : ℕ} (w : Fin L → Bool) :
+    (fwdScoreList w).sum = fwdScore w := by
+  rw [fwdScoreList, List.sum_ofFn]
+  rfl
+
+/-- The additive score has the same strict sign as the forward multiplicative score. -/
+theorem fwdEndpointPositive_iff_score_pos {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔ 0 < fwdScore w := by
+  rw [FwdEndpointPositive, fwdScore_eq]
+  constructor
+  · intro h
+    have hR : (2 : ℝ) ^ (L + wordTrueCount w) < (3 : ℝ) ^ L := by
+      exact_mod_cast h
+    have hlog := Real.log_lt_log (by positivity) hR
+    rw [Real.log_pow, Real.log_pow] at hlog
+    push_cast at hlog ⊢
+    linarith
+  · intro h
+    have hlog : Real.log ((2 : ℝ) ^ (L + wordTrueCount w)) <
+        Real.log ((3 : ℝ) ^ L) := by
+      rw [Real.log_pow, Real.log_pow]
+      push_cast at h ⊢
+      linarith
+    have hR : (2 : ℝ) ^ (L + wordTrueCount w) < (3 : ℝ) ^ L :=
+      (Real.log_lt_log_iff (by positivity) (by positivity)).mp hlog
+    exact_mod_cast hR
+
+theorem fwdScoreList_take {L t : ℕ} (ht : t ≤ L) (w : Fin L → Bool) :
+    (fwdScoreList w).take t = fwdScoreList (Fin.take t ht w) := by
+  unfold fwdScoreList
+  rw [← Fin.ofFn_take_eq_take_ofFn ht (fun i => fwdStepScore (w i))]
+  rfl
+
+/-- Forward survival is strict positivity of every prefix of the additive score list. -/
+theorem fwdGood_iff_strictlyPositivePrefixes {L : ℕ} (w : Fin L → Bool) :
+    FwdGood L w ↔ CollatzMoonshot.StrictlyPositivePrefixes (fwdScoreList w) := by
+  rw [fwdGood_iff_prefix_positive]
+  constructor
+  · intro hw t ht0 htlen
+    have htL : t ≤ L := by simpa [fwdScoreList] using htlen
+    rw [fwdScoreList_take htL, fwdScoreList_sum_eq_score]
+    exact (fwdEndpointPositive_iff_score_pos _).mp (hw t ht0 htL)
+  · intro hw t ht0 htL
+    apply (fwdEndpointPositive_iff_score_pos _).mpr
+    rw [← fwdScoreList_sum_eq_score, ← fwdScoreList_take htL]
+    exact hw t ht0 (by simpa [fwdScoreList])
+
+/-- The backward additive score reverses the forward logarithmic score. -/
+noncomputable def bwdStepScore (b : Bool) : ℝ := -fwdStepScore b
+
+/-- Additive logarithmic scores of the letters in a backward word. -/
+noncomputable def bwdScoreList {L : ℕ} (w : Fin L → Bool) : List ℝ :=
+  List.ofFn fun i => bwdStepScore (w i)
+
+/-- Total additive logarithmic score of a backward word. -/
+noncomputable def bwdScore {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  ∑ i, bwdStepScore (w i)
+
+theorem bwdScore_eq_neg_fwdScore {L : ℕ} (w : Fin L → Bool) :
+    bwdScore w = -fwdScore w := by
+  simp [bwdScore, bwdStepScore, fwdScore]
+
+theorem bwdScoreList_sum_eq_score {L : ℕ} (w : Fin L → Bool) :
+    (bwdScoreList w).sum = bwdScore w := by
+  rw [bwdScoreList, List.sum_ofFn]
+  rfl
+
+/-- The additive score has the same strict sign as the backward multiplicative score. -/
+theorem bwdEndpointPositive_iff_score_pos {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔ 0 < bwdScore w := by
+  rw [BwdEndpointPositive, bwdScore_eq_neg_fwdScore, fwdScore_eq]
+  constructor
+  · intro h
+    have hR : (3 : ℝ) ^ L < (2 : ℝ) ^ (L + wordTrueCount w) := by
+      exact_mod_cast h
+    have hlog := Real.log_lt_log (by positivity) hR
+    rw [Real.log_pow, Real.log_pow] at hlog
+    push_cast at hlog ⊢
+    linarith
+  · intro h
+    have hlog : Real.log ((3 : ℝ) ^ L) <
+        Real.log ((2 : ℝ) ^ (L + wordTrueCount w)) := by
+      rw [Real.log_pow, Real.log_pow]
+      push_cast at h ⊢
+      linarith
+    have hR : (3 : ℝ) ^ L < (2 : ℝ) ^ (L + wordTrueCount w) :=
+      (Real.log_lt_log_iff (by positivity) (by positivity)).mp hlog
+    exact_mod_cast hR
+
+theorem bwdScoreList_take {L t : ℕ} (ht : t ≤ L) (w : Fin L → Bool) :
+    (bwdScoreList w).take t = bwdScoreList (Fin.take t ht w) := by
+  unfold bwdScoreList
+  rw [← Fin.ofFn_take_eq_take_ofFn ht (fun i => bwdStepScore (w i))]
+  rfl
+
+/-- Backward survival is strict positivity of every prefix of the additive score list. -/
+theorem bwdGood_iff_strictlyPositivePrefixes {L : ℕ} (w : Fin L → Bool) :
+    BwdGood L w ↔ CollatzMoonshot.StrictlyPositivePrefixes (bwdScoreList w) := by
+  rw [bwdGood_iff_prefix_positive]
+  constructor
+  · intro hw t ht0 htlen
+    have htL : t ≤ L := by simpa [bwdScoreList] using htlen
+    rw [bwdScoreList_take htL, bwdScoreList_sum_eq_score]
+    exact (bwdEndpointPositive_iff_score_pos _).mp (hw t ht0 htL)
+  · intro hw t ht0 htL
+    apply (bwdEndpointPositive_iff_score_pos _).mpr
+    rw [← bwdScoreList_sum_eq_score, ← bwdScoreList_take htL]
+    exact hw t ht0 (by simpa [bwdScoreList])
+
+/-- Every nonempty forward word has nonzero additive score. -/
+theorem fwdScore_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    fwdScore w ≠ 0 := by
+  rcases wordBlock_endpoint_lt_or_gt L (wordTrueCount w) hL with hf | hb
+  · exact ne_of_gt ((fwdEndpointPositive_iff_score_pos w).mp hf)
+  · have hbpos : 0 < bwdScore w :=
+      (bwdEndpointPositive_iff_score_pos w).mp hb
+    rw [bwdScore_eq_neg_fwdScore] at hbpos
+    exact ne_of_lt (by linarith)
+
+theorem fwdScoreList_sum_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    (fwdScoreList w).sum ≠ 0 := by
+  rw [fwdScoreList_sum_eq_score]
+  exact fwdScore_ne_zero w hL
+
+theorem fwdScoreList_eq_map {L : ℕ} (w : Fin L → Bool) :
+    fwdScoreList w = (List.ofFn w).map fwdStepScore := by
+  rw [fwdScoreList, List.map_ofFn]
+  rfl
+
+/-- Every nonempty contiguous block of a forward score list has nonzero sum. -/
+theorem fwdScoreList_block_ne_zero {L : ℕ} (w : Fin L → Bool) (i n : ℕ)
+    (hn : 0 < n) (hin : i + n ≤ L) :
+    (((fwdScoreList w).drop i).take n).sum ≠ 0 := by
+  let letters := ((List.ofFn w).drop i).take n
+  have hlen : letters.length = n := by
+    simp only [letters, List.length_take, List.length_drop, List.length_ofFn]
+    rw [min_eq_left]
+    omega
+  have hv := fwdScoreList_sum_ne_zero letters.get (by simpa [hlen] using hn)
+  rw [fwdScoreList_eq_map, List.ofFn_get] at hv
+  rw [fwdScoreList_eq_map, ← List.map_drop, ← List.map_take]
+  simpa only [letters] using hv
+
+/-- Prefix sums of every forward score list are pairwise distinct. -/
+theorem fwdScoreList_prefixSums_ne {L : ℕ} (w : Fin L → Bool) :
+    ∀ i j : ℕ, i < j → j ≤ (fwdScoreList w).length →
+      ((fwdScoreList w).take i).sum ≠ ((fwdScoreList w).take j).sum := by
+  apply CollatzMoonshot.prefixSums_ne_of_blocks_ne_zero
+  intro i n hn hin
+  apply fwdScoreList_block_ne_zero w i n hn
+  simpa [fwdScoreList] using hin
+
+/-- Every nonempty backward word has nonzero additive score. -/
+theorem bwdScore_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    bwdScore w ≠ 0 := by
+  rw [bwdScore_eq_neg_fwdScore]
+  exact neg_ne_zero.mpr (fwdScore_ne_zero w hL)
+
+theorem bwdScoreList_sum_ne_zero {L : ℕ} (w : Fin L → Bool) (hL : 0 < L) :
+    (bwdScoreList w).sum ≠ 0 := by
+  rw [bwdScoreList_sum_eq_score]
+  exact bwdScore_ne_zero w hL
+
+theorem bwdScoreList_eq_map {L : ℕ} (w : Fin L → Bool) :
+    bwdScoreList w = (List.ofFn w).map bwdStepScore := by
+  rw [bwdScoreList, List.map_ofFn]
+  rfl
+
+/-- Every nonempty contiguous block of a backward score list has nonzero sum. -/
+theorem bwdScoreList_block_ne_zero {L : ℕ} (w : Fin L → Bool) (i n : ℕ)
+    (hn : 0 < n) (hin : i + n ≤ L) :
+    (((bwdScoreList w).drop i).take n).sum ≠ 0 := by
+  let letters := ((List.ofFn w).drop i).take n
+  have hlen : letters.length = n := by
+    simp only [letters, List.length_take, List.length_drop, List.length_ofFn]
+    rw [min_eq_left]
+    omega
+  have hv := bwdScoreList_sum_ne_zero letters.get (by simpa [hlen] using hn)
+  rw [bwdScoreList_eq_map, List.ofFn_get] at hv
+  rw [bwdScoreList_eq_map, ← List.map_drop, ← List.map_take]
+  simpa only [letters] using hv
+
+/-- Prefix sums of every backward score list are pairwise distinct. -/
+theorem bwdScoreList_prefixSums_ne {L : ℕ} (w : Fin L → Bool) :
+    ∀ i j : ℕ, i < j → j ≤ (bwdScoreList w).length →
+      ((bwdScoreList w).take i).sum ≠ ((bwdScoreList w).take j).sum := by
+  apply CollatzMoonshot.prefixSums_ne_of_blocks_ne_zero
+  intro i n hn hin
+  apply bwdScoreList_block_ne_zero w i n hn
+  simpa [bwdScoreList] using hin
+
+/-- A forward-positive word has a cyclic score rotation with every prefix positive. -/
+theorem fwdEndpointPositive_iff_exists_goodScoreRotation {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔
+      ∃ r < L, CollatzMoonshot.StrictlyPositivePrefixes ((fwdScoreList w).rotate r) := by
+  rw [fwdEndpointPositive_iff_score_pos, ← fwdScoreList_sum_eq_score]
+  simpa [fwdScoreList] using
+    (CollatzMoonshot.sum_pos_iff_exists_rotate_strictlyPositivePrefixes
+      (fwdScoreList w) (fwdScoreList_prefixSums_ne w))
+
+/-- A backward-positive word has a cyclic score rotation with every prefix positive. -/
+theorem bwdEndpointPositive_iff_exists_goodScoreRotation {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔
+      ∃ r < L, CollatzMoonshot.StrictlyPositivePrefixes ((bwdScoreList w).rotate r) := by
+  rw [bwdEndpointPositive_iff_score_pos, ← bwdScoreList_sum_eq_score]
+  simpa [bwdScoreList] using
+    (CollatzMoonshot.sum_pos_iff_exists_rotate_strictlyPositivePrefixes
+      (bwdScoreList w) (bwdScoreList_prefixSums_ne w))
+
+/-- Rotate a finite word by rotating its list of letters. -/
+def rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) : Fin L → Bool :=
+  fun i => ((List.ofFn w).rotate r).get (Fin.cast (by simp) i)
+
+theorem ofFn_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    List.ofFn (rotateWord w r) = (List.ofFn w).rotate r := by
+  apply List.ext_get
+  · simp
+  · intro n h₁ h₂
+    simp [rotateWord]
+
+/-- Successive cyclic word rotations add their offsets. -/
+theorem rotateWord_rotateWord {L : ℕ} (w : Fin L → Bool) (r s : ℕ) :
+    rotateWord (rotateWord w r) s = rotateWord w (r + s) := by
+  apply List.ofFn_injective
+  rw [ofFn_rotateWord, ofFn_rotateWord, ofFn_rotateWord, List.rotate_rotate]
+
+/-- Successive rotations indexed by `Fin L` add in the cyclic group `Fin L`. -/
+theorem rotateWord_fin_add {L : ℕ} [NeZero L]
+    (w : Fin L → Bool) (a b : Fin L) :
+    rotateWord (rotateWord w a) b = rotateWord w (a + b : Fin L) := by
+  rw [rotateWord_rotateWord]
+  apply List.ofFn_injective
+  rw [ofFn_rotateWord, ofFn_rotateWord]
+  simp only [Fin.add_def]
+  simpa using (List.rotate_mod (List.ofFn w) (a.val + b.val)).symm
+
+/-- Rotation by a fixed offset is injective on finite words. -/
+theorem rotateWord_injective {L : ℕ} (r : ℕ) :
+    Function.Injective (fun w : Fin L → Bool => rotateWord w r) := by
+  intro w v h
+  apply List.ofFn_injective
+  apply List.rotate_injective r
+  simpa only [ofFn_rotateWord] using congrArg List.ofFn h
+
+/-- Rotation by a fixed offset, packaged as a permutation of finite words. -/
+noncomputable def rotateWordEquiv (L r : ℕ) :
+    (Fin L → Bool) ≃ (Fin L → Bool) :=
+  Equiv.ofBijective (fun w => rotateWord w r)
+    ((Fintype.bijective_iff_injective_and_card _).2
+      ⟨rotateWord_injective r, rfl⟩)
+
+@[simp]
+theorem rotateWordEquiv_apply (L r : ℕ) (w : Fin L → Bool) :
+    rotateWordEquiv L r w = rotateWord w r := rfl
+
+theorem fwdScoreList_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    fwdScoreList (rotateWord w r) = (fwdScoreList w).rotate r := by
+  rw [fwdScoreList_eq_map, ofFn_rotateWord, fwdScoreList_eq_map, List.map_rotate]
+
+theorem bwdScoreList_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    bwdScoreList (rotateWord w r) = (bwdScoreList w).rotate r := by
+  rw [bwdScoreList_eq_map, ofFn_rotateWord, bwdScoreList_eq_map, List.map_rotate]
+
+theorem wordTrueCount_eq_count_true {L : ℕ} (w : Fin L → Bool) :
+    wordTrueCount w = (List.ofFn w).count true := by
+  induction L with
+  | zero => simp [wordTrueCount]
+  | succ L ih =>
+      rw [← Fin.cons_self_tail w, wordTrueCount_cons, List.ofFn_cons]
+      simp only [List.count_cons]
+      rw [ih]
+      cases w 0 <;> simp [Nat.add_comm]
+
+/-- Cyclic list rotation preserves the marked-letter count. -/
+theorem wordTrueCount_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    wordTrueCount (rotateWord w r) = wordTrueCount w := by
+  rw [wordTrueCount_eq_count_true, ofFn_rotateWord, wordTrueCount_eq_count_true]
+  exact (List.rotate_perm (List.ofFn w) r).count_eq true
+
+theorem fwdWordWeight_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    fwdWordWeight (rotateWord w r) = fwdWordWeight w := rfl
+
+/-- Arbitrary cyclic list rotation preserves backward word weight. -/
+theorem bwdWordWeight_rotateWord {L : ℕ} (w : Fin L → Bool) (r : ℕ) :
+    bwdWordWeight (rotateWord w r) = bwdWordWeight w := by
+  unfold bwdWordWeight
+  rw [wordTrueCount_rotateWord]
+
+/-- Concrete strict cyclic cover for forward words. -/
+theorem fwdEndpointPositive_iff_exists_goodRotation {L : ℕ} (w : Fin L → Bool) :
+    FwdEndpointPositive w ↔ ∃ r < L, FwdGood L (rotateWord w r) := by
+  rw [fwdEndpointPositive_iff_exists_goodScoreRotation]
+  constructor
+  · rintro ⟨r, hr, hscore⟩
+    refine ⟨r, hr, (fwdGood_iff_strictlyPositivePrefixes _).mpr ?_⟩
+    rwa [fwdScoreList_rotateWord]
+  · rintro ⟨r, hr, hgood⟩
+    refine ⟨r, hr, ?_⟩
+    rw [← fwdScoreList_rotateWord]
+    exact (fwdGood_iff_strictlyPositivePrefixes _).mp hgood
+
+/-- Concrete strict cyclic cover for backward words. -/
+theorem bwdEndpointPositive_iff_exists_goodRotation {L : ℕ} (w : Fin L → Bool) :
+    BwdEndpointPositive w ↔ ∃ r < L, BwdGood L (rotateWord w r) := by
+  rw [bwdEndpointPositive_iff_exists_goodScoreRotation]
+  constructor
+  · rintro ⟨r, hr, hscore⟩
+    refine ⟨r, hr, (bwdGood_iff_strictlyPositivePrefixes _).mpr ?_⟩
+    rwa [bwdScoreList_rotateWord]
+  · rintro ⟨r, hr, hgood⟩
+    refine ⟨r, hr, ?_⟩
+    rw [← bwdScoreList_rotateWord]
+    exact (bwdGood_iff_strictlyPositivePrefixes _).mp hgood
+
+/-- Concatenating two forward-positive blocks gives a forward-positive block. -/
+theorem FwdEndpointPositive.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hu : FwdEndpointPositive u) (hv : FwdEndpointPositive v) :
+    FwdEndpointPositive (Fin.append u v) := by
+  unfold FwdEndpointPositive at hu hv ⊢
+  rw [wordTrueCount_append]
+  calc
+    2 ^ (m + n + (wordTrueCount u + wordTrueCount v)) =
+        2 ^ (m + wordTrueCount u) * 2 ^ (n + wordTrueCount v) := by
+      rw [show m + n + (wordTrueCount u + wordTrueCount v) =
+        (m + wordTrueCount u) + (n + wordTrueCount v) by omega, pow_add]
+    _ < 3 ^ m * 3 ^ n := Nat.mul_lt_mul_of_lt_of_lt hu hv
+    _ = 3 ^ (m + n) := (pow_add 3 m n).symm
+
+/-- Concatenating two backward-positive blocks gives a backward-positive block. -/
+theorem BwdEndpointPositive.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hu : BwdEndpointPositive u) (hv : BwdEndpointPositive v) :
+    BwdEndpointPositive (Fin.append u v) := by
+  unfold BwdEndpointPositive at hu hv ⊢
+  rw [wordTrueCount_append]
+  calc
+    3 ^ (m + n) = 3 ^ m * 3 ^ n := pow_add 3 m n
+    _ < 2 ^ (m + wordTrueCount u) * 2 ^ (n + wordTrueCount v) :=
+      Nat.mul_lt_mul_of_lt_of_lt hu hv
+    _ = 2 ^ ((m + wordTrueCount u) + (n + wordTrueCount v)) :=
+      (pow_add 2 (m + wordTrueCount u) (n + wordTrueCount v)).symm
+    _ = 2 ^ (m + n + (wordTrueCount u + wordTrueCount v)) := by
+      congr 1
+      omega
+
+/-- Forward-surviving words are closed under concatenation.  This is the renewal
+factorization needed after the first positive cyclic block is cut off. -/
+theorem FwdGood.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hm : 0 < m) (hu : FwdGood m u) (hv : FwdGood n v) :
+    FwdGood (m + n) (Fin.append u v) := by
+  rw [fwdGood_iff_prefix_positive]
+  intro t ht0 htL
+  by_cases htm : t ≤ m
+  · rw [Fin.take_append_left t htm]
+    exact (fwdGood_iff_prefix_positive u).mp hu t ht0 htm
+  · obtain ⟨s, rfl⟩ : ∃ s, t = m + s := ⟨t - m, by omega⟩
+    have hs0 : 0 < s := by omega
+    have hsn : s ≤ n := by omega
+    rw [Fin.take_append_right s hsn]
+    apply FwdEndpointPositive.append
+    · simpa using (fwdGood_iff_prefix_positive u).mp hu m hm le_rfl
+    · exact (fwdGood_iff_prefix_positive v).mp hv s hs0 hsn
+
+/-- Backward-surviving words are closed under concatenation. -/
+theorem BwdGood.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hm : 0 < m) (hu : BwdGood m u) (hv : BwdGood n v) :
+    BwdGood (m + n) (Fin.append u v) := by
+  rw [bwdGood_iff_prefix_positive]
+  intro t ht0 htL
+  by_cases htm : t ≤ m
+  · rw [Fin.take_append_left t htm]
+    exact (bwdGood_iff_prefix_positive u).mp hu t ht0 htm
+  · obtain ⟨s, rfl⟩ : ∃ s, t = m + s := ⟨t - m, by omega⟩
+    have hs0 : 0 < s := by omega
+    have hsn : s ≤ n := by omega
+    rw [Fin.take_append_right s hsn]
+    apply BwdEndpointPositive.append
+    · simpa using (bwdGood_iff_prefix_positive u).mp hu m hm le_rfl
+    · exact (bwdGood_iff_prefix_positive v).mp hv s hs0 hsn
+
+/-- The left block of a forward-surviving concatenation survives. -/
+theorem FwdGood.of_append_left {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (h : FwdGood (m + n) (Fin.append u v)) : FwdGood m u := by
+  rw [fwdGood_iff_prefix_positive]
+  intro t ht0 htm
+  have htL : t ≤ m + n := by omega
+  rw [← Fin.take_append_left t htm u v]
+  exact (fwdGood_iff_prefix_positive (Fin.append u v)).mp h t ht0 htL
+
+/-- The left block of a backward-surviving concatenation survives. -/
+theorem BwdGood.of_append_left {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (h : BwdGood (m + n) (Fin.append u v)) : BwdGood m u := by
+  rw [bwdGood_iff_prefix_positive]
+  intro t ht0 htm
+  have htL : t ≤ m + n := by omega
+  rw [← Fin.take_append_left t htm u v]
+  exact (bwdGood_iff_prefix_positive (Fin.append u v)).mp h t ht0 htL
+
+/-- Two forward cyclic starts at the endpoints of positive-length blocks both survive
+exactly when the two intervening blocks survive separately.  This is the two-mark
+intersection step in the cyclic inclusion--exclusion proof of Sparre--Andersen. -/
+theorem fwdGood_append_and_swap_iff {m n : ℕ} (hm : 0 < m) (hn : 0 < n)
+    (u : Fin m → Bool) (v : Fin n → Bool) :
+    (FwdGood (m + n) (Fin.append u v) ∧
+      FwdGood (n + m) (Fin.append v u)) ↔
+      FwdGood m u ∧ FwdGood n v := by
+  constructor
+  · rintro ⟨huv, hvu⟩
+    exact ⟨FwdGood.of_append_left huv, FwdGood.of_append_left hvu⟩
+  · rintro ⟨hu, hv⟩
+    exact ⟨hu.append hm hv, hv.append hn hu⟩
+
+/-- Backward analogue of `fwdGood_append_and_swap_iff`. -/
+theorem bwdGood_append_and_swap_iff {m n : ℕ} (hm : 0 < m) (hn : 0 < n)
+    (u : Fin m → Bool) (v : Fin n → Bool) :
+    (BwdGood (m + n) (Fin.append u v) ∧
+      BwdGood (n + m) (Fin.append v u)) ↔
+      BwdGood m u ∧ BwdGood n v := by
+  constructor
+  · rintro ⟨huv, hvu⟩
+    exact ⟨BwdGood.of_append_left huv, BwdGood.of_append_left hvu⟩
+  · rintro ⟨hu, hv⟩
+    exact ⟨hu.append hm hv, hv.append hn hu⟩
+
+/-! ## Arbitrarily many cyclic marks
+
+The two-mark equivalences above are the first intersection term in cyclic
+inclusion--exclusion.  The following list-level lemma packages the induction needed for every
+intersection term: if a survival predicate restricts to an initial block and is preserved by
+concatenating a nonempty surviving block, then simultaneous survival from all marked boundaries
+is exactly separate survival on every intervening gap. -/
+
+/-- Simultaneous survival from every boundary in a nonempty cyclic list of nonempty blocks is
+equivalent to separate survival of all blocks.  This abstract form is the structural core of
+all higher cyclic-intersection factorizations. -/
+theorem cyclicBlocks_all_iff {α : Type*} (P : List α → Prop)
+    (hleft : ∀ a b, P (a ++ b) → P a)
+    (happend : ∀ a b, a ≠ [] → P a → P b → P (a ++ b))
+    (blocks : List (List α)) (hblocks : blocks ≠ [])
+    (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, P (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, P b := by
+  constructor
+  · intro hrot b hb
+    obtain ⟨pre, post, rfl⟩ := List.mem_iff_append.mp hb
+    have h := hrot pre.length (by simp)
+    rw [List.rotate_append_length_eq] at h
+    have h' : P (b ++ (post ++ pre).flatten) := by simpa using h
+    exact hleft b ((post ++ pre).flatten) h'
+  · intro hall r _hr
+    have hrot_nonempty : blocks.rotate r ≠ [] := by
+      intro hnil
+      exact hblocks (List.rotate_eq_nil_iff.mp hnil)
+    have hrot_ne : ∀ b ∈ blocks.rotate r, b ≠ [] := by
+      intro b hb
+      exact hne b (List.mem_rotate.mp hb)
+    have hrot_good : ∀ b ∈ blocks.rotate r, P b := by
+      intro b hb
+      exact hall b (List.mem_rotate.mp hb)
+    have aux : ∀ (bs : List (List α)), bs ≠ [] →
+        (∀ b ∈ bs, b ≠ []) → (∀ b ∈ bs, P b) → P bs.flatten := by
+      intro bs hbs
+      induction bs with
+      | nil => contradiction
+      | cons b bs ih =>
+          intro hne' hall'
+          cases bs with
+          | nil => simpa using hall' b (by simp)
+          | cons c cs =>
+              rw [List.flatten_cons]
+              apply happend b (c :: cs).flatten
+              · exact hne' b (by simp)
+              · exact hall' b (by simp)
+              · apply ih
+                · simp
+                · intro d hd
+                  exact hne' d (by simp [hd])
+                · intro d hd
+                  exact hall' d (by simp [hd])
+    exact aux (blocks.rotate r) hrot_nonempty hrot_ne hrot_good
+
+/-- Strict positivity of every nonempty prefix restricts to an initial block. -/
+theorem strictlyPositivePrefixes_of_append_left (a b : List ℝ)
+    (h : CollatzMoonshot.StrictlyPositivePrefixes (a ++ b)) :
+    CollatzMoonshot.StrictlyPositivePrefixes a := by
+  intro t ht0 hta
+  have htab : t ≤ (a ++ b).length := by simp; omega
+  have hp := h t ht0 htab
+  simpa [List.take_append, hta] using hp
+
+/-- Two strict-positive-prefix blocks concatenate to another such block when the first block is
+nonempty. -/
+theorem strictlyPositivePrefixes_append {a b : List ℝ} (ha0 : a ≠ [])
+    (ha : CollatzMoonshot.StrictlyPositivePrefixes a)
+    (hb : CollatzMoonshot.StrictlyPositivePrefixes b) :
+    CollatzMoonshot.StrictlyPositivePrefixes (a ++ b) := by
+  intro t ht0 htab
+  by_cases hta : t ≤ a.length
+  · have hp := ha t ht0 hta
+    rw [List.take_append, Nat.sub_eq_zero_of_le hta]
+    simpa using hp
+  · have ha_sum : 0 < a.sum := by
+      simpa using ha a.length (List.length_pos_of_ne_nil ha0) le_rfl
+    have hsub0 : 0 < t - a.length := by omega
+    have hsubb : t - a.length ≤ b.length := by
+      simp only [List.length_append] at htab
+      omega
+    have hb_sum := hb (t - a.length) hsub0 hsubb
+    rw [List.take_append, List.take_of_length_le (by omega), List.sum_append]
+    exact add_pos ha_sum hb_sum
+
+/-- Forward survival for a list word, in its additive-score form. -/
+def FwdListGood (l : List Bool) : Prop :=
+  CollatzMoonshot.StrictlyPositivePrefixes (l.map fwdStepScore)
+
+/-- Backward survival for a list word, in its additive-score form. -/
+def BwdListGood (l : List Bool) : Prop :=
+  CollatzMoonshot.StrictlyPositivePrefixes (l.map bwdStepScore)
+
+theorem fwdListGood_iff (l : List Bool) :
+    FwdListGood l ↔ FwdGood l.length l.get := by
+  simpa [FwdListGood, fwdScoreList_eq_map] using
+    (fwdGood_iff_strictlyPositivePrefixes l.get).symm
+
+theorem bwdListGood_iff (l : List Bool) :
+    BwdListGood l ↔ BwdGood l.length l.get := by
+  simpa [BwdListGood, bwdScoreList_eq_map] using
+    (bwdGood_iff_strictlyPositivePrefixes l.get).symm
+
+/-- Arbitrary forward cyclic-mark intersections factor at the proposition level into the
+survival predicates of their positive-length gaps. -/
+theorem fwdListGood_cyclicBlocks_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, FwdListGood (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, FwdListGood b := by
+  apply cyclicBlocks_all_iff FwdListGood
+      (fun a b h => strictlyPositivePrefixes_of_append_left
+        (a.map fwdStepScore) (b.map fwdStepScore) (by simpa [FwdListGood] using h))
+      (fun a b ha0 ha hb => by
+        change CollatzMoonshot.StrictlyPositivePrefixes
+          ((a ++ b).map fwdStepScore)
+        rw [List.map_append]
+        apply strictlyPositivePrefixes_append
+        · simpa using ha0
+        · simpa [FwdListGood] using ha
+        · simpa [FwdListGood] using hb)
+      blocks hblocks hne
+
+/-- Backward analogue of `fwdListGood_cyclicBlocks_iff`. -/
+theorem bwdListGood_cyclicBlocks_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, BwdListGood (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, BwdListGood b := by
+  apply cyclicBlocks_all_iff BwdListGood
+      (fun a b h => strictlyPositivePrefixes_of_append_left
+        (a.map bwdStepScore) (b.map bwdStepScore) (by simpa [BwdListGood] using h))
+      (fun a b ha0 ha hb => by
+        change CollatzMoonshot.StrictlyPositivePrefixes
+          ((a ++ b).map bwdStepScore)
+        rw [List.map_append]
+        apply strictlyPositivePrefixes_append
+        · simpa using ha0
+        · simpa [BwdListGood] using ha
+        · simpa [BwdListGood] using hb)
+      blocks hblocks hne
+
+/-- The forward arbitrary-mark factorization in the original `FwdGood` interface. -/
+theorem fwdGood_cyclicBlockLists_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length,
+      FwdGood (blocks.rotate r).flatten.length (blocks.rotate r).flatten.get) ↔
+      ∀ b ∈ blocks, FwdGood b.length b.get := by
+  simpa only [← fwdListGood_iff] using
+    fwdListGood_cyclicBlocks_iff blocks hblocks hne
+
+/-- The backward arbitrary-mark factorization in the original `BwdGood` interface. -/
+theorem bwdGood_cyclicBlockLists_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length,
+      BwdGood (blocks.rotate r).flatten.length (blocks.rotate r).flatten.get) ↔
+      ∀ b ∈ blocks, BwdGood b.length b.get := by
+  simpa only [← bwdListGood_iff] using
+    bwdListGood_cyclicBlocks_iff blocks hblocks hne
+
+/-- Forward word weights multiply under concatenation. -/
+theorem fwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    fwdWordWeight (Fin.append u v) = fwdWordWeight u * fwdWordWeight v := by
+  unfold fwdWordWeight
+  rw [pow_add]
+
+/-- Backward word weights multiply under concatenation. -/
+theorem bwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
+    bwdWordWeight (Fin.append u v) = bwdWordWeight u * bwdWordWeight v := by
+  have hu := wordTrueCount_le u
+  have hv := wordTrueCount_le v
+  have hsub : m + n - (wordTrueCount u + wordTrueCount v) =
+      (m - wordTrueCount u) + (n - wordTrueCount v) := by omega
+  unfold bwdWordWeight
+  rw [wordTrueCount_append, pow_add, hsub, pow_add]
+  ring
+
+/-! ## Composition-indexed cyclic intersections
+
+`Composition L` is the exact finite indexing object needed for cyclic inclusion--exclusion:
+its positive blocks are the gaps between a nonempty family of marked cyclic starts.  The
+following equivalence separates a word into the Boolean words on those blocks. -/
+
+/-! The first reindexing needed for cyclic inclusion--exclusion: a composition is the same
+as a nonempty family of cyclic starts together with a distinguished start at zero. -/
+
+/-- The cyclic starts marked by a composition, omitting its virtual right endpoint. -/
+def compositionStarts {L : ℕ} (c : Composition L) : Finset (Fin L) :=
+  Finset.univ.filter fun r ↦ r.castSucc ∈ c.boundaries
+
+@[simp]
+theorem mem_compositionStarts {L : ℕ} (c : Composition L) (r : Fin L) :
+    r ∈ compositionStarts c ↔ r.castSucc ∈ c.boundaries := by
+  simp [compositionStarts]
+
+/-- The `i`-th genuine (non-virtual) start of a composition. -/
+def compositionStart {L : ℕ} (c : Composition L) (i : ℕ) (hi : i < c.length) : Fin L :=
+  ⟨c.sizeUpTo i, by
+    calc
+      c.sizeUpTo i < c.sizeUpTo (i + 1) := c.sizeUpTo_strict_mono hi
+      _ ≤ c.sizeUpTo c.length := c.monotone_sizeUpTo (by omega)
+      _ = L := c.sizeUpTo_length⟩
+
+@[simp]
+theorem coe_compositionStart {L : ℕ} (c : Composition L) (i : ℕ)
+    (hi : i < c.length) : (compositionStart c i hi : ℕ) = c.sizeUpTo i := rfl
+
+theorem compositionStart_mem {L : ℕ} (c : Composition L) (i : ℕ)
+    (hi : i < c.length) : compositionStart c i hi ∈ compositionStarts c := by
+  rw [mem_compositionStarts]
+  unfold Composition.boundaries
+  rw [Finset.mem_map]
+  refine ⟨⟨i, by omega⟩, Finset.mem_univ _, ?_⟩
+  apply Fin.ext
+  rfl
+
+/-- The marked starts are exactly the partial sums before the positive blocks. -/
+theorem mem_compositionStarts_iff {L : ℕ} (c : Composition L) (r : Fin L) :
+    r ∈ compositionStarts c ↔
+      ∃ (i : ℕ) (hi : i < c.length), r = compositionStart c i hi := by
+  rw [mem_compositionStarts]
+  constructor
+  · intro hr
+    rw [Composition.boundaries, Finset.mem_map] at hr
+    obtain ⟨j, _hj, hj⟩ := hr
+    have hjne : (j : ℕ) ≠ c.length := by
+      intro heq
+      have hjlast : j = Fin.last c.length := by ext; simpa using heq
+      subst j
+      change c.boundary (Fin.last c.length) = r.castSucc at hj
+      rw [c.boundary_last] at hj
+      exact Fin.castSucc_ne_last r hj.symm
+    have hjlt : (j : ℕ) < c.length := by omega
+    refine ⟨j, hjlt, ?_⟩
+    apply Fin.ext
+    simpa [Composition.boundary] using congrArg Fin.val hj.symm
+  · rintro ⟨i, hi, rfl⟩
+    exact (mem_compositionStarts c _).mp (compositionStart_mem c i hi)
+
+theorem zero_mem_compositionStarts {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (⟨0, hL⟩ : Fin L) ∈ compositionStarts c := by
+  rw [mem_compositionStarts]
+  simpa using c.toCompositionAsSet.zero_mem
+
+theorem map_compositionStarts_eq_erase_boundaries {L : ℕ} (c : Composition L) :
+    (compositionStarts c).map Fin.castSuccEmb = c.boundaries.erase (Fin.last L) := by
+  ext r
+  rw [Finset.mem_map]
+  constructor
+  · rintro ⟨i, hi, rfl⟩
+    exact Finset.mem_erase.mpr
+      ⟨Fin.castSucc_ne_last i, (mem_compositionStarts c i).mp hi⟩
+  · intro hr
+    obtain ⟨hrlast, hr⟩ := Finset.mem_erase.mp hr
+    obtain ⟨i, rfl⟩ := Fin.eq_castSucc_of_ne_last hrlast
+    exact ⟨i, (mem_compositionStarts c i).mpr hr, rfl⟩
+
+/-- A composition has exactly one marked cyclic start per block. -/
+theorem card_compositionStarts {L : ℕ} (c : Composition L) :
+    (compositionStarts c).card = c.length := by
+  rw [← Finset.card_map (s := compositionStarts c) Fin.castSuccEmb,
+    map_compositionStarts_eq_erase_boundaries,
+    Finset.card_erase_of_mem (show Fin.last L ∈ c.boundaries from
+      c.toCompositionAsSet.getLast_mem), c.card_boundaries_eq_succ_length]
+  omega
+
+theorem compositionStarts_injective {L : ℕ} :
+    Function.Injective (compositionStarts : Composition L → Finset (Fin L)) := by
+  intro c d h
+  apply (compositionEquiv L).injective
+  apply CompositionAsSet.ext
+  change c.boundaries = d.boundaries
+  have hc : insert (Fin.last L) (c.boundaries.erase (Fin.last L)) = c.boundaries :=
+    Finset.insert_erase c.toCompositionAsSet.getLast_mem
+  have hd : insert (Fin.last L) (d.boundaries.erase (Fin.last L)) = d.boundaries :=
+    Finset.insert_erase d.toCompositionAsSet.getLast_mem
+  rw [← hc, ← hd, ← map_compositionStarts_eq_erase_boundaries,
+    ← map_compositionStarts_eq_erase_boundaries, h]
+
+/-- An auxiliary cardinality equivalence between compositions and anchored subsets. -/
+def anchoredFinsetEquiv (n : ℕ) :
+    Composition (n + 1) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} := by
+  let e : Composition (n + 1) ≃ Finset (Fin n) :=
+    (compositionEquiv (n + 1)).trans (compositionAsSetEquiv (n + 1))
+  let f : Finset (Fin n) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} :=
+    { toFun := fun s ↦
+        ⟨(finSuccEquiv n).symm.finsetCongr (Finset.insertNone s), by simp⟩
+      invFun := fun s ↦
+        Finset.eraseNone ((finSuccEquiv n).finsetCongr s.1)
+      left_inv := by
+        intro s
+        ext j
+        simp [Equiv.finsetCongr_apply]
+      right_inv := by
+        rintro ⟨s, hs⟩
+        apply Subtype.ext
+        change (finSuccEquiv n).symm.finsetCongr
+            (Finset.insertNone (Finset.eraseNone ((finSuccEquiv n).finsetCongr s))) = s
+        ext i
+        simp only [Equiv.finsetCongr_apply, Finset.mem_map_equiv, Finset.mem_insertNone]
+        rcases hi : finSuccEquiv n i with _ | j
+        · rw [finSuccEquiv_eq_none] at hi
+          subst i
+          simpa using hs
+        · have hij : i = j.succ := finSuccEquiv_eq_some.mp hi
+          subst i
+          simp [Finset.mem_eraseNone] }
+  exact e.trans f
+
+/-- Compositions of `n+1` are canonically equivalent to cyclic-start sets containing zero.
+The forward map is definitionally `compositionStarts`, so its card and boundary API apply
+without transporting through an unrelated enumeration. -/
+noncomputable def compositionStartsEquiv (n : ℕ) :
+    Composition (n + 1) ≃ {s : Finset (Fin (n + 1)) // 0 ∈ s} :=
+  Equiv.ofBijective
+    (fun c ↦ ⟨compositionStarts c, zero_mem_compositionStarts (Nat.zero_lt_succ n) c⟩)
+    ((Fintype.bijective_iff_injective_and_card _).mpr ⟨
+      fun _c _d h ↦ compositionStarts_injective (congrArg Subtype.val h),
+      Fintype.card_congr (anchoredFinsetEquiv n)⟩)
+
+@[simp]
+theorem compositionStartsEquiv_apply (n : ℕ) (c : Composition (n + 1)) :
+    (compositionStartsEquiv n c).1 = compositionStarts c := rfl
+
+@[simp]
+theorem compositionStartsEquiv_apply_card (n : ℕ) (c : Composition (n + 1)) :
+    (compositionStartsEquiv n c).1.card = c.length := card_compositionStarts c
+
+/-! The second reindexing needed for cyclic inclusion--exclusion: mark one start in an
+arbitrary nonempty cyclic-start set, then translate that marked start to zero. -/
+
+/-- Translate a cyclic-start set so that the start `a` moves to zero. -/
+def anchorCyclicFinset {L : ℕ} [NeZero L] (a : Fin L) (s : Finset (Fin L)) :
+    Finset (Fin L) :=
+  (finCycle a).symm.finsetCongr s
+
+/-- Undo `anchorCyclicFinset`, translating zero back to the absolute start `a`. -/
+def unanchorCyclicFinset {L : ℕ} [NeZero L] (a : Fin L) (s : Finset (Fin L)) :
+    Finset (Fin L) :=
+  (finCycle a).finsetCongr s
+
+@[simp]
+theorem mem_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a x : Fin L) (s : Finset (Fin L)) :
+    x ∈ anchorCyclicFinset a s ↔ x + a ∈ s := by
+  simp [anchorCyclicFinset]
+
+@[simp]
+theorem mem_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a x : Fin L) (s : Finset (Fin L)) :
+    x ∈ unanchorCyclicFinset a s ↔ x - a ∈ s := by
+  simp [unanchorCyclicFinset]
+
+@[simp]
+theorem zero_mem_anchorCyclicFinset_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    0 ∈ anchorCyclicFinset a s ↔ a ∈ s := by
+  simp
+
+@[simp]
+theorem anchor_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    anchorCyclicFinset a (unanchorCyclicFinset a s) = s := by
+  ext x
+  simp
+
+@[simp]
+theorem unanchor_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    unanchorCyclicFinset a (anchorCyclicFinset a s) = s := by
+  ext x
+  simp
+
+@[simp]
+theorem card_anchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    (anchorCyclicFinset a s).card = s.card := by
+  simp [anchorCyclicFinset]
+
+@[simp]
+theorem card_unanchorCyclicFinset {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    (unanchorCyclicFinset a s).card = s.card := by
+  simp [unanchorCyclicFinset]
+
+/-- Marking an element of an arbitrary cyclic-start set is equivalent to choosing an
+absolute anchor and a translated cyclic-start set containing zero. -/
+def markedCyclicFinsetEquiv (L : ℕ) [NeZero L] :
+    {p : Finset (Fin L) × Fin L // p.2 ∈ p.1} ≃
+      Fin L × {s : Finset (Fin L) // 0 ∈ s} where
+  toFun p :=
+    (p.1.2, ⟨anchorCyclicFinset p.1.2 p.1.1,
+      (zero_mem_anchorCyclicFinset_iff p.1.2 p.1.1).2 p.2⟩)
+  invFun p :=
+    ⟨(unanchorCyclicFinset p.1 p.2.1, p.1),
+      (mem_unanchorCyclicFinset p.1 p.1 p.2.1).2 (by simpa using p.2.2)⟩
+  left_inv p := by
+    apply Subtype.ext
+    apply Prod.ext
+    · exact unanchor_anchorCyclicFinset p.1.2 p.1.1
+    · rfl
+  right_inv p := by
+    apply Prod.ext
+    · rfl
+    · apply Subtype.ext
+      exact anchor_unanchorCyclicFinset p.1 p.2.1
+
+/-- The same marked cyclic-start sets, arranged into fibers over their underlying nonempty
+sets.  Each fiber has cardinality equal to the number of marked starts. -/
+def markedCyclicFinsetFiberEquiv (L : ℕ) :
+    {p : Finset (Fin L) × Fin L // p.2 ∈ p.1} ≃
+      Σ s : {s : Finset (Fin L) // s.Nonempty}, {a : Fin L // a ∈ s.1} where
+  toFun p := ⟨⟨p.1.1, ⟨p.1.2, p.2⟩⟩, ⟨p.1.2, p.2⟩⟩
+  invFun p := ⟨(p.1.1, p.2.1), p.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Summing over a marked start multiplies the contribution of a nonempty start-set by its
+cardinality. -/
+theorem sum_markedCyclicFinset_eq_card_mul (L : ℕ)
+    (F : Finset (Fin L) → ℝ) :
+    (∑ p : {p : Finset (Fin L) × Fin L // p.2 ∈ p.1}, F p.1.1) =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, (s.1.card : ℝ) * F s.1 := by
+  calc
+    _ = ∑ p : Σ s : {s : Finset (Fin L) // s.Nonempty}, {a : Fin L // a ∈ s.1},
+          F ((markedCyclicFinsetFiberEquiv L).symm p).1.1 :=
+      ((markedCyclicFinsetFiberEquiv L).symm.sum_comp _).symm
+    _ = _ := by
+      rw [Fintype.sum_sigma]
+      simp [markedCyclicFinsetFiberEquiv]
+
+/-- **Cyclic marked-set double count.**  A rotation-invariant contribution summed over a
+nonempty start-set with one distinguished start can instead be summed over its absolute anchor
+and its translate containing zero.  Thus the two sides acquire factors `s.card` and `L`. -/
+theorem cyclicFinset_double_count (L : ℕ) [NeZero L]
+    (F : Finset (Fin L) → ℝ)
+    (hF : ∀ (a : Fin L) (s : Finset (Fin L)),
+      F (unanchorCyclicFinset a s) = F s) :
+    (∑ s : {s : Finset (Fin L) // s.Nonempty}, (s.1.card : ℝ) * F s.1) =
+      L * ∑ s : {s : Finset (Fin L) // 0 ∈ s}, F s.1 := by
+  rw [← sum_markedCyclicFinset_eq_card_mul]
+  calc
+    (∑ p : {p : Finset (Fin L) × Fin L // p.2 ∈ p.1}, F p.1.1) =
+        ∑ p : Fin L × {s : Finset (Fin L) // 0 ∈ s},
+          F ((markedCyclicFinsetEquiv L).symm p).1.1 :=
+      ((markedCyclicFinsetEquiv L).symm.sum_comp _).symm
+    _ = ∑ p : Fin L × {s : Finset (Fin L) // 0 ∈ s}, F p.2.1 := by
+      apply Finset.sum_congr rfl
+      intro p _hp
+      exact hF p.1 p.2.1
+    _ = _ := by
+      rw [Fintype.sum_prod_type]
+      simp
+
+/-- Rotation-invariant sums over nonempty cyclic-start sets can be reindexed by anchored sets;
+the reciprocal cardinality compensates for the choice of marked start. -/
+theorem cyclicFinset_sum_eq_anchored (L : ℕ) [NeZero L]
+    (G : Finset (Fin L) → ℝ)
+    (hG : ∀ (a : Fin L) (s : Finset (Fin L)),
+      G (unanchorCyclicFinset a s) = G s) :
+    (∑ s : {s : Finset (Fin L) // s.Nonempty}, G s.1) =
+      L * ∑ s : {s : Finset (Fin L) // 0 ∈ s}, G s.1 / s.1.card := by
+  have h := cyclicFinset_double_count L
+    (fun s => G s / (s.card : ℝ)) (fun a s => by simp [hG])
+  rw [← h]
+  apply Finset.sum_congr rfl
+  intro s _hs
+  rw [mul_div_cancel₀]
+  exact_mod_cast Finset.card_ne_zero.mpr s.2
+
+/-- Replace the anchored cyclic-start sets in the double count by their canonical positive
+compositions.  The reciprocal start-set cardinality becomes the reciprocal block count. -/
+theorem anchoredCyclicFinset_sum_eq_composition (n : ℕ)
+    (G : Finset (Fin (n + 1)) → ℝ) :
+    (∑ s : {s : Finset (Fin (n + 1)) // 0 ∈ s}, G s.1 / s.1.card) =
+      ∑ c : Composition (n + 1), G (compositionStarts c) / c.length := by
+  rw [← (compositionStartsEquiv n).sum_comp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  simp only [compositionStartsEquiv_apply]
+  rw [card_compositionStarts]
+
+/-- The complete cyclic-anchor reindexing: a rotation-invariant sum over arbitrary nonempty
+start-sets is `n+1` times the composition sum, with reciprocal block-count weights. -/
+theorem cyclicFinset_sum_eq_composition (n : ℕ)
+    (G : Finset (Fin (n + 1)) → ℝ)
+    (hG : ∀ (a : Fin (n + 1)) (s : Finset (Fin (n + 1))),
+      G (unanchorCyclicFinset a s) = G s) :
+    (∑ s : {s : Finset (Fin (n + 1)) // s.Nonempty}, G s.1) =
+      (n + 1) * ∑ c : Composition (n + 1), G (compositionStarts c) / c.length := by
+  rw [cyclicFinset_sum_eq_anchored (n + 1) G hG,
+    anchoredCyclicFinset_sum_eq_composition]
+  norm_num
+
+/-- Quantifying over the anchored subset is the same as quantifying over the block-boundary
+indices.  This is the interface between finite-set inclusion--exclusion and compositions. -/
+theorem forall_mem_compositionStarts_iff {L : ℕ} (c : Composition L) (P : Fin L → Prop) :
+    (∀ r ∈ compositionStarts c, P r) ↔
+      ∀ (i : ℕ) (hi : i < c.length), P (compositionStart c i hi) := by
+  constructor
+  · intro h i hi
+    exact h _ (compositionStart_mem c i hi)
+  · intro h r hr
+    obtain ⟨i, hi, rfl⟩ := (mem_compositionStarts_iff c r).mp hr
+    exact h i hi
+
+/-- A word of length `L` is equivalently a family of words indexed by the blocks of a
+composition of `L`. -/
+def wordBlocksEquiv {L : ℕ} (c : Composition L) :
+    (Fin L → Bool) ≃ ((i : Fin c.length) → Fin (c.blocksFun i) → Bool) :=
+  (c.blocksFinEquiv.piCongrLeft (fun _ : Fin L => Bool)).symm.trans
+    (Equiv.piCurry fun (i : Fin c.length) (_j : Fin (c.blocksFun i)) => Bool)
+
+/-- The block family of a word, represented as a list of nonempty Boolean lists. -/
+def wordBlockLists {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    List (List Bool) :=
+  List.ofFn fun i => List.ofFn ((wordBlocksEquiv c) w i)
+
+/-- The canonical block family agrees with Mathlib's splitting of the list word along the
+composition. -/
+theorem wordBlockLists_eq_splitWrtComposition {L : ℕ} (c : Composition L)
+    (w : Fin L → Bool) :
+    wordBlockLists c w = (List.ofFn w).splitWrtComposition c := by
+  apply List.ext_getElem
+  · simp [wordBlockLists]
+  · intro i hi₁ hi₂
+    have hi : i < c.length := by simpa [wordBlockLists] using hi₁
+    rw [List.getElem_splitWrtComposition]
+    apply List.ext_getElem
+    · simp only [List.length_drop, List.length_take]
+      simp [wordBlockLists]
+      rw [min_eq_left]
+      · rw [c.sizeUpTo_succ hi]
+        simp only [Composition.blocksFun, List.get_eq_getElem]
+        omega
+      · exact c.sizeUpTo_le (i + 1)
+    · intro j hj₁ hj₂
+      simp only [List.getElem_drop, List.getElem_take]
+      simp [wordBlockLists, wordBlocksEquiv]
+      rfl
+
+/-- Flattening the canonical blocks recovers the original list word. -/
+@[simp]
+theorem wordBlockLists_flatten {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    (wordBlockLists c w).flatten = List.ofFn w := by
+  rw [wordBlockLists_eq_splitWrtComposition]
+  apply List.flatten_splitWrtCompositionAux
+  simpa using c.blocks_sum
+
+/-- Flattening a block-list rotation rotates the flattened list by the total length of the
+preceding blocks. -/
+theorem flatten_rotate_blocks {α : Type*} (blocks : List (List α)) (r : ℕ)
+    (hr : r ≤ blocks.length) :
+    (blocks.rotate r).flatten =
+      blocks.flatten.rotate (blocks.take r).flatten.length := by
+  calc
+    (blocks.rotate r).flatten =
+        (blocks.drop r).flatten ++ (blocks.take r).flatten := by
+      rw [List.rotate_eq_drop_append_take hr, List.flatten_append]
+    _ = ((blocks.take r).flatten ++ (blocks.drop r).flatten).rotate
+          (blocks.take r).flatten.length :=
+      (List.rotate_append_length_eq (blocks.take r).flatten
+        (blocks.drop r).flatten).symm
+    _ = blocks.flatten.rotate (blocks.take r).flatten.length := by
+      rw [← List.flatten_append, List.take_append_drop]
+
+/-- The flattened prefix of the first `r` canonical blocks has length `c.sizeUpTo r`. -/
+theorem wordBlockLists_take_flatten_length {L : ℕ} (c : Composition L)
+    (w : Fin L → Bool) (r : ℕ) :
+    ((wordBlockLists c w).take r).flatten.length = c.sizeUpTo r := by
+  rw [wordBlockLists_eq_splitWrtComposition]
+  rw [List.length_flatten, List.map_take]
+  have hm : ((List.ofFn w).splitWrtComposition c).map List.length = c.blocks := by
+    apply List.map_length_splitWrtCompositionAux
+    simpa using c.blocks_sum.le
+  rw [hm]
+  rfl
+
+/-- Rotating the canonical blocks by `r` rotates the original word by the corresponding
+composition boundary `c.sizeUpTo r`. -/
+theorem wordBlockLists_rotate_flatten {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    ((wordBlockLists c w).rotate r).flatten =
+      List.ofFn (rotateWord w (c.sizeUpTo r)) := by
+  rw [flatten_rotate_blocks (wordBlockLists c w) r (by simpa [wordBlockLists] using hr),
+    wordBlockLists_flatten, wordBlockLists_take_flatten_length, ofFn_rotateWord]
+
+theorem fwdListGood_ofFn_iff {L : ℕ} (w : Fin L → Bool) :
+    FwdListGood (List.ofFn w) ↔ FwdGood L w := by
+  change CollatzMoonshot.StrictlyPositivePrefixes ((List.ofFn w).map fwdStepScore) ↔
+    FwdGood L w
+  rw [fwdGood_iff_strictlyPositivePrefixes, fwdScoreList_eq_map]
+
+theorem bwdListGood_ofFn_iff {L : ℕ} (w : Fin L → Bool) :
+    BwdListGood (List.ofFn w) ↔ BwdGood L w := by
+  change CollatzMoonshot.StrictlyPositivePrefixes ((List.ofFn w).map bwdStepScore) ↔
+    BwdGood L w
+  rw [bwdGood_iff_strictlyPositivePrefixes, bwdScoreList_eq_map]
+
+/-- A forward-good canonical block rotation is the original word surviving from the
+corresponding composition boundary. -/
+theorem fwdWordBlockBoundary_iff {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    FwdListGood ((wordBlockLists c w).rotate r).flatten ↔
+      FwdGood L (rotateWord w (c.sizeUpTo r)) := by
+  rw [wordBlockLists_rotate_flatten c w r hr]
+  exact fwdListGood_ofFn_iff _
+
+/-- Backward analogue of `fwdWordBlockBoundary_iff`. -/
+theorem bwdWordBlockBoundary_iff {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    BwdListGood ((wordBlockLists c w).rotate r).flatten ↔
+      BwdGood L (rotateWord w (c.sizeUpTo r)) := by
+  rw [wordBlockLists_rotate_flatten c w r hr]
+  exact bwdListGood_ofFn_iff _
+
+/-- Under a positive-size composition, simultaneous forward survival from every block boundary
+is exactly separate survival of every block. -/
+theorem fwdWordBlockLists_cyclic_iff {L : ℕ} (hL : 0 < L) (c : Composition L)
+    (w : Fin L → Bool) :
+    (∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten) ↔
+      ∀ i : Fin c.length, FwdGood (c.blocksFun i) ((wordBlocksEquiv c) w i) := by
+  have hblocks : wordBlockLists c w ≠ [] := by
+    apply List.ne_nil_of_length_pos
+    simpa [wordBlockLists] using c.length_pos_of_pos hL
+  have hne : ∀ b ∈ wordBlockLists c w, b ≠ [] := by
+    intro b hb
+    rw [wordBlockLists, List.mem_ofFn'] at hb
+    obtain ⟨i, rfl⟩ := hb
+    apply List.ne_nil_of_length_pos
+    have hi := c.one_le_blocksFun i
+    simp only [List.length_ofFn]
+    omega
+  have hlen : (wordBlockLists c w).length = c.length := by
+    simp [wordBlockLists]
+  have hfactor := fwdListGood_cyclicBlocks_iff (wordBlockLists c w) hblocks hne
+  rw [hlen] at hfactor
+  rw [hfactor]
+  simp only [wordBlockLists, List.forall_mem_ofFn_iff, fwdListGood_ofFn_iff]
+
+/-- Backward analogue of `fwdWordBlockLists_cyclic_iff`. -/
+theorem bwdWordBlockLists_cyclic_iff {L : ℕ} (hL : 0 < L) (c : Composition L)
+    (w : Fin L → Bool) :
+    (∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten) ↔
+      ∀ i : Fin c.length, BwdGood (c.blocksFun i) ((wordBlocksEquiv c) w i) := by
+  have hblocks : wordBlockLists c w ≠ [] := by
+    apply List.ne_nil_of_length_pos
+    simpa [wordBlockLists] using c.length_pos_of_pos hL
+  have hne : ∀ b ∈ wordBlockLists c w, b ≠ [] := by
+    intro b hb
+    rw [wordBlockLists, List.mem_ofFn'] at hb
+    obtain ⟨i, rfl⟩ := hb
+    apply List.ne_nil_of_length_pos
+    have hi := c.one_le_blocksFun i
+    simp only [List.length_ofFn]
+    omega
+  have hlen : (wordBlockLists c w).length = c.length := by
+    simp [wordBlockLists]
+  have hfactor := bwdListGood_cyclicBlocks_iff (wordBlockLists c w) hblocks hne
+  rw [hlen] at hfactor
+  rw [hfactor]
+  simp only [wordBlockLists, List.forall_mem_ofFn_iff, bwdListGood_ofFn_iff]
+
+/-- Marked-letter counts split additively over the blocks of a composition. -/
+theorem wordTrueCount_eq_sum_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    wordTrueCount w =
+      ∑ i : Fin c.length, wordTrueCount ((wordBlocksEquiv c) w i) := by
+  calc
+    wordTrueCount w = ∑ j : Fin L, if w j = true then 1 else 0 := by
+      unfold wordTrueCount
+      simpa using (Finset.sum_boole (fun j : Fin L => w j = true) Finset.univ).symm
+    _ = ∑ i : Fin c.length, ∑ j : Fin (c.blocksFun i),
+          if w (c.embedding i j) = true then 1 else 0 :=
+      (c.sum_sum_apply_embedding (fun j => if w j = true then 1 else 0)).symm
+    _ = ∑ i : Fin c.length, wordTrueCount ((wordBlocksEquiv c) w i) := by
+      apply Finset.sum_congr rfl
+      intro i _hi
+      calc
+        (∑ j : Fin (c.blocksFun i), if w (c.embedding i j) = true then 1 else 0) =
+            (Finset.univ.filter fun j : Fin (c.blocksFun i) =>
+              w (c.embedding i j) = true).card := by
+          simpa using (Finset.sum_boole
+            (fun j : Fin (c.blocksFun i) => w (c.embedding i j) = true) Finset.univ)
+        _ = wordTrueCount ((wordBlocksEquiv c) w i) := rfl
+
+/-- Forward product weights split multiplicatively over composition blocks. -/
+theorem fwdWordWeight_eq_prod_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    fwdWordWeight w =
+      ∏ i : Fin c.length, fwdWordWeight ((wordBlocksEquiv c) w i) := by
+  simp only [fwdWordWeight, Finset.prod_pow_eq_pow_sum, c.sum_blocksFun]
+
+/-- Backward product weights split multiplicatively over composition blocks. -/
+theorem bwdWordWeight_eq_prod_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    bwdWordWeight w =
+      ∏ i : Fin c.length, bwdWordWeight ((wordBlocksEquiv c) w i) := by
+  have hcount := wordTrueCount_eq_sum_blocks c w
+  have hcomplement :
+      (∑ i : Fin c.length,
+        (c.blocksFun i - wordTrueCount ((wordBlocksEquiv c) w i))) =
+        L - wordTrueCount w := by
+    rw [Finset.sum_tsub_distrib Finset.univ]
+    · simp only [c.sum_blocksFun, ← hcount]
+    · intro i _hi
+      exact wordTrueCount_le ((wordBlocksEquiv c) w i)
+  unfold bwdWordWeight
+  rw [Finset.prod_mul_distrib, Finset.prod_pow_eq_pow_sum,
+    Finset.prod_pow_eq_pow_sum, ← hcount, hcomplement]
+
+/-- Split a sum over Boolean words according to its first letter. -/
+theorem sum_boolWords_succ {M : Type*} [AddCommMonoid M] (L : ℕ)
+    (F : (Fin (L + 1) → Bool) → M) :
+    (∑ w : Fin (L + 1) → Bool, F w) =
+      ∑ b : Bool, ∑ w : Fin L → Bool, F (Fin.cons b w) := by
+  calc
+    _ = ∑ p : Bool × (Fin L → Bool),
+          F ((Fin.consEquiv fun _ : Fin (L + 1) => Bool) p) :=
+      ((Fin.consEquiv fun _ : Fin (L + 1) => Bool).sum_comp F).symm
+    _ = _ := by rw [Fintype.sum_prod_type]; rfl
+
+theorem sum_boolWords_by_trueCount_succ {M : Type*} [AddCommMonoid M]
+    (L : ℕ) (f : ℕ → M) :
+    (∑ w : Fin (L + 1) → Bool, f (wordTrueCount w)) =
+      ∑ w : Fin L → Bool,
+        (f (wordTrueCount w) + f (wordTrueCount w + 1)) := by
+  rw [sum_boolWords_succ]
+  simp [wordTrueCount_cons, add_comm, ← Finset.sum_add_distrib]
+
+/-- Regroup any finite Boolean-word sum depending only on the number of marked letters into
+the corresponding binomial sum. -/
+theorem sum_boolWords_by_trueCount {M : Type*} [AddCommMonoid M]
+    (L : ℕ) (f : ℕ → M) :
+    (∑ w : Fin L → Bool, f (wordTrueCount w)) =
+      ∑ o ∈ Finset.range (L + 1), L.choose o • f o := by
+  induction L generalizing f with
+  | zero => simp [wordTrueCount]
+  | succ L ih =>
+      rw [sum_boolWords_by_trueCount_succ]
+      rw [Finset.sum_add_distrib, ih f, ih (fun o => f (o + 1))]
+      rw [Finset.sum_range_succ' (fun o => L.choose o • f o) L,
+        Finset.sum_range_succ (fun o => L.choose o • f (o + 1)) L,
+        Finset.sum_range_succ (fun o => (L + 1).choose o • f o) (L + 1),
+        Finset.sum_range_succ' (fun o => (L + 1).choose o • f o) L]
+      simp only [Nat.choose_zero_right, Nat.choose_self, one_nsmul,
+        Nat.choose_succ_succ, add_nsmul]
+      calc
+        _ = f 0 + f (L + 1) +
+            ((∑ x ∈ Finset.range L, L.choose x • f (x + 1)) +
+              ∑ x ∈ Finset.range L, L.choose (x + 1) • f (x + 1)) := by ac_rfl
+        _ = f 0 + f (L + 1) +
+            ∑ x ∈ Finset.range L,
+              (L.choose x • f (x + 1) + L.choose (x + 1) • f (x + 1)) := by
+          rw [Finset.sum_add_distrib]
+        _ = _ := by simp only [Nat.succ_eq_add_one]; ac_rfl
+
+/-- The forward positive-endpoint mass, expressed on the same Boolean-word sample space as
+`fwdSurv`. -/
+theorem fwdPosTerm_eq_word_sum (k : ℕ) :
+    fwdPosTerm k = ∑ w : Fin k → Bool,
+      if 2 ^ (k + wordTrueCount w) < 3 ^ k then (1 / 2 : ℝ) ^ k else 0 := by
+  rw [sum_boolWords_by_trueCount k (fun o =>
+    if 2 ^ (k + o) < 3 ^ k then (1 / 2 : ℝ) ^ k else 0)]
+  unfold fwdPosTerm
+  apply Finset.sum_congr rfl
+  intro o ho
+  simp only [nsmul_eq_mul]
+  split_ifs
+  · rw [one_div, inv_pow, div_eq_mul_inv]
+  · simp
+
+/-- The backward positive-endpoint mass, expressed on the same weighted Boolean-word sample
+space as `bwdSurv`. -/
+theorem bwdPosTerm_eq_word_sum (k : ℕ) :
+    bwdPosTerm k = ∑ w : Fin k → Bool,
+      if 3 ^ k < 2 ^ (k + wordTrueCount w) then
+        (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (k - wordTrueCount w) else 0 := by
+  rw [sum_boolWords_by_trueCount k (fun o => if 3 ^ k < 2 ^ (k + o) then
+    (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (k - o) else 0)]
+  unfold bwdPosTerm
+  apply Finset.sum_congr rfl
+  intro o ho
+  simp only [nsmul_eq_mul]
+  split_ifs
+  · have ho' : o ≤ k := Nat.le_of_lt_succ (Finset.mem_range.mp ho)
+    rw [show k = o + (k - o) by omega, pow_add]
+    rw [div_pow, div_pow]
+    rw [show o + (k - o) - o = k - o by omega]
+    ring
+  · simp
+
+/-- Forward survival, cast to reals, is its finite weighted sum over good Boolean words. -/
+theorem fwdSurv_cast_eq_word_sum (k : ℕ) :
+    (fwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if FwdGood k w then (1 / 2 : ℝ) ^ k else 0 := by
+  unfold fwdSurv
+  push_cast
+  apply Finset.sum_congr rfl
+  intro w hw
+  split_ifs <;> norm_num
+
+/-- Backward survival, cast to reals, is its finite weighted sum over good Boolean words. -/
+theorem bwdSurv_cast_eq_word_sum (k : ℕ) :
+    (bwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if BwdGood k w then
+        (2 / 3 : ℝ) ^ wordTrueCount w * (1 / 3 : ℝ) ^ (k - wordTrueCount w) else 0 := by
+  unfold bwdSurv wordTrueCount
+  push_cast
+  apply Finset.sum_congr rfl
+  intro w hw
+  split_ifs
+  · have hcard := Finset.card_filter_add_card_filter_not
+      (s := (Finset.univ : Finset (Fin k))) (fun i => w i = true)
+    have hfalse : (Finset.univ.filter fun i : Fin k => w i = false).card =
+        k - (Finset.univ.filter fun i : Fin k => w i = true).card := by
+      have hcard' : (Finset.univ.filter fun i : Fin k => w i = true).card +
+          (Finset.univ.filter fun i : Fin k => w i = false).card = k := by
+        simpa using hcard
+      omega
+    rw [hfalse]
+    norm_num
+  · norm_num
+
+/-! The same four identities in the named product-weight interface used by the cyclic
+decomposition.  Keeping this interface separate leaves the ratified statements above unchanged. -/
+
+theorem fwdPosTerm_eq_weighted_word_sum (k : ℕ) :
+    fwdPosTerm k = ∑ w : Fin k → Bool,
+      if 2 ^ (k + wordTrueCount w) < 3 ^ k then fwdWordWeight w else 0 := by
+  rw [fwdPosTerm_eq_word_sum]
+  rfl
+
+theorem bwdPosTerm_eq_weighted_word_sum (k : ℕ) :
+    bwdPosTerm k = ∑ w : Fin k → Bool,
+      if 3 ^ k < 2 ^ (k + wordTrueCount w) then bwdWordWeight w else 0 := by
+  rw [bwdPosTerm_eq_word_sum]
+  rfl
+
+theorem fwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
+    (fwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if FwdGood k w then fwdWordWeight w else 0 := by
+  rw [fwdSurv_cast_eq_word_sum]
+  rfl
+
+theorem bwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
+    (bwdSurv k : ℝ) = ∑ w : Fin k → Bool,
+      if BwdGood k w then bwdWordWeight w else 0 := by
+  rw [bwdSurv_cast_eq_word_sum]
+  rfl
+
+open Classical in
+/-- For every positive composition of a word length, the weighted intersection of forward
+survival events at all cyclic block boundaries is the product of the block-survival masses. -/
+theorem fwdCompositionIntersection_sum {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  classical
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+        fwdWordWeight w else 0) =
+        ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          if ∀ r < c.length,
+              FwdListGood
+                ((wordBlockLists c ((wordBlocksEquiv c).symm blocks)).rotate r).flatten then
+            fwdWordWeight ((wordBlocksEquiv c).symm blocks) else 0 := by
+      exact ((wordBlocksEquiv c).symm.sum_comp (fun w =>
+        if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+          fwdWordWeight w else 0)).symm
+    _ = ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          ∏ i : Fin c.length,
+            if FwdGood (c.blocksFun i) (blocks i) then fwdWordWeight (blocks i) else 0 := by
+      apply Finset.sum_congr rfl
+      intro blocks _hblocks
+      simp only [fwdWordBlockLists_cyclic_iff hL c,
+        fwdWordWeight_eq_prod_blocks c, Equiv.apply_symm_apply]
+      symm
+      simpa using (Finset.prod_ite_zero
+        (s := Finset.univ)
+        (p := fun i : Fin c.length => FwdGood (c.blocksFun i) (blocks i))
+        (f := fun i : Fin c.length => fwdWordWeight (blocks i)))
+    _ = ∏ i : Fin c.length, ∑ u : Fin (c.blocksFun i) → Bool,
+          if FwdGood (c.blocksFun i) u then fwdWordWeight u else 0 := by
+      exact (Fintype.prod_sum (fun i (u : Fin (c.blocksFun i) → Bool) =>
+        if FwdGood (c.blocksFun i) u then fwdWordWeight u else 0)).symm
+    _ = ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+      apply Finset.prod_congr rfl
+      intro i _hi
+      rw [fwdSurv_cast_eq_weighted_word_sum]
+
+open Classical in
+/-- Backward analogue of `fwdCompositionIntersection_sum`. -/
+theorem bwdCompositionIntersection_sum {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  classical
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+        bwdWordWeight w else 0) =
+        ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          if ∀ r < c.length,
+              BwdListGood
+                ((wordBlockLists c ((wordBlocksEquiv c).symm blocks)).rotate r).flatten then
+            bwdWordWeight ((wordBlocksEquiv c).symm blocks) else 0 := by
+      exact ((wordBlocksEquiv c).symm.sum_comp (fun w =>
+        if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+          bwdWordWeight w else 0)).symm
+    _ = ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          ∏ i : Fin c.length,
+            if BwdGood (c.blocksFun i) (blocks i) then bwdWordWeight (blocks i) else 0 := by
+      apply Finset.sum_congr rfl
+      intro blocks _hblocks
+      simp only [bwdWordBlockLists_cyclic_iff hL c,
+        bwdWordWeight_eq_prod_blocks c, Equiv.apply_symm_apply]
+      symm
+      simpa using (Finset.prod_ite_zero
+        (s := Finset.univ)
+        (p := fun i : Fin c.length => BwdGood (c.blocksFun i) (blocks i))
+        (f := fun i : Fin c.length => bwdWordWeight (blocks i)))
+    _ = ∏ i : Fin c.length, ∑ u : Fin (c.blocksFun i) → Bool,
+          if BwdGood (c.blocksFun i) u then bwdWordWeight u else 0 := by
+      exact (Fintype.prod_sum (fun i (u : Fin (c.blocksFun i) → Bool) =>
+        if BwdGood (c.blocksFun i) u then bwdWordWeight u else 0)).symm
+    _ = ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+      apply Finset.prod_congr rfl
+      intro i _hi
+      rw [bwdSurv_cast_eq_weighted_word_sum]
+
+open Classical in
+/-- The forward composition factorization, stated directly as survival of the original word
+from the marked cyclic starts `c.sizeUpTo r`. -/
+theorem fwdCompositionBoundaryIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdGood L (rotateWord w (c.sizeUpTo r)) then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdGood L (rotateWord w (c.sizeUpTo r)) then
+        fwdWordWeight w else 0) =
+        ∑ w : Fin L → Bool,
+          if ∀ r < c.length,
+              FwdListGood ((wordBlockLists c w).rotate r).flatten then
+            fwdWordWeight w else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · constructor
+        · intro h r hr
+          exact (fwdWordBlockBoundary_iff c w r hr.le).mpr (h r hr)
+        · intro h r hr
+          exact (fwdWordBlockBoundary_iff c w r hr.le).mp (h r hr)
+      · rfl
+      · rfl
+    _ = ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) :=
+      fwdCompositionIntersection_sum hL c
+
+open Classical in
+/-- Backward analogue of `fwdCompositionBoundaryIntersection_sum`. -/
+theorem bwdCompositionBoundaryIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdGood L (rotateWord w (c.sizeUpTo r)) then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdGood L (rotateWord w (c.sizeUpTo r)) then
+        bwdWordWeight w else 0) =
+        ∑ w : Fin L → Bool,
+          if ∀ r < c.length,
+              BwdListGood ((wordBlockLists c w).rotate r).flatten then
+            bwdWordWeight w else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · constructor
+        · intro h r hr
+          exact (bwdWordBlockBoundary_iff c w r hr.le).mpr (h r hr)
+        · intro h r hr
+          exact (bwdWordBlockBoundary_iff c w r hr.le).mp (h r hr)
+      · rfl
+      · rfl
+    _ = ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) :=
+      bwdCompositionIntersection_sum hL c
+
+open Classical in
+/-- Forward composition factorization indexed by the actual anchored subset of cyclic starts.
+This is the form consumed by finite-set inclusion--exclusion. -/
+theorem fwdCompositionStartsIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r ∈ compositionStarts c, FwdGood L (rotateWord w r) then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  rw [← fwdCompositionBoundaryIntersection_sum hL c]
+  apply Finset.sum_congr rfl
+  intro w _hw
+  apply if_congr
+  · rw [forall_mem_compositionStarts_iff]
+    constructor
+    · intro h r hr
+      simpa using h r hr
+    · intro h r hr
+      simpa using h r hr
+  · rfl
+  · rfl
+
+open Classical in
+/-- Backward analogue of `fwdCompositionStartsIntersection_sum`. -/
+theorem bwdCompositionStartsIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r ∈ compositionStarts c, BwdGood L (rotateWord w r) then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  rw [← bwdCompositionBoundaryIntersection_sum hL c]
+  apply Finset.sum_congr rfl
+  intro w _hw
+  apply if_congr
+  · rw [forall_mem_compositionStarts_iff]
+    constructor
+    · intro h r hr
+      simpa using h r hr
+    · intro h r hr
+      simpa using h r hr
+  · rfl
+  · rfl
+
+/-- The weighted intersection of two forward survival events based at two cyclic marks
+factors into the two block-survival masses. -/
+theorem fwdTwoMarkIntersection_sum {m n : ℕ} (hm : 0 < m) (hn : 0 < n) :
+    (∑ u : Fin m → Bool, ∑ v : Fin n → Bool,
+      if FwdGood (m + n) (Fin.append u v) ∧
+          FwdGood (n + m) (Fin.append v u) then
+        fwdWordWeight (Fin.append u v) else 0) =
+      (fwdSurv m : ℝ) * fwdSurv n := by
+  rw [fwdSurv_cast_eq_weighted_word_sum, fwdSurv_cast_eq_weighted_word_sum,
+    Fintype.sum_mul_sum]
+  apply Finset.sum_congr rfl
+  intro u hu
+  apply Finset.sum_congr rfl
+  intro v hv
+  simp only [fwdGood_append_and_swap_iff hm hn, fwdWordWeight_append]
+  split_ifs <;> simp_all
+
+/-- Backward analogue of `fwdTwoMarkIntersection_sum`. -/
+theorem bwdTwoMarkIntersection_sum {m n : ℕ} (hm : 0 < m) (hn : 0 < n) :
+    (∑ u : Fin m → Bool, ∑ v : Fin n → Bool,
+      if BwdGood (m + n) (Fin.append u v) ∧
+          BwdGood (n + m) (Fin.append v u) then
+        bwdWordWeight (Fin.append u v) else 0) =
+      (bwdSurv m : ℝ) * bwdSurv n := by
+  rw [bwdSurv_cast_eq_weighted_word_sum, bwdSurv_cast_eq_weighted_word_sum,
+    Fintype.sum_mul_sum]
+  apply Finset.sum_congr rfl
+  intro u hu
+  apply Finset.sum_congr rfl
+  intro v hv
+  simp only [bwdGood_append_and_swap_iff hm hn, bwdWordWeight_append]
+  split_ifs <;> simp_all
+
+/-! ## Finite inclusion--exclusion and the logarithmic composition coefficients -/
+
+/-- Translating every cyclic start by `a` is the same as rotating the underlying forward word
+by `a`. -/
+theorem forall_unanchor_fwd_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) (w : Fin L → Bool) :
+    (∀ r ∈ unanchorCyclicFinset a s, FwdGood L (rotateWord w r)) ↔
+      ∀ r ∈ s, FwdGood L (rotateWord (rotateWord w a) r) := by
+  constructor
+  · intro h r hr
+    rw [rotateWord_fin_add]
+    exact h (a + r) (by simpa using hr)
+  · intro h r hr
+    have hs : r - a ∈ s := (mem_unanchorCyclicFinset a r s).mp hr
+    have := h (r - a) hs
+    rw [rotateWord_fin_add] at this
+    simpa [add_comm] using this
+
+/-- Weighted mass of the simultaneous forward-survival events based at a set of cyclic starts. -/
+noncomputable def fwdCyclicIntersectionMass (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  ∑ w : Fin L → Bool,
+    if ∀ r ∈ s, FwdGood L (rotateWord w r) then fwdWordWeight w else 0
+
+open Classical in
+/-- The forward cyclic-intersection mass is invariant under translating all starts. -/
+theorem fwdCyclicIntersectionMass_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    fwdCyclicIntersectionMass L (unanchorCyclicFinset a s) =
+      fwdCyclicIntersectionMass L s := by
+  rw [fwdCyclicIntersectionMass, fwdCyclicIntersectionMass]
+  calc
+    (∑ w : Fin L → Bool,
+        if ∀ r ∈ unanchorCyclicFinset a s, FwdGood L (rotateWord w r) then
+          fwdWordWeight w else 0) =
+      ∑ w : Fin L → Bool,
+        if ∀ r ∈ s, FwdGood L (rotateWord (rotateWord w a) r) then
+          fwdWordWeight (rotateWord w a) else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · exact forall_unanchor_fwd_iff a s w
+      · exact fwdWordWeight_rotateWord w a
+      · rfl
+    _ = _ := by
+      let F : (Fin L → Bool) → ℝ := fun w =>
+        if ∀ r ∈ s, FwdGood L (rotateWord w r) then fwdWordWeight w else 0
+      change (∑ w : Fin L → Bool, F (rotateWord w a)) = ∑ w : Fin L → Bool, F w
+      simpa only [rotateWordEquiv_apply] using (rotateWordEquiv L a).sum_comp F
+
+/-- The signed forward intersection contribution appearing in inclusion--exclusion. -/
+noncomputable def fwdCyclicContribution (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  (-1 : ℝ) ^ (s.card + 1) * fwdCyclicIntersectionMass L s
+
+open Classical in
+/-- Signed forward intersection contributions are rotation invariant. -/
+theorem fwdCyclicContribution_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    fwdCyclicContribution L (unanchorCyclicFinset a s) =
+      fwdCyclicContribution L s := by
+  simp [fwdCyclicContribution, fwdCyclicIntersectionMass_unanchor]
+
+/-- The finite set of words that survive forward from the cyclic start `r`. -/
+def fwdGoodRotationWords (L : ℕ) (r : Fin L) : Finset (Fin L → Bool) :=
+  Finset.univ.filter fun w => FwdGood L (rotateWord w r)
+
+@[simp]
+theorem mem_fwdGoodRotationWords {L : ℕ} (r : Fin L) (w : Fin L → Bool) :
+    w ∈ fwdGoodRotationWords L r ↔ FwdGood L (rotateWord w r) := by
+  simp [fwdGoodRotationWords]
+
+open Classical in
+/-- The union of the forward cyclic-survival events is exactly endpoint positivity. -/
+theorem fwdGoodRotationWords_biUnion (L : ℕ) :
+    (Finset.univ : Finset (Fin L)).biUnion (fwdGoodRotationWords L) =
+      Finset.univ.filter FwdEndpointPositive := by
+  ext w
+  rw [Finset.mem_biUnion, Finset.mem_filter]
+  simp only [Finset.mem_univ, mem_fwdGoodRotationWords, true_and]
+  rw [fwdEndpointPositive_iff_exists_goodRotation]
+  constructor
+  · rintro ⟨r, hr⟩
+    exact ⟨r, r.isLt, hr⟩
+  · rintro ⟨r, hr, hw⟩
+    exact ⟨⟨r, hr⟩, hw⟩
+
+open Classical in
+/-- The weighted intersection of the finite forward event sets is the named cyclic mass. -/
+theorem fwdGoodRotationWords_inf_sum {L : ℕ}
+    (s : Finset (Fin L)) (hs : s.Nonempty) :
+    (∑ w ∈ s.inf' hs (fwdGoodRotationWords L), fwdWordWeight w) =
+      fwdCyclicIntersectionMass L s := by
+  have hinf : s.inf' hs (fwdGoodRotationWords L) =
+      Finset.univ.filter fun w => ∀ r ∈ s, FwdGood L (rotateWord w r) := by
+    ext w
+    simp [fwdGoodRotationWords]
+  rw [hinf, fwdCyclicIntersectionMass]
+  rw [Finset.sum_filter]
+
+open Classical in
+/-- Finite inclusion--exclusion for the cyclic cover of forward endpoint-positive words. -/
+theorem fwdPosTerm_eq_cyclicContribution_sum (L : ℕ) :
+    fwdPosTerm L =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, fwdCyclicContribution L s.1 := by
+  calc
+    fwdPosTerm L =
+        ∑ w ∈ Finset.univ.filter FwdEndpointPositive, fwdWordWeight w := by
+      rw [fwdPosTerm_eq_weighted_word_sum]
+      rw [Finset.sum_filter]
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · rfl
+      · rfl
+      · rfl
+    _ = ∑ w ∈ (Finset.univ : Finset (Fin L)).biUnion
+          (fwdGoodRotationWords L), fwdWordWeight w := by
+      apply Finset.sum_congr
+      · exact (fwdGoodRotationWords_biUnion L).symm
+      · intro w _hw
+        rfl
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          (-1 : ℤ) ^ (t.1.card + 1) •
+            ∑ w ∈ t.1.inf' (Finset.mem_filter.mp t.2).2
+              (fwdGoodRotationWords L), fwdWordWeight w :=
+      Finset.inclusion_exclusion_sum_biUnion
+        (Finset.univ : Finset (Fin L)) (fwdGoodRotationWords L) fwdWordWeight
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          fwdCyclicContribution L t.1 := by
+      apply Finset.sum_congr rfl
+      intro t _ht
+      rw [fwdCyclicContribution,
+        fwdGoodRotationWords_inf_sum t.1 (Finset.mem_filter.mp t.2).2]
+      norm_num
+    _ = _ := by
+      change (∑ t ∈ ((Finset.univ : Finset (Fin L)).powerset.filter
+          (·.Nonempty)).attach, fwdCyclicContribution L t.1) = _
+      rw [Finset.sum_attach]
+      exact (Finset.sum_subtype
+        (p := fun x : Finset (Fin L) => x.Nonempty)
+        ((Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty))
+        (by simp) (fwdCyclicContribution L))
+
+open Classical in
+/-- The forward endpoint coefficients are the logarithmic composition polynomial in the
+survival coefficients. -/
+theorem fwdPosTerm_div_eq_composition_sum (n : ℕ) :
+    fwdPosTerm (n + 1) / (n + 1 : ℝ) =
+      ∑ c : Composition (n + 1),
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+  have hcyc := cyclicFinset_sum_eq_composition n
+    (fwdCyclicContribution (n + 1))
+    (fwdCyclicContribution_unanchor (L := n + 1))
+  rw [← fwdPosTerm_eq_cyclicContribution_sum] at hcyc
+  rw [hcyc]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  rw [mul_div_cancel_left₀ _ hn]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  rw [fwdCyclicContribution, card_compositionStarts, fwdCyclicIntersectionMass,
+    fwdCompositionStartsIntersection_sum (Nat.zero_lt_succ n)]
+
+/-- Backward analogue of `forall_unanchor_fwd_iff`. -/
+theorem forall_unanchor_bwd_iff {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) (w : Fin L → Bool) :
+    (∀ r ∈ unanchorCyclicFinset a s, BwdGood L (rotateWord w r)) ↔
+      ∀ r ∈ s, BwdGood L (rotateWord (rotateWord w a) r) := by
+  constructor
+  · intro h r hr
+    rw [rotateWord_fin_add]
+    exact h (a + r) (by simpa using hr)
+  · intro h r hr
+    have hs : r - a ∈ s := (mem_unanchorCyclicFinset a r s).mp hr
+    have := h (r - a) hs
+    rw [rotateWord_fin_add] at this
+    simpa [add_comm] using this
+
+/-- Weighted mass of simultaneous backward-survival events at cyclic starts. -/
+noncomputable def bwdCyclicIntersectionMass (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  ∑ w : Fin L → Bool,
+    if ∀ r ∈ s, BwdGood L (rotateWord w r) then bwdWordWeight w else 0
+
+open Classical in
+/-- The backward cyclic-intersection mass is invariant under translating all starts. -/
+theorem bwdCyclicIntersectionMass_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    bwdCyclicIntersectionMass L (unanchorCyclicFinset a s) =
+      bwdCyclicIntersectionMass L s := by
+  rw [bwdCyclicIntersectionMass, bwdCyclicIntersectionMass]
+  calc
+    (∑ w : Fin L → Bool,
+        if ∀ r ∈ unanchorCyclicFinset a s, BwdGood L (rotateWord w r) then
+          bwdWordWeight w else 0) =
+      ∑ w : Fin L → Bool,
+        if ∀ r ∈ s, BwdGood L (rotateWord (rotateWord w a) r) then
+          bwdWordWeight (rotateWord w a) else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · exact forall_unanchor_bwd_iff a s w
+      · exact (bwdWordWeight_rotateWord w a).symm
+      · rfl
+    _ = _ := by
+      let F : (Fin L → Bool) → ℝ := fun w =>
+        if ∀ r ∈ s, BwdGood L (rotateWord w r) then bwdWordWeight w else 0
+      change (∑ w : Fin L → Bool, F (rotateWord w a)) = ∑ w : Fin L → Bool, F w
+      simpa only [rotateWordEquiv_apply] using (rotateWordEquiv L a).sum_comp F
+
+/-- The signed backward intersection contribution appearing in inclusion--exclusion. -/
+noncomputable def bwdCyclicContribution (L : ℕ) (s : Finset (Fin L)) : ℝ :=
+  (-1 : ℝ) ^ (s.card + 1) * bwdCyclicIntersectionMass L s
+
+open Classical in
+/-- Signed backward intersection contributions are rotation invariant. -/
+theorem bwdCyclicContribution_unanchor {L : ℕ} [NeZero L]
+    (a : Fin L) (s : Finset (Fin L)) :
+    bwdCyclicContribution L (unanchorCyclicFinset a s) =
+      bwdCyclicContribution L s := by
+  simp [bwdCyclicContribution, bwdCyclicIntersectionMass_unanchor]
+
+/-- The finite set of words that survive backward from the cyclic start `r`. -/
+def bwdGoodRotationWords (L : ℕ) (r : Fin L) : Finset (Fin L → Bool) :=
+  Finset.univ.filter fun w => BwdGood L (rotateWord w r)
+
+@[simp]
+theorem mem_bwdGoodRotationWords {L : ℕ} (r : Fin L) (w : Fin L → Bool) :
+    w ∈ bwdGoodRotationWords L r ↔ BwdGood L (rotateWord w r) := by
+  simp [bwdGoodRotationWords]
+
+open Classical in
+/-- The union of the backward cyclic-survival events is exactly endpoint positivity. -/
+theorem bwdGoodRotationWords_biUnion (L : ℕ) :
+    (Finset.univ : Finset (Fin L)).biUnion (bwdGoodRotationWords L) =
+      Finset.univ.filter BwdEndpointPositive := by
+  ext w
+  rw [Finset.mem_biUnion, Finset.mem_filter]
+  simp only [Finset.mem_univ, mem_bwdGoodRotationWords, true_and]
+  rw [bwdEndpointPositive_iff_exists_goodRotation]
+  constructor
+  · rintro ⟨r, hr⟩
+    exact ⟨r, r.isLt, hr⟩
+  · rintro ⟨r, hr, hw⟩
+    exact ⟨⟨r, hr⟩, hw⟩
+
+open Classical in
+/-- The weighted intersection of the finite backward event sets is the named cyclic mass. -/
+theorem bwdGoodRotationWords_inf_sum {L : ℕ}
+    (s : Finset (Fin L)) (hs : s.Nonempty) :
+    (∑ w ∈ s.inf' hs (bwdGoodRotationWords L), bwdWordWeight w) =
+      bwdCyclicIntersectionMass L s := by
+  have hinf : s.inf' hs (bwdGoodRotationWords L) =
+      Finset.univ.filter fun w => ∀ r ∈ s, BwdGood L (rotateWord w r) := by
+    ext w
+    simp [bwdGoodRotationWords]
+  rw [hinf, bwdCyclicIntersectionMass]
+  rw [Finset.sum_filter]
+
+open Classical in
+/-- Finite inclusion--exclusion for the cyclic cover of backward endpoint-positive words. -/
+theorem bwdPosTerm_eq_cyclicContribution_sum (L : ℕ) :
+    bwdPosTerm L =
+      ∑ s : {s : Finset (Fin L) // s.Nonempty}, bwdCyclicContribution L s.1 := by
+  calc
+    bwdPosTerm L =
+        ∑ w ∈ Finset.univ.filter BwdEndpointPositive, bwdWordWeight w := by
+      rw [bwdPosTerm_eq_weighted_word_sum]
+      rw [Finset.sum_filter]
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · rfl
+      · rfl
+      · rfl
+    _ = ∑ w ∈ (Finset.univ : Finset (Fin L)).biUnion
+          (bwdGoodRotationWords L), bwdWordWeight w := by
+      apply Finset.sum_congr
+      · exact (bwdGoodRotationWords_biUnion L).symm
+      · intro w _hw
+        rfl
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          (-1 : ℤ) ^ (t.1.card + 1) •
+            ∑ w ∈ t.1.inf' (Finset.mem_filter.mp t.2).2
+              (bwdGoodRotationWords L), bwdWordWeight w :=
+      Finset.inclusion_exclusion_sum_biUnion
+        (Finset.univ : Finset (Fin L)) (bwdGoodRotationWords L) bwdWordWeight
+    _ = ∑ t : (Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty),
+          bwdCyclicContribution L t.1 := by
+      apply Finset.sum_congr rfl
+      intro t _ht
+      rw [bwdCyclicContribution,
+        bwdGoodRotationWords_inf_sum t.1 (Finset.mem_filter.mp t.2).2]
+      norm_num
+    _ = _ := by
+      change (∑ t ∈ ((Finset.univ : Finset (Fin L)).powerset.filter
+          (·.Nonempty)).attach, bwdCyclicContribution L t.1) = _
+      rw [Finset.sum_attach]
+      exact (Finset.sum_subtype
+        (p := fun x : Finset (Fin L) => x.Nonempty)
+        ((Finset.univ : Finset (Fin L)).powerset.filter (·.Nonempty))
+        (by simp) (bwdCyclicContribution L))
+
+open Classical in
+/-- The backward endpoint coefficients are the logarithmic composition polynomial in the
+survival coefficients. -/
+theorem bwdPosTerm_div_eq_composition_sum (n : ℕ) :
+    bwdPosTerm (n + 1) / (n + 1 : ℝ) =
+      ∑ c : Composition (n + 1),
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+  have hcyc := cyclicFinset_sum_eq_composition n
+    (bwdCyclicContribution (n + 1))
+    (bwdCyclicContribution_unanchor (L := n + 1))
+  rw [← bwdPosTerm_eq_cyclicContribution_sum] at hcyc
+  rw [hcyc]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  rw [mul_div_cancel_left₀ _ hn]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  rw [bwdCyclicContribution, card_compositionStarts, bwdCyclicIntersectionMass,
+    bwdCompositionStartsIntersection_sum (Nat.zero_lt_succ n)]
+
+/-! ## Formal Sparre--Andersen renewal equations -/
+
+/-- Compositions of `n` with `k` blocks are positive `k`-vectors summing to `n`. -/
+noncomputable def compositionLengthEquiv (n k : ℕ) :
+    {c : Composition n // c.length = k} ≃
+      {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} where
+  toFun c :=
+    ⟨fun i => c.1.blocksFun (Fin.cast c.2.symm i),
+      ⟨fun i => c.1.one_le_blocksFun (Fin.cast c.2.symm i), by
+        let e : Fin k ≃ Fin c.1.length := finCongr c.2.symm
+        calc
+          (∑ i : Fin k, c.1.blocksFun (Fin.cast c.2.symm i)) =
+              ∑ i : Fin c.1.length, c.1.blocksFun i := e.sum_comp c.1.blocksFun
+          _ = n := c.1.sum_blocksFun⟩⟩
+  invFun v :=
+    ⟨{ blocks := List.ofFn v.1
+       blocks_pos := by
+         simpa only [List.forall_mem_ofFn_iff] using v.2.1
+       blocks_sum := by
+         rw [List.sum_ofFn]
+         exact v.2.2 }, by
+      exact List.length_ofFn⟩
+  left_inv c := by
+    rcases c with ⟨c, hc⟩
+    subst k
+    apply Subtype.ext
+    apply Composition.ext
+    simp [Composition.blocksFun]
+  right_inv v := by
+    apply Subtype.ext
+    funext i
+    simp [Composition.blocksFun]
+
+private def vectorExtend (k : ℕ) (v : Fin k → ℕ) (i : ℕ) : ℕ :=
+  if hi : i < k then v ⟨i, hi⟩ else 0
+
+private noncomputable def vectorFinsupp (k : ℕ) (v : Fin k → ℕ) : ℕ →₀ ℕ :=
+  Finsupp.onFinset (Finset.range k) (vectorExtend k v) (by
+    intro i hi
+    by_contra hik
+    have hnlt : ¬i < k := by simpa using hik
+    simp [vectorExtend, hnlt] at hi)
+
+@[simp]
+private theorem vectorFinsupp_apply_lt (k : ℕ) (v : Fin k → ℕ) (i : ℕ) (hi : i < k) :
+    vectorFinsupp k v i = v ⟨i, hi⟩ := by
+  simp [vectorFinsupp, vectorExtend, hi]
+
+private theorem vectorFinsupp_support_subset (k : ℕ) (v : Fin k → ℕ) :
+    (vectorFinsupp k v).support ⊆ Finset.range k :=
+  Finsupp.support_onFinset_subset
+
+private noncomputable def antidiagVectorEquiv (k n : ℕ) :
+    (Finset.finsuppAntidiag (Finset.range k) n) ≃
+      {v : Fin k → ℕ // ∑ i, v i = n} where
+  toFun l := ⟨fun i => l.1 i, by
+    rw [Fin.sum_univ_eq_sum_range]
+    exact (Finset.mem_finsuppAntidiag.mp l.2).1⟩
+  invFun v := by
+    refine ⟨vectorFinsupp k v.1, Finset.mem_finsuppAntidiag.mpr ⟨?_, ?_⟩⟩
+    · calc
+        (Finset.range k).sum (vectorFinsupp k v.1) =
+            ∑ i : Fin k, vectorFinsupp k v.1 i :=
+          (Fin.sum_univ_eq_sum_range (vectorFinsupp k v.1) k).symm
+        _ = ∑ i : Fin k, v.1 i := by
+          apply Finset.sum_congr rfl
+          intro i _hi
+          exact vectorFinsupp_apply_lt k v.1 i i.isLt
+        _ = n := v.2
+    · exact vectorFinsupp_support_subset k v.1
+  left_inv l := by
+    apply Subtype.ext
+    apply Finsupp.ext
+    intro i
+    by_cases hi : i < k
+    · exact vectorFinsupp_apply_lt k (fun j => l.1 j) i hi
+    · have hsupp := (Finset.mem_finsuppAntidiag.mp l.2).2
+      have hil : l.1 i = 0 := by
+        rw [← Finsupp.notMem_support_iff]
+        intro himem
+        exact hi (Finset.mem_range.mp (hsupp himem))
+      simp [vectorFinsupp, vectorExtend, hi, hil]
+  right_inv v := by
+    apply Subtype.ext
+    funext i
+    exact vectorFinsupp_apply_lt k v.1 i i.isLt
+
+@[simp]
+private theorem antidiagVectorEquiv_apply (k n : ℕ)
+    (l : Finset.finsuppAntidiag (Finset.range k) n) (i : Fin k) :
+    (antidiagVectorEquiv k n l).1 i = l.1 i := rfl
+
+private def positiveVectorEquiv (k n : ℕ) :
+    {v : {v : Fin k → ℕ // ∑ i, v i = n} // ∀ i, 0 < v.1 i} ≃
+      {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} where
+  toFun v := ⟨v.1.1, v.2, v.1.2⟩
+  invFun v := ⟨⟨v.1, v.2.2⟩, v.2.1⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+open Classical in
+/-- If `φ` has zero constant coefficient, coefficients of `φ ^ k` are indexed by the
+compositions with exactly `k` positive blocks. -/
+theorem coeff_pow_eq_composition_length_sum
+    (φ : PowerSeries ℝ) (hφ : PowerSeries.constantCoeff φ = 0) (k n : ℕ) :
+    PowerSeries.coeff n (φ ^ k) =
+      ∑ c : {c : Composition n // c.length = k},
+        ∏ i : Fin c.1.length, PowerSeries.coeff (c.1.blocksFun i) φ := by
+  letI : Fintype {v : Fin k → ℕ // ∑ i, v i = n} :=
+    Fintype.ofEquiv _ (antidiagVectorEquiv k n)
+  letI : Fintype {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n} :=
+    Fintype.ofEquiv _ (positiveVectorEquiv k n)
+  rw [PowerSeries.coeff_pow]
+  calc
+    (∑ l ∈ Finset.finsuppAntidiag (Finset.range k) n,
+        ∏ i ∈ Finset.range k, PowerSeries.coeff (l i) φ) =
+      ∑ l : Finset.finsuppAntidiag (Finset.range k) n,
+        ∏ i : Fin k, PowerSeries.coeff (l.1 i) φ := by
+      rw [← Finset.sum_attach]
+      apply Finset.sum_congr rfl
+      intro l _hl
+      exact (Fin.prod_univ_eq_prod_range
+        (fun i => PowerSeries.coeff (l.1 i) φ) k).symm
+    _ = ∑ v : {v : Fin k → ℕ // ∑ i, v i = n},
+        ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ := by
+      simpa only [antidiagVectorEquiv_apply] using
+        (antidiagVectorEquiv k n).sum_comp
+          (fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ)
+    _ = ∑ v : {v : {v : Fin k → ℕ // ∑ i, v i = n} // ∀ i, 0 < v.1 i},
+        ∏ i : Fin k, PowerSeries.coeff (v.1.1 i) φ := by
+      let S := {v : Fin k → ℕ // ∑ i, v i = n}
+      let P : S → Prop := fun v => ∀ i, 0 < v.1 i
+      let F : S → ℝ := fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ
+      change (∑ v : S, F v) = ∑ v : {v : S // P v}, F v.1
+      rw [← Finset.sum_subtype
+        (p := P) (Finset.univ.filter P) (by simp) F]
+      symm
+      apply Finset.sum_subset (Finset.filter_subset _ _)
+      intro v _hv hv
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, P] at hv
+      push Not at hv
+      obtain ⟨i, hi⟩ := hv
+      have hzero : v.1 i = 0 := by omega
+      apply Finset.prod_eq_zero (Finset.mem_univ i)
+      rw [hzero, PowerSeries.coeff_zero_eq_constantCoeff, hφ]
+    _ = ∑ v : {v : Fin k → ℕ // (∀ i, 0 < v i) ∧ ∑ i, v i = n},
+        ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ := by
+      exact (positiveVectorEquiv k n).sum_comp
+        (fun v => ∏ i : Fin k, PowerSeries.coeff (v.1 i) φ)
+    _ = _ := by
+      rw [← (compositionLengthEquiv n k).sum_comp]
+      apply Finset.sum_congr rfl
+      intro c _hc
+      rcases c with ⟨c, hc⟩
+      subst k
+      rfl
+
+private def compositionLengthSigmaEquiv (n : ℕ) :
+    (Σ k : Fin (n + 1), {c : Composition n // c.length = k}) ≃ Composition n where
+  toFun p := p.2.1
+  invFun c := ⟨⟨c.length, Nat.lt_succ_of_le c.length_le⟩, ⟨c, rfl⟩⟩
+  left_inv p := by
+    rcases p with ⟨k, c, hc⟩
+    have hk : (⟨c.length, Nat.lt_succ_of_le c.length_le⟩ : Fin (n + 1)) = k :=
+      Fin.ext hc
+    cases hk
+    rfl
+  right_inv _ := rfl
+
+open Classical in
+/-- The positive-degree coefficient of `log (1 + φ)` is its finite composition
+polynomial when `φ` has zero constant coefficient. -/
+theorem coeff_log_subst_eq_composition_sum
+    (φ : PowerSeries ℝ) (hφ : PowerSeries.constantCoeff φ = 0) (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n ((PowerSeries.log ℝ).subst φ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) / c.length *
+          ∏ i : Fin c.length, PowerSeries.coeff (c.blocksFun i) φ := by
+  have hsupp : Function.support (fun k : ℕ =>
+      PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ k)) ⊆
+      (Finset.range (n + 1) : Set ℕ) := by
+    intro k hk
+    simp only [Function.mem_support] at hk
+    by_contra hkrange
+    have hnk : n < k := by simpa [Finset.mem_range, not_lt] using hkrange
+    have hpow : PowerSeries.coeff n (φ ^ k) = 0 := by
+      rw [coeff_pow_eq_composition_length_sum φ hφ]
+      apply Finset.sum_eq_zero
+      rintro ⟨c, hc⟩ _hmem
+      exact False.elim (Nat.not_lt_of_ge c.length_le (hc.symm ▸ hnk))
+    simp [hpow] at hk
+  rw [PowerSeries.coeff_subst' (PowerSeries.HasSubst.of_constantCoeff_zero' hφ),
+    finsum_eq_sum_of_support_subset _ hsupp]
+  calc
+    (∑ k ∈ Finset.range (n + 1),
+        PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ k)) =
+      ∑ k : Fin (n + 1),
+        PowerSeries.coeff k (PowerSeries.log ℝ) • PowerSeries.coeff n (φ ^ (k : ℕ)) := by
+      exact (Fin.sum_univ_eq_sum_range (fun k =>
+        PowerSeries.coeff k (PowerSeries.log ℝ) •
+          PowerSeries.coeff n (φ ^ k)) (n + 1)).symm
+    _ = ∑ k : Fin (n + 1),
+        ∑ c : {c : Composition n // c.length = k},
+          PowerSeries.coeff k (PowerSeries.log ℝ) *
+            ∏ i : Fin c.1.length, PowerSeries.coeff (c.1.blocksFun i) φ := by
+      apply Finset.sum_congr rfl
+      intro k _hk
+      rw [coeff_pow_eq_composition_length_sum φ hφ (k : ℕ)]
+      simp only [smul_eq_mul, Finset.mul_sum]
+    _ = ∑ p : Σ k : Fin (n + 1), {c : Composition n // c.length = k},
+        PowerSeries.coeff p.1 (PowerSeries.log ℝ) *
+          ∏ i : Fin p.2.1.length, PowerSeries.coeff (p.2.1.blocksFun i) φ := by
+      rw [Fintype.sum_sigma]
+    _ = ∑ c : Composition n,
+        PowerSeries.coeff ((compositionLengthSigmaEquiv n).symm c).1
+            (PowerSeries.log ℝ) *
+          ∏ i : Fin ((compositionLengthSigmaEquiv n).symm c).2.1.length,
+            PowerSeries.coeff
+              (((compositionLengthSigmaEquiv n).symm c).2.1.blocksFun i) φ := by
+      exact ((compositionLengthSigmaEquiv n).symm.sum_comp
+        (fun p => PowerSeries.coeff p.1 (PowerSeries.log ℝ) *
+          ∏ i : Fin p.2.1.length,
+            PowerSeries.coeff (p.2.1.blocksFun i) φ)).symm
+    _ = ∑ c : Composition n,
+        PowerSeries.coeff c.length (PowerSeries.log ℝ) *
+          ∏ i : Fin c.length, PowerSeries.coeff (c.blocksFun i) φ := by
+      apply Finset.sum_congr rfl
+      intro c _hc
+      rfl
+    _ = _ := by
+      apply Finset.sum_congr rfl
+      intro c _hc
+      have hclen : c.length ≠ 0 := (c.length_pos_of_pos hn).ne'
+      rw [PowerSeries.coeff_log, if_neg hclen]
+      norm_num [map_div₀, map_pow]
+
+/-- The formal logarithm has derivative `(1 + X)⁻¹`, in multiplicative form. -/
+theorem one_add_X_mul_derivative_log :
+    (1 + PowerSeries.X : PowerSeries ℝ) *
+        (PowerSeries.derivative ℝ) (PowerSeries.log ℝ) = 1 := by
+  rw [PowerSeries.deriv_log]
+  ext (_ | n)
+  · norm_num
+  · simp [add_mul]
+    rw [pow_succ]
+    ring
+
+/-- Formal logarithmic differentiation: `Q (log Q)' = Q'` for a series with constant
+coefficient one. -/
+theorem mul_derivative_logOf (Q : PowerSeries ℝ)
+    (hQ : PowerSeries.constantCoeff Q = 1) :
+    Q * (PowerSeries.derivative ℝ) (PowerSeries.logOf Q) =
+      (PowerSeries.derivative ℝ) Q := by
+  let φ := Q - 1
+  have hφ : PowerSeries.constantCoeff φ = 0 := by
+    dsimp [φ]
+    rw [map_sub, map_one, hQ, sub_self]
+  have hsubst : PowerSeries.HasSubst φ :=
+    PowerSeries.HasSubst.of_constantCoeff_zero' hφ
+  have hinv : Q *
+      ((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ = 1 := by
+    have hsub := congrArg (fun f : PowerSeries ℝ => f.subst φ)
+      one_add_X_mul_derivative_log
+    rw [PowerSeries.subst_mul hsubst,
+      PowerSeries.subst_add hsubst,
+      PowerSeries.subst_X hsubst] at hsub
+    have hone : PowerSeries.subst φ (1 : PowerSeries ℝ) = 1 := by
+      rw [← PowerSeries.coe_substAlgHom hsubst]
+      exact map_one (PowerSeries.substAlgHom hsubst)
+    rw [hone] at hsub
+    convert hsub using 1 <;> dsimp [φ] <;> ring
+  rw [PowerSeries.logOf_eq, PowerSeries.derivative_subst hsubst]
+  calc
+    Q * (((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ *
+        (PowerSeries.derivative ℝ) φ) =
+      (Q * ((PowerSeries.derivative ℝ) (PowerSeries.log ℝ)).subst φ) *
+        (PowerSeries.derivative ℝ) φ := by ring
+    _ = (PowerSeries.derivative ℝ) Q := by
+      rw [hinv, one_mul]
+      dsimp [φ]
+      simp
+
+/-- The generating power series of forward survival probabilities. -/
+noncomputable def fwdSurvivalSeries : PowerSeries ℝ :=
+  PowerSeries.mk fun n => (fwdSurv n : ℝ)
+
+@[simp]
+theorem coeff_fwdSurvivalSeries (n : ℕ) :
+    PowerSeries.coeff n fwdSurvivalSeries = (fwdSurv n : ℝ) := by
+  simp [fwdSurvivalSeries]
+
+@[simp]
+theorem fwdSurv_zero : (fwdSurv 0 : ℝ) = 1 := by
+  have hq : fwdSurv 0 = 1 := by
+    rw [fwdSurv]
+    calc
+      (∑ w : Fin 0 → Bool,
+          if ∀ t : ℕ, 1 ≤ t → t ≤ 0 →
+              2 ^ (t + (Finset.univ.filter fun i : Fin 0 =>
+                i.val < t ∧ w i = true).card) < 3 ^ t then
+            (1 / 2 : ℚ) ^ 0 else 0) = ∑ _w : Fin 0 → Bool, (1 : ℚ) := by
+        apply Finset.sum_congr rfl
+        intro w _hw
+        rw [if_pos]
+        · norm_num
+        · intro t ht ht0
+          omega
+      _ = 1 := by simp
+  exact_mod_cast hq
+
+@[simp]
+theorem constantCoeff_fwdSurvivalSeries :
+    PowerSeries.constantCoeff fwdSurvivalSeries = 1 := by
+  rw [← PowerSeries.coeff_zero_eq_constantCoeff_apply]
+  simp
+
+private theorem constantCoeff_fwdSurvivalSeries_sub_one :
+    PowerSeries.constantCoeff (fwdSurvivalSeries - 1) = 0 := by
+  rw [map_sub, map_one, constantCoeff_fwdSurvivalSeries, sub_self]
+
+private theorem coeff_fwdSurvivalSeries_sub_one (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (fwdSurvivalSeries - 1) = (fwdSurv n : ℝ) := by
+  rw [map_sub, coeff_fwdSurvivalSeries, PowerSeries.coeff_one, if_neg hn.ne']
+  simp
+
+open Classical in
+/-- Positive coefficients of the formal logarithm of the forward survival series are the
+forward endpoint-positive probabilities divided by time. -/
+theorem coeff_logOf_fwdSurvivalSeries (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (PowerSeries.logOf fwdSurvivalSeries) =
+      fwdPosTerm n / n := by
+  rw [PowerSeries.logOf_eq,
+    coeff_log_subst_eq_composition_sum
+      (fwdSurvivalSeries - 1) constantCoeff_fwdSurvivalSeries_sub_one n hn]
+  have hcomp : fwdPosTerm n / (n : ℝ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+    have hbase := fwdPosTerm_div_eq_composition_sum (n - 1)
+    have hcast : ((n - 1 : ℕ) : ℝ) + 1 = n := by
+      exact_mod_cast Nat.sub_add_cancel hn
+    rw [Nat.sub_add_cancel hn, hcast] at hbase
+    exact hbase
+  rw [hcomp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  have hprod :
+      (∏ i : Fin c.length,
+          PowerSeries.coeff (c.blocksFun i) (fwdSurvivalSeries - 1)) =
+        ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+    apply Finset.prod_congr rfl
+    intro i _hi
+    rw [coeff_fwdSurvivalSeries_sub_one]
+    exact c.one_le_blocksFun i
+  rw [hprod]
+  ring
+
+open Classical in
+/-- The forward survival probabilities satisfy the Sparre--Andersen renewal recurrence. -/
+theorem fwdSurv_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (fwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) * fwdPosTerm (n - k + 1) := by
+  have h := congrArg (PowerSeries.coeff n)
+    (mul_derivative_logOf fwdSurvivalSeries constantCoeff_fwdSurvivalSeries)
+  rw [PowerSeries.coeff_mul, PowerSeries.coeff_derivative,
+    coeff_fwdSurvivalSeries] at h
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk] at h
+  simp only [coeff_fwdSurvivalSeries, PowerSeries.coeff_derivative] at h
+  have hterm : ∀ k ∈ Finset.range (n + 1),
+      PowerSeries.coeff (n - k + 1) (PowerSeries.logOf fwdSurvivalSeries) *
+          (((n - k : ℕ) : ℝ) + 1) = fwdPosTerm (n - k + 1) := by
+    intro k hk
+    rw [coeff_logOf_fwdSurvivalSeries]
+    · have hcast : ((n - k + 1 : ℕ) : ℝ) = ((n - k : ℕ) : ℝ) + 1 := by
+        norm_num
+      rw [← hcast]
+      field_simp
+    · omega
+  have hsum :
+      (∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) *
+          (PowerSeries.coeff (n - k + 1) (PowerSeries.logOf fwdSurvivalSeries) *
+            (((n - k : ℕ) : ℝ) + 1))) =
+        ∑ k ∈ Finset.range (n + 1),
+          (fwdSurv k : ℝ) * fwdPosTerm (n - k + 1) := by
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [hterm k hk]
+  rw [hsum] at h
+  nlinarith
+
+/-- The generating power series of backward survival probabilities. -/
+noncomputable def bwdSurvivalSeries : PowerSeries ℝ :=
+  PowerSeries.mk fun n => (bwdSurv n : ℝ)
+
+@[simp]
+theorem coeff_bwdSurvivalSeries (n : ℕ) :
+    PowerSeries.coeff n bwdSurvivalSeries = (bwdSurv n : ℝ) := by
+  simp [bwdSurvivalSeries]
+
+@[simp]
+theorem bwdSurv_zero : (bwdSurv 0 : ℝ) = 1 := by
+  have hq : bwdSurv 0 = 1 := by
+    rw [bwdSurv]
+    calc
+      (∑ w : Fin 0 → Bool,
+          if ∀ t : ℕ, 1 ≤ t → t ≤ 0 →
+              3 ^ t < 2 ^ (t + (Finset.univ.filter fun i : Fin 0 =>
+                i.val < t ∧ w i = true).card) then
+            (2 / 3 : ℚ) ^ (Finset.univ.filter fun i : Fin 0 => w i = true).card *
+              (1 / 3 : ℚ) ^ (Finset.univ.filter fun i : Fin 0 => w i = false).card
+          else 0) = ∑ _w : Fin 0 → Bool, (1 : ℚ) := by
+        apply Finset.sum_congr rfl
+        intro w _hw
+        rw [if_pos]
+        · norm_num
+        · intro t ht ht0
+          omega
+      _ = 1 := by simp
+  exact_mod_cast hq
+
+@[simp]
+theorem constantCoeff_bwdSurvivalSeries :
+    PowerSeries.constantCoeff bwdSurvivalSeries = 1 := by
+  rw [← PowerSeries.coeff_zero_eq_constantCoeff_apply]
+  simp
+
+private theorem constantCoeff_bwdSurvivalSeries_sub_one :
+    PowerSeries.constantCoeff (bwdSurvivalSeries - 1) = 0 := by
+  rw [map_sub, map_one, constantCoeff_bwdSurvivalSeries, sub_self]
+
+private theorem coeff_bwdSurvivalSeries_sub_one (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (bwdSurvivalSeries - 1) = (bwdSurv n : ℝ) := by
+  rw [map_sub, coeff_bwdSurvivalSeries, PowerSeries.coeff_one, if_neg hn.ne']
+  simp
+
+open Classical in
+/-- Positive coefficients of the formal logarithm of the backward survival series are the
+backward endpoint-positive probabilities divided by time. -/
+theorem coeff_logOf_bwdSurvivalSeries (n : ℕ) (hn : 0 < n) :
+    PowerSeries.coeff n (PowerSeries.logOf bwdSurvivalSeries) =
+      bwdPosTerm n / n := by
+  rw [PowerSeries.logOf_eq,
+    coeff_log_subst_eq_composition_sum
+      (bwdSurvivalSeries - 1) constantCoeff_bwdSurvivalSeries_sub_one n hn]
+  have hcomp : bwdPosTerm n / (n : ℝ) =
+      ∑ c : Composition n,
+        (-1 : ℝ) ^ (c.length + 1) *
+          (∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ)) / c.length := by
+    have hbase := bwdPosTerm_div_eq_composition_sum (n - 1)
+    have hcast : ((n - 1 : ℕ) : ℝ) + 1 = n := by
+      exact_mod_cast Nat.sub_add_cancel hn
+    rw [Nat.sub_add_cancel hn, hcast] at hbase
+    exact hbase
+  rw [hcomp]
+  apply Finset.sum_congr rfl
+  intro c _hc
+  have hprod :
+      (∏ i : Fin c.length,
+          PowerSeries.coeff (c.blocksFun i) (bwdSurvivalSeries - 1)) =
+        ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+    apply Finset.prod_congr rfl
+    intro i _hi
+    rw [coeff_bwdSurvivalSeries_sub_one]
+    exact c.one_le_blocksFun i
+  rw [hprod]
+  ring
+
+open Classical in
+/-- The backward survival probabilities satisfy the Sparre--Andersen renewal recurrence. -/
+theorem bwdSurv_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (bwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) * bwdPosTerm (n - k + 1) := by
+  have h := congrArg (PowerSeries.coeff n)
+    (mul_derivative_logOf bwdSurvivalSeries constantCoeff_bwdSurvivalSeries)
+  rw [PowerSeries.coeff_mul, PowerSeries.coeff_derivative,
+    coeff_bwdSurvivalSeries] at h
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk] at h
+  simp only [coeff_bwdSurvivalSeries, PowerSeries.coeff_derivative] at h
+  have hterm : ∀ k ∈ Finset.range (n + 1),
+      PowerSeries.coeff (n - k + 1) (PowerSeries.logOf bwdSurvivalSeries) *
+          (((n - k : ℕ) : ℝ) + 1) = bwdPosTerm (n - k + 1) := by
+    intro k hk
+    rw [coeff_logOf_bwdSurvivalSeries]
+    · have hcast : ((n - k + 1 : ℕ) : ℝ) = ((n - k : ℕ) : ℝ) + 1 := by
+        norm_num
+      rw [← hcast]
+      field_simp
+    · omega
+  have hsum :
+      (∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) *
+          (PowerSeries.coeff (n - k + 1) (PowerSeries.logOf bwdSurvivalSeries) *
+            (((n - k : ℕ) : ℝ) + 1))) =
+        ∑ k ∈ Finset.range (n + 1),
+          (bwdSurv k : ℝ) * bwdPosTerm (n - k + 1) := by
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [hterm k hk]
+  rw [hsum] at h
+  nlinarith
+
+/-! ## Abelian boundary passage and directional limits -/
+
+open Classical in
+theorem sum_fwdWordWeight_one :
+    (∑ v : Fin 1 → Bool, fwdWordWeight v) = 1 := by
+  simp [fwdWordWeight]
+
+open Classical in
+theorem sum_bwdWordWeight_one :
+    (∑ v : Fin 1 → Bool, bwdWordWeight v) = 1 := by
+  unfold bwdWordWeight
+  change (∑ v : Fin 1 → Bool,
+    (fun o : ℕ => (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (1 - o)) (wordTrueCount v)) = 1
+  rw [sum_boolWords_by_trueCount 1
+    (fun o : ℕ => (2 / 3 : ℝ) ^ o * (1 / 3 : ℝ) ^ (1 - o))]
+  norm_num [Finset.sum_range_succ]
+
+theorem fwdWordWeight_nonneg {L : ℕ} (w : Fin L → Bool) :
+    0 ≤ fwdWordWeight w := by
+  unfold fwdWordWeight
+  positivity
+
+theorem bwdWordWeight_nonneg {L : ℕ} (w : Fin L → Bool) :
+    0 ≤ bwdWordWeight w := by
+  unfold bwdWordWeight
+  positivity
+
+open Classical in
+theorem fwdSurv_succ_le (L : ℕ) :
+    (fwdSurv (L + 1) : ℝ) ≤ (fwdSurv L : ℝ) := by
+  rw [fwdSurv_cast_eq_weighted_word_sum, fwdSurv_cast_eq_weighted_word_sum]
+  calc
+    (∑ w : Fin (L + 1) → Bool, if FwdGood (L + 1) w then fwdWordWeight w else 0) =
+        ∑ p : (Fin L → Bool) × (Fin 1 → Bool),
+          if FwdGood (L + 1) (Fin.append p.1 p.2) then
+            fwdWordWeight (Fin.append p.1 p.2) else 0 := by
+      exact ((Fin.appendEquiv L 1).sum_comp (fun w =>
+        if FwdGood (L + 1) w then fwdWordWeight w else 0)).symm
+    _ = ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if FwdGood (L + 1) (Fin.append u v) then
+            fwdWordWeight (Fin.append u v) else 0 := by
+      rw [Fintype.sum_prod_type]
+    _ ≤ ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if FwdGood L u then fwdWordWeight (Fin.append u v) else 0 := by
+      apply Finset.sum_le_sum
+      intro u _hu
+      apply Finset.sum_le_sum
+      intro v _hv
+      split_ifs with huv hu
+      · exact le_rfl
+      · exact False.elim (hu (FwdGood.of_append_left huv))
+      · exact fwdWordWeight_nonneg _
+      · exact le_rfl
+    _ = ∑ u : Fin L → Bool, if FwdGood L u then fwdWordWeight u else 0 := by
+      apply Finset.sum_congr rfl
+      intro u _hu
+      split_ifs
+      · simp_rw [fwdWordWeight_append]
+        rw [← Finset.mul_sum, sum_fwdWordWeight_one, mul_one]
+      · simp
+
+open Classical in
+theorem bwdSurv_succ_le (L : ℕ) :
+    (bwdSurv (L + 1) : ℝ) ≤ (bwdSurv L : ℝ) := by
+  rw [bwdSurv_cast_eq_weighted_word_sum, bwdSurv_cast_eq_weighted_word_sum]
+  calc
+    (∑ w : Fin (L + 1) → Bool, if BwdGood (L + 1) w then bwdWordWeight w else 0) =
+        ∑ p : (Fin L → Bool) × (Fin 1 → Bool),
+          if BwdGood (L + 1) (Fin.append p.1 p.2) then
+            bwdWordWeight (Fin.append p.1 p.2) else 0 := by
+      exact ((Fin.appendEquiv L 1).sum_comp (fun w =>
+        if BwdGood (L + 1) w then bwdWordWeight w else 0)).symm
+    _ = ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if BwdGood (L + 1) (Fin.append u v) then
+            bwdWordWeight (Fin.append u v) else 0 := by
+      rw [Fintype.sum_prod_type]
+    _ ≤ ∑ u : Fin L → Bool, ∑ v : Fin 1 → Bool,
+          if BwdGood L u then bwdWordWeight (Fin.append u v) else 0 := by
+      apply Finset.sum_le_sum
+      intro u _hu
+      apply Finset.sum_le_sum
+      intro v _hv
+      split_ifs with huv hu
+      · exact le_rfl
+      · exact False.elim (hu (BwdGood.of_append_left huv))
+      · exact bwdWordWeight_nonneg _
+      · exact le_rfl
+    _ = ∑ u : Fin L → Bool, if BwdGood L u then bwdWordWeight u else 0 := by
+      apply Finset.sum_congr rfl
+      intro u _hu
+      split_ifs
+      · simp_rw [bwdWordWeight_append]
+        rw [← Finset.mul_sum, sum_bwdWordWeight_one, mul_one]
+      · simp
+
+theorem antitone_fwdSurv : Antitone fun L : ℕ => (fwdSurv L : ℝ) :=
+  antitone_nat_of_succ_le fwdSurv_succ_le
+
+theorem antitone_bwdSurv : Antitone fun L : ℕ => (bwdSurv L : ℝ) :=
+  antitone_nat_of_succ_le bwdSurv_succ_le
+
+noncomputable def shiftedPowerSeries (q : ℕ → ℝ) (x : ℝ) : ℝ :=
+  q 0 + ∑' n : ℕ, q (n + 1) * x ^ (n + 1)
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_shiftedPowerSeries (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (shiftedPowerSeries q)
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) x := by
+  let r : ℝ := (|x| + 1) / 2
+  have hr0 : 0 ≤ r := by dsimp [r]; positivity
+  have hxr : |x| < r := by dsimp [r]; linarith
+  have hrpos : 0 < r := (abs_nonneg x).trans_lt hxr
+  have hr1 : r < 1 := by dsimp [r]; linarith
+  have hrnorm : ‖r‖ < 1 := by simpa [Real.norm_eq_abs, abs_of_nonneg hr0]
+  have hu : Summable (fun n : ℕ => (n + 1 : ℝ) * r ^ n) := by
+    have hn := summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 1 hrnorm
+    have hg := summable_geometric_of_lt_one hr0 hr1
+    simpa [pow_one, add_mul] using hn.add hg
+  have hseries := hasDerivAt_tsum_of_isPreconnected
+    (g := fun (n : ℕ) (y : ℝ) => q (n + 1) * y ^ (n + 1))
+    (g' := fun (n : ℕ) (y : ℝ) => (n + 1 : ℝ) * q (n + 1) * y ^ n)
+    (u := fun n : ℕ => (n + 1 : ℝ) * r ^ n)
+    hu isOpen_Ioo Set.ordConnected_Ioo.isPreconnected
+    (fun n y _hy => by
+      simpa [Nat.add_sub_cancel, mul_comm, mul_left_comm, mul_assoc] using
+        (hasDerivAt_pow (n + 1) y).const_mul (q (n + 1)))
+    (fun n y hy => by
+      have hay : |y| < r := abs_lt.mpr hy
+      rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_pow]
+      have hn0 : (0 : ℝ) ≤ n + 1 := by positivity
+      rw [abs_of_nonneg hn0]
+      calc
+        (n + 1 : ℝ) * |q (n + 1)| * |y| ^ n ≤
+            (n + 1 : ℝ) * 1 * r ^ n := by
+          gcongr
+          · exact hq (n + 1)
+        _ = (n + 1 : ℝ) * r ^ n := by ring)
+    (show (0 : ℝ) ∈ Set.Ioo (-r) r by simp [hrpos])
+    (show Summable (fun n : ℕ => q (n + 1) * (0 : ℝ) ^ (n + 1)) by simp)
+    (show x ∈ Set.Ioo (-r) r by exact abs_lt.mp hxr)
+  unfold shiftedPowerSeries
+  exact hseries.const_add (q 0)
+
+noncomputable def defectCoeff (a : ℕ → ℝ) : ℕ → ℝ
+  | 0 => 0
+  | n + 1 => a (n + 1) / (n + 1)
+
+noncomputable def defectPowerSeries (a : ℕ → ℝ) (x : ℝ) : ℝ :=
+  shiftedPowerSeries (defectCoeff a) x
+
+theorem abs_defectCoeff_le_one (a : ℕ → ℝ) (ha : ∀ n, |a n| ≤ 1) :
+    ∀ n, |defectCoeff a n| ≤ 1 := by
+  intro n
+  cases n with
+  | zero => simp [defectCoeff]
+  | succ n =>
+      rw [defectCoeff, abs_div]
+      apply (div_le_one (by positivity : (0 : ℝ) < |(n + 1 : ℝ)|)).2
+      calc
+        |a (n + 1)| ≤ 1 := ha (n + 1)
+        _ ≤ |(n + 1 : ℝ)| := by
+          rw [abs_of_nonneg (by positivity)]
+          norm_num
+
+theorem hasDerivAt_defectPowerSeries (a : ℕ → ℝ)
+    (ha : ∀ n, |a n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (defectPowerSeries a)
+      (∑' n : ℕ, a (n + 1) * x ^ n) x := by
+  have h := hasDerivAt_shiftedPowerSeries (defectCoeff a)
+    (abs_defectCoeff_le_one a ha) hx
+  unfold defectPowerSeries
+  convert h using 1
+  apply tsum_congr
+  intro n
+  rw [defectCoeff]
+  have hn : (n + 1 : ℝ) ≠ 0 := by positivity
+  field_simp
+
+theorem summable_powerSeries_of_abs_le_one (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    Summable fun n : ℕ => q n * x ^ n := by
+  apply Summable.of_norm_bounded (summable_geometric_of_lt_one (abs_nonneg x) hx)
+  intro n
+  rw [norm_mul, Real.norm_eq_abs, norm_pow, Real.norm_eq_abs]
+  calc
+    |q n| * |x| ^ n ≤ 1 * |x| ^ n := by gcongr; exact hq n
+    _ = |x| ^ n := one_mul _
+
+theorem shiftedPowerSeries_eq_tsum (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    shiftedPowerSeries q x = ∑' n : ℕ, q n * x ^ n := by
+  have hsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hsplit := hsum.sum_add_tsum_nat_add 1
+  unfold shiftedPowerSeries
+  simpa [Finset.sum_range_succ] using hsplit
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_shiftedPowerSeries_of_recurrence
+    (q a : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (shiftedPowerSeries q)
+      (shiftedPowerSeries q x *
+        ∑' n : ℕ, (1 - a (n + 1)) * x ^ n) x := by
+  have hgabs : ∀ n : ℕ, |1 - a (n + 1)| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (sub_nonneg.mpr (ha1 (n + 1)))]
+    linarith [ha0 (n + 1)]
+  have hqsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hgsum := summable_powerSeries_of_abs_le_one (fun n => 1 - a (n + 1)) hgabs hx
+  have hcauchy := tsum_mul_tsum_eq_tsum_sum_range_of_summable_norm hqsum.norm hgsum.norm
+  have hvalue :
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) =
+        shiftedPowerSeries q x *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := by
+    calc
+      (∑' n : ℕ, (n + 1 : ℝ) * q (n + 1) * x ^ n) =
+          ∑' n : ℕ,
+            (∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1))) * x ^ n := by
+        apply tsum_congr
+        intro n
+        rw [hrec n]
+      _ = ∑' n : ℕ, ∑ k ∈ Finset.range (n + 1),
+            (q k * x ^ k) * ((1 - a (n - k + 1)) * x ^ (n - k)) := by
+        apply tsum_congr
+        intro n
+        rw [Finset.sum_mul]
+        apply Finset.sum_congr rfl
+        intro k hk
+        have hkn : k ≤ n := Nat.le_of_lt_succ (Finset.mem_range.mp hk)
+        have hpow : x ^ n = x ^ k * x ^ (n - k) := by
+          rw [← pow_add, Nat.add_sub_of_le hkn]
+        rw [hpow]
+        ring
+      _ = (∑' n : ℕ, q n * x ^ n) *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := hcauchy.symm
+      _ = shiftedPowerSeries q x *
+          ∑' n : ℕ, (1 - a (n + 1)) * x ^ n := by
+        rw [shiftedPowerSeries_eq_tsum q hq hx]
+  exact (hasDerivAt_shiftedPowerSeries q hq hx).congr_deriv hvalue
+
+theorem one_sub_defectSeries_eq (a : ℕ → ℝ)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    {x : ℝ} (hx : |x| < 1) :
+    (∑' n : ℕ, (1 - a (n + 1)) * x ^ n) =
+      1 / (1 - x) - ∑' n : ℕ, a (n + 1) * x ^ n := by
+  have haabs : ∀ n : ℕ, |a (n + 1)| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (ha0 (n + 1))]
+    exact ha1 (n + 1)
+  have hasum := summable_powerSeries_of_abs_le_one (fun n => a (n + 1)) haabs hx
+  have hgeom : Summable fun n : ℕ => x ^ n :=
+    summable_geometric_of_norm_lt_one (by simpa [Real.norm_eq_abs] using hx)
+  calc
+    (∑' n : ℕ, (1 - a (n + 1)) * x ^ n) =
+        (∑' n : ℕ, (x ^ n - a (n + 1) * x ^ n)) := by
+      apply tsum_congr
+      intro n
+      ring
+    _ = (∑' n : ℕ, x ^ n) - (∑' n : ℕ, a (n + 1) * x ^ n) :=
+      hgeom.tsum_sub hasum
+    _ = 1 / (1 - x) - (∑' n : ℕ, a (n + 1) * x ^ n) := by
+      rw [tsum_geometric_of_norm_lt_one (by simpa [Real.norm_eq_abs] using hx)]
+      simp [div_eq_mul_inv]
+
+noncomputable def integratingFactor (q a : ℕ → ℝ) (x : ℝ) : ℝ :=
+  (1 - x) * shiftedPowerSeries q x * Real.exp (defectPowerSeries a x)
+
+set_option maxHeartbeats 800000 in
+theorem hasDerivAt_integratingFactor
+    (q a : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    HasDerivAt (integratingFactor q a) 0 x := by
+  have haabs : ∀ n, |a n| ≤ 1 := by
+    intro n
+    rw [abs_of_nonneg (ha0 n)]
+    exact ha1 n
+  have hQ := hasDerivAt_shiftedPowerSeries_of_recurrence q a hq ha0 ha1 hrec hx
+  have hA := hasDerivAt_defectPowerSeries a haabs hx
+  have hprod := (((hasDerivAt_const x 1).sub (hasDerivAt_id x)).mul hQ).mul hA.exp
+  have hvalue :
+      (((0 - 1) * shiftedPowerSeries q x +
+          (1 - x) * (shiftedPowerSeries q x *
+            ∑' n : ℕ, (1 - a (n + 1)) * x ^ n)) *
+          Real.exp (defectPowerSeries a x) +
+        ((1 - x) * shiftedPowerSeries q x) *
+          (Real.exp (defectPowerSeries a x) *
+            ∑' n : ℕ, a (n + 1) * x ^ n)) = 0 := by
+    rw [one_sub_defectSeries_eq a ha0 ha1 hx]
+    have hxlt : x < 1 := (le_abs_self x).trans_lt hx
+    have hden : 1 - x ≠ 0 := sub_ne_zero.mpr (ne_of_gt hxlt)
+    field_simp
+    ring
+  apply (hprod.congr_deriv hvalue).congr_of_eventuallyEq
+  exact Filter.Eventually.of_forall fun y => by
+    simp [integratingFactor]
+
+set_option maxHeartbeats 800000 in
+theorem sparreAndersen_generating_identity
+    (q a : ℕ → ℝ) (hq0 : q 0 = 1) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    {x : ℝ} (hx : |x| < 1) :
+    (1 - x) * shiftedPowerSeries q x =
+      Real.exp (-defectPowerSeries a x) := by
+  have hdiff : DifferentiableOn ℝ (integratingFactor q a) (Set.Ioo (-1) 1) := by
+    intro y hy
+    exact (hasDerivAt_integratingFactor q a hq ha0 ha1 hrec
+      (abs_lt.mpr hy)).differentiableAt.differentiableWithinAt
+  have hderiv : Set.EqOn (deriv (integratingFactor q a)) 0 (Set.Ioo (-1) 1) := by
+    intro y hy
+    exact (hasDerivAt_integratingFactor q a hq ha0 ha1 hrec
+      (abs_lt.mpr hy)).deriv
+  have hconst := isOpen_Ioo.is_const_of_deriv_eq_zero
+    Set.ordConnected_Ioo.isPreconnected hdiff hderiv (abs_lt.mp hx)
+    (show (0 : ℝ) ∈ Set.Ioo (-1) 1 by norm_num)
+  have hzero : integratingFactor q a 0 = 1 := by
+    simp [integratingFactor, shiftedPowerSeries, defectPowerSeries,
+      defectCoeff, hq0]
+  rw [hzero] at hconst
+  have hexp : Real.exp (defectPowerSeries a x) ≠ 0 := Real.exp_ne_zero _
+  rw [integratingFactor] at hconst
+  calc
+    (1 - x) * shiftedPowerSeries q x =
+        1 / Real.exp (defectPowerSeries a x) := (eq_div_iff hexp).2 hconst
+    _ = Real.exp (-defectPowerSeries a x) := by
+      simp [Real.exp_neg, div_eq_mul_inv]
+
+def differenceCoeff (q : ℕ → ℝ) : ℕ → ℝ
+  | 0 => q 0
+  | n + 1 => q (n + 1) - q n
+
+theorem sum_range_succ_differenceCoeff (q : ℕ → ℝ) (n : ℕ) :
+    (∑ i ∈ Finset.range (n + 1), differenceCoeff q i) = q n := by
+  induction n with
+  | zero => simp [differenceCoeff]
+  | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      simp [differenceCoeff]
+
+theorem summable_differencePowerSeries (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    Summable fun n : ℕ => differenceCoeff q n * x ^ n := by
+  have hgeom := (summable_geometric_of_lt_one (abs_nonneg x) hx).mul_left 2
+  apply Summable.of_norm_bounded hgeom
+  intro n
+  rw [norm_mul, Real.norm_eq_abs, norm_pow, Real.norm_eq_abs]
+  have hd : |differenceCoeff q n| ≤ 2 := by
+    cases n with
+    | zero => simpa [differenceCoeff] using (hq 0).trans (by norm_num : (1 : ℝ) ≤ 2)
+    | succ n =>
+        rw [differenceCoeff]
+        exact (abs_sub _ _).trans (by linarith [hq (n + 1), hq n])
+  gcongr
+
+set_option maxHeartbeats 800000 in
+theorem differencePowerSeries_eq (q : ℕ → ℝ)
+    (hq : ∀ n, |q n| ≤ 1) {x : ℝ} (hx : |x| < 1) :
+    (∑' n : ℕ, differenceCoeff q n * x ^ n) =
+      (1 - x) * shiftedPowerSeries q x := by
+  have hqsum := summable_powerSeries_of_abs_le_one q hq hx
+  have hnextBase := summable_powerSeries_of_abs_le_one (fun n => q (n + 1)) (fun n => hq (n + 1)) hx
+  have hnext : Summable fun n : ℕ => q (n + 1) * x ^ (n + 1) := by
+    exact (hnextBase.mul_right x).congr (fun n => by rw [pow_succ]; ring)
+  have hcurrent : Summable fun n : ℕ => q n * x ^ (n + 1) := by
+    exact (hqsum.mul_right x).congr (fun n => by rw [pow_succ]; ring)
+  have hdiff := summable_differencePowerSeries q hq hx
+  have hsplit := hdiff.sum_add_tsum_nat_add 1
+  have hcurrentValue :
+      (∑' n : ℕ, q n * x ^ (n + 1)) =
+        x * ∑' n : ℕ, q n * x ^ n := by
+    rw [← tsum_mul_left]
+    apply tsum_congr
+    intro n
+    rw [pow_succ]
+    ring
+  calc
+    (∑' n : ℕ, differenceCoeff q n * x ^ n) =
+        differenceCoeff q 0 +
+          ∑' n : ℕ, differenceCoeff q (n + 1) * x ^ (n + 1) := by
+      simpa [Finset.sum_range_succ] using hsplit.symm
+    _ = q 0 + ∑' n : ℕ,
+        (q (n + 1) * x ^ (n + 1) - q n * x ^ (n + 1)) := by
+      rw [differenceCoeff]
+      congr 1
+      apply tsum_congr
+      intro n
+      rw [differenceCoeff]
+      ring
+    _ = q 0 + ((∑' n : ℕ, q (n + 1) * x ^ (n + 1)) -
+        ∑' n : ℕ, q n * x ^ (n + 1)) := by
+      rw [hnext.tsum_sub hcurrent]
+    _ = shiftedPowerSeries q x - x * (∑' n : ℕ, q n * x ^ n) := by
+      rw [hcurrentValue]
+      rw [shiftedPowerSeries]
+      ring
+    _ = shiftedPowerSeries q x - x * shiftedPowerSeries q x := by
+      rw [← shiftedPowerSeries_eq_tsum q hq hx]
+    _ = (1 - x) * shiftedPowerSeries q x := by ring
+
+theorem tendsto_one_sub_mul_shiftedPowerSeries
+    (q : ℕ → ℝ) (hq : ∀ n, |q n| ≤ 1) {l : ℝ}
+    (hqlim : Filter.Tendsto q Filter.atTop (nhds l)) :
+    Filter.Tendsto (fun x : ℝ => (1 - x) * shiftedPowerSeries q x)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1)) (nhds l) := by
+  have hpartialShift : Filter.Tendsto
+      (fun n => ∑ i ∈ Finset.range (n + 1), differenceCoeff q i)
+      Filter.atTop (nhds l) :=
+    hqlim.congr' (Filter.Eventually.of_forall fun n =>
+      (sum_range_succ_differenceCoeff q n).symm)
+  have hpartial : Filter.Tendsto
+      (fun n => ∑ i ∈ Finset.range n, differenceCoeff q i)
+      Filter.atTop (nhds l) :=
+    (Filter.tendsto_add_atTop_iff_nat 1).mp (by simpa using hpartialShift)
+  have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt hpartial
+  apply habel.congr'
+  have hpos : ∀ᶠ x : ℝ in nhdsWithin (1 : ℝ) (Set.Iio 1), 0 < x :=
+    (show ∀ᶠ x : ℝ in nhds (1 : ℝ), 0 < x from
+      eventually_gt_nhds (by norm_num)).filter_mono inf_le_left
+  filter_upwards [hpos, self_mem_nhdsWithin] with x hx0 hx1
+  exact differencePowerSeries_eq q hq (abs_lt.mpr ⟨by linarith, hx1⟩)
+
+theorem defectPowerSeries_eq (a : ℕ → ℝ) (x : ℝ) :
+    defectPowerSeries a x =
+      x * ∑' n : ℕ, (a (n + 1) / (n + 1 : ℝ)) * x ^ n := by
+  rw [defectPowerSeries, shiftedPowerSeries]
+  simp only [defectCoeff, zero_add]
+  rw [← tsum_mul_left]
+  apply tsum_congr
+  intro n
+  rw [pow_succ]
+  ring
+
+theorem tendsto_defectPowerSeries (a : ℕ → ℝ)
+    (hsum : Summable fun n : ℕ => a (n + 1) / (n + 1 : ℝ)) :
+    Filter.Tendsto (defectPowerSeries a)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1))
+      (nhds (∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))) := by
+  have hpartial := hsum.hasSum.tendsto_sum_nat
+  have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt hpartial
+  have hid : Filter.Tendsto (fun x : ℝ => x)
+      (nhdsWithin (1 : ℝ) (Set.Iio 1)) (nhds 1) :=
+    continuousAt_id.mono_left inf_le_left
+  have hmul := hid.mul habel
+  simpa only [one_mul] using hmul.congr' (Filter.Eventually.of_forall fun x =>
+    (defectPowerSeries_eq a x).symm)
+
+set_option maxHeartbeats 800000 in
+theorem sparreAndersen_limit
+    (q a : ℕ → ℝ) (l : ℝ)
+    (hq0 : q 0 = 1) (hq : ∀ n, |q n| ≤ 1)
+    (ha0 : ∀ n, 0 ≤ a n) (ha1 : ∀ n, a n ≤ 1)
+    (hrec : ∀ n : ℕ,
+      (n + 1 : ℝ) * q (n + 1) =
+        ∑ k ∈ Finset.range (n + 1), q k * (1 - a (n - k + 1)))
+    (hqlim : Filter.Tendsto q Filter.atTop (nhds l))
+    (hasum : Summable fun n : ℕ => a (n + 1) / (n + 1 : ℝ)) :
+    Filter.Tendsto q Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))))) := by
+  have hleft := tendsto_one_sub_mul_shiftedPowerSeries q hq hqlim
+  have hA := tendsto_defectPowerSeries a hasum
+  have hright : Filter.Tendsto
+      (fun x : ℝ => Real.exp (-defectPowerSeries a x))
+      (nhdsWithin (1 : ℝ) (Set.Iio 1))
+      (nhds (Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))))) :=
+    (Real.continuous_exp.tendsto _).comp hA.neg
+  have hpos : ∀ᶠ x : ℝ in nhdsWithin (1 : ℝ) (Set.Iio 1), 0 < x :=
+    (show ∀ᶠ x : ℝ in nhds (1 : ℝ), 0 < x from
+      eventually_gt_nhds (by norm_num)).filter_mono inf_le_left
+  have heq :
+      (fun x : ℝ => Real.exp (-defectPowerSeries a x)) =ᶠ[
+        nhdsWithin (1 : ℝ) (Set.Iio 1)]
+      (fun x : ℝ => (1 - x) * shiftedPowerSeries q x) := by
+    filter_upwards [hpos, self_mem_nhdsWithin] with x hx0 hx1
+    exact (sparreAndersen_generating_identity q a hq0 hq ha0 ha1 hrec
+      (abs_lt.mpr ⟨by linarith, hx1⟩)).symm
+  have hright' := hright.congr' heq
+  have hl : l = Real.exp (-(∑' n : ℕ, a (n + 1) / (n + 1 : ℝ))) :=
+    tendsto_nhds_unique hleft hright'
+  rwa [hl] at hqlim
+
+open Classical in
+theorem fwdSurv_nonneg (n : ℕ) : 0 ≤ (fwdSurv n : ℝ) := by
+  rw [fwdSurv_cast_eq_weighted_word_sum]
+  apply Finset.sum_nonneg
+  intro w _hw
+  split_ifs
+  · exact fwdWordWeight_nonneg w
+  · exact le_rfl
+
+open Classical in
+theorem bwdSurv_nonneg (n : ℕ) : 0 ≤ (bwdSurv n : ℝ) := by
+  rw [bwdSurv_cast_eq_weighted_word_sum]
+  apply Finset.sum_nonneg
+  intro w _hw
+  split_ifs
+  · exact bwdWordWeight_nonneg w
+  · exact le_rfl
+
+theorem abs_fwdSurv_le_one (n : ℕ) : |(fwdSurv n : ℝ)| ≤ 1 := by
+  rw [abs_of_nonneg (fwdSurv_nonneg n)]
+  calc
+    (fwdSurv n : ℝ) ≤ (fwdSurv 0 : ℝ) := antitone_fwdSurv (Nat.zero_le n)
+    _ = 1 := fwdSurv_zero
+
+theorem abs_bwdSurv_le_one (n : ℕ) : |(bwdSurv n : ℝ)| ≤ 1 := by
+  rw [abs_of_nonneg (bwdSurv_nonneg n)]
+  calc
+    (bwdSurv n : ℝ) ≤ (bwdSurv 0 : ℝ) := antitone_bwdSurv (Nat.zero_le n)
+    _ = 1 := bwdSurv_zero
+
+theorem fwdPosTerm_nonneg (n : ℕ) : 0 ≤ fwdPosTerm n := by
+  unfold fwdPosTerm
+  apply Finset.sum_nonneg
+  intro o _ho
+  split_ifs <;> positivity
+
+theorem bwdPosTerm_nonneg (n : ℕ) : 0 ≤ bwdPosTerm n := by
+  unfold bwdPosTerm
+  apply Finset.sum_nonneg
+  intro o _ho
+  split_ifs <;> positivity
+
+theorem fwdNonposTerm_le_one (n : ℕ) : fwdNonposTerm n ≤ 1 := by
+  cases n with
+  | zero => norm_num [fwdNonposTerm, Finset.sum_range_succ]
+  | succ n =>
+      linarith [fwdNonposTerm_add_fwdPosTerm (n + 1) (by omega),
+        fwdPosTerm_nonneg (n + 1)]
+
+theorem bwdNonposTerm_le_one (n : ℕ) : bwdNonposTerm n ≤ 1 := by
+  cases n with
+  | zero => norm_num [bwdNonposTerm, Finset.sum_range_succ]
+  | succ n =>
+      linarith [bwdNonposTerm_add_bwdPosTerm (n + 1) (by omega),
+        bwdPosTerm_nonneg (n + 1)]
+
+theorem fwdSurv_nonpos_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (fwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (fwdSurv k : ℝ) * (1 - fwdNonposTerm (n - k + 1)) := by
+  rw [fwdSurv_recurrence]
+  apply Finset.sum_congr rfl
+  intro k hk
+  congr 1
+  linarith [fwdNonposTerm_add_fwdPosTerm (n - k + 1) (by omega)]
+
+theorem bwdSurv_nonpos_recurrence (n : ℕ) :
+    (n + 1 : ℝ) * (bwdSurv (n + 1) : ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (bwdSurv k : ℝ) * (1 - bwdNonposTerm (n - k + 1)) := by
+  rw [bwdSurv_recurrence]
+  apply Finset.sum_congr rfl
+  intro k hk
+  congr 1
+  linarith [bwdNonposTerm_add_bwdPosTerm (n - k + 1) (by omega)]
+
+theorem tendsto_fwdSurv :
+    Filter.Tendsto (fun n : ℕ => (fwdSurv n : ℝ)) Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ,
+        fwdNonposTerm (n + 1) / (n + 1 : ℝ))))) := by
+  let l : ℝ := ⨅ n : ℕ, (fwdSurv n : ℝ)
+  have hbdd : BddBelow (Set.range fun n : ℕ => (fwdSurv n : ℝ)) := by
+    refine ⟨0, ?_⟩
+    rintro _ ⟨n, rfl⟩
+    exact fwdSurv_nonneg n
+  have hlim : Filter.Tendsto (fun n : ℕ => (fwdSurv n : ℝ)) Filter.atTop (nhds l) :=
+    by simpa [l] using tendsto_atTop_ciInf antitone_fwdSurv hbdd
+  exact sparreAndersen_limit
+    (fun n => (fwdSurv n : ℝ)) fwdNonposTerm l fwdSurv_zero
+    abs_fwdSurv_le_one fwdNonposTerm_nonneg fwdNonposTerm_le_one
+    fwdSurv_nonpos_recurrence hlim summable_fwdNonposSeries
+
+theorem tendsto_bwdSurv :
+    Filter.Tendsto (fun n : ℕ => (bwdSurv n : ℝ)) Filter.atTop
+      (nhds (Real.exp (-(∑' n : ℕ,
+        bwdNonposTerm (n + 1) / (n + 1 : ℝ))))) := by
+  let l : ℝ := ⨅ n : ℕ, (bwdSurv n : ℝ)
+  have hbdd : BddBelow (Set.range fun n : ℕ => (bwdSurv n : ℝ)) := by
+    refine ⟨0, ?_⟩
+    rintro _ ⟨n, rfl⟩
+    exact bwdSurv_nonneg n
+  have hlim : Filter.Tendsto (fun n : ℕ => (bwdSurv n : ℝ)) Filter.atTop (nhds l) :=
+    by simpa [l] using tendsto_atTop_ciInf antitone_bwdSurv hbdd
+  exact sparreAndersen_limit
+    (fun n => (bwdSurv n : ℝ)) bwdNonposTerm l bwdSurv_zero
+    abs_bwdSurv_le_one bwdNonposTerm_nonneg bwdNonposTerm_le_one
+    bwdSurv_nonpos_recurrence hlim summable_bwdNonposSeries
+
+
 /-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
-  sorry
+  rw [WindowDensityLimit, minimaConstant_eq_directionalFactors]
+  simpa only [Rat.cast_mul] using tendsto_fwdSurv.mul tendsto_bwdSurv
 
 open Classical in
 /-- Orbit minima have upper density at most `minimaConstant ≈ 0.049780`. -/
