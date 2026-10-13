@@ -71,6 +71,197 @@ theorem spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm (k : ℕ) (hk : 0 < k) :
       exact_mod_cast hgt.le)]
     ring
 
+/-! ## Summability of the Spitzer series -/
+
+/-- The elementary square-root majorant used to obtain exponential decay of the Spitzer
+terms. -/
+theorem min_one_le_sqrt (x : ℝ) : min 1 x ≤ √x := by
+  rcases le_total x 1 with hx | hx
+  · rw [min_eq_right hx]
+    exact Real.le_sqrt_self_iff.mpr hx
+  · rw [min_eq_left hx]
+    exact Real.one_le_sqrt.mpr hx
+
+/-- Square root commutes with natural powers of a nonnegative real. -/
+theorem sqrt_pow_of_nonneg (x : ℝ) (hx : 0 ≤ x) (n : ℕ) :
+    √(x ^ n) = (√x) ^ n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ, Real.sqrt_mul (pow_nonneg hx n), ih, pow_succ]
+
+/-- Factor the square root of a walk's Radon--Nikodym weight into its independent-step
+factors. -/
+theorem sqrt_walk_weight (k o : ℕ) :
+    √((2 : ℝ) ^ (k + o) / 3 ^ k) =
+      (√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o := by
+  calc
+    √((2 : ℝ) ^ (k + o) / 3 ^ k) =
+        √(((2 : ℝ) / 3) ^ k * 2 ^ o) := by
+          congr 1
+          rw [pow_add, div_pow]
+          ring
+    _ = √(((2 : ℝ) / 3) ^ k) * √((2 : ℝ) ^ o) := by
+      rw [Real.sqrt_mul (by positivity)]
+    _ = (√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o := by
+      rw [sqrt_pow_of_nonneg _ (by positivity), sqrt_pow_of_nonneg _ (by positivity)]
+
+/-- A strict geometric rate dominating `spitzerTerm`.  Numerically this is about
+`0.985598`. -/
+noncomputable def spitzerRate : ℝ :=
+  √((2 : ℝ) / 3) * (1 + √(2 : ℝ)) / 2
+
+theorem spitzerRate_nonneg : 0 ≤ spitzerRate := by
+  unfold spitzerRate
+  positivity
+
+theorem spitzerRate_lt_one : spitzerRate < 1 := by
+  have hb : √(2 : ℝ) < 3 / 2 := by
+    rw [Real.sqrt_lt (by norm_num) (by norm_num)]
+    norm_num
+  have ha_sq : (√((2 : ℝ) / 3)) ^ 2 = 2 / 3 :=
+    Real.sq_sqrt (by norm_num)
+  have hb_sq : (√(2 : ℝ)) ^ 2 = 2 := Real.sq_sqrt (by norm_num)
+  have hsq : (√((2 : ℝ) / 3) * (1 + √(2 : ℝ))) ^ 2 < (2 : ℝ) ^ 2 := by
+    rw [mul_pow, ha_sq]
+    nlinarith
+  have hprod : √((2 : ℝ) / 3) * (1 + √(2 : ℝ)) < 2 :=
+    (sq_lt_sq₀ (by positivity) (by positivity)).mp hsq
+  unfold spitzerRate
+  linarith
+
+theorem spitzerTerm_nonneg (k : ℕ) : 0 ≤ spitzerTerm k := by
+  unfold spitzerTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  positivity
+
+/-- The Spitzer contributions decay geometrically, by the square-root moment of the walk. -/
+theorem spitzerTerm_le_rate_pow (k : ℕ) : spitzerTerm k ≤ spitzerRate ^ k := by
+  unfold spitzerTerm
+  calc
+    (∑ o ∈ Finset.range (k + 1),
+        (Nat.choose k o : ℝ) / 2 ^ k * min 1 ((2 : ℝ) ^ (k + o) / 3 ^ k)) ≤
+        ∑ o ∈ Finset.range (k + 1),
+          (Nat.choose k o : ℝ) / 2 ^ k * √((2 : ℝ) ^ (k + o) / 3 ^ k) := by
+      apply Finset.sum_le_sum
+      intro o ho
+      exact mul_le_mul_of_nonneg_left (min_one_le_sqrt _) (by positivity)
+    _ = ∑ o ∈ Finset.range (k + 1),
+          (Nat.choose k o : ℝ) / 2 ^ k *
+            ((√((2 : ℝ) / 3)) ^ k * (√(2 : ℝ)) ^ o) := by
+      apply Finset.sum_congr rfl
+      intro o ho
+      rw [sqrt_walk_weight]
+    _ = ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) *
+          ∑ o ∈ Finset.range (k + 1),
+            (Nat.choose k o : ℝ) * (√(2 : ℝ)) ^ o := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro o ho
+      ring
+    _ = ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) * (1 + √(2 : ℝ)) ^ k := by
+      have hbinom := add_pow (√(2 : ℝ)) 1 k
+      simp only [one_pow, mul_one] at hbinom
+      rw [add_comm] at hbinom
+      congr 1
+      simpa only [mul_comm] using hbinom.symm
+    _ = spitzerRate ^ k := by
+      unfold spitzerRate
+      calc
+        ((√((2 : ℝ) / 3)) ^ k / 2 ^ k) * (1 + √(2 : ℝ)) ^ k =
+            (√((2 : ℝ) / 3) * (1 + √(2 : ℝ))) ^ k / 2 ^ k := by
+          rw [mul_pow]
+          ring
+        _ = (√((2 : ℝ) / 3) * (1 + √(2 : ℝ)) / 2) ^ k := by
+          rw [div_pow]
+
+/-- The series appearing in the definition of `minimaConstant` is summable. -/
+theorem summable_spitzerSeries :
+    Summable (fun k : ℕ => spitzerTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (spitzerTerm_nonneg _) (by positivity)
+  · intro k
+    calc
+      spitzerTerm (k + 1) / (k + 1) ≤ spitzerTerm (k + 1) := by
+        apply div_le_self
+        · exact spitzerTerm_nonneg _
+        · exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega : k + 1 ≠ 0)
+      _ ≤ spitzerRate ^ (k + 1) := spitzerTerm_le_rate_pow _
+      _ ≤ spitzerRate ^ k := by
+        rw [pow_succ]
+        exact mul_le_of_le_one_right (pow_nonneg spitzerRate_nonneg k) spitzerRate_lt_one.le
+  · exact summable_geometric_of_lt_one spitzerRate_nonneg spitzerRate_lt_one
+
+theorem fwdNonposTerm_nonneg (k : ℕ) : 0 ≤ fwdNonposTerm k := by
+  unfold fwdNonposTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  split_ifs <;> positivity
+
+theorem bwdNonposTerm_nonneg (k : ℕ) : 0 ≤ bwdNonposTerm k := by
+  unfold bwdNonposTerm
+  apply Finset.sum_nonneg
+  intro o ho
+  split_ifs <;> positivity
+
+theorem fwdNonposTerm_le_spitzerTerm (k : ℕ) (hk : 0 < k) :
+    fwdNonposTerm k ≤ spitzerTerm k := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm k hk]
+  exact le_add_of_nonneg_right (bwdNonposTerm_nonneg k)
+
+theorem bwdNonposTerm_le_spitzerTerm (k : ℕ) (hk : 0 < k) :
+    bwdNonposTerm k ≤ spitzerTerm k := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm k hk]
+  exact le_add_of_nonneg_left (fwdNonposTerm_nonneg k)
+
+/-- The forward nonpositive endpoint series is summable. -/
+theorem summable_fwdNonposSeries :
+    Summable (fun k : ℕ => fwdNonposTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (fwdNonposTerm_nonneg _) (by positivity)
+  · intro k
+    exact div_le_div_of_nonneg_right
+      (fwdNonposTerm_le_spitzerTerm _ (by omega)) (by positivity)
+  · exact summable_spitzerSeries
+
+/-- The backward nonpositive endpoint series is summable. -/
+theorem summable_bwdNonposSeries :
+    Summable (fun k : ℕ => bwdNonposTerm (k + 1) / (k + 1)) := by
+  apply Summable.of_nonneg_of_le
+  · intro k
+    exact div_nonneg (bwdNonposTerm_nonneg _) (by positivity)
+  · intro k
+    exact div_le_div_of_nonneg_right
+      (bwdNonposTerm_le_spitzerTerm _ (by omega)) (by positivity)
+  · exact summable_spitzerSeries
+
+/-- Pointwise Haar duality for the normalized Spitzer series. -/
+theorem spitzerSeries_eq_fwd_add_bwd (k : ℕ) :
+    spitzerTerm (k + 1) / (k + 1) =
+      fwdNonposTerm (k + 1) / (k + 1) + bwdNonposTerm (k + 1) / (k + 1) := by
+  rw [spitzerTerm_eq_fwdNonposTerm_add_bwdNonposTerm (k + 1) (by omega)]
+  ring
+
+/-- The two directional endpoint series merge exactly into the series defining
+`minimaConstant`. -/
+theorem tsum_spitzerSeries_eq_fwd_add_bwd :
+    (∑' k : ℕ, spitzerTerm (k + 1) / (k + 1)) =
+      (∑' k : ℕ, fwdNonposTerm (k + 1) / (k + 1)) +
+        ∑' k : ℕ, bwdNonposTerm (k + 1) / (k + 1) := by
+  rw [← Summable.tsum_add summable_fwdNonposSeries summable_bwdNonposSeries]
+  apply tsum_congr
+  exact spitzerSeries_eq_fwd_add_bwd
+
+/-- The constant factors into the two directional Sparre--Andersen limits. -/
+theorem minimaConstant_eq_directionalFactors :
+    minimaConstant =
+      Real.exp (-(∑' k : ℕ, fwdNonposTerm (k + 1) / (k + 1))) *
+        Real.exp (-(∑' k : ℕ, bwdNonposTerm (k + 1) / (k + 1))) := by
+  rw [minimaConstant, tsum_spitzerSeries_eq_fwd_add_bwd, neg_add, Real.exp_add]
+
 /-- At positive time, the forward endpoint is either strictly positive or nonpositive, and the
 two binomial masses sum to one. -/
 theorem fwdNonposTerm_add_fwdPosTerm (k : ℕ) (hk : 0 < k) :
