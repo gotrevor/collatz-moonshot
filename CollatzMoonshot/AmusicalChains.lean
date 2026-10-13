@@ -98,7 +98,7 @@ theorem atLeastSeven_or_orbitEight_infinite :
     simp only [Finset.mem_insert] at hx
     rcases hx with rfl | hx
     · exact hn0
-    · simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    · simp only [Finset.mem_singleton] at hx
       rcases hx with rfl | rfl | rfl | rfl | rfl | rfl <;> norm_num
   · intro a ha b hb hab
     change a ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at ha
