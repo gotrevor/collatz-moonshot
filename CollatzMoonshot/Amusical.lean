@@ -259,6 +259,121 @@ theorem amusicalInfinitelyManyOrbits_of_zeroDensity (h : AmusicalOrbitsZeroDensi
     nlinarith
   linarith
 
+/-- The orbit of `x` returns to linear size arbitrarily late: some `C` has
+`U^j x ≤ C (|j| + 1)` for arbitrarily large `|j|`.  An aperiodic orbit growing at the
+heuristic rate `≈ 1.06^|j|` never does this. -/
+def AmusicalLinearlyRecurrent (x : ℤ) : Prop :=
+  ∃ C : ℝ, ∀ J : ℕ, ∃ j : ℤ, (J : ℤ) ≤ |j| ∧ (((amusicalPerm ^ j) x : ℤ) : ℝ) ≤ C * (|j| + 1)
+
+open Classical in
+/-- **What finitely many orbits would force.**  If `U` had only finitely many orbits, some
+infinite orbit would be linearly recurrent.  So refuting linear recurrence for every aperiodic
+orbit (a statement about individual orbits, the same kind as `AmusicalOrbitOfEightInfinite`)
+would settle Klamkin's problem (a).  Proof: a zero-density failure gives an orbit meeting
+`[0, X)` in `≥ εX` points for arbitrarily large `X`; those points sit at `≥ εX` distinct times
+`j`, so one has `|j| ≥ εX/2`, while its value is `< X ≤ (2/ε)(|j| + 1)`. -/
+theorem exists_linearlyRecurrent_of_finitelyManyOrbits (h : ¬ AmusicalInfinitelyManyOrbits) :
+    ∃ x : ℤ, 0 ≤ x ∧ (amusicalOrbit x).Infinite ∧ AmusicalLinearlyRecurrent x := by
+  have hz : ¬ AmusicalOrbitsZeroDensity := fun hz =>
+    h (amusicalInfinitelyManyOrbits_of_zeroDensity hz)
+  simp only [AmusicalOrbitsZeroDensity, not_forall] at hz
+  obtain ⟨x, hx0, hnt⟩ := hz
+  set f : ℕ → ℝ := fun X =>
+    (((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x).card : ℝ) / X with hf
+  have hf0 : ∀ X, 0 ≤ f X := fun X => by positivity
+  -- not tending to `0` means frequently `≥ ε`
+  obtain ⟨ε, hε, hfreq⟩ : ∃ ε : ℝ, 0 < ε ∧ ∃ᶠ X in Filter.atTop, ε ≤ f X := by
+    by_contra hne
+    push Not at hne
+    apply hnt
+    rw [tendsto_order]
+    refine ⟨fun a ha => Filter.Eventually.of_forall fun X => lt_of_lt_of_le ha (hf0 X), ?_⟩
+    intro a ha
+    simpa [Filter.not_frequently, not_le] using hne a ha
+  refine ⟨x, hx0, ?_, ?_⟩
+  · -- a finite orbit has bounded counts, so `f → 0`
+    intro hfin
+    set N := hfin.toFinset.card
+    have hbound : ∀ X,
+        ((Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x).card ≤ N := by
+      intro X
+      refine Finset.card_le_card_of_injOn (fun n : ℕ => (n : ℤ)) ?_ ?_
+      · intro n hn
+        simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hn
+        simpa using hn.2
+      · intro a _ b _ hab; simpa using hab
+    have hlim : ∀ᶠ X : ℕ in Filter.atTop, f X < ε := by
+      have ht : Filter.Tendsto (fun X : ℕ => (N : ℝ) / X) Filter.atTop (nhds 0) :=
+        tendsto_const_div_atTop_nhds_zero_nat _
+      filter_upwards [ht.eventually (gt_mem_nhds hε), Filter.eventually_ge_atTop 1] with X hX hX1
+      refine lt_of_le_of_lt ?_ hX
+      have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+      exact div_le_div_of_nonneg_right (by exact_mod_cast hbound X) hXpos.le
+    exact (hfreq.and_eventually hlim).exists.elim fun X hX => absurd hX.1 (not_le.2 hX.2)
+  · refine ⟨2 / ε, fun J => ?_⟩
+    have hlarge := hfreq.and_eventually
+      (Filter.eventually_ge_atTop (Nat.ceil (2 * ((J : ℝ) + 1) / ε) + 1))
+    obtain ⟨X, hXε, hXbig⟩ := hlarge.exists
+    have hX1 : (1 : ℕ) ≤ X := le_trans (Nat.le_add_left 1 _) hXbig
+    have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+    set S := (Finset.range X).filter fun n : ℕ => (n : ℤ) ∈ amusicalOrbit x
+    have hS : ε * X ≤ S.card := by
+      have := hXε; simp only [hf] at this; rwa [le_div_iff₀ hXpos] at this
+    -- a time for each point of `S`
+    let g : ℕ → ℤ := fun n =>
+      if hn : (n : ℤ) ∈ amusicalOrbit x then Classical.choose hn else 0
+    have hg : ∀ n ∈ S, (amusicalPerm ^ g n) x = n := by
+      intro n hn
+      have hn' : (n : ℤ) ∈ amusicalOrbit x := (Finset.mem_filter.1 hn).2
+      simp only [g, dif_pos hn']
+      exact Classical.choose_spec hn'
+    have hginj : Set.InjOn g S := by
+      intro a ha b hb hab
+      have := (hg a ha).symm.trans ((congrArg (fun j => (amusicalPerm ^ j) x) hab).trans (hg b hb))
+      exact_mod_cast this
+    set m : ℕ := Nat.floor (ε * X / 2)
+    have hm2 : (2 * m : ℝ) ≤ ε * X := by
+      have := Nat.floor_le (by positivity : (0 : ℝ) ≤ ε * X / 2); linarith
+    have hT : (S.image g).card = S.card := Finset.card_image_of_injOn hginj
+    have hIcc : (Finset.Icc (-(m : ℤ) + 1) ((m : ℤ) - 1)).card < (S.image g).card := by
+      rw [Int.card_Icc, hT]
+      have h1 : ((m : ℤ) - 1 + 1 - (-(m : ℤ) + 1)).toNat ≤ 2 * m - 1 := by omega
+      have h2 : (2 * m : ℝ) ≤ S.card := le_trans hm2 hS
+      have h3 : 2 * m ≤ S.card := by exact_mod_cast h2
+      rcases Nat.eq_zero_or_pos m with hm0 | hm0
+      · have : ((m : ℤ) - 1 + 1 - (-(m : ℤ) + 1)).toNat = 0 := by omega
+        rw [this]
+        have hpos : (0 : ℝ) < S.card := lt_of_lt_of_le (by positivity) hS
+        exact_mod_cast hpos
+      · omega
+    obtain ⟨j, hjT, hjI⟩ := Finset.exists_mem_notMem_of_card_lt_card hIcc
+    obtain ⟨n, hnS, rfl⟩ := Finset.mem_image.1 hjT
+    have hjabs : (m : ℤ) ≤ |g n| := by
+      simp only [Finset.mem_Icc, not_and_or, not_le] at hjI
+      exact le_abs.2 (by omega)
+    have hnX : (n : ℝ) < X := by exact_mod_cast Finset.mem_range.1 (Finset.mem_filter.1 hnS).1
+    refine ⟨g n, ?_, ?_⟩
+    · -- `m ≥ J` because `X ≥ 2(J+1)/ε`
+      have hceil : 2 * ((J : ℝ) + 1) / ε ≤ X := by
+        have := Nat.le_ceil (2 * ((J : ℝ) + 1) / ε)
+        have : ((Nat.ceil (2 * ((J : ℝ) + 1) / ε) + 1 : ℕ) : ℝ) ≤ X := by exact_mod_cast hXbig
+        push_cast at this; linarith
+      have hJm : (J : ℝ) + 1 ≤ ε * X / 2 := by
+        rw [div_le_iff₀ hε] at hceil; linarith
+      have hmJ : J ≤ m := by
+        apply Nat.le_floor
+        linarith
+      omega
+    · rw [hg n hnS]
+      have habs : ((m : ℤ) : ℝ) ≤ ((|g n| : ℤ) : ℝ) := by exact_mod_cast hjabs
+      have hmfl : ε * X / 2 < (m : ℝ) + 1 := Nat.lt_floor_add_one _
+      have key : (X : ℝ) ≤ 2 / ε * ((|g n| : ℤ) + 1) := by
+        rw [div_mul_eq_mul_div, le_div_iff₀ hε]
+        push_cast at habs ⊢
+        linarith
+      push_cast at key ⊢
+      linarith
+
 open Classical in
 /-- **Conjecture (2026-10-13), a quantitative form of `AmusicalInfinitelyManyOrbits`.**  Orbit
 minima have natural density `p_f · p_b ≈ 0.0498`.
