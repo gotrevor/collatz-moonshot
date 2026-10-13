@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalConstant
 import CollatzMoonshot.CycleDiophantine
 import CollatzMoonshot.CyclicMinimum
+import Mathlib.Combinatorics.Enumerative.Composition
 
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
@@ -1046,6 +1047,214 @@ theorem bwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Boo
   rw [wordTrueCount_append, pow_add, hsub, pow_add]
   ring
 
+/-! ## Composition-indexed cyclic intersections
+
+`Composition L` is the exact finite indexing object needed for cyclic inclusion--exclusion:
+its positive blocks are the gaps between a nonempty family of marked cyclic starts.  The
+following equivalence separates a word into the Boolean words on those blocks. -/
+
+/-- A word of length `L` is equivalently a family of words indexed by the blocks of a
+composition of `L`. -/
+def wordBlocksEquiv {L : ℕ} (c : Composition L) :
+    (Fin L → Bool) ≃ ((i : Fin c.length) → Fin (c.blocksFun i) → Bool) :=
+  (c.blocksFinEquiv.piCongrLeft (fun _ : Fin L => Bool)).symm.trans
+    (Equiv.piCurry fun (i : Fin c.length) (_j : Fin (c.blocksFun i)) => Bool)
+
+/-- The block family of a word, represented as a list of nonempty Boolean lists. -/
+def wordBlockLists {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    List (List Bool) :=
+  List.ofFn fun i => List.ofFn ((wordBlocksEquiv c) w i)
+
+/-- The canonical block family agrees with Mathlib's splitting of the list word along the
+composition. -/
+theorem wordBlockLists_eq_splitWrtComposition {L : ℕ} (c : Composition L)
+    (w : Fin L → Bool) :
+    wordBlockLists c w = (List.ofFn w).splitWrtComposition c := by
+  apply List.ext_getElem
+  · simp [wordBlockLists]
+  · intro i hi₁ hi₂
+    have hi : i < c.length := by simpa [wordBlockLists] using hi₁
+    rw [List.getElem_splitWrtComposition]
+    apply List.ext_getElem
+    · simp only [List.length_drop, List.length_take]
+      simp [wordBlockLists]
+      rw [min_eq_left]
+      · rw [c.sizeUpTo_succ hi]
+        simp only [Composition.blocksFun, List.get_eq_getElem]
+        omega
+      · exact c.sizeUpTo_le (i + 1)
+    · intro j hj₁ hj₂
+      simp only [List.getElem_drop, List.getElem_take]
+      simp [wordBlockLists, wordBlocksEquiv]
+      rfl
+
+/-- Flattening the canonical blocks recovers the original list word. -/
+@[simp]
+theorem wordBlockLists_flatten {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    (wordBlockLists c w).flatten = List.ofFn w := by
+  rw [wordBlockLists_eq_splitWrtComposition]
+  apply List.flatten_splitWrtCompositionAux
+  simpa using c.blocks_sum
+
+/-- Flattening a block-list rotation rotates the flattened list by the total length of the
+preceding blocks. -/
+theorem flatten_rotate_blocks {α : Type*} (blocks : List (List α)) (r : ℕ)
+    (hr : r ≤ blocks.length) :
+    (blocks.rotate r).flatten =
+      blocks.flatten.rotate (blocks.take r).flatten.length := by
+  calc
+    (blocks.rotate r).flatten =
+        (blocks.drop r).flatten ++ (blocks.take r).flatten := by
+      rw [List.rotate_eq_drop_append_take hr, List.flatten_append]
+    _ = ((blocks.take r).flatten ++ (blocks.drop r).flatten).rotate
+          (blocks.take r).flatten.length :=
+      (List.rotate_append_length_eq (blocks.take r).flatten
+        (blocks.drop r).flatten).symm
+    _ = blocks.flatten.rotate (blocks.take r).flatten.length := by
+      rw [← List.flatten_append, List.take_append_drop]
+
+/-- The flattened prefix of the first `r` canonical blocks has length `c.sizeUpTo r`. -/
+theorem wordBlockLists_take_flatten_length {L : ℕ} (c : Composition L)
+    (w : Fin L → Bool) (r : ℕ) :
+    ((wordBlockLists c w).take r).flatten.length = c.sizeUpTo r := by
+  rw [wordBlockLists_eq_splitWrtComposition]
+  rw [List.length_flatten, List.map_take]
+  have hm : ((List.ofFn w).splitWrtComposition c).map List.length = c.blocks := by
+    apply List.map_length_splitWrtCompositionAux
+    simpa using c.blocks_sum.le
+  rw [hm]
+  rfl
+
+/-- Rotating the canonical blocks by `r` rotates the original word by the corresponding
+composition boundary `c.sizeUpTo r`. -/
+theorem wordBlockLists_rotate_flatten {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    ((wordBlockLists c w).rotate r).flatten =
+      List.ofFn (rotateWord w (c.sizeUpTo r)) := by
+  rw [flatten_rotate_blocks (wordBlockLists c w) r (by simpa [wordBlockLists] using hr),
+    wordBlockLists_flatten, wordBlockLists_take_flatten_length, ofFn_rotateWord]
+
+theorem fwdListGood_ofFn_iff {L : ℕ} (w : Fin L → Bool) :
+    FwdListGood (List.ofFn w) ↔ FwdGood L w := by
+  change CollatzMoonshot.StrictlyPositivePrefixes ((List.ofFn w).map fwdStepScore) ↔
+    FwdGood L w
+  rw [fwdGood_iff_strictlyPositivePrefixes, fwdScoreList_eq_map]
+
+theorem bwdListGood_ofFn_iff {L : ℕ} (w : Fin L → Bool) :
+    BwdListGood (List.ofFn w) ↔ BwdGood L w := by
+  change CollatzMoonshot.StrictlyPositivePrefixes ((List.ofFn w).map bwdStepScore) ↔
+    BwdGood L w
+  rw [bwdGood_iff_strictlyPositivePrefixes, bwdScoreList_eq_map]
+
+/-- A forward-good canonical block rotation is the original word surviving from the
+corresponding composition boundary. -/
+theorem fwdWordBlockBoundary_iff {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    FwdListGood ((wordBlockLists c w).rotate r).flatten ↔
+      FwdGood L (rotateWord w (c.sizeUpTo r)) := by
+  rw [wordBlockLists_rotate_flatten c w r hr]
+  exact fwdListGood_ofFn_iff _
+
+/-- Backward analogue of `fwdWordBlockBoundary_iff`. -/
+theorem bwdWordBlockBoundary_iff {L : ℕ} (c : Composition L) (w : Fin L → Bool)
+    (r : ℕ) (hr : r ≤ c.length) :
+    BwdListGood ((wordBlockLists c w).rotate r).flatten ↔
+      BwdGood L (rotateWord w (c.sizeUpTo r)) := by
+  rw [wordBlockLists_rotate_flatten c w r hr]
+  exact bwdListGood_ofFn_iff _
+
+/-- Under a positive-size composition, simultaneous forward survival from every block boundary
+is exactly separate survival of every block. -/
+theorem fwdWordBlockLists_cyclic_iff {L : ℕ} (hL : 0 < L) (c : Composition L)
+    (w : Fin L → Bool) :
+    (∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten) ↔
+      ∀ i : Fin c.length, FwdGood (c.blocksFun i) ((wordBlocksEquiv c) w i) := by
+  have hblocks : wordBlockLists c w ≠ [] := by
+    apply List.ne_nil_of_length_pos
+    simpa [wordBlockLists] using c.length_pos_of_pos hL
+  have hne : ∀ b ∈ wordBlockLists c w, b ≠ [] := by
+    intro b hb
+    rw [wordBlockLists, List.mem_ofFn'] at hb
+    obtain ⟨i, rfl⟩ := hb
+    apply List.ne_nil_of_length_pos
+    have hi := c.one_le_blocksFun i
+    simp only [List.length_ofFn]
+    omega
+  have hlen : (wordBlockLists c w).length = c.length := by
+    simp [wordBlockLists]
+  have hfactor := fwdListGood_cyclicBlocks_iff (wordBlockLists c w) hblocks hne
+  rw [hlen] at hfactor
+  rw [hfactor]
+  simp only [wordBlockLists, List.forall_mem_ofFn_iff, fwdListGood_ofFn_iff]
+
+/-- Backward analogue of `fwdWordBlockLists_cyclic_iff`. -/
+theorem bwdWordBlockLists_cyclic_iff {L : ℕ} (hL : 0 < L) (c : Composition L)
+    (w : Fin L → Bool) :
+    (∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten) ↔
+      ∀ i : Fin c.length, BwdGood (c.blocksFun i) ((wordBlocksEquiv c) w i) := by
+  have hblocks : wordBlockLists c w ≠ [] := by
+    apply List.ne_nil_of_length_pos
+    simpa [wordBlockLists] using c.length_pos_of_pos hL
+  have hne : ∀ b ∈ wordBlockLists c w, b ≠ [] := by
+    intro b hb
+    rw [wordBlockLists, List.mem_ofFn'] at hb
+    obtain ⟨i, rfl⟩ := hb
+    apply List.ne_nil_of_length_pos
+    have hi := c.one_le_blocksFun i
+    simp only [List.length_ofFn]
+    omega
+  have hlen : (wordBlockLists c w).length = c.length := by
+    simp [wordBlockLists]
+  have hfactor := bwdListGood_cyclicBlocks_iff (wordBlockLists c w) hblocks hne
+  rw [hlen] at hfactor
+  rw [hfactor]
+  simp only [wordBlockLists, List.forall_mem_ofFn_iff, bwdListGood_ofFn_iff]
+
+/-- Marked-letter counts split additively over the blocks of a composition. -/
+theorem wordTrueCount_eq_sum_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    wordTrueCount w =
+      ∑ i : Fin c.length, wordTrueCount ((wordBlocksEquiv c) w i) := by
+  calc
+    wordTrueCount w = ∑ j : Fin L, if w j = true then 1 else 0 := by
+      unfold wordTrueCount
+      simpa using (Finset.sum_boole (fun j : Fin L => w j = true) Finset.univ).symm
+    _ = ∑ i : Fin c.length, ∑ j : Fin (c.blocksFun i),
+          if w (c.embedding i j) = true then 1 else 0 :=
+      (c.sum_sum_apply_embedding (fun j => if w j = true then 1 else 0)).symm
+    _ = ∑ i : Fin c.length, wordTrueCount ((wordBlocksEquiv c) w i) := by
+      apply Finset.sum_congr rfl
+      intro i _hi
+      calc
+        (∑ j : Fin (c.blocksFun i), if w (c.embedding i j) = true then 1 else 0) =
+            (Finset.univ.filter fun j : Fin (c.blocksFun i) =>
+              w (c.embedding i j) = true).card := by
+          simpa using (Finset.sum_boole
+            (fun j : Fin (c.blocksFun i) => w (c.embedding i j) = true) Finset.univ)
+        _ = wordTrueCount ((wordBlocksEquiv c) w i) := rfl
+
+/-- Forward product weights split multiplicatively over composition blocks. -/
+theorem fwdWordWeight_eq_prod_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    fwdWordWeight w =
+      ∏ i : Fin c.length, fwdWordWeight ((wordBlocksEquiv c) w i) := by
+  simp only [fwdWordWeight, Finset.prod_pow_eq_pow_sum, c.sum_blocksFun]
+
+/-- Backward product weights split multiplicatively over composition blocks. -/
+theorem bwdWordWeight_eq_prod_blocks {L : ℕ} (c : Composition L) (w : Fin L → Bool) :
+    bwdWordWeight w =
+      ∏ i : Fin c.length, bwdWordWeight ((wordBlocksEquiv c) w i) := by
+  have hcount := wordTrueCount_eq_sum_blocks c w
+  have hcomplement :
+      (∑ i : Fin c.length,
+        (c.blocksFun i - wordTrueCount ((wordBlocksEquiv c) w i))) =
+        L - wordTrueCount w := by
+    rw [Finset.sum_tsub_distrib Finset.univ]
+    · simp only [c.sum_blocksFun, ← hcount]
+    · intro i _hi
+      exact wordTrueCount_le ((wordBlocksEquiv c) w i)
+  unfold bwdWordWeight
+  rw [Finset.prod_mul_distrib, Finset.prod_pow_eq_pow_sum,
+    Finset.prod_pow_eq_pow_sum, ← hcount, hcomplement]
+
 /-- Split a sum over Boolean words according to its first letter. -/
 theorem sum_boolWords_succ {M : Type*} [AddCommMonoid M] (L : ℕ)
     (F : (Fin (L + 1) → Bool) → M) :
@@ -1185,6 +1394,148 @@ theorem bwdSurv_cast_eq_weighted_word_sum (k : ℕ) :
       if BwdGood k w then bwdWordWeight w else 0 := by
   rw [bwdSurv_cast_eq_word_sum]
   rfl
+
+open Classical in
+/-- For every positive composition of a word length, the weighted intersection of forward
+survival events at all cyclic block boundaries is the product of the block-survival masses. -/
+theorem fwdCompositionIntersection_sum {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  classical
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+        fwdWordWeight w else 0) =
+        ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          if ∀ r < c.length,
+              FwdListGood
+                ((wordBlockLists c ((wordBlocksEquiv c).symm blocks)).rotate r).flatten then
+            fwdWordWeight ((wordBlocksEquiv c).symm blocks) else 0 := by
+      exact ((wordBlocksEquiv c).symm.sum_comp (fun w =>
+        if ∀ r < c.length, FwdListGood ((wordBlockLists c w).rotate r).flatten then
+          fwdWordWeight w else 0)).symm
+    _ = ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          ∏ i : Fin c.length,
+            if FwdGood (c.blocksFun i) (blocks i) then fwdWordWeight (blocks i) else 0 := by
+      apply Finset.sum_congr rfl
+      intro blocks _hblocks
+      simp only [fwdWordBlockLists_cyclic_iff hL c,
+        fwdWordWeight_eq_prod_blocks c, Equiv.apply_symm_apply]
+      symm
+      simpa using (Finset.prod_ite_zero
+        (s := Finset.univ)
+        (p := fun i : Fin c.length => FwdGood (c.blocksFun i) (blocks i))
+        (f := fun i : Fin c.length => fwdWordWeight (blocks i)))
+    _ = ∏ i : Fin c.length, ∑ u : Fin (c.blocksFun i) → Bool,
+          if FwdGood (c.blocksFun i) u then fwdWordWeight u else 0 := by
+      exact (Fintype.prod_sum (fun i (u : Fin (c.blocksFun i) → Bool) =>
+        if FwdGood (c.blocksFun i) u then fwdWordWeight u else 0)).symm
+    _ = ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+      apply Finset.prod_congr rfl
+      intro i _hi
+      rw [fwdSurv_cast_eq_weighted_word_sum]
+
+open Classical in
+/-- Backward analogue of `fwdCompositionIntersection_sum`. -/
+theorem bwdCompositionIntersection_sum {L : ℕ} (hL : 0 < L) (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  classical
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+        bwdWordWeight w else 0) =
+        ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          if ∀ r < c.length,
+              BwdListGood
+                ((wordBlockLists c ((wordBlocksEquiv c).symm blocks)).rotate r).flatten then
+            bwdWordWeight ((wordBlocksEquiv c).symm blocks) else 0 := by
+      exact ((wordBlocksEquiv c).symm.sum_comp (fun w =>
+        if ∀ r < c.length, BwdListGood ((wordBlockLists c w).rotate r).flatten then
+          bwdWordWeight w else 0)).symm
+    _ = ∑ blocks : (i : Fin c.length) → Fin (c.blocksFun i) → Bool,
+          ∏ i : Fin c.length,
+            if BwdGood (c.blocksFun i) (blocks i) then bwdWordWeight (blocks i) else 0 := by
+      apply Finset.sum_congr rfl
+      intro blocks _hblocks
+      simp only [bwdWordBlockLists_cyclic_iff hL c,
+        bwdWordWeight_eq_prod_blocks c, Equiv.apply_symm_apply]
+      symm
+      simpa using (Finset.prod_ite_zero
+        (s := Finset.univ)
+        (p := fun i : Fin c.length => BwdGood (c.blocksFun i) (blocks i))
+        (f := fun i : Fin c.length => bwdWordWeight (blocks i)))
+    _ = ∏ i : Fin c.length, ∑ u : Fin (c.blocksFun i) → Bool,
+          if BwdGood (c.blocksFun i) u then bwdWordWeight u else 0 := by
+      exact (Fintype.prod_sum (fun i (u : Fin (c.blocksFun i) → Bool) =>
+        if BwdGood (c.blocksFun i) u then bwdWordWeight u else 0)).symm
+    _ = ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+      apply Finset.prod_congr rfl
+      intro i _hi
+      rw [bwdSurv_cast_eq_weighted_word_sum]
+
+open Classical in
+/-- The forward composition factorization, stated directly as survival of the original word
+from the marked cyclic starts `c.sizeUpTo r`. -/
+theorem fwdCompositionBoundaryIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdGood L (rotateWord w (c.sizeUpTo r)) then
+        fwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) := by
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, FwdGood L (rotateWord w (c.sizeUpTo r)) then
+        fwdWordWeight w else 0) =
+        ∑ w : Fin L → Bool,
+          if ∀ r < c.length,
+              FwdListGood ((wordBlockLists c w).rotate r).flatten then
+            fwdWordWeight w else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · constructor
+        · intro h r hr
+          exact (fwdWordBlockBoundary_iff c w r hr.le).mpr (h r hr)
+        · intro h r hr
+          exact (fwdWordBlockBoundary_iff c w r hr.le).mp (h r hr)
+      · rfl
+      · rfl
+    _ = ∏ i : Fin c.length, (fwdSurv (c.blocksFun i) : ℝ) :=
+      fwdCompositionIntersection_sum hL c
+
+open Classical in
+/-- Backward analogue of `fwdCompositionBoundaryIntersection_sum`. -/
+theorem bwdCompositionBoundaryIntersection_sum {L : ℕ} (hL : 0 < L)
+    (c : Composition L) :
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdGood L (rotateWord w (c.sizeUpTo r)) then
+        bwdWordWeight w else 0) =
+      ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) := by
+  calc
+    (∑ w : Fin L → Bool,
+      if ∀ r < c.length, BwdGood L (rotateWord w (c.sizeUpTo r)) then
+        bwdWordWeight w else 0) =
+        ∑ w : Fin L → Bool,
+          if ∀ r < c.length,
+              BwdListGood ((wordBlockLists c w).rotate r).flatten then
+            bwdWordWeight w else 0 := by
+      apply Finset.sum_congr rfl
+      intro w _hw
+      apply if_congr
+      · constructor
+        · intro h r hr
+          exact (bwdWordBlockBoundary_iff c w r hr.le).mpr (h r hr)
+        · intro h r hr
+          exact (bwdWordBlockBoundary_iff c w r hr.le).mp (h r hr)
+      · rfl
+      · rfl
+    _ = ∏ i : Fin c.length, (bwdSurv (c.blocksFun i) : ℝ) :=
+      bwdCompositionIntersection_sum hL c
 
 /-- The weighted intersection of two forward survival events based at two cyclic marks
 factors into the two block-survival masses. -/

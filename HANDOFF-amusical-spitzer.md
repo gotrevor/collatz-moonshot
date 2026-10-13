@@ -1,6 +1,76 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, arbitrary-mark factorization)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, composition-weight factorization)
 
-## Current checkpoint: every cyclic intersection factors propositionally
+## Current checkpoint: every composition-indexed weighted intersection factors
+
+This reflection lap audited the full remaining proof graph rather than extending the preceding
+list interface mechanically.  The finite cyclic-union route is still faithful to the ratified
+`WindowDensityLimit`: the already-proved Haar split identifies the desired constant, the exact
+word computations support the same Sparre--Andersen coefficient recurrence through length 14,
+and the earlier counterexample rules out only a pointwise same-word cut identity, not the
+cyclic inclusion--exclusion argument.  The missing finite reindexing, rather than another score
+lemma, is now the route-decisive crux.
+
+The key source-level discovery is Mathlib's existing `Composition L` API.  The new
+`wordBlocksEquiv` uses its canonical equivalence between `Fin L` and the disjoint union of the
+positive composition blocks.  The file now proves:
+
+- `wordBlockLists_eq_splitWrtComposition` and `wordBlockLists_flatten`: the canonical dependent
+  block family is exactly Mathlib's list splitting and flattens back to the original word;
+- `wordBlockLists_rotate_flatten`: rotating the block list by `r` is exactly `rotateWord` at the
+  marked boundary `c.sizeUpTo r`;
+- `wordTrueCount_eq_sum_blocks`, `fwdWordWeight_eq_prod_blocks`, and
+  `bwdWordWeight_eq_prod_blocks`: counts and both probability weights factor across every
+  positive composition;
+- `fwdCompositionIntersection_sum` and `bwdCompositionIntersection_sum`: the weighted sum of
+  simultaneous survival at all block boundaries is the product of the block survival masses;
+- `fwdCompositionBoundaryIntersection_sum` and
+  `bwdCompositionBoundaryIntersection_sum`: the same theorem in the original `rotateWord`
+  event language needed by cyclic inclusion--exclusion.
+
+This discharges the entire arbitrary-intersection probability calculation, including the
+dependent finite-word reindexing that the previous handoff left open.  No ratified statement was
+changed, no axiom or `native_decide` was added, and the scoped file still has exactly its one
+disclosed target `sorry` at `windowDensityLimit`.
+
+## Verification
+
+Final exact checks run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+lake build CollatzMoonshot.AmusicalSpitzer
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdCompositionBoundaryIntersection_sum
+```
+
+The focused gate ended `FORMALIZE-TIER GREEN`.  The new boundary-intersection theorem's axiom
+audit is exactly `[Classical.choice, Quot.sound, propext]`; the gate reports only the existing
+`windowDensityLimit` proof debt.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single `sorry`.  The next load-bearing step is
+the cyclic inclusion--exclusion reindexing itself.  For fixed `0 < L`, represent a nonempty
+subset of cyclic starts by a chosen marked anchor and the positive cyclic-gap composition.
+Mathlib's `CompositionAsSet` / `compositionAsSetEquiv` already handles the linear internal
+boundaries; the remaining theorem must account for the choice of cyclic anchor, so a set of
+cardinality `m` is counted `m` times.  Combining that exact finite count with
+`fwdCompositionBoundaryIntersection_sum` (and its backward analogue) should yield the standard
+coefficient identity
+
+```text
+positiveEndpoint L / L =
+  sum over positive compositions c of L of
+    (-1)^(c.length+1) / c.length * product_i (survive (c.blocksFun i)).
+```
+
+Then package it as the renewal recurrence, derive the two survival generating functions, and
+take the boundary limits.  Mathlib's `Real.tendsto_tsum_powerSeries_nhdsWithin_lt` is available
+for the Abel step, while this file already supplies `summable_fwdNonposSeries`,
+`summable_bwdNonposSeries`, and `minimaConstant_eq_directionalFactors`.  Do not return to the
+refuted pointwise cut identity, and do not duplicate composition splitting by hand.
+
+## Previous checkpoint: every cyclic intersection factors propositionally
 
 This lap generalized the preceding two-mark result to an arbitrary nonempty ordered collection
 of nonempty cyclic gaps.  The abstract theorem `cyclicBlocks_all_iff` proves that for any
