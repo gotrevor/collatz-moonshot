@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Amusical
-import CollatzMoonshot.AmusicalLogBalance.Transport
+import CollatzMoonshot.AmusicalLogBalance.Estimates
 
 /-!
 # Log-weighted balance of unions of orbits
@@ -42,14 +42,20 @@ times `2/3`, and the odds onto the non-multiples up to about `3N/4`, each weight
 `e + o = (2/3) e + (4/3) o + E` with `|E| < 1`, so `|e - o| < 3` and `|e - (e + o)/2| < 3/2`. -/
 theorem logWeight_even_balance {S : Set ℤ} (hS : ∀ x, amusical x ∈ S ↔ x ∈ S) (N : ℕ) :
     |logWeight (S ∩ {n | 2 ∣ n}) N - logWeight S N / 2| ≤ 3 := by
-  sorry
+  classical
+  unfold logWeight
+  simpa only [Finset.sum_filter, Set.mem_inter_iff, Set.mem_ofPred_eq] using
+    reciprocal_sum_even_balance hS N
 
 /-- **Target.**  A union of orbits carries a third of its log weight on multiples of `3`, up to
 `3`: the multiples of `3` up to `N` weigh `(2/3) e` up to `log(3/2) + O(1/N)`, and
 `(2/3) e - (e + o)/3 = (e - o)/3`, bounded by the even balance. -/
 theorem logWeight_three_balance {S : Set ℤ} (hS : ∀ x, amusical x ∈ S ↔ x ∈ S) (N : ℕ) :
     |logWeight (S ∩ {n | 3 ∣ n}) N - logWeight S N / 3| ≤ 3 := by
-  sorry
+  classical
+  unfold logWeight
+  simpa only [Finset.sum_filter, Set.mem_inter_iff, Set.mem_ofPred_eq] using
+    reciprocal_sum_three_balance hS N
 
 /-- **Target.**  If every orbit of a nonnegative integer has log density `0`, Klamkin's problem
 (a) holds.  Paper proof: finitely many orbits would cover `ℕ`, so their log weights up to `N`
