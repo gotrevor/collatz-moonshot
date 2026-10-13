@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalLogBalance.Transport
 
 /-!
 # Log-weighted balance of unions of orbits
