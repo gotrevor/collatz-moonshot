@@ -1,5 +1,57 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 lap: rewiring barrier closed
+
+### Concrete advance
+
+- Proved the ratified `rewire_single_orbit` statement without changing its type.  Two target
+  sorries now remain in `CollatzMoonshot/AmusicalSeventh.lean`.
+- The fresh review found that the paper's annular upper bounds are unnecessary for sparsity.
+  `sparseCutPoint` enumerates every `(base point, requested time, direction)` and chooses the
+  corresponding orbit cut above `(q+1)^2`.  The resulting `sparseOrbitCuts` meets both tails of
+  every infinite orbit cofinally, contains only infinite-orbit points, and every decidable subset
+  has density zero.
+- `nextSparseCut` and `prevSparseCut` are inverse nearest-cut maps.  The finite segments between
+  cuts are reconnected so their induced successor is a conjugate of translation by one on `ℤ`.
+  This makes all original infinite-orbit points lie on one new orbit and leaves finite orbits
+  untouched.
+- The changed domain satisfies the explicit stronger bound
+  `card {n < N | τ n ≠ σ n} ≤ Nat.sqrt (2*N+1)`, using only the forward half of the ratified
+  doubling hypothesis.  Its real square-root majorant proves the required density limit.
+- No new axiom and no `native_decide` were introduced.  The two ratified statements still open
+  are `amusical_pow_classUnion_invariant` and `sparse_sweep`.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Rewire.lean` (green).
+- `lake build CollatzMoonshot.AmusicalSeventh.Rewire` (8710 jobs, green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; warnings only for the two remaining
+  target sorries).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms CollatzMoonshot.Amusical.rewire_single_orbit`
+  (8711 jobs, `FORMALIZE-TIER GREEN`; axiom ledger exactly `Classical.choice`, `Quot.sound`,
+  `propext`).
+- `git diff --check` (clean).  The ratified theorem statement is unchanged from kickoff commit
+  `5fa5871`; only its proof body changed this lap.
+
+### Current blocker
+
+There is no external blocker.  `amusical_pow_classUnion_invariant` is now next by the ratified
+order and requires a uniform strong-connectivity argument for the residue graph of every positive
+power of `amusical`.  The existing cylinder transport module supplies exact forward and backward
+congruence control but does not yet package the mixed `2`/`3`/coprime CRT reachability theorem.
+`sparse_sweep` remains the final and heaviest target.
+
+### Next highest-value attack
+
+Attack `amusical_pow_classUnion_invariant`.  First state and prove a point-to-point residue
+reachability lemma: for `0 < m,M` and residues `r,s : ZMod M`, choose integers `x ≡ r` and a
+positive multiple `L` of `m` with `amusical^[L] x ≡ s`.  Reuse
+`amusical_iterate_add_forwardPeriod_mul`, `amusical_iterate_modEq_two`, and
+`amusicalInv_iterate_modEq_three`; isolate the modulus coprime to `6` before the final CRT.  Then
+derive the target from forward/backward invariance of the class union.  Adversarially test the
+reachability statement at small `m,M` before committing its exact quantifiers.
+
 ## 2026-10-13 lap: rewiring properness and annulus crossing
 
 ### Concrete advance

@@ -123,6 +123,21 @@ theorem rewire_single_orbit (σ : Equiv.Perm ℕ)
         Filter.atTop (nhds 0) ∧
       ∀ a b, (Set.range fun j : ℤ => (σ ^ j) a).Infinite →
         (Set.range fun j : ℤ => (σ ^ j) b).Infinite → ∃ j : ℤ, (τ ^ j) a = b := by
-  sorry
+  classical
+  by_cases hex : ∃ x : ℕ, (Set.range fun j : ℤ => (σ ^ j) x).Infinite
+  · obtain ⟨x, hx⟩ := hex
+    have hcuts : (sparseOrbitCuts σ).Infinite :=
+      sparseOrbitCuts_infinite_of_infinite_orbit σ hx
+    refine ⟨sparselyRewiredPerm σ hcuts, ?_, ?_, ?_⟩
+    · intro n hn
+      exact sparselyRewiredPerm_eq_of_finite_orbit σ hcuts hn
+    · exact sparselyRewiredPerm_support_density_zero σ (fun n => (hstep n).1) hcuts
+    · intro a b ha hb
+      exact sparselyRewiredPerm_connects_infinite_orbits σ hcuts ha hb
+  · refine ⟨σ, fun _ _ => rfl, ?_, ?_⟩
+    · simpa using (tendsto_const_nhds :
+        Filter.Tendsto (fun _ : ℕ => (0 : ℝ)) Filter.atTop (nhds 0))
+    · intro a _ ha
+      exact (hex ⟨a, ha⟩).elim
 
 end CollatzMoonshot.Amusical
