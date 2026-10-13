@@ -1,55 +1,54 @@
-# HANDOFF: amusical word-to-lattice bridge (2026-10-13)
+# HANDOFF: amusical `1/20` density bound complete (2026-10-13)
 
 ## Concrete advance
 
-The existing kernel-efficient integer lattice DP and its 200-step inequality remain intact.
-This lap proved the recurrence interface needed by the combinatorial bridge:
+The scoped target is complete.  A fresh review confirmed that the ratified statements still lead
+from the 200-window estimate to the orbit-minimum density theorem, then closed the only missing
+word-to-lattice bridge:
 
-- `sum_bool_snoc` splits a sum over `(Fin (n+1) → Bool)` into the last letter and a length-`n`
-  prefix via `Fin.snocEquiv`, without asking the kernel to enumerate the function space;
-- `fwdLatticeStep_getD` and `bwdLatticeStep_getD` prove the exact adjacent-coordinate formula
-  for a step, including the explicit left-neighbor accumulator;
-- `fwdLatticeRow_succ_getD` and `bwdLatticeRow_succ_getD` lift those formulas to rows, with
-  the zero boundary and final appended zero discharged;
-- the backward formula visibly carries the required factor `2` for a newly marked letter.
+- `fwdLatticeCount t o` and `bwdLatticeCount t o` are semantic weighted counts of surviving
+  length-`t` words with exactly `o` marked letters;
+- splitting a word with `Fin.snoc` proves their adjacent-coordinate recurrences, including the
+  backward factor `2` for a newly marked letter;
+- induction identifies every semantic coordinate with the corresponding entry of
+  `fwdLatticeRow` or `bwdLatticeRow`, and summing coordinates identifies the numerators;
+- `fwdSurv_mul_two` and `bwdSurv_mul_three` establish, for every `L`,
+  `2^L * fwdSurv L = fwdLatticeNum L` and
+  `3^L * bwdSurv L = bwdLatticeNum L`;
+- clearing the positive denominators reduces `windowDensity_two_hundred_lt` exactly to the
+  existing kernel-certified `latticeDensity_two_hundred_lt`.
 
-These lemmas are kernel-checked and add no axiom, `native_decide`, or new `sorry`.
+`CollatzMoonshot/AmusicalBound.lean` is now sorry-free.  The ratified statements and imported
+definitions were unchanged; no axiom or `native_decide` was added.  Consequently the existing
+`orbitMin_density_lt_one_twentieth` corollary is fully proved as well.
 
 ## Exact verification
 
 ```text
 lake env lean CollatzMoonshot/AmusicalBound.lean
-# passes; warning only at the scoped target sorry
+# passes cleanly
 
 git diff --check
 # passes
 
-~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-bound --target CollatzMoonshot.AmusicalBound
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-bound \
+  --target CollatzMoonshot.AmusicalBound \
+  --axioms CollatzMoonshot.Amusical.windowDensity_two_hundred_lt
 # Build completed successfully (8709 jobs); FORMALIZE-TIER GREEN
-# reports exactly the scoped sorry at AmusicalBound.lean:181
+# axioms: Classical.choice, Quot.sound, propext
+
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-bound \
+  --axioms CollatzMoonshot.Amusical.orbitMin_density_lt_one_twentieth
+# Build completed successfully (8839 jobs); FORMALIZE-TIER GREEN
+# axioms: Classical.choice, Quot.sound, propext
 ```
 
 ## Current blocker
 
-The sole remaining `sorry` is `windowDensity_two_hundred_lt`.  Its numerical content is
-certified.  What remains is the semantic half of the combinatorial bridge, for every `L`:
-
-```lean
-fwdSurv L = (fwdLatticeNum L : ℚ) / 2^L
-bwdSurv L = (bwdLatticeNum L : ℚ) / 3^L
-```
-
-This must connect the ratified sums over `w : Fin L → Bool` to the recurrence without asking
-the kernel to enumerate function spaces.
+None for `KICKOFF-2026-10-13-amusical-bound.md` or the host predicate
+`sorry-free:CollatzMoonshot/AmusicalBound.lean`.
 
 ## Next highest-value attack
 
-Define semantic forward/backward coordinates as weighted counts of surviving words with exactly
-`o` marked letters.  Apply `sum_bool_snoc`; old prefix conditions are unchanged under `Fin.snoc`,
-and the sole new condition is the full-prefix guard.  Prove that these semantic coordinates obey
-`fwdLatticeRow_succ_getD` / `bwdLatticeRow_succ_getD`, then identify the rows by induction and sum
-over `o`.  This yields the two displayed bridge equalities.  Finally rewrite the target, clear the
-positive denominators, and apply `latticeDensity_two_hundred_lt`.
-
-Do not change `fwdSurv`, `bwdSurv`, or either ratified theorem statement.  The untracked
-`CLAUDE.local.md` predates this lap and must remain uncommitted.
+Stop: the scoped objective is met, and no stretch objective was assigned.  The untracked
+`CLAUDE.local.md` predates this campaign and remains deliberately uncommitted.
