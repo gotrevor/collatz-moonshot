@@ -111,6 +111,7 @@ import CollatzMoonshot.Sibling
 import CollatzMoonshot.Amusical
 import CollatzMoonshot.AmusicalWindow
 import CollatzMoonshot.AmusicalConstant
+import CollatzMoonshot.AmusicalBound
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
 import CollatzMoonshot.Literature.AmusicalCycles
