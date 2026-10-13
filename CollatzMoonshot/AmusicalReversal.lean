@@ -145,6 +145,156 @@ theorem no_piecewiseAffine_reversor :
     ¬ ∃ (ι : Equiv.Perm ℤ) (n : ℕ) (piece : ℤ → Fin n) (a b c : Fin n → ℤ),
       (∀ j, c j ≠ 0) ∧ (∀ x, c (piece x) * ι x = a (piece x) * x + b (piece x)) ∧
       ι * amusicalPerm * ι⁻¹ = amusicalPerm⁻¹ := by
-  sorry
+  rintro ⟨ι, n, piece, a, b, c, hc, haff, hconj⟩
+  let B : ℕ := (∑ j, (c j).natAbs) * ∑ j, (a j).natAbs
+  let L : ℕ := B + 1
+  have hbig : B < 3 ^ (2 * L) := by
+    calc
+      B < 2 ^ B := B.lt_two_pow_self
+      _ ≤ 3 ^ (2 * L) := by dsimp [L]; gcongr <;> omega
+  let cell : ℤ → Fin n × ZMod (4 ^ L) × Fin n × ZMod (3 ^ L) := fun x =>
+    (piece x, (x : ZMod (4 ^ L)), piece (amusical^[L] x), (ι x : ZMod (3 ^ L)))
+  obtain ⟨x, y, hxy, hcell⟩ := Finite.exists_ne_map_eq_of_infinite cell
+  have hp₀ : piece x = piece y := by
+    simpa [cell] using congrArg (fun z => z.1) hcell
+  have hm₄ : (x : ZMod (4 ^ L)) = (y : ZMod (4 ^ L)) := by
+    simpa [cell] using congrArg (fun z => z.2.1) hcell
+  have hp₁ : piece (amusical^[L] x) = piece (amusical^[L] y) := by
+    simpa [cell] using congrArg (fun z => z.2.2.1) hcell
+  have hm₃ : (ι x : ZMod (3 ^ L)) = (ι y : ZMod (3 ^ L)) := by
+    simpa [cell] using congrArg (fun z => z.2.2.2) hcell
+  obtain ⟨k, hy⟩ := Int.modEq_iff_add_fac.mp
+    ((ZMod.intCast_eq_intCast_iff x y (4 ^ L)).mp hm₄)
+  have hy' : y = x + (4 : ℤ) ^ L * k := by simpa using hy
+  obtain ⟨q, hιy⟩ := Int.modEq_iff_add_fac.mp
+    ((ZMod.intCast_eq_intCast_iff (ι x) (ι y) (3 ^ L)).mp hm₃)
+  have hιy' : ι y = ι x + (3 : ℤ) ^ L * q := by simpa using hιy
+  have hk : k ≠ 0 := by
+    intro hk
+    apply hxy
+    have : y = x := by simpa [hk] using hy'
+    exact this.symm
+  have hsem : SemiconjBy ι amusicalPerm amusicalPerm⁻¹ := by
+    rw [SemiconjBy]
+    calc
+      ι * amusicalPerm = (ι * amusicalPerm * ι⁻¹) * ι := by group
+      _ = amusicalPerm⁻¹ * ι := by rw [hconj]
+  have hiterate : ∀ z : ℤ, ι (amusical^[L] z) = amusicalInv^[L] (ι z) := by
+    intro z
+    have hz := congrArg (fun p : Equiv.Perm ℤ => p z) (hsem.pow_right L).eq
+    rw [amusical_iterate_eq_perm_pow, amusicalInv_iterate_eq_perm_pow]
+    simpa [zpow_natCast, zpow_neg, Equiv.Perm.mul_apply] using hz
+  have hforward : amusical^[L] y = amusical^[L] x +
+      (3 : ℤ) ^ L * 2 ^ amusicalForwardEvenCount L x * k := by
+    rw [hy']
+    simpa using amusical_iterate_add_pow_four_mul_slope L L le_rfl x k
+  have hbackward : amusicalInv^[L] (ι y) = amusicalInv^[L] (ι x) +
+      (2 : ℤ) ^ (L + amusicalBackwardFourCount L (ι x)) * q := by
+    rw [hιy']
+    simpa using amusicalInv_iterate_add_pow_three_mul_slope L L le_rfl (ι x) q
+  have hdiff₀ : c (piece x) * (ι y - ι x) = a (piece x) * (y - x) := by
+    have hx := haff x
+    have hy := haff y
+    rw [← hp₀] at hy
+    linear_combination hy - hx
+  have ha₀ : a (piece x) ≠ 0 := by
+    intro ha₀
+    have hz : c (piece x) * (ι y - ι x) = 0 := by simpa [ha₀] using hdiff₀
+    have hsub : ι y - ι x = 0 := (mul_eq_zero.mp hz).resolve_left (hc _)
+    exact hxy ((ι.injective (sub_eq_zero.mp hsub)).symm)
+  have hdiff₁ : c (piece (amusical^[L] x)) *
+        (ι (amusical^[L] y) - ι (amusical^[L] x)) =
+      a (piece (amusical^[L] x)) * (amusical^[L] y - amusical^[L] x) := by
+    have hx := haff (amusical^[L] x)
+    have hy := haff (amusical^[L] y)
+    rw [← hp₁] at hy
+    linear_combination hy - hx
+  have heq₀ : c (piece x) * ((3 : ℤ) ^ L * q) =
+      a (piece x) * ((4 : ℤ) ^ L * k) := by
+    calc
+      c (piece x) * ((3 : ℤ) ^ L * q) = c (piece x) * (ι y - ι x) := by rw [hιy']; ring
+      _ = a (piece x) * (y - x) := hdiff₀
+      _ = a (piece x) * ((4 : ℤ) ^ L * k) := by rw [hy']; ring
+  have hιUdiff : ι (amusical^[L] y) - ι (amusical^[L] x) =
+      (2 : ℤ) ^ (L + amusicalBackwardFourCount L (ι x)) * q := by
+    rw [hiterate y, hiterate x, hbackward]
+    ring
+  have hUdiff : amusical^[L] y - amusical^[L] x =
+      (3 : ℤ) ^ L * 2 ^ amusicalForwardEvenCount L x * k := by
+    rw [hforward]
+    ring
+  have heq₁ : c (piece (amusical^[L] x)) *
+        ((2 : ℤ) ^ (L + amusicalBackwardFourCount L (ι x)) * q) =
+      a (piece (amusical^[L] x)) *
+        ((3 : ℤ) ^ L * 2 ^ amusicalForwardEvenCount L x * k) := by
+    calc
+      _ = c (piece (amusical^[L] x)) *
+          (ι (amusical^[L] y) - ι (amusical^[L] x)) := by rw [hιUdiff]
+      _ = a (piece (amusical^[L] x)) * (amusical^[L] y - amusical^[L] x) := hdiff₁
+      _ = _ := by rw [hUdiff]
+  have hcross :
+      ((c (piece (amusical^[L] x)) * a (piece x)) *
+        ((4 : ℤ) ^ L * 2 ^ (L + amusicalBackwardFourCount L (ι x)))) * k =
+      (((3 : ℤ) ^ L * 3 ^ L) *
+        (c (piece x) * a (piece (amusical^[L] x)) *
+          2 ^ amusicalForwardEvenCount L x)) * k := by
+    calc
+      _ = (c (piece (amusical^[L] x)) *
+          2 ^ (L + amusicalBackwardFourCount L (ι x))) *
+          (a (piece x) * (4 ^ L * k)) := by ring
+      _ = (c (piece (amusical^[L] x)) *
+          2 ^ (L + amusicalBackwardFourCount L (ι x))) *
+          (c (piece x) * (3 ^ L * q)) := by rw [heq₀]
+      _ = (c (piece x) * 3 ^ L) *
+          (c (piece (amusical^[L] x)) *
+            (2 ^ (L + amusicalBackwardFourCount L (ι x)) * q)) := by ring
+      _ = (c (piece x) * 3 ^ L) *
+          (a (piece (amusical^[L] x)) *
+            (3 ^ L * 2 ^ amusicalForwardEvenCount L x * k)) := by rw [heq₁]
+      _ = _ := by ring
+  have hcoeff₀ := mul_right_cancel₀ hk hcross
+  have hcoeff :
+      (c (piece (amusical^[L] x)) * a (piece x)) *
+          (2 : ℤ) ^ (2 * L + (L + amusicalBackwardFourCount L (ι x))) =
+        (3 : ℤ) ^ (2 * L) *
+          (c (piece x) * a (piece (amusical^[L] x)) *
+            2 ^ amusicalForwardEvenCount L x) := by
+    calc
+      _ = (c (piece (amusical^[L] x)) * a (piece x)) *
+          ((4 : ℤ) ^ L * 2 ^ (L + amusicalBackwardFourCount L (ι x))) := by
+            rw [show (4 : ℤ) = 2 ^ 2 by norm_num, ← pow_mul, ← pow_add]
+      _ = ((3 : ℤ) ^ L * 3 ^ L) *
+          (c (piece x) * a (piece (amusical^[L] x)) *
+            2 ^ amusicalForwardEvenCount L x) := hcoeff₀
+      _ = _ := by rw [← pow_add]; congr 2; omega
+  have hdivInt : (3 : ℤ) ^ (2 * L) ∣
+      (c (piece (amusical^[L] x)) * a (piece x)) *
+        (2 : ℤ) ^ (2 * L + (L + amusicalBackwardFourCount L (ι x))) := by
+    exact ⟨_, hcoeff⟩
+  have hdivInt' : ((3 ^ (2 * L) : ℕ) : ℤ) ∣
+      (c (piece (amusical^[L] x)) * a (piece x)) *
+        (2 : ℤ) ^ (2 * L + (L + amusicalBackwardFourCount L (ι x))) := by
+    simpa using hdivInt
+  have hdivNat := Int.natCast_dvd.mp hdivInt'
+  simp only [Int.natAbs_mul, Int.natAbs_pow] at hdivNat
+  norm_num at hdivNat
+  have hdivCoeff : 3 ^ (2 * L) ∣
+      (c (piece (amusical^[L] x))).natAbs * (a (piece x)).natAbs :=
+    ((Nat.Coprime.pow (2 * L)
+      (2 * L + (L + amusicalBackwardFourCount L (ι x)))
+      (by decide : Nat.Coprime 3 2)).dvd_mul_right).mp hdivNat
+  have hcoeff_ne : (c (piece (amusical^[L] x))).natAbs * (a (piece x)).natAbs ≠ 0 :=
+    mul_ne_zero (Int.natAbs_ne_zero.mpr (hc _)) (Int.natAbs_ne_zero.mpr ha₀)
+  have hle : 3 ^ (2 * L) ≤
+      (c (piece (amusical^[L] x))).natAbs * (a (piece x)).natAbs :=
+    Nat.le_of_dvd (Nat.pos_of_ne_zero hcoeff_ne) hdivCoeff
+  have hB : (c (piece (amusical^[L] x))).natAbs * (a (piece x)).natAbs ≤ B := by
+    dsimp [B]
+    apply Nat.mul_le_mul
+    · exact Finset.single_le_sum (f := fun j ↦ (c j).natAbs)
+        (fun _ _ ↦ Nat.zero_le _) (Finset.mem_univ _)
+    · exact Finset.single_le_sum (f := fun j ↦ (a j).natAbs)
+        (fun _ _ ↦ Nat.zero_le _) (Finset.mem_univ _)
+  omega
 
 end CollatzMoonshot.Amusical
