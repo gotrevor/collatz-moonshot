@@ -869,6 +869,166 @@ theorem bwdGood_append_and_swap_iff {m n : ℕ} (hm : 0 < m) (hn : 0 < n)
   · rintro ⟨hu, hv⟩
     exact ⟨hu.append hm hv, hv.append hn hu⟩
 
+/-! ## Arbitrarily many cyclic marks
+
+The two-mark equivalences above are the first intersection term in cyclic
+inclusion--exclusion.  The following list-level lemma packages the induction needed for every
+intersection term: if a survival predicate restricts to an initial block and is preserved by
+concatenating a nonempty surviving block, then simultaneous survival from all marked boundaries
+is exactly separate survival on every intervening gap. -/
+
+/-- Simultaneous survival from every boundary in a nonempty cyclic list of nonempty blocks is
+equivalent to separate survival of all blocks.  This abstract form is the structural core of
+all higher cyclic-intersection factorizations. -/
+theorem cyclicBlocks_all_iff {α : Type*} (P : List α → Prop)
+    (hleft : ∀ a b, P (a ++ b) → P a)
+    (happend : ∀ a b, a ≠ [] → P a → P b → P (a ++ b))
+    (blocks : List (List α)) (hblocks : blocks ≠ [])
+    (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, P (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, P b := by
+  constructor
+  · intro hrot b hb
+    obtain ⟨pre, post, rfl⟩ := List.mem_iff_append.mp hb
+    have h := hrot pre.length (by simp)
+    rw [List.rotate_append_length_eq] at h
+    have h' : P (b ++ (post ++ pre).flatten) := by simpa using h
+    exact hleft b ((post ++ pre).flatten) h'
+  · intro hall r _hr
+    have hrot_nonempty : blocks.rotate r ≠ [] := by
+      intro hnil
+      exact hblocks (List.rotate_eq_nil_iff.mp hnil)
+    have hrot_ne : ∀ b ∈ blocks.rotate r, b ≠ [] := by
+      intro b hb
+      exact hne b (List.mem_rotate.mp hb)
+    have hrot_good : ∀ b ∈ blocks.rotate r, P b := by
+      intro b hb
+      exact hall b (List.mem_rotate.mp hb)
+    have aux : ∀ (bs : List (List α)), bs ≠ [] →
+        (∀ b ∈ bs, b ≠ []) → (∀ b ∈ bs, P b) → P bs.flatten := by
+      intro bs hbs
+      induction bs with
+      | nil => contradiction
+      | cons b bs ih =>
+          intro hne' hall'
+          cases bs with
+          | nil => simpa using hall' b (by simp)
+          | cons c cs =>
+              rw [List.flatten_cons]
+              apply happend b (c :: cs).flatten
+              · exact hne' b (by simp)
+              · exact hall' b (by simp)
+              · apply ih
+                · simp
+                · intro d hd
+                  exact hne' d (by simp [hd])
+                · intro d hd
+                  exact hall' d (by simp [hd])
+    exact aux (blocks.rotate r) hrot_nonempty hrot_ne hrot_good
+
+/-- Strict positivity of every nonempty prefix restricts to an initial block. -/
+theorem strictlyPositivePrefixes_of_append_left (a b : List ℝ)
+    (h : CollatzMoonshot.StrictlyPositivePrefixes (a ++ b)) :
+    CollatzMoonshot.StrictlyPositivePrefixes a := by
+  intro t ht0 hta
+  have htab : t ≤ (a ++ b).length := by simp; omega
+  have hp := h t ht0 htab
+  simpa [List.take_append, hta] using hp
+
+/-- Two strict-positive-prefix blocks concatenate to another such block when the first block is
+nonempty. -/
+theorem strictlyPositivePrefixes_append {a b : List ℝ} (ha0 : a ≠ [])
+    (ha : CollatzMoonshot.StrictlyPositivePrefixes a)
+    (hb : CollatzMoonshot.StrictlyPositivePrefixes b) :
+    CollatzMoonshot.StrictlyPositivePrefixes (a ++ b) := by
+  intro t ht0 htab
+  by_cases hta : t ≤ a.length
+  · have hp := ha t ht0 hta
+    rw [List.take_append, Nat.sub_eq_zero_of_le hta]
+    simpa using hp
+  · have ha_sum : 0 < a.sum := by
+      simpa using ha a.length (List.length_pos_of_ne_nil ha0) le_rfl
+    have hsub0 : 0 < t - a.length := by omega
+    have hsubb : t - a.length ≤ b.length := by
+      simp only [List.length_append] at htab
+      omega
+    have hb_sum := hb (t - a.length) hsub0 hsubb
+    rw [List.take_append, List.take_of_length_le (by omega), List.sum_append]
+    exact add_pos ha_sum hb_sum
+
+/-- Forward survival for a list word, in its additive-score form. -/
+def FwdListGood (l : List Bool) : Prop :=
+  CollatzMoonshot.StrictlyPositivePrefixes (l.map fwdStepScore)
+
+/-- Backward survival for a list word, in its additive-score form. -/
+def BwdListGood (l : List Bool) : Prop :=
+  CollatzMoonshot.StrictlyPositivePrefixes (l.map bwdStepScore)
+
+theorem fwdListGood_iff (l : List Bool) :
+    FwdListGood l ↔ FwdGood l.length l.get := by
+  simpa [FwdListGood, fwdScoreList_eq_map] using
+    (fwdGood_iff_strictlyPositivePrefixes l.get).symm
+
+theorem bwdListGood_iff (l : List Bool) :
+    BwdListGood l ↔ BwdGood l.length l.get := by
+  simpa [BwdListGood, bwdScoreList_eq_map] using
+    (bwdGood_iff_strictlyPositivePrefixes l.get).symm
+
+/-- Arbitrary forward cyclic-mark intersections factor at the proposition level into the
+survival predicates of their positive-length gaps. -/
+theorem fwdListGood_cyclicBlocks_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, FwdListGood (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, FwdListGood b := by
+  apply cyclicBlocks_all_iff FwdListGood
+      (fun a b h => strictlyPositivePrefixes_of_append_left
+        (a.map fwdStepScore) (b.map fwdStepScore) (by simpa [FwdListGood] using h))
+      (fun a b ha0 ha hb => by
+        change CollatzMoonshot.StrictlyPositivePrefixes
+          ((a ++ b).map fwdStepScore)
+        rw [List.map_append]
+        apply strictlyPositivePrefixes_append
+        · simpa using ha0
+        · simpa [FwdListGood] using ha
+        · simpa [FwdListGood] using hb)
+      blocks hblocks hne
+
+/-- Backward analogue of `fwdListGood_cyclicBlocks_iff`. -/
+theorem bwdListGood_cyclicBlocks_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length, BwdListGood (blocks.rotate r).flatten) ↔
+      ∀ b ∈ blocks, BwdListGood b := by
+  apply cyclicBlocks_all_iff BwdListGood
+      (fun a b h => strictlyPositivePrefixes_of_append_left
+        (a.map bwdStepScore) (b.map bwdStepScore) (by simpa [BwdListGood] using h))
+      (fun a b ha0 ha hb => by
+        change CollatzMoonshot.StrictlyPositivePrefixes
+          ((a ++ b).map bwdStepScore)
+        rw [List.map_append]
+        apply strictlyPositivePrefixes_append
+        · simpa using ha0
+        · simpa [BwdListGood] using ha
+        · simpa [BwdListGood] using hb)
+      blocks hblocks hne
+
+/-- The forward arbitrary-mark factorization in the original `FwdGood` interface. -/
+theorem fwdGood_cyclicBlockLists_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length,
+      FwdGood (blocks.rotate r).flatten.length (blocks.rotate r).flatten.get) ↔
+      ∀ b ∈ blocks, FwdGood b.length b.get := by
+  simpa only [← fwdListGood_iff] using
+    fwdListGood_cyclicBlocks_iff blocks hblocks hne
+
+/-- The backward arbitrary-mark factorization in the original `BwdGood` interface. -/
+theorem bwdGood_cyclicBlockLists_iff (blocks : List (List Bool))
+    (hblocks : blocks ≠ []) (hne : ∀ b ∈ blocks, b ≠ []) :
+    (∀ r < blocks.length,
+      BwdGood (blocks.rotate r).flatten.length (blocks.rotate r).flatten.get) ↔
+      ∀ b ∈ blocks, BwdGood b.length b.get := by
+  simpa only [← bwdListGood_iff] using
+    bwdListGood_cyclicBlocks_iff blocks hblocks hne
+
 /-- Forward word weights multiply under concatenation. -/
 theorem fwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
     fwdWordWeight (Fin.append u v) = fwdWordWeight u * fwdWordWeight v := by

@@ -1,6 +1,51 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, two-mark intersections)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, arbitrary-mark factorization)
 
-## Current checkpoint: the first cyclic intersection term factors exactly
+## Current checkpoint: every cyclic intersection factors propositionally
+
+This lap generalized the preceding two-mark result to an arbitrary nonempty ordered collection
+of nonempty cyclic gaps.  The abstract theorem `cyclicBlocks_all_iff` proves that for any
+list predicate which restricts to an initial block and is preserved by concatenation,
+simultaneous survival from every cyclic block boundary is equivalent to separate survival of
+every block.  Its proof rotates an arbitrary selected block to the front for the reverse
+implication and folds append closure around every rotation for the forward implication.
+
+The generic prefix facts `strictlyPositivePrefixes_of_append_left` and
+`strictlyPositivePrefixes_append` instantiate this theorem on additive score lists.  The result
+is connected back to both original walk predicates through `fwdListGood_iff` and
+`bwdListGood_iff`; the final statements `fwdGood_cyclicBlockLists_iff` and
+`bwdGood_cyclicBlockLists_iff` say directly that all marked cyclic starts survive iff all
+positive-length gap words survive.  Thus the logical intersection identity required for every
+term of cyclic inclusion--exclusion is now kernel-checked, rather than merely the two-mark base
+case.
+
+## Verification
+
+Exact commands run in this lap:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+lake build CollatzMoonshot.AmusicalSpitzer
+git diff --check
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.fwdGood_cyclicBlockLists_iff
+```
+
+The target gate ended `FORMALIZE-TIER GREEN`; the arbitrary-mark forward theorem's axiom audit
+is exactly `[propext, Classical.choice, Quot.sound]`.  The only proof-debt warning remains the
+pre-existing `windowDensityLimit`.
+
+## Current blocker and next highest-value attack
+
+`windowDensityLimit` remains the scoped file's single `sorry`.  The proposition-level
+arbitrary-intersection theorem now removes the main logical obstacle.  Next lift it to weighted
+sums indexed by a positive composition of the total length: prove that the weight of the
+flattened block list is the product of block weights and that the finite sum over block words
+factors as the product of the corresponding `fwdSurv` or `bwdSurv` values.  Feed those terms to
+`Finset.inclusion_exclusion_sum_biUnion` for the cyclic survival-event cover to derive the
+verified renewal recurrence.  Then derive the two generating functions and take their boundary
+limits using `summable_fwdNonposSeries`, `summable_bwdNonposSeries`, and
+`minimaConstant_eq_directionalFactors`.  Do not return to the refuted pointwise cut identity.
+
+## Previous checkpoint: the first cyclic intersection term factors exactly
 
 This lap advanced the cyclic-union inclusion--exclusion route past the one-mark cover.  In
 `CollatzMoonshot/AmusicalSpitzer.lean`, the new restriction lemmas
