@@ -186,3 +186,28 @@ scratch, not in the repo).  Outcomes, each recorded in `Maze.lean`:
   nontrivial separator (skew-product transitivity); "orbit of `8` has density `1`" contradicts
   nothing provable.  Computational: any sixth cycle has length `≥ 665` (float-based cut test;
   not formalized).
+
+## 8. What U lacks: time reversal (2026-10-13, "relative" agent, checked)
+
+* **A relative where it works.**  `H` on `ℤ[i]` (`GaussianRelative.lean`): every piece
+  multiplies by `π = 2+i` and divides by `π̄ = 2−i`, as `U` multiplies by `3` and divides by `2`.
+  Haar-balanced, dissipative (drift `≈ 0.13` both ways), wild, no residue-class cycles, finitely
+  many cycles per length, two-sided full-shift coding (so no growth cone), residue graph strongly
+  connected at every tested modulus.  And `conj ∘ H ∘ conj = H⁻¹`, so every orbit meets
+  `Fix(conj) = ℤ` at most twice: **infinitely many orbits, proved** (any `13` real integers lie in
+  `≥ 7` orbits).  Independently checked: `scripts/amusical/gauss_check.py` (integral, injective,
+  reversal identity on `|a|,|b| ≤ 60`; a perturbed constant fails exact division).
+* **Theorem NR.**  No bijection of `ℤ` affine on finitely many pieces reverses `U`
+  (`no_piecewiseAffine_reversor`): `ι U^ℓ = U^{−ℓ} ι` on an infinite cell forces
+  `v₃(slope) + ℓ = v₃(slope') − ℓ`.  The unbalance of `U` sits on the primes `2, 3`, which no
+  automorphism of `ℚ` exchanges; `ℤ[i]` hosts a split pair that conjugation swaps.
+* **Exact reformulation.**  Klamkin (a) ⇔ some sign-preserving involution reverses `U` and has
+  infinitely many nonnegative fixed points (`infinitelyManyOrbits_iff_reversor`): reversibility
+  is the whole problem, and NR says the reversor cannot be piecewise affine.
+* **Also from the agent:** `U`'s residue transition graph is strongly connected for every
+  modulus, so every eventually periodic `U`-invariant subset of `ℕ` is finite or cofinite (a proof
+  must use sets not definable in `(ℤ, +, <)`); the elliptic relative `G(z) = (πz + ρ)/π̄` (a
+  discretised Pythagorean rotation) is also conj-reversible; a tame Haar-balanced no-cone map with
+  exactly one orbit exists, so balance + no cone + mixed slopes cannot by themselves force
+  infinitely many orbits; composing `U` with residue permutations creates a cone in `144/719`
+  cases mod `6`, so the no-cone property is fragile.
