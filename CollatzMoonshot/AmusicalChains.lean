@@ -28,7 +28,13 @@ open CollatzMoonshot.Obstructions.Amusical
 `n ≤ U^t n` and `U^t n ≤ U^-t (U^t n) = n`. -/
 theorem IsWindowMin.iterate_eq_of_isWindowMin {L t : ℕ} {n : ℤ} (h : IsWindowMin L n)
     (ht : 0 < t) (htL : t ≤ L) (h' : IsWindowMin L (amusical^[t] n)) : amusical^[t] n = n := by
-  sorry
+  apply le_antisymm
+  · have hback := (h' t ht htL).2
+    rw [amusicalInv_iterate_eq_perm_pow, amusical_iterate_eq_perm_pow] at hback
+    have hback' : (amusicalPerm ^ (t : ℤ)) n ≤ n := by
+      simpa [← Equiv.Perm.mul_apply] using hback
+    rwa [amusical_iterate_eq_perm_pow]
+  · exact (h t ht htL).1
 
 /-- **Target.**  The forward survival probability is at least `1/6` for every `L`. -/
 theorem fwdSurv_ge (L : ℕ) : 1 / 6 ≤ fwdSurv L := by
