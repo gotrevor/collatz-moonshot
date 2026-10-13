@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import CollatzMoonshot.Obstructions.Amusical
 import CollatzMoonshot.AmusicalSeventh.Rewire
 import CollatzMoonshot.AmusicalSeventh.Residue
+import CollatzMoonshot.AmusicalSeventh.Sparse
 
 /-!
 # Toward a seventh orbit: what a cofinite orbit would need, and why statistics cannot refute it

@@ -1,5 +1,48 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 lap: explicit window-representative growth bound
+
+### Concrete advance
+
+- Added `CollatzMoonshot/AmusicalSeventh/Sparse.lean`, the quantitative helper module for the sole
+  remaining target, `sparse_sweep`.
+- Proved `amusical_max_step`: on nonnegative integers, both `U` and `U⁻¹` are at most `2z+1`.
+- Proved the iterated bounds `amusical_iterate_lt_two_pow_mul` and
+  `amusicalInv_iterate_lt_two_pow_mul`.
+- Proved the load-bearing finite-representative estimate
+  `amusical_window_representative_lt`: if `c < 12^L` and `t ≤ L`, then both `U^t(c)` and
+  `U⁻ᵗ(c)` are below `24^L`.  This supplies an explicit bound on the affine offsets in the exact
+  residue formulas and replaces the opaque `windowBound` at the start of Lemma W.
+- Imported the new helper module into the ratified target file.  No statement was changed, and no
+  axiom, `native_decide`, or new `sorry` was introduced.  The original `sparse_sweep` sorry is the
+  only scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `lake build CollatzMoonshot.AmusicalSeventh.Sparse CollatzMoonshot.AmusicalSeventh`
+  (8716 jobs, green; only the expected original `sparse_sweep` sorry warning).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh` (8716 jobs, `FORMALIZE-TIER GREEN`; the gate reports exactly
+  the original `sparse_sweep` proof debt).
+- `git diff --check` (clean).
+
+### Current blocker
+
+There is no external blocker.  Lemma W still needs its comparison step.  Write
+`n = c + 4^L q` forward and `n = c + 3^L q` backward, with `c` the appropriate residue of a
+joint representative modulo `12^L`.  The new `24^L` bound controls `|U^t(c)-c|` and
+`|U⁻ᵗ(c)-c|`; the hypothesis `n ≥ 2·324^L` makes each quotient larger than that error.  Then
+`add_mul_le_add_mul_iff` identifies the comparison with the affine slope, hence with the residue.
+
+### Next highest-value attack
+
+Formalize that quotient/error inequality and package Lemma W as an equivalence between
+`IsWindowMin L n` and a predicate of `n % 12^L` for `n ≥ 2·324^L`.  Afterward define the offset of
+the minimum of the finite `L`-window and prove the integer-weight Chernoff tail over one complete
+residue system; this is the remaining probabilistic input before the existing
+`windowMin_card_mul_le` packing theorem closes `sparse_sweep`.
+
 ## 2026-10-13 review lap: full residue transitivity closed
 
 ### Concrete advance
