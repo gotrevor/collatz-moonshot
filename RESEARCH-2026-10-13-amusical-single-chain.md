@@ -321,8 +321,12 @@ exists rises from ~93% to ~97%.
 * **Window 3 is dead exactly (computer).**  No bijective reversor has `stepSym (ι n)` read off
   three consecutive itinerary symbols.  The sole inputs are surjectivity (Moore–Myhill) and the
   requirement that the nine integer cycles of length `≤ 14` map bijectively to cycles; it was
-  cross-checked by SAT.  The orphan-word certificates for a Lean proof are pending, and window 4
-  is still running.
+  cross-checked by SAT.  Re-derived independently (`scripts/amusical/w3check.py`: 24 partial
+  rules, 216 completions, none surjective; orphans of length 4 or 5 in `w3certs.txt`).  Lean target:
+  `AmusicalWindowThree.lean`.
+* **Window 4: the exact tests run out.**  40 surjective (permutive) window-4 rules pass every
+  exact cycle test.  All fail the numerical integrality probe, which is only evidence.  The
+  homeomorphic case was not settled (SAT timed out).
 * **Meta (wall).**  A finite set of non-periodic integers never certifies that a table fails,
   since every finite residue datum is CRT-consistent with integrality.  So exact kills beyond the
   cycle and surjectivity tests need a global mechanism or infinite-orbit input.

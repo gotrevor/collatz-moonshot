@@ -335,9 +335,9 @@ shift), and
 each must send every integer to an integer.  Evidence (2026-10-13, agent report `reversor.md`):
 every table of window at most `2` sends some integer cycle to a non-integral one (the pure flip
 sends the `12`-cycle through `44` to the cycle through `693999/7153`,
-`7153 = 3¹² − 2¹⁹`), and the
-`60` possibly-surjective window-`3` tables passing the cycle test send one of `8, 10, …, 16`
-outside the integers below `10¹⁵`. -/
+`7153 = 3¹² − 2¹⁹`), and no window-`3` table works at all
+(`no_window3_bijective_reversor`, exact; agent report `q1.md`).  One integer with a normal
+backward itinerary would settle it (`not_reversor_of_backwardNormal`). -/
 def AmusicalNoContinuousReversor : Prop :=
   ¬ ∃ (ι : Equiv.Perm ℤ) (c₀ d₀ : ℕ), IsAmusicalReversor ι ∧
       ∀ n n' : ℤ, n ≡ n' [ZMOD 2 ^ c₀ * 3 ^ d₀] → stepSym (ι n) = stepSym (ι n')

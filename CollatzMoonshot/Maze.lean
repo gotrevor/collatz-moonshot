@@ -25,6 +25,7 @@ import CollatzMoonshot.AmusicalLogBalance
 import CollatzMoonshot.AmusicalSeventh
 import CollatzMoonshot.AmusicalTwin
 import CollatzMoonshot.AmusicalEscape
+import CollatzMoonshot.AmusicalWindowThree
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -219,7 +220,7 @@ def register : List Hall := [
    "AmusicalTwin.lean; AmusicalSeventh.lean; agent report twin.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: residue reversor killed by escape (normal backward itinerary)", .wall,
    "sound, but needs one integer with a normal backward itinerary; finite checks stop at cycles",
-   "AmusicalEscape.lean; agent report q1.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalEscape.lean; AmusicalWindowThree.lean; agent report q1.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -307,7 +308,8 @@ def mazeLinks : List Link := [
   ⟨"amusical: residue reversor killed by escape (normal backward itinerary)",
    [``CollatzMoonshot.Amusical.escape_forward,
     ``CollatzMoonshot.Amusical.not_reversor_of_evenFrequency_lt,
-    ``CollatzMoonshot.Amusical.not_reversor_of_backwardNormal],
+    ``CollatzMoonshot.Amusical.not_reversor_of_backwardNormal,
+    ``CollatzMoonshot.Amusical.no_window3_bijective_reversor],
    [``CollatzMoonshot.Amusical.BackwardNormal]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
