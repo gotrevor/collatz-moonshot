@@ -1,5 +1,14 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical continuous reversor objective COMPLETE:**
+> `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
+> proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;
+> exact finite block counting proves that no injective residue-continuous reversor has linear
+> growth.  The 8712-job scoped gate and 8848-job full gate are FORMALIZE-tier green, and all three
+> new headline axiom ledgers contain exactly `Classical.choice`, `Quot.sound`, and `propext`.
+> The separately stated `AmusicalNoContinuousReversor` conjecture remains open and out of scope.
+> Read `HANDOFF-amusical-contrev.md`.
+
 > **2026-10-13, amusical chain-connectivity objective COMPLETE:**
 > `AmusicalChains.lean` is sorry-free.  Uniform survival is proved at
 > `fwdSurv L ≥ 1/6` and `bwdSurv L ≥ 1/6`; distinct `L`-window minima on

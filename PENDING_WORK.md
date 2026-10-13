@@ -1,5 +1,17 @@
 # PENDING_WORK
 
+## 2026-10-13 — amusical continuous reversor objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-contrev.md` is fully discharged.  Lemma S and Theorems A, A′, and C
+are proved with their ratified statements unchanged, and
+`CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free.  The 8712-job scoped gate and
+8848-job full gate are FORMALIZE-tier green; the three new headline theorems use only
+`Classical.choice`, `Quot.sound`, and `propext`.  See `HANDOFF-amusical-contrev.md` for the proof
+architecture and exact checks.
+
+No stretch objective was assigned.  The explicitly open `AmusicalNoContinuousReversor`
+proposition was not part of this kickoff and requires a new operator instruction before work.
+
 ## 2026-10-13 — amusical chains objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-chains.md` is fully discharged.  All four ratified
