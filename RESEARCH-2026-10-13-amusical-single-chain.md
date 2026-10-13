@@ -122,3 +122,25 @@ Test applied to each: does the argument also apply to `ℕ`?  If so it cannot wo
   finitely many invariant pieces per layer.  For `q = 1` the `±1` offsets destroy the coset
   invariant, and `D_q` contains the copy `q·ℤ` of `U`, so orbit counts for `U_q` bound those of
   `U` from above only: no lever for Klamkin (a) from this side.
+
+## 6. Do orbit minima carry residue structure beyond windows?  No (2026-10-13)
+
+The minima avoid `2, 16, 20, 34 (mod 36)`, but that is the 2-window condition (for
+`n = 36k + 2`, `U^-2 n = 32k + 2 < n`).  The question that matters for certification: among
+`L`-window minima, is being a *global* minimum correlated with the residue class?  A hidden
+arithmetic rule would show as excess `χ²` that persists as `L` grows; a finite-window artifact
+fades.  `scripts/amusical/minima_vs_window.py`, `n ≤ 10^6`, cycle members excluded (they are
+window minima but never orbit minima, and dominated the first run):
+
+| `L` | window minima | global/window | `χ²` mod 72 (df 15) | mod 864 (df 143) | mod 2592 (df 383) |
+|---|---|---|---|---|---|
+| 20 | 67550 | 0.740 | 62.1 | 285.6 | 537.6 |
+| 40 | 56722 | 0.881 | 29.7 | 168.1 | 407.3 |
+| 80 | 51685 | 0.967 | 16.2 | 117.6 | 336.4 |
+
+The excess decays to nothing by `L = 80`.  At this resolution, global minima are
+residue-independent beyond long-window conditions: they look exactly like the independent-walk
+model of `AmusicalMinimaDensity`.  No congruence certifies a global minimum, matching the
+theory: a residue class controls only finitely many steps, and survival past step `L` costs
+about `1.5^-L` (Cramér root `θ = 1`).  Certifying individual minima runs into the orbit-of-8
+wall.
