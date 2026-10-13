@@ -2,16 +2,33 @@
 
 ## Concrete advance
 
-`evenFrequency_of_backwardNormal` is proved with its ratified statement unchanged.  The proof
-partitions every coded-zero count by the finite fiber of `f`, applies `BackwardNormal` to each
-exact block, and sums the resulting limits.  Balancedness and `w >= 1` reduce the limit
-`3^(w-1) * (1/3)^w` to `1/3`.  An exact `Nat.count_add` identity then shifts the block stream by
-`s`; the finite prefix vanishes after division by the sample length.
+The scoped objective is complete: `CollatzMoonshot/AmusicalEscape.lean` is sorry-free, and every
+ratified statement remains unchanged from planting commit `b75f5a9`.
 
-Thus `CollatzMoonshot/AmusicalEscape.lean` has two unresolved proofs rather than three.  The
-entire Theorem N downstream chain and normality bridge are closed.  No `native_decide`, axiom,
-heartbeat override, statement change, or long Lean line was introduced.  The pre-existing
-untracked `CLAUDE.local.md` remains untouched.
+`escape_forward` and `escape_backward` are now proved from a shared logarithmic escape ledger.
+Nonperiodicity and bijectivity make the forward and backward iterate sequences injective.  An
+injective integer sequence eventually leaves every bounded interval, so the affine `+1` error in
+each branch is uniformly negligible on a late tail.  Taking base-2 logarithms gives the one-step
+ledgers
+
+```text
+log₂ |U x| + stepBits x <= log₂ |x| + log₂ (3 + 1/X),
+log₂ |U⁻¹ x| + log₂ 3 <= log₂ |x| + stepBits (U⁻¹ x)
+                               + log₂ (1 + 1/(2X)).
+```
+
+The two ledgers telescope.  If the forward cumulative bits stayed above
+`(log₂ 3 + δ)k`, or the backward cumulative bits stayed below `(log₂ 3 - δ)k`, a sufficiently
+long tail would force `log₂ |U^k m| < 0` or `log₂ |U⁻ᵏ m| < 0`.  Tail escape gives absolute value
+at least one, so either conclusion is impossible.
+
+The direction-review audit independently reconstructed the dependency chain.  The planted
+statement shapes still reach `periodic_of_evenFrequency_lt`, the reversor reduction, the normality
+bridge, and final Theorem N exactly as intended.  No route correction was needed.
+
+No `native_decide`, axiom, heartbeat override, deprecated tactic, statement change, or Lean line
+over 100 characters was introduced.  The pre-existing untracked `CLAUDE.local.md` remains
+untouched.
 
 ## Exact verification
 
@@ -21,27 +38,22 @@ rg -n '.{101}' CollatzMoonshot/AmusicalEscape.lean
 git diff --check
 ~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-escape \
   --target CollatzMoonshot.AmusicalEscape \
-  --axioms CollatzMoonshot.Amusical.evenFrequency_of_backwardNormal
+  --axioms CollatzMoonshot.Amusical.escape_forward \
+  --axioms CollatzMoonshot.Amusical.escape_backward \
+  --axioms CollatzMoonshot.Amusical.periodic_of_evenFrequency_lt \
+  --axioms CollatzMoonshot.Amusical.not_reversor_of_backwardNormal
 ```
 
-The direct elaboration succeeds with only the two remaining disclosed `sorry` warnings.  The
-long-line scan and `git diff --check` have no findings.  The 8714-job real gate verdict is
-`FORMALIZE-TIER GREEN`.  The new theorem's exact axiom ledger is
+Direct elaboration succeeds without output.  The long-line scan and `git diff --check` have no
+findings.  The real scoped build succeeds at 8714/8714 jobs with final verdict
+`FORMALIZE-TIER GREEN`.  Each audited declaration has exact axiom ledger
 `[Classical.choice, Quot.sound, propext]`.
 
 ## Current blocker
 
-Only `escape_forward` and `escape_backward` remain.  Both require a kernel-friendly analytic
-iteration of the affine absolute-value branch bounds.  Nonperiodicity plus bijectivity first
-makes the relevant orbit injective and hence eventually outside every bounded integer interval.
-The remaining ledger must turn the per-step `+1` error into a uniformly small multiplicative
-factor and contradict exponential decay forced by a persistent bit-average gap.
+None.  The host predicate `sorry-free:CollatzMoonshot/AmusicalEscape.lean` is satisfied.
 
 ## Next highest-value attack
 
-Attack `escape_forward`.  First prove reusable helpers for pairwise distinct iterates and eventual
-escape from a finite integer interval.  Then choose a large integer threshold so
-`1 + 1/(3X) <= 2^(delta/2)` and iterate `abs_amusical_le` over the late orbit, preferably after
-taking logarithms to avoid rounding `logb 2 3 * k`.  Once this proof is stable, mirror the same
-infrastructure for `escape_backward`, run the headline axiom audits, and call `box done` only when
-the target file is sorry-free.
+No stretch objective was assigned.  Stop after this green checkpoint; any later amusical target
+requires a new operator instruction.

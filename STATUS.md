@@ -1,5 +1,13 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical escape objective COMPLETE:**
+> `CollatzMoonshot/AmusicalEscape.lean` is sorry-free with every ratified statement unchanged.
+> `escape_forward` and `escape_backward` now follow from injectivity-driven escape from finite
+> integer intervals and telescoping base-2 logarithmic bit ledgers.  Thus the periodicity,
+> reversor, normality, and final Theorem N chain is fully proved.  The 8714-job scoped gate is
+> FORMALIZE-tier green; both escape lemmas, the periodicity consumer, and the final theorem use
+> exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read `HANDOFF-amusical-escape.md`.
+
 > **2026-10-13, amusical normality bridge FORMALIZED:**
 > `evenFrequency_of_backwardNormal` now derives output frequency `1/3` by exact fiber counting,
 > finite-sum convergence, balancedness, and a proved finite-shift density argument.  The scoped
