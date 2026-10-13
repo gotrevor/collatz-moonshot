@@ -24,7 +24,10 @@ Verification in this lap:
 - `lake env lean CollatzMoonshot/AmusicalChains.lean` passed after both proofs,
   with only the three remaining disclosed `sorry` warnings.
 - The pre-commit full `lake build` passed twice: 8842 jobs each time.
-- Final real gate is recorded below after this handoff is committed.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-chains
+  --target CollatzMoonshot.AmusicalChains`: **FORMALIZE-TIER GREEN**, 8710 jobs;
+  it reports precisely the three remaining `sorry` declarations at source
+  lines 40, 44, and 59.
 
 Current blocker / next highest-value attack:
 
@@ -43,4 +46,3 @@ Current blocker / next highest-value attack:
    set before converting separation of values into separation of orbit times.
    Pigeonhole first over the finitely many orbits for each large `L`, then over
    the orbit choice as `L` tends to infinity.
-
