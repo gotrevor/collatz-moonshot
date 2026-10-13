@@ -98,4 +98,83 @@ theorem orbitMin_density_le_of_windowMinDensity {L : ℕ} (h : WindowMinDensity 
   gcongr with m
   exact fun hm => hm.isWindowMin L
 
+/-! ## The case `L = 1`: Conway's congruence paradox, exactly
+
+Conway (2013, Appendix 2) observes that `n < U n` exactly when `n` is even and `n < U⁻¹ n`
+exactly when `3 ∤ n`, so the local minima are the classes `±2 (mod 6)`, a third of all
+integers.  `windowMinDensity_one` is that statement as a density. -/
+
+theorem isWindowMin_one_iff (n : ℤ) :
+    IsWindowMin 1 n ↔ n ≤ amusical n ∧ n ≤ amusicalInv n := by
+  constructor
+  · intro h; simpa using h 1 le_rfl le_rfl
+  · intro h t h1 h2
+    obtain rfl : t = 1 := by omega
+    simpa using h
+
+/-- On the naturals, the `1`-window minima are `0`, `1` and the classes `2, 4 (mod 6)`. -/
+theorem isWindowMin_one_natCast_iff (n : ℕ) :
+    IsWindowMin 1 (n : ℤ) ↔ n = 0 ∨ n = 1 ∨ n % 6 = 2 ∨ n % 6 = 4 := by
+  rw [isWindowMin_one_iff]
+  unfold amusical amusicalInv
+  split_ifs <;> omega
+
+/-- The predicate of `isWindowMin_one_natCast_iff`, decidably. -/
+def windowOnePred (n : ℕ) : Prop := n = 0 ∨ n = 1 ∨ n % 6 = 2 ∨ n % 6 = 4
+
+instance : DecidablePred windowOnePred := fun n => by unfold windowOnePred; infer_instance
+
+theorem count_windowOnePred_six {a : ℕ} (ha : 2 ≤ a) :
+    Nat.count (fun k => windowOnePred (a + k)) 6 = 2 := by
+  have key : ∀ k, windowOnePred (a + k) ↔ ((a % 6 + k) % 6 = 2 ∨ (a % 6 + k) % 6 = 4) := by
+    intro k; unfold windowOnePred; omega
+  rw [Nat.count_eq_card_filter_range, Finset.filter_congr fun k _ => key k]
+  have hr : a % 6 < 6 := Nat.mod_lt _ (by norm_num)
+  generalize a % 6 = r at hr ⊢
+  interval_cases r <;> decide
+
+theorem count_windowOnePred_bound (X : ℕ) :
+    3 * Nat.count windowOnePred X ≤ X + 8 ∧ X ≤ 3 * Nat.count windowOnePred X + 8 := by
+  induction X using Nat.strong_induction_on with
+  | _ X ih =>
+    rcases Nat.lt_or_ge X 8 with hX | hX
+    · interval_cases X <;> decide
+    · have h6 := Nat.count_add windowOnePred (X - 6) 6
+      rw [Nat.sub_add_cancel (by omega), count_windowOnePred_six (by omega)] at h6
+      have := ih (X - 6) (by omega)
+      omega
+
+open Classical in
+/-- **Conway's congruence paradox as a density.**  The `1`-window minima have density
+`1/3 = fwdSurv 1 * bwdSurv 1`. -/
+theorem windowMinDensity_one : WindowMinDensity 1 := by
+  unfold WindowMinDensity
+  have hval : ((fwdSurv 1 * bwdSurv 1 : ℚ) : ℝ) = 1 / 3 := by
+    rw [windowDensity_values.1]; norm_num
+  rw [hval]
+  have hcard : ∀ X : ℕ, ((Finset.range X).filter fun n : ℕ => IsWindowMin 1 n).card =
+      Nat.count windowOnePred X := by
+    intro X
+    rw [Nat.count_eq_card_filter_range]
+    exact congrArg _ (Finset.filter_congr fun n _ => isWindowMin_one_natCast_iff n)
+  simp only [hcard]
+  have hlo : Filter.Tendsto (fun X : ℕ => (1 / 3 : ℝ) - 3 / X) Filter.atTop (nhds (1 / 3)) := by
+    simpa using tendsto_const_nhds.sub (tendsto_const_div_atTop_nhds_zero_nat (3 : ℝ))
+  have hhi : Filter.Tendsto (fun X : ℕ => (1 / 3 : ℝ) + 3 / X) Filter.atTop (nhds (1 / 3)) := by
+    simpa using tendsto_const_nhds.add (tendsto_const_div_atTop_nhds_zero_nat (3 : ℝ))
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo hhi ?_ ?_
+  · filter_upwards [Filter.eventually_ge_atTop 1] with X hX
+    have hXpos : (0 : ℝ) < X := by exact_mod_cast hX
+    have hb : (X : ℝ) ≤ 3 * (Nat.count windowOnePred X : ℝ) + 8 := by
+      exact_mod_cast (count_windowOnePred_bound X).2
+    rw [sub_le_iff_le_add, ← add_div, le_div_iff₀ hXpos]
+    linarith
+  · filter_upwards [Filter.eventually_ge_atTop 1] with X hX
+    have hXpos : (0 : ℝ) < X := by exact_mod_cast hX
+    have hb : 3 * (Nat.count windowOnePred X : ℝ) ≤ X + 8 := by
+      exact_mod_cast (count_windowOnePred_bound X).1
+    have hX' : ((1 : ℝ) / 3 + 3 / X) * X = X / 3 + 3 := by field_simp
+    rw [div_le_iff₀ hXpos, hX']
+    linarith
+
 end CollatzMoonshot.Amusical
