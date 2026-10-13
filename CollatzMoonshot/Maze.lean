@@ -19,6 +19,7 @@ import CollatzMoonshot.FrontA.FirstCrossingResidue
 import CollatzMoonshot.Obstructions.Amusical
 import CollatzMoonshot.AmusicalReturns
 import CollatzMoonshot.AmusicalChains
+import CollatzMoonshot.AmusicalReversal
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -195,7 +196,10 @@ def register : List Hall := [
    "AmusicalReturns.lean; agent report diophantine.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: chain-connectivity statistics (records, excursions, pairs)", .wall,
    "finite-step statistics agree in both worlds; the span bound gives only sublinear recurrence",
-   "AmusicalChains.lean; agent report chains.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalChains.lean; agent report chains.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: reversing involution (works for the Gaussian relative)", .refuted,
+   "no piecewise-affine reversor (3-adic slope valuation drifts); a general one is the problem",
+   "AmusicalReversal.lean; GaussianRelative.lean; agent report relative.md", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -256,7 +260,11 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.IsWindowMin.iterate_eq_of_isWindowMin,
     ``CollatzMoonshot.Amusical.exists_sublinearlyRecurrent_of_finitelyManyOrbits,
     ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_atLeastLinearGrowth],
-   [``CollatzMoonshot.Amusical.AtLeastLinearGrowth]⟩]
+   [``CollatzMoonshot.Amusical.AtLeastLinearGrowth]⟩,
+  ⟨"amusical: reversing involution (works for the Gaussian relative)",
+   [``CollatzMoonshot.Amusical.no_piecewiseAffine_reversor,
+    ``CollatzMoonshot.Amusical.infinitelyManyOrbits_iff_reversor,
+    ``CollatzMoonshot.Amusical.reversing_zpow_fixed], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -269,7 +277,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 29 rows, 21 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 30 rows, 22 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

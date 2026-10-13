@@ -115,6 +115,8 @@ import CollatzMoonshot.AmusicalBound
 import CollatzMoonshot.AmusicalSpitzer
 import CollatzMoonshot.AmusicalReturns
 import CollatzMoonshot.AmusicalChains
+import CollatzMoonshot.AmusicalReversal
+import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
 import CollatzMoonshot.Literature.AmusicalCycles
