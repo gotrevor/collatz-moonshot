@@ -7,8 +7,9 @@
 on `ℕ`; whether it has only finitely many is Klamkin's problem (a) (SIAM Review 1963), still
 open.  An orbit of a nonnegative integer has a least element, so the
 number of orbits is the number of *orbit minima*.  We prove, in Lean, that the orbit minima
-have upper density **less than `1/20`**, and we give a closed-form prediction for their density,
-`c = exp(−Σ_{k≥1} E[min(1, 2^(k+O_k)/3^k)]/k) ≈ 0.049780` with `O_k ~ Bin(k, 1/2)`, which matches
+have upper density **at most an explicit constant**
+`c = exp(−Σ_{k≥1} E[min(1, 2^(k+O_k)/3^k)]/k) ≈ 0.049780` with `O_k ~ Bin(k, 1/2)` (in particular
+less than `1/20`), and conjecture that `c` is their exact density: it matches
 the number of apparent orbit minima in `1..10^6` (`0.049957`; both orbit directions pass
 `n·2^120` without dropping below `n`) to within one binomial standard error.  A positive *lower* bound on
 that density would settle Klamkin's problem; we record why the natural tools cannot give one.
@@ -75,7 +76,7 @@ hence for all large `X`, fewer than `X/20` of `0, …, X−1` are orbit minima
 ([`orbitMin_density_lt_one_twentieth`](https://github.com/gotrevor/collatz-moonshot/blob/549a2d53174539263eba1fbd21cc78953b819159/CollatzMoonshot/AmusicalBound.lean#L588)).
 Equivalently: at most `X/20` orbits of `U` meet `[0, X)`, for large `X`.
 
-## 3. The predicted density (conjecture)
+## 3. The density constant: a proved upper bound and a conjectured exact value
 
 Heuristically, treat the forward and backward orbits of a large `n` as the two independent
 walks of Theorem 1, run forever.  For each finite horizon this is exact (Theorem 1: the residues
@@ -93,6 +94,14 @@ $$c = p_f\, p_b = \exp\Big(-\sum_{k\ge1} \frac1k\, \mathbb E\big[\min(1,\ 2^{k+O
 `p_f ≈ 0.210136`, `p_b ≈ 0.236892`
 ([`minimaConstant`](https://github.com/gotrevor/collatz-moonshot/blob/549a2d53174539263eba1fbd21cc78953b819159/CollatzMoonshot/AmusicalConstant.lean#L29)).
 
+**Theorem 2′.**  The window densities decrease to `c`, `δ_L → c`
+([`windowDensityLimit`](https://github.com/gotrevor/collatz-moonshot/blob/PIN/CollatzMoonshot/AmusicalSpitzer.lean#L0)); hence the orbit minima of `U` have upper density
+at most `c` ([`orbitMin_density_le_minimaConstant'`](https://github.com/gotrevor/collatz-moonshot/blob/PIN/CollatzMoonshot/AmusicalSpitzer.lean#L0)).
+
+*Proof idea.*  `f_L ↓ p_f` and `b_L ↓ p_b` by Sparre Andersen's theorem for the two walks (they
+never tie, since `3^k ≠ 2^m`), formalized through power-series recurrences, a cyclic-shift
+counting lemma and Abelian boundary limits; the duality identity above merges the two series.
+
 **Conjecture.**  The orbit minima of `U` have natural density `c`
 ([`AmusicalMinimaDensityExact`](https://github.com/gotrevor/collatz-moonshot/blob/549a2d53174539263eba1fbd21cc78953b819159/CollatzMoonshot/AmusicalConstant.lean#L58)).
 
@@ -104,12 +113,7 @@ integers have both orbit directions exceed `n·2^120` without
 dropping below `n` (density `0.049957`; standard error `≈ 0.0002`), stable from `10^3` to
 `10^6`.  Among long-window minima, being a global minimum shows no dependence on the residue
 class mod `72`, `864` or `2592` once the window is long (the `χ²` excess decays to nothing by
-`L = 80`), as the independence model predicts.  The upper half is a theorem on paper, not yet in Lean: `f_L ↓ p_f` and `b_L ↓ p_b` by
-continuity of measure and Sparre Andersen's theorem (both walks drift upward and never tie,
-since `3^k ≠ 2^m`), and the duality identity merges the two series, so `δ_L ↓ c` and the orbit
-minima have upper density at most `c`
-([`WindowDensityLimit`](https://github.com/gotrevor/collatz-moonshot/blob/549a2d53174539263eba1fbd21cc78953b819159/CollatzMoonshot/AmusicalConstant.lean#L40),
-[`orbitMin_density_le_minimaConstant`](https://github.com/gotrevor/collatz-moonshot/blob/549a2d53174539263eba1fbd21cc78953b819159/CollatzMoonshot/AmusicalConstant.lean#L47)).  The measured
+`L = 80`), as the independence model predicts.  The upper half is Theorem 2′.  The measured
 `0.049957` lies above both `c` and the proved `δ_200 = 0.049888`; these are asymptotic bounds,
 and the excess is `0.8` standard errors.  The lower half is the open problem: any positive lower bound
 gives infinitely many orbits
@@ -194,9 +198,8 @@ affine maps.
 ## What is not claimed
 
 No lower bound on the density of orbit minima, no seventh orbit, nothing about the orbit of `8`
-beyond the classical facts.  `c` is an upper bound for the upper density by a paper argument not yet in
-Lean, and its equality with the density is a conjecture; the conjugacy is stated without formal
-proof.  We know no proof that *any* permutation of this residue-class-affine
+beyond the classical facts.  The equality of `c` with the density is a conjecture; the
+conjugacy is stated without formal proof.  We know no proof that *any* permutation of this residue-class-affine
 kind has infinitely many orbits, except by a forward-invariant union of classes (as in Simons
 §5.4); for `U` we know of none (none exists modulo any `M ≤ 300`).  For the wider class, Lagarias records that even the existence of a
 single infinite orbit is open (annotated bibliography 2003, entry on Venturini 1992); for `U`,
@@ -216,6 +219,6 @@ The one-sided halves of the conjugacy are classical (Matthews–Watts; Lagarias;
 ```
 git clone https://github.com/gotrevor/collatz-moonshot && cd collatz-moonshot
 git checkout 549a2d53174539263eba1fbd21cc78953b819159
-lake exe cache get && lake build CollatzMoonshot.AmusicalBound CollatzMoonshot.Obstructions.Amusical \
+lake exe cache get && lake build CollatzMoonshot.AmusicalBound CollatzMoonshot.AmusicalSpitzer CollatzMoonshot.Obstructions.Amusical \
   CollatzMoonshot.AmusicalChains CollatzMoonshot.AmusicalReversal CollatzMoonshot.GaussianRelative
 ```

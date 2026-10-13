@@ -15,9 +15,10 @@ import Mathlib.RingTheory.PowerSeries.Log
 /-!
 # The window densities converge to `minimaConstant` (Sparre Andersen)
 
-Target for a treadmill (`KICKOFF-2026-10-13-amusical-spitzer.md`): `windowDensityLimit`, after
-which `orbitMin_density_le_minimaConstant` is unconditional.  The duality half is a termwise
-identity: forward survival at time `k` and backward non-survival use the same binomial index set
+`windowDensityLimit` was kernel-checked 2026-10-13 by the spitzer treadmill
+(`HANDOFF-amusical-spitzer.md`), so `orbitMin_density_le_minimaConstant` is unconditional.
+The duality half is a termwise identity: forward survival at time `k` and backward
+non-survival use the same binomial index set
 `{o : 2^(k+o) < 3^k}`, with weights `C(k,o) 2^-k · 2^(k+o) 3^-k = C(k,o) 2^o 3^-k` on both sides.
 The real content is Sparre Andersen's theorem for the two multiplicative walks.
 -/
@@ -3400,7 +3401,7 @@ theorem tendsto_bwdSurv :
     bwdSurv_nonpos_recurrence hlim summable_bwdNonposSeries
 
 
-/-- **Target (treadmill).**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
+/-- **Proved.**  `fwdSurv L * bwdSurv L → minimaConstant`. -/
 theorem windowDensityLimit : WindowDensityLimit := by
   rw [WindowDensityLimit, minimaConstant_eq_directionalFactors]
   simpa only [Rat.cast_mul] using tendsto_fwdSurv.mul tendsto_bwdSurv

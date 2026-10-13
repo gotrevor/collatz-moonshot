@@ -29,9 +29,9 @@ noncomputable def spitzerTerm (k : ℕ) : ℝ :=
 noncomputable def minimaConstant : ℝ :=
   Real.exp (-∑' k : ℕ, spitzerTerm (k + 1) / (k + 1))
 
-/-- **Proved on paper, Lean formalization pending: the window densities decrease to
-`minimaConstant`.**  Sparre Andersen's
-theorem gives `lim fwdSurv L = exp(-Σ P(S_k ≤ 0)/k)` and `lim bwdSurv L = exp(-Σ P(B_k ≤ 0)/k)`
+/-- **The window densities decrease to `minimaConstant`** (proved: `windowDensityLimit` in
+`AmusicalSpitzer.lean`, 2026-10-13).  Sparre Andersen's theorem gives
+`lim fwdSurv L = exp(-Σ P(S_k ≤ 0)/k)` and `lim bwdSurv L = exp(-Σ P(B_k ≤ 0)/k)`
 for the two multiplicative walks (no ties: `3^k ≠ 2^m`).  The backward walk is the forward walk
 reversed and tilted by `e^{-S}` (the Haar balance `E[e^{-S_1}] = 1`), so the two series merge
 into `Σ spitzerTerm k / k`.  Numerics (`scripts/amusical/spitzer.py`, 4000 terms):
@@ -43,7 +43,7 @@ def WindowDensityLimit : Prop :=
 
 open Classical in
 /-- Orbit minima have upper density at most `minimaConstant`, given the window densities and
-their limit (`windowMinDensity` is proved; `WindowDensityLimit` is believed). -/
+their limit (both proved; the unconditional form is `orbitMin_density_le_minimaConstant'`). -/
 theorem orbitMin_density_le_minimaConstant (hlim : WindowDensityLimit) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ X : ℕ in Filter.atTop,
       (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤ minimaConstant + ε := by
