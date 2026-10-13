@@ -361,3 +361,33 @@ at most `K` times (Klamkin (a) ⇔ one exists).
     `scripts/amusical/central_w2.py`.
   * Window 3 adds one exotic `±` pair, non-integral only numerically.
   * Believed (~85%): the continuous centralizer is `{0, ±1, ±Uʲ}`.
+
+## 15. The anti-Kohl conjecture (2026-10-13, "antikohl" agent, checked)
+
+Lean: `AmusicalAntiKohl.lean` (κ, τ and the cone identities proved; the rest are targets).  The
+conjecture: an RCWA permutation whose slopes all have `v_p = 1` for one fixed prime `p` has no
+orbit containing a class tail.  At `p = 3` it gives `U` a seventh orbit.  It is still open on
+the residue-transitive core (`U`, the twins); credence ~93%.
+
+* **Theorem T (elementary, any bijection).**  Take a cone `σS ⊆ S`.  If both the forward cores
+  `σⁿS` and the never-entering sets `A_n` have density → 0, then every finite union of orbits has
+  density 0.  The reason: an orbit lies in `σⁿS ∪ A_n` except for `2n` points.  For RCWA maps with
+  periodic `S`, both sequences are exact periodic densities, so they can be checked.
+* **Proved instances.**
+  * `κ` (modulus 6, slopes 2, 2/3, `p = 2`): `d(A_n) = (5/12)(2/3)ⁿ`, forward rate `0.9196`.
+  * `σ_τ = τ_{1(2),2(4)} ∘ U` (`p = 3`): forward core `3⁻ⁿ/4`, `d(A_n) = (1/2)(3/4)ⁿ⁻¹`.  I re-checked
+    both by box counting (`scripts/amusical/cores.py`, exact match for `n ≤ 8`).
+  * 31 of the 32 single class-transposition perturbations `π ∘ U` that have a cone, by an exact
+    automaton (not re-derived).
+* **The gate.**  `U` has no periodic cone: its residue graph mod `M` is strongly connected
+  (`seventh.md` T4; `scripts/amusical/cone.py` for `M ≤ 200`).  So Theorem T is vacuous on `U`
+  and on the 255 residue-transitive perturbations.
+* **Boundaries.**
+  * Valuation 1 at *some* prime on each piece is not enough: an RCWA conjugate of translation has
+    slopes `3/2, 2/3` only and one orbit.
+  * No RCWA conjugate of translation lies in the class, even with infinitely many pieces.
+  * "`v_p = 1`" is equivalent to "`v_p ≥ 1`", by suspension.
+* **Necessary condition for a counterexample.**  A positive-density orbit needs arbitrarily long
+  windows whose slope product is within polynomial factors of 1.
+* **Search.**  4,540 random members (`p = 2, 3, 5`) all show linearly growing orbit counts.
+* **Literature.**  The conjecture does not appear in Kohl's thesis or the RCWA manual.

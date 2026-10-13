@@ -124,6 +124,7 @@ import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.AmusicalWindowThree
 import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
+import CollatzMoonshot.AmusicalAntiKohl
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity

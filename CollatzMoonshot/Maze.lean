@@ -28,6 +28,7 @@ import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.AmusicalWindowThree
 import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
+import CollatzMoonshot.AmusicalAntiKohl
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -232,7 +233,13 @@ def register : List Hall := [
    "AmusicalGlobal.lean; agent report global.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: survival densities (never undercut later)", .wall,
    "decisive and changed by rewiring, but needs late drops to be rare: orbit typicality",
-   "AmusicalGlobal.lean; agent report global.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalGlobal.lean; agent report global.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: anti-Kohl via transient cones (Theorem T)", .refuted,
+   "proves anti-Kohl for κ and τ∘U, but U has no periodic cone: its residue graphs are connected",
+   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)", .refuted,
+   "slopes 3/2 and 2/3 alone allow a conjugated translation, which has one orbit",
+   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -333,7 +340,15 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.commuting_window_two], []⟩,
   ⟨"amusical: survival densities (never undercut later)",
    [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_survival],
-   [``CollatzMoonshot.Amusical.FwdSurvivor, ``CollatzMoonshot.Amusical.BwdSurvivor]⟩]
+   [``CollatzMoonshot.Amusical.FwdSurvivor, ``CollatzMoonshot.Amusical.BwdSurvivor]⟩,
+  ⟨"amusical: anti-Kohl via transient cones (Theorem T)",
+   [``CollatzMoonshot.Amusical.orbit_densityZero_of_transientCone,
+    ``CollatzMoonshot.Amusical.sigmaTau_orbit_densityZero,
+    ``CollatzMoonshot.Amusical.amusical_no_periodic_cone,
+    ``CollatzMoonshot.Amusical.atLeastSevenOrbits_of_antiKohl],
+   [``CollatzMoonshot.Amusical.AntiKohlConjecture]⟩,
+  ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)",
+   [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -346,7 +361,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 38 rows, 30 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 40 rows, 32 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
