@@ -1,5 +1,14 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical orbit-minimum density bound FORMALIZED:**
+> `windowDensity_two_hundred_lt` now proves `fwdSurv 200 * bwdSurv 200 < 1/20` by identifying
+> semantic weighted word counts with the linear-size integer lattice DP and applying its exact
+> kernel certificate.  `AmusicalBound.lean` is sorry-free, so
+> `orbitMin_density_lt_one_twentieth` is unconditional over the existing definitions.  The
+> 8709-job scoped gate and 8839-job full gate are FORMALIZE-tier green; the target and downstream
+> theorem use only `Classical.choice`, `Quot.sound`, and `propext`.  Read
+> `HANDOFF-amusical-bound.md`.
+
 > **2026-09-29, variable-depth reset audit:** [Full-run results](RESEARCH-2026-09-29-q1-run-macro.md).  The exit, immediate re-entry obstruction, one-halving expansion, and normalized-reset rank calibration are proved in Lean.  Long-phase contraction survives, but resetting that rank still requires size descent; no reusable full-state induction step was found.
 
 > **2026-09-29, Q1 bounded splicing resolved:** [Coalescence and separation](RESEARCH-2026-09-29-q1-coalescence.md).  Lean proves a sparse 18-step descent class and, for every cutoff, a hard-family parameter whose target and auxiliary prefixes remain separated by the starting value.  No bounded-depth splice into Q1 covers the family.  Growing-depth repair and its rank remain open.

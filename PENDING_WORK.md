@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-10-13 — amusical `1/20` objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-bound.md` is fully discharged.  The semantic word counts are proved
+equal to the certified lattice rows for every length, and `windowDensity_two_hundred_lt` closes
+without `sorry`, a new axiom, or `native_decide`.  Its existing orbit-minimum density corollary is
+therefore fully proved.  See `HANDOFF-amusical-bound.md` for the exact proof chain and gate output.
+
+No stretch objective was assigned after the scoped host predicate became true.
+
 ## 2026-09-22 — summability/crossing bridge: DONE, nothing owed
 
 `KICKOFF-2026-09-22-summability-crossing.md` is fully discharged (commits
