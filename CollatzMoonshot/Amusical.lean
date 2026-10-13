@@ -167,16 +167,112 @@ def cycleLocalMinCount (n : ℤ) (p : ℕ) : ℕ :=
 def evenCount (k : ℕ) : ℕ :=
   ((Finset.range k).filter fun i => amusical^[i] 8 % 2 = 0).card
 
-/-- **Believed (~95%), proof not yet written.**  If `8` were periodic with period `p` and `e`
+/-- The number of odd values among `U^[0] 8, …, U^[k-1] 8`. -/
+def oddCount (k : ℕ) : ℕ :=
+  ((Finset.range k).filter fun i => ¬ amusical^[i] 8 % 2 = 0).card
+
+theorem evenCount_add_oddCount (k : ℕ) : evenCount k + oddCount k = k := by
+  unfold evenCount oddCount
+  rw [Finset.card_filter_add_card_filter_not, Finset.card_range]
+
+theorem oddCount_eq (k : ℕ) : oddCount k = k - evenCount k := by
+  have := evenCount_add_oddCount k; omega
+
+theorem evenCount_succ (k : ℕ) :
+    evenCount (k + 1) = evenCount k + if amusical^[k] 8 % 2 = 0 then 1 else 0 := by
+  unfold evenCount
+  rw [Finset.range_add_one, Finset.filter_insert]
+  split_ifs with h
+  · rw [Finset.card_insert_of_notMem (by simp)]
+  · rfl
+
+theorem oddCount_succ (k : ℕ) :
+    oddCount (k + 1) = oddCount k + if amusical^[k] 8 % 2 = 0 then 0 else 1 := by
+  have h1 := evenCount_add_oddCount k
+  have h2 := evenCount_add_oddCount (k + 1)
+  have h3 := evenCount_succ k
+  split_ifs at h3 ⊢ <;> omega
+
+/-- `[0, 4)` is invariant under `U⁻¹`: a value landing there came from there. -/
+theorem lt_four_of_amusical_lt_four {x : ℤ} (h0 : 0 ≤ amusical x) (h4 : amusical x < 4) :
+    0 ≤ x ∧ x < 4 := by
+  unfold amusical at h0 h4; split_ifs at h0 h4 <;> omega
+
+theorem nonneg_of_iterate_lt_four (k : ℕ) :
+    ∀ x : ℤ, 0 ≤ amusical^[k] x → amusical^[k] x < 4 → 0 ≤ x ∧ x < 4 := by
+  induction k with
+  | zero => intro x h0 h4; exact ⟨h0, h4⟩
+  | succ k ih =>
+    intro x h0 h4
+    rw [Function.iterate_succ_apply] at h0 h4
+    obtain ⟨h0', h4'⟩ := ih _ h0 h4
+    exact lt_four_of_amusical_lt_four h0' h4'
+
+theorem amusical_nonneg {x : ℤ} (h : 0 ≤ x) : 0 ≤ amusical x := by
+  unfold amusical; split_ifs <;> omega
+
+/-- The orbit of `8` stays `≥ 4`: it is nonnegative, and avoids the invariant set `[0, 4)`. -/
+theorem four_le_orbit_eight (k : ℕ) : 4 ≤ amusical^[k] 8 := by
+  have hnn : ∀ j : ℕ, 0 ≤ amusical^[j] 8 := by
+    intro j
+    induction j with
+    | zero => norm_num
+    | succ j ih => rw [Function.iterate_succ_apply']; exact amusical_nonneg ih
+  by_contra h
+  have := nonneg_of_iterate_lt_four k 8 (hnn k) (by omega)
+  omega
+
+theorem two_mul_amusical_of_even {x : ℤ} (h : x % 2 = 0) : 2 * amusical x = 3 * x := by
+  unfold amusical; split_ifs; omega
+
+theorem eleven_mul_le_of_odd {x : ℤ} (h4 : 4 ≤ x) (h : ¬ x % 2 = 0) :
+    11 * x ≤ 16 * amusical x := by
+  unfold amusical; split_ifs <;> omega
+
+/-- The running product of step ratios: `(3/2)^e (11/16)^o · 8 ≤ U^[k] 8`, cleared of
+denominators. -/
+theorem evenCount_bound (k : ℕ) :
+    (3 : ℤ) ^ evenCount k * 11 ^ oddCount k * 8 ≤
+      2 ^ evenCount k * 16 ^ oddCount k * amusical^[k] 8 := by
+  induction k with
+  | zero => simp [evenCount, oddCount]
+  | succ k ih =>
+    rw [evenCount_succ, oddCount_succ, Function.iterate_succ_apply']
+    have hB : (0 : ℤ) ≤ 2 ^ evenCount k * 16 ^ oddCount k := by positivity
+    split_ifs with h
+    · have hs := two_mul_amusical_of_even h
+      calc (3 : ℤ) ^ (evenCount k + 1) * 11 ^ (oddCount k + 0) * 8
+          = 3 * (3 ^ evenCount k * 11 ^ oddCount k * 8) := by ring
+        _ ≤ 3 * (2 ^ evenCount k * 16 ^ oddCount k * amusical^[k] 8) := by linarith
+        _ = 2 ^ evenCount k * 16 ^ oddCount k * (3 * amusical^[k] 8) := by ring
+        _ = 2 ^ evenCount k * 16 ^ oddCount k * (2 * amusical (amusical^[k] 8)) := by rw [hs]
+        _ = 2 ^ (evenCount k + 1) * 16 ^ (oddCount k + 0) * amusical (amusical^[k] 8) := by
+          ring
+    · have hs := eleven_mul_le_of_odd (four_le_orbit_eight k) h
+      calc (3 : ℤ) ^ (evenCount k + 0) * 11 ^ (oddCount k + 1) * 8
+          = 11 * (3 ^ evenCount k * 11 ^ oddCount k * 8) := by ring
+        _ ≤ 11 * (2 ^ evenCount k * 16 ^ oddCount k * amusical^[k] 8) := by linarith
+        _ = 2 ^ evenCount k * 16 ^ oddCount k * (11 * amusical^[k] 8) := by ring
+        _ ≤ 2 ^ evenCount k * 16 ^ oddCount k * (16 * amusical (amusical^[k] 8)) :=
+          mul_le_mul_of_nonneg_left hs hB
+        _ = 2 ^ (evenCount k + 0) * 16 ^ (oddCount k + 1) * amusical (amusical^[k] 8) := by
+          ring
+
+/-- If `8` were periodic with period `p` and `e`
 even steps per period, then `(3/2)^e (11/16)^(p-e) ≤ 1`.
 
-English proof: the orbit of `8` is positive and avoids the invariant set `{0, 1, 2, 3}` (a
+Proof: the orbit of `8` is positive and avoids the invariant set `{0, 1, 2, 3}` (a
 bijection's cycles are disjoint, and `8` is not in them), so every value is `≥ 4`.  An odd step
 from `x` multiplies by `3/4 ± 1/(4x) ≥ 11/16`.  Around a cycle the product of the step ratios
 is `1`, so `1 ≥ (3/2)^e (11/16)^(p-e)`. -/
-theorem periodic_eight_even_bound {p : ℕ} (hp : 0 < p) (hper : amusical^[p] 8 = 8) :
+theorem periodic_eight_even_bound {p : ℕ} (_hp : 0 < p) (hper : amusical^[p] 8 = 8) :
     3 ^ evenCount p * 11 ^ (p - evenCount p) ≤ 2 ^ evenCount p * 16 ^ (p - evenCount p) := by
-  sorry
+  have h := evenCount_bound p
+  rw [hper, oddCount_eq] at h
+  have h' : ((3 ^ evenCount p * 11 ^ (p - evenCount p) : ℕ) : ℤ) ≤
+      ((2 ^ evenCount p * 16 ^ (p - evenCount p) : ℕ) : ℤ) := by
+    push_cast; omega
+  exact_mod_cast h'
 
 /-- **Open, normality-type.**  The even values have density `1/2` along the orbit of `8`.
 
@@ -187,14 +283,52 @@ kind of statement as the normality of a specific real number. -/
 def EightEvenDensityHalf : Prop :=
   Filter.Tendsto (fun k : ℕ => (evenCount k : ℝ) / k) Filter.atTop (nhds (1 / 2))
 
-/-- **Believed (~95%), proof not yet written.**  Even density `1/2` forces the orbit of `8` to be
+/-- Even density `1/2` forces the orbit of `8` to be
 infinite.
 
-English proof: if `8` had period `p` with `e` even steps per period, then
+Proof: if `8` had period `p` with `e` even steps per period, then
 `evenCount (m * p) = m * e`, so the density would be `e / p`, forcing `2e = p`.  Then
 `periodic_eight_even_bound` gives `33^e ≤ 32^e`, so `e = 0` and `p = 0`, a contradiction. -/
 theorem amusicalOrbitOfEightInfinite_of_evenDensityHalf (h : EightEvenDensityHalf) :
     AmusicalOrbitOfEightInfinite := by
-  sorry
+  rw [amusicalOrbitOfEightInfinite_iff]
+  intro p hp hper
+  have hpt : Function.IsPeriodicPt amusical p 8 := hper
+  set e := evenCount p with he
+  -- along multiples of the period the count is exactly linear
+  have hlin : ∀ m : ℕ, evenCount (m * p) = m * e := by
+    intro m
+    induction m with
+    | zero => simp [evenCount]
+    | succ m ih =>
+      have hsplit : evenCount (m * p + p) = evenCount (m * p) + evenCount p := by
+        unfold evenCount
+        simp only [Finset.card_filter]
+        rw [Finset.sum_range_add]
+        congr 1
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [add_comm, Function.iterate_add_apply, mul_comm, (hpt.mul_const m).eq]
+      rw [Nat.succ_mul, hsplit, ih, ← he, Nat.succ_mul]
+  have hmono : Filter.Tendsto (fun m : ℕ => m * p) Filter.atTop Filter.atTop :=
+    Filter.tendsto_atTop_atTop.2 fun b => ⟨b, fun m hm => le_trans hm (Nat.le_mul_of_pos_right m hp)⟩
+  have hsub := h.comp hmono
+  have hconst : Filter.Tendsto (fun m : ℕ => (evenCount (m * p) : ℝ) / ((m * p : ℕ) : ℝ))
+      Filter.atTop (nhds ((e : ℝ) / p)) := by
+    refine tendsto_const_nhds.congr' ?_
+    filter_upwards [Filter.eventually_ge_atTop 1] with m hm
+    rw [hlin]
+    have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast (by omega : m ≠ 0)
+    push_cast
+    field_simp
+  have hval : (e : ℝ) / p = 1 / 2 := tendsto_nhds_unique hconst hsub
+  have hp' : (p : ℝ) ≠ 0 := by exact_mod_cast hp.ne'
+  have h2e : p = 2 * e := by
+    field_simp at hval
+    exact_mod_cast (by linarith : (p : ℝ) = 2 * e)
+  have hbound := periodic_eight_even_bound hp hper
+  rw [← he, show p - e = e by omega, ← mul_pow, ← mul_pow] at hbound
+  have he0 : e ≠ 0 := by omega
+  have := Nat.pow_lt_pow_left (show 2 * 16 < 3 * 11 by norm_num) he0
+  omega
 
 end CollatzMoonshot.Amusical
