@@ -173,4 +173,16 @@ scratch, not in the repo).  Outcomes, each recorded in `Maze.lean`:
   the reduction: `exists_denseLinearReturns_of_finitelyManyOrbits`, equivalent to positive upper
   density of one orbit.  Believed (~90%): each aperiodic orbit has finitely many linear returns
   (seeds 8, 14, 40, 64: last return with `C = 1000` at `j ≤ 197`).
-* **Chains** (connectivity statistics, the seven-orbit question): pending.
+* **Chains.**  No chain statistic separates finitely from infinitely many orbits: finite-step
+  statistics (residues, windows, mass flow) agree in both worlds, and anything about two points
+  sharing an orbit needs an all-time fact about one orbit.  Proved on paper, now treadmill targets
+  in `AmusicalChains.lean`: window minima on one orbit are more than `L` steps apart; window
+  densities are uniformly `≥ 1/36` (`fwdSurv, bwdSurv ≥ 1/6` via `g_L(s) ≥ 1 − e^{-s}`); hence
+  finitely many orbits force an infinite orbit with `liminf |U^j x|/|j| = 0` (sublinear
+  recurrence; with effective counting `U^j x ≤ C|j|/log|j|`, and under "only six orbits",
+  `U^j 8 ≤ 360|j|/ln|j|` infinitely often).  New reopen condition `AtLeastLinearGrowth`, weaker
+  than `NoLinearRecurrence`, with its implication to Klamkin (a) proved.  Also: excursion-forest
+  roots are exactly the minima; no eventually periodic set closed under `U` and `U⁻¹` is a
+  nontrivial separator (skew-product transitivity); "orbit of `8` has density `1`" contradicts
+  nothing provable.  Computational: any sixth cycle has length `≥ 665` (float-based cut test;
+  not formalized).
