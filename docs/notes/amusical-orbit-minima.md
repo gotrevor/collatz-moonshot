@@ -130,8 +130,8 @@ and finitely many orbits would force some infinite orbit to return to linear siz
 
 Why the natural tools fail (each a row of
 [`Maze.lean`](https://github.com/gotrevor/collatz-moonshot/blob/1fbd2e3effe5c6306059a09a59a48368d25306fd/CollatzMoonshot/Maze.lean);
-the first two rest on proved theorems, the third on a believed proposition and an open Lean
-target):
+the first two rest on proved theorems, the third on a proved theorem plus a believed
+proposition):
 
 * **Density, measure and level-crossing counts balance on `ℕ`.**  For every `X`, as many
   `n < X` jump to `≥ X` as are reached from `≥ X`
@@ -142,7 +142,8 @@ target):
   ([`amusicalInfinitelyManyOrbits_iff_invariant`](https://github.com/gotrevor/collatz-moonshot/blob/1fbd2e3effe5c6306059a09a59a48368d25306fd/CollatzMoonshot/Obstructions/Amusical.lean#L96)).
 * **Residues cannot certify a minimum.**  Every residue class mod `2^k 3^l` contains arbitrarily
   large non-minima (paper proof: steer the 2-adic digits past the class's forced prefix into a
-  long run of `4m+1 ↦ 3m+1` steps; Lean target `exists_large_nonOrbitMin`, not yet proved), and
+  long run of `4m+1 ↦ 3m+1` steps;
+  [`exists_large_nonOrbitMin`](https://github.com/gotrevor/collatz-moonshot/blob/0be3c75ac6927189d233d0cd894a628cf01bdb16/CollatzMoonshot/AmusicalReturns.lean#L325)), and
   the data show no residue dependence beyond the window condition
   (`MinimaNotResidueDetermined`, believed).
 
