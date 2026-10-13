@@ -24,6 +24,7 @@ import CollatzMoonshot.AmusicalContinuousReversor
 import CollatzMoonshot.AmusicalLogBalance
 import CollatzMoonshot.AmusicalSeventh
 import CollatzMoonshot.AmusicalTwin
+import CollatzMoonshot.AmusicalEscape
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -215,7 +216,10 @@ def register : List Hall := [
    "AmusicalSeventh.lean; agent report seventh.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: statistical twin with finitely many orbits", .costume,
    "a no-go for twins applies to U itself; twins differ in cycles (twin W has a 3-cycle, U none)",
-   "AmusicalTwin.lean; AmusicalSeventh.lean; agent report twin.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalTwin.lean; AmusicalSeventh.lean; agent report twin.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: residue reversor killed by escape (normal backward itinerary)", .wall,
+   "sound, but needs one integer with a normal backward itinerary; finite checks stop at cycles",
+   "AmusicalEscape.lean; agent report q1.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -299,7 +303,12 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.twinW_not_conj_amusical,
     ``CollatzMoonshot.Amusical.twinW_threeCycle,
     ``CollatzMoonshot.Amusical.amusical_no_threeCycle,
-    ``CollatzMoonshot.Amusical.rewire_single_orbit], []⟩]
+    ``CollatzMoonshot.Amusical.rewire_single_orbit], []⟩,
+  ⟨"amusical: residue reversor killed by escape (normal backward itinerary)",
+   [``CollatzMoonshot.Amusical.escape_forward,
+    ``CollatzMoonshot.Amusical.not_reversor_of_evenFrequency_lt,
+    ``CollatzMoonshot.Amusical.not_reversor_of_backwardNormal],
+   [``CollatzMoonshot.Amusical.BackwardNormal]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -312,7 +321,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 34 rows, 26 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 35 rows, 27 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

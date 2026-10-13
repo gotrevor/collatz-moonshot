@@ -302,3 +302,27 @@ none with all slopes `3/2^k` (~97%), but proving that is at least as hard as Kla
   gives `E log|slope| ≥ 0`; with all slopes `3/2^k` the effective drift `log 3 − κ log 2` is
   strictly positive both ways, so the transience heuristic covers every such map.  Kohl's `ω`
   (one big orbit) escapes only through exact slope relations like `3 · (1/3) = 1`.
+
+## 13. Escape and Theorem N (2026-10-13, "q1" agent, checked)
+
+Lean: `AmusicalEscape.lean` (branch bounds proved; the rest are treadmill targets).  The question
+whether `U` has a bijective reversor determined by residues is still open; credence that none
+exists rises from ~93% to ~97%.
+
+* **Escape (Lemma E).**  A non-periodic orbit leaves every bounded set, and `|U x| ≤ (3|x|+1)/2^b`,
+  so forward it spends at most `log₂ 3` bits per step infinitely often; backward, at least
+  `log₂ 3`.  Generic rates: forward `3/2 < log₂ 3`, backward `5/3 > log₂ 3`.
+* **Theorem N.**  A balanced block code (every bijective residue reversor has one, by Lemma S(b)
+  and Hedlund) sends a normal past to a future with even-step frequency `1/3`, i.e. `5/3` bits per
+  step.  So `ι n` is periodic, and by injectivity so is `n`.  Hence one integer with a normal
+  backward itinerary kills every residue reversor.  Normality of a single integer is open
+  (Collatz-type), so this is a reduction.  The Gaussian relative passes, because its forward
+  law is the conjugate of its backward law.
+* **Window 3 is dead exactly (computer).**  No bijective reversor has `stepSym (ι n)` read off
+  three consecutive itinerary symbols.  The sole inputs are surjectivity (Moore–Myhill) and the
+  requirement that the nine integer cycles of length `≤ 14` map bijectively to cycles; it was
+  cross-checked by SAT.  The orphan-word certificates for a Lean proof are pending, and window 4
+  is still running.
+* **Meta (wall).**  A finite set of non-periodic integers never certifies that a table fails,
+  since every finite residue datum is CRT-consistent with integrality.  So exact kills beyond the
+  cycle and surjectivity tests need a global mechanism or infinite-orbit input.

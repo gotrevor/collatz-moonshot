@@ -120,6 +120,7 @@ import CollatzMoonshot.AmusicalContinuousReversor
 import CollatzMoonshot.AmusicalLogBalance
 import CollatzMoonshot.AmusicalSeventh
 import CollatzMoonshot.AmusicalTwin
+import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
