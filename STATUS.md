@@ -9,6 +9,14 @@
 > The separately stated `AmusicalNoContinuousReversor` conjecture remains open and out of scope.
 > Read `HANDOFF-amusical-contrev.md`.
 
+> **2026-10-13, amusical log-balance objective COMPLETE:**
+> `CollatzMoonshot/AmusicalLogBalance.lean` is sorry-free with all three ratified statements
+> unchanged.  Exact even/odd amusical transports, telescoping reciprocal error, elementary cutoff
+> tails, and a finite small-cutoff check prove the uniform even and three-multiple balances; the
+> finite-orbit harmonic contradiction proves the log-density implication.  The scoped and
+> 8848-job full gates are FORMALIZE-tier green, and all three headline axiom ledgers contain
+> exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read `HANDOFF-amusical-logbal.md`.
+
 > **2026-10-13, amusical chain-connectivity objective COMPLETE:**
 > `AmusicalChains.lean` is sorry-free.  Uniform survival is proved at
 > `fwdSurv L ≥ 1/6` and `bwdSurv L ≥ 1/6`; distinct `L`-window minima on

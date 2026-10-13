@@ -244,7 +244,7 @@ residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically co
 
 ## 10. Log-weighted balance and fat orbits (2026-10-13, "equidist" agent, checked)
 
-Lean: `AmusicalLogBalance.lean` (targets).  Weight `n` by `1/n`: `W_N(S) = Σ_{n ∈ S, n ≤ N} 1/n`.
+Lean: `AmusicalLogBalance.lean` (all proved, axiom-clean).  Weight `n` by `1/n`: `W_N(S) = Σ_{n ∈ S, n ≤ N} 1/n`.
 
 * **Exact balance (paper proof checked).**  For any union `S` of orbits in `ℕ_{>0}`,
   `W_N(S ∩ 2ℤ) = W_N(S)/2 + O(1)` and `W_N(S ∩ 3ℤ) = W_N(S)/3 + O(1)`.  Proof: `U` maps the evens
