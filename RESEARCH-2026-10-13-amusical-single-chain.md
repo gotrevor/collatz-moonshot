@@ -284,3 +284,21 @@ minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both st
   log-density, window and crossing statistic, so statistics cannot prove a seventh orbit; a proof
   needs the exact RCWA structure everywhere plus a global mechanism, and the only known global
   mechanism, reversal, is excluded (Theorem NR, Theorem C).
+
+## 12. Statistical twins (2026-10-13, "twin" agent, checked)
+
+Lean: `AmusicalTwin.lean`.  No residue-class twin of `U` with finitely many orbits found; believed
+none with all slopes `3/2^k` (~97%), but proving that is at least as hard as Klamkin (a), since
+`U` is its own twin (a costume).
+
+* **Perfect twins with other cycles.**  `W(2m) = 3m+α`, `W(4m+1) = 3m+β`, `W(4m+3) = 3m+γ`, with
+  `α, β, γ` distinct mod 3, have exactly `U`'s cylinder laws and `δ_L` and the same full-shift
+  coding; `W_{3,1,2}` has the 3-cycle `8 → 15 → 11`, `U` has none, so statistics do not fix the
+  conjugacy class.
+* **One-orbit splice (paper, `splice.py`).**  A bijection of `ℤ` with one orbit agreeing with `U`
+  off `≤ 2 log₂(2Y+2) + #(cycles in [−Y, Y])` points of `[−Y, Y]` (sharper than the rewiring of
+  §11).  So the no-go test is a theorem: only the exact arithmetic of `U` is left as a lever.
+* **Positive drift is generic.**  For any residue-class bijection, Jensen on `E[1/slope] = 1`
+  gives `E log|slope| ≥ 0`; with all slopes `3/2^k` the effective drift `log 3 − κ log 2` is
+  strictly positive both ways, so the transience heuristic covers every such map.  Kohl's `ω`
+  (one big orbit) escapes only through exact slope relations like `3 · (1/3) = 1`.
