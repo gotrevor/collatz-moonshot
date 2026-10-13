@@ -393,6 +393,122 @@ theorem wordTrueCount_le {L : ℕ} (w : Fin L → Bool) : wordTrueCount w ≤ L 
       Finset.card_filter_le _ _
     _ = L := Fintype.card_fin L
 
+/-- Taking a prefix turns the filtered count used in `FwdGood` and `BwdGood` into the
+ordinary marked-letter count of a shorter word. -/
+theorem wordTrueCount_take {L : ℕ} (w : Fin L → Bool) (t : ℕ) (ht : t ≤ L) :
+    wordTrueCount (Fin.take t ht w) =
+      (Finset.univ.filter fun i : Fin L => i.val < t ∧ w i = true).card := by
+  unfold wordTrueCount
+  refine Finset.card_bij (fun i _ => Fin.castLE ht i) ?_ ?_ ?_
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi ⊢
+    exact ⟨i.isLt, hi⟩
+  · intro i₁ hi₁ i₂ hi₂ h
+    exact Fin.castLE_injective ht h
+  · intro i hi
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
+    refine ⟨⟨i, hi.1⟩, ?_, ?_⟩
+    · apply Finset.mem_filter.mpr
+      refine ⟨Finset.mem_univ _, ?_⟩
+      have heq : Fin.castLE ht ⟨i, hi.1⟩ = i := by ext; rfl
+      simpa only [Fin.take_apply, heq] using hi.2
+    · rfl
+
+/-- A forward word finishes strictly above its starting point. -/
+def FwdEndpointPositive {L : ℕ} (w : Fin L → Bool) : Prop :=
+  2 ^ (L + wordTrueCount w) < 3 ^ L
+
+/-- A backward word finishes strictly above its starting point. -/
+def BwdEndpointPositive {L : ℕ} (w : Fin L → Bool) : Prop :=
+  3 ^ L < 2 ^ (L + wordTrueCount w)
+
+/-- Forward survival is exactly strict positivity of every nonempty prefix word. -/
+theorem fwdGood_iff_prefix_positive {L : ℕ} (w : Fin L → Bool) :
+    FwdGood L w ↔
+      ∀ (t : ℕ) (ht0 : 0 < t) (htL : t ≤ L),
+        FwdEndpointPositive (Fin.take t htL w) := by
+  constructor
+  · intro hw t ht0 htL
+    simpa only [FwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+  · intro hw t ht0 htL
+    simpa only [FwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+
+/-- Backward survival is exactly strict positivity of every nonempty prefix word. -/
+theorem bwdGood_iff_prefix_positive {L : ℕ} (w : Fin L → Bool) :
+    BwdGood L w ↔
+      ∀ (t : ℕ) (ht0 : 0 < t) (htL : t ≤ L),
+        BwdEndpointPositive (Fin.take t htL w) := by
+  constructor
+  · intro hw t ht0 htL
+    simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+  · intro hw t ht0 htL
+    simpa only [BwdEndpointPositive, wordTrueCount_take] using hw t ht0 htL
+
+/-- Concatenating two forward-positive blocks gives a forward-positive block. -/
+theorem FwdEndpointPositive.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hu : FwdEndpointPositive u) (hv : FwdEndpointPositive v) :
+    FwdEndpointPositive (Fin.append u v) := by
+  unfold FwdEndpointPositive at hu hv ⊢
+  rw [wordTrueCount_append]
+  calc
+    2 ^ (m + n + (wordTrueCount u + wordTrueCount v)) =
+        2 ^ (m + wordTrueCount u) * 2 ^ (n + wordTrueCount v) := by
+      rw [show m + n + (wordTrueCount u + wordTrueCount v) =
+        (m + wordTrueCount u) + (n + wordTrueCount v) by omega, pow_add]
+    _ < 3 ^ m * 3 ^ n := Nat.mul_lt_mul_of_lt_of_lt hu hv
+    _ = 3 ^ (m + n) := (pow_add 3 m n).symm
+
+/-- Concatenating two backward-positive blocks gives a backward-positive block. -/
+theorem BwdEndpointPositive.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hu : BwdEndpointPositive u) (hv : BwdEndpointPositive v) :
+    BwdEndpointPositive (Fin.append u v) := by
+  unfold BwdEndpointPositive at hu hv ⊢
+  rw [wordTrueCount_append]
+  calc
+    3 ^ (m + n) = 3 ^ m * 3 ^ n := pow_add 3 m n
+    _ < 2 ^ (m + wordTrueCount u) * 2 ^ (n + wordTrueCount v) :=
+      Nat.mul_lt_mul_of_lt_of_lt hu hv
+    _ = 2 ^ ((m + wordTrueCount u) + (n + wordTrueCount v)) :=
+      (pow_add 2 (m + wordTrueCount u) (n + wordTrueCount v)).symm
+    _ = 2 ^ (m + n + (wordTrueCount u + wordTrueCount v)) := by
+      congr 1
+      omega
+
+/-- Forward-surviving words are closed under concatenation.  This is the renewal
+factorization needed after the first positive cyclic block is cut off. -/
+theorem FwdGood.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hm : 0 < m) (hu : FwdGood m u) (hv : FwdGood n v) :
+    FwdGood (m + n) (Fin.append u v) := by
+  rw [fwdGood_iff_prefix_positive]
+  intro t ht0 htL
+  by_cases htm : t ≤ m
+  · rw [Fin.take_append_left t htm]
+    exact (fwdGood_iff_prefix_positive u).mp hu t ht0 htm
+  · obtain ⟨s, rfl⟩ : ∃ s, t = m + s := ⟨t - m, by omega⟩
+    have hs0 : 0 < s := by omega
+    have hsn : s ≤ n := by omega
+    rw [Fin.take_append_right s hsn]
+    apply FwdEndpointPositive.append
+    · simpa using (fwdGood_iff_prefix_positive u).mp hu m hm le_rfl
+    · exact (fwdGood_iff_prefix_positive v).mp hv s hs0 hsn
+
+/-- Backward-surviving words are closed under concatenation. -/
+theorem BwdGood.append {m n : ℕ} {u : Fin m → Bool} {v : Fin n → Bool}
+    (hm : 0 < m) (hu : BwdGood m u) (hv : BwdGood n v) :
+    BwdGood (m + n) (Fin.append u v) := by
+  rw [bwdGood_iff_prefix_positive]
+  intro t ht0 htL
+  by_cases htm : t ≤ m
+  · rw [Fin.take_append_left t htm]
+    exact (bwdGood_iff_prefix_positive u).mp hu t ht0 htm
+  · obtain ⟨s, rfl⟩ : ∃ s, t = m + s := ⟨t - m, by omega⟩
+    have hs0 : 0 < s := by omega
+    have hsn : s ≤ n := by omega
+    rw [Fin.take_append_right s hsn]
+    apply BwdEndpointPositive.append
+    · simpa using (bwdGood_iff_prefix_positive u).mp hu m hm le_rfl
+    · exact (bwdGood_iff_prefix_positive v).mp hv s hs0 hsn
+
 /-- Forward word weights multiply under concatenation. -/
 theorem fwdWordWeight_append {m n : ℕ} (u : Fin m → Bool) (v : Fin n → Bool) :
     fwdWordWeight (Fin.append u v) = fwdWordWeight u * fwdWordWeight v := by

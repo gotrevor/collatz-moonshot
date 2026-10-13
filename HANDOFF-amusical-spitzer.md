@@ -1,4 +1,45 @@
-# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, cyclic interface)
+# HANDOFF: amusical Sparre--Andersen limit (2026-10-13, prefix-word interface)
+
+## Current checkpoint: prefix survival and concatenation
+
+The survival predicates now use the same actual finite blocks as the cyclic decomposition,
+rather than re-expanding an ad hoc filtered count at every use.  All additions are proved in
+`CollatzMoonshot/AmusicalSpitzer.lean`:
+
+- `wordTrueCount_take` identifies the marked-letter count of `Fin.take t w` with the filtered
+  prefix count occurring in the ratified `FwdGood` and `BwdGood` definitions.
+- `FwdEndpointPositive` and `BwdEndpointPositive` name the two strict endpoint signs.
+- `fwdGood_iff_prefix_positive` and `bwdGood_iff_prefix_positive` prove that survival is exactly
+  strict endpoint positivity of every nonempty prefix word.
+- `FwdEndpointPositive.append` and `BwdEndpointPositive.append` prove that positive blocks remain
+  positive under concatenation.
+- `FwdGood.append` and `BwdGood.append` prove the survival factorization when the left block is
+  nonempty, precisely the form needed after cutting off the first positive cyclic block.
+
+No ratified statement changed.  The current lap ran:
+
+```text
+lake env lean CollatzMoonshot/AmusicalSpitzer.lean
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-spitzer --target CollatzMoonshot.AmusicalSpitzer --axioms CollatzMoonshot.Amusical.FwdGood.append
+git diff --check
+```
+
+Both target gates ended `FORMALIZE-TIER GREEN`; the axiom audit for `FwdGood.append` is exactly
+`[propext, Classical.choice, Quot.sound]`.  The only proof-debt warning is the pre-existing
+`windowDensityLimit` target.  The checkpoint commit also passed the repository pre-commit hook's
+full `lake build` (8840 jobs).
+
+`windowDensityLimit` remains the scoped file's single disclosed `sorry`.  The route-decisive
+blocker remains the weighted marked cyclic-decomposition bijection and its recurrence
+`L * survive L = sum_{k=1}^L positiveEndpoint k * survive (L-k)`.  The next lap should prove the
+unweighted bijection using `FwdEndpointPositive` / `BwdEndpointPositive` for the first block and
+the new prefix equivalences plus `.append` lemmas for the surviving tail, then transfer weights
+with the already-proved rotation invariance and weight factorization.  After the recurrences,
+derive the generating functions and take the boundary limit using the proved summability and
+`minimaConstant_eq_directionalFactors`.
+
+## Previous checkpoint: cyclic weight interface
 
 ## Concrete advance
 
