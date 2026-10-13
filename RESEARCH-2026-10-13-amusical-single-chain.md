@@ -215,3 +215,26 @@ kernel-checked and axiom-clean as of 2026-10-13.
   exactly one orbit exists, so balance + no cone + mixed slopes cannot by themselves force
   infinitely many orbits; composing `U` with residue permutations creates a cone in `144/719`
   cases mod `6`, so the no-cone property is fragile.
+
+## 9. Reversors determined by residues (2026-10-13, "reversor" agent, checked)
+
+Lean: `AmusicalContinuousReversor.lean` (targets for a treadmill; Maze row "reversor determined by
+residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically continuous iff its step symbols
+`stepSym (ι n)` depend only on `n mod 2^c₀ 3^d₀`; then it is determined by that finite table
+(Lemma S) and equals flip ∘ a cellular automaton on the Matthews–Watts shift.
+
+* **Theorem C (proved on paper, checked by me).**  No injective continuous reversor grows at most
+  linearly.  Mechanism: the far-future step symbols of `ι n` are a window function of the past
+  symbols of `n` (uniform on three letters), so the even-step frequency `q` is a fraction over a
+  power of `3`, never `1/2`; along `L` disjoint windows the event densities are `ρ^L` vs `2^{−L}`
+  with `ρ = max(q, 1−q) > 1/2`, contradicting injectivity plus `|ι n| ≤ C|n| + D`.  Corollaries
+  (paper only): `|ι n|/|n| → ∞` on a set of lower density 1; a continuous reversing involution has
+  a fixed set of density 0.  Breaks for `H` (both laws have powers of `5`; conjugation is an
+  isometry), as it must.  Reproves the residue-class case of Theorem NR by a different mechanism.
+* **Theorems A, A′ (and B, B′, paper only).**  Continuity for one prime alone, or with the other
+  prime's dependence growing at rate `< 1/2` (B) or `< 1` (B′) digits per digit, forces a constant
+  reversor.  B's `1/2` is sharp on `ℤ₂ × ℤ₃` (a non-constant semiconjugacy at exactly rate `1/2`),
+  so arguments that also work on the full shift are exhausted: Q1 needs integrality.
+* **Q1 (no bijective continuous reversor at all): believed ~93%, open**
+  (`AmusicalNoContinuousReversor`).  Exact computation kills every window-`≤ 2` table; window-`3`
+  survivors of the cycle test fail numerically on small integers.

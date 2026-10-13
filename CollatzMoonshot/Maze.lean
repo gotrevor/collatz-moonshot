@@ -20,6 +20,7 @@ import CollatzMoonshot.Obstructions.Amusical
 import CollatzMoonshot.AmusicalReturns
 import CollatzMoonshot.AmusicalChains
 import CollatzMoonshot.AmusicalReversal
+import CollatzMoonshot.AmusicalContinuousReversor
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -199,7 +200,10 @@ def register : List Hall := [
    "AmusicalChains.lean; agent report chains.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: reversing involution (works for the Gaussian relative)", .refuted,
    "no piecewise-affine reversor (3-adic slope valuation drifts); a general one is the problem",
-   "AmusicalReversal.lean; GaussianRelative.lean; agent report relative.md", "2026-10-13"⟩]
+   "AmusicalReversal.lean; GaussianRelative.lean; agent report relative.md", "2026-10-13"⟩,
+  ⟨"amusical: reversor determined by residues ((2,3)-adically continuous)", .refuted,
+   "even-step frequencies are dyadic forward, triadic backward: no linear growth; one prime: const",
+   "AmusicalContinuousReversor.lean; agent report reversor.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -264,7 +268,12 @@ def mazeLinks : List Link := [
   ⟨"amusical: reversing involution (works for the Gaussian relative)",
    [``CollatzMoonshot.Amusical.no_piecewiseAffine_reversor,
     ``CollatzMoonshot.Amusical.infinitelyManyOrbits_iff_reversor,
-    ``CollatzMoonshot.Amusical.reversing_zpow_fixed], []⟩]
+    ``CollatzMoonshot.Amusical.reversing_zpow_fixed], []⟩,
+  ⟨"amusical: reversor determined by residues ((2,3)-adically continuous)",
+   [``CollatzMoonshot.Amusical.no_continuous_linear_reversor,
+    ``CollatzMoonshot.Amusical.reversor_const_of_twoAdicContinuous,
+    ``CollatzMoonshot.Amusical.reversor_const_of_threeAdicContinuous,
+    ``CollatzMoonshot.Amusical.AmusicalNoContinuousReversor], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -277,7 +286,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 30 rows, 22 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 31 rows, 23 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
