@@ -128,6 +128,243 @@ theorem bwdWalk_ge (L a b : ℕ) (ha : 0 < a) (hab : a < b) :
             simpa [Nat.cast_mul] using ih (3 * a) (4 * b) (by positivity) h4
           _ = _ := by ring
 
+open Classical in
+/-- Split a sum over Boolean words by the first letter. -/
+theorem sum_bool_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℚ) :
+    ∑ w, f w = ∑ b : Bool, ∑ u : Fin n → Bool, f (Fin.cons b u) := by
+  refine ((Fintype.sum_equiv (Fin.consEquiv (fun _ : Fin (n + 1) ↦ Bool))
+    (fun x => f (Fin.cons x.1 x.2)) f (fun _ => rfl)).symm).trans ?_
+  exact Fintype.sum_prod_type _
+
+/-- The forward survival condition, retaining the current exponential deficit `a / b`. -/
+def FwdWalkGood {L : ℕ} (a b : ℕ) (w : Fin L → Bool) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L →
+    a * 2 ^ (t + latticePrefixMarked w t) < b * 3 ^ t
+
+/-- The backward survival condition, retaining the current exponential deficit `a / b`. -/
+def BwdWalkGood {L : ℕ} (a b : ℕ) (w : Fin L → Bool) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L →
+    a * 3 ^ t < b * 2 ^ (t + latticePrefixMarked w t)
+
+theorem latticePrefixMarked_cons_succ {n t : ℕ} (c : Bool) (u : Fin n → Bool) :
+    latticePrefixMarked (Fin.cons c u) (t + 1) =
+      (if c then 1 else 0) + latticePrefixMarked u t := by
+  simp only [latticePrefixMarked, Finset.card_filter]
+  rw [Fin.sum_univ_succ]
+  cases c <;> simp
+
+@[simp] theorem latticePrefixMarked_zero {n : ℕ} (u : Fin n → Bool) :
+    latticePrefixMarked u 0 = 0 := by
+  simp [latticePrefixMarked]
+
+theorem two_pow_step_false (t p : ℕ) :
+    2 ^ (t + 1 + p) = 2 * 2 ^ (t + p) := by
+  rw [show t + 1 + p = (t + p) + 1 by omega, pow_succ]
+  ring
+
+theorem two_pow_step_true (t p : ℕ) :
+    2 ^ (t + 1 + (1 + p)) = 4 * 2 ^ (t + p) := by
+  rw [show t + 1 + (1 + p) = (t + p) + 2 by omega, pow_add]
+  norm_num
+  ring
+
+theorem three_pow_step (t : ℕ) : 3 ^ (t + 1) = 3 * 3 ^ t := by
+  rw [pow_succ]
+  ring
+
+theorem fwdWalkGood_cons_false {n a b : ℕ} (u : Fin n → Bool) :
+    FwdWalkGood a b (Fin.cons false u) ↔
+      2 * a < 3 * b ∧ FwdWalkGood (2 * a) (3 * b) u := by
+  constructor
+  · intro h
+    constructor
+    · simpa [FwdWalkGood, latticePrefixMarked_cons_succ, mul_comm] using
+        h 1 (by omega) (by omega)
+    · intro t ht1 htn
+      have ht := h (t + 1) (by omega) (by omega)
+      rw [latticePrefixMarked_cons_succ] at ht
+      simp only [Bool.false_eq_true, ↓reduceIte, zero_add] at ht
+      rw [two_pow_step_false, three_pow_step] at ht
+      simpa [mul_assoc, mul_comm, mul_left_comm] using ht
+  · rintro ⟨hfirst, htail⟩ t ht1 ht
+    obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+    cases s with
+    | zero => simpa [FwdWalkGood, latticePrefixMarked_cons_succ, mul_comm] using hfirst
+    | succ s =>
+        have hs := htail (s + 1) (by omega) (by omega)
+        rw [latticePrefixMarked_cons_succ]
+        simp only [Bool.false_eq_true, ↓reduceIte, zero_add]
+        rw [two_pow_step_false, three_pow_step]
+        simpa [mul_assoc, mul_comm, mul_left_comm] using hs
+
+theorem fwdWalkGood_cons_true {n a b : ℕ} (u : Fin n → Bool) :
+    FwdWalkGood a b (Fin.cons true u) ↔
+      4 * a < 3 * b ∧ FwdWalkGood (4 * a) (3 * b) u := by
+  constructor
+  · intro h
+    constructor
+    · simpa [FwdWalkGood, latticePrefixMarked_cons_succ, pow_succ, mul_comm] using
+        h 1 (by omega) (by omega)
+    · intro t ht1 htn
+      have ht := h (t + 1) (by omega) (by omega)
+      rw [latticePrefixMarked_cons_succ] at ht
+      simp only [↓reduceIte] at ht
+      rw [two_pow_step_true, three_pow_step] at ht
+      simpa [mul_assoc, mul_comm, mul_left_comm] using ht
+  · rintro ⟨hfirst, htail⟩ t ht1 ht
+    obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+    cases s with
+    | zero => simpa [FwdWalkGood, latticePrefixMarked_cons_succ, pow_succ, mul_comm] using hfirst
+    | succ s =>
+        have hs := htail (s + 1) (by omega) (by omega)
+        rw [latticePrefixMarked_cons_succ]
+        simp only [↓reduceIte]
+        rw [two_pow_step_true, three_pow_step]
+        simpa [mul_assoc, mul_comm, mul_left_comm] using hs
+
+theorem bwdWalkGood_cons_false {n a b : ℕ} (u : Fin n → Bool) :
+    BwdWalkGood a b (Fin.cons false u) ↔
+      3 * a < 2 * b ∧ BwdWalkGood (3 * a) (2 * b) u := by
+  constructor
+  · intro h
+    constructor
+    · simpa [BwdWalkGood, latticePrefixMarked_cons_succ, mul_comm] using
+        h 1 (by omega) (by omega)
+    · intro t ht1 htn
+      have ht := h (t + 1) (by omega) (by omega)
+      rw [latticePrefixMarked_cons_succ] at ht
+      simp only [Bool.false_eq_true, ↓reduceIte, zero_add] at ht
+      rw [three_pow_step, two_pow_step_false] at ht
+      simpa [mul_assoc, mul_comm, mul_left_comm] using ht
+  · rintro ⟨hfirst, htail⟩ t ht1 ht
+    obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+    cases s with
+    | zero => simpa [BwdWalkGood, latticePrefixMarked_cons_succ, mul_comm] using hfirst
+    | succ s =>
+        have hs := htail (s + 1) (by omega) (by omega)
+        rw [latticePrefixMarked_cons_succ]
+        simp only [Bool.false_eq_true, ↓reduceIte, zero_add]
+        rw [three_pow_step, two_pow_step_false]
+        simpa [mul_assoc, mul_comm, mul_left_comm] using hs
+
+theorem bwdWalkGood_cons_true {n a b : ℕ} (u : Fin n → Bool) :
+    BwdWalkGood a b (Fin.cons true u) ↔
+      3 * a < 4 * b ∧ BwdWalkGood (3 * a) (4 * b) u := by
+  constructor
+  · intro h
+    constructor
+    · simpa [BwdWalkGood, latticePrefixMarked_cons_succ, pow_succ, mul_comm] using
+        h 1 (by omega) (by omega)
+    · intro t ht1 htn
+      have ht := h (t + 1) (by omega) (by omega)
+      rw [latticePrefixMarked_cons_succ] at ht
+      simp only [↓reduceIte] at ht
+      rw [three_pow_step, two_pow_step_true] at ht
+      simpa [mul_assoc, mul_comm, mul_left_comm] using ht
+  · rintro ⟨hfirst, htail⟩ t ht1 ht
+    obtain ⟨s, rfl⟩ : ∃ s, t = s + 1 := ⟨t - 1, by omega⟩
+    cases s with
+    | zero => simpa [BwdWalkGood, latticePrefixMarked_cons_succ, pow_succ, mul_comm] using hfirst
+    | succ s =>
+        have hs := htail (s + 1) (by omega) (by omega)
+        rw [latticePrefixMarked_cons_succ]
+        simp only [↓reduceIte]
+        rw [three_pow_step, two_pow_step_true]
+        simpa [mul_assoc, mul_comm, mul_left_comm] using hs
+
+def latticeUnmarked {L : ℕ} (w : Fin L → Bool) : ℕ :=
+  (Finset.univ.filter fun i => w i = false).card
+
+theorem latticeMarked_cons {n : ℕ} (c : Bool) (u : Fin n → Bool) :
+    latticeMarked (Fin.cons c u) = (if c then 1 else 0) + latticeMarked u := by
+  simp only [latticeMarked, Finset.card_filter]
+  rw [Fin.sum_univ_succ]
+  cases c <;> simp
+
+theorem latticeUnmarked_cons {n : ℕ} (c : Bool) (u : Fin n → Bool) :
+    latticeUnmarked (Fin.cons c u) = (if c then 0 else 1) + latticeUnmarked u := by
+  simp only [latticeUnmarked, Finset.card_filter]
+  rw [Fin.sum_univ_succ]
+  cases c <;> simp
+
+noncomputable def fwdWalkSum (L a b : ℕ) : ℚ := by
+  classical
+  exact ∑ w : Fin L → Bool, if FwdWalkGood a b w then (1 / 2 : ℚ) ^ L else 0
+
+def bwdWalkWeight {L : ℕ} (w : Fin L → Bool) : ℚ :=
+  (2 / 3 : ℚ) ^ latticeMarked w * (1 / 3 : ℚ) ^ latticeUnmarked w
+
+theorem bwdWalkWeight_cons_false {n : ℕ} (u : Fin n → Bool) :
+    bwdWalkWeight (Fin.cons false u) = (1 / 3 : ℚ) * bwdWalkWeight u := by
+  simp only [bwdWalkWeight, latticeMarked_cons, latticeUnmarked_cons, Bool.false_eq_true,
+    ↓reduceIte, zero_add]
+  rw [show 1 + latticeUnmarked u = latticeUnmarked u + 1 by omega, pow_succ]
+  ring
+
+theorem bwdWalkWeight_cons_true {n : ℕ} (u : Fin n → Bool) :
+    bwdWalkWeight (Fin.cons true u) = (2 / 3 : ℚ) * bwdWalkWeight u := by
+  simp only [bwdWalkWeight, latticeMarked_cons, latticeUnmarked_cons, ↓reduceIte, zero_add]
+  rw [show 1 + latticeMarked u = latticeMarked u + 1 by omega, pow_succ]
+  ring
+
+noncomputable def bwdWalkSum (L a b : ℕ) : ℚ := by
+  classical
+  exact ∑ w : Fin L → Bool, if BwdWalkGood a b w then bwdWalkWeight w else 0
+
+theorem fwdWalkSum_succ (L a b : ℕ) :
+    fwdWalkSum (L + 1) a b =
+      (if 2 * a < 3 * b then (1 / 2 : ℚ) * fwdWalkSum L (2 * a) (3 * b) else 0) +
+      (if 4 * a < 3 * b then (1 / 2 : ℚ) * fwdWalkSum L (4 * a) (3 * b) else 0) := by
+  classical
+  unfold fwdWalkSum
+  rw [sum_bool_cons, Fintype.sum_bool]
+  simp_rw [fwdWalkGood_cons_false, fwdWalkGood_cons_true]
+  by_cases h2 : a * 2 < b * 3 <;> by_cases h4 : a * 4 < b * 3 <;>
+    simp [h2, h4, pow_succ, Finset.mul_sum, mul_comm, add_comm]
+
+theorem bwdWalkSum_succ (L a b : ℕ) :
+    bwdWalkSum (L + 1) a b =
+      (if 3 * a < 2 * b then (1 / 3 : ℚ) * bwdWalkSum L (3 * a) (2 * b) else 0) +
+      (if 3 * a < 4 * b then (2 / 3 : ℚ) * bwdWalkSum L (3 * a) (4 * b) else 0) := by
+  classical
+  unfold bwdWalkSum
+  rw [sum_bool_cons, Fintype.sum_bool]
+  simp_rw [bwdWalkGood_cons_false, bwdWalkGood_cons_true, bwdWalkWeight_cons_false,
+    bwdWalkWeight_cons_true]
+  by_cases h2 : a * 3 < b * 2 <;> by_cases h4 : a * 3 < b * 4 <;>
+    simp [h2, h4, Finset.mul_sum, mul_comm, add_comm]
+
+theorem fwdWalkSum_eq_fwdWalk (L a b : ℕ) : fwdWalkSum L a b = fwdWalk L a b := by
+  induction L generalizing a b with
+  | zero =>
+      unfold fwdWalkSum
+      simp only [Fintype.sum_unique]
+      rw [if_pos (by intro t ht1 ht0; omega)]
+      simp [fwdWalk]
+  | succ L ih => rw [fwdWalkSum_succ, fwdWalk, ih, ih]
+
+theorem bwdWalkSum_eq_bwdWalk (L a b : ℕ) : bwdWalkSum L a b = bwdWalk L a b := by
+  induction L generalizing a b with
+  | zero =>
+      unfold bwdWalkSum
+      simp only [Fintype.sum_unique]
+      rw [if_pos (by intro t ht1 ht0; omega)]
+      simp [bwdWalkWeight, latticeMarked, latticeUnmarked, bwdWalk]
+  | succ L ih => rw [bwdWalkSum_succ, bwdWalk, ih, ih]
+
+theorem fwdSurv_eq_fwdWalk (L : ℕ) : fwdSurv L = fwdWalk L 1 1 := by
+  rw [← fwdWalkSum_eq_fwdWalk L 1 1]
+  classical
+  unfold fwdSurv fwdWalkSum FwdWalkGood latticePrefixMarked
+  simp
+
+theorem bwdSurv_eq_bwdWalk (L : ℕ) : bwdSurv L = bwdWalk L 1 1 := by
+  rw [← bwdWalkSum_eq_bwdWalk L 1 1]
+  classical
+  unfold bwdSurv bwdWalkSum BwdWalkGood bwdWalkWeight latticePrefixMarked latticeMarked
+    latticeUnmarked
+  simp
+
 /-- **Target.**  Two `L`-window minima at most `L` steps apart on one orbit coincide:
 `n ≤ U^t n` and `U^t n ≤ U^-t (U^t n) = n`. -/
 theorem IsWindowMin.iterate_eq_of_isWindowMin {L t : ℕ} {n : ℤ} (h : IsWindowMin L n)
@@ -142,11 +379,25 @@ theorem IsWindowMin.iterate_eq_of_isWindowMin {L t : ℕ} {n : ℤ} (h : IsWindo
 
 /-- **Target.**  The forward survival probability is at least `1/6` for every `L`. -/
 theorem fwdSurv_ge (L : ℕ) : 1 / 6 ≤ fwdSurv L := by
-  sorry
+  cases L with
+  | zero => rw [fwdSurv_eq_fwdWalk]; norm_num [fwdWalk]
+  | succ L =>
+      rw [fwdSurv_eq_fwdWalk, fwdWalk]
+      norm_num
+      have h := fwdWalk_ge L 2 3 (by omega) (by omega)
+      norm_num at h ⊢
+      linarith
 
 /-- **Target.**  The backward survival probability is at least `1/6` for every `L`. -/
 theorem bwdSurv_ge (L : ℕ) : 1 / 6 ≤ bwdSurv L := by
-  sorry
+  cases L with
+  | zero => rw [bwdSurv_eq_bwdWalk]; norm_num [bwdWalk]
+  | succ L =>
+      rw [bwdSurv_eq_bwdWalk, bwdWalk]
+      norm_num
+      have h := bwdWalk_ge L 3 4 (by omega) (by omega)
+      norm_num at h ⊢
+      linarith
 
 /-- Window minima have density at least `1/36` for every window length. -/
 theorem windowDensity_ge (L : ℕ) : 1 / 36 ≤ fwdSurv L * bwdSurv L := by

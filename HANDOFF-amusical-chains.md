@@ -1,5 +1,47 @@
 # HANDOFF — amusical chains
 
+## 2026-10-13 treadmill lap: both survival bounds proved
+
+Concrete advance:
+
+- Added generalized word predicates and weighted sums retaining the current
+  rational deficit `a / b`, and split the sums at their first Boolean letter
+  with `Fin.consEquiv`.
+- Proved `fwdWalkSum_eq_fwdWalk` and `bwdWalkSum_eq_bwdWalk`: the semantic
+  prefix conditions obey exactly the previously proved head-recursive walk
+  recurrences, including the `1/2` and `1/3, 2/3` branch weights.
+- Specialized at `(a,b) = (1,1)`.  The first surviving forward letter is
+  forced to the `(2,3)` state and the first surviving backward letter to the
+  `(3,4)` state, so `fwdWalk_ge` and `bwdWalk_ge` close the ratified theorems
+  `fwdSurv_ge` and `bwdSurv_ge` at `1/6`.
+- No statement changed, and no axiom or native certificate was added.  The
+  scoped file now has exactly one remaining `sorry`, in
+  `exists_sublinearlyRecurrent_of_finitelyManyOrbits`.
+
+Verification in this lap:
+
+- `lake env lean CollatzMoonshot/AmusicalChains.lean` passed with only the
+  single remaining disclosed target sorry.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-chains
+  --target CollatzMoonshot.AmusicalChains --axioms
+  CollatzMoonshot.Amusical.fwdSurv_ge`: **FORMALIZE-TIER GREEN**, 8711 jobs;
+  axioms are exactly `Classical.choice`, `Quot.sound`, `propext`.
+- The same scoped gate for `CollatzMoonshot.Amusical.bwdSurv_ge` is
+  **FORMALIZE-TIER GREEN**, with the same axiom ledger.
+
+Current blocker / next highest-value attack:
+
+1. Close the sole remaining recurrence target by combining the positive
+   density `windowMinDensity L` / `windowDensity_ge L` with time separation:
+   distinct `L`-window minima on one aperiodic orbit have orbit indices more
+   than `L` apart by `IsWindowMin.iterate_eq_of_isWindowMin`.
+2. Under failure of sublinear recurrence on each of the finitely many
+   aperiodic orbits, each orbit has an eventual linear time bound
+   `|j| < C_O U^j(x)`.  The separation then bounds its window minima below `X`
+   by `2 C_O X / (L+1) + O_O(1)`.  Sum over the finite orbit set and choose
+   `L` above the total coefficient, contradicting the uniform density
+   lower bound `1/36`.
+
 ## 2026-10-13 treadmill lap: survival invariant formalized
 
 Concrete advance:
