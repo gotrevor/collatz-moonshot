@@ -16,6 +16,7 @@ import CollatzMoonshot.Obstructions.BorrowabilityHeight23
 import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
+import CollatzMoonshot.Obstructions.Amusical
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -163,7 +164,27 @@ def register : List Hall := [
    "RESEARCH-2026-09-22-mechanism-search.md", "2026-09-22"⟩,
   ⟨"richer matrix interpretations of the rewriting system", .wall,
    "barred by Nashida Part II (non-negative affine matrix interpretations)",
-   "RESEARCH-2026-10-05-rewriting-lane-landscape.md", "2026-10-05"⟩]
+   "RESEARCH-2026-10-05-rewriting-lane-landscape.md", "2026-10-05"⟩,
+  ⟨"amusical: density, measure and crossing counts for Klamkin (a)", .siblingTransfer,
+   "each count balances on ℕ, a union of infinitely many orbits, so cannot bound the orbit count",
+   "Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md", "2026-10-13"⟩,
+  ⟨"amusical: Tavares zero-density reduction with Rhin bounds", .siblingTransfer,
+   "decreasing points drop by up to (3/4)^N, swamping the Rhin gain; the bound holds for ℕ too",
+   "Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md", "2026-10-13"⟩,
+  ⟨"amusical: forward/backward drift asymmetry", .refuted,
+   "0.0589 vs 0.0566 is one balance in 2-adic and 3-adic density (evens below 2X/3, threes below X)",
+   "Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md", "2026-10-13"⟩,
+  ⟨"amusical: orbit invariant or rational height for Klamkin (a)", .costume,
+   "an invariant with infinitely many values on ℕ exists iff there are infinitely many orbits",
+   "Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md §1, §5",
+   "2026-10-13"⟩,
+  ⟨"amusical: residue certification of orbit minima", .adversary2adic,
+   "a class fixes finitely many steps; minima show no class dependence beyond long windows",
+   "Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md §6", "2026-10-13"⟩,
+  ⟨"amusical: single-chain mechanism for Klamkin (a)", .wall,
+   "finitely many orbits force a linearly recurrent orbit; refuting it is the orbit-of-8 wall",
+   "Amusical.lean; Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md §3",
+   "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -195,7 +216,24 @@ def mazeLinks : List Link := [
   ⟨"signed flow as a new lever", [``SignedFlow.exists_signed_flow_iff_reachesOne], []⟩,
   ⟨"ballot-coalescence rigidity", [``FrontA.FirstCrossing.not_ballot_ancestor_unique], []⟩,
   ⟨"first-crossing word periodicity",
-   [``FrontA.FirstCrossing.at_primitive, ``FrontA.FirstCrossing.overshoot_modEq], []⟩]
+   [``FrontA.FirstCrossing.at_primitive, ``FrontA.FirstCrossing.overshoot_modEq], []⟩,
+  ⟨"amusical: density, measure and crossing counts for Klamkin (a)",
+   [``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩,
+  ⟨"amusical: Tavares zero-density reduction with Rhin bounds",
+   [``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation,
+    ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_zeroDensity], []⟩,
+  ⟨"amusical: forward/backward drift asymmetry",
+   [``CollatzMoonshot.Amusical.even_iff_amusical_mod_three,
+    ``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩,
+  ⟨"amusical: orbit invariant or rational height for Klamkin (a)",
+   [``CollatzMoonshot.Obstructions.Amusical.amusicalInfinitelyManyOrbits_iff_invariant], []⟩,
+  ⟨"amusical: residue certification of orbit minima",
+   [``CollatzMoonshot.Obstructions.Amusical.MinimaNotResidueDetermined,
+    ``CollatzMoonshot.Amusical.IsOrbitMin.isWindowMin], []⟩,
+  ⟨"amusical: single-chain mechanism for Klamkin (a)",
+   [``CollatzMoonshot.Amusical.exists_linearlyRecurrent_of_finitelyManyOrbits,
+    ``CollatzMoonshot.Obstructions.Amusical.amusicalInfinitelyManyOrbits_of_noLinearRecurrence],
+   [``CollatzMoonshot.Obstructions.Amusical.NoLinearRecurrence]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -208,7 +246,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 20 rows, 12 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 26 rows, 18 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
