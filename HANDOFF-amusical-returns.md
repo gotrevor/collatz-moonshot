@@ -1,5 +1,31 @@
 # HANDOFF: amusical returns treadmill
 
+## 2026-10-13: exits equal strict minima proved
+
+`exits_eq_strictMinima` is now proved with its ratified statement unchanged.  The forward map sends
+an exit to `orbitMinNat`; positivity and exit aperiodicity make that point the strict two-sided
+minimum.  Conversely, `finite_forward_visits_below` supplies a finite nonempty set of visits below
+`X`, whose maximum is the unique last visit and hence an exit.  The proof checks both inverse
+directions through orbit equality; periodic orbits contribute to neither side without any
+divergence assumption.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalReturns.lean` passes; its only warnings for proof debt are
+  the two remaining target sorries.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-returns --target
+  CollatzMoonshot.AmusicalReturns --axioms CollatzMoonshot.Amusical.exits_eq_strictMinima` passed:
+  8710 jobs, `FORMALIZE-TIER GREEN`; the theorem's axiom ledger is exactly
+  `[propext, Classical.choice, Quot.sound]`, and proof debt is at lines 196 and 424.
+- `git diff --check` passes.
+
+Current blocker: `exists_large_nonOrbitMin` and `return_defect_bound` remain independent hard proof
+obligations.  This is mathematical/formalization work, not an operator blocker.
+
+Next highest-value attack: `return_defect_bound`, the more uncertain analytic obligation.  First
+factor one `amusical` step into its exact positive real multiplier and telescope the logarithms;
+then isolate the distinct-iterate reciprocal sum before proving the stated logarithmic bound.
+
 ## 2026-10-13: exits/minima finiteness layer proved
 
 The route-decisive infrastructure for `exits_eq_strictMinima` is now proved in

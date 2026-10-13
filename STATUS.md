@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical exits/minima FORMALIZED:** `exits_eq_strictMinima` now proves the exact
+> finite-cardinality identity with its pinned statement unchanged.  Exits map to their least
+> natural orbit member; strict minima map back to the maximum finite forward visit below the
+> cutoff.  Orbit injectivity handles both uniqueness and the periodic case.  The 8710-job scoped
+> gate is FORMALIZE-tier green, and the theorem uses only `propext`, `Classical.choice`, and
+> `Quot.sound`.  Two target sorries remain; read `HANDOFF-amusical-returns.md`.
+
 > **2026-10-13, amusical exits/minima infrastructure:** the positivity, aperiodicity/injectivity,
 > exit-injectivity, strict-minimum injectivity, and finite-bounded-forward-visit lemmas needed by
 > `exits_eq_strictMinima` are now kernel-checked in `AmusicalReturns.lean`.  The remaining step is

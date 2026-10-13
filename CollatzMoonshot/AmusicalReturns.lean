@@ -25,6 +25,8 @@ single-chain.md` §7), each proved on paper there.  Treadmill target
 
 namespace CollatzMoonshot.Amusical
 
+open CollatzMoonshot.Obstructions.Amusical
+
 theorem amusicalInv_pos {x : ℤ} (hx : 0 < x) : 0 < amusicalInv x := by
   unfold amusicalInv
   split_ifs <;> omega
@@ -115,6 +117,78 @@ theorem finite_forward_visits_below {m X : ℕ}
   have hz : (a : ℤ) = b := hinj (by simpa [f] using hab)
   exact_mod_cast hz
 
+/-- Injectivity of the integer parametrization of an orbit transfers to every point on that
+orbit. -/
+theorem amusicalPerm_zpow_apply_injective_of_mem {x y : ℤ}
+    (hinj : Function.Injective fun j : ℤ => (amusicalPerm ^ j) x)
+    (hy : y ∈ amusicalOrbit x) :
+    Function.Injective fun j : ℤ => (amusicalPerm ^ j) y := by
+  obtain ⟨r, rfl⟩ := hy
+  intro i j hij
+  have hir : (amusicalPerm ^ (i + r)) x = (amusicalPerm ^ (j + r)) x := by
+    simpa only [zpow_add, Equiv.Perm.mul_apply] using hij
+  have := hinj hir
+  omega
+
+/-- `orbitMinNat` is below every nonnegative member of the same orbit. -/
+theorem orbitMinNat_le_of_nonneg_mem {x y : ℤ} (hy0 : 0 ≤ y)
+    (hy : y ∈ amusicalOrbit x) : (orbitMinNat x : ℤ) ≤ y := by
+  classical
+  have hex : ∃ k : ℕ, (k : ℤ) ∈ amusicalOrbit x :=
+    ⟨y.toNat, by rwa [Int.toNat_of_nonneg hy0]⟩
+  have hymem : ((y.toNat : ℕ) : ℤ) ∈ amusicalOrbit x := by
+    rwa [Int.toNat_of_nonneg hy0]
+  have hle : Nat.find hex ≤ y.toNat := Nat.find_min' hex hymem
+  unfold orbitMinNat minNatOf
+  rw [dif_pos hex]
+  rw [← Int.toNat_of_nonneg hy0]
+  exact_mod_cast hle
+
+/-- On an aperiodic positive orbit, its least natural member is a strict two-sided minimum. -/
+theorem orbitMinNat_strict_of_injective {x : ℤ} (hx : 0 < x)
+    (hinj : Function.Injective fun j : ℤ => (amusicalPerm ^ j) x) :
+    ∀ j : ℤ, j ≠ 0 →
+      (orbitMinNat x : ℤ) < (amusicalPerm ^ j) (orbitMinNat x : ℤ) := by
+  have hmem := orbitMinNat_mem hx.le
+  have hmpos : 0 < (orbitMinNat x : ℤ) := by
+    obtain ⟨r, hr⟩ := hmem
+    rw [← hr]
+    exact amusicalPerm_zpow_pos r hx
+  have hmorbit : amusicalOrbit (orbitMinNat x : ℤ) = amusicalOrbit x :=
+    amusicalOrbit_eq_of_mem hmem
+  have hminj := amusicalPerm_zpow_apply_injective_of_mem hinj hmem
+  intro j hj
+  have hypos : 0 < (amusicalPerm ^ j) (orbitMinNat x : ℤ) :=
+    amusicalPerm_zpow_pos j hmpos
+  have hymem : (amusicalPerm ^ j) (orbitMinNat x : ℤ) ∈ amusicalOrbit x := by
+    rw [← hmorbit]
+    exact ⟨j, rfl⟩
+  have hle := orbitMinNat_le_of_nonneg_mem hypos.le hymem
+  have hne : (amusicalPerm ^ j) (orbitMinNat x : ℤ) ≠ (orbitMinNat x : ℤ) := by
+    intro heq
+    apply hj
+    apply hminj
+    simpa using heq
+  exact lt_of_le_of_ne hle hne.symm
+
+/-- A strict two-sided minimum is exactly the least natural member selected from its orbit. -/
+theorem orbitMinNat_eq_of_strictMin {m : ℕ}
+    (hmin : ∀ j : ℤ, j ≠ 0 → (m : ℤ) < (amusicalPerm ^ j) m) :
+    orbitMinNat (m : ℤ) = m := by
+  have hmem := orbitMinNat_mem (show (0 : ℤ) ≤ m by positivity)
+  have hle : orbitMinNat (m : ℤ) ≤ m := by
+    exact_mod_cast orbitMinNat_le_of_nonneg_mem (show (0 : ℤ) ≤ m by positivity)
+      (mem_amusicalOrbit_self (m : ℤ))
+  have hge : m ≤ orbitMinNat (m : ℤ) := by
+    obtain ⟨r, hr⟩ := hmem
+    by_cases hr0 : r = 0
+    · subst r
+      simpa using hr.le
+    · have := (hmin r hr0).le
+      have hgeZ : (m : ℤ) ≤ (orbitMinNat (m : ℤ) : ℤ) := this.trans_eq hr
+      exact_mod_cast hgeZ
+  omega
+
 /-- **Target.**  Every residue class mod `2^k 3^l` has arbitrarily large non-minima.  Paper
 proof: by CRT choose `n` in the class whose 2-adic digits after the forced prefix make the next
 `K` steps all of type `4m+1 ↦ 3m+1`, which contracts toward `1`; for `K` large compared with the
@@ -131,7 +205,98 @@ theorem exits_eq_strictMinima (X : ℕ) :
         ∀ j : ℕ, 0 < j → (X : ℤ) < (amusicalPerm ^ (j : ℤ)) n).card =
       ((Finset.Icc 1 X).filter fun n : ℕ =>
         ∀ j : ℤ, j ≠ 0 → (n : ℤ) < (amusicalPerm ^ j) n).card := by
-  sorry
+  let exits := (Finset.Icc 1 X).filter fun n : ℕ =>
+    ∀ j : ℕ, 0 < j → (X : ℤ) < (amusicalPerm ^ (j : ℤ)) n
+  let minima := (Finset.Icc 1 X).filter fun n : ℕ =>
+    ∀ j : ℤ, j ≠ 0 → (n : ℤ) < (amusicalPerm ^ j) n
+  change exits.card = minima.card
+  refine Finset.card_bij (fun n _ => orbitMinNat (n : ℤ)) ?_ ?_ ?_
+  · intro n hn
+    have hn' := Finset.mem_filter.1 hn
+    have hnIcc := Finset.mem_Icc.1 hn'.1
+    have hnpos : 0 < (n : ℤ) := by exact_mod_cast hnIcc.1
+    have hinj := exit_has_injective_orbit hnIcc.2 hn'.2
+    have hmem := orbitMinNat_mem hnpos.le
+    have hmpos : 0 < (orbitMinNat (n : ℤ) : ℤ) := by
+      obtain ⟨r, hr⟩ := hmem
+      rw [← hr]
+      exact amusicalPerm_zpow_pos r hnpos
+    have hmle : orbitMinNat (n : ℤ) ≤ n := by
+      exact_mod_cast orbitMinNat_le_of_nonneg_mem hnpos.le (mem_amusicalOrbit_self (n : ℤ))
+    apply Finset.mem_filter.2
+    refine ⟨Finset.mem_Icc.2 ⟨by exact_mod_cast hmpos, hmle.trans hnIcc.2⟩, ?_⟩
+    exact orbitMinNat_strict_of_injective hnpos hinj
+  · intro a ha b hb hab
+    have ha' := Finset.mem_filter.1 ha
+    have hb' := Finset.mem_filter.1 hb
+    have haIcc := Finset.mem_Icc.1 ha'.1
+    have hbIcc := Finset.mem_Icc.1 hb'.1
+    have hma := orbitMinNat_mem (show (0 : ℤ) ≤ a by positivity)
+    have hmb := orbitMinNat_mem (show (0 : ℤ) ≤ b by positivity)
+    have horbit : amusicalOrbit (a : ℤ) = amusicalOrbit (b : ℤ) := by
+      rw [← amusicalOrbit_eq_of_mem hma, ← amusicalOrbit_eq_of_mem hmb, hab]
+    have hbmem : (b : ℤ) ∈ amusicalOrbit (a : ℤ) := by
+      rw [horbit]
+      exact mem_amusicalOrbit_self (b : ℤ)
+    obtain ⟨r, hr⟩ := hbmem
+    change (amusicalPerm ^ r) (a : ℤ) = (b : ℤ) at hr
+    by_cases hr0 : r = 0
+    · subst r
+      simpa using hr
+    · rcases lt_or_gt_of_ne (Ne.symm hr0) with hrpos | hrneg
+      · have hrnat : ((r.toNat : ℕ) : ℤ) = r := Int.toNat_of_nonneg hrpos.le
+        have hfuture := ha'.2 r.toNat (by omega)
+        rw [hrnat, hr] at hfuture
+        exact absurd hfuture (not_lt_of_ge (by exact_mod_cast hbIcc.2))
+      · have hrnat : (((-r).toNat : ℕ) : ℤ) = -r :=
+          Int.toNat_of_nonneg (neg_nonneg.mpr hrneg.le)
+        have hback : (amusicalPerm ^ (-r)) (b : ℤ) = a := by
+          rw [← hr, ← Equiv.Perm.mul_apply, ← zpow_add]
+          simp
+        have hfuture := hb'.2 (-r).toNat (by omega)
+        rw [hrnat, hback] at hfuture
+        exact absurd hfuture (not_lt_of_ge (by exact_mod_cast haIcc.2))
+  · intro m hm
+    have hm' := Finset.mem_filter.1 hm
+    have hmIcc := Finset.mem_Icc.1 hm'.1
+    let visits : Finset ℕ :=
+      (finite_forward_visits_below (m := m) (X := X) hm'.2).toFinset
+    have hzero : 0 ∈ visits := by
+      simp only [visits, Set.Finite.mem_toFinset, Set.mem_setOf_eq]
+      simpa using hmIcc.2
+    let t : ℕ := visits.max' ⟨0, hzero⟩
+    have htmem : t ∈ visits := Finset.max'_mem visits ⟨0, hzero⟩
+    have htX : (amusicalPerm ^ (t : ℤ)) (m : ℤ) ≤ X := by
+      simpa only [visits, Set.Finite.mem_toFinset, Set.mem_setOf_eq] using htmem
+    have htpos : 0 < (amusicalPerm ^ (t : ℤ)) (m : ℤ) :=
+      amusicalPerm_zpow_pos t (by exact_mod_cast hmIcc.1)
+    let n : ℕ := ((amusicalPerm ^ (t : ℤ)) (m : ℤ)).toNat
+    have hncast : (n : ℤ) = (amusicalPerm ^ (t : ℤ)) (m : ℤ) := by
+      exact Int.toNat_of_nonneg htpos.le
+    have hnmem : n ∈ exits := by
+      apply Finset.mem_filter.2
+      have hnpos : 1 ≤ n := by
+        have : 0 < (n : ℤ) := by rw [hncast]; exact htpos
+        exact_mod_cast this
+      have hnX : n ≤ X := by
+        have : (n : ℤ) ≤ X := by rw [hncast]; exact htX
+        exact_mod_cast this
+      refine ⟨Finset.mem_Icc.2 ⟨hnpos, hnX⟩, ?_⟩
+      intro j hj
+      by_contra hnot
+      have hjX : (amusicalPerm ^ (j : ℤ)) (n : ℤ) ≤ X := by omega
+      have hsumX : (amusicalPerm ^ ((t + j : ℕ) : ℤ)) (m : ℤ) ≤ X := by
+        rw [Nat.cast_add, add_comm, zpow_add, Equiv.Perm.mul_apply, ← hncast]
+        exact hjX
+      have hsumMem : t + j ∈ visits := by
+        simpa only [visits, Set.Finite.mem_toFinset, Set.mem_setOf_eq] using hsumX
+      have hmax := Finset.le_max' visits (t + j) hsumMem
+      omega
+    refine ⟨n, hnmem, ?_⟩
+    have hnorbit : amusicalOrbit (n : ℤ) = amusicalOrbit (m : ℤ) := by
+      apply amusicalOrbit_eq_of_mem
+      exact ⟨(t : ℤ), hncast.symm⟩
+    rw [orbitMinNat_eq_of_orbit_eq hnorbit, orbitMinNat_eq_of_strictMin hm'.2]
 
 open Classical in
 /-- **Target.**  The strong form of the linear-recurrence reduction: finitely many orbits give an
