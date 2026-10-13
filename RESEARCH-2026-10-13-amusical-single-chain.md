@@ -306,7 +306,7 @@ none with all slopes `3/2^k` (~97%), but proving that is at least as hard as Kla
 
 ## 13. Escape and Theorem N (2026-10-13, "q1" agent, checked)
 
-Lean: `AmusicalEscape.lean` (branch bounds proved; the rest are treadmill targets).  The question
+Lean: `AmusicalEscape.lean` (all proved, axiom-clean).  The question
 whether `U` has a bijective reversor determined by residues is still open; credence that none
 exists rises from ~93% to ~97%.
 

@@ -28,8 +28,8 @@ backward itinerary (`not_reversor_of_backwardNormal`); this is where `2 ≠ 3` e
 balanced code outputs the uniform law, never the dyadic law `(1/2, 1/4, 1/4)`.
 
 The normality hypothesis is open for every integer (it is a Collatz-type typicality statement),
-so this is a reduction, not a proof.  Paper proofs: `q1.md` §2–§3.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-escape.md`): close every `sorry` here.
+so this is a reduction, not a proof.  Paper proofs: `q1.md` §2–§3.  Kernel-checked
+2026-10-13 by the escape treadmill (`HANDOFF-amusical-escape.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -220,7 +220,7 @@ theorem forward_log_ledger_from (m : ℤ) (X J n : ℕ) (hX : 1 ≤ X)
           rw [Nat.cast_add, Nat.cast_one]
           ring
 
-/-- **Target (Lemma E).**  A non-periodic forward orbit spends at most `log₂ 3 + δ` bits per
+/-- **Proved (Lemma E).**  A non-periodic forward orbit spends at most `log₂ 3 + δ` bits per
 step infinitely often. -/
 theorem escape_forward (m : ℤ) (hm : ∀ k ≥ 1, amusical^[k] m ≠ m) (δ : ℝ) (hδ : 0 < δ)
     (K : ℕ) : ∃ k ≥ K, (fwdBits m k : ℝ) ≤ (Real.logb 2 3 + δ) * k := by
@@ -396,7 +396,7 @@ theorem backward_log_ledger_from (m : ℤ) (X J n : ℕ) (hX : 1 ≤ X)
           push_cast
           ring
 
-/-- **Target (Lemma E′).**  A non-periodic backward orbit spends at least `log₂ 3 − δ` bits per
+/-- **Proved (Lemma E′).**  A non-periodic backward orbit spends at least `log₂ 3 − δ` bits per
 step infinitely often. -/
 theorem escape_backward (m : ℤ) (hm : ∀ k ≥ 1, amusical^[k] m ≠ m) (δ : ℝ) (hδ : 0 < δ)
     (K : ℕ) : ∃ k ≥ K, (Real.logb 2 3 - δ) * k ≤ (bwdBits m k : ℝ) := by
@@ -477,7 +477,7 @@ private theorem fwdBits_add_evenCount (m : ℤ) (k : ℕ) :
       have hs := stepBits_add_evenIndicator (amusical^[k] m)
       split_ifs at hs ⊢ <;> omega
 
-/-- **Target.**  An orbit whose even steps have limiting frequency `c < 2 − log₂ 3` spends
+/-- **Proved.**  An orbit whose even steps have limiting frequency `c < 2 − log₂ 3` spends
 `2 − c > log₂ 3` bits per step, so it is periodic by `escape_forward`. -/
 theorem periodic_of_evenFrequency_lt (m : ℤ) (c : ℝ) (hc : c < 2 - Real.logb 2 3)
     (h : Filter.Tendsto (fun k : ℕ =>
@@ -513,7 +513,7 @@ theorem periodic_of_evenFrequency_lt (m : ℤ) (c : ℝ) (hc : c < 2 - Real.logb
   rw [lt_div_iff₀ hkpos] at hlow
   exact (not_lt_of_ge hk) hlow
 
-/-- **Target (Theorem N, core).**  No injective reversor sends a non-periodic `n` to a point
+/-- **Proved (Theorem N, core).**  No injective reversor sends a non-periodic `n` to a point
 whose even steps have limiting frequency `c < 2 − log₂ 3`.  Paper proof: `ι (U⁻ʲ n) = Uʲ (ι n)`,
 so `ι n` is periodic by `periodic_of_evenFrequency_lt`, say `Uᵖ (ι n) = ι n`; then
 `ι (U⁻ᵖ n) = ι n`, so `U⁻ᵖ n = n` by injectivity, so `Uᵖ n = n`. -/
@@ -555,7 +555,7 @@ def BackwardNormal (n : ℤ) : Prop :=
       ∀ i : Fin w, stepSym (amusicalInv^[j + 1 + i] n) = b i).card : ℝ) / k)
     Filter.atTop (nhds ((3 : ℝ)⁻¹ ^ w))
 
-/-- **Target (Theorem N, bridge).**  A balanced sliding block code `f` (a third of the blocks
+/-- **Proved (Theorem N, bridge).**  A balanced sliding block code `f` (a third of the blocks
 map to `0`) reading a normal backward itinerary outputs `0` with limiting frequency `1/3`.
 Paper proof: the frequency is `∑ b ∈ f⁻¹(0), 3⁻ʷ = 3^(w−1) · 3⁻ʷ`; the first `s` terms do not
 affect the limit. -/
@@ -655,7 +655,7 @@ theorem evenFrequency_of_backwardNormal (ι : ℤ → ℤ) (n : ℤ) (hn : Backw
     all_goals norm_num
   simpa only [out, Nat.cast_add] using ht'
 
-/-- **Target (Theorem N).**  An injective reversor whose even steps are a balanced block code of
+/-- **Proved (Theorem N).**  An injective reversor whose even steps are a balanced block code of
 the backward itinerary forces every non-periodic integer's backward itinerary to be abnormal.
 Paper proof: `evenFrequency_of_backwardNormal`, then `not_reversor_of_evenFrequency_lt` with
 `c = 1/3 < 2 − log₂ 3` (`3³ < 2⁵`). -/
