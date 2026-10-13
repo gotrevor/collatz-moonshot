@@ -1,5 +1,43 @@
 # HANDOFF: amusical continuous reversors
 
+## 2026-10-13 — Exact forward-cylinder transport proved
+
+Concrete advance:
+
+- Added `AmusicalContinuousReversor/Cylinder.lean` and proved
+  `amusical_iterate_add_forwardPeriod_mul`.  The recursively defined
+  `amusicalForwardPeriod t n` is the exact product of the branch denominators (`2` on an even
+  branch and `4` on either odd branch), and translation by this period is transported by
+  `amusical^[t]` to translation by exactly `3^t`.
+- This is the route-decisive refinement missing from the earlier `4^t` affine formula: its image
+  increment has no residual factor of two, so CRT can choose a point in the cylinder whose image
+  has any prescribed two-adic residue.  Positivity of the period was also proved.
+- The ratified target statements are unchanged.  Three target sorries remain.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalContinuousReversor/Cylinder.lean` — green.
+- `lake build CollatzMoonshot.AmusicalContinuousReversor` — green, 8711 jobs.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-contrev --target
+  CollatzMoonshot.AmusicalContinuousReversor` — FORMALIZE-TIER GREEN, 8711 jobs; the three
+  remaining target sorries are disclosed as proof debt.
+
+Current blocker:
+
+- Theorem A still needs the CRT selection lemma plus binary propagation through `amusical^[t]`.
+  The exact cylinder transport required for that selection is now available.
+- The mirror exact backward-cylinder theorem (period factors `2`/`4`, image increment `2^a`) is
+  still needed for Theorem A′.  The finite-density machinery for Theorem C remains afterward.
+
+Next highest-value attack:
+
+1. Package CRT for `3^t` against `2^c`, apply it to
+   `amusical_iterate_add_forwardPeriod_mul`, and prove Theorem A.
+2. Prove the elementary propagation lemma that congruence modulo `2^(b+2t)` descends through
+   `amusical^[t]` to congruence modulo `2^b`.
+3. Only then mirror the cylinder construction for Theorem A′ and build the counting layer for
+   Theorem C.
+
 ## 2026-10-13 — Lemma S proved; three targets remain
 
 Concrete advance:
