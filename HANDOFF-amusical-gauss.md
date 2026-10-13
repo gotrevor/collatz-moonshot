@@ -1,40 +1,39 @@
-# HANDOFF: Gaussian relative, involution identity closed (2026-10-13)
+# HANDOFF: Gaussian relative complete (2026-10-13)
 
-Lane G owns only `CollatzMoonshot/GaussianRelative.lean`.  The primary host predicate remains
-`sorry-free:CollatzMoonshot/GaussianRelative.lean`; it is not yet met.
+Lane G's primary predicate, `sorry-free:CollatzMoonshot/GaussianRelative.lean`, is met. Both
+ratified target statements are proved without new axioms or `native_decide`.
 
 ## Concrete advance
 
-`conj_gaussH_conj_gaussH` is proved without axioms or `native_decide`.  The proof freezes
-`r = (a + 7*b) % 25`, derives `0 ≤ r < 25`, enumerates its 25 possible values, unfolds the two
-applications of `gaussH`, and closes every exact-division branch with `norm_num` and `omega`.
-The local `maxHeartbeats 2000000` is needed because the deliberately direct 25-class proof
-normalizes the nested piecewise map; the checked run used about one minute.
+`gauss_infinitely_many_orbits` is proved independently of Lane R's unresolved
+`orbit_inter_fixedPoints_ncard_le_two`. The proof uses a shorter infinite-fiber argument:
 
-The only remaining `sorry` in the owned file is `gauss_infinitely_many_orbits`.
+1. If the set of Gaussian orbits were finite, infinite pigeonhole gives one orbit containing
+   infinitely many distinct real-axis points `(n, 0)`.
+2. Two distinct such points are conjugation-fixed and differ by a nonzero Gaussian iterate `k`.
+   The proved `Amusical.reversing_zpow_fixed` therefore gives return time `2*k` at the first point.
+3. The local helper `zpow_orbit_finite_of_period` realizes an integer-power orbit with a nonzero
+   return time as the image of the finite integer interval `uIcc 0 (2*k)`, so that orbit is finite.
+4. The injected image of the infinite pigeonhole fiber is both infinite and contained in that
+   finite orbit, a contradiction.
+
+The involution and reversal identities used in step 2 are proved locally from `conjPerm`,
+`gaussPerm`, and their definitions. Thus the theorem depends on the proved reversal lemma but
+on none of Lane R's three `sorry`-bearing targets.
 
 ## Verification
 
-* `lake env lean CollatzMoonshot/GaussianRelative.lean` — succeeds; the sole owned-file warning
-  is the remaining `sorry` at `gauss_infinitely_many_orbits`.
+* `lake env lean CollatzMoonshot/GaussianRelative.lean` — succeeds; no `sorry` warning in the
+  owned file (two style-only `letI` suggestions).
+* `rg -n '^\s*(sorry|admit)\b|:=\s*(sorry|by\s+sorry)\b'
+  CollatzMoonshot/GaussianRelative.lean` — no matches.
 * `~/personal/bin/lean-green . --target CollatzMoonshot.GaussianRelative --axioms
-  CollatzMoonshot.GaussianRelative.conj_gaussH_conj_gaussH` — FORMALIZE-TIER GREEN; axiom list
-  exactly `[Classical.choice, Quot.sound, propext]`.  (A first attempt hit a transient filesystem
-  `Too many open files`; the identical retry succeeded.)
+  CollatzMoonshot.GaussianRelative.gauss_infinitely_many_orbits` — FORMALIZE-TIER GREEN, 8711
+  jobs; axiom list exactly `[Classical.choice, Quot.sound, propext]`.
 * `~/personal/bin/lean-green .` — FORMALIZE-TIER GREEN, 8844 jobs.
+* `git diff --check` — clean before the handoff update.
 
 ## Current blocker and next attack
 
-Do **not** use `Amusical.orbit_inter_fixedPoints_ncard_le_two`: Lane R has not proved it, and the
-kickoff forbids importing its `sorry` as proof debt.  Prove the needed local specialization from
-the already proved `Amusical.reversing_zpow_fixed`.
-
-The route-decisive lemma is: for `σ = gaussPerm`, `ι = conjPerm`, any orbit contains at most two
-`ι`-fixed points.  Parameterize three alleged fixed points by exponents `k₁,k₂,k₃`; translating
-the base to the first point, `reversing_zpow_fixed` says both exponent differences have doubled
-period.  In the stabilizer subgroup `{k : ℤ | (σ^k)x=x}`, either it is `{0}` (giving at most one)
-or it is `pℤ`; the solutions of `2k ≡ 0 (mod p)` are the two residue classes `0` and `p/2`.
-Once that finite-fiber lemma is in place, argue that a finite family of orbits would make its
-union of intersections with `Fix(conjPerm)` finite, contradicting the infinite fixed subset
-`{(n,0) | n : ℤ}`.  Establish the group identities from `conj_gaussH_conj_gaussH`; do not depend
-on either of Lane R's unresolved target theorems.
+No Lane G blocker or next proof obligation remains. The host predicate is complete. Other
+amusical files are owned by separate treadmill lanes and were deliberately not edited.
