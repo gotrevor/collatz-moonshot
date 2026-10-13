@@ -1,5 +1,32 @@
 # HANDOFF: amusical returns treadmill
 
+## 2026-10-13: exits/minima finiteness layer proved
+
+The route-decisive infrastructure for `exits_eq_strictMinima` is now proved in
+`CollatzMoonshot/AmusicalReturns.lean`.  Positive integers stay positive under every integer
+power of `amusicalPerm`; an orbit parametrization by `ℤ` is injective exactly when the base
+point has no nonzero return; the exit predicate implies this injectivity; and the strict-minimum
+predicate implies both injectivity and finiteness of the set of forward times whose values lie
+below a fixed cutoff.  In particular, the paper proof's “last forward visit” now has a finite,
+nonempty set from which it can be selected without assuming orbit divergence.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalReturns.lean` passes; its only warnings are the three
+  pre-existing target sorries.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-returns --target
+  CollatzMoonshot.AmusicalReturns` passed: 8710 jobs, `FORMALIZE-TIER GREEN`; proof debt is exactly
+  the three target sorries at lines 122, 129, and 259.
+- `git diff --check` passes.
+
+Current blocker: `exits_eq_strictMinima` still needs the explicit finite-set maximum construction
+and the two inverse maps (exit to least natural orbit member, strict minimum to last forward
+visit).  The mathematical finiteness and uniqueness inputs for that construction are now closed.
+
+Next highest-value attack: define the maximum of `finite_forward_visits_below` (the set contains
+time `0` for a strict minimum in `Icc 1 X`), prove its iterate is an exit, and use
+`orbitMinNat` for the inverse map in `Finset.card_bij`.
+
 ## 2026-10-13: dense linear returns proved
 
 `exists_denseLinearReturns_of_finitelyManyOrbits` in

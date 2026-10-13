@@ -25,6 +25,96 @@ single-chain.md` §7), each proved on paper there.  Treadmill target
 
 namespace CollatzMoonshot.Amusical
 
+theorem amusicalInv_pos {x : ℤ} (hx : 0 < x) : 0 < amusicalInv x := by
+  unfold amusicalInv
+  split_ifs <;> omega
+
+theorem amusical_pos {x : ℤ} (hx : 0 < x) : 0 < amusical x := by
+  unfold amusical
+  split_ifs <;> omega
+
+theorem amusicalPerm_zpow_pos (j : ℤ) {x : ℤ} (hx : 0 < x) :
+    0 < (amusicalPerm ^ j) x := by
+  revert x
+  induction j using Int.induction_on with
+  | zero => intro x hx; simpa
+  | succ j ih =>
+      intro x hx
+      rw [zpow_add_one, Equiv.Perm.mul_apply]
+      exact ih (amusical_pos hx)
+  | pred j ih =>
+      intro x hx
+      rw [zpow_sub_one, Equiv.Perm.mul_apply]
+      exact ih (amusicalInv_pos hx)
+
+theorem amusicalPerm_zpow_apply_injective (x : ℤ) :
+    (Function.Injective fun j : ℤ => (amusicalPerm ^ j) x) ↔
+      ∀ j : ℤ, j ≠ 0 → (amusicalPerm ^ j) x ≠ x := by
+  constructor
+  · intro hinj j hj heq
+    apply hj
+    apply hinj
+    simpa using heq
+  · intro h i j hij
+    by_contra hne
+    have hfix : (amusicalPerm ^ (i - j)) x = x := by
+      apply (amusicalPerm ^ j).injective
+      rw [← Equiv.Perm.mul_apply, ← zpow_add, show j + (i - j) = i by omega]
+      dsimp only at hij
+      rw [hij]
+    exact h (i - j) (sub_ne_zero.mpr hne) hfix
+
+theorem amusicalPerm_zpow_eq_self_neg {j x : ℤ}
+    (h : (amusicalPerm ^ j) x = x) : (amusicalPerm ^ (-j)) x = x := by
+  apply (amusicalPerm ^ j).injective
+  rw [← Equiv.Perm.mul_apply, ← zpow_add]
+  simp [h]
+
+theorem exit_has_injective_orbit {X n : ℕ} (hnX : n ≤ X)
+    (hexit : ∀ j : ℕ, 0 < j → (X : ℤ) < (amusicalPerm ^ (j : ℤ)) n) :
+    Function.Injective fun j : ℤ => (amusicalPerm ^ j) (n : ℤ) := by
+  rw [amusicalPerm_zpow_apply_injective]
+  intro j hj hfix
+  rcases lt_or_gt_of_ne hj.symm with hjpos | hjneg
+  · have hjnat : ((j.toNat : ℕ) : ℤ) = j := Int.toNat_of_nonneg hjpos.le
+    have hknat : 0 < j.toNat := by omega
+    have := hexit j.toNat hknat
+    rw [hjnat, hfix] at this
+    exact (not_lt_of_ge (by exact_mod_cast hnX)) this
+  · have hjnat : (((-j).toNat : ℕ) : ℤ) = -j :=
+      Int.toNat_of_nonneg (neg_nonneg.mpr hjneg.le)
+    have hknat : 0 < (-j).toNat := by omega
+    have hfix' := amusicalPerm_zpow_eq_self_neg hfix
+    have := hexit (-j).toNat hknat
+    rw [hjnat, hfix'] at this
+    exact (not_lt_of_ge (by exact_mod_cast hnX)) this
+
+theorem strictMin_has_injective_orbit {m : ℤ}
+    (hmin : ∀ j : ℤ, j ≠ 0 → m < (amusicalPerm ^ j) m) :
+    Function.Injective fun j : ℤ => (amusicalPerm ^ j) m := by
+  rw [amusicalPerm_zpow_apply_injective]
+  intro j hj hfix
+  exact (hmin j hj).ne hfix.symm
+
+theorem finite_forward_visits_below {m X : ℕ}
+    (hmin : ∀ j : ℤ, j ≠ 0 → (m : ℤ) < (amusicalPerm ^ j) m) :
+    {j : ℕ | (amusicalPerm ^ (j : ℤ)) (m : ℤ) ≤ X}.Finite := by
+  let f : ℕ → ℤ := fun j => (amusicalPerm ^ (j : ℤ)) (m : ℤ)
+  have himage : (f '' {j : ℕ | (amusicalPerm ^ (j : ℤ)) (m : ℤ) ≤ X}).Finite :=
+    (Set.finite_Icc (m : ℤ) (X : ℤ)).subset (by
+      intro y hy
+      obtain ⟨j, hj, hy⟩ := hy
+      rw [← hy]
+      refine ⟨?_, hj⟩
+      by_cases hj0 : j = 0
+      · subst j; simp [f]
+      · exact (hmin j (by exact_mod_cast hj0)).le)
+  apply Set.Finite.of_finite_image himage
+  intro a _ b _ hab
+  have hinj := strictMin_has_injective_orbit hmin
+  have hz : (a : ℤ) = b := hinj (by simpa [f] using hab)
+  exact_mod_cast hz
+
 /-- **Target.**  Every residue class mod `2^k 3^l` has arbitrarily large non-minima.  Paper
 proof: by CRT choose `n` in the class whose 2-adic digits after the forced prefix make the next
 `K` steps all of type `4m+1 ↦ 3m+1`, which contracts toward `1`; for `K` large compared with the

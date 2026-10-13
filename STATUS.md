@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-13, amusical exits/minima infrastructure:** the positivity, aperiodicity/injectivity,
+> exit-injectivity, strict-minimum injectivity, and finite-bounded-forward-visit lemmas needed by
+> `exits_eq_strictMinima` are now kernel-checked in `AmusicalReturns.lean`.  The remaining step is
+> the explicit last-visit/orbit-minimum bijection.  Three target sorries remain; read
+> `HANDOFF-amusical-returns.md`.
+
 > **2026-10-13, amusical dense returns FORMALIZED:**
 > `exists_denseLinearReturns_of_finitelyManyOrbits` now proves the pinned strong recurrence
 > statement: under finitely many nonnegative orbits, one infinite orbit has, for frequently many
