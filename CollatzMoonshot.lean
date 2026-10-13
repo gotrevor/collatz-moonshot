@@ -109,6 +109,7 @@ import CollatzMoonshot.Obstructions.RayRefill
 import CollatzMoonshot.Obstructions.BoundedMerger
 import CollatzMoonshot.Sibling
 import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalWindow
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
 import CollatzMoonshot.Literature.AmusicalCycles
