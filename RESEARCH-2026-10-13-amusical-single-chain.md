@@ -189,6 +189,9 @@ scratch, not in the repo).  Outcomes, each recorded in `Maze.lean`:
 
 ## 8. What U lacks: time reversal (2026-10-13, "relative" agent, checked)
 
+All four §8 theorems (Gaussian orbits, NR, the reformulation, `reversing_zpow_fixed`) are
+kernel-checked and axiom-clean as of 2026-10-13.
+
 * **A relative where it works.**  `H` on `ℤ[i]` (`GaussianRelative.lean`): every piece
   multiplies by `π = 2+i` and divides by `π̄ = 2−i`, as `U` multiplies by `3` and divides by `2`.
   Haar-balanced, dissipative (drift `≈ 0.13` both ways), wild, no residue-class cycles, finitely
@@ -201,6 +204,7 @@ scratch, not in the repo).  Outcomes, each recorded in `Maze.lean`:
   (`no_piecewiseAffine_reversor`): `ι U^ℓ = U^{−ℓ} ι` on an infinite cell forces
   `v₃(slope) + ℓ = v₃(slope') − ℓ`.  The unbalance of `U` sits on the primes `2, 3`, which no
   automorphism of `ℚ` exchanges; `ℤ[i]` hosts a split pair that conjugation swaps.
+  The pieces may be *any* finite partition of `ℤ` (not just residue classes or intervals).
 * **Exact reformulation.**  Klamkin (a) ⇔ some sign-preserving involution reverses `U` and has
   infinitely many nonnegative fixed points (`infinitelyManyOrbits_iff_reversor`): reversibility
   is the whole problem, and NR says the reversor cannot be piecewise affine.

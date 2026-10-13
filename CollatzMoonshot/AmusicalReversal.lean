@@ -22,7 +22,7 @@ complex conjugation as such a reversor.  For `U`:
   one, and a piecewise-affine conjugacy changes valuations by a bounded amount.  `ℚ` has no
   automorphism exchanging `2` and `3`; in `ℤ[i]` conjugation exchanges `2 + i` and `2 − i`.
 
-Treadmill target (`KICKOFF-2026-10-13-amusical-reversal.md`): close every `sorry` here.
+All targets kernel-checked 2026-10-13 by the reversal treadmill (`HANDOFF-amusical-reversal.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -134,7 +134,7 @@ private lemma orbit_inter_fixedPoints_finite {α : Type*} {σ ι : Equiv.Perm α
   exact orbit_inter_fixedPoints_no_three hι hrev x hu hv hw huv
     huw_and_hvw.1 huw_and_hvw.2
 
-/-- **Target.**  An orbit of a reversible permutation meets the fixed set of the reversor in at
+/-- **Proved.**  An orbit of a reversible permutation meets the fixed set of the reversor in at
 most two points (at most one if the orbit is infinite; `k ≡ 0, p/2 (mod p)` on a `p`-cycle). -/
 theorem orbit_inter_fixedPoints_ncard_le_two {α : Type*} {σ ι : Equiv.Perm α}
     (hι : ι * ι = 1) (hrev : ι * σ * ι = σ⁻¹) (x : α) :
@@ -163,7 +163,7 @@ private lemma neg_zpow_apply_eq_of_zpow_apply_eq {α : Type*} {σ : Equiv.Perm �
       congr 1
       ring
 
-/-- **Target.**  Klamkin's problem (a) is equivalent to the existence of a sign-preserving
+/-- **Proved.**  Klamkin's problem (a) is equivalent to the existence of a sign-preserving
 reversing involution of `U` with infinitely many nonnegative fixed points.  (`⇐`: the orbit
 count lemma above.  `⇒`: on each orbit `(x_k)` with chosen base point, set `ι x_k = x_{-k}`.) -/
 theorem infinitelyManyOrbits_iff_reversor :
@@ -311,7 +311,7 @@ theorem infinitelyManyOrbits_iff_reversor :
       rw [← horbit]
       exact mem_amusicalOrbit_self y
 
-/-- **Target (Theorem NR).**  No bijection of `ℤ` that is affine with rational slope on each of
+/-- **Theorem NR (proved).**  No bijection of `ℤ` that is affine with rational slope on each of
 finitely many pieces (`c · ι x = a · x + b` on piece `j`) conjugates `U` to `U⁻¹`.  Paper proof:
 `ι U^ℓ = U^{-ℓ} ι`; refine `ℤ` into finitely many cells (the piece of `n`, the residue class of
 `n` fixing the first `ℓ` branches of `U`, the piece of `U^ℓ n`, the class of `ι n` for `U^{-ℓ}`);
