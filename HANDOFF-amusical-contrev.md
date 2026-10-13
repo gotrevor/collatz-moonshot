@@ -1,5 +1,57 @@
 # HANDOFF: amusical continuous reversors
 
+## 2026-10-13 — Scoped objective complete; target is sorry-free
+
+Concrete advance:
+
+- Proved all three formerly open ratified targets in
+  `CollatzMoonshot/AmusicalContinuousReversor.lean`, without changing their statements:
+  `reversor_const_of_twoAdicContinuous`, `reversor_const_of_threeAdicContinuous`, and
+  `no_continuous_linear_reversor`.  Together with the earlier itinerary theorem, the kickoff's
+  four-target objective is complete and the target file is sorry-free.
+- The two constancy theorems use exact forward/backward cylinder transport, CRT between powers
+  of two and three, and explicit bounds on the digits lost by iteration.  Their common conclusion
+  is then forced to be one of the three constant fixed points `-1`, `0`, or `1`.
+- Added `AmusicalContinuousReversor/Counting.lean`.  It gives a bijective ternary coding of
+  backward words, exact counts for independent input blocks and fixed forward coordinates,
+  periodicity of both finite events, and the signed-image bound needed for `natAbs`.
+  `no_continuous_linear_reversor` combines these facts with the strict majority
+  `3^w < 2a` and an elementary power-growth estimate to contradict any injective linear-growth
+  reversor.
+- No new axiom or `native_decide` was introduced.  The ratified statements are unchanged; only
+  formatting and the proofs beneath them changed.  The untracked `CLAUDE.local.md` predates this
+  lap and remains untouched.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalContinuousReversor/Counting.lean` — green.
+- `lake env lean CollatzMoonshot/AmusicalContinuousReversor.lean` — green, with no
+  declaration-uses-sorry warning.
+- `lake build CollatzMoonshot.AmusicalContinuousReversor` — green, 8712 jobs.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-contrev --target
+  CollatzMoonshot.AmusicalContinuousReversor --axioms
+  CollatzMoonshot.Amusical.no_continuous_linear_reversor` — FORMALIZE-TIER GREEN, 8712 jobs;
+  the axiom ledger is exactly `Classical.choice`, `Quot.sound`, and `propext`.
+- The same scoped real gate and exact trust ledger passed separately for
+  `CollatzMoonshot.Amusical.reversor_const_of_twoAdicContinuous` and
+  `CollatzMoonshot.Amusical.reversor_const_of_threeAdicContinuous`.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-contrev` — FORMALIZE-TIER GREEN,
+  8848 jobs.  Its sole disclosed repository-wide proof debt is the pre-existing, out-of-scope
+  `CollatzMoonshot/AmusicalSpitzer.lean:21`.
+- `git diff --check`, the 100-column check on all touched Lean files, and a scoped search for
+  `sorry`, `native_decide`, and new `axiom` declarations are clean.
+
+Current blocker:
+
+- None for the scoped host objective.  The separately stated proposition
+  `AmusicalNoContinuousReversor` remains an explicitly open conjecture and was not part of the
+  kickoff or the host completion predicate.
+
+Next highest-value attack:
+
+- Nothing is owed in this treadmill.  The host should stop on the satisfied sorry-free
+  predicate.  Work on `AmusicalNoContinuousReversor` requires a new operator-assigned objective.
+
 ## 2026-10-13 — Exact forward-cylinder transport proved
 
 Concrete advance:

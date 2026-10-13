@@ -95,4 +95,67 @@ theorem amusical_iterate_add_forwardPeriod_mul (t : ℕ) (n q : ℤ) :
               convert ih (amusical n) (3 * q) using 1 <;> ring
             _ = amusical^[t] (amusical n) + 3 * 3 ^ t * q := by ring
 
+/-- The exact forward-cylinder period is divisible by `2^t`. -/
+theorem pow_two_dvd_amusicalForwardPeriod (t : ℕ) (n : ℤ) :
+    (2 : ℤ) ^ t ∣ amusicalForwardPeriod t n := by
+  induction t generalizing n with
+  | zero => simp [amusicalForwardPeriod]
+  | succ t ih =>
+      simp only [amusicalForwardPeriod, pow_succ]
+      obtain ⟨q, hq⟩ := ih (amusical n)
+      split
+      · exact ⟨q, by rw [hq]; ring⟩
+      · exact ⟨2 * q, by rw [hq]; ring⟩
+
+/-- Multiplication by an element coprime to the modulus reaches every residue class. -/
+theorem exists_mul_modEq_of_isCoprime {m a d : ℤ} (h : IsCoprime m a) :
+    ∃ q : ℤ, a * q ≡ d [ZMOD m] := by
+  obtain ⟨u, v, huv⟩ := h
+  refine ⟨v * d, Int.modEq_iff_dvd.mpr ⟨u * d, ?_⟩⟩
+  calc
+    d - a * (v * d) = d * 1 - a * (v * d) := by ring
+    _ = d * (u * m + v * a) - a * (v * d) := by rw [huv]
+    _ = m * (u * d) := by ring
+
+/-- Each forward step loses at most two binary digits of a congruence. -/
+theorem amusical_iterate_modEq_two (b t : ℕ) {x y : ℤ}
+    (hxy : x ≡ y [ZMOD 2 ^ (b + 2 * t)]) :
+    amusical^[t] x ≡ amusical^[t] y [ZMOD 2 ^ b] := by
+  rw [Int.modEq_iff_add_fac] at hxy ⊢
+  obtain ⟨q, hq⟩ := hxy
+  refine ⟨amusicalForwardMultiplier t x * q, ?_⟩
+  rw [show y = x + (4 : ℤ) ^ t * ((2 : ℤ) ^ b * q) by
+    rw [hq, pow_add]
+    rw [show (2 : ℤ) ^ (2 * t) = 4 ^ t by rw [pow_mul]; norm_num]
+    ring]
+  rw [amusical_iterate_add_pow_four_mul_exact t t le_rfl]
+  simp only [Nat.sub_self, pow_zero, one_mul]
+  ring
+
+/-- Each backward step loses at most one ternary digit of a congruence. -/
+theorem amusicalInv_iterate_modEq_three (b t : ℕ) {x y : ℤ}
+    (hxy : x ≡ y [ZMOD 3 ^ (b + t)]) :
+    amusicalInv^[t] x ≡ amusicalInv^[t] y [ZMOD 3 ^ b] := by
+  rw [Int.modEq_iff_add_fac] at hxy ⊢
+  obtain ⟨q, hq⟩ := hxy
+  refine ⟨amusicalBackwardMultiplier t x * q, ?_⟩
+  rw [show y = x + (3 : ℤ) ^ t * ((3 : ℤ) ^ b * q) by
+    rw [hq, pow_add]
+    ring]
+  rw [amusicalInv_iterate_add_pow_three_mul_exact t t le_rfl]
+  simp only [Nat.sub_self, pow_zero, one_mul]
+  ring
+
+theorem amusicalInv_iterate_amusical_iterate (t : ℕ) (n : ℤ) :
+    amusicalInv^[t] (amusical^[t] n) = n := by
+  rw [amusicalInv_iterate_eq_perm_pow, amusical_iterate_eq_perm_pow]
+  rw [← Equiv.Perm.mul_apply, ← zpow_add]
+  simp
+
+theorem amusical_iterate_amusicalInv_iterate (t : ℕ) (n : ℤ) :
+    amusical^[t] (amusicalInv^[t] n) = n := by
+  rw [amusical_iterate_eq_perm_pow, amusicalInv_iterate_eq_perm_pow]
+  rw [← Equiv.Perm.mul_apply, ← zpow_add]
+  simp
+
 end CollatzMoonshot.Amusical
