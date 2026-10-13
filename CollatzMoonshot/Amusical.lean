@@ -174,6 +174,55 @@ at once, so a counting or density argument could settle it. -/
 def AmusicalInfinitelyManyOrbits : Prop :=
   {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x}.Infinite
 
+theorem mem_amusicalOrbit_self (x : ℤ) : x ∈ amusicalOrbit x := ⟨0, by simp⟩
+
+/-- `m` is the least element of its orbit. -/
+def IsOrbitMin (m : ℤ) : Prop :=
+  ∀ y ∈ amusicalOrbit m, m ≤ y
+
+theorem amusicalOrbit_eq_of_mem {x y : ℤ} (h : y ∈ amusicalOrbit x) :
+    amusicalOrbit y = amusicalOrbit x := by
+  obtain ⟨j, rfl⟩ := h
+  ext z
+  constructor
+  · rintro ⟨i, rfl⟩
+    exact ⟨i + j, by dsimp only; rw [zpow_add, Equiv.Perm.mul_apply]⟩
+  · rintro ⟨i, rfl⟩
+    exact ⟨i - j, by dsimp only; rw [← Equiv.Perm.mul_apply, ← zpow_add, sub_add_cancel]⟩
+
+/-- Distinct orbit minima have distinct orbits, so infinitely many minima give infinitely many
+orbits. -/
+theorem amusicalInfinitelyManyOrbits_of_minima
+    (h : {m : ℤ | 0 ≤ m ∧ IsOrbitMin m}.Infinite) : AmusicalInfinitelyManyOrbits := by
+  have hinj : Set.InjOn amusicalOrbit {m : ℤ | 0 ≤ m ∧ IsOrbitMin m} := by
+    intro m hm m' hm' heq
+    have h1 : m ∈ amusicalOrbit m' := heq ▸ mem_amusicalOrbit_self m
+    have h2 : m' ∈ amusicalOrbit m := heq.symm ▸ mem_amusicalOrbit_self m'
+    exact le_antisymm (hm.2 m' h2) (hm'.2 m h1)
+  refine (h.image hinj).mono ?_
+  rintro _ ⟨m, hm, rfl⟩
+  exact ⟨m, hm.1, rfl⟩
+
+open Classical in
+/-- **Conjecture (2026-10-13), a quantitative form of `AmusicalInfinitelyManyOrbits`.**  Orbit
+minima have natural density `p_f · p_b ≈ 0.0498`.
+
+Model: from a large `n`, the forward orbit is a log-scale random walk with steps `log (3/2)` and
+`log (3/4)`, each with probability `1/2` (the residue of `n` mod `4` is uniform), and the
+backward orbit one with steps `log (2/3)` with probability `1/3` and `log (4/3)` with
+probability `2/3` (the residue mod `3` is uniform), the two independent (CRT on `2^a 3^b`).  `n` is an orbit minimum
+when both walks stay above `0` for ever.  Exact lattice computation (2026-10-13,
+`tmp/amusical/survival.py`, 3000 steps, absorbing at height 40): `p_f = 0.21014`,
+`p_b = 0.23689`, product `0.049780`.  Measured: `49957` of the integers `1..10^6` have both
+orbit directions pass `n · 2^120` without going below `n`, a density of `0.049957`, one
+standard error (`≈ 0.0002`) from the prediction; the ratio is stable from `10^3` to `10^6`.
+Minima lie in the classes `±2 (mod 6)` (the local minima), and they avoid
+`2, 16, 20, 34 (mod 36)`. -/
+def AmusicalMinimaDensity : Prop :=
+  ∃ c : ℝ, 0 < c ∧ Filter.Tendsto
+    (fun X : ℕ => (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X)
+    Filter.atTop (nhds c)
+
 /-- The number of strict local minima on the cycle through a periodic `n` of period `p`: the
 indices `i < p` with `U⁻¹ x > x < U x` for `x = U^[i] n`.  Simons calls a cycle with `m` of
 them an *m-cycle* (arXiv:2205.10582, §1.3). -/
@@ -328,7 +377,8 @@ theorem amusicalOrbitOfEightInfinite_of_evenDensityHalf (h : EightEvenDensityHal
         rw [add_comm, Function.iterate_add_apply, mul_comm, (hpt.mul_const m).eq]
       rw [Nat.succ_mul, hsplit, ih, ← he, Nat.succ_mul]
   have hmono : Filter.Tendsto (fun m : ℕ => m * p) Filter.atTop Filter.atTop :=
-    Filter.tendsto_atTop_atTop.2 fun b => ⟨b, fun m hm => le_trans hm (Nat.le_mul_of_pos_right m hp)⟩
+    Filter.tendsto_atTop_atTop.2 fun b =>
+      ⟨b, fun m hm => le_trans hm (Nat.le_mul_of_pos_right m hp)⟩
   have hsub := h.comp hmono
   have hconst : Filter.Tendsto (fun m : ℕ => (evenCount (m * p) : ℝ) / ((m * p : ℕ) : ℝ))
       Filter.atTop (nhds ((e : ℝ) / p)) := by
@@ -396,7 +446,8 @@ theorem odd_step_upper {x : ℤ} (h11 : 11 ≤ x) (h : ¬ x % 2 = 0) : 13 * amus
 
 /-- Running product, lower side: if every odd step multiplies by at least `a/b`, then
 `(3/2)^e (a/b)^o · 8 ≤ U^[k] 8`. -/
-theorem orbit_product_lower {a b : ℤ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hodd : ∀ k : ℕ, ¬ amusical^[k] 8 % 2 = 0 →
+theorem orbit_product_lower {a b : ℤ} (ha : 0 ≤ a) (hb : 0 ≤ b)
+    (hodd : ∀ k : ℕ, ¬ amusical^[k] 8 % 2 = 0 →
       a * amusical^[k] 8 ≤ b * amusical (amusical^[k] 8)) (k : ℕ) :
     3 ^ evenCount k * a ^ oddCount k * 8 ≤ 2 ^ evenCount k * b ^ oddCount k * amusical^[k] 8 := by
   induction k with
