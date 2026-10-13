@@ -46,9 +46,16 @@ def gaussH (z : ℤ × ℤ) : ℤ × ℤ :=
 /-- Complex conjugation on `ℤ × ℤ`. -/
 def conj (z : ℤ × ℤ) : ℤ × ℤ := (z.1, -z.2)
 
+set_option maxHeartbeats 2000000 in
 /-- **Target.**  `conj ∘ H ∘ conj ∘ H = id`, i.e. `conj ∘ H ∘ conj = H⁻¹` once `H` is a bijection. -/
 theorem conj_gaussH_conj_gaussH (z : ℤ × ℤ) : conj (gaussH (conj (gaussH z))) = z := by
-  sorry
+  rcases z with ⟨a, b⟩
+  generalize hr : (a + 7 * b) % 25 = r
+  have hr0 : 0 ≤ r := by rw [← hr]; omega
+  have hr25 : r < 25 := by rw [← hr]; omega
+  interval_cases r <;>
+    simp only [conj, gaussH, yOf, hr] <;>
+    split_ifs <;> norm_num at * <;> omega
 
 /-- `H` is a bijection, with inverse `conj ∘ H ∘ conj`. -/
 def gaussPerm : Equiv.Perm (ℤ × ℤ) where
