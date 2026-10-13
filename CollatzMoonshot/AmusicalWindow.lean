@@ -177,4 +177,20 @@ theorem windowMinDensity_one : WindowMinDensity 1 := by
     rw [div_le_iff₀ hXpos, hX']
     linarith
 
+/-- **Target (treadmill, `KICKOFF-2026-10-13-amusical-window.md`).**  The window-minimum
+density holds for every `L`.  Proof plan in the kickoff: on each residue class mod
+`4^L · 3^L` the first `L` forward and backward branches are fixed, so `U^t` and `U^-t` are
+affine there; past a size threshold the window condition is a congruence condition; the good
+classes number `4^L · 3^L · fwdSurv L · bwdSurv L` (Haar counting per direction, CRT across). -/
+theorem windowMinDensity (L : ℕ) : WindowMinDensity L := by
+  sorry
+
+open Classical in
+/-- **Unconditional window bound** (modulo `windowMinDensity`): orbit minima have upper
+density at most `fwdSurv L * bwdSurv L` for every `L`, hence at most `p_f · p_b ≈ 0.0498`. -/
+theorem orbitMin_density_le (L : ℕ) {ε : ℝ} (hε : 0 < ε) : ∀ᶠ X : ℕ in Filter.atTop,
+    (((Finset.range X).filter fun m : ℕ => IsOrbitMin m).card : ℝ) / X ≤
+      ((fwdSurv L * bwdSurv L : ℚ) : ℝ) + ε :=
+  orbitMin_density_le_of_windowMinDensity (windowMinDensity L) hε
+
 end CollatzMoonshot.Amusical
