@@ -1,5 +1,47 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-13 lap: three-primary residue transitivity closed
+
+### Concrete advance
+
+- Extended `CollatzMoonshot/AmusicalSeventh/Residue.lean` with the full residue-transitivity
+  theorem for every power-of-three modulus, `amusical_pow_classUnion_invariant_pow_three`.
+- Proved `exists_amusical_mul_iterate_modEq_pow_three`: after a time constrained to be a multiple
+  of any positive `m`, a point in any prescribed class modulo `3^b` can land in any prescribed
+  output class.
+- The construction works backward from the output class.  Exact backward-cylinder transport has
+  slope a power of two, hence a unit modulo `3^b`; applying the matching forward iterate then
+  gives the required point-to-point reachability.
+- No ratified statement changed, no axiom or `native_decide` was introduced, and no new `sorry`
+  was added.  The two original targets remain open.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Residue.lean` (green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; only the two original target
+  sorry warnings).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.amusical_pow_classUnion_invariant_pow_three` (`FORMALIZE-TIER GREEN`;
+  axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- `git diff --check` (clean).
+
+### Current blocker
+
+There is no external blocker.  Both primary-power components of
+`amusical_pow_classUnion_invariant` are complete.  The route-decisive remaining part is
+transitivity modulo the factor coprime to `6`, followed by a simultaneous CRT construction that
+absorbs the binary prefix and ternary suffix without disturbing that coprime residue.  The
+ratified `sparse_sweep` theorem remains untouched.
+
+### Next highest-value attack
+
+Formalize the coprime-modulus affine-word translation.  For `N` coprime to `6`, package the two
+branch maps as affine permutations of `ZMod N`; words of length divisible by `m` contain both
+`A^m` and `A^(m-1) * B`, whose quotient is the nonzero translation `A^-1 * B`.  Iterate that
+translation to connect arbitrary residues, then combine it with the proved power-of-two and
+power-of-three cylinders by CRT to discharge the ratified theorem.
+
 ## 2026-10-13 lap: two-primary residue transitivity closed
 
 ### Concrete advance
