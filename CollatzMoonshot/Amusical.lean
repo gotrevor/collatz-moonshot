@@ -210,13 +210,14 @@ minima have natural density `p_f · p_b ≈ 0.0498`.
 Model: from a large `n`, the forward orbit is a log-scale random walk with steps `log (3/2)` and
 `log (3/4)`, each with probability `1/2` (the residue of `n` mod `4` is uniform), and the
 backward orbit one with steps `log (2/3)` with probability `1/3` and `log (4/3)` with
-probability `2/3` (the residue mod `3` is uniform), the two independent (CRT on `2^a 3^b`).  `n` is an orbit minimum
-when both walks stay above `0` for ever.  Exact lattice computation (2026-10-13,
-`tmp/amusical/survival.py`, 3000 steps, absorbing at height 40): `p_f = 0.21014`,
-`p_b = 0.23689`, product `0.049780`.  Measured: `49957` of the integers `1..10^6` have both
-orbit directions pass `n · 2^120` without going below `n`, a density of `0.049957`, one
-standard error (`≈ 0.0002`) from the prediction; the ratio is stable from `10^3` to `10^6`.
-Minima lie in the classes `±2 (mod 6)` (the local minima), and they avoid
+probability `2/3` (the residue mod `3` is uniform), the two independent (CRT on `2^a 3^b`).
+`n` is an orbit minimum when both walks stay above `0` for ever.  Exact lattice computation
+(2026-10-13, `scripts/amusical/survival.py`, 3000 steps, absorbing at height 40):
+`p_f = 0.21014`, `p_b = 0.23689`, product `0.049780`.  Measured
+(`scripts/amusical/minima2.py`): `49957` of the integers `1..10^6` have both orbit directions
+pass `n · 2^120` without going below `n`, a density of `0.049957`, one standard error
+(`≈ 0.0002`) from the prediction; the ratio is stable from `10^3` to `10^6`.  Minima lie in the
+classes `±2 (mod 6)` (the local minima), and they avoid
 `2, 16, 20, 34 (mod 36)`. -/
 def AmusicalMinimaDensity : Prop :=
   ∃ c : ℝ, 0 < c ∧ Filter.Tendsto
