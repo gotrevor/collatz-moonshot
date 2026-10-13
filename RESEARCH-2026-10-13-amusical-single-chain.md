@@ -100,3 +100,25 @@ Test applied to each: does the argument also apply to `ℕ`?  If so it cannot wo
 * `scripts/amusical/minima2.py`: orbit-minimum density `0.049957` on `1..10^6`.
 * `scripts/amusical/survival.py`: random-walk prediction `p_f · p_b = 0.049780`.
 * `scripts/amusical/window.py`: exact `δ_L` vs empirical, agreement to `~10^-4` for `L ≤ 20`.
+
+## 5. The q-layers `U_q` (numerics 2026-10-13, `scripts/amusical/uq.py`, `cycle_heuristic.py`)
+
+* **Cycles are Böhm-Sontacchi divisibility.**  A length-`p` branch word of weight `n`
+  (`#evens + 2·#odds`) closes on the rational `c_w / (2^n − 3^p)`, which lives in the layer of
+  its denominator.  When `q = |2^n − 3^p|` every such word closes in `D_q`, which explains the
+  big same-length families: `139 = 3^7 − 2^11` (dozens of 7-cycles), `13 = 2^8 − 3^5` (5-cycles).
+* **`q = 1`.**  The forced cycles need `2^n − 3^p = ±1`, which by Mihăilescu are only `{±1}` and
+  `{±2, ±3}`.  The 5-cycle and the 12-cycle are accidental divisibility: `13 | c_w` and
+  `7153 = 23·311 | c_w` respectively.
+* **Divisibility heuristic.**  Counting each word as an integer cycle with probability
+  `1/|2^n − 3^p|`, the expected number at length `p` peaks at exactly `p = 5` (1.38) and
+  `p = 12` (1.24), the two observed accidental lengths.  The total is overcounted (≈ 9.8
+  expected against 4 observed, both signs), because the model ignores that a new cycle needs
+  elements beyond the searched range, which confines it to `|n log 2 − p log 3|` tiny (Simons's
+  Λ).  The tail estimate is `≈ 0.02` expected cycles of length `≥ 200`: heuristic support for
+  `AmusicalFinitelyManyCycles`, not for Klamkin (a).
+* **Invariants.**  `gcd(r, q)` is `U_q`-invariant (`q` is prime to `3`), and so is the coset of
+  `r` in `(ℤ/q)^× / ⟨2, 3⟩`, since every branch multiplies by `3/2` or `3/4` mod `q`.  These give
+  finitely many invariant pieces per layer.  For `q = 1` the `±1` offsets destroy the coset
+  invariant, and `D_q` contains the copy `q·ℤ` of `U`, so orbit counts for `U_q` bound those of
+  `U` from above only: no lever for Klamkin (a) from this side.
