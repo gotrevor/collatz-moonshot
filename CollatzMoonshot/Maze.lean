@@ -17,6 +17,7 @@ import CollatzMoonshot.Obstructions.SignedFlow
 import CollatzMoonshot.FrontA.BallotCoalescenceWitness
 import CollatzMoonshot.FrontA.FirstCrossingResidue
 import CollatzMoonshot.Obstructions.Amusical
+import CollatzMoonshot.AmusicalReturns
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -187,7 +188,10 @@ def register : List Hall := [
    "2026-10-13"⟩,
   ⟨"amusical: adelic volume preservation and ×2×3 rigidity", .siblingTransfer,
    "Haar on ℝ×ℤ₂×ℤ₃ is preserved (product formula), which is mass conservation; ℤ sits at 0",
-   "Obstructions/Amusical.lean; agent report adelic.md (2026-10-13)", "2026-10-13"⟩]
+   "Obstructions/Amusical.lean; agent report adelic.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: Diophantine bounds on linear returns", .refuted,
+   "the return form n log 2 - j log 3 + log(y/x) is O(log j), not small; sums have ~0.585j terms",
+   "AmusicalReturns.lean; agent report diophantine.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -232,14 +236,18 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Obstructions.Amusical.amusicalInfinitelyManyOrbits_iff_invariant], []⟩,
   ⟨"amusical: residue certification of orbit minima",
    [``CollatzMoonshot.Obstructions.Amusical.MinimaNotResidueDetermined,
-    ``CollatzMoonshot.Amusical.IsOrbitMin.isWindowMin], []⟩,
+    ``CollatzMoonshot.Amusical.IsOrbitMin.isWindowMin,
+    ``CollatzMoonshot.Amusical.exists_large_nonOrbitMin], []⟩,
   ⟨"amusical: single-chain mechanism for Klamkin (a)",
    [``CollatzMoonshot.Amusical.exists_linearlyRecurrent_of_finitelyManyOrbits,
     ``CollatzMoonshot.Obstructions.Amusical.amusicalInfinitelyManyOrbits_of_noLinearRecurrence],
    [``CollatzMoonshot.Obstructions.Amusical.NoLinearRecurrence]⟩,
   ⟨"amusical: adelic volume preservation and ×2×3 rigidity",
    [``CollatzMoonshot.Obstructions.Amusical.amusical_branch_product_formula,
-    ``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩]
+    ``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩,
+  ⟨"amusical: Diophantine bounds on linear returns",
+   [``CollatzMoonshot.Amusical.return_defect_bound,
+    ``CollatzMoonshot.Amusical.exists_denseLinearReturns_of_finitelyManyOrbits], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -252,7 +260,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 27 rows, 19 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 28 rows, 20 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

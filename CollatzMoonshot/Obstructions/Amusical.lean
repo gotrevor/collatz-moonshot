@@ -243,4 +243,21 @@ theorem amusical_branch_product_formula :
   · rw [padicNorm.div, padicNorm.div, h4, padicNorm.mul, padicNorm.mul, h2, h3, h23, h32]
     norm_num
 
+/-- **Klamkin (a) or an infinite orbit.**  If every orbit on `ℕ` were finite, the orbits would
+be infinitely many finite cycles.  (For the wider class of permutational maps Lagarias records
+that even the existence of one infinite orbit is open: annotated bibliography 2003, entry on
+Venturini 1992.) -/
+theorem amusicalInfinitelyManyOrbits_or_exists_infinite :
+    AmusicalInfinitelyManyOrbits ∨ ∃ x : ℤ, 0 ≤ x ∧ (amusicalOrbit x).Infinite := by
+  by_contra h
+  simp only [not_or, not_exists, not_and, Set.not_infinite, AmusicalInfinitelyManyOrbits] at h
+  obtain ⟨hS, hfin⟩ := h
+  have hU : (⋃₀ {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x}).Finite := by
+    refine hS.sUnion ?_
+    rintro _ ⟨x, hx, rfl⟩
+    exact hfin x hx
+  apply Set.Ici_infinite (0 : ℤ)
+  refine hU.subset fun x hx => ?_
+  exact ⟨amusicalOrbit x, ⟨x, hx, rfl⟩, mem_amusicalOrbit_self x⟩
+
 end CollatzMoonshot.Obstructions.Amusical
