@@ -160,4 +160,62 @@ theorem amusicalInfinitelyManyOrbits_of_noLinearRecurrence (h : NoLinearRecurren
   obtain ⟨x, hx0, hinf, hrec⟩ := exists_linearlyRecurrent_of_finitelyManyOrbits hfin
   exact h x hx0 hinf hrec
 
+/-! ## How many orbits can be proved?  Six. -/
+
+/-- An orbit stays inside any set closed under `U` and `U⁻¹`. -/
+theorem amusicalOrbit_subset_of_closed {S : Set ℤ} (hU : ∀ y ∈ S, amusical y ∈ S)
+    (hV : ∀ y ∈ S, amusicalInv y ∈ S) {x : ℤ} (hx : x ∈ S) : amusicalOrbit x ⊆ S := by
+  rintro _ ⟨j, rfl⟩
+  induction j using Int.induction_on with
+  | zero => simpa using hx
+  | succ i ih =>
+    show (amusicalPerm ^ ((i : ℤ) + 1)) x ∈ S
+    rw [add_comm, zpow_add, zpow_one, Equiv.Perm.mul_apply]
+    exact hU _ ih
+  | pred i ih =>
+    show (amusicalPerm ^ (-(i : ℤ) - 1)) x ∈ S
+    rw [sub_eq_add_neg, add_comm, zpow_add, zpow_neg, zpow_one, Equiv.Perm.mul_apply]
+    exact hV _ ih
+
+theorem amusicalOrbit_ne_of_closed {S : Set ℤ} (hU : ∀ y ∈ S, amusical y ∈ S)
+    (hV : ∀ y ∈ S, amusicalInv y ∈ S) {a b : ℤ} (ha : a ∈ S) (hb : b ∉ S) :
+    amusicalOrbit a ≠ amusicalOrbit b := fun h =>
+  hb (amusicalOrbit_subset_of_closed hU hV ha (h ▸ mem_amusicalOrbit_self b))
+
+/-- **Six provably distinct orbits on `ℕ`**: the four known cycles `{0}`, `{1}`, `{2, 3}`,
+`{4, 6, 9, 7, 5}`, the 12-cycle through `44`, and the orbit of `8`. -/
+theorem amusical_six_distinct_orbits : ∀ a ∈ ({0, 1, 2, 4, 44, 8} : Finset ℤ),
+    ∀ b ∈ ({0, 1, 2, 4, 44, 8} : Finset ℤ), a ≠ b → amusicalOrbit a ≠ amusicalOrbit b := by
+  -- each known cycle is a finite set closed under `U` and `U⁻¹`
+  have cyc : ∀ C : Finset ℤ, (∀ y ∈ C, amusical y ∈ C) → (∀ y ∈ C, amusicalInv y ∈ C) →
+      ∀ a ∈ C, ∀ b ∉ C, amusicalOrbit a ≠ amusicalOrbit b := fun C hU hV a ha b hb =>
+    amusicalOrbit_ne_of_closed (S := (C : Set ℤ)) (by simpa using hU) (by simpa using hV)
+      (by simpa using ha) (by simpa using hb)
+  have c0 := cyc {0} (by decide) (by decide)
+  have c1 := cyc {1} (by decide) (by decide)
+  have c2 := cyc {2, 3} (by decide) (by decide)
+  have c4 := cyc {4, 6, 9, 7, 5} (by decide) (by decide)
+  have c44 := cyc {44, 66, 99, 74, 111, 83, 62, 93, 70, 105, 79, 59} (by decide) (by decide)
+  intro a ha b hb hab
+  simp only [Finset.mem_insert, Finset.mem_singleton] at ha hb
+  rcases ha with rfl | rfl | rfl | rfl | rfl | rfl <;>
+    rcases hb with rfl | rfl | rfl | rfl | rfl | rfl <;>
+    first
+      | exact absurd rfl hab
+      | exact c0 _ (by decide) _ (by decide) | exact (c0 _ (by decide) _ (by decide)).symm
+      | exact c1 _ (by decide) _ (by decide) | exact (c1 _ (by decide) _ (by decide)).symm
+      | exact c2 _ (by decide) _ (by decide) | exact (c2 _ (by decide) _ (by decide)).symm
+      | exact c4 _ (by decide) _ (by decide) | exact (c4 _ (by decide) _ (by decide)).symm
+      | exact c44 _ (by decide) _ (by decide) | exact (c44 _ (by decide) _ (by decide)).symm
+
+/-- **Open: a seventh orbit.**  Some seven nonnegative integers lie on pairwise distinct
+orbits.  Nobody can prove this: beyond the five known cycles and the orbit of `8`, separating
+any further orbit means showing a number never meets the orbit of `8`, and Conway (2013,
+Appendix 1) notes that `8` and `14` might share an orbit.  Its negation says the orbit of `8`
+together with the known cycles is all of `ℕ`, so the orbit of `8` would have density `1`.
+Implied by `AmusicalInfinitelyManyOrbits`. -/
+def AmusicalAtLeastSevenOrbits : Prop :=
+  ∃ s : Finset ℤ, s.card = 7 ∧ (∀ x ∈ s, 0 ≤ x) ∧
+    (s : Set ℤ).Pairwise fun a b => amusicalOrbit a ≠ amusicalOrbit b
+
 end CollatzMoonshot.Obstructions.Amusical
