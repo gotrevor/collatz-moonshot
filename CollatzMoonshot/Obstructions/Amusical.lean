@@ -218,4 +218,29 @@ def AmusicalAtLeastSevenOrbits : Prop :=
   ∃ s : Finset ℤ, s.card = 7 ∧ (∀ x ∈ s, 0 ≤ x) ∧
     (s : Set ℤ).Pairwise fun a b => amusicalOrbit a ≠ amusicalOrbit b
 
+/-! ## The adelic picture (closed: restates mass conservation)
+
+Each branch of `U` scales the archimedean place by `3/2^a`, the `2`-adic place by `2^a` and the
+`3`-adic place by `1/3`, so `U` extends to a Haar-preserving piecewise-affine bijection of
+`ℝ × ℤ₂ × ℤ₃` in which `ℤ` is a covolume-`1` lattice.  This only restates
+`amusical_mass_conservation`; almost every point drifts off in both time directions (no
+recurrence to exploit), and in the quotient by `ℤ` every integer becomes the fixed point `0`,
+so `×2 ×3`-rigidity theorems see nothing of the integer orbits (agent report 2026-10-13). -/
+
+/-- The product formula on each branch: `|r|_∞ · |r|_2 · |r|_3 = 1` for `r = 3/2` and `3/4`. -/
+theorem amusical_branch_product_formula :
+    padicNorm 2 (3 / 2 : ℚ) * padicNorm 3 (3 / 2) * (3 / 2) = 1 ∧
+      padicNorm 2 (3 / 4 : ℚ) * padicNorm 3 (3 / 4) * (3 / 4) = 1 := by
+  have h2 : padicNorm 2 (2 : ℚ) = 1 / 2 := by simpa using padicNorm.padicNorm_p_of_prime (p := 2)
+  have h3 : padicNorm 3 (3 : ℚ) = 1 / 3 := by simpa using padicNorm.padicNorm_p_of_prime (p := 3)
+  have h23 : padicNorm 2 (3 : ℚ) = 1 := by
+    simpa using padicNorm.padicNorm_of_prime_of_ne (p := 2) (q := 3) (by norm_num)
+  have h32 : padicNorm 3 (2 : ℚ) = 1 := by
+    simpa using padicNorm.padicNorm_of_prime_of_ne (p := 3) (q := 2) (by norm_num)
+  have h4 : (4 : ℚ) = 2 * 2 := by norm_num
+  refine ⟨?_, ?_⟩
+  · rw [padicNorm.div, padicNorm.div, h2, h3, h23, h32]; norm_num
+  · rw [padicNorm.div, padicNorm.div, h4, padicNorm.mul, padicNorm.mul, h2, h3, h23, h32]
+    norm_num
+
 end CollatzMoonshot.Obstructions.Amusical

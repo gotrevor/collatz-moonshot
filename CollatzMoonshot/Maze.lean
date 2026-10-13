@@ -184,7 +184,10 @@ def register : List Hall := [
   ⟨"amusical: single-chain mechanism for Klamkin (a)", .wall,
    "finitely many orbits force a linearly recurrent orbit; refuting it is the orbit-of-8 wall",
    "Amusical.lean; Obstructions/Amusical.lean; RESEARCH-2026-10-13-amusical-single-chain.md §3",
-   "2026-10-13"⟩]
+   "2026-10-13"⟩,
+  ⟨"amusical: adelic volume preservation and ×2×3 rigidity", .siblingTransfer,
+   "Haar on ℝ×ℤ₂×ℤ₃ is preserved (product formula), which is mass conservation; ℤ sits at 0",
+   "Obstructions/Amusical.lean; agent report adelic.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -233,7 +236,10 @@ def mazeLinks : List Link := [
   ⟨"amusical: single-chain mechanism for Klamkin (a)",
    [``CollatzMoonshot.Amusical.exists_linearlyRecurrent_of_finitelyManyOrbits,
     ``CollatzMoonshot.Obstructions.Amusical.amusicalInfinitelyManyOrbits_of_noLinearRecurrence],
-   [``CollatzMoonshot.Obstructions.Amusical.NoLinearRecurrence]⟩]
+   [``CollatzMoonshot.Obstructions.Amusical.NoLinearRecurrence]⟩,
+  ⟨"amusical: adelic volume preservation and ×2×3 rigidity",
+   [``CollatzMoonshot.Obstructions.Amusical.amusical_branch_product_formula,
+    ``CollatzMoonshot.Obstructions.Amusical.amusical_mass_conservation], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -246,7 +252,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 26 rows, 18 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 27 rows, 19 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
