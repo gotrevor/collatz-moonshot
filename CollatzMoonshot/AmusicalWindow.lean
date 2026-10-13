@@ -81,6 +81,50 @@ def amusicalBackwardFourCount : ℕ → ℤ → ℕ
   | 0, _ => 0
   | t + 1, n => (if n % 3 = 0 then 0 else 1) + amusicalBackwardFourCount t (amusicalInv n)
 
+/-- The forward branch word, with `true` marking a `×3/4` (odd) step. -/
+def amusicalForwardWord (L : ℕ) (n : ℤ) (i : Fin L) : Bool :=
+  decide (amusical^[i.val] n % 2 ≠ 0)
+
+/-- The backward branch word, with `true` marking a `×4/3` step. -/
+def amusicalBackwardWord (L : ℕ) (n : ℤ) (i : Fin L) : Bool :=
+  decide (amusicalInv^[i.val] n % 3 ≠ 0)
+
+/-- The recursive forward counter is exactly the number of even branches in the orbit trace. -/
+theorem amusicalForwardEvenCount_eq_count (t : ℕ) (n : ℤ) :
+    amusicalForwardEvenCount t n =
+      Nat.count (fun i : ℕ => amusical^[i] n % 2 = 0) t := by
+  induction t generalizing n with
+  | zero => simp [amusicalForwardEvenCount]
+  | succ t ih =>
+      rw [amusicalForwardEvenCount, Nat.count_succ']
+      rw [ih]
+      simp only [Function.iterate_zero_apply]
+      rw [add_comm]
+      apply congrArg₂ (fun a b : ℕ => a + b)
+      · rw [Nat.count_eq_card_filter_range, Nat.count_eq_card_filter_range]
+        apply congrArg Finset.card
+        ext i
+        simp [Function.iterate_succ_apply]
+      · rfl
+
+/-- The recursive backward counter is exactly the number of `×4/3` branches in the trace. -/
+theorem amusicalBackwardFourCount_eq_count (t : ℕ) (n : ℤ) :
+    amusicalBackwardFourCount t n =
+      Nat.count (fun i : ℕ => amusicalInv^[i] n % 3 ≠ 0) t := by
+  induction t generalizing n with
+  | zero => simp [amusicalBackwardFourCount]
+  | succ t ih =>
+      rw [amusicalBackwardFourCount, Nat.count_succ']
+      rw [ih]
+      simp only [Function.iterate_zero_apply]
+      rw [add_comm]
+      apply congrArg₂ (fun a b : ℕ => a + b)
+      · rw [Nat.count_eq_card_filter_range, Nat.count_eq_card_filter_range]
+        apply congrArg Finset.card
+        ext i
+        simp [Function.iterate_succ_apply]
+      · by_cases h : n % 3 = 0 <;> simp [h]
+
 theorem amusicalForwardMultiplier_eq (t : ℕ) (n : ℤ) :
     amusicalForwardMultiplier t n =
       (3 : ℤ) ^ t * 2 ^ amusicalForwardEvenCount t n := by
@@ -167,6 +211,30 @@ theorem amusicalInv_iterate_add_pow_three_mul_slope (L t : ℕ) (ht : t ≤ L) (
     amusicalInv^[t] (n + (3 : ℤ) ^ L * k) = amusicalInv^[t] n +
       (3 : ℤ) ^ (L - t) * 2 ^ (t + amusicalBackwardFourCount t n) * k := by
   rw [amusicalInv_iterate_add_pow_three_mul_exact L t ht, amusicalBackwardMultiplier_eq]
+
+/-- A residue modulo `4^L` fixes the complete forward branch word of length `L`. -/
+theorem amusicalForwardWord_add_pow_four_mul (L : ℕ) (n k : ℤ) :
+    amusicalForwardWord L (n + (4 : ℤ) ^ L * k) = amusicalForwardWord L n := by
+  funext i
+  unfold amusicalForwardWord
+  rw [amusical_iterate_add_pow_four_mul_slope L i.val i.isLt.le]
+  obtain ⟨d, hd⟩ : ∃ d, L - i.val = d + 1 := by
+    use L - i.val - 1
+    omega
+  rw [hd, pow_succ]
+  simp [Int.add_emod, Int.mul_emod]
+
+/-- A residue modulo `3^L` fixes the complete backward branch word of length `L`. -/
+theorem amusicalBackwardWord_add_pow_three_mul (L : ℕ) (n k : ℤ) :
+    amusicalBackwardWord L (n + (3 : ℤ) ^ L * k) = amusicalBackwardWord L n := by
+  funext i
+  unfold amusicalBackwardWord
+  rw [amusicalInv_iterate_add_pow_three_mul_slope L i.val i.isLt.le]
+  obtain ⟨d, hd⟩ : ∃ d, L - i.val = d + 1 := by
+    use L - i.val - 1
+    omega
+  rw [hd, pow_succ]
+  simp [Int.add_emod, Int.mul_emod]
 
 theorem amusical_iterate_add_pow_four_mul (L t : ℕ) (ht : t ≤ L) (n k : ℤ) :
     ∃ a : ℤ, 0 < a ∧ amusical^[t] (n + (4 : ℤ) ^ L * k) = amusical^[t] n + a * k := by
