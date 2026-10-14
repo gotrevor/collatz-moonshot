@@ -39,12 +39,39 @@ namespace CollatzMoonshot.Amusical
 def FwdSurvivorOf (f : ℤ → ℤ) (n : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → n ≤ f^[t] n
 
-/-- **Target.**  The separation lemma needs only the even branch: for any permutation `τ` of `ℤ`
+theorem perm_int_pow_nat_apply (τ : Equiv.Perm ℤ) (t : ℕ) (x : ℤ) :
+    (τ ^ (t : ℤ)) x = (⇑τ)^[t] x := by
+  rw [zpow_natCast, Equiv.Perm.coe_pow]
+
+theorem perm_int_iterate_pow_neg_nat (τ : Equiv.Perm ℤ) (t : ℕ) (x : ℤ) :
+    (⇑τ)^[t] ((τ ^ (-(t : ℤ))) x) = x := by
+  rw [← Equiv.Perm.coe_pow, ← zpow_natCast, ← Equiv.Perm.mul_apply, ← zpow_add]
+  simp
+
+/-- **Proved.**  The separation lemma needs only the even branch: for any permutation `τ` of `ℤ`
 with `τ(2m) = 3m`, two forward survivors `n < n'` on one orbit with `3 ∣ n'` satisfy `3n ≤ 2n'`. -/
 theorem fwdSurvivor_three_separation_of (τ : Equiv.Perm ℤ) (h2 : ∀ m : ℤ, τ (2 * m) = 3 * m)
     {n n' : ℤ} (hn : FwdSurvivorOf τ n) (hn' : FwdSurvivorOf τ n') (hlt : n < n')
     (h3 : 3 ∣ n') (horb : ∃ k : ℤ, (τ ^ k) n = n') : 3 * n ≤ 2 * n' := by
-  sorry
+  obtain ⟨k, hk⟩ := horb
+  obtain ⟨m, rfl⟩ := h3
+  rcases Int.eq_nat_or_neg k with ⟨t, rfl | rfl⟩
+  · rw [perm_int_pow_nat_apply] at hk
+    rcases t with _ | s
+    · simp at hk; omega
+    · rw [Function.iterate_succ_apply'] at hk
+      have hy : (⇑τ)^[s] n = 2 * m := τ.injective (hk.trans (h2 m).symm)
+      rcases s with _ | s
+      · simp at hy; omega
+      · have := hn (s + 1) (by omega)
+        omega
+  · have hback : (⇑τ)^[t] (3 * m) = n := by
+      rw [← hk]
+      exact perm_int_iterate_pow_neg_nat τ t n
+    rcases t with _ | t
+    · simp at hback; omega
+    · have := hn' (t + 1) (by omega)
+      omega
 
 /-- **Target (Theorem TT).**  Every permutation of `ℕ` agreeing with `U` off `S` has infinitely
 many infinite orbits iff infinitely many infinite orbits of `U` have an `S`-free forward tail, or
