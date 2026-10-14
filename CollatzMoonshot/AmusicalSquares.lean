@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalSquares.Cylinder
+import CollatzMoonshot.AmusicalSquares.PrefixRoot
 
 /-!
 # Square visits, prefix roots, and automatic invariants (the "newroutes-astra" lap)
@@ -59,7 +60,43 @@ def prefixRoot (w : List (Fin 3)) (j : ℕ) : ℚ :=
 /-- **Target (SQG1).**  Two prefixes share a root iff every branch between them is `E`. -/
 theorem prefixRoot_eq_iff (w : List (Fin 3)) {i j : ℕ} (hij : i < j) (hj : j ≤ w.length) :
     prefixRoot w i = prefixRoot w j ↔ ∀ h, i ≤ h → h < j → w.getD h 0 = 0 := by
-  sorry
+  set e : ℕ → ℤ := fun h => branchSign (w.getD h 0) with he
+  set t : ℕ → ℚ := fun h => (e h : ℚ) * 2 ^ wordWeight w h / 3 ^ (h + 1) with ht
+  have hdiff : prefixRoot w i = prefixRoot w j ↔ ∑ h ∈ Finset.Ico i j, t h = 0 := by
+    rw [Finset.sum_Ico_eq_sub _ hij.le]
+    simp only [prefixRoot, t, e]
+    constructor <;> intro H <;> linarith
+  have hsign : ∀ b : Fin 3, branchSign b = 0 ↔ b = 0 := by
+    intro b; fin_cases b <;> simp [branchSign]
+  have hsign3 : ∀ b : Fin 3, b ≠ 0 → ¬ (3 : ℤ) ∣ branchSign b := by
+    intro b; fin_cases b <;> simp [branchSign]
+  rw [hdiff]
+  constructor
+  · intro H
+    by_contra hne
+    push Not at hne
+    obtain ⟨h0, hi0, hj0, hne0⟩ := hne
+    set F := (Finset.Ico i j).filter (fun h => w.getD h 0 ≠ 0) with hFdef
+    have hF : F.Nonempty := ⟨h0, Finset.mem_filter.2 ⟨Finset.mem_Ico.2 ⟨hi0, hj0⟩, hne0⟩⟩
+    set n := F.max' hF
+    have hnF : n ∈ F := F.max'_mem hF
+    have hsum : ∑ h ∈ Finset.Ico i j, t h = t n + ∑ h ∈ F.erase n, t h := by
+      rw [Finset.add_sum_erase _ _ hnF]
+      symm
+      apply Finset.sum_subset (Finset.filter_subset _ _)
+      intro h hh hnot
+      have h0' : w.getD h 0 = 0 := by
+        by_contra hc; exact hnot (Finset.mem_filter.2 ⟨hh, hc⟩)
+      simp only [t, e]; rw [h0']; simp [branchSign]
+    refine sum_three_adic_ne_zero e (wordWeight w) (F.erase n) n ?_ ?_ (hsum ▸ H)
+    · intro h hh
+      exact lt_of_le_of_ne (F.le_max' h (Finset.mem_of_mem_erase hh)) (Finset.ne_of_mem_erase hh)
+    · exact hsign3 _ (Finset.mem_filter.1 hnF).2
+  · intro H
+    apply Finset.sum_eq_zero
+    intro h hh
+    rw [Finset.mem_Ico] at hh
+    simp only [t, e]; rw [H h hh.1 hh.2]; simp [branchSign]
 
 /-- **Target (canonical cylinder).**  `V^k` is affine on each cylinder `3^k n + r`, landing on a
 canonical class `2^a n + s`. -/
