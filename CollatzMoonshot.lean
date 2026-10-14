@@ -151,6 +151,7 @@ import CollatzMoonshot.AmusicalNearCycleRuns
 import CollatzMoonshot.AmusicalNearCycleEntropy
 import CollatzMoonshot.AmusicalReglue
 import CollatzMoonshot.AmusicalExcursionCode
+import CollatzMoonshot.AmusicalSquares
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
