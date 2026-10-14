@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical block-swap objective COMPLETE:** `CollatzMoonshot/AmusicalSwap.lean`
+> is sorry-free with `ampSwap` and all six ratified statements unchanged.  Every swap pattern of
+> the family `F_1` is a permutation of `ℕ` (explicit inverse), keeps `U`'s even branch and offset
+> `≤ 5`; CT1 (near-cycle starts = previous-smaller parents within `D`) and the spine bound are
+> proved.  Read `HANDOFF-amusical-swap.md`.
+
 > **2026-10-14, amusical anti-Kohl Theorem T COMPLETE:**
 > `orbit_densityZero_of_transientCone` and `infinitelyManyOrbits_of_transientCone` now
 > kernel-check.  Finite orbit unions have density zero by a synchronized-core/finite-exception
