@@ -6,6 +6,17 @@
 > corollary, strict-forward orbit infinitude, and Chernoff tilt identity are fully proved.  The
 > 8725-job scoped build is green, and all four headline axiom ledgers contain exactly `propext`,
 > `Classical.choice`, and `Quot.sound`.  Read `HANDOFF-amusical-latedrops.md`.
+> **2026-10-14, amusical cycle-product infrastructure:** the exact cleared step identity,
+> defect classification (`0` on even steps and `±1` on odd steps), odd-step count, telescoping
+> orbit-product reindexing, and full cyclic product identity are now proved in
+> `AmusicalCycleBound/Step.lean`. This supplies the algebraic backbone of Theorem A-star; its two
+> odd-factor product inequalities remain. Read `HANDOFF-amusical-cycles.md`.
+
+> **2026-10-14, amusical cycle structure:** `cycle_min_meet` and `cycle_min_mod_six` are now
+> proved with their ratified statements unchanged.  Backward cycle positions are complementary
+> forward iterates via integer powers of `amusicalPerm`; cycle minimality then excludes residues
+> `0, 1, 3, 5` modulo `6`.  Four scoped sorries remain, led by the multiplicative Theorem A-star.
+> Read `HANDOFF-amusical-cycles.md`.
 
 > **2026-10-14, amusical ping-pong objective COMPLETE:** `pingPong_seed_inEngine` now proves the
 > full two-counter seed cycle and its concatenation for every forward time, while
