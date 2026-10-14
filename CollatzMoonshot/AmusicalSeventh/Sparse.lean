@@ -172,4 +172,39 @@ theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
     exact ⟨(hF t ht1 ht2).mpr (h1 t ht1 ht2),
       (hB t ht1 ht2).mpr (h2 t ht1 ht2)⟩
 
+/-- Every finite centered orbit window has a minimizing offset.  This is the deterministic
+selection underlying the exceptional-offset count in Lemma T. -/
+theorem exists_centered_window_minimizer (L : ℕ) (n : ℤ) :
+    ∃ t : ℤ, |t| ≤ L ∧ ∀ s : ℤ, |s| ≤ L →
+      (amusicalPerm ^ t) n ≤ (amusicalPerm ^ s) n := by
+  let I := Finset.Icc (-(L : ℤ)) (L : ℤ)
+  have hI : I.Nonempty := ⟨0, by simp [I]⟩
+  obtain ⟨t, htI, htmin⟩ := Finset.exists_min_image I (fun s => (amusicalPerm ^ s) n) hI
+  refine ⟨t, ?_, ?_⟩
+  · simpa [I, abs_le] using htI
+  · intro s hs
+    apply htmin s
+    simpa [I, abs_le] using hs
+
+/-- If a minimum of the centered `L`-window occurs within `K` steps of its center, the
+corresponding orbit point is an `(L-K)`-window minimum. -/
+theorem isWindowMin_sub_of_centered_minimizer {L K : ℕ} {n : ℤ} {t : ℤ}
+    (hK : K ≤ L) (ht : |t| ≤ K)
+    (hmin : ∀ s : ℤ, |s| ≤ L → (amusicalPerm ^ t) n ≤ (amusicalPerm ^ s) n) :
+    IsWindowMin (L - K) ((amusicalPerm ^ t) n) := by
+  intro u hu1 huLK
+  have hu : (u : ℤ) ≤ L - K := by exact_mod_cast huLK
+  have ht_bounds := abs_le.mp ht
+  have hplus : |t + (u : ℤ)| ≤ L := by
+    rw [abs_le]
+    constructor <;> push_cast at ht_bounds hu ⊢ <;> omega
+  have hminus : |t - (u : ℤ)| ≤ L := by
+    rw [abs_le]
+    constructor <;> push_cast at ht_bounds hu ⊢ <;> omega
+  constructor
+  · rw [amusical_iterate_eq_perm_pow, ← Equiv.Perm.mul_apply, ← zpow_add]
+    exact hmin _ (by simpa [add_comm] using hplus)
+  · rw [amusicalInv_iterate_eq_perm_pow, ← Equiv.Perm.mul_apply, ← zpow_add]
+    exact hmin _ (by simpa [sub_eq_add_neg, add_comm] using hminus)
+
 end CollatzMoonshot.Amusical

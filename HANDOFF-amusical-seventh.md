@@ -1,5 +1,45 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: deterministic offset-to-window-minimum bridge
+
+### Concrete advance
+
+- Proved `exists_centered_window_minimizer` in
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`: every finite centered orbit window has an
+  offset `t ∈ [-L,L]` whose orbit value is minimal throughout that window.
+- Proved `isWindowMin_sub_of_centered_minimizer`: if such a minimizing offset satisfies
+  `|t| ≤ K ≤ L`, then the shifted point is an `(L-K)`-window minimum.  The proof explicitly
+  transports the forward and backward comparisons through integer powers of `amusicalPerm`.
+- This closes the deterministic bridge stated in the paper proof of `sparse_sweep`.  After the
+  exceptional offsets `|t| > K` are counted, every remaining visited point maps to a packed
+  `(L-K)`-window minimum using this theorem and `windowMin_card_mul_le`.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `ulimit -n 65536; lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `ulimit -n 65536; ~/personal/bin/lean-green
+  /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target CollatzMoonshot.AmusicalSeventh`
+  (`FORMALIZE-TIER GREEN`; exactly the original
+  `sparse_sweep` proof debt).
+- `git diff --check` and the 100-character Lean line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The remaining route-decisive result is precisely the probabilistic
+half of Lemma T: uniformly count residues modulo `12^L` for which every minimizing offset of the
+centered `L`-window lies outside `[-K,K]`.  The target geometric tail is
+`2 * sum_{i>K} ρ^i`, with `ρ = 1/√6 + 1/√3 < 1`.
+
+### Next highest-value attack
+
+Define a deterministic least minimizing offset (to avoid choice ambiguity), show that the events
+`t > K` and `t < -K` force one-sided descending records of lengths `K+1, K+2, ...`, and bound
+their weighted Boolean-word counts.  Package that as a finite residue-cardinality inequality;
+then combine `isWindowMin_sub_of_centered_minimizer`, `windowMin_card_mul_le`, and the explicit
+`2 * 324^L` low-value error to prove `sparse_sweep`.
+
 ## 2026-10-14 lap: explicit Lemma W closed
 
 ### Concrete advance
