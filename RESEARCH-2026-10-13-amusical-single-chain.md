@@ -1102,7 +1102,8 @@ below `c`.  The answer is no.
 
 ## 37. Near-cycles: a linear law, and survivors counted by near-cycles (2026-10-14, "ncnull" Opus agent, checked in part)
 
-Lean: `AmusicalNearCycleLaw.lean` (T1, T2, NCU and the LIN corollary; treadmill).  I checked NCU and
+Lean: `AmusicalNearCycleLaw.lean` (T1, T2, NCU and the LIN corollary), proved and axiom-clean
+(treadmill).  I checked NCU and
 T1–T2 by hand.  NC₀ (near-cycle starts have density 0) is **not** proved.  Agent odds that this moves
 (a): about 2%.
 
