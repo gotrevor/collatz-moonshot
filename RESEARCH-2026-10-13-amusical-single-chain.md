@@ -461,8 +461,10 @@ residue-transitive map can have provably infinitely many orbits.  It is still op
 
 ## 18. No new cycles of length ≤ 31866 (2026-10-13, "cycles" agent, checked)
 
-Lean: `AmusicalCycleBound.lean` (Theorem 1 holds conditional on the search certificate; Theorem A★,
-the reduction, the bound computation and an in-kernel Atkin are targets).  Klamkin (b) and C4
+Lean: `AmusicalCycleBound.lean`, every statement proved and axiom-clean (2026-10-14).  Theorem 1
+holds conditional on the external search certificate.  Theorem A★, the reduction, and the bound
+computation (`cycleMinBound_31866`, one `decide +kernel`, 3.1 GB) are proved.  So is **Atkin 1966 in the
+kernel** (`amusical_noNewCycles_199`): a `Bool` search checker, sound by `searchCheck_sound`.  Klamkin (b) and C4
 stay open.
 
 * **Theorem A★.**  A cycle's *minimum* is polynomially bounded by its length:
