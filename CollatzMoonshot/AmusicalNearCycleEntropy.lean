@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalNearCycleRuns
 import CollatzMoonshot.AmusicalNearCycleEntropy.Chernoff
+import CollatzMoonshot.AmusicalNearCycleEntropy.Prefixes
 
 /-!
 # Stopped prefixes: run tightness at a logarithmic threshold (Theorem RT-low)
@@ -70,12 +71,43 @@ def stoppedPrefixes (τ k M : ℕ) : Finset (List Bool) :=
 theorem sum_stoppedPrefixes_le (τ k M : ℕ) (hτ : 1 ≤ τ) :
     ∑ s ∈ stoppedPrefixes τ k M, ((1 : ℝ) / 2) ^ s.length ≤
       ∑ j ∈ Finset.range k, ((τ - 1).choose j : ℝ) / 2 ^ τ := by
-  sorry
+  have hSP : stoppedPrefixes τ k M = NearCycleEntropy.SP τ k M := by
+    have h1 : trueRuns = NearCycleEntropy.runs := by
+      funext s
+      induction s with
+      | nil => rfl
+      | cons b s ih => simp [trueRuns, NearCycleEntropy.runs, ih]
+    have h2 : boolListsUpTo = NearCycleEntropy.upTo := by
+      funext n
+      induction n with
+      | zero => rfl
+      | succ n ih => simp [boolListsUpTo, NearCycleEntropy.upTo, ih]
+    unfold stoppedPrefixes NearCycleEntropy.SP
+    rw [h1, h2]
+  obtain ⟨t, rfl⟩ : ∃ t, τ = t + 1 := ⟨τ - 1, by omega⟩
+  rw [hSP]
+  simpa using NearCycleEntropy.sum_SP_le t k M
 
 /-- **Target.**  The pattern count. -/
 theorem card_stoppedPrefixes_le (τ k M : ℕ) :
     (stoppedPrefixes τ k M).card ≤ ∑ i ∈ Finset.range k, (τ - 1).choose i * M.choose i := by
-  sorry
+  have hSP : stoppedPrefixes τ k M = NearCycleEntropy.SP τ k M := by
+    have h1 : trueRuns = NearCycleEntropy.runs := by
+      funext s
+      induction s with
+      | nil => rfl
+      | cons b s ih => simp [trueRuns, NearCycleEntropy.runs, ih]
+    have h2 : boolListsUpTo = NearCycleEntropy.upTo := by
+      funext n
+      induction n with
+      | zero => rfl
+      | succ n ih => simp [boolListsUpTo, NearCycleEntropy.upTo, ih]
+    unfold stoppedPrefixes NearCycleEntropy.SP
+    rw [h1, h2]
+  rw [hSP]
+  rcases τ with _ | t
+  · simp [NearCycleEntropy.SP_zero]
+  · simpa using NearCycleEntropy.card_SP_le t k M
 
 /-- **Target (Chernoff).**  The fair binomial lower tail, with the natural-log entropy. -/
 theorem sum_choose_le_exp_binEntropy (n j : ℕ) (hj : 2 * j ≤ n) :
