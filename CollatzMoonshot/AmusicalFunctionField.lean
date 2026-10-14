@@ -92,7 +92,7 @@ private lemma twinCycle_mem_periodicPts (e : ℕ) (he : 3 ≤ e) :
   apply Function.minimalPeriod_pos_iff_mem_periodicPts.mp
   rw [twinCycle_minimalPeriod e he]; positivity
 
-/-- **Proved from Theorem F.**  The twin has infinitely many cycles, hence infinitely many orbits:
+/-- **Proved.**  The twin has infinitely many cycles, hence infinitely many orbits:
 cycles of distinct exact lengths are distinct sets. -/
 theorem twin_infinitelyManyCycles :
     {O : Set (ZMod 2)[X] | ∃ x ∈ Function.periodicPts twinU,
