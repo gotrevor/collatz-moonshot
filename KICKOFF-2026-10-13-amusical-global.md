@@ -46,3 +46,21 @@ Order: Lemma K first, then the finite-solutions lemma, then the commuting mechan
    `2^e 3^f M₀` with prescribed itinerary, choose the word greedily.
 
 Notes for the next lap go in `HANDOFF-amusical-global.md`.
+
+## ⚠️ Operator note (2026-10-13 21:00): no `decide` over function types
+
+`decide +kernel` over `∀ f : Fin 3 → Fin 3 → Fin 3` held 16 GB within 7 minutes; the kernel materializes the
+`Fintype` of a function type.  The operator stopped the box.  Delete that approach.  Never quantify over a
+function type, or over more than a few thousand cases, in `decide`.
+
+Route for `commuting_window_two` without enumerating tables:
+1. For a cycle point `x` with `Uᵖ x = x`, `g x` is a `Uᵖ`-fixed point, and `g (Uᵏ x) = Uᵏ (g x)`.
+   * `p = 1`: `U y = y` forces `y ∈ {0, 1, −1}` (`unfold amusical; omega`).
+   * `p = 2`: `y ∈ {0, ±1, ±2, ±3}` (a small bound, then `decide` on a range).
+   * `p = 5, 12`: use `amusical_periodic_mem`.  It is a target in a file owned by another treadmill;
+     a `sorry` inherited through it is fine.
+2. Each forced value fixes `f` on the windows `(stepSym (Uᵏ x), stepSym (U^(k+1) x))` along the cycle.  Split
+   on `g 0`, `g 1`, `g (−1)` first (3 cases each).  Those pin `f 0 0`, `f 1 1`, `f 2 2`.  Then `g 2`, `g (−2)`, and
+   so on.  Prune as you go: most branches contradict an already-fixed `f` entry immediately.  Keep each
+   `decide` to small finite sets of integers.
+3. Then identify `g` from `f`, as in the docstring.

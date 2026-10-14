@@ -29,6 +29,12 @@ import CollatzMoonshot.AmusicalWindowThree
 import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalAntiKohl
+import CollatzMoonshot.AmusicalPingPong
+import CollatzMoonshot.AmusicalUniform
+import CollatzMoonshot.AmusicalCycleBound
+import CollatzMoonshot.AmusicalFormalMin
+import CollatzMoonshot.AmusicalLateDrops
+import CollatzMoonshot.AmusicalFunctionField
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -239,7 +245,28 @@ def register : List Hall := [
    "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)", .refuted,
    "slopes 3/2 and 2/3 alone allow a conjugated translation, which has one orbit",
-   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: eventually-linear ping-pong engine (two counters)", .refuted,
+   "gives ∞ orbits for a residue-transitive map, but U's one linear piece 2n ↦ 3n only lowers v₂",
+   "AmusicalPingPong.lean; agent report transitive.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: piecewise-affine reversor for one-signed slope valuations", .refuted,
+   "one-signed v_p with unbounded accumulation forbids it (NR_p); symmetric cycles force ±1",
+   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)", .refuted,
+   "transitivity on Ẑ equates an invariant across classes where it is locally constant",
+   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: excluding cycles by bounding every cycle element", .refuted,
+   "element bounds grow like 3^p/|2^e−3^p|; only the minimum is polynomial (Theorem A★)",
+   "AmusicalCycleBound.lean; agent report cycles.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: coarse heights F(x mod M, scale) with bounded cocycle", .refuted,
+   "two-visit steering makes them bounded once one orbit is infinite (Proposition G)",
+   "AmusicalFormalMin.lean; agent report emptyint.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: survival typicality beyond the residue horizon", .wall,
+   "late drops after depth log₃ X are uncontrolled; τ matches U's windows with maximal late drops",
+   "AmusicalLateDrops.lean; agent report survival.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: infinitely many orbits via infinitely many cycles", .refuted,
+   "works in 𝔽₂[t] by Frobenius; over ℤ the denominators 2^N − 3^p are never small (Baker)",
+   "AmusicalFunctionField.lean; agent report freeform.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -348,7 +375,28 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.atLeastSevenOrbits_of_antiKohl],
    [``CollatzMoonshot.Amusical.AntiKohlConjecture]⟩,
   ⟨"amusical: slopes of valuation 1 at some prime (not one fixed prime)",
-   [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩]
+   [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩,
+  ⟨"amusical: eventually-linear ping-pong engine (two counters)",
+   [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_pingPong,
+    ``CollatzMoonshot.Amusical.amusical_not_eventually_linear], []⟩,
+  ⟨"amusical: piecewise-affine reversor for one-signed slope valuations",
+   [``CollatzMoonshot.Amusical.no_piecewiseAffine_reversor_of_valNonneg,
+    ``CollatzMoonshot.Amusical.island_cycle_slope], []⟩,
+  ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)",
+   [``CollatzMoonshot.Amusical.amusical_invariant_eq_of_locallyConst,
+    ``CollatzMoonshot.Amusical.amusical_topologicallyTransitive],
+   [``CollatzMoonshot.Amusical.AmusicalTopologicallyTransitive]⟩,
+  ⟨"amusical: excluding cycles by bounding every cycle element",
+   [``CollatzMoonshot.Amusical.amusical_cycle_min_bound,
+    ``CollatzMoonshot.Amusical.amusical_noNewCycles_31866], []⟩,
+  ⟨"amusical: coarse heights F(x mod M, scale) with bounded cocycle",
+   [``CollatzMoonshot.Amusical.coarse_quasiInvariant_bounded], []⟩,
+  ⟨"amusical: survival typicality beyond the residue horizon",
+   [``CollatzMoonshot.Amusical.card_windowMin_le, ``CollatzMoonshot.Amusical.lateDrops_dense],
+   [``CollatzMoonshot.Amusical.AmusicalLateDropsSparse]⟩,
+  ⟨"amusical: infinitely many orbits via infinitely many cycles",
+   [``CollatzMoonshot.Amusical.amusical_EmBm_not_integral,
+    ``CollatzMoonshot.Amusical.twin_infinitelyManyCycles], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -361,7 +409,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 40 rows, 32 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 47 rows, 39 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

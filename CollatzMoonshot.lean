@@ -125,6 +125,13 @@ import CollatzMoonshot.AmusicalWindowThree
 import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalAntiKohl
+import CollatzMoonshot.AmusicalPingPong
+import CollatzMoonshot.AmusicalUniform
+import CollatzMoonshot.AmusicalCycleBound
+import CollatzMoonshot.AmusicalFormalMin
+import CollatzMoonshot.AmusicalLateDrops
+import CollatzMoonshot.AmusicalFunctionField
+import CollatzMoonshot.AmusicalLinearForever
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
