@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical rewiring schedule:** the proposed `Nat.unpair` schedule is now an
+> explicit kernel-checked level-preserving permutation of the canonical cuts.  Each valid level
+> performs exactly the base-forward / orbit-backward / orbit-forward three-cycle.  Theorem R is
+> reduced to proving that this scheduled successor is connected.  Read
+> `HANDOFF-amusical-rewire.md`.
+
 > **2026-10-14, amusical rewiring quantitative layer:** canonical scale-cut sources are now
 > pairwise distinct, and every level-preserving permutation of them automatically fixes finite
 > orbits, satisfies the factor-three estimate, and moves at most

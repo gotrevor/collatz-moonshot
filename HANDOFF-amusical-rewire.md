@@ -1,5 +1,49 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — scheduled three-cut permutation formalized
+
+The target still has its original `sorry`; the remaining obligation is the connectivity proof.
+This lap added the sorry-free module `CollatzMoonshot/AmusicalRewireRatio/Schedule.lean`:
+
+- `ScaleCutIndex.fiberwisePerm` assembles a family of level-preserving permutations into one
+  global permutation, with its inverse checked fiberwise.
+- `spliceCycle` is the concrete three-cycle on the base forward cut, the scheduled orbit's
+  backward cut, and its forward cut.  `spliceCycle_level` proves it preserves scale.
+- `scheduledLocal` decodes `r = (Nat.unpair k).1` at level `k`, performs the three-cycle exactly
+  when `r` is a non-base infinite representative, and otherwise fixes the level.
+- `scheduledCutPerm` assembles these local cycles.  `scheduledCutPerm_level` proves the exact
+  hypothesis required by `BoundedRatioSourceRewire.ofScaleCutPerm`.  Thus the proposed schedule
+  is no longer prose: only its orbit-connectivity consequence remains to establish.
+
+Exact verification:
+
+```text
+LEAN_NUM_THREADS=1 lake env lean CollatzMoonshot/AmusicalRewireRatio/Schedule.lean
+# passes
+awk 'length($0)>100 { ... }' CollatzMoonshot/AmusicalRewireRatio/Schedule.lean
+# no output
+git diff --check
+# passes
+LEAN_NUM_THREADS=1 ~/personal/bin/lean-green \
+  ~/src/collatz-moonshot-amusical-rewire --target CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8716 jobs).
+# FORMALIZE-TIER GREEN; only the ratified target declaration retains a sorry.
+```
+
+The box intermittently reported `Too many open files` while loading mathlib; serial Lean
+(`LEAN_NUM_THREADS=1`) succeeded on retry.
+
+Current blocker: prove that rewiring by `scheduledCutPerm` connects every pair of infinite
+natural amusical orbits.  No arithmetic, bijectivity, scale preservation, or schedule-definition
+work remains.
+
+Next attack: state and prove the cut-incidence transition rules for the original successor:
+successive backward cuts run toward the representative, and successive forward cuts run away
+from it.  Compute the three exceptional transitions at each scheduled level.  Then induct between
+consecutive levels `Nat.pair r t` to show the base chain makes a finite detour through every
+segment of orbit `r`, including its central segment at the first scheduled level.  Feed that
+connectivity theorem to `BoundedRatioSourceRewire.ofScaleCutPerm` and `.realize`.
+
 ## 2026-10-14 — quantitative cut permutation discharged
 
 The target still has its original `sorry`; only the global connectivity construction remains.
