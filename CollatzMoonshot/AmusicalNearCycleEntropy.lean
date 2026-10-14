@@ -7,6 +7,7 @@ import CollatzMoonshot.AmusicalNearCycleRuns
 import CollatzMoonshot.AmusicalNearCycleEntropy.Chernoff
 import CollatzMoonshot.AmusicalNearCycleEntropy.Prefixes
 import CollatzMoonshot.AmusicalNearCycleEntropy.Balance
+import CollatzMoonshot.AmusicalNearCycleEntropy.RTLow
 
 /-!
 # Stopped prefixes: run tightness at a logarithmic threshold (Theorem RT-low)
@@ -121,7 +122,7 @@ theorem ncard_deep_lowRun_le :
     ∃ C : ℝ, ∀ D : ℕ, 2 ≤ D →
       (({p : ℕ | (p : ℝ) ≤ D * Real.logb 2 D ^ 14 ∧ ∃ g, NearCycleAt D p g ∧
           0.61 * Real.logb 2 D < g ∧ (eRuns p g : ℝ) ≤ Real.logb 2 D / 40}).ncard : ℝ) ≤
-        C * (D : ℝ) ^ (0.87 : ℝ) := by
-  sorry
+        C * (D : ℝ) ^ (0.87 : ℝ) :=
+  NearCycleEntropy.ncard_deep_lowRun_le'
 
 end CollatzMoonshot.Amusical

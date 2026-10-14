@@ -44,7 +44,8 @@ theorem sum_choose_lt_le (n m : ℕ) :
       simp only
       rw [mul_assoc]
       apply mul_le_mul_of_nonneg_left _ (by positivity)
-      have h1 : ((1 : ℝ) / 9) ^ m ≤ (1 / 9) ^ i := pow_le_pow_of_le_one (by norm_num) (by norm_num) him
+      have h1 : ((1 : ℝ) / 9) ^ m ≤ (1 / 9) ^ i :=
+        pow_le_pow_of_le_one (by norm_num) (by norm_num) him
       have h2 : ((1 : ℝ) / 10) ^ i * (9 / 10) ^ (n - i) = (1 / 9) ^ i * (9 / 10) ^ n := by
         rw [show n = i + (n - i) from (Nat.add_sub_cancel' hin).symm, pow_add,
           Nat.add_sub_cancel_left, ← mul_assoc, ← mul_pow]
