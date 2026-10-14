@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalChains
+import CollatzMoonshot.AmusicalSeventh.Rewire
 
 /-!
 # Quantitative infrastructure for sparse sweeping
@@ -206,5 +207,49 @@ theorem isWindowMin_sub_of_centered_minimizer {L K : ℕ} {n : ℤ} {t : ℤ}
     exact hmin _ (by simpa [add_comm] using hplus)
   · rw [amusicalInv_iterate_eq_perm_pow, ← Equiv.Perm.mul_apply, ← zpow_add]
     exact hmin _ (by simpa [sub_eq_add_neg, add_comm] using hminus)
+
+/-- On an infinite orbit, a centered-window minimum outside the central `K` offsets forces a
+strict descent at some forward or backward time between `K+1` and `L`.  This reduces the
+exceptional-offset event in Lemma T to the union of one-sided descent events. -/
+theorem centered_minimizer_outside_implies_descent {L K : ℕ} {n t : ℤ}
+    (hinf : (amusicalOrbit n).Infinite) (ht : |t| ≤ L) (hout : K < |t|)
+    (hmin : ∀ s : ℤ, |s| ≤ L →
+      (amusicalPerm ^ t) n ≤ (amusicalPerm ^ s) n) :
+    (∃ i : ℕ, K < i ∧ i ≤ L ∧ amusical^[i] n < n) ∨
+      ∃ i : ℕ, K < i ∧ i ≤ L ∧ amusicalInv^[i] n < n := by
+  have hinj := perm_zpow_apply_injective_of_infinite amusicalPerm hinf
+  have hle : (amusicalPerm ^ t) n ≤ n := by simpa using hmin 0 (by simp)
+  have ht0 : t ≠ 0 := by
+    intro h
+    subst t
+    simp only [abs_zero] at hout
+    omega
+  rcases lt_or_gt_of_ne ht0 with htneg | htpos
+  · right
+    rw [abs_of_neg htneg] at hout ht
+    refine ⟨(-t).natAbs, ?_, ?_, ?_⟩
+    · have hi : ((-t).natAbs : ℤ) = -t := by simp [abs_of_neg htneg]
+      exact_mod_cast (show (K : ℤ) < ((-t).natAbs : ℤ) by rw [hi]; exact hout)
+    · have hi : ((-t).natAbs : ℤ) = -t := by simp [abs_of_neg htneg]
+      exact_mod_cast (show ((-t).natAbs : ℤ) ≤ L by rw [hi]; exact ht)
+    · rw [amusicalInv_iterate_eq_perm_pow]
+      have hpow : (-((-t).natAbs : ℤ)) = t := by simp [abs_of_neg htneg]
+      rw [hpow]
+      exact lt_of_le_of_ne hle fun heq => by
+        apply ht0
+        exact hinj (by simpa using heq)
+  · left
+    rw [abs_of_pos htpos] at hout ht
+    refine ⟨t.natAbs, ?_, ?_, ?_⟩
+    · have hi : (t.natAbs : ℤ) = t := by simp [abs_of_pos htpos]
+      exact_mod_cast (show (K : ℤ) < (t.natAbs : ℤ) by rw [hi]; exact hout)
+    · have hi : (t.natAbs : ℤ) = t := by simp [abs_of_pos htpos]
+      exact_mod_cast (show (t.natAbs : ℤ) ≤ L by rw [hi]; exact ht)
+    · rw [amusical_iterate_eq_perm_pow]
+      have hpow : (t.natAbs : ℤ) = t := by simp [abs_of_pos htpos]
+      rw [hpow]
+      exact lt_of_le_of_ne hle fun heq => by
+        apply ht0
+        exact hinj (by simpa using heq)
 
 end CollatzMoonshot.Amusical

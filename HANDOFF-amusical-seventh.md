@@ -1,5 +1,41 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: exceptional minimizers reduced to descent events
+
+### Concrete advance
+
+- Proved `centered_minimizer_outside_implies_descent` in
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`.  On an infinite orbit, if a minimum of the
+  centered `L`-window occurs at an offset with `|t| > K`, then either a forward or backward
+  iterate at some time `i` with `K < i ≤ L` is strictly below the center.
+- The strict inequality uses injectivity of the integer orbit parametrization; this removes the
+  equality/periodic case cleanly.  The result reduces the exceptional-offset event to a finite
+  union of the exact one-sided descent events to which the weighted Boolean-word Chernoff count
+  applies.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh` (`FORMALIZE-TIER GREEN`; exactly the original
+  `sparse_sweep` proof debt).
+- `git diff --check` and the 100-character Lean line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The remaining load-bearing input is now a finite bound for each
+one-sided event `U^i n < n` and `U^-i n < n` over a complete residue system modulo `12^L`.
+Summing those bounds for `K < i ≤ L` gives Lemma T via the theorem proved this lap.
+
+### Next highest-value attack
+
+Prove the individual weighted word bounds for `U^i n < n` and `U^-i n < n`.  Use an integer
+Chernoff weight (or rational square-root-free upper bound) and the exact forward/backward word
+fiber counts already in `AmusicalWindow.lean`; then union-bound over `i > K` and combine with
+`isWindowMin_sub_of_centered_minimizer` and `windowMin_card_mul_le`.
+
 ## 2026-10-14 lap: deterministic offset-to-window-minimum bridge
 
 ### Concrete advance
