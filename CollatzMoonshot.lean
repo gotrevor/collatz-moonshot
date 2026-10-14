@@ -140,6 +140,7 @@ import CollatzMoonshot.AmusicalUnit
 import CollatzMoonshot.AmusicalDeform
 import CollatzMoonshot.AmusicalStaircase
 import CollatzMoonshot.AmusicalPowers
+import CollatzMoonshot.AmusicalRay
 import CollatzMoonshot.AmusicalSurvivorCeiling
 import CollatzMoonshot.AmusicalDecouple
 import CollatzMoonshot.AmusicalLinearForever
