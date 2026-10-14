@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalNearCycle.Rung
+import CollatzMoonshot.AmusicalNearCycle.Count
 
 /-!
 # The quantized ladder and the near-cycle reduction
@@ -28,14 +28,18 @@ with `n'` odd satisfy `4n ≤ 3n' + 1`.
 **`infinitelyManyOrbits_of_fwdSurvivor_pos_of_nearCycle_null` (Theorem NC′).**  A `D`-near-cycle
 start is a `p` whose forward orbit first re-enters `[0, p + D]` inside `(p, p + D]`.  If
 near-cycle starts have density `0` for every `D`, then forward survivors of positive upper
-density already imply Klamkin (a): the threshold of §31's C2′ drops from `c` to `0`.  Proof: under
-`r` orbits, rungs of one orbit in a block `(Y, 2Y]` telescope to `∏ ρ ≤ 3`, so at most `3.3Y/D`
-have gap `> D`; every other rung's predecessor is a `D`-near-cycle start, injectively.
+density already imply Klamkin (a): the threshold of §31's C2′ drops from `c` to `0`.  Proof
+(`NearCycle.card_fwdSurvivor_le`): under `r` orbits, a forward survivor below `X` is an orbit
+minimum (at most `r`) or a rung with predecessor `p` (`NearCycle.IsRungPred`).  On one orbit `p`
+is the next lower forward survivor (P′), so the rungs with gap `> D` are `D`-separated: at most
+`r (X/D + 1)` of them.  Every other rung's predecessor is a `D`-near-cycle start, injectively
+(`n` is the minimum of `p`'s forward orbit after time `0`).  This linear packing replaces the
+kickoff's multiplicative telescoping.
 -/
 
 namespace CollatzMoonshot.Amusical
 
-/-- **Target (Sep3 mirror).**  Odd backward survivors separate orbits. -/
+/-- **Proved (Sep3 mirror).**  Odd backward survivors separate orbits.  (`h0` is not used.) -/
 theorem bwdSurvivor_odd_separation {n n' : ℤ} (hn : BwdSurvivor n) (hn' : BwdSurvivor n')
     (h0 : 0 ≤ n) (hlt : n < n') (hodd : Odd n') (horb : n ∈ amusicalOrbit n') :
     4 * n ≤ 3 * n' + 1 := by
@@ -57,8 +61,8 @@ theorem bwdSurvivor_odd_separation {n n' : ℤ} (hn : BwdSurvivor n) (hn' : BwdS
     · have := hn' (t + 1) (by omega)
       omega
 
-/-- **Target (Theorem SQ, part 1).**  The log-ratio of a rung is `g log 3 − a log 2` up to the
-carry `g/(3n − 1)`. -/
+/-- **Proved (Theorem SQ, part 1).**  The log-ratio of a rung is `g log 3 − a log 2` up to the
+carry `g/(3n − 1)`.  (`hg` is not used: for `g = 0` the hypothesis `hdrop` is false.) -/
 theorem rung_log_ratio {n : ℤ} {g : ℕ} (hg : 1 ≤ g) (hn : FwdSurvivor n) (hpos : 2 ≤ n)
     (hdrop : amusicalInv^[g] n < n)
     (hmin : ∀ t, 1 ≤ t → t < g → n ≤ amusicalInv^[t] n) :
@@ -75,7 +79,7 @@ theorem rung_log_ratio {n : ℤ} {g : ℕ} (hg : 1 ≤ g) (hn : FwdSurvivor n) (
   convert ha using 2
   ring
 
-/-- **Target (Theorem SQ, part 2).**  Once the carry is below both margins, the depth of a rung is
+/-- **Proved (Theorem SQ, part 2).**  Once the carry is below both margins, the depth of a rung is
 a forward-survivor depth: `{gθ} ≤ θ − 1`. -/
 theorem rung_depth_spectrum {n : ℤ} {g : ℕ} (hg : 1 ≤ g) (hn : FwdSurvivor n) (hpos : 2 ≤ n)
     (hdrop : amusicalInv^[g] n < n)
@@ -140,7 +144,7 @@ def NearCycleStart (D p : ℕ) : Prop :=
     ∀ k, 1 ≤ k → k < g → (p : ℤ) + D < amusical^[k] p
 
 open Classical in
-/-- **Target (Theorem NC′).**  If near-cycle starts have density `0` for every `D`, forward
+/-- **Proved (Theorem NC′).**  If near-cycle starts have density `0` for every `D`, forward
 survivors of positive upper density imply Klamkin (a). -/
 theorem infinitelyManyOrbits_of_fwdSurvivor_pos_of_nearCycle_null
     (hNC : ∀ D : ℕ, Filter.Tendsto (fun X : ℕ =>
@@ -149,6 +153,41 @@ theorem infinitelyManyOrbits_of_fwdSurvivor_pos_of_nearCycle_null
     (hFS : ∃ᶠ X : ℕ in Filter.atTop,
         δ * X ≤ ((Finset.range X).filter fun n : ℕ => FwdSurvivor n).card) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  by_contra hfin
+  obtain ⟨r, hr⟩ := NearCycle.card_fwdSurvivor_le hfin
+  set D : ℕ := ⌈8 * (r : ℝ) / δ⌉₊ + 1 with hDdef
+  have hD1 : 1 ≤ D := by omega
+  have hDpos : (0 : ℝ) < D := by exact_mod_cast hD1
+  have hrD : 8 * (r : ℝ) ≤ δ * D := by
+    have h1 : 8 * (r : ℝ) / δ ≤ D := by
+      rw [hDdef]; push_cast; linarith [Nat.le_ceil (8 * (r : ℝ) / δ)]
+    rw [div_le_iff₀ hδ] at h1
+    linarith
+  have hNCD := (hNC D).eventually (gt_mem_nhds (show (0 : ℝ) < δ / 4 by linarith))
+  obtain ⟨X, hX1, hX2, hX3⟩ := (hFS.and_eventually (hNCD.and
+    (Filter.eventually_ge_atTop (⌈4 * (r : ℝ) / δ⌉₊ + 1)))).exists
+  have hXpos' : 0 < X := by omega
+  have hXpos : (0 : ℝ) < X := by exact_mod_cast hXpos'
+  have hX4 : 4 * (r : ℝ) < δ * X := by
+    have h1 : 4 * (r : ℝ) / δ < X := by
+      have := Nat.le_ceil (4 * (r : ℝ) / δ)
+      have h2 : ((⌈4 * (r : ℝ) / δ⌉₊ + 1 : ℕ) : ℝ) ≤ X := by exact_mod_cast hX3
+      push_cast at h2
+      linarith
+    rw [div_lt_iff₀ hδ] at h1
+    linarith
+  have hNC' := (div_lt_iff₀ hXpos).mp hX2
+  have hcount := hr D X hD1
+  have hcountR : (((Finset.range X).filter fun n : ℕ => FwdSurvivor n).card : ℝ) ≤
+      2 * r + r * ((X / D : ℕ) : ℝ) +
+        (((Finset.range X).filter (NearCycleStart D)).card : ℝ) := by
+    exact_mod_cast hcount
+  have hXD : (r : ℝ) * ((X / D : ℕ) : ℝ) ≤ δ * X / 8 := by
+    calc (r : ℝ) * ((X / D : ℕ) : ℝ) ≤ r * ((X : ℝ) / D) :=
+          mul_le_mul_of_nonneg_left Nat.cast_div_le (by positivity)
+      _ = (8 * r) * X / (8 * D) := by field_simp
+      _ ≤ (δ * D) * X / (8 * D) := by gcongr
+      _ = δ * X / 8 := by field_simp
+  nlinarith
 
 end CollatzMoonshot.Amusical
