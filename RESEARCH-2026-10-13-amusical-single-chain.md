@@ -474,8 +474,10 @@ stay open.
   * The bound gives `m ≤ 167195612`.  I re-derived it exactly (`scripts/amusical/cycles/x0_ren.py`).
   * Agent search (`cyclemin.c`, lockstep `U`/`V` with meet-in-the-middle at `H = 15933`):
     0 cycles, 8.3 M survivors, 2.66·10¹¹ steps.
-  * Independent re-run with my own forward-only GMP search (`fwd_ren.c`, a different algorithm),
-    with teeth (finds 44 at period cap 12, misses it at 11): **in progress**.
+  * Independent re-run with my own forward-only GMP search (`fwd_ren.c`, a different algorithm and
+    code), with teeth (finds 44 at period cap 12, misses it at 11): **confirmed**.  All of
+    `[1, 167195612]` in 400 contiguous chunks, `1.12·10¹²` exact steps.  The only returns are
+    1, 2, 4, 44; dips + survivors + returns = the range size (`logs/fwd_ren-summary.txt`).
   * `defs_teeth.py` checks the Lean definitions literally: `CycleMinSearch 173 6` is clean, and
     fails at 44 when 44 is not skipped.
 * **Theorem 2 (computer + Rhin 1987 as quoted by Simons 2022).**  Every new cycle has at least 33

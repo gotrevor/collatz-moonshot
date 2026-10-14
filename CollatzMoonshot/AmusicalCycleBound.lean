@@ -31,8 +31,8 @@ The search runs outside the kernel, as two independent computations:
 * the agent's lockstep `U`/`V` meet-in-the-middle search (`scripts/amusical/cycles/cyclemin.c`):
   `158872552` dips, `8323056` survivors, `0` cycles;
 * my forward-only GMP search to `2H` steps with a different algorithm
-  (`scripts/amusical/cycles/fwd_ren.c`).  Teeth: it finds `1, 2, 4, 44` with period cap `12`
-  and misses `44` with cap `11`.
+  (`scripts/amusical/cycles/fwd_ren.c`): only `1, 2, 4, 44` return, `1.12·10¹²` steps.  Teeth:
+  it finds `1, 2, 4, 44` with period cap `12` and misses `44` with cap `11`.
 The bound `167195612` was re-derived independently (`scripts/amusical/cycles/x0_ren.py`).
 
 Also (agent, paper and computer, not in Lean): every new cycle has at least `33` local minima.
