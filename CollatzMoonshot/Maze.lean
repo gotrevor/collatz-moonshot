@@ -40,6 +40,7 @@ import CollatzMoonshot.AmusicalCrossing
 import CollatzMoonshot.AmusicalAdelic
 import CollatzMoonshot.AmusicalAdditive
 import CollatzMoonshot.AmusicalUnit
+import CollatzMoonshot.AmusicalDeform
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -289,7 +290,10 @@ def register : List Hall := [
    "AmusicalAdditive.lean; agent report ringadd.md (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: partial multiplicative symmetry (Theorem W beyond zero offsets)", .wall,
    "transport is free; existence needs an integer sub-series of an orbit's 2-adic expansion",
-   "AmusicalUnit.lean; agent report ringunit.md (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalUnit.lean; agent report ringunit.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: deformation Û + c, carried to the degenerate point c = 0", .refuted,
+   "U + 6^N agrees with U for ~N steps yet roots every point of [0, 6^N) on its own infinite orbit",
+   "AmusicalDeform.lean; agent report deform.md (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -438,7 +442,10 @@ def mazeLinks : List Link := [
   ⟨"amusical: partial multiplicative symmetry (Theorem W beyond zero offsets)",
    [``CollatzMoonshot.Amusical.two_mul_not_orbit_map,
     ``CollatzMoonshot.Amusical.amusical_three_mul_sub_four],
-   [``CollatzMoonshot.Amusical.AmusicalSharedSkeleton]⟩]
+   [``CollatzMoonshot.Amusical.AmusicalSharedSkeleton]⟩,
+  ⟨"amusical: deformation Û + c, carried to the degenerate point c = 0",
+   [``CollatzMoonshot.Amusical.amusical_add_roots_distinct,
+    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -451,7 +458,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 53 rows, 45 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 54 rows, 46 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
