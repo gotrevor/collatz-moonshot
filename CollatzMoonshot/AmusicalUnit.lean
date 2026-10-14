@@ -51,8 +51,8 @@ theorem two_mul_not_orbit_map : amusicalInv 22 = 29 ∧ (2 * 29 : ℤ) ∉ amusi
 
 /-- **Reopen condition (wall).**  Two distinct integers whose orbits have the same parity
 skeleton from some point on: `U^(a+j) y` and `U^(b+j) z` take the same branch (`stepSym`: even,
-`1 mod 4`, `3 mod 4`) for every `j`, on different orbits.  By the agent's Proposition T this would supply the
-partial multiplicative symmetry.  Believed to have no instances (~95%). -/
+`1 mod 4`, `3 mod 4`) for every `j`, on different orbits.  By the agent's Proposition T this
+would supply the partial multiplicative symmetry.  Believed to have no instances (~95%). -/
 def AmusicalSharedSkeleton : Prop :=
   ∃ y z : ℤ, ∃ a b : ℕ, z ∉ amusicalOrbit y ∧
     ∀ j : ℕ, stepSym (amusical^[a + j] y) = stepSym (amusical^[b + j] z)
