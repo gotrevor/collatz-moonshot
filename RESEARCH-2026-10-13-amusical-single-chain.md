@@ -956,8 +956,8 @@ behind MD is `Decouple.evPer_fwdWin` / `evPer_bwdWin` (`AmusicalDecouple/Windows
 
 ## 33. The tail threshold: rewiring off any set short of whole tails fuses the chains (2026-10-14, "oddbranch" Opus agent, checked)
 
-Lean: `AmusicalOddRewire.lean` (Theorem TT, T1★, and Sep3 for any `τ` with `τ(2m) = 3m`;
-treadmill).  Maze row "odd-branch agreement off a sparse set".  I checked TT by hand.
+Lean: `AmusicalOddRewire.lean` (Theorem TT, T1★, and Sep3 for any `τ` with `τ(2m) = 3m`),
+proved and axiom-clean (GL as a cut-set-parameterized copy of the §14 construction).  Maze row "odd-branch agreement off a sparse set".  I checked TT by hand.
 
 * **Gluing lemma GL (PROVED, re-derived).**  Take any family of chains, each meeting `S` at
   unboundedly late and early times.  Rewiring only at cut points in `S ∩ [Y_k, ∞)` fuses the whole
@@ -1002,3 +1002,68 @@ treadmill).  Maze row "odd-branch agreement off a sparse set".  I checked TT by 
     bounded side is a conjecture (65%).
 * **Where the wall sits.**  Any proof must use `U` exactly along entire forward (or backward) tails
   of infinitely many chains.  That is a survival-type, Π₁ statement: exactly §31's `d(FS) > c`.
+
+## 34. Forward survivors on a ray reduce to the powers of 2 (2026-10-14, "rayfs" Opus agent, checked)
+
+Lean: `AmusicalRay.lean`, proved and axiom-clean (treadmill).  I checked DE, M2 and Corollary H by
+hand.  No explicit ray is settled.
+
+* **Odd rays are dead (PROVED).**  Odd `y > 1` has `U y < y`, so `5ᵏ` and every other odd ray hold
+  no forward survivor past their first member.
+* **Lemma IS and Corollary H (PROVED).**  On a staircase `2^(s−b) 3^b y` the forward survivors form
+  an initial segment.  So infinitely many 3-smooth forward survivors is the same as infinitely many
+  forward survivors among the `2ˢ` (Ray(2)).
+* **Theorem DE (PROVED).**  Every step has `U y + 1 ≥ ¾(y + 1)`.  So after the climb
+  `2ˢ ↦ 3ˢ`, the orbit needs more than `1.41 s` further steps to come back below `2ˢ`.  It uses up
+  every binary digit of `3ˢ` first, so Ray(2) is a pure late-drop question with no middle-digit
+  half (§32's SRE without MDE).
+* **M2 (PROVED).**  Infinitely many powers of 2 that are orbit minima give (a).  `2ˢ` is the best ray
+  for this route, since 2 is a primitive root mod `3^L`.  Measured backward-survivor rate: `0.3576`
+  (predicted `0.3553`).
+* **Conjecture P2 (BELIEVED 90%).**  Every `2ˢ` is a forward survivor.  It is a single Π⁰₁
+  sentence implying Ray(2).
+  * All `s ≤ 3000` pass a walk proxy (escape at `2⁹⁰ · 3ˢ`).  The proxy cannot certify a single
+    survivor.
+  * The Haar model expects `0.78` failures in total, a prior of 0.43 for none.
+* **Gate: witness confinement.**  The injectivity pigeonhole is REFUTED.
+  * First-drop witnesses never collide for ratios `≥ 4/3`.
+  * Forward-minimum witnesses collide only by sharing an orbit, and nothing proved limits sharing.
+  * A world with every `2ˢ` in the backward half of one orbit is consistent with every proved
+    lemma.
+* **Saturation (PROVED).**  For any infinite `S`, the forward orbits of `S` hold infinitely many
+  survivors.  The ray question is exactly the removal of that saturation.
+
+## 35. The ladder is quantized; near-cycle sparsity drops the threshold to 0 (2026-10-14, "fsfloor" Opus agent, checked)
+
+Lean: `AmusicalNearCycle.lean` (SQ, Sep3 mirror, NC′; treadmill).  I checked SQ and NC by hand.
+No unconditional floor above `c` was found; agent odds that this moves (a): about 3%.
+
+* **Theorem V (PROVED): renormalization is empty.**  Under finitely many orbits, every staircase
+  source set has `O(log X)` elements.  These are `FS ∩ 3ℤ`, and `BS ∩ odd` via a new Sep3 mirror,
+  `4n ≤ 3n' + 1`.  So no recursive inequality on `d(FS ∩ 2^a 3^b ℤ)` exists, and `τ_odd`, sitting
+  at density `c`, already solves the record-ratio recursion.
+* **Theorem SQ (PROVED): the ladder is quantized.**  Take a rung `n` (a forward survivor, not its
+  orbit's minimum), its depth `g`, and `p = Vᵍ n`.
+  * Each step is `x ↦ (3x + e)/2^d`, and odd steps sit at intermediate points `> n`.  So
+    `log₂ (n/p) = gθ − a + O(g/n)` (`θ = log₂ 3`): the carry is `≤ g/(3n − 1)`, not `O(log g)`.
+  * Since `n/p ∈ (1, 3/2]`, forward-survivor depths lie in the Sturmian set
+    `{g : {gθ} ≤ θ − 1} = {1, 2, 4, 6, 7, 9, 11, 12, …}`.  Backward-survivor depths lie in the
+    complement `{1, 3, 5, 8, 10, 13, …}`.  The two sets share only `g = 1`.
+  * Checked on all of `[1, 2²³)`: `2.9 · 10⁶` cases, 0 off-spectrum, and two false variants fire.
+  * **`τ` and `τ_odd` break SQ** on 35–43% of their rungs, where Lemma K never caught them.  This is
+    the first U-specific property seen to separate them at the level of individual rungs.
+* **`τ` splits the ceiling.**  `BS_τ ≈ 0` and `FS_τ = c`.  So no inequality between `d(FS)` and
+  `d(BS)` can come from window statistics, Lemma K or the even branch.
+* **Theorem BK (PROVED, with Rhin's bound as a hypothesis Prop).**  Under finitely many orbits,
+  shallow rungs (depth `≤ G`) number `O(r G¹⁴)` per block, against Lemma K's `O(r 4^G)`.
+* **Theorem NC′ (PROVED, elementary): the sharpest conditional.**  (a) follows from
+  `d_upper(FS) > 0` together with "near-cycle starts have density 0 for every `D`".
+  * A `D`-near-cycle start is a `p` whose forward orbit first re-enters `[0, p + D]` inside
+    `(p, p + D]`.
+  * Proof: under `r` orbits, the rungs of one orbit in a block `(Y, 2Y]` telescope to `∏ ρ ≤ 3`, so
+    few have gap `> D`.  Every other rung's predecessor is a near-cycle start, injectively.
+  * The near-cycle hypothesis is a density version of "no new cycles".  By SQ and Rhin a near-cycle
+    needs return time `g ≳ (p/D)^{1/14.3}`.  It is BELIEVED (97%): per-block counts fall to 0, and
+    return times are exactly the SQ depths (12, 53, 359).
+  * The remaining wall, `d_upper(FS) > 0`, is threshold-free but still Conway-hard: one unit of it
+    already exhibits an infinite orbit.
