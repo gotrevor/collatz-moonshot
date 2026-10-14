@@ -1,5 +1,37 @@
 # HANDOFF: amusical ping-pong
 
+## 2026-10-14: scoped objective complete
+
+- Proved `pingPong_seed_inEngine` with its ratified statement unchanged.  The proof packages one
+  complete cycle internally: an A-run lowers `v₅` and raises `v₇`, the `15x` hand-off starts the
+  B-run, the B-run reverses the counters while doubling the accumulated `v₅`, and the final `3x`
+  step returns to a seed of valuation `2A + 1`.  An exact mod-19 countdown invariant supplies both
+  phase membership and the final seed congruence.  Strong induction on time then concatenates
+  cycles of length `2A + 2`.
+- Proved `infinitelyManyOrbits_of_pingPong`.  Every nonzero forward displacement of a seed is an
+  engine image and hence divisible by `3`.  Thus two seeds prime to `3` in one two-sided orbit must
+  coincide, treating negative displacement by applying the inverse exponent.  The injective
+  progression `4705 + 9975t` consists of seeds prime to `3`, so its orbit image is infinite.
+- Added three general phase helpers to `AmusicalPingPong/Phase.lean`: powers of `8` stay in `K`, a
+  seed congruence forces A-phase membership, and either counter transition preserves a mod-19
+  countdown while multiplying phase by `8`.
+- Adversarial review found no statement drift or route defect.  In particular, the transition
+  count is exactly `2A + 2`, and the positive/negative exponent split proves orbit injectivity
+  without assuming that the engine is backward invariant.
+- Exact verification:
+  `~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-pingpong --target
+  CollatzMoonshot.AmusicalPingPong --import CollatzMoonshot.AmusicalPingPong --axioms
+  CollatzMoonshot.Amusical.pingPong_seed_inEngine --axioms
+  CollatzMoonshot.Amusical.infinitelyManyOrbits_of_pingPong --axioms
+  CollatzMoonshot.Amusical.amusical_not_eventually_linear` — 8712-job build, final verdict
+  `FORMALIZE-TIER GREEN`.
+- All three headline declarations have exactly the canonical axiom footprint
+  `[Classical.choice, Quot.sound, propext]`; none depends on the out-of-scope sorries in the
+  imported `AmusicalAntiKohl.lean`.
+- Current blocker: none.  `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free, so the scoped host
+  predicate is met.  No stretch objective was assigned; the next action is to stop rather than
+  enter modules owned by other treadmills.
+
 ## 2026-10-14: residue and valuation transition kernel
 
 - Added `CollatzMoonshot/AmusicalPingPong/Phase.lean`, imported by the ratified target file.  It

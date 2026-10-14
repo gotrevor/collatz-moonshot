@@ -1,5 +1,15 @@
 # PENDING_WORK
 
+## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,
+engine-forever theorem, and infinitely-many-orbits consequence are proved with their ratified
+statements unchanged; `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free.  The 8712-job scoped
+gate and canonical axiom ledgers are recorded in `HANDOFF-amusical-pingpong.md`.
+
+No stretch objective was assigned.  Remaining sorries in imported amusical modules are owned by
+other treadmills and are not dependencies of the three ping-pong headline theorems.
+
 ## 2026-10-13 — amusical continuous reversor objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-contrev.md` is fully discharged.  Lemma S and Theorems A, A′, and C

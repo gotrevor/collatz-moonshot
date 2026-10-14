@@ -27,6 +27,46 @@ theorem phaseB_step {x y : ℤ} (hx : x % 19 ∈ ({4, 6, 9, 10, 13, 15} : Finset
   simp only [Finset.mem_insert, Finset.mem_singleton] at hx ⊢
   rcases hx with hx | hx | hx | hx | hx | hx <;> simp [hy, hx]
 
+/-- Every power of `8` modulo `19` lies in the six-element A phase. -/
+theorem pow_eight_emod_mem_phaseK (n : ℕ) :
+    (8 : ℤ) ^ n % 19 ∈ ({1, 7, 8, 11, 12, 18} : Finset ℤ) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ]
+      simp only [Finset.mem_insert, Finset.mem_singleton] at ih ⊢
+      rcases ih with ih | ih | ih | ih | ih | ih <;> simp [Int.mul_emod, ih]
+
+/-- A residue whose product with a power of `8` is `1` lies in the A phase. -/
+theorem phaseK_of_mul_pow_eight_emod_eq_one {x : ℤ} {a : ℕ}
+    (hx : (x * 8 ^ a) % 19 = 1) :
+    x % 19 ∈ ({1, 7, 8, 11, 12, 18} : Finset ℤ) := by
+  have hp := pow_eight_emod_mem_phaseK a
+  have hm : ((x % 19) * (8 ^ a % 19)) % 19 = 1 := by
+    rw [Int.mul_emod] at hx
+    exact hx
+  have hx0 : 0 ≤ x % 19 := Int.emod_nonneg _ (by norm_num)
+  have hx19 : x % 19 < 19 := Int.emod_lt_of_pos _ (by norm_num)
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hp ⊢
+  rcases hp with hp | hp | hp | hp | hp | hp <;> rw [hp] at hm <;> omega
+
+/-- Both counter transitions multiply the phase by `8` modulo `19`.
+
+The countdown formulation is convenient for a run with `a + 1` steps left. -/
+theorem phase_countdown_step {x y : ℤ} {a : ℕ}
+    (hxy : 5 * y = 21 * x ∨ 7 * y = 75 * x) {r : ℤ}
+    (hx : (x * 8 ^ (a + 1)) % 19 = r % 19) :
+    (y * 8 ^ a) % 19 = r % 19 := by
+  have hy : y ≡ 8 * x [ZMOD 19] := by
+    rcases hxy with hxy | hxy <;> change y % 19 = (8 * x) % 19 <;> omega
+  calc
+    (y * 8 ^ a) % 19 = ((8 * x) * 8 ^ a) % 19 := (hy.mul_right _).eq
+    _ = (x * 8 ^ (a + 1)) % 19 := by
+      congr 1
+      rw [pow_succ]
+      ring
+    _ = r % 19 := hx
+
 /-- Every engine transition has an output divisible by three. -/
 theorem three_dvd_of_engine_equation {x y : ℤ}
     (hxy : 5 * y = 21 * x ∨ y = 15 * x ∨ 7 * y = 75 * x ∨ y = 3 * x) :

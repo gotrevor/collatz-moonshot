@@ -1,10 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
-> **2026-10-14, amusical ping-pong transition kernel:** the exact residue transitions and
-> `(v₅,v₇)` counter changes for both engine phases are now proved in
-> `AmusicalPingPong/Phase.lean`, together with divisibility-by-3 of every engine image.  These are
-> the load-bearing one-step facts for the still-open seed-to-seed cycle.  Two target sorries
-> remain; read `HANDOFF-amusical-pingpong.md`.
+> **2026-10-14, amusical ping-pong objective COMPLETE:** `pingPong_seed_inEngine` now proves the
+> full two-counter seed cycle and its concatenation for every forward time, while
+> `infinitelyManyOrbits_of_pingPong` separates the prime-to-3 progression of seeds by their
+> two-sided orbits.  `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free with all ratified
+> statements unchanged.  The 8712-job scoped gate is FORMALIZE-tier green, and all three headline
+> theorems use exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read
+> `HANDOFF-amusical-pingpong.md`.
 
 > **2026-10-13, amusical escape objective COMPLETE:**
 > `CollatzMoonshot/AmusicalEscape.lean` is sorry-free with every ratified statement unchanged.
