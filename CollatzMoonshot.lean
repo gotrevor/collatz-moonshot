@@ -132,6 +132,8 @@ import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalFunctionField
 import CollatzMoonshot.AmusicalTwinDegree
+import CollatzMoonshot.AmusicalCrossing
+import CollatzMoonshot.AmusicalAdelic
 import CollatzMoonshot.AmusicalLinearForever
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure

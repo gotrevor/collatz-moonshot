@@ -221,7 +221,7 @@ kernel-checked and axiom-clean as of 2026-10-13.
 
 ## 9. Reversors determined by residues (2026-10-13, "reversor" agent, checked)
 
-Lean: `AmusicalContinuousReversor.lean` (targets for a treadmill; Maze row "reversor determined by
+Lean: `AmusicalContinuousReversor.lean` (proved, axiom-clean; Maze row "reversor determined by
 residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically continuous iff its step symbols
 `stepSym (ι n)` depend only on `n mod 2^c₀ 3^d₀`; then it is determined by that finite table
 (Lemma S) and equals flip ∘ a cellular automaton on the Matthews–Watts shift.
@@ -264,7 +264,7 @@ Lean: `AmusicalLogBalance.lean` (all proved, axiom-clean).  Weight `n` by `1/n`:
 
 ## 11. Seventh orbit (2026-10-13, "seventh" agent, checked)
 
-Lean: `AmusicalSeventh.lean` (targets).  A seventh orbit ⇔ no orbit of `U` is cofinite in `ℕ`.
+Lean: `AmusicalSeventh.lean` (proved, axiom-clean, 2026-10-14).  A seventh orbit ⇔ no orbit of `U` is cofinite in `ℕ`.
 No contradiction found from a cofinite orbit of `8`; believed `≥ 7` orbits at 99.5%, `14` an orbit
 minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both stay above `2⁸⁰⁰⁰`).
 
@@ -334,7 +334,7 @@ exists rises from ~93% to ~97%.
 
 ## 14. Global mechanisms (2026-10-13, "global" agent, checked)
 
-Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (targets).  No global mechanism found; a
+Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (proved, axiom-clean).  No global mechanism found; a
 seventh orbit stays open.  Every mechanism is a transversal, an infinite set meeting each orbit
 at most `K` times (Klamkin (a) ⇔ one exists).
 
@@ -364,7 +364,7 @@ at most `K` times (Klamkin (a) ⇔ one exists).
 
 ## 15. The anti-Kohl conjecture (2026-10-13, "antikohl" agent, checked)
 
-Lean: `AmusicalAntiKohl.lean` (κ, τ and the cone identities proved; the rest are targets).  The
+Lean: `AmusicalAntiKohl.lean`, every statement proved and axiom-clean (antikohl treadmill, 2026-10-14).  The
 conjecture: an RCWA permutation whose slopes all have `v_p = 1` for one fixed prime `p` has no
 orbit containing a class tail.  At `p = 3` it gives `U` a seventh orbit.  It is still open on
 the residue-transitive core (`U`, the twins); credence ~93%.
@@ -660,4 +660,73 @@ the twin's extras making one provable.
   `#{w : (t^{2p} − Q^p) | c_w}`, the twin's own Diophantine half.  Periodic points look t-adically
   and Q-adically dense (BELIEVED 85%: cycles inside degree 24 meet every cylinder of depth 6), so
   the twin's residue adversary is an actual polynomial.  In that respect the twin is harder than `ℤ`.
+
+## 24. Kohl's determinant is the net crossing of `0` (2026-10-14, "bridge" Opus agent, checked in part)
+
+Lean: `AmusicalCrossing.lean`, proved and axiom-clean.  The agent's question was whether operator
+algebras, groupoids or self-similar groups give an invariant that (a) is computable from residues,
+(b) separates `U` from `ω` and `τ`, and (c) bounds the orbit count.  Its answer for `U` is no.
+
+* **Theorem I (PROVED, paper; three-line proof, read).**  For class-wise order-preserving `σ`,
+  Kohl's `det σ = Σ b/(a m)` equals `#{x < 0 ≤ σx} − #{x ≥ 0 > σx}`.  That is the Fredholm index of
+  `σ` compressed to `ℓ²(ℕ)`, and also Matui's index map.  Proof: canonical pieces
+  `r + a k ↦ s + b(k + j)` give `det = Σ (s/b + j − r/a)`, and Rump's identity `Σ r/m = (n−1)/2`
+  cancels the fractions.  Kohl had called det unintuitive, found by computer.
+  * My check (`scripts/amusical/flux_ren.py`): Kohl's formula = brute-force flux on nine twins
+    `W_{a,b,c}`.  Teeth: `U` gives 0, and a window missing the crossing misses it.
+* **Corollary (PROVED; Lean `not_periodic_of_upCrossing`).**  `σ` has at least `|det σ|` infinite
+  orbits, since a finite orbit carries no net flux.  This is a fourth certificate type, disjoint
+  from reversal, Frobenius and Theorem W.
+* **The statistical twin has an infinite orbit (PROVED; Lean `twinW_zero_not_periodic`).**  `twinW`
+  (`AmusicalTwin.lean`: U's cylinder laws, densities and coding, plus a 3-cycle) maps `ℕ` into
+  `ℕ ∖ {0}`, and its only crossing is `−2 ↦ 0`.  `W_{3k,1,2}` has at least `k` infinite orbits.
+* **Silent on `U` (PROVED; Lean `amusical_no_crossing`).**  `U` preserves sign, so it has no
+  crossing.  The agent also shows every residue-computable channel into `K_0 = ℤ[orbits]` is this
+  index, and that traces and KMS states do not see orbits.
+* **Literature check (2026-10-14, verifier agent, primary sources opened; `out/kohl-verify.md`).**
+  * **Kohl's thesis §2.13 (p. 65) has 8 open questions** (verified).  The first two: is
+    `RCWA(ℤ) ▷ ker sgn ▷ 1` a composition series, and are `ker sgn`, `ker det` simple?
+  * **The groupoid input is published.**  Bruce–Kubota–Takeishi (arXiv 2407.01952, JFA 2026) study
+    the `ax+b` groupoid on `Ẑ`: `H₀ = 0`, `H₁ = ℤ/2`, and `[[𝒢]]^ab = ℤ/2` with simple commutator
+    subgroup (their Thm 5.7, via Matui Thm 4.16 and Li Cor. 6.14).  The bridge agent did not cite it.
+  * **The one new step is `RCWA(ℤ) ≅ [[𝒢]]`.**  The verifier re-proved it by hand (~90%) and found
+    no paper stating it (abstract-level search only).  With BKT it answers Kohl's question for
+    `ker sgn` (~85%): the normal subgroups of `RCWA(ℤ)` are `1`, `ker sgn`, `RCWA(ℤ)`.  It would also
+    settle Kohl's Conjecture 6.8 (Math. Z. 2010: `RCWA(ℤ)` is generated by tame elements), still a
+    conjecture in RCWA manual 4.10.2.  The `ker det` case (~75%) needs `H₁(𝒢⁺) = ℤ`, not found in
+    print.  `ker sgn = CT(ℤ)` is false: `CT(ℤ) < K̃⁺ ≤ ker det ≤ ker sgn`.
+  * **Kohl's ω:** Kohl computed `det ω = 1` himself (thesis B.6, pp. 88–90) and states one infinite
+    cycle plus 9 exceptional points without proof.  "ω has an infinite orbit" follows from Theorem I.
+    "Only one" remains unproved.
+  * **Lagarias #176 (verified quote, math/0309224 pp. 65–66):** the open problem is that *every*
+    such permutation has an infinite orbit.  `twinW` meets the hypotheses, but its infinite orbit is
+    trivial.  The determinant criterion covers only the easy nonzero-flux cases, so "settles an
+    instance" overstates it.
+
+## 25. The adelic space is a costume; one orbit can pass for `ℤ` (2026-10-14, "quasicrystal" Opus agent, checked in part)
+
+Lean: `AmusicalAdelic.lean` (Proposition L in rational form, proved and axiom-clean).  The angle: `ℤ` as a
+model set in `K = ℝ × ℤ₂ × ℤ₃`, with `U` extended to `Û` by its affine formulas.  Does a rigidity or
+measure-classification property of `Û` force infinitely many orbits on the diagonal?  No.
+
+* **Theorem M, Masquerade (PROVED by the agent; I read it but did not re-derive the construction).**
+  Either `U` has infinitely many cycles, or for every `ε` one `Û`-orbit shadows `ι(ℤ ∖ 0)`.  It
+  stays within `ε` off a density-0 set, has `o(X)` extra points per box, and agrees with `U` off
+  `O(log² X)` places.  So every Haar, box-count, Delone or finite-window argument on `K` fails,
+  unless it proves infinitely many cycles.  Unlike the rewired `τ` (§14), this is `Û`'s own
+  dynamics.
+  * Proof: Theorem R-style cuts (§14), glued by a new Steering Lemma (signed-sum covering plus
+    approximation of `log₂ 3`).  The demo (`scratch-quasicrystal/masq.py`, the agent's): one orbit
+    piece covers all 2980 non-periodic integers in `[1, 3000]` exactly once, with the same
+    cylinder table.
+  * It answers `adelic.md`'s open C7 (that agent had put 60% on yes).
+* **Proposition L (PROVED; I checked it).**  A `Û`-invariant subgroup with a point of odd 2-adic
+  coordinate contains `ι(ℤ)`, since `4Ûv − 3v = ±ι(1)`.  The invariant lattices are exactly
+  `(1/q) ι(ℤ)`, `gcd(q, 6) = 1`.  So invariant subgroups give back Klamkin (a) for `U_q`, nothing more.
+* **Corollary S_K (PROVED; I checked it).**  One orbit with the lattice's window statistics has
+  forward plus backward survival density `≤ p_f + p_b − p_f p_b = 0.3972`.  The product `p_f p_b` is
+  `c`, the orbit-minima density.  `ℤ` measures `0.4470` (§20).  So survival is exactly where the
+  masquerade must fail, the §20 wall again.  The proof uses one strict minimum per orbit.
+  * Open Q1 (agent: 50%): does some single orbit reach `0.3972`?  If so, Proposition S's threshold
+    is sharp.
 
