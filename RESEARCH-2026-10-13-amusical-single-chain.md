@@ -1138,7 +1138,8 @@ T1–T2 by hand.  NC₀ (near-cycle starts have density 0) is **not** proved.  A
 
 ## 38. Run-bounded near-cycles: the cycle method proves the linear law stratum by stratum (2026-10-14, "ncbaker" Opus agent, checked in part)
 
-Lean: `AmusicalNearCycleRuns.lean` (MR I, MR II, MR-P with Rhin as a hypothesis `Prop`; treadmill).
+Lean: `AmusicalNearCycleRuns.lean` (MR I, MR II, MR-P with Rhin as a hypothesis `Prop`), proved
+and axiom-clean (treadmill).
 I checked MR (I) and (II) by hand.  The linear-law theorems L1/Lm are the agent's (PROVED, not yet
 re-derived by me).  Agent odds that this moves (a): about 2%.
 
