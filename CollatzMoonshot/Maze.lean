@@ -42,6 +42,7 @@ import CollatzMoonshot.AmusicalAdditive
 import CollatzMoonshot.AmusicalUnit
 import CollatzMoonshot.AmusicalDeform
 import CollatzMoonshot.AmusicalOddRewire
+import CollatzMoonshot.AmusicalNearCycle
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -228,6 +229,11 @@ def register : List Hall := [
   ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)", .refuted,
    "Haar is conformal, not invariant, and Û is totally dissipative; only ½/⅓ log balance survives",
    "AmusicalLogBalance.lean; agent report equidist.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: rung constraints (quantized ladder SQ) lower the survivor ceiling below c",
+   .siblingTransfer,
+   "SQ, Kraft and Lemma K hold on every real Û-orbit; the one-orbit masquerade attains c",
+   "AmusicalNearCycle.lean; AmusicalSurvivorCeiling.lean; agent report sqceiling.md (2026-10-14)",
+   "2026-10-14"⟩,
   ⟨"amusical: odd-branch agreement off a sparse set (any agreement set short of whole tails)",
    .siblingTransfer,
    "rewiring U on a set S meeting every chain late and early fuses all chains (Theorem TT)",
@@ -373,6 +379,9 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.logWeight_even_balance,
     ``CollatzMoonshot.Amusical.logWeight_three_balance,
     ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_logDensityZero], []⟩,
+  ⟨"amusical: rung constraints (quantized ladder SQ) lower the survivor ceiling below c",
+   [``CollatzMoonshot.Amusical.rung_depth_spectrum,
+    ``CollatzMoonshot.Amusical.fwdSurvivor_density_le_of_finite], []⟩,
   ⟨"amusical: odd-branch agreement off a sparse set (any agreement set short of whole tails)",
    [``CollatzMoonshot.Amusical.tail_threshold, ``CollatzMoonshot.Amusical.exists_oddRewire,
     ``CollatzMoonshot.Amusical.fwdSurvivor_three_separation_of], []⟩,
@@ -466,7 +475,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 55 rows, 47 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 56 rows, 48 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
