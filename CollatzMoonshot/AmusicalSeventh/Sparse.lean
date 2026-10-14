@@ -71,11 +71,24 @@ theorem amusical_window_representative_lt {L t c : ℕ} (ht : t ≤ L) (hc : c <
   · exact lt_of_lt_of_le (amusicalInv_iterate_lt_two_pow_mul (Int.natCast_nonneg c) t)
       (by exact_mod_cast hprod)
 
-/-- **Lemma W.** Above `2 · 324^L`, being an `L`-window minimum is determined by the
-forward and backward branch words, hence by the residue modulo `12^L`. -/
-theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
-    IsWindowMin L n ↔ FwdGood L (amusicalForwardWord L n) ∧
-      BwdGood L (amusicalBackwardWord L n) := by
+/-- A forward slope descent occurs when the marked-letter product makes the affine slope less
+than one. -/
+abbrev FwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
+  3 ^ L < 2 ^ (L + latticeMarked w)
+
+/-- A backward slope descent is the reverse marked-letter inequality. -/
+abbrev BwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
+  2 ^ (L + latticeMarked w) < 3 ^ L
+
+/-- Above the Lemma W threshold, each individual forward and backward comparison is determined
+by the corresponding prefix of the branch word. -/
+theorem iterate_le_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
+    (∀ t, 1 ≤ t → t ≤ L → ((n : ℤ) ≤ amusical^[t] n ↔
+      2 ^ (t + ((Finset.univ.filter fun i : Fin L =>
+        i.val < t ∧ amusicalForwardWord L n i = true).card)) < 3 ^ t)) ∧
+    (∀ t, 1 ≤ t → t ≤ L → ((n : ℤ) ≤ amusicalInv^[t] n ↔
+      3 ^ t < 2 ^ (t + ((Finset.univ.filter fun i : Fin L =>
+        i.val < t ∧ amusicalBackwardWord L n i = true).card)))) := by
   set M := 12 ^ L with hM
   have hMpos : 0 < M := by positivity
   set c := n % M with hc
@@ -164,6 +177,14 @@ theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
       (lt_of_lt_of_le (hbound t ht).2 hq4)]
     rw [amusicalBackwardWord_true_card_eq_fourCount L t ht c]
     exact amusical_backward_slope_lt_iff L t _ ht
+  exact ⟨hF, hB⟩
+
+/-- **Lemma W.** Above `2 · 324^L`, being an `L`-window minimum is determined by the
+forward and backward branch words, hence by the residue modulo `12^L`. -/
+theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
+    IsWindowMin L n ↔ FwdGood L (amusicalForwardWord L n) ∧
+      BwdGood L (amusicalBackwardWord L n) := by
+  obtain ⟨hF, hB⟩ := iterate_le_iff_words_of_ge L n hn
   unfold IsWindowMin
   constructor
   · intro h
@@ -172,6 +193,48 @@ theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
   · rintro ⟨h1, h2⟩ t ht1 ht2
     exact ⟨(hF t ht1 ht2).mpr (h1 t ht1 ht2),
       (hB t ht1 ht2).mpr (h2 t ht1 ht2)⟩
+
+/-- At the Lemma W threshold, a forward descent is exactly a descending forward slope. -/
+theorem iterate_lt_iff_fwdSlopeDescends_of_ge (L n : ℕ) (hL : 1 ≤ L)
+    (hn : 2 * 324 ^ L ≤ n) :
+    amusical^[L] (n : ℤ) < n ↔ FwdSlopeDescends L (amusicalForwardWord L n) := by
+  rw [show amusical^[L] (n : ℤ) < n ↔ ¬ (n : ℤ) ≤ amusical^[L] n by omega]
+  rw [(iterate_le_iff_words_of_ge L n hn).1 L hL le_rfl]
+  have hcard : (Finset.univ.filter fun i : Fin L =>
+      i.val < L ∧ amusicalForwardWord L n i = true).card =
+      latticeMarked (amusicalForwardWord L n) := by
+    simp [latticeMarked]
+  rw [hcard]
+  unfold FwdSlopeDescends
+  have hne : 3 ^ L ≠ 2 ^ (L + latticeMarked (amusicalForwardWord L n)) := by
+    have ho : Odd (3 ^ L) := (by norm_num : Odd 3).pow
+    have he : Even (2 ^ (L + latticeMarked (amusicalForwardWord L n))) :=
+      Nat.even_pow.mpr ⟨by decide, by omega⟩
+    rcases ho with ⟨a, ha⟩
+    rcases he with ⟨b, hb⟩
+    omega
+  omega
+
+/-- At the Lemma W threshold, a backward descent is exactly a descending backward slope. -/
+theorem inv_iterate_lt_iff_bwdSlopeDescends_of_ge (L n : ℕ) (hL : 1 ≤ L)
+    (hn : 2 * 324 ^ L ≤ n) :
+    amusicalInv^[L] (n : ℤ) < n ↔ BwdSlopeDescends L (amusicalBackwardWord L n) := by
+  rw [show amusicalInv^[L] (n : ℤ) < n ↔ ¬ (n : ℤ) ≤ amusicalInv^[L] n by omega]
+  rw [(iterate_le_iff_words_of_ge L n hn).2 L hL le_rfl]
+  have hcard : (Finset.univ.filter fun i : Fin L =>
+      i.val < L ∧ amusicalBackwardWord L n i = true).card =
+      latticeMarked (amusicalBackwardWord L n) := by
+    simp [latticeMarked]
+  rw [hcard]
+  unfold BwdSlopeDescends
+  have hne : 3 ^ L ≠ 2 ^ (L + latticeMarked (amusicalBackwardWord L n)) := by
+    have ho : Odd (3 ^ L) := (by norm_num : Odd 3).pow
+    have he : Even (2 ^ (L + latticeMarked (amusicalBackwardWord L n))) :=
+      Nat.even_pow.mpr ⟨by decide, by omega⟩
+    rcases ho with ⟨a, ha⟩
+    rcases he with ⟨b, hb⟩
+    omega
+  omega
 
 /-! ## Chernoff bounds for one-sided descents -/
 
@@ -338,15 +401,6 @@ theorem bwdSlopeDescends_weight_lt {L : ℕ} (w : Fin L → Bool)
     _ = (1 / 6 : ℝ) ^ b * (1 / 3 : ℝ) ^ a := by
       norm_num [div_pow]
       ring
-
-/-- A forward slope descent occurs when the marked-letter product makes the affine slope less
-than one. -/
-abbrev FwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
-  3 ^ L < 2 ^ (L + latticeMarked w)
-
-/-- A backward slope descent is the reverse marked-letter inequality. -/
-abbrev BwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
-  2 ^ (L + latticeMarked w) < 3 ^ L
 
 /-- Generic fiber count for a predicate on forward branch words. -/
 theorem count_amusicalForwardWord_pred (L : ℕ) (P : (Fin L → Bool) → Prop)

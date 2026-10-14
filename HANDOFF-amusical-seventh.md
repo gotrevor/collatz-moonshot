@@ -1,5 +1,49 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: actual descents identified with Chernoff slope events
+
+### Concrete advance
+
+- Refactored the proof of Lemma W in `CollatzMoonshot/AmusicalSeventh/Sparse.lean` so its
+  load-bearing individual comparison result is public as `iterate_le_iff_words_of_ge`.
+  It simultaneously characterizes every forward and backward comparison through time `L` above
+  the explicit `2 * 324^L` threshold; `isWindowMin_iff_words_of_ge` is now its short corollary.
+- Proved `iterate_lt_iff_fwdSlopeDescends_of_ge` and
+  `inv_iterate_lt_iff_bwdSlopeDescends_of_ge`.  Thus the actual events `U^i n < n` and
+  `U^-i n < n` are exactly the `FwdSlopeDescends` and `BwdSlopeDescends` residue events already
+  controlled by the Chernoff estimates.  The strict conversion explicitly excludes equality of
+  the powers of two and three by parity.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; exactly the original
+  `sparse_sweep` sorry warning).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.iterate_lt_iff_fwdSlopeDescends_of_ge` (`FORMALIZE-TIER GREEN`; axiom
+  ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- The same gate for `CollatzMoonshot.Amusical.inv_iterate_lt_iff_bwdSlopeDescends_of_ge` was
+  `FORMALIZE-TIER GREEN` with the same axiom ledger.
+- `git diff --check` and the 100-character changed-Lean-line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The comparison-to-Chernoff bridge is complete.  The remaining
+finite Lemma T bookkeeping is to lift the complete-period bounds to `[0,X)`, union-bound over
+`K < i ≤ L`, and discard the initial range below `2 * 324^L`.  The final headline still needs
+that exceptional-set estimate combined with the deterministic minimizer bridge and window-minimum
+packing, followed by the elementary choices of `K`, `L`, and `c`.
+
+### Next highest-value attack
+
+Define the forward/backward descent predicates at time `i`, prove their periodicity modulo `4^i`
+and `3^i`, and apply `WindowCount.count_periodic_bounds` plus the two
+`*_residue_proportion_le_ninetyNineHundredths` theorems.  Sum over `K < i ≤ L`; this gives the
+finite geometric exceptional-set bound needed for `sparse_sweep`.
+
 ## 2026-10-14 review lap: one-sided Chernoff residue bounds proved
 
 ### Concrete advance
