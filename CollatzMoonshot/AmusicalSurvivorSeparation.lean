@@ -17,10 +17,10 @@ orbit of `n'`, whose first step is `U⁻¹ n' = 2n'/3`; and `n` survives up to t
 
 **`infinitelyManyOrbits_of_fwdSurvivors_three`.**  So forward survivors divisible by `3` in a window
 `[X, 3X/2)` lie on pairwise distinct infinite orbits (`fwdSurvivor_three_not_periodic`).  If such
-windows hold unboundedly many of them, `U` has infinitely many orbits.  It suffices that `FS ∩ 3ℤ ∩ [1, X]` is not `O(log X)`.  The
-measured density of `FS` is about `0.21` (research §20); proving any lower bound is the typicality
-wall.  The rewired `τ` (§14) satisfies `U(2m) = 3m` on all but a density-0 set, so the lemma's
-input is genuinely global.
+windows hold unboundedly many of them, `U` has infinitely many orbits.  It suffices that
+`FS ∩ 3ℤ ∩ [1, X]` is not `O(log X)`.  The measured density of `FS` is about `0.21` (research §20),
+but proving any lower bound is the typicality wall: the agent checks that the rewired `τ` (§14)
+satisfies every hypothesis of its survival results.
 
 Paper proofs: agent report `q1sharp.md`, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §26.
