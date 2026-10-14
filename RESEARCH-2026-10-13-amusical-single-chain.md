@@ -1173,3 +1173,35 @@ re-derived by me).  Agent odds that this moves (a): about 2%.
   about `log g`.  For example, the `g = 665` starts have 151–169 runs and a floor of 4.  What is
   left of LIN lies beyond the residue horizon and has too much entropy for this counting.  It is no
   easier than LIN (85%).
+
+## 39. The basin identity, and an order-theoretic no-go for "LIN ⇒ many survivors" (2026-10-14, "basin" Opus agent, checked)
+
+Maze row "basin counting: near-cycle sparsity forces many survivors".  I checked the identity and
+Theorem G's construction.  Agent odds that this route moves (a): under 1%.
+
+* **The identity (PROVED; Ren's observation, agent-verified).**  `fmin(n)` = the minimum of the
+  forward orbit of `n` is a forward survivor, and `FS = Fix(fmin)`.  The basin of `m` is
+  `{Vˢ m : s < g(m)}`, its backward excursion above `m`.  So `X = Σ_{m ∈ FS} #(basin(m) ∩ [0, X))`,
+  i.e. `#FS(X) = X / (mean basin size)`.  It is only a change of variables.
+* **Dictionary (PROVED).**  Basins are the trees of the first-drop forest.  A node's children are
+  its backward record lows, and `NC^f_D`, `NC^b_D` are exactly the short gaps in each value-sorted
+  family.  This held on 12.6M children with 0 mismatches and reproduces `κ ≈ 5.05`, `κ_b ≈ 4.05`.
+* **The per-basin link is REFUTED on `U`.**  "A basin visiting `[m, X)` `k` times holds `≳ k`
+  near-cycle starts" fails.  `U`'s 10 largest finite basins below `2²⁴` (`≥ 200` visits each) hold
+  no `NC_256` start.  Basin sizes have an exponential tail (mean 4.76, max 268).  About 54% of
+  `[0, 2²⁴)` lies on backward rays of orbit minima.
+* **Theorem G (PROVED; order-theoretic no-go).**  There is a permutation `σ` of `ℕ` with:
+  * exactly one orbit;
+  * every near-cycle set `NC_D` finite, forward and backward (LIN's qualitative content);
+  * forward survivors `o(√X)`, even `(log X)²`;
+  * step ratios tending to 1.
+
+  The construction lists a spine `s_b` and finite chunks `C_r` above each spine point, spread
+  `K_b → ∞` apart, so close pairs are finite while the forward survivors are the spine.  The basin
+  identity, the first-drop forest, NCU and P′ all hold for `σ`.  So "LIN ⇒ `#FS ≠ O(√Y)`" cannot
+  come from order structure.  It must use `U`'s arithmetic along whole excursions (T1
+  integrality), which is §37's gate, now shown to bind the survivor half as well.
+* **Where the one-orbit models escape.**  `τ`, `τ_odd` and the masquerade break LIN: their
+  near-cycle counts grow with `N` (`τ`: 41 → 88 at `D = 4`), while `U`'s stay flat at 17.  `σ`
+  escapes the other way, through sparse survivors.  A one-orbit `U` under LIN would have to look
+  like `σ`.

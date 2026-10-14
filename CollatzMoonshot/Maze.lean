@@ -43,6 +43,7 @@ import CollatzMoonshot.AmusicalUnit
 import CollatzMoonshot.AmusicalDeform
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalNearCycle
+import CollatzMoonshot.AmusicalNearCycleLaw
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -229,6 +230,9 @@ def register : List Hall := [
   ⟨"amusical: fat orbits equidistribute (ergodic theory on ℤ₂ × ℤ₃)", .refuted,
    "Haar is conformal, not invariant, and Û is totally dissipative; only ½/⅓ log balance survives",
    "AmusicalLogBalance.lean; agent report equidist.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: basin counting: near-cycle sparsity forces many survivors", .siblingTransfer,
+   "a one-orbit order-only permutation has finite near-cycle sets and o(√X) survivors",
+   "AmusicalNearCycleLaw.lean; agent report basin.md (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: rung constraints (quantized ladder SQ) lower the survivor ceiling below c",
    .siblingTransfer,
    "SQ, Kraft and Lemma K hold on every real Û-orbit; the one-orbit masquerade attains c",
@@ -379,6 +383,9 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.logWeight_even_balance,
     ``CollatzMoonshot.Amusical.logWeight_three_balance,
     ``CollatzMoonshot.Amusical.amusicalInfinitelyManyOrbits_of_logDensityZero], []⟩,
+  ⟨"amusical: basin counting: near-cycle sparsity forces many survivors",
+   [``CollatzMoonshot.Amusical.card_fwdSurvivor_block_le,
+    ``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_linearNearCycleLaw], []⟩,
   ⟨"amusical: rung constraints (quantized ladder SQ) lower the survivor ceiling below c",
    [``CollatzMoonshot.Amusical.rung_depth_spectrum,
     ``CollatzMoonshot.Amusical.fwdSurvivor_density_le_of_finite], []⟩,
@@ -475,7 +482,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 56 rows, 48 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 57 rows, 49 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
