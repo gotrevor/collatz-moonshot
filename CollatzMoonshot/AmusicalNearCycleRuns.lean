@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalNearCycleRuns.Growth
+import CollatzMoonshot.AmusicalNearCycleRuns.Bootstrap
 
 /-!
 # Run-bounded near-cycles (Theorem MR)
@@ -124,6 +124,71 @@ theorem nearCycleAt_numE_ge {D p g : ℕ} (h : NearCycleAt D p g)
 theorem nearCycleAt_le_of_eRuns_le (hR : RhinBound) :
     ∃ C : ℕ → ℝ, ∀ {D p g m : ℕ}, NearCycleAt D p g → eRuns p g ≤ m → 1 ≤ D →
       (p : ℝ) ≤ C m * D * (Real.log D + 1) ^ (13.3 : ℝ) := by
-  sorry
+  have hb := fun m : ℕ => NearCycleRuns.rpow_bootstrap (NearCycleRuns.one_le_growthConst m)
+    (by linarith [(Nat.cast_nonneg m : (0 : ℝ) ≤ m)] : (1 : ℝ) ≤ m + 1)
+  choose Cb hCb using hb
+  refine ⟨fun m => max (3 * m / 2 + 2) (Cb m), ?_⟩
+  intro D p g m h hm hD
+  have hp2 := NearCycleRuns.nearCycleAt_two_le h
+  have hD1 : (1 : ℝ) ≤ D := by exact_mod_cast hD
+  have hX : 1 ≤ (Real.log D + 1) ^ (13.3 : ℝ) :=
+    Real.one_le_rpow (by linarith [Real.log_nonneg hD1]) (by norm_num)
+  have hW : (D : ℝ) ≤ D * (Real.log D + 1) ^ (13.3 : ℝ) := le_mul_of_one_le_right (by linarith) hX
+  have hm' : (eRuns p g : ℝ) ≤ m := by exact_mod_cast hm
+  have hm0 : (0 : ℝ) ≤ m := Nat.cast_nonneg m
+  set C := max (3 * (m : ℝ) / 2 + 2) (Cb m) with hC
+  have hC1 : 3 * (m : ℝ) / 2 + 2 ≤ C := le_max_left _ _
+  rw [mul_assoc]
+  by_cases hA : 3 * eRuns p g < 2 * p
+  swap
+  · -- `p ≤ 1.5 m`
+    have : 2 * (p : ℝ) ≤ 3 * eRuns p g := by exact_mod_cast (by omega : 2 * p ≤ 3 * eRuns p g)
+    nlinarith
+  rcases (by have := h.1; omega : g = 1 ∨ 2 ≤ g) with rfl | hg2
+  · -- `g = 1`: `3p/2 ≤ p + D`
+    have h2 := NearCycleRuns.two_mul_amusical_of_even (NearCycleRuns.nearCycleAt_even h)
+    have h3 := h.2.2.1
+    simp only [Function.iterate_one] at h3
+    have : (p : ℝ) ≤ 2 * D := by exact_mod_cast (by omega : p ≤ 2 * D)
+    nlinarith
+  -- the main case
+  have h1 := nearCycleAt_linearForm h hp2
+  have hg := NearCycleRuns.two_mul_le_growthConst (by omega : 1 ≤ p) hm
+    (nearCycleAt_numE_ge h hA) (nearCycleAt_numE_le h hp2)
+  have hN : numE p g ≤ g := NearCycleRuns.cntE_le _ g
+  have ha : g ≤ excursionWeight p g := by unfold excursionWeight; omega
+  have ha2 : excursionWeight p g ≤ 2 * g := by unfold excursionWeight; omega
+  have hRh := hR (excursionWeight p g) g (by omega)
+  set a := excursionWeight p g with hadef
+  have haR : (g : ℝ) ≤ a := by exact_mod_cast ha
+  have ha2R : (a : ℝ) ≤ 2 * g := by exact_mod_cast ha2
+  have hgR : (2 : ℝ) ≤ g := by exact_mod_cast hg2
+  rw [max_eq_left haR, abs_sub_comm] at hRh
+  set Λ := (g : ℝ) * Real.log 3 - a * Real.log 2 with hΛ
+  have hp0 : (0 : ℝ) < p := by exact_mod_cast (by omega : 0 < p)
+  have hpΛ : p * |Λ| < D + m := by
+    rw [← abs_of_pos hp0, ← abs_mul, abs_lt]
+    constructor <;> linarith
+  have h2g : ((2 * g : ℝ)) ^ (-(13.3 : ℝ)) ≤ (a : ℝ) ^ (-(13.3 : ℝ)) :=
+    Real.rpow_le_rpow_of_nonpos (by linarith) ha2R (by norm_num)
+  have hG0 : 0 < ((2 * g : ℝ)) ^ (13.3 : ℝ) := Real.rpow_pos_of_pos (by linarith) _
+  have hpg : (p : ℝ) < (D + m) * (2 * g) ^ (13.3 : ℝ) := by
+    rw [Real.rpow_neg (by linarith)] at h2g
+    have : (p : ℝ) * ((2 * g : ℝ) ^ (13.3 : ℝ))⁻¹ < D + m := by
+      calc _ ≤ (p : ℝ) * |Λ| := mul_le_mul_of_nonneg_left (h2g.trans hRh) hp0.le
+        _ < D + m := hpΛ
+    rwa [← div_eq_mul_inv, div_lt_iff₀ hG0] at this
+  have hpow : ((2 * g : ℝ)) ^ (13.3 : ℝ) ≤
+      (NearCycleRuns.growthConst m * (Real.log p + 1)) ^ (13.3 : ℝ) :=
+    Real.rpow_le_rpow (by linarith) hg (by norm_num)
+  have hDm : (D : ℝ) + m ≤ (m + 1) * D := by nlinarith
+  have hfin := hCb m p D (by exact_mod_cast (by omega : 1 ≤ p)) hD1 (by
+    calc (p : ℝ) ≤ (D + m) * (2 * g) ^ (13.3 : ℝ) := hpg.le
+      _ ≤ ((m + 1) * D) * (NearCycleRuns.growthConst m * (Real.log p + 1)) ^ (13.3 : ℝ) :=
+          mul_le_mul hDm hpow hG0.le (by positivity)
+      _ = _ := by ring)
+  have hCb' : Cb m ≤ C := le_max_right _ _
+  rw [mul_assoc] at hfin
+  exact hfin.trans (mul_le_mul_of_nonneg_right hCb' (by positivity))
 
 end CollatzMoonshot.Amusical
