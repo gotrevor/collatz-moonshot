@@ -31,7 +31,7 @@ statistics has forward plus backward survival density at most
 `p_f + p_b − p_f p_b ≈ 0.3972`, while `ℤ` measures `0.4470`.  Survival is the first statistic the
 masquerade cannot fake: the §20 typicality wall.
 
-Treadmill target: close every `sorry` here.
+Kernel-checked 2026-10-14 by the adelic treadmill (`HANDOFF-amusical-adelic.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -44,7 +44,7 @@ def amusicalRat (x : ℚ) : ℚ :=
   else if (x.num * x.den) % 4 = 1 then (3 * x + 1) / 4
   else (3 * x - 1) / 4
 
-/-- **Target.**  `amusicalRat` extends `U`. -/
+/-- **Proved.**  `amusicalRat` extends `U`. -/
 theorem amusicalRat_intCast (n : ℤ) : amusicalRat n = amusical n := by
   unfold amusicalRat amusical
   simp only [Rat.den_intCast, Rat.num_intCast, Nat.cast_one, mul_one]
@@ -63,7 +63,7 @@ theorem amusicalRat_intCast (n : ℤ) : amusicalRat n = amusical n := by
       if_neg (by omega), show (4 * m + 3) / 4 = m by omega]
     push_cast; ring
 
-/-- **Target (Proposition L, rational form).**  A nonzero subgroup of `ℤ_(2)` closed under the
+/-- **Proved (Proposition L, rational form).**  A nonzero subgroup of `ℤ_(2)` closed under the
 extension of `U` contains `1`, hence `ℤ`.  Paper proof: pick `x ≠ 0`; while `v₂ x > 0`,
 `Ũ x = 3x/2 ∈ Λ`; at a `2`-adic unit `y`, `4 Ũ y − 3 y = ±1`. -/
 theorem amusicalRat_subgroup_one_mem (Λ : AddSubgroup ℚ) (hden : ∀ x ∈ Λ, x.den % 2 = 1)

@@ -705,7 +705,7 @@ algebras, groupoids or self-similar groups give an invariant that (a) is computa
 
 ## 25. The adelic space is a costume; one orbit can pass for `ℤ` (2026-10-14, "quasicrystal" Opus agent, checked in part)
 
-Lean: `AmusicalAdelic.lean` (Proposition L, targets, on `wip/amusical-adelic`).  The angle: `ℤ` as a
+Lean: `AmusicalAdelic.lean` (Proposition L in rational form, proved and axiom-clean).  The angle: `ℤ` as a
 model set in `K = ℝ × ℤ₂ × ℤ₃`, with `U` extended to `Û` by its affine formulas.  Does a rigidity or
 measure-classification property of `Û` force infinitely many orbits on the diagonal?  No.
 
