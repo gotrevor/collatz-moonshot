@@ -46,7 +46,7 @@ Paper proofs: agent report `cycles.md`, summarized in
 
 namespace CollatzMoonshot.Amusical
 
-/-- **Target (Theorem A★).**  For a cycle of length `p` through `x` whose members are all at
+/-- **Proved (Theorem A★).**  For a cycle of length `p` through `x` whose members are all at
 least `m ≥ 1`, with `e` total halvings and `k = e − p` odd steps:
 `3^p (3m−1)^k ≤ 2^e (3m)^k ≤ 3^p (3m+1)^k`.  Paper proof in the module docstring: multiply the
 step identities `2^{bᵢ} x_{i+1} = 3xᵢ + dᵢ` over the cycle, cancel `∏ xᵢ`, and bound each odd
@@ -57,7 +57,81 @@ theorem amusical_cycle_min_bound (x m : ℤ) (p : ℕ) (hp : 0 < p) (hcyc : amus
     let k := e - p
     3 ^ p * (3 * m - 1) ^ k ≤ 2 ^ e * (3 * m) ^ k ∧
       2 ^ e * (3 * m) ^ k ≤ 3 ^ p * (3 * m + 1) ^ k := by
-  sorry
+  intro e k
+  set a : ℕ → ℤ := fun j => amusical^[j] x with ha
+  set S := (Finset.range p).filter fun j => ¬ 2 ∣ a j with hS
+  have hk : k = S.card := by
+    have he : e = p + S.card := sum_stepBits_eq_add_filter_card x p
+    show e - p = _; omega
+  have hkp : S.card ≤ p := by
+    calc S.card ≤ (Finset.range p).card := Finset.card_filter_le _ _
+      _ = p := Finset.card_range p
+  have hpos : ∀ j ∈ Finset.range p, 0 < a j := fun j hj =>
+    lt_of_lt_of_le (by omega : (0 : ℤ) < m) (hmin j (Finset.mem_range.mp hj))
+  have hx0 : x ≠ 0 := (show (0 : ℤ) < x from hpos 0 (Finset.mem_range.mpr hp)).ne'
+  have hid := amusical_cycle_product_identity hx0 hcyc
+  change 2 ^ e * ∏ j ∈ Finset.range p, a j =
+    ∏ j ∈ Finset.range p, (3 * a j + stepDefect (a j)) at hid
+  rw [← Finset.prod_filter_mul_prod_filter_not (Finset.range p) (fun j => ¬ 2 ∣ a j),
+    ← Finset.prod_filter_mul_prod_filter_not (Finset.range p) (fun j => ¬ 2 ∣ a j)] at hid
+  set T := (Finset.range p).filter fun j => ¬ ¬ 2 ∣ a j with hT
+  have heven : ∏ j ∈ T, (3 * a j + stepDefect (a j)) = 3 ^ T.card * ∏ j ∈ T, a j := by
+    rw [← Finset.prod_const, ← Finset.prod_mul_distrib]
+    refine Finset.prod_congr rfl fun j hj => ?_
+    have h2 : a j % 2 = 0 := by
+      simp only [hT, Finset.mem_filter, not_not] at hj; exact Int.emod_eq_zero_of_dvd hj.2
+    rw [stepDefect_eq_zero_of_even h2]; ring
+  have hTcard : T.card = p - S.card := by
+    have hsum : S.card + T.card = p := by
+      convert Finset.card_filter_add_card_filter_not (s := Finset.range p) (fun j => ¬ 2 ∣ a j)
+      exact (Finset.card_range p).symm
+    omega
+  have hTpos : 0 < ∏ j ∈ T, a j :=
+    Finset.prod_pos fun j hj => hpos j (Finset.mem_filter.mp hj).1
+  rw [heven] at hid
+  set A := ∏ j ∈ S, a j
+  set B := ∏ j ∈ S, (3 * a j + stepDefect (a j))
+  have hstar : 2 ^ e * A = 3 ^ (p - S.card) * B := by
+    rw [← hTcard]; apply mul_right_cancel₀ hTpos.ne'; linear_combination hid
+  have hApos : 0 < A := Finset.prod_pos fun j hj => hpos j (Finset.mem_filter.mp hj).1
+  have h3p : (3 : ℤ) ^ p = 3 ^ (p - S.card) * 3 ^ S.card := by
+    rw [← pow_add]; congr 1; omega
+  have hSmem : ∀ j ∈ S, m ≤ a j ∧ -1 ≤ stepDefect (a j) ∧ stepDefect (a j) ≤ 1 := fun j hj =>
+    ⟨hmin j (Finset.mem_range.mp (Finset.mem_filter.mp hj).1), stepDefect_mem (a j)⟩
+  have hlo : (3 * m - 1) ^ S.card * (3 ^ S.card * A) ≤ (3 * m) ^ S.card * B := by
+    calc (3 * m - 1) ^ S.card * (3 ^ S.card * A) = ∏ j ∈ S, ((3 * m - 1) * (3 * a j)) := by
+          rw [Finset.prod_mul_distrib, Finset.prod_mul_distrib, Finset.prod_const,
+            Finset.prod_const]
+      _ ≤ ∏ j ∈ S, (3 * m * (3 * a j + stepDefect (a j))) := by
+          refine Finset.prod_le_prod (fun j hj => ?_) (fun j hj => ?_)
+          · obtain ⟨h1, -, -⟩ := hSmem j hj; nlinarith
+          · obtain ⟨h1, h2, -⟩ := hSmem j hj; nlinarith
+      _ = (3 * m) ^ S.card * B := by rw [Finset.prod_mul_distrib, Finset.prod_const]
+  have hhi : (3 * m) ^ S.card * B ≤ (3 * m + 1) ^ S.card * (3 ^ S.card * A) := by
+    calc (3 * m) ^ S.card * B = ∏ j ∈ S, (3 * m * (3 * a j + stepDefect (a j))) := by
+          rw [Finset.prod_mul_distrib, Finset.prod_const]
+      _ ≤ ∏ j ∈ S, ((3 * m + 1) * (3 * a j)) := by
+          refine Finset.prod_le_prod (fun j hj => ?_) (fun j hj => ?_)
+          · obtain ⟨h1, h2, -⟩ := hSmem j hj; nlinarith
+          · obtain ⟨h1, -, h3⟩ := hSmem j hj; nlinarith
+      _ = (3 * m + 1) ^ S.card * (3 ^ S.card * A) := by
+          rw [Finset.prod_mul_distrib, Finset.prod_mul_distrib, Finset.prod_const,
+            Finset.prod_const]
+  rw [hk]
+  have h3pk : (0 : ℤ) ≤ 3 ^ (p - S.card) := by positivity
+  constructor
+  · refine le_of_mul_le_mul_right ?_ hApos
+    calc 3 ^ p * (3 * m - 1) ^ S.card * A
+        = 3 ^ (p - S.card) * ((3 * m - 1) ^ S.card * (3 ^ S.card * A)) := by rw [h3p]; ring
+      _ ≤ 3 ^ (p - S.card) * ((3 * m) ^ S.card * B) := mul_le_mul_of_nonneg_left hlo h3pk
+      _ = 2 ^ e * (3 * m) ^ S.card * A := by linear_combination (-(3 * m) ^ S.card) * hstar
+  · refine le_of_mul_le_mul_right ?_ hApos
+    calc 2 ^ e * (3 * m) ^ S.card * A
+        = 3 ^ (p - S.card) * ((3 * m) ^ S.card * B) := by
+          linear_combination (3 * m) ^ S.card * hstar
+      _ ≤ 3 ^ (p - S.card) * ((3 * m + 1) ^ S.card * (3 ^ S.card * A)) :=
+          mul_le_mul_of_nonneg_left hhi h3pk
+      _ = 3 ^ p * (3 * m + 1) ^ S.card * A := by rw [h3p]; ring
 
 /-- The Theorem A bound `M(p, e) = ⌊(k · max(2^e, 3^p) + D) / (3D)⌋`, `D = |2^e − 3^p|`,
 `k = e − p`, on the minimum of a cycle of length `p` with `e` halvings. -/
