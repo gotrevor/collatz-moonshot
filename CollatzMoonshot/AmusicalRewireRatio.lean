@@ -26,8 +26,8 @@ the successor in the chain: it differs from `U` at most `2k` times at scale `k`,
 swapping one image at scale `k` for another.
 
 Paper proof: agent report `global.md` §2 (2026-10-13; `rewire.py` builds the chain on `U`'s
-apparent orbits below `1500`: one chain, ratio in `[0.336, 2.98]`).  Kernel-checked 2026-10-13 by the rewire treadmill
-(`HANDOFF-amusical-rewire.md`).
+apparent orbits below `1500`: one chain, ratio in `[0.336, 2.98]`).
+Kernel-checked 2026-10-13 by the rewire treadmill (`HANDOFF-amusical-rewire.md`).
 -/
 
 namespace CollatzMoonshot.Amusical

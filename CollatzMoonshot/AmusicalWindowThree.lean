@@ -26,8 +26,8 @@ The proof uses only finite information:
   the forward itinerary of some integer (`exists_forward_itinerary`), so `ι` is not onto.
 
 Paper proof: agent report `q1.md` §4 (2026-10-13), re-derived independently by
-`scripts/amusical/w3check.py`; certificates in `scripts/amusical/w3certs.txt`.  Kernel-checked 2026-10-13 by the w3 treadmill
-(`HANDOFF-amusical-w3.md`).
+`scripts/amusical/w3check.py`; certificates in `scripts/amusical/w3certs.txt`.
+Kernel-checked 2026-10-13 by the w3 treadmill (`HANDOFF-amusical-w3.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
