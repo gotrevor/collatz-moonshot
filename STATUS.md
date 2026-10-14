@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical ping-pong transition kernel:** the exact residue transitions and
+> `(v₅,v₇)` counter changes for both engine phases are now proved in
+> `AmusicalPingPong/Phase.lean`, together with divisibility-by-3 of every engine image.  These are
+> the load-bearing one-step facts for the still-open seed-to-seed cycle.  Two target sorries
+> remain; read `HANDOFF-amusical-pingpong.md`.
+
 > **2026-10-13, amusical escape objective COMPLETE:**
 > `CollatzMoonshot/AmusicalEscape.lean` is sorry-free with every ratified statement unchanged.
 > `escape_forward` and `escape_backward` now follow from injectivity-driven escape from finite

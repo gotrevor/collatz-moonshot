@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalAntiKohl
+import CollatzMoonshot.AmusicalPingPong.Phase
 
 /-!
 # A ping-pong engine: infinitely many orbits without a periodic cone
