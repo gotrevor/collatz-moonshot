@@ -1,0 +1,76 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+import CollatzMoonshot.AmusicalNearCycleLaw
+
+/-!
+# Run-bounded near-cycles (Theorem MR)
+
+The 2026-10-14 "ncbaker" agent (research §38) carried the Steiner / Simons–de Weger cycle method
+over to near-cycles.  For a near-cycle start `p` with return time `g`, write `m` for the number of
+`E`-runs of its excursion and `Λ = g log 3 − a log 2` (`a` = bits consumed).
+
+**`nearCycleAt_linearForm` (MR I).**  `−m < p Λ < D + m`.  The carry is bounded run by run: along
+an odd run `z ↦ z'` has `z − 1 ≥ (4/3)(z' − 1)`, so a run ending at `X` contributes `< 1/(X − 1)`,
+and every run ends above `p`.
+
+**`nearCycleAt_numE_le`, `nearCycleAt_numE_ge` (MR II).**  An `E`-run at a local minimum `x_j`
+has length `≤ log₂ x_j` (`2^{a_j} ∣ x_j`, the one integrality input), so its peak is `≤ x_j^θ`
+and `#E ≤ log₂ p · (θ^m − 1)/(θ − 1)`.  Conversely (I) gives `#E > (2 − θ) g − 1` once `p > 1.5 m`.
+
+**`nearCycleAt_le_of_eRuns_le` (MR-P).**  With Rhin's linear-forms bound as a hypothesis `Prop`,
+near-cycle starts with at most `m` runs satisfy `p ≤ C_m · D · (log D + 1)^13.3`: the location
+clause of Conjecture LIN (§37) holds on every run stratum.
+
+The agent also proves the linear law `#NC_D^(≤m) = κ_{≤m} D + O(D^{θ/2+ε})` on every stratum
+(`κ₁ = 2.736…`; exhaustive count `179 332` at `D = 2¹⁶` against `179 329.5`), and that LIN's density
+clause is equivalent to run tightness.  The 1-near-cycle starts with at most 32 runs are exactly
+`2, 4, 6, 10, 88, 112` (exhaustive computation).  Those are recorded in research §38.
+-/
+
+namespace CollatzMoonshot.Amusical
+
+/-- **Literature input (Rhin 1987, as used in Simons 2022, Lemma 10), a hypothesis `Prop`.** -/
+def RhinBound : Prop :=
+  ∀ a g : ℕ, 2 ≤ max a g →
+    ((max a g : ℝ) ^ (-(13.3 : ℝ))) ≤ |a * Real.log 2 - g * Real.log 3|
+
+/-- The number of `E`-steps among the first `g` steps of the orbit of `p`. -/
+def numE (p g : ℕ) : ℕ :=
+  ((Finset.range g).filter fun t => Even (amusical^[t] (p : ℤ))).card
+
+/-- The number of maximal `E`-runs among the first `g` steps of the orbit of `p`. -/
+def eRuns (p g : ℕ) : ℕ :=
+  ((Finset.range g).filter fun t =>
+    Even (amusical^[t] (p : ℤ)) ∧ (t = 0 ∨ Odd (amusical^[t - 1] (p : ℤ)))).card
+
+/-- The bits consumed by the first `g` steps: `#E + 2 #O`. -/
+def excursionWeight (p g : ℕ) : ℕ := 2 * g - numE p g
+
+/-- **Target (MR I).**  The carry bound: `−m < p Λ < D + m`. -/
+theorem nearCycleAt_linearForm {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p) :
+    -(eRuns p g : ℝ) < p * ((g : ℝ) * Real.log 3 - excursionWeight p g * Real.log 2) ∧
+      p * ((g : ℝ) * Real.log 3 - excursionWeight p g * Real.log 2) < D + eRuns p g := by
+  sorry
+
+/-- **Target (MR II, upper half).**  Few runs force few `E`-steps. -/
+theorem nearCycleAt_numE_le {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p) :
+    (numE p g : ℝ) ≤
+      Real.logb 2 p * (Real.logb 2 3 ^ eRuns p g - 1) / (Real.logb 2 3 - 1) := by
+  sorry
+
+/-- **Target (MR II, lower half).** -/
+theorem nearCycleAt_numE_ge {D p g : ℕ} (h : NearCycleAt D p g)
+    (hp : 3 * eRuns p g < 2 * p) :
+    (2 - Real.logb 2 3) * g - 1 < numE p g := by
+  sorry
+
+/-- **Target (MR-P).**  Run-bounded near-cycle starts are polynomially bounded in `D`. -/
+theorem nearCycleAt_le_of_eRuns_le (hR : RhinBound) :
+    ∃ C : ℕ → ℝ, ∀ {D p g m : ℕ}, NearCycleAt D p g → eRuns p g ≤ m → 1 ≤ D →
+      (p : ℝ) ≤ C m * D * (Real.log D + 1) ^ (13.3 : ℝ) := by
+  sorry
+
+end CollatzMoonshot.Amusical

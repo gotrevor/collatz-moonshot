@@ -1135,3 +1135,40 @@ T1–T2 by hand.  NC₀ (near-cycle starts have density 0) is **not** proved.  A
   * Tao-type 3-adic mixing (Tao 2019, Prop 1.14): `U`'s version holds exactly, but only inside the
     horizon.  Tao gets past the horizon by repeating at ever smaller heights, which needs orbits
     to drift down; `U` and `V` both drift up.
+
+## 38. Run-bounded near-cycles: the cycle method proves the linear law stratum by stratum (2026-10-14, "ncbaker" Opus agent, checked in part)
+
+Lean: `AmusicalNearCycleRuns.lean` (MR I, MR II, MR-P with Rhin as a hypothesis `Prop`; treadmill).
+I checked MR (I) and (II) by hand.  The linear-law theorems L1/Lm are the agent's (PROVED, not yet
+re-derived by me).  Agent odds that this moves (a): about 2%.
+
+* **Theorem MR (PROVED, elementary).**  A near-cycle start `p` (return time `g`, `m` `E`-runs,
+  `Λ = g ln 3 − a ln 2`) satisfies:
+  * **(I)** `−m < pΛ < D + m`.  Along an odd run, `z − 1 ≥ (4/3)(z' − 1)`, so a run ending at `X`
+    adds `< 1/(X − 1)` to the carry.
+  * **(II)** `(2 − θ)g − 1 < #E ≤ log₂p · (θ^m − 1)/(θ − 1)`.  The upper bound uses `2^{a_j} ∣ x_j`,
+    the one integrality input and the one a real `Û`-orbit lacks.
+* **MR-P (PROVED, Rhin as a `Prop`).**  `max NC_D^(≤m) ≤ D (C θ^m log D)^13.3`.  This is LIN's
+  location clause on each run stratum.
+  * Starts with `m ≤ μ log₂ p`, `μ < 0.113`, satisfy `p ≤ D^{1/(1 − μ/0.113) + o(1)}`.
+  * Any effective irrationality measure of `log₂ 3` suffices in place of Rhin's constant.
+* **The linear law on every stratum (L1, Lm; PROVED, Rhin as a `Prop`).**
+  `#NC_D^(≤m) = κ_{≤m} D + O_m(D^{θ/2+ε})`.
+  * For one run, `κ₁ = 2.736351…` has a closed series.  The exhaustive count at `D = 2¹⁶` is
+    `179 332` against `179 329.5`, and the error never exceeds 12 for `D ≤ 2¹⁶`.
+  * Counting works past the residue horizon because `E`-runs are rigid (one residue class each).
+    Mixed A/B odd runs are the only free bits, and prefix balance caps them at 1.41× the `E`-mass
+    before them.
+* **Equivalences (PROVED).**
+  * LIN's density clause holds iff runs are tight, i.e. iff
+    `#{p ∈ NC_D : runs > 0.4 √(log₂ D)} = o(D)`.
+  * `NC_D` is finite iff its run counts are bounded.
+* **Computer theorem C1 (exhaustive, exact arithmetic).**  The 1-near-cycle starts with at most 32
+  runs are exactly `2, 4, 6, 10, 88, 112`.  This is the `D = 1` sibling of §18's no-new-cycle bound.
+  * `m ≤ 5` needs only `p ≤ 5869`, so it is kernel-checkable.
+  * Complete lists: `D ≤ 256` with up to 24 runs, and `D ≤ 2¹⁶` with up to 15 runs (`322 417`
+    starts, 97% of `NC_{2¹⁶}`).
+* **Where the method stops.**  The measured run count is about `g/4.1`, against a proved floor of
+  about `log g`.  For example, the `g = 665` starts have 151–169 runs and a floor of 4.  What is
+  left of LIN lies beyond the residue horizon and has too much entropy for this counting.  It is no
+  easier than LIN (85%).
