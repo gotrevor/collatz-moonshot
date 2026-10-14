@@ -1274,3 +1274,35 @@ Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many su
   `ρ = 0.985597` (forward and backward share `ρ`: Chernoff duality).  Finite basins longer than the
   horizon carry 16–18.5% of `[0, X)` at `X = 2²⁰ … 2²⁴`; a survivor floor needs this mass and no Haar
   argument reaches it.
+
+## 42. T1 integrality is the 2-adic code at the endpoints (2026-10-14, "t1arith" Opus agent, checked)
+
+Asked for an arithmetic invariant of whole excursions that `U` has and Theorem G's `σ` lacks.  None
+is cheaper than (a).  I checked R, LOC, DIV and Proposition H.  Maze row "T1 integrality …".  Lean:
+`AmusicalExcursionCode.lean` (treadmill).  Agent odds that this moves (a): under 1%.
+
+* **Theorem R (PROVED).**  On the class of a word `w`, `2^a(U^g p − p) = Δ(p − x*_w)`, with
+  `x*_w = −C_w/Δ` the word's periodic rational.  So `d ≡ C_w 2^{−a} ≡ C_w 3^{−g} (mod Δ)`, and the
+  depth-`g` starts with word `w` are the integers of `w`'s class mod `2^a` in the window
+  `(x*_w, x*_w + 2^a D/Δ]`.  `C_w mod Δ` is the 2-adic code shifted by `x*_w`, with no digit
+  structure beyond it: the T1 count is §37's beyond-horizon count again.  Checked exactly on all
+  4941 starts of `NC_{1024}` below `2¹⁸` and on four `g = 665` hits; word-first counts match direct
+  counts for every `g ≤ 12`.
+* **Theorem LOC (PROVED).**  Exactly one of `3x/2`, `(3x ± 1)/4` is an integer, namely `U x`.  So an
+  integer endpoint of an excursion forces every intermediate step to be a `U`-branch, and a self-map
+  built from `U`'s branches is `U`.  "Integrality along whole excursions" is stepwise agreement with
+  `U`.  The only integrality input anywhere in §35–§38 is MR(II)'s E-run rigidity `2^{a_j} ∣ x_j`.
+* **Theorem DIV (PROVED).**  `gcd(C_w, Δ) = gcd(d, Δ)`.  Every near-cycle is a 2-adic shadow of a
+  cycle of a layer map `U_q`, `q ∣ Δ_g`; a genuine cycle word carries no near-cycle with `d < Δ`.  No
+  counting leverage.
+* **Barriers (PROVED).**  Beyond some depth the expected count per depth is below 1, so LIN's
+  finiteness clause has the logical shape of "no new cycles" (B1).  Parseval: a typical Fourier
+  coefficient is `≳ 2^{0.78g}` against a main term `≤ D·2^{−0.0209g}`, so no second-moment or
+  sum-over-words argument reaches LIN (B2).
+* **Proposition H (PROVED via NCU).**  A property `X` that `U` has and that excludes every
+  finitely-many-orbit, LIN-sparse model with `O(√Y)` survivors per block gives LIN ⇒ (a).  So the
+  requested separating theorem *is* (a) modulo LIN.
+* **Proposition BO and Conjecture G′ (65%).**  T2, SQ, MR(I) and Lemma K hold for every
+  bounded-offset map `x ↦ (3x + e_x)/2^{w_x}`, `|e_x| ≤ E`; MR(II) does not.  G′: some bounded-offset
+  permutation has one orbit, every `NC_D` finite and `o(√X)` survivors.  If G′ fails, there is a
+  real-affine route to (a) mod LIN, the one live positive possibility (35%).
