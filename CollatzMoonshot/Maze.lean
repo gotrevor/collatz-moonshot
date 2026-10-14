@@ -32,6 +32,7 @@ import CollatzMoonshot.AmusicalAntiKohl
 import CollatzMoonshot.AmusicalPingPong
 import CollatzMoonshot.AmusicalUniform
 import CollatzMoonshot.AmusicalCycleBound
+import CollatzMoonshot.AmusicalFormalMin
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -254,7 +255,10 @@ def register : List Hall := [
    "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: excluding cycles by bounding every cycle element", .refuted,
    "element bounds grow like 3^p/|2^e−3^p|; only the minimum is polynomial (Theorem A★)",
-   "AmusicalCycleBound.lean; agent report cycles.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalCycleBound.lean; agent report cycles.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: coarse heights F(x mod M, scale) with bounded cocycle", .refuted,
+   "two-visit steering makes them bounded once one orbit is infinite (Proposition G)",
+   "AmusicalFormalMin.lean; agent report emptyint.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -376,7 +380,9 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.AmusicalTopologicallyTransitive]⟩,
   ⟨"amusical: excluding cycles by bounding every cycle element",
    [``CollatzMoonshot.Amusical.amusical_cycle_min_bound,
-    ``CollatzMoonshot.Amusical.amusical_noNewCycles_31866], []⟩]
+    ``CollatzMoonshot.Amusical.amusical_noNewCycles_31866], []⟩,
+  ⟨"amusical: coarse heights F(x mod M, scale) with bounded cocycle",
+   [``CollatzMoonshot.Amusical.coarse_quasiInvariant_bounded], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -389,7 +395,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 44 rows, 36 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 45 rows, 37 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

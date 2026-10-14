@@ -497,3 +497,35 @@ stay open.
     excluded.  C4 credence ~3%.
 * **Novelty** (agent, ~85%): the 31866 bound, the minimum-search method, and the `r ≤ 32` theorem.
 
+## 19. Empty-interior certificates (2026-10-13, "emptyint" agent, checked)
+
+Lean: `AmusicalFormalMin.lean` (the formal-walk counterexample is proved; Theorem F and
+Proposition G1 are targets).  Every natural empty-interior candidate is either dead or stuck at the
+per-orbit infinite-horizon wall (Proposition S, orbit of 8).  Agent: under 1% toward a seventh
+orbit.
+
+* **Formal minima `FM = ℤ ∩ (W₂ × W₃)`** (Theorem F, hand-checked).
+  * At most one point per orbit; no periodic points; `FM = −FM`; meets every thin orbit exactly
+    once; upper density `≤ c`.
+  * Certifying one FM point proves its orbit infinite.
+  * On `[1, 10⁶]`, FM equals the orbit minima exactly (49957 each).
+  * The formal walk can mis-order near ties of `t log₂ 3`: `U¹² 31 = 30`, while `2¹⁹ < 3¹²` (proved
+    by `decide`).
+* **Proposition G (resolution gate, paper).**  If some orbit is infinite, every height
+  `F(x mod M, ⌊log₂ x⌋)` with bounded cocycle is bounded.  The same holds for growing
+  `M(s) | 2^∞3^∞N₀` with `M(s) ≤ 2^{s/10}`, and transversals defined by residues at resolution
+  `2^{s/(10(K+1))}` are dead (G2′).
+  * So a certificate must read `Ω(log x)` digits.
+  * Open: a growing prime-to-6 modulus (needs a diameter bound for the affine action).
+* **Archimedean invariant (paper identities).**
+  * On thin orbits (`Σ 1/y < ∞`), `Q(O) = ∏(1 + χ₄(y)/(3y)) = L₊/L₋` is an orbit invariant.
+  * `Δ = L₊ − L₋` depends on the itinerary alone, and `η = x/|Δ|` is a summable-cocycle height.
+  * Teeth: `|Q_H| = 1` on conjugation-symmetric orbits of the Gaussian H (to 1e-14).
+  * `Q = 1` for `U` would need an archimedean reversor, which Theorem NR excludes.
+  * Separating orbits by `Q` is "no late return", the Proposition S wall again.
+  * All 1002 orbits with minimum `≤ 2·10⁴` have distinct `Q`.
+* **Dead.**
+  * Tail and digit statistics: Kolmogorov 0-1, plus normality, which is believed but unprovable.
+  * Weighted transversals `φ(x)/x`: alive, but weaker than `AtLeastLinearGrowth`.
+* Consistency check: `E[m · W(O_m)] = 19.98`, against `1/c = 20.09`.
+
