@@ -1,6 +1,6 @@
 # HANDOFF 2026-10-14: amusical squares done
 
-Branch `wip/amusical-squares`; proofs landed in `9461c52`, `495db6b`, `4fc930d`.
+Branch `wip/amusical-squares` (HEAD before this note: `527309f`); proofs landed in `9461c52`, `495db6b`, `4fc930d`.
 
 ## Done
 
