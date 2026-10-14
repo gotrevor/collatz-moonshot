@@ -189,6 +189,63 @@ open Classical in
 def IntDensityLE (A : Set ℤ) (ε : ℝ) : Prop :=
   ∀ᶠ X : ℕ in Filter.atTop, (((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card : ℝ) ≤ ε * X
 
+/-- Membership in a forward-invariant cone is monotone along the integer coordinates of an
+orbit.  This is the order-theoretic core of the finite-error term in Theorem T. -/
+theorem cone_mem_zpow_mono (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) {x : ℤ} {a b : ℤ} (hab : a ≤ b)
+    (ha : (σ ^ a) x ∈ S) : (σ ^ b) x ∈ S := by
+  let d := (b - a).toNat
+  have hd : b = a + d := by
+    rw [Int.toNat_of_nonneg (sub_nonneg.mpr hab)]
+    omega
+  rw [hd]
+  induction d with
+  | zero => simpa
+  | succ d ih =>
+      rw [Nat.cast_succ]
+      have he : a + ((d : ℤ) + 1) = 1 + (a + (d : ℤ)) := by omega
+      rw [he, zpow_add, Equiv.Perm.mul_apply, zpow_one]
+      exact hS _ ih
+
+/-- A nontrivial monotone truth set on `ℤ` has a first true index.  Applied to cone membership
+along an orbit, this supplies the unique transition around which Theorem T discards finitely many
+points. -/
+theorem exists_first_of_monotone_int (P : ℤ → Prop)
+    (hmono : ∀ ⦃a b⦄, a ≤ b → P a → P b) (htrue : ∃ a, P a)
+    (hfalse : ∃ a, ¬ P a) : ∃ t, P t ∧ ¬ P (t - 1) := by
+  obtain ⟨a, ha⟩ := hfalse
+  have hbdd : ∃ b : ℤ, ∀ z, P z → b ≤ z := by
+    refine ⟨a + 1, ?_⟩
+    intro z hz
+    by_contra h
+    have hza : z ≤ a := by omega
+    exact ha (hmono hza hz)
+  obtain ⟨t, ht, hleast⟩ := Int.exists_least_of_bdd hbdd htrue
+  refine ⟨t, ht, ?_⟩
+  intro hprev
+  have := hleast (t - 1) hprev
+  omega
+
+/-- Every orbit is wholly in the cone, wholly outside it, or crosses its boundary exactly once
+in the ordered integer parametrization. -/
+theorem cone_orbit_trichotomy (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) (x : ℤ) :
+    (∀ k : ℤ, (σ ^ k) x ∈ S) ∨ (∀ k : ℤ, (σ ^ k) x ∉ S) ∨
+      ∃ t : ℤ, (σ ^ t) x ∈ S ∧ (σ ^ (t - 1)) x ∉ S := by
+  classical
+  by_cases hall : ∀ k : ℤ, (σ ^ k) x ∈ S
+  · exact Or.inl hall
+  by_cases hnone : ∀ k : ℤ, (σ ^ k) x ∉ S
+  · exact Or.inr (Or.inl hnone)
+  · apply Or.inr
+    apply Or.inr
+    apply exists_first_of_monotone_int (fun k => (σ ^ k) x ∈ S)
+    · intro a b hab ha
+      exact cone_mem_zpow_mono σ S hS hab ha
+    · obtain ⟨k, hk⟩ := not_forall.mp hnone
+      exact ⟨k, Classical.not_not.mp hk⟩
+    · exact not_forall.mp hall
+
 /-- **Target (Theorem T).**  A cone `S` (`σ S ⊆ S`) whose forward cores `σⁿ S` and never-entering
 sets `{x : σʲ x ∉ S, j ≤ n}` both have density tending to `0` makes every finite union of orbits
 density `0`.  Paper proof: an orbit is inside `S`, inside the complement, or a backward ray in the

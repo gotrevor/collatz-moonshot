@@ -1,5 +1,43 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: Theorem T orbit trichotomy isolated
+
+The order-theoretic crux of `orbit_densityZero_of_transientCone` is now explicit in three proved
+helpers in `CollatzMoonshot/AmusicalAntiKohl.lean`:
+
+* `cone_mem_zpow_mono`: forward invariance makes membership monotone in the integer coordinate of
+  a two-sided permutation orbit;
+* `exists_first_of_monotone_int`: a nonempty, non-universal monotone predicate on `ℤ` has a first
+  true index;
+* `cone_orbit_trichotomy`: every orbit is wholly inside the cone, wholly outside it, or has a
+  first cone point.
+
+This removes the main qualitative ambiguity in the paper proof.  In the transition case with
+first index `t`, a point at coordinate `k ≥ t + n` lies in `(σ ^ n) '' S`, while a point at
+coordinate `k < t - n` lies in the `n`-step never-entering set.  Thus only the finite coordinate
+interval around `t` remains to be converted into the filtered-box cardinality estimate.
+
+Verification attempted:
+
+```text
+git diff --check
+lake env lean -j1 CollatzMoonshot/AmusicalAntiKohl.lean
+```
+
+`git diff --check` passes.  The first Lean run reached elaboration, exposed an unavailable helper
+name (`Int.exists_eq_add_of_le`), and the proof was rewritten using `Int.toNat`.  Three subsequent
+checks then failed during imports with the environment's intermittent `Too many open files`
+failure.  A later retry completed successfully with exactly the five pre-existing target sorry
+warnings.
+
+Current blocker: no mathematical or operator blocker.  Five ratified target sorries remain.  The
+only immediate issue is the transient import-level file-descriptor failure.
+
+Next highest-value attack: prove that, for a finite seed set `F`, the part of its orbit union
+outside the two `n`-cores has
+cardinality at most `F.card * (2 * n + 1)`.  Combine that fixed finite error with the two
+`IntDensityLE` bounds (epsilon split in half) to close `orbit_densityZero_of_transientCone`.
+
 ## 2026-10-14: five ratified targets proved
 
 `CollatzMoonshot/AmusicalAntiKohl.lean` now has five sorries rather than ten.  This checkpoint
