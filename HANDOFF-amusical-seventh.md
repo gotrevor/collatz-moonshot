@@ -1,5 +1,60 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 review lap: one-sided Chernoff residue bounds proved
+
+### Concrete advance
+
+- Fresh review confirmed that all four ratified theorem types are unchanged from kickoff commit
+  `5fa5871` and that `sparse_sweep` is the sole scoped proof hole.  The minimizer-to-descent
+  reduction from the previous lap is therefore still on the direct route to the headline.
+- Added the shared forward/backward Chernoff engine to
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`.  The normalized word weight uses factors
+  `1 / √6` and `1 / √3`; `sum_descentChernoffWeight` proves its exact total mass is `ρ^L`, where
+  `ρ = 1 / √6 + 1 / √3`, and `descentChernoffRate_lt_ninetyNineHundredths` proves
+  `ρ < 99 / 100`.
+- Proved the two pointwise Markov inequalities `fwdSlopeDescends_weight_lt` and
+  `bwdSlopeDescends_weight_lt`.  The same weight handles the uniform forward-word law and the
+  nonuniform backward law because a backward word with `a` marked letters has residue-fiber
+  weight `2^a / 3^L`.
+- Proved generic branch-word fiber decompositions and the load-bearing finite estimates
+  `fwdSlopeDescends_residue_proportion_le_ninetyNineHundredths` and
+  `bwdSlopeDescends_residue_proportion_le_ninetyNineHundredths`: the share of length-`L`
+  forward residues modulo `4^L`, respectively backward residues modulo `3^L`, with descending
+  affine slope is at most `(99/100)^L`.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `lake env lean CollatzMoonshot/AmusicalSeventh.lean` (green; exactly the original
+  `sparse_sweep` sorry warning).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.fwdSlopeDescends_residue_proportion_le_ninetyNineHundredths`
+  (`FORMALIZE-TIER GREEN`; axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- The same gate for
+  `CollatzMoonshot.Amusical.bwdSlopeDescends_residue_proportion_le_ninetyNineHundredths`
+  was `FORMALIZE-TIER GREEN` with the same axiom ledger.
+- `git diff --check` and the 100-character changed-Lean-line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The probabilistic core of Lemma T is now proved at the exact
+branch-word/residue level.  What remains is bookkeeping that connects an actual comparison
+`U^i n < n` or `U^-i n < n` above the explicit Lemma W threshold to `FwdSlopeDescends i` or
+`BwdSlopeDescends i`, lifts the complete-period bounds to an initial interval, and union-bounds
+over `K < i ≤ L`.
+
+### Next highest-value attack
+
+Extract the individual forward and backward comparison equivalences from the proof of
+`isWindowMin_iff_words_of_ge` (without duplicating its threshold arithmetic).  Then prove the
+periodic initial-interval count and finite geometric union bound.  Combine that exceptional-set
+bound with `centered_minimizer_outside_implies_descent`,
+`isWindowMin_sub_of_centered_minimizer`, and `windowMin_card_mul_le`; the remaining final step is
+the elementary choice of `K`, logarithmic `L`, and `c` in `sparse_sweep`.
+
 ## 2026-10-14 lap: exceptional minimizers reduced to descent events
 
 ### Concrete advance

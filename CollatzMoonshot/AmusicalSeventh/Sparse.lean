@@ -173,6 +173,325 @@ theorem isWindowMin_iff_words_of_ge (L n : ℕ) (hn : 2 * 324 ^ L ≤ n) :
     exact ⟨(hF t ht1 ht2).mpr (h1 t ht1 ht2),
       (hB t ht1 ht2).mpr (h2 t ht1 ht2)⟩
 
+/-! ## Chernoff bounds for one-sided descents -/
+
+/-- The common Chernoff weight for forward and backward branch words.  An unmarked letter has
+normalized weight `1 / √6`, while a marked letter has normalized weight `1 / √3`. -/
+noncomputable def descentChernoffWeight {L : ℕ} (w : Fin L → Bool) : ℝ :=
+  (1 / Real.sqrt 6) ^ latticeUnmarked w *
+    (1 / Real.sqrt 3) ^ latticeMarked w
+
+/-- The exponential rate in the one-sided descent bounds. -/
+noncomputable def descentChernoffRate : ℝ :=
+  1 / Real.sqrt 6 + 1 / Real.sqrt 3
+
+theorem sum_bool_cons_real {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
+    ∑ w, f w = ∑ b : Bool, ∑ u : Fin n → Bool, f (Fin.cons b u) := by
+  refine ((Fintype.sum_equiv (Fin.consEquiv (fun _ : Fin (n + 1) ↦ Bool))
+    (fun x => f (Fin.cons x.1 x.2)) f (fun _ => rfl)).symm).trans ?_
+  exact Fintype.sum_prod_type _
+
+theorem descentChernoffWeight_cons_false {n : ℕ} (u : Fin n → Bool) :
+    descentChernoffWeight (Fin.cons false u) =
+      (1 / Real.sqrt 6) * descentChernoffWeight u := by
+  simp only [descentChernoffWeight, latticeMarked_cons, latticeUnmarked_cons,
+    Bool.false_eq_true, ↓reduceIte, zero_add]
+  rw [show 1 + latticeUnmarked u = latticeUnmarked u + 1 by omega, pow_succ]
+  ring
+
+theorem descentChernoffWeight_cons_true {n : ℕ} (u : Fin n → Bool) :
+    descentChernoffWeight (Fin.cons true u) =
+      (1 / Real.sqrt 3) * descentChernoffWeight u := by
+  simp only [descentChernoffWeight, latticeMarked_cons, latticeUnmarked_cons,
+    ↓reduceIte, zero_add]
+  rw [show 1 + latticeMarked u = latticeMarked u + 1 by omega, pow_succ]
+  ring
+
+/-- The Chernoff weights of all Boolean words of length `L` have total mass `ρ^L`. -/
+theorem sum_descentChernoffWeight (L : ℕ) :
+    ∑ w : Fin L → Bool, descentChernoffWeight w = descentChernoffRate ^ L := by
+  unfold descentChernoffRate
+  induction L with
+  | zero => simp [descentChernoffWeight, latticeMarked, latticeUnmarked]
+  | succ L ih =>
+      rw [sum_bool_cons_real, Fintype.sum_bool]
+      simp_rw [descentChernoffWeight_cons_false, descentChernoffWeight_cons_true]
+      rw [← Finset.mul_sum, ← Finset.mul_sum, ih, pow_succ]
+      ring
+
+/-- A convenient rational upper bound for the exact Chernoff rate
+`ρ = 1 / √6 + 1 / √3`. -/
+theorem descentChernoffRate_lt_ninetyNineHundredths :
+    descentChernoffRate < (99 : ℝ) / 100 := by
+  unfold descentChernoffRate
+  have hs6 : (61 : ℝ) / 25 < Real.sqrt 6 := by
+    rw [← sq_lt_sq₀ (by positivity) (Real.sqrt_nonneg _)]
+    rw [Real.sq_sqrt (by norm_num)]
+    norm_num
+  have hs3 : (173 : ℝ) / 100 < Real.sqrt 3 := by
+    rw [← sq_lt_sq₀ (by positivity) (Real.sqrt_nonneg _)]
+    rw [Real.sq_sqrt (by norm_num)]
+    norm_num
+  have hi6 : 1 / Real.sqrt 6 < (25 : ℝ) / 61 := by
+    have hi := one_div_lt_one_div_of_lt (by positivity) hs6
+    norm_num at hi ⊢
+    exact hi
+  have hi3 : 1 / Real.sqrt 3 < (100 : ℝ) / 173 := by
+    have hi := one_div_lt_one_div_of_lt (by positivity) hs3
+    norm_num at hi ⊢
+    exact hi
+  linarith
+
+theorem descentChernoffWeight_sq {L : ℕ} (w : Fin L → Bool) :
+    descentChernoffWeight w ^ 2 =
+      (1 / 6 : ℝ) ^ latticeUnmarked w *
+        (1 / 3 : ℝ) ^ latticeMarked w := by
+  unfold descentChernoffWeight
+  rw [mul_pow]
+  rw [show ((1 / Real.sqrt 6 : ℝ) ^ latticeUnmarked w) ^ 2 =
+      ((1 / Real.sqrt 6 : ℝ) ^ 2) ^ latticeUnmarked w by
+        rw [← pow_mul, ← pow_mul, Nat.mul_comm]]
+  rw [show ((1 / Real.sqrt 3 : ℝ) ^ latticeMarked w) ^ 2 =
+      ((1 / Real.sqrt 3 : ℝ) ^ 2) ^ latticeMarked w by
+        rw [← pow_mul, ← pow_mul, Nat.mul_comm]]
+  norm_num [Real.sq_sqrt]
+
+theorem latticeMarked_add_unmarked {L : ℕ} (w : Fin L → Bool) :
+    latticeMarked w + latticeUnmarked w = L := by
+  have h := Finset.card_filter_add_card_filter_not
+    (s := (Finset.univ : Finset (Fin L))) (fun i => w i = true)
+  simpa [latticeMarked, latticeUnmarked] using h
+
+/-- If a forward word has descending affine slope, its uniform word mass is strictly below its
+Chernoff weight. -/
+theorem fwdSlopeDescends_weight_lt {L : ℕ} (w : Fin L → Bool)
+    (h : 3 ^ L < 2 ^ (L + latticeMarked w)) :
+    (1 / (2 : ℝ) ^ L) < descentChernoffWeight w := by
+  set a := latticeMarked w
+  set b := latticeUnmarked w
+  have hab : a + b = L := by simpa [a, b] using latticeMarked_add_unmarked w
+  have hden : 6 ^ b * 3 ^ a < 4 ^ L := by
+    calc
+      6 ^ b * 3 ^ a = 2 ^ b * 3 ^ L := by
+        rw [show 6 = 2 * 3 by norm_num, mul_pow]
+        calc
+          2 ^ b * 3 ^ b * 3 ^ a = 2 ^ b * (3 ^ b * 3 ^ a) := by ring
+          _ = 2 ^ b * 3 ^ (b + a) := by rw [pow_add]
+          _ = 2 ^ b * 3 ^ L := by congr 2; omega
+      _ < 2 ^ b * 2 ^ (L + a) :=
+        Nat.mul_lt_mul_of_pos_left h (by positivity)
+      _ = 4 ^ L := by
+        rw [← pow_add, show b + (L + a) = 2 * L by omega, pow_mul]
+        norm_num
+  rw [← sq_lt_sq₀ (by positivity) (by unfold descentChernoffWeight; positivity)]
+  rw [show descentChernoffWeight w ^ 2 =
+      (1 / 6 : ℝ) ^ b * (1 / 3 : ℝ) ^ a by
+        simpa [a, b] using descentChernoffWeight_sq w]
+  have hdenR : (6 : ℝ) ^ b * 3 ^ a < 4 ^ L := by exact_mod_cast hden
+  calc
+    (1 / (2 : ℝ) ^ L) ^ 2 = 1 / (4 : ℝ) ^ L := by
+      rw [div_pow]
+      congr 1
+      · norm_num
+      · rw [← pow_mul, Nat.mul_comm L 2, pow_mul]
+        norm_num
+    _ < 1 / ((6 : ℝ) ^ b * 3 ^ a) :=
+      one_div_lt_one_div_of_lt (by positivity) hdenR
+    _ = (1 / 6 : ℝ) ^ b * (1 / 3 : ℝ) ^ a := by
+      norm_num [div_pow]
+      ring
+
+/-- If a backward word has descending affine slope, its normalized residue-fiber mass is strictly
+below its Chernoff weight. -/
+theorem bwdSlopeDescends_weight_lt {L : ℕ} (w : Fin L → Bool)
+    (h : 2 ^ (L + latticeMarked w) < 3 ^ L) :
+    (2 : ℝ) ^ latticeMarked w / 3 ^ L < descentChernoffWeight w := by
+  set a := latticeMarked w
+  set b := latticeUnmarked w
+  have hab : a + b = L := by simpa [a, b] using latticeMarked_add_unmarked w
+  have hcross : 4 ^ a * (6 ^ b * 3 ^ a) < 9 ^ L := by
+    calc
+      4 ^ a * (6 ^ b * 3 ^ a) = 2 ^ (2 * a + b) * 3 ^ (b + a) := by
+        rw [show 4 = 2 ^ 2 by norm_num, ← pow_mul]
+        rw [show 6 = 2 * 3 by norm_num, mul_pow, pow_add, pow_add]
+        ring
+      _ = 2 ^ (L + a) * 3 ^ L := by congr 2 <;> omega
+      _ < 3 ^ L * 3 ^ L := Nat.mul_lt_mul_of_pos_right h (by positivity)
+      _ = 9 ^ L := by rw [← mul_pow]; norm_num
+  rw [← sq_lt_sq₀ (by positivity) (by unfold descentChernoffWeight; positivity)]
+  rw [show descentChernoffWeight w ^ 2 =
+      (1 / 6 : ℝ) ^ b * (1 / 3 : ℝ) ^ a by
+        simpa [a, b] using descentChernoffWeight_sq w]
+  have hcrossR : (4 : ℝ) ^ a * ((6 : ℝ) ^ b * 3 ^ a) < 9 ^ L := by
+    exact_mod_cast hcross
+  calc
+    ((2 : ℝ) ^ a / 3 ^ L) ^ 2 = 4 ^ a / 9 ^ L := by
+      rw [div_pow]
+      congr 1
+      · rw [← pow_mul, Nat.mul_comm a 2, pow_mul]
+        norm_num
+      · rw [← pow_mul, Nat.mul_comm L 2, pow_mul]
+        norm_num
+    _ < 1 / ((6 : ℝ) ^ b * 3 ^ a) := by
+      rw [div_lt_div_iff₀ (by positivity) (by positivity)]
+      simpa using hcrossR
+    _ = (1 / 6 : ℝ) ^ b * (1 / 3 : ℝ) ^ a := by
+      norm_num [div_pow]
+      ring
+
+/-- A forward slope descent occurs when the marked-letter product makes the affine slope less
+than one. -/
+abbrev FwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
+  3 ^ L < 2 ^ (L + latticeMarked w)
+
+/-- A backward slope descent is the reverse marked-letter inequality. -/
+abbrev BwdSlopeDescends (L : ℕ) (w : Fin L → Bool) : Prop :=
+  2 ^ (L + latticeMarked w) < 3 ^ L
+
+/-- Generic fiber count for a predicate on forward branch words. -/
+theorem count_amusicalForwardWord_pred (L : ℕ) (P : (Fin L → Bool) → Prop)
+    [DecidablePred P] :
+    Nat.count (fun r : ℕ => P (amusicalForwardWord L r)) (4 ^ L) =
+      ∑ w : Fin L → Bool, if P w then 2 ^ L else 0 := by
+  classical
+  rw [Nat.count_eq_card_filter_range, Finset.card_eq_sum_card_fiberwise
+    (f := fun r : ℕ => amusicalForwardWord L r) (t := Finset.univ)
+      (fun _ _ => Finset.mem_coe.mpr (Finset.mem_univ _))]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  rw [Finset.filter_filter]
+  split_ifs with hw
+  · rw [← count_amusicalForwardWord_eq L w, Nat.count_eq_card_filter_range]
+    congr 1
+    apply Finset.filter_congr
+    intro r _
+    exact ⟨fun h => h.2, fun h => ⟨h ▸ hw, h⟩⟩
+  · rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    rintro r _ ⟨h1, h2⟩
+    exact hw (h2 ▸ h1)
+
+/-- Generic fiber count for a predicate on backward branch words. -/
+theorem count_amusicalBackwardWord_pred (L : ℕ) (P : (Fin L → Bool) → Prop)
+    [DecidablePred P] :
+    Nat.count (fun r : ℕ => P (amusicalBackwardWord L r)) (3 ^ L) =
+      ∑ w : Fin L → Bool, if P w then 2 ^ latticeMarked w else 0 := by
+  classical
+  rw [Nat.count_eq_card_filter_range, Finset.card_eq_sum_card_fiberwise
+    (f := fun r : ℕ => amusicalBackwardWord L r) (t := Finset.univ)
+      (fun _ _ => Finset.mem_coe.mpr (Finset.mem_univ _))]
+  refine Finset.sum_congr rfl fun w _ => ?_
+  rw [Finset.filter_filter]
+  split_ifs with hw
+  · rw [show latticeMarked w =
+      (Finset.univ.filter fun i : Fin L => w i = true).card by rfl]
+    rw [← count_amusicalBackwardWord_eq L w, Nat.count_eq_card_filter_range]
+    congr 1
+    apply Finset.filter_congr
+    intro r _
+    exact ⟨fun h => h.2, fun h => ⟨h ▸ hw, h⟩⟩
+  · rw [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    rintro r _ ⟨h1, h2⟩
+    exact hw (h2 ▸ h1)
+
+theorem fwdSlopeDescends_word_proportion_le (L : ℕ) :
+    (((Finset.univ.filter fun w : Fin L → Bool =>
+      FwdSlopeDescends L w).card : ℕ) : ℝ) / 2 ^ L ≤ descentChernoffRate ^ L := by
+  classical
+  calc
+    (((Finset.univ.filter fun w : Fin L → Bool =>
+        FwdSlopeDescends L w).card : ℕ) : ℝ) / 2 ^ L =
+        ∑ w : Fin L → Bool,
+          if FwdSlopeDescends L w then 1 / (2 : ℝ) ^ L else 0 := by
+            rw [Finset.card_filter]
+            push_cast
+            rw [Finset.sum_div]
+            apply Finset.sum_congr rfl
+            intro w _
+            split_ifs <;> norm_num
+    _ ≤ ∑ w : Fin L → Bool, descentChernoffWeight w := by
+      apply Finset.sum_le_sum
+      intro w _
+      split_ifs with hw
+      · exact (fwdSlopeDescends_weight_lt w hw).le
+      · unfold descentChernoffWeight
+        positivity
+    _ = _ := sum_descentChernoffWeight L
+
+theorem bwdSlopeDescends_word_proportion_le (L : ℕ) :
+    (∑ w : Fin L → Bool,
+      if BwdSlopeDescends L w then (2 : ℝ) ^ latticeMarked w else 0) / 3 ^ L ≤
+        descentChernoffRate ^ L := by
+  classical
+  calc
+    (∑ w : Fin L → Bool,
+        if BwdSlopeDescends L w then (2 : ℝ) ^ latticeMarked w else 0) / 3 ^ L =
+        ∑ w : Fin L → Bool,
+          if BwdSlopeDescends L w then
+            (2 : ℝ) ^ latticeMarked w / 3 ^ L else 0 := by
+              rw [Finset.sum_div]
+              apply Finset.sum_congr rfl
+              intro w _
+              split_ifs <;> norm_num
+    _ ≤ ∑ w : Fin L → Bool, descentChernoffWeight w := by
+      apply Finset.sum_le_sum
+      intro w _
+      split_ifs with hw
+      · exact (bwdSlopeDescends_weight_lt w hw).le
+      · unfold descentChernoffWeight
+        positivity
+    _ = _ := sum_descentChernoffWeight L
+
+/-- At most a `ρ^L` share of forward residues have descending length-`L` affine slope. -/
+theorem fwdSlopeDescends_residue_proportion_le (L : ℕ) :
+    (Nat.count (fun r : ℕ => FwdSlopeDescends L (amusicalForwardWord L r))
+      (4 ^ L) : ℝ) / 4 ^ L ≤ descentChernoffRate ^ L := by
+  rw [show Nat.count
+      (fun r : ℕ => FwdSlopeDescends L (amusicalForwardWord L (r : ℤ))) (4 ^ L) =
+        ∑ w : Fin L → Bool, if FwdSlopeDescends L w then 2 ^ L else 0 from
+      count_amusicalForwardWord_pred L (FwdSlopeDescends L)]
+  push_cast
+  calc
+    (∑ w : Fin L → Bool, if FwdSlopeDescends L w then (2 : ℝ) ^ L else 0) /
+        (4 : ℝ) ^ L =
+      (((Finset.univ.filter fun w : Fin L → Bool => FwdSlopeDescends L w).card : ℕ) : ℝ) /
+        2 ^ L := by
+          rw [show (4 : ℝ) ^ L = 2 ^ L * 2 ^ L by rw [← mul_pow]; norm_num]
+          rw [← Finset.sum_filter]
+          simp only [Finset.sum_const, nsmul_eq_mul]
+          field_simp
+    _ ≤ _ := fwdSlopeDescends_word_proportion_le L
+
+/-- At most a `ρ^L` share of backward residues have descending length-`L` affine slope. -/
+theorem bwdSlopeDescends_residue_proportion_le (L : ℕ) :
+    (Nat.count (fun r : ℕ => BwdSlopeDescends L (amusicalBackwardWord L r))
+      (3 ^ L) : ℝ) / 3 ^ L ≤ descentChernoffRate ^ L := by
+  rw [show Nat.count
+      (fun r : ℕ => BwdSlopeDescends L (amusicalBackwardWord L (r : ℤ))) (3 ^ L) =
+        ∑ w : Fin L → Bool,
+          if BwdSlopeDescends L w then 2 ^ latticeMarked w else 0 from
+      count_amusicalBackwardWord_pred L (BwdSlopeDescends L)]
+  push_cast
+  exact bwdSlopeDescends_word_proportion_le L
+
+theorem fwdSlopeDescends_residue_proportion_le_ninetyNineHundredths (L : ℕ) :
+    (Nat.count (fun r : ℕ => FwdSlopeDescends L (amusicalForwardWord L r))
+      (4 ^ L) : ℝ) / 4 ^ L ≤ ((99 : ℝ) / 100) ^ L := by
+  calc
+    _ ≤ descentChernoffRate ^ L := fwdSlopeDescends_residue_proportion_le L
+    _ ≤ ((99 : ℝ) / 100) ^ L := by
+      unfold descentChernoffRate
+      gcongr
+      exact descentChernoffRate_lt_ninetyNineHundredths.le
+
+theorem bwdSlopeDescends_residue_proportion_le_ninetyNineHundredths (L : ℕ) :
+    (Nat.count (fun r : ℕ => BwdSlopeDescends L (amusicalBackwardWord L r))
+      (3 ^ L) : ℝ) / 3 ^ L ≤ ((99 : ℝ) / 100) ^ L := by
+  calc
+    _ ≤ descentChernoffRate ^ L := bwdSlopeDescends_residue_proportion_le L
+    _ ≤ ((99 : ℝ) / 100) ^ L := by
+      unfold descentChernoffRate
+      gcongr
+      exact descentChernoffRate_lt_ninetyNineHundredths.le
+
 /-- Every finite centered orbit window has a minimizing offset.  This is the deterministic
 selection underlying the exceptional-offset count in Lemma T. -/
 theorem exists_centered_window_minimizer (L : ℕ) (n : ℤ) :
