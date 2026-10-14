@@ -1,5 +1,33 @@
 # HANDOFF: window-3 reversors (2026-10-13)
 
+## Update 2026-10-14: orphan-to-surjectivity bridge proved
+
+- Added the decidable `IsWindowThreeOrphan` predicate with exactly the certificate convention in
+  `scripts/amusical/w3certs.txt`.
+- Proved `orphan_forbids_surjective_reversor`: for any local rule `f`, a finite orphan rules out a
+  surjective reversor.  The proof realizes the orphan word using `exists_forward_itinerary`, pulls
+  a preimage back by surjectivity, and proves by reversor algebra that its forward output word is
+  `f (s (j+2)) (s (j+1)) (s j)`, contradicting the orphan.
+- This closes the entire infinite argument after the finite certificate.  The only remaining
+  obligation is now finite: show that cycle consistency puts `f` among the 24 partial rules and
+  kernel-check the supplied orphan for each of their nine completions.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalWindowThree.lean` passes (only the intended final target
+  `sorry` remains; about 63 seconds).
+- `awk 'length($0) > 100 { ... }' CollatzMoonshot/AmusicalWindowThree.lean` has no output.
+- `git diff --check` passes.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-w3 --target
+  CollatzMoonshot.AmusicalWindowThree` passes (8714 jobs; `FORMALIZE-TIER GREEN`).  An initial
+  attempt hit a transient `Too many open files` while opening a cached mathlib object; the clean
+  retry is the recorded verdict.
+
+Next attack: encode the nine cycle representatives by period-preserving permutations and phases
+(only `6 * 8 * 50 * 288 = 691200` assignments), check consistency gives one of the 24 partial
+rules, and encode/check the 216 listed orphan witnesses.  Then invoke
+`orphan_forbids_surjective_reversor` to close the headline theorem.
+
 ## Concrete advance
 
 - Proved `amusical_periodic_mem`, leaving only the final

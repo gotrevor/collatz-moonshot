@@ -280,6 +280,7 @@ theorem exists_forward_itinerary (u : List (Fin 3)) :
           rw [amusical_two_mul, ← hyform]
           rw [stepSym_iterate_add_forwardPeriod u.length m q i hi, hm i hi]
           simp
+
       · refine ⟨4 * (y / 3) + 1, ?_⟩
         norm_num at hy
         intro j hj
@@ -316,6 +317,58 @@ theorem exists_forward_itinerary (u : List (Fin 3)) :
           rw [amusical_four_mul_add_three, ← hyform]
           rw [stepSym_iterate_add_forwardPeriod u.length m q i hi, hm i hi]
           simp
+
+private def IsWindowThreeOrphan (f : Fin 3 → Fin 3 → Fin 3 → Fin 3) {L : ℕ}
+    (u : Fin L → Fin 3) : Prop :=
+  ∀ s : Fin (L + 2) → Fin 3, ∃ j : Fin L,
+    f (s ⟨j.val + 2, by omega⟩) (s ⟨j.val + 1, by omega⟩) (s ⟨j.val, by omega⟩) ≠ u j
+
+private theorem orphan_forbids_surjective_reversor
+    (f : Fin 3 → Fin 3 → Fin 3 → Fin 3) {ι : ℤ → ℤ}
+    (hrev : IsAmusicalReversor ι) (hsurj : Function.Surjective ι)
+    (hloc : ∀ n, stepSym (ι n) =
+      f (stepSym (amusicalInv n)) (stepSym n) (stepSym (amusical n)))
+    {L : ℕ} {u : Fin L → Fin 3} (hu : IsWindowThreeOrphan f u) : False := by
+  let word := List.ofFn u
+  obtain ⟨m, hm⟩ := exists_forward_itinerary word
+  obtain ⟨n, rfl⟩ := hsurj m
+  have hback (z : ℤ) : ι (amusicalInv z) = amusical (ι z) := by
+    calc
+      ι (amusicalInv z) = amusical (amusicalInv (ι (amusicalInv z))) :=
+        (amusical_amusicalInv _).symm
+      _ = amusical (ι (amusical (amusicalInv z))) := by rw [hrev]
+      _ = amusical (ι z) := by rw [amusical_amusicalInv]
+  have hiter : ∀ k z, ι (amusicalInv^[k] z) = amusical^[k] (ι z) := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        intro z
+        rw [Function.iterate_succ_apply', hback, ih]
+        exact (Function.iterate_succ_apply' _ k _).symm
+  let s : Fin (L + 2) → Fin 3 := fun k =>
+    if hk : k.val = 0 then stepSym (amusical n)
+    else stepSym (amusicalInv^[k.val - 1] n)
+  obtain ⟨j, hj⟩ := hu s
+  have hit : stepSym (amusical^[j.val] (ι n)) = u j := by
+    simpa [word] using hm j.val (by simpa [word] using j.isLt)
+  rw [← hiter j.val n, hloc] at hit
+  have hs0 : s ⟨j.val, by omega⟩ =
+      stepSym (amusical (amusicalInv^[j.val] n)) := by
+    by_cases hj0 : j.val = 0
+    · simp [s, hj0]
+    · simp only [s, dif_neg hj0]
+      have he : j.val = (j.val - 1) + 1 := by omega
+      rw [he, Function.iterate_succ_apply']
+      simp only [amusical_amusicalInv]
+      congr 2
+  have hs1 : s ⟨j.val + 1, by omega⟩ = stepSym (amusicalInv^[j.val] n) := by
+    simp [s]
+  have hs2 : s ⟨j.val + 2, by omega⟩ =
+      stepSym (amusicalInv (amusicalInv^[j.val] n)) := by
+    simp [s, Function.iterate_succ_apply']
+  rw [hs0, hs1, hs2, hit] at hj
+  exact hj rfl
 
 /-- **Target (Theorem W3).**  No bijective reversor of `U` has `stepSym (ι n)` determined by
 `stepSym (U⁻¹ n)`, `stepSym n`, `stepSym (U n)`.  Paper proof: module docstring and
