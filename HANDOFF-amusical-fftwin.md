@@ -1,5 +1,8 @@
 # HANDOFF: amusical F₂[t] twin complete (2026-10-14)
 
+Branch `wip/amusical-fftwin`; proof commit `9c23705` (on top of `4349cd4`).  Run stopped by
+`box done --green` after the scoped target was met.
+
 ## Concrete advance
 
 Scoped target complete: `CollatzMoonshot/AmusicalFunctionField.lean` is sorry-free and every
@@ -38,5 +41,5 @@ Box note: "Too many open files" recurred on wide builds and even `lake env lean`
 
 ## Next
 
-Target met.  The open mathematical question recorded in the module docstring ("one infinite
+Target met; nothing in flight.  Host: merge `wip/amusical-fftwin` to `main`.  The open mathematical question recorded in the module docstring ("one infinite
 orbit exists" for the twin) is not a target of this run.
