@@ -31,8 +31,8 @@ over more than a few thousand cases.  Lean lines ≤ 100 characters.  Do **not**
    `a` vs `⌊gθ⌋`: `a = ⌊gθ⌋` gives `fract ≤ θ − 1 + ε`, and `ε < |fract − (θ − 1)|` forces
    `fract ≤ θ − 1`; `a ≥ ⌊gθ⌋ + 1` gives `gθ − a ≤ fract − 1 < −ε` (by `ε < 1 − fract`); `a ≤ ⌊gθ⌋ − 1`
    gives `gθ − a ≥ 1 + fract > θ − 1 + ε` (`θ − 1 < 0.6`, `ε < 1 − fract`, so `θ − 1 + ε < 1.6 − fract`;
-   if this bound is not enough, use `ε < 1 − fract ≤ 1` and `θ < 1.6`; check carefully and, if a
-   genuine gap appears, record it in the handoff rather than changing the statement).
+   simplest: argue by contradiction from `fract > θ − 1`; then `ε < fract − (θ − 1)` and all three
+   cases close, the last because `1 + fract > fract > θ − 1 + ε`).
 4. **`infinitelyManyOrbits_of_fwdSurvivor_pos_of_nearCycle_null`** (NC′).  By contradiction, `r`
    orbits.  Reuse `AmusicalSurvivorCeiling/Packing.lean` (P′ `fwdSurvivor_le_iterate_inv`-style
    lemma, per-orbit fibering).
