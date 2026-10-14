@@ -6,6 +6,8 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalRewireRatio.Restriction
 import CollatzMoonshot.AmusicalReglue.BackwardStep
+import CollatzMoonshot.AmusicalReglue.Segments
+import CollatzMoonshot.AmusicalReglue.WordOrder
 
 /-!
 # Sparse regluing makes forward survivors arbitrarily sparse (Theorem Π)
