@@ -8,6 +8,7 @@ import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.AmusicalCycleBound.Step
 import CollatzMoonshot.AmusicalCycleBound.MinBound
 import CollatzMoonshot.AmusicalCycleBound.Orbit
+import CollatzMoonshot.AmusicalCycleBound.Search
 
 /-!
 # No new cycles of length at most 31866
@@ -43,7 +44,10 @@ That uses Rhin's 1987 linear-form bound, which `Literature` does not yet carry. 
 a cycle with `m ≥ 2` is `≡ 2, 4 (mod 6)` (`cycle_min_mod_six`).
 
 Paper proofs: agent report `cycles.md`, summarized in
-`RESEARCH-2026-10-13-amusical-single-chain.md` §18.  Treadmill target: close every `sorry` here.
+`RESEARCH-2026-10-13-amusical-single-chain.md` §18.
+
+In the kernel, with no search assumed: the same reduction with `X = 4964` and `H = 100` proves
+Atkin's bound (`amusical_noNewCycles_199`, `atkinNoShortCycles`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -195,7 +199,7 @@ theorem cycle_min_meet (n : ℤ) (H P : ℕ) (hP : 0 < P) (hPH : P ≤ 2 * H)
     · right
       rw [hback H (by omega)]
 
-/-- **Target (the reduction).**  A bound on cycle minima plus a clean search gives no new cycles.
+/-- **Proved (the reduction).**  A bound on cycle minima plus a clean search gives no new cycles.
 Paper proof: reduce to `y > 0` by `amusical_neg`; let `n` be the minimum of the cycle and `P` its
 minimal period.  Theorem A★ with `cycleMinBound` gives `n ≤ X`.  If `n ∈ {1, 2, 4, 44}`, the cycle
 is known.  Otherwise the search contradicts `cycle_min_meet`. -/
@@ -268,10 +272,10 @@ theorem noNewCycles_of_search {P X H : ℕ} (hPH : P ≤ 2 * H) (hX : CycleMinBo
   · rw [abs_of_pos hpos]
     exact key y hpos p hp hpP hy
 
-/-- **Target (a kernel computation).**  `M(p, e) ≤ 167195612` for all `p ≤ 31866`.  Only the
+/-- **Proved (a kernel computation).**  `M(p, e) ≤ 167195612` for all `p ≤ 31866`.  Only the
 `e` with `3^p / 2 < 2^e < 2 · 3^p` need computing: otherwise `D ≥ max / 2` and `M(p, e) ≤ k ≤ p`.
 That leaves at most two `e` per `p`, about `6 · 10⁴` comparisons of ≤ 50000-bit numbers.
-⚠️ Measure on `P = 665` (`X = 65707`) first, and stop at 4 GB. -/
+Checked by one `decide +kernel` call (`natMinBound_le_31866`; 9 s, 3.1 GB measured). -/
 theorem cycleMinBound_31866 : CycleMinBoundHolds 31866 167195612 := by
   intro p e hp hpP hpe he
   unfold cycleMinBound
@@ -284,12 +288,24 @@ theorem amusical_noNewCycles_31866 (hS : CycleMinSearch 167195612 15933) :
     AmusicalNoNewCyclesUpTo 31866 :=
   noNewCycles_of_search (by norm_num) cycleMinBound_31866 hS
 
-/-- **Target (stretch): Atkin 1966 in the kernel.**  No new cycles of length `≤ 199`.  The bound
-is `X = 4964` (`x0_ren.py 200`) and `H = 100`.  Discharge `CycleMinSearch 4964 100` with a fuelled
-`Bool` checker plus a soundness lemma and one `decide +kernel` call, about `10⁶` big-integer
-steps.  ⚠️ Measure on `P = 12` (`X = 173`, `H = 6`) first, and stop at 4 GB. -/
+/-- **Proved: Atkin 1966 in the kernel.**  No new cycles of length `≤ 199`.  The bound
+is `X = 4964` (`x0_ren.py 200`) and `H = 100`.  `CycleMinSearch 4964 100` is discharged by a fuelled
+`Bool` checker (`searchCheck`, sound by `searchCheck_sound`) and one `decide +kernel` call that
+also checks the bound (`cycleCheck_199`; 6.5 s of kernel time). -/
 theorem amusical_noNewCycles_199 : AmusicalNoNewCyclesUpTo 199 := by
-  sorry
+  refine noNewCycles_of_search (X := 4964) (H := 100) (by norm_num) ?_
+    (searchCheck_sound searchCheck_4964)
+  intro p e hp hpP hpe he
+  unfold cycleMinBound
+  rw [natAbs_two_pow_sub_three_pow]
+  exact natMinBound_le_199 p e hp hpP hpe he
+
+/-- **Proved: Atkin 1966 in the kernel.**  Every nonnegative periodic point of period `< 200` is
+a known cycle member. -/
+theorem atkinNoShortCycles : Literature.AtkinNoShortCycles := by
+  intro n hn p hp hp200 hcyc
+  have h := amusical_noNewCycles_199 n p hp (by omega) hcyc
+  rwa [abs_of_nonneg hn] at h
 
 /-- **Proved.**  The minimum `n ≥ 2` of a cycle is `≡ 2` or `4 (mod 6)`.  If `n` is odd then
 `U n < n`; if `6 ∣ n` then `V n = 2n/3 < n`; both lie on the cycle. -/
