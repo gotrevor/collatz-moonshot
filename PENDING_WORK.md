@@ -1,5 +1,13 @@
 # PENDING_WORK
 
+## 2026-10-14: amusical squares objective DONE, nothing owed
+
+`KICKOFF-2026-10-14-amusical-squares.md` is fully discharged.  `CollatzMoonshot/AmusicalSquares.lean`
+is sorry-free with ratified statements unchanged: `infinitelyManyOrbits_of_squareReturnConfinement`
+(SRC ⇒ Klamkin (a)), `prefixRoot_eq_iff` (SQG1), `amusicalInv_iterate_cylinder`,
+`invariant_kernel_three_pow`.  `SquareReturnConfinement` remains the open premise.  Proof notes in
+`HANDOFF-amusical-squares.md`.
+
 ## 2026-10-14 — amusical cycle bound objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-cycles.md` is fully discharged, including the stretch target.
