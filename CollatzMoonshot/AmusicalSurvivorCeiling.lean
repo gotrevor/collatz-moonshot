@@ -3,9 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalSurvivorSeparation
-import CollatzMoonshot.AmusicalLateDrops
-import CollatzMoonshot.AmusicalSpitzer
+import CollatzMoonshot.AmusicalSurvivorCeiling.Packing
 
 /-!
 # The survivor ceiling: finitely many orbits cap the survivor density at `c`
@@ -34,34 +32,45 @@ Paper proof (value form, no time indices):
   spaced `≳ X/(M 4^L)` apart: at most `8 M 4^L + 1` of them.  The rest of the forward survivors in
   `[X/M, X)` are `L`-window minima.  Sum over the `r` orbits, let `X → ∞`, then `M → ∞`.
 
-Agent report: `c1verify.md` (§5 has an 11-lemma decomposition).
+Agent report: `c1verify.md` (§5 has an 11-lemma decomposition).  The proofs here instantiate the
+direction-generic lemmas of `AmusicalSurvivorCeiling/Packing.lean` with `(f, g) = (U, V)` and
+`(V, U)`.
 -/
 
 namespace CollatzMoonshot.Amusical
 
 open Classical in
-/-- **Target (C2).**  With finitely many orbits, forward survivors have upper density `≤ δ_L`. -/
+/-- **Proved (C2).**  With finitely many orbits, forward survivors have upper density `≤ δ_L`. -/
 theorem fwdSurvivor_density_le_of_finite (hfin : ¬ AmusicalInfinitelyManyOrbits) (L : ℕ)
     {ε : ℝ} (hε : 0 < ε) : ∀ᶠ X : ℕ in Filter.atTop,
       (((Finset.range X).filter fun n : ℕ => FwdSurvivor n).card : ℝ) ≤
-        (((fwdSurv L * bwdSurv L : ℚ) : ℝ) + ε) * X := by
-  sorry
+        (((fwdSurv L * bwdSurv L : ℚ) : ℝ) + ε) * X :=
+  Ceiling.density_le_of_finite amusical_amusicalInv
+    (fun ℓ hℓ x => (abs_le_four_pow_mul_iterate_sub ℓ hℓ x).2)
+    (fun _ _ h => Ceiling.exists_iterate_of_mem_amusicalOrbit h)
+    (fun _ _ hf hb t h1 h2 => ⟨hf t h1, hb t h1 h2⟩) hfin L hε
 
 open Classical in
-/-- **Target (C2′).**  Forward survivors of upper density above `c` imply Klamkin (a). -/
+/-- **Proved (C2′).**  Forward survivors of upper density above `c` imply Klamkin (a). -/
 theorem infinitelyManyOrbits_of_fwdSurvivor_density {η : ℝ} (hη : 0 < η)
     (h : ∃ᶠ X : ℕ in Filter.atTop,
       (minimaConstant + η) * X ≤ ((Finset.range X).filter fun n : ℕ => FwdSurvivor n).card) :
-    AmusicalInfinitelyManyOrbits := by
-  sorry
+    AmusicalInfinitelyManyOrbits :=
+  Ceiling.infinitelyManyOrbits_of_density amusical_amusicalInv
+    (fun ℓ hℓ x => (abs_le_four_pow_mul_iterate_sub ℓ hℓ x).2)
+    (fun _ _ h => Ceiling.exists_iterate_of_mem_amusicalOrbit h)
+    (fun _ _ hf hb t h1 h2 => ⟨hf t h1, hb t h1 h2⟩) hη h
 
 open Classical in
-/-- **Target (C2′, backward mirror).**  Backward survivors of upper density above `c` imply
+/-- **Proved (C2′, backward mirror).**  Backward survivors of upper density above `c` imply
 Klamkin (a). -/
 theorem infinitelyManyOrbits_of_bwdSurvivor_density {η : ℝ} (hη : 0 < η)
     (h : ∃ᶠ X : ℕ in Filter.atTop,
       (minimaConstant + η) * X ≤ ((Finset.range X).filter fun n : ℕ => BwdSurvivor n).card) :
-    AmusicalInfinitelyManyOrbits := by
-  sorry
+    AmusicalInfinitelyManyOrbits :=
+  Ceiling.infinitelyManyOrbits_of_density amusicalInv_amusical
+    (fun ℓ hℓ x => (abs_le_four_pow_mul_iterate_sub ℓ hℓ x).1)
+    (fun _ _ h => (Ceiling.exists_iterate_of_mem_amusicalOrbit h).imp fun _ => Or.symm)
+    (fun _ _ hb hf t h1 h2 => ⟨hf t h1 h2, hb t h1⟩) hη h
 
 end CollatzMoonshot.Amusical
