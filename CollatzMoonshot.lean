@@ -145,6 +145,7 @@ import CollatzMoonshot.AmusicalSurvivorCeiling
 import CollatzMoonshot.AmusicalDecouple
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalLinearForever
+import CollatzMoonshot.AmusicalNearCycle
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
