@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalAdelic.Descent
 
 /-!
 # The adelic space adds nothing: lattice rigidity, and a single orbit that passes for `ℤ`
@@ -67,6 +68,11 @@ extension of `U` contains `1`, hence `ℤ`.  Paper proof: pick `x ≠ 0`; while 
 `Ũ x = 3x/2 ∈ Λ`; at a `2`-adic unit `y`, `4 Ũ y − 3 y = ±1`. -/
 theorem amusicalRat_subgroup_one_mem (Λ : AddSubgroup ℚ) (hden : ∀ x ∈ Λ, x.den % 2 = 1)
     (hinv : ∀ x ∈ Λ, amusicalRat x ∈ Λ) (hne : Λ ≠ ⊥) : (1 : ℚ) ∈ Λ := by
-  sorry
+  refine Adelic.one_mem amusicalRat (fun x hd he => ?_) (fun x hd ho => ?_) Λ hden hinv hne
+  · unfold amusicalRat; rw [if_neg (by omega), if_pos he]
+  · unfold amusicalRat; rw [if_neg (by omega), if_neg (by omega)]
+    split_ifs
+    · left; ring
+    · right; ring
 
 end CollatzMoonshot.Amusical
