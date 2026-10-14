@@ -1,5 +1,7 @@
 # HANDOFF: amusical twin degrees (2026-10-14)
 
+Branch `wip/amusical-twindeg`; proofs landed at `73a9a73`.  Stop signalled (`box done --green`).
+
 `KICKOFF-2026-10-14-amusical-twindeg.md` is discharged: `CollatzMoonshot/AmusicalTwinDegree.lean`
 has no `sorry`, and its statements are unchanged.  All seven targets depend only on `propext`,
 `Classical.choice` and `Quot.sound`.  No `native_decide` and no `decide` over large cases.
