@@ -30,6 +30,7 @@ import CollatzMoonshot.AmusicalGlobal
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalAntiKohl
 import CollatzMoonshot.AmusicalPingPong
+import CollatzMoonshot.AmusicalUniform
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -243,7 +244,13 @@ def register : List Hall := [
    "AmusicalAntiKohl.lean; agent report antikohl.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: eventually-linear ping-pong engine (two counters)", .refuted,
    "gives ∞ orbits for a residue-transitive map, but U's one linear piece 2n ↦ 3n only lowers v₂",
-   "AmusicalPingPong.lean; agent report transitive.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalPingPong.lean; agent report transitive.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: piecewise-affine reversor for one-signed slope valuations", .refuted,
+   "one-signed v_p with unbounded accumulation forbids it (NR_p); symmetric cycles force ±1",
+   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)", .refuted,
+   "transitivity on Ẑ equates an invariant across classes where it is locally constant",
+   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -355,7 +362,14 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.mixedPrime_single_orbit], []⟩,
   ⟨"amusical: eventually-linear ping-pong engine (two counters)",
    [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_pingPong,
-    ``CollatzMoonshot.Amusical.amusical_not_eventually_linear], []⟩]
+    ``CollatzMoonshot.Amusical.amusical_not_eventually_linear], []⟩,
+  ⟨"amusical: piecewise-affine reversor for one-signed slope valuations",
+   [``CollatzMoonshot.Amusical.no_piecewiseAffine_reversor_of_valNonneg,
+    ``CollatzMoonshot.Amusical.island_cycle_slope], []⟩,
+  ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)",
+   [``CollatzMoonshot.Amusical.amusical_invariant_eq_of_locallyConst,
+    ``CollatzMoonshot.Amusical.amusical_topologicallyTransitive],
+   [``CollatzMoonshot.Amusical.AmusicalTopologicallyTransitive]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -368,7 +382,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 41 rows, 33 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 43 rows, 35 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

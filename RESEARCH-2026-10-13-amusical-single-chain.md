@@ -423,3 +423,39 @@ infinitely many orbits.  The agent found no prior example (~80% that it is new).
   * No coarse valuation clock exists for any member of the class.
   * Commuting RCWA maps of a transitive map are surjective.
   * The bounded-ratio rewiring (§14) extends to the whole class.
+
+## 17. Weakly sign-uniform maps (2026-10-13, "uniform" agent, checked)
+
+Lean: `AmusicalUniform.lean` (M4 for `U` and the `δ` bijection proved; NR_p, the Island Lemma,
+M3 for `U` and `δ`'s finiteness are targets).  The question was whether a weakly sign-uniform (WSU),
+residue-transitive map can have provably infinitely many orbits.  It is still open; the agent puts
+≤ 10% on any known certificate type producing one.
+
+* **Theorem NR_p.**  Suppose every slope has `v_p ≥ 0` at one prime `p` and `v_p` accumulates along
+  orbits.  Then no piecewise-affine bijection reverses the map.  Being one-signed at `p` suffices;
+  `v_p = 1` is not needed.  The Gaussian `H` escapes only because complex conjugation is semilinear.
+  I hand-checked the proof (a valuation count on one infinite refined cell).
+* **Island Lemma.**  A cycle mapped to itself by an RCWA reversor has slope product `±1`, so the map
+  is the identity to order `2L` on a residue class and is not transitive.  I hand-checked it (the
+  reversor slopes telescope).  It kills all 1400+ random involution-product candidates.
+  * Conjecture B2 (~60%): no transitive RCWA map has an RCWA reversor fixing a class.
+* **Theorem M3 / M4** (paper proof, not re-derived).  A WSU transitive map is topologically
+  transitive on `Ẑ`.  So an orbit invariant takes equal values on any two classes where it is locally
+  constant.  This kills every invariant built from finitely many valuations, leading digits or
+  `S`-free parts, and all locally constant factor maps.
+* **More no-gos (paper).**
+  * An eventually periodic itinerary forces a cycle (Lemma EP).
+  * RCWA factors inherit the full-support measure.
+  * Each length has finitely many cycles.
+  * Transitive maps with all slopes `±1` have finitely many orbits.
+* **Side example `δ`.**  A product of two class-transposition involutions with slopes `2/3, 1, 3/2`.
+  Every orbit is finite, with an explicit dihedral invariant.  It is strongly connected mod 12–48,
+  96 and 108, but not mod 60, 72 or 144.
+  * My check `scripts/amusical/delta_ren.py`: bijective on a window; 10003 finite cycles through
+    `[−30000, 30000]`; SCC counts, with `U` strongly connected at every listed modulus as control.
+  * Correction: the agent wrote "transitive up to 60"; it already fails at 60.
+* **Still open: digit automata.**  These reduce to lacunary families `{α Qⁿ + β}`.  For `U` the powers
+  `2ⁿ` share orbits only at `{2³, 2⁵}` and `{2⁴, 2⁹}`.  The agent's reading (~85%): WSU maps multiply by
+  their primes and never divide them back out, so every surviving certificate needs Collatz-type
+  control of single orbits.
+
