@@ -563,3 +563,31 @@ settled.  The wall is now one count: the integers that survive past the residue 
 * **Calibration.**  A positive lower density of *strict* survivors would already exhibit an
   aperiodic orbit, which is open.
 
+## 21. The `𝔽₂[t]` twin has infinitely many orbits (2026-10-13, "freeform" Fable agent, checked)
+
+Lean: `AmusicalFunctionField.lean` (targets).  This is the clean split of Klamkin (a) into a
+Diophantine half and a dynamical half.
+
+* **The twin.**  `(ℤ, 2, 3) → (𝔽₂[t], t, Q)` with `Q = t² + t + 1`.  Haar balance forces depths
+  `(1, 2, 3, 3)`.
+  * It is residue-transitive at 18 tested moduli.
+  * Degrees change by exactly `+1, 0, −1`.
+  * The forward and backward walks have the same law, so `p_f = p_b = 1/4` and the heuristic
+    orbit-minimum density is exactly `1/16` (measured `0.06271`).
+* **Theorem F (PROVED).**  For `p = 2^e ≥ 8`, `m = p/2`, `(t⁴+t³+1) t^m (t+1)^(m−3)` has exact
+  period `p`, with itinerary `E^m B^m`.  So the twin has infinitely many cycles, hence orbits.
+  * The proof never touches an infinite orbit.  Frobenius collapses the Böhm–Sontacchi
+    denominator: `t^{2p} − Q^p = (t+1)^p`.
+  * For `Q = t² + 1` the denominator is `1`, and every balanced word of length `2^e` closes.
+  * I re-checked it independently (`scripts/amusical/twin/fftwin_ren.py`, own carry-less
+    arithmetic): exact periods and itineraries for `p = 8 … 256`.  Teeth: `p = 10, 12, 14` and
+    `s_E ≠ 0` do not close.
+* **Heuristic exact in the limit.**  Cycles of length 8, 16, 32 number 9, 299 (exact) and about
+  `2.76·10⁶`, against the heuristic `3.6`, `233`, `2.69·10⁶`.  The ratio tends to 1.
+* **What fails over `ℤ`.**  `E^m B^m` closes at `2^m(4^m−3^m)/(9^m−8^m)`, an integer only at
+  `m = 1` (`amusical_EmBm_not_integral`).  The missing identity `(a^m−b^m)/(a−b) = (a−b)^{m−1}` is
+  smallness of `2^N − 3^p`, which Mihăilescu and Baker forbid.
+  * Since cycles of `U` are believed finite (§5, §18), **any proof of Klamkin (a) must exhibit
+    infinitely many infinite orbits**.
+  * Every wall ports to the twin, and even "one infinite orbit exists" is open there.
+

@@ -34,6 +34,7 @@ import CollatzMoonshot.AmusicalUniform
 import CollatzMoonshot.AmusicalCycleBound
 import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
+import CollatzMoonshot.AmusicalFunctionField
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -262,7 +263,10 @@ def register : List Hall := [
    "AmusicalFormalMin.lean; agent report emptyint.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: survival typicality beyond the residue horizon", .wall,
    "late drops after depth log₃ X are uncontrolled; τ matches U's windows with maximal late drops",
-   "AmusicalLateDrops.lean; agent report survival.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalLateDrops.lean; agent report survival.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: infinitely many orbits via infinitely many cycles", .refuted,
+   "works in 𝔽₂[t] by Frobenius; over ℤ the denominators 2^N − 3^p are never small (Baker)",
+   "AmusicalFunctionField.lean; agent report freeform.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -389,7 +393,10 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.coarse_quasiInvariant_bounded], []⟩,
   ⟨"amusical: survival typicality beyond the residue horizon",
    [``CollatzMoonshot.Amusical.card_windowMin_le, ``CollatzMoonshot.Amusical.lateDrops_dense],
-   [``CollatzMoonshot.Amusical.AmusicalLateDropsSparse]⟩]
+   [``CollatzMoonshot.Amusical.AmusicalLateDropsSparse]⟩,
+  ⟨"amusical: infinitely many orbits via infinitely many cycles",
+   [``CollatzMoonshot.Amusical.amusical_EmBm_not_integral,
+    ``CollatzMoonshot.Amusical.twin_infinitelyManyCycles], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -402,7 +409,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 46 rows, 38 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 47 rows, 39 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
