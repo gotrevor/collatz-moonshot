@@ -1,5 +1,37 @@
 # HANDOFF: window-3 reversors (2026-10-13)
 
+## Update 2026-10-14: scoped objective complete
+
+- Proved the unchanged headline theorem `no_window3_bijective_reversor`; the scoped file
+  `CollatzMoonshot/AmusicalWindowThree.lean` is now sorry-free.
+- Formalized the cycle-to-rule bridge. Exact-period transport restricts the nine source-cycle
+  images to four finite assignment groups, consistency forces one of the 24 certified partial
+  rules, and the two unconstrained blocks give its nine completions.
+- Formalized the nine-state pair automaton and kernel-checked all 216 supplied orphan words.
+  `reachablePairs_empty_is_orphan` turns each empty reachable-state set into the semantic orphan
+  needed by `orphan_forbids_surjective_reversor`.
+- Kept computation within the treadmill memory ceiling. The cycle check joins from the selective
+  period-12 constraints backwards, pruning 28,800 raw combinations to 24 rule checks. The legacy
+  bounded-period check is split over twelve integer intervals. Monolithic and forward-join
+  experiments exceeded 8 GB and were discarded.
+
+Verification:
+
+- `lake build CollatzMoonshot.AmusicalWindowThree` passes (8723 jobs).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-w3 --target
+  CollatzMoonshot.AmusicalWindowThree --axioms
+  CollatzMoonshot.Amusical.no_window3_bijective_reversor` ends `FORMALIZE-TIER GREEN`.
+- The headline axiom ledger is exactly `Classical.choice`, `Quot.sound`, and `propext`; it does
+  not inherit the unrelated proof debt reported in `AmusicalEscape.lean`.
+- `git diff --check` and the 100-column check over the target and helper modules pass. A source
+  scan finds no active `sorry` in them (only the target file's historical docstring mention).
+
+Current blocker: none for the scoped objective.
+
+Next attack: no further work is required for the host predicate. Any later campaign should treat
+the eight helper modules under `CollatzMoonshot/AmusicalWindowThree/` as the computation boundary:
+keep the period shards and reverse-pruned cycle join rather than recombining their closed checks.
+
 ## Update 2026-10-14: finite certificate imported into Lean
 
 - Added `CollatzMoonshot/AmusicalWindowThree/Certificate.lean`, containing the exact 25-block,

@@ -1,5 +1,13 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, window-3 reversor objective COMPLETE:**
+> `CollatzMoonshot/AmusicalWindowThree.lean` is sorry-free and the unchanged theorem
+> `no_window3_bijective_reversor` is proved. Exact-period cycle transport and a reverse-pruned
+> finite join force one of 24 partial rules; a nine-state automaton kernel-checks all 216 orphan
+> witnesses and rules out surjectivity. The 8723-job scoped gate is FORMALIZE-tier green, and the
+> headline axiom ledger contains exactly `Classical.choice`, `Quot.sound`, and `propext`. Read
+> `HANDOFF-amusical-w3.md`.
+
 > **2026-10-14, window-3 certificate data formalized:** the exact 25 constrained blocks, 24
 > partial rules, and 216 orphan words now live in a typed, kernel-checked Lean module. Their
 > dimensions, orphan length bounds, block uniqueness, and exact free-block complement are proved.

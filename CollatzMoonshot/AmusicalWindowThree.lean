@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalEscape
-import CollatzMoonshot.AmusicalWindowThree.Certificate
+import CollatzMoonshot.AmusicalWindowThree.OrphanCheck
+import CollatzMoonshot.AmusicalWindowThree.PeriodicCheck
 
 /-!
 # No bijective reversor reads a window of three symbols
@@ -211,7 +212,7 @@ set_option maxRecDepth 10000 in
 private theorem periodic_bounded_check :
     ∀ y : ↥(Finset.Icc (-2346 : ℤ) 2346), ∀ p : ↥(Finset.Icc 1 12),
       amusical^[p.1] y.1 = y.1 → |y.1| ∈ knownCycleMembers := by
-  decide +kernel
+  exact WindowThreePeriodic.periodicBoundedCheck
 
 /-- **Target.**  Every integer of period at most `12` lies on a known cycle.  Paper proof: on the
 cylinder of its itinerary word `w`, a period-`p` point is `x_w = N_w / (2^e − 3^p)`, and
@@ -424,6 +425,327 @@ private theorem reversor_image_mem_exactPeriodCandidates {ι : ℤ → ℤ}
   have himage := reversor_preserves_exact_period hrev hinj hn
   exact ⟨amusical_periodic_mem (ι n) p hp hp12 himage.1, himage⟩
 
+/-! ## The finite cycle and orphan certificates
+
+The cycle check is staged by exact period.  In particular, it never enumerates a function
+`Fin 3 → Fin 3 → Fin 3 → Fin 3`: it enumerates only the possible images of the nine cycle
+representatives, deduplicates their induced constraint lists, and combines the four period groups.
+-/
+
+open WindowThreeCertificate WindowThreeFinite
+
+-- Lean deliberately does not install finite `∀` decidability globally.  The certificate
+-- section uses this local, computational instance only for the displayed finite types.
+local instance finiteDecidableForall {A : Type} [Fintype A] {p : A → Prop}
+    [DecidablePred p] : Decidable (∀ a, p a) :=
+  Fintype.decidableForallFintype
+
+local instance finiteDecidableExists {A : Type} [Fintype A] {p : A → Prop}
+    [DecidablePred p] : Decidable (∃ a, p a) :=
+  Fintype.decidableExistsFintype
+
+private theorem mem_signedKnownCycleList_of_abs_mem {n : ℤ}
+    (hn : |n| ∈ knownCycleMembers) : n ∈ signedKnownCycleList := by
+  have habs : |n| ∈ knownCycleList := by
+    simpa [knownCycleMembers, knownCycleList] using hn
+  rw [signedKnownCycleList, List.mem_dedup, List.mem_append]
+  by_cases hnonneg : 0 ≤ n
+  · left
+    simpa [abs_of_nonneg hnonneg] using habs
+  · right
+    rw [List.mem_map]
+    exact ⟨|n|, habs, by simp [abs_of_neg (lt_of_not_ge hnonneg)]⟩
+
+private theorem hasBoundedExactAmusicalPeriod_of_exact {p : ℕ} {n : ℤ}
+    (hn : HasExactAmusicalPeriod p n) : HasBoundedExactAmusicalPeriod p n := by
+  refine ⟨hn.1, ?_⟩
+  intro q
+  by_cases hq : q.val = 0
+  · exact Or.inl hq
+  · exact Or.inr (hn.2 q.val (by omega) q.isLt)
+
+private theorem reversor_image_mem_exactPeriodCandidates' {ι : ℤ → ℤ}
+    (hrev : IsAmusicalReversor ι) (hinj : Function.Injective ι) {p : ℕ} {n : ℤ}
+    (hp : 1 ≤ p) (hp12 : p ≤ 12) (hn : HasExactAmusicalPeriod p n) :
+    ι n ∈ exactPeriodCandidates p := by
+  rw [exactPeriodCandidates, List.mem_filter]
+  have himage := reversor_image_mem_exactPeriodCandidates hrev hinj hp hp12 hn
+  exact ⟨mem_signedKnownCycleList_of_abs_mem himage.1,
+    by simpa using hasBoundedExactAmusicalPeriod_of_exact himage.2⟩
+
+private theorem reversor_images_orbitsDisjoint {ι : ℤ → ℤ}
+    (hrev : IsAmusicalReversor ι) (hinj : Function.Injective ι) {p : ℕ} {x y : ℤ}
+    (hxy : ∀ j k : Fin p, amusical^[j.val] x ≠ amusical^[k.val] y) :
+    OrbitsDisjoint p (ι x) (ι y) := by
+  intro j k hjk
+  apply hxy j k
+  apply hinj
+  rw [reversor_iterate_forward hrev, reversor_iterate_forward hrev]
+  exact hjk
+
+private theorem mem_pairAssignments {p : ℕ} {x y : ℤ}
+    (hx : x ∈ exactPeriodCandidates p) (hy : y ∈ exactPeriodCandidates p)
+    (hxy : OrbitsDisjoint p x y) : (x, y) ∈ pairAssignments p := by
+  simp [pairAssignments, hx, hy, hxy]
+
+private theorem mem_fixedAssignments {x y z : ℤ}
+    (hx : x ∈ exactPeriodCandidates 1) (hy : y ∈ exactPeriodCandidates 1)
+    (hz : z ∈ exactPeriodCandidates 1) (hxy : OrbitsDisjoint 1 x y)
+    (hxz : OrbitsDisjoint 1 x z) (hyz : OrbitsDisjoint 1 y z) :
+    ((x, y), z) ∈ fixedAssignments := by
+  simp [fixedAssignments, hx, hy, hz, hxy, hxz, hyz]
+
+private def SatisfiesConstraints (f : Symbol → Symbol → Symbol → Symbol)
+    (cs : List WindowConstraint) : Prop :=
+  ∀ e ∈ cs, evalBlock f e.1 = e.2
+
+private theorem constraintsConsistent_of_satisfies
+    {f : Symbol → Symbol → Symbol → Symbol} {cs : List WindowConstraint}
+    (h : SatisfiesConstraints f cs) : ConstraintsConsistent cs := by
+  induction cs with
+  | nil => simp [ConstraintsConsistent]
+  | cons e cs ih =>
+      rw [ConstraintsConsistent, List.pairwise_cons]
+      constructor
+      · intro e' he' heq
+        rw [← h e (by simp), ← h e' (by simp [he']), heq]
+      · apply ih
+        intro e' he'
+        exact h e' (by simp [he'])
+
+private theorem satisfiesConstraints_append
+    {f : Symbol → Symbol → Symbol → Symbol} {xs ys : List WindowConstraint} :
+    SatisfiesConstraints f (xs ++ ys) ↔
+      SatisfiesConstraints f xs ∧ SatisfiesConstraints f ys := by
+  simp only [SatisfiesConstraints, List.mem_append, or_imp, forall_and]
+
+private theorem satisfies_cycleConstraints {f : Symbol → Symbol → Symbol → Symbol}
+    {ι : ℤ → ℤ} (hrev : IsAmusicalReversor ι)
+    (hloc : ∀ n, stepSym (ι n) = evalBlock f (cycleWindow n)) (p : ℕ) (n : ℤ) :
+    SatisfiesConstraints f (cycleConstraints p n (ι n)) := by
+  intro e he
+  simp only [cycleConstraints, List.mem_map, List.mem_range] at he
+  obtain ⟨j, hj, rfl⟩ := he
+  simp only [evalBlock, cycleWindow]
+  calc
+    f (stepSym (amusicalInv (amusical^[j] n))) (stepSym (amusical^[j] n))
+        (stepSym (amusical (amusical^[j] n))) = stepSym (ι (amusical^[j] n)) :=
+      (hloc (amusical^[j] n)).symm
+    _ = stepSym (amusicalInv^[j] (ι n)) := by
+      rw [reversor_iterate_forward hrev]
+
+private theorem satisfies_fixedConstraints {f : Symbol → Symbol → Symbol → Symbol}
+    {ι : ℤ → ℤ} (hrev : IsAmusicalReversor ι)
+    (hloc : ∀ n, stepSym (ι n) = evalBlock f (cycleWindow n)) :
+    SatisfiesConstraints f (fixedConstraints (((ι 0, ι 1), ι (-1)))) := by
+  simpa only [fixedConstraints, satisfiesConstraints_append] using
+    And.intro
+      (And.intro (satisfies_cycleConstraints hrev hloc 1 0)
+        (satisfies_cycleConstraints hrev hloc 1 1))
+      (satisfies_cycleConstraints hrev hloc 1 (-1))
+
+private theorem satisfies_pairConstraints {f : Symbol → Symbol → Symbol → Symbol}
+    {ι : ℤ → ℤ} (hrev : IsAmusicalReversor ι)
+    (hloc : ∀ n, stepSym (ι n) = evalBlock f (cycleWindow n))
+    (p : ℕ) (x y : ℤ) :
+    SatisfiesConstraints f (pairConstraints p x y (ι x, ι y)) := by
+  simpa only [pairConstraints, satisfiesConstraints_append] using
+    And.intro (satisfies_cycleConstraints hrev hloc p x)
+      (satisfies_cycleConstraints hrev hloc p y)
+
+private theorem fixedConstraints_mem_options {f : Symbol → Symbol → Symbol → Symbol}
+    {a : (ℤ × ℤ) × ℤ} (ha : a ∈ fixedAssignments)
+    (hsat : SatisfiesConstraints f (fixedConstraints a)) :
+    fixedConstraints a ∈ fixedConstraintOptions := by
+  rw [fixedConstraintOptions, List.mem_dedup, List.mem_filter]
+  exact ⟨List.mem_map.mpr ⟨a, ha, rfl⟩,
+    by simpa using constraintsConsistent_of_satisfies hsat⟩
+
+private theorem pairConstraints_mem_options {f : Symbol → Symbol → Symbol → Symbol}
+    {p : ℕ} {x y : ℤ} {a : ℤ × ℤ} (ha : a ∈ pairAssignments p)
+    (hsat : SatisfiesConstraints f (pairConstraints p x y a)) :
+    pairConstraints p x y a ∈ pairConstraintOptions p x y := by
+  rw [pairConstraintOptions, List.mem_dedup, List.mem_filter]
+  exact ⟨List.mem_map.mpr ⟨a, ha, rfl⟩,
+    by simpa using constraintsConsistent_of_satisfies hsat⟩
+
+private theorem constrainedBlockAt_constrainedIndex (a b c : Symbol)
+    (hfirst : (a, b, c) ≠ (1, 1, 2)) (hsecond : (a, b, c) ≠ (2, 2, 1)) :
+    constrainedBlockAt (constrainedIndex a b c) = (a, b, c) := by
+  fin_cases a <;> fin_cases b <;> fin_cases c <;>
+    simp_all [constrainedBlockAt, constrainedIndex, constrainedBlocks]
+
+private theorem completedRule_eq_of_values
+    (f : Symbol → Symbol → Symbol → Symbol) (i : Fin 24)
+    (hvalues : ∀ j : Fin 25,
+      evalBlock f (constrainedBlockAt j) = partialRuleValue i j) :
+    completedRule i (f 1 1 2) (f 2 2 1) = f := by
+  funext a b c
+  by_cases hfirst : (a, b, c) = (1, 1, 2)
+  · have hcoords : a = 1 ∧ b = 1 ∧ c = 2 := by
+      simpa only [Prod.mk.injEq] using hfirst
+    rcases hcoords with ⟨rfl, rfl, rfl⟩
+    simp [completedRule]
+  · by_cases hsecond : (a, b, c) = (2, 2, 1)
+    · have hcoords : a = 2 ∧ b = 2 ∧ c = 1 := by
+        simpa only [Prod.mk.injEq] using hsecond
+      rcases hcoords with ⟨rfl, rfl, rfl⟩
+      simp [completedRule]
+    · simp only [completedRule, hfirst, hsecond, ↓reduceIte]
+      have hvalue := hvalues (constrainedIndex a b c)
+      rw [constrainedBlockAt_constrainedIndex a b c hfirst hsecond] at hvalue
+      exact hvalue.symm
+
+private def ProducesFrom (f : Symbol → Symbol → Symbol → Symbol) :
+    Symbol → Symbol → List Symbol → Prop
+  | _, _, [] => True
+  | a, b, out :: u => ∃ c, f c b a = out ∧ ProducesFrom f b c u
+
+private theorem mem_advancePairs {f : Symbol → Symbol → Symbol → Symbol}
+    {out a b c : Symbol} {states : Finset (Symbol × Symbol)}
+    (hab : (a, b) ∈ states) (hout : f c b a = out) :
+    (b, c) ∈ advancePairs f out states := by
+  simp only [advancePairs, Finset.mem_image, Finset.mem_filter, Finset.mem_product,
+    Finset.mem_univ, and_true]
+  exact ⟨((a, b), c), ⟨hab, hout⟩, rfl⟩
+
+private theorem producesFrom_mem_reachable {f : Symbol → Symbol → Symbol → Symbol}
+    {u : List Symbol} {a b : Symbol} {states : Finset (Symbol × Symbol)}
+    (hab : (a, b) ∈ states) (hproduce : ProducesFrom f a b u) :
+    ∃ state, state ∈ u.foldl (fun s out => advancePairs f out s) states := by
+  induction u generalizing a b states with
+  | nil => exact ⟨(a, b), hab⟩
+  | cons out u ih =>
+      obtain ⟨c, hout, htail⟩ := hproduce
+      exact ih (mem_advancePairs hab hout) htail
+
+private theorem producesFrom_of_matches {f : Symbol → Symbol → Symbol → Symbol}
+    (u : List Symbol) (s : Fin (u.length + 2) → Symbol)
+    (hmatch : ∀ j : Fin u.length,
+      f (s ⟨j.val + 2, by omega⟩) (s ⟨j.val + 1, by omega⟩)
+        (s ⟨j.val, by omega⟩) = u.get j) :
+    ProducesFrom f (s ⟨0, by omega⟩) (s ⟨1, by omega⟩) u := by
+  induction u with
+  | nil => trivial
+  | cons out u ih =>
+      let tailSeq : Fin (u.length + 2) → Symbol := fun j =>
+        s ⟨j.val + 1, by simp only [List.length_cons] at j ⊢; omega⟩
+      refine ⟨s ⟨2, by simp⟩, ?_, ?_⟩
+      · simpa using hmatch ⟨0, by simp⟩
+      · apply ih tailSeq
+        intro j
+        simpa [tailSeq] using hmatch ⟨j.val + 1, by simp⟩
+
+private theorem reachablePairs_empty_is_orphan
+    (f : Symbol → Symbol → Symbol → Symbol) (u : List Symbol)
+    (hempty : reachablePairs f u = ∅) :
+    IsWindowThreeOrphan f (fun j : Fin u.length => u.get j) := by
+  intro s
+  by_contra hbad
+  push_neg at hbad
+  have hproduce := producesFrom_of_matches u s hbad
+  obtain ⟨state, hstate⟩ := producesFrom_mem_reachable
+    (states := (Finset.univ : Finset (Symbol × Symbol))) (by simp) hproduce
+  rw [← reachablePairs, hempty] at hstate
+  simp at hstate
+
+private theorem constraintsConsistent_suffix
+    {pre suffix : List WindowConstraint}
+    (h : ConstraintsConsistent (pre ++ suffix)) :
+    ConstraintsConsistent suffix := by
+  unfold ConstraintsConsistent at h ⊢
+  exact h.sublist (List.sublist_append_right pre suffix)
+
+private theorem cycle_constraint_check {fixed two five twelve : List WindowConstraint}
+    (hfixed : fixed ∈ fixedConstraintOptions)
+    (htwo : two ∈ pairConstraintOptions 2 2 (-2))
+    (hfive : five ∈ pairConstraintOptions 5 4 (-4))
+    (htwelve : twelve ∈ pairConstraintOptions 12 44 (-44))
+    (hconsistent : ConstraintsConsistent
+      (combinedConstraints fixed two five twelve)) :
+    ∃ i : Fin 24,
+      ConstraintsEncodeRule (combinedConstraints fixed two five twelve) i := by
+  have hfiveConsistent : ConstraintsConsistent (five ++ twelve) := by
+    apply constraintsConsistent_suffix (pre := fixed ++ two)
+    simpa only [combinedConstraints, List.append_assoc] using hconsistent
+  have htwoConsistent : ConstraintsConsistent ((two ++ five) ++ twelve) := by
+    apply constraintsConsistent_suffix (pre := fixed)
+    simpa only [combinedConstraints, List.append_assoc] using hconsistent
+  have hfive' : five ∈ compatibleFiveOptions twelve := by
+    rw [compatibleFiveOptions, List.mem_filter]
+    exact ⟨hfive, by simpa using hfiveConsistent⟩
+  have htwo' : two ∈ compatibleTwoOptions five twelve := by
+    rw [compatibleTwoOptions, List.mem_filter]
+    exact ⟨htwo, by simpa using htwoConsistent⟩
+  have hfixed' : fixed ∈ compatibleFixedOptions two five twelve := by
+    rw [compatibleFixedOptions, List.mem_filter]
+    exact ⟨hfixed, by simpa using hconsistent⟩
+  have hcheck := cycleConstraintCheck_eq_true
+  unfold cycleConstraintCheck at hcheck
+  rw [List.all_eq_true] at hcheck
+  have hcheck := hcheck twelve htwelve
+  rw [List.all_eq_true] at hcheck
+  have hcheck := hcheck five hfive'
+  rw [List.all_eq_true] at hcheck
+  have hcheck := hcheck two htwo'
+  rw [List.all_eq_true] at hcheck
+  have hcheck := hcheck fixed hfixed'
+  exact of_decide_eq_true hcheck
+
+private theorem exactPeriod_zero : HasExactAmusicalPeriod 1 0 := by
+  constructor
+  · decide
+  · intro q hq hlt
+    omega
+
+private theorem exactPeriod_one : HasExactAmusicalPeriod 1 1 := by
+  constructor
+  · decide
+  · intro q hq hlt
+    omega
+
+private theorem exactPeriod_negOne : HasExactAmusicalPeriod 1 (-1) := by
+  constructor
+  · decide
+  · intro q hq hlt
+    omega
+
+private theorem exactPeriod_two : HasExactAmusicalPeriod 2 2 := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
+private theorem exactPeriod_negTwo : HasExactAmusicalPeriod 2 (-2) := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
+private theorem exactPeriod_four : HasExactAmusicalPeriod 5 4 := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
+private theorem exactPeriod_negFour : HasExactAmusicalPeriod 5 (-4) := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
+private theorem exactPeriod_fortyFour : HasExactAmusicalPeriod 12 44 := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
+private theorem exactPeriod_negFortyFour : HasExactAmusicalPeriod 12 (-44) := by
+  constructor
+  · decide
+  · intro q hq hlt
+    interval_cases q <;> decide
+
 /-- **Target (Theorem W3).**  No bijective reversor of `U` has `stepSym (ι n)` determined by
 `stepSym (U⁻¹ n)`, `stepSym n`, `stepSym (U n)`.  Paper proof: module docstring and
 `KICKOFF-2026-10-13-amusical-w3.md`. -/
@@ -431,6 +753,100 @@ theorem no_window3_bijective_reversor (f : Fin 3 → Fin 3 → Fin 3 → Fin 3) 
     (hrev : IsAmusicalReversor ι) (hbij : Function.Bijective ι)
     (hloc : ∀ n, stepSym (ι n) =
       f (stepSym (amusicalInv n)) (stepSym n) (stepSym (amusical n))) : False := by
-  sorry
+  have hloc' : ∀ n, stepSym (ι n) = evalBlock f (cycleWindow n) := by
+    intro n
+    simpa only [evalBlock, cycleWindow] using hloc n
+  have hc0 : ι 0 ∈ exactPeriodCandidates 1 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_zero
+  have hc1 : ι 1 ∈ exactPeriodCandidates 1 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_one
+  have hcn1 : ι (-1) ∈ exactPeriodCandidates 1 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_negOne
+  have hc2 : ι 2 ∈ exactPeriodCandidates 2 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_two
+  have hcn2 : ι (-2) ∈ exactPeriodCandidates 2 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_negTwo
+  have hc4 : ι 4 ∈ exactPeriodCandidates 5 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_four
+  have hcn4 : ι (-4) ∈ exactPeriodCandidates 5 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_negFour
+  have hc44 : ι 44 ∈ exactPeriodCandidates 12 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_fortyFour
+  have hcn44 : ι (-44) ∈ exactPeriodCandidates 12 :=
+    reversor_image_mem_exactPeriodCandidates' hrev hbij.1 (by omega) (by omega)
+      exactPeriod_negFortyFour
+  have hd01 : OrbitsDisjoint 1 (ι 0) (ι 1) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hd0n1 : OrbitsDisjoint 1 (ι 0) (ι (-1)) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hd1n1 : OrbitsDisjoint 1 (ι 1) (ι (-1)) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hd2 : OrbitsDisjoint 2 (ι 2) (ι (-2)) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hd4 : OrbitsDisjoint 5 (ι 4) (ι (-4)) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hd44 : OrbitsDisjoint 12 (ι 44) (ι (-44)) := by
+    apply reversor_images_orbitsDisjoint hrev hbij.1
+    decide +kernel
+  have hfixedAssignment : ((ι 0, ι 1), ι (-1)) ∈ fixedAssignments := by
+    exact mem_fixedAssignments hc0 hc1 hcn1 hd01 hd0n1 hd1n1
+  have htwoAssignment : (ι 2, ι (-2)) ∈ pairAssignments 2 := by
+    exact mem_pairAssignments hc2 hcn2 hd2
+  have hfiveAssignment : (ι 4, ι (-4)) ∈ pairAssignments 5 := by
+    exact mem_pairAssignments hc4 hcn4 hd4
+  have htwelveAssignment : (ι 44, ι (-44)) ∈ pairAssignments 12 := by
+    exact mem_pairAssignments hc44 hcn44 hd44
+  let fixed := fixedConstraints ((ι 0, ι 1), ι (-1))
+  let two := pairConstraints 2 2 (-2) (ι 2, ι (-2))
+  let five := pairConstraints 5 4 (-4) (ι 4, ι (-4))
+  let twelve := pairConstraints 12 44 (-44) (ι 44, ι (-44))
+  have hfixedSat : SatisfiesConstraints f fixed := by
+    simpa only [fixed] using satisfies_fixedConstraints hrev hloc'
+  have htwoSat : SatisfiesConstraints f two := by
+    simpa only [two] using satisfies_pairConstraints hrev hloc' 2 2 (-2)
+  have hfiveSat : SatisfiesConstraints f five := by
+    simpa only [five] using satisfies_pairConstraints hrev hloc' 5 4 (-4)
+  have htwelveSat : SatisfiesConstraints f twelve := by
+    simpa only [twelve] using satisfies_pairConstraints hrev hloc' 12 44 (-44)
+  have hfixedMem : fixed ∈ fixedConstraintOptions := by
+    simpa only [fixed] using fixedConstraints_mem_options hfixedAssignment hfixedSat
+  have htwoMem : two ∈ pairConstraintOptions 2 2 (-2) := by
+    simpa only [two] using pairConstraints_mem_options htwoAssignment htwoSat
+  have hfiveMem : five ∈ pairConstraintOptions 5 4 (-4) := by
+    simpa only [five] using pairConstraints_mem_options hfiveAssignment hfiveSat
+  have htwelveMem : twelve ∈ pairConstraintOptions 12 44 (-44) := by
+    simpa only [twelve] using
+      pairConstraints_mem_options htwelveAssignment htwelveSat
+  have hallSat :
+      SatisfiesConstraints f (combinedConstraints fixed two five twelve) := by
+    simpa only [combinedConstraints, satisfiesConstraints_append] using
+      And.intro (And.intro (And.intro hfixedSat htwoSat) hfiveSat) htwelveSat
+  obtain ⟨i, hi⟩ := cycle_constraint_check hfixedMem htwoMem hfiveMem htwelveMem
+    (constraintsConsistent_of_satisfies hallSat)
+  have hvalues : ∀ j : Fin 25,
+      evalBlock f (constrainedBlockAt j) = partialRuleValue i j := by
+    intro j
+    exact hallSat _ (hi j)
+  have hcomplete : completedRule i (f 1 1 2) (f 2 2 1) = f :=
+    completedRule_eq_of_values f i hvalues
+  have horphan := reachablePairs_empty_is_orphan
+    (completedRule i (f 1 1 2) (f 2 2 1))
+    (orphanWordAt i (f 1 1 2) (f 2 2 1))
+    (orphanCertificateCheck i (f 1 1 2) (f 2 2 1))
+  rw [hcomplete] at horphan
+  exact orphan_forbids_surjective_reversor f hrev hbij.2 hloc horphan
 
 end CollatzMoonshot.Amusical
