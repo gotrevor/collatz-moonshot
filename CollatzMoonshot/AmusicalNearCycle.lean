@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalSurvivorCeiling
+import CollatzMoonshot.AmusicalNearCycle.Rung
 
 /-!
 # The quantized ladder and the near-cycle reduction
@@ -39,7 +39,23 @@ namespace CollatzMoonshot.Amusical
 theorem bwdSurvivor_odd_separation {n n' : ℤ} (hn : BwdSurvivor n) (hn' : BwdSurvivor n')
     (h0 : 0 ≤ n) (hlt : n < n') (hodd : Odd n') (horb : n ∈ amusicalOrbit n') :
     4 * n ≤ 3 * n' + 1 := by
-  sorry
+  have hU := NearCycle.four_mul_amusical_le_of_odd hodd
+  obtain ⟨t, ht | ht⟩ := Ceiling.exists_iterate_of_mem_amusicalOrbit horb
+  · rcases t with _ | t
+    · simp at ht; omega
+    have key : n ≤ amusical n' := by
+      rcases t with _ | t
+      · simp at ht; omega
+      · have hback : amusicalInv^[t + 1] n = amusical n' := by
+          rw [ht, Function.iterate_add_apply]
+          simpa using (Function.LeftInverse.iterate amusicalInv_amusical (t + 1)) (amusical n')
+        have := hn (t + 1) (by omega)
+        omega
+    omega
+  · rcases t with _ | t
+    · simp at ht; omega
+    · have := hn' (t + 1) (by omega)
+      omega
 
 /-- **Target (Theorem SQ, part 1).**  The log-ratio of a rung is `g log 3 − a log 2` up to the
 carry `g/(3n − 1)`. -/
@@ -48,7 +64,16 @@ theorem rung_log_ratio {n : ℤ} {g : ℕ} (hg : 1 ≤ g) (hn : FwdSurvivor n) (
     (hmin : ∀ t, 1 ≤ t → t < g → n ≤ amusicalInv^[t] n) :
     ∃ a : ℕ, |Real.log ((n : ℝ) / (amusicalInv^[g] n : ℝ)) - (g * Real.log 3 - a * Real.log 2)|
       ≤ g / (3 * (n : ℝ) - 1) := by
-  sorry
+  obtain ⟨a, ha⟩ := NearCycle.rung_log_iter hn hpos hdrop hmin g le_rfl
+  obtain ⟨hp2, -, -⟩ := NearCycle.rung_base hn hpos hdrop hmin
+  refine ⟨a, ?_⟩
+  rw [NearCycle.iterate_rung le_rfl, Nat.sub_self, Function.iterate_zero, id_eq] at ha
+  have hp : (0 : ℝ) < (amusicalInv^[g] n : ℝ) := by
+    exact_mod_cast (by omega : (0 : ℤ) < amusicalInv^[g] n)
+  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : (0 : ℤ) < n)
+  rw [Real.log_div hn0.ne' hp.ne']
+  convert ha using 2
+  ring
 
 /-- **Target (Theorem SQ, part 2).**  Once the carry is below both margins, the depth of a rung is
 a forward-survivor depth: `{gθ} ≤ θ − 1`. -/
@@ -59,7 +84,54 @@ theorem rung_depth_spectrum {n : ℤ} {g : ℕ} (hg : 1 ≤ g) (hn : FwdSurvivor
       min (1 - Int.fract (g * Real.logb 2 3))
         |Int.fract (g * Real.logb 2 3) - (Real.logb 2 3 - 1)|) :
     Int.fract (g * Real.logb 2 3) ≤ Real.logb 2 3 - 1 := by
-  sorry
+  obtain ⟨a, ha⟩ := rung_log_ratio hg hn hpos hdrop hmin
+  obtain ⟨hp2, -, h32⟩ := NearCycle.rung_base hn hpos hdrop hmin
+  set p := amusicalInv^[g] n with hpdef
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hp : (0 : ℝ) < (p : ℝ) := by exact_mod_cast (by omega : (0 : ℤ) < p)
+  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : (0 : ℤ) < n)
+  have hn3 : (0 : ℝ) < 3 * (n : ℝ) - 1 := by
+    have : (2 : ℝ) ≤ n := by exact_mod_cast hpos
+    linarith
+  set θ := Real.logb 2 3 with hθ
+  have hθ' : θ = Real.log 3 / Real.log 2 := rfl
+  set lam := Real.log ((n : ℝ) / p) with hlam
+  -- `0 < λ ≤ log 3 − log 2`
+  have hlam0 : 0 < lam := Real.log_pos (by rw [one_lt_div hp]; exact_mod_cast hdrop)
+  have hlam1 : lam ≤ Real.log 3 - Real.log 2 := by
+    rw [← Real.log_div (by norm_num) (by norm_num)]
+    apply Real.log_le_log (div_pos hn0 hp)
+    rw [div_le_div_iff₀ hp (by norm_num)]
+    have : (2 : ℝ) * n ≤ 3 * p := by exact_mod_cast h32
+    linarith
+  set ε := (g : ℝ) / ((3 * n - 1) * Real.log 2) with hε
+  have hs : |lam / Real.log 2 - (g * θ - a)| ≤ ε := by
+    have h1 : lam / Real.log 2 - (g * θ - a) =
+        (lam - (g * Real.log 3 - a * Real.log 2)) / Real.log 2 := by
+      rw [hθ']; field_simp
+    rw [h1, abs_div, abs_of_pos hl2, hε, ← div_div]
+    exact div_le_div_of_nonneg_right ha hl2.le
+  set s := lam / Real.log 2 with hsdef
+  have hs0 : 0 < s := div_pos hlam0 hl2
+  have hs1 : s ≤ θ - 1 := by
+    rw [hsdef, div_le_iff₀ hl2, hθ', sub_mul, div_mul_cancel₀ _ hl2.ne']
+    linarith
+  by_contra hf
+  push Not at hf
+  set f := Int.fract (g * θ) with hfdef
+  have hε1 : ε < 1 - f := lt_of_lt_of_le hbig (min_le_left _ _)
+  have hε2 : ε < f - (θ - 1) := by
+    have := lt_of_lt_of_le hbig (min_le_right _ _)
+    rwa [abs_of_pos (by linarith)] at this
+  have hfl : g * θ = ⌊g * θ⌋ + f := by rw [hfdef, Int.fract]; ring
+  rw [abs_le] at hs
+  rcases le_or_gt 0 (⌊(g : ℝ) * θ⌋ - (a : ℤ)) with hk | hk
+  · have : (0 : ℝ) ≤ ((⌊(g : ℝ) * θ⌋ - (a : ℤ) : ℤ) : ℝ) := by exact_mod_cast hk
+    push_cast at this
+    linarith
+  · have : ((⌊(g : ℝ) * θ⌋ - (a : ℤ) : ℤ) : ℝ) ≤ -1 := by exact_mod_cast (by omega : _ ≤ (-1 : ℤ))
+    push_cast at this
+    linarith
 
 /-- A `D`-near-cycle start: the forward orbit of `p` first re-enters `[0, p + D]` inside
 `(p, p + D]`. -/
