@@ -1,5 +1,32 @@
 # HANDOFF: window-3 reversors (2026-10-13)
 
+## Update 2026-10-14: finite certificate imported into Lean
+
+- Added `CollatzMoonshot/AmusicalWindowThree/Certificate.lean`, containing the exact 25-block,
+  24-rule, and 216-orphan tables from `scripts/amusical/w3certs.txt` as typed Lean data.
+- Kernel-checked the table dimensions, the orphan length range `1..5`, uniqueness of the 25
+  constrained blocks, and that their complement is exactly the two free blocks `112` and `221`.
+- Imported the certificate module into `AmusicalWindowThree.lean`. No ratified statement changed.
+
+Verification:
+
+- `lake env lean CollatzMoonshot/AmusicalWindowThree/Certificate.lean` passes.
+- `lake env lean CollatzMoonshot/AmusicalWindowThree.lean` passes; its only `sorry` remains the
+  headline `no_window3_bijective_reversor`.
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-w3 --target
+  CollatzMoonshot.AmusicalWindowThree` passes (`FORMALIZE-TIER GREEN`).
+- The 100-column check on both touched Lean files and `git diff --check` pass.
+
+Current blocker: the typed certificate still needs two proof bridges. First, implement a
+finite-state orphan checker for the 216 words (avoiding `decide` over a function type). Second,
+show that period-preserving cycle assignments force the local rule to equal one of the 24 rows.
+The sole scoped `sorry` is unchanged.
+
+Next attack: define the nine-state pair automaton for a proposed output word. Prove generically
+that an empty final state set implies `IsWindowThreeOrphan`, then kernel-check the 216 short table
+entries. After that, encode the four cycle-length groups separately (at most 288 assignments per
+group) and intersect their induced partial-rule rows.
+
 ## Update 2026-10-14: exact-period cycle transport proved
 
 - Added both iterate directions of the reversor identity:
