@@ -1,43 +1,49 @@
-# HANDOFF: formal-minimum bookkeeping written, loader-blocked (2026-10-14)
+# HANDOFF: Proposition G1 proved; AmusicalFormalMin.lean sorry-free (2026-10-14)
 
-## Concrete advance
+## Result
 
-Proofs are written for the first four targets in `AmusicalFormalMin.lean`:
+Every target in `CollatzMoonshot/AmusicalFormalMin.lean` is proved.  `#print axioms` is
+`[propext, Classical.choice, Quot.sound]` for `coarse_quasiInvariant_bounded`,
+`TwoVisit.exists_two_visit`, `formalMin_unique`, `not_formalMin_of_periodic`, `formalMin_neg`,
+`infinitelyManyOrbits_of_formalMin_infinite` and `formal_walk_disagrees`.  The ratified
+statements and definitions are unchanged; the only edits to the file are the new import, the G1
+proof and the G1 docstrings.
 
-- `amusicalInv_iterate_forward_iterate` cancels a bounded number of inverse iterates from a
-  forward iterate, using the existing `amusicalPerm` integer-power bridge.
-- `kBwd_forward_iterate` identifies the backward bit ledger at `U^[j] x` with the forward
-  ledger at `x`.
-- `formalMin_unique`, `not_formalMin_of_periodic`, and `formalMin_neg` use those identities.
-- `infinitelyManyOrbits_of_formalMin_infinite` maps the infinite set of natural formal minima
-  injectively to two-sided orbits, with injectivity supplied by `formalMin_unique`.
+**Proposition G1** (`coarse_quasiInvariant_bounded`) does **not** use
+`amusical_no_periodic_cone` (still a `sorry` owned by the antikohl treadmill), and it does not
+use the irrationality of `log(3/2)/log(4/3)`.  Helpers are in
+`CollatzMoonshot/AmusicalFormalMin/TwoVisit.lean`:
 
-Reusable iterate/negation helpers are in
-`CollatzMoonshot/AmusicalFormalMin/Bookkeeping.lean`, as required by the kickoff.  The ratified
-definitions and theorem statements were not changed.  One `sorry` remains, exactly Proposition
-G1 (`coarse_quasiInvariant_bounded`).
+- `exists_two_visit`: for every `M`, `r`, `r'` and every large `s`, some `x ∈ [2ˢ, 2ˢ⁺¹)` with
+  `x ≡ r` has `Uᴸ x ∈ [2ˢ, 2ˢ⁺¹)` and `Uᴸ x ≡ r' (mod M)`.
+- `exists_balanced_word`: the word `pre · Eᵉ · conn · suf`.
+  - The connector has a fixed shape (`exists_fixed_connector`: `q` translation units padded by
+    identity blocks `B^{m!}` to one length, all odd steps), so its length and bit count do not
+    depend on the residues.
+  - `e` is the least number of even steps with `3ᴸ ≥ 2ᴮ` (found with `Nat.find`), so the slope
+    is in `[1, 3/2)`.  This replaces the paper's density argument.
+- `level_return`: slope in `[1, 3/2)` plus `2ˢ + 4ᴸ ≤ x`, `3x + 2·4ᴸ ≤ 4·2ˢ` brings `Uᴸ x`
+  back into the block.
+- `orbit_visits_block`: a positive aperiodic forward orbit visits every block above its start.
+- `two_visit_uniform`: the same, uniform over `ZMod M × ZMod M` (`Filter.eventually_all`).
 
-## Verification actually run
+The modular connector machinery (`act`, `connectorCore`, `exists_forward_itinerary_local`, …)
+is copied from the `private` section of `AmusicalGlobal.lean`, which is owned elsewhere.
+`TwoVisit` imports `AmusicalWindow`, not `AmusicalGlobal`.  Importing `AmusicalGlobal` forced a
+rebuild of stale `AmusicalWindowThree.*` oleans in this worktree.
 
-- `git diff --check`: PASS.
-- `lake build CollatzMoonshot.AmusicalFormalMin`: loader failure while building the new helper:
-  `failed to open ... .ir.sig: Too many open files`.
-- `lake build CollatzMoonshot.AmusicalFormalMin.Bookkeeping`: same loader failure.
-- `LEAN_NUM_THREADS=1 lake build CollatzMoonshot.AmusicalFormalMin.Bookkeeping`: same loader
-  failure.  This happened before Lean emitted any source-level proof diagnostic.
+## Build environment note
 
-The first direct `lake env lean` invocation remained alive for nearly fourteen minutes, reached
-5.7 GB RSS, and was killed under the treadmill resource rule.  No green claim and no commit were
-made because the new proofs have not yet been kernel-checked.
+The host was fd-starved this lap: every `lake env lean` and many `lake build` attempts died
+with `Too many open files` while loading mathlib oleans from the virtiofs mount.  For iteration
+I copied all `LEAN_PATH` dirs to `/tmp/ll/<n>` (VM-native overlay fs) and ran
+`LEAN_PATH=$(cat /tmp/ll/LEAN_PATH) lean <file>` (`/tmp/ll/lean.sh`).  The commit gate was a
+real `lake build CollatzMoonshot.AmusicalFormalMin`: it succeeded on the second retry, with no
+`declaration uses sorry`, and `#print axioms` was then rerun under `lake env lean`.
 
-## Current blocker and next attack
+## Next
 
-The immediate blocker is environmental file-descriptor exhaustion in Lean's import loader, not a
-known proof error.  On a fresh box, first build `CollatzMoonshot.AmusicalFormalMin.Bookkeeping`,
-then the scoped target, and repair any ordinary elaboration errors.
-
-After the first four targets are green, attack the sole remaining target, Proposition G1.  Its
-route-decisive missing input is the paper's two-visit lemma: for fixed `M`, arbitrary residue
-classes can be joined by an amusical orbit segment whose endpoints lie in one sufficiently large
-dyadic block.  The theorem `amusical_no_periodic_cone` is available in
-`AmusicalAntiKohl.lean`, but no such two-visit statement has yet been formalized here.
+Nothing is open in this file.  A natural sequel is Proposition G2 (growing modulus
+`M(s) | 2^∞3^∞N₀`, `log₂ M(s) ≤ s/10`).  Its bookkeeping is the explicit length of the word
+built here: about `a + b + N₀!·(N₀ + 2(a+b) + 1) + e`.  The factorial connector is far too long
+for G2, so G2 would need a connector of length `O(log M)`.
