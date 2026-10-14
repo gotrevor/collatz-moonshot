@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalSurvivorSeparation
+import CollatzMoonshot.AmusicalOddRewire.Glue
 
 /-!
 # Rewiring the odd branch: the tail threshold (Theorem TT) and `τ_odd` (T1★)
