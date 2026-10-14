@@ -565,7 +565,8 @@ settled.  The wall is now one count: the integers that survive past the residue 
 
 ## 21. The `𝔽₂[t]` twin has infinitely many orbits (2026-10-13, "freeform" Fable agent, checked)
 
-Lean: `AmusicalFunctionField.lean` (targets).  This is the clean split of Klamkin (a) into a
+Lean: `AmusicalFunctionField.lean`, every statement proved and axiom-clean (Theorem F by the
+fftwin treadmill, 2026-10-14).  This is the clean split of Klamkin (a) into a
 Diophantine half and a dynamical half.
 
 * **The twin.**  `(ℤ, 2, 3) → (𝔽₂[t], t, Q)` with `Q = t² + t + 1`.  Haar balance forces depths
@@ -614,4 +615,47 @@ Lean: `AmusicalLinearForever.lean`.  Theorem W is **proved, axiom-clean** (Ren's
   permutation with one orbit iff `Con(ZFC)`.  The agent puts 90% on a `C₃` variant and 80% on a
   residue-transitive one.
 * Lagarias's C4 fails non-trivially for some members of the class: sibling cycles of one length.
+
+## 23. The twin's cycles are graded by `v₂(p)`; Frobenius is half an intertwiner (2026-10-13, "twin2" Fable agent, checked)
+
+Lean: `AmusicalTwinDegree.lean` (targets, on `wip/amusical-twindeg` until a treadmill closes them).
+The agent did not find an infinite orbit of the twin.  It puts 99% on one existing and about 2% on
+the twin's extras making one provable.
+
+* **Theorem D (PROVED, paper; I checked the proof).**  A non-exceptional cycle of period
+  `p = 2^v q`, `q` odd, has minimum degree `≤ 2^v + 2`.
+  * D1: `deg(t^{2p} − Q^p) = 2p − 2^v`.  Frobenius reduces to `q` odd, where the `t^{2q}` terms
+    cancel and the `t^{2q−1}` coefficient is `q ≡ 1`.
+  * D2: at the minimum every term of `c_w` has degree `≤ 2p + 2`, since the degree walk `S_j ≥ 0`.
+  * The walk `+1, 0, −1, −1` is exact except at `m = 0` in each class.  Those are exactly the four
+    exceptional points `0, 1, 1 + t, Q` (two fixed points and the 3-cycle `t → Q → 1 + t`).
+  * Tight up to one: Theorem F's cycles have minimum degree `p + 1` at `p = 2^e`.
+  * I re-checked it independently (`scripts/amusical/twin/twinD_ren.py`, own code): D1 for
+    `p ≤ 400`, and Theorem D on all `113` cycles through polynomials of degree `< 16` (periods 8,
+    16, 20, 32, 48, 64).  Teeth: the bound without its `+ 2` fails on period 8.
+* **Corollaries (PROVED from D).**  Each 2-adic class `v` holds at most `2^{2^v+3}` cycles, over
+  all odd `q` together.  With Theorem F the valuations are unbounded, so the cycle structure is
+  graded by `v₂(p)`.  A periodic polynomial of degree `d` has period `≥ (2d − 4)/3`.  Any odd
+  balanced cycle passes through one of 11 polynomials of degree `≤ 3`, all followed above degree
+  120 (agent's `census.c`), so such a cycle has period `≥ 236`.
+* **Contrast with `ℤ`.**  Theorem A★ (§18) is stronger per period (a cycle minimum is `≤ p^C`) but
+  has no uniformity in the odd part: `|2^N − 3^p|` grows with every `p`, while the twin's
+  denominator sees only `v₂(p)`.
+* **Frobenius on `E ∪ A` (PROVED).**  `U²(n²) = (Un)²` there, the one symmetry `ℤ` lacks (the
+  window-2 centralizer of `U` is `0, ±1, ±id, ±U`, §14).  It fails on `B, C`, because the class read
+  `n mod t³` forgets `n₂`, and Haar balance forces depth 3 for every `𝔽₂[t]` twin.
+  * Numerically the orbits of `n` and `n²` decouple: `deg U^{2j}(n²) − 2 deg Uʲ(n)` spreads like two
+    independent walks (sd 40 at `j = 400`).  For all 1313 periodic points inside degree 18 with
+    period `≥ 3`, `x²` is not periodic.
+  * **No class-wise constant repair (PROVED, my proof).**  The agent's §7 argument mixes up a depth
+    (`n²` is in `A`, not `B`).  My route: `n = 0, 1` force `U²κ_E = κ_E` and `U²(1+κ_A) = 1+κ_A`.
+    Such points have degree `≤ 5` by the period bound, and a search finds only `0, 1`.  Then
+    `n = 1+t` and `n = Q` determine `κ_B, κ_C`, and all four candidates fail at `n = t`
+    (`scripts/amusical/twin/classwise_ren.py`; teeth: the pure square passes on `E ∪ A`, fails on `B`).
+  * Proposition M (PROVED): a self-similar point `z² + c ∈ orbit(z)` certifies an infinite orbit,
+    given an intertwiner.  None exists here; the statement keeps the certificate shape.
+* **Walls.**  Exact-height counting is a costume for the closing-word count
+  `#{w : (t^{2p} − Q^p) | c_w}`, the twin's own Diophantine half.  Periodic points look t-adically
+  and Q-adically dense (BELIEVED 85%: cycles inside degree 24 meet every cylinder of depth 6), so
+  the twin's residue adversary is an actual polynomial.  In that respect the twin is harder than `ℤ`.
 
