@@ -16,3 +16,11 @@ Axioms: all six use only `propext`, `Quot.sound` (and `Classical.choice` for the
 CT1).  No `native_decide`.  `lake build CollatzMoonshot.AmusicalSwap` green (8707 jobs).
 
 Next: nothing open in this objective's scope.
+
+## Checkpoint
+
+* Branch `wip/amusical-swap`, proof commit `6fd5068` (stacked on `wip/amusical-squares`).
+* Stop signalled via `box done --green`; the scoped target `sorry-free:CollatzMoonshot/AmusicalSwap.lean`
+  is met.  Remaining `sorry`s elsewhere in `src/` are designated-open for this run.
+* `DIRECTION.md` CURRENT DIRECTIVE (awaiting a new idea) still stands; no follow-on proof lap
+  is selected.  Next step, if any, is the operator's: merge/stack this branch.
