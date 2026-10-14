@@ -1,5 +1,79 @@
 # PENDING_WORK
 
+## 2026-10-14 — amusical cycle bound objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-cycles.md` is fully discharged, including the stretch target.
+`CollatzMoonshot/AmusicalCycleBound.lean` is sorry-free with ratified statements unchanged:
+Theorem A★, `noNewCycles_of_search`, `cycleMinBound_31866`, and Atkin's bound in the kernel
+(`amusical_noNewCycles_199`, `atkinNoShortCycles`).  Measurements and controls are in
+`HANDOFF-amusical-cycles.md`.  The length-`31866` theorem stays conditional on the external
+`CycleMinSearch 167195612 15933` (about `10¹²` steps, not kernel-feasible).
+## 2026-10-14 — amusical anti-Kohl objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-antikohl.md` is fully discharged: `CollatzMoonshot/AmusicalAntiKohl.lean`
+is sorry-free, the ratified statements are unchanged, and the axiom ledgers are trust-base only.  See
+`HANDOFF-amusical-antikohl.md`.  The open `AntiKohlConjecture` is a definition, not a target.
+## 2026-10-14: amusical twin degrees objective DONE, nothing owed
+
+`KICKOFF-2026-10-14-amusical-twindeg.md` is fully discharged.  All seven targets in
+`CollatzMoonshot/AmusicalTwinDegree.lean` are proved with their ratified statements unchanged:
+D1, Theorem D, D-i, D-iii, the Frobenius half-intertwiner, the class-wise no-go and Proposition M.
+Their axioms are `propext`, `Classical.choice` and `Quot.sound` only.  See
+`HANDOFF-amusical-twindeg.md`, including the finding that `twinExceptional` omits `t` (harmless).
+
+## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,
+engine-forever theorem, and infinitely-many-orbits consequence are proved with their ratified
+statements unchanged; `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free.  The 8712-job scoped
+gate and canonical axiom ledgers are recorded in `HANDOFF-amusical-pingpong.md`.
+
+No stretch objective was assigned.  Remaining sorries in imported amusical modules are owned by
+other treadmills and are not dependencies of the three ping-pong headline theorems.
+
+## 2026-10-13 — amusical continuous reversor objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-contrev.md` is fully discharged.  Lemma S and Theorems A, A′, and C
+are proved with their ratified statements unchanged, and
+`CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free.  The 8712-job scoped gate and
+8848-job full gate are FORMALIZE-tier green; the three new headline theorems use only
+`Classical.choice`, `Quot.sound`, and `propext`.  See `HANDOFF-amusical-contrev.md` for the proof
+architecture and exact checks.
+
+No stretch objective was assigned.  The explicitly open `AmusicalNoContinuousReversor`
+proposition was not part of this kickoff and requires a new operator instruction before work.
+
+## 2026-10-13 — amusical log-balance objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-logbal.md` is fully discharged.  All three ratified targets are
+proved without statement changes, and `CollatzMoonshot/AmusicalLogBalance.lean` is sorry-free.
+The scoped and full gates are green with the trust-base-only axiom ledgers recorded in
+`HANDOFF-amusical-logbal.md`.
+
+No stretch objective was assigned.  The remaining sorries in other amusical modules are owned by
+separate objectives and were not touched.
+
+## 2026-10-13 — amusical chains objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-chains.md` is fully discharged.  All four ratified
+targets are proved, including the two uniform survival bounds and the
+finite-orbits-to-sublinear-recurrence counting theorem;
+`CollatzMoonshot/AmusicalChains.lean` is sorry-free.  The scoped and full gates
+are green with the trust-base-only axiom ledger recorded in
+`HANDOFF-amusical-chains.md`.
+
+No stretch objective was assigned.  `AmusicalSpitzer.lean` and
+`AmusicalReturns.lean` remain owned by other treadmills and were not edited.
+
+## 2026-10-13 — amusical `1/20` objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-bound.md` is fully discharged.  The semantic word counts are proved
+equal to the certified lattice rows for every length, and `windowDensity_two_hundred_lt` closes
+without `sorry`, a new axiom, or `native_decide`.  Its existing orbit-minimum density corollary is
+therefore fully proved.  See `HANDOFF-amusical-bound.md` for the exact proof chain and gate output.
+
+No stretch objective was assigned after the scoped host predicate became true.
+
 ## 2026-09-22 — summability/crossing bridge: DONE, nothing owed
 
 `KICKOFF-2026-09-22-summability-crossing.md` is fully discharged (commits
