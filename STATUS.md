@@ -109,6 +109,17 @@
 > no-rewiring branch (at most one infinite nonnegative orbit) proves every conclusion of Theorem R
 > with empty change set.  The remaining target is the sparse geometric cut-and-splice construction
 > for at least two infinite orbits.  Read `HANDOFF-amusical-rewire.md`.
+> **2026-10-14, window-3 certificate data formalized:** the exact 25 constrained blocks, 24
+> partial rules, and 216 orphan words now live in a typed, kernel-checked Lean module. Their
+> dimensions, orphan length bounds, block uniqueness, and exact free-block complement are proved.
+> The remaining scoped obligation is the finite-state orphan check plus cycle-to-rule bridge for
+> `no_window3_bijective_reversor`. Read `HANDOFF-amusical-w3.md`.
+
+> **2026-10-13, window-3 periodic classification FORMALIZED:**
+> `amusical_periodic_mem` is proved without itinerary-word enumeration. The actual orbit's affine
+> recurrence gives the uniform bound `|y| <= 2346` for periods at most 12, and one kernel check
+> classifies that bounded range into the known cycles. One scoped target remains:
+> `no_window3_bijective_reversor`. Read `HANDOFF-amusical-w3.md`.
 
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
