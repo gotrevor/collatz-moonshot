@@ -913,7 +913,9 @@ re-derivation of §26's ceiling.  I checked P′, the gap step and the count by 
 ## 32. Conjecture LF has no joint content; the two primes decouple (2026-10-14, "lfprobe" Opus agent, checked in part)
 
 Lean: `AmusicalDecouple.lean` (Lemma D, Corollary MD, `not_formalMin_of_three_dvd`,
-`infinitelyManyOrbits_of_ray`; treadmill).  Agent odds that this lane moves (a): under 1%.
+`infinitelyManyOrbits_of_ray`; treadmill), all four proved and axiom-clean.  Lemma D is
+`Decouple.tendsto_cnt_iInter_inter` (`AmusicalDecouple/Density.lean`); the window periodicity
+behind MD is `Decouple.evPer_fwdWin` / `evPer_bwdWin` (`AmusicalDecouple/Windows.lean`).  Agent odds that this lane moves (a): under 1%.
 
 * **Lemma D (PROVED; I checked it).**  Suppose `A_L` are eventually periodic with power-of-2 periods
   and `B_L` with power-of-3 periods.  If `⋂ A_L` and `⋂ B_L` have the limit densities `α` and `β`

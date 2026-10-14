@@ -46,7 +46,7 @@ open Classical in
 noncomputable def countBelow (S : Set ℕ) (X : ℕ) : ℕ :=
   ((Finset.range X).filter fun n => n ∈ S).card
 
-/-- **Target (Lemma D).**  Eventually `2`-power-periodic and eventually `3`-power-periodic window
+/-- **Proved (Lemma D).**  Eventually `2`-power-periodic and eventually `3`-power-periodic window
 families decouple in the infinite-horizon limit. -/
 theorem tendsto_density_inter_of_two_three {A B : ℕ → Set ℕ}
     (pA : ∀ L, ∃ a N : ℕ, ∀ n, N ≤ n → (n ∈ A L ↔ n + 2 ^ a ∈ A L))
@@ -69,7 +69,7 @@ theorem tendsto_density_inter_of_two_three {A B : ℕ → Set ℕ}
     (fun L => let ⟨a, N, h⟩ := pA L; ⟨a, N, hper _ _ _ h⟩)
     (fun L => let ⟨b, N, h⟩ := pB L; ⟨b, N, hper _ _ _ h⟩) hAL hBL ha hb hA hB
 
-/-- **Target (Corollary MD).**  If forward and backward survivors have the densities the windows
+/-- **Proved (Corollary MD).**  If forward and backward survivors have the densities the windows
 predict, orbit minima have density `minimaConstant`. -/
 theorem orbitMin_density_of_survivor_densities {pf pb : ℝ}
     (hpf : Filter.Tendsto (fun L : ℕ => (fwdSurv L : ℝ)) Filter.atTop (nhds pf))
@@ -117,7 +117,7 @@ theorem orbitMin_density_of_survivor_densities {pf pb : ℝ}
   · rw [hAi]; exact hF
   · rw [hBi]; exact hB
 
-/-- **Target.**  Formal minima avoid `3ℤ`. -/
+/-- **Proved.**  Formal minima avoid `3ℤ`. -/
 theorem not_formalMin_of_three_dvd {y : ℤ} (h : 3 ∣ y) : ¬ FormalMin y := by
   intro hy
   have h1 := (hy 1 le_rfl).2
@@ -129,7 +129,7 @@ theorem not_formalMin_of_three_dvd {y : ℤ} (h : 3 ∣ y) : ¬ FormalMin y := b
   rw [hk] at h1
   norm_num at h1
 
-/-- **Target.**  Infinitely many formal minima on a ray `uᵏ x` imply Klamkin (a). -/
+/-- **Proved.**  Infinitely many formal minima on a ray `uᵏ x` imply Klamkin (a). -/
 theorem infinitelyManyOrbits_of_ray {u x : ℤ} (hu : 1 < u) (hx : 0 < x)
     (h : {k : ℕ | FormalMin (u ^ k * x)}.Infinite) : AmusicalInfinitelyManyOrbits := by
   apply infinitelyManyOrbits_of_formalMin_infinite
