@@ -71,7 +71,35 @@ def AntiKohlConjecture (p : ℕ) : Prop :=
 `c ∈ {2, 4}`, `b ∈ {0, 1, −1}`. -/
 theorem amusical_antiKohl_class :
     ∃ a b c : ℤ → ℤ, IsRCWA amusical 4 a b c ∧ SlopeValOne 3 4 a c := by
-  sorry
+  refine ⟨fun _ => 3, fun r => if r % 2 = 0 then 0 else if r % 4 = 1 then 1 else -1,
+    fun r => if r % 2 = 0 then 2 else 4, ?_, ?_⟩
+  · refine ⟨by norm_num, ?_, ?_⟩
+    · intro r
+      dsimp
+      split_ifs <;> omega
+    · intro x
+      dsimp
+      unfold amusical
+      split_ifs <;> omega
+  · intro r hr0 hr4
+    have h3 : padicValRat 3 (3 : ℚ) = 1 := padicValRat.self (by norm_num)
+    have h2 : padicValRat 3 (2 : ℚ) = 0 := by
+      change padicValRat 3 ((2 : ℕ) : ℚ) = 0
+      rw [padicValRat.of_nat]
+      rw [padicValNat.eq_zero_of_not_dvd (p := 3) (n := 2) (by norm_num)]
+      norm_num
+    have h4 : padicValRat 3 (4 : ℚ) = 0 := by
+      change padicValRat 3 ((4 : ℕ) : ℚ) = 0
+      rw [padicValRat.of_nat]
+      rw [padicValNat.eq_zero_of_not_dvd (p := 3) (n := 4) (by norm_num)]
+      norm_num
+    have hr : r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3 := by omega
+    rcases hr with rfl | rfl | rfl | rfl
+    all_goals
+      dsimp
+      rw [padicValRat.div (by norm_num) (by norm_num), h3]
+      first | rw [h2] | rw [h4]
+      norm_num
 
 /-- **Target.**  The anti-Kohl conjecture at `3` gives `U` a seventh orbit.  Paper proof: without a
 seventh orbit, the orbit of `8` contains every nonnegative integer off the twenty known cycle
@@ -79,7 +107,65 @@ members (`AmusicalChains`: the six orbits cover `ℕ`), so it contains the class
 `{y ≥ 112}`; `permOrbit amusicalPerm 8 = amusicalOrbit 8`. -/
 theorem atLeastSevenOrbits_of_antiKohl (h : AntiKohlConjecture 3) :
     AmusicalAtLeastSevenOrbits := by
-  sorry
+  obtain ⟨a, b, c, hrcwa, hslope⟩ := amusical_antiKohl_class
+  have hnoTail : ¬ ContainsClassTail (permOrbit amusicalPerm 8) :=
+    h amusicalPerm 4 a b c (by
+      change IsRCWA amusical 4 a b c
+      exact hrcwa) hslope 8
+  have hcomp : ({n : ℤ | 0 ≤ n} \ amusicalOrbit 8).Infinite := by
+    by_contra hnotinf
+    have hfinite : ({n : ℤ | 0 ≤ n} \ amusicalOrbit 8).Finite :=
+      Set.not_infinite.1 hnotinf
+    obtain ⟨N, hN⟩ := hfinite.bddAbove
+    apply hnoTail
+    refine ⟨1, 0, max N 0 + 1, by norm_num, ?_⟩
+    intro y _ hy
+    change y ∈ amusicalOrbit 8
+    by_contra hyorb
+    have hmax0 : 0 ≤ max N 0 := le_max_right N 0
+    have hmaxN : N ≤ max N 0 := le_max_left N 0
+    have hstep : max N 0 ≤ max N 0 + 1 := by omega
+    have hycomp : y ∈ {n : ℤ | 0 ≤ n} \ amusicalOrbit 8 :=
+      ⟨hmax0.trans (hstep.trans hy), hyorb⟩
+    have hygtN : N < y := lt_of_le_of_lt hmaxN (lt_of_lt_of_le (by omega) hy)
+    exact (not_le_of_gt hygtN) (hN hycomp)
+  have hknown : (knownCycleMembers : Set ℤ).Finite := Finset.finite_toSet _
+  obtain ⟨n, ⟨hn0, hn8⟩, hnknown⟩ := (hcomp.sdiff hknown).nonempty
+  have hclosed : ∀ a ∈ ({0, 1, 2, 4, 44} : Finset ℤ),
+      amusicalOrbit a ⊆ (knownCycleMembers : Set ℤ) := by
+    intro a ha
+    apply amusicalOrbit_subset_of_closed (S := (knownCycleMembers : Set ℤ))
+        (by decide) (by decide)
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl <;> decide
+  have hnorb : ∀ a ∈ ({0, 1, 2, 4, 44, 8} : Finset ℤ),
+      amusicalOrbit n ≠ amusicalOrbit a := by
+    intro a ha heq
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl | rfl
+    all_goals first
+      | exact hnknown (hclosed _ (by decide) (heq ▸ mem_amusicalOrbit_self n))
+      | exact hn8 (heq ▸ mem_amusicalOrbit_self n)
+  refine ⟨insert n {0, 1, 2, 4, 44, 8}, ?_, ?_, ?_⟩
+  · have hnmem : n ∉ ({0, 1, 2, 4, 44, 8} : Finset ℤ) := by
+      intro hn'
+      exact hnorb n (by simpa using hn') rfl
+    simp [hnmem]
+  · intro x hx
+    simp only [Finset.mem_insert] at hx
+    rcases hx with rfl | hx
+    · exact hn0
+    · simp only [Finset.mem_singleton] at hx
+      rcases hx with rfl | rfl | rfl | rfl | rfl | rfl <;> norm_num
+  · intro a ha b hb hab
+    change a ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at ha
+    change b ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at hb
+    rcases Finset.mem_insert.mp ha with rfl | ha
+    · exact hnorb b (Finset.mem_insert.mp hb |>.resolve_left hab.symm)
+    · rcases Finset.mem_insert.mp hb with hbn | hb
+      · subst b
+        exact (hnorb a ha).symm
+      · exact amusical_six_distinct_orbits a ha b hb hab
 
 /-- **Target (the gate).**  `U` has no periodic cone: a union of residue classes mod `M` that `U`
 maps into itself is empty or everything.  Paper proof: the residue graph of `U` mod `M` (edge
@@ -181,7 +267,34 @@ theorem kappa_cone (x : ℤ) (h : x % 2 = 1 ∨ x % 12 = 0) : kappa x % 2 = 1 :=
 /-- **Target.**  `κ` is in the anti-Kohl class at `p = 2`. -/
 theorem kappa_antiKohl_class :
     ∃ a b c : ℤ → ℤ, IsRCWA kappa 6 a b c ∧ SlopeValOne 2 6 a c := by
-  sorry
+  refine ⟨fun _ => 2,
+    fun r => if r % 6 = 0 then 5 else if r % 6 = 1 then 7 else if r % 6 = 2 then 2
+      else if r % 6 = 3 then -5 else if r % 6 = 4 then -8 else -1,
+    fun r => if r % 6 = 0 then 1 else if r % 6 = 1 then 3 else if r % 6 = 2 then 3
+      else if r % 6 = 3 then 1 else if r % 6 = 4 then 3 else 1, ?_, ?_⟩
+  · refine ⟨by norm_num, ?_, ?_⟩
+    · intro r
+      dsimp
+      split_ifs <;> omega
+    · intro x
+      dsimp
+      unfold kappa
+      split_ifs <;> omega
+  · intro r hr0 hr6
+    have h2 : padicValRat 2 (2 : ℚ) = 1 := padicValRat.self (by norm_num)
+    have h3 : padicValRat 2 (3 : ℚ) = 0 := by
+      change padicValRat 2 ((3 : ℕ) : ℚ) = 0
+      rw [padicValRat.of_nat]
+      rw [padicValNat.eq_zero_of_not_dvd (p := 2) (n := 3) (by norm_num)]
+      norm_num
+    have hr : r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 ∨ r = 5 := by omega
+    rcases hr with rfl | rfl | rfl | rfl | rfl | rfl
+    all_goals
+      dsimp
+      first
+      | simpa using h2
+      | rw [padicValRat.div (by norm_num) (by norm_num), h2, h3]
+        norm_num
 
 /-- **Target.**  Every orbit of `κ` has density `0`, so `κ` has infinitely many orbits and none
 contains a class tail.  Paper proof: Theorem T with `S = odd ∪ 12ℤ`.
@@ -236,8 +349,35 @@ def hFive (x : ℤ) : ℤ :=
 /-- **Target.**  `hFive` is a bijection of `ℤ` (images: `5k + {0, 2, 4}` from evens, `5k + {1, 3}`
 from odds). -/
 theorem hFive_bijective : Function.Bijective hFive := by
-  sorry
+  let g : ℤ → ℤ := fun y =>
+    if y % 5 = 0 then 6 * (y / 5)
+    else if y % 5 = 1 then 4 * (y / 5) + 1
+    else if y % 5 = 2 then 6 * (y / 5) + 2
+    else if y % 5 = 3 then 4 * (y / 5) + 3
+    else 6 * (y / 5) + 4
+  have hg_left : Function.LeftInverse g hFive := by
+    intro x
+    have hx :
+        (x % 2 = 0 ∧ x % 6 = 0) ∨ (x % 2 = 0 ∧ x % 6 = 2) ∨
+        (x % 2 = 0 ∧ x % 6 = 4) ∨ (x % 2 = 1 ∧ x % 4 = 1) ∨
+        (x % 2 = 1 ∧ x % 4 = 3) := by omega
+    rcases hx with hx | hx | hx | hx | hx
+    all_goals
+      dsimp [g]
+      unfold hFive
+      split_ifs <;> omega
+  have hg_right : Function.RightInverse g hFive := by
+    intro y
+    have hy : y % 5 = 0 ∨ y % 5 = 1 ∨ y % 5 = 2 ∨ y % 5 = 3 ∨ y % 5 = 4 := by
+      omega
+    rcases hy with hy | hy | hy | hy | hy
+    all_goals
+      dsimp [g]
+      unfold hFive
+      split_ifs <;> omega
+  exact ⟨hg_left.injective, hg_right.surjective⟩
 
+set_option maxHeartbeats 1000000 in
 /-- **Target.**  `h ∘ (· + 1) ∘ h⁻¹` has modulus `30` and only the slopes `3/2` and `2/3` (the
 parity of `h⁻¹ y` flips under `+1`), so each slope has valuation `1` at `3` or at `2`; being
 conjugate to a translation, it has a single orbit. -/
@@ -247,6 +387,77 @@ theorem mixedPrime_single_orbit :
     (∃ a b c : ℤ → ℤ, IsRCWA σ 30 a b c ∧
       ∀ r, (a r : ℚ) / c r = 3 / 2 ∨ (a r : ℚ) / c r = 2 / 3) ∧
       ∀ x y : ℤ, ∃ n : ℤ, (σ ^ n) x = y := by
-  sorry
+  let e : Equiv.Perm ℤ := Equiv.ofBijective hFive hFive_bijective
+  let σ : Equiv.Perm ℤ := e.symm.trans ((Equiv.addRight (1 : ℤ)).trans e)
+  change (∃ a b c : ℤ → ℤ, IsRCWA σ 30 a b c ∧
+      ∀ r, (a r : ℚ) / c r = 3 / 2 ∨ (a r : ℚ) / c r = 2 / 3) ∧
+    ∀ x y : ℤ, ∃ n : ℤ, (σ ^ n) x = y
+  let g : ℤ → ℤ := fun y =>
+    if y % 5 = 0 then 6 * (y / 5)
+    else if y % 5 = 1 then 4 * (y / 5) + 1
+    else if y % 5 = 2 then 6 * (y / 5) + 2
+    else if y % 5 = 3 then 4 * (y / 5) + 3
+    else 6 * (y / 5) + 4
+  have hg_right : Function.RightInverse g hFive := by
+    intro y
+    have hlt : y % 5 < 5 := Int.emod_lt_of_pos y (by norm_num)
+    have hnonneg : 0 ≤ y % 5 := Int.emod_nonneg y (by norm_num)
+    interval_cases hy : y % 5 <;>
+      dsimp [g] <;> unfold hFive <;> split_ifs <;> omega
+  have he (y : ℤ) : e.symm y = g y := by
+    apply hFive_bijective.1
+    calc
+      hFive (e.symm y) = y := e.apply_symm_apply y
+      _ = hFive (g y) := (hg_right y).symm
+  have hsigma (y : ℤ) : σ y = hFive (g y + 1) := by
+    change hFive (e.symm y + 1) = hFive (g y + 1)
+    rw [he]
+  let a : ℤ → ℤ := fun r => if g r % 2 = 0 then 3 else 2
+  let c : ℤ → ℤ := fun r => if g r % 2 = 0 then 2 else 3
+  let b : ℤ → ℤ := fun r => c r * hFive (g r + 1) - a r * r
+  constructor
+  · refine ⟨a, b, c, ?_, ?_⟩
+    · refine ⟨by norm_num, ?_, ?_⟩
+      · intro r
+        dsimp [a, c]
+        split_ifs <;> omega
+      · intro x
+        rw [hsigma]
+        have hlt : x % 30 < 30 := Int.emod_lt_of_pos x (by norm_num)
+        have hnonneg : 0 ≤ x % 30 := Int.emod_nonneg x (by norm_num)
+        interval_cases hx : x % 30 <;>
+          dsimp [a, b, c, g] <;> unfold hFive <;> split_ifs <;> omega
+    · intro r
+      dsimp [a, c]
+      split_ifs
+      · left
+        norm_num
+      · right
+        norm_num
+  · intro x y
+    have hcoord (z : ℤ) : e.symm (σ z) = e.symm z + 1 := by
+      change e.symm (e (e.symm z + 1)) = e.symm z + 1
+      exact e.symm_apply_apply (e.symm z + 1)
+    have hinvcoord (z : ℤ) : e.symm (σ⁻¹ z) = e.symm z - 1 := by
+      have hz := hcoord (σ⁻¹ z)
+      have happ : σ (σ⁻¹ z) = z := by simp
+      rw [happ] at hz
+      omega
+    have hpow : ∀ n : ℤ, ∀ z : ℤ, e.symm ((σ ^ n) z) = e.symm z + n := by
+      intro n
+      induction n using Int.induction_on with
+      | zero => intro z; simp
+      | succ n ih =>
+          intro z
+          rw [zpow_add_one, Equiv.Perm.mul_apply, ih, hcoord]
+          omega
+      | pred n ih =>
+          intro z
+          rw [zpow_sub_one, Equiv.Perm.mul_apply, ih, hinvcoord]
+          omega
+    refine ⟨e.symm y - e.symm x, ?_⟩
+    apply e.symm.injective
+    rw [hpow]
+    omega
 
 end CollatzMoonshot.Amusical
