@@ -150,6 +150,32 @@ def deltaPerm : Equiv.Perm ℤ where
   left_inv := deltaInv_delta
   right_inv := delta_deltaInv
 
+/-- At a multiple of four, divisibility of the shifted coordinate by three gives the
+contracting edge in the finite `2`-`3` lattice used by `delta_periodic`. -/
+theorem delta_four_contract (k : ℤ) (h : 3 ∣ k + 2) :
+    delta (4 * k) = 4 * (2 * (k + 2) / 3 - 2) := by
+  unfold delta
+  split_ifs <;> omega
+
+/-- The contracting edge sends the shifted coordinate `k + 2` to two thirds of itself. -/
+theorem delta_four_contract_coordinate (k : ℤ) (h : 3 ∣ k + 2) :
+    delta (4 * k) / 4 + 2 = 2 * (k + 2) / 3 := by
+  rw [delta_four_contract k h]
+  omega
+
+/-- In the inverse direction, an even shifted coordinate gives the expanding edge of the same
+finite `2`-`3` lattice. -/
+theorem deltaInv_four_expand (k : ℤ) (h : 2 ∣ k + 2) :
+    deltaInv (4 * k) = 4 * (3 * (k + 2) / 2 - 2) := by
+  unfold deltaInv
+  split_ifs <;> omega
+
+/-- The inverse expanding edge sends the shifted coordinate `k + 2` to three halves of itself. -/
+theorem deltaInv_four_expand_coordinate (k : ℤ) (h : 2 ∣ k + 2) :
+    deltaInv (4 * k) / 4 + 2 = 3 * (k + 2) / 2 := by
+  rw [deltaInv_four_expand k h]
+  omega
+
 /-- **Target.**  Every orbit of `δ` is finite.  Paper proof (`uniform.md` §5): write the
 multiples of `4` as `4k` and put `c = k + 2`; along an orbit the multiples of `4` alternate
 `c ↦ (3/2) c` (while `2 ∣ c`) and `c ↦ (2/3) c` (while `3 ∣ c`), ending at fixed points of the
