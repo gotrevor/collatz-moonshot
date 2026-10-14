@@ -40,6 +40,40 @@
 > 8714-job gate is FORMALIZE-tier green, and the theorem uses only `Classical.choice`,
 > `Quot.sound`, and `propext`.  Only the two analytic escape lemmas remain; read
 > `HANDOFF-amusical-escape.md`.
+> **2026-10-14, amusical global mechanisms objective COMPLETE:**
+> `CollatzMoonshot/AmusicalGlobal.lean` is sorry-free with every ratified statement unchanged.
+> Proposition S converts a positive survivor-density gap into infinitely many orbit minima;
+> Proposition P uses an adic marker, a transitive affine connector on the coprime modulus, and a
+> CRT-selected large cylinder translate to force arbitrarily many returns to any residue class.
+> The 8716-job scoped gate is FORMALIZE-tier green. Both final headline axiom ledgers contain
+> exactly `Classical.choice`, `Quot.sound`, and `propext`, with no inherited `sorryAx`. Read
+> `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical one-sided density ledger:** the periodic good-word predicates now have
+> kernel-checked natural densities `fwdSurv L` and `bwdSurv L`. This closes the counting half of
+> Proposition S's one-sided finite-window estimates; only the large-integer semantic bridge and
+> inclusion-exclusion remain. Two scoped sorries remain; read `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical survival semantics formalized:** the orbit-theoretic core of Proposition
+> S is kernel-checked: forward-and-backward infinite survival is exactly `IsOrbitMin`, and each
+> infinite survivor implies its corresponding finite-window predicate. The remaining proof is a
+> finite-cardinality density calculation. Two scoped sorries remain; read
+> `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical window-two centralizer FORMALIZED:**
+> `commuting_window_two` is proved with its ratified statement unchanged. The proof replaces the
+> forbidden all-function enumeration with indexed certificates on the `44` and `-44` cycles and
+> independently classifies period-dividing-12 images from an affine bound plus a `Fin 2346`
+> kernel check. Its axiom ledger is exactly `Classical.choice`, `Quot.sound`, and `propext`.
+> Two target sorries remain in `AmusicalGlobal.lean`; the 8716-job scoped gate is
+> FORMALIZE-tier green. Read `HANDOFF-amusical-global.md`.
+
+> **2026-10-13, amusical commuting mechanism FORMALIZED:**
+> `infinitelyManyOrbits_of_commuting` is proved with its ratified statement unchanged. A
+> commuting strictly increasing map commutes with all integer powers, transports orbit minima,
+> and generates a strictly increasing infinite family of nonnegative minima. Three target
+> sorries remain in `AmusicalGlobal.lean`; the 8715-job scoped gate is FORMALIZE-tier green.
+> Read `HANDOFF-amusical-global.md`.
 
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
