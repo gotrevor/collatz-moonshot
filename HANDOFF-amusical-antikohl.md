@@ -1,5 +1,33 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: sigma-tau forward core algebra isolated
+
+The easy half of the `sigmaTau_orbit_densityZero` automaton is now reduced to pure counting.
+Three kernel-checked helpers establish that `S = {x | x % 4 = 2}` is a forward-invariant cone,
+that `(sigmaTauPerm ^ n) x = 3^n * x` on `S`, and that the full forward core is exactly
+`{3^n * x | x % 4 = 2}`.  In particular, no further dynamics remain in the forward estimate;
+the next step is only the symmetric-box cardinality bound for this single dilated class.
+
+Verification run:
+
+```text
+lake env lean -j1 CollatzMoonshot/AmusicalAntiKohl.lean
+```
+
+The direct check succeeds with exactly the three pre-existing target sorry warnings.  Two
+earlier unchanged retries hit the environment's intermittent import-level `Too many open files`
+failure.  No target statement, axiom, or decision certificate changed.
+
+Current blocker: no external blocker.  The three ratified target sorries remain
+`amusical_no_periodic_cone`, `kappa_orbit_densityZero`, and `sigmaTau_orbit_densityZero`.
+For the last, the forward core is now explicit; the load-bearing missing part is still the
+13-type backward survivor recursion with decay `(1/2)(3/4)^(n-1)`.
+
+Next highest-value attack: prove a reusable `IntDensityLE` bound for a single dilated residue
+class and discharge the forward hypothesis of Theorem T from `sigmaTau_forward_core`.  Then
+encode the 13 backward survivor types as finite residue sets and prove their one-step cardinality
+recursion, aiming only for the geometric upper bound required by Theorem T.
+
 ## 2026-10-14: Theorem T and its orbit consequences proved
 
 The reflection audit found no statement mismatch: the scoped gate is exactly the remaining

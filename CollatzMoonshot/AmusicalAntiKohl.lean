@@ -740,6 +740,42 @@ theorem sigmaTau_two_mod_four (x : ℤ) (h : x % 4 = 2) : sigmaTauPerm x = 3 * x
   show ctau (amusical x) = 3 * x
   unfold ctau amusical; split_ifs <;> omega
 
+/-- The class `2 mod 4` is a forward-invariant cone for `σ_τ`. -/
+theorem sigmaTau_cone (x : ℤ) (hx : x % 4 = 2) : sigmaTauPerm x % 4 = 2 := by
+  rw [sigmaTau_two_mod_four x hx, Int.mul_emod, hx]
+  norm_num
+
+/-- Iterating `σ_τ` on its cone is simply multiplication by the corresponding power of `3`. -/
+theorem sigmaTau_pow_two_mod_four (n : ℕ) (x : ℤ) (hx : x % 4 = 2) :
+    (sigmaTauPerm ^ n) x = (3 : ℤ) ^ n * x := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ', Equiv.Perm.mul_apply, ih]
+      rw [sigmaTau_two_mod_four]
+      · ring
+      · have h3pow : (3 : ℤ) ^ n % 4 = 1 ∨ (3 : ℤ) ^ n % 4 = 3 := by
+          clear ih
+          induction n with
+          | zero => simp
+          | succ n hn =>
+              rw [pow_succ, Int.mul_emod]
+              rcases hn with hn | hn <;> omega
+        rw [Int.mul_emod]
+        rcases h3pow with h3pow | h3pow <;> rw [h3pow, hx] <;> norm_num
+
+/-- The `n`th forward core of the `σ_τ` cone is the dilated residue class
+`3^n · (2 + 4ℤ)`. -/
+theorem sigmaTau_forward_core (n : ℕ) :
+    ((sigmaTauPerm ^ n) '' {x : ℤ | x % 4 = 2}) =
+      {y : ℤ | ∃ x : ℤ, x % 4 = 2 ∧ y = (3 : ℤ) ^ n * x} := by
+  ext y
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨x, hx, sigmaTau_pow_two_mod_four n x hx⟩
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨x, hx, sigmaTau_pow_two_mod_four n x hx⟩
+
 /-- **Target.**  Every orbit of `σ_τ = τ ∘ U` has density `0`.  Paper proof: Theorem T with
 `S = 2 + 4ℤ`.  The forward core is `3ⁿ (2 + 4ℤ)`, of density `3⁻ⁿ/4`.  The backward core
 `{x : σ_τʲ x ∉ S, j ≤ n}` has density `(1/2)(3/4)ⁿ⁻¹`.  This comes from a closed 13-type
