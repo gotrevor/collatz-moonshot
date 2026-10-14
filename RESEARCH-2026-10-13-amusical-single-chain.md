@@ -864,7 +864,7 @@ settles (a): about 2%.
   below `1.5X` equals the number of crossing rungs in `[X, 1.5X)`, bracketed by `FS ∩ 3ℤ ≤ orbits ≤ FS`
   per window.
 * **Gates.**  `uᵏx` families with `u` prime to 6 never feed Sep3; they act only through formal minima
-  (Conjecture LF, §28).  **Twin `τ_odd` (PROVED ~90%, with a demo):** it agrees with `U` on every even
+  (Conjecture LF, §28).  **Twin `τ_odd` (PROVED, unconditional in §33):** it agrees with `U` on every even
   number, has `U`'s statistics, satisfies Sep3 verbatim, and has one orbit.  Under it the powers of 3
   fall back almost always.  So any proof must use `U`'s odd branch at infinitely many high points.
 
@@ -953,3 +953,52 @@ behind MD is `Decouple.evPer_fwdWin` / `evPer_bwdWin` (`AmusicalDecouple/Windows
   member's own, but a beyond-the-digits test (walks to 150 nats) also matches.
 * **No-go test.**  The LF analogue is false for `τ`, `ω` and `τ_odd`, since each has finitely many
   orbit minima.  So no proof of LF can be a statistic.
+
+## 33. The tail threshold: rewiring off any set short of whole tails fuses the chains (2026-10-14, "oddbranch" Opus agent, checked)
+
+Lean: `AmusicalOddRewire.lean` (Theorem TT, T1★, and Sep3 for any `τ` with `τ(2m) = 3m`;
+treadmill).  Maze row "odd-branch agreement off a sparse set".  I checked TT by hand.
+
+* **Gluing lemma GL (PROVED, re-derived).**  Take any family of chains, each meeting `S` at
+  unboundedly late and early times.  Rewiring only at cut points in `S ∩ [Y_k, ∞)` fuses the whole
+  family into one chain.
+  * At most `2k` points change at stage `k`, and junctions pair cut points of the same stage.
+  * The construction is §14's trail with the cut predicate as a parameter.  It needs none of
+    Theorem R's ratio bookkeeping, which is where §30's 10% doubt lay.
+* **Theorem TT (PROVED, new).**  The following are equivalent, for every `S`:
+  * every permutation agreeing with `U` off `S` has infinitely many infinite orbits;
+  * infinitely many chains have an `S`-free forward tail, or infinitely many have an `S`-free
+    backward tail.
+
+  Proof of ⇐: an `S`-free tail stays a `τ`-ray, and disjoint forward rays never share an orbit.
+  Proof of ⇒: glue the remaining chains by GL.  So a proof of (a) that consults `U` only off `S`
+  is the same thing as a proof that infinitely many whole tails avoid `S`.
+* **T1★ (PROVED; settles §30's `τ_odd`).**  Take `S` = the odd numbers.  No tail is `S`-free:
+  forward, an `E`-run from `x` lasts `v₂(x)` steps; backward, every increase of `V` lands on
+  `4q + 1` or `4q + 3`.  So for every `F → ∞` there is a `τ` that:
+  * has `τ(2m) = 3m` and keeps `U`'s cycles;
+  * changes at most `F(N)` points below `N`;
+  * has one chain.
+
+  It keeps Sep3, Lemma St, P3, and every window and residue statistic.  It does not keep Lemma K's
+  time separation or any Π₁ statement (FS density, PD, the orbit of 8).
+* **NG★ (PROVED as a dichotomy).**  Either (I) infinitely many chains each have a tail avoiding some
+  class `1 mod 6^k`, or (II) for every `F → ∞` some `τ` with finitely many chains satisfies all of:
+  * agrees with `U` on evens and on `3 mod 4`;
+  * agrees with `U` mod 3 everywhere, so it follows the branch-residue rule exactly;
+  * has `τ − U → 0` in `ℤ₂` and `ℤ₃`, so its boundary map is `Û` itself.
+
+  (I) would itself give (a).  It is believed false (99%): 25 chains walked to `2^1500` hit `A_k` at
+  the model rates `8^{−k}` forward and `(2/9)·…` backward.  So no local-to-global statement about
+  `Û` can prove (a).
+* **Lever (Part B).**
+  * **Information, not size.**  A rewiring set chosen blind to the orbits fuses them for certain at
+    `p_n = 1/ln ln n` (PROVED).  It is believed harmless below about `p_n = 1/ln² n`.  The believed
+    threshold is `Σ p_n/n = ∞` (80%; 20 chains walked to `2^3000`).
+  * "Affine on all odds" pins `τ` to `{U, W_{0,2,1}}`, so it proves nothing for `U` that it does
+    not also prove for the twin.
+  * The staircase's first odd point controls only `O(log s)` steps.
+  * No perturbation of `U` is small at `∞`, 2 and 3 at once.  The 2/3-adic side is proved, the
+    bounded side is a conjecture (65%).
+* **Where the wall sits.**  Any proof must use `U` exactly along entire forward (or backward) tails
+  of infinitely many chains.  That is a survival-type, Π₁ statement: exactly §31's `d(FS) > c`.

@@ -142,6 +142,7 @@ import CollatzMoonshot.AmusicalStaircase
 import CollatzMoonshot.AmusicalPowers
 import CollatzMoonshot.AmusicalSurvivorCeiling
 import CollatzMoonshot.AmusicalDecouple
+import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalLinearForever
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
