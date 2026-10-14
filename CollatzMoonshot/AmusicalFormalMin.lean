@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalEscape
+import CollatzMoonshot.AmusicalFormalMin.Bookkeeping
 
 /-!
 # Empty-interior certificates: the formal-minimum transversal and the resolution gate
@@ -51,29 +51,93 @@ def kBwd (x : ℤ) (t : ℕ) : ℕ :=
 def FormalMin (x : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → 2 ^ kFwd x t < 3 ^ t ∧ 3 ^ t < 2 ^ kBwd x t
 
+theorem kBwd_forward_iterate (x : ℤ) (j : ℕ) :
+    kBwd (amusical^[j] x) j = kFwd x j := by
+  unfold kBwd kFwd
+  rw [← Finset.sum_range_reflect]
+  apply Finset.sum_congr rfl
+  intro i hi
+  simp only [Finset.mem_range] at hi
+  rw [amusicalInv_iterate_forward_iterate x j (j - 1 - i + 1) (by omega)]
+  congr 2
+  omega
+
 /-- **Proved.**  An orbit contains at most one formal minimum.  Paper proof: if `y = Uʲ x` with
 `j > 0`, the `j` steps before `y` are the `j` steps after `x`, so `kBwd y j = kFwd x j`, and the
 two conditions at `t = j` contradict.  `j < 0` is symmetric. -/
 theorem formalMin_unique {x : ℤ} {j : ℤ} (hx : FormalMin x)
     (hy : FormalMin ((amusicalPerm ^ j) x)) : j = 0 := by
-  sorry
+  cases j with
+  | ofNat n =>
+      by_cases hn : n = 0
+      · simp [hn]
+      · have hnpos : 1 ≤ n := by omega
+        have hxy := hx n hnpos
+        have hyy := hy n hnpos
+        have hpow : (amusicalPerm ^ Int.ofNat n) x = amusical^[n] x := by
+          rw [Int.ofNat_eq_coe, amusical_iterate_eq_perm_pow]
+        rw [hpow, kBwd_forward_iterate] at hyy
+        exact absurd (hxy.1.trans hyy.2) (lt_irrefl _)
+  | negSucc n =>
+      set y := (amusicalPerm ^ Int.negSucc n) x with hy_def
+      have hforward : amusical^[n + 1] y = x := by
+        rw [amusical_iterate_eq_perm_pow, hy_def, ← Equiv.Perm.mul_apply, ← zpow_add]
+        have h0 : ((n + 1 : ℕ) : ℤ) + Int.negSucc n = 0 := by
+          rw [Int.negSucc_eq]; push_cast; ring
+        rw [h0, zpow_zero, Equiv.Perm.one_apply]
+      have hxx := hx (n + 1) (by omega)
+      have hyy := hy (n + 1) (by omega)
+      rw [← hforward, kBwd_forward_iterate] at hxx
+      exact absurd (hyy.1.trans hxx.2) (lt_irrefl _)
 
 /-- **Proved.**  A periodic point is not a formal minimum.  Paper proof: with period `p` the `p`
 steps before `x` are the `p` steps after it, so `kBwd x p = kFwd x p`, and the two conditions at
 `t = p` contradict. -/
 theorem not_formalMin_of_periodic {x : ℤ} {p : ℕ} (hp : 0 < p) (h : amusical^[p] x = x) :
     ¬ FormalMin x := by
-  sorry
+  intro hx
+  have hf := hx p hp
+  have hk := kBwd_forward_iterate x p
+  rw [h] at hk
+  rw [hk] at hf
+  exact absurd (hf.1.trans hf.2) (lt_irrefl _)
 
 /-- **Proved.**  `U` is odd and preserves parity, so negation preserves every bit count. -/
 theorem formalMin_neg (x : ℤ) : FormalMin (-x) ↔ FormalMin x := by
-  sorry
+  have hkFwd (y : ℤ) (t : ℕ) : kFwd (-y) t = kFwd y t := by
+    unfold kFwd
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [amusical_iterate_neg, stepBits_neg]
+  have hkBwd (y : ℤ) (t : ℕ) : kBwd (-y) t = kBwd y t := by
+    unfold kBwd
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [amusicalInv_iterate_neg, stepBits_neg]
+  simp only [FormalMin, hkFwd, hkBwd]
 
 /-- **Proved.**  Infinitely many nonnegative formal minima give infinitely many orbits on `ℕ`,
 since each orbit holds at most one (`formalMin_unique`). -/
 theorem infinitelyManyOrbits_of_formalMin_infinite
     (h : {n : ℕ | FormalMin (n : ℤ)}.Infinite) : AmusicalInfinitelyManyOrbits := by
-  sorry
+  have horbit : Set.InjOn (fun n : ℕ => amusicalOrbit (n : ℤ))
+      {n : ℕ | FormalMin (n : ℤ)} := by
+    intro a ha b hb hab
+    have hbmem : (b : ℤ) ∈ amusicalOrbit (a : ℤ) := by
+      have horb : amusicalOrbit (a : ℤ) = amusicalOrbit (b : ℤ) := hab
+      rw [horb]
+      exact mem_amusicalOrbit_self b
+    obtain ⟨j, hj⟩ := hbmem
+    have hj' : (amusicalPerm ^ j) (a : ℤ) = b := hj
+    have hb' : FormalMin ((amusicalPerm ^ j) (a : ℤ)) := by
+      rw [hj']
+      exact hb
+    have hj0 := formalMin_unique ha hb'
+    subst hj0
+    simpa using hj'
+  refine (h.image horbit).mono ?_
+  rintro O ⟨n, hn, rfl⟩
+  exact ⟨n, by positivity, rfl⟩
 
 /-- **Proved.**  The formal walk can disagree with the true order: `U¹² 31 = 30 < 31`, yet the
 twelve steps spend only `19` bits and `2¹⁹ < 3¹²`. -/
