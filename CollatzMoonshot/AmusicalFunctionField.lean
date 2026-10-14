@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalFunctionField.Cycle
 
 /-!
 # The `𝔽₂[t]` twin of the amusical permutation has infinitely many orbits
@@ -37,7 +38,8 @@ Paper proofs: agent report `freeform.md` §1–§5, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §21.  I re-checked Theorem F independently with my
 own carry-less arithmetic (`scripts/amusical/twin/fftwin_ren.py`): exact periods and itineraries for
 `p = 8, …, 256`, bijectivity on degrees `< 14`.  Teeth: `p = 10, 12, 14` and `s_E ≠ 0` do not
-close.  Treadmill target: close every `sorry` here.
+close.  Every statement here is proved; the closed-form orbit is in
+`CollatzMoonshot/AmusicalFunctionField/Cycle.lean`.
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -54,11 +56,11 @@ noncomputable def twinU (n : (ZMod 2)[X]) : (ZMod 2)[X] :=
   else if n.coeff 2 = 0 then twinQ * ((n - 1 - X) /ₘ X ^ 3) + X
   else twinQ * ((n - 1 - X - X ^ 2) /ₘ X ^ 3) + (1 + X)
 
-/-- **Target.**  The twin is a permutation of `𝔽₂[t]`.  The domains `t𝔽₂[t]`, `1 + t²𝔽₂[t]`,
-`1 + t + t³𝔽₂[t]`, `1 + t + t² + t³𝔽₂[t]` partition `𝔽₂[t]`, and the images `Q 𝔽₂[t] + s` for
-`s ∈ {0, 1, t, 1 + t}` partition it too, since these are the residues mod `Q`. -/
-theorem twinU_bijective : Function.Bijective twinU := by
-  sorry
+/-- **Proved** (`FFTwin.fU_bijective`).  The twin is a permutation of `𝔽₂[t]`.  The domains
+`t𝔽₂[t]`, `1 + t²𝔽₂[t]`, `1 + t + t³𝔽₂[t]`, `1 + t + t² + t³𝔽₂[t]` partition `𝔽₂[t]`, and the
+images `Q 𝔽₂[t] + s` for `s ∈ {0, 1, t, 1 + t}` partition it too, since these are the residues
+mod `Q`. -/
+theorem twinU_bijective : Function.Bijective twinU := FFTwin.fU_bijective
 
 /-- **Proved.**  The cycle denominator collapses: `(t²)^(2^e) − Q^(2^e) = (t + 1)^(2^e)`
 (Frobenius in characteristic `2`). -/
@@ -74,13 +76,16 @@ theorem twin_den_frobenius (e : ℕ) :
 noncomputable def twinCycle (e : ℕ) : (ZMod 2)[X] :=
   (X ^ 4 + X ^ 3 + 1) * X ^ (2 ^ (e - 1)) * (X + 1) ^ (2 ^ (e - 1) - 3)
 
-/-- **Target (Theorem F).**  For `e ≥ 3`, `twinCycle e` has exact period `2^e`.  Paper proof
-(`freeform.md` §3): along `E^m B^m` the `E` steps add nothing, and the `B` steps sum to
-`e_B t^m (t^{3m} + Q^m)/(t³ + Q) = e_B t^m (t+1)^{3m−3}`.  Dividing by
-`t^{2p} − Q^p = (t + 1)^{2m}` gives the point.  The word is primitive, so the period is exact. -/
+/-- **Proved (Theorem F**, `FFTwin.fU_minimalPeriod`**).**  For `e ≥ 3`, `twinCycle e` has exact
+period `2^e`.  Paper proof (`freeform.md` §3): along `E^m B^m` the `E` steps add nothing, and the
+`B` steps sum to `e_B t^m (t^{3m} + Q^m)/(t³ + Q) = e_B t^m (t+1)^{3m−3}`.  Dividing by
+`t^{2p} − Q^p = (t + 1)^{2m}` gives the point.  The Lean proof runs the orbit in closed form
+(`CollatzMoonshot/AmusicalFunctionField/Cycle.lean`); exactness is cheaper than primitivity of
+the word: the period divides `2^e`, and `U^m x₀` has constant term `1` while `x₀` has `0`. -/
 theorem twinCycle_minimalPeriod (e : ℕ) (he : 3 ≤ e) :
     Function.minimalPeriod twinU (twinCycle e) = 2 ^ e := by
-  sorry
+  obtain ⟨n, rfl⟩ : ∃ n, e = n + 1 := ⟨e - 1, by omega⟩
+  exact FFTwin.fU_minimalPeriod n (by omega)
 
 private lemma twinCycle_mem_periodicPts (e : ℕ) (he : 3 ≤ e) :
     twinCycle e ∈ Function.periodicPts twinU := by
