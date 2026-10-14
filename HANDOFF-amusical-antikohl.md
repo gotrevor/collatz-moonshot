@@ -1,5 +1,56 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: Theorem T and its orbit consequences proved
+
+The reflection audit found no statement mismatch: the scoped gate is exactly the remaining
+`sorry`s in `CollatzMoonshot/AmusicalAntiKohl.lean`, `AntiKohlConjecture` remains an open
+definition, and the transient-cone route is semantically sufficient.  The missing abstraction
+was simultaneous depth control plus a stable filtered-box count, not a stronger density notion.
+
+`orbit_densityZero_of_transientCone` is now kernel-checked.  The proof chooses forward and
+backward depths for `ε/4`, advances both to their sum using cone antitonicity, combines the
+per-orbit exceptional intervals into one `Finset`, and absorbs its fixed cardinality with
+`tendsto_const_div_atTop_nhds_zero_nat`.  A private `intBoxCount` fixes the classical decision
+procedure used by repeated `Finset.filter` expressions; without that shared definition,
+extensionally equal predicates produced non-definitionally-equal filtered finsets.
+
+`infinitelyManyOrbits_of_transientCone` is also proved.  The new helper
+`not_intDensityZero_of_containsClassTail` injects `t` consecutive points of a residue-class tail
+into a symmetric box of radius at most `2Mt`, giving a fixed positive density lower bound.  If
+there were finitely many orbits, choosing one representative from each would make a finite orbit
+union equal to `Set.univ`, contradicting Theorem T.  Applying the same obstruction to a singleton
+seed rules out a class tail in every orbit.
+
+Verification run:
+
+```text
+lake env lean -j1 CollatzMoonshot/AmusicalAntiKohl.lean
+git diff --check
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-antikohl \
+  --target CollatzMoonshot.AmusicalAntiKohl \
+  --axioms CollatzMoonshot.Amusical.orbit_densityZero_of_transientCone
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-antikohl \
+  --target CollatzMoonshot.AmusicalAntiKohl \
+  --axioms CollatzMoonshot.Amusical.infinitelyManyOrbits_of_transientCone
+```
+
+The direct check succeeds with exactly the three remaining target sorry warnings.  No new axiom,
+`native_decide`, or target-statement change was introduced.  Both 8710-job scoped gates are
+FORMALIZE-tier green.  Each new headline theorem's axiom ledger is exactly `Classical.choice`,
+`Quot.sound`, and `propext`.
+
+Current blocker: no external blocker.  Three ratified target sorries remain:
+`amusical_no_periodic_cone`, `kappa_orbit_densityZero`, and
+`sigmaTau_orbit_densityZero`.  These are precisely the residue-connectivity gate and the two
+periodic-core automata identified by the kickoff; the reusable transient-cone engine is complete.
+
+Next highest-value attack: isolate periodic-set counting infrastructure for
+`sigmaTau_orbit_densityZero`, starting with the easy forward core
+`(sigmaTauPerm ^ n) '' {x | x % 4 = 2} = {x | x % (4 * 3^n) = 2 * 3^n}` and its density bound.
+Then encode the backward survivor recursion as finite residue classes, aiming only for the
+geometric upper bound `(1/2)(3/4)^(n-1)`.  This is a smaller, more checkable first automaton than
+the four-type spectral recursion needed for the `kappa` forward core.
+
 ## 2026-10-14: finite-exception bridge for Theorem T proved
 
 The missing geometric step after the orbit trichotomy is now kernel-checked as

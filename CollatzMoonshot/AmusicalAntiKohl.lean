@@ -304,6 +304,79 @@ theorem exists_orbit_exception (σ : Equiv.Perm ℤ) (S : Set ℤ)
         congr 2
         omega
 
+/-- Every natural iterate of a permutation preserves a forward-invariant cone. -/
+theorem cone_pow_mem (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) {x : ℤ} (n : ℕ) (hx : x ∈ S) :
+    (σ ^ n) x ∈ S := by
+  have h := cone_mem_zpow_mono σ S hS (x := x) (a := 0) (b := (n : ℤ))
+    (by omega) (by simpa using hx)
+  simpa [zpow_natCast] using h
+
+/-- Later forward cores of a forward-invariant cone are contained in earlier cores. -/
+theorem cone_pow_image_antitone (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) {a b : ℕ} (hab : a ≤ b) :
+    ((σ ^ b) '' S) ⊆ ((σ ^ a) '' S) := by
+  rintro y ⟨x, hx, rfl⟩
+  refine ⟨(σ ^ (b - a)) x, cone_pow_mem σ S hS (b - a) hx, ?_⟩
+  rw [← Equiv.Perm.mul_apply, ← pow_add]
+  congr 2
+  omega
+
+/-- The exceptional intervals for finitely many seeds can be combined with the expected linear
+cardinality bound. -/
+theorem exists_orbits_exception (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) (F : Finset ℤ) (n : ℕ) :
+    ∃ E : Finset ℤ, E.card ≤ F.card * (2 * n + 1) ∧
+      (⋃ x ∈ F, permOrbit σ x) ⊆
+        ((σ ^ n) '' S) ∪ {y | ∀ j ≤ n, (σ ^ j) y ∉ S} ∪ (E : Set ℤ) := by
+  classical
+  choose E hEcard hEcover using fun x : ℤ => exists_orbit_exception σ S hS x n
+  refine ⟨F.biUnion E, Finset.card_biUnion_le_card_mul F E (2 * n + 1) ?_, ?_⟩
+  · intro x hx
+    exact hEcard x
+  · intro y hy
+    rcases Set.mem_iUnion.mp hy with ⟨x, hy⟩
+    rcases Set.mem_iUnion.mp hy with ⟨hx, hy⟩
+    rcases hEcover x hy with hy | hy
+    · exact Or.inl hy
+    · exact Or.inr (Finset.mem_coe.mpr (Finset.mem_biUnion.mpr ⟨x, hx, hy⟩))
+
+open Classical in
+private noncomputable def intBoxCount (A : Set ℤ) (X : ℕ) : ℕ :=
+  ((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card
+
+private theorem intBoxCount_mono {A B : Set ℤ} (hAB : A ⊆ B) (X : ℕ) :
+    intBoxCount A X ≤ intBoxCount B X := by
+  classical
+  unfold intBoxCount
+  apply Finset.card_le_card
+  intro y hy
+  simp only [Finset.mem_filter] at hy ⊢
+  exact ⟨hy.1, hAB hy.2⟩
+
+private theorem intBoxCount_le_union_finset {U A B : Set ℤ} {E : Finset ℤ}
+    (hU : U ⊆ A ∪ B ∪ (E : Set ℤ)) (X : ℕ) :
+    intBoxCount U X ≤ intBoxCount A X + intBoxCount B X + E.card := by
+  classical
+  let box := Finset.Icc (-(X : ℤ)) X
+  let UA := box.filter (· ∈ A)
+  let UB := box.filter (· ∈ B)
+  have hsubset : box.filter (· ∈ U) ⊆ (UA ∪ UB) ∪ E := by
+    intro y hy
+    simp only [Finset.mem_filter] at hy
+    rcases hU hy.2 with (hyA | hyB) | hyE
+    · exact Finset.mem_union.mpr (Or.inl (Finset.mem_union.mpr
+        (Or.inl (Finset.mem_filter.mpr ⟨hy.1, hyA⟩))))
+    · exact Finset.mem_union.mpr (Or.inl (Finset.mem_union.mpr
+        (Or.inr (Finset.mem_filter.mpr ⟨hy.1, hyB⟩))))
+    · exact Finset.mem_union.mpr (Or.inr hyE)
+  calc
+    intBoxCount U X = (box.filter (· ∈ U)).card := by rfl
+    _ ≤ ((UA ∪ UB) ∪ E).card := Finset.card_le_card hsubset
+    _ ≤ (UA ∪ UB).card + E.card := Finset.card_union_le _ _
+    _ ≤ (UA.card + UB.card) + E.card :=
+      Nat.add_le_add_right (Finset.card_union_le _ _) _
+
 /-- **Target (Theorem T).**  A cone `S` (`σ S ⊆ S`) whose forward cores `σⁿ S` and never-entering
 sets `{x : σʲ x ∉ S, j ≤ n}` both have density tending to `0` makes every finite union of orbits
 density `0`.  Paper proof: an orbit is inside `S`, inside the complement, or a backward ray in the
@@ -314,7 +387,199 @@ theorem orbit_densityZero_of_transientCone (σ : Equiv.Perm ℤ) (S : Set ℤ)
     (hfwd : ∀ ε > 0, ∃ n : ℕ, IntDensityLE ((σ ^ n) '' S) ε)
     (hbwd : ∀ ε > 0, ∃ n : ℕ, IntDensityLE {x | ∀ j ≤ n, (σ ^ j) x ∉ S} ε)
     (F : Finset ℤ) : IntDensityZero (⋃ x ∈ F, permOrbit σ x) := by
-  sorry
+  classical
+  unfold IntDensityZero
+  change Filter.Tendsto
+    (fun X : ℕ => (intBoxCount (⋃ x ∈ F, permOrbit σ x) X : ℝ) / X)
+      Filter.atTop (nhds 0)
+  rw [NormedAddGroup.tendsto_nhds_zero]
+  intro ε hε
+  let δ := ε / 4
+  have hδ : 0 < δ := by
+    dsimp [δ]
+    positivity
+  obtain ⟨nf, hnf⟩ := hfwd δ hδ
+  obtain ⟨nb, hnb⟩ := hbwd δ hδ
+  let n := nf + nb
+  let A : Set ℤ := (σ ^ n) '' S
+  let B : Set ℤ := {x | ∀ j ≤ n, (σ ^ j) x ∉ S}
+  have hAset : A ⊆ ((σ ^ nf) '' S) := by
+    dsimp [A, n]
+    exact cone_pow_image_antitone σ S hS (by omega)
+  have hBset : B ⊆ {x | ∀ j ≤ nb, (σ ^ j) x ∉ S} := by
+    intro x hx j hj
+    exact hx j (by dsimp [B, n] at hx; omega)
+  have hA : IntDensityLE A δ := by
+    unfold IntDensityLE at hnf ⊢
+    change ∀ᶠ X : ℕ in Filter.atTop,
+      (intBoxCount ((σ ^ nf) '' S) X : ℝ) ≤ δ * X at hnf
+    change ∀ᶠ X : ℕ in Filter.atTop, (intBoxCount A X : ℝ) ≤ δ * X
+    filter_upwards [hnf] with X hX
+    have hcard := intBoxCount_mono hAset X
+    have hcard' : (intBoxCount A X : ℝ) ≤ intBoxCount ((σ ^ nf) '' S) X := by
+      exact_mod_cast hcard
+    exact hcard'.trans hX
+  have hB : IntDensityLE B δ := by
+    unfold IntDensityLE at hnb ⊢
+    change ∀ᶠ X : ℕ in Filter.atTop,
+      (intBoxCount {x | ∀ j ≤ nb, (σ ^ j) x ∉ S} X : ℝ) ≤ δ * X at hnb
+    change ∀ᶠ X : ℕ in Filter.atTop, (intBoxCount B X : ℝ) ≤ δ * X
+    filter_upwards [hnb] with X hX
+    have hcard := intBoxCount_mono hBset X
+    have hcard' : (intBoxCount B X : ℝ) ≤
+        intBoxCount {x | ∀ j ≤ nb, (σ ^ j) x ∉ S} X := by
+      exact_mod_cast hcard
+    exact hcard'.trans hX
+  obtain ⟨E, hEcard, hcover⟩ := exists_orbits_exception σ S hS F n
+  have hEzero : Filter.Tendsto (fun X : ℕ => (E.card : ℝ) / X)
+      Filter.atTop (nhds 0) := tendsto_const_div_atTop_nhds_zero_nat _
+  have hE : ∀ᶠ X : ℕ in Filter.atTop, (E.card : ℝ) / X < δ :=
+    hEzero.eventually (gt_mem_nhds hδ)
+  filter_upwards [hA, hB, hE, Filter.eventually_ge_atTop 1] with X hAX hBX hEX hX
+  have hXpos : (0 : ℝ) < X := by exact_mod_cast hX
+  have hEX' : (E.card : ℝ) < δ * X := by
+    rwa [div_lt_iff₀ hXpos] at hEX
+  have hcard : intBoxCount (⋃ x ∈ F, permOrbit σ x) X ≤
+      intBoxCount A X + intBoxCount B X + E.card :=
+    intBoxCount_le_union_finset hcover X
+  have hcard' : (intBoxCount (⋃ x ∈ F, permOrbit σ x) X : ℝ) ≤
+      intBoxCount A X + intBoxCount B X + E.card := by
+    exact_mod_cast hcard
+  rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg (by positivity) hXpos.le),
+    div_lt_iff₀ hXpos]
+  have hsum : (intBoxCount (⋃ x ∈ F, permOrbit σ x) X : ℝ) <
+      δ * X + δ * X + δ * X := by
+    exact hcard'.trans_lt (add_lt_add_of_le_of_lt (add_le_add hAX hBX) hEX')
+  have hthree : δ + δ + δ < ε := by
+    dsimp [δ]
+    linarith
+  calc
+    (intBoxCount (⋃ x ∈ F, permOrbit σ x) X : ℝ) <
+      δ * X + δ * X + δ * X := hsum
+    _ = (δ + δ + δ) * X := by ring
+    _ < ε * X := mul_lt_mul_of_pos_right hthree hXpos
+
+/-- A residue-class tail has positive lower density in the symmetric boxes. -/
+theorem not_intDensityZero_of_containsClassTail (A : Set ℤ) :
+    ContainsClassTail A → ¬ IntDensityZero A := by
+  classical
+  rintro ⟨M, r, N, hM, htail⟩ hzero
+  let K : ℤ := max 0 (max (N - r) (-r))
+  have hK0 : 0 ≤ K := le_max_left _ _
+  have hKN : N - r ≤ K :=
+    (le_max_left (N - r) (-r)).trans (le_max_right 0 (max (N - r) (-r)))
+  have hKr : -r ≤ K :=
+    (le_max_right (N - r) (-r)).trans (le_max_right 0 (max (N - r) (-r)))
+  have hM1 : 1 ≤ M := by omega
+  have hKM : K ≤ M * K := by nlinarith
+  let y0 := r + M * K
+  have hy00 : 0 ≤ y0 := by
+    dsimp [y0]
+    nlinarith
+  have hy0N : N ≤ y0 := by
+    dsimp [y0]
+    nlinarith
+  let m := M.toNat
+  have hmpos : 0 < m := by
+    dsimp [m]
+    omega
+  have hmcast : (m : ℤ) = M := by
+    dsimp [m]
+    rw [Int.toNat_of_nonneg hM.le]
+  let a := y0.toNat
+  have hacast : (a : ℤ) = y0 := by
+    dsimp [a]
+    rw [Int.toNat_of_nonneg hy00]
+  have hlim : Filter.Tendsto
+      (fun X : ℕ => (intBoxCount A X : ℝ) / X) Filter.atTop (nhds 0) := by
+    exact hzero
+  let c : ℝ := 1 / (2 * (m : ℝ))
+  have hc : 0 < c := by
+    dsimp [c]
+    positivity
+  have hevent : ∀ᶠ X : ℕ in Filter.atTop,
+      (intBoxCount A X : ℝ) / X < c :=
+    hlim.eventually (gt_mem_nhds hc)
+  rw [Filter.eventually_atTop] at hevent
+  obtain ⟨X0, hX0⟩ := hevent
+  let t := max 1 (max X0 a)
+  have htpos : 0 < t := by
+    dsimp [t]
+    omega
+  have hX0t : X0 ≤ t := by
+    dsimp [t]
+    omega
+  have hat : a ≤ t := by
+    dsimp [t]
+    omega
+  let X := a + m * t
+  have htmt : t ≤ m * t := by
+    simpa using Nat.mul_le_mul_right t hmpos
+  have hX0X : X0 ≤ X := by
+    dsimp [X]
+    omega
+  have hsmall := hX0 X hX0X
+  let g : ℕ → ℤ := fun i => (a + m * i : ℕ)
+  have hginj : Function.Injective g := by
+    intro i j hij
+    dsimp [g] at hij
+    have hij' : a + m * i = a + m * j := by exact_mod_cast hij
+    have hmul : m * i = m * j := Nat.add_left_cancel hij'
+    exact Nat.mul_left_cancel hmpos hmul
+  let P : Finset ℤ := (Finset.range t).image g
+  have hPcard : P.card = t := by
+    dsimp [P]
+    rw [Finset.card_image_of_injective _ hginj, Finset.card_range]
+  have hPsubset : P ⊆ (Finset.Icc (-(X : ℤ)) X).filter (· ∈ A) := by
+    intro z hz
+    rw [Finset.mem_image] at hz
+    obtain ⟨i, hi, rfl⟩ := hz
+    have hit : i < t := Finset.mem_range.mp hi
+    have hgi0 : (0 : ℤ) ≤ g i := by
+      dsimp [g]
+      positivity
+    have hgiX : g i ≤ (X : ℤ) := by
+      dsimp [g, X]
+      norm_cast
+      exact Nat.add_le_add_left (Nat.mul_le_mul_left m hit.le) a
+    have hgieq : g i = y0 + M * i := by
+      dsimp [g]
+      rw [hmcast, hacast]
+    have hgiN : N ≤ g i := by
+      rw [hgieq]
+      have hi0 : (0 : ℤ) ≤ i := by omega
+      nlinarith
+    have hgimod : g i ≡ r [ZMOD M] := by
+      rw [Int.modEq_iff_dvd]
+      refine ⟨-(K + i), ?_⟩
+      rw [hgieq]
+      dsimp [y0]
+      ring
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨by omega, hgiX⟩,
+      htail (g i) hgimod hgiN⟩
+  have hcount : t ≤ intBoxCount A X := by
+    unfold intBoxCount
+    rw [← hPcard]
+    exact Finset.card_le_card hPsubset
+  have hXposNat : 0 < X := by
+    have hmtpos : 0 < m * t := Nat.mul_pos hmpos htpos
+    dsimp [X]
+    omega
+  have hXpos : (0 : ℝ) < X := by exact_mod_cast hXposNat
+  have hmreal : (0 : ℝ) < m := by exact_mod_cast hmpos
+  have htreal : (0 : ℝ) < t := by exact_mod_cast htpos
+  have hXleNat : X ≤ 2 * m * t := by
+    dsimp [X]
+    nlinarith
+  have hXle : (X : ℝ) ≤ 2 * (m : ℝ) * t := by exact_mod_cast hXleNat
+  have hlower : c ≤ (t : ℝ) / X := by
+    dsimp [c]
+    rw [div_le_div_iff₀ (mul_pos (by norm_num) hmreal) hXpos]
+    nlinarith
+  have hcountReal : (t : ℝ) ≤ intBoxCount A X := by exact_mod_cast hcount
+  have hratio : (t : ℝ) / X ≤ (intBoxCount A X : ℝ) / X :=
+    div_le_div_of_nonneg_right hcountReal hXpos.le
+  exact (not_lt_of_ge (hlower.trans hratio)) hsmall
 
 /-- **Target.**  Under Theorem T's hypotheses `σ` has infinitely many orbits and none contains a
 residue-class tail.  Paper proof: finitely many orbits would cover `ℤ`, of density `1`; a class
@@ -324,7 +589,35 @@ theorem infinitelyManyOrbits_of_transientCone (σ : Equiv.Perm ℤ) (S : Set ℤ
     (hfwd : ∀ ε > 0, ∃ n : ℕ, IntDensityLE ((σ ^ n) '' S) ε)
     (hbwd : ∀ ε > 0, ∃ n : ℕ, IntDensityLE {x | ∀ j ≤ n, (σ ^ j) x ∉ S} ε) :
     {O : Set ℤ | ∃ x, O = permOrbit σ x}.Infinite ∧ ∀ x, ¬ ContainsClassTail (permOrbit σ x) := by
-  sorry
+  classical
+  let Ω : Set (Set ℤ) := {O | ∃ x, O = permOrbit σ x}
+  change Ω.Infinite ∧ ∀ x, ¬ ContainsClassTail (permOrbit σ x)
+  constructor
+  · by_contra hnot
+    have hfinite : Ω.Finite := Set.not_infinite.mp hnot
+    letI : Fintype Ω := hfinite.fintype
+    let rep : Ω → ℤ := fun O => Classical.choose O.2
+    have hrep (O : Ω) : O.1 = permOrbit σ (rep O) :=
+      Classical.choose_spec O.2
+    let F : Finset ℤ := Finset.univ.image rep
+    have hcover : (⋃ x ∈ F, permOrbit σ x) = Set.univ := by
+      rw [Set.eq_univ_iff_forall]
+      intro y
+      let O : Ω := ⟨permOrbit σ y, ⟨y, rfl⟩⟩
+      have hmemF : rep O ∈ F := by
+        exact Finset.mem_image.mpr ⟨O, Finset.mem_univ O, rfl⟩
+      apply Set.mem_iUnion.mpr
+      refine ⟨rep O, Set.mem_iUnion.mpr ⟨hmemF, ?_⟩⟩
+      rw [← hrep O]
+      exact ⟨0, by simp⟩
+    have hdensity := orbit_densityZero_of_transientCone σ S hS hfwd hbwd F
+    rw [hcover] at hdensity
+    apply not_intDensityZero_of_containsClassTail Set.univ
+      ⟨1, 0, 0, by norm_num, by simp⟩
+    exact hdensity
+  · intro x htail
+    apply not_intDensityZero_of_containsClassTail (permOrbit σ x) htail
+    simpa using orbit_densityZero_of_transientCone σ S hS hfwd hbwd ({x} : Finset ℤ)
 
 /-! ## `κ`: an explicit member of the class at `p = 2` -/
 
