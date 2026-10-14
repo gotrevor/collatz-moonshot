@@ -8,6 +8,11 @@ Theorem A★, `noNewCycles_of_search`, `cycleMinBound_31866`, and Atkin's bound 
 (`amusical_noNewCycles_199`, `atkinNoShortCycles`).  Measurements and controls are in
 `HANDOFF-amusical-cycles.md`.  The length-`31866` theorem stays conditional on the external
 `CycleMinSearch 167195612 15933` (about `10¹²` steps, not kernel-feasible).
+## 2026-10-14 — amusical anti-Kohl objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-antikohl.md` is fully discharged: `CollatzMoonshot/AmusicalAntiKohl.lean`
+is sorry-free, the ratified statements are unchanged, and the axiom ledgers are trust-base only.  See
+`HANDOFF-amusical-antikohl.md`.  The open `AntiKohlConjecture` is a definition, not a target.
 
 ## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
 

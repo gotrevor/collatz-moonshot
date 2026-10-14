@@ -31,7 +31,7 @@ candidates.
 **Residue-local invariants (Theorem M3/M4).**  The residue Markov chain of a weakly
 sign-uniform transitive map realizes every class-to-class path along a single orbit.  For `U`
 this is `AmusicalTopologicallyTransitive`, proved from the agent's M3 together with
-`amusical_no_periodic_cone` (still an `AmusicalAntiKohl` target).  Then any orbit invariant that
+`amusical_no_periodic_cone` (proved in `AmusicalAntiKohl`).  Then any orbit invariant that
 is constant on two residue classes takes the same value on both
 (`amusical_invariant_eq_of_locallyConst`).  This kills every invariant built from finitely many
 valuations, leading digits, or the `6`-free part mod `n`.
@@ -46,7 +46,8 @@ Paper proofs: agent report `uniform.md`, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §17.  NR_p and the Island Lemma were hand-checked.
 `δ` was re-checked independently by `scripts/amusical/delta_ren.py`: bijective on a window,
 `10003` finite cycles through `[−30000, 30000]`, SCC counts, with `U` as a strongly connected
-control.  Treadmill target: close every `sorry` here.
+control.
+Kernel-checked 2026-10-14 by the uniform treadmill (`HANDOFF-amusical-uniform.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -320,8 +321,8 @@ def AmusicalTopologicallyTransitive : Prop :=
   ∀ (M : ℕ), 0 < M → ∀ r s : ℤ, ∃ (x : ℤ) (n : ℕ), 0 < n ∧ x ≡ r [ZMOD M] ∧
     amusical^[n] x ≡ s [ZMOD M]
 
-/-- **Proved from `amusical_no_periodic_cone`** (an `AmusicalAntiKohl` target).  `U` is
-topologically transitive on `Ẑ` (Theorem M3 for `U`). -/
+/-- **Proved.**  `U` is topologically transitive on `Ẑ` (Theorem M3 for `U`), via
+`amusical_no_periodic_cone`. -/
 theorem amusical_topologicallyTransitive : AmusicalTopologicallyTransitive := by
   intro M hM r s
   -- classes reached from `r + M ℤ` by a full pair `(n, c)` with `n ≥ 1`
