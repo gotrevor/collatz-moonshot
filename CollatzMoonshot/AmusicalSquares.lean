@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalSquares.Cylinder
 import CollatzMoonshot.AmusicalSquares.PrefixRoot
+import CollatzMoonshot.AmusicalSquares.SquareCount
 
 /-!
 # Square visits, prefix roots, and automatic invariants (the "newroutes-astra" lap)
@@ -44,7 +45,61 @@ def SquareReturnConfinement : Prop :=
 /-- **Target (SRC ⇒ (a)).** -/
 theorem infinitelyManyOrbits_of_squareReturnConfinement (h : SquareReturnConfinement) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  classical
+  obtain ⟨C, hC⟩ := h
+  by_contra hfin
+  rw [AmusicalInfinitelyManyOrbits, Set.not_infinite] at hfin
+  set T := hfin.toFinset with hT
+  have hmemT : ∀ O ∈ T, ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x := fun O hO => by
+    simpa [hT] using hO
+  have key : ∀ H : ℕ, (H : ℝ) ≤ T.card * ((|C| + 12) * Real.log (2 + H) + 3) := by
+    intro H
+    set Q := Finset.Icc 1 H with hQ
+    have hcover : Q ⊆ T.biUnion fun O => Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O := by
+      intro q hq
+      rw [Finset.mem_biUnion]
+      refine ⟨amusicalOrbit ((q : ℤ) ^ 2), ?_,
+        Finset.mem_filter.2 ⟨hq, mem_amusicalOrbit_self _⟩⟩
+      simp only [hT, Set.Finite.mem_toFinset, Set.mem_ofPred_eq]
+      exact ⟨(q : ℤ) ^ 2, by positivity, rfl⟩
+    have hper : ∀ O ∈ T, ((Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) ≤
+        (|C| + 12) * Real.log (2 + H) + 3 := by
+      intro O hO
+      obtain ⟨x, -, rfl⟩ := hmemT O hO
+      set F := Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ amusicalOrbit x with hF
+      obtain ⟨y, Tw, hinj, hcov⟩ := exists_injective_window x (F.image fun q : ℕ => (q : ℤ) ^ 2)
+        (by
+          intro s hs
+          obtain ⟨q, hq, rfl⟩ := Finset.mem_image.1 hs
+          exact (Finset.mem_filter.1 hq).2)
+      have hcnt := card_small_square_times_le C H (fun x s t => hC x s t H) y Tw hinj
+      refine le_trans ?_ hcnt
+      have hsurj := Finset.card_le_card_of_surjOn
+        (s := (Finset.range (Tw + 1)).filter fun i => IsSmallSq H (amusical^[i] y)) (t := F)
+        (fun i => Nat.sqrt (amusical^[i] y).toNat) (by
+          intro q hq
+          have hqF : q ∈ F := hq
+          obtain ⟨i, hiT, hi⟩ := hcov ((q : ℤ) ^ 2)
+            (Finset.mem_image_of_mem (fun q : ℕ => (q : ℤ) ^ 2) hqF)
+          have hqQ := Finset.mem_Icc.1 (Finset.mem_filter.1 hqF).1
+          refine ⟨i, ?_, ?_⟩
+          · simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq]
+            exact ⟨by omega, q, hqQ.1, hqQ.2, hi⟩
+          · simp only
+            rw [hi, show ((q : ℤ) ^ 2).toNat = q ^ 2 by
+              rw [← Nat.cast_pow, Int.toNat_natCast], Nat.sqrt_eq']
+        )
+      exact_mod_cast hsurj
+    calc (H : ℝ) = (Q.card : ℝ) := by simp [hQ]
+      _ ≤ ((T.biUnion fun O => Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) := by
+          exact_mod_cast Finset.card_le_card hcover
+      _ ≤ ∑ O ∈ T, ((Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) := by
+          exact_mod_cast Finset.card_biUnion_le
+      _ ≤ ∑ _O ∈ T, ((|C| + 12) * Real.log (2 + H) + 3) := Finset.sum_le_sum hper
+      _ = T.card * ((|C| + 12) * Real.log (2 + H) + 3) := by
+          rw [Finset.sum_const, nsmul_eq_mul]
+  obtain ⟨H, hH⟩ := exists_nat_gt_log_bound T.card (|C| + 12) (by positivity) (by positivity)
+  exact absurd (key H) (not_le.2 hH)
 
 /-- Bits consumed by the first `h` branches (`0` = `E` costs 1, `1` = `A` and `2` = `B` cost 2). -/
 def wordWeight (w : List (Fin 3)) (h : ℕ) : ℕ :=
