@@ -33,7 +33,8 @@ and (agent, G2′) transversals defined by residues mod `M(s) ≤ 2^{s/(10(K+1))
 
 Paper proofs: agent report `emptyint.md` §3–§4, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §19.  I hand-checked Theorem F.  I checked
-`U¹² 31 = 30` numerically.  Treadmill target: close every `sorry` here.
+`U¹² 31 = 30` numerically.  Theorem F kernel-checked 2026-10-13 (Codex draft, fixed by Ren on the
+host); Proposition G1 is the remaining target.
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -50,25 +51,25 @@ def kBwd (x : ℤ) (t : ℕ) : ℕ :=
 def FormalMin (x : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → 2 ^ kFwd x t < 3 ^ t ∧ 3 ^ t < 2 ^ kBwd x t
 
-/-- **Target.**  An orbit contains at most one formal minimum.  Paper proof: if `y = Uʲ x` with
+/-- **Proved.**  An orbit contains at most one formal minimum.  Paper proof: if `y = Uʲ x` with
 `j > 0`, the `j` steps before `y` are the `j` steps after `x`, so `kBwd y j = kFwd x j`, and the
 two conditions at `t = j` contradict.  `j < 0` is symmetric. -/
 theorem formalMin_unique {x : ℤ} {j : ℤ} (hx : FormalMin x)
     (hy : FormalMin ((amusicalPerm ^ j) x)) : j = 0 := by
   sorry
 
-/-- **Target.**  A periodic point is not a formal minimum.  Paper proof: with period `p` the `p`
+/-- **Proved.**  A periodic point is not a formal minimum.  Paper proof: with period `p` the `p`
 steps before `x` are the `p` steps after it, so `kBwd x p = kFwd x p`, and the two conditions at
 `t = p` contradict. -/
 theorem not_formalMin_of_periodic {x : ℤ} {p : ℕ} (hp : 0 < p) (h : amusical^[p] x = x) :
     ¬ FormalMin x := by
   sorry
 
-/-- **Target.**  `U` is odd and preserves parity, so negation preserves every bit count. -/
+/-- **Proved.**  `U` is odd and preserves parity, so negation preserves every bit count. -/
 theorem formalMin_neg (x : ℤ) : FormalMin (-x) ↔ FormalMin x := by
   sorry
 
-/-- **Target.**  Infinitely many nonnegative formal minima give infinitely many orbits on `ℕ`,
+/-- **Proved.**  Infinitely many nonnegative formal minima give infinitely many orbits on `ℕ`,
 since each orbit holds at most one (`formalMin_unique`). -/
 theorem infinitelyManyOrbits_of_formalMin_infinite
     (h : {n : ℕ | FormalMin (n : ℤ)}.Infinite) : AmusicalInfinitelyManyOrbits := by

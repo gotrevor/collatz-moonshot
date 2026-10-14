@@ -501,8 +501,8 @@ stay open.
 
 ## 19. Empty-interior certificates (2026-10-13, "emptyint" agent, checked)
 
-Lean: `AmusicalFormalMin.lean` (the formal-walk counterexample is proved; Theorem F and
-Proposition G1 are targets).  Every natural empty-interior candidate is either dead or stuck at the
+Lean: `AmusicalFormalMin.lean` (Theorem F and the formal-walk counterexample proved, axiom-clean;
+Proposition G1 is a target).  Every natural empty-interior candidate is either dead or stuck at the
 per-orbit infinite-horizon wall (Proposition S, orbit of 8).  Agent: under 1% toward a seventh
 orbit.
 
