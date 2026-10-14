@@ -115,8 +115,9 @@ theorem powerAdmissible_survivor {y : ℤ} (hy : 0 < y) {L s : ℕ} (h : PowerAd
 theorem amusical_iterate_mem_amusicalOrbit (t : ℕ) (x : ℤ) : amusical^[t] x ∈ amusicalOrbit x :=
   ⟨t, amusicalPerm_pow_nat_apply t x⟩
 
-/-- **Target (P3).**  Distinct admissible exponents give distinct orbits. -/
-theorem powers_orbit_ne {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y) {L s s' : ℕ}
+/-- **Proved (P3, general form).**  Distinct admissible exponents give distinct orbits; `y` need
+not be prime to `6`, since it cancels before unique factorization is used. -/
+theorem powers_orbit_ne_of_pos {y : ℤ} (hy : 0 < y) {L s s' : ℕ}
     (hs : PowerAdmissible y L s) (hs' : PowerAdmissible y L s') (hne : s ≠ s') :
     3 ^ s' * y ∉ amusicalOrbit (3 ^ s * y) := by
   intro hmem
@@ -143,6 +144,12 @@ theorem powers_orbit_ne {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 �
   · exact fwdSurvivor_three_not_mem_orbit hfs' hfs hlo' hlt hhi h3
       (hsame.symm ▸ mem_amusicalOrbit_self n)
 
+/-- **Target (P3).**  Distinct admissible exponents give distinct orbits. -/
+theorem powers_orbit_ne {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y) {L s s' : ℕ}
+    (hs : PowerAdmissible y L s) (hs' : PowerAdmissible y L s') (hne : s ≠ s') :
+    3 ^ s' * y ∉ amusicalOrbit (3 ^ s * y) :=
+  powers_orbit_ne_of_pos hy hs hs' hne
+
 /-- **Target.**  An admissible power lies on an infinite orbit. -/
 theorem powers_not_periodic {y : ℤ} (hy : 0 < y) {L s : ℕ} (hs : PowerAdmissible y L s) :
     3 ^ s * y ∉ Function.periodicPts amusical := by
@@ -154,13 +161,18 @@ theorem powers_not_periodic {y : ℤ} (hy : 0 < y) {L s : ℕ} (hs : PowerAdmiss
   rw [← Function.iterate_add_apply, add_comm, Function.iterate_add_apply, hit]
   exact hper.eq
 
-/-- **Target (P3, counting form).**  Unboundedly many admissible exponents for single windows
-imply Klamkin (a). -/
-theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y)
-    (h : ∀ r : ℕ, ∃ L : ℕ, ∃ T : Finset ℕ, r < T.card ∧ ∀ s ∈ T, PowerAdmissible y L s) :
-    AmusicalInfinitelyManyOrbits := by
-  intro hfin
-  obtain ⟨L, T, hcard, hT⟩ := h hfin.toFinset.card
+/-- Admissibility passes to smaller windows above `s`. -/
+theorem PowerAdmissible.mono {y : ℤ} (hy : 0 < y) {L L' s : ℕ} (h : PowerAdmissible y L' s)
+    (hsL : s < L) (hLL : L ≤ L') : PowerAdmissible y L s := by
+  refine ⟨hsL, fun t => le_trans ?_ (h.2 t)⟩
+  have := pow_le_pow_right₀ (by norm_num : (1 : ℤ) ≤ 2) hLL
+  nlinarith
+
+/-- With finitely many orbits, one window holds at most as many admissible exponents as there
+are orbits. -/
+theorem card_le_of_powerAdmissible {y : ℤ} (hy : 0 < y)
+    (hfin : {O : Set ℤ | ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x}.Finite) {L : ℕ} {T : Finset ℕ}
+    (hT : ∀ s ∈ T, PowerAdmissible y L s) : T.card ≤ hfin.toFinset.card := by
   have hmaps : ∀ s ∈ T, amusicalOrbit (3 ^ s * y) ∈ hfin.toFinset := by
     intro s _
     rw [Set.Finite.mem_toFinset]
@@ -169,10 +181,19 @@ theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y)
     intro s hs s' hs' heq
     by_contra hne
     have heq' : amusicalOrbit (3 ^ s * y) = amusicalOrbit (3 ^ s' * y) := heq
-    refine powers_orbit_ne hy hy2 hy3 (hT s hs) (hT s' hs') hne ?_
+    refine powers_orbit_ne_of_pos hy (hT s hs) (hT s' hs') hne ?_
     rw [heq']
     exact mem_amusicalOrbit_self _
-  have := Finset.card_le_card_of_injOn _ hmaps hinj
+  exact Finset.card_le_card_of_injOn _ hmaps hinj
+
+/-- **Target (P3, counting form).**  Unboundedly many admissible exponents for single windows
+imply Klamkin (a). -/
+theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y)
+    (h : ∀ r : ℕ, ∃ L : ℕ, ∃ T : Finset ℕ, r < T.card ∧ ∀ s ∈ T, PowerAdmissible y L s) :
+    AmusicalInfinitelyManyOrbits := by
+  intro hfin
+  obtain ⟨L, T, hcard, hT⟩ := h hfin.toFinset.card
+  have := card_le_of_powerAdmissible hy hfin hT
   omega
 
 /-- **Target (P3′).**  With `η = 1/k`: if the exponents `s ≤ S` whose orbit stays at or above
@@ -182,6 +203,56 @@ theorem infinitelyManyOrbits_of_powers_log {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 �
     (h : ∀ C : ℕ, ∃ S : ℕ, ∃ T : Finset ℕ, C * (Nat.log 2 S + 1) < T.card ∧
       ∀ s ∈ T, s ≤ S ∧ PowerAdmissible y (s + s / k + 1) s) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  classical
+  intro hfin
+  set r := hfin.toFinset.card
+  obtain ⟨S, T, hcard, hT⟩ := h (r * k)
+  set g : ℕ → ℕ × ℕ := fun s =>
+    (Nat.log 2 s, (s - 2 ^ Nat.log 2 s) / (2 ^ Nat.log 2 s / k + 1)) with hg
+  have hpos : ∀ s ∈ T, 1 ≤ s := by
+    intro s hs
+    obtain ⟨b, hb1, hbs, -⟩ := powerAdmissible_window_point hy (hT s hs).2
+    omega
+  -- the block facts for `s ≥ 1`
+  have hblock : ∀ s, 1 ≤ s →
+      2 ^ Nat.log 2 s ≤ s ∧ s < 2 * 2 ^ Nat.log 2 s ∧
+      (2 ^ Nat.log 2 s / k + 1) * ((s - 2 ^ Nat.log 2 s) / (2 ^ Nat.log 2 s / k + 1)) +
+        (s - 2 ^ Nat.log 2 s) % (2 ^ Nat.log 2 s / k + 1) = s - 2 ^ Nat.log 2 s ∧
+      (s - 2 ^ Nat.log 2 s) % (2 ^ Nat.log 2 s / k + 1) < 2 ^ Nat.log 2 s / k + 1 ∧
+      2 ^ Nat.log 2 s / k ≤ s / k := by
+    intro s hs
+    have h1 := Nat.pow_log_le_self 2 (show s ≠ 0 by omega)
+    have h2 := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) s
+    rw [Nat.pow_succ] at h2
+    exact ⟨h1, by omega, Nat.div_add_mod _ _, Nat.mod_lt _ (Nat.succ_pos _),
+      Nat.div_le_div_right h1⟩
+  have hmaps : ∀ s ∈ T, g s ∈ Finset.range (Nat.log 2 S + 1) ×ˢ Finset.range k := by
+    intro s hs
+    obtain ⟨h1, h2, -, -, -⟩ := hblock s (hpos s hs)
+    simp only [hg, Finset.mem_product, Finset.mem_range]
+    refine ⟨Nat.lt_succ_of_le (Nat.log_mono_right (hT s hs).1), ?_⟩
+    rw [Nat.div_lt_iff_lt_mul (Nat.succ_pos _)]
+    have h3 := Nat.div_add_mod' (2 ^ Nat.log 2 s) k
+    have h4 := Nat.mod_lt (2 ^ Nat.log 2 s) hk
+    have h5 : k * (2 ^ Nat.log 2 s / k).succ = 2 ^ Nat.log 2 s / k * k + k := by
+      rw [Nat.succ_eq_add_one]; ring
+    omega
+  have hfiber : ∀ b ∈ Finset.range (Nat.log 2 S + 1) ×ˢ Finset.range k,
+      (T.filter fun s => g s = b).card ≤ r := by
+    intro b _
+    apply card_le_of_powerAdmissible hy hfin
+      (L := 2 ^ b.1 + ((2 ^ b.1 / k + 1) * b.2 + (2 ^ b.1 / k + 1)))
+    intro s hs
+    rw [Finset.mem_filter] at hs
+    obtain ⟨hsT, hgs⟩ := hs
+    rw [← hgs]
+    obtain ⟨h1, h2, h3, h4, h5⟩ := hblock s (hpos s hsT)
+    refine (hT s hsT).2.mono hy ?_ ?_
+    · simp only [hg]; omega
+    · simp only [hg]; omega
+  have := Finset.card_le_mul_card_image_of_maps_to hmaps r hfiber
+  rw [Finset.card_product, Finset.card_range, Finset.card_range] at this
+  have he : r * ((Nat.log 2 S + 1) * k) = r * k * (Nat.log 2 S + 1) := by ring
+  omega
 
 end CollatzMoonshot.Amusical
