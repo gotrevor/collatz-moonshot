@@ -88,7 +88,35 @@ theorem cycle_min_meet (n : ℤ) (H P : ℕ) (hP : 0 < P) (hPH : P ≤ 2 * H)
     (hmin : ∀ j < P, n ≤ amusical^[j] n) :
     (∀ j, 0 < j → j < P → n < amusical^[j] n ∧ n < amusicalInv^[j] n) ∧
       (P ≤ H ∨ amusical^[P - H] n = amusicalInv^[H] n) := by
-  sorry
+  have hback (j : ℕ) (hj : j ≤ P) : amusicalInv^[j] n = amusical^[P - j] n := by
+    rw [amusicalInv_iterate_eq_perm_pow, amusical_iterate_eq_perm_pow]
+    have hcyc' : (amusicalPerm ^ (P : ℤ)) n = n := by
+      simpa [amusical_iterate_eq_perm_pow] using hcyc
+    calc
+      (amusicalPerm ^ (-(j : ℤ))) n =
+          (amusicalPerm ^ (-(j : ℤ))) ((amusicalPerm ^ (P : ℤ)) n) := by rw [hcyc']
+      _ = (amusicalPerm ^ ((P : ℤ) - j)) n := by
+        rw [← Equiv.Perm.mul_apply, ← zpow_add]
+        congr 2
+        omega
+      _ = (amusicalPerm ^ ((P - j : ℕ) : ℤ)) n := by
+        congr 2
+        omega
+  constructor
+  · intro j hj0 hjP
+    have hfwd : n < amusical^[j] n :=
+      lt_of_le_of_ne (hmin j hjP) (Ne.symm (hper j hj0 hjP))
+    have hsub0 : 0 < P - j := by omega
+    have hsubP : P - j < P := by omega
+    have hbwd : n < amusicalInv^[j] n := by
+      rw [hback j hjP.le]
+      exact lt_of_le_of_ne (hmin (P - j) hsubP)
+        (Ne.symm (hper (P - j) hsub0 hsubP))
+    exact ⟨hfwd, hbwd⟩
+  · by_cases hPH' : P ≤ H
+    · exact Or.inl hPH'
+    · right
+      rw [hback H (by omega)]
 
 /-- **Target (the reduction).**  A bound on cycle minima plus a clean search gives no new cycles.
 Paper proof: reduce to `y > 0` by `amusical_neg`; let `n` be the minimum of the cycle and `P` its
@@ -123,6 +151,49 @@ theorem amusical_noNewCycles_199 : AmusicalNoNewCyclesUpTo 199 := by
 theorem cycle_min_mod_six (n : ℤ) (P : ℕ) (hP : 0 < P) (hn : 2 ≤ n)
     (hcyc : amusical^[P] n = n) (hmin : ∀ j < P, n ≤ amusical^[j] n) :
     n % 6 = 2 ∨ n % 6 = 4 := by
-  sorry
+  have hfwd : n ≤ amusical n := by
+    by_cases h : P = 1
+    · subst P
+      simpa using hcyc.symm.le
+    · simpa using hmin 1 (by omega)
+  have hback : amusicalInv n = amusical^[P - 1] n := by
+    change amusicalInv^[1] n = amusical^[P - 1] n
+    rw [amusicalInv_iterate_eq_perm_pow, amusical_iterate_eq_perm_pow]
+    have hcyc' : (amusicalPerm ^ (P : ℤ)) n = n := by
+      simpa [amusical_iterate_eq_perm_pow] using hcyc
+    calc
+      (amusicalPerm ^ (-1 : ℤ)) n =
+          (amusicalPerm ^ (-1 : ℤ)) ((amusicalPerm ^ (P : ℤ)) n) := by rw [hcyc']
+      _ = (amusicalPerm ^ ((P : ℤ) - 1)) n := by
+        rw [← Equiv.Perm.mul_apply, ← zpow_add]
+        congr 2
+      _ = (amusicalPerm ^ ((P - 1 : ℕ) : ℤ)) n := by
+        congr 2
+        omega
+  have hbwd : n ≤ amusicalInv n := by
+    rw [hback]
+    exact hmin (P - 1) (by omega)
+  have hrange : 0 ≤ n % 6 ∧ n % 6 < 6 :=
+    ⟨Int.emod_nonneg n (by omega), Int.emod_lt_of_pos n (by omega)⟩
+  rcases hrange with ⟨hrange0, hrange6⟩
+  interval_cases hmod : n % 6
+  · have h3 : n % 3 = 0 := by omega
+    unfold amusicalInv at hbwd
+    simp [h3] at hbwd
+    omega
+  · have h2 : n % 2 ≠ 0 := by omega
+    unfold amusical at hfwd
+    simp [h2] at hfwd
+    split at hfwd <;> omega
+  · exact Or.inl rfl
+  · have h2 : n % 2 ≠ 0 := by omega
+    unfold amusical at hfwd
+    simp [h2] at hfwd
+    split at hfwd <;> omega
+  · exact Or.inr rfl
+  · have h2 : n % 2 ≠ 0 := by omega
+    unfold amusical at hfwd
+    simp [h2] at hfwd
+    split at hfwd <;> omega
 
 end CollatzMoonshot.Amusical
