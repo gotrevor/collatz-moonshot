@@ -1,46 +1,34 @@
-# HANDOFF: amusical cycle structure (2026-10-14)
+# HANDOFF: amusical cycle bound (2026-10-14): DONE
 
-## Concrete advance
+`KICKOFF-2026-10-13-amusical-cycles.md` is fully discharged, stretch target included.
+`CollatzMoonshot/AmusicalCycleBound.lean` is sorry-free, with its ratified statements unchanged.
 
-The algebraic backbone of Theorem A-star is now proved in
-`CollatzMoonshot/AmusicalCycleBound/Step.lean`:
+## Results (all `[propext, Classical.choice, Quot.sound]`)
 
-- `stepDefect` packages the additive error in
-  `2 ^ stepBits x * amusical x = 3 * x + stepDefect x`.
-- `stepDefect_eq_zero_of_even`, `stepDefect_of_odd`, and `stepDefect_mem` prove that the defect
-  is zero on even steps and is exactly `1` or `-1` on odd steps.
-- `sum_stepBits_eq_add_filter_card` identifies `e - p` with the number of odd steps.
-- `mul_prod_iterate_succ` and `prod_iterate_succ_eq_of_cycle` prove the orbit-product reindexing
-  without a permutation construction.
-- `amusical_cycle_product_identity` multiplies the cleared step identities and cancels the cyclic
-  shift, giving the exact product identity needed for both inequalities in
-  `amusical_cycle_min_bound`.
+- `amusical_cycle_min_bound` (Theorem A★).
+- `cycle_min_meet`, `cycle_min_mod_six`.
+- `noNewCycles_of_search`: the reduction.  Its real-to-floor step is `le_natMinBound`
+  (`MinBound.lean`), which uses Bernoulli's inequality `bernoulli_clear` in place of logarithms.
+- `cycleMinBound_31866`: one `decide +kernel` on `minBoundCheck 167195612 31866` (9 s, 3.1 GB).
+  Control: `X = 167195611` is rejected.
+- `amusical_noNewCycles_31866`: Theorem 1, conditional only on `CycleMinSearch 167195612 15933`.
+- `amusical_noNewCycles_199`, `atkinNoShortCycles : Literature.AtkinNoShortCycles`: Atkin 1966,
+  unconditional, in the kernel.  The proof is one `decide +kernel` (`cycleCheck_199` in
+  `Search.lean`) on `minBoundCheck 4964 199 && searchCheck 100 4964`, with soundness by
+  `searchCheck_sound`.
+  - Measured: the small instance (`X = 173`, `H = 6`) takes 15 ms of kernel time; the full one
+    takes 6.5 s, about 1.1 GB over the 6.4 GB max-RSS of the bare import.
+  - Controls: `minBoundCheck 4963 199` is rejected, and `searchOkN_fortyFour_fails` shows that
+    without the exemption the check fails at `44`.
 
-The ratified target statements are unchanged. Four target proofs remain:
-`amusical_cycle_min_bound`, `noNewCycles_of_search`, `cycleMinBound_31866`, and
-`amusical_noNewCycles_199`.
+## Checker design (`Search.lean`)
 
-## Exact verification
+`natU`/`natV` are `U`/`V` on `ℕ` built from `Nat` primitives, bridged to `amusical`/`amusicalInv`
+by `natU_iterate_cast`/`natV_iterate_cast`.  The loops `anyLt`, `allNe` and `iterN` are bare
+`Nat.rec` loops.  Per `n` the check is a lazy `||`: a forward dip, then a backward dip, then
+"the first `H` forward iterates avoid `n` and `V^H n`".
 
-```text
-lake build CollatzMoonshot.AmusicalCycleBound.Step
-# Build completed successfully (8715 jobs).
+## Not done (out of scope)
 
-~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-cycles \
-  --target CollatzMoonshot.AmusicalCycleBound
-# Build completed successfully (8717 jobs); FORMALIZE-TIER GREEN.
-# Four disclosed target sorries remain.
-```
-
-## Current blocker
-
-Theorem A-star now reduces to bounding the product's odd factors. For every orbit member
-`z >= m >= 1`, cross-multiply `3m-1 <= 3z+d <= 3m+1` against `3z`, apply
-`Finset.prod_le_prod` on the odd-step filter, and cancel the positive orbit product. The integer
-sign/positivity bookkeeping and arranging the two products are the remaining formal burden.
-
-## Next highest-value attack
-
-Add lower and upper cross-multiplied factor lemmas to `Step.lean`, then apply them over the odd
-filter. Rewrite the exponent with `sum_stepBits_eq_add_filter_card` and discharge
-`amusical_cycle_min_bound` directly from `amusical_cycle_product_identity`.
+The full `CycleMinSearch 167195612 15933` in the kernel.  It is about `10¹²` steps, far beyond any
+`decide`, and it stays an external computation, as the module docstring says.

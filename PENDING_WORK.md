@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-10-14 — amusical cycle bound objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-cycles.md` is fully discharged, including the stretch target.
+`CollatzMoonshot/AmusicalCycleBound.lean` is sorry-free with ratified statements unchanged:
+Theorem A★, `noNewCycles_of_search`, `cycleMinBound_31866`, and Atkin's bound in the kernel
+(`amusical_noNewCycles_199`, `atkinNoShortCycles`).  Measurements and controls are in
+`HANDOFF-amusical-cycles.md`.  The length-`31866` theorem stays conditional on the external
+`CycleMinSearch 167195612 15933` (about `10¹²` steps, not kernel-feasible).
+
 ## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,
