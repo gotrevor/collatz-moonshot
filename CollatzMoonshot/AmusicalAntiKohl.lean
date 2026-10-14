@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
 import CollatzMoonshot.AmusicalAntiKohl.Connect
+import CollatzMoonshot.AmusicalAntiKohl.Periodic
 
 /-!
 # The anti-Kohl conjecture and transient cones
@@ -907,13 +908,217 @@ theorem sigmaTau_forward_density (ε : ℝ) (hε : 0 < ε) :
   simpa using intDensityLE_dilate (3 ^ n) (by positivity)
     {x : ℤ | x % 4 = 2} ε (by simpa using hratio)
 
+open Classical in
+/-- A set covered by a periodic predicate with few residues has small upper density. -/
+theorem intDensityLE_of_isPer {Q : ℕ} (hQ : 0 < Q) {P : ℤ → Prop}
+    (hP : AntiKohlPeriodic.IsPer Q P) (A : Set ℤ) (hA : ∀ x ∈ A, P x) (ε : ℝ)
+    (hε : 3 * (AntiKohlPeriodic.resCount Q P : ℝ) < ε * Q) : IntDensityLE A ε := by
+  unfold IntDensityLE
+  filter_upwards [Filter.eventually_ge_atTop (2 * Q)] with X hX
+  set c := AntiKohlPeriodic.resCount Q P
+  have hsub : ((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card ≤
+      ((Finset.Icc (-(X : ℤ)) X).filter P).card := by
+    apply Finset.card_le_card
+    intro y hy
+    simp only [Finset.mem_filter] at hy ⊢
+    exact ⟨hy.1, hA y hy.2⟩
+  have hbox := AntiKohlPeriodic.box_count_le hQ hP X
+  have hcnt : (((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card : ℝ) ≤
+      c * (2 * ((X / Q : ℕ) : ℝ) + 2) := by
+    exact_mod_cast hsub.trans hbox
+  have hdiv : ((X / Q : ℕ) : ℝ) * Q ≤ X := by exact_mod_cast Nat.div_mul_le_self X Q
+  have hQr : (0 : ℝ) < Q := by exact_mod_cast hQ
+  have hXr : 2 * (Q : ℝ) ≤ X := by exact_mod_cast hX
+  have hc0 : (0 : ℝ) ≤ c := Nat.cast_nonneg _
+  have hX0 : (0 : ℝ) ≤ X := Nat.cast_nonneg _
+  have k1 := mul_le_mul_of_nonneg_left hdiv (by positivity : (0 : ℝ) ≤ 2 * c)
+  have k2 := mul_le_mul_of_nonneg_left hXr hc0
+  have k3 := mul_le_mul_of_nonneg_right hε.le hX0
+  have key : (c * (2 * ((X / Q : ℕ) : ℝ) + 2)) * Q ≤ (ε * X) * Q := by
+    nlinarith
+  exact hcnt.trans (le_of_mul_le_mul_right key hQr)
+
+theorem sigmaTau_apply (x : ℤ) : sigmaTauPerm x = ctau (amusical x) := rfl
+
+/-- One step of the `n`-step never-entering condition. -/
+theorem sigmaTau_surv_succ {n : ℕ} {x : ℤ}
+    (h : ∀ j ≤ n + 1, (sigmaTauPerm ^ j) x % 4 ≠ 2) :
+    x % 4 ≠ 2 ∧ sigmaTauPerm x % 4 ≠ 2 ∧
+      ∀ j ≤ n, (sigmaTauPerm ^ j) (sigmaTauPerm x) % 4 ≠ 2 := by
+  refine ⟨by simpa using h 0 (by omega), by simpa using h 1 (by omega), ?_⟩
+  intro j hj
+  have hj' := h (j + 1) (by omega)
+  rwa [pow_succ, Equiv.Perm.mul_apply] at hj'
+
+open AntiKohlPeriodic in
+/-- **The `σ_τ` backward automaton.**  The survivors of `n` steps among `4s` and among `2s + 1`
+are covered by predicates of period `8ⁿ` in `s` with at most `2 · 6ⁿ` residues in total:
+`4s` survives through `4·3t` (`s = 2t`) or `2(3t+1)+1` (`s = 2t+1`), while `2s+1` survives only
+for `s ≡ 1, 2, 5, 6 (mod 8)`, through one of `2·3w+1, 4(3w+1), 4(3w+2), 2(3w+2)+1`. -/
+theorem sigmaTau_survivor_cover (n : ℕ) :
+    ∃ A B : ℤ → Prop, IsPer (8 ^ n) A ∧ IsPer (8 ^ n) B ∧
+      resCount (8 ^ n) A + resCount (8 ^ n) B ≤ 2 * 6 ^ n ∧
+      (∀ s, (∀ j ≤ n, (sigmaTauPerm ^ j) (4 * s) % 4 ≠ 2) → A s) ∧
+      (∀ s, (∀ j ≤ n, (sigmaTauPerm ^ j) (2 * s + 1) % 4 ≠ 2) → B s) := by
+  induction n with
+  | zero =>
+      refine ⟨fun _ => True, fun _ => True, fun _ => Iff.rfl, fun _ => Iff.rfl, ?_,
+        fun _ _ => trivial, fun _ _ => trivial⟩
+      simp [resCount]
+  | succ n ih =>
+      obtain ⟨A, B, hA, hB, hcnt, hAs, hBs⟩ := ih
+      have hQ : 0 < 8 ^ n := by positivity
+      have h3 : IsCoprime (3 : ℤ) ((8 ^ n : ℕ) : ℤ) := by
+        push_cast
+        exact IsCoprime.pow_right ⟨3, -1, by norm_num⟩
+      have h2 : 0 < 2 := by norm_num
+      have h8 : 0 < 8 := by norm_num
+      let A' : ℤ → Prop := fun s =>
+        (s % ((2 : ℕ) : ℤ) = 0 ∧ A (3 * (s / ((2 : ℕ) : ℤ)) + 0)) ∨
+          (s % ((2 : ℕ) : ℤ) = 1 ∧ B (3 * (s / ((2 : ℕ) : ℤ)) + 1))
+      let B' : ℤ → Prop := fun s =>
+        ((s % ((8 : ℕ) : ℤ) = 6 ∧ B (3 * (s / ((8 : ℕ) : ℤ)) + 2)) ∨
+          (s % ((8 : ℕ) : ℤ) = 2 ∧ A (3 * (s / ((8 : ℕ) : ℤ)) + 1))) ∨
+        ((s % ((8 : ℕ) : ℤ) = 1 ∧ B (3 * (s / ((8 : ℕ) : ℤ)) + 0)) ∨
+          (s % ((8 : ℕ) : ℤ) = 5 ∧ A (3 * (s / ((8 : ℕ) : ℤ)) + 2)))
+      have hA'per : IsPer (2 * 8 ^ n) A' := (hA.pull h2 0 3 0).or (hB.pull h2 1 3 1)
+      have hA'cnt : resCount (2 * 8 ^ n) A' ≤ resCount (8 ^ n) A + resCount (8 ^ n) B :=
+        resCount_or_le.trans (add_le_add (resCount_pull_le hQ hA h2 0 3 0 h3)
+          (resCount_pull_le hQ hB h2 1 3 1 h3))
+      have hB'per : IsPer (8 * 8 ^ n) B' :=
+        ((hB.pull h8 6 3 2).or (hA.pull h8 2 3 1)).or ((hB.pull h8 1 3 0).or (hA.pull h8 5 3 2))
+      have hB'cnt : resCount (8 * 8 ^ n) B' ≤
+          2 * (resCount (8 ^ n) A + resCount (8 ^ n) B) := by
+        have e1 := resCount_pull_le hQ hB h8 6 3 2 h3
+        have e2 := resCount_pull_le hQ hA h8 2 3 1 h3
+        have e3 := resCount_pull_le hQ hB h8 1 3 0 h3
+        have e4 := resCount_pull_le hQ hA h8 5 3 2 h3
+        refine resCount_or_le.trans ?_
+        refine (add_le_add resCount_or_le resCount_or_le).trans ?_
+        omega
+      have hsplit : 8 ^ (n + 1) = 4 * (2 * 8 ^ n) := by ring
+      have hsplit' : 8 ^ (n + 1) = 8 * 8 ^ n := by ring
+      refine ⟨A', B', ?_, ?_, ?_, ?_, ?_⟩
+      · rw [hsplit]; exact hA'per.mul 4
+      · rw [hsplit']; exact hB'per
+      · have hA4 := resCount_mul_le (by positivity) hA'per 4
+        rw [← hsplit] at hA4
+        rw [← hsplit'] at hB'cnt
+        rw [show 6 ^ (n + 1) = 6 * 6 ^ n by ring]
+        omega
+      · intro s hs
+        obtain ⟨-, -, hnext⟩ := sigmaTau_surv_succ hs
+        have hs2 : s % 2 = 0 ∨ s % 2 = 1 := by omega
+        rcases hs2 with hs2 | hs2
+        · have hσ : sigmaTauPerm (4 * s) = 4 * (3 * (s / 2) + 0) := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          left
+          refine ⟨by simpa using hs2, ?_⟩
+          have := hAs _ (hσ ▸ hnext)
+          simpa using this
+        · have hσ : sigmaTauPerm (4 * s) = 2 * (3 * (s / 2) + 1) + 1 := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          right
+          refine ⟨by simpa using hs2, ?_⟩
+          have := hBs _ (hσ ▸ hnext)
+          simpa using this
+      · intro s hs
+        obtain ⟨-, hone, hnext⟩ := sigmaTau_surv_succ hs
+        have hs8 : s % 8 = 0 ∨ s % 8 = 1 ∨ s % 8 = 2 ∨ s % 8 = 3 ∨ s % 8 = 4 ∨
+            s % 8 = 5 ∨ s % 8 = 6 ∨ s % 8 = 7 := by omega
+        rcases hs8 with hs8 | hs8 | hs8 | hs8 | hs8 | hs8 | hs8 | hs8
+        · exfalso; apply hone
+          rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+        · have hσ : sigmaTauPerm (2 * s + 1) = 2 * (3 * (s / 8) + 0) + 1 := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          right; left
+          refine ⟨by simpa using hs8, ?_⟩
+          have := hBs _ (hσ ▸ hnext)
+          simpa using this
+        · have hσ : sigmaTauPerm (2 * s + 1) = 4 * (3 * (s / 8) + 1) := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          left; right
+          refine ⟨by simpa using hs8, ?_⟩
+          exact hAs _ (hσ ▸ hnext)
+        · exfalso; apply hone
+          rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+        · exfalso; apply hone
+          rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+        · have hσ : sigmaTauPerm (2 * s + 1) = 4 * (3 * (s / 8) + 2) := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          right; right
+          refine ⟨by simpa using hs8, ?_⟩
+          exact hAs _ (hσ ▸ hnext)
+        · have hσ : sigmaTauPerm (2 * s + 1) = 2 * (3 * (s / 8) + 2) + 1 := by
+            rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+          left; left
+          refine ⟨by simpa using hs8, ?_⟩
+          exact hBs _ (hσ ▸ hnext)
+        · exfalso; apply hone
+          rw [sigmaTau_apply]; unfold ctau amusical; split_ifs <;> omega
+
+/-- The never-entering sets of the `σ_τ` cone have density tending to zero. -/
+theorem sigmaTau_backward_density (ε : ℝ) (hε : 0 < ε) :
+    ∃ n : ℕ, IntDensityLE {x | ∀ j ≤ n, (sigmaTauPerm ^ j) x ∉ {x : ℤ | x % 4 = 2}} ε := by
+  have hlim : Filter.Tendsto (fun n : ℕ => ((3 : ℝ) / 4) ^ n) Filter.atTop (nhds 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  obtain ⟨n, hn⟩ := (hlim.eventually (gt_mem_nhds (by positivity : (0 : ℝ) < ε / 3))).exists
+  obtain ⟨A, B, hA, hB, hcnt, hAs, hBs⟩ := sigmaTau_survivor_cover n
+  have hQ : 0 < 8 ^ n := by positivity
+  let P : ℤ → Prop := fun x =>
+    (x % ((4 : ℕ) : ℤ) = 0 ∧ A (1 * (x / ((4 : ℕ) : ℤ)) + 0)) ∨
+      (x % ((2 : ℕ) : ℤ) = 1 ∧ B (1 * (x / ((2 : ℕ) : ℤ)) + 0))
+  have hPA := hA.pull (by norm_num : 0 < 4) 0 1 0
+  have hPB := (hB.pull (by norm_num : 0 < 2) 1 1 0).mul 2
+  have hmul : 2 * (2 * 8 ^ n) = 4 * 8 ^ n := by ring
+  rw [hmul] at hPB
+  have hP : AntiKohlPeriodic.IsPer (4 * 8 ^ n) P := hPA.or hPB
+  have hPcnt : AntiKohlPeriodic.resCount (4 * 8 ^ n) P ≤ 4 * 6 ^ n := by
+    have e1 := AntiKohlPeriodic.resCount_pull_le hQ hA (by norm_num : 0 < 4) 0 1 0
+      isCoprime_one_left
+    have e2 := AntiKohlPeriodic.resCount_pull_le hQ hB (by norm_num : 0 < 2) 1 1 0
+      isCoprime_one_left
+    have e3 := AntiKohlPeriodic.resCount_mul_le (by positivity)
+      (hB.pull (by norm_num : 0 < 2) 1 1 0) 2
+    rw [hmul] at e3
+    refine AntiKohlPeriodic.resCount_or_le.trans ?_
+    omega
+  refine ⟨n, intDensityLE_of_isPer (by positivity) hP _ ?_ ε ?_⟩
+  · intro x hx
+    have hx' : ∀ j ≤ n, (sigmaTauPerm ^ j) x % 4 ≠ 2 := hx
+    have hx0 : x % 4 ≠ 2 := by simpa using hx' 0 (by omega)
+    have hcases : x % 4 = 0 ∨ x % 2 = 1 := by omega
+    rcases hcases with h4 | h2
+    · left
+      refine ⟨by simpa using h4, ?_⟩
+      have hxe : x = 4 * (x / 4) := by omega
+      have := hAs (x / 4) (by rw [← hxe]; exact hx')
+      simpa using this
+    · right
+      refine ⟨by simpa using h2, ?_⟩
+      have hxe : x = 2 * (x / 2) + 1 := by omega
+      have := hBs (x / 2) (by rw [← hxe]; exact hx')
+      simpa using this
+  · have hcast : (AntiKohlPeriodic.resCount (4 * 8 ^ n) P : ℝ) ≤ 4 * 6 ^ n := by
+      exact_mod_cast hPcnt
+    have hpow : ((3 : ℝ) / 4) ^ n = (6 : ℝ) ^ n / 8 ^ n := by
+      rw [div_pow]
+      rw [show (6 : ℝ) ^ n = 3 ^ n * 2 ^ n by rw [← mul_pow]; norm_num,
+        show (8 : ℝ) ^ n = 4 ^ n * 2 ^ n by rw [← mul_pow]; norm_num]
+      field_simp
+    rw [hpow, div_lt_iff₀ (by positivity)] at hn
+    push_cast
+    nlinarith
+
 /-- **Target.**  Every orbit of `σ_τ = τ ∘ U` has density `0`.  Paper proof: Theorem T with
 `S = 2 + 4ℤ`.  The forward core is `3ⁿ (2 + 4ℤ)`, of density `3⁻ⁿ/4`.  The backward core
 `{x : σ_τʲ x ∉ S, j ≤ n}` has density `(1/2)(3/4)ⁿ⁻¹`.  This comes from a closed 13-type
 automaton on image classes typed by known `2`-adic digits and residue mod `3`, with
 characteristic polynomial `λ¹²(4λ − 3)/4` (agent scripts `typeauto.py`, `typeauto2.py`). -/
 theorem sigmaTau_orbit_densityZero (x : ℤ) : IntDensityZero (permOrbit sigmaTauPerm x) := by
-  sorry
+  simpa using orbit_densityZero_of_transientCone sigmaTauPerm {x : ℤ | x % 4 = 2}
+    (fun x hx => sigmaTau_cone x hx) sigmaTau_forward_density sigmaTau_backward_density
+    ({x} : Finset ℤ)
 
 /-! ## One fixed prime is essential -/
 
