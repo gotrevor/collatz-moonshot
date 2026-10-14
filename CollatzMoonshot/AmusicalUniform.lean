@@ -31,9 +31,10 @@ candidates.
 **Residue-local invariants (Theorem M3/M4).**  The residue Markov chain of a weakly
 sign-uniform transitive map realizes every class-to-class path along a single orbit.  For `U`
 this is `AmusicalTopologicallyTransitive`, proved from the agent's M3 together with
-`amusical_no_periodic_cone` (still an `AmusicalAntiKohl` target).  Then any orbit invariant that is constant on two residue classes takes the
-same value on both (`amusical_invariant_eq_of_locallyConst`).  This kills every invariant built
-from finitely many valuations, leading digits, or the `6`-free part mod `n`.
+`amusical_no_periodic_cone` (still an `AmusicalAntiKohl` target).  Then any orbit invariant that
+is constant on two residue classes takes the same value on both
+(`amusical_invariant_eq_of_locallyConst`).  This kills every invariant built from finitely many
+valuations, leading digits, or the `6`-free part mod `n`.
 
 **Side example `δ`.**  `δ(6k) = 6k+3`, `δ(6k+2) = 6k+1`, `δ(6k+4) = 4k`, `δ(4k+3) = 4k+2`,
 `δ(4k+1) = 6k+5`.  It is a product of two class-transposition involutions with slopes `2/3, 1, 3/2`,
