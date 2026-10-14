@@ -74,6 +74,41 @@
 > and generates a strictly increasing infinite family of nonnegative minima. Three target
 > sorries remain in `AmusicalGlobal.lean`; the 8715-job scoped gate is FORMALIZE-tier green.
 > Read `HANDOFF-amusical-global.md`.
+> **2026-10-14, amusical rewiring transitions:** the scheduled three-cycle's exact orientation is
+> now kernel-checked, as is its semantic action on natural cut sources: the base forward cut enters
+> the scheduled orbit through its backward target, its backward cut crosses to the forward target,
+> and its forward cut returns to the base target.  Global segment traversal/connectivity is the
+> only remaining Theorem R obligation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring schedule:** the proposed `Nat.unpair` schedule is now an
+> explicit kernel-checked level-preserving permutation of the canonical cuts.  Each valid level
+> performs exactly the base-forward / orbit-backward / orbit-forward three-cycle.  Theorem R is
+> reduced to proving that this scheduled successor is connected.  Read
+> `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring quantitative layer:** canonical scale-cut sources are now
+> pairwise distinct, and every level-preserving permutation of them automatically fixes finite
+> orbits, satisfies the factor-three estimate, and moves at most
+> `2(log₂ N + 1)²` sources below `N`.  Theorem R is reduced to the one remaining global
+> connectivity proof for a cut-index permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring scale geometry:** forward and backward first-passage edges are
+> now packaged with exact uniform source/target windows.  Any two cut targets at one scale obey
+> the required factor-3 affine ratio, and cut endpoints at eightfold-growing scales are strictly
+> separated.  The remaining Theorem R blocker is the infinite-orbit enumeration and global
+> segment-splicing permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-13, amusical rewiring passage checkpoint:** every infinite nonnegative amusical orbit
+> now kernel-provably escapes every bounded interval in both time directions.  Least forward and
+> backward passages, their minimality, and uniform affine bounds for `U` and `U⁻¹` are formalized
+> in `AmusicalRewireRatio/Passage.lean`.  The remaining Theorem R blocker is the explicit sparse
+> segment-splicing permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-13, amusical bounded-ratio rewiring in progress:** the restriction of `U` to `ℕ` is
+> now a kernel-checked permutation, with exact integer-power compatibility.  The complete
+> no-rewiring branch (at most one infinite nonnegative orbit) proves every conclusion of Theorem R
+> with empty change set.  The remaining target is the sparse geometric cut-and-splice construction
+> for at least two infinite orbits.  Read `HANDOFF-amusical-rewire.md`.
 
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
