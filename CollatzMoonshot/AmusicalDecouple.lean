@@ -7,6 +7,7 @@ import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalSpitzer
 import CollatzMoonshot.AmusicalDecouple.Density
+import CollatzMoonshot.AmusicalDecouple.Windows
 
 /-!
 # The two primes decouple: Lemma D, and the formal-minimum route to Klamkin (a)
@@ -79,7 +80,42 @@ theorem orbitMin_density_of_survivor_densities {pf pb : ℝ}
       (fun X : ℕ => (countBelow {n : ℕ | BwdSurvivor n} X : ℝ) / X) Filter.atTop (nhds pb)) :
     Filter.Tendsto (fun X : ℕ => (countBelow {n : ℕ | IsOrbitMin n} X : ℝ) / X) Filter.atTop
       (nhds minimaConstant) := by
-  sorry
+  classical
+  set A : ℕ → Set ℕ := fun L => {n : ℕ | IsFwdWin L (n : ℤ)} with hA
+  set B : ℕ → Set ℕ := fun L => {n : ℕ | IsBwdWin L (n : ℤ)} with hB'
+  have hAi : (⋂ L, A L) = {n : ℕ | FwdSurvivor n} := by
+    ext n
+    simp only [A, Set.mem_iInter, Set.mem_ofPred_eq]
+    exact ⟨fun h t ht => h t t ht le_rfl, fun h L t ht _ => h t ht⟩
+  have hBi : (⋂ L, B L) = {n : ℕ | BwdSurvivor n} := by
+    ext n
+    simp only [B, Set.mem_iInter, Set.mem_ofPred_eq]
+    exact ⟨fun h t ht => h t t ht le_rfl, fun h L t ht _ => h t ht⟩
+  have hAB : (⋂ L, A L) ∩ (⋂ L, B L) = {n : ℕ | IsOrbitMin n} := by
+    rw [hAi, hBi]
+    ext n
+    simp only [Set.mem_inter_iff, Set.mem_ofPred_eq]
+    exact (isOrbitMin_iff_survivors n).symm
+  have hAL : ∀ L, Filter.Tendsto (fun X : ℕ => (countBelow (A L) X : ℝ) / X) Filter.atTop
+      (nhds (fwdSurv L : ℝ)) := fun L => by
+    convert tendsto_fwdWindowSurvivor_density L using 4
+    unfold countBelow
+    exact congrArg Finset.card (Finset.filter_congr fun _ _ => Iff.rfl)
+  have hBL : ∀ L, Filter.Tendsto (fun X : ℕ => (countBelow (B L) X : ℝ) / X) Filter.atTop
+      (nhds (bwdSurv L : ℝ)) := fun L => by
+    convert tendsto_bwdWindowSurvivor_density L using 4
+    unfold countBelow
+    exact congrArg Finset.card (Finset.filter_congr fun _ _ => Iff.rfl)
+  have hlim : pf * pb = minimaConstant := by
+    refine tendsto_nhds_unique (hpf.mul hpb) ?_
+    have h := windowDensityLimit
+    unfold WindowDensityLimit at h
+    simpa only [Rat.cast_mul] using h
+  rw [← hAB, ← hlim]
+  refine tendsto_density_inter_of_two_three (fun L => ⟨2 * L, _, Decouple.evPer_fwdWin L⟩)
+    (fun L => ⟨L, _, Decouple.evPer_bwdWin L⟩) hAL hBL hpf hpb ?_ ?_
+  · rw [hAi]; exact hF
+  · rw [hBi]; exact hB
 
 /-- **Target.**  Formal minima avoid `3ℤ`. -/
 theorem not_formalMin_of_three_dvd {y : ℤ} (h : 3 ∣ y) : ¬ FormalMin y := by
