@@ -1,5 +1,11 @@
 # PENDING_WORK
 
+## 2026-10-14 — amusical anti-Kohl objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-antikohl.md` is fully discharged: `CollatzMoonshot/AmusicalAntiKohl.lean`
+is sorry-free, the ratified statements are unchanged, and the axiom ledgers are trust-base only.  See
+`HANDOFF-amusical-antikohl.md`.  The open `AntiKohlConjecture` is a definition, not a target.
+
 ## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,

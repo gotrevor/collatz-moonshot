@@ -1,5 +1,27 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: objective complete, `AmusicalAntiKohl.lean` sorry-free
+
+Both core estimates are proved, closing the kickoff.  New module
+`CollatzMoonshot/AmusicalAntiKohl/Periodic.lean` counts residues of periodic predicates on `ℤ`
+(`resCount`, `IsPer`).  Its four operations are the pull-back `y ≡ r (mod m) ∧ P(a⌊y/m⌋ + b)`
+with `a` a unit, unions, period refinement, and box counting.  The bridge to the density notion is
+`intDensityLE_of_isPer` (`3·resCount < ε·Q` gives `IntDensityLE`).  Proofs only need upper
+bounds, so the automata are over-approximating covers built by induction, not exact survivor
+sets:
+
+* `sigmaTau_survivor_cover`: survivors among `4s` and `2s+1` lie in predicates of period `8ⁿ`
+  with `≤ 2·6ⁿ` residues in total.  The forward hypothesis was already done
+  (`sigmaTau_forward_density`).
+* `kappa_survivor_cover`: survivors `2y` lie in a period-`3ⁿ` predicate with `≤ 2ⁿ` residues.
+* `kappa_forward_cover`: `kappaTⁿ(ℤ) ⊆ F ∪ 3Z ∪ (3O+1)` (`kCover`), period `2ⁿ`, and
+  `9ⁿ(18f + 10z + 6o) ≤ 18·17ⁿ`.  Hence the `(17/18)ⁿ` decay.
+
+`kappa_orbit_densityZero` and `sigmaTau_orbit_densityZero` follow from Theorem T.  The scoped
+`lake build CollatzMoonshot.AmusicalAntiKohl` is green (8716 jobs).  Every ratified target uses only
+`propext`, `Classical.choice`, `Quot.sound`.  There are no statement changes, no `native_decide` and no new axioms.
+`AntiKohlConjecture` remains an open definition, as ratified.
+
 ## 2026-10-14: the gate `amusical_no_periodic_cone` proved
 
 New helper module `CollatzMoonshot/AmusicalAntiKohl/Connect.lean` proves `amusical_reach`: for

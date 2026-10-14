@@ -646,6 +646,36 @@ theorem infinitelyManyOrbits_of_transientCone (σ : Equiv.Perm ℤ) (S : Set ℤ
     apply not_intDensityZero_of_containsClassTail (permOrbit σ x) htail
     simpa using orbit_densityZero_of_transientCone σ S hS hfwd hbwd ({x} : Finset ℤ)
 
+open Classical in
+/-- A set covered by a periodic predicate with few residues has small upper density. -/
+theorem intDensityLE_of_isPer {Q : ℕ} (hQ : 0 < Q) {P : ℤ → Prop}
+    (hP : AntiKohlPeriodic.IsPer Q P) (A : Set ℤ) (hA : ∀ x ∈ A, P x) (ε : ℝ)
+    (hε : 3 * (AntiKohlPeriodic.resCount Q P : ℝ) < ε * Q) : IntDensityLE A ε := by
+  unfold IntDensityLE
+  filter_upwards [Filter.eventually_ge_atTop (2 * Q)] with X hX
+  set c := AntiKohlPeriodic.resCount Q P
+  have hsub : ((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card ≤
+      ((Finset.Icc (-(X : ℤ)) X).filter P).card := by
+    apply Finset.card_le_card
+    intro y hy
+    simp only [Finset.mem_filter] at hy ⊢
+    exact ⟨hy.1, hA y hy.2⟩
+  have hbox := AntiKohlPeriodic.box_count_le hQ hP X
+  have hcnt : (((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card : ℝ) ≤
+      c * (2 * ((X / Q : ℕ) : ℝ) + 2) := by
+    exact_mod_cast hsub.trans hbox
+  have hdiv : ((X / Q : ℕ) : ℝ) * Q ≤ X := by exact_mod_cast Nat.div_mul_le_self X Q
+  have hQr : (0 : ℝ) < Q := by exact_mod_cast hQ
+  have hXr : 2 * (Q : ℝ) ≤ X := by exact_mod_cast hX
+  have hc0 : (0 : ℝ) ≤ c := Nat.cast_nonneg _
+  have hX0 : (0 : ℝ) ≤ X := Nat.cast_nonneg _
+  have k1 := mul_le_mul_of_nonneg_left hdiv (by positivity : (0 : ℝ) ≤ 2 * c)
+  have k2 := mul_le_mul_of_nonneg_left hXr hc0
+  have k3 := mul_le_mul_of_nonneg_right hε.le hX0
+  have key : (c * (2 * ((X / Q : ℕ) : ℝ) + 2)) * Q ≤ (ε * X) * Q := by
+    nlinarith
+  exact hcnt.trans (le_of_mul_le_mul_right key hQr)
+
 /-! ## `κ`: an explicit member of the class at `p = 2` -/
 
 /-- `κ(6k) = 12k+5`, `κ(6k+1) = 4k+3`, `κ(6k+2) = 4k+2`, `κ(6k+3) = 12k+1`, `κ(6k+4) = 4k`,
@@ -731,6 +761,281 @@ theorem kappa_antiKohl_class :
       | rw [padicValRat.div (by norm_num) (by norm_num), h2, h3]
         norm_num
 
+/-- One step of an `n`-step never-entering condition, for any permutation and cone. -/
+theorem perm_surv_succ (σ : Equiv.Perm ℤ) (S : Set ℤ) {n : ℕ} {x : ℤ}
+    (h : ∀ j ≤ n + 1, (σ ^ j) x ∉ S) :
+    x ∉ S ∧ σ x ∉ S ∧ ∀ j ≤ n, (σ ^ j) (σ x) ∉ S := by
+  refine ⟨by simpa using h 0 (by omega), by simpa using h 1 (by omega), ?_⟩
+  intro j hj
+  have hj' := h (j + 1) (by omega)
+  rwa [pow_succ, Equiv.Perm.mul_apply] at hj'
+
+theorem kappaPerm_apply (x : ℤ) : kappaPerm x = kappa x := rfl
+
+open AntiKohlPeriodic in
+/-- **The `κ` backward automaton.**  Writing a never-entering point as `2y`, survival forces
+`y ∉ 3ℤ` and continues through `2y' = κ(2y)` with `y' = 2⌊y/3⌋ + 1` (`y ≡ 1`) or `2⌊y/3⌋`
+(`y ≡ 2`).  So the `n`-step survivors are covered by a predicate of period `3ⁿ` with at most
+`2ⁿ` residues. -/
+theorem kappa_survivor_cover (n : ℕ) :
+    ∃ D : ℤ → Prop, IsPer (3 ^ n) D ∧ resCount (3 ^ n) D ≤ 2 ^ n ∧
+      ∀ y, (∀ j ≤ n, (kappaPerm ^ j) (2 * y) ∉ {x : ℤ | x % 2 = 1 ∨ x % 12 = 0}) → D y := by
+  induction n with
+  | zero =>
+      refine ⟨fun _ => True, fun _ => Iff.rfl, ?_, fun _ _ => trivial⟩
+      simp [resCount]
+  | succ n ih =>
+      obtain ⟨D, hD, hcnt, hDs⟩ := ih
+      have hQ : 0 < 3 ^ n := by positivity
+      have h2 : IsCoprime (2 : ℤ) ((3 ^ n : ℕ) : ℤ) := by
+        push_cast
+        exact IsCoprime.pow_right ⟨-1, 1, by norm_num⟩
+      have h3 : 0 < 3 := by norm_num
+      let D' : ℤ → Prop := fun y =>
+        (y % ((3 : ℕ) : ℤ) = 1 ∧ D (2 * (y / ((3 : ℕ) : ℤ)) + 1)) ∨
+          (y % ((3 : ℕ) : ℤ) = 2 ∧ D (2 * (y / ((3 : ℕ) : ℤ)) + 0))
+      have hsplit : 3 ^ (n + 1) = 3 * 3 ^ n := by ring
+      refine ⟨D', ?_, ?_, ?_⟩
+      · rw [hsplit]
+        exact (hD.pull h3 1 2 1).or (hD.pull h3 2 2 0)
+      · rw [hsplit]
+        have e1 := resCount_pull_le hQ hD h3 1 2 1 h2
+        have e2 := resCount_pull_le hQ hD h3 2 2 0 h2
+        refine resCount_or_le.trans ?_
+        rw [pow_succ]
+        omega
+      · intro y hy
+        obtain ⟨h0, h1, hnext⟩ := perm_surv_succ kappaPerm _ hy
+        simp only [Set.mem_ofPred_eq, kappaPerm_apply] at h0 h1
+        have hy3 : y % 3 = 0 ∨ y % 3 = 1 ∨ y % 3 = 2 := by omega
+        rcases hy3 with hy3 | hy3 | hy3
+        · exfalso
+          apply h1
+          unfold kappa
+          split_ifs <;> omega
+        · have hκ : kappaPerm (2 * y) = 2 * (2 * (y / 3) + 1) := by
+            rw [kappaPerm_apply]; unfold kappa; split_ifs <;> omega
+          left
+          refine ⟨by simpa using hy3, ?_⟩
+          have := hDs _ (hκ ▸ hnext)
+          simpa using this
+        · have hκ : kappaPerm (2 * y) = 2 * (2 * (y / 3) + 0) := by
+            rw [kappaPerm_apply]; unfold kappa; split_ifs <;> omega
+          right
+          refine ⟨by simpa using hy3, ?_⟩
+          have := hDs _ (hκ ▸ hnext)
+          simpa using this
+
+/-- The never-entering sets of the `κ` cone have density tending to zero. -/
+theorem kappa_backward_density (ε : ℝ) (hε : 0 < ε) :
+    ∃ n : ℕ, IntDensityLE
+      {x | ∀ j ≤ n, (kappaPerm ^ j) x ∉ {x : ℤ | x % 2 = 1 ∨ x % 12 = 0}} ε := by
+  have hlim : Filter.Tendsto (fun n : ℕ => ((2 : ℝ) / 3) ^ n) Filter.atTop (nhds 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  obtain ⟨n, hn⟩ := (hlim.eventually (gt_mem_nhds (by positivity : (0 : ℝ) < ε / 3))).exists
+  obtain ⟨D, hD, hcnt, hDs⟩ := kappa_survivor_cover n
+  have hQ : 0 < 3 ^ n := by positivity
+  let P : ℤ → Prop := fun x => x % ((2 : ℕ) : ℤ) = 0 ∧ D (1 * (x / ((2 : ℕ) : ℤ)) + 0)
+  have hP : AntiKohlPeriodic.IsPer (2 * 3 ^ n) P := hD.pull (by norm_num : 0 < 2) 0 1 0
+  have hPcnt : AntiKohlPeriodic.resCount (2 * 3 ^ n) P ≤ 2 ^ n :=
+    (AntiKohlPeriodic.resCount_pull_le hQ hD (by norm_num : 0 < 2) 0 1 0
+      isCoprime_one_left).trans hcnt
+  refine ⟨n, intDensityLE_of_isPer (by positivity) hP _ ?_ ε ?_⟩
+  · intro x hx
+    have hx' : ∀ j ≤ n, (kappaPerm ^ j) x ∉ {x : ℤ | x % 2 = 1 ∨ x % 12 = 0} := hx
+    have hx0 : ¬ (x % 2 = 1 ∨ x % 12 = 0) := by simpa using hx' 0 (by omega)
+    refine ⟨by simp; omega, ?_⟩
+    have hxe : x = 2 * (x / 2) := by omega
+    have := hDs (x / 2) (by rw [← hxe]; exact hx')
+    simpa using this
+  · have hcast : (AntiKohlPeriodic.resCount (2 * 3 ^ n) P : ℝ) ≤ 2 ^ n := by
+      exact_mod_cast hPcnt
+    rw [div_pow, div_lt_iff₀ (by positivity)] at hn
+    push_cast
+    nlinarith
+
+/-- `κ` on odd numbers, in the coordinate `x = 2y + 1`. -/
+def kappaT (y : ℤ) : ℤ :=
+  if y % 3 = 0 then 2 * (y / 3) + 1 else if y % 3 = 1 then 6 * (y / 3) else 6 * (y / 3) + 4
+
+theorem kappa_two_mul_add_one (y : ℤ) : kappa (2 * y + 1) = 2 * kappaT y + 1 := by
+  unfold kappa kappaT; split_ifs <;> omega
+
+theorem kappaPerm_pow_odd (n : ℕ) (y : ℤ) :
+    (kappaPerm ^ n) (2 * y + 1) = 2 * kappaT^[n] y + 1 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ', Equiv.Perm.mul_apply, ih, kappaPerm_apply, kappa_two_mul_add_one,
+        Function.iterate_succ_apply']
+
+/-- The forward cover `F ∪ 3Z ∪ (3O + 1)` of the `κ` forward core, in odd coordinates. -/
+def kCover (F Z O : ℤ → Prop) (v : ℤ) : Prop :=
+  F v ∨ (v % ((3 : ℕ) : ℤ) = 0 ∧ Z (1 * (v / ((3 : ℕ) : ℤ)) + 0)) ∨
+    (v % ((3 : ℕ) : ℤ) = 1 ∧ O (1 * (v / ((3 : ℕ) : ℤ)) + 0))
+
+/-- The free part after one step: `2(F/3) + 1 ∪ 2Z + 1`. -/
+def kStepF (F Z : ℤ → Prop) (y : ℤ) : Prop :=
+  (y % ((2 : ℕ) : ℤ) = 1 ∧ F (3 * (y / ((2 : ℕ) : ℤ)) + 0)) ∨
+    (y % ((2 : ℕ) : ℤ) = 1 ∧ Z (1 * (y / ((2 : ℕ) : ℤ)) + 0))
+
+/-- The `3ℤ` part after one step: `2((F − 1)/3) ∪ 2O`. -/
+def kStepZ (F O : ℤ → Prop) (y : ℤ) : Prop :=
+  (y % ((2 : ℕ) : ℤ) = 0 ∧ F (3 * (y / ((2 : ℕ) : ℤ)) + 1)) ∨
+    (y % ((2 : ℕ) : ℤ) = 0 ∧ O (1 * (y / ((2 : ℕ) : ℤ)) + 0))
+
+/-- The `3ℤ + 1` part after one step: `2((F − 2)/3) + 1`. -/
+def kStepO (F : ℤ → Prop) (y : ℤ) : Prop :=
+  y % ((2 : ℕ) : ℤ) = 1 ∧ F (3 * (y / ((2 : ℕ) : ℤ)) + 2)
+
+theorem kCover_step {F Z O : ℤ → Prop} {v : ℤ} (h : kCover F Z O v) :
+    kCover (kStepF F Z) (kStepZ F O) (kStepO F) (kappaT v) := by
+  have key : ∀ {P : ℤ → Prop} {a b : ℤ}, a = b → P b → P a := fun h hb => h ▸ hb
+  unfold kCover kStepF kStepZ kStepO
+  simp only [Nat.cast_ofNat, one_mul, add_zero] at h ⊢
+  have hv3 : v % 3 = 0 ∨ v % 3 = 1 ∨ v % 3 = 2 := by omega
+  rcases h with hF | ⟨hv, hZ⟩ | ⟨hv, hO⟩
+  · rcases hv3 with hv3 | hv3 | hv3
+    · have hT : kappaT v = 2 * (v / 3) + 1 := by unfold kappaT; split_ifs <;> omega
+      rw [hT]
+      exact Or.inl (Or.inl ⟨by omega, key (by omega) hF⟩)
+    · have hT : kappaT v = 6 * (v / 3) := by unfold kappaT; split_ifs <;> omega
+      rw [hT]
+      exact Or.inr (Or.inl ⟨by omega, Or.inl ⟨by omega, key (by omega) hF⟩⟩)
+    · have hT : kappaT v = 6 * (v / 3) + 4 := by unfold kappaT; split_ifs <;> omega
+      rw [hT]
+      exact Or.inr (Or.inr ⟨by omega, by omega, key (by omega) hF⟩)
+  · have hT : kappaT v = 2 * (v / 3) + 1 := by unfold kappaT; split_ifs <;> omega
+    rw [hT]
+    exact Or.inl (Or.inr ⟨by omega, key (by omega) hZ⟩)
+  · have hT : kappaT v = 6 * (v / 3) := by unfold kappaT; split_ifs <;> omega
+    rw [hT]
+    exact Or.inr (Or.inl ⟨by omega, Or.inr ⟨by omega, key (by omega) hO⟩⟩)
+
+open AntiKohlPeriodic in
+/-- **The `κ` forward automaton.**  `kappaTⁿ ℤ` is covered by `F ∪ 3Z ∪ (3O + 1)` with `F, Z, O`
+of period `2ⁿ` and residue counts `f, z, o`; the counts evolve by
+`(f, z, o) ↦ (f + z, f + o, f)`, and the weights `(18, 10, 6)` grow by at most `17/9` per step
+while the period doubles. -/
+theorem kappa_forward_cover (n : ℕ) :
+    ∃ F Z O : ℤ → Prop, IsPer (2 ^ n) F ∧ IsPer (2 ^ n) Z ∧ IsPer (2 ^ n) O ∧
+      9 ^ n * (18 * resCount (2 ^ n) F + 10 * resCount (2 ^ n) Z + 6 * resCount (2 ^ n) O) ≤
+        18 * 17 ^ n ∧
+      ∀ y, kCover F Z O (kappaT^[n] y) := by
+  induction n with
+  | zero =>
+      refine ⟨fun _ => True, fun _ => False, fun _ => False, fun _ => Iff.rfl,
+        fun _ => Iff.rfl, fun _ => Iff.rfl, ?_, fun y => Or.inl trivial⟩
+      simp [resCount]
+  | succ n ih =>
+      obtain ⟨F, Z, O, hF, hZ, hO, hcnt, hcov⟩ := ih
+      have hQ : 0 < 2 ^ n := by positivity
+      have h3 : IsCoprime (3 : ℤ) ((2 ^ n : ℕ) : ℤ) := by
+        push_cast
+        exact IsCoprime.pow_right ⟨1, -1, by norm_num⟩
+      have h1 : IsCoprime (1 : ℤ) ((2 ^ n : ℕ) : ℤ) := isCoprime_one_left
+      have h2 : 0 < 2 := by norm_num
+      have hsplit : 2 ^ (n + 1) = 2 * 2 ^ n := by ring
+      refine ⟨kStepF F Z, kStepZ F O, kStepO F, ?_, ?_, ?_, ?_, ?_⟩
+      · rw [hsplit]; exact (hF.pull h2 1 3 0).or (hZ.pull h2 1 1 0)
+      · rw [hsplit]; exact (hF.pull h2 0 3 1).or (hO.pull h2 0 1 0)
+      · rw [hsplit]; exact hF.pull h2 1 3 2
+      · rw [hsplit]
+        have eF : resCount (2 * 2 ^ n) (kStepF F Z) ≤
+            resCount (2 ^ n) F + resCount (2 ^ n) Z :=
+          resCount_or_le.trans (add_le_add (resCount_pull_le hQ hF h2 1 3 0 h3)
+            (resCount_pull_le hQ hZ h2 1 1 0 h1))
+        have eZ : resCount (2 * 2 ^ n) (kStepZ F O) ≤
+            resCount (2 ^ n) F + resCount (2 ^ n) O :=
+          resCount_or_le.trans (add_le_add (resCount_pull_le hQ hF h2 0 3 1 h3)
+            (resCount_pull_le hQ hO h2 0 1 0 h1))
+        have eO : resCount (2 * 2 ^ n) (kStepO F) ≤ resCount (2 ^ n) F :=
+          resCount_pull_le hQ hF h2 1 3 2 h3
+        set f := resCount (2 ^ n) F
+        set z := resCount (2 ^ n) Z
+        set o := resCount (2 ^ n) O
+        have hw : 9 * (18 * resCount (2 * 2 ^ n) (kStepF F Z) +
+            10 * resCount (2 * 2 ^ n) (kStepZ F O) + 6 * resCount (2 * 2 ^ n) (kStepO F)) ≤
+            17 * (18 * f + 10 * z + 6 * o) := by omega
+        calc 9 ^ (n + 1) * (18 * resCount (2 * 2 ^ n) (kStepF F Z) +
+              10 * resCount (2 * 2 ^ n) (kStepZ F O) + 6 * resCount (2 * 2 ^ n) (kStepO F))
+            = 9 ^ n * (9 * (18 * resCount (2 * 2 ^ n) (kStepF F Z) +
+              10 * resCount (2 * 2 ^ n) (kStepZ F O) +
+                6 * resCount (2 * 2 ^ n) (kStepO F))) := by ring
+          _ ≤ 9 ^ n * (17 * (18 * f + 10 * z + 6 * o)) := Nat.mul_le_mul_left _ hw
+          _ = 17 * (9 ^ n * (18 * f + 10 * z + 6 * o)) := by ring
+          _ ≤ 17 * (18 * 17 ^ n) := Nat.mul_le_mul_left _ hcnt
+          _ = 18 * 17 ^ (n + 1) := by ring
+      · intro y
+        rw [Function.iterate_succ_apply']
+        exact kCover_step (hcov y)
+
+/-- The forward cores of the `κ` cone have density tending to zero. -/
+theorem kappa_forward_density (ε : ℝ) (hε : 0 < ε) :
+    ∃ n : ℕ, IntDensityLE ((kappaPerm ^ n) '' {x : ℤ | x % 2 = 1 ∨ x % 12 = 0}) ε := by
+  have hlim : Filter.Tendsto (fun n : ℕ => ((17 : ℝ) / 18) ^ n) Filter.atTop (nhds 0) :=
+    tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
+  obtain ⟨n, hn⟩ := (hlim.eventually (gt_mem_nhds (by positivity : (0 : ℝ) < ε / 2))).exists
+  obtain ⟨F, Z, O, hF, hZ, hO, hcnt, hcov⟩ := kappa_forward_cover n
+  have hQ : 0 < 2 ^ n := by positivity
+  have h3 : 0 < 3 := by norm_num
+  have hCper : AntiKohlPeriodic.IsPer (3 * 2 ^ n) (kCover F Z O) :=
+    (hF.mul 3).or ((hZ.pull h3 0 1 0).or (hO.pull h3 1 1 0))
+  have hCcnt : AntiKohlPeriodic.resCount (3 * 2 ^ n) (kCover F Z O) ≤
+      3 * AntiKohlPeriodic.resCount (2 ^ n) F + AntiKohlPeriodic.resCount (2 ^ n) Z +
+        AntiKohlPeriodic.resCount (2 ^ n) O := by
+    have e1 := AntiKohlPeriodic.resCount_mul_le hQ hF 3
+    have e2 := AntiKohlPeriodic.resCount_pull_le hQ hZ h3 0 1 0 isCoprime_one_left
+    have e3 := AntiKohlPeriodic.resCount_pull_le hQ hO h3 1 1 0 isCoprime_one_left
+    unfold kCover
+    refine AntiKohlPeriodic.resCount_or_le.trans ?_
+    refine (add_le_add le_rfl AntiKohlPeriodic.resCount_or_le).trans ?_
+    omega
+  have hC3 : 0 < 3 * 2 ^ n := by positivity
+  let P : ℤ → Prop := fun x => x % ((2 : ℕ) : ℤ) = 1 ∧ kCover F Z O (1 * (x / ((2 : ℕ) : ℤ)) + 0)
+  have hP : AntiKohlPeriodic.IsPer (2 * (3 * 2 ^ n)) P := hCper.pull (by norm_num) 1 1 0
+  have hPcnt : AntiKohlPeriodic.resCount (2 * (3 * 2 ^ n)) P ≤
+      AntiKohlPeriodic.resCount (3 * 2 ^ n) (kCover F Z O) :=
+    AntiKohlPeriodic.resCount_pull_le hC3 hCper (by norm_num) 1 1 0 isCoprime_one_left
+  refine ⟨n + 1, intDensityLE_of_isPer (by positivity) hP _ ?_ ε ?_⟩
+  · rintro x ⟨x0, hx0, rfl⟩
+    have hodd : kappa x0 % 2 = 1 := kappa_cone x0 hx0
+    have hxe : kappaPerm x0 = 2 * (kappa x0 / 2) + 1 := by rw [kappaPerm_apply]; omega
+    rw [pow_succ, Equiv.Perm.mul_apply, hxe, kappaPerm_pow_odd]
+    refine ⟨by simp, ?_⟩
+    have := hcov (kappa x0 / 2)
+    have he : 1 * ((2 * kappaT^[n] (kappa x0 / 2) + 1) / ((2 : ℕ) : ℤ)) + 0 =
+        kappaT^[n] (kappa x0 / 2) := by simp; omega
+    rw [he]
+    exact this
+  · have hc : (AntiKohlPeriodic.resCount (2 * (3 * 2 ^ n)) P : ℝ) ≤
+        3 * AntiKohlPeriodic.resCount (2 ^ n) F + AntiKohlPeriodic.resCount (2 ^ n) Z +
+          AntiKohlPeriodic.resCount (2 ^ n) O := by
+      exact_mod_cast hPcnt.trans hCcnt
+    have hw : (9 : ℝ) ^ n * (18 * (AntiKohlPeriodic.resCount (2 ^ n) F : ℝ) +
+        10 * AntiKohlPeriodic.resCount (2 ^ n) Z + 6 * AntiKohlPeriodic.resCount (2 ^ n) O) ≤
+        18 * 17 ^ n := by exact_mod_cast hcnt
+    set f : ℝ := (AntiKohlPeriodic.resCount (2 ^ n) F : ℝ)
+    set z : ℝ := (AntiKohlPeriodic.resCount (2 ^ n) Z : ℝ)
+    set o : ℝ := (AntiKohlPeriodic.resCount (2 ^ n) O : ℝ)
+    have hf : 0 ≤ f := Nat.cast_nonneg _
+    have hz : 0 ≤ z := Nat.cast_nonneg _
+    have ho : 0 ≤ o := Nat.cast_nonneg _
+    have h9 : (0 : ℝ) < 9 ^ n := by positivity
+    have hpow : ((17 : ℝ) / 18) ^ n * (18 ^ n) = 17 ^ n := by
+      rw [div_pow]; field_simp
+    have h18 : (18 : ℝ) ^ n = 9 ^ n * 2 ^ n := by rw [← mul_pow]; norm_num
+    -- 3 c ≤ (18f + 10z + 6o) / 2 ≤ 9 (17/9)^n < (ε/2) · 18 · 2^n ... compare in the period
+    have hmain : 3 * (3 * f + z + o) * 9 ^ n < ε * (2 * (3 * 2 ^ n)) * 9 ^ n := by
+      have hn' : (17 : ℝ) ^ n < ε / 2 * 18 ^ n := by
+        rw [← hpow]
+        exact mul_lt_mul_of_pos_right hn (by positivity)
+      rw [h18] at hn'
+      nlinarith
+    have hlt := lt_of_mul_lt_mul_right hmain h9.le
+    push_cast
+    linarith
+
 /-- **Target.**  Every orbit of `κ` has density `0`, so `κ` has infinitely many orbits and none
 contains a class tail.  Paper proof: Theorem T with `S = odd ∪ 12ℤ`.
 * Backward core: survival forces `y_j = κʲ x / 2 ∉ 3ℤ`, where `y ↦ (2y+1)/3` or `(2y−4)/3`, and
@@ -740,7 +1045,11 @@ contains a class tail.  Paper proof: Theorem T with `S = odd ∪ 12ℤ`.
   classes have `v₃(modulus) ≤ 1`, and their masses by type (3-free / `0, 1, 2 mod 3`) evolve
   linearly with spectral radius `0.9196…`, the root of `8λ³ − 4λ² − 2λ − 1`. -/
 theorem kappa_orbit_densityZero (x : ℤ) : IntDensityZero (permOrbit kappaPerm x) := by
-  sorry
+  have hS : ∀ x ∈ {x : ℤ | x % 2 = 1 ∨ x % 12 = 0},
+      kappaPerm x ∈ {x : ℤ | x % 2 = 1 ∨ x % 12 = 0} :=
+    fun x hx => Or.inl (kappa_cone x hx)
+  simpa using orbit_densityZero_of_transientCone kappaPerm _ hS kappa_forward_density
+    kappa_backward_density ({x} : Finset ℤ)
 
 /-! ## `σ_τ`: `U` followed by one class transposition -/
 
@@ -907,36 +1216,6 @@ theorem sigmaTau_forward_density (ε : ℝ) (hε : 0 < ε) :
   rw [sigmaTau_forward_core]
   simpa using intDensityLE_dilate (3 ^ n) (by positivity)
     {x : ℤ | x % 4 = 2} ε (by simpa using hratio)
-
-open Classical in
-/-- A set covered by a periodic predicate with few residues has small upper density. -/
-theorem intDensityLE_of_isPer {Q : ℕ} (hQ : 0 < Q) {P : ℤ → Prop}
-    (hP : AntiKohlPeriodic.IsPer Q P) (A : Set ℤ) (hA : ∀ x ∈ A, P x) (ε : ℝ)
-    (hε : 3 * (AntiKohlPeriodic.resCount Q P : ℝ) < ε * Q) : IntDensityLE A ε := by
-  unfold IntDensityLE
-  filter_upwards [Filter.eventually_ge_atTop (2 * Q)] with X hX
-  set c := AntiKohlPeriodic.resCount Q P
-  have hsub : ((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card ≤
-      ((Finset.Icc (-(X : ℤ)) X).filter P).card := by
-    apply Finset.card_le_card
-    intro y hy
-    simp only [Finset.mem_filter] at hy ⊢
-    exact ⟨hy.1, hA y hy.2⟩
-  have hbox := AntiKohlPeriodic.box_count_le hQ hP X
-  have hcnt : (((Finset.Icc (-(X : ℤ)) X).filter (· ∈ A)).card : ℝ) ≤
-      c * (2 * ((X / Q : ℕ) : ℝ) + 2) := by
-    exact_mod_cast hsub.trans hbox
-  have hdiv : ((X / Q : ℕ) : ℝ) * Q ≤ X := by exact_mod_cast Nat.div_mul_le_self X Q
-  have hQr : (0 : ℝ) < Q := by exact_mod_cast hQ
-  have hXr : 2 * (Q : ℝ) ≤ X := by exact_mod_cast hX
-  have hc0 : (0 : ℝ) ≤ c := Nat.cast_nonneg _
-  have hX0 : (0 : ℝ) ≤ X := Nat.cast_nonneg _
-  have k1 := mul_le_mul_of_nonneg_left hdiv (by positivity : (0 : ℝ) ≤ 2 * c)
-  have k2 := mul_le_mul_of_nonneg_left hXr hc0
-  have k3 := mul_le_mul_of_nonneg_right hε.le hX0
-  have key : (c * (2 * ((X / Q : ℕ) : ℝ) + 2)) * Q ≤ (ε * X) * Q := by
-    nlinarith
-  exact hcnt.trans (le_of_mul_le_mul_right key hQr)
 
 theorem sigmaTau_apply (x : ℤ) : sigmaTauPerm x = ctau (amusical x) := rfl
 
