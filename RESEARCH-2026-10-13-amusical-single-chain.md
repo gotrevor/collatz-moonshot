@@ -1205,3 +1205,72 @@ Theorem G's construction.  Agent odds that this route moves (a): under 1%.
   near-cycle counts grow with `N` (`τ`: 41 → 88 at `D = 4`), while `U`'s stay flat at 17.  `σ`
   escapes the other way, through sparse survivors.  A one-orbit `U` under LIN would have to look
   like `σ`.
+
+## 40. Stopped prefixes: run tightness at a logarithmic threshold, and the method's ceiling (2026-10-14, "ncentropy" Opus agent, checked)
+
+Pushes §38's run-stratum method from `m ≲ 0.4√log₂D` runs to `m ≤ log₂D/40`.  I checked §2 of the
+report (every lemma and exponent).  Lean: `AmusicalNearCycleEntropy.lean` (P2′, NB, the pattern
+count, Chernoff, RT-low; treadmill).  Agent odds that this moves (a): about 2%, unchanged.
+
+* **The fix.**  Count each excursion only up to its `τ`-th `E`-step, not over its whole parity
+  pattern.  Pattern entropy is then paid on `O(log D)` steps, and Lemma R's `θ^m` blow-up enters
+  once, through the location bound.
+* **P2′ (PROVED, elementary).**  At an interior local minimum after `A` `E`-steps, `B` odd steps
+  and `j` completed runs: `B ln(4/3) < A ln(3/2) + j/(p + D)`, so `B < 1.41 A + 3.48`.  Checked on
+  `D = 64` (0 violations; tightening by 0.05 gives violations) and by the agent on 860 242 minima.
+* **NB (PROVED).**  The fair-coin mass of `E`/`O` patterns that start with `E`, end at their
+  `τ`-th `E` and use `≤ k` `E`-runs is `Σ_{j<k} C(τ−1, j)/2^τ`, a binomial tail (coins "the run
+  stops after this `E`").  Checked exactly for `τ ≤ 7`.
+* **RT-low (PROVED, no Rhin).**  Near-cycle starts `p ≤ D(log₂D)^14` with `g > 0.61 log₂D` and
+  `≤ log₂D/40` runs number `O(D^0.87)`.
+* **RT-log (PROVED, Rhin as Prop).**  The same above `D(log₂D)^14` at `O(D^0.956)`, via MR-P's
+  location bound `P(m, D) = D^{1 + 8.84μ + o(1)}`.  Hence `#{p ∈ NC_D : m(p) ≤ log₂D/40} = κD + o(D)`.
+* **EQ-log (PROVED, Rhin).**  LIN-density ⟺ near-cycles with `> log₂D/40` runs are `o(D)` ⟺
+  near-cycles with `g > G(D)` are `o(D)`, for any `G → ∞` with `G ≤ 0.95 log₃D`.  The last form,
+  **beyond-horizon negligibility (BHN)**, is all that is left open of LIN-density.  39.8% of
+  `NC_{2¹⁶}` lies beyond `log₃D`.
+* **Ceiling (PROVED, about the method).**  No count built from residues, stopped prefixes and a
+  location bound passes `m ≈ 0.131 log₂D = ((2−θ)/(2θ)) log₂D`, even granting LIN's location clause.
+  Rhin gives `μ₀ = 0.0326`; irrationality exponent 2 would give 0.081.
+* **Prefix typicality (measured).**  Deep near-cycles (`g ≥ 40`, 39 973 starts at `D = 2¹⁶`) have
+  prefixes that look like Haar integers (run-count ratios 0.45–1.44 of random), so refining prefix
+  events cannot help.
+* **The exponential-sum lead is REFUTED as a route.**  Beyond the horizon the count is the
+  congruence `C_w ≡ 2^a d (mod 3^g − 2^a)`; even square-root cancellation only stretches the horizon
+  to `1.28 log₂D`.  Past that, BHN needs a pointwise Diophantine argument: the Simons–de Weger wall
+  with a defect.
+* **Park the stratum method.**  Cheap follow-up: RT-log for the backward map (85% verbatim).
+
+## 41. Sparse regluing: forward-survivor density is a gluing artifact (2026-10-14, "fsarith" Opus agent, checked)
+
+Asked for an arithmetic mechanism forcing many forward survivors; found a no-go instead.  I checked
+Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many survivors".  Lean:
+`AmusicalReglue.lean` (Π, Π′, Lemma BW, Chernoff duality; treadmill).  Agent odds that this moves
+(a): about 1%.
+
+* **Theorem Π (PROVED).**  Let `f` permute `ℕ` with finitely many periodic points, and `F, G → ∞`.
+  Some `π` differs from `f` (and `π⁻¹` from `f⁻¹`) at `≤ F(X)` points below `X`, keeps `f`'s
+  cycles, merges all infinite orbits into one, and has `#FS_π(X) ≤ G(X)`.  Cut every chain at
+  sparse high points; group the pieces into finite blocks by their minimum along a sparse spine of
+  singleton pieces; traverse each block in **decreasing** order of piece minimum, blocks laid out
+  `⋯ B₆ B₄ B₂ | B₁ B₃ B₅ ⋯`.  Only the spine survives.
+* **Π′ (PROVED).**  For `U` every cut can be odd, so `π(2m) = 3m`: Sep3, Lemma St and every
+  window/residue statistic survive.
+* **Corollary.**  No property of `U` that is robust to sparse modification implies any FS lower
+  bound beyond "infinitely many": not `d_lower(FS) > 0`, not `d_upper(FS) > c`, not
+  `#FS ∩ (Y, 2Y] ≠ O(√Y)`.  That closes 2-adic/3-adic measure of basin sizes and congruence
+  structure of basins.  It is §33's TT with survivors in place of orbit count, and `π` (not
+  Theorem G's `σ`) is the right foil: it keeps `U`'s windows and even branch.
+* **Gluing order reaches both corners (measured).**  The same pieces in increasing order (`τ`'s
+  order, §31) give dense FS (37 718 below `2²⁰`) and dense near-cycles; in decreasing order FS is
+  the 5 spine points and near-cycle counts look linear in `D` (`NC_256`: 1 786 against `U`'s
+  1 275), stable as the cut height rises.
+* **Conjecture Π-LIN (70%).**  `π` in decreasing order inherits LIN.  Then "LIN ⇒ (a)" has no proof
+  from LIN plus sparse-robust properties: what remains is `U`'s exactness along entire tails.
+* **Conjecture M (60%).**  §25's Steering Lemma realizes the decreasing order with real `Û`-arrows,
+  giving one real `Û`-orbit with SQ on every rung and FS density 0.  Then integrality (T1/T2) is the
+  only input left.
+* **Lead 1 numbers.**  Model basin tails are exponential, `P(t ≤ g < ∞) ≤ ρᵗ/(1−ρ)`,
+  `ρ = 0.985597` (forward and backward share `ρ`: Chernoff duality).  Finite basins longer than the
+  horizon carry 16–18.5% of `[0, X)` at `X = 2²⁰ … 2²⁴`; a survivor floor needs this mass and no Haar
+  argument reaches it.
