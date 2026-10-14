@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFunctionField
+import CollatzMoonshot.AmusicalTwinDegree.Den
 
 /-!
 # The `𝔽₂[t]` twin: cycle minima are graded by the 2-adic valuation of the period
@@ -62,8 +63,8 @@ noncomputable def twinClass (n : (ZMod 2)[X]) : Fin 4 :=
 `p = 2^v q` with `q` odd; Frobenius gives `(t^{2q} − Q^q)^{2^v}`, and in `Q^q` the `t^{2q}`
 coefficient is `1` and the `t^{2q−1}` coefficient is `q ≡ 1`. -/
 theorem twin_den_natDegree (p : ℕ) (hp : 0 < p) :
-    ((X ^ 2 : (ZMod 2)[X]) ^ p - twinQ ^ p).natDegree = 2 * p - 2 ^ padicValNat 2 p := by
-  sorry
+    ((X ^ 2 : (ZMod 2)[X]) ^ p - twinQ ^ p).natDegree = 2 * p - 2 ^ padicValNat 2 p :=
+  TwinDeg.den_natDegree p hp
 
 /-- **Target (Theorem D).**  A non-exceptional cycle of period `2^v q` has minimum degree at
 most `2^v + 2`.  Paper proof in the module docstring: `x (t^{2p} − Q^p) = c_w` with
