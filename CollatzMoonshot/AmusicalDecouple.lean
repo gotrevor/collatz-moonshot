@@ -78,11 +78,30 @@ theorem orbitMin_density_of_survivor_densities {pf pb : ℝ}
 
 /-- **Target.**  Formal minima avoid `3ℤ`. -/
 theorem not_formalMin_of_three_dvd {y : ℤ} (h : 3 ∣ y) : ¬ FormalMin y := by
-  sorry
+  intro hy
+  have h1 := (hy 1 le_rfl).2
+  obtain ⟨m, rfl⟩ := h
+  have hinv : amusicalInv (3 * m) = 2 * m := by
+    unfold amusicalInv; split_ifs <;> omega
+  have hk : kBwd (3 * m) 1 = 1 := by
+    simp [kBwd, hinv, stepBits]
+  rw [hk] at h1
+  norm_num at h1
 
 /-- **Target.**  Infinitely many formal minima on a ray `uᵏ x` imply Klamkin (a). -/
 theorem infinitelyManyOrbits_of_ray {u x : ℤ} (hu : 1 < u) (hx : 0 < x)
     (h : {k : ℕ | FormalMin (u ^ k * x)}.Infinite) : AmusicalInfinitelyManyOrbits := by
-  sorry
+  apply infinitelyManyOrbits_of_formalMin_infinite
+  have hpos : ∀ k : ℕ, 0 < u ^ k * x := fun k => mul_pos (pow_pos (by omega) k) hx
+  have hmono : StrictMono fun k : ℕ => u ^ k * x := fun i j hij =>
+    mul_lt_mul_of_pos_right (pow_lt_pow_right₀ hu hij) hx
+  refine Set.infinite_of_injOn_mapsTo (f := fun k : ℕ => (u ^ k * x).toNat) ?_ ?_ h
+  · intro i _ j _ hij
+    have := congrArg (fun n : ℕ => (n : ℤ)) hij
+    simp only [Int.toNat_of_nonneg (hpos i).le, Int.toNat_of_nonneg (hpos j).le] at this
+    exact hmono.injective this
+  · intro k hk
+    simp only [Set.mem_ofPred_eq, Int.toNat_of_nonneg (hpos k).le]
+    exact hk
 
 end CollatzMoonshot.Amusical
