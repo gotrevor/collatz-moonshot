@@ -1,103 +1,69 @@
-# HANDOFF: amusical global mechanisms (2026-10-14, one-sided density ledger)
+# HANDOFF: amusical global mechanisms (2026-10-14, objective complete)
 
 ## Latest lap advance
 
-- Added kernel-checked `tendsto_fwdGood_density` and `tendsto_bwdGood_density`. They prove the
-  exact natural densities `fwdSurv L` and `bwdSurv L` for the periodic forward/backward
-  good-word predicates, using periods `4^L` and `3^L` respectively.
-- This discharges the arithmetic/counting half of the missing one-sided finite-window density
-  inputs for Proposition S. The remaining local bridge is semantic: prove that, above the
-  existing `windowBound` cutoff, `FwdWindowSurvivor` and `BwdWindowSurvivor` are individually
-  equivalent to their good-word predicates. Then `tendsto_count_div_of_eventually_congr`
-  transfers the two limits directly.
-- The scoped file still has exactly two `sorry`s, in `exists_many_returns` and
-  `infinitelyManyOrbits_of_survival`. No statement or existing definition changed.
+- `CollatzMoonshot/AmusicalGlobal.lean` is sorry-free. Both remaining ratified targets were
+  proved without changing any statement or existing definition.
+- Proposition S, `infinitelyManyOrbits_of_survival`, now transfers the exact one-sided window
+  densities to the semantic survivor predicates, applies finite inclusion-exclusion, and turns
+  the resulting positive density of two-sided survivors into infinitely many orbit minima.
+- Proposition P, `exists_many_returns`, now factors `M = 2^a 3^b M₀`, constructs a nonempty
+  return connector on `ZMod M₀`, repeats a marker word, realizes that word by an integer
+  itinerary, and chooses an arbitrarily large cylinder translate by CRT. The marker prefix fixes
+  the `2^a` residue, its suffix fixes the `3^b` residue, and the connector fixes the `M₀` residue.
+- The connector proof formalizes the paper crux: the two odd affine branches generate the unit
+  translation `z ↦ z - 2/3`. A factorial iterate represents the inverse of one branch on the
+  finite ring, so the resulting semigroup reaches every residue.
+- Added a local proof of finite forward-itinerary realization from
+  `continuousBackwardStepWordEquiv`. This removes the initially observed inherited `sorryAx`
+  from Proposition P; both new headline declarations have a clean trust ledger.
 
-## Latest verification
+## Reflection audit
+
+- The exact statements and definitions remained faithful to the kickoff. Proposition S's missing
+  abstraction was the one-sided semantic/good-word equivalence above the existing threshold;
+  Proposition P's real crux was the coprime-to-six connector, not the adic marker bookkeeping.
+- The first axiom audit of Proposition P correctly exposed reliance on the inherited
+  `exists_forward_itinerary` sorry. Replacing that call locally closed the dependency hole rather
+  than accepting cargo-cult proof debt.
+- No function type or large case space is decided, no `native_decide` is introduced, and no
+  proof source outside `CollatzMoonshot/AmusicalGlobal.lean` was changed.
+
+## Verification
+
+Narrow checks:
 
 ```text
 lake env lean CollatzMoonshot/AmusicalGlobal.lean
+rg -n '\bsorry\b|sorryAx' CollatzMoonshot/AmusicalGlobal.lean
 git diff --check
 awk 'length($0)>100 ...' CollatzMoonshot/AmusicalGlobal.lean
 ```
 
-All passed. The real scoped gate
+The Lean check succeeds, the search finds no occurrence, and the diff and 100-column checks pass.
 
-```text
-~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-global \
-  --target CollatzMoonshot.AmusicalGlobal
-```
-
-also passed: `✅ FORMALIZE-TIER GREEN` (`lake build` completed successfully, 8716 jobs).
-
-## Latest next attack
-
-Extract the forward and backward halves of `isWindowMin_iff_of_large` into local one-sided
-semantic equivalences (without editing the treadmill-owned `AmusicalWindow.lean`). Transfer the
-new periodic limits to `FwdWindowSurvivor` and `BwdWindowSurvivor`, then finish Proposition S by
-the finite-set inequality
-`|FS| + |BS| + |FWL ∩ BWL| ≤ |FS ∩ BS| + |FWL| + |BWL|` and a positive density gap.
-
-## Concrete advance
-
-- Kernel-checked Proposition S's orbit-theoretic core: `isOrbitMin_iff_survivors` proves that
-  surviving forever in both directions is exactly `IsOrbitMin`.
-- Added explicit finite forward/backward window predicates, proved their conjunction is exactly
-  `IsWindowMin`, and proved infinite-horizon survivors imply their corresponding finite window
-  predicates. The remaining Proposition S work is now a finite-cardinality density estimate.
-- Proved `commuting_window_two` with its ratified statement unchanged.
-- Added `CollatzMoonshot/AmusicalGlobal/WindowTwo.lean`, whose finite certificate uses the
-  cycles through `44` and `-44` to classify the two-symbol table. The certificate ranges only
-  over indexed cycle data; it never quantifies over `Fin 3 → Fin 3 → Fin 3`.
-- Removed the failed all-function `decide +kernel` route recorded in the kickoff. In particular,
-  no proof enumerates the `3^9` function space.
-- Avoided inherited proof debt from `amusical_periodic_mem`: the existing affine ledger gives
-  `7153 * |y| < 4^12` for a point fixed by `U^12`, hence `|y| ≤ 2345`. A kernel check over
-  `Fin 2346` classifies the nonnegative possibilities, and oddness supplies the signed list.
-- The `44` and `-44` itinerary words reduce every compatible table to exactly the seven
-  constant, signed-projection, and signed-successor tables. Forward-itinerary extensionality
-  then identifies `g` with `0`, `1`, `-1`, `id`, `-id`, `U`, or `-U`.
-- The scoped file has two remaining `sorry`s. No axiom, `native_decide`,
-  statement change, or change to an existing definition was introduced.
-
-## Verification
-
-Exact gate run:
+Real scoped gates:
 
 ```text
 ~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-global \
   --target CollatzMoonshot.AmusicalGlobal \
-  --axioms CollatzMoonshot.Amusical.commuting_window_two
+  --axioms CollatzMoonshot.Amusical.exists_many_returns
+
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-global \
+  --target CollatzMoonshot.AmusicalGlobal \
+  --axioms CollatzMoonshot.Amusical.infinitelyManyOrbits_of_survival
 ```
 
-Verdict: `✅ FORMALIZE-TIER GREEN` (`lake build` completed successfully, 8716 jobs).
-`commuting_window_two` has exactly the trust-base axioms `Classical.choice`, `Quot.sound`, and
-`propext`; in particular, it has no `sorryAx`. The only scoped proof debt is now
-`exists_many_returns` and `infinitelyManyOrbits_of_survival`.
-
-The same exact gate was rerun after adding the survival semantics and again returned
-`✅ FORMALIZE-TIER GREEN` (8716 jobs).
-
-Additional narrow checks run:
-
-```text
-lake build CollatzMoonshot.AmusicalGlobal.WindowTwo
-lake env lean CollatzMoonshot/AmusicalGlobal.lean
-python3 scripts/amusical/central_w2.py
-git diff --check
-```
-
-All passed. Both edited Lean files also pass the kickoff's 100-character line limit.
+Both return `✅ FORMALIZE-TIER GREEN` over 8716 jobs. Each audited theorem uses exactly
+`Classical.choice`, `Quot.sound`, and `propext`; neither uses `sorryAx`.
 
 ## Current blocker
 
-There is no external blocker. Proposition S and Proposition P remain substantial formal proofs.
-The host predicate is not yet met because those two declarations still contain `sorry`.
+None. The scoped host predicate `sorry-free:CollatzMoonshot/AmusicalGlobal.lean` is met.
+Inherited proof debt in treadmill-owned `AmusicalEscape.lean` and `AmusicalWindowThree.lean`
+remains out of scope and is not in either completed headline theorem's axiom ledger.
 
 ## Next highest-value attack
 
-Finish `infinitelyManyOrbits_of_survival`. Prove density lemmas for the two finite halves using
-`count_fwdGood`, `count_bwdGood`, `fwdSurv_mul`, and `bwdSurv_mul`, then combine their cardinals
-with `windowMinDensity` through `|F ∪ B| = |F| + |B| - |F ∩ B|`. Inclusion-exclusion and
-`isOrbitMin_iff_survivors` then give infinitely many minima. After Proposition S, attack
-`exists_many_returns` last.
+No further scoped attack remains. The host should accept the completed objective; any work on the
+inherited files belongs to their separate treadmills.

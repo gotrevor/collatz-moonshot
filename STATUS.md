@@ -1,5 +1,14 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical global mechanisms objective COMPLETE:**
+> `CollatzMoonshot/AmusicalGlobal.lean` is sorry-free with every ratified statement unchanged.
+> Proposition S converts a positive survivor-density gap into infinitely many orbit minima;
+> Proposition P uses an adic marker, a transitive affine connector on the coprime modulus, and a
+> CRT-selected large cylinder translate to force arbitrarily many returns to any residue class.
+> The 8716-job scoped gate is FORMALIZE-tier green. Both final headline axiom ledgers contain
+> exactly `Classical.choice`, `Quot.sound`, and `propext`, with no inherited `sorryAx`. Read
+> `HANDOFF-amusical-global.md`.
+
 > **2026-10-14, amusical one-sided density ledger:** the periodic good-word predicates now have
 > kernel-checked natural densities `fwdSurv L` and `bwdSurv L`. This closes the counting half of
 > Proposition S's one-sided finite-window estimates; only the large-integer semantic bridge and
