@@ -37,6 +37,7 @@ import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalFunctionField
 import CollatzMoonshot.AmusicalTwinDegree
 import CollatzMoonshot.AmusicalCrossing
+import CollatzMoonshot.AmusicalAdelic
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -277,7 +278,10 @@ def register : List Hall := [
    "AmusicalTwinDegree.lean; agent report twin2.md §2, §4 (2026-10-13)", "2026-10-14"⟩,
   ⟨"amusical: archimedean crossing index (Kohl's det) for infinite orbits", .refuted,
    "det = net crossings of 0 certifies |det| infinite orbits (twinW has one), but U preserves sign",
-   "AmusicalCrossing.lean; agent report bridge.md §2–§4 (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalCrossing.lean; agent report bridge.md §2–§4 (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: rigidity or statistics of Û on ℝ × ℤ₂ × ℤ₃", .costume,
+   "invariant subgroups are ℤ's layers (Prop L); one Û-orbit fakes every window statistic (Thm M)",
+   "AmusicalAdelic.lean; agent report quasicrystal.md §2–§5 (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -417,7 +421,9 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.twin_den_natDegree], []⟩,
   ⟨"amusical: archimedean crossing index (Kohl's det) for infinite orbits",
    [``CollatzMoonshot.Amusical.twinW_zero_not_periodic,
-    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩]
+    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩,
+  ⟨"amusical: rigidity or statistics of Û on ℝ × ℤ₂ × ℤ₃",
+   [``CollatzMoonshot.Amusical.amusicalRat_subgroup_one_mem], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -430,7 +436,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 50 rows, 42 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 51 rows, 43 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 

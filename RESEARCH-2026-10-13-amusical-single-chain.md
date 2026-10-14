@@ -702,3 +702,31 @@ algebras, groupoids or self-similar groups give an invariant that (a) is computa
     such permutation has an infinite orbit.  `twinW` meets the hypotheses, but its infinite orbit is
     trivial.  The determinant criterion covers only the easy nonzero-flux cases, so "settles an
     instance" overstates it.
+
+## 25. The adelic space is a costume; one orbit can pass for `ℤ` (2026-10-14, "quasicrystal" Opus agent, checked in part)
+
+Lean: `AmusicalAdelic.lean` (Proposition L, targets, on `wip/amusical-adelic`).  The angle: `ℤ` as a
+model set in `K = ℝ × ℤ₂ × ℤ₃`, with `U` extended to `Û` by its affine formulas.  Does a rigidity or
+measure-classification property of `Û` force infinitely many orbits on the diagonal?  No.
+
+* **Theorem M, Masquerade (PROVED by the agent; I read it but did not re-derive the construction).**
+  Either `U` has infinitely many cycles, or for every `ε` one `Û`-orbit shadows `ι(ℤ ∖ 0)`.  It
+  stays within `ε` off a density-0 set, has `o(X)` extra points per box, and agrees with `U` off
+  `O(log² X)` places.  So every Haar, box-count, Delone or finite-window argument on `K` fails,
+  unless it proves infinitely many cycles.  Unlike the rewired `τ` (§14), this is `Û`'s own
+  dynamics.
+  * Proof: Theorem R-style cuts (§14), glued by a new Steering Lemma (signed-sum covering plus
+    approximation of `log₂ 3`).  The demo (`scratch-quasicrystal/masq.py`, the agent's): one orbit
+    piece covers all 2980 non-periodic integers in `[1, 3000]` exactly once, with the same
+    cylinder table.
+  * It answers `adelic.md`'s open C7 (that agent had put 60% on yes).
+* **Proposition L (PROVED; I checked it).**  A `Û`-invariant subgroup with a point of odd 2-adic
+  coordinate contains `ι(ℤ)`, since `4Ûv − 3v = ±ι(1)`.  The invariant lattices are exactly
+  `(1/q) ι(ℤ)`, `gcd(q, 6) = 1`.  So invariant subgroups give back Klamkin (a) for `U_q`, nothing more.
+* **Corollary S_K (PROVED; I checked it).**  One orbit with the lattice's window statistics has
+  forward plus backward survival density `≤ p_f + p_b − p_f p_b = 0.3972`.  The product `p_f p_b` is
+  `c`, the orbit-minima density.  `ℤ` measures `0.4470` (§20).  So survival is exactly where the
+  masquerade must fail, the §20 wall again.  The proof uses one strict minimum per orbit.
+  * Open Q1 (agent: 50%): does some single orbit reach `0.3972`?  If so, Proposition S's threshold
+    is sharp.
+
