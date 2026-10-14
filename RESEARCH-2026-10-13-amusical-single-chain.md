@@ -221,7 +221,7 @@ kernel-checked and axiom-clean as of 2026-10-13.
 
 ## 9. Reversors determined by residues (2026-10-13, "reversor" agent, checked)
 
-Lean: `AmusicalContinuousReversor.lean` (targets for a treadmill; Maze row "reversor determined by
+Lean: `AmusicalContinuousReversor.lean` (proved, axiom-clean; Maze row "reversor determined by
 residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically continuous iff its step symbols
 `stepSym (ι n)` depend only on `n mod 2^c₀ 3^d₀`; then it is determined by that finite table
 (Lemma S) and equals flip ∘ a cellular automaton on the Matthews–Watts shift.
@@ -264,7 +264,7 @@ Lean: `AmusicalLogBalance.lean` (all proved, axiom-clean).  Weight `n` by `1/n`:
 
 ## 11. Seventh orbit (2026-10-13, "seventh" agent, checked)
 
-Lean: `AmusicalSeventh.lean` (targets).  A seventh orbit ⇔ no orbit of `U` is cofinite in `ℕ`.
+Lean: `AmusicalSeventh.lean` (proved, axiom-clean, 2026-10-14).  A seventh orbit ⇔ no orbit of `U` is cofinite in `ℕ`.
 No contradiction found from a cofinite orbit of `8`; believed `≥ 7` orbits at 99.5%, `14` an orbit
 minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both stay above `2⁸⁰⁰⁰`).
 
@@ -334,7 +334,7 @@ exists rises from ~93% to ~97%.
 
 ## 14. Global mechanisms (2026-10-13, "global" agent, checked)
 
-Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (targets).  No global mechanism found; a
+Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (proved, axiom-clean).  No global mechanism found; a
 seventh orbit stays open.  Every mechanism is a transversal, an infinite set meeting each orbit
 at most `K` times (Klamkin (a) ⇔ one exists).
 
@@ -364,7 +364,7 @@ at most `K` times (Klamkin (a) ⇔ one exists).
 
 ## 15. The anti-Kohl conjecture (2026-10-13, "antikohl" agent, checked)
 
-Lean: `AmusicalAntiKohl.lean` (κ, τ and the cone identities proved; the rest are targets).  The
+Lean: `AmusicalAntiKohl.lean`, every statement proved and axiom-clean (antikohl treadmill, 2026-10-14).  The
 conjecture: an RCWA permutation whose slopes all have `v_p = 1` for one fixed prime `p` has no
 orbit containing a class tail.  At `p = 3` it gives `U` a seventh orbit.  It is still open on
 the residue-transitive core (`U`, the twins); credence ~93%.
