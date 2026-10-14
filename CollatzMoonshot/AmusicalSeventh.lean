@@ -26,20 +26,21 @@ proved toward it, and the barrier it found.
 * `rewire_single_orbit` (the barrier): a permutation of `ℕ` with steps at most doubling can be
   changed on a set of density `0` so that all its infinite orbits fuse into one.  Applied to `U`
   (if it has an infinite orbit) this gives a permutation that agrees with `U` off a density-`0` set,
-  shares every density, log-density, window and crossing statistic, and has exactly the cycles plus
-  one orbit.  So no argument built from such statistics can prove a seventh orbit: a proof must use
-  the exact value of `U` everywhere, plus a global mechanism.
+  shares every finite-window density, log-density and crossing statistic, and has exactly the cycles
+  plus one orbit.  So no argument built from such statistics can prove a seventh orbit: a proof must
+  use the exact value of `U` everywhere, plus a global mechanism.  (Survival statistics are not
+  finite-window and do differ, research §14.)
 
 Paper proofs: agent report `seventh.md` (2026-10-13), summarized in
-`RESEARCH-2026-10-13-amusical-single-chain.md` §11.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-seventh.md`): close every `sorry` here.
+`RESEARCH-2026-10-13-amusical-single-chain.md` §11.
+Kernel-checked 2026-10-14 by the seventh treadmill (`HANDOFF-amusical-seventh.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
 
 open CollatzMoonshot.Obstructions.Amusical
 
-/-- **Target.**  If the orbit of `8` misses infinitely many nonnegative integers, there is a seventh
+/-- **Proved.**  If the orbit of `8` misses infinitely many nonnegative integers, there is a seventh
 orbit.  Paper proof: pick a nonnegative `n` outside `knownCycleMembers` and outside the orbit of
 `8`; its orbit differs from the orbit of `8` (it does not contain `8`) and from each known cycle's
 orbit (each is contained in `knownCycleMembers`); add `n` to `{0, 1, 2, 4, 44, 8}`. -/
@@ -83,7 +84,7 @@ theorem atLeastSeven_of_orbit8_not_cofinite
         exact (hnorb a ha).symm
       · exact amusical_six_distinct_orbits a ha b hb hab
 
-/-- **Target (sparse sweeping).**  For every `η > 0` there is `c > 0` such that, for all large `X`,
+/-- **Proved (sparse sweeping).**  For every `η > 0` there is `c > 0` such that, for all large `X`,
 every infinite orbit spends at most `ηX` of the times `|j| ≤ cX log X` below `X`.  Paper proof: for
 `n ≥ 2·324^L` the order of `U^i n` and `n`, `|i| ≤ L`, is a residue condition mod `12^L` (Lemma W);
 outside a set of density `2ρ^{K+1}/(1−ρ)`, `ρ = 1/√6 + 1/√3 < 1`, the minimum of the `L`-window
@@ -96,7 +97,7 @@ theorem sparse_sweep : ∀ η : ℝ, 0 < η → ∃ c : ℝ, 0 < c ∧ ∃ X₀ 
         fun j => 0 ≤ (amusicalPerm ^ j) x ∧ (amusicalPerm ^ j) x < X).card : ℝ) ≤ η * X :=
   sparse_sweep_assembled
 
-/-- **Target (residue transitivity).**  No nontrivial union of residue classes mod `M` is mapped
+/-- **Proved (residue transitivity).**  No nontrivial union of residue classes mod `M` is mapped
 onto itself by `Uᵐ`, for any `m ≥ 1`.  Paper proof: the residue graph of `Uᵐ` mod `M` is strongly
 connected.  Write `M = 2^i 3^j N` with `gcd(N, 6) = 1`; the affine maps mod `N` of branch words
 whose length is `≡ 0 (mod m)` form a subgroup of `Aff(ℤ/N)` containing `A^m` and `A^{m−1} ∘ B`,
@@ -109,7 +110,7 @@ theorem amusical_pow_classUnion_invariant (m M : ℕ) (hm : 0 < m) (hM : 0 < M)
     R = ∅ ∨ R = Set.univ := by
   exact amusical_pow_classUnion_invariant_of_image_eq m M hm hM R h
 
-/-- **Target (the rewiring barrier).**  A permutation of `ℕ` whose steps at most double (as `U` and
+/-- **Proved (the rewiring barrier).**  A permutation of `ℕ` whose steps at most double (as `U` and
 `U⁻¹` do on `ℕ`) agrees, off a set of density `0` and on every finite orbit, with a permutation in
 which all the infinite orbits form a single orbit.  Paper proof: every infinite orbit tends to `∞`
 in both time directions (injectivity), and a step from below `Y` lands below `2Y`, so each infinite

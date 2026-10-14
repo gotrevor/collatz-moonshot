@@ -30,8 +30,8 @@ candidates.
 
 **Residue-local invariants (Theorem M3/M4).**  The residue Markov chain of a weakly
 sign-uniform transitive map realizes every class-to-class path along a single orbit.  For `U`
-this is `AmusicalTopologicallyTransitive` (target).  It follows from the agent's M3 together with
-`amusical_no_periodic_cone`.  Then any orbit invariant that is constant on two residue classes takes the
+this is `AmusicalTopologicallyTransitive`, proved from the agent's M3 together with
+`amusical_no_periodic_cone` (still an `AmusicalAntiKohl` target).  Then any orbit invariant that is constant on two residue classes takes the
 same value on both (`amusical_invariant_eq_of_locallyConst`).  This kills every invariant built
 from finitely many valuations, leading digits, or the `6`-free part mod `n`.
 
@@ -58,7 +58,7 @@ def rcwaIterSlope (σ : ℤ → ℤ) (m : ℕ) (a c : ℤ → ℤ) (k : ℕ) (x 
 
 /-! ## Theorem NR_p -/
 
-/-- **Target (Theorem NR_p).**  Let `σ` be an RCWA permutation whose slopes all have `v_p ≥ 0`
+/-- **Proved (Theorem NR_p).**  Let `σ` be an RCWA permutation whose slopes all have `v_p ≥ 0`
 (and those of `σ⁻¹`, their reciprocals, `v_p ≤ 0`), with `v_p` of the slope of `σᵏ` unbounded.
 Then no bijection affine on each of finitely many pieces reverses `σ`.  Paper proof (`uniform.md`
 §2.1): let `T` bound `|v_p|` of the piece slopes of `ι`; pick a `k`-cylinder class where `σᵏ` has
@@ -216,7 +216,7 @@ theorem no_piecewiseAffine_reversor_of_valNonneg (p : ℕ) [Fact p.Prime] (σ : 
 
 /-! ## The Island Lemma -/
 
-/-- **Target (Island Lemma).**  If an RCWA permutation `ι` reverses an RCWA permutation `σ` and
+/-- **Proved (Island Lemma).**  If an RCWA permutation `ι` reverses an RCWA permutation `σ` and
 maps a `σ`-cycle `Z` to itself, the slope product of `σ` around `Z` is `±1`.  Paper proof
 (`uniform.md` §2.2): near each `x` both sides of `ι σ = σ⁻¹ ι` are affine, so
 `t(σx) s(x) = t(x) / s(σ⁻¹ι x)`; multiply over `Z`; the `t` factors telescope, and `σ⁻¹ι = ισ`
@@ -319,7 +319,8 @@ def AmusicalTopologicallyTransitive : Prop :=
   ∀ (M : ℕ), 0 < M → ∀ r s : ℤ, ∃ (x : ℤ) (n : ℕ), 0 < n ∧ x ≡ r [ZMOD M] ∧
     amusical^[n] x ≡ s [ZMOD M]
 
-/-- **Target.**  `U` is topologically transitive on `Ẑ` (Theorem M3 for `U`). -/
+/-- **Proved from `amusical_no_periodic_cone`** (an `AmusicalAntiKohl` target).  `U` is
+topologically transitive on `Ẑ` (Theorem M3 for `U`). -/
 theorem amusical_topologicallyTransitive : AmusicalTopologicallyTransitive := by
   intro M hM r s
   -- classes reached from `r + M ℤ` by a full pair `(n, c)` with `n ≥ 1`
@@ -722,7 +723,7 @@ theorem periodic_of_finite_forwardOrbit {α : Type*} (f : α → α) (hf : Funct
     rw [← Function.iterate_add_apply, show j + (i - j) = i by omega]
     exact heq'
 
-/-- **Target.**  Every orbit of `δ` is finite.  Paper proof (`uniform.md` §5): write the
+/-- **Proved.**  Every orbit of `δ` is finite.  Paper proof (`uniform.md` §5): write the
 multiples of `4` as `4k` and put `c = k + 2`; along an orbit the multiples of `4` alternate
 `c ↦ (3/2) c` (while `2 ∣ c`) and `c ↦ (2/3) c` (while `3 ∣ c`), ending at fixed points of the
 involution `ι₁`.  So the multiples of `4` in a cycle are `{u · 2ⁱ 3^(s−i) : 0 ≤ i ≤ s}`, with
