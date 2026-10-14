@@ -5,7 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalSurvivorSeparation
-import CollatzMoonshot.AmusicalOddRewire.Glue
+import CollatzMoonshot.AmusicalOddRewire.OddTails
 
 /-!
 # Rewiring the odd branch: the tail threshold (Theorem TT) and `τ_odd` (T1★)
@@ -86,7 +86,7 @@ theorem tail_threshold (S : Set ℤ) :
         ∀ j : ℕ, 1 ≤ j → amusicalInv^[j] (y : ℤ) ∉ S}.Infinite) := by
   sorry
 
-/-- **Target (T1★).**  For every `F → ∞` there is a permutation of `ℕ` that agrees with `U` on
+/-- **Proved (T1★).**  For every `F → ∞` there is a permutation of `ℕ` that agrees with `U` on
 every even number and every finite orbit, changes at most `F N` points below `N`, and fuses all
 infinite orbits of `U` into one. -/
 theorem exists_oddRewire (F : ℕ → ℕ) (hF : Filter.Tendsto F Filter.atTop Filter.atTop) :
@@ -96,6 +96,22 @@ theorem exists_oddRewire (F : ℕ → ℕ) (hF : Filter.Tendsto F Filter.atTop F
       (∀ N : ℕ, ((Finset.range N).filter fun n => (τ n : ℤ) ≠ amusical n).card ≤ F N) ∧
       ∀ a b : ℕ, (amusicalOrbit a).Infinite → (amusicalOrbit b).Infinite →
         ∃ j : ℤ, (τ ^ j) a = b := by
-  sorry
+  obtain ⟨τ, hchg, hcount, hconn⟩ := exists_glue amusicalNatPerm {n | Odd n} F hF
+  have heq (n : ℕ) (h : (τ n : ℤ) ≠ amusical n) : τ n ≠ amusicalNatPerm n := fun h' =>
+    h (by rw [h', amusicalNatPerm_apply_cast])
+  refine ⟨τ, fun m => ?_, fun n hn => ?_, fun N => ?_, fun a b ha hb => ?_⟩
+  · by_cases h : τ (2 * m) = amusicalNatPerm (2 * m)
+    · apply Nat.cast_injective (R := ℤ)
+      rw [h, amusicalNatPerm_apply_cast]
+      push_cast
+      exact amusical_two_mul m
+    · exact absurd (hchg _ h).1 (by simp)
+  · by_contra h
+    exact (natOrbit_infinite_iff n).1 (hchg n (heq n h)).2.1 hn
+  · refine le_trans (Finset.card_le_card fun n hn => ?_) (hcount N)
+    simp only [Finset.mem_filter] at hn ⊢
+    exact ⟨hn.1, heq n hn.2⟩
+  · exact hconn a b (gluePt_odd_of_infinite ((natOrbit_infinite_iff a).2 ha))
+      (gluePt_odd_of_infinite ((natOrbit_infinite_iff b).2 hb))
 
 end CollatzMoonshot.Amusical
