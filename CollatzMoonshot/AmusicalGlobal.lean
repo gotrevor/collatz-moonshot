@@ -51,7 +51,7 @@ private theorem amusical_step_affine (x : ℤ) :
     | exact ⟨-1, by norm_num, by omega⟩
 
 /-- Iterating the branch formula produces a uniformly bounded affine error. -/
-private theorem amusical_iterate_affine (l : ℕ) (x : ℤ) :
+theorem amusical_iterate_affine (l : ℕ) (x : ℤ) :
     ∃ B : ℕ, ∃ c : ℤ, l ≤ B ∧ B ≤ 2 * l ∧ |c| < 4 ^ l ∧
       2 ^ B * amusical^[l] x = 3 ^ l * x + c := by
   induction l with
