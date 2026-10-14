@@ -661,3 +661,33 @@ the twin's extras making one provable.
   and Q-adically dense (BELIEVED 85%: cycles inside degree 24 meet every cylinder of depth 6), so
   the twin's residue adversary is an actual polynomial.  In that respect the twin is harder than `ℤ`.
 
+## 24. Kohl's determinant is the net crossing of `0` (2026-10-14, "bridge" Opus agent, checked in part)
+
+Lean: `AmusicalCrossing.lean`, proved and axiom-clean.  The agent's question was whether operator
+algebras, groupoids or self-similar groups give an invariant that (a) is computable from residues,
+(b) separates `U` from `ω` and `τ`, and (c) bounds the orbit count.  Its answer for `U` is no.
+
+* **Theorem I (PROVED, paper; three-line proof, read).**  For class-wise order-preserving `σ`,
+  Kohl's `det σ = Σ b/(a m)` equals `#{x < 0 ≤ σx} − #{x ≥ 0 > σx}`.  That is the Fredholm index of
+  `σ` compressed to `ℓ²(ℕ)`, and also Matui's index map.  Proof: canonical pieces
+  `r + a k ↦ s + b(k + j)` give `det = Σ (s/b + j − r/a)`, and Rump's identity `Σ r/m = (n−1)/2`
+  cancels the fractions.  Kohl had called det unintuitive, found by computer.
+  * My check (`scripts/amusical/flux_ren.py`): Kohl's formula = brute-force flux on nine twins
+    `W_{a,b,c}`.  Teeth: `U` gives 0, and a window missing the crossing misses it.
+* **Corollary (PROVED; Lean `not_periodic_of_upCrossing`).**  `σ` has at least `|det σ|` infinite
+  orbits, since a finite orbit carries no net flux.  This is a fourth certificate type, disjoint
+  from reversal, Frobenius and Theorem W.
+* **The statistical twin has an infinite orbit (PROVED; Lean `twinW_zero_not_periodic`).**  `twinW`
+  (`AmusicalTwin.lean`: U's cylinder laws, densities and coding, plus a 3-cycle) maps `ℕ` into
+  `ℕ ∖ {0}`, and its only crossing is `−2 ↦ 0`.  `W_{3k,1,2}` has at least `k` infinite orbits.
+* **Silent on `U` (PROVED; Lean `amusical_no_crossing`).**  `U` preserves sign, so it has no
+  crossing.  The agent also shows every residue-computable channel into `K_0 = ℤ[orbits]` is this
+  index, and that traces and KMS states do not see orbits.
+* **Claims under verification (not yet checked by me).**
+  * `ω` has det 1, hence an infinite orbit from `−∞` to `+∞`.  Kohl stated ω's orbit structure
+    without visible proof.
+  * RCWA(ℤ) is the topological full group of the `ax+b` groupoid on `Ẑ`.  With Li's and Matui's
+    theorems (quoted from memory) this would give `RCWA(ℤ)^ab = ℤ/2` and simple kernels, answering
+    Kohl's 2005 thesis questions (§2.13).  Agent: BELIEVED 70%.
+  * `W_{3,1,2}` settles an instance of Lagarias's bibliography #176 (on Venturini 1992).
+

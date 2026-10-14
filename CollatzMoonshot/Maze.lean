@@ -36,6 +36,7 @@ import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalFunctionField
 import CollatzMoonshot.AmusicalTwinDegree
+import CollatzMoonshot.AmusicalCrossing
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -273,7 +274,10 @@ def register : List Hall := [
    "AmusicalTwinDegree.lean; agent report twin2.md §1, §7 (2026-10-13)", "2026-10-14"⟩,
   ⟨"amusical twin: exact-height pigeonhole for an infinite orbit", .costume,
    "Theorem D controls only the cycle minimum; every count needs the closing-word bound",
-   "AmusicalTwinDegree.lean; agent report twin2.md §2, §4 (2026-10-13)", "2026-10-14"⟩]
+   "AmusicalTwinDegree.lean; agent report twin2.md §2, §4 (2026-10-13)", "2026-10-14"⟩,
+  ⟨"amusical: archimedean crossing index (Kohl's det) for infinite orbits", .refuted,
+   "det = net crossings of 0 certifies |det| infinite orbits (twinW has one), but U preserves sign",
+   "AmusicalCrossing.lean; agent report bridge.md §2–§4 (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -410,7 +414,10 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.twin_not_periodic_of_selfSimilar], []⟩,
   ⟨"amusical twin: exact-height pigeonhole for an infinite orbit",
    [``CollatzMoonshot.Amusical.twin_cycleMin_natDegree_le,
-    ``CollatzMoonshot.Amusical.twin_den_natDegree], []⟩]
+    ``CollatzMoonshot.Amusical.twin_den_natDegree], []⟩,
+  ⟨"amusical: archimedean crossing index (Kohl's det) for infinite orbits",
+   [``CollatzMoonshot.Amusical.twinW_zero_not_periodic,
+    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -423,7 +430,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 49 rows, 41 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 50 rows, 42 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
