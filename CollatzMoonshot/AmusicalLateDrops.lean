@@ -88,7 +88,66 @@ theorem infinitelyManyOrbits_of_lateDrops (L : ℕ) {η : ℝ} (hη : 0 < η)
     (h : ∃ᶠ X : ℕ in Filter.atTop,
       (lateDropCount L X : ℝ) ≤ (((fwdSurv L * bwdSurv L : ℚ) : ℝ) - η) * X) :
     AmusicalInfinitelyManyOrbits := by
-  sorry
+  classical
+  let δ : ℝ := ((fwdSurv L * bwdSurv L : ℚ) : ℝ)
+  let W : ℕ → ℕ := fun X =>
+    ((Finset.range X).filter fun n : ℕ => IsWindowMin L n).card
+  let S : ℕ → ℕ := fun X =>
+    ((Finset.range X).filter fun n : ℕ => FwdSurvivor n ∧ BwdSurvivor n).card
+  have hW : ∀ᶠ X : ℕ in Filter.atTop, (δ - η / 2) * X < (W X : ℝ) := by
+    have hevent := (windowMinDensity L).eventually
+      (lt_mem_nhds (sub_lt_self δ (half_pos hη)))
+    filter_upwards [hevent, Filter.eventually_ge_atTop 1] with X hX hX1
+    have hXpos : (0 : ℝ) < X := by exact_mod_cast hX1
+    rw [show W X = ((Finset.range X).filter fun n : ℕ => IsWindowMin L n).card by rfl]
+    rwa [lt_div_iff₀ hXpos] at hX
+  have hfreq : ∃ᶠ X : ℕ in Filter.atTop, (η / 2) * X < (S X : ℝ) := by
+    refine (h.and_eventually hW).mono ?_
+    intro X hX
+    have hcard := card_windowMin_le L X
+    change W X ≤ S X + lateDropCount L X at hcard
+    have hcard' : (W X : ℝ) ≤ S X + lateDropCount L X := by exact_mod_cast hcard
+    dsimp only [δ] at hX
+    nlinarith
+  apply amusicalInfinitelyManyOrbits_of_minima
+  intro hfinite
+  let N := hfinite.toFinset.card
+  have hbound : ∀ X, S X ≤ N := by
+    intro X
+    refine Finset.card_le_card_of_injOn (fun n : ℕ => (n : ℤ)) ?_ ?_
+    · intro n hn
+      simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hn
+      refine hfinite.mem_toFinset.mpr ⟨Int.natCast_nonneg n, ?_⟩
+      intro y hy
+      obtain ⟨j, rfl⟩ := hy
+      cases j with
+      | ofNat t =>
+          change (n : ℤ) ≤ (amusicalPerm ^ (t : ℤ)) n
+          rw [← amusical_iterate_eq_perm_pow]
+          cases t with
+          | zero => simp
+          | succ t => exact hn.2.1 (t + 1) (by omega)
+      | negSucc t =>
+          change (n : ℤ) ≤ (amusicalPerm ^ (Int.negSucc t)) n
+          rw [Int.negSucc_eq, show -((t : ℤ) + 1) = -((t + 1 : ℕ) : ℤ) by norm_num, ←
+            amusicalInv_iterate_eq_perm_pow]
+          exact hn.2.2 (t + 1) (by omega)
+    · intro a _ b _ hab
+      exact Int.ofNat_inj.mp hab
+  have hlarge := hfreq.and_eventually
+    (Filter.eventually_ge_atTop (Nat.ceil (2 * (N : ℝ) / η) + 1))
+  obtain ⟨X, hSX, hX⟩ := hlarge.exists
+  have hNX : (N : ℝ) < η / 2 * X := by
+    have hceil := Nat.le_ceil (2 * (N : ℝ) / η)
+    have hXR : 2 * (N : ℝ) / η < X := by
+      have : ((Nat.ceil (2 * (N : ℝ) / η) + 1 : ℕ) : ℝ) ≤ X := by
+        exact_mod_cast hX
+      push_cast at this
+      linarith
+    rw [div_lt_iff₀ hη] at hXR
+    nlinarith
+  have hSN : (S X : ℝ) ≤ N := by exact_mod_cast hbound X
+  linarith
 
 /-- **Open (the reopen condition for the late-drop wall).**  At some depth `L`, infinitely often,
 late drops fall short of the window-minimum density `f_L b_L` by a fixed margin. -/
@@ -104,16 +163,36 @@ theorem infinitelyManyOrbits_of_lateDropsSparse (h : AmusicalLateDropsSparse) :
 
 /-- **Target (Corollary LD′).**  With finitely many orbits, late drops are dense at every depth.
 Paper proof: the contrapositive of `infinitelyManyOrbits_of_lateDrops`. -/
-theorem lateDrops_dense (hfin : ¬ AmusicalInfinitelyManyOrbits) (L : ℕ) {ε : ℝ} (hε : 0 < ε) :
+theorem lateDrops_dense (hfin : ¬ AmusicalInfinitelyManyOrbits) (L : ℕ) {ε : ℝ}
+    (hε : 0 < ε) :
     ∀ᶠ X : ℕ in Filter.atTop,
       (((fwdSurv L * bwdSurv L : ℚ) : ℝ) - ε) * X ≤ (lateDropCount L X : ℝ) := by
-  sorry
+  by_contra hnot
+  apply hfin
+  apply infinitelyManyOrbits_of_lateDrops L hε
+  have hfreq : ∃ᶠ X : ℕ in Filter.atTop,
+      (lateDropCount L X : ℝ) < (((fwdSurv L * bwdSurv L : ℚ) : ℝ) - ε) * X := by
+    simpa only [Filter.not_eventually, not_le] using hnot
+  exact hfreq.mono fun _ hX => hX.le
 
 /-- **Target (calibration).**  A strict forward survivor has an infinite orbit: a periodic
 point returns to itself, so it is not strictly undercut-free. -/
 theorem amusicalOrbit_infinite_of_strictFwd {n : ℤ}
     (h : ∀ t : ℕ, 1 ≤ t → n < amusical^[t] n) : (amusicalOrbit n).Infinite := by
-  sorry
+  have hinj : Function.Injective (fun t : ℕ => amusical^[t] n) := by
+    intro i j hij
+    wlog hijle : i ≤ j generalizing i j
+    · exact (this hij.symm (Nat.le_of_not_ge hijle)).symm
+    obtain rfl | hijlt := hijle.eq_or_lt
+    · rfl
+    · obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_lt hijlt
+      change amusical^[i] n = amusical^[i + k + 1] n at hij
+      rw [show i + k + 1 = i + (k + 1) by omega, Function.iterate_add_apply] at hij
+      have heq := (amusical_injective.iterate i) hij
+      exact absurd heq (h (k + 1) (by omega)).ne
+  refine (Set.infinite_range_of_injective hinj).mono ?_
+  rintro _ ⟨t, rfl⟩
+  exact ⟨(t : ℤ), (amusical_iterate_eq_perm_pow t n).symm⟩
 
 /-- **Target (tilt duality).**  The backward Chernoff transform at `θ` equals the forward one at
 `1 − θ`, so both directions share the rate `ρ = 0.985597`.  Paper proof:
@@ -121,6 +200,24 @@ theorem amusicalOrbit_infinite_of_strictFwd {n : ℤ}
 theorem walk_mgf_tilt (θ : ℝ) :
     (1 / 3) * (3 / 2 : ℝ) ^ θ + (2 / 3) * (3 / 4 : ℝ) ^ θ =
       (1 / 2) * (2 / 3 : ℝ) ^ (1 - θ) + (1 / 2) * (4 / 3 : ℝ) ^ (1 - θ) := by
-  sorry
+  rw [Real.rpow_sub (by positivity), Real.rpow_sub (by positivity), Real.rpow_one,
+    Real.rpow_one]
+  have h₁ : (2 / 3 : ℝ) ^ θ * (3 / 2 : ℝ) ^ θ = 1 := by
+    rw [← Real.mul_rpow (by positivity) (by positivity)]
+    norm_num
+  have h₂ : (4 / 3 : ℝ) ^ θ * (3 / 4 : ℝ) ^ θ = 1 := by
+    rw [← Real.mul_rpow (by positivity) (by positivity)]
+    norm_num
+  have hp₁ : 0 < (2 / 3 : ℝ) ^ θ := Real.rpow_pos_of_pos (by positivity) _
+  have hp₂ : 0 < (4 / 3 : ℝ) ^ θ := Real.rpow_pos_of_pos (by positivity) _
+  have heq₁ : (1 / 2 : ℝ) * ((2 / 3) / (2 / 3) ^ θ) =
+      (1 / 3) * (3 / 2) ^ θ := by
+    field_simp [ne_of_gt hp₁]
+    nlinarith
+  have heq₂ : (1 / 2 : ℝ) * ((4 / 3) / (4 / 3) ^ θ) =
+      (2 / 3) * (3 / 4) ^ θ := by
+    field_simp [ne_of_gt hp₂]
+    nlinarith
+  rw [heq₁, heq₂]
 
 end CollatzMoonshot.Amusical

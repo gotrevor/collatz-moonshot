@@ -1,5 +1,12 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical late-drops objective COMPLETE:**
+> `CollatzMoonshot/AmusicalLateDrops.lean` is sorry-free with every ratified statement unchanged.
+> Window-minimum density minus late drops now yields infinitely many orbit minima; the density
+> corollary, strict-forward orbit infinitude, and Chernoff tilt identity are fully proved.  The
+> 8725-job scoped build is green, and all four headline axiom ledgers contain exactly `propext`,
+> `Classical.choice`, and `Quot.sound`.  Read `HANDOFF-amusical-latedrops.md`.
+
 > **2026-10-14, amusical ping-pong objective COMPLETE:** `pingPong_seed_inEngine` now proves the
 > full two-counter seed cycle and its concatenation for every forward time, while
 > `infinitelyManyOrbits_of_pingPong` separates the prime-to-3 progression of seeds by their
