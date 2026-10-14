@@ -5,7 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalSurvivorSeparation
-import CollatzMoonshot.AmusicalOddRewire.OddTails
+import CollatzMoonshot.AmusicalOddRewire.Threshold
 
 /-!
 # Rewiring the odd branch: the tail threshold (Theorem TT) and `τ_odd` (T1★)
@@ -31,7 +31,9 @@ most `F(N)` points below `N`, and fuses all chains into one orbit.  `τ` keeps t
 (`fwdSurvivor_three_separation_of` needs only `τ(2m) = 3m`), staircases, P3, and every window
 statistic.  Any proof of (a) must use `U`'s odd branch exactly along entire tails.
 
-Paper proofs: agent report `oddbranch.md` §A (A.5 has a lemma decomposition).
+Paper proofs: agent report `oddbranch.md` §A (A.5 has a lemma decomposition).  Kernel-checked
+2026-10-14: GL is `exists_glue` (`AmusicalOddRewire/Glue.lean`, on the cut-set reconnection
+`IsCutSet.glue`); the odd tails are `exists_late_odd` and `exists_early_odd`.
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -74,7 +76,7 @@ theorem fwdSurvivor_three_separation_of (τ : Equiv.Perm ℤ) (h2 : ∀ m : ℤ,
     · have := hn' (t + 1) (by omega)
       omega
 
-/-- **Target (Theorem TT).**  Every permutation of `ℕ` agreeing with `U` off `S` has infinitely
+/-- **Proved (Theorem TT).**  Every permutation of `ℕ` agreeing with `U` off `S` has infinitely
 many infinite orbits iff infinitely many infinite orbits of `U` have an `S`-free forward tail, or
 infinitely many an `S`-free backward tail. -/
 theorem tail_threshold (S : Set ℤ) :
@@ -84,7 +86,49 @@ theorem tail_threshold (S : Set ℤ) :
         ∀ j : ℕ, amusical^[j] (y : ℤ) ∉ S}.Infinite ∨
       {O : Set ℤ | ∃ y : ℕ, O = amusicalOrbit y ∧ O.Infinite ∧
         ∀ j : ℕ, 1 ≤ j → amusicalInv^[j] (y : ℤ) ∉ S}.Infinite) := by
-  sorry
+  classical
+  constructor
+  · intro H
+    by_contra hAB
+    rw [not_or, Set.not_infinite, Set.not_infinite] at hAB
+    obtain ⟨hA, hB⟩ := hAB
+    obtain ⟨τ, hchg, -, hconn⟩ :=
+      exists_glue amusicalNatPerm {n : ℕ | (n : ℤ) ∈ S} id Filter.tendsto_id
+    have hτ : ∀ n : ℕ, (n : ℤ) ∉ S → (τ n : ℤ) = amusical n := by
+      intro n hn
+      by_contra h
+      exact hn (hchg n fun h' => h (by rw [h', amusicalNatPerm_apply_cast])).1
+    apply H τ hτ
+    have hG : {P : Set ℕ | ∃ x, GluePt amusicalNatPerm {n : ℕ | (n : ℤ) ∈ S} x ∧
+        P = Set.range fun j : ℤ => (τ ^ j) x}.Finite := by
+      apply Set.Subsingleton.finite
+      rintro P ⟨a, ha, rfl⟩ Q ⟨b, hb, rfl⟩
+      obtain ⟨j, hj⟩ := hconn a b ha hb
+      rw [← hj, perm_zpow_range_apply_zpow]
+    refine (hG.union ((hA.union hB).image fun O : Set ℤ => (Nat.cast : ℕ → ℤ) ⁻¹' O)).subset ?_
+    rintro P ⟨x, rfl, hPinf⟩
+    by_cases hx : GluePt amusicalNatPerm {n : ℕ | (n : ℤ) ∈ S} x
+    · exact Or.inl ⟨x, hx, rfl⟩
+    · have hzp := zpow_eq_of_not_gluePt (fun n h => (hchg n h).2) hx
+      have hP : (Set.range fun j : ℤ => (τ ^ j) x) =
+          Set.range fun j : ℤ => (amusicalNatPerm ^ j) x := by simp only [hzp]
+      rw [hP] at hPinf ⊢
+      obtain ⟨y, hyO, hy⟩ := exists_tail_of_not_gluePt hPinf hx
+      have hOinf : (amusicalOrbit (y : ℤ)).Infinite := hyO ▸ (natOrbit_infinite_iff x).1 hPinf
+      refine Or.inr ⟨amusicalOrbit y, ?_, ?_⟩
+      · rcases hy with hy | hy
+        · exact Or.inl ⟨y, rfl, hOinf, hy⟩
+        · exact Or.inr ⟨y, rfl, hOinf, hy⟩
+      · rw [hyO, amusicalOrbit_natCast_eq]
+        exact Set.preimage_image_eq _ Nat.cast_injective
+  · intro hAB τ hτ
+    rcases hAB with hA | hB
+    · refine infinite_tauOrbits_of_rays τ 1 (by norm_num) _ hA ?_
+      rintro O ⟨y, rfl, hinf, hy⟩
+      exact ⟨y, rfl, hinf, fun j => by simpa using tau_pow_nat_eq_of_fwdTail hτ hy j⟩
+    · refine infinite_tauOrbits_of_rays τ (-1) (by norm_num) _ hB ?_
+      rintro O ⟨y, rfl, hinf, hy⟩
+      exact ⟨y, rfl, hinf, fun j => by simpa using tau_pow_neg_eq_of_bwdTail hτ hy j⟩
 
 /-- **Proved (T1★).**  For every `F → ∞` there is a permutation of `ℕ` that agrees with `U` on
 every even number and every finite orbit, changes at most `F N` points below `N`, and fuses all

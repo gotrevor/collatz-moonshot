@@ -135,7 +135,8 @@ theorem glueChanges_infinite {σ : Equiv.Perm ℕ} {S : Set ℕ} (B : ℕ → �
   refine Set.infinite_of_not_bddAbove fun ⟨M, hM⟩ => ?_
   let q := Nat.pair (Nat.pair x (M + 1)) 0
   have hsrc : sparseCutSource q = x := by simp [q, sparseCutSource]
-  have hmem : glueChange σ S B q ∈ glueChanges σ S B := ⟨q, show GluePt σ S (sparseCutSource q) from hsrc ▸ hx, rfl⟩
+  have hmem : glueChange σ S B q ∈ glueChanges σ S B :=
+    ⟨q, show GluePt σ S (sparseCutSource q) from hsrc ▸ hx, rfl⟩
   have h1 := hM hmem
   have h2 := glueChange_ge σ S B q
   have h3 : M + 1 ≤ q := (Nat.right_le_pair _ _).trans (Nat.left_le_pair _ _)
