@@ -45,6 +45,7 @@ import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalNearCycle
 import CollatzMoonshot.AmusicalNearCycleLaw
 import CollatzMoonshot.AmusicalReglue
+import CollatzMoonshot.AmusicalExcursionCode
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -313,7 +314,11 @@ def register : List Hall := [
   ⟨"amusical: arithmetic of basins (2-/3-adic measure, congruences) forces many survivors",
    .siblingTransfer,
    "sparse odd regluing of U keeps the even branch and windows, one orbit, survivors as sparse",
-   "AmusicalReglue.lean; agent report fsarith.md (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalReglue.lean; agent report fsarith.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: T1 integrality (C_w mod Δ_w) as an arithmetic invariant of whole excursions",
+   .costume,
+   "C_w mod Δ is the 2-adic code at the endpoints; integrality along an excursion is U itself",
+   "AmusicalExcursionCode.lean; agent report t1arith.md (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -477,7 +482,10 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩,
   ⟨"amusical: arithmetic of basins (2-/3-adic measure, congruences) forces many survivors",
    [``CollatzMoonshot.Amusical.exists_reglue_sparseFS,
-    ``CollatzMoonshot.Amusical.exists_reglue_sparseFS_amusical], []⟩]
+    ``CollatzMoonshot.Amusical.exists_reglue_sparseFS_amusical], []⟩,
+  ⟨"amusical: T1 integrality (C_w mod Δ_w) as an arithmetic invariant of whole excursions",
+   [``CollatzMoonshot.Amusical.defect_mod_delta,
+    ``CollatzMoonshot.Amusical.eq_amusical_of_forall_branch], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -490,7 +498,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 58 rows, 50 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 59 rows, 51 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
