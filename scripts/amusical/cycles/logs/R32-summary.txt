@@ -1,0 +1,1 @@
+COVERAGE [1,20000000000] contiguous in 800 chunks; R=32; candidates (excl. 1,2,4,44)=19999999996; {'dips': 18993831737, 'runcap': 1006168259, 'found': 0, 'overflow': 0}; steps=3.5816e+11

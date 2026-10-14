@@ -459,3 +459,41 @@ residue-transitive map can have provably infinitely many orbits.  It is still op
   their primes and never divide them back out, so every surviving certificate needs Collatz-type
   control of single orbits.
 
+## 18. No new cycles of length ≤ 31866 (2026-10-13, "cycles" agent, checked)
+
+Lean: `AmusicalCycleBound.lean` (Theorem 1 holds conditional on the search certificate; Theorem A★,
+the reduction, the bound computation and an in-kernel Atkin are targets).  Klamkin (b) and C4
+stay open.
+
+* **Theorem A★.**  A cycle's *minimum* is polynomially bounded by its length:
+  `3^p (3m−1)^k ≤ 2^e (3m)^k ≤ 3^p (3m+1)^k`.  Its elements are not.  This replaces Collatz's
+  "everything small converges" check, which `U` lacks.  I hand-checked it: the cycle product
+  telescopes to `2^e ∏ 3x = 3^p ∏ (3x+d)`.
+* **Theorem 1 (computer).**  Every periodic point of period `≤ 31866` is a known cycle member.
+  Atkin 1966 had `< 200`, so this is 160× further.
+  * The bound gives `m ≤ 167195612`.  I re-derived it exactly (`scripts/amusical/cycles/x0_ren.py`).
+  * Agent search (`cyclemin.c`, lockstep `U`/`V` with meet-in-the-middle at `H = 15933`):
+    0 cycles, 8.3 M survivors, 2.66·10¹¹ steps.
+  * Independent re-run with my own forward-only GMP search (`fwd_ren.c`, a different algorithm),
+    with teeth (finds 44 at period cap 12, misses it at 11): **in progress**.
+  * `defs_teeth.py` checks the Lean definitions literally: `CycleMinSearch 173 6` is clean, and
+    fails at 44 when 44 is not skipped.
+* **Theorem 2 (computer + Rhin 1987 as quoted by Simons 2022).**  Every new cycle has at least 33
+  local minima.
+  * It uses Lemma R (`log₂ m ≥ (2p−e)(θ−1)/(θ^r−1)`, by chaining local minima) and the A′ bound
+    `m ≤ 1 + r/|Λ|`.
+  * Search to `2·10¹⁰`.
+  * Simons 2022 had `m ≤ 2` complete.
+  * Not in Lean: Rhin's bound is not yet a `Literature` Prop.
+* **Structure.**
+  * Cycle minima are `≡ 2, 4 (mod 6)`.
+  * E-frequency `= 2 − θ ± 0.37/(m−1)`.
+  * If `m > 0.57 p²`, then `p` is a multiple of a convergent denominator of `log₂ 3`.  This makes
+    Shanks 1965 precise.
+* **Gates.**
+  * Bounding every element is exponential: only the minimum is polynomial.
+  * "Every element of a long cycle is large" is out of reach, since nothing bounds a cycle's
+    minimum from below except through its run count.  A cycle through 8 of length `10¹⁰⁰` is not
+    excluded.  C4 credence ~3%.
+* **Novelty** (agent, ~85%): the 31866 bound, the minimum-search method, and the `r ≤ 32` theorem.
+

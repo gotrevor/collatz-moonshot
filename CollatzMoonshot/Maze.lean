@@ -31,6 +31,7 @@ import CollatzMoonshot.AmusicalRewireRatio
 import CollatzMoonshot.AmusicalAntiKohl
 import CollatzMoonshot.AmusicalPingPong
 import CollatzMoonshot.AmusicalUniform
+import CollatzMoonshot.AmusicalCycleBound
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -250,7 +251,10 @@ def register : List Hall := [
    "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)", .refuted,
    "transitivity on Ẑ equates an invariant across classes where it is locally constant",
-   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalUniform.lean; agent report uniform.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical: excluding cycles by bounding every cycle element", .refuted,
+   "element bounds grow like 3^p/|2^e−3^p|; only the minimum is polynomial (Theorem A★)",
+   "AmusicalCycleBound.lean; agent report cycles.md (2026-10-13)", "2026-10-13"⟩]
 
 /-! ## 4. The audit -/
 
@@ -369,7 +373,10 @@ def mazeLinks : List Link := [
   ⟨"amusical: residue-local orbit invariants (valuations, digits, 6-free part)",
    [``CollatzMoonshot.Amusical.amusical_invariant_eq_of_locallyConst,
     ``CollatzMoonshot.Amusical.amusical_topologicallyTransitive],
-   [``CollatzMoonshot.Amusical.AmusicalTopologicallyTransitive]⟩]
+   [``CollatzMoonshot.Amusical.AmusicalTopologicallyTransitive]⟩,
+  ⟨"amusical: excluding cycles by bounding every cycle element",
+   [``CollatzMoonshot.Amusical.amusical_cycle_min_bound,
+    ``CollatzMoonshot.Amusical.amusical_noNewCycles_31866], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -382,7 +389,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 43 rows, 35 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 44 rows, 36 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
