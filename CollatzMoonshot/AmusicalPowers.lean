@@ -8,26 +8,26 @@ import CollatzMoonshot.AmusicalStaircase
 /-!
 # Powers of `3`: staircases in one window separate orbits (Theorem P3)
 
-The 2026-10-14 "lfsep" agent's Theorem P3 and Corollary P3′ (research §30).  Fix `y > 0` prime to
-`6` and put `X = 2^L y`.  For `s < L` the orbit of `3^s y` contains the ratio-`3/2` staircase
+The 2026-10-14 "lfsep" agent's Theorem P3 and Corollary P3′ (research §30).  Fix `y > 0` and put
+`X = 2^L y`.  For `s < L` the orbit of `3^s y` contains the ratio-`3/2` staircase
 `2^(s−b) 3^b y`, `0 ≤ b ≤ s` (`amusical_iterate_staircase`).  Its lowest point divisible by `3`
 (`b = 1`) is `3 · 2^(s−1) y ≤ 3X/4`.  If the whole forward orbit of `3^s y` stays at or above
 `3X/2`, the staircase has a point `n_s ∈ 3ℤ ∩ [X, 3X/2)`, which is a forward survivor by Lemma St
 (`staircase_fwdSurvivor`).
 
 **`powers_orbit_ne` (P3).**  Two such `s ≠ s'` lie on distinct orbits: `n_s ≠ n_s'` by unique
-factorization (`y` prime to `6`), and Sep3 (`fwdSurvivor_three_not_mem_orbit`) separates forward
-survivors divisible by `3` in one window.  Each such orbit is infinite
-(`powers_not_periodic`, from `fwdSurvivor_three_not_periodic`).
+factorization (`y` cancels, so it need not be prime to `6`), and Sep3
+(`fwdSurvivor_three_not_mem_orbit`) separates forward survivors divisible by `3` in one window.
+Each such orbit is infinite (`powers_not_periodic`, from `fwdSurvivor_three_not_periodic`).
 
 **`infinitelyManyOrbits_of_powers` (P3, counting form).**  If for every `r` some `L` has more than
 `r` such exponents, `U` has infinitely many orbits on `ℕ`.
 
 **`infinitelyManyOrbits_of_powers_log` (P3′).**  With `η = 1/k`: if the exponents `s ≤ S` whose
 orbit never returns below `3 · 2^(s + s/k + 1) y / 2` are not `O(log S)`, `U` has infinitely many
-orbits.  Paper proof: cover `[1, S]` by `O(k log S)` blocks `[L_j, L_{j+1})` with
-`L_{j+1} = L_j + L_j / (k + 1) + 1`; every exponent of a block is admissible for `L = L_{j+1}`, so
-each block holds at most `r` of them.
+orbits.  Proof: split each dyadic range `[2^m, 2^(m+1))` into `k` arithmetic blocks of length
+`2^m / k + 1`; every exponent of a block is admissible for the block's right end, so each block
+holds at most `r` of them, and `C = r · k` suffices.
 
 This is a reduction, not progress on the count: one admissible `s` already exhibits an infinite
 orbit, which is Conway's open question (§30).  Measured for `y = 1`, `s ≤ 3000`, `η = 0.01`: only
@@ -41,7 +41,7 @@ namespace CollatzMoonshot.Amusical
 def PowerAdmissible (y : ℤ) (L s : ℕ) : Prop :=
   s < L ∧ ∀ t : ℕ, 3 * (2 ^ L * y) ≤ 2 * amusical^[t] (3 ^ s * y)
 
-/-- **Target.**  An admissible staircase has a point divisible by `3` in `[2^L y, 3 · 2^L y / 2)`
+/-- **Proved.**  An admissible staircase has a point divisible by `3` in `[2^L y, 3 · 2^L y / 2)`
 (`1 ≤ b ≤ s`; such a point is a forward survivor by `staircase_fwdSurvivor`). -/
 theorem powerAdmissible_window_point {y : ℤ} (hy : 0 < y) {L s : ℕ}
     (h : PowerAdmissible y L s) :
@@ -115,9 +115,9 @@ theorem powerAdmissible_survivor {y : ℤ} (hy : 0 < y) {L s : ℕ} (h : PowerAd
 theorem amusical_iterate_mem_amusicalOrbit (t : ℕ) (x : ℤ) : amusical^[t] x ∈ amusicalOrbit x :=
   ⟨t, amusicalPerm_pow_nat_apply t x⟩
 
-/-- **Proved (P3, general form).**  Distinct admissible exponents give distinct orbits; `y` need
-not be prime to `6`, since it cancels before unique factorization is used. -/
-theorem powers_orbit_ne_of_pos {y : ℤ} (hy : 0 < y) {L s s' : ℕ}
+/-- **Proved (P3).**  Distinct admissible exponents give distinct orbits.  `y` cancels before
+unique factorization is used, so it need not be prime to `6`. -/
+theorem powers_orbit_ne {y : ℤ} (hy : 0 < y) {L s s' : ℕ}
     (hs : PowerAdmissible y L s) (hs' : PowerAdmissible y L s') (hne : s ≠ s') :
     3 ^ s' * y ∉ amusicalOrbit (3 ^ s * y) := by
   intro hmem
@@ -144,13 +144,7 @@ theorem powers_orbit_ne_of_pos {y : ℤ} (hy : 0 < y) {L s s' : ℕ}
   · exact fwdSurvivor_three_not_mem_orbit hfs' hfs hlo' hlt hhi h3
       (hsame.symm ▸ mem_amusicalOrbit_self n)
 
-/-- **Target (P3).**  Distinct admissible exponents give distinct orbits. -/
-theorem powers_orbit_ne {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y) {L s s' : ℕ}
-    (hs : PowerAdmissible y L s) (hs' : PowerAdmissible y L s') (hne : s ≠ s') :
-    3 ^ s' * y ∉ amusicalOrbit (3 ^ s * y) :=
-  powers_orbit_ne_of_pos hy hs hs' hne
-
-/-- **Target.**  An admissible power lies on an infinite orbit. -/
+/-- **Proved.**  An admissible power lies on an infinite orbit. -/
 theorem powers_not_periodic {y : ℤ} (hy : 0 < y) {L s : ℕ} (hs : PowerAdmissible y L s) :
     3 ^ s * y ∉ Function.periodicPts amusical := by
   rintro ⟨p, hp, hper⟩
@@ -181,14 +175,14 @@ theorem card_le_of_powerAdmissible {y : ℤ} (hy : 0 < y)
     intro s hs s' hs' heq
     by_contra hne
     have heq' : amusicalOrbit (3 ^ s * y) = amusicalOrbit (3 ^ s' * y) := heq
-    refine powers_orbit_ne_of_pos hy (hT s hs) (hT s' hs') hne ?_
+    refine powers_orbit_ne hy (hT s hs) (hT s' hs') hne ?_
     rw [heq']
     exact mem_amusicalOrbit_self _
   exact Finset.card_le_card_of_injOn _ hmaps hinj
 
-/-- **Target (P3, counting form).**  Unboundedly many admissible exponents for single windows
+/-- **Proved (P3, counting form).**  Unboundedly many admissible exponents for single windows
 imply Klamkin (a). -/
-theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y) (hy3 : ¬ 3 ∣ y)
+theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y)
     (h : ∀ r : ℕ, ∃ L : ℕ, ∃ T : Finset ℕ, r < T.card ∧ ∀ s ∈ T, PowerAdmissible y L s) :
     AmusicalInfinitelyManyOrbits := by
   intro hfin
@@ -196,10 +190,9 @@ theorem infinitelyManyOrbits_of_powers {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y)
   have := card_le_of_powerAdmissible hy hfin hT
   omega
 
-/-- **Target (P3′).**  With `η = 1/k`: if the exponents `s ≤ S` whose orbit stays at or above
+/-- **Proved (P3′).**  With `η = 1/k`: if the exponents `s ≤ S` whose orbit stays at or above
 `3 · 2^(s + s/k + 1) y / 2` are not `O(log S)`, `U` has infinitely many orbits on `ℕ`. -/
-theorem infinitelyManyOrbits_of_powers_log {y : ℤ} (hy : 0 < y) (hy2 : ¬ 2 ∣ y)
-    (hy3 : ¬ 3 ∣ y) (k : ℕ) (hk : 0 < k)
+theorem infinitelyManyOrbits_of_powers_log {y : ℤ} (hy : 0 < y) (k : ℕ) (hk : 0 < k)
     (h : ∀ C : ℕ, ∃ S : ℕ, ∃ T : Finset ℕ, C * (Nat.log 2 S + 1) < T.card ∧
       ∀ s ∈ T, s ≤ S ∧ PowerAdmissible y (s + s / k + 1) s) :
     AmusicalInfinitelyManyOrbits := by
