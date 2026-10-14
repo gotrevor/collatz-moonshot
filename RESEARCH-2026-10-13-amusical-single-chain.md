@@ -839,3 +839,30 @@ moves Klamkin (a): under 1%.
   no coset of `(ℤ/Q)^×/⟨2,3⟩` carries flux at `c = 0`.  Checked on 3850 pieces and every coset for
   `Q ≤ 400`.  Lemma P: every periodic invariant piece has period prime to 6.
 
+## 30. Staircases: the `×2` multiplier, and why the survivor count is no easier than one (2026-10-14, "lfsep" Opus agent, checked in part)
+
+Lean: `AmusicalStaircase.lean` (Lemma St), proved and axiom-clean (Ren's proof).  Agent odds that this
+settles (a): about 2%.
+
+* **The correction.**  §26 reduced (a) to "`FS ∩ 3ℤ` is not `O(log X)`".  That bar is not low: a
+  single positive forward survivor divisible by 3 already lies on an infinite orbit
+  (`fwdSurvivor_three_not_periodic`), which is Conway's open question.  The weakness of the count is
+  illusory.
+* **Lemma St (PROVED; Lean `staircase_fwdSurvivor`).**  `U(2y) = 3y`, so `3ˢy`'s orbit contains the
+  staircase `2^(s−b) 3^b y`.  A staircase point at or below the top's whole forward orbit is a forward
+  survivor.
+* **Theorem P3, Corollary P3′ (PROVED by the agent; P3 follows from Lemma St and Sep3).**  With
+  `X = 2^L y`, the orbits of `3ˢy` (`s < L`) with forward minimum `≥ 3X/2` are pairwise distinct
+  and infinite.  If `U` had `r` infinite orbits, all but `O(r log S)` of `s ≤ S` would fall back: the
+  orbit of `2ˢ` would return below `3 · 2^((1+η)s)` after climbing to `3ˢ`.
+  * Measured (`s ≤ 3000`, `η = 0.01`): only `s = 4, 5, 6, 7, 10` fall back.  Under Haar balance `1/slope`
+    is a martingale, so a drop by a factor `λ` has probability `≤ (4/3)/λ` (Doob).  Measured
+    `λ · P(D ≥ λ)` lies in `0.87–1.22`.
+* **Exact count (PROVED, checked for `X = 2⁶ … 2¹⁸`).**  The number of infinite orbits with minimum
+  below `1.5X` equals the number of crossing rungs in `[X, 1.5X)`, bracketed by `FS ∩ 3ℤ ≤ orbits ≤ FS`
+  per window.
+* **Gates.**  `uᵏx` families with `u` prime to 6 never feed Sep3; they act only through formal minima
+  (Conjecture LF, §28).  **Twin `τ_odd` (PROVED ~90%, with a demo):** it agrees with `U` on every even
+  number, has `U`'s statistics, satisfies Sep3 verbatim, and has one orbit.  Under it the powers of 3
+  fall back almost always.  So any proof must use `U`'s odd branch at infinitely many high points.
+
