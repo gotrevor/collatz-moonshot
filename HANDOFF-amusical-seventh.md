@@ -1,5 +1,47 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: explicit Lemma W closed
+
+### Concrete advance
+
+- Proved `isWindowMin_iff_words_of_ge` in `CollatzMoonshot/AmusicalSeventh/Sparse.lean`.
+  For every `n ≥ 2 · 324^L`, the condition `IsWindowMin L n` is exactly the conjunction of
+  `FwdGood` and `BwdGood` on its two branch words.  Since those words depend respectively on
+  `n mod 4^L` and `n mod 3^L`, this is the requested Lemma W residue characterization modulo
+  `12^L`.
+- The proof writes `n = c + 12^L q`, uses the previous lap's bound that all length-`L`
+  iterates of `c` are below `24^L`, and proves `24^L < q` from the ratified threshold via
+  `12^L (24^L + 1) ≤ 2 · 324^L`.  The exact affine formulas and slope inequalities from
+  `AmusicalWindow.lean` then decide every forward and backward comparison.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `lake build CollatzMoonshot.AmusicalSeventh.Sparse` (8712 jobs, green).
+- `lake build CollatzMoonshot.AmusicalSeventh` (green; only the expected original
+  `sparse_sweep` sorry warning).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh` (`FORMALIZE-TIER GREEN`; exactly the original
+  `sparse_sweep` proof debt).
+- `git diff --check` and the 100-character Lean line check (clean).
+
+### Current blocker
+
+There is no external blocker.  Lemma W is complete.  The route-decisive missing result is now
+Lemma T: a uniform finite count on residues modulo `12^L` showing that the minimizing offset of
+an `L`-window lies outside `[-K,K]` for at most a geometric `O(ρ^K)` share of residues.  Existing
+`FwdGood`/`BwdGood` weighted word counts provide the finite probability space, but the offset-tail
+event and its Chernoff estimate have not yet been packaged in Lean.
+
+### Next highest-value attack
+
+Define the least minimizing offset in the finite window and express the one-sided events
+`U^i n < n` and `U⁻ᵢ n < n`, using `isWindowMin_iff_words_of_ge` after shifting to the chosen
+minimum.  Prove the finite weighted Chernoff bounds over forward and backward branch words, then
+combine them into the `2 ∑_{i>K} ρ^i` residue count.  This supplies the exceptional-set term
+needed to combine with `windowMin_card_mul_le` and finish `sparse_sweep`.
+
 ## 2026-10-13 lap: explicit window-representative growth bound
 
 ### Concrete advance
