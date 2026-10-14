@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical anti-Kohl Theorem T bridge:** `exists_orbit_exception` now
+> kernel-checks the exact finite-error cover: outside at most `2n+1` explicit points, each orbit
+> lies in the forward `n`-core or the `n`-step never-entering set.  Five target sorries remain;
+> the next step is finite-seed cardinality and density bookkeeping.  Read
+> `HANDOFF-amusical-antikohl.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;

@@ -246,6 +246,64 @@ theorem cone_orbit_trichotomy (σ : Equiv.Perm ℤ) (S : Set ℤ)
       exact ⟨k, Classical.not_not.mp hk⟩
     · exact not_forall.mp hall
 
+/-- Away from at most `2n + 1` consecutive coordinates, one orbit is covered by the forward
+`n`-core of a cone and its `n`-step never-entering set. -/
+theorem exists_orbit_exception (σ : Equiv.Perm ℤ) (S : Set ℤ)
+    (hS : ∀ x ∈ S, σ x ∈ S) (x : ℤ) (n : ℕ) :
+    ∃ E : Finset ℤ, E.card ≤ 2 * n + 1 ∧
+      permOrbit σ x ⊆ ((σ ^ n) '' S) ∪ {y | ∀ j ≤ n, (σ ^ j) y ∉ S} ∪ (E : Set ℤ) := by
+  classical
+  rcases cone_orbit_trichotomy σ S hS x with hall | hnone | ⟨t, ht, htprev⟩
+  · refine ⟨∅, by simp, ?_⟩
+    rintro y ⟨k, rfl⟩
+    apply Or.inl
+    apply Or.inl
+    refine ⟨(σ ^ (k - n)) x, hall _, ?_⟩
+    rw [← Equiv.Perm.mul_apply, ← zpow_natCast, ← zpow_add,
+      show (n : ℤ) + (k - n) = k by omega]
+  · refine ⟨∅, by simp, ?_⟩
+    rintro y ⟨k, rfl⟩
+    apply Or.inl
+    apply Or.inr
+    intro j hj
+    rw [← Equiv.Perm.mul_apply, ← zpow_natCast, ← zpow_add]
+    exact hnone _
+  · let E : Finset ℤ :=
+      (Finset.range (2 * n + 1)).image fun i : ℕ => (σ ^ (t - n + i)) x
+    refine ⟨E, ?_, ?_⟩
+    · calc
+        E.card ≤ (Finset.range (2 * n + 1)).card := by
+          exact Finset.card_image_le
+        _ = 2 * n + 1 := Finset.card_range _
+    · rintro y ⟨k, rfl⟩
+      by_cases hlo : k < t - n
+      · apply Or.inl
+        apply Or.inr
+        intro j hj hmem
+        apply htprev
+        apply cone_mem_zpow_mono σ S hS (a := k + j) (b := t - 1) (by omega)
+        have hmem' : (σ ^ ((j : ℤ) + k)) x ∈ S := by
+          rw [zpow_add, Equiv.Perm.mul_apply, zpow_natCast]
+          exact hmem
+        simpa [add_comm] using hmem'
+      by_cases hhi : t + n ≤ k
+      · apply Or.inl
+        apply Or.inl
+        refine ⟨(σ ^ (k - n)) x, cone_mem_zpow_mono σ S hS (a := t)
+          (b := k - n) (by omega) ht, ?_⟩
+        rw [← Equiv.Perm.mul_apply, ← zpow_natCast, ← zpow_add,
+          show (n : ℤ) + (k - n) = k by omega]
+      · apply Or.inr
+        have hi0 : 0 ≤ k - (t - n) := by omega
+        have hilt : k - (t - n) < 2 * n + 1 := by omega
+        have hi : (k - (t - n)).toNat < 2 * n + 1 := by omega
+        change (σ ^ k) x ∈ E
+        rw [Finset.mem_image]
+        refine ⟨(k - (t - n)).toNat, Finset.mem_range.mpr hi, ?_⟩
+        rw [Int.toNat_of_nonneg hi0]
+        congr 2
+        omega
+
 /-- **Target (Theorem T).**  A cone `S` (`σ S ⊆ S`) whose forward cores `σⁿ S` and never-entering
 sets `{x : σʲ x ∉ S, j ≤ n}` both have density tending to `0` makes every finite union of orbits
 density `0`.  Paper proof: an orbit is inside `S`, inside the complement, or a backward ray in the

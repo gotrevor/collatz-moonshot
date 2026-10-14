@@ -1,5 +1,41 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: finite-exception bridge for Theorem T proved
+
+The missing geometric step after the orbit trichotomy is now kernel-checked as
+`exists_orbit_exception`.  For every seed `x` and depth `n`, it constructs an explicit finite set
+`E` of at most `2n + 1` orbit points such that the full two-sided orbit is contained in the union
+of the forward core `(σ ^ n) '' S`, the `n`-step never-entering set, and `E`.
+
+In the transition case, `E` is the image of the coordinate interval
+`[t-n, t+n]`.  Coordinates below it remain outside `S` for the next `n` iterates, by contraposing
+cone monotonicity against the last false coordinate `t-1`; coordinates above it are images under
+`σ^n` of cone points.  The wholly-inside and wholly-outside cases have empty exceptions.  This is
+the load-bearing set inclusion promised by the previous handoff; no new axiom, decision
+certificate, or target statement change was introduced.
+
+Verification run:
+
+```text
+lake env lean -j1 CollatzMoonshot/AmusicalAntiKohl.lean
+git diff --check
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-antikohl \
+  --target CollatzMoonshot.AmusicalAntiKohl
+```
+
+The direct check succeeds with exactly the five pre-existing target sorry warnings.  The real
+target gate is FORMALIZE-tier green (8710 jobs).
+
+Current blocker: no external blocker.  Five ratified target sorries remain.  For Theorem T, only
+the finite-union cardinality and epsilon/Tendsto bookkeeping remains after the proved cover.
+
+Next highest-value attack: for a finite seed set `F`, union the exception sets from
+`exists_orbit_exception` and bound their cardinality by `F.card * (2*n+1)`.  Filter the resulting
+set inclusion by `Icc (-X) X`, use the two `IntDensityLE` bounds with epsilon split in half, and
+absorb the fixed exception cardinality for large `X`.  This should close
+`orbit_densityZero_of_transientCone`, after which prove the positive density of a residue-class
+tail to close `infinitelyManyOrbits_of_transientCone`.
+
 ## 2026-10-14: Theorem T orbit trichotomy isolated
 
 The order-theoretic crux of `orbit_densityZero_of_transientCone` is now explicit in three proved
