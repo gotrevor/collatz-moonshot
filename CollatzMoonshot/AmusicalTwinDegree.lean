@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFunctionField
-import CollatzMoonshot.AmusicalTwinDegree.Corollaries
+import CollatzMoonshot.AmusicalTwinDegree.Frobenius
 
 /-!
 # The `𝔽₂[t]` twin: cycle minima are graded by the 2-adic valuation of the period
@@ -95,8 +95,8 @@ theorem twin_period_lower_bound (x : (ZMod 2)[X]) (hx : x ∈ Function.periodicP
 proof: `n = t m` gives `n² = t² m² ↦ Q t m² ↦ Q² m²`; `n = 1 + t² m` gives
 `n² = 1 + t⁴ m² ↦ Q t² m² + 1 ↦ Q² m² + 1`. -/
 theorem twinU_twinU_sq (n : (ZMod 2)[X]) (h : n.coeff 0 = 0 ∨ n.coeff 1 = 0) :
-    twinU (twinU (n ^ 2)) = twinU n ^ 2 := by
-  sorry
+    twinU (twinU (n ^ 2)) = twinU n ^ 2 :=
+  TwinDeg.twinU_twinU_sq n h
 
 /-- **Target (no class-wise Frobenius repair).**  No constants `κ_E, κ_A, κ_B, κ_C` make
 `n ↦ n² + κ_{cls n}` a semiconjugacy from `U` to `U²`.  Paper proof: `n = 0` and `n = 1` force
@@ -118,7 +118,7 @@ kills the simplest form); the statement records the shape for a future intertwin
 theorem twin_not_periodic_of_selfSimilar (C : Finset (ZMod 2)[X])
     (hC : ∀ z, ∀ c ∈ C, ∃ k, 1 ≤ k ∧ ∃ c' ∈ C, twinU^[k] (z ^ 2 + c) = twinU z ^ 2 + c')
     (z : (ZMod 2)[X]) (hdeg : ∀ c ∈ C, c.natDegree < z.natDegree)
-    (hz : ∃ c ∈ C, ∃ a, twinU^[a] z = z ^ 2 + c) : z ∉ Function.periodicPts twinU := by
-  sorry
+    (hz : ∃ c ∈ C, ∃ a, twinU^[a] z = z ^ 2 + c) : z ∉ Function.periodicPts twinU :=
+  TwinDeg.not_periodic_of_selfSimilar C hC z hdeg hz
 
 end CollatzMoonshot.Amusical
