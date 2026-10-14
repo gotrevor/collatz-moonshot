@@ -1,5 +1,41 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: finite descent union bound proved
+
+### Concrete advance
+
+- Added the generic finite-event union estimate `count_exists_mem_le_sum` in
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`.
+- Proved `count_descent_between_le`: the count below `X` of centers admitting a forward or
+  backward strict descent at some time `K < i ≤ L` is at most
+  `Σ i ∈ Icc (K+1) L, (2(99/100)^i X + 4^i + 3^i + 4·324^i)`.
+- This packages the one-time Chernoff estimates from the previous lap into the exact finite union
+  needed after `centered_minimizer_outside_implies_descent`.  No ratified statement changed, and
+  no axiom, `native_decide`, or new `sorry` was introduced.  The original `sparse_sweep` sorry
+  remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms CollatzMoonshot.Amusical.count_descent_between_le`
+  (`FORMALIZE-TIER GREEN`; axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- `git diff --check` and the 100-character changed-Lean-line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The probabilistic exceptional set is now one explicit finite sum.
+It remains to bound its geometric main term by `200 * (99/100)^(K+1) * X` and its additive term
+by a constant times `324^(L+1)`, then combine it with the centered-minimizer bridge and packed
+window minima.
+
+### Next highest-value attack
+
+Prove the two elementary geometric-sum bounds for `count_descent_between_le`.  Then define a
+choice of fixed `K` from `η` and logarithmic `L = ⌊log X / (2 log 324)⌋`; the additive error is
+`o(X)` while `L-K → ∞`.  Use `isWindowMin_sub_of_centered_minimizer` and
+`windowMin_card_mul_le` to finish the time-window count in `sparse_sweep`.
+
 ## 2026-10-14 lap: finite-interval descent bounds proved
 
 ### Concrete advance

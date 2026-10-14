@@ -651,6 +651,59 @@ theorem count_inv_iterate_lt_le (L X : ℕ) (hL : 1 ≤ L) :
     exact_mod_cast hc
   linarith
 
+/-- A finite union of events in an initial interval has size at most the sum of their sizes. -/
+theorem count_exists_mem_le_sum {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (P : ι → ℕ → Prop) [∀ i, DecidablePred (P i)] (X : ℕ) :
+    Nat.count (fun n => ∃ i : ↥s, P i n) X ≤ ∑ i ∈ s, Nat.count (P i) X := by
+  classical
+  rw [Nat.count_eq_card_filter_range]
+  let A : ι → Finset ℕ := fun i => (Finset.range X).filter (P i)
+  have hsub : (Finset.range X).filter (fun n => ∃ i : ↥s, P i n) ⊆ s.biUnion A := by
+    intro n hn
+    simp only [Finset.mem_filter, Finset.mem_range] at hn
+    rcases hn.2 with ⟨i, hPin⟩
+    exact Finset.mem_biUnion.mpr
+      ⟨i, i.property, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hn.1, hPin⟩⟩
+  calc
+    ((Finset.range X).filter (fun n => ∃ i : ↥s, P i n)).card ≤ (s.biUnion A).card :=
+      Finset.card_le_card hsub
+    _ ≤ ∑ i ∈ s, (A i).card := Finset.card_biUnion_le
+    _ = ∑ i ∈ s, Nat.count (P i) X := by
+      apply Finset.sum_congr rfl
+      intro i _
+      exact (Nat.count_eq_card_filter_range (p := P i) (n := X)).symm
+
+/-- Union bound for a forward or backward descent at some time `K < i ≤ L`. -/
+theorem count_descent_between_le (K L X : ℕ) :
+    (Nat.count (fun n : ℕ => ∃ i : ↥(Finset.Icc (K + 1) L),
+      (amusical^[i] (n : ℤ) < n ∨ amusicalInv^[i] (n : ℤ) < n)) X : ℝ) ≤
+      ∑ i ∈ Finset.Icc (K + 1) L,
+        (2 * ((99 : ℝ) / 100) ^ i * X + 4 ^ i + 3 ^ i + 4 * 324 ^ i) := by
+  let P : ℕ → ℕ → Prop := fun i n =>
+    amusical^[i] (n : ℤ) < n ∨ amusicalInv^[i] (n : ℤ) < n
+  have hu := count_exists_mem_le_sum (Finset.Icc (K + 1) L) P X
+  have huR : (Nat.count (fun n : ℕ => ∃ i : ↥(Finset.Icc (K + 1) L), P i n) X : ℝ) ≤
+      ∑ i ∈ Finset.Icc (K + 1) L, (Nat.count (P i) X : ℝ) := by
+    exact_mod_cast hu
+  refine huR.trans (Finset.sum_le_sum fun i hi => ?_)
+  have hi1 : 1 ≤ i := by
+    have := (Finset.mem_Icc.mp hi).1
+    omega
+  have hf := count_iterate_lt_le i X hi1
+  have hb := count_inv_iterate_lt_le i X hi1
+  have hor := count_exists_mem_le_sum ({true, false} : Finset Bool)
+    (fun b n => if b then amusical^[i] (n : ℤ) < n else amusicalInv^[i] (n : ℤ) < n) X
+  have hor' : Nat.count (P i) X ≤
+      Nat.count (fun n : ℕ => amusical^[i] (n : ℤ) < n) X +
+        Nat.count (fun n : ℕ => amusicalInv^[i] (n : ℤ) < n) X := by
+    simpa [P, or_comm, add_comm] using hor
+  have horR : (Nat.count (P i) X : ℝ) ≤
+      Nat.count (fun n : ℕ => amusical^[i] (n : ℤ) < n) X +
+        Nat.count (fun n : ℕ => amusicalInv^[i] (n : ℤ) < n) X := by
+    exact_mod_cast hor'
+  norm_num [Nat.cast_add, Nat.cast_pow] at hf hb ⊢
+  linarith
+
 /-- Every finite centered orbit window has a minimizing offset.  This is the deterministic
 selection underlying the exceptional-offset count in Lemma T. -/
 theorem exists_centered_window_minimizer (L : ℕ) (n : ℤ) :
