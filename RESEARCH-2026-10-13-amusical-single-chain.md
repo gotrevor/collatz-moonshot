@@ -788,3 +788,31 @@ Klamkin (a): under 1%.
   are Dirichlet-sized (`|Λ| ≲ 1/J` at lag `≤ J`).  Every irrational satisfies these, so no lower
   bound for linear forms in `log 2, log 3` can contradict them.
 
+## 28. Multiplicative symmetry reduces to 2-adic irrationality (2026-10-14, "ringunit" Opus agent, checked in part)
+
+Lean: `AmusicalUnit.lean`, proved and axiom-clean, plus the wall's reopen condition
+`AmusicalSharedSkeleton`.  Agent credence that this route proves Klamkin (a): under 1%.
+
+* **Proposition T (PROVED by the agent).**  A map commuting with `U` along a forward orbit tail and
+  asymptotically `×u` (`u ∉ ±2^ℤ3^ℤ`) moves that orbit to a different one.  Transport is free.
+  * Such a map exists iff two integers share an infinite parity skeleton.  That happens iff an
+    infinite, co-infinite sub-series of `x = −Σ χ₄(Uʲx) 2^{nⱼ}/3^{j+1}` sums to an integer.
+    (Negation `z = −y` is the full series.)  Believed to have no solutions (~95%).
+  * Search: no pair `y < z ≤ 2·10⁵` shares more than 34 skeleton steps (random model about 1.2 at
+    34).  Teeth: a cross-layer search finds the allowed U-cycle / U_q-cycle matches, e.g.
+    `q = 13 = 2⁸ − 3⁵` with the 5-cycle.
+* **Theorem A (PROVED).**  An affine map `vy + e`, `v ∉ {0, ±1}`, commutes with `U` on at most one
+  branch class.  New example (Lean `amusical_three_mul_sub_four`): `3y − 4` on `1 + 4ℤ`.
+* **Proposition N (exact; Lean `two_mul_not_orbit_map` for `u = 2`).**  `×u` fails to map orbits to
+  orbits for 12 tested `u`.  For `u = 2`: `22` and `29 = U⁻¹ 22` share an orbit, but `44` (12-cycle)
+  and `58` do not.  For `u = 13` the same failure would already give a seventh orbit.
+* **Theorem D (PROVED).**  "Every orbit meets the defect set finitely often" is circular: an infinite
+  defect set already proves (a).  The forward-only version is the §17 wall.
+* **Theorem U (PROVED).**  A `×u`-closed set of integers has closure with interior in `ℤ₂ × ℤ₃`, so
+  formal minima are never multiplicatively closed.  Conjecture LF (implies (a)): `uᵏ x` hits formal
+  minima at a ball's Haar rate.  Numerics beyond the residue horizon match within about 1σ in 8
+  families (e.g. `5ᵏ · 8`: 0.245 vs 0.226).
+* **Theorem A★_u, twisted cycles (PROVED, Baker as a literature Prop).**  If `Uᵗ x = u x`, the
+  segment minimum is polynomial in `t`.  857 such returns for `x ≤ 2·10⁴`, `t ≤ 400`, with 0 bound
+  violations.  The most frequent multiplier is `u = 79 ≈ 3³³/2⁴⁶`.
+
