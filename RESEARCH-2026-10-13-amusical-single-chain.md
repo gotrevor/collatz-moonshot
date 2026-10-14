@@ -353,7 +353,8 @@ at most `K` times (Klamkin (a) ⇔ one exists).
   forward orbit revisits the class `K + 1` times.
 * **Survival (Proposition S).**  Survivor lower densities with `a + b > f_L + b_L − f_L b_L`
   (`≈ 0.397` in the limit) give Klamkin (a).  Survival is an infinite-horizon statistic, and
-  rewiring changes it (FS density `0.213` for `U`, `0.056` for `τ`).  So it is the right
+  rewiring changes it (FS density `0.213` for `U`, `0.056` for `τ` at `N = 1500`; asymptotically
+  `FS_τ` is exactly `U`'s orbit minima, density `≈ c`, §31).  So it is the right
   statistic, but proving it means showing late drops are rare: the typicality wall.
 * **Commuting maps.**  An orbit-moving map commuting with `U` would separate orbits, and Theorem
   C's law obstruction does not apply (both Bernoulli laws can be preserved).
@@ -743,7 +744,7 @@ Lean: `AmusicalSurvivorSeparation.lean`, proved and axiom-clean (Ren's proofs). 
   unboundedly many of them, i.e. `FS ∩ 3ℤ` is not `O(log X)`, Klamkin (a) holds.  Under finitely
   many orbits every multiple of 3 that survives a fixed window is a late dropper, except
   `O(log X)` of them.
-* **Ceiling C1 (PROVED by the agent; not yet re-derived by me).**  One orbit, or finitely many,
+* **Ceiling C1 (PROVED by the agent; re-derived unconditionally in §31).**  One orbit, or finitely many,
   with the lattice's window statistics has `FS ∪ BS` of upper density `≤ δ_L` for every `L`, hence
   `≤ c`.  The mechanism: a forward survivor whose backward window first drops at time `g` has
   `Vᵍ n` as the next lower survivor of its orbit, and Lemma K forces a height gap `≥ m'/4ᵍ − 1`.
@@ -867,3 +868,43 @@ settles (a): about 2%.
   number, has `U`'s statistics, satisfies Sep3 verbatim, and has one orbit.  Under it the powers of 3
   fall back almost always.  So any proof must use `U`'s odd branch at infinitely many high points.
 
+
+## 31. The survivor ceiling is unconditional, and `τ` sits on it (2026-10-14, "c1verify" Opus agent, checked)
+
+Lean: `AmusicalSurvivorCeiling.lean` (C2, C2′ and the backward mirror; treadmill).  An adversarial
+re-derivation of §26's ceiling.  I checked P′, the gap step and the count by hand.
+
+* **C2′ is unconditional (PROVED).**  `d_upper(FS) > c` implies Klamkin (a), with no statistical
+  hypothesis on the hypothetical orbits.  Finitely many orbits partition `ℕ`, so their joint window
+  statistics are `ℕ`'s, which are proved (`windowMinDensity`, `windowDensityLimit`).  The only
+  `U`-specific input is Lemma K.  Any `L` works: `d_upper(FS) > δ₃ = 1/6` already gives (a).
+* **Value-form proof.**  This version is shorter than §26's, with no time indices, no non-periodicity
+  and no dyadic sums.
+  * **P′.**  If `n' < n` are forward survivors on one orbit and `g` is `n`'s first backward drop,
+    then `n' ≤ Vᵍ n`.  The `g = 1`, `3 ∣ n` case is `fwdSurvivor_three_separation`.
+  * **Gap.**  Lemma K backward at `n`: `n ≤ 4^L (n − n' + 1)`.
+  * **Count.**  On one orbit, forward survivors in `[X/M, X)` that fail the backward `L`-window are
+    spaced `≥ X/(2M·4^L)` apart, so there are at most `8M·4^L + 1` of them.  Every other forward
+    survivor there is an `L`-window minimum.  Summing over `r` orbits gives
+    `#FS(X) ≤ #W_L(X) + X/M + r(8M·4^L + 1)`.
+* **C1 (abstract `Û`-orbits)** holds under one explicit hypothesis on the chosen orbit: its
+  `W_L` count is at most `δ_L`.  That is a property of the orbit, not the typicality wall.
+* **Correction to §14 and q1sharp: `FS_τ` does not tend to `0`.**
+  * For `x ≤ N` in `U`-orbit `k`, `FS_τ(x) ⇔ FS_U(x) ∧ x < m_{k+1}`, where `m_{k+1}` is the next orbit
+    minimum.  The agent validated this with symmetric difference 0 on the explicit chains
+    (`τ` at `N = 1500` and `6000`, `τ_odd` at `3000`).
+  * By that rule, `FS_τ = Min_U` exactly on every block `[2¹³, 2²³)`, at density `0.0491–0.0509`.
+  * §14's `0.056` is a small-`N` excess: 9–10 points, all below 600.
+  * So `τ` and `τ_odd` sit **on** the ceiling, and `c` is sharp for any window-plus-Lemma-K
+    argument (BELIEVED 90%; `d(Min_U) = c` is itself unproved).
+* **No-go test.**
+  * Kohl's `ω` and the zigzag lack Lemma K (`|3ᵍ − 2^a| ≥ 1`), which is exactly the input they miss.
+  * The statistical twins satisfy Lemma K with a constant, so C2 transfers to them.  `W_{3,1,2}`
+    measures `FS ≈ 0.21`, so C2′ predicts infinitely many orbits, in line with §12.
+* **Checks (agent's, `scratch-c1verify/`).**  P′, Lemma K on every link, and the chaining step: 0
+  failures on `[2⁸, 2²²)`.  Per-orbit packing maximum is `≤ 7` (bounds 9–8193).  Four deliberately
+  false variants fire.  A false first-pass "Lemma K failure" was a 128-bit overflow, rechecked
+  exactly.
+* **Where the wall now sits.**  (a) follows from proving `FS` has upper density above `c`, i.e. that
+  forward survivors (measured `0.21`) are not almost all late droppers.  That is the same Π₁
+  typicality as §20, with the target 4.2× below the measurement.
