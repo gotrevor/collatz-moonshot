@@ -730,3 +730,89 @@ measure-classification property of `Û` force infinitely many orbits on the diag
   * Open Q1 (agent: 50%): does some single orbit reach `0.3972`?  If so, Proposition S's threshold
     is sharp.
 
+## 26. One-sided survival suffices; the single-orbit ceiling is `c` (2026-10-14, "q1sharp" Opus agent, checked in part)
+
+Lean: `AmusicalSurvivorSeparation.lean`, proved and axiom-clean (Ren's proofs).  The agent answered
+§25's Q1 negatively: the single-orbit survival ceiling is `c = p_f p_b ≈ 0.0498`, not `0.3972`.
+
+* **Separation (PROVED; Lean `fwdSurvivor_three_separation`).**  If `n < n'` are forward survivors
+  on one orbit and `3 ∣ n'`, then `3n ≤ 2n'`.  `n'` cannot precede `n`, and the step before `n'` is
+  `U⁻¹ n' = 2n'/3`.  So **forward survivors divisible by 3 in `[X, 3X/2)` lie on distinct orbits**,
+  each infinite (`fwdSurvivor_three_not_periodic`).
+* **Reduction (PROVED; Lean `infinitelyManyOrbits_of_fwdSurvivors_three`).**  If such windows hold
+  unboundedly many of them, i.e. `FS ∩ 3ℤ` is not `O(log X)`, Klamkin (a) holds.  Under finitely
+  many orbits every multiple of 3 that survives a fixed window is a late dropper, except
+  `O(log X)` of them.
+* **Ceiling C1 (PROVED by the agent; not yet re-derived by me).**  One orbit, or finitely many,
+  with the lattice's window statistics has `FS ∪ BS` of upper density `≤ δ_L` for every `L`, hence
+  `≤ c`.  The mechanism: a forward survivor whose backward window first drops at time `g` has
+  `Vᵍ n` as the next lower survivor of its orbit, and Lemma K forces a height gap `≥ m'/4ᵍ − 1`.
+  * Consequence (C2′): **`d_upper(FS) > c` implies Klamkin (a)**, which needs forward survivors at
+    only `c/p_f = 23.7%` of their measured density.  This overturns §20's "one-sided control
+    fails", which holds only for the S′ counting method.
+  * At the walk's late-drop rates the fixed-depth version fires from window depth 3, where Theorem LD
+    needs depth 23.
+  * Sharpness: conditionally, a re-tuned masquerade makes every orbit minimum a forward survivor.
+    Unconditionally the agent puts 85% on reaching `c`, leaning on Theorem M's accounting.
+  * Checks (agent's, `scratch-q1sharp/`): the predecessor and separation lemmas have 0 failures on
+    `[2⁸, 2²¹)`.  Teeth: a false `2ᵍ` strengthening of Lemma K is caught.
+* **The wall is unchanged in kind.**  The rewired `τ` satisfies every hypothesis, so lower-bounding
+  survival is still the typicality wall, now one-sided at 23.7%.
+
+## 27. The additive side is closed; the twins are translates of layer maps (2026-10-14, "ringadd" Opus agent, checked in part)
+
+Lean: `AmusicalAdditive.lean`, proved and axiom-clean.  Agent credence that any of this moves
+Klamkin (a): under 1%.
+
+* **Theorem T (PROVED by the agent; I checked the `q = ±1` family by hand).**  Every twin
+  `W_{α,β,γ}` equals a layer map `U_q` (§5) plus `d = (α+β+γ−3)/3`, after a unique even
+  translation, with `q = 3 − 2(γ−β)`.  Checked on all 6600 twins with offsets `|·| ≤ 15`.
+  * So the §12 statistical twins are `Û + c` restricted to `(1/q)ℤ`, and Kohl's det of a twin is `d`.
+  * `twinW x = U(x + 4) − 3`, i.e. `U + 1` conjugated by translation (Lean `twinW_eq_translate`).
+  * Every det-0 twin contains a copy of `U`, so a det-0 twin with finitely many orbits would
+    disprove Klamkin (a).
+  * T4: `U` is the only residue-transitive twin with zero flux.  Every other transitive twin has a
+    provably infinite orbit (§24).
+  * T5: for every rational `c ≠ 0`, `Û + c` has infinitely many infinite orbits on `ℚ ∩ ℤ_(6)`,
+    from flux on nested layers.  At `c = 0` this is open.
+* **Carry cocycle (REFUTED as finitely valued; Lean `amusical_carry_unbounded`).**
+  `U(x+y) − U(x) − U(y)` is unbounded (`6k + 1` at `x = y = 4k + 1`).  An additive Theorem W is
+  vacuous, since the itinerary codes `ℤ₂` injectively.
+* **Theorem G (PROVED by the agent).**  An automorphism of an infinite abelian group has infinitely
+  many orbits.  So "U respects a group law on the non-periodic integers" is a costume for infinitely
+  many infinite orbits.  On all of `ℤ` it is impossible by Lagrange (`|Fix U| = 3`, `|Fix U²| = 7`).
+* **The `𝔽₂[t]` twin is additive on triples of one depth.**  Over `ℤ` an exact carry in `{0, ±1}`
+  turns the twin's linear algebra into a knapsack problem, which only reorganises cycles.
+* **Baker contrapositive (REFUTED).**  Along an orbit segment, `j log 3 − n log 2 = log(y/x) − S`
+  with `S` the archimedean carry.  Proposition D: the relations that finitely many orbits forces
+  are Dirichlet-sized (`|Λ| ≲ 1/J` at lag `≤ J`).  Every irrational satisfies these, so no lower
+  bound for linear forms in `log 2, log 3` can contradict them.
+
+## 28. Multiplicative symmetry reduces to 2-adic irrationality (2026-10-14, "ringunit" Opus agent, checked in part)
+
+Lean: `AmusicalUnit.lean`, proved and axiom-clean, plus the wall's reopen condition
+`AmusicalSharedSkeleton`.  Agent credence that this route proves Klamkin (a): under 1%.
+
+* **Proposition T (PROVED by the agent).**  A map commuting with `U` along a forward orbit tail and
+  asymptotically `×u` (`u ∉ ±2^ℤ3^ℤ`) moves that orbit to a different one.  Transport is free.
+  * Such a map exists iff two integers share an infinite parity skeleton.  That happens iff an
+    infinite, co-infinite sub-series of `x = −Σ χ₄(Uʲx) 2^{nⱼ}/3^{j+1}` sums to an integer.
+    (Negation `z = −y` is the full series.)  Believed to have no solutions (~95%).
+  * Search: no pair `y < z ≤ 2·10⁵` shares more than 34 skeleton steps (random model about 1.2 at
+    34).  Teeth: a cross-layer search finds the allowed U-cycle / U_q-cycle matches, e.g.
+    `q = 13 = 2⁸ − 3⁵` with the 5-cycle.
+* **Theorem A (PROVED).**  An affine map `vy + e`, `v ∉ {0, ±1}`, commutes with `U` on at most one
+  branch class.  New example (Lean `amusical_three_mul_sub_four`): `3y − 4` on `1 + 4ℤ`.
+* **Proposition N (exact; Lean `two_mul_not_orbit_map` for `u = 2`).**  `×u` fails to map orbits to
+  orbits for 12 tested `u`.  For `u = 2`: `22` and `29 = U⁻¹ 22` share an orbit, but `44` (12-cycle)
+  and `58` do not.  For `u = 13` the same failure would already give a seventh orbit.
+* **Theorem D (PROVED).**  "Every orbit meets the defect set finitely often" is circular: an infinite
+  defect set already proves (a).  The forward-only version is the §17 wall.
+* **Theorem U (PROVED).**  A `×u`-closed set of integers has closure with interior in `ℤ₂ × ℤ₃`, so
+  formal minima are never multiplicatively closed.  Conjecture LF (implies (a)): `uᵏ x` hits formal
+  minima at a ball's Haar rate.  Numerics beyond the residue horizon match within about 1σ in 8
+  families (e.g. `5ᵏ · 8`: 0.245 vs 0.226).
+* **Theorem A★_u, twisted cycles (PROVED, Baker as a literature Prop).**  If `Uᵗ x = u x`, the
+  segment minimum is polynomial in `t`.  857 such returns for `x ≤ 2·10⁴`, `t ≤ 400`, with 0 bound
+  violations.  The most frequent multiplier is `u = 79 ≈ 3³³/2⁴⁶`.
+

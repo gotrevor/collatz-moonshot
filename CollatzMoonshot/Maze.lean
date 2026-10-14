@@ -38,6 +38,8 @@ import CollatzMoonshot.AmusicalFunctionField
 import CollatzMoonshot.AmusicalTwinDegree
 import CollatzMoonshot.AmusicalCrossing
 import CollatzMoonshot.AmusicalAdelic
+import CollatzMoonshot.AmusicalAdditive
+import CollatzMoonshot.AmusicalUnit
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -281,7 +283,13 @@ def register : List Hall := [
    "AmusicalCrossing.lean; agent report bridge.md §2–§4 (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: rigidity or statistics of Û on ℝ × ℤ₂ × ℤ₃", .costume,
    "invariant subgroups are ℤ's layers (Prop L); one Û-orbit fakes every window statistic (Thm M)",
-   "AmusicalAdelic.lean; agent report quasicrystal.md §2–§5 (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalAdelic.lean; agent report quasicrystal.md §2–§5 (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: additive structure (carry cocycle, orbit sums, Baker contrapositive)", .refuted,
+   "carry unbounded; forced log 2 / log 3 relations only Dirichlet-sized; twins are translates",
+   "AmusicalAdditive.lean; agent report ringadd.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: partial multiplicative symmetry (Theorem W beyond zero offsets)", .wall,
+   "transport is free; existence needs an integer sub-series of an orbit's 2-adic expansion",
+   "AmusicalUnit.lean; agent report ringunit.md (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -423,7 +431,14 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.twinW_zero_not_periodic,
     ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩,
   ⟨"amusical: rigidity or statistics of Û on ℝ × ℤ₂ × ℤ₃",
-   [``CollatzMoonshot.Amusical.amusicalRat_subgroup_one_mem], []⟩]
+   [``CollatzMoonshot.Amusical.amusicalRat_subgroup_one_mem], []⟩,
+  ⟨"amusical: additive structure (carry cocycle, orbit sums, Baker contrapositive)",
+   [``CollatzMoonshot.Amusical.amusical_carry_unbounded,
+    ``CollatzMoonshot.Amusical.twinW_eq_translate], []⟩,
+  ⟨"amusical: partial multiplicative symmetry (Theorem W beyond zero offsets)",
+   [``CollatzMoonshot.Amusical.two_mul_not_orbit_map,
+    ``CollatzMoonshot.Amusical.amusical_three_mul_sub_four],
+   [``CollatzMoonshot.Amusical.AmusicalSharedSkeleton]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -436,7 +451,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 51 rows, 43 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 53 rows, 45 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
