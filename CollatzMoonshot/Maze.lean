@@ -284,7 +284,7 @@ def register : List Hall := [
    "invariant subgroups are ℤ's layers (Prop L); one Û-orbit fakes every window statistic (Thm M)",
    "AmusicalAdelic.lean; agent report quasicrystal.md §2–§5 (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: additive structure (carry cocycle, orbit sums, Baker contrapositive)", .refuted,
-   "the carry is unbounded; forced log 2 / log 3 relations are Dirichlet-sized; twins are translates",
+   "carry unbounded; forced log 2 / log 3 relations only Dirichlet-sized; twins are translates",
    "AmusicalAdditive.lean; agent report ringadd.md (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
