@@ -1,4 +1,42 @@
-# HANDOFF: amusical global mechanisms (2026-10-14, survival semantics)
+# HANDOFF: amusical global mechanisms (2026-10-14, one-sided density ledger)
+
+## Latest lap advance
+
+- Added kernel-checked `tendsto_fwdGood_density` and `tendsto_bwdGood_density`. They prove the
+  exact natural densities `fwdSurv L` and `bwdSurv L` for the periodic forward/backward
+  good-word predicates, using periods `4^L` and `3^L` respectively.
+- This discharges the arithmetic/counting half of the missing one-sided finite-window density
+  inputs for Proposition S. The remaining local bridge is semantic: prove that, above the
+  existing `windowBound` cutoff, `FwdWindowSurvivor` and `BwdWindowSurvivor` are individually
+  equivalent to their good-word predicates. Then `tendsto_count_div_of_eventually_congr`
+  transfers the two limits directly.
+- The scoped file still has exactly two `sorry`s, in `exists_many_returns` and
+  `infinitelyManyOrbits_of_survival`. No statement or existing definition changed.
+
+## Latest verification
+
+```text
+lake env lean CollatzMoonshot/AmusicalGlobal.lean
+git diff --check
+awk 'length($0)>100 ...' CollatzMoonshot/AmusicalGlobal.lean
+```
+
+All passed. The real scoped gate
+
+```text
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-global \
+  --target CollatzMoonshot.AmusicalGlobal
+```
+
+also passed: `✅ FORMALIZE-TIER GREEN` (`lake build` completed successfully, 8716 jobs).
+
+## Latest next attack
+
+Extract the forward and backward halves of `isWindowMin_iff_of_large` into local one-sided
+semantic equivalences (without editing the treadmill-owned `AmusicalWindow.lean`). Transfer the
+new periodic limits to `FwdWindowSurvivor` and `BwdWindowSurvivor`, then finish Proposition S by
+the finite-set inequality
+`|FS| + |BS| + |FWL ∩ BWL| ≤ |FS ∩ BS| + |FWL| + |BWL|` and a positive density gap.
 
 ## Concrete advance
 

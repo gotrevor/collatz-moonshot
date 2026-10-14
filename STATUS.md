@@ -1,5 +1,10 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical one-sided density ledger:** the periodic good-word predicates now have
+> kernel-checked natural densities `fwdSurv L` and `bwdSurv L`. This closes the counting half of
+> Proposition S's one-sided finite-window estimates; only the large-integer semantic bridge and
+> inclusion-exclusion remain. Two scoped sorries remain; read `HANDOFF-amusical-global.md`.
+
 > **2026-10-14, amusical survival semantics formalized:** the orbit-theoretic core of Proposition
 > S is kernel-checked: forward-and-backward infinite survival is exactly `IsOrbitMin`, and each
 > infinite survivor implies its corresponding finite-window predicate. The remaining proof is a

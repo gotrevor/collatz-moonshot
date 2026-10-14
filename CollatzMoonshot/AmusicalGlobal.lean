@@ -224,6 +224,70 @@ private theorem bwdSurvivor_window (L : ℕ) {n : ℤ} (hn : BwdSurvivor n) :
   intro t ht _
   exact hn t ht
 
+private theorem tendsto_fwdGood_density (L : ℕ) :
+    Filter.Tendsto
+      (fun X : ℕ =>
+        (Nat.count (fun n : ℕ => FwdGood L (amusicalForwardWord L n)) X : ℝ) / X)
+      Filter.atTop (nhds (fwdSurv L : ℝ)) := by
+  let P : ℕ → Prop := fun n => FwdGood L (amusicalForwardWord L n)
+  set M := 4 ^ L with hM
+  set G := Nat.count P M with hG
+  have hMpos : 0 < M := by positivity
+  have hPper : ∀ n, P n ↔ P (n % M) := fun n => by
+    simp only [P]
+    rw [← amusicalForwardWord_natCast_mod]
+  have hPadd : ∀ n : ℕ, P (n + M) ↔ P n := by
+    intro n
+    rw [hPper (n + M), hPper n]
+    simp
+  have hblock : ∀ a : ℕ, Nat.count (fun k => P (a + k)) M = G := by
+    intro a
+    rw [count_block_eq_of_add_periodic P hPadd a, hG]
+  have hratio : (fwdSurv L : ℝ) = (G : ℝ) / M := by
+    have heq := fwdSurv_mul L
+    simp only [P, hM] at hG
+    rw [← hG] at heq
+    apply (eq_div_iff (by positivity : (M : ℝ) ≠ 0)).2
+    have heq' := congrArg (fun q : ℚ => (q : ℝ)) heq
+    rw [hM]
+    push_cast
+    norm_num at heq'
+    nlinarith
+  rw [hratio]
+  exact tendsto_count_div_of_periodic_blocks P hMpos hblock
+
+private theorem tendsto_bwdGood_density (L : ℕ) :
+    Filter.Tendsto
+      (fun X : ℕ =>
+        (Nat.count (fun n : ℕ => BwdGood L (amusicalBackwardWord L n)) X : ℝ) / X)
+      Filter.atTop (nhds (bwdSurv L : ℝ)) := by
+  let P : ℕ → Prop := fun n => BwdGood L (amusicalBackwardWord L n)
+  set M := 3 ^ L with hM
+  set G := Nat.count P M with hG
+  have hMpos : 0 < M := by positivity
+  have hPper : ∀ n, P n ↔ P (n % M) := fun n => by
+    simp only [P]
+    rw [← amusicalBackwardWord_natCast_mod]
+  have hPadd : ∀ n : ℕ, P (n + M) ↔ P n := by
+    intro n
+    rw [hPper (n + M), hPper n]
+    simp
+  have hblock : ∀ a : ℕ, Nat.count (fun k => P (a + k)) M = G := by
+    intro a
+    rw [count_block_eq_of_add_periodic P hPadd a, hG]
+  have hratio : (bwdSurv L : ℝ) = (G : ℝ) / M := by
+    have heq := bwdSurv_mul L
+    simp only [P, hM] at hG
+    rw [← hG] at heq
+    apply (eq_div_iff (by positivity : (M : ℝ) ≠ 0)).2
+    have heq' := congrArg (fun q : ℚ => (q : ℝ)) heq
+    rw [hM]
+    push_cast
+    norm_num at heq'
+    nlinarith
+  rw [hratio]
+  exact tendsto_count_div_of_periodic_blocks P hMpos hblock
+
 /-- A point surviving forever in both directions is precisely an orbit minimum. -/
 private theorem isOrbitMin_iff_survivors (n : ℤ) :
     IsOrbitMin n ↔ FwdSurvivor n ∧ BwdSurvivor n := by
