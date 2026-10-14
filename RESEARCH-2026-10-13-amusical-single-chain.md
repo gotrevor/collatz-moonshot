@@ -1265,7 +1265,7 @@ Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many su
   order, §31) give dense FS (37 718 below `2²⁰`) and dense near-cycles; in decreasing order FS is
   the 5 spine points and near-cycle counts look linear in `D` (`NC_256`: 1 786 against `U`'s
   1 275), stable as the cut height rises.
-* **Conjecture Π-LIN (70%).**  `π` in decreasing order inherits LIN.  Then "LIN ⇒ (a)" has no proof
+* **Conjecture Π-LIN (70%).**  `π` in decreasing order inherits LIN.  (§43: the forward half holds as measured; the backward half fails, and the repaired `π_β` is the right foil.)  Then "LIN ⇒ (a)" has no proof
   from LIN plus sparse-robust properties: what remains is `U`'s exactness along entire tails.
 * **Conjecture M (60%).**  §25's Steering Lemma realizes the decreasing order with real `Û`-arrows,
   giving one real `Û`-orbit with SQ on every rung and FS density 0.  Then integrality (T1/T2) is the
@@ -1306,3 +1306,37 @@ is cheaper than (a).  I checked R, LOC, DIV and Proposition H.  Maze row "T1 int
   bounded-offset map `x ↦ (3x + e_x)/2^{w_x}`, `|e_x| ≤ E`; MR(II) does not.  G′: some bounded-offset
   permutation has one orbit, every `NC_D` finite and `o(√X)` survivors.  If G′ fails, there is a
   real-affine route to (a) mod LIN, the one live positive possibility (35%).
+
+## 43. Π-LIN: the backward half fails, and interleaving repairs it (2026-10-14, "pilin" Opus agent, checked)
+
+Stress test of §41's Conjecture Π-LIN.  I checked Theorem MG and the `π_β` construction.  Agent odds
+that this moves (a): unchanged (no mechanism).
+
+* **Control.**  fsarith's table reproduces exactly; pure `π` near-cycles are always `U` near-cycles
+  (0 violations in 35 runs).
+* **Theorem MG (PROVED).**  In the decreasing-order `π`, if consecutive pieces `Q, Q'` of a block have
+  `μ(Q) − μ(Q') ≤ D`, then `μ(Q')` is a backward `D`-near-cycle start: the backward scan leaves `Q'`
+  (all `> μ'`) and enters `Q`, which contains `μ ≤ μ' + D`.  Pigeonhole: `#NC^{π,b}_D ∩ [0, X) ≥
+  M(X) − X/D − O(blocks)`, `M` = piece minima.
+* **So the backward half of Π-LIN fails whenever chain minima have positive density.**  Measured:
+  `U`'s orbit minima have density `0.0499 = p_f·p_b` (to 0.3%), and `NC^{π,b}_16` grows like
+  `0.0256·N` (27 082 / 107 425 / 430 401 at `N = 2²⁰ / 2²² / 2²⁴`; predicted 0.0255).  Positive
+  density of chain minima already implies (a), so this is exactly the world in which a foil is needed.
+  fsarith measured only the forward direction.
+* **The forward half holds (measured; CONJECTURE 80%).**  Forward junction near-cycles are all
+  "ladder proximity" events, frozen as `N` grows ×16 and the cut height goes `2²³ → 2²⁸`.  A deep hunt
+  (835k junctions below `2²⁴`, ladders to `2⁷⁰`) gives `κ_J ≈ 1.70` forward, `≈ 3.0` backward.  The
+  ladders are glued at matching scale; re-pairing at scale ratio `≥ 4.7` makes counts grow like `log N`.
+* **Theorem Πβ (PROVED).**  Deal each block's pieces round-robin into `β_b → ∞` sub-blocks, each closed
+  by its own odd spine (`≢ 0 mod 3`, so both cuts are odd), spines below the block and decreasing.
+  Then `π_β` has one infinite orbit, `π(2m) = 3m`, sparse changes, and one survivor per block;
+  consecutive minima in a sub-block differ by `≥ β_b`, so min-gap events vanish for every fixed `D`.
+  Measured: backward `NC_256` freezes at 838 / 856 / 862.
+* **Π-LIN for `π_β` ⟺ LIN for `U` ∧ LP** (Conjecture LP, 75%: ladder events at each `D` are
+  finite).  A greedy dealing (Lemma G) gives `NC^π_D ⊆ NC^U_D ∪ (finite)` in both directions under a
+  "non-lingering" hypothesis NL (ladders at scale `s` shorter than `s^{1−ε}`; Haar-trivial, unproved),
+  at the cost of changes `O(X^{1−ε})`.
+* **"Rewiring must pay in near-cycles" is not a mechanism.**  The decreasing order pays
+  `0.0499·P(gap ≤ D)·X` backward near-cycles, but interleaving removes them with no change to FS.
+  fsarith's no-go survives with `π_β`, conditional on LP: no proof of "LIN ⇒ many survivors" can use
+  only LIN plus sparse-robust properties of `U`.
