@@ -546,6 +546,111 @@ theorem bwdSlopeDescends_residue_proportion_le_ninetyNineHundredths (L : ℕ) :
       gcongr
       exact descentChernoffRate_lt_ninetyNineHundredths.le
 
+/-! ## Initial-interval bounds for descent events -/
+
+/-- A periodic predicate whose one-period proportion is at most `q` has at most `q X + M`
+members in `[0,X)`.  The additive period is the incomplete final block. -/
+theorem count_periodic_le_mul_add_period (P : ℕ → Prop) [DecidablePred P]
+    (M : ℕ) (hM : 0 < M) (hP : ∀ n, P n ↔ P (n % M)) (q : ℝ)
+    (hq : (Nat.count P M : ℝ) / M ≤ q) (X : ℕ) :
+    (Nat.count P X : ℝ) ≤ q * X + M := by
+  have hb := (WindowCount.count_periodic_bounds P M hM hP X).2
+  have hcount : Nat.count P M ≤ M := Nat.count_le _
+  have hdiv : X / M * M ≤ X := Nat.div_mul_le_self X M
+  have hMreal : (0 : ℝ) < M := by exact_mod_cast hM
+  have hqnonneg : 0 ≤ q := by
+    exact le_trans (div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)) hq
+  have hq' : (Nat.count P M : ℝ) ≤ q * M := by
+    rwa [div_le_iff₀ hMreal] at hq
+  have hbR : (Nat.count P X : ℝ) ≤
+      (((X / M : ℕ) : ℝ) + 1) * Nat.count P M := by exact_mod_cast hb
+  have hcountR : (Nat.count P M : ℝ) ≤ M := by exact_mod_cast hcount
+  have hdivR : (((X / M : ℕ) : ℝ) * M) ≤ X := by exact_mod_cast hdiv
+  have hfloor : ((X / M : ℕ) : ℝ) * Nat.count P M ≤ q * X := by
+    calc
+      ((X / M : ℕ) : ℝ) * Nat.count P M ≤
+          ((X / M : ℕ) : ℝ) * (q * M) := by
+        gcongr
+      _ = q * (((X / M : ℕ) : ℝ) * M) := by ring
+      _ ≤ q * X := by
+        gcongr
+  calc
+    (Nat.count P X : ℝ) ≤ (((X / M : ℕ) : ℝ) + 1) * Nat.count P M := hbR
+    _ = ((X / M : ℕ) : ℝ) * Nat.count P M + Nat.count P M := by ring
+    _ ≤ q * X + M := add_le_add hfloor hcountR
+
+/-- The length-`L` forward descent event is periodic modulo `4^L`. -/
+theorem fwdSlopeDescends_periodic (L n : ℕ) :
+    FwdSlopeDescends L (amusicalForwardWord L n) ↔
+      FwdSlopeDescends L (amusicalForwardWord L ((n % 4 ^ L : ℕ) : ℤ)) := by
+  rw [amusicalForwardWord_natCast_mod]
+
+/-- The length-`L` backward descent event is periodic modulo `3^L`. -/
+theorem bwdSlopeDescends_periodic (L n : ℕ) :
+    BwdSlopeDescends L (amusicalBackwardWord L n) ↔
+      BwdSlopeDescends L (amusicalBackwardWord L ((n % 3 ^ L : ℕ) : ℤ)) := by
+  rw [amusicalBackwardWord_natCast_mod]
+
+/-- Forward descents at time `L` occupy at most `(99/100)^L X + 4^L` points of `[0,X)`. -/
+theorem count_fwdSlopeDescends_le (L X : ℕ) :
+    (Nat.count (fun n : ℕ => FwdSlopeDescends L (amusicalForwardWord L n)) X : ℝ) ≤
+      ((99 : ℝ) / 100) ^ L * X + (↑(4 ^ L) : ℝ) := by
+  have hq : (Nat.count
+      (fun n : ℕ => FwdSlopeDescends L (amusicalForwardWord L n)) (4 ^ L) : ℝ) /
+      (4 ^ L : ℕ) ≤ ((99 : ℝ) / 100) ^ L := by
+    simpa only [Nat.cast_pow, Nat.cast_ofNat] using
+      fwdSlopeDescends_residue_proportion_le_ninetyNineHundredths L
+  have h := count_periodic_le_mul_add_period _ (4 ^ L) (by positivity)
+    (fwdSlopeDescends_periodic L) (((99 : ℝ) / 100) ^ L) hq X
+  simpa only [Nat.cast_pow, Nat.cast_ofNat] using h
+
+/-- Backward descents at time `L` occupy at most `(99/100)^L X + 3^L` points of `[0,X)`. -/
+theorem count_bwdSlopeDescends_le (L X : ℕ) :
+    (Nat.count (fun n : ℕ => BwdSlopeDescends L (amusicalBackwardWord L n)) X : ℝ) ≤
+      ((99 : ℝ) / 100) ^ L * X + (↑(3 ^ L) : ℝ) := by
+  have hq : (Nat.count
+      (fun n : ℕ => BwdSlopeDescends L (amusicalBackwardWord L n)) (3 ^ L) : ℝ) /
+      (3 ^ L : ℕ) ≤ ((99 : ℝ) / 100) ^ L := by
+    simpa only [Nat.cast_pow, Nat.cast_ofNat] using
+      bwdSlopeDescends_residue_proportion_le_ninetyNineHundredths L
+  have h := count_periodic_le_mul_add_period _ (3 ^ L) (by positivity)
+    (bwdSlopeDescends_periodic L) (((99 : ℝ) / 100) ^ L) hq X
+  simpa only [Nat.cast_pow, Nat.cast_ofNat] using h
+
+/-- Actual forward descents obey the same Chernoff bound, apart from the explicit initial range
+where the affine comparison need not yet be controlled by its slope. -/
+theorem count_iterate_lt_le (L X : ℕ) (hL : 1 ≤ L) :
+    (Nat.count (fun n : ℕ => amusical^[L] (n : ℤ) < n) X : ℝ) ≤
+      ((99 : ℝ) / 100) ^ L * X + (↑(4 ^ L) : ℝ) + 2 * 324 ^ L := by
+  let P : ℕ → Prop := fun n => amusical^[L] (n : ℤ) < n
+  let Q : ℕ → Prop := fun n => FwdSlopeDescends L (amusicalForwardWord L n)
+  have heq : ∀ n : ℕ, 2 * 324 ^ L ≤ n → (P n ↔ Q n) := by
+    intro n hn
+    exact iterate_lt_iff_fwdSlopeDescends_of_ge L n hL hn
+  have hc := (count_eventually_congr_bound P Q heq X).1
+  have hq := count_fwdSlopeDescends_le L X
+  change (Nat.count P X : ℝ) ≤ _
+  have hcR : (Nat.count P X : ℝ) ≤ Nat.count Q X + 2 * 324 ^ L := by
+    exact_mod_cast hc
+  linarith
+
+/-- Actual backward descents obey the same Chernoff bound, apart from the explicit initial range
+where the affine comparison need not yet be controlled by its slope. -/
+theorem count_inv_iterate_lt_le (L X : ℕ) (hL : 1 ≤ L) :
+    (Nat.count (fun n : ℕ => amusicalInv^[L] (n : ℤ) < n) X : ℝ) ≤
+      ((99 : ℝ) / 100) ^ L * X + (↑(3 ^ L) : ℝ) + 2 * 324 ^ L := by
+  let P : ℕ → Prop := fun n => amusicalInv^[L] (n : ℤ) < n
+  let Q : ℕ → Prop := fun n => BwdSlopeDescends L (amusicalBackwardWord L n)
+  have heq : ∀ n : ℕ, 2 * 324 ^ L ≤ n → (P n ↔ Q n) := by
+    intro n hn
+    exact inv_iterate_lt_iff_bwdSlopeDescends_of_ge L n hL hn
+  have hc := (count_eventually_congr_bound P Q heq X).1
+  have hq := count_bwdSlopeDescends_le L X
+  change (Nat.count P X : ℝ) ≤ _
+  have hcR : (Nat.count P X : ℝ) ≤ Nat.count Q X + 2 * 324 ^ L := by
+    exact_mod_cast hc
+  linarith
+
 /-- Every finite centered orbit window has a minimizing offset.  This is the deterministic
 selection underlying the exceptional-offset count in Lemma T. -/
 theorem exists_centered_window_minimizer (L : ℕ) (n : ℤ) :

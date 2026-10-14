@@ -1,5 +1,48 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: finite-interval descent bounds proved
+
+### Concrete advance
+
+- Added `count_periodic_le_mul_add_period` in
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`: a periodic predicate with one-period
+  proportion at most `q` has at most `q * X + M` members below `X`, including the incomplete
+  final period.
+- Proved `fwdSlopeDescends_periodic`, `bwdSlopeDescends_periodic`,
+  `count_fwdSlopeDescends_le`, and `count_bwdSlopeDescends_le`.  These lift the complete-period
+  Chernoff estimates to arbitrary initial intervals, with explicit `4^L` and `3^L` errors.
+- Proved `count_iterate_lt_le` and `count_inv_iterate_lt_le`, transferring those estimates to
+  the actual events `U^L n < n` and `U^-L n < n`.  The only additional error is the explicit
+  Lemma W initial range `2 * 324^L`.
+- No ratified statement changed, and no axiom, `native_decide`, or new `sorry` was introduced.
+  The original `sparse_sweep` sorry remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms CollatzMoonshot.Amusical.count_iterate_lt_le`
+  (`FORMALIZE-TIER GREEN`; axiom ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- The same gate for `CollatzMoonshot.Amusical.count_inv_iterate_lt_le` was
+  `FORMALIZE-TIER GREEN` with the same axiom ledger.
+- `git diff --check` and the 100-character changed-Lean-line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The individual descent events now have the required arbitrary
+interval bounds.  The remaining finite Lemma T bookkeeping is the union bound over
+`K < i ≤ L`; its additive error is the sum of `4^i + 3^i + 4 * 324^i`, which must be made
+`o(X)` by choosing `L` logarithmically below `log X`.  This then feeds the already-proved
+centered-minimizer bridge and window-minimum packing.
+
+### Next highest-value attack
+
+Package the union of forward/backward descent events over `Finset.Icc (K+1) L` and prove its
+count is bounded by the sum of the two new one-time estimates.  Bound the geometric main term by
+`200 * (99/100)^(K+1) * X` and the additive error by a constant times `324^(L+1)`.  Then combine
+`centered_minimizer_outside_implies_descent`, `isWindowMin_sub_of_centered_minimizer`, and
+`windowMin_card_mul_le` to assemble the final count used by `sparse_sweep`.
+
 ## 2026-10-14 lap: actual descents identified with Chernoff slope events
 
 ### Concrete advance
