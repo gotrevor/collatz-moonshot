@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalSpitzer
+import CollatzMoonshot.AmusicalDecouple.Density
 
 /-!
 # The two primes decouple: Lemma D, and the formal-minimum route to Klamkin (a)
@@ -61,7 +62,11 @@ theorem tendsto_density_inter_of_two_three {A B : ℕ → Set ℕ}
       (nhds β)) :
     Filter.Tendsto (fun X : ℕ => (countBelow ((⋂ L, A L) ∩ ⋂ L, B L) X : ℝ) / X)
       Filter.atTop (nhds (α * β)) := by
-  sorry
+  have hper : ∀ (S : Set ℕ) (p N : ℕ), (∀ n, N ≤ n → (n ∈ S ↔ n + p ∈ S)) →
+      Decouple.EvPer S p N := fun _ _ _ h => h
+  exact Decouple.tendsto_cnt_iInter_inter
+    (fun L => let ⟨a, N, h⟩ := pA L; ⟨a, N, hper _ _ _ h⟩)
+    (fun L => let ⟨b, N, h⟩ := pB L; ⟨b, N, hper _ _ _ h⟩) hAL hBL ha hb hA hB
 
 /-- **Target (Corollary MD).**  If forward and backward survivors have the densities the windows
 predict, orbit minima have density `minimaConstant`. -/
