@@ -4,6 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
+import CollatzMoonshot.AmusicalSeventh.Rewire
+import CollatzMoonshot.AmusicalSeventh.Residue
+import CollatzMoonshot.AmusicalSeventh.Sparse
+import CollatzMoonshot.AmusicalSeventh.Sweep
 
 /-!
 # Toward a seventh orbit: what a cofinite orbit would need, and why statistics cannot refute it
@@ -41,7 +45,43 @@ orbit.  Paper proof: pick a nonnegative `n` outside `knownCycleMembers` and outs
 orbit (each is contained in `knownCycleMembers`); add `n` to `{0, 1, 2, 4, 44, 8}`. -/
 theorem atLeastSeven_of_orbit8_not_cofinite
     (h : ({n : ℤ | 0 ≤ n} \ amusicalOrbit 8).Infinite) : AmusicalAtLeastSevenOrbits := by
-  sorry
+  have hknown : (knownCycleMembers : Set ℤ).Finite := Finset.finite_toSet _
+  obtain ⟨n, hn0, hn⟩ := h.sdiff hknown |>.nonempty
+  have hclosed : ∀ a ∈ ({0, 1, 2, 4, 44} : Finset ℤ),
+      amusicalOrbit a ⊆ (knownCycleMembers : Set ℤ) := by
+    intro a ha
+    apply amusicalOrbit_subset_of_closed (S := (knownCycleMembers : Set ℤ))
+        (by decide) (by decide)
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl <;> decide
+  have hnorb : ∀ a ∈ ({0, 1, 2, 4, 44, 8} : Finset ℤ),
+      amusicalOrbit n ≠ amusicalOrbit a := by
+    intro a ha heq
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl | rfl | rfl
+    all_goals first
+      | exact hn (hclosed _ (by decide) (heq ▸ mem_amusicalOrbit_self n))
+      | exact hn0.2 (heq ▸ mem_amusicalOrbit_self n)
+  refine ⟨insert n {0, 1, 2, 4, 44, 8}, ?_, ?_, ?_⟩
+  · have : n ∉ ({0, 1, 2, 4, 44, 8} : Finset ℤ) := by
+      intro hn'
+      exact hnorb n (by simpa using hn') rfl
+    simp [this]
+  · intro x hx
+    simp only [Finset.mem_insert] at hx
+    rcases hx with rfl | hx
+    · exact hn0.1
+    · simp only [Finset.mem_singleton] at hx
+      rcases hx with rfl | rfl | rfl | rfl | rfl | rfl <;> norm_num
+  · intro a ha b hb hab
+    change a ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at ha
+    change b ∈ (insert n {0, 1, 2, 4, 44, 8} : Finset ℤ) at hb
+    rcases Finset.mem_insert.mp ha with rfl | ha
+    · exact hnorb b (Finset.mem_insert.mp hb |>.resolve_left hab.symm)
+    · rcases Finset.mem_insert.mp hb with hbn | hb
+      · subst b
+        exact (hnorb a ha).symm
+      · exact amusical_six_distinct_orbits a ha b hb hab
 
 /-- **Target (sparse sweeping).**  For every `η > 0` there is `c > 0` such that, for all large `X`,
 every infinite orbit spends at most `ηX` of the times `|j| ≤ cX log X` below `X`.  Paper proof: for
@@ -53,8 +93,8 @@ of `n` sits within `K` steps (Lemma T, Chernoff over residues); that minimum is 
 theorem sparse_sweep : ∀ η : ℝ, 0 < η → ∃ c : ℝ, 0 < c ∧ ∃ X₀ : ℕ, ∀ X ≥ X₀, ∀ x : ℤ,
     (amusicalOrbit x).Infinite →
     (((Finset.Icc (-⌊c * X * Real.log X⌋) ⌊c * X * Real.log X⌋).filter
-        fun j => 0 ≤ (amusicalPerm ^ j) x ∧ (amusicalPerm ^ j) x < X).card : ℝ) ≤ η * X := by
-  sorry
+        fun j => 0 ≤ (amusicalPerm ^ j) x ∧ (amusicalPerm ^ j) x < X).card : ℝ) ≤ η * X :=
+  sparse_sweep_assembled
 
 /-- **Target (residue transitivity).**  No nontrivial union of residue classes mod `M` is mapped
 onto itself by `Uᵐ`, for any `m ≥ 1`.  Paper proof: the residue graph of `Uᵐ` mod `M` is strongly
@@ -67,7 +107,7 @@ theorem amusical_pow_classUnion_invariant (m M : ℕ) (hm : 0 < m) (hM : 0 < M)
     (R : Set (ZMod M))
     (h : (amusical^[m]) '' {n : ℤ | (n : ZMod M) ∈ R} = {n : ℤ | (n : ZMod M) ∈ R}) :
     R = ∅ ∨ R = Set.univ := by
-  sorry
+  exact amusical_pow_classUnion_invariant_of_image_eq m M hm hM R h
 
 /-- **Target (the rewiring barrier).**  A permutation of `ℕ` whose steps at most double (as `U` and
 `U⁻¹` do on `ℕ`) agrees, off a set of density `0` and on every finite orbit, with a permutation in
@@ -86,6 +126,21 @@ theorem rewire_single_orbit (σ : Equiv.Perm ℕ)
         Filter.atTop (nhds 0) ∧
       ∀ a b, (Set.range fun j : ℤ => (σ ^ j) a).Infinite →
         (Set.range fun j : ℤ => (σ ^ j) b).Infinite → ∃ j : ℤ, (τ ^ j) a = b := by
-  sorry
+  classical
+  by_cases hex : ∃ x : ℕ, (Set.range fun j : ℤ => (σ ^ j) x).Infinite
+  · obtain ⟨x, hx⟩ := hex
+    have hcuts : (sparseOrbitCuts σ).Infinite :=
+      sparseOrbitCuts_infinite_of_infinite_orbit σ hx
+    refine ⟨sparselyRewiredPerm σ hcuts, ?_, ?_, ?_⟩
+    · intro n hn
+      exact sparselyRewiredPerm_eq_of_finite_orbit σ hcuts hn
+    · exact sparselyRewiredPerm_support_density_zero σ (fun n => (hstep n).1) hcuts
+    · intro a b ha hb
+      exact sparselyRewiredPerm_connects_infinite_orbits σ hcuts ha hb
+  · refine ⟨σ, fun _ _ => rfl, ?_, ?_⟩
+    · simpa using (tendsto_const_nhds :
+        Filter.Tendsto (fun _ : ℕ => (0 : ℝ)) Filter.atTop (nhds 0))
+    · intro a _ ha
+      exact (hex ⟨a, ha⟩).elim
 
 end CollatzMoonshot.Amusical
