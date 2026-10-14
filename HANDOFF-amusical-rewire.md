@@ -1,5 +1,47 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — scale-cut windows and separation
+
+The target still has its original `sorry`; the explicit global splicing permutation remains open.
+This lap completed the local geometric layer in
+`CollatzMoonshot/AmusicalRewireRatio/Passage.lean`:
+
+- `forwardCutSource`/`forwardCutTarget` and their backward analogues identify the two oriented
+  edges crossing a height for the first time, with exact `amusicalNatPerm` incidence.
+- `AmusicalScaleCut`, `forwardScaleCut`, and `backwardScaleCut` package both endpoint windows in
+  integral form.  In particular every cut target at height `B` lies between approximately
+  `3B/4` and `3B/2`, exactly the interval needed when a splice replaces one cut image by another.
+- `AmusicalScaleCut.target_ratio` proves the target theorem's factor-3 affine comparison for any
+  two targets at one scale.
+- `source_lt_of_eight_mul_le` and `target_lt_of_eight_mul_le` prove strict separation of cut
+  endpoints at scales growing by eight.  This supplies the no-collision fact needed both for the
+  permutation construction and the logarithmic change count.
+
+Exact verification:
+
+```text
+lake env lean CollatzMoonshot/AmusicalRewireRatio/Passage.lean
+# passes
+awk 'length($0)>100 { ... }' CollatzMoonshot/AmusicalRewireRatio/Passage.lean
+# no output
+git diff --check
+# passes
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-rewire \
+  --target CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8713 jobs).
+# FORMALIZE-TIER GREEN; only the target declaration retains a sorry.
+```
+
+Current blocker: enumerate the infinite natural orbits and define a bijective global successor
+which splices their scale segments without endpoint collisions.  Escape, cut incidence, endpoint
+geometry, factor-3 comparison, and cross-scale separation are now available.
+
+Next attack: define the orbit equivalence relation of `amusicalNatPerm`, choose one least natural
+representative per infinite class, and enumerate those representatives increasingly.  Define
+geometric scales recursively above each representative.  Then express the Eulerian recursion as
+a permutation of cut targets; `AmusicalScaleCut.target_ratio` should discharge the ratio clause
+pointwise, while the separation lemmas support injectivity and counting.
+
 ## 2026-10-13 — two-sided escape and first-passage infrastructure
 
 The target still has its original `sorry`; the main-case construction remains open.  This lap
