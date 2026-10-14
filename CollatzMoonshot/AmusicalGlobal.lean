@@ -807,11 +807,11 @@ def BwdSurvivor (n : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → n ≤ amusicalInv^[t] n
 
 /-- The finite forward half of `IsWindowMin`. -/
-private def FwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
+def FwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → t ≤ L → n ≤ amusical^[t] n
 
 /-- The finite backward half of `IsWindowMin`. -/
-private def BwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
+def BwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → t ≤ L → n ≤ amusicalInv^[t] n
 
 private theorem isWindowMin_iff_windowSurvivors (L : ℕ) (n : ℤ) :
@@ -986,7 +986,7 @@ private theorem tendsto_bwdGood_density (L : ℕ) :
   exact tendsto_count_div_of_periodic_blocks P hMpos hblock
 
 open Classical in
-private theorem tendsto_fwdWindowSurvivor_density (L : ℕ) :
+theorem tendsto_fwdWindowSurvivor_density (L : ℕ) :
     Filter.Tendsto
       (fun X : ℕ =>
         (((Finset.range X).filter fun n : ℕ => FwdWindowSurvivor L n).card : ℝ) / X)
@@ -1001,7 +1001,7 @@ private theorem tendsto_fwdWindowSurvivor_density (L : ℕ) :
   simpa only [Nat.count_eq_card_filter_range] using h
 
 open Classical in
-private theorem tendsto_bwdWindowSurvivor_density (L : ℕ) :
+theorem tendsto_bwdWindowSurvivor_density (L : ℕ) :
     Filter.Tendsto
       (fun X : ℕ =>
         (((Finset.range X).filter fun n : ℕ => BwdWindowSurvivor L n).card : ℝ) / X)
@@ -1025,7 +1025,7 @@ private theorem card_add_card_add_inter_le {α : Type*} [DecidableEq α]
   omega
 
 /-- A point surviving forever in both directions is precisely an orbit minimum. -/
-private theorem isOrbitMin_iff_survivors (n : ℤ) :
+theorem isOrbitMin_iff_survivors (n : ℤ) :
     IsOrbitMin n ↔ FwdSurvivor n ∧ BwdSurvivor n := by
   constructor
   · intro hn
