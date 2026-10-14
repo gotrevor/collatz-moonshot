@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalNearCycleRuns.Carry
+import CollatzMoonshot.AmusicalNearCycleRuns.Growth
 
 /-!
 # Run-bounded near-cycles (Theorem MR)
@@ -85,7 +85,14 @@ theorem nearCycleAt_linearForm {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤
 theorem nearCycleAt_numE_le {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p) :
     (numE p g : ℝ) ≤
       Real.logb 2 p * (Real.logb 2 3 ^ eRuns p g - 1) / (Real.logb 2 3 - 1) := by
-  sorry
+  have h2 : ∀ k ≤ g, 2 ≤ amusical^[k] (p : ℤ) := fun k hk => by
+    rcases Nat.eq_zero_or_pos k with rfl | hk0
+    · simp only [Function.iterate_zero, id_eq]; omega
+    · have := NearCycleRuns.nearCycleAt_big h k hk0 hk; omega
+  have := NearCycleRuns.cntE_le_of_runs (fun t => amusical^[t] (p : ℤ))
+    (NearCycleRuns.iterate_even_step _) (NearCycleRuns.iterate_odd_step _) h.1 h2
+  simp only [Function.iterate_zero, id_eq, Int.cast_natCast] at this
+  exact this
 
 /-- **Target (MR II, lower half).** -/
 theorem nearCycleAt_numE_ge {D p g : ℕ} (h : NearCycleAt D p g)
