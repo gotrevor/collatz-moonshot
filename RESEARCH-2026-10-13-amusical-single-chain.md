@@ -1099,3 +1099,38 @@ below `c`.  The answer is no.
     rungs have undershoot `≤ 512`.
   * Four statistical twins (one of them `U`) satisfy SQ, with 0 off-spectrum among about 10 500
     rungs each.  The Gaussian `H` has a degenerate spectrum.
+
+## 37. Near-cycles: a linear law, and survivors counted by near-cycles (2026-10-14, "ncnull" Opus agent, checked in part)
+
+Lean: `AmusicalNearCycleLaw.lean` (T1, T2, NCU and the LIN corollary; treadmill).  I checked NCU and
+T1–T2 by hand.  NC₀ (near-cycle starts have density 0) is **not** proved.  Agent odds that this moves
+(a): about 2%.
+
+* **T1 and T2 (PROVED).**  A near-cycle start satisfies the cycle equation with a defect,
+  `(3^g − 2^a) p = 2^a d − C_w` with `0 < d ≤ D`.  So each return time `g` carries finitely many
+  starts, and `NC_D` is finite exactly when its return times are bounded.  Lemma K forces
+  `3^g ≳ Y/D`.
+* **NCU (PROVED; strengthens NC′).**  With `N` orbits,
+  `#FS ∩ (Y, 2Y] ≤ N(1 + 2Y/D) + #(NC_D ∩ (Y, 2Y))`.
+  * On one orbit the block's survivors are `pred`-linked (P′).  A gap `≤ D` makes the lower end a
+    near-cycle start, and fewer than `Y/D` gaps exceed `D`.
+* **The linear law (Conjecture LIN, BELIEVED 85%).**  `NC_D` looks finite, with `#NC_D ≈ κ D`.
+  * `κ = E[1/(2^{M⁺} − 1)] ≈ 5.07`, where `M⁺` is the lowest positive level the log-height walk
+    reaches before it first goes `≤ 0`.
+  * Measured `#NC_D / D = 5.049, 5.066, 5.069` at `D = 2¹², 2¹⁴, 2¹⁶` (all `p < 2²⁶`).  The exact
+    model gives `κ ∈ [5.068, 5.079]`.
+  * A deep hunt in `[2²⁶, 2³²)` found 6 starts where the model predicts 4.4, all at return time 665.
+    Each excursion uses 1054 binary digits of a 31-bit start, so the model holds far past the
+    residue horizon.
+  * The backward map gives `κ_b ≈ 4.07`, matching its model.  Four twins give the same `κ`.
+  * **LB (PROVED):** `liminf #NC_D / D ≥ κ`, with per-depth constants matching the data to 4 digits.
+* **Consequence.**  Under LIN, NCU with `D ≈ √Y` makes `#FS ∩ (Y, 2Y] = O(√Y)` under finitely many
+  orbits.  So (a) ⇐ LIN ∧ (forward survivors are not `O(√Y)` per block).  The measured density is
+  `0.21`.  The second hypothesis is still Π₁ and Conway-hard, but its required size is now tiny.
+* **Collatz contrast (PROVED, given Terras).**  NC₀ is a theorem for the Collatz map.  It fails to
+  transfer to `U` at exactly one step: depth-`G` survivors keep density `p_f ≈ 0.21 > 0`.
+* **Gates.**
+  * Residue counting over words reaches only depths `g ≲ log₃ Y`, which Lemma K already empties.
+  * Tao-type 3-adic mixing (Tao 2019, Prop 1.14): `U`'s version holds exactly, but only inside the
+    horizon.  Tao gets past the horizon by repeating at ever smaller heights, which needs orbits
+    to drift down; `U` and `V` both drift up.
