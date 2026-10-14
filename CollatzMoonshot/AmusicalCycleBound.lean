@@ -6,6 +6,8 @@ Authors: Trevor Morris
 import CollatzMoonshot.Literature.AmusicalCycles
 import CollatzMoonshot.AmusicalEscape
 import CollatzMoonshot.AmusicalCycleBound.Step
+import CollatzMoonshot.AmusicalCycleBound.MinBound
+import CollatzMoonshot.AmusicalCycleBound.Orbit
 
 /-!
 # No new cycles of length at most 31866
@@ -199,14 +201,82 @@ minimal period.  Theorem A★ with `cycleMinBound` gives `n ≤ X`.  If `n ∈ {
 is known.  Otherwise the search contradicts `cycle_min_meet`. -/
 theorem noNewCycles_of_search {P X H : ℕ} (hPH : P ≤ 2 * H) (hX : CycleMinBoundHolds P X)
     (hS : CycleMinSearch X H) : AmusicalNoNewCyclesUpTo P := by
-  sorry
+  -- The positive case; negatives follow by `amusical_neg`.
+  have key : ∀ y : ℤ, 0 < y → ∀ p : ℕ, 1 ≤ p → p ≤ P → amusical^[p] y = y →
+      y ∈ knownCycleMembers := by
+    intro y hy0 p hp hpP hy
+    obtain ⟨n, ⟨jy, hjy⟩, ⟨jn, hjn⟩, hnp, hmin⟩ := exists_orbit_min (by omega : 0 < p) hy
+    have hn0 : 0 < n := hjn ▸ amusical_iterate_pos hy0 jn
+    have hnper : Function.IsPeriodicPt amusical p n := hnp
+    set Q := Function.minimalPeriod amusical n with hQ
+    have hQ0 : 0 < Q := hnper.minimalPeriod_pos (by omega)
+    have hQp : Q ≤ p := hnper.minimalPeriod_le (by omega)
+    have hQcyc : amusical^[Q] n = n := Function.isPeriodicPt_minimalPeriod amusical n
+    have hQper : ∀ j, 0 < j → j < Q → amusical^[j] n ≠ n := fun j hj0 hjQ =>
+      Function.not_isPeriodicPt_of_pos_of_lt_minimalPeriod (by omega) hjQ
+    have hQH : Q ≤ 2 * H := by omega
+    -- Theorem A★ bounds the minimum.
+    have hA := amusical_cycle_min_bound n n Q hQ0 hQcyc (by omega) (fun j _ => hmin j)
+    set e := ∑ j ∈ Finset.range Q, stepBits (amusical^[j] n) with he
+    have he2 : e ≤ 2 * Q := sum_stepBits_le n Q
+    have heQ : Q ≤ e := by rw [he, sum_stepBits_eq_add_filter_card]; omega
+    have hnat : n = ((n.toNat : ℕ) : ℤ) := (Int.toNat_of_nonneg hn0.le).symm
+    rw [hnat] at hA
+    have hQe : Q < e := by
+      by_contra hcon
+      have hEq : e = Q := by omega
+      have h1 := hA.1
+      rw [hEq, Nat.sub_self, pow_zero, pow_zero, mul_one, mul_one] at h1
+      have : (2 : ℤ) ^ Q < 3 ^ Q := pow_lt_pow_left₀ (by norm_num) (by norm_num) (by omega)
+      omega
+    have hle : n.toNat ≤ natMinBound Q e :=
+      le_natMinBound (by omega) (by omega) hA.1 hA.2
+    have hbound : cycleMinBound Q e ≤ X := hX Q e (by omega) (by omega) hQe he2
+    unfold cycleMinBound at hbound
+    rw [natAbs_two_pow_sub_three_pow] at hbound
+    have hnX : n ≤ X := by
+      have : n.toNat ≤ X := hle.trans hbound
+      omega
+    by_cases hknown : n ∈ ({1, 2, 4, 44} : Finset ℤ)
+    · have hnk : n ∈ knownCycleMembers := by
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hknown
+        rcases hknown with rfl | rfl | rfl | rfl <;> decide
+      exact hjy ▸ amusical_iterate_mem_knownCycleMembers hnk jy
+    · exfalso
+      obtain ⟨hmeet1, hmeet2⟩ := cycle_min_meet n H Q hQ0 hQH hQcyc hQper (fun j _ => hmin j)
+      have hinvper : Function.IsPeriodicPt amusicalInv Q n :=
+        amusicalInv_iterate_of_cycle hQcyc
+      have hinv : ∀ j, n ≤ amusicalInv^[j] n := by
+        intro j
+        rw [← hinvper.iterate_mod_apply]
+        rcases Nat.eq_zero_or_pos (j % Q) with h0 | h0
+        · rw [h0]; exact le_rfl
+        · exact (hmeet1 _ h0 (Nat.mod_lt _ hQ0)).2.le
+      rcases hS n (by omega) hnX hknown with ⟨j, -, -, hj | hj⟩ | ⟨hret, hmeet⟩
+      · exact absurd (hmin j) (not_le.mpr hj)
+      · exact absurd (hinv j) (not_le.mpr hj)
+      · by_cases hQH' : Q ≤ H
+        · exact hret Q hQ0 hQH' hQcyc
+        · have hm2 := hmeet2.resolve_left hQH'
+          exact hmeet (Q - H) (by omega) (by omega) hm2
+  intro y p hp hpP hy
+  rcases lt_trichotomy y 0 with hneg | rfl | hpos
+  · have h' : amusical^[p] (-y) = -y := by rw [amusical_iterate_neg, hy]
+    rw [abs_of_neg hneg]
+    exact key (-y) (by omega) p hp hpP h'
+  · decide
+  · rw [abs_of_pos hpos]
+    exact key y hpos p hp hpP hy
 
 /-- **Target (a kernel computation).**  `M(p, e) ≤ 167195612` for all `p ≤ 31866`.  Only the
 `e` with `3^p / 2 < 2^e < 2 · 3^p` need computing: otherwise `D ≥ max / 2` and `M(p, e) ≤ k ≤ p`.
 That leaves at most two `e` per `p`, about `6 · 10⁴` comparisons of ≤ 50000-bit numbers.
 ⚠️ Measure on `P = 665` (`X = 65707`) first, and stop at 4 GB. -/
 theorem cycleMinBound_31866 : CycleMinBoundHolds 31866 167195612 := by
-  sorry
+  intro p e hp hpP hpe he
+  unfold cycleMinBound
+  rw [natAbs_two_pow_sub_three_pow]
+  exact natMinBound_le_31866 p e hp hpP hpe he
 
 /-- **Proved modulo the search: Theorem 1.**  If the orbit-minimum search over `[1, 167195612]`
 with `H = 15933` is clean, there are no new cycles of length `≤ 31866`. -/
