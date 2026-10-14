@@ -529,3 +529,35 @@ orbit.
   * Weighted transversals `φ(x)/x`: alive, but weaker than `AtLeastLinearGrowth`.
 * Consistency check: `E[m · W(O_m)] = 19.98`, against `1/c = 20.09`.
 
+## 20. Late drops: the typicality wall pinned (2026-10-13, "survival" agent, checked)
+
+Lean: `AmusicalLateDrops.lean` (Proposition S′ is proved; Theorem LD, LD′, the calibration and the
+tilt identity are targets; reopen condition `AmusicalLateDropsSparse`).  Klamkin (a) is not
+settled.  The wall is now one count: the integers that survive past the residue horizon
+`T(X) ≈ log₃ X` and are undercut later.  Agent: under 1% toward settling (a).
+
+* **Constants** (agent's are paper proofs; I re-derived them in
+  `scripts/amusical/survival/consts_ren.py`, to 12 digits).
+  * `p_f = 0.210136239317` and `p_b = 0.236891833789`, with `p_f p_b = 0.04977956 = c`.
+  * Each equals `1/E[first strict ascent time]` (Feller XII.7).
+  * Tilt duality `E_b e^{−θY} = E_f e^{−(1−θ)X}`, so both directions share the rate
+    `ρ = 0.985597`.
+* **Numerics** (agent, all `x ∈ [16, 2³¹)`).
+  * FS `0.2101358`, BS `0.2368935`, minima `0.0497804`, all within `2·10⁻⁶` of the walk.
+  * Beyond the provable horizon (`L = 20–200`), integers match the walk's late drops to 0.5%.
+  * The twin `W_{3,1,2}` gives the same numbers.
+* **Theorem LD.**  Late droppers below `(c − η)X` infinitely often give (a).
+  * At the walk's rates it fires from depth `L = 23`, and at `K` times the walk's rates at a larger
+    depth (`L = 50` for `K = 2.65`, `L = 100` for `K = 10.7`).
+  * One-sided control fails: perfect forward typicality still needs backward survivors at
+    `≥ 79%` of `p_b`.
+* **U vs `τ`.**  Forward/backward window independence is proved; typicality beyond the horizon is
+  open.  `τ` has `U`'s windows but maximal late drops.
+* **New obstructions.**
+  * In `ℤ₂` the survival set's boundary is the whole set, so equidistribution gives only the upper
+    bound.
+  * `U` climbs in both time directions, so Tao-style renewal fails.
+  * The first-rise (Feller) route is killed by `τ`.
+* **Calibration.**  A positive lower density of *strict* survivors would already exhibit an
+  aperiodic orbit, which is open.
+

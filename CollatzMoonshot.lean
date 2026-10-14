@@ -129,6 +129,7 @@ import CollatzMoonshot.AmusicalPingPong
 import CollatzMoonshot.AmusicalUniform
 import CollatzMoonshot.AmusicalCycleBound
 import CollatzMoonshot.AmusicalFormalMin
+import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
