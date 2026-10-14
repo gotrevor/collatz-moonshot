@@ -370,6 +370,59 @@ private theorem orphan_forbids_surjective_reversor
   rw [hs0, hs1, hs2, hit] at hj
   exact hj rfl
 
+private theorem reversor_iterate_forward {ι : ℤ → ℤ} (hrev : IsAmusicalReversor ι) :
+    ∀ k n, ι (amusical^[k] n) = amusicalInv^[k] (ι n) := by
+  intro k
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      intro n
+      rw [Function.iterate_succ_apply', hrev, ih]
+      exact (Function.iterate_succ_apply' _ k _).symm
+
+private theorem reversor_iterate_backward {ι : ℤ → ℤ} (hrev : IsAmusicalReversor ι) :
+    ∀ k n, ι (amusicalInv^[k] n) = amusical^[k] (ι n) := by
+  have hback (n : ℤ) : ι (amusicalInv n) = amusical (ι n) := by
+    calc
+      ι (amusicalInv n) = amusical (amusicalInv (ι (amusicalInv n))) :=
+        (amusical_amusicalInv _).symm
+      _ = amusical (ι (amusical (amusicalInv n))) := by rw [hrev]
+      _ = amusical (ι n) := by rw [amusical_amusicalInv]
+  intro k
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      intro n
+      rw [Function.iterate_succ_apply', hback, ih]
+      exact (Function.iterate_succ_apply' _ k _).symm
+
+private def HasExactAmusicalPeriod (p : ℕ) (n : ℤ) : Prop :=
+  amusical^[p] n = n ∧ ∀ q, 1 ≤ q → q < p → amusical^[q] n ≠ n
+
+private theorem reversor_preserves_exact_period {ι : ℤ → ℤ}
+    (hrev : IsAmusicalReversor ι) (hinj : Function.Injective ι) {p : ℕ} {n : ℤ}
+    (hn : HasExactAmusicalPeriod p n) : HasExactAmusicalPeriod p (ι n) := by
+  constructor
+  · have hv : amusicalInv^[p] (ι n) = ι n := by
+      rw [← reversor_iterate_forward hrev, hn.1]
+    calc
+      amusical^[p] (ι n) = amusical^[p] (amusicalInv^[p] (ι n)) := by rw [hv]
+      _ = ι n := Function.LeftInverse.iterate amusical_amusicalInv p (ι n)
+  · intro q hq hqp hi
+    apply hn.2 q hq hqp
+    apply hinj
+    rw [reversor_iterate_forward hrev]
+    have := congrArg (amusicalInv^[q]) hi
+    rw [Function.LeftInverse.iterate amusicalInv_amusical q (ι n)] at this
+    exact this.symm
+
+private theorem reversor_image_mem_exactPeriodCandidates {ι : ℤ → ℤ}
+    (hrev : IsAmusicalReversor ι) (hinj : Function.Injective ι) {p : ℕ} {n : ℤ}
+    (hp : 1 ≤ p) (hp12 : p ≤ 12) (hn : HasExactAmusicalPeriod p n) :
+    |ι n| ∈ knownCycleMembers ∧ HasExactAmusicalPeriod p (ι n) := by
+  have himage := reversor_preserves_exact_period hrev hinj hn
+  exact ⟨amusical_periodic_mem (ι n) p hp hp12 himage.1, himage⟩
+
 /-- **Target (Theorem W3).**  No bijective reversor of `U` has `stepSym (ι n)` determined by
 `stepSym (U⁻¹ n)`, `stepSym n`, `stepSym (U n)`.  Paper proof: module docstring and
 `KICKOFF-2026-10-13-amusical-w3.md`. -/

@@ -1,5 +1,35 @@
 # HANDOFF: window-3 reversors (2026-10-13)
 
+## Update 2026-10-14: exact-period cycle transport proved
+
+- Added both iterate directions of the reversor identity:
+  `reversor_iterate_forward` and `reversor_iterate_backward`.
+- Defined `HasExactAmusicalPeriod` and proved `reversor_preserves_exact_period`: injective
+  reversors preserve the least positive period, not merely periodicity.
+- Combined that result with `amusical_periodic_mem` in
+  `reversor_image_mem_exactPeriodCandidates`.  Thus every source representative of period
+  `p <= 12` maps to a signed known-cycle point of exact period `p`.  This supplies the missing
+  dynamical-to-finite interface needed to parameterize the final check by the four independent
+  cycle-length groups (`6 * 8 * 50 * 288` assignments), rather than arbitrary integer images.
+
+Verification:
+
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-w3 --target
+  CollatzMoonshot.AmusicalWindowThree` passes (8714 jobs; `FORMALIZE-TIER GREEN`).
+- `awk 'length($0) > 100 { print NR ":" length($0) ":" $0 }'
+  CollatzMoonshot/AmusicalWindowThree.lean` has no output.
+- `git diff --check` passes.
+
+Current blocker: the sole scoped `sorry` remains `no_window3_bijective_reversor`.  It is now a
+finite certificate integration problem: encode the period-preserving cycle assignments, prove
+their 25 forced window values are one of the 24 supplied partial rules, and check the nine
+completions of each rule against its supplied orphan.
+
+Next attack: define compact assignment codes `Fin 6`, `Fin 8`, `Fin 50`, and `Fin 288` for the
+period `1`, `2`, `5`, and `12` cycle groups.  Reconstruct all cycle images with
+`reversor_iterate_forward`, kernel-check the 24-rule/orphan table, then invoke
+`orphan_forbids_surjective_reversor`.
+
 ## Update 2026-10-14: orphan-to-surjectivity bridge proved
 
 - Added the decidable `IsWindowThreeOrphan` predicate with exactly the certificate convention in
