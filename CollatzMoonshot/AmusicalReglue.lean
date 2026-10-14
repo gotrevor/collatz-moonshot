@@ -6,8 +6,7 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalRewireRatio.Restriction
 import CollatzMoonshot.AmusicalReglue.BackwardStep
-import CollatzMoonshot.AmusicalReglue.Segments
-import CollatzMoonshot.AmusicalReglue.WordOrder
+import CollatzMoonshot.AmusicalReglue.General
 
 /-!
 # Sparse regluing makes forward survivors arbitrarily sparse (Theorem Π)
@@ -47,6 +46,23 @@ def PermPeriodic (f : Equiv.Perm ℕ) (x : ℕ) : Prop := ∃ k ≥ 1, (⇑f)^[k
 def nChanged (π f : Equiv.Perm ℕ) (X : ℕ) : ℕ :=
   ((Finset.range X).filter fun x => π x ≠ f x ∨ π.symm x ≠ f.symm x).card
 
+/-- A non-periodic point has an infinite orbit. -/
+theorem infinite_orbit_of_not_periodic {f : Equiv.Perm ℕ} {x : ℕ} (hx : ¬ PermPeriodic f x) :
+    (Set.range fun j : ℤ => (f ^ j) x).Infinite := by
+  have key (i j : ℤ) (hlt : i < j) (hij : (f ^ i) x = (f ^ j) x) : False := by
+    apply hx
+    refine ⟨(j - i).toNat, by omega, ?_⟩
+    have : (f ^ ((j - i).toNat : ℤ)) x = x := by
+      rw [Int.toNat_of_nonneg (by omega), show j - i = -i + j by ring, zpow_add,
+        Equiv.Perm.mul_apply, ← hij, ← Equiv.Perm.mul_apply, ← zpow_add]
+      simp
+    rwa [zpow_natCast, Equiv.Perm.coe_pow] at this
+  refine Set.infinite_range_of_injective fun i j hij => ?_
+  rcases lt_trichotomy i j with h | h | h
+  · exact (key i j h hij).elim
+  · exact h
+  · exact (key j i h hij.symm).elim
+
 open Classical in
 /-- **Target (Theorem Π).**  Sparse regluing to one infinite orbit with arbitrarily sparse forward
 survivors. -/
@@ -57,7 +73,14 @@ theorem exists_reglue_sparseFS (f : Equiv.Perm ℕ) (hcyc : {x | PermPeriodic f 
       (∀ x, PermPeriodic f x → π x = f x) ∧
       (∀ x y, ¬ PermPeriodic f x → ¬ PermPeriodic f y → π.SameCycle x y) ∧
       (∀ᶠ X in .atTop, ((Finset.range X).filter (PermFwdSurvivor π)).card ≤ G X) := by
-  sorry
+  have hglue (x : ℕ) (hx : ¬ PermPeriodic f x) : GluePt f Set.univ x :=
+    ⟨infinite_orbit_of_not_periodic hx, fun K => ⟨K, le_rfl, trivial⟩,
+      fun K => ⟨K, le_rfl, trivial⟩⟩
+  have hsp : {y | GluePt f Set.univ y ∧ y ∈ Set.univ ∧ f.symm y ∈ Set.univ}.Infinite :=
+    hcyc.infinite_compl.mono fun y hy => ⟨hglue y hy, trivial, trivial⟩
+  obtain ⟨π, -, hchg, hper, hsame, hsurv⟩ :=
+    exists_reglue_of_gluable f Set.univ hcyc hglue hsp F G hF hG
+  exact ⟨π, Filter.Eventually.of_forall hchg, hper, hsame, hsurv⟩
 
 open Classical in
 /-- **Target (Π′).**  For the amusical map all cuts can be odd, so the even branch is kept. -/
@@ -69,7 +92,45 @@ theorem exists_reglue_sparseFS_amusical (hcyc : {x | PermPeriodic amusicalNatPer
       (∀ x y, ¬ PermPeriodic amusicalNatPerm x → ¬ PermPeriodic amusicalNatPerm y →
         π.SameCycle x y) ∧
       (∀ᶠ X in .atTop, ((Finset.range X).filter (PermFwdSurvivor π)).card ≤ G X) := by
-  sorry
+  set σ := amusicalNatPerm
+  have hglue (x : ℕ) (hx : ¬ PermPeriodic σ x) : GluePt σ {n | Odd n} x :=
+    gluePt_odd_of_infinite (infinite_orbit_of_not_periodic hx)
+  have hsp : {y | GluePt σ {n | Odd n} y ∧ y ∈ {n | Odd n} ∧
+      σ.symm y ∈ {n | Odd n}}.Infinite := by
+    have h6 : {y : ℕ | y % 6 = 1}.Infinite :=
+      (Set.infinite_range_of_injective (f := fun n : ℕ => 6 * n + 1) fun a b h => by
+        simp only at h; omega).mono (by rintro _ ⟨n, rfl⟩; simp only [Set.mem_ofPred_eq]; omega)
+    refine (h6.sdiff hcyc).mono fun y hy => ?_
+    have hy6 : y % 6 = 1 := hy.1
+    refine ⟨hglue y hy.2, ?_, ?_⟩
+    · exact Nat.odd_iff.2 (by omega)
+    · refine Nat.odd_iff.2 ?_
+      have h : ((σ.symm y : ℕ) : ℤ) = amusicalInv y := amusicalNatPerm_symm_apply_cast y
+      unfold amusicalInv at h
+      split_ifs at h <;> omega
+  obtain ⟨π, hS, hchg, hper, hsame, hsurv⟩ :=
+    exists_reglue_of_gluable σ {n | Odd n} hcyc hglue hsp F G hF hG
+  refine ⟨π, fun m => ?_, Filter.Eventually.of_forall hchg, hper, hsame, hsurv⟩
+  by_cases h : π (2 * m) = σ (2 * m)
+  · apply Nat.cast_injective (R := ℤ)
+    rw [h, amusicalNatPerm_apply_cast]
+    push_cast
+    exact amusical_two_mul m
+  · exact absurd (hS _ h) (by simp)
+
+/-- **Proved (why Π′ uses singleton spine pieces).**  If `π (2m) = 3m` for all `m`, a forward
+survivor `3k` makes `2k` a survivor.  So every survivor `m` brings `v₃(m) + 1` survivors below it,
+and an `E`-run spine piece `2ᵃr, …, 3ᵃr` survives whole.  That kills the paper route's bound
+`Σ_{s_b < X} (log₂ X + 1)` for slowly growing `G`.  The proof instead takes the spine at
+non-periodic `y ≡ 1 (mod 6)`: `y` and `U⁻¹ y` are both odd, so `{y}` is a singleton piece with
+odd cuts. -/
+theorem permFwdSurvivor_two_mul {π : Equiv.Perm ℕ} (h2 : ∀ m, π (2 * m) = 3 * m) {k : ℕ}
+    (hk : PermFwdSurvivor π (3 * k)) : PermFwdSurvivor π (2 * k) := by
+  intro t
+  rcases t with _ | s
+  · exact le_rfl
+  · rw [Function.iterate_succ_apply, h2]
+    exact le_trans (by omega) (hk s)
 
 /-- The bits consumed by the first `i` backward steps: `1` at a multiple of `3`, else `2`. -/
 def bwdWeight (m i : ℕ) : ℕ :=
