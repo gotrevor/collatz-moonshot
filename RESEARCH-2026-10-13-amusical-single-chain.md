@@ -1035,7 +1035,8 @@ hand.  No explicit ray is settled.
 
 ## 35. The ladder is quantized; near-cycle sparsity drops the threshold to 0 (2026-10-14, "fsfloor" Opus agent, checked)
 
-Lean: `AmusicalNearCycle.lean` (SQ, Sep3 mirror, NC′; treadmill).  I checked SQ and NC by hand.
+Lean: `AmusicalNearCycle.lean` (SQ, Sep3 mirror, NC′), proved and axiom-clean (treadmill).  I
+checked SQ and NC by hand.
 No unconditional floor above `c` was found; agent odds that this moves (a): about 3%.
 
 * **Theorem V (PROVED): renormalization is empty.**  Under finitely many orbits, every staircase
@@ -1050,8 +1051,9 @@ No unconditional floor above `c` was found; agent odds that this moves (a): abou
     `{g : {gθ} ≤ θ − 1} = {1, 2, 4, 6, 7, 9, 11, 12, …}`.  Backward-survivor depths lie in the
     complement `{1, 3, 5, 8, 10, 13, …}`.  The two sets share only `g = 1`.
   * Checked on all of `[1, 2²³)`: `2.9 · 10⁶` cases, 0 off-spectrum, and two false variants fire.
-  * **`τ` and `τ_odd` break SQ** on 35–43% of their rungs, where Lemma K never caught them.  This is
-    the first U-specific property seen to separate them at the level of individual rungs.
+  * `τ` and `τ_odd` break SQ on 35–43% of their rungs, where Lemma K never caught them.  **But SQ
+    is not U-specific (§36):** it holds on every real `Û`-orbit, including the one-orbit masquerade.
+    `τ` breaks it only because its glue arrows are not `Û`-arrows.
 * **`τ` splits the ceiling.**  `BS_τ ≈ 0` and `FS_τ = c`.  So no inequality between `d(FS)` and
   `d(BS)` can come from window statistics, Lemma K or the even branch.
 * **Theorem BK (PROVED, with Rhin's bound as a hypothesis Prop).**  Under finitely many orbits,
@@ -1067,3 +1069,33 @@ No unconditional floor above `c` was found; agent odds that this moves (a): abou
     return times are exactly the SQ depths (12, 53, 359).
   * The remaining wall, `d_upper(FS) > 0`, is threshold-free but still Conway-hard: one unit of it
     already exhibits an infinite orbit.
+
+## 36. SQ is a property of `Û`, so rung constraints cannot lower the ceiling (2026-10-14, "sqceiling" Opus agent, checked)
+
+Maze row "rung constraints lower the survivor ceiling below `c`".  Agent odds that this moves (a):
+under 1%.  The question was whether SQ (§35) forces the finite-orbit forward-survivor ceiling
+below `c`.  The answer is no.
+
+* **Transfer (PROVED; I checked it).**  SQ's proof uses only the real affine branches
+  `x ↦ (3x + e)/2^d` and the ladder's order.  So SQ and its mirror hold on every real `Û`-orbit, with
+  the integer proofs unchanged.  So do the quantized Kraft sum, BK, P′, Lemma K, Sep3 and NC.
+* **The masquerade satisfies SQ.**  §25's masquerade is one real `Û`-orbit with FS density `≈ c`.
+  SQ holds on 161 of its 161 rungs, with `a = ⌊gθ⌋` exactly and median depth 31 980.
+  * `τ` breaks SQ only because its glue arrows are not `Û`-arrows (`τ/U ∈ [1/3, 3]`).  That shifts
+    `{gθ}`, and has nothing to do with `τ` having one chain.
+  * **Correction to §35:** SQ does not separate `U` from single-orbit models.  The no-go test for
+    rung properties should use the masquerade, not `τ`.
+* **Sharpness (PROVED, resting on q1sharp's C3‴, 85%).**  Over finitely many real `Û`-orbits with
+  lattice window statistics, the largest possible FS density is exactly `c`.  So no combination of
+  rung constraints lowers the ceiling.
+  * Kraft is an identity along each ladder.  Window minima are close together: 99.9% of `W₂₄`
+    points have another within 80 below.
+* **What could lower it.**  Only diagonal, integer-specific inputs: near-cycle sparsity (NC₀, §35),
+  late-drop rarity, or FS typicality.  Each is Π₁ or Σ₁ in kind.
+* **Smaller results.**
+  * **UF (PROVED, no Lemma K).**  Under finitely many orbits, almost every forward survivor has a
+    bounded backward undershoot `n − pred(n)`.  As a route to (a) it is weaker than BK.
+  * **Q (PROVED).**  `U`'s relative undershoot clusters at `1 − 2^⌊gθ⌋/3^g`.  At `2²⁰`, 0 of 42 170
+    rungs have undershoot `≤ 512`.
+  * Four statistical twins (one of them `U`) satisfy SQ, with 0 off-spectrum among about 10 500
+    rungs each.  The Gaussian `H` has a degenerate spectrum.
