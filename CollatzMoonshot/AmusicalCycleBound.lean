@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.Literature.AmusicalCycles
 import CollatzMoonshot.AmusicalEscape
+import CollatzMoonshot.AmusicalCycleBound.Step
 
 /-!
 # No new cycles of length at most 31866

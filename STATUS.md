@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical cycle-product infrastructure:** the exact cleared step identity,
+> defect classification (`0` on even steps and `±1` on odd steps), odd-step count, telescoping
+> orbit-product reindexing, and full cyclic product identity are now proved in
+> `AmusicalCycleBound/Step.lean`. This supplies the algebraic backbone of Theorem A-star; its two
+> odd-factor product inequalities remain. Read `HANDOFF-amusical-cycles.md`.
+
 > **2026-10-14, amusical cycle structure:** `cycle_min_meet` and `cycle_min_mod_six` are now
 > proved with their ratified statements unchanged.  Backward cycle positions are complementary
 > forward iterates via integer powers of `amusicalPerm`; cycle minimality then excludes residues
