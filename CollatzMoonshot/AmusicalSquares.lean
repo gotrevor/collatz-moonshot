@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.Amusical
+import CollatzMoonshot.AmusicalSquares.Cylinder
 
 /-!
 # Square visits, prefix roots, and automatic invariants (the "newroutes-astra" lap)
@@ -65,14 +65,24 @@ theorem prefixRoot_eq_iff (w : List (Fin 3)) {i j : ℕ} (hij : i < j) (hj : j �
 canonical class `2^a n + s`. -/
 theorem amusicalInv_iterate_cylinder (k : ℕ) (r : ℤ) (hr0 : 0 ≤ r) (hr : r < 3 ^ k) :
     ∃ a : ℕ, ∃ s : ℤ, k ≤ a ∧ a ≤ 2 * k ∧ 0 ≤ s ∧ s < 2 ^ a ∧
-      ∀ n : ℤ, amusicalInv^[k] (3 ^ k * n + r) = 2 ^ a * n + s := by
-  sorry
+      ∀ n : ℤ, amusicalInv^[k] (3 ^ k * n + r) = 2 ^ a * n + s :=
+  amusicalInv_iterate_cylinder_aux k r hr0 hr
 
 /-- **Target (AUT core).**  The `3^m`-kernel of a `U^m`-invariant colouring lies in its
 `2`-kernel. -/
 theorem invariant_kernel_three_pow {α : Type*} (f : ℤ → α) (m : ℕ)
     (hf : ∀ n, f (amusical^[m] n) = f n) (k : ℕ) (r : ℤ) (hr0 : 0 ≤ r) (hr : r < 3 ^ (m * k)) :
     ∃ a : ℕ, ∃ s : ℤ, 0 ≤ s ∧ s < 2 ^ a ∧ ∀ n : ℤ, f (3 ^ (m * k) * n + r) = f (2 ^ a * n + s) := by
-  sorry
+  have hV : ∀ x, f (amusicalInv^[m] x) = f x := fun x => by
+    rw [← hf, (Function.LeftInverse.iterate amusical_amusicalInv m) x]
+  have hVk : ∀ x, f (amusicalInv^[m * k] x) = f x := by
+    intro x
+    rw [Function.iterate_mul]
+    clear hr
+    induction k with
+    | zero => rfl
+    | succ k ih => rw [Function.iterate_succ_apply', hV, ih]
+  obtain ⟨a, s, -, -, hs0, hsa, hcyl⟩ := amusicalInv_iterate_cylinder (m * k) r hr0 hr
+  exact ⟨a, s, hs0, hsa, fun n => by rw [← hVk, hcyl]⟩
 
 end CollatzMoonshot.Amusical
