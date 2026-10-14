@@ -1265,8 +1265,10 @@ Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many su
   order, §31) give dense FS (37 718 below `2²⁰`) and dense near-cycles; in decreasing order FS is
   the 5 spine points and near-cycle counts look linear in `D` (`NC_256`: 1 786 against `U`'s
   1 275), stable as the cut height rises.
-* **Conjecture Π-LIN (70%).**  `π` in decreasing order inherits LIN.  (§43: the forward half holds as measured; the backward half fails, and the repaired `π_β` is the right foil.)  Then "LIN ⇒ (a)" has no proof
+* **Conjecture Π-LIN (70%).**  `π` in decreasing order inherits LIN.  Then "LIN ⇒ (a)" has no proof
   from LIN plus sparse-robust properties: what remains is `U`'s exactness along entire tails.
+  (§43: the forward half holds as measured; the backward half fails, and the repaired `π_β` is the
+  right foil.)
 * **Conjecture M (60%).**  §25's Steering Lemma realizes the decreasing order with real `Û`-arrows,
   giving one real `Û`-orbit with SQ on every rung and FS density 0.  Then integrality (T1/T2) is the
   only input left.
