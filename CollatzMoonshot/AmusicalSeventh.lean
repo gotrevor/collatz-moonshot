@@ -93,8 +93,8 @@ of `n` sits within `K` steps (Lemma T, Chernoff over residues); that minimum is 
 theorem sparse_sweep : ∀ η : ℝ, 0 < η → ∃ c : ℝ, 0 < c ∧ ∃ X₀ : ℕ, ∀ X ≥ X₀, ∀ x : ℤ,
     (amusicalOrbit x).Infinite →
     (((Finset.Icc (-⌊c * X * Real.log X⌋) ⌊c * X * Real.log X⌋).filter
-        fun j => 0 ≤ (amusicalPerm ^ j) x ∧ (amusicalPerm ^ j) x < X).card : ℝ) ≤ η * X := by
-  sorry
+        fun j => 0 ≤ (amusicalPerm ^ j) x ∧ (amusicalPerm ^ j) x < X).card : ℝ) ≤ η * X :=
+  sparse_sweep_assembled
 
 /-- **Target (residue transitivity).**  No nontrivial union of residue classes mod `M` is mapped
 onto itself by `Uᵐ`, for any `m ≥ 1`.  Paper proof: the residue graph of `Uᵐ` mod `M` is strongly
