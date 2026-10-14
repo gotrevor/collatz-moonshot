@@ -44,6 +44,7 @@ import CollatzMoonshot.AmusicalDeform
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalNearCycle
 import CollatzMoonshot.AmusicalNearCycleLaw
+import CollatzMoonshot.AmusicalReglue
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -308,7 +309,11 @@ def register : List Hall := [
    "AmusicalUnit.lean; agent report ringunit.md (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: deformation Û + c, carried to the degenerate point c = 0", .refuted,
    "U + 6^N agrees with U for ~N steps yet roots every point of [0, 6^N) on its own infinite orbit",
-   "AmusicalDeform.lean; agent report deform.md (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalDeform.lean; agent report deform.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: arithmetic of basins (2-/3-adic measure, congruences) forces many survivors",
+   .siblingTransfer,
+   "sparse odd regluing of U keeps the even branch and windows, one orbit, survivors as sparse",
+   "AmusicalReglue.lean; agent report fsarith.md (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -469,7 +474,10 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.AmusicalSharedSkeleton]⟩,
   ⟨"amusical: deformation Û + c, carried to the degenerate point c = 0",
    [``CollatzMoonshot.Amusical.amusical_add_roots_distinct,
-    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩]
+    ``CollatzMoonshot.Amusical.amusical_no_crossing], []⟩,
+  ⟨"amusical: arithmetic of basins (2-/3-adic measure, congruences) forces many survivors",
+   [``CollatzMoonshot.Amusical.exists_reglue_sparseFS,
+    ``CollatzMoonshot.Amusical.exists_reglue_sparseFS_amusical], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -482,7 +490,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 57 rows, 49 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 58 rows, 50 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
