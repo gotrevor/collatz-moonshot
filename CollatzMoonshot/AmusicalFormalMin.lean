@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFormalMin.Bookkeeping
+import CollatzMoonshot.AmusicalFormalMin.TwoVisit
 
 /-!
 # Empty-interior certificates: the formal-minimum transversal and the resolution gate
@@ -34,7 +35,7 @@ and (agent, G2′) transversals defined by residues mod `M(s) ≤ 2^{s/(10(K+1))
 Paper proofs: agent report `emptyint.md` §3–§4, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §19.  I hand-checked Theorem F.  I checked
 `U¹² 31 = 30` numerically.  Theorem F kernel-checked 2026-10-13 (Codex draft, fixed by Ren on the
-host); Proposition G1 is the remaining target.
+host); Proposition G1 kernel-checked 2026-10-14 (`AmusicalFormalMin/TwoVisit.lean`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -145,20 +146,74 @@ theorem formal_walk_disagrees :
     amusical^[12] 31 = 30 ∧ kFwd 31 12 = 19 ∧ (2 : ℕ) ^ 19 < 3 ^ 12 := by
   decide
 
-/-- **Target (Proposition G1).**  If some orbit is infinite, a height `F(x mod M, ⌊log₂ x⌋)` on
-the positive integers whose cocycle along orbits is bounded by `C` is bounded.  Paper proof
-(`emptyint.md` §4): (1) *two-visit lemma*: for large `s` and residues `r, r'` there are `x ≡ r`,
-`Uʲ x ≡ r'`, both in `[2ˢ, 2ˢ⁺¹)`.  Prescribe the residue via marker words, steer mod the
-prime-to-6 part by transitivity of the affine maps, and balance the net slope into
-`[2^{−1/4}, 2^{1/4}]` with a word acting trivially mod `M`, using `log(3/2)/log(4/3) ∉ ℚ`.
-(2) An infinite orbit is unbounded both ways (Lemma E), with consecutive ratios `≤ 3/2 < 2`,
-so it visits every large block.  (3) Chain these: oscillation `≤ 3C` at large scales. -/
+/-- **Proved (Proposition G1).**  If some orbit is infinite, a height `F(x mod M, ⌊log₂ x⌋)` on
+the positive integers whose cocycle along orbits is bounded by `C` is bounded.  Proof:
+(1) *two-visit lemma* (`TwoVisit.exists_two_visit`): for large `s` and residues `r, r'` there
+are `x ≡ r`, `Uʲ x ≡ r'`, both in `[2ˢ, 2ˢ⁺¹)`.  Marker words fix the residue mod `2^a 3^b`, a
+fixed-shape connector steers the prime-to-`6` part, and a minimal run of even steps puts the
+slope in `[1, 3/2)`, so no irrationality input is needed.
+(2) A positive aperiodic orbit visits every block above its start
+(`TwoVisit.orbit_visits_block`), since a step from below `2ˢ` stays below `2ˢ⁺¹`.
+(3) Chain these: `|F| ≤ |F(x₀)| + 2C` at large scales, and finitely many values below. -/
 theorem coarse_quasiInvariant_bounded (M : ℕ) [NeZero M] (F : ZMod M → ℕ → ℝ) (C : ℝ)
     (hq : ∀ (x : ℤ) (j : ℕ), 1 ≤ x →
       |F (amusical^[j] x : ZMod M) (Nat.log 2 (amusical^[j] x).toNat) -
         F (x : ZMod M) (Nat.log 2 x.toNat)| ≤ C)
     (hinf : ∃ x : ℤ, ∀ p : ℕ, 0 < p → amusical^[p] x ≠ x) :
     ∃ B : ℝ, ∀ x : ℤ, 1 ≤ x → |F (x : ZMod M) (Nat.log 2 x.toNat)| ≤ B := by
-  sorry
+  obtain ⟨x₀, hx₀, hap⟩ := TwoVisit.exists_pos_aperiodic hinf
+  obtain ⟨S, hS⟩ := TwoVisit.two_visit_uniform M
+  have hlog : ∀ (y : ℤ) (s : ℕ), 2 ^ s ≤ y → y < 2 ^ (s + 1) → Nat.log 2 y.toNat = s := by
+    intro y s h1 h2
+    have hy : ((y.toNat : ℕ) : ℤ) = y :=
+      Int.toNat_of_nonneg (le_trans (by positivity) h1)
+    apply Nat.log_eq_of_pow_le_of_lt_pow
+    · exact_mod_cast (hy ▸ h1 : (2 : ℤ) ^ s ≤ (y.toNat : ℤ))
+    · exact_mod_cast (hy ▸ h2 : (y.toNat : ℤ) < 2 ^ (s + 1))
+  have hblock : ∀ y : ℤ, 1 ≤ y →
+      2 ^ Nat.log 2 y.toNat ≤ y ∧ y < 2 ^ (Nat.log 2 y.toNat + 1) := by
+    intro y hy
+    have hy' : ((y.toNat : ℕ) : ℤ) = y := Int.toNat_of_nonneg (by omega)
+    have hne : y.toNat ≠ 0 := by omega
+    constructor
+    · have := Nat.pow_log_le_self 2 hne
+      rw [← hy']
+      exact_mod_cast this
+    · have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) y.toNat
+      rw [← hy']
+      exact_mod_cast this
+  set S' := max S (Nat.log 2 x₀.toNat + 1) with hS'
+  set A := |F (x₀ : ZMod M) (Nat.log 2 x₀.toNat)| with hA
+  set T := ∑ ρ : ZMod M, ∑ s ∈ Finset.range S', |F ρ s| with hT
+  refine ⟨max (A + 2 * C) T, fun x hx => ?_⟩
+  set s := Nat.log 2 x.toNat with hs_def
+  by_cases hs : S' ≤ s
+  · obtain ⟨hxlo, hxhi⟩ := hblock x hx
+    have hx₀s : x₀ < 2 ^ s := by
+      have h1 := (hblock x₀ (by omega)).2
+      have h2 : (2 : ℤ) ^ (Nat.log 2 x₀.toNat + 1) ≤ 2 ^ s :=
+        pow_le_pow_right₀ (by norm_num) (le_trans (le_max_right _ _) hs)
+      linarith
+    obtain ⟨j₀, hj₀lo, hj₀hi⟩ := TwoVisit.orbit_visits_block hx₀ hap s hx₀s
+    obtain ⟨y, j, h1, h2, h3, h4, h5, h6⟩ :=
+      hS s (le_trans (le_max_left _ _) hs) (x : ZMod M) (amusical^[j₀] x₀ : ZMod M)
+    have hy1 : 1 ≤ y := le_trans (one_le_pow₀ (by norm_num)) h1
+    have e1 := hq x₀ j₀ (by omega)
+    have e2 := hq y j hy1
+    rw [hlog _ _ hj₀lo hj₀hi] at e1
+    rw [hlog _ _ h3 h4, hlog _ _ h1 h2, h5, h6] at e2
+    apply le_max_of_le_left
+    have hA' := abs_le.mp (le_refl A)
+    rw [hA] at hA'
+    rw [abs_le] at e1 e2 ⊢
+    constructor <;> linarith [hA'.1, hA'.2, e1.1, e1.2, e2.1, e2.2]
+  · apply le_max_of_le_right
+    have hsm : s ∈ Finset.range S' := Finset.mem_range.mpr (by omega)
+    calc
+      |F (x : ZMod M) s| ≤ ∑ s' ∈ Finset.range S', |F (x : ZMod M) s'| :=
+        Finset.single_le_sum (fun i _ => abs_nonneg (F (x : ZMod M) i)) hsm
+      _ ≤ T :=
+        Finset.single_le_sum (f := fun ρ => ∑ s' ∈ Finset.range S', |F ρ s'|)
+          (fun i _ => Finset.sum_nonneg (fun _ _ => abs_nonneg _)) (Finset.mem_univ _)
 
 end CollatzMoonshot.Amusical
