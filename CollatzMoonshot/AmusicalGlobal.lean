@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalWindow
 import CollatzMoonshot.AmusicalWindowThree
+import CollatzMoonshot.AmusicalGlobal.WindowTwo
 
 /-!
 # Global mechanisms for a seventh orbit, and why the cheap ones fail
@@ -15,8 +16,9 @@ name against the rewired `U` of `AmusicalRewireRatio.lean` (same values except a
 points below `N`, with bounded ratio, and one infinite orbit).  This file holds the pieces that
 are theorems.
 
-* **Kohl's mirror (Lemma K).**  `|x| ≤ 4^ℓ (|Uˡ x − x| + 1)`, because the slope of `Uˡ` on each
-  cylinder is `3ˡ/2^B ≠ 1` (`abs_le_four_pow_mul_iterate_sub`).  So `Uˡ x = x + d` has finitely
+* **Kohl's mirror (Lemma K).**  `|x| ≤ 4^ℓ (|Uˡ x − x| + 1)`, because the slope of `Uˡ` on
+  each cylinder is `3ˡ/2^B ≠ 1` (`abs_le_four_pow_mul_iterate_sub`).
+  So `Uˡ x = x + d` has finitely
   many solutions (`amusical_iterate_eq_add_finite`): `U` has no translation piece, which is the
   ingredient of Kohl's one-orbit permutation `ω`.  The absence does not bite: the rewired `U`
   satisfies the same time separation.
@@ -179,7 +181,8 @@ theorem amusical_iterate_eq_add_finite (ℓ : ℕ) (hℓ : 1 ≤ ℓ) (d : ℤ) 
 forward iterates visit the class at least `K + 1` times, so no eventually periodic infinite set
 meets every orbit boundedly often.  Paper proof: write `M = 2^a 3^b M₀` with `gcd(M₀, 6) = 1`;
 `Uⁱ x mod 2^a` is fixed by the next `a` symbols, `Uⁱ x mod 3^b` by the previous `b`, and the
-branch maps act transitively on `ℤ/M₀` (`g_A⁻¹ g_B` is translation by `−2/3`).  Build a word
+branch maps act transitively on `ℤ/M₀` (`g_A⁻¹ g_B` is translation by `−2/3`).
+Build a word
 `p v₁ p ⋯ v_K p` with a marker `p` coding `r` and connectors `vⱼ` fixing the `M₀` part, then
 prescribe its cylinder and `x mod 3^b M₀` by CRT. -/
 theorem exists_many_returns (M : ℕ) (hM : 0 < M) (r : ℤ) (K N : ℕ) :
@@ -194,6 +197,55 @@ def FwdSurvivor (n : ℤ) : Prop :=
 /-- `n` is never undercut going backward. -/
 def BwdSurvivor (n : ℤ) : Prop :=
   ∀ t : ℕ, 1 ≤ t → n ≤ amusicalInv^[t] n
+
+/-- The finite forward half of `IsWindowMin`. -/
+private def FwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L → n ≤ amusical^[t] n
+
+/-- The finite backward half of `IsWindowMin`. -/
+private def BwdWindowSurvivor (L : ℕ) (n : ℤ) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → t ≤ L → n ≤ amusicalInv^[t] n
+
+private theorem isWindowMin_iff_windowSurvivors (L : ℕ) (n : ℤ) :
+    IsWindowMin L n ↔ FwdWindowSurvivor L n ∧ BwdWindowSurvivor L n := by
+  constructor
+  · intro hn
+    exact ⟨fun t ht hL => (hn t ht hL).1, fun t ht hL => (hn t ht hL).2⟩
+  · rintro ⟨hf, hb⟩ t ht hL
+    exact ⟨hf t ht hL, hb t ht hL⟩
+
+private theorem fwdSurvivor_window (L : ℕ) {n : ℤ} (hn : FwdSurvivor n) :
+    FwdWindowSurvivor L n := by
+  intro t ht _
+  exact hn t ht
+
+private theorem bwdSurvivor_window (L : ℕ) {n : ℤ} (hn : BwdSurvivor n) :
+    BwdWindowSurvivor L n := by
+  intro t ht _
+  exact hn t ht
+
+/-- A point surviving forever in both directions is precisely an orbit minimum. -/
+private theorem isOrbitMin_iff_survivors (n : ℤ) :
+    IsOrbitMin n ↔ FwdSurvivor n ∧ BwdSurvivor n := by
+  constructor
+  · intro hn
+    constructor
+    · intro t ht
+      exact hn _ ⟨t, (amusical_iterate_eq_perm_pow t n).symm⟩
+    · intro t ht
+      exact hn _ ⟨-(t : ℤ), (amusicalInv_iterate_eq_perm_pow t n).symm⟩
+  · rintro ⟨hf, hb⟩ y ⟨j, rfl⟩
+    by_cases hj0 : j = 0
+    · subst j; simp
+    · rcases lt_or_gt_of_ne hj0 with hj | hj
+      · obtain ⟨t, rfl⟩ := Int.eq_negSucc_of_lt_zero hj
+        change n ≤ (amusicalPerm ^ (-((t + 1 : ℕ) : ℤ))) n
+        rw [← amusicalInv_iterate_eq_perm_pow]
+        exact hb (t + 1) (by omega)
+      · obtain ⟨t, rfl⟩ := Int.eq_ofNat_of_zero_le hj.le
+        change n ≤ (amusicalPerm ^ (t : ℤ)) n
+        rw [← amusical_iterate_eq_perm_pow]
+        exact hf t (by omega)
 
 open Classical in
 /-- **Target (Proposition S).**  Survivor densities above `f_L + b_L − f_L b_L` give Klamkin (a).
@@ -211,9 +263,10 @@ theorem infinitelyManyOrbits_of_survival (L : ℕ) (a b : ℝ)
   sorry
 
 /-- **Target.**  A strictly increasing map commuting with `U` and raising every positive integer
-separates orbits.  Paper proof: `g` also commutes with `U⁻¹`, so it maps the orbit of `m` onto the
-orbit of `g m`, with minimum `g m > m`; the orbits of `m, g m, g² m, …` are distinct. -/
-theorem infinitelyManyOrbits_of_commuting {g : ℤ → ℤ} (hg : ∀ n, g (amusical n) = amusical (g n))
+separates orbits.  Paper proof: `g` also commutes with `U⁻¹`, so it maps the orbit of `m` onto
+the orbit of `g m`, with minimum `g m > m`; the orbits of `m, g m, g² m, …` are distinct. -/
+theorem infinitelyManyOrbits_of_commuting {g : ℤ → ℤ}
+    (hg : ∀ n, g (amusical n) = amusical (g n))
     (hmono : StrictMono g) (hgt : ∀ n, 0 < n → n < g n) (hpos : ∀ n, 0 ≤ n → 0 ≤ g n)
     (hinf : ∃ n, 0 < n ∧ IsOrbitMin n ∧ (amusicalOrbit n).Infinite) :
     AmusicalInfinitelyManyOrbits := by
@@ -262,11 +315,100 @@ theorem infinitelyManyOrbits_of_commuting {g : ℤ → ℤ} (hg : ∀ n, g (amus
   rintro _ ⟨k, rfl⟩
   exact ⟨hnonneg k, hmins k⟩
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+private theorem windowTwo_nonnegative_periodic_classify :
+    ∀ z : Fin 2346, amusical^[12] (z : ℤ) = (z : ℤ) →
+      ∃ j : Fin 31, (z : ℤ) = windowTwoPeriodicPoint j := by
+  decide +kernel
+
+private theorem windowTwoPeriodicPoint_neg (j : Fin 31) :
+    ∃ k : Fin 31, -windowTwoPeriodicPoint j = windowTwoPeriodicPoint k := by
+  fin_cases j <;> decide +kernel
+
+set_option maxHeartbeats 1000000 in
+private theorem windowTwo_periodic_point_exists (y : ℤ) (h : amusical^[12] y = y) :
+    ∃ j : Fin 31, y = windowTwoPeriodicPoint j := by
+  obtain ⟨B, c, hB12, hB24, hc, heq⟩ := amusical_iterate_affine 12 y
+  rw [h] at heq
+  have hslope : (7153 : ℤ) ≤ |(3 : ℤ) ^ 12 - 2 ^ B| := by
+    interval_cases B <;> norm_num
+  have hid : ((3 : ℤ) ^ 12 - 2 ^ B) * y = -c := by
+    linear_combination -heq
+  have habsprod : |(3 : ℤ) ^ 12 - 2 ^ B| * |y| = |c| := by
+    calc
+      |(3 : ℤ) ^ 12 - 2 ^ B| * |y| = |((3 : ℤ) ^ 12 - 2 ^ B) * y| := by
+        rw [abs_mul]
+      _ = |-c| := by rw [hid]
+      _ = |c| := abs_neg c
+  have hmul := mul_le_mul_of_nonneg_right hslope (abs_nonneg y)
+  rw [habsprod] at hmul
+  norm_num at hc
+  have hyabs : |y| ≤ 2345 := by omega
+  have hneg_iterate : ∀ k x, amusical^[k] (-x) = -amusical^[k] x := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        intro x
+        rw [Function.iterate_succ_apply', ih, amusical_neg,
+          Function.iterate_succ_apply']
+  have habsperiod : amusical^[12] |y| = |y| := by
+    by_cases hy : 0 ≤ y
+    · simpa [abs_of_nonneg hy] using h
+    · have hylt : y < 0 := lt_of_not_ge hy
+      rw [abs_of_neg hylt, hneg_iterate, h]
+  have hnat : y.natAbs ≤ 2345 := by
+    rw [← Int.natCast_natAbs] at hyabs
+    exact_mod_cast hyabs
+  let z : Fin 2346 := ⟨y.natAbs, by omega⟩
+  have hzcast : (z : ℤ) = |y| := by
+    simp [z]
+  have hzperiod : amusical^[12] (z : ℤ) = (z : ℤ) := by
+    simpa only [hzcast] using habsperiod
+  obtain ⟨j, hj⟩ := windowTwo_nonnegative_periodic_classify z hzperiod
+  have habsj : |y| = windowTwoPeriodicPoint j := hzcast.symm.trans hj
+  rcases eq_or_eq_neg_of_abs_eq habsj with hy | hy
+  · exact ⟨j, hy⟩
+  · obtain ⟨k, hk⟩ := windowTwoPeriodicPoint_neg j
+    exact ⟨k, hy.trans hk⟩
+
+private theorem commuting_eq_of_stepSym_eq {g q : ℤ → ℤ}
+    (hg : ∀ n, g (amusical n) = amusical (g n))
+    (hq : ∀ n, q (amusical n) = amusical (q n))
+    (hs : ∀ n, stepSym (g n) = stepSym (q n)) : g = q := by
+  funext n
+  apply eq_of_stepSym_iterate_eq
+  intro i
+  change stepSym (amusical^[i] (g n)) = stepSym (amusical^[i] (q n))
+  have iter_g : ∀ k x, g (amusical^[k] x) = amusical^[k] (g x) := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        intro x
+        rw [Function.iterate_succ_apply', hg, ih, Function.iterate_succ_apply']
+  have iter_q : ∀ k x, q (amusical^[k] x) = amusical^[k] (q x) := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        intro x
+        rw [Function.iterate_succ_apply', hq, ih, Function.iterate_succ_apply']
+  rw [← iter_g, ← iter_q]
+  exact hs _
+
+private theorem stepSym_neg (n : ℤ) : stepSym (-n) = -stepSym n := by
+  unfold stepSym
+  split_ifs <;> apply Fin.ext <;> simp_all <;> first | rfl | omega
+
 /-- **Target (window-2 centralizer).**  A map commuting with `U` whose step symbol reads
-`stepSym n` and `stepSym (U n)` is one of `0, 1, −1, id, −id, U, −U`.  Paper proof: the forward
+`stepSym n` and `stepSym (U n)` is one of `0, 1, −1, id, −id, U, −U`.
+Paper proof: the forward
 itinerary of `g x` is the block code of that of `x`, so `g` maps each cycle point to an integer
-periodic point of period dividing its period; by `amusical_periodic_mem` the image lies on the
-nine known cycles.  Of the `3⁹` tables exactly these seven pass (`scripts/amusical/central_w2.py`),
+periodic point of period dividing its period; an affine bound and finite certificate put the
+image on the nine known cycles.  Of the `3⁹` tables exactly these seven pass
+(`scripts/amusical/central_w2.py`),
 and the table determines `g` since an integer is determined by its forward itinerary
 (`reversor_eq_of_stepSym_eq` argument). -/
 theorem commuting_window_two (f : Fin 3 → Fin 3 → Fin 3) {g : ℤ → ℤ}
@@ -274,6 +416,55 @@ theorem commuting_window_two (f : Fin 3 → Fin 3 → Fin 3) {g : ℤ → ℤ}
     (hloc : ∀ n, stepSym (g n) = f (stepSym n) (stepSym (amusical n))) :
     g = (fun _ => 0) ∨ g = (fun _ => 1) ∨ g = (fun _ => -1) ∨ g = id ∨ g = Neg.neg ∨
       g = amusical ∨ g = fun n => -amusical n := by
-  sorry
+  rcases windowTwo_table_classify windowTwo_periodic_point_exists f hg hloc with
+    hf | hf | hf | hf | hf | hf | hf
+  · left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      norm_num [amusical]
+    · intro n
+      rw [hloc, hf]
+      norm_num [stepSym]
+  · right; right; right; left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      rfl
+    · intro n
+      rw [hloc, hf]
+      rfl
+  · right; right; right; right; left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      exact (amusical_neg n).symm
+    · intro n
+      rw [hloc, hf]
+      exact (stepSym_neg n).symm
+  · right; right; right; right; right; left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      rfl
+    · intro n
+      rw [hloc, hf]
+  · right; right; right; right; right; right
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      exact (amusical_neg (amusical n)).symm
+    · intro n
+      rw [hloc, hf]
+      exact (stepSym_neg (amusical n)).symm
+  · right; left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      norm_num [amusical]
+    · intro n
+      rw [hloc, hf]
+      norm_num [stepSym]
+  · right; right; left
+    apply commuting_eq_of_stepSym_eq hg
+    · intro n
+      norm_num [amusical]
+    · intro n
+      rw [hloc, hf]
+      norm_num [stepSym]
 
 end CollatzMoonshot.Amusical

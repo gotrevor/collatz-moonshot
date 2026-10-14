@@ -1,5 +1,19 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical survival semantics formalized:** the orbit-theoretic core of Proposition
+> S is kernel-checked: forward-and-backward infinite survival is exactly `IsOrbitMin`, and each
+> infinite survivor implies its corresponding finite-window predicate. The remaining proof is a
+> finite-cardinality density calculation. Two scoped sorries remain; read
+> `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical window-two centralizer FORMALIZED:**
+> `commuting_window_two` is proved with its ratified statement unchanged. The proof replaces the
+> forbidden all-function enumeration with indexed certificates on the `44` and `-44` cycles and
+> independently classifies period-dividing-12 images from an affine bound plus a `Fin 2346`
+> kernel check. Its axiom ledger is exactly `Classical.choice`, `Quot.sound`, and `propext`.
+> Two target sorries remain in `AmusicalGlobal.lean`; the 8716-job scoped gate is
+> FORMALIZE-tier green. Read `HANDOFF-amusical-global.md`.
+
 > **2026-10-13, amusical commuting mechanism FORMALIZED:**
 > `infinitelyManyOrbits_of_commuting` is proved with its ratified statement unchanged. A
 > commuting strictly increasing map commutes with all integer powers, transports orbit minima,
