@@ -1,5 +1,47 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — objective complete: bounded-ratio rewiring proved
+
+`CollatzMoonshot/AmusicalRewireRatio.lean` is sorry-free and its ratified theorem
+`exists_boundedRatio_rewire` is proved unchanged.  The final construction replaces the earlier
+one-orbit-at-a-time schedule with an all-active sweep at each scale:
+
+- `CutDynamics.lean` identifies the exact structural successor of every canonical forward or
+  backward cut, proves consecutive cut times have no intervening canonical source, and lifts one
+  cut transition to a finite positive path of the rewired natural permutation.
+- `Sweep.lean` cycles the base forward cut through both cuts of every non-base infinite
+  representative active at a level.  The resulting global cut permutation is level-preserving,
+  so all previously proved factor-three and `O(log² N)` bounds apply unchanged.
+- `Connectivity.lean` proves the induced successor is a single cycle on all canonical cuts.  A
+  first-hit lemma then proves every point of every infinite natural orbit reaches that cut cycle
+  while following unchanged edges before its first cut.
+- The target selects the least natural point on any infinite orbit (when one exists), proves it
+  is its orbit representative, packages the sweep with `BoundedRatioSourceRewire`, and retains
+  the existing no-infinite-orbit degenerate branch.
+
+Exact verification:
+
+```text
+LEAN_NUM_THREADS=1 lake build CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8720 jobs).
+git diff --check
+# passes
+awk 'length($0)>100 { ... }' CollatzMoonshot/AmusicalRewireRatio.lean \
+  CollatzMoonshot/AmusicalRewireRatio/{CutDynamics,Sweep,Connectivity}.lean
+# no output
+LEAN_NUM_THREADS=1 ~/personal/bin/lean-green \
+  ~/src/collatz-moonshot-amusical-rewire \
+  --target CollatzMoonshot.AmusicalRewireRatio \
+  --import CollatzMoonshot.AmusicalRewireRatio \
+  --axioms CollatzMoonshot.Amusical.exists_boundedRatio_rewire
+# 8720 jobs; headline axioms exactly Classical.choice, Quot.sound, propext.
+# FORMALIZE-TIER GREEN
+```
+
+Current blocker: none for this treadmill objective.  The scoped target is sorry-free.
+
+Next attack: none in scope; return control to the host completion gate.
+
 ## 2026-10-14 — exact scheduled successor transitions formalized
 
 The target still has its original `sorry`; global connectivity remains the sole obligation.  This
