@@ -816,3 +816,26 @@ Lean: `AmusicalUnit.lean`, proved and axiom-clean, plus the wall's reopen condit
   segment minimum is polynomial in `t`.  857 such returns for `x ≤ 2·10⁴`, `t ≤ 400`, with 0 bound
   violations.  The most frequent multiplier is `u = 79 ≈ 3³³/2⁴⁶`.
 
+## 29. The deformation `Û + c` has a degenerate point at `c = 0` (2026-10-14, "deform" Opus agent, checked in part)
+
+Lean: `AmusicalDeform.lean`, proved and axiom-clean (Ren's proofs).  Agent credence that this route
+moves Klamkin (a): under 1%.
+
+* **Prop R (PROVED; Lean `amusical_add_roots_distinct`).**  For an integer `d > 0`, `U + d` sends `ℕ`
+  into `[d, ∞)`, since `U` preserves sign.  So `0, …, d − 1` lie on `d` pairwise distinct infinite
+  orbits.  The agent adds that these are exactly the landing points of the `d` up-crossings (§24).
+* **The degenerate point.**  At `d = 6^N → 0` in `ℤ₂ × ℤ₃` the itineraries agree with `U`'s for
+  about `N/1.5` steps forward and `N` back.  Yet every point of `[0, 6^N)` is on its own infinite
+  orbit, `U`'s 5-cycle included.  The cycle's branch word survives only when `13 | d`, at
+  `4 + 862d/13 → ∞`.
+  * Mechanism: `U`'s orbits solve `m = A_w(n)` (the Böhm–Sontacchi system).  Every `c ≠ 0` shifts
+    them to `m − A_w(n) = c·P_w`, `P_w ≥ 1`, and the solution sets have no limit as `c → 0`.
+  * Small denominators fuse orbits instead: at `c = 1/5` the points `0, 1, 2, 3, 8` and the 5-cycle
+    lie on one orbit.  Real-small `c` isolates them (Lemma I: no short segment joins two integers).
+* **Theorem A (PROVED by the agent).**  Forward agreement of `U + c` with `U` is exactly governed by
+  `v₂(c)`, backward agreement by `v₃(c)`.  The real size of `c` never affects the itinerary.
+* **Theorem Z (PROVED by the agent, new).**  On every periodic invariant piece, the flux of
+  `U_Q + k` is `k` times the piece's density.  Flux is `c · Haar`, linear with no mode locking.  So
+  no coset of `(ℤ/Q)^×/⟨2,3⟩` carries flux at `c = 0`.  Checked on 3850 pieces and every coset for
+  `Q ≤ 400`.  Lemma P: every periodic invariant piece has period prime to 6.
+
