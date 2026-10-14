@@ -138,6 +138,7 @@ import CollatzMoonshot.AmusicalSurvivorSeparation
 import CollatzMoonshot.AmusicalAdditive
 import CollatzMoonshot.AmusicalUnit
 import CollatzMoonshot.AmusicalDeform
+import CollatzMoonshot.AmusicalStaircase
 import CollatzMoonshot.AmusicalLinearForever
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
