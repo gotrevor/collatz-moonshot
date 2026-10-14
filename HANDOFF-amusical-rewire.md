@@ -1,5 +1,45 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — source-permutation reduction
+
+The target still has its original `sorry`; the global cut-source permutation remains open.  This
+lap isolated and kernel-checked the algebraic interface in
+`CollatzMoonshot/AmusicalRewireRatio/Splice.lean`:
+
+- `rewireBySource σ p = σ * p` implements rewiring by permuting cut sources, so bijectivity is
+  automatic and the new target at `n` is the old target at `p n`.
+- `rewireBySource_changed_card_le` proves that changed values below `N` are bounded by moved
+  sources below `N`.
+- `rewireBySource_ratio` and `rewireBySource_eq_on_finiteOrbits` transfer the factor-three and
+  finite-orbit clauses from pointwise properties of `p`.
+- `BoundedRatioSourceRewire` is now the exact remaining combinatorial interface, and
+  `BoundedRatioSourceRewire.realize` proves that any inhabitant supplies every conclusion of
+  `exists_boundedRatio_rewire`.
+
+Exact verification:
+
+```text
+lake env lean CollatzMoonshot/AmusicalRewireRatio/Splice.lean
+# passes
+awk 'length($0)>100 { ... }' CollatzMoonshot/AmusicalRewireRatio/Splice.lean
+# no output
+git diff --check
+# passes
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-rewire \
+  --target CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8714 jobs).
+# FORMALIZE-TIER GREEN; only the target declaration retains a sorry.
+```
+
+Current blocker: construct `BoundedRatioSourceRewire.sourcePerm` from the scale cuts.  All
+algebraic, cast, count-transfer, finite-orbit, and ratio plumbing is now discharged; the hard core
+is exactly the Eulerian cut-source permutation plus its single-orbit proof.
+
+Next attack: define the least representative of each infinite `amusicalNatPerm` orbit and enumerate
+those representatives increasingly.  Use the scale cuts to define disjoint cycles of source
+assignments at each scale; compose them using cross-scale separation.  Prove the four fields of
+`BoundedRatioSourceRewire` directly, then close the target with `.realize`.
+
 ## 2026-10-14 — scale-cut windows and separation
 
 The target still has its original `sorry`; the explicit global splicing permutation remains open.
