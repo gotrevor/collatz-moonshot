@@ -60,11 +60,15 @@ noncomputable def twinU (n : (ZMod 2)[X]) : (ZMod 2)[X] :=
 theorem twinU_bijective : Function.Bijective twinU := by
   sorry
 
-/-- **Target.**  The cycle denominator collapses: `(t²)^(2^e) − Q^(2^e) = (t + 1)^(2^e)`
+/-- **Proved.**  The cycle denominator collapses: `(t²)^(2^e) − Q^(2^e) = (t + 1)^(2^e)`
 (Frobenius in characteristic `2`). -/
 theorem twin_den_frobenius (e : ℕ) :
     (X ^ 2 : (ZMod 2)[X]) ^ (2 ^ e) - twinQ ^ (2 ^ e) = (X + 1) ^ (2 ^ e) := by
-  sorry
+  rw [← sub_pow_char_pow (p := 2)]
+  congr 1
+  have h2 : (2 : (ZMod 2)[X]) = 0 := CharTwo.two_eq_zero
+  unfold twinQ
+  linear_combination (-(1 : (ZMod 2)[X]) - X) * h2
 
 /-- The Theorem F point of period `2^e`: `(t⁴ + t³ + 1) t^m (t+1)^(m−3)` with `m = 2^(e−1)`. -/
 noncomputable def twinCycle (e : ℕ) : (ZMod 2)[X] :=
@@ -78,19 +82,58 @@ theorem twinCycle_minimalPeriod (e : ℕ) (he : 3 ≤ e) :
     Function.minimalPeriod twinU (twinCycle e) = 2 ^ e := by
   sorry
 
-/-- **Target.**  The twin has infinitely many cycles, hence infinitely many orbits: cycles of
-distinct exact lengths are distinct sets. -/
+private lemma twinCycle_mem_periodicPts (e : ℕ) (he : 3 ≤ e) :
+    twinCycle e ∈ Function.periodicPts twinU := by
+  apply Function.minimalPeriod_pos_iff_mem_periodicPts.mp
+  rw [twinCycle_minimalPeriod e he]; positivity
+
+/-- **Proved from Theorem F.**  The twin has infinitely many cycles, hence infinitely many orbits:
+cycles of distinct exact lengths are distinct sets. -/
 theorem twin_infinitelyManyCycles :
     {O : Set (ZMod 2)[X] | ∃ x ∈ Function.periodicPts twinU,
       O = Set.range fun n : ℕ => twinU^[n] x}.Infinite := by
-  sorry
+  let orb : ℕ → Set (ZMod 2)[X] := fun k => Set.range fun n : ℕ => twinU^[n] (twinCycle (k + 3))
+  refine Set.infinite_of_injective_forall_mem (f := orb) ?_ ?_
+  · intro a b hab
+    have hmem : twinCycle (b + 3) ∈ orb a := by
+      rw [hab]; exact ⟨0, rfl⟩
+    obtain ⟨k, hk⟩ := hmem
+    have hper :=
+      Function.minimalPeriod_apply_iterate (twinCycle_mem_periodicPts (a + 3) (by omega)) k
+    simp only at hk
+    rw [hk, twinCycle_minimalPeriod _ (by omega), twinCycle_minimalPeriod _ (by omega)] at hper
+    have := Nat.pow_right_injective (le_refl 2) hper
+    omega
+  · intro k
+    exact ⟨twinCycle (k + 3), twinCycle_mem_periodicPts _ (by omega), rfl⟩
 
-/-- **Target (what fails over `ℤ`).**  The `ℤ` analogue of Theorem F's point, the periodic point
+private lemma two_mul_eight_pow_lt (m : ℕ) (hm : 6 ≤ m) : 2 * 8 ^ m < 9 ^ m := by
+  induction m, hm using Nat.le_induction with
+  | base => norm_num
+  | succ n _ ih => rw [pow_succ, pow_succ]; omega
+
+/-- **Proved (what fails over `ℤ`).**  The `ℤ` analogue of Theorem F's point, the periodic point
 `2^m (4^m − 3^m) / (9^m − 8^m)` of the word `E^m B^m`, is not an integer for `m ≥ 2`.  For
 `m ≥ 5` the numerator `8^m − 6^m` is positive and below the denominator; `m = 2, 3, 4` are direct
 checks. -/
 theorem amusical_EmBm_not_integral (m : ℕ) (hm : 2 ≤ m) :
     ¬ ((9 : ℤ) ^ m - 8 ^ m ∣ 2 ^ m * (4 ^ m - 3 ^ m)) := by
-  sorry
+  have hnum : (2 : ℤ) ^ m * (4 ^ m - 3 ^ m) = 8 ^ m - 6 ^ m := by
+    rw [mul_sub, ← mul_pow, ← mul_pow]; norm_num
+  rw [hnum]
+  rcases (show m = 2 ∨ m = 3 ∨ m = 4 ∨ 5 ≤ m by omega) with rfl | rfl | rfl | h5
+  · decide
+  · decide
+  · decide
+  intro hd
+  have hlt : (6 : ℤ) ^ m < 8 ^ m := pow_lt_pow_left₀ (by norm_num) (by norm_num) (by omega)
+  have hbig : (8 : ℤ) ^ m - 6 ^ m < 9 ^ m - 8 ^ m := by
+    rcases (show m = 5 ∨ 6 ≤ m by omega) with rfl | h6
+    · norm_num
+    · have h' : (2 : ℤ) * 8 ^ m < 9 ^ m := by exact_mod_cast two_mul_eight_pow_lt m h6
+      have h6pos : (0 : ℤ) < 6 ^ m := by positivity
+      linarith
+  have := Int.le_of_dvd (by omega) hd
+  omega
 
 end CollatzMoonshot.Amusical
