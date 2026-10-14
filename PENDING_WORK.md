@@ -1,5 +1,15 @@
 # PENDING_WORK
 
+## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,
+engine-forever theorem, and infinitely-many-orbits consequence are proved with their ratified
+statements unchanged; `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free.  The 8712-job scoped
+gate and canonical axiom ledgers are recorded in `HANDOFF-amusical-pingpong.md`.
+
+No stretch objective was assigned.  Remaining sorries in imported amusical modules are owned by
+other treadmills and are not dependencies of the three ping-pong headline theorems.
+
 ## 2026-10-13 — amusical continuous reversor objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-contrev.md` is fully discharged.  Lemma S and Theorems A, A′, and C
@@ -11,6 +21,16 @@ architecture and exact checks.
 
 No stretch objective was assigned.  The explicitly open `AmusicalNoContinuousReversor`
 proposition was not part of this kickoff and requires a new operator instruction before work.
+
+## 2026-10-13 — amusical log-balance objective: DONE, nothing owed
+
+`KICKOFF-2026-10-13-amusical-logbal.md` is fully discharged.  All three ratified targets are
+proved without statement changes, and `CollatzMoonshot/AmusicalLogBalance.lean` is sorry-free.
+The scoped and full gates are green with the trust-base-only axiom ledgers recorded in
+`HANDOFF-amusical-logbal.md`.
+
+No stretch objective was assigned.  The remaining sorries in other amusical modules are owned by
+separate objectives and were not touched.
 
 ## 2026-10-13 — amusical chains objective: DONE, nothing owed
 

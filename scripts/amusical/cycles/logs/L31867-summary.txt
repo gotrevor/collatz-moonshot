@@ -1,0 +1,1 @@
+COVERAGE [1,167195612] contiguous in 400 chunks; H=15933 (periods <= 31866); candidates (excl. 1,2,4,44)=167195608; {'dips': 158872552, 'survivors': 8323056, 'found': 0, 'fpcoll': 0}; steps=2.6610e+11; maxlimbs=28

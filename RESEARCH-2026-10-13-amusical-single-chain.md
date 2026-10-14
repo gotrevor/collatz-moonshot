@@ -244,7 +244,7 @@ residues").  A reversor `ι` (`ι ∘ U = U⁻¹ ∘ ι`) is `(2,3)`-adically co
 
 ## 10. Log-weighted balance and fat orbits (2026-10-13, "equidist" agent, checked)
 
-Lean: `AmusicalLogBalance.lean` (targets).  Weight `n` by `1/n`: `W_N(S) = Σ_{n ∈ S, n ≤ N} 1/n`.
+Lean: `AmusicalLogBalance.lean` (all proved, axiom-clean).  Weight `n` by `1/n`: `W_N(S) = Σ_{n ∈ S, n ≤ N} 1/n`.
 
 * **Exact balance (paper proof checked).**  For any union `S` of orbits in `ℕ_{>0}`,
   `W_N(S ∩ 2ℤ) = W_N(S)/2 + O(1)` and `W_N(S ∩ 3ℤ) = W_N(S)/3 + O(1)`.  Proof: `U` maps the evens
@@ -280,7 +280,338 @@ minimum at 99% (no meeting with the orbit of `8` for `|j| ≤ 6·10⁶`; both st
 * **Residue transitivity.**  Every `Uᵐ` has a strongly connected residue graph, so no nontrivial
   union of classes is `Uᵐ`-invariant, and under H `t mod m` is never eventually periodic.
 * **The barrier (rewiring).**  A permutation of `ℕ` with at-most-doubling steps can be changed on a
-  density-`0` set so all infinite orbits fuse into one.  For `U` this keeps every density,
-  log-density, window and crossing statistic, so statistics cannot prove a seventh orbit; a proof
+  density-`0` set so all infinite orbits fuse into one.  For `U` this keeps every
+  finite-window statistic (density, log-density, window, crossing), so those cannot prove a
+  seventh orbit.  Infinite-horizon statistics such as survival do change (§14); a proof
   needs the exact RCWA structure everywhere plus a global mechanism, and the only known global
   mechanism, reversal, is excluded (Theorem NR, Theorem C).
+
+## 12. Statistical twins (2026-10-13, "twin" agent, checked)
+
+Lean: `AmusicalTwin.lean` (all proved, axiom-clean).  No residue-class twin of `U` with finitely many orbits found; believed
+none with all slopes `3/2^k` (~97%), but proving that is at least as hard as Klamkin (a), since
+`U` is its own twin (a costume).
+
+* **Perfect twins with other cycles.**  `W(2m) = 3m+α`, `W(4m+1) = 3m+β`, `W(4m+3) = 3m+γ`, with
+  `α, β, γ` distinct mod 3, have exactly `U`'s cylinder laws and `δ_L` and the same full-shift
+  coding; `W_{3,1,2}` has the 3-cycle `8 → 15 → 11`, `U` has none, so statistics do not fix the
+  conjugacy class.
+* **One-orbit splice (paper, `splice.py`).**  A bijection of `ℤ` with one orbit agreeing with `U`
+  off `≤ 2 log₂(2Y+2) + #(cycles in [−Y, Y])` points of `[−Y, Y]` (sharper than the rewiring of
+  §11).  So the no-go test is a theorem: only the exact arithmetic of `U` is left as a lever.
+* **Positive drift is generic.**  For any residue-class bijection, Jensen on `E[1/slope] = 1`
+  gives `E log|slope| ≥ 0`; with all slopes `3/2^k` the effective drift `log 3 − κ log 2` is
+  strictly positive both ways, so the transience heuristic covers every such map.  Kohl's `ω`
+  (one big orbit) escapes only through exact slope relations like `3 · (1/3) = 1`.
+
+## 13. Escape and Theorem N (2026-10-13, "q1" agent, checked)
+
+Lean: `AmusicalEscape.lean` (all proved, axiom-clean).  The question
+whether `U` has a bijective reversor determined by residues is still open; credence that none
+exists rises from ~93% to ~97%.
+
+* **Escape (Lemma E).**  A non-periodic orbit leaves every bounded set, and `|U x| ≤ (3|x|+1)/2^b`,
+  so forward it spends at most `log₂ 3` bits per step infinitely often; backward, at least
+  `log₂ 3`.  Generic rates: forward `3/2 < log₂ 3`, backward `5/3 > log₂ 3`.
+* **Theorem N.**  A balanced block code (every bijective residue reversor has one, by Lemma S(b)
+  and Hedlund) sends a normal past to a future with even-step frequency `1/3`, i.e. `5/3` bits per
+  step.  So `ι n` is periodic, and by injectivity so is `n`.  Hence one integer with a normal
+  backward itinerary kills every residue reversor.  Normality of a single integer is open
+  (Collatz-type), so this is a reduction.  The Gaussian relative passes, because its forward
+  law is the conjugate of its backward law.
+* **Window 3 is dead exactly (computer).**  No bijective reversor has `stepSym (ι n)` read off
+  three consecutive itinerary symbols.  The sole inputs are surjectivity (Moore–Myhill) and the
+  requirement that the nine integer cycles of length `≤ 14` map bijectively to cycles; it was
+  cross-checked by SAT.  Re-derived independently (`scripts/amusical/w3check.py`: 24 partial
+  rules, 216 completions, none surjective; orphans of length 4 or 5 in `w3certs.txt`).  Lean target:
+  `AmusicalWindowThree.lean`.
+* **Window 4: the exact tests run out.**  40 surjective (permutive) window-4 rules pass every
+  exact cycle test.  All fail the numerical integrality probe, which is only evidence.  The
+  homeomorphic case was not settled (SAT timed out).
+* **Meta (wall).**  A finite set of non-periodic integers never certifies that a table fails,
+  since every finite residue datum is CRT-consistent with integrality.  So exact kills beyond the
+  cycle and surjectivity tests need a global mechanism or infinite-orbit input.
+
+## 14. Global mechanisms (2026-10-13, "global" agent, checked)
+
+Lean: `AmusicalGlobal.lean`, `AmusicalRewireRatio.lean` (targets).  No global mechanism found; a
+seventh orbit stays open.  Every mechanism is a transversal, an infinite set meeting each orbit
+at most `K` times (Klamkin (a) ⇔ one exists).
+
+* **Theorem R (bounded-ratio rewiring).**  Some permutation `τ` of `ℕ` agrees with `U` except at
+  `O(log² N)` points below `N`, has `τ/U ∈ [1/3, 3]` up to `+3`, and fuses all infinite orbits
+  into one.  The construction cuts each orbit at first passage of scales `Y_{k+1} ≥ 8 Y_k`,
+  then glues the segments at matching scales along an Eulerian trail.  This kills every
+  *coarse-local* invariant: flux, rotation-number analogues, crossing counts, finite-depth
+  Cartesian-tree and record statistics.
+* **Kohl's mirror (Lemma K).**  `|x| ≤ 4^ℓ (|Uˡ x − x| + 1)` (tight).  So `U` has no translation
+  piece, since `v₃` of every slope of `Uˡ` is `ℓ`; Kohl's one-orbit `ω` is built from such
+  pieces.  The rewired `τ` obeys the same time separation (0 violations in 5855 pairs), so this
+  does not bite.  The survivor is the "anti-Kohl" conjecture (~95%): an RCWA permutation whose
+  slopes all have `v_p = 1` has no orbit containing a residue-class tail.
+* **No residue-definable transversal (Proposition P).**  Every residue class has points whose
+  forward orbit revisits the class `K + 1` times.
+* **Survival (Proposition S).**  Survivor lower densities with `a + b > f_L + b_L − f_L b_L`
+  (`≈ 0.397` in the limit) give Klamkin (a).  Survival is an infinite-horizon statistic, and
+  rewiring changes it (FS density `0.213` for `U`, `0.056` for `τ`).  So it is the right
+  statistic, but proving it means showing late drops are rare: the typicality wall.
+* **Commuting maps.**  An orbit-moving map commuting with `U` would separate orbits, and Theorem
+  C's law obstruction does not apply (both Bernoulli laws can be preserved).
+  * The window-2 centralizer is exactly `0, ±1, ±id, ±U`; I re-derived this independently with
+    `scripts/amusical/central_w2.py`.
+  * Window 3 adds one exotic `±` pair, non-integral only numerically.
+  * Believed (~85%): the continuous centralizer is `{0, ±1, ±Uʲ}`.
+
+## 15. The anti-Kohl conjecture (2026-10-13, "antikohl" agent, checked)
+
+Lean: `AmusicalAntiKohl.lean` (κ, τ and the cone identities proved; the rest are targets).  The
+conjecture: an RCWA permutation whose slopes all have `v_p = 1` for one fixed prime `p` has no
+orbit containing a class tail.  At `p = 3` it gives `U` a seventh orbit.  It is still open on
+the residue-transitive core (`U`, the twins); credence ~93%.
+
+* **Theorem T (elementary, any bijection).**  Take a cone `σS ⊆ S`.  If both the forward cores
+  `σⁿS` and the never-entering sets `A_n` have density → 0, then every finite union of orbits has
+  density 0.  The reason: an orbit lies in `σⁿS ∪ A_n` except for `2n` points.  For RCWA maps with
+  periodic `S`, both sequences are exact periodic densities, so they can be checked.
+* **Proved instances.**
+  * `κ` (modulus 6, slopes 2, 2/3, `p = 2`): `d(A_n) = (5/12)(2/3)ⁿ`, forward rate `0.9196`.
+  * `σ_τ = τ_{1(2),2(4)} ∘ U` (`p = 3`): forward core `3⁻ⁿ/4`, `d(A_n) = (1/2)(3/4)ⁿ⁻¹`.  I re-checked
+    both by box counting (`scripts/amusical/cores.py`, exact match for `n ≤ 8`).
+  * 31 of the 32 single class-transposition perturbations `π ∘ U` that have a cone, by an exact
+    automaton (not re-derived).
+* **The gate.**  `U` has no periodic cone: its residue graph mod `M` is strongly connected
+  (`seventh.md` T4; `scripts/amusical/cone.py` for `M ≤ 200`).  So Theorem T is vacuous on `U`
+  and on the 255 residue-transitive perturbations.
+* **Boundaries.**
+  * Valuation 1 at *some* prime on each piece is not enough: an RCWA conjugate of translation has
+    slopes `3/2, 2/3` only and one orbit.
+  * No RCWA conjugate of translation lies in the class, even with infinitely many pieces.
+  * "`v_p = 1`" is equivalent to "`v_p ≥ 1`", by suspension.
+* **Necessary condition for a counterexample.**  A positive-density orbit needs arbitrarily long
+  windows whose slope product is within polynomial factors of 1.
+* **Search.**  4,540 random members (`p = 2, 3, 5`) all show linearly growing orbit counts.
+* **Literature.**  The conjecture does not appear in Kohl's thesis or the RCWA manual.
+
+## 16. A residue-transitive member with infinitely many orbits (2026-10-13, "transitive" agent, checked)
+
+Lean: `AmusicalPingPong.lean` (engine theorem and `U`'s Theorem L proved, axiom-clean).  This
+is the first residue-transitive RCWA permutation in the anti-Kohl class with *provably*
+infinitely many orbits.  The agent found no prior example (~80% that it is new).
+
+* **`PP(0)`.**  Modulus `13300`, `9711` pieces, slopes `3/4, 3/2, 3, 21/5, 15, 75/7` (all `v₃ = 1`).
+  * Four linear "engine" pieces run a two-counter ping-pong on `(v₅, v₇)`, with phase `x mod 19`.
+  * Seeds (`v₅` odd, `7 ∤ x`, `x · 8^(v₅ x) ≡ 1 mod 19`) stay in the engine forever.  Seeds prime to
+    `3` start distinct orbits, at density `2/399`.
+  * No orbit contains a class tail (steering argument).
+  * The filler pieces (slopes `3/2^d`) make the map a bijection that is residue-transitive at every
+    modulus.  That proof is computer-assisted: four hand lemmas plus two exact finite checks.
+* **My independent checks** (`scripts/amusical/pp57/`):
+  * domains and images partition `ℤ` exactly;
+  * strongly connected at 8 moduli the agent did not test (`13300 · {3, 8, 27, 5, 7, 19, 11, 13}`, up
+    to `359100`), with teeth: `κ` is NOT strongly connected, `U` is;
+  * Lemma E: 902 of 902 odd-`A` seeds stay in the engine for 120 steps, and 181 of 181 even-`A`
+    controls leak.
+  * Credence: infinitely many orbits ~97%; transitive at every modulus ~88%.
+* **Why it cannot transfer to `U`** (agent Theorems L and M, paper proofs, not re-derived).
+  * `U` is *weakly sign-uniform*: for each prime, its slopes never change valuation sign.
+  * For such transitive maps no orbit stays in the linear pieces forever (Theorem L).
+  * The Cesàro limit of `σ̂ⁿ_* Haar` has full support on `Ẑ` (Theorem M).  So there is no open cone
+    (killing Theorem T in every variant) and no open transversal (Proposition P generalized).
+  * Hence a certificate for `U` must have empty interior in `Ẑ`.  The example lives exactly where
+    `U` does not: at primes (5 and 7) where slope valuations change sign.
+* **Further no-gos.**
+  * No coarse valuation clock exists for any member of the class.
+  * Commuting RCWA maps of a transitive map are surjective.
+  * The bounded-ratio rewiring (§14) extends to the whole class.
+
+## 17. Weakly sign-uniform maps (2026-10-13, "uniform" agent, checked)
+
+Lean: `AmusicalUniform.lean` (M4 for `U` and the `δ` bijection proved; NR_p, the Island Lemma,
+M3 for `U` and `δ`'s finiteness are targets).  The question was whether a weakly sign-uniform (WSU),
+residue-transitive map can have provably infinitely many orbits.  It is still open; the agent puts
+≤ 10% on any known certificate type producing one.
+
+* **Theorem NR_p.**  Suppose every slope has `v_p ≥ 0` at one prime `p` and `v_p` accumulates along
+  orbits.  Then no piecewise-affine bijection reverses the map.  Being one-signed at `p` suffices;
+  `v_p = 1` is not needed.  The Gaussian `H` escapes only because complex conjugation is semilinear.
+  I hand-checked the proof (a valuation count on one infinite refined cell).
+* **Island Lemma.**  A cycle mapped to itself by an RCWA reversor has slope product `±1`, so the map
+  is the identity to order `2L` on a residue class and is not transitive.  I hand-checked it (the
+  reversor slopes telescope).  It kills all 1400+ random involution-product candidates.
+  * Conjecture B2 (~60%): no transitive RCWA map has an RCWA reversor fixing a class.
+* **Theorem M3 / M4** (paper proof, not re-derived).  A WSU transitive map is topologically
+  transitive on `Ẑ`.  So an orbit invariant takes equal values on any two classes where it is locally
+  constant.  This kills every invariant built from finitely many valuations, leading digits or
+  `S`-free parts, and all locally constant factor maps.
+* **More no-gos (paper).**
+  * An eventually periodic itinerary forces a cycle (Lemma EP).
+  * RCWA factors inherit the full-support measure.
+  * Each length has finitely many cycles.
+  * Transitive maps with all slopes `±1` have finitely many orbits.
+* **Side example `δ`.**  A product of two class-transposition involutions with slopes `2/3, 1, 3/2`.
+  Every orbit is finite, with an explicit dihedral invariant.  It is strongly connected mod 12–48,
+  96 and 108, but not mod 60, 72 or 144.
+  * My check `scripts/amusical/delta_ren.py`: bijective on a window; 10003 finite cycles through
+    `[−30000, 30000]`; SCC counts, with `U` strongly connected at every listed modulus as control.
+  * Correction: the agent wrote "transitive up to 60"; it already fails at 60.
+* **Still open: digit automata.**  These reduce to lacunary families `{α Qⁿ + β}`.  For `U` the powers
+  `2ⁿ` share orbits only at `{2³, 2⁵}` and `{2⁴, 2⁹}`.  The agent's reading (~85%): WSU maps multiply by
+  their primes and never divide them back out, so every surviving certificate needs Collatz-type
+  control of single orbits.
+
+## 18. No new cycles of length ≤ 31866 (2026-10-13, "cycles" agent, checked)
+
+Lean: `AmusicalCycleBound.lean` (Theorem 1 holds conditional on the search certificate; Theorem A★,
+the reduction, the bound computation and an in-kernel Atkin are targets).  Klamkin (b) and C4
+stay open.
+
+* **Theorem A★.**  A cycle's *minimum* is polynomially bounded by its length:
+  `3^p (3m−1)^k ≤ 2^e (3m)^k ≤ 3^p (3m+1)^k`.  Its elements are not.  This replaces Collatz's
+  "everything small converges" check, which `U` lacks.  I hand-checked it: the cycle product
+  telescopes to `2^e ∏ 3x = 3^p ∏ (3x+d)`.
+* **Theorem 1 (computer).**  Every periodic point of period `≤ 31866` is a known cycle member.
+  Atkin 1966 had `< 200`, so this is 160× further.
+  * The bound gives `m ≤ 167195612`.  I re-derived it exactly (`scripts/amusical/cycles/x0_ren.py`).
+  * Agent search (`cyclemin.c`, lockstep `U`/`V` with meet-in-the-middle at `H = 15933`):
+    0 cycles, 8.3 M survivors, 2.66·10¹¹ steps.
+  * Independent re-run with my own forward-only GMP search (`fwd_ren.c`, a different algorithm and
+    code), with teeth (finds 44 at period cap 12, misses it at 11): **confirmed**.  All of
+    `[1, 167195612]` in 400 contiguous chunks, `1.12·10¹²` exact steps.  The only returns are
+    1, 2, 4, 44; dips + survivors + returns = the range size (`logs/fwd_ren-summary.txt`).
+  * `defs_teeth.py` checks the Lean definitions literally: `CycleMinSearch 173 6` is clean, and
+    fails at 44 when 44 is not skipped.
+* **Theorem 2 (computer + Rhin 1987 as quoted by Simons 2022).**  Every new cycle has at least 33
+  local minima.
+  * It uses Lemma R (`log₂ m ≥ (2p−e)(θ−1)/(θ^r−1)`, by chaining local minima) and the A′ bound
+    `m ≤ 1 + r/|Λ|`.
+  * Search to `2·10¹⁰`.
+  * Simons 2022 had `m ≤ 2` complete.
+  * Not in Lean: Rhin's bound is not yet a `Literature` Prop.
+* **Structure.**
+  * Cycle minima are `≡ 2, 4 (mod 6)`.
+  * E-frequency `= 2 − θ ± 0.37/(m−1)`.
+  * If `m > 0.57 p²`, then `p` is a multiple of a convergent denominator of `log₂ 3`.  This makes
+    Shanks 1965 precise.
+* **Gates.**
+  * Bounding every element is exponential: only the minimum is polynomial.
+  * "Every element of a long cycle is large" is out of reach, since nothing bounds a cycle's
+    minimum from below except through its run count.  A cycle through 8 of length `10¹⁰⁰` is not
+    excluded.  C4 credence ~3%.
+* **Novelty** (agent, ~85%): the 31866 bound, the minimum-search method, and the `r ≤ 32` theorem.
+
+## 19. Empty-interior certificates (2026-10-13, "emptyint" agent, checked)
+
+Lean: `AmusicalFormalMin.lean` (Theorem F and the formal-walk counterexample proved, axiom-clean;
+Proposition G1 is a target).  Every natural empty-interior candidate is either dead or stuck at the
+per-orbit infinite-horizon wall (Proposition S, orbit of 8).  Agent: under 1% toward a seventh
+orbit.
+
+* **Formal minima `FM = ℤ ∩ (W₂ × W₃)`** (Theorem F, hand-checked).
+  * At most one point per orbit; no periodic points; `FM = −FM`; meets every thin orbit exactly
+    once; upper density `≤ c`.
+  * Certifying one FM point proves its orbit infinite.
+  * On `[1, 10⁶]`, FM equals the orbit minima exactly (49957 each).
+  * The formal walk can mis-order near ties of `t log₂ 3`: `U¹² 31 = 30`, while `2¹⁹ < 3¹²` (proved
+    by `decide`).
+* **Proposition G (resolution gate, paper).**  If some orbit is infinite, every height
+  `F(x mod M, ⌊log₂ x⌋)` with bounded cocycle is bounded.  The same holds for growing
+  `M(s) | 2^∞3^∞N₀` with `M(s) ≤ 2^{s/10}`, and transversals defined by residues at resolution
+  `2^{s/(10(K+1))}` are dead (G2′).
+  * So a certificate must read `Ω(log x)` digits.
+  * Open: a growing prime-to-6 modulus (needs a diameter bound for the affine action).
+* **Archimedean invariant (paper identities).**
+  * On thin orbits (`Σ 1/y < ∞`), `Q(O) = ∏(1 + χ₄(y)/(3y)) = L₊/L₋` is an orbit invariant.
+  * `Δ = L₊ − L₋` depends on the itinerary alone, and `η = x/|Δ|` is a summable-cocycle height.
+  * Teeth: `|Q_H| = 1` on conjugation-symmetric orbits of the Gaussian H (to 1e-14).
+  * `Q = 1` for `U` would need an archimedean reversor, which Theorem NR excludes.
+  * Separating orbits by `Q` is "no late return", the Proposition S wall again.
+  * All 1002 orbits with minimum `≤ 2·10⁴` have distinct `Q`.
+* **Dead.**
+  * Tail and digit statistics: Kolmogorov 0-1, plus normality, which is believed but unprovable.
+  * Weighted transversals `φ(x)/x`: alive, but weaker than `AtLeastLinearGrowth`.
+* Consistency check: `E[m · W(O_m)] = 19.98`, against `1/c = 20.09`.
+
+## 20. Late drops: the typicality wall pinned (2026-10-13, "survival" agent, checked)
+
+Lean: `AmusicalLateDrops.lean`, all proved, axiom-clean (S′, Theorem LD, LD′, the calibration,
+the tilt identity); reopen condition `AmusicalLateDropsSparse`.  Klamkin (a) is not
+settled.  The wall is now one count: the integers that survive past the residue horizon
+`T(X) ≈ log₃ X` and are undercut later.  Agent: under 1% toward settling (a).
+
+* **Constants** (agent's are paper proofs; I re-derived them in
+  `scripts/amusical/survival/consts_ren.py`, to 12 digits).
+  * `p_f = 0.210136239317` and `p_b = 0.236891833789`, with `p_f p_b = 0.04977956 = c`.
+  * Each equals `1/E[first strict ascent time]` (Feller XII.7).
+  * Tilt duality `E_b e^{−θY} = E_f e^{−(1−θ)X}`, so both directions share the rate
+    `ρ = 0.985597`.
+* **Numerics** (agent, all `x ∈ [16, 2³¹)`).
+  * FS `0.2101358`, BS `0.2368935`, minima `0.0497804`, all within `2·10⁻⁶` of the walk.
+  * Beyond the provable horizon (`L = 20–200`), integers match the walk's late drops to 0.5%.
+  * The twin `W_{3,1,2}` gives the same numbers.
+* **Theorem LD.**  Late droppers below `(c − η)X` infinitely often give (a).
+  * At the walk's rates it fires from depth `L = 23`, and at `K` times the walk's rates at a larger
+    depth (`L = 50` for `K = 2.65`, `L = 100` for `K = 10.7`).
+  * One-sided control fails: perfect forward typicality still needs backward survivors at
+    `≥ 79%` of `p_b`.
+* **U vs `τ`.**  Forward/backward window independence is proved; typicality beyond the horizon is
+  open.  `τ` has `U`'s windows but maximal late drops.
+* **New obstructions.**
+  * In `ℤ₂` the survival set's boundary is the whole set, so equidistribution gives only the upper
+    bound.
+  * `U` climbs in both time directions, so Tao-style renewal fails.
+  * The first-rise (Feller) route is killed by `τ`.
+* **Calibration.**  A positive lower density of *strict* survivors would already exhibit an
+  aperiodic orbit, which is open.
+
+## 21. The `𝔽₂[t]` twin has infinitely many orbits (2026-10-13, "freeform" Fable agent, checked)
+
+Lean: `AmusicalFunctionField.lean` (targets).  This is the clean split of Klamkin (a) into a
+Diophantine half and a dynamical half.
+
+* **The twin.**  `(ℤ, 2, 3) → (𝔽₂[t], t, Q)` with `Q = t² + t + 1`.  Haar balance forces depths
+  `(1, 2, 3, 3)`.
+  * It is residue-transitive at 18 tested moduli.
+  * Degrees change by exactly `+1, 0, −1`.
+  * The forward and backward walks have the same law, so `p_f = p_b = 1/4` and the heuristic
+    orbit-minimum density is exactly `1/16` (measured `0.06271`).
+* **Theorem F (PROVED).**  For `p = 2^e ≥ 8`, `m = p/2`, `(t⁴+t³+1) t^m (t+1)^(m−3)` has exact
+  period `p`, with itinerary `E^m B^m`.  So the twin has infinitely many cycles, hence orbits.
+  * The proof never touches an infinite orbit.  Frobenius collapses the Böhm–Sontacchi
+    denominator: `t^{2p} − Q^p = (t+1)^p`.
+  * For `Q = t² + 1` the denominator is `1`, and every balanced word of length `2^e` closes.
+  * I re-checked it independently (`scripts/amusical/twin/fftwin_ren.py`, own carry-less
+    arithmetic): exact periods and itineraries for `p = 8 … 256`.  Teeth: `p = 10, 12, 14` and
+    `s_E ≠ 0` do not close.
+* **Heuristic exact in the limit.**  Cycles of length 8, 16, 32 number 9, 299 (exact) and about
+  `2.76·10⁶`, against the heuristic `3.6`, `233`, `2.69·10⁶`.  The ratio tends to 1.
+* **What fails over `ℤ`.**  `E^m B^m` closes at `2^m(4^m−3^m)/(9^m−8^m)`, an integer only at
+  `m = 1` (`amusical_EmBm_not_integral`).  The missing identity `(a^m−b^m)/(a−b) = (a−b)^{m−1}` is
+  smallness of `2^N − 3^p`, which Mihăilescu and Baker forbid.
+  * Since cycles of `U` are believed finite (§5, §18), **any proof of Klamkin (a) must exhibit
+    infinitely many infinite orbits**.
+  * Every wall ports to the twin, and even "one infinite orbit exists" is open there.
+
+## 22. Complexity of orbit counting; Theorem W (2026-10-13, "logic" Fable agent, checked in part)
+
+Lean: `AmusicalLinearForever.lean`.  Theorem W is **proved, axiom-clean** (Ren's proof).
+
+* **Theorem W.**  If some `x ≠ 0` has a forward orbit that only uses zero-offset pieces, then the
+  points `u x` (`u ≡ 1 mod m`, prime to all slope primes) are distinct orbits.  So the map has
+  infinitely many orbits.
+  * This is the single mechanism behind every provable certificate so far: `PP(0)`'s engine in one
+    line, and the reason certificates for `U` must have empty interior.
+  * It is vacuous on `U`, because no orbit stays on `2n ↦ 3n` (Theorem L).
+* **Complexity** (paper, not re-derived), for RCWA permutations given by tables:
+  * "x ~ y" and "x periodic" are `Σ⁰₁`-complete;
+  * "∃ infinite orbit" is `Σ⁰₂`-complete, and "all orbits finite" is `Π⁰₂`-complete;
+  * "finitely many orbits" is `Π⁰₂`-hard, with the naive upper bound `Π⁰₃`.
+  * The machinery: Morita reversible 2-counter machines as linear pieces, a Bennett wrapper, and a
+    one-orbit "highway".
+* **The gap `Σ⁰₂` / `Π⁰₃` is exactly universal *additive* (Collatz-like) computation, i.e. `U`'s
+  class.**  Agent credence: 70% Π⁰₃-complete; 30% a genuine collapse, which would be a theorem
+  about U-like maps.
+* **Independence** (paper, "in principle", no table built).  There is an explicit computable RCWA
+  permutation with one orbit iff `Con(ZFC)`.  The agent puts 90% on a `C₃` variant and 80% on a
+  residue-transitive one.
+* Lagarias's C4 fails non-trivially for some members of the class: sibling cycles of one length.
+

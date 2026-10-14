@@ -1,5 +1,134 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical late-drops objective COMPLETE:**
+> `CollatzMoonshot/AmusicalLateDrops.lean` is sorry-free with every ratified statement unchanged.
+> Window-minimum density minus late drops now yields infinitely many orbit minima; the density
+> corollary, strict-forward orbit infinitude, and Chernoff tilt identity are fully proved.  The
+> 8725-job scoped build is green, and all four headline axiom ledgers contain exactly `propext`,
+> `Classical.choice`, and `Quot.sound`.  Read `HANDOFF-amusical-latedrops.md`.
+> **2026-10-14, amusical cycle-product infrastructure:** the exact cleared step identity,
+> defect classification (`0` on even steps and `±1` on odd steps), odd-step count, telescoping
+> orbit-product reindexing, and full cyclic product identity are now proved in
+> `AmusicalCycleBound/Step.lean`. This supplies the algebraic backbone of Theorem A-star; its two
+> odd-factor product inequalities remain. Read `HANDOFF-amusical-cycles.md`.
+
+> **2026-10-14, amusical cycle structure:** `cycle_min_meet` and `cycle_min_mod_six` are now
+> proved with their ratified statements unchanged.  Backward cycle positions are complementary
+> forward iterates via integer powers of `amusicalPerm`; cycle minimality then excludes residues
+> `0, 1, 3, 5` modulo `6`.  Four scoped sorries remain, led by the multiplicative Theorem A-star.
+> Read `HANDOFF-amusical-cycles.md`.
+
+> **2026-10-14, amusical ping-pong objective COMPLETE:** `pingPong_seed_inEngine` now proves the
+> full two-counter seed cycle and its concatenation for every forward time, while
+> `infinitelyManyOrbits_of_pingPong` separates the prime-to-3 progression of seeds by their
+> two-sided orbits.  `CollatzMoonshot/AmusicalPingPong.lean` is sorry-free with all ratified
+> statements unchanged.  The 8712-job scoped gate is FORMALIZE-tier green, and all three headline
+> theorems use exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read
+> `HANDOFF-amusical-pingpong.md`.
+
+> **2026-10-13, amusical escape objective COMPLETE:**
+> `CollatzMoonshot/AmusicalEscape.lean` is sorry-free with every ratified statement unchanged.
+> `escape_forward` and `escape_backward` now follow from injectivity-driven escape from finite
+> integer intervals and telescoping base-2 logarithmic bit ledgers.  Thus the periodicity,
+> reversor, normality, and final Theorem N chain is fully proved.  The 8714-job scoped gate is
+> FORMALIZE-tier green; both escape lemmas, the periodicity consumer, and the final theorem use
+> exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read `HANDOFF-amusical-escape.md`.
+
+> **2026-10-13, amusical normality bridge FORMALIZED:**
+> `evenFrequency_of_backwardNormal` now derives output frequency `1/3` by exact fiber counting,
+> finite-sum convergence, balancedness, and a proved finite-shift density argument.  The scoped
+> 8714-job gate is FORMALIZE-tier green, and the theorem uses only `Classical.choice`,
+> `Quot.sound`, and `propext`.  Only the two analytic escape lemmas remain; read
+> `HANDOFF-amusical-escape.md`.
+> **2026-10-14, amusical global mechanisms objective COMPLETE:**
+> `CollatzMoonshot/AmusicalGlobal.lean` is sorry-free with every ratified statement unchanged.
+> Proposition S converts a positive survivor-density gap into infinitely many orbit minima;
+> Proposition P uses an adic marker, a transitive affine connector on the coprime modulus, and a
+> CRT-selected large cylinder translate to force arbitrarily many returns to any residue class.
+> The 8716-job scoped gate is FORMALIZE-tier green. Both final headline axiom ledgers contain
+> exactly `Classical.choice`, `Quot.sound`, and `propext`, with no inherited `sorryAx`. Read
+> `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical one-sided density ledger:** the periodic good-word predicates now have
+> kernel-checked natural densities `fwdSurv L` and `bwdSurv L`. This closes the counting half of
+> Proposition S's one-sided finite-window estimates; only the large-integer semantic bridge and
+> inclusion-exclusion remain. Two scoped sorries remain; read `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical survival semantics formalized:** the orbit-theoretic core of Proposition
+> S is kernel-checked: forward-and-backward infinite survival is exactly `IsOrbitMin`, and each
+> infinite survivor implies its corresponding finite-window predicate. The remaining proof is a
+> finite-cardinality density calculation. Two scoped sorries remain; read
+> `HANDOFF-amusical-global.md`.
+
+> **2026-10-14, amusical window-two centralizer FORMALIZED:**
+> `commuting_window_two` is proved with its ratified statement unchanged. The proof replaces the
+> forbidden all-function enumeration with indexed certificates on the `44` and `-44` cycles and
+> independently classifies period-dividing-12 images from an affine bound plus a `Fin 2346`
+> kernel check. Its axiom ledger is exactly `Classical.choice`, `Quot.sound`, and `propext`.
+> Two target sorries remain in `AmusicalGlobal.lean`; the 8716-job scoped gate is
+> FORMALIZE-tier green. Read `HANDOFF-amusical-global.md`.
+
+> **2026-10-13, amusical commuting mechanism FORMALIZED:**
+> `infinitelyManyOrbits_of_commuting` is proved with its ratified statement unchanged. A
+> commuting strictly increasing map commutes with all integer powers, transports orbit minima,
+> and generates a strictly increasing infinite family of nonnegative minima. Three target
+> sorries remain in `AmusicalGlobal.lean`; the 8715-job scoped gate is FORMALIZE-tier green.
+> Read `HANDOFF-amusical-global.md`.
+> **2026-10-14, amusical rewiring transitions:** the scheduled three-cycle's exact orientation is
+> now kernel-checked, as is its semantic action on natural cut sources: the base forward cut enters
+> the scheduled orbit through its backward target, its backward cut crosses to the forward target,
+> and its forward cut returns to the base target.  Global segment traversal/connectivity is the
+> only remaining Theorem R obligation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring schedule:** the proposed `Nat.unpair` schedule is now an
+> explicit kernel-checked level-preserving permutation of the canonical cuts.  Each valid level
+> performs exactly the base-forward / orbit-backward / orbit-forward three-cycle.  Theorem R is
+> reduced to proving that this scheduled successor is connected.  Read
+> `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring quantitative layer:** canonical scale-cut sources are now
+> pairwise distinct, and every level-preserving permutation of them automatically fixes finite
+> orbits, satisfies the factor-three estimate, and moves at most
+> `2(log₂ N + 1)²` sources below `N`.  Theorem R is reduced to the one remaining global
+> connectivity proof for a cut-index permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-14, amusical rewiring scale geometry:** forward and backward first-passage edges are
+> now packaged with exact uniform source/target windows.  Any two cut targets at one scale obey
+> the required factor-3 affine ratio, and cut endpoints at eightfold-growing scales are strictly
+> separated.  The remaining Theorem R blocker is the infinite-orbit enumeration and global
+> segment-splicing permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-13, amusical rewiring passage checkpoint:** every infinite nonnegative amusical orbit
+> now kernel-provably escapes every bounded interval in both time directions.  Least forward and
+> backward passages, their minimality, and uniform affine bounds for `U` and `U⁻¹` are formalized
+> in `AmusicalRewireRatio/Passage.lean`.  The remaining Theorem R blocker is the explicit sparse
+> segment-splicing permutation.  Read `HANDOFF-amusical-rewire.md`.
+
+> **2026-10-13, amusical bounded-ratio rewiring in progress:** the restriction of `U` to `ℕ` is
+> now a kernel-checked permutation, with exact integer-power compatibility.  The complete
+> no-rewiring branch (at most one infinite nonnegative orbit) proves every conclusion of Theorem R
+> with empty change set.  The remaining target is the sparse geometric cut-and-splice construction
+> for at least two infinite orbits.  Read `HANDOFF-amusical-rewire.md`.
+> **2026-10-14, window-3 reversor objective COMPLETE:**
+> `CollatzMoonshot/AmusicalWindowThree.lean` is sorry-free and the unchanged theorem
+> `no_window3_bijective_reversor` is proved. Exact-period cycle transport and a reverse-pruned
+> finite join force one of 24 partial rules; a nine-state automaton kernel-checks all 216 orphan
+> witnesses and rules out surjectivity. The 8723-job scoped gate is FORMALIZE-tier green, and the
+> headline axiom ledger contains exactly `Classical.choice`, `Quot.sound`, and `propext`. Read
+> `HANDOFF-amusical-w3.md`.
+
+> **2026-10-14, window-3 certificate data formalized:** the exact 25 constrained blocks, 24
+> partial rules, and 216 orphan words now live in a typed, kernel-checked Lean module. Their
+> dimensions, orphan length bounds, block uniqueness, and exact free-block complement are proved.
+> The remaining scoped obligation is the finite-state orphan check plus cycle-to-rule bridge for
+> `no_window3_bijective_reversor`. Read `HANDOFF-amusical-w3.md`.
+
+> **2026-10-13, window-3 periodic classification FORMALIZED:**
+> `amusical_periodic_mem` is proved without itinerary-word enumeration. The actual orbit's affine
+> recurrence gives the uniform bound `|y| <= 2346` for periods at most 12, and one kernel check
+> classifies that bounded range into the known cycles. One scoped target remains:
+> `no_window3_bijective_reversor`. Read `HANDOFF-amusical-w3.md`.
+
 > **2026-10-13, amusical continuous reversor objective COMPLETE:**
 > `CollatzMoonshot/AmusicalContinuousReversor.lean` is sorry-free, with all four ratified targets
 > proved and unchanged.  Exact cylinder/CRT transport proves the two adic constancy theorems;
@@ -8,6 +137,14 @@
 > new headline axiom ledgers contain exactly `Classical.choice`, `Quot.sound`, and `propext`.
 > The separately stated `AmusicalNoContinuousReversor` conjecture remains open and out of scope.
 > Read `HANDOFF-amusical-contrev.md`.
+
+> **2026-10-13, amusical log-balance objective COMPLETE:**
+> `CollatzMoonshot/AmusicalLogBalance.lean` is sorry-free with all three ratified statements
+> unchanged.  Exact even/odd amusical transports, telescoping reciprocal error, elementary cutoff
+> tails, and a finite small-cutoff check prove the uniform even and three-multiple balances; the
+> finite-orbit harmonic contradiction proves the log-density implication.  The scoped and
+> 8848-job full gates are FORMALIZE-tier green, and all three headline axiom ledgers contain
+> exactly `Classical.choice`, `Quot.sound`, and `propext`.  Read `HANDOFF-amusical-logbal.md`.
 
 > **2026-10-13, amusical chain-connectivity objective COMPLETE:**
 > `AmusicalChains.lean` is sorry-free.  Uniform survival is proved at
