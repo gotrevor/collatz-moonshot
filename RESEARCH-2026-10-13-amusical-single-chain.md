@@ -759,3 +759,32 @@ Lean: `AmusicalSurvivorSeparation.lean`, proved and axiom-clean (Ren's proofs). 
 * **The wall is unchanged in kind.**  The rewired `τ` satisfies every hypothesis, so lower-bounding
   survival is still the typicality wall, now one-sided at 23.7%.
 
+## 27. The additive side is closed; the twins are translates of layer maps (2026-10-14, "ringadd" Opus agent, checked in part)
+
+Lean: `AmusicalAdditive.lean`, proved and axiom-clean.  Agent credence that any of this moves
+Klamkin (a): under 1%.
+
+* **Theorem T (PROVED by the agent; I checked the `q = ±1` family by hand).**  Every twin
+  `W_{α,β,γ}` equals a layer map `U_q` (§5) plus `d = (α+β+γ−3)/3`, after a unique even
+  translation, with `q = 3 − 2(γ−β)`.  Checked on all 6600 twins with offsets `|·| ≤ 15`.
+  * So the §12 statistical twins are `Û + c` restricted to `(1/q)ℤ`, and Kohl's det of a twin is `d`.
+  * `twinW x = U(x + 4) − 3`, i.e. `U + 1` conjugated by translation (Lean `twinW_eq_translate`).
+  * Every det-0 twin contains a copy of `U`, so a det-0 twin with finitely many orbits would
+    disprove Klamkin (a).
+  * T4: `U` is the only residue-transitive twin with zero flux.  Every other transitive twin has a
+    provably infinite orbit (§24).
+  * T5: for every rational `c ≠ 0`, `Û + c` has infinitely many infinite orbits on `ℚ ∩ ℤ_(6)`,
+    from flux on nested layers.  At `c = 0` this is open.
+* **Carry cocycle (REFUTED as finitely valued; Lean `amusical_carry_unbounded`).**
+  `U(x+y) − U(x) − U(y)` is unbounded (`6k + 1` at `x = y = 4k + 1`).  An additive Theorem W is
+  vacuous, since the itinerary codes `ℤ₂` injectively.
+* **Theorem G (PROVED by the agent).**  An automorphism of an infinite abelian group has infinitely
+  many orbits.  So "U respects a group law on the non-periodic integers" is a costume for infinitely
+  many infinite orbits.  On all of `ℤ` it is impossible by Lagrange (`|Fix U| = 3`, `|Fix U²| = 7`).
+* **The `𝔽₂[t]` twin is additive on triples of one depth.**  Over `ℤ` an exact carry in `{0, ±1}`
+  turns the twin's linear algebra into a knapsack problem, which only reorganises cycles.
+* **Baker contrapositive (REFUTED).**  Along an orbit segment, `j log 3 − n log 2 = log(y/x) − S`
+  with `S` the archimedean carry.  Proposition D: the relations that finitely many orbits forces
+  are Dirichlet-sized (`|Λ| ≲ 1/J` at lag `≤ J`).  Every irrational satisfies these, so no lower
+  bound for linear forms in `log 2, log 3` can contradict them.
+
