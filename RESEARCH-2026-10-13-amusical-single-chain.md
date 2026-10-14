@@ -730,3 +730,32 @@ measure-classification property of `Û` force infinitely many orbits on the diag
   * Open Q1 (agent: 50%): does some single orbit reach `0.3972`?  If so, Proposition S's threshold
     is sharp.
 
+## 26. One-sided survival suffices; the single-orbit ceiling is `c` (2026-10-14, "q1sharp" Opus agent, checked in part)
+
+Lean: `AmusicalSurvivorSeparation.lean`, proved and axiom-clean (Ren's proofs).  The agent answered
+§25's Q1 negatively: the single-orbit survival ceiling is `c = p_f p_b ≈ 0.0498`, not `0.3972`.
+
+* **Separation (PROVED; Lean `fwdSurvivor_three_separation`).**  If `n < n'` are forward survivors
+  on one orbit and `3 ∣ n'`, then `3n ≤ 2n'`.  `n'` cannot precede `n`, and the step before `n'` is
+  `U⁻¹ n' = 2n'/3`.  So **forward survivors divisible by 3 in `[X, 3X/2)` lie on distinct orbits**,
+  each infinite (`fwdSurvivor_three_not_periodic`).
+* **Reduction (PROVED; Lean `infinitelyManyOrbits_of_fwdSurvivors_three`).**  If such windows hold
+  unboundedly many of them, i.e. `FS ∩ 3ℤ` is not `O(log X)`, Klamkin (a) holds.  Under finitely
+  many orbits every multiple of 3 that survives a fixed window is a late dropper, except
+  `O(log X)` of them.
+* **Ceiling C1 (PROVED by the agent; not yet re-derived by me).**  One orbit, or finitely many,
+  with the lattice's window statistics has `FS ∪ BS` of upper density `≤ δ_L` for every `L`, hence
+  `≤ c`.  The mechanism: a forward survivor whose backward window first drops at time `g` has
+  `Vᵍ n` as the next lower survivor of its orbit, and Lemma K forces a height gap `≥ m'/4ᵍ − 1`.
+  * Consequence (C2′): **`d_upper(FS) > c` implies Klamkin (a)**, which needs forward survivors at
+    only `c/p_f = 23.7%` of their measured density.  This overturns §20's "one-sided control
+    fails", which holds only for the S′ counting method.
+  * At the walk's late-drop rates the fixed-depth version fires from window depth 3, where Theorem LD
+    needs depth 23.
+  * Sharpness: conditionally, a re-tuned masquerade makes every orbit minimum a forward survivor.
+    Unconditionally the agent puts 85% on reaching `c`, leaning on Theorem M's accounting.
+  * Checks (agent's, `scratch-q1sharp/`): the predecessor and separation lemmas have 0 failures on
+    `[2⁸, 2²¹)`.  Teeth: a false `2ᵍ` strengthening of Lemma K is caught.
+* **The wall is unchanged in kind.**  The rewired `τ` satisfies every hypothesis, so lower-bounding
+  survival is still the typicality wall, now one-sided at 23.7%.
+
