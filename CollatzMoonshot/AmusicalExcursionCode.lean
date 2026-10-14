@@ -30,29 +30,43 @@ namespace CollatzMoonshot.Amusical
 /-- **Target (LOC.1, branch uniqueness).** -/
 theorem eq_amusical_of_branch {x y : ℤ}
     (h : 2 * y = 3 * x ∨ 4 * y = 3 * x + 1 ∨ 4 * y = 3 * x - 1) : y = amusical x := by
-  sorry
+  unfold amusical; split_ifs <;> omega
 
 /-- **Target (LOC.1).**  A self-map of `ℤ` built from `U`'s branches is `U`. -/
 theorem eq_amusical_of_forall_branch (π : ℤ → ℤ)
     (h : ∀ x, 2 * π x = 3 * x ∨ 4 * π x = 3 * x + 1 ∨ 4 * π x = 3 * x - 1) : π = amusical := by
-  sorry
+  funext x; exact eq_amusical_of_branch (h x)
 
 /-- **Target (Theorem R).**  The defect is the residue `C · 2^{−a}` modulo `Δ = 3^g − 2^a`. -/
 theorem defect_mod_delta {g a : ℕ} {p C : ℤ}
     (h : 2 ^ a * amusical^[g] p = 3 ^ g * p + C) :
-    2 ^ a * (amusical^[g] p - p) ≡ C [ZMOD (3 ^ g - 2 ^ a)] := by
-  sorry
+    2 ^ a * (amusical^[g] p - p) ≡ C [ZMOD (3 ^ g - 2 ^ a)] :=
+  Int.modEq_iff_dvd.2 ⟨-p, by linear_combination -h⟩
 
 /-- **Target (Theorem DIV).**  The offset and the defect have the same gcd with `Δ`. -/
 theorem gcd_offset_eq_gcd_defect {g a : ℕ} {p C : ℤ} (ha : 1 ≤ a)
     (h : 2 ^ a * amusical^[g] p = 3 ^ g * p + C) :
     Int.gcd C (3 ^ g - 2 ^ a) = Int.gcd (amusical^[g] p - p) (3 ^ g - 2 ^ a) := by
-  sorry
+  set d := amusical^[g] p - p
+  have hC : C = 2 ^ a * d + (3 ^ g - 2 ^ a) * (-p) := by simp only [d]; linear_combination -h
+  have hcop : IsCoprime ((2 : ℤ) ^ a) (3 ^ g - 2 ^ a) := by
+    apply IsCoprime.pow_left
+    obtain ⟨k, hk⟩ : Odd ((3 : ℤ) ^ g - 2 ^ a) :=
+      (Odd.pow (by decide : Odd (3 : ℤ))).sub_even (Int.even_pow.2 ⟨even_two, by omega⟩)
+    exact ⟨-k, 1, by rw [hk]; ring⟩
+  have h1 : Nat.Coprime (2 ^ a : ℤ).natAbs (3 ^ g - 2 ^ a : ℤ).natAbs :=
+    Int.isCoprime_iff_gcd_eq_one.1 hcop
+  rw [hC, Int.gcd_add_mul_left_left]
+  simp only [Int.gcd, Int.natAbs_mul]
+  exact Nat.Coprime.gcd_mul_left_cancel _ h1
 
 /-- **Target.**  `U^g p ≥ p` iff `Δ p + C ≥ 0`. -/
 theorem amusical_iterate_ge_iff_offset {g a : ℕ} {p C : ℤ}
     (h : 2 ^ a * amusical^[g] p = 3 ^ g * p + C) :
     p ≤ amusical^[g] p ↔ 0 ≤ (3 ^ g - 2 ^ a) * p + C := by
-  sorry
+  have h2 : (0 : ℤ) < 2 ^ a := by positivity
+  constructor
+  · intro hp; nlinarith
+  · intro hp; by_contra hc; push Not at hc; nlinarith
 
 end CollatzMoonshot.Amusical
