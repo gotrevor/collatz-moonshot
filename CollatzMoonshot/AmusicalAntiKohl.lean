@@ -776,6 +776,111 @@ theorem sigmaTau_forward_core (n : ℕ) :
   · rintro ⟨x, hx, rfl⟩
     exact ⟨x, hx, sigmaTau_pow_two_mod_four n x hx⟩
 
+open Classical in
+/-- A positive integral dilation has eventually arbitrarily small symmetric-box density. -/
+theorem intDensityLE_dilate (q : ℕ) (hq : 0 < q) (A : Set ℤ) (ε : ℝ)
+    (hqε : 3 / (q : ℝ) < ε) :
+    IntDensityLE {y : ℤ | ∃ x ∈ A, y = (q : ℤ) * x} ε := by
+  unfold IntDensityLE
+  filter_upwards [Filter.eventually_ge_atTop (2 * q)] with X hX
+  let B := (Finset.Icc (-(X : ℤ)) X).filter
+    (· ∈ {y : ℤ | ∃ x ∈ A, y = (q : ℤ) * x})
+  let f : ℤ → ℤ := fun y => y / q
+  have hf_inj : Set.InjOn f B := by
+    intro y hy z hz heq
+    change y ∈ B at hy
+    change z ∈ B at hz
+    simp only [B, Finset.mem_filter, Finset.mem_Icc] at hy hz
+    obtain ⟨xy, _, hxy⟩ := hy.2
+    obtain ⟨xz, _, hxz⟩ := hz.2
+    have hydiv : y / (q : ℤ) = xy := by
+      apply Int.ediv_eq_of_eq_mul_left (by omega)
+      simpa [mul_comm] using hxy
+    have hzdiv : z / (q : ℤ) = xz := by
+      apply Int.ediv_eq_of_eq_mul_left (by omega)
+      simpa [mul_comm] using hxz
+    dsimp [f] at heq
+    rw [hydiv, hzdiv] at heq
+    subst xz
+    exact hxy.trans hxz.symm
+  have hf_mem : ∀ y ∈ B, f y ∈ Finset.Icc (-(X / q : ℕ) - 1 : ℤ) (X / q : ℕ) := by
+    intro y hy
+    simp only [B, Finset.mem_filter, Finset.mem_Icc] at hy ⊢
+    obtain ⟨xy, _, hxy⟩ := hy.2
+    have hqz : (0 : ℤ) < q := by exact_mod_cast hq
+    have hydiv : y / (q : ℤ) = xy := by
+      apply Int.ediv_eq_of_eq_mul_left (by omega)
+      simpa [mul_comm] using hxy
+    have hupper : xy ≤ (X : ℤ) / q := by
+      rw [Int.le_ediv_iff_mul_le hqz]
+      simpa [mul_comm, hxy] using hy.1.2
+    have hlower : -(X : ℤ) / q ≤ xy := by
+      rw [Int.ediv_le_iff_le_mul hqz]
+      rw [mul_comm xy, ← hxy]
+      omega
+    have hmod : X % q + q * (X / q) = X := Nat.mod_add_div X q
+    have hfloorlower : (-(X / q : ℕ) - 1 : ℤ) ≤ -(X : ℤ) / q := by
+      rw [Int.le_ediv_iff_mul_le hqz]
+      have hbound : X ≤ q * (X / q + 1) := by
+        calc
+          X = X % q + q * (X / q) := hmod.symm
+          _ ≤ q + q * (X / q) := Nat.add_le_add_right (Nat.mod_lt X hq).le _
+          _ = q * (X / q + 1) := by ring
+      have hbound' : (X : ℤ) ≤ (q : ℤ) * (((X / q : ℕ) : ℤ) + 1) := by
+        exact_mod_cast hbound
+      calc
+        (-(X / q : ℕ) - 1 : ℤ) * q =
+            -((q : ℤ) * (((X / q : ℕ) : ℤ) + 1)) := by ring
+        _ ≤ -(X : ℤ) := neg_le_neg hbound'
+    change (-(X / q : ℕ) - 1 : ℤ) ≤ y / q ∧ y / q ≤ (X / q : ℕ)
+    constructor <;> rw [hydiv]
+    · exact hfloorlower.trans hlower
+    · simpa using hupper
+  have hcard : B.card ≤ (Finset.Icc (-(X / q : ℕ) - 1 : ℤ) (X / q : ℕ)).card := by
+    exact Finset.card_le_card_of_injOn f hf_mem hf_inj
+  rw [Int.card_Icc] at hcard
+  have hcard' : B.card ≤ 2 * (X / q) + 2 := by
+    have heqcard : (((X / q : ℕ) : ℤ) + 1 - (-(X / q : ℕ) - 1 : ℤ)).toNat =
+        2 * (X / q) + 2 := by omega
+    rw [heqcard] at hcard
+    exact hcard
+  change (B.card : ℝ) ≤ ε * X
+  have hqreal : (0 : ℝ) < q := by exact_mod_cast hq
+  have hXreal : (2 : ℝ) * q ≤ X := by exact_mod_cast hX
+  have hXposreal : (0 : ℝ) < X := lt_of_lt_of_le (mul_pos (by norm_num) hqreal) hXreal
+  have hdivreal : (X / q : ℕ) ≤ (X : ℝ) / q := by
+    rw [le_div_iff₀ hqreal]
+    exact_mod_cast Nat.div_mul_le_self X q
+  have hcardreal : (B.card : ℝ) ≤ 2 * (X / q : ℕ) + 2 := by exact_mod_cast hcard'
+  calc
+    (B.card : ℝ) ≤ 2 * (X / q : ℕ) + 2 := hcardreal
+    _ ≤ 2 * ((X : ℝ) / q) + 2 := by linarith
+    _ ≤ 3 * ((X : ℝ) / q) := by
+      have : (2 : ℝ) ≤ (X : ℝ) / q := (le_div_iff₀ hqreal).2 (by simpa using hXreal)
+      linarith
+    _ ≤ ε * X := by
+      apply le_of_lt
+      calc
+        3 * ((X : ℝ) / q) = (3 / q) * X := by ring
+        _ < ε * X := mul_lt_mul_of_pos_right hqε hXposreal
+
+/-- The forward cores of the `σ_τ` cone have density tending to zero. -/
+theorem sigmaTau_forward_density (ε : ℝ) (hε : 0 < ε) :
+    ∃ n : ℕ, IntDensityLE ((sigmaTauPerm ^ n) '' {x : ℤ | x % 4 = 2}) ε := by
+  have hgrow : Filter.Tendsto (fun n : ℕ => (3 : ℝ) ^ n) Filter.atTop Filter.atTop :=
+    tendsto_pow_atTop_atTop_of_one_lt (by norm_num)
+  have hevent := hgrow.eventually_gt_atTop (3 / ε)
+  rw [Filter.eventually_atTop] at hevent
+  obtain ⟨n, hn⟩ := hevent
+  have hratio : 3 / ((3 : ℝ) ^ n) < ε := by
+    rw [div_lt_iff₀ (by positivity)]
+    have := (div_lt_iff₀ hε).mp (hn n le_rfl)
+    nlinarith
+  refine ⟨n, ?_⟩
+  rw [sigmaTau_forward_core]
+  simpa using intDensityLE_dilate (3 ^ n) (by positivity)
+    {x : ℤ | x % 4 = 2} ε (by simpa using hratio)
+
 /-- **Target.**  Every orbit of `σ_τ = τ ∘ U` has density `0`.  Paper proof: Theorem T with
 `S = 2 + 4ℤ`.  The forward core is `3ⁿ (2 + 4ℤ)`, of density `3⁻ⁿ/4`.  The backward core
 `{x : σ_τʲ x ∉ S, j ≤ n}` has density `(1/2)(3/4)ⁿ⁻¹`.  This comes from a closed 13-type

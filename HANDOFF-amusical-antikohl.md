@@ -1,5 +1,45 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: sigma-tau forward density closed
+
+The forward hypothesis of Theorem T for `sigmaTauPerm` is now kernel-checked.  The reusable
+lemma `intDensityLE_dilate` injects a positive integral dilation inside `[-X, X]` into the
+integer quotient interval `[-⌊X/q⌋-1, ⌊X/q⌋]`, giving the explicit bound
+`2⌊X/q⌋ + 2 ≤ 3X/q` once `X ≥ 2q`.  Combining this with
+`sigmaTau_forward_core` and the divergence of `3^n` proves `sigmaTau_forward_density`:
+
+```text
+∀ ε > 0, ∃ n, IntDensityLE ((sigmaTauPerm ^ n) '' {x | x % 4 = 2}) ε.
+```
+
+Verification run:
+
+```text
+lake env lean -j1 CollatzMoonshot/AmusicalAntiKohl.lean
+git diff --check
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-antikohl \
+  --target CollatzMoonshot.AmusicalAntiKohl \
+  --axioms CollatzMoonshot.Amusical.sigmaTau_forward_density
+```
+
+The direct check succeeds with exactly the three pre-existing target sorry warnings.  The real
+8710-job scoped gate is FORMALIZE-tier green, and the new headline theorem's axiom ledger is
+exactly `Classical.choice`, `Quot.sound`, and `propext`.  Two unchanged gate attempts first hit
+the environment's intermittent import-level `Too many open files` failure.  No target statement,
+axiom, or decision certificate changed.
+
+Current blocker: no external blocker.  The three ratified target sorries remain
+`amusical_no_periodic_cone`, `kappa_orbit_densityZero`, and `sigmaTau_orbit_densityZero`.
+For the last theorem, its forward hypothesis is complete; the sole missing input before applying
+Theorem T is the backward survivor estimate.
+
+Next highest-value attack: encode the 13 backward survivor types for `sigmaTauPerm` as finite
+residue sets and prove their one-step cardinality recursion, aiming only for an upper bound of
+the form `C * (3/4)^n`.  Once this supplies
+`∀ ε > 0, ∃ n, IntDensityLE {x | ∀ j ≤ n, (sigmaTauPerm ^ j) x % 4 ≠ 2} ε`, apply
+`orbit_densityZero_of_transientCone` with `sigmaTau_cone` and
+`sigmaTau_forward_density` to close `sigmaTau_orbit_densityZero`.
+
 ## 2026-10-14: sigma-tau forward core algebra isolated
 
 The easy half of the `sigmaTau_orbit_densityZero` automaton is now reduced to pure counting.
