@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalAntiKohl
+import CollatzMoonshot.AmusicalUniform.Iterate
+import CollatzMoonshot.AmusicalUniform.Transitive
 
 /-!
 # Weakly sign-uniform maps: reversal and residue-local invariants die
@@ -72,7 +74,145 @@ theorem no_piecewiseAffine_reversor_of_valNonneg (p : ℕ) [Fact p.Prime] (σ : 
     ¬ ∃ (ι : Equiv.Perm ℤ) (n : ℕ) (piece : ℤ → Fin n) (a₀ b₀ c₀ : Fin n → ℤ),
       (∀ j, c₀ j ≠ 0) ∧ (∀ x, c₀ (piece x) * ι x = a₀ (piece x) * x + b₀ (piece x)) ∧
       ι * σ * ι⁻¹ = σ⁻¹ := by
-  sorry
+  rintro ⟨ι, n, piece, a₀, b₀, c₀, hc₀, haff, hconj⟩
+  have hstep : ∀ y, ι (σ y) = σ.symm (ι y) := by
+    intro y
+    have h := congrArg (fun f : Equiv.Perm ℤ => f (ι y)) hconj
+    simpa [Equiv.Perm.mul_apply, Equiv.Perm.inv_def] using h
+  have hiter : ∀ (k : ℕ) y, ι (σ^[k] y) = (⇑σ.symm)^[k] (ι y) := by
+    intro k
+    induction k with
+    | zero => intro y; rfl
+    | succ k ih =>
+      intro y
+      rw [Function.iterate_succ_apply', Function.iterate_succ_apply', hstep, ih]
+  -- a bound for the valuations of the piece-slope ratios of `ι`
+  have hnn : ∀ i j, 0 ≤ padicValRat p ((c₀ i : ℚ) * a₀ j) := by
+    intro i j
+    rw [← Int.cast_mul, padicValRat.of_int]
+    exact Int.natCast_nonneg _
+  let B : ℤ := ∑ i : Fin n, ∑ j : Fin n, padicValRat p ((c₀ i : ℚ) * a₀ j)
+  have hB : ∀ i j, padicValRat p ((c₀ i : ℚ) * a₀ j) ≤ B := by
+    intro i j
+    calc padicValRat p ((c₀ i : ℚ) * a₀ j)
+        ≤ ∑ j' : Fin n, padicValRat p ((c₀ i : ℚ) * a₀ j') :=
+          Finset.single_le_sum (fun j' _ => hnn i j') (Finset.mem_univ j)
+      _ ≤ B :=
+          Finset.single_le_sum (f := fun i' => ∑ j' : Fin n, padicValRat p ((c₀ i' : ℚ) * a₀ j'))
+            (fun i' _ => Finset.sum_nonneg fun j' _ => hnn i' j') (Finset.mem_univ i)
+  obtain ⟨x₀, k, hk⟩ := hacc (B + 1)
+  set S := rcwaIterSlope σ m a c k x₀ with hS
+  have hDpos : 0 < rcwaDen m c := rcwaDen_pos hσ
+  have hD'pos : 0 < rcwaDen m' c' := rcwaDen_pos hσ'
+  set N : ℕ := (rcwaDen m' c' ^ k).toNat with hNdef
+  have hN : (N : ℤ) = rcwaDen m' c' ^ k := Int.toNat_of_nonneg (pow_pos hD'pos k).le
+  have : NeZero N := ⟨by have := pow_pos hD'pos k; omega⟩
+  let y : ℤ → ℤ := fun t => x₀ + rcwaDen m c ^ k * t
+  let cell : ℤ → Fin n × Fin n × ZMod N := fun t =>
+    (piece (y t), piece (σ^[k] (y t)), ((ι (y t) : ℤ) : ZMod N))
+  obtain ⟨t₁, t₂, ht, hcell⟩ := Finite.exists_ne_map_eq_of_infinite cell
+  have hp₀ : piece (y t₁) = piece (y t₂) := congrArg (fun z => z.1) hcell
+  have hp₁ : piece (σ^[k] (y t₁)) = piece (σ^[k] (y t₂)) := congrArg (fun z => z.2.1) hcell
+  have hm : ((ι (y t₁) : ℤ) : ZMod N) = ((ι (y t₂) : ℤ) : ZMod N) :=
+    congrArg (fun z => z.2.2) hcell
+  obtain ⟨q, hq⟩ := Int.modEq_iff_add_fac.mp ((ZMod.intCast_eq_intCast_iff _ _ N).mp hm)
+  rw [hN] at hq
+  -- forward: `σᵏ` is affine with slope `S` on `x₀ + Dᵏ ℤ`
+  have hf : ∀ t, ((σ^[k] (y t) - σ^[k] x₀ : ℤ) : ℚ) = S * (rcwaDen m c ^ k * t : ℤ) := by
+    intro t
+    exact (rcwa_iterate_diff hσ k x₀ (rcwaDen m c ^ k * t) 1 (by simp)).2
+  -- backward: `σ⁻ᵏ` is affine with slope `S'` near `ι (y t₁)`
+  set S' := rcwaIterSlope σ.symm m' a' c' k (ι (y t₁)) with hS'
+  have hb : (((⇑σ.symm)^[k] (ι (y t₂)) - (⇑σ.symm)^[k] (ι (y t₁)) : ℤ) : ℚ) =
+      S' * (ι (y t₂) - ι (y t₁) : ℤ) := by
+    have h := (rcwa_iterate_diff hσ' k (ι (y t₁)) (rcwaDen m' c' ^ k * q) 1 (by simp)).2
+    rw [← hq] at h
+    rw [h, hq]
+    congr 2
+    ring
+  -- valuations of the two iterate slopes
+  have hS'val := padicValRat_prod_le (p := p)
+    (fun l => (a' ((⇑σ.symm)^[l] (ι (y t₁)) % m') : ℚ) / c' ((⇑σ.symm)^[l] (ι (y t₁)) % m'))
+    (fun l => div_ne_zero (by exact_mod_cast (hσ'.coeff _).2)
+      (by exact_mod_cast (hσ'.coeff _).1.ne'))
+    (fun _ => 0)
+    (fun l => hval' _ (Int.emod_nonneg _ (by exact_mod_cast hσ'.pos.ne'))
+      (Int.emod_lt_of_pos _ (by exact_mod_cast hσ'.pos))) k
+  simp only [Finset.sum_const_zero] at hS'val
+  obtain ⟨hS'0, hS'le⟩ := hS'val
+  have hS0 : S ≠ 0 := by
+    rw [hS]
+    unfold rcwaIterSlope
+    exact Finset.prod_ne_zero_iff.mpr fun l _ => div_ne_zero
+      (by exact_mod_cast (hσ.coeff _).2) (by exact_mod_cast (hσ.coeff _).1.ne')
+  change S' ≠ 0 at hS'0
+  change padicValRat p S' ≤ 0 at hS'le
+  -- the two piece equations of `ι`
+  have hyne : y t₁ ≠ y t₂ := by
+    intro h
+    apply ht
+    have h' : rcwaDen m c ^ k * t₁ = rcwaDen m c ^ k * t₂ := by simp only [y] at h; omega
+    exact mul_left_cancel₀ (pow_pos hDpos k).ne' h'
+  set i := piece (σ^[k] (y t₁))
+  set j := piece (y t₁)
+  have e1 : c₀ j * (ι (y t₂) - ι (y t₁)) = a₀ j * (y t₂ - y t₁) := by
+    have h1 := haff (y t₁)
+    have h2 := haff (y t₂)
+    rw [← hp₀] at h2
+    linear_combination h2 - h1
+  have e2 : c₀ i * (ι (σ^[k] (y t₂)) - ι (σ^[k] (y t₁))) =
+      a₀ i * (σ^[k] (y t₂) - σ^[k] (y t₁)) := by
+    have h1 := haff (σ^[k] (y t₁))
+    have h2 := haff (σ^[k] (y t₂))
+    rw [← hp₁] at h2
+    linear_combination h2 - h1
+  rw [hiter, hiter] at e2
+  have hΓ : ((ι (y t₂) - ι (y t₁) : ℤ) : ℚ) ≠ 0 := by
+    have : ι (y t₂) - ι (y t₁) ≠ 0 := fun h => hyne (ι.injective (by linarith)).symm
+    exact_mod_cast this
+  have hΔ : ((y t₂ - y t₁ : ℤ) : ℚ) ≠ 0 := by
+    have : y t₂ - y t₁ ≠ 0 := fun h => hyne (by linarith)
+    exact_mod_cast this
+  have hfd : ((σ^[k] (y t₂) - σ^[k] (y t₁) : ℤ) : ℚ) = S * (y t₂ - y t₁ : ℤ) := by
+    have h1 := hf t₁
+    have h2 := hf t₂
+    simp only [y] at h1 h2 ⊢
+    push_cast at h1 h2 ⊢
+    linear_combination h2 - h1
+  have e1Q : (c₀ j : ℚ) * (ι (y t₂) - ι (y t₁) : ℤ) = a₀ j * (y t₂ - y t₁ : ℤ) := by
+    exact_mod_cast e1
+  have e2Q : (c₀ i : ℚ) * (S' * (ι (y t₂) - ι (y t₁) : ℤ)) =
+      a₀ i * (S * (y t₂ - y t₁ : ℤ)) := by
+    rw [← hb, ← hfd]
+    exact_mod_cast e2
+  have hkey : ((c₀ i : ℚ) * a₀ j) * S' = ((a₀ i : ℚ) * c₀ j) * S := by
+    apply mul_right_cancel₀ hΔ
+    linear_combination (-((c₀ i : ℚ) * S')) * e1Q + (c₀ j : ℚ) * e2Q
+  have hci : (c₀ i : ℚ) ≠ 0 := by exact_mod_cast hc₀ i
+  have hcj : (c₀ j : ℚ) ≠ 0 := by exact_mod_cast hc₀ j
+  have hai : (a₀ i : ℚ) ≠ 0 := by
+    intro h0
+    rw [h0, zero_mul] at e2Q
+    rcases mul_eq_zero.mp e2Q with h | h
+    · exact hci h
+    · rcases mul_eq_zero.mp h with h | h
+      · exact hS'0 h
+      · exact hΓ h
+  have haj : (a₀ j : ℚ) ≠ 0 := by
+    intro h0
+    rw [h0, zero_mul] at e1Q
+    rcases mul_eq_zero.mp e1Q with h | h
+    · exact hcj h
+    · exact hΓ h
+  have hv := congrArg (padicValRat p) hkey
+  rw [padicValRat.mul (mul_ne_zero hci haj) hS'0,
+    padicValRat.mul (mul_ne_zero hai hcj) hS0] at hv
+  have h1 := hB i j
+  have h2 : 0 ≤ padicValRat p ((a₀ i : ℚ) * c₀ j) := by
+    rw [← Int.cast_mul, padicValRat.of_int]
+    exact Int.natCast_nonneg _
+  have h3 : (B + 1 : ℤ) ≤ padicValRat p S := hk
+  linarith
 
 /-! ## The Island Lemma -/
 
@@ -86,7 +226,88 @@ theorem island_cycle_slope (σ ι : Equiv.Perm ℤ) {m : ℕ} {a b c : ℤ → �
     (hrev : ι * σ * ι⁻¹ = σ⁻¹) {z : ℤ} {L : ℕ} (hL : 0 < L) (hz : (σ ^ L) z = z)
     (hZ : ∀ i : ℕ, ∃ j : ℕ, ι ((σ ^ i) z) = (σ ^ j) z) :
     rcwaIterSlope σ m a c L z = 1 ∨ rcwaIterSlope σ m a c L z = -1 := by
-  sorry
+  have hzL : σ^[L] z = z := hz
+  have hstep : ∀ y, ι (σ y) = σ.symm (ι y) := by
+    intro y
+    have h := congrArg (fun f : Equiv.Perm ℤ => f (ι y)) hrev
+    simpa [Equiv.Perm.mul_apply, Equiv.Perm.inv_def] using h
+  have hiter : ∀ (k : ℕ) y, ι (σ^[k] y) = (⇑σ.symm)^[k] (ι y) := by
+    intro k
+    induction k with
+    | zero => intro y; rfl
+    | succ k ih =>
+      intro y
+      rw [Function.iterate_succ_apply', Function.iterate_succ_apply', hstep, ih]
+  have hback : ∀ y, σ^[L] (ι (σ^[L] y)) = ι y := by
+    intro y
+    rw [hiter]
+    exact Function.LeftInverse.iterate (fun v => σ.apply_symm_apply v) L (ι y)
+  -- the slope around a cycle does not depend on the base point
+  have hcyc1 : ∀ w, σ^[L] w = w →
+      rcwaIterSlope σ m a c L (σ w) = rcwaIterSlope σ m a c L w := by
+    intro w hw
+    unfold rcwaIterSlope
+    have h1 := Finset.prod_range_succ
+      (fun l => ((a (σ^[l] w % m) : ℚ) / c (σ^[l] w % m))) L
+    have h2 := Finset.prod_range_succ'
+      (fun l => ((a (σ^[l] w % m) : ℚ) / c (σ^[l] w % m))) L
+    simp only [Function.iterate_succ_apply, Function.iterate_zero, id, hw] at h1 h2
+    have h0 : ((a (w % m) : ℚ) / c (w % m)) ≠ 0 := div_ne_zero
+      (by exact_mod_cast (hσ.coeff _).2) (by exact_mod_cast (hσ.coeff _).1.ne')
+    exact mul_right_cancel₀ h0 (h2.symm.trans h1)
+  have hcyc : ∀ j : ℕ, rcwaIterSlope σ m a c L (σ^[j] z) = rcwaIterSlope σ m a c L z := by
+    intro j
+    induction j with
+    | zero => rfl
+    | succ j ih =>
+      rw [Function.iterate_succ_apply', hcyc1, ih]
+      rw [← Function.iterate_add_apply, add_comm, Function.iterate_add_apply, hzL]
+  obtain ⟨j₀, hj₀⟩ := hZ 0
+  have hw : ι z = σ^[j₀] z := by
+    simp only [pow_zero, Equiv.Perm.one_apply] at hj₀
+    exact hj₀
+  have hwL : σ^[L] (ι z) = ι z := by
+    rw [hw, ← Function.iterate_add_apply, add_comm, Function.iterate_add_apply, hzL]
+  set S := rcwaIterSlope σ m a c L z with hS
+  have hSw : rcwaIterSlope σ m a c L (ι z) = S := by rw [hw, hcyc]
+  -- one deep displacement, followed through `σᴸ`, `ι`, `σᴸ`
+  set D := rcwaDen m c
+  set Dι := rcwaDen m' c'
+  have hDpos : 0 < D := rcwaDen_pos hσ
+  have hDιpos : 0 < Dι := rcwaDen_pos hι
+  set N : ℤ := D ^ L * (D ^ L * Dι) with hN
+  have hNpos : 0 < N := by positivity
+  obtain ⟨hA1, hA2⟩ := rcwa_iterate_diff hσ L z N (D ^ L * Dι) dvd_rfl
+  rw [hzL] at hA1 hA2
+  change _ = S * _ at hA2
+  set d₁ := σ^[L] (z + N) - z
+  obtain ⟨hB1, hB2⟩ := rcwa_iterate_diff hι 1 z d₁ (D ^ L) (by rw [pow_one, mul_comm]; exact hA1)
+  simp only [Function.iterate_one, Finset.range_one, Finset.prod_singleton,
+    Function.iterate_zero, id] at hB1 hB2
+  set τ : ℚ := (a' (z % m') : ℚ) / c' (z % m')
+  have hτ : τ ≠ 0 := div_ne_zero
+    (by exact_mod_cast (hι.coeff _).2) (by exact_mod_cast (hι.coeff _).1.ne')
+  set d₂ := ι (z + d₁) - ι z
+  obtain ⟨-, hC2⟩ := rcwa_iterate_diff hσ L (ι z) d₂ 1 (by rw [mul_one]; exact hB1)
+  rw [hwL] at hC2
+  change _ = rcwaIterSlope σ m a c L (ι z) * _ at hC2
+  rw [hSw] at hC2
+  obtain ⟨-, hD2⟩ := rcwa_iterate_diff hι 1 z N 1
+    (by rw [pow_one, mul_one]; exact ⟨D ^ L * D ^ L, by rw [hN]; ring⟩)
+  simp only [Function.iterate_one, Finset.range_one, Finset.prod_singleton,
+    Function.iterate_zero, id] at hD2
+  change _ = τ * _ at hD2
+  have hzd₁ : z + d₁ = σ^[L] (z + N) := by simp only [d₁]; ring
+  have hwd₂ : ι z + d₂ = ι (σ^[L] (z + N)) := by simp only [d₂]; rw [hzd₁]; ring
+  rw [hwd₂, hback] at hC2
+  -- `τ N = S τ S N`
+  have hfin : (τ * N) * (S * S) = (τ * N) * 1 := by
+    have e : ((ι (z + N) - ι z : ℤ) : ℚ) = S * (τ * (S * N)) := by
+      rw [hC2, hB2, hA2]
+    rw [hD2] at e
+    linear_combination -e
+  have hτN : τ * N ≠ 0 := mul_ne_zero hτ (by exact_mod_cast hNpos.ne')
+  exact mul_self_eq_one_iff.mp (mul_left_cancel₀ hτN hfin)
 
 /-! ## Residue-local invariants -/
 
@@ -100,7 +321,26 @@ def AmusicalTopologicallyTransitive : Prop :=
 
 /-- **Target.**  `U` is topologically transitive on `Ẑ` (Theorem M3 for `U`). -/
 theorem amusical_topologicallyTransitive : AmusicalTopologicallyTransitive := by
-  sorry
+  intro M hM r s
+  -- classes reached from `r + M ℤ` by a full pair `(n, c)` with `n ≥ 1`
+  let R : Set (ZMod M) :=
+    {t | ∃ n c, 0 < n ∧ AmusicalFull M r n c ∧ ((amusical^[n] c : ℤ) : ZMod M) = t}
+  have hclosed : ∀ z : ℤ, (z : ZMod M) ∈ R → ((amusical z : ℤ) : ZMod M) ∈ R := by
+    rintro z ⟨n, c, -, hPc, hzt⟩
+    have hz : z ≡ amusical^[n] c [ZMOD M] := (ZMod.intCast_eq_intCast_iff _ _ _).mp hzt.symm
+    obtain ⟨c', hPc', hc'⟩ := amusical_full_step hPc hz
+    exact ⟨n + 1, c', n.succ_pos, hPc', (ZMod.intCast_eq_intCast_iff _ _ _).mpr hc'⟩
+  have hne : R.Nonempty := by
+    obtain ⟨c', hPc', -⟩ := amusical_full_step (amusicalFull_zero M r) (Int.ModEq.refl r)
+    exact ⟨_, 1, c', one_pos, hPc', rfl⟩
+  rcases amusical_no_periodic_cone M hM R hclosed with h | h
+  · exact absurd h hne.ne_empty
+  · have hs : ((s : ℤ) : ZMod M) ∈ R := h ▸ Set.mem_univ _
+    obtain ⟨n, c, hn, hPc, hcs⟩ := hs
+    obtain ⟨x, hxr, hx⟩ := hPc _ (Int.ModEq.refl _)
+    refine ⟨x, n, hn, hxr, ?_⟩
+    rw [hx]
+    exact (ZMod.intCast_eq_intCast_iff _ _ _).mp hcs
 
 /-- **Proved (M4 for `U`).**  Given topological transitivity, an orbit invariant that is constant
 on the class of `r` and on the class of `s` (mod the same `M`) takes the same value on both.  So
