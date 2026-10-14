@@ -871,7 +871,8 @@ settles (a): about 2%.
 
 ## 31. The survivor ceiling is unconditional, and `τ` sits on it (2026-10-14, "c1verify" Opus agent, checked)
 
-Lean: `AmusicalSurvivorCeiling.lean` (C2, C2′ and the backward mirror; treadmill).  An adversarial
+Lean: `AmusicalSurvivorCeiling.lean` (C2, C2′ and the backward mirror; treadmill), proved and
+axiom-clean, over direction-generic packing lemmas in `AmusicalSurvivorCeiling/Packing.lean`.  An adversarial
 re-derivation of §26's ceiling.  I checked P′, the gap step and the count by hand.
 
 * **C2′ is unconditional (PROVED).**  `d_upper(FS) > c` implies Klamkin (a), with no statistical
