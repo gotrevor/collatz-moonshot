@@ -42,8 +42,8 @@ linear piece `2n ↦ 3n` lowers `v₂`.  Moreover, an invariant measure of full 
 every open cone and every open transversal.  So a certificate for `U` must be a set with no
 residue class inside it.
 
-Summary: `RESEARCH-2026-10-13-amusical-single-chain.md` §16.  Treadmill target
-(`KICKOFF-2026-10-13-amusical-pingpong.md`): close every `sorry` here.
+Summary: `RESEARCH-2026-10-13-amusical-single-chain.md` §16.  Kernel-checked 2026-10-13 by the
+pingpong treadmill (`HANDOFF-amusical-pingpong.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -70,7 +70,7 @@ def InEngine (x : ℤ) : Prop :=
 def PingPongSeed (x : ℤ) : Prop :=
   x ≠ 0 ∧ Odd (padicValInt 5 x) ∧ x % 7 ≠ 0 ∧ x * 8 ^ padicValInt 5 x % 19 = 1
 
-/-- **Target (Lemma E).**  A seed never leaves the engine.  Paper proof: with `A = v₅ x`,
+/-- **Proved (Lemma E).**  A seed never leaves the engine.  Paper proof: with `A = v₅ x`,
 `A` steps of `21/5` take `(v₅, v₇)` from `(A, 0)` to `(0, A)` with the phase multiplied by
 `8^A`, ending at phase `1`.  Then `15` gives `(1, A)` at phase `15`, and `A` steps of `75/7`
 give `(2A + 1, 0)`
@@ -315,7 +315,7 @@ theorem pingPong_seed_inEngine {σ : ℤ → ℤ} (h : RunsPingPong σ) {x : ℤ
         rw [← hnadd, Function.iterate_add_apply]
         simpa [A] using hrec
 
-/-- **Target.**  Every permutation running the engine has infinitely many orbits.  Paper proof:
+/-- **Proved.**  Every permutation running the engine has infinitely many orbits.  Paper proof:
 for a seed `x` with `3 ∤ x`, `σ⁻¹ x` is not engine-forever (engine images are multiples of
 `3`), so `x` is the first engine-forever point of its orbit.  Two such seeds on one orbit would
 both be first, so they lie on distinct orbits.  There are infinitely many: every
@@ -410,7 +410,7 @@ theorem infinitelyManyOrbits_of_pingPong (σ : Equiv.Perm ℤ) (h : RunsPingPong
   rintro O ⟨a, _, rfl⟩
   exact ⟨a, rfl⟩
 
-/-- **Target (Theorem L for `U`).**  No nonzero orbit of `U` stays in its linear piece
+/-- **Proved (Theorem L for `U`).**  No nonzero orbit of `U` stays in its linear piece
 `2n ↦ 3n` forever: each such step lowers `v₂`. -/
 theorem amusical_not_eventually_linear {x : ℤ} (hx : x ≠ 0) (N : ℕ) :
     ¬ ∀ k ≥ N, amusical^[k] x % 2 = 0 := by

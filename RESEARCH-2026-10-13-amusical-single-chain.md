@@ -394,7 +394,7 @@ the residue-transitive core (`U`, the twins); credence ~93%.
 
 ## 16. A residue-transitive member with infinitely many orbits (2026-10-13, "transitive" agent, checked)
 
-Lean: `AmusicalPingPong.lean` (the abstract engine theorem and `U`'s Theorem L are targets).  This
+Lean: `AmusicalPingPong.lean` (engine theorem and `U`'s Theorem L proved, axiom-clean).  This
 is the first residue-transitive RCWA permutation in the anti-Kohl class with *provably*
 infinitely many orbits.  The agent found no prior example (~80% that it is new).
 
