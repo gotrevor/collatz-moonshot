@@ -591,3 +591,27 @@ Diophantine half and a dynamical half.
     infinitely many infinite orbits**.
   * Every wall ports to the twin, and even "one infinite orbit exists" is open there.
 
+## 22. Complexity of orbit counting; Theorem W (2026-10-13, "logic" Fable agent, checked in part)
+
+Lean: `AmusicalLinearForever.lean`.  Theorem W is **proved, axiom-clean** (Ren's proof).
+
+* **Theorem W.**  If some `x ≠ 0` has a forward orbit that only uses zero-offset pieces, then the
+  points `u x` (`u ≡ 1 mod m`, prime to all slope primes) are distinct orbits.  So the map has
+  infinitely many orbits.
+  * This is the single mechanism behind every provable certificate so far: `PP(0)`'s engine in one
+    line, and the reason certificates for `U` must have empty interior.
+  * It is vacuous on `U`, because no orbit stays on `2n ↦ 3n` (Theorem L).
+* **Complexity** (paper, not re-derived), for RCWA permutations given by tables:
+  * "x ~ y" and "x periodic" are `Σ⁰₁`-complete;
+  * "∃ infinite orbit" is `Σ⁰₂`-complete, and "all orbits finite" is `Π⁰₂`-complete;
+  * "finitely many orbits" is `Π⁰₂`-hard, with the naive upper bound `Π⁰₃`.
+  * The machinery: Morita reversible 2-counter machines as linear pieces, a Bennett wrapper, and a
+    one-orbit "highway".
+* **The gap `Σ⁰₂` / `Π⁰₃` is exactly universal *additive* (Collatz-like) computation, i.e. `U`'s
+  class.**  Agent credence: 70% Π⁰₃-complete; 30% a genuine collapse, which would be a theorem
+  about U-like maps.
+* **Independence** (paper, "in principle", no table built).  There is an explicit computable RCWA
+  permutation with one orbit iff `Con(ZFC)`.  The agent puts 90% on a `C₃` variant and 80% on a
+  residue-transitive one.
+* Lagarias's C4 fails non-trivially for some members of the class: sibling cycles of one length.
+
