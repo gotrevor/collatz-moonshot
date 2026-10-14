@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalNearCycleLaw
+import CollatzMoonshot.AmusicalNearCycleRuns.Carry
 
 /-!
 # Run-bounded near-cycles (Theorem MR)
@@ -53,7 +53,33 @@ def excursionWeight (p g : ℕ) : ℕ := 2 * g - numE p g
 theorem nearCycleAt_linearForm {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p) :
     -(eRuns p g : ℝ) < p * ((g : ℝ) * Real.log 3 - excursionWeight p g * Real.log 2) ∧
       p * ((g : ℝ) * Real.log 3 - excursionWeight p g * Real.log 2) < D + eRuns p g := by
-  sorry
+  obtain ⟨s, hs, hps⟩ := NearCycleRuns.carry_bound (fun t => amusical^[t] (p : ℤ))
+    (NearCycleRuns.iterate_even_step _) (NearCycleRuns.iterate_odd_step _) h.1
+    (NearCycleRuns.nearCycleAt_even h) (by simp only [Function.iterate_zero, id_eq]; omega)
+    (NearCycleRuns.nearCycleAt_big h)
+  have hW : (excursionWeight p g : ℝ) = 2 * g - numE p g := by
+    have : numE p g ≤ g := NearCycleRuns.cntE_le _ g
+    unfold excursionWeight
+    rw [Nat.cast_sub (by omega)]
+    push_cast; ring
+  simp only [Function.iterate_zero, id_eq, Int.cast_natCast] at hs hps
+  change |_ - _ - (_ - (2 * (g : ℝ) - (numE p g : ℝ)) * _)| ≤ s at hs
+  change _ ≤ (eRuns p g : ℝ) at hps
+  obtain ⟨-, h1, h2, -⟩ := h
+  set X : ℝ := ((amusical^[g] (p : ℤ) : ℤ) : ℝ) with hX
+  have hp0 : (0 : ℝ) < p := by exact_mod_cast (by omega : 0 < p)
+  have hXp : (p : ℝ) < X := by rw [hX]; exact_mod_cast h1
+  have hXD : X ≤ p + D := by rw [hX]; exact_mod_cast h2
+  have hL : Real.log X - Real.log p = Real.log (X / p) := (Real.log_div (by linarith) hp0.ne').symm
+  have hL0 : 0 < Real.log (X / p) := Real.log_pos (by rw [one_lt_div hp0]; exact hXp)
+  have hL1 : p * Real.log (X / p) < D := by
+    have := Real.log_lt_sub_one_of_pos (x := X / p) (div_pos (by linarith) hp0)
+      (by rw [ne_eq, div_eq_one_iff_eq hp0.ne']; exact hXp.ne')
+    rw [div_sub_one hp0.ne', lt_div_iff₀ hp0] at this
+    linarith
+  rw [hW]
+  rw [abs_le] at hs
+  constructor <;> nlinarith
 
 /-- **Target (MR II, upper half).**  Few runs force few `E`-steps. -/
 theorem nearCycleAt_numE_le {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p) :
@@ -65,7 +91,27 @@ theorem nearCycleAt_numE_le {D p g : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
 theorem nearCycleAt_numE_ge {D p g : ℕ} (h : NearCycleAt D p g)
     (hp : 3 * eRuns p g < 2 * p) :
     (2 - Real.logb 2 3) * g - 1 < numE p g := by
-  sorry
+  have hp2 := NearCycleRuns.nearCycleAt_two_le h
+  have h1 := (nearCycleAt_linearForm h hp2).1
+  have hW : (excursionWeight p g : ℝ) = 2 * g - numE p g := by
+    have : numE p g ≤ g := NearCycleRuns.cntE_le _ g
+    unfold excursionWeight
+    rw [Nat.cast_sub (by omega)]
+    push_cast; ring
+  rw [hW] at h1
+  have hp0 : (0 : ℝ) < p := by exact_mod_cast (by omega : 0 < p)
+  have hm : 3 * (eRuns p g : ℝ) < 2 * p := by exact_mod_cast hp
+  have hl2 := Real.log_two_gt_d9
+  have hl2' : 0 < Real.log 2 := by linarith
+  set Λ := (g : ℝ) * Real.log 3 - (2 * g - numE p g) * Real.log 2 with hΛ
+  have hΛ0 : -(2 / 3 : ℝ) < Λ := by
+    by_contra hc
+    push Not at hc
+    nlinarith
+  rw [Real.logb, show (2 - Real.log 3 / Real.log 2) * g - 1 =
+    ((2 * Real.log 2 - Real.log 3) * g - Real.log 2) / Real.log 2 by field_simp,
+    div_lt_iff₀ hl2']
+  linarith
 
 /-- **Target (MR-P).**  Run-bounded near-cycle starts are polynomially bounded in `D`. -/
 theorem nearCycleAt_le_of_eRuns_le (hR : RhinBound) :
