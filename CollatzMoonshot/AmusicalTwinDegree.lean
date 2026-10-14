@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFunctionField
-import CollatzMoonshot.AmusicalTwinDegree.Frobenius
+import CollatzMoonshot.AmusicalTwinDegree.NoGo
 
 /-!
 # The `𝔽₂[t]` twin: cycle minima are graded by the 2-adic valuation of the period
@@ -44,7 +44,8 @@ Paper proofs: agent report `twin2.md` §1, §2, §7, summarized in
 (`scripts/amusical/twin/twinD_ren.py`): D1 for `p ≤ 400`, and Theorem D plus the period bound on
 all `113` cycles through polynomials of degree `< 16` (periods `8, 16, 20, 32, 48, 64`).  Teeth:
 the bound without its `+ 2` fails on period `8`.  The class-wise no-go is
-`scripts/amusical/twin/classwise_ren.py`.  Treadmill target: close every `sorry` here.
+`scripts/amusical/twin/classwise_ren.py`.  All seven are proved; helpers in
+`CollatzMoonshot/AmusicalTwinDegree/`.
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -107,7 +108,21 @@ such points have degree `≤ 5`, and a search finds only these).  `n = 1 + t` (w
 theorem twin_no_classwise_frobenius :
     ¬ ∃ κ : Fin 4 → (ZMod 2)[X], ∀ n, twinU (twinU (n ^ 2 + κ (twinClass n))) =
       twinU n ^ 2 + κ (twinClass (twinU n)) := by
-  sorry
+  rintro ⟨κ, hκ⟩
+  have c0 : twinClass 0 = 0 := by simp [twinClass]
+  have cX : twinClass X = 0 := by simp [twinClass]
+  have cQ : twinClass twinQ = 3 := by simp [twinClass, twinQ, coeff_X, coeff_one]
+  have c1X : twinClass (X + 1) = 2 := by simp [twinClass, coeff_X, coeff_one]
+  have h0 := hκ 0
+  have hX := hκ X
+  have hQ := hκ twinQ
+  have h1X := hκ (X + 1)
+  simp only [TwinDeg.twinU_zero, c0, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    zero_add] at h0
+  rw [TwinDeg.twinU_X, cX, cQ] at hX
+  rw [TwinDeg.twinU_Q, cQ, c1X] at hQ
+  rw [TwinDeg.twinU_X_add_one, c1X, cX] at h1X
+  exact TwinDeg.no_classwise_core (κ 0) (κ 2) (κ 3) h0 hX hQ h1X
 
 /-- **Target (Proposition M).**  A self-similar point certifies an infinite orbit.  If squaring
 plus a constant from a finite set `C` is carried along every orbit, and `z² + c` lies on the

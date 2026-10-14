@@ -1,5 +1,13 @@
 # PENDING_WORK
 
+## 2026-10-14: amusical twin degrees objective DONE, nothing owed
+
+`KICKOFF-2026-10-14-amusical-twindeg.md` is fully discharged.  All seven targets in
+`CollatzMoonshot/AmusicalTwinDegree.lean` are proved with their ratified statements unchanged:
+D1, Theorem D, D-i, D-iii, the Frobenius half-intertwiner, the class-wise no-go and Proposition M.
+Their axioms are `propext`, `Classical.choice` and `Quot.sound` only.  See
+`HANDOFF-amusical-twindeg.md`, including the finding that `twinExceptional` omits `t` (harmless).
+
 ## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
 
 `KICKOFF-2026-10-13-amusical-pingpong.md` is fully discharged.  The seed-to-seed counter cycle,

@@ -59,7 +59,8 @@ theorem den_natDegree (p : ℕ) (hp : 0 < p) :
   have hq0 : 0 < q := hq.pos
   have hv : padicValNat 2 (2 ^ v * q) = v := by
     rw [padicValNat.mul (by positivity) hq0.ne', padicValNat.prime_pow,
-      padicValNat.eq_zero_of_not_dvd (by simpa [Nat.two_dvd_ne_zero] using Nat.odd_iff.mp hq), add_zero]
+      padicValNat.eq_zero_of_not_dvd (by simpa [Nat.two_dvd_ne_zero] using Nat.odd_iff.mp hq),
+      add_zero]
   rw [hv, mul_comm (2 ^ v) q, pow_mul, pow_mul, ← sub_pow_char_pow (p := 2), natDegree_pow,
     den_odd_natDegree q hq]
   have : 1 ≤ q := hq0
