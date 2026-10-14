@@ -1,5 +1,25 @@
 # HANDOFF: amusical anti-Kohl
 
+## 2026-10-14: the gate `amusical_no_periodic_cone` proved
+
+New helper module `CollatzMoonshot/AmusicalAntiKohl/Connect.lean` proves `amusical_reach`: for
+every `M > 0` and `r s : ℤ` there are `x ≡ r` and `L` with `Uᴸ x ≡ s (mod M)`.  The itinerary is
+`pre · connector · suf · post` (first `a` symbols of `r`; an `M₀` connector; the `b` symbols
+leading into `s`; the first `a` symbols of `s`), realized by `exists_forward_itinerary_local`, with
+`x mod 3^b M₀` fixed by CRT.  The modular connector lemmas are copied from the global treadmill's
+`exists_many_returns` proof (that module is owned elsewhere and not merged here).  The gate then
+follows by iterating the closure hypothesis.  Axioms: `propext`, `Classical.choice`, `Quot.sound`.
+Remaining: `kappa_orbit_densityZero`, `sigmaTau_orbit_densityZero`.
+
+Plan for both (worked out this lap, see PENDING_WORK): everything reduces to **2-adic counting**.
+σ_τ backward: survival `Surv n` is periodic mod `2^(3n+2)`; with
+`α_n(m) = #{s < 2^m : Surv n (4s)}`, `β_n(m) = #{s < 2^m : Surv n (2s+1)}`,
+`α_{n+1}(m+1) ≤ α_n(m) + β_n(m)` and `β_{n+1}(m+3) ≤ 2(α_n(m) + β_n(m))`, so
+`4^n (α+β) ≤ 2^(m+1) 3^n`.  κ forward: on `y` (`x = 2y+1`) the core is covered by
+`F ∪ 3Z ∪ (3O+1)` with `F, Z, O` 2-periodic, `d(F') = (dF+dZ)/2`, `d(Z') = (dF+dO)/2`,
+`d(O') = dF/2`; weights `(18, 10, 6)` contract by `17/18`.  κ backward: `y ↦ (2y+1)/3, (2y-4)/3`
+is a 3-adic shift, survivors periodic mod `3^n` with `2^n` residues.
+
 ## 2026-10-14: sigma-tau forward density closed
 
 The forward hypothesis of Theorem T for `sigmaTauPerm` is now kernel-checked.  The reusable

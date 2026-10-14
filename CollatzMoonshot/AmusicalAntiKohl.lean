@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Obstructions.Amusical
+import CollatzMoonshot.AmusicalAntiKohl.Connect
 
 /-!
 # The anti-Kohl conjecture and transient cones
@@ -174,7 +175,32 @@ a forward-closed class union is a union of strongly connected components with no
 theorem amusical_no_periodic_cone (M : ℕ) (hM : 0 < M) (R : Set (ZMod M))
     (h : ∀ n : ℤ, (n : ZMod M) ∈ R → ((amusical n : ℤ) : ZMod M) ∈ R) :
     R = ∅ ∨ R = Set.univ := by
-  sorry
+  haveI : NeZero M := ⟨hM.ne'⟩
+  by_cases hR : R = ∅
+  · exact Or.inl hR
+  right
+  obtain ⟨r, hr⟩ := Set.nonempty_iff_ne_empty.mpr hR
+  have hiter : ∀ (t : ℕ) (n : ℤ), (n : ZMod M) ∈ R →
+      ((amusical^[t] n : ℤ) : ZMod M) ∈ R := by
+    intro t
+    induction t with
+    | zero => intro n hn; simpa using hn
+    | succ t ih =>
+        intro n hn
+        rw [Function.iterate_succ_apply']
+        exact h _ (ih n hn)
+  rw [Set.eq_univ_iff_forall]
+  intro s
+  obtain ⟨x, L, hx, hL⟩ :=
+    AntiKohlConnect.amusical_reach M hM ((r.val : ℕ) : ℤ) ((s.val : ℕ) : ℤ)
+  have hxr : (x : ZMod M) = r := by
+    rw [(ZMod.intCast_eq_intCast_iff _ _ _).mpr hx]
+    simp
+  have hLs : ((amusical^[L] x : ℤ) : ZMod M) = s := by
+    rw [(ZMod.intCast_eq_intCast_iff _ _ _).mpr hL]
+    simp
+  rw [← hLs]
+  exact hiter L x (hxr ▸ hr)
 
 /-! ## Theorem T -/
 
