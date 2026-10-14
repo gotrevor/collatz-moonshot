@@ -1342,3 +1342,71 @@ that this moves (a): unchanged (no mechanism).
   `0.0499·P(gap ≤ D)·X` backward near-cycles, but interleaving removes them with no change to FS.
   fsarith's no-go survives with `π_β`, conditional on LP: no proof of "LIN ⇒ many survivors" can use
   only LIN plus sparse-robust properties of `U`.
+
+## 44. Two ideation laps: eight new mechanisms, one survivor (2026-10-14, Codex "astra" and Fable xhigh, checked in part)
+
+Two independent laps (Codex `gpt-6-astra` xhigh; Fable xhigh), each told to read the Maze and §1–§39
+first and propose four mechanisms not already tried.  One survives.  Lean: `AmusicalSquares.lean`
+(SRC ⇒ (a), SQG1, canonical cylinder, AUT core; treadmill).
+
+* **Square-return confinement (SRC; OPEN, astra).**  Three square visits with roots `≤ H`, in three
+  distinct `E`-only blocks of one orbit segment, lie within `C log(2 + H)` steps.
+  * **SRC ⇒ (a) (PROVED; I checked).**  Each infinite orbit then holds `O(log H)` of the `H` squares
+    `≤ H²`, so finitely many orbits cannot cover them.
+  * **SQG1 (PROVED).**  The prefix roots `−B_j/A_j = −Σ_{h<j} e_h 2^{a_h}/3^{h+1}` coincide iff every
+    branch between is `E` (the last odd branch has the unique least 3-adic valuation).  So `k` square
+    visits in distinct blocks give a multiquadratic curve of genus `1 + (k − 3)2^{k−2}` (SQG2).
+  * **Killer.**  Uniformity in the varying word: Siegel/Faltings bound each fixed curve, not the
+    family.  Bounded sample: 35 qualifying triples, worst `t/log(2+H) = 17.8`.  A probe ("srcprobe") is
+    testing the weakest confinement that still gives (a).  Odds: 1% to move (a).
+* **AUT (PROVED; I checked).**  A binary-automatic `U^m`-invariant colouring of `ℕ` is eventually
+  constant.  `V^k` maps the cylinder `3^k n + r` onto `2^a n + s` (`0 ≤ s < 2^a`), so the `3^m`-kernel
+  lies in the 2-kernel; Cobham then gives eventual periodicity, and strong connectivity (§11) makes it
+  constant.  The route "finitely many orbits ⇒ automatic orbits" (REG) is equivalent to (a) for `U`: a
+  costume.
+* **ESS (PROVED, astra).**  On `ℓ²(ℕ, (n+1)^{−s})` every `λ` on the unit circle is in the Fredholm
+  essential spectrum of the permutation operator (Weyl sequences on balanced words `a_j = ⌊jθ⌋`).  This
+  kills weighted Fredholm-index counting of orbits.
+* **Killed (astra).**  An auxiliary-prime affine expander / large sieve: the averaged branch walk is not
+  `U` mod `p`, and exact integer cylinders violate the needed mixing.
+* **Killed (Fable).**  Each dies on one of three faces of one wall: one point, costume, beyond-horizon.
+  * *Two-place Mahler series.*  `U^j m = 3^j(m + S_j)/2^{b_j}`, `S_j = Σ_{i<j} d_i 2^{b_i}/3^{i+1}`.  The
+    series converges 2-adically to `−m` for every orbit, and in `ℝ` to `L₊ − m` iff the orbit is thin
+    (a costume of late returns).  The real approximation exponent by `3^j` denominators is about 0.05
+    (Ridout needs `> 1`), and the 2-adic target `−m` is rational.  This closes S-unit, subspace and
+    Mahler routes.
+  * *Complexity shape.*  A `Σ₁` separation certificate for `U` is an orbit invariant (costume), so (a)
+    stays `Π⁰₃`-shaped.  Independence is at most 5%, and `U` hosts no computation (Theorem L).
+  * *Kakutani first-return permutation of `[1, X)`.*  Its path count *is* the orbit count: 4 995 paths
+    at `X = 10⁵`, equal to the orbit minima below `10⁵`.
+  * *Chain-word repetition forcing.*  The forced repeat length equals the integer's bit length; the
+    staircase `2^K` attains it.
+* **Synthesis (Fable).**  Every proved inequality about `U` is an inequality about the real affine
+  cocycle of `Û`, and every unproved one is `Π₁` about integers beyond depth `log X`.  A proof of (a)
+  needs a statement false for the masquerade and true for `ℤ`.
+
+## 45. Conjecture G′ holds in a stronger form: block-swap maps keep every proved invariant (2026-10-14, "gprime" Opus agent, checked in part)
+
+Settles the direction §42 left open, conditional on one extension lemma.  I checked the family and
+the elementary lemmas.  Agent odds that this moves (a): under 1%; it closes a route and opens none.
+
+* **The family `F_L` (PROVED).**  Keep `π(2m) = 3m`; for each `n`, map the odd numbers of
+  `[4nL, 4nL + 4L)` bijectively onto the non-multiples of 3 in `[3nL, 3nL + 3L)` (both have `2L`
+  elements).  Every choice is a permutation with offset `|e| ≤ 12L − 3` and exactly `U`'s `E`-runs, so
+  it satisfies MR(II) as well as T2, SQ, MR(I) and Lemma K.  `U` is the member whose block transitions
+  are all increasing.  For `L = 1` this is "`U` with the targets of `4n+1`, `4n+3` optionally swapped"
+  (`|e| ≤ 5`).
+* **CT (PROVED).**  `NC_D` starts are exactly the short edges (`≤ D`) of the chain's Cartesian tree.
+* **HB (PROVED).**  For any bounded-offset bijection, every dyadic block is crossed by `≥ 0.0536 Y`
+  separate orbit segments; this follows from bijectivity alone and bounds passes, not orbits.  So
+  no mass-conservation obstruction exists.
+* **Measured.**  A lazy builder in `F_2` (`|π − U| ≤ 4`, offset `≤ 17`) produced one chain covering
+  `[10³, 10⁵)`, with no near-cycle violations at `D(y) = 0.2 y^0.6` and FS = 15 (the spine; `U` has
+  about 21 000).  Its controls reproduce `U`'s `NC_D` exactly (6 / 20 / 78 / 324 / 1 275).
+* **EXT ⇒ G′ (PROVED, EXT as hypothesis).**  Given the extension lemma EXT (85%, measured), some
+  `π ∈ F_2` has one infinite orbit, every `NC_D` finite and `#FS = O(log X)`.  With the ratio
+  version (70%), `#NC_D ≤ D/δ + O(1)`.
+* **Consequence.**  Under EXT, Proposition H fails even with MR(II) included.  So "LIN ⇒ many
+  survivors" cannot come from the §35–§38 toolkit.  Inside `F_L`, `U` is singled out only by
+  increasing block transitions, and by TT a proof must use that law along entire tails: the Π₁ wall
+  again.  `L = 1` is open (the builder sticks at 1215 with the gap filter).
