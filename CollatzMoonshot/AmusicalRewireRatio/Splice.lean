@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalRewireRatio.Schedule
+import CollatzMoonshot.AmusicalRewireRatio.Transitions
 
 /-! Algebraic infrastructure for rewiring a permutation by permuting cut sources. -/
 

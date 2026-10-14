@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical rewiring transitions:** the scheduled three-cycle's exact orientation is
+> now kernel-checked, as is its semantic action on natural cut sources: the base forward cut enters
+> the scheduled orbit through its backward target, its backward cut crosses to the forward target,
+> and its forward cut returns to the base target.  Global segment traversal/connectivity is the
+> only remaining Theorem R obligation.  Read `HANDOFF-amusical-rewire.md`.
+
 > **2026-10-14, amusical rewiring schedule:** the proposed `Nat.unpair` schedule is now an
 > explicit kernel-checked level-preserving permutation of the canonical cuts.  Each valid level
 > performs exactly the base-forward / orbit-backward / orbit-forward three-cycle.  Theorem R is

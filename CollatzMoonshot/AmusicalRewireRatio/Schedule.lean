@@ -80,6 +80,43 @@ theorem spliceCycle_level (k b r : ℕ) (hbk : b ≤ k) (hrk : r ≤ k)
   exact swap_level_of_eq (a := mkAt k r hrk hr .backward)
     (b := mkAt k r hrk hr .forward) (by rfl) i
 
+theorem spliceCycle_apply_baseForward (k b r : ℕ) (hbk : b ≤ k) (hrk : r ≤ k)
+    (hb : IsInfiniteOrbitRep b) (hr : IsInfiniteOrbitRep r) (hbr : b ≠ r) :
+    spliceCycle k b r hbk hrk hb hr (mkAt k b hbk hb .forward) =
+      mkAt k r hrk hr .backward := by
+  classical
+  simp only [spliceCycle, Equiv.Perm.mul_apply]
+  have hab : mkAt k b hbk hb .forward ≠ mkAt k r hrk hr .backward := by
+    intro h
+    exact hbr (congrArg ScaleCutIndex.rep h)
+  have hac : mkAt k b hbk hb .forward ≠ mkAt k r hrk hr .forward := by
+    intro h
+    exact hbr (congrArg ScaleCutIndex.rep h)
+  rw [Equiv.swap_apply_of_ne_of_ne hab hac, Equiv.swap_apply_left]
+
+theorem spliceCycle_apply_repBackward (k b r : ℕ) (hbk : b ≤ k) (hrk : r ≤ k)
+    (hb : IsInfiniteOrbitRep b) (hr : IsInfiniteOrbitRep r) (hbr : b ≠ r) :
+    spliceCycle k b r hbk hrk hb hr (mkAt k r hrk hr .backward) =
+      mkAt k r hrk hr .forward := by
+  classical
+  simp only [spliceCycle, Equiv.Perm.mul_apply]
+  have hca : mkAt k r hrk hr .forward ≠ mkAt k b hbk hb .forward := by
+    intro h
+    exact hbr (congrArg ScaleCutIndex.rep h).symm
+  have hcb : mkAt k r hrk hr .forward ≠ mkAt k r hrk hr .backward := by
+    intro h
+    have := congrArg ScaleCutIndex.side h
+    exact ScaleCutSide.noConfusion this
+  rw [Equiv.swap_apply_left, Equiv.swap_apply_of_ne_of_ne hca hcb]
+
+theorem spliceCycle_apply_repForward (k b r : ℕ) (hbk : b ≤ k) (hrk : r ≤ k)
+    (hb : IsInfiniteOrbitRep b) (hr : IsInfiniteOrbitRep r) (_hbr : b ≠ r) :
+    spliceCycle k b r hbk hrk hb hr (mkAt k r hrk hr .forward) =
+      mkAt k b hbk hb .forward := by
+  classical
+  simp only [spliceCycle, Equiv.Perm.mul_apply]
+  rw [Equiv.swap_apply_right, Equiv.swap_apply_right]
+
 /-- At level `k`, schedule the representative in the left coordinate of `unpair k`.  Invalid
 coordinates and the base representative give the identity. -/
 noncomputable def scheduledLocal (b k : ℕ) (hb : IsInfiniteOrbitRep b)

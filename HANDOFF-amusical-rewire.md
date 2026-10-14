@@ -1,5 +1,43 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — exact scheduled successor transitions formalized
+
+The target still has its original `sorry`; global connectivity remains the sole obligation.  This
+lap added the sorry-free module `CollatzMoonshot/AmusicalRewireRatio/Transitions.lean` and the
+three exact action lemmas for `spliceCycle`:
+
+- `spliceCycle_apply_baseForward`, `spliceCycle_apply_repBackward`, and
+  `spliceCycle_apply_repForward` prove that the cycle is oriented
+  `F(b,k) ↦ B(r,k) ↦ F(r,k) ↦ F(b,k)`.
+- `scaleCut_rewired_apply` proves the key semantic bridge: rewiring by a cut permutation `p`
+  sends the natural source of `i` exactly to the natural target of `p i`.
+- `splice_rewired_baseForward`, `splice_rewired_repBackward`, and
+  `splice_rewired_repForward` consequently prove the three exceptional successor edges at each
+  nontrivial scheduled level.  The schedule's enter/cross/exit orientation is now kernel-checked,
+  rather than inferred from permutation multiplication conventions.
+
+Exact verification:
+
+```text
+LEAN_NUM_THREADS=1 lake build CollatzMoonshot.AmusicalRewireRatio.Schedule
+# Build completed successfully (8714 jobs).
+LEAN_NUM_THREADS=1 lake env lean CollatzMoonshot/AmusicalRewireRatio/Transitions.lean
+# passes
+LEAN_NUM_THREADS=1 ~/personal/bin/lean-green \
+  ~/src/collatz-moonshot-amusical-rewire --target CollatzMoonshot.AmusicalRewireRatio
+# FORMALIZE-tier green (see gate verdict below in this checkpoint's commit).
+```
+
+Current blocker: lift these local exceptional edges to a global path theorem.  One must also show
+that all nonscheduled sources retain their original successor and that the finite original-orbit
+segments between consecutive scale cuts are traversed unchanged.
+
+Next attack: prove exact z-power coordinates for every cut target, then package interval traversal:
+between consecutive forward cuts the successor follows increasing orbit coordinates, and between
+consecutive backward cuts it follows toward the representative.  Combine those segment lemmas
+with the three transition lemmas above and induct over consecutive levels `Nat.pair r t` to put
+every representative on the base chain.
+
 ## 2026-10-14 — scheduled three-cut permutation formalized
 
 The target still has its original `sorry`; the remaining obligation is the connectivity proof.
