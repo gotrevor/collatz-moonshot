@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFunctionField
-import CollatzMoonshot.AmusicalTwinDegree.Step
+import CollatzMoonshot.AmusicalTwinDegree.Corollaries
 
 /-!
 # The `𝔽₂[t]` twin: cycle minima are graded by the 2-adic valuation of the period
@@ -80,16 +80,16 @@ theorem twin_cycleMin_natDegree_le (x : (ZMod 2)[X]) (hx : x ∈ Function.period
 theorem twin_cycleMins_finite (v : ℕ) :
     {x : (ZMod 2)[X] | x ∈ Function.periodicPts twinU ∧
       padicValNat 2 (Function.minimalPeriod twinU x) = v ∧
-      ∀ j, x.natDegree ≤ (twinU^[j] x).natDegree}.Finite := by
-  sorry
+      ∀ j, x.natDegree ≤ (twinU^[j] x).natDegree}.Finite :=
+  TwinDeg.cycleMins_finite v
 
 /-- **Target (D-iii).**  A periodic polynomial of degree `d` has period `p` with
 `2d ≤ 3p + 4`.  Paper proof: with `m` the cycle's minimum degree, `#E = #B + #C ≤ p/2` on a
 balanced word, so `d − m ≤ p/2`; and `m ≤ 2^v + 2 ≤ p + 2` by Theorem D.  The exceptional cycles
 have degree at most `2`. -/
 theorem twin_period_lower_bound (x : (ZMod 2)[X]) (hx : x ∈ Function.periodicPts twinU) :
-    2 * x.natDegree ≤ 3 * Function.minimalPeriod twinU x + 4 := by
-  sorry
+    2 * x.natDegree ≤ 3 * Function.minimalPeriod twinU x + 4 :=
+  TwinDeg.period_lower_bound x hx
 
 /-- **Target (Frobenius on the shallow classes).**  `U² (n²) = (U n)²` for `n ∈ E ∪ A`.  Paper
 proof: `n = t m` gives `n² = t² m² ↦ Q t m² ↦ Q² m²`; `n = 1 + t² m` gives
