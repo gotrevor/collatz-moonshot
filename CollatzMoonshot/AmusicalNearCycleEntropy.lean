@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import CollatzMoonshot.AmusicalNearCycleRuns
 import CollatzMoonshot.AmusicalNearCycleEntropy.Chernoff
 import CollatzMoonshot.AmusicalNearCycleEntropy.Prefixes
+import CollatzMoonshot.AmusicalNearCycleEntropy.Balance
 
 /-!
 # Stopped prefixes: run tightness at a logarithmic threshold (Theorem RT-low)
@@ -47,8 +48,8 @@ theorem nearCycleAt_prefix_balance {D p g t : ℕ} (h : NearCycleAt D p g) (hp :
     (ht : 0 < t) (htg : t < g) (hO : Odd (amusical^[t - 1] (p : ℤ)))
     (hE : Even (amusical^[t] (p : ℤ))) :
     ((t - numE p t : ℕ) : ℝ) * Real.log (4 / 3) <
-      (numE p t : ℝ) * Real.log (3 / 2) + (eRuns p t : ℝ) / (p + D) := by
-  sorry
+      (numE p t : ℝ) * Real.log (3 / 2) + (eRuns p t : ℝ) / (p + D) :=
+  NearCycleRuns.prefix_balance h hp ht htg hO hE
 
 /-- The number of maximal `true`-runs of a list, each counted at its last element. -/
 def trueRuns : List Bool → ℕ
