@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalFunctionField
-import CollatzMoonshot.AmusicalTwinDegree.Den
+import CollatzMoonshot.AmusicalTwinDegree.Step
 
 /-!
 # The `𝔽₂[t]` twin: cycle minima are graded by the 2-adic valuation of the period
@@ -71,8 +71,8 @@ most `2^v + 2`.  Paper proof in the module docstring: `x (t^{2p} − Q^p) = c_w`
 `deg c_w ≤ 2p + 2` at the minimum, and `twin_den_natDegree`. -/
 theorem twin_cycleMin_natDegree_le (x : (ZMod 2)[X]) (hx : x ∈ Function.periodicPts twinU)
     (hmin : ∀ j, x.natDegree ≤ (twinU^[j] x).natDegree) (hexc : x ∉ twinExceptional) :
-    x.natDegree ≤ 2 ^ padicValNat 2 (Function.minimalPeriod twinU x) + 2 := by
-  sorry
+    x.natDegree ≤ 2 ^ padicValNat 2 (Function.minimalPeriod twinU x) + 2 :=
+  TwinDeg.cycleMin_natDegree_le x hx hmin
 
 /-- **Target (D-i).**  For each `v`, finitely many cycle minima have period of 2-adic valuation
 `v`, over all odd parts together.  Paper proof: Theorem D bounds their degree by `2^v + 2`, and
