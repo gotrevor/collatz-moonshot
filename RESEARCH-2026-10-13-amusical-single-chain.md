@@ -841,7 +841,8 @@ moves Klamkin (a): under 1%.
 
 ## 30. Staircases: the `×2` multiplier, and why the survivor count is no easier than one (2026-10-14, "lfsep" Opus agent, checked in part)
 
-Lean: `AmusicalStaircase.lean` (Lemma St), proved and axiom-clean (Ren's proof).  Agent odds that this
+Lean: `AmusicalStaircase.lean` (Lemma St, Ren's proof) and `AmusicalPowers.lean` (P3, P3′,
+treadmill), proved and axiom-clean.  P3 needs no coprimality: `y` cancels.  Agent odds that this
 settles (a): about 2%.
 
 * **The correction.**  §26 reduced (a) to "`FS ∩ 3ℤ` is not `O(log X)`".  That bar is not low: a
@@ -851,7 +852,7 @@ settles (a): about 2%.
 * **Lemma St (PROVED; Lean `staircase_fwdSurvivor`).**  `U(2y) = 3y`, so `3ˢy`'s orbit contains the
   staircase `2^(s−b) 3^b y`.  A staircase point at or below the top's whole forward orbit is a forward
   survivor.
-* **Theorem P3, Corollary P3′ (PROVED by the agent; P3 follows from Lemma St and Sep3).**  With
+* **Theorem P3, Corollary P3′ (PROVED; Lean `powers_orbit_ne`, `infinitelyManyOrbits_of_powers_log`).**  With
   `X = 2^L y`, the orbits of `3ˢy` (`s < L`) with forward minimum `≥ 3X/2` are pairwise distinct
   and infinite.  If `U` had `r` infinite orbits, all but `O(r log S)` of `s ≤ S` would fall back: the
   orbit of `2ˢ` would return below `3 · 2^((1+η)s)` after climbing to `3ˢ`.
