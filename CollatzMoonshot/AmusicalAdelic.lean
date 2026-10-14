@@ -45,7 +45,22 @@ def amusicalRat (x : ℚ) : ℚ :=
 
 /-- **Target.**  `amusicalRat` extends `U`. -/
 theorem amusicalRat_intCast (n : ℤ) : amusicalRat n = amusical n := by
-  sorry
+  unfold amusicalRat amusical
+  simp only [Rat.den_intCast, Rat.num_intCast, Nat.cast_one, mul_one]
+  have hcases : (∃ m, n = 2 * m) ∨ (∃ m, n = 4 * m + 1) ∨ ∃ m, n = 4 * m + 3 := by
+    rcases (by omega : n % 2 = 0 ∨ n % 4 = 1 ∨ n % 4 = 3) with h | h | h
+    · exact .inl ⟨n / 2, by omega⟩
+    · exact .inr (.inl ⟨n / 4, by omega⟩)
+    · exact .inr (.inr ⟨n / 4, by omega⟩)
+  rcases hcases with ⟨m, rfl⟩ | ⟨m, rfl⟩ | ⟨m, rfl⟩
+  · rw [if_neg (by omega), if_pos (by omega), if_pos (by omega), show 2 * m / 2 = m by omega]
+    push_cast; ring
+  · rw [if_neg (by omega), if_neg (by omega), if_pos (by omega), if_neg (by omega),
+      if_pos (by omega), show (4 * m + 1) / 4 = m by omega]
+    push_cast; ring
+  · rw [if_neg (by omega), if_neg (by omega), if_neg (by omega), if_neg (by omega),
+      if_neg (by omega), show (4 * m + 3) / 4 = m by omega]
+    push_cast; ring
 
 /-- **Target (Proposition L, rational form).**  A nonzero subgroup of `ℤ_(2)` closed under the
 extension of `U` contains `1`, hence `ℤ`.  Paper proof: pick `x ≠ 0`; while `v₂ x > 0`,
