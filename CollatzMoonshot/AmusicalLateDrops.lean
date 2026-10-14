@@ -38,8 +38,8 @@ typicality beyond the residue horizon `≈ log₃ X` is open.
 
 Paper proofs: agent report `survival.md` §1–§2, summarized in
 `RESEARCH-2026-10-13-amusical-single-chain.md` §20.  Constants re-derived independently
-(`scripts/amusical/survival/consts_ren.py`, 12 digits, product `= c`).  Treadmill target: close
-every `sorry` here.
+(`scripts/amusical/survival/consts_ren.py`, 12 digits, product `= c`).  Kernel-checked 2026-10-13
+by the latedrops treadmill (`HANDOFF-amusical-latedrops.md`).
 -/
 
 namespace CollatzMoonshot.Amusical
@@ -78,7 +78,7 @@ theorem card_windowMin_le (L X : ℕ) :
     · exact Or.inr (Or.inr ⟨hX, hb, hB⟩)
   · exact Or.inr (Or.inl ⟨hX, hf, hF⟩)
 
-/-- **Target (Theorem LD, fixed depth).**  Few late drops along a sequence give Klamkin (a).
+/-- **Proved (Theorem LD, fixed depth).**  Few late drops along a sequence give Klamkin (a).
 Paper proof: by `card_windowMin_le` and `windowMinDensity L`, along the given sequence the
 survivors-both-ways below `X` number at least `(η/2) X` for large `X`.  These are orbit minima
 (`IsOrbitMin`, via `amusical_iterate_eq_perm_pow`).  A set with infinitely many `X` where it
@@ -155,13 +155,13 @@ def AmusicalLateDropsSparse : Prop :=
   ∃ (L : ℕ) (η : ℝ), 0 < η ∧ ∃ᶠ X : ℕ in Filter.atTop,
     (lateDropCount L X : ℝ) ≤ (((fwdSurv L * bwdSurv L : ℚ) : ℝ) - η) * X
 
-/-- **Proved (modulo Theorem LD).**  Sparse late drops give Klamkin (a). -/
+/-- **Proved.**  Sparse late drops give Klamkin (a). -/
 theorem infinitelyManyOrbits_of_lateDropsSparse (h : AmusicalLateDropsSparse) :
     AmusicalInfinitelyManyOrbits := by
   obtain ⟨L, η, hη, hX⟩ := h
   exact infinitelyManyOrbits_of_lateDrops L hη hX
 
-/-- **Target (Corollary LD′).**  With finitely many orbits, late drops are dense at every depth.
+/-- **Proved (Corollary LD′).**  With finitely many orbits, late drops are dense at every depth.
 Paper proof: the contrapositive of `infinitelyManyOrbits_of_lateDrops`. -/
 theorem lateDrops_dense (hfin : ¬ AmusicalInfinitelyManyOrbits) (L : ℕ) {ε : ℝ}
     (hε : 0 < ε) :
@@ -175,7 +175,7 @@ theorem lateDrops_dense (hfin : ¬ AmusicalInfinitelyManyOrbits) (L : ℕ) {ε :
     simpa only [Filter.not_eventually, not_le] using hnot
   exact hfreq.mono fun _ hX => hX.le
 
-/-- **Target (calibration).**  A strict forward survivor has an infinite orbit: a periodic
+/-- **Proved (calibration).**  A strict forward survivor has an infinite orbit: a periodic
 point returns to itself, so it is not strictly undercut-free. -/
 theorem amusicalOrbit_infinite_of_strictFwd {n : ℤ}
     (h : ∀ t : ℕ, 1 ≤ t → n < amusical^[t] n) : (amusicalOrbit n).Infinite := by
@@ -194,7 +194,7 @@ theorem amusicalOrbit_infinite_of_strictFwd {n : ℤ}
   rintro _ ⟨t, rfl⟩
   exact ⟨(t : ℤ), (amusical_iterate_eq_perm_pow t n).symm⟩
 
-/-- **Target (tilt duality).**  The backward Chernoff transform at `θ` equals the forward one at
+/-- **Proved (tilt duality).**  The backward Chernoff transform at `θ` equals the forward one at
 `1 − θ`, so both directions share the rate `ρ = 0.985597`.  Paper proof:
 `(1/2)(2/3)^{1−θ} = (1/3)(3/2)^θ` and `(1/2)(4/3)^{1−θ} = (2/3)(3/4)^θ`. -/
 theorem walk_mgf_tilt (θ : ℝ) :

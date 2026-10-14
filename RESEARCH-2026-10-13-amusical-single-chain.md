@@ -531,8 +531,8 @@ orbit.
 
 ## 20. Late drops: the typicality wall pinned (2026-10-13, "survival" agent, checked)
 
-Lean: `AmusicalLateDrops.lean` (Proposition S′ is proved; Theorem LD, LD′, the calibration and the
-tilt identity are targets; reopen condition `AmusicalLateDropsSparse`).  Klamkin (a) is not
+Lean: `AmusicalLateDrops.lean`, all proved, axiom-clean (S′, Theorem LD, LD′, the calibration,
+the tilt identity); reopen condition `AmusicalLateDropsSparse`.  Klamkin (a) is not
 settled.  The wall is now one count: the integers that survive past the residue horizon
 `T(X) ≈ log₃ X` and are undercut later.  Agent: under 1% toward settling (a).
 
