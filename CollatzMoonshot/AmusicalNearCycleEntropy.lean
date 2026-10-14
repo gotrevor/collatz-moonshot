@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalNearCycleRuns
+import CollatzMoonshot.AmusicalNearCycleEntropy.Chernoff
 
 /-!
 # Stopped prefixes: run tightness at a logarithmic threshold (Theorem RT-low)
@@ -79,8 +80,8 @@ theorem card_stoppedPrefixes_le (τ k M : ℕ) :
 /-- **Target (Chernoff).**  The fair binomial lower tail, with the natural-log entropy. -/
 theorem sum_choose_le_exp_binEntropy (n j : ℕ) (hj : 2 * j ≤ n) :
     (∑ i ∈ Finset.range (j + 1), (n.choose i : ℝ)) ≤
-      Real.exp (n * Real.binEntropy ((j : ℝ) / n)) := by
-  sorry
+      Real.exp (n * Real.binEntropy ((j : ℝ) / n)) :=
+  NearCycleEntropy.sum_choose_le_exp n j hj
 
 /-- **Target (RT-low).**  Deep run-poor near-cycle starts below `D (log₂ D)^14` are `O(D^0.87)`. -/
 theorem ncard_deep_lowRun_le :
