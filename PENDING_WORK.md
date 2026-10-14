@@ -13,6 +13,13 @@ Theorem A★, `noNewCycles_of_search`, `cycleMinBound_31866`, and Atkin's bound 
 `KICKOFF-2026-10-13-amusical-antikohl.md` is fully discharged: `CollatzMoonshot/AmusicalAntiKohl.lean`
 is sorry-free, the ratified statements are unchanged, and the axiom ledgers are trust-base only.  See
 `HANDOFF-amusical-antikohl.md`.  The open `AntiKohlConjecture` is a definition, not a target.
+## 2026-10-14: amusical twin degrees objective DONE, nothing owed
+
+`KICKOFF-2026-10-14-amusical-twindeg.md` is fully discharged.  All seven targets in
+`CollatzMoonshot/AmusicalTwinDegree.lean` are proved with their ratified statements unchanged:
+D1, Theorem D, D-i, D-iii, the Frobenius half-intertwiner, the class-wise no-go and Proposition M.
+Their axioms are `propext`, `Classical.choice` and `Quot.sound` only.  See
+`HANDOFF-amusical-twindeg.md`, including the finding that `twinExceptional` omits `t` (harmless).
 
 ## 2026-10-14 — amusical ping-pong objective: DONE, nothing owed
 

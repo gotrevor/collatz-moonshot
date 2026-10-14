@@ -620,7 +620,7 @@ Lean: `AmusicalLinearForever.lean`.  Theorem W is **proved, axiom-clean** (Ren's
 
 ## 23. The twin's cycles are graded by `v₂(p)`; Frobenius is half an intertwiner (2026-10-13, "twin2" Fable agent, checked)
 
-Lean: `AmusicalTwinDegree.lean` (targets, on `wip/amusical-twindeg` until a treadmill closes them).
+Lean: `AmusicalTwinDegree.lean`, every statement proved and axiom-clean (twindeg treadmill, 2026-10-14).
 The agent did not find an infinite orbit of the twin.  It puts 99% on one existing and about 2% on
 the twin's extras making one provable.
 

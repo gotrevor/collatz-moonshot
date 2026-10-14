@@ -35,6 +35,7 @@ import CollatzMoonshot.AmusicalCycleBound
 import CollatzMoonshot.AmusicalFormalMin
 import CollatzMoonshot.AmusicalLateDrops
 import CollatzMoonshot.AmusicalFunctionField
+import CollatzMoonshot.AmusicalTwinDegree
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -266,7 +267,13 @@ def register : List Hall := [
    "AmusicalLateDrops.lean; agent report survival.md (2026-10-13)", "2026-10-13"⟩,
   ⟨"amusical: infinitely many orbits via infinitely many cycles", .refuted,
    "works in 𝔽₂[t] by Frobenius; over ℤ the denominators 2^N − 3^p are never small (Baker)",
-   "AmusicalFunctionField.lean; agent report freeform.md (2026-10-13)", "2026-10-13"⟩]
+   "AmusicalFunctionField.lean; agent report freeform.md (2026-10-13)", "2026-10-13"⟩,
+  ⟨"amusical twin: Frobenius self-similar certificate for an infinite orbit", .refuted,
+   "U²(n²) = (Un)² only on E ∪ A: the depth-3 class read forgets n₂; no class-wise repair",
+   "AmusicalTwinDegree.lean; agent report twin2.md §1, §7 (2026-10-13)", "2026-10-14"⟩,
+  ⟨"amusical twin: exact-height pigeonhole for an infinite orbit", .costume,
+   "Theorem D controls only the cycle minimum; every count needs the closing-word bound",
+   "AmusicalTwinDegree.lean; agent report twin2.md §2, §4 (2026-10-13)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -396,7 +403,14 @@ def mazeLinks : List Link := [
    [``CollatzMoonshot.Amusical.AmusicalLateDropsSparse]⟩,
   ⟨"amusical: infinitely many orbits via infinitely many cycles",
    [``CollatzMoonshot.Amusical.amusical_EmBm_not_integral,
-    ``CollatzMoonshot.Amusical.twin_infinitelyManyCycles], []⟩]
+    ``CollatzMoonshot.Amusical.twin_infinitelyManyCycles], []⟩,
+  ⟨"amusical twin: Frobenius self-similar certificate for an infinite orbit",
+   [``CollatzMoonshot.Amusical.twinU_twinU_sq,
+    ``CollatzMoonshot.Amusical.twin_no_classwise_frobenius,
+    ``CollatzMoonshot.Amusical.twin_not_periodic_of_selfSimilar], []⟩,
+  ⟨"amusical twin: exact-height pigeonhole for an infinite orbit",
+   [``CollatzMoonshot.Amusical.twin_cycleMin_natDegree_le,
+    ``CollatzMoonshot.Amusical.twin_den_natDegree], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -409,7 +423,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 47 rows, 39 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 49 rows, 41 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
