@@ -909,3 +909,45 @@ re-derivation of §26's ceiling.  I checked P′, the gap step and the count by 
 * **Where the wall now sits.**  (a) follows from proving `FS` has upper density above `c`, i.e. that
   forward survivors (measured `0.21`) are not almost all late droppers.  That is the same Π₁
   typicality as §20, with the target 4.2× below the measurement.
+
+## 32. Conjecture LF has no joint content; the two primes decouple (2026-10-14, "lfprobe" Opus agent, checked in part)
+
+Lean: `AmusicalDecouple.lean` (Lemma D, Corollary MD, `not_formalMin_of_three_dvd`,
+`infinitelyManyOrbits_of_ray`; treadmill).  Agent odds that this lane moves (a): under 1%.
+
+* **Lemma D (PROVED; I checked it).**  Suppose `A_L` are eventually periodic with power-of-2 periods
+  and `B_L` with power-of-3 periods.  If `⋂ A_L` and `⋂ B_L` have the limit densities `α` and `β`
+  of their windows, then `⋂ A_L ∩ ⋂ B_L` has density `αβ`.  Only CRT is used.
+* **Corollary MD.**  The conjectured orbit-minimum density `c = p_f p_b` follows from two one-prime
+  statements: forward survivors have density `p_f`, and backward survivors have density `p_b`.
+  * §20 proves the windows are independent, and Lemma D carries that independence to the infinite
+    horizon.
+  * With §31, `d(FS) > c` alone gives (a).  Equality `d(FS) = p_f` would also pin `d(Min) = c`.
+* **LF ⇐ LF₂ ∧ LF₃ on sub-rays.**  LF₂ says forward survivors fall along the ray at the Haar rate,
+  and LF₃ says the same for backward survivors.  So LF has no joint 2-adic/3-adic content.
+  * ×2×3 rigidity (Furstenberg, Rudolph–Johnson, Host, BLMV) has nothing to grip.  Here `×u` is a
+    zero-entropy isometry of `ℤ₂ × ℤ₃`.
+  * Gate: **zero-entropy isometry, so rigidity is vacuous.**
+* **Anatomy: LF = MDE + SRE.**
+  * MDE is equidistribution of the middle digits of `uᵏx`, the same family as Erdős's
+    ternary-digits problem and Mahler's 3/2 problem.
+  * SRE is a summable rare-event statement about late drops, the shape of §30's PD.
+  * Three equivalent forms (PROVED): LF, late drops along the ray being negligible, and the window
+    rates being uniform in depth.
+* **Theorem LH (PROVED).**  LF holds up to horizon `log₁₂ k`, a full period of `k ↦ uᵏ mod 12^t`.
+  Korobov-type bounds improve only the constant (BELIEVED 75%).
+* **Proposition Z (PROVED).**  A single formal-minimum hit on a ray proves an aperiodic orbit, which
+  is Conway's question, so no positive lower bound is in reach.  Infinitely many hits give (a)
+  through `formalMin_unique`.
+* **`FM ∩ 3ℤ = ∅` (PROVED, one line).**  `V(3m) = 2m` is even.  The two known routes to (a), formal
+  minima and Sep3/staircases, therefore use disjoint witnesses.
+* **Cleanest open "weak LF".**  Infinitely many forward survivors on a single ray.  Proposition Z
+  does not block it, but no route to it is known.  Infinitely many forward survivors in `ℕ` is
+  unconditional and trivial.
+* **Numerics (agent's, `scratch-lfprobe/`).**  `β` is computed exactly by period averages, and the
+  control reproduces `p_f`, `p_b` to 12 digits.  This corrects ringunit's Monte Carlo value:
+  `β(5, 8) = 0.23488`, not `0.226`.  Over 21 rays × 20000 members the pooled z-score is `+0.13`.
+  `β ± 5%` is rejected at `|z| ≈ 4–5`.  Only 0.3–1.1% of decisions needed digits beyond the
+  member's own, but a beyond-the-digits test (walks to 150 nats) also matches.
+* **No-go test.**  The LF analogue is false for `τ`, `ω` and `τ_odd`, since each has finitely many
+  orbit minima.  So no proof of LF can be a statistic.
