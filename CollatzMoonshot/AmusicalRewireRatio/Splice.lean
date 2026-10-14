@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import CollatzMoonshot.AmusicalRewireRatio.Passage
+import CollatzMoonshot.AmusicalRewireRatio.Cuts
 
 /-! Algebraic infrastructure for rewiring a permutation by permuting cut sources. -/
 
@@ -73,6 +73,19 @@ structure BoundedRatioSourceRewire where
     amusicalNatPerm n ≤ 3 * amusicalNatPerm (sourcePerm n) + 3
   connected : ∀ a b : ℕ, (amusicalOrbit a).Infinite → (amusicalOrbit b).Infinite →
     ∃ j : ℤ, ((rewireBySource amusicalNatPerm sourcePerm) ^ j) a = b
+
+/-- A level-preserving permutation of the canonical scale cuts automatically satisfies every
+quantitative requirement.  The remaining obligation is exactly the global orbit proof. -/
+noncomputable def BoundedRatioSourceRewire.ofScaleCutPerm
+    (p : Equiv.Perm ScaleCutIndex) (hlevel : ∀ i, (p i).level = i.level)
+    (hconnected : ∀ a b : ℕ, (amusicalOrbit a).Infinite → (amusicalOrbit b).Infinite →
+      ∃ j : ℤ, ((rewireBySource amusicalNatPerm (scaleCutSourcePerm p)) ^ j) a = b) :
+    BoundedRatioSourceRewire where
+  sourcePerm := scaleCutSourcePerm p
+  fixed_finite := scaleCutSourcePerm_fixed_finite p
+  moved_card := scaleCutSourcePerm_moved_card p
+  target_ratio := scaleCutSourcePerm_target_ratio p hlevel
+  connected := hconnected
 
 /-- A bounded-ratio source rewiring immediately yields every conclusion of Theorem R. -/
 theorem BoundedRatioSourceRewire.realize (d : BoundedRatioSourceRewire) :

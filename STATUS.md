@@ -1,5 +1,11 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-14, amusical rewiring quantitative layer:** canonical scale-cut sources are now
+> pairwise distinct, and every level-preserving permutation of them automatically fixes finite
+> orbits, satisfies the factor-three estimate, and moves at most
+> `2(log₂ N + 1)²` sources below `N`.  Theorem R is reduced to the one remaining global
+> connectivity proof for a cut-index permutation.  Read `HANDOFF-amusical-rewire.md`.
+
 > **2026-10-14, amusical rewiring scale geometry:** forward and backward first-passage edges are
 > now packaged with exact uniform source/target windows.  Any two cut targets at one scale obey
 > the required factor-3 affine ratio, and cut endpoints at eightfold-growing scales are strictly

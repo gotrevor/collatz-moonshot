@@ -1,5 +1,66 @@
 # HANDOFF: bounded-ratio amusical rewiring
 
+## 2026-10-14 — quantitative cut permutation discharged
+
+The target still has its original `sorry`; only the global connectivity construction remains.
+This lap added the sorry-free module
+`CollatzMoonshot/AmusicalRewireRatio/Cuts.lean` and strengthened the reduction in `Splice.lean`:
+
+- `IsInfiniteOrbitRep` canonically represents every infinite natural orbit by `orbitMinNat`.
+- `ScaleCutIndex` indexes the forward and backward cut for every representative `r ≤ k` at
+  height `8^(k+1)`.  `ScaleCutIndex.source_injective` proves that all indexed sources are
+  distinct: eightfold separation handles different levels, orbit minima handle different
+  representatives, and the first-passage inequalities separate the two sides.
+- `scaleCutSourcePerm` extends any permutation of these indices by the identity on all other
+  naturals.  If the index permutation preserves `level`, then
+  `scaleCutSourcePerm_fixed_finite` and `scaleCutSourcePerm_target_ratio` discharge the finite-
+  orbit and factor-three clauses.
+- `ScaleCutIndex.level_le_log_of_source_lt` proves that a cut source below `N` has
+  `level ≤ log₂ N`.  Encoding an index by `(level, rep, side)` then gives the uniform bound
+  `2 * (log₂ N + 1)^2` in `scaleCutSourcePerm_moved_card`, for every index permutation.
+- `BoundedRatioSourceRewire.ofScaleCutPerm` packages those results.  A level-preserving index
+  permutation and its connectivity proof now supply every field except no additional arithmetic
+  or counting work.
+
+Adversarial review also found a useful, simpler next construction than cycling every active
+orbit at every level.  Let `b` be the least infinite representative.  At level `k`, decode
+`r = (Nat.unpair k).1`; when `r` is an infinite representative distinct from `b`, use the
+three-cycle `[F(b,k), B(r,k), F(r,k)]`, and otherwise use the identity.  `Nat.unpair_left_le`
+makes the indices valid, while the levels `Nat.pair r t` schedule every `r` cofinally.  The
+induced source-cut successor is `S * p`, where `S` is the original cut successor.  Consecutive
+scheduled levels for `r` make one finite detour from the base orbit through the intervening
+backward and forward segments; the first detour reaches the central segment.  This should be
+substantially simpler to prove connected than the all-active Euler cycle, and even has constant
+support per level.
+
+Exact verification:
+
+```text
+lake env lean CollatzMoonshot/AmusicalRewireRatio/Cuts.lean
+# passes
+lake build CollatzMoonshot.AmusicalRewireRatio.Cuts
+# Build completed successfully (8713 jobs).
+lake build CollatzMoonshot.AmusicalRewireRatio.Splice
+# Build completed successfully (8714 jobs).
+git diff --check
+# passes
+~/personal/bin/lean-green ~/src/collatz-moonshot-amusical-rewire \
+  --target CollatzMoonshot.AmusicalRewireRatio
+# Build completed successfully (8715 jobs).
+# FORMALIZE-TIER GREEN; only the ratified target declaration retains a sorry.
+```
+
+Current blocker: define that fiberwise three-cycle permutation and prove connectivity.  All
+representative selection, cut existence, endpoint injectivity, finite-orbit preservation,
+factor-three control, and `O(log² N)` counting are now kernel-checked.
+
+Next attack: formalize the structural cut successor
+`B(r,k+1) ↦ B(r,k)`, `B(r,r) ↦ F(r,r)`, `F(r,k) ↦ F(r,k+1)`, then the scheduled
+three-cycle above.  Prove `S * p` has one orbit by decomposing its forward path into the finite
+detours between consecutive `Nat.pair r t` levels.  Finally lift segment connectivity from cut
+indices to natural points and close the target with `BoundedRatioSourceRewire.ofScaleCutPerm`
+and `.realize` (retaining the existing subsingleton branch).
+
 ## 2026-10-14 — source-permutation reduction
 
 The target still has its original `sorry`; the global cut-source permutation remains open.  This
