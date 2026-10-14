@@ -22,11 +22,15 @@ Verification run:
 
 ```text
 ulimit -n 4096; lake env lean CollatzMoonshot/AmusicalUniform.lean
+ulimit -n 4096; ~/personal/bin/lean-green \
+  /Users/gotrevor/src/collatz-moonshot-amusical-uniform \
+  --target CollatzMoonshot.AmusicalUniform
 ```
 
-This completed successfully, with only the four expected existing `sorry` warnings. The temporary
-`ulimit` was needed because the shared host intermittently returned `ENFILE`; it is not a project
-setting or source change.
+Both completed successfully. The real gate built 8711 jobs and ended `FORMALIZE-TIER GREEN`, with
+only the four expected target `sorry` warnings (plus inherited proof debt in `AmusicalAntiKohl`).
+The temporary `ulimit` was needed because the shared host intermittently returned `ENFILE`; it is
+not a project setting or source change.
 
 Next highest-value attack: finish `delta_periodic`. Prove that every point reaches a multiple of
 four (or fixed point `-7`) within a uniformly bounded number of forward or backward steps. Then
@@ -34,4 +38,3 @@ show the shifted coordinates at multiples of four lie in the finite set obtained
 the fixed total exponents of `2` and `3` in `|c|`; use injectivity of `deltaPerm` to turn finiteness
 of the two-sided orbit into a positive forward period. The newly proved coordinate lemmas are the
 two transition cases needed for that invariant.
-
