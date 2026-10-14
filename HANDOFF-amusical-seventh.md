@@ -1,5 +1,43 @@
 # HANDOFF: seventh orbit formalization
 
+## 2026-10-14 lap: geometric descent-tail bound proved
+
+### Concrete advance
+
+- Added `sum_ninetyNineHundredths_Icc_le` and `sum_descent_period_errors_le` in
+  `CollatzMoonshot/AmusicalSeventh/Sparse.lean`.
+- Proved `count_descent_between_geometric_le`: the count below `X` of centers admitting a
+  forward or backward strict descent at some time `K < i ≤ L` is at most
+  `200 * (99/100)^(K+1) * X + 6 * (L+1) * 324^L`.
+- This closes the geometric-series bookkeeping left by the preceding lap.  The first term can
+  be made an arbitrarily small fraction of `X` by fixing `K`; the second is sublinear after a
+  sufficiently conservative logarithmic choice of `L`.  No ratified statement changed, and no
+  axiom, `native_decide`, or new `sorry` was introduced.  The original `sparse_sweep` sorry
+  remains the sole scoped obligation.
+
+### Verification
+
+- `lake env lean CollatzMoonshot/AmusicalSeventh/Sparse.lean` (green).
+- `~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-amusical-seventh --target
+  CollatzMoonshot.AmusicalSeventh --axioms
+  CollatzMoonshot.Amusical.count_descent_between_geometric_le` (`FORMALIZE-TIER GREEN`; axiom
+  ledger exactly `Classical.choice`, `Quot.sound`, `propext`).
+- `git diff --check` and the 100-character changed-Lean-line check (clean).
+
+### Current blocker
+
+There is no external blocker.  The exceptional-center density estimate is now in its final
+quantitative form.  The remaining proof must map each visited point to a nearby centered-window
+minimum, split off exceptional centers using this estimate, and bound the nonexceptional fibers
+with `windowMin_card_mul_le`.
+
+### Next highest-value attack
+
+Prove the finite counting bridge from visited times to centers below `X`, separating centers
+whose chosen minimizer lies outside `[-K,K]`.  On the complement use
+`isWindowMin_sub_of_centered_minimizer` and `windowMin_card_mul_le`; then choose fixed `K`, a
+logarithmic `L`, and `c` to discharge `sparse_sweep`.
+
 ## 2026-10-14 lap: finite descent union bound proved
 
 ### Concrete advance

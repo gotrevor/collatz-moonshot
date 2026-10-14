@@ -704,6 +704,75 @@ theorem count_descent_between_le (K L X : ℕ) :
   norm_num [Nat.cast_add, Nat.cast_pow] at hf hb ⊢
   linarith
 
+/-- The geometric part of the finite descent union is uniformly bounded by its infinite tail. -/
+theorem sum_ninetyNineHundredths_Icc_le (K L : ℕ) :
+    ∑ i ∈ Finset.Icc (K + 1) L, ((99 : ℝ) / 100) ^ i ≤
+      100 * ((99 : ℝ) / 100) ^ (K + 1) := by
+  rw [← Finset.Ico_add_one_right_eq_Icc]
+  calc
+    ∑ i ∈ Finset.Ico (K + 1) (L + 1), ((99 : ℝ) / 100) ^ i ≤
+        ((99 : ℝ) / 100) ^ (K + 1) / (1 - (99 : ℝ) / 100) :=
+      geom_sum_Ico_le_of_lt_one (by norm_num) (by norm_num)
+    _ = 100 * ((99 : ℝ) / 100) ^ (K + 1) := by ring
+
+/-- A coarse bound for the incomplete-period errors in the finite descent union. -/
+theorem sum_descent_period_errors_le (K L : ℕ) :
+    ∑ i ∈ Finset.Icc (K + 1) L,
+        ((4 : ℝ) ^ i + 3 ^ i + 4 * 324 ^ i) ≤ 6 * (L + 1) * 324 ^ L := by
+  calc
+    ∑ i ∈ Finset.Icc (K + 1) L,
+        ((4 : ℝ) ^ i + 3 ^ i + 4 * 324 ^ i) ≤
+        ∑ _i ∈ Finset.Icc (K + 1) L, 6 * 324 ^ L := by
+      apply Finset.sum_le_sum
+      intro i hi
+      have hiL : i ≤ L := (Finset.mem_Icc.mp hi).2
+      have h4 : (4 : ℝ) ^ i ≤ 324 ^ i := by gcongr <;> norm_num
+      have h3 : (3 : ℝ) ^ i ≤ 324 ^ i := by gcongr <;> norm_num
+      have hpow : (324 : ℝ) ^ i ≤ 324 ^ L := by
+        exact pow_le_pow_right₀ (by norm_num) hiL
+      nlinarith [show (0 : ℝ) ≤ 324 ^ i by positivity]
+    _ ≤ 6 * (L + 1) * 324 ^ L := by
+      simp only [Finset.sum_const, nsmul_eq_mul]
+      have hcard : (Finset.Icc (K + 1) L).card ≤ L + 1 := by
+        rw [Nat.card_Icc]
+        omega
+      have hcardR : ((Finset.Icc (K + 1) L).card : ℝ) ≤ L + 1 := by exact_mod_cast hcard
+      nlinarith [mul_le_mul_of_nonneg_right hcardR
+        (show (0 : ℝ) ≤ 6 * 324 ^ L by positivity)]
+
+/-- The finite descent union has a geometric main term and an explicit sublinear-scale error. -/
+theorem count_descent_between_geometric_le (K L X : ℕ) :
+    (Nat.count (fun n : ℕ => ∃ i : ↥(Finset.Icc (K + 1) L),
+      (amusical^[i] (n : ℤ) < n ∨ amusicalInv^[i] (n : ℤ) < n)) X : ℝ) ≤
+      200 * ((99 : ℝ) / 100) ^ (K + 1) * X + 6 * (L + 1) * 324 ^ L := by
+  refine (count_descent_between_le K L X).trans ?_
+  have hmain := sum_ninetyNineHundredths_Icc_le K L
+  have herr := sum_descent_period_errors_le K L
+  have hsplit :
+      (∑ i ∈ Finset.Icc (K + 1) L,
+        (2 * ((99 : ℝ) / 100) ^ i * X + 4 ^ i + 3 ^ i + 4 * 324 ^ i)) =
+        (∑ i ∈ Finset.Icc (K + 1) L, 2 * ((99 : ℝ) / 100) ^ i * X) +
+          ∑ i ∈ Finset.Icc (K + 1) L, (4 ^ i + 3 ^ i + 4 * 324 ^ i) := by
+    rw [← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro i _
+    ring
+  rw [hsplit]
+  calc
+    ∑ i ∈ Finset.Icc (K + 1) L, 2 * ((99 : ℝ) / 100) ^ i * X +
+          ∑ i ∈ Finset.Icc (K + 1) L, (4 ^ i + 3 ^ i + 4 * 324 ^ i) =
+        2 * X * (∑ i ∈ Finset.Icc (K + 1) L, ((99 : ℝ) / 100) ^ i) +
+          ∑ i ∈ Finset.Icc (K + 1) L, (4 ^ i + 3 ^ i + 4 * 324 ^ i) := by
+      congr 1
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro i _
+      ring
+    _ ≤ 2 * X * (100 * ((99 : ℝ) / 100) ^ (K + 1)) +
+          6 * (L + 1) * 324 ^ L := by gcongr
+    _ = 200 * ((99 : ℝ) / 100) ^ (K + 1) * X + 6 * (L + 1) * 324 ^ L := by
+      ring
+
 /-- Every finite centered orbit window has a minimizing offset.  This is the deterministic
 selection underlying the exceptional-offset count in Lemma T. -/
 theorem exists_centered_window_minimizer (L : ℕ) (n : ℤ) :
