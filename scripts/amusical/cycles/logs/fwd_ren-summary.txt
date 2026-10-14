@@ -1,0 +1,6 @@
+fwd_ren.c full run 2026-10-13 (Ren, independent): [1,167195612] in 400 contiguous chunks, Pmax=31866 forward-only
+RETURN n=1 period=1
+RETURN n=2 period=2
+RETURN n=4 period=5
+RETURN n=44 period=12
+dips=132068040 survivors=35127568 returns=4 (sum 167195612 = range size) steps=1119978387232

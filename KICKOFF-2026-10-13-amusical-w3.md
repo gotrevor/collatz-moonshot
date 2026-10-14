@@ -60,3 +60,20 @@ fine.  Lean lines ≤ 100 characters.
      each certificate closes by `decide`.
 
 Notes for the next lap go in `HANDOFF-amusical-w3.md`.
+
+## ⚠️ Operator note (2026-10-13 19:35): do not enumerate words
+
+The `word_bound` attempt (`interval_cases p <;> revert w <;> decide +kernel` over all `3^p` words) held 16 GB
+for over 2 h and starved every other box on the shared memory ceiling.  The operator stopped it.  Delete
+that approach, and never decide over `Fin p → Fin 3` for `p ≥ 8`.
+
+Cheap route for `amusical_periodic_mem`, reusing your `iterate_affine`
+(`2^B · Uᵖ y = 3ᵖ y + N`, with `B = wordBits` and `N = wordNumerator`):
+1. `|N| < 4^p` by induction on the word.  Each step gives `N' = 3N + 2^(B_j) d_j`, with `|d_j| ≤ 1` and
+   `B_j ≤ 2j`.
+2. `p ≤ B ≤ 2p`, and `2^B ≠ 3^p`.  Let `D_p = min_{p ≤ e ≤ 2p} |2^e − 3^p|`, a small `decide` per `p`
+   (`D_12 = 7153`).
+3. If `Uᵖ y = y` then `(2^B − 3^p) y = −N`, so `|y| ≤ 4^p / D_p`.  For `p = 12` this is `|y| ≤ 2346`;
+   the other `p ≤ 12` give smaller bounds.
+4. `decide +kernel` over `y ∈ [−2346, 2346]` for each `p`.  That is about 4,700 integers × 12 steps of
+   `amusical`, which is cheap.  Alternatively, prove one uniform bound and do one range check.

@@ -459,3 +459,159 @@ residue-transitive map can have provably infinitely many orbits.  It is still op
   their primes and never divide them back out, so every surviving certificate needs Collatz-type
   control of single orbits.
 
+## 18. No new cycles of length ≤ 31866 (2026-10-13, "cycles" agent, checked)
+
+Lean: `AmusicalCycleBound.lean` (Theorem 1 holds conditional on the search certificate; Theorem A★,
+the reduction, the bound computation and an in-kernel Atkin are targets).  Klamkin (b) and C4
+stay open.
+
+* **Theorem A★.**  A cycle's *minimum* is polynomially bounded by its length:
+  `3^p (3m−1)^k ≤ 2^e (3m)^k ≤ 3^p (3m+1)^k`.  Its elements are not.  This replaces Collatz's
+  "everything small converges" check, which `U` lacks.  I hand-checked it: the cycle product
+  telescopes to `2^e ∏ 3x = 3^p ∏ (3x+d)`.
+* **Theorem 1 (computer).**  Every periodic point of period `≤ 31866` is a known cycle member.
+  Atkin 1966 had `< 200`, so this is 160× further.
+  * The bound gives `m ≤ 167195612`.  I re-derived it exactly (`scripts/amusical/cycles/x0_ren.py`).
+  * Agent search (`cyclemin.c`, lockstep `U`/`V` with meet-in-the-middle at `H = 15933`):
+    0 cycles, 8.3 M survivors, 2.66·10¹¹ steps.
+  * Independent re-run with my own forward-only GMP search (`fwd_ren.c`, a different algorithm and
+    code), with teeth (finds 44 at period cap 12, misses it at 11): **confirmed**.  All of
+    `[1, 167195612]` in 400 contiguous chunks, `1.12·10¹²` exact steps.  The only returns are
+    1, 2, 4, 44; dips + survivors + returns = the range size (`logs/fwd_ren-summary.txt`).
+  * `defs_teeth.py` checks the Lean definitions literally: `CycleMinSearch 173 6` is clean, and
+    fails at 44 when 44 is not skipped.
+* **Theorem 2 (computer + Rhin 1987 as quoted by Simons 2022).**  Every new cycle has at least 33
+  local minima.
+  * It uses Lemma R (`log₂ m ≥ (2p−e)(θ−1)/(θ^r−1)`, by chaining local minima) and the A′ bound
+    `m ≤ 1 + r/|Λ|`.
+  * Search to `2·10¹⁰`.
+  * Simons 2022 had `m ≤ 2` complete.
+  * Not in Lean: Rhin's bound is not yet a `Literature` Prop.
+* **Structure.**
+  * Cycle minima are `≡ 2, 4 (mod 6)`.
+  * E-frequency `= 2 − θ ± 0.37/(m−1)`.
+  * If `m > 0.57 p²`, then `p` is a multiple of a convergent denominator of `log₂ 3`.  This makes
+    Shanks 1965 precise.
+* **Gates.**
+  * Bounding every element is exponential: only the minimum is polynomial.
+  * "Every element of a long cycle is large" is out of reach, since nothing bounds a cycle's
+    minimum from below except through its run count.  A cycle through 8 of length `10¹⁰⁰` is not
+    excluded.  C4 credence ~3%.
+* **Novelty** (agent, ~85%): the 31866 bound, the minimum-search method, and the `r ≤ 32` theorem.
+
+## 19. Empty-interior certificates (2026-10-13, "emptyint" agent, checked)
+
+Lean: `AmusicalFormalMin.lean` (Theorem F and the formal-walk counterexample proved, axiom-clean;
+Proposition G1 is a target).  Every natural empty-interior candidate is either dead or stuck at the
+per-orbit infinite-horizon wall (Proposition S, orbit of 8).  Agent: under 1% toward a seventh
+orbit.
+
+* **Formal minima `FM = ℤ ∩ (W₂ × W₃)`** (Theorem F, hand-checked).
+  * At most one point per orbit; no periodic points; `FM = −FM`; meets every thin orbit exactly
+    once; upper density `≤ c`.
+  * Certifying one FM point proves its orbit infinite.
+  * On `[1, 10⁶]`, FM equals the orbit minima exactly (49957 each).
+  * The formal walk can mis-order near ties of `t log₂ 3`: `U¹² 31 = 30`, while `2¹⁹ < 3¹²` (proved
+    by `decide`).
+* **Proposition G (resolution gate, paper).**  If some orbit is infinite, every height
+  `F(x mod M, ⌊log₂ x⌋)` with bounded cocycle is bounded.  The same holds for growing
+  `M(s) | 2^∞3^∞N₀` with `M(s) ≤ 2^{s/10}`, and transversals defined by residues at resolution
+  `2^{s/(10(K+1))}` are dead (G2′).
+  * So a certificate must read `Ω(log x)` digits.
+  * Open: a growing prime-to-6 modulus (needs a diameter bound for the affine action).
+* **Archimedean invariant (paper identities).**
+  * On thin orbits (`Σ 1/y < ∞`), `Q(O) = ∏(1 + χ₄(y)/(3y)) = L₊/L₋` is an orbit invariant.
+  * `Δ = L₊ − L₋` depends on the itinerary alone, and `η = x/|Δ|` is a summable-cocycle height.
+  * Teeth: `|Q_H| = 1` on conjugation-symmetric orbits of the Gaussian H (to 1e-14).
+  * `Q = 1` for `U` would need an archimedean reversor, which Theorem NR excludes.
+  * Separating orbits by `Q` is "no late return", the Proposition S wall again.
+  * All 1002 orbits with minimum `≤ 2·10⁴` have distinct `Q`.
+* **Dead.**
+  * Tail and digit statistics: Kolmogorov 0-1, plus normality, which is believed but unprovable.
+  * Weighted transversals `φ(x)/x`: alive, but weaker than `AtLeastLinearGrowth`.
+* Consistency check: `E[m · W(O_m)] = 19.98`, against `1/c = 20.09`.
+
+## 20. Late drops: the typicality wall pinned (2026-10-13, "survival" agent, checked)
+
+Lean: `AmusicalLateDrops.lean`, all proved, axiom-clean (S′, Theorem LD, LD′, the calibration,
+the tilt identity); reopen condition `AmusicalLateDropsSparse`.  Klamkin (a) is not
+settled.  The wall is now one count: the integers that survive past the residue horizon
+`T(X) ≈ log₃ X` and are undercut later.  Agent: under 1% toward settling (a).
+
+* **Constants** (agent's are paper proofs; I re-derived them in
+  `scripts/amusical/survival/consts_ren.py`, to 12 digits).
+  * `p_f = 0.210136239317` and `p_b = 0.236891833789`, with `p_f p_b = 0.04977956 = c`.
+  * Each equals `1/E[first strict ascent time]` (Feller XII.7).
+  * Tilt duality `E_b e^{−θY} = E_f e^{−(1−θ)X}`, so both directions share the rate
+    `ρ = 0.985597`.
+* **Numerics** (agent, all `x ∈ [16, 2³¹)`).
+  * FS `0.2101358`, BS `0.2368935`, minima `0.0497804`, all within `2·10⁻⁶` of the walk.
+  * Beyond the provable horizon (`L = 20–200`), integers match the walk's late drops to 0.5%.
+  * The twin `W_{3,1,2}` gives the same numbers.
+* **Theorem LD.**  Late droppers below `(c − η)X` infinitely often give (a).
+  * At the walk's rates it fires from depth `L = 23`, and at `K` times the walk's rates at a larger
+    depth (`L = 50` for `K = 2.65`, `L = 100` for `K = 10.7`).
+  * One-sided control fails: perfect forward typicality still needs backward survivors at
+    `≥ 79%` of `p_b`.
+* **U vs `τ`.**  Forward/backward window independence is proved; typicality beyond the horizon is
+  open.  `τ` has `U`'s windows but maximal late drops.
+* **New obstructions.**
+  * In `ℤ₂` the survival set's boundary is the whole set, so equidistribution gives only the upper
+    bound.
+  * `U` climbs in both time directions, so Tao-style renewal fails.
+  * The first-rise (Feller) route is killed by `τ`.
+* **Calibration.**  A positive lower density of *strict* survivors would already exhibit an
+  aperiodic orbit, which is open.
+
+## 21. The `𝔽₂[t]` twin has infinitely many orbits (2026-10-13, "freeform" Fable agent, checked)
+
+Lean: `AmusicalFunctionField.lean` (targets).  This is the clean split of Klamkin (a) into a
+Diophantine half and a dynamical half.
+
+* **The twin.**  `(ℤ, 2, 3) → (𝔽₂[t], t, Q)` with `Q = t² + t + 1`.  Haar balance forces depths
+  `(1, 2, 3, 3)`.
+  * It is residue-transitive at 18 tested moduli.
+  * Degrees change by exactly `+1, 0, −1`.
+  * The forward and backward walks have the same law, so `p_f = p_b = 1/4` and the heuristic
+    orbit-minimum density is exactly `1/16` (measured `0.06271`).
+* **Theorem F (PROVED).**  For `p = 2^e ≥ 8`, `m = p/2`, `(t⁴+t³+1) t^m (t+1)^(m−3)` has exact
+  period `p`, with itinerary `E^m B^m`.  So the twin has infinitely many cycles, hence orbits.
+  * The proof never touches an infinite orbit.  Frobenius collapses the Böhm–Sontacchi
+    denominator: `t^{2p} − Q^p = (t+1)^p`.
+  * For `Q = t² + 1` the denominator is `1`, and every balanced word of length `2^e` closes.
+  * I re-checked it independently (`scripts/amusical/twin/fftwin_ren.py`, own carry-less
+    arithmetic): exact periods and itineraries for `p = 8 … 256`.  Teeth: `p = 10, 12, 14` and
+    `s_E ≠ 0` do not close.
+* **Heuristic exact in the limit.**  Cycles of length 8, 16, 32 number 9, 299 (exact) and about
+  `2.76·10⁶`, against the heuristic `3.6`, `233`, `2.69·10⁶`.  The ratio tends to 1.
+* **What fails over `ℤ`.**  `E^m B^m` closes at `2^m(4^m−3^m)/(9^m−8^m)`, an integer only at
+  `m = 1` (`amusical_EmBm_not_integral`).  The missing identity `(a^m−b^m)/(a−b) = (a−b)^{m−1}` is
+  smallness of `2^N − 3^p`, which Mihăilescu and Baker forbid.
+  * Since cycles of `U` are believed finite (§5, §18), **any proof of Klamkin (a) must exhibit
+    infinitely many infinite orbits**.
+  * Every wall ports to the twin, and even "one infinite orbit exists" is open there.
+
+## 22. Complexity of orbit counting; Theorem W (2026-10-13, "logic" Fable agent, checked in part)
+
+Lean: `AmusicalLinearForever.lean`.  Theorem W is **proved, axiom-clean** (Ren's proof).
+
+* **Theorem W.**  If some `x ≠ 0` has a forward orbit that only uses zero-offset pieces, then the
+  points `u x` (`u ≡ 1 mod m`, prime to all slope primes) are distinct orbits.  So the map has
+  infinitely many orbits.
+  * This is the single mechanism behind every provable certificate so far: `PP(0)`'s engine in one
+    line, and the reason certificates for `U` must have empty interior.
+  * It is vacuous on `U`, because no orbit stays on `2n ↦ 3n` (Theorem L).
+* **Complexity** (paper, not re-derived), for RCWA permutations given by tables:
+  * "x ~ y" and "x periodic" are `Σ⁰₁`-complete;
+  * "∃ infinite orbit" is `Σ⁰₂`-complete, and "all orbits finite" is `Π⁰₂`-complete;
+  * "finitely many orbits" is `Π⁰₂`-hard, with the naive upper bound `Π⁰₃`.
+  * The machinery: Morita reversible 2-counter machines as linear pieces, a Bennett wrapper, and a
+    one-orbit "highway".
+* **The gap `Σ⁰₂` / `Π⁰₃` is exactly universal *additive* (Collatz-like) computation, i.e. `U`'s
+  class.**  Agent credence: 70% Π⁰₃-complete; 30% a genuine collapse, which would be a theorem
+  about U-like maps.
+* **Independence** (paper, "in principle", no table built).  There is an explicit computable RCWA
+  permutation with one orbit iff `Con(ZFC)`.  The agent puts 90% on a `C₃` variant and 80% on a
+  residue-transitive one.
+* Lagarias's C4 fails non-trivially for some members of the class: sibling cycles of one length.
+
