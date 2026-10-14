@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.AmusicalOddRewire
 import CollatzMoonshot.AmusicalRewireRatio.Restriction
+import CollatzMoonshot.AmusicalReglue.BackwardStep
 
 /-!
 # Sparse regluing makes forward survivors arbitrarily sparse (Theorem Π)
@@ -72,21 +73,89 @@ theorem exists_reglue_sparseFS_amusical (hcyc : {x | PermPeriodic amusicalNatPer
 def bwdWeight (m i : ℕ) : ℕ :=
   i + ((Finset.range i).filter fun j => ¬ 3 ∣ amusicalNatPerm.symm^[j] m).card
 
+theorem bwdWeight_succ (m i : ℕ) :
+    bwdWeight m (i + 1) =
+      bwdWeight m i + if 3 ∣ amusicalNatPerm.symm^[i] m then 1 else 2 := by
+  unfold bwdWeight
+  rw [Finset.range_add_one, Finset.filter_insert]
+  split_ifs with h1
+  · omega
+  · rw [Finset.card_insert_of_notMem (by simp)]; omega
+
+/-- Lemma BW with the sharp carry invariant `|E| ≤ 4^i − 3^i`
+(`4(4^i − 3^i) + 3^i = 4^{i+1} − 3^{i+1}`). -/
+theorem bwd_iter_affine_le (m i : ℕ) :
+    ∃ E : ℤ, (3 : ℤ) ^ i * (amusicalNatPerm.symm^[i] m : ℤ) = 2 ^ bwdWeight m i * m + E ∧
+      |E| ≤ 4 ^ i - 3 ^ i := by
+  induction i with
+  | zero => exact ⟨0, by simp [bwdWeight]⟩
+  | succ i ih =>
+    obtain ⟨E, hE, hb⟩ := ih
+    rw [Function.iterate_succ_apply', bwdWeight_succ]
+    set y := amusicalNatPerm.symm^[i] m
+    obtain ⟨h1, h2⟩ := three_mul_symm_step y
+    have h3 : (0 : ℤ) ≤ 3 ^ i := by positivity
+    have h4 : (3 : ℤ) ^ i ≤ 4 ^ i := pow_le_pow_left₀ (by norm_num) (by norm_num) i
+    by_cases h : 3 ∣ y
+    · refine ⟨2 * E, ?_, ?_⟩
+      · rw [if_pos h, pow_succ, pow_succ]
+        linear_combination 2 * hE + 3 ^ i * h1 h
+      · rw [abs_mul, pow_succ, pow_succ]
+        norm_num
+        linarith
+    · refine ⟨4 * E + 3 ^ i * (3 * (amusicalNatPerm.symm y : ℤ) - 4 * y), ?_, ?_⟩
+      · rw [if_neg h, pow_add, pow_succ]
+        linear_combination 4 * hE
+      · have := h2 h
+        calc _ ≤ |4 * E| + |3 ^ i * (3 * (amusicalNatPerm.symm y : ℤ) - 4 * y)| :=
+              abs_add_le _ _
+          _ ≤ 4 * |E| + 3 ^ i * 1 := by
+              rw [abs_mul, abs_mul, abs_of_nonneg h3]
+              have := mul_le_mul_of_nonneg_left this h3
+              norm_num at this ⊢
+              linarith
+          _ ≤ _ := by rw [pow_succ, pow_succ]; linarith
+
 /-- **Target (Lemma BW, affine form).** -/
 theorem bwd_iter_affine (m i : ℕ) :
     ∃ E : ℤ, (3 : ℤ) ^ i * (amusicalNatPerm.symm^[i] m : ℤ) = 2 ^ bwdWeight m i * m + E ∧
       |E| < 4 ^ i := by
-  sorry
+  obtain ⟨E, hE, hb⟩ := bwd_iter_affine_le m i
+  exact ⟨E, hE, by have : (0 : ℤ) < 3 ^ i := by positivity
+                   linarith⟩
 
 /-- **Target (Lemma BW, sign form).** -/
 theorem lt_bwd_iter_iff (m i : ℕ) (hi : 1 ≤ i) (hm : 4 ^ i < m) :
     m < amusicalNatPerm.symm^[i] m ↔ 3 ^ i < 2 ^ bwdWeight m i := by
-  sorry
+  obtain ⟨E, hE, hb⟩ := bwd_iter_affine m i
+  have hw : i ≤ bwdWeight m i := by unfold bwdWeight; omega
+  have hne := two_pow_ne_three_pow (i := i) (hi.trans hw)
+  set w := bwdWeight m i
+  set v := amusicalNatPerm.symm^[i] m
+  have hmZ : (4 : ℤ) ^ i < m := by exact_mod_cast hm
+  have hE' := abs_lt.mp (hb.trans hmZ)
+  have hT : (0 : ℤ) < 3 ^ i := by positivity
+  constructor
+  · intro hv
+    by_contra hc
+    have hlt : 2 ^ w + 1 ≤ 3 ^ i := by omega
+    have hltZ : (2 : ℤ) ^ w + 1 ≤ 3 ^ i := by exact_mod_cast hlt
+    have hvZ : (m : ℤ) + 1 ≤ v := by exact_mod_cast hv
+    have h1 := mul_le_mul_of_nonneg_right hltZ (Int.natCast_nonneg m)
+    have h2 := mul_le_mul_of_nonneg_left hvZ hT.le
+    nlinarith
+  · intro hc
+    have hltZ : (3 : ℤ) ^ i + 1 ≤ 2 ^ w := by exact_mod_cast hc
+    have h1 := mul_le_mul_of_nonneg_right hltZ (Int.natCast_nonneg m)
+    have : (3 : ℤ) ^ i * m < 3 ^ i * v := by nlinarith
+    exact_mod_cast lt_of_mul_lt_mul_left this hT.le
 
 /-- **Target.**  Forward and backward Chernoff functions agree under `s ↦ 1 − s`. -/
 theorem chernoff_duality (s : ℝ) :
     (1 / 3) * (3 / 2 : ℝ) ^ s + (2 / 3) * (3 / 4 : ℝ) ^ s =
       (1 / 2) * (3 / 2 : ℝ) ^ (-(1 - s)) + (1 / 2) * (3 / 4 : ℝ) ^ (-(1 - s)) := by
-  sorry
+  rw [show -(1 - s) = s + (-1) by ring, Real.rpow_add (by norm_num), Real.rpow_add (by norm_num),
+    Real.rpow_neg_one, Real.rpow_neg_one]
+  ring
 
 end CollatzMoonshot.Amusical
