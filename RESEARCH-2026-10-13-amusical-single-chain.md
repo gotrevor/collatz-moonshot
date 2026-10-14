@@ -1410,3 +1410,64 @@ the elementary lemmas.  Agent odds that this moves (a): under 1%; it closes a ro
   survivors" cannot come from the §35–§38 toolkit.  Inside `F_L`, `U` is singled out only by
   increasing block transitions, and by TT a proof must use that law along entire tails: the Π₁ wall
   again.  `L = 1` is open (the builder sticks at 1215 with the gap filter).
+
+## 46. Square-return confinement: probably true, Π⁰₁, and out of reach of curve geometry (2026-10-14, "srcprobe" Opus agent, checked in part)
+
+Probe of §44's SRC.  I checked Claim W and the implication chain.  Agent odds that this moves (a):
+under 0.5%.
+
+* **Hunt (measured).**  Exact walks from every square start up to `10¹⁶` (values below `2¹⁶⁰`; every
+  triple starts at a square, so this is complete for triples in that range): **22 qualifying triple
+  endpoints in all, none with `H > 863`**, the same 22 as at `H = 10⁴`.  The worst ratio stays
+  `29² → 10² → 13²` (`t/ln(2+H) = 17.76`, 61 steps), so `SRC_C` with `C = 17.77` holds to `H = 10⁸`.
+* **Pairs (measured).**  Two-block square pairs grow like `≈ 29 ln H` (479 at `H = 10⁸`), including a
+  Pell family `15² → 13², 209² → 181², …` (one `A`-step each).  A heuristic with decay rate
+  `I = 0.014508` predicts `≈ 35 ln H` pairs and finitely many triples; `U` is more confined than the
+  model on every statistic.  Pairs are genus 0 and recur; triples are genus `≥ 1` and finite in all
+  data.
+* **Weakest sufficient confinement (PROVED).**  FT ⇒ `SRC_C` ⇒ TSC (`t ≤ f(H)`, `liminf f/H = 0`) ⇒
+  WSC ⇒ (a′) ⇒ (a), where (a′) says the squares meet infinitely many orbits; `ARC_C ⇒ SRC_{2C}`.  For
+  fixed `C`, `SRC_C` and `ARC_C` are **Π⁰₁** statements.
+* **Claim W (PROVED): the geometry is vacuous.**  Once `t > 2 log₂ H` the word has consumed more bits
+  than `x₀ ≤ H²` has, so each word-curve carries at most one relevant integral point.  Siegel,
+  Faltings, uniform Mordell and Bombieri–Pila count points; SRC is about whether such points
+  *exist*.  SQG1 is only the block clause, and Lemma K bounds `t` from below.  SRC constrains
+  `t > 17.76 ln H`, about six times past the residue horizon `1.82 ln H`: the §42 wall.
+* **Foil (conditional).**  If G′ (§45) holds with offsets prime to 3 (55%), a one-orbit model keeps
+  SQG1, SQG2 and Lemma K while every confinement fails.
+* **Credences.**  SRC true 85%; FT true 80%.
+
+## 47. Where the lane stands: one wall, six foils (2026-10-14, Ren)
+
+A map of §30–§46, so the next session starts here rather than re-deriving it.
+
+**The wall.**  Every route ends at a Π₁ statement about integers beyond the residue horizon
+(`depth > log X`).  Every *proved* inequality about `U` is an inequality about the real affine cocycle
+of `Û` (Fable, §44).  A proof of (a) must use `U`'s exact branch law along entire tails (TT, §33),
+and the only statements known to separate `ℤ` from the masquerade are the survivor densities
+themselves.
+
+**Sharpest conditionals (all Lean-proved).**
+* (a) ⇐ `d_upper(FS) > c` (C2′, §31).
+* (a) ⇐ `d(FS) > 0 ∧ NC₀` (NC′, §35).
+* (a) ⇐ LIN `∧ #FS ∩ (Y, 2Y] ≠ O(√Y)` (§37).
+* (a) ⇐ SRC, a Π⁰₁ hypothesis with `C = 17.77` unrefuted to `H = 10⁸` (§44, §46).
+
+**The foils: each keeps a class of proved invariants and fails (a)'s conclusion.**
+
+| foil | keeps | breaks | § |
+|---|---|---|---|
+| `σ` (Theorem G) | order facts, NCU, basin identity, LIN's finiteness | windows, even branch | 39 |
+| `τ`, `τ_odd` | windows, residues, even branch | LIN | 14, 33 |
+| masquerade (real `Û`-orbit) | SQ, Lemma K, every window statistic | integrality | 25, 36 |
+| `π`, `π_β` (Theorem Π, Πβ) | sparse-robust properties, even branch, LIN (mod LP) | FS density | 41, 43 |
+| `F_L` block-swap (G′, mod EXT) | MR(II), T2, SQ, MR(I), Lemma K | increasing block law | 45 |
+| `U + 6^N` (deformation) | `U` for `~N` steps | everything far out | 29 |
+
+**Open statements, with credences.**  LIN 85% (its open core is BHN, §40); LP 75% (§43); EXT 85%
+(§45); SRC 85% (§46); NC₀ (§35) open; (a) itself open since 1963.
+
+**What would move it.**  A statement that is false for the masquerade and for every `F_L` member
+with a non-increasing block law, and true for `ℤ`, about whole tails.  Nothing in §1–§46 is such a
+statement.  Odds that this lane settles (a): about 1%.  Its standing output is the Lean-certified
+map of why each tool fails.
