@@ -105,10 +105,9 @@ theorem carry_potential_at (x : ℕ → ℤ) (hE : ∀ k, Even (x k) → 2 * x (
           push_cast
           nlinarith
 
-/-- **P2′.**  See the module docstring. -/
-theorem prefix_balance {D p g t : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
-    (ht : 0 < t) (htg : t < g) (hO : Odd (amusical^[t - 1] (p : ℤ)))
-    (hE : Even (amusical^[t] (p : ℤ))) :
+/-- **P2′**, at any even point `x_t`, `0 < t < g` (the run need not start at `t`). -/
+theorem prefix_balance' {D p g t : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
+    (ht : 0 < t) (htg : t < g) (hE : Even (amusical^[t] (p : ℤ))) :
     ((t - numE p t : ℕ) : ℝ) * Real.log (4 / 3) <
       (numE p t : ℝ) * Real.log (3 / 2) + (eRuns p t : ℝ) / (p + D) := by
   obtain ⟨s, hs, hpot⟩ := carry_potential_at (fun k => amusical^[k] (p : ℤ))
@@ -118,8 +117,12 @@ theorem prefix_balance {D p g t : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
   simp only [Function.iterate_zero, id_eq, Int.cast_natCast] at hs hpot
   rw [if_neg (Int.not_odd_iff_even.mpr hE)] at hpot
   obtain ⟨t', rfl⟩ : ∃ t', t = t' + 1 := ⟨t - 1, by omega⟩
-  rw [cntR_succ, if_pos ⟨hE, by simpa using hO⟩] at hpot
-  change (((p + D : ℤ) : ℝ)) * s + 1 - 0 ≤ ((eRuns p (t' + 1) + 1 : ℕ) : ℝ) at hpot
+  have hR : cntR (fun k => amusical^[k] (p : ℤ)) (t' + 1 + 1) ≤ eRuns p (t' + 1) + 1 := by
+    rw [cntR_succ]; split_ifs <;> simp [eRuns, cntR]
+  have hR' : (cntR (fun k => amusical^[k] (p : ℤ)) (t' + 1 + 1) : ℝ) ≤ eRuns p (t' + 1) + 1 := by
+    exact_mod_cast hR
+  replace hpot := hpot.trans hR'
+  change (((p + D : ℤ) : ℝ)) * s + 1 - 0 ≤ (eRuns p (t' + 1) : ℝ) + 1 at hpot
   change |_ - _ - (_ - (2 * _ - ((numE p (t' + 1) : ℕ) : ℝ)) * _)| ≤ s at hs
   have hA : numE p (t' + 1) ≤ t' + 1 := cntE_le _ _
   rw [Nat.cast_sub hA]
@@ -141,5 +144,13 @@ theorem prefix_balance {D p g t : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
   rw [h43, h32]
   push_cast at hs ⊢
   nlinarith [hs.2]
+
+/-- **P2′.**  See the module docstring. -/
+theorem prefix_balance {D p g t : ℕ} (h : NearCycleAt D p g) (hp : 2 ≤ p)
+    (ht : 0 < t) (htg : t < g) (_hO : Odd (amusical^[t - 1] (p : ℤ)))
+    (hE : Even (amusical^[t] (p : ℤ))) :
+    ((t - numE p t : ℕ) : ℝ) * Real.log (4 / 3) <
+      (numE p t : ℝ) * Real.log (3 / 2) + (eRuns p t : ℝ) / (p + D) :=
+  prefix_balance' h hp ht htg hE
 
 end CollatzMoonshot.Amusical.NearCycleRuns
