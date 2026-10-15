@@ -1695,3 +1695,34 @@ survivor.  Reports: `newroutes5-astra.md`, `newroutes5-fable.md`.
 * **Reading.**  Six rounds, ~230 candidates.  Integrality-blind tools see the generic fibre;
   integrality-consuming tools see closed equations; the one attempt to close infinite orbits (real
   ends) closed them in `ℝ`, where integrality is gone.  The reopen condition is still §47's.
+
+## 54. Normal and disjunctive itineraries (2026-10-15, "normal" Opus agent and the "crossreview" agent; Ren checked)
+
+Trevor's question: if `U` runs to infinity, is its step sequence normal or disjunctive, and can
+normal numbers be built from these orbits?  Report: `normal.md`; cross-lane context: `crossreview.md`.
+
+* **No itinerary is base-3 normal (PROVED, Lean).**  `not_tendsto_evenFrequency_third`: for every
+  positive integer, the even-label frequency of its forward itinerary does not tend to `1/3`.  An
+  aperiodic orbit with even-frequency below `2 − log₂ 3 = log₂(4/3) ≈ 0.415` spends more than
+  `log₂ 3` bits per step and falls (`periodic_of_evenFrequency_lt`, already in the repo); a cycle at
+  exactly `1/3` would need its odd elements to average below about 3.8 (the step ratios multiply to
+  1 around a cycle), leaving only `{1}` and `{2, 3}`.  The agent's Theorem A adds the liminf and
+  backward forms: forward `liminf E⁺/K ≥ κ ≥ limsup E⁻/K` on any infinite orbit (paper, 95%).
+* **The right normality is one-sided.**  Forward cylinders are classes mod `2^{W(w)}` (Haar on `ℤ₂`
+  pushes to `Bernoulli(½, ¼, ¼)`); backward ones are classes mod `3^k` (uniform).  Forward normal ⟺
+  the orbit equidistributes in `ℤ₂`; disjunctive ⟺ it is dense in `ℤ₂` (paper, 95%).  Both open.
+  Measured on 8's orbit to `10⁷` steps: forward even-frequency `0.4998`, backward `0.3335`, every
+  forward word to length 10 present by step `7.88M` (prediction `7.87M`).
+* **Positive claims are blocked.**  An eventually periodic itinerary is a cycle, so "the itinerary
+  real of 8 is irrational" is exactly "8's orbit is infinite" (costume); every positive statement
+  about a single-orbit real implies that orbit is infinite.  The number of `n ≤ X` whose forward
+  itinerary avoids a label is `≤ 6X^{log₂ φ}` (Mahler's exponent; paper, 90%), so even "8 hits 3 mod
+  4 infinitely often" is a Mahler-type single-orbit problem.
+* **Antihydra (cross-lane).**  Antihydra is Mahler's map `x ↦ ⌊3x/2⌋ + (x mod 2)` from 7, shifted by
+  1 (Ren checked `10⁴` steps); it never halts ⟺ `#odd − N/2 ≤ N/6` for every `N`.  Equidistribution of
+  `{ζ(3/2)^k}` alone gives only "the counter → ∞"; an effective discrepancy bound would be needed.
+  The rounding-choice foils, the gate theorem and the exact ceiling of rounding-blind arguments are
+  now in Lean in `collatz-cryptid` (`Antihydra/Foils.lean`), with Bigfoot's parity clock and engine
+  census (`Bigfoot/Clock.lean`, `Census.lean`: BBf #323 and BB(2,5) Hydra walk the same orbit
+  `H^n(3)`, as the two halves of one equidistribution statement).
+* **Lean.**  `AmusicalNotNormal.lean` (proved, axiom-clean, verified 2026-10-15).
