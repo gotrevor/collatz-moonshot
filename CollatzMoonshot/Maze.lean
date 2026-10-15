@@ -51,6 +51,7 @@ import CollatzMoonshot.AmusicalSquares
 import CollatzMoonshot.AmusicalSwap
 import CollatzMoonshot.AmusicalTailEvent
 import CollatzMoonshot.AmusicalLoopInterleave
+import CollatzMoonshot.AmusicalNoMean
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -371,7 +372,11 @@ def register : List Hall := [
   ⟨"amusical: tail-event transfer from random perturbations to U (0–1 law, coupling)", .costume,
    "summable noise is a.s. a finite change of U, so μ(A) = 1 iff A(U); otherwise U is null",
    "AmusicalTailEvent.lean; agent report newroutes3-astra.md §3–§4 (2026-10-14)",
-   "2026-10-14"⟩]
+   "2026-10-14"⟩,
+  ⟨"amusical: dictionaries to groupoids, Schreier graphs, itinerary modules, covers", .costume,
+   "(a) is the fully ramified point; ⟨n+1, U⟩ has no invariant mean, so averages cannot see it",
+   "AmusicalNoMean.lean; agent reports newroutes4-fable.md, newroutes4-astra.md, pcancel.md",
+   "2026-10-15"⟩]
 
 /-! ## 4. The audit -/
 
@@ -557,7 +562,10 @@ def mazeLinks : List Link := [
   ⟨"amusical: tail-event transfer from random perturbations to U (0–1 law, coupling)",
    [``CollatzMoonshot.Amusical.infinite_permOrbits_mul_swaps_iff,
     ``CollatzMoonshot.Amusical.pivot_raises,
-    ``CollatzMoonshot.Amusical.pivot_lowers], []⟩]
+    ``CollatzMoonshot.Amusical.pivot_lowers], []⟩,
+  ⟨"amusical: dictionaries to groupoids, Schreier graphs, itinerary modules, covers",
+   [``CollatzMoonshot.Amusical.no_translation_amusical_invariant_mean,
+    ``CollatzMoonshot.Amusical.amusical_image_even], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -570,7 +578,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 65 rows, 57 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 66 rows, 58 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
