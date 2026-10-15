@@ -1471,3 +1471,36 @@ themselves.
 with a non-increasing block law, and true for `ℤ`, about whole tails.  Nothing in §1–§46 is such a
 statement.  Odds that this lane settles (a): about 1%.  Its standing output is the Lean-certified
 map of why each tool fails.
+
+## 48. Ideation round 2, gated by the Maze pre-flight: 42 candidates, no survivor, two theorems (2026-10-14, Codex "astra" and Fable xhigh, checked in part)
+
+Both laps ran under the Maze §0 pre-flight and an effort bar (at least 15 candidates from at least 5
+areas, one targeted repair per gate failure, four probed seriously).  Together: 42 candidates, every
+one blocked by a named gate question, almost all by question 1 (the beyond-horizon wall).  No
+candidate passes question 3 with any input other than "`U` is exactly `U`", which is TT (§33).
+Reports: `newroutes2-astra.md`, `newroutes2-fable.md`.
+
+* **Theorem Z (paper, astra; Ren read it, Lemmas A and C not fully re-derived; 70% note-worthy).**
+  Let `𝒜` be the `*`-algebra of finite sums of operators mapping a full arithmetic progression
+  affinely onto another (positive slopes) on `ℓ²(ℤ)`.  If `S ∈ 𝒜` commutes with `U` and `S*S = I`,
+  then `SS* = I`.  The proof transports coefficients to a nonnegative commuting operator, fixes the
+  origin, and uses residue transitivity (§11) to equate generic row and column masses, so `I − SS*`
+  is a positive operator of finite support in `𝒜`, hence `0`.  So no finite arithmetic isometry
+  certificate can count orbits by an index: this closes the operator-certificate shape that passes
+  the gate's first draft.
+* **Lemma E (PROVED, Fable; Ren checked).**  A successor swap `σ ↦ σ ∘ (a b)` never changes the
+  number of infinite orbits of a permutation of `ℕ` and changes the total orbit count by at most
+  one.  So "infinitely many orbits" is a tail event in any perturbation family of `U`, with
+  probability `0` or `1`.  Lean: `AmusicalTailEvent.lean` (treadmill).
+* **Measured (Fable).**  In the monotone family `U ∘ s_E` (swap the targets of `2n` and `4n+1` for
+  `n ∈ E`; every member has `|π − U| ≤ 1`), random `E` of every density `p ∈ [0, 1]` keeps the
+  orbit-start density at `c ≈ 0.05`.  (a)-like behaviour is generic; only adversarial `E` (EXT-type,
+  §45) kills it.  `U` is the unique map in both this family and `F_L`.
+* **Other kills, one line each.**  Transport energy (no monotone link to orbit count); ordered
+  strands and induced returns (the first order lemma is false: an infinite family of two-step
+  inversions); signed distortion (temporal discrepancy uncontrolled); powers of 3 with p-adic Baker
+  on periodic runs (the start bound `C log s` is sharp, the tail is beyond the horizon); late
+  droppers as reduced periodic points (an identity only); a two-sided horizon from the peak (92% of
+  late droppers stay past the peak's digit budget).
+* **Reading.**  The gate worked: both laps spent their probes on candidates that had passed it.  The
+  wall did not move.
