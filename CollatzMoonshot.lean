@@ -154,6 +154,7 @@ import CollatzMoonshot.AmusicalExcursionCode
 import CollatzMoonshot.AmusicalSquares
 import CollatzMoonshot.AmusicalSwap
 import CollatzMoonshot.AmusicalTailEvent
+import CollatzMoonshot.AmusicalPeriodicInvariant
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity

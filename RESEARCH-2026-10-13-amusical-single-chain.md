@@ -1482,14 +1482,19 @@ one blocked by a named gate question, almost all by question 1 (the beyond-horiz
 candidate passes question 3 with any input other than "`U` is exactly `U`", which is TT (§33).
 Reports: `newroutes2-astra.md`, `newroutes2-fable.md`.
 
-* **Theorem Z (paper, astra; Ren read it, Lemmas A and C not fully re-derived; 70% note-worthy).**
+* **Theorem Z (PROVED on paper; astra, confirmed by the adversarial "zverify" agent, ~97%).**
   Let `𝒜` be the `*`-algebra of finite sums of operators mapping a full arithmetic progression
   affinely onto another (positive slopes) on `ℓ²(ℤ)`.  If `S ∈ 𝒜` commutes with `U` and `S*S = I`,
-  then `SS* = I`.  The proof transports coefficients to a nonnegative commuting operator, fixes the
-  origin, and uses residue transitivity (§11) to equate generic row and column masses, so `I − SS*`
-  is a positive operator of finite support in `𝒜`, hence `0`.  So no finite arithmetic isometry
-  certificate can count orbits by an index: this closes the operator-certificate shape that passes
-  the gate's first draft.
+  then `SS* = I`.  zverify's simpler proof: `‖S δ_n‖²` and `‖S* δ_m‖²` are `U`-invariant (from
+  `PS = SP`, `P` unitary) and agree with periodic functions off a finite set, so they are constant
+  (residue transitivity, §11); a germ argument at `0` makes the two constants equal; then `I − SS*`
+  is a positive element of `𝒜` with finite support, hence `0`.  So no finite arithmetic isometry
+  certificate can count orbits by an index.  No counterexample in five commutant dictionaries up to
+  1.03M terms (the commutant was always the Laurent polynomials in `P` the dictionary could
+  express).  `𝒜` is the dense core of Cuntz's `ax + b` ring algebra; nearest literature Mori
+  (arXiv 2411.08084, 2508.05713); novelty ~70%.  Lean: the arithmetic core, "a periodic
+  `U`-invariant function on `ℤ` is constant" (also with invariance only off a finite window),
+  `AmusicalPeriodicInvariant.lean` (proved, axiom-clean, verified 2026-10-14).
 * **Lemma E (PROVED, Fable; Ren checked).**  A successor swap `σ ↦ σ ∘ (a b)` never changes the
   number of infinite orbits of a permutation of `ℕ` and changes the total orbit count by at most
   one.  So "infinitely many orbits" is a tail event in any perturbation family of `U`, with
