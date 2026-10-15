@@ -3,7 +3,7 @@ Copyright (c) 2026 Trevor Morris. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
-import Mathlib
+import CollatzMoonshot.AmusicalTailEvent.Agree
 
 /-!
 # Infinite orbits survive successor swaps, so (a) is a tail event (Lemma E, research §48)
@@ -31,20 +31,29 @@ def natPermOrbits (σ : Equiv.Perm ℕ) : Set (Set ℕ) := {O | ∃ x, O = natPe
 def infiniteNatPermOrbits (σ : Equiv.Perm ℕ) : Set (Set ℕ) :=
   {O | ∃ x, O = natPermOrbit σ x ∧ O.Infinite}
 
+theorem mul_swap_agree (σ : Equiv.Perm ℕ) (a b : ℕ) :
+    ∀ y ∉ ({a, b} : Set ℕ), σ y = (σ * Equiv.swap a b) y := by
+  intro y hy
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hy
+  rw [Equiv.Perm.mul_apply, Equiv.swap_apply_of_ne_of_ne hy.1 hy.2]
+
 /-- **Target (Lemma E).**  A successor swap does not change the number of infinite orbits. -/
 theorem encard_infinitePermOrbits_mul_swap (σ : Equiv.Perm ℕ) (a b : ℕ) :
-    (infiniteNatPermOrbits (σ * Equiv.swap a b)).encard = (infiniteNatPermOrbits σ).encard := by
-  sorry
+    (infiniteNatPermOrbits (σ * Equiv.swap a b)).encard = (infiniteNatPermOrbits σ).encard :=
+  TailEvent.encard_infiniteOrbits_eq_of_agree (Set.toFinite {a, b}) (mul_swap_agree σ a b)
 
 /-- **Target.**  A successor swap does not change whether there are infinitely many orbits. -/
 theorem infinite_permOrbits_mul_swap_iff (σ : Equiv.Perm ℕ) (a b : ℕ) :
-    (natPermOrbits (σ * Equiv.swap a b)).Infinite ↔ (natPermOrbits σ).Infinite := by
-  sorry
+    (natPermOrbits (σ * Equiv.swap a b)).Infinite ↔ (natPermOrbits σ).Infinite :=
+  TailEvent.infinite_orbits_iff_of_agree (Set.toFinite {a, b}) (mul_swap_agree σ a b)
 
 /-- **Target.**  The same for any finite list of successor swaps. -/
 theorem infinite_permOrbits_mul_swaps_iff (σ : Equiv.Perm ℕ) (l : List (ℕ × ℕ)) :
     (natPermOrbits (σ * (l.map fun p => Equiv.swap p.1 p.2).prod)).Infinite ↔
       (natPermOrbits σ).Infinite := by
-  sorry
+  induction l generalizing σ with
+  | nil => simp
+  | cons p l ih =>
+    rw [List.map_cons, List.prod_cons, ← mul_assoc, ih, infinite_permOrbits_mul_swap_iff]
 
 end CollatzMoonshot.Amusical
