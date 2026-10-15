@@ -49,6 +49,8 @@ import CollatzMoonshot.AmusicalExcursionCode
 import CollatzMoonshot.AmusicalNearCycleEntropy
 import CollatzMoonshot.AmusicalSquares
 import CollatzMoonshot.AmusicalSwap
+import CollatzMoonshot.AmusicalTailEvent
+import CollatzMoonshot.AmusicalLoopInterleave
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -361,7 +363,15 @@ def register : List Hall := [
    "AmusicalSwap.lean; agent report gprime.md (2026-10-14)", "2026-10-14"⟩,
   ⟨"amusical: automatic (finite-state) orbit invariants or colourings", .costume,
    "a binary-automatic U^m-invariant colouring is constant; automatic orbits ⇔ (a)",
-   "AmusicalSquares.lean; agent report newroutes-astra.md §2 (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalSquares.lean; agent report newroutes-astra.md §2 (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: loop-weighted (FKG) comparison of U with random block swaps", .refuted,
+   "blocks 8 and 9 of U interleave on the orbit of 37: loop counts 0, 1, 1, 0, not supermodular",
+   "AmusicalLoopInterleave.lean; agent report newroutes3-astra.md §6 (2026-10-14)",
+   "2026-10-14"⟩,
+  ⟨"amusical: tail-event transfer from random perturbations to U (0–1 law, coupling)", .costume,
+   "summable noise is a.s. a finite change of U, so μ(A) = 1 iff A(U); otherwise U is null",
+   "AmusicalTailEvent.lean; agent report newroutes3-astra.md §3–§4 (2026-10-14)",
+   "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -540,7 +550,14 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.ampSwap_even], []⟩,
   ⟨"amusical: automatic (finite-state) orbit invariants or colourings",
    [``CollatzMoonshot.Amusical.invariant_kernel_three_pow,
-    ``CollatzMoonshot.Amusical.amusicalInv_iterate_cylinder], []⟩]
+    ``CollatzMoonshot.Amusical.amusicalInv_iterate_cylinder], []⟩,
+  ⟨"amusical: loop-weighted (FKG) comparison of U with random block swaps",
+   [``CollatzMoonshot.Amusical.interleave_path,
+    ``CollatzMoonshot.Amusical.swap_both_path], []⟩,
+  ⟨"amusical: tail-event transfer from random perturbations to U (0–1 law, coupling)",
+   [``CollatzMoonshot.Amusical.infinite_permOrbits_mul_swaps_iff,
+    ``CollatzMoonshot.Amusical.pivot_raises,
+    ``CollatzMoonshot.Amusical.pivot_lowers], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -553,7 +570,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 63 rows, 55 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 65 rows, 57 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
