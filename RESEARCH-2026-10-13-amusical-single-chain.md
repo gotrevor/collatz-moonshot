@@ -1546,3 +1546,46 @@ Target: a statement `P` about whole tails that `U` satisfies and every foil viol
   costume).
 * **Reading.**  Three rounds, ~120 candidates, one boundary.  Round 4 drops the repair posture and
   hunts a dictionary to a foreign world (Trevor: "Langlands-level thinking leap").
+
+## 50. Theorem R, a Langlands-style dictionary that is a costume, and round 3's second lap (2026-10-14, "extprove" and "pcancel" Opus agents, Codex "astra" round 4, Fable round 3; Ren checked in part)
+
+* **Theorem R (PROVED, extprove; Ren checked Lemmas F, R and the assembly, ~85%).**  For every
+  `L ≥ 72` some `π ∈ F_L` has exactly one infinite orbit, finitely many cycles, and
+  `#FS(X) = O(log X)`.  Construction: gprime's spine, then a climb that always routes to the arc of the
+  lowest unvisited value, taking only *safe* arcs.  The unused-arc digraph is balanced except at the
+  current node (out − in = 1), and an infinite Fleury lemma says at most one arc out of it can strand
+  a finite set.  Interval maps `U(I) ≈ 4I/3`, `D(I) ≈ 8I/9` grow whenever the route lingers (zero gain
+  forces `3 ∣ a`, at most `v₃(a)` times), so every unvisited value stays reachable.  Every point of the
+  climb is followed by the spine's start, so `FS ⊆ spine ∪ (finite)`.  **Consequence:** bounded offset,
+  exact E-runs (MR(II)), T2, SQ, MR(I), Lemma K and `U`'s parity word cannot force survivor density
+  on a one-orbit map.  This was measured before; it is now unconditional (Maze row "bounded-offset real-affine maps").
+* **EXT (§45) is the wrong target as worded** (proved: a good prefix whose two lowest reachable holes
+  are within `D` is a dead end); the reduction to G′ needs only one good infinite climb (EXT\*).
+  Theorem NF (proved): near the frontier every hole is an even non-multiple of 3, filled only as a
+  strict valley, so near-frontier CT3 is an order condition.  Open core BSL (CT3-legal routing just
+  above the frontier, 80%): at `D = 0.001y` the filter rejects an option at `6.5·10⁻⁵` of choice steps,
+  never below two legal options.  One chain covers `[10³, 10⁶)` (55.7M points, offset ≤ 17, FS = 22,
+  no near-cycles at that scale).  gprime's scale `D = 0.2y^{0.6}` breaks past `10⁵`.  G′ 90%.
+* **Itinerary hull (astra round 4; pcancel).**  Round 4 hunted a dictionary to a foreign world
+  (Trevor: "Langlands-level thinking leap"); 12 worlds, two developed.  Code each integer by its
+  two-sided branch word `c_n(k) = U^{k+1}(n) mod 3 ∈ F₃` (pcancel's D1: the branch label *is* `U(x)` mod
+  3) and let `M_U = Σ R c_n`, `R = F₃[t, t⁻¹]`, discrete.  Proved: finitely many orbits ⇒ `M_U` finitely
+  generated (so non-f.g. ⇒ (a)), equivalently its compact dual is expansive; f.g. is label-independent
+  and invariant under finite surgery; infinitely many cycles ⇒ non-f.g.; no `R`-relations on one or
+  two points.  But with no relations (NR, 90%; exact `F₃` elimination finds none for `n ≤ 1000` in
+  degree 0, `n ≤ 500` in degree ≤ 2, `n ≤ 60` in degree ≤ 12), `M_U ≅ (cycle torsion) ⊕ R^{#infinite
+  orbits}`, so non-f.g. ⇔ (a): a **costume**.  NR itself is a whole-tail Π₁ statement.  The one
+  non-costume mechanism, periodic cancellation among aperiodic codes, is unsupported (3%).
+* **Pants cover (astra round 4).**  With monodromies `U` and `n ↦ n+1`, `U`-orbits are the components
+  over one marked boundary circle (proved), and the surface has infinite genus from explicit embedded
+  handles using only the even branch (proved).  `n ↦ n+1` alone also gives infinite genus with one
+  orbit, so genus is no lever; the marked-boundary count is a costume.
+* **Fable round 3 (17 candidates, no survivor).**  Two genuine separating statements with `P ⇒ (a)`
+  proved, both blocked at Q1: transient cores of the minimum-ray set (via Theorem T; core mass decays
+  `0.465 → 0.0014` over 200 steps) and "every orbit holds finitely many powers of 2" (only
+  `U¹²(8) = 32`, `U⁴¹(16) = 512` up to 200 steps, Ren checked).  Late survival is, pattern by pattern, a
+  signed-sumset (Littlewood–Offord) problem: anti-concentration saves `√m`, BHN needs `2^{−3m}`.  The
+  random swap family `F_1` is Haar-typical two-sidedly at every swap density.
+* **Reading.**  The foreign-world leap produced faithful dictionaries, but each far-side target was
+  equivalent to (a) once the dictionary's kernel was understood.  The leap that would count needs a
+  far side whose *tools* see integrality along whole tails.
