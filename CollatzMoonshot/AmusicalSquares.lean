@@ -1,0 +1,180 @@
+/-
+Copyright (c) 2026 Trevor Morris. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Trevor Morris
+-/
+import CollatzMoonshot.AmusicalSquares.Cylinder
+import CollatzMoonshot.AmusicalSquares.PrefixRoot
+import CollatzMoonshot.AmusicalSquares.SquareCount
+
+/-!
+# Square visits, prefix roots, and automatic invariants (the "newroutes-astra" lap)
+
+The 2026-10-14 Codex ideation lap (research §44) proposed four new approaches to Klamkin (a); one
+survives, and two side theorems came out of the others.
+
+**`infinitelyManyOrbits_of_squareReturnConfinement` (SRC ⇒ (a)).**  If three square visits with
+roots `≤ H`, in three distinct `E`-only blocks of one orbit segment, always lie within
+`C log(2 + H)` steps, then every infinite orbit holds `O(log H)` of the `H` squares `≤ H²`, and
+finitely many orbits cannot cover them.  `SquareReturnConfinement` is an open hypothesis `Prop`.
+
+**`prefixRoot_eq_iff` (SQG1).**  The prefix affine maps `F_j(X) = A_j X + B_j` of a branch word
+have roots `−B_j / A_j = −Σ_{h<j} e_h 2^{a_h} / 3^{h+1}`; two prefixes share a root iff every
+branch between them is `E` (the last odd branch has the unique least `3`-adic valuation).  So
+square visits in distinct `E`-blocks give distinct linear factors and a multiquadratic curve of
+genus `1 + (k − 3) 2^{k−2}`.
+
+**`amusicalInv_iterate_cylinder`, `invariant_kernel_three_pow` (AUT core).**  `V^k` maps the
+cylinder `3^k n + r` affinely onto `2^a n + s` with `0 ≤ s < 2^a`, so the `3^m`-kernel of a
+`U^m`-invariant colouring lies in its `2`-kernel.  With Cobham's theorem this makes a
+binary-automatic `U^m`-invariant set finite or cofinite (research §44).
+-/
+
+namespace CollatzMoonshot.Amusical
+
+/-- **Open hypothesis (SRC).**  Three square visits with roots `≤ H` in three distinct `E`-only
+blocks of a repetition-free orbit segment lie within `C log(2 + H)` steps. -/
+def SquareReturnConfinement : Prop :=
+  ∃ C : ℝ, ∀ (x : ℤ) (s t H : ℕ), 0 < s → s < t →
+    (∀ i j, i ≤ t → j ≤ t → amusical^[i] x = amusical^[j] x → i = j) →
+    (∃ q ≤ H, x = (q : ℤ) ^ 2) → (∃ q ≤ H, amusical^[s] x = (q : ℤ) ^ 2) →
+    (∃ q ≤ H, amusical^[t] x = (q : ℤ) ^ 2) →
+    (∃ i < s, Odd (amusical^[i] x)) → (∃ i, s ≤ i ∧ i < t ∧ Odd (amusical^[i] x)) →
+    (t : ℝ) ≤ C * Real.log (2 + H)
+
+/-- **Target (SRC ⇒ (a)).** -/
+theorem infinitelyManyOrbits_of_squareReturnConfinement (h : SquareReturnConfinement) :
+    AmusicalInfinitelyManyOrbits := by
+  classical
+  obtain ⟨C, hC⟩ := h
+  by_contra hfin
+  rw [AmusicalInfinitelyManyOrbits, Set.not_infinite] at hfin
+  set T := hfin.toFinset with hT
+  have hmemT : ∀ O ∈ T, ∃ x : ℤ, 0 ≤ x ∧ O = amusicalOrbit x := fun O hO => by
+    simpa [hT] using hO
+  have key : ∀ H : ℕ, (H : ℝ) ≤ T.card * ((|C| + 12) * Real.log (2 + H) + 3) := by
+    intro H
+    set Q := Finset.Icc 1 H with hQ
+    have hcover : Q ⊆ T.biUnion fun O => Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O := by
+      intro q hq
+      rw [Finset.mem_biUnion]
+      refine ⟨amusicalOrbit ((q : ℤ) ^ 2), ?_,
+        Finset.mem_filter.2 ⟨hq, mem_amusicalOrbit_self _⟩⟩
+      simp only [hT, Set.Finite.mem_toFinset, Set.mem_ofPred_eq]
+      exact ⟨(q : ℤ) ^ 2, by positivity, rfl⟩
+    have hper : ∀ O ∈ T, ((Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) ≤
+        (|C| + 12) * Real.log (2 + H) + 3 := by
+      intro O hO
+      obtain ⟨x, -, rfl⟩ := hmemT O hO
+      set F := Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ amusicalOrbit x with hF
+      obtain ⟨y, Tw, hinj, hcov⟩ := exists_injective_window x (F.image fun q : ℕ => (q : ℤ) ^ 2)
+        (by
+          intro s hs
+          obtain ⟨q, hq, rfl⟩ := Finset.mem_image.1 hs
+          exact (Finset.mem_filter.1 hq).2)
+      have hcnt := card_small_square_times_le C H (fun x s t => hC x s t H) y Tw hinj
+      refine le_trans ?_ hcnt
+      have hsurj := Finset.card_le_card_of_surjOn
+        (s := (Finset.range (Tw + 1)).filter fun i => IsSmallSq H (amusical^[i] y)) (t := F)
+        (fun i => Nat.sqrt (amusical^[i] y).toNat) (by
+          intro q hq
+          have hqF : q ∈ F := hq
+          obtain ⟨i, hiT, hi⟩ := hcov ((q : ℤ) ^ 2)
+            (Finset.mem_image_of_mem (fun q : ℕ => (q : ℤ) ^ 2) hqF)
+          have hqQ := Finset.mem_Icc.1 (Finset.mem_filter.1 hqF).1
+          refine ⟨i, ?_, ?_⟩
+          · simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq]
+            exact ⟨by omega, q, hqQ.1, hqQ.2, hi⟩
+          · simp only
+            rw [hi, show ((q : ℤ) ^ 2).toNat = q ^ 2 by
+              rw [← Nat.cast_pow, Int.toNat_natCast], Nat.sqrt_eq']
+        )
+      exact_mod_cast hsurj
+    calc (H : ℝ) = (Q.card : ℝ) := by simp [hQ]
+      _ ≤ ((T.biUnion fun O => Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) := by
+          exact_mod_cast Finset.card_le_card hcover
+      _ ≤ ∑ O ∈ T, ((Q.filter fun q : ℕ => ((q : ℤ) ^ 2) ∈ O).card : ℝ) := by
+          exact_mod_cast Finset.card_biUnion_le
+      _ ≤ ∑ _O ∈ T, ((|C| + 12) * Real.log (2 + H) + 3) := Finset.sum_le_sum hper
+      _ = T.card * ((|C| + 12) * Real.log (2 + H) + 3) := by
+          rw [Finset.sum_const, nsmul_eq_mul]
+  obtain ⟨H, hH⟩ := exists_nat_gt_log_bound T.card (|C| + 12) (by positivity) (by positivity)
+  exact absurd (key H) (not_le.2 hH)
+
+/-- Bits consumed by the first `h` branches (`0` = `E` costs 1, `1` = `A` and `2` = `B` cost 2). -/
+def wordWeight (w : List (Fin 3)) (h : ℕ) : ℕ :=
+  ((w.take h).map fun b => if b = 0 then 1 else 2).sum
+
+/-- The offset sign of a branch: `0` for `E`, `+1` for `A`, `−1` for `B`. -/
+def branchSign (b : Fin 3) : ℤ := if b = 0 then 0 else if b = 1 then 1 else -1
+
+/-- The root `−B_j / A_j` of the `j`-th prefix affine map of the word `w`. -/
+def prefixRoot (w : List (Fin 3)) (j : ℕ) : ℚ :=
+  -∑ h ∈ Finset.range j, (branchSign (w.getD h 0) : ℚ) * 2 ^ wordWeight w h / 3 ^ (h + 1)
+
+/-- **Target (SQG1).**  Two prefixes share a root iff every branch between them is `E`. -/
+theorem prefixRoot_eq_iff (w : List (Fin 3)) {i j : ℕ} (hij : i < j) (hj : j ≤ w.length) :
+    prefixRoot w i = prefixRoot w j ↔ ∀ h, i ≤ h → h < j → w.getD h 0 = 0 := by
+  set e : ℕ → ℤ := fun h => branchSign (w.getD h 0) with he
+  set t : ℕ → ℚ := fun h => (e h : ℚ) * 2 ^ wordWeight w h / 3 ^ (h + 1) with ht
+  have hdiff : prefixRoot w i = prefixRoot w j ↔ ∑ h ∈ Finset.Ico i j, t h = 0 := by
+    rw [Finset.sum_Ico_eq_sub _ hij.le]
+    simp only [prefixRoot, t, e]
+    constructor <;> intro H <;> linarith
+  have hsign : ∀ b : Fin 3, branchSign b = 0 ↔ b = 0 := by
+    intro b; fin_cases b <;> simp [branchSign]
+  have hsign3 : ∀ b : Fin 3, b ≠ 0 → ¬ (3 : ℤ) ∣ branchSign b := by
+    intro b; fin_cases b <;> simp [branchSign]
+  rw [hdiff]
+  constructor
+  · intro H
+    by_contra hne
+    push Not at hne
+    obtain ⟨h0, hi0, hj0, hne0⟩ := hne
+    set F := (Finset.Ico i j).filter (fun h => w.getD h 0 ≠ 0) with hFdef
+    have hF : F.Nonempty := ⟨h0, Finset.mem_filter.2 ⟨Finset.mem_Ico.2 ⟨hi0, hj0⟩, hne0⟩⟩
+    set n := F.max' hF
+    have hnF : n ∈ F := F.max'_mem hF
+    have hsum : ∑ h ∈ Finset.Ico i j, t h = t n + ∑ h ∈ F.erase n, t h := by
+      rw [Finset.add_sum_erase _ _ hnF]
+      symm
+      apply Finset.sum_subset (Finset.filter_subset _ _)
+      intro h hh hnot
+      have h0' : w.getD h 0 = 0 := by
+        by_contra hc; exact hnot (Finset.mem_filter.2 ⟨hh, hc⟩)
+      simp only [t, e]; rw [h0']; simp [branchSign]
+    refine sum_three_adic_ne_zero e (wordWeight w) (F.erase n) n ?_ ?_ (hsum ▸ H)
+    · intro h hh
+      exact lt_of_le_of_ne (F.le_max' h (Finset.mem_of_mem_erase hh)) (Finset.ne_of_mem_erase hh)
+    · exact hsign3 _ (Finset.mem_filter.1 hnF).2
+  · intro H
+    apply Finset.sum_eq_zero
+    intro h hh
+    rw [Finset.mem_Ico] at hh
+    simp only [t, e]; rw [H h hh.1 hh.2]; simp [branchSign]
+
+/-- **Target (canonical cylinder).**  `V^k` is affine on each cylinder `3^k n + r`, landing on a
+canonical class `2^a n + s`. -/
+theorem amusicalInv_iterate_cylinder (k : ℕ) (r : ℤ) (hr0 : 0 ≤ r) (hr : r < 3 ^ k) :
+    ∃ a : ℕ, ∃ s : ℤ, k ≤ a ∧ a ≤ 2 * k ∧ 0 ≤ s ∧ s < 2 ^ a ∧
+      ∀ n : ℤ, amusicalInv^[k] (3 ^ k * n + r) = 2 ^ a * n + s :=
+  amusicalInv_iterate_cylinder_aux k r hr0 hr
+
+/-- **Target (AUT core).**  The `3^m`-kernel of a `U^m`-invariant colouring lies in its
+`2`-kernel. -/
+theorem invariant_kernel_three_pow {α : Type*} (f : ℤ → α) (m : ℕ)
+    (hf : ∀ n, f (amusical^[m] n) = f n) (k : ℕ) (r : ℤ) (hr0 : 0 ≤ r) (hr : r < 3 ^ (m * k)) :
+    ∃ a : ℕ, ∃ s : ℤ, 0 ≤ s ∧ s < 2 ^ a ∧ ∀ n : ℤ, f (3 ^ (m * k) * n + r) = f (2 ^ a * n + s) := by
+  have hV : ∀ x, f (amusicalInv^[m] x) = f x := fun x => by
+    rw [← hf, (Function.LeftInverse.iterate amusical_amusicalInv m) x]
+  have hVk : ∀ x, f (amusicalInv^[m * k] x) = f x := by
+    intro x
+    rw [Function.iterate_mul]
+    clear hr
+    induction k with
+    | zero => rfl
+    | succ k ih => rw [Function.iterate_succ_apply', hV, ih]
+  obtain ⟨a, s, -, -, hs0, hsa, hcyl⟩ := amusicalInv_iterate_cylinder (m * k) r hr0 hr
+  exact ⟨a, s, hs0, hsa, fun n => by rw [← hVk, hcyl]⟩
+
+end CollatzMoonshot.Amusical
