@@ -1651,8 +1651,47 @@ survivor.  Reports: `newroutes5-astra.md`, `newroutes5-fable.md`.
   `0.2101`, matching the measured FS density `0.213`, §14).
 * **Side entries (Fable).**  `Û` lowers 3-denominators by one, and (a) is equivalent to infinitely many
   orbits of the inverse branch system on `ℤ[1/3]`; every orbit indicator has the unit circle as a
-  natural boundary, and "exactly one infinite orbit" ⟺ `Σ_{n ∈ O(8)} 2^{−n} ∈ ℚ` (Pólya–Carlson).
+  natural boundary, and `Σ_{n ∈ O(8)} 2^{−n} ∈ ℚ` ⟺ `O(8)` is finite or cofinite (Pólya–Carlson; corrected
+  in §53 from Fable's "exactly one infinite orbit", which needs `O(8)` infinite and finitely many
+  cycles, both open).
 * **Reading.**  Every far side that consumes integrality and reaches `U` sees *closed* Diophantine
   equations, which are cycles; infinite orbits are open equations.  Conjecture J is the cleanest new
   target: a statement about S-unit equations along one explicit family of orbits, with the first
   `2.1m` steps proved.
+* **Lean.**  `AmusicalRayJoin.lean`: both known joins (`decide`, axiom-free) and Theorem J in the form
+  "no join within `2m − 2` steps", from the hypothesis `EllisonBound` (proved, axiom-clean, verified
+  2026-10-15).  Maze row "S-unit equations along rays" (`beyondHorizon`).
+
+## 53. Round 6 and the Conjecture J attack: the early half of J is settled, infinite orbits stay open (2026-10-15, "jattack" Opus agent, Codex "astra" and Fable xhigh round 6; Ren checked in part)
+
+* **Theorem T (jattack, paper + exact computation, 92%).**  For every `m ≥ 5` and `1 ≤ k < 3.818m`,
+  `U^k(3^m)` is not a power of 2 (Ellison gave `2.107m`).  Large `m` via Rhin's measure
+  `|u₀ + u₁ log 2 + u₂ log 3| ≥ H^{−13.3}` (Rhin 1987, Prop. (7), opened); `m ≤ 7·10⁴` by per-`m` bounds and
+  exact search.  The dip form of Lemma BJ holds without its side condition.
+* **Theorem S (jattack, paper + table; Ren checked the descent, 95%).**  The constant is sharp for
+  `F₁`: for every `m ≥ 5` some `π ∈ F₁` joins `3^m` to a power of 2 by step `log_{4/3}(3^m) − 8.4`
+  (always take the odd image, so `x′ ≤ (3x+5)/4`, values stay odd, and each block is decided once;
+  a computed table finishes below 2000).  So `c* = log_{4/3} 3 = 3.8188` is the exact ceiling of any
+  argument that also holds on `F_L`; the early-join question is solved at the level of `F_L`.
+* **What is left of Conjecture J (65%).**  Late joins.  The only `U`-only lever found: a join just past
+  `c*m` forces `3^m mod 4^{0.79m}` into a 2-adic set of measure `2^{−Ω(m)}`, an Erdős-type digit
+  problem.  Finite certificates on small orbits cannot reach `k ~ m²`.  Search: no join for
+  `5 ≤ m ≤ 400` within `10⁶` steps, `m ≤ 20 000` within `4m` (Ren spot-checked `m ≤ 60` to `20 000`).
+  Since Conjecture J implies (a), the late half is at least as hard as (a); parked as a named target.
+* **Round 6 brief: make infinite orbits closed objects.**  28 worlds across both laps; no survivor.
+  * **Ends and monodromy (Fable, Theorem E/M, paper).**  An infinite orbit whose signed harmonic sums
+    converge has two real ends `ξ±(n)` (limits of `2^{b_k} x_k / 3^k` and its backward analogue), with
+    `ξ±(Un) = (3/2^{s(n)}) ξ±(n)`, so `ξ±` mod `⟨2, 3⟩` and the monodromy
+    `ρ(O) = ξ₊/ξ₋ = ∏_{x ∈ O} (1 + ε(x)/(3x))` are orbit invariants; a cycle has `S`-unit monodromy
+    `2^b/3^p` (Ren checked the telescoping).  This is the brief's "cycle at infinity", but it is a
+    real limit, an invariant of the real-affine cocycle shared by the masquerade and Theorem R's
+    one-orbit member: a costume.  `ρ(8) = 0.96532989759365964906…`; `ρ` separates 256 of 257 orbit
+    representatives `≤ 5000`; no infinite orbit has `S`-unit monodromy of height `≤ 80`.
+  * **Limits of cycles (astra, paper).**  Finite completions agreeing with every internal `U`-arrow on
+    `[0, N)` can have normalized cycle counts tending to any value in `[0, 1/6]`, all converging to
+    `U`; `U` has no nontrivial congruence quotient; first returns and finite-to-one quotients cannot
+    make an infinite orbit periodic.
+  * **Correction (astra).**  The §52 rationality criterion needed two open hypotheses; fixed there.
+* **Reading.**  Six rounds, ~230 candidates.  Integrality-blind tools see the generic fibre;
+  integrality-consuming tools see closed equations; the one attempt to close infinite orbits (real
+  ends) closed them in `ℝ`, where integrality is gone.  The reopen condition is still §47's.
