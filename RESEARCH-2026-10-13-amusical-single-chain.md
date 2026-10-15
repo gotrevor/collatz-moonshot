@@ -1511,3 +1511,38 @@ Reports: `newroutes2-astra.md`, `newroutes2-fable.md`.
   late droppers stay past the peak's digit budget).
 * **Reading.**  The gate worked: both laps spent their probes on candidates that had passed it.  The
   wall did not move.
+
+## 49. Ideation round 3, hunting the separating statement: no survivor, three obstructions (2026-10-14, Codex "astra", Ren checked)
+
+Target: a statement `P` about whole tails that `U` satisfies and every foil violates (§47).
+15 candidates from seven areas, a repair per failure, four attacks probed; no survivor.  Report:
+`newroutes3-astra.md`.
+
+* **T1–T3 (endpoint transfer, paper proofs, Ren checked).**  No `P` invariant under finite changes
+  can reject every non-increasing `F_L`: a single swapped block is a finite change of `U`.  For
+  independent swap bits with rates `p_b`: if `Σ p_b < ∞` the random map is almost surely a finite
+  change of `U`, so "(a) almost surely" is *equivalent* to (a) for `U` (Lemma E, §48); if
+  `Σ p_b = ∞`, `U`'s pattern is null and an almost-sure theorem says nothing about it.  No nontrivial
+  closed or open tail event exists in the pattern topology (each finite-change class is dense).  So
+  randomization plus a 0–1 law cannot transfer (a) to `U` without an exact endpoint comparison.
+* **Monotone coupling fails on `U` itself (Lean).**  "A swap never lowers finite-horizon survival"
+  is false both ways: swapping block 42 lifts `100` from a drop at time 5 to 64 steps above it;
+  swapping block 49 drops `104`, 64 steps above under `U`, to `85` at time 20.  The averaged Russo
+  derivative over starts has both signs too.  Frozen and fresh-coin exploration differ already from
+  `1` (total variation 5/8), and injective `U`-prefixes revisit a block's partner with either parity.
+* **L1, positive loop correlation fails on `U` itself (Lean, Ren checked).**  Two switches whose
+  sources interleave on one orbit (`a, c, b, d`) give loop counts `C, C+1, C+1, C`, breaking the
+  log-supermodularity FKG needs.  On `37 → 28 → 42 → 63 → 47 → 35 → 26 → 39 → 29 → 22 → 33 → 25`,
+  block 9's sources sit at times 0, 7 and block 8's at 5, 10: swapping 9 closes a 7-cycle, 8 a
+  5-cycle, both rethread one segment.  Increasing *spatial* block order does not give the needed
+  *temporal* non-interleaving.
+* **O1, O2 (operator certificates, standard arguments, Ren checked).**  A compact perturbation of a
+  unitary that is an isometry is onto, so decaying nonperiodic corrections to a commuting unitary
+  cannot give a proper isometry.  Approximate commutation does not certify: for one bilateral chain
+  there are proper isometries with `‖PS − SP‖ ≤ π/K` (piecewise doubling on `K` cells).  What is left
+  is an exact, noncompact, effectively specified commuting isometry, with no construction in sight.
+* **Lean.**  `AmusicalLoopInterleave.lean`: the L1 witness and both pivots, by `decide`, axiom-free
+  (verified 2026-10-14).  Maze rows 64–65 (loop-weighted comparison: refuted; tail-event transfer:
+  costume).
+* **Reading.**  Three rounds, ~120 candidates, one boundary.  Round 4 drops the repair posture and
+  hunts a dictionary to a foreign world (Trevor: "Langlands-level thinking leap").
