@@ -1618,3 +1618,41 @@ points.  Report: `newroutes4-fable.md` (12 worlds, 8 fields).
 * **Lean.**  `AmusicalNoMean.lean`: `amusical_image_even`, `no_translation_amusical_invariant_mean`
   (proved, axiom-clean, verified 2026-10-15).  Maze row "dictionaries to groupoids, Schreier graphs,
   itinerary modules, covers" (costume).
+
+## 52. Round 5, far sides that consume integrality: they see cycles, not infinite orbits (2026-10-15, Codex "astra" and Fable xhigh; Ren checked in part)
+
+Brief: a foreign world whose theorem takes integrality (or the diagonal `ℤ[1/6] ⊂ ℝ × ℚ₂ × ℚ₃`) as a
+hypothesis with teeth and concludes finiteness.  28 worlds across both laps, four developed; no
+survivor.  Reports: `newroutes5-astra.md`, `newroutes5-fable.md`.
+
+* **Rays and S-units (both laps).**  The *rays* `R_m = {2^m, 3·2^{m−1}, …, 3^m}` are the maximal
+  S-integer segments of orbits; an orbit enters a ray only at `2^m` and leaves only at `3^m`.  A
+  *join* `U^k(3^m) = 2^{m′}` is the S-unit equation `2^x − 3^y = C_w` for the prefix word `w`.  Fable's
+  ray-join map `σ_J` is a partial injection, and "`σ_J` has infinitely many orbits" implies (a)
+  (strictly stronger, not a costume).  Joins known: `27 → 32` (9 steps) and `81 → 512` (37 steps), Ren
+  checked; none from `3^m`, `5 ≤ m ≤ 200`, within 20 000 steps.  **Conjecture J (60%):** `σ_J` is defined
+  only on `{1, 2, 3, 4}`, which implies (a).
+  * **Theorem J (Fable, paper, given Ellison 1970/71 Thm 3, opened).**  No join from `3^m` within
+    `2.1m` steps, past the residue horizon `1.06m` (about `3.8m` with Rhin's measure, cited secondhand).
+    Via Lemma BJ: `|2^x/3^y − 1| ≤ Q_k` from the two-place series.
+  * **Corollary P (Fable, given Bennett 2001 Thm 1.1, opened).**  At most two rays share a (word,
+    depth); exactly one for both known joins.  So the 2-adic adversary is beaten on an infinite class.
+  * **ESS transfers (astra, paper).**  Ray returns with boundedly many odd steps inject into
+    nondegenerate S-unit solutions, so Evertse–Schlickewei–Schmidt bounds them uniformly, but the
+    whole theorem applies verbatim to every `F_L`, finite-orbit foil included.  The residual is the
+    late-return wall: "the orbit of `3^m` never dips late".
+* **`p`-adic interpolation (astra, paper).**  A continuous 2-adic interpolation in time of a sampled
+  `U`-orbit forces periodicity; a restricted-analytic one forces it constant; a 5-adic repair loses
+  2-integrality.  Adelic quotient descent fails, `U` has no o-minimal real extension, and polarized
+  heights do not normalize.
+* **Mahler `Z`-numbers (Fable).**  Mahler's `0.7 = log₂ φ` and Flatto's `0.585` reproduced exactly; the
+  transplant to `U` sees only cycles (nontrivial real shadows occur only over cycles; cycle elements
+  `≤ X` of bounded ratio number `≤ C X^{0.9868}`), and survivors have no entropy deficit (Haar plateau
+  `0.2101`, matching the measured FS density `0.213`, §14).
+* **Side entries (Fable).**  `Û` lowers 3-denominators by one, and (a) is equivalent to infinitely many
+  orbits of the inverse branch system on `ℤ[1/3]`; every orbit indicator has the unit circle as a
+  natural boundary, and "exactly one infinite orbit" ⟺ `Σ_{n ∈ O(8)} 2^{−n} ∈ ℚ` (Pólya–Carlson).
+* **Reading.**  Every far side that consumes integrality and reaches `U` sees *closed* Diophantine
+  equations, which are cycles; infinite orbits are open equations.  Conjecture J is the cleanest new
+  target: a statement about S-unit equations along one explicit family of orbits, with the first
+  `2.1m` steps proved.
