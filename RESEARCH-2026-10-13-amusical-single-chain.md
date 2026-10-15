@@ -1210,7 +1210,7 @@ Theorem G's construction.  Agent odds that this route moves (a): under 1%.
 
 Pushes §38's run-stratum method from `m ≲ 0.4√log₂D` runs to `m ≤ log₂D/40`.  I checked §2 of the
 report (every lemma and exponent).  Lean: `AmusicalNearCycleEntropy.lean` (P2′, NB, the pattern
-count, Chernoff, RT-low; treadmill).  Agent odds that this moves (a): about 2%, unchanged.
+count, Chernoff, RT-low; proved, axiom-clean, verified 2026-10-14).  Agent odds that this moves (a): about 2%, unchanged.
 
 * **The fix.**  Count each excursion only up to its `τ`-th `E`-step, not over its whole parity
   pattern.  Pattern entropy is then paid on `O(log D)` steps, and Lemma R's `θ^m` blow-up enters
@@ -1245,7 +1245,7 @@ count, Chernoff, RT-low; treadmill).  Agent odds that this moves (a): about 2%, 
 
 Asked for an arithmetic mechanism forcing many forward survivors; found a no-go instead.  I checked
 Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many survivors".  Lean:
-`AmusicalReglue.lean` (Π, Π′, Lemma BW, Chernoff duality; treadmill).  Agent odds that this moves
+`AmusicalReglue.lean` (Π, Π′, Lemma BW, Chernoff duality; proved, axiom-clean, verified 2026-10-14).  Agent odds that this moves
 (a): about 1%.
 
 * **Theorem Π (PROVED).**  Let `f` permute `ℕ` with finitely many periodic points, and `F, G → ∞`.
@@ -1281,7 +1281,7 @@ Theorem Π and Π′ by hand.  Maze row "arithmetic of basins … forces many su
 
 Asked for an arithmetic invariant of whole excursions that `U` has and Theorem G's `σ` lacks.  None
 is cheaper than (a).  I checked R, LOC, DIV and Proposition H.  Maze row "T1 integrality …".  Lean:
-`AmusicalExcursionCode.lean` (treadmill).  Agent odds that this moves (a): under 1%.
+`AmusicalExcursionCode.lean` (proved, axiom-clean, verified 2026-10-14).  Agent odds that this moves (a): under 1%.
 
 * **Theorem R (PROVED).**  On the class of a word `w`, `2^a(U^g p − p) = Δ(p − x*_w)`, with
   `x*_w = −C_w/Δ` the word's periodic rational.  So `d ≡ C_w 2^{−a} ≡ C_w 3^{−g} (mod Δ)`, and the
@@ -1347,7 +1347,7 @@ that this moves (a): unchanged (no mechanism).
 
 Two independent laps (Codex `gpt-6-astra` xhigh; Fable xhigh), each told to read the Maze and §1–§39
 first and propose four mechanisms not already tried.  One survives.  Lean: `AmusicalSquares.lean`
-(SRC ⇒ (a), SQG1, canonical cylinder, AUT core; treadmill).
+(SRC ⇒ (a), SQG1, canonical cylinder, AUT core; proved, axiom-clean, verified 2026-10-14).
 
 * **Square-return confinement (SRC; OPEN, astra).**  Three square visits with roots `≤ H`, in three
   distinct `E`-only blocks of one orbit segment, lie within `C log(2 + H)` steps.
@@ -1388,7 +1388,9 @@ first and propose four mechanisms not already tried.  One survives.  Lean: `Amus
 ## 45. Conjecture G′ holds in a stronger form: block-swap maps keep every proved invariant (2026-10-14, "gprime" Opus agent, checked in part)
 
 Settles the direction §42 left open, conditional on one extension lemma.  I checked the family and
-the elementary lemmas.  Agent odds that this moves (a): under 1%; it closes a route and opens none.
+the elementary lemmas.  Lean: `AmusicalSwap.lean` (`ampSwap` bijective, even branch, offset,
+no-swap = `U`, CT1, spine bound; proved, axiom-clean, verified 2026-10-14).  Agent odds that this
+moves (a): under 1%; it closes a route and opens none.
 
 * **The family `F_L` (PROVED).**  Keep `π(2m) = 3m`; for each `n`, map the odd numbers of
   `[4nL, 4nL + 4L)` bijectively onto the non-multiples of 3 in `[3nL, 3nL + 3L)` (both have `2L`
@@ -1491,7 +1493,7 @@ Reports: `newroutes2-astra.md`, `newroutes2-fable.md`.
 * **Lemma E (PROVED, Fable; Ren checked).**  A successor swap `σ ↦ σ ∘ (a b)` never changes the
   number of infinite orbits of a permutation of `ℕ` and changes the total orbit count by at most
   one.  So "infinitely many orbits" is a tail event in any perturbation family of `U`, with
-  probability `0` or `1`.  Lean: `AmusicalTailEvent.lean` (treadmill).
+  probability `0` or `1`.  Lean: `AmusicalTailEvent.lean` (proved, axiom-clean, verified 2026-10-14).
 * **Measured (Fable).**  In the monotone family `U ∘ s_E` (swap the targets of `2n` and `4n+1` for
   `n ∈ E`; every member has `|π − U| ≤ 1`), random `E` of every density `p ∈ [0, 1]` keeps the
   orbit-start density at `c ≈ 0.05`.  (a)-like behaviour is generic; only adversarial `E` (EXT-type,
