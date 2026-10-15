@@ -46,6 +46,9 @@ import CollatzMoonshot.AmusicalNearCycle
 import CollatzMoonshot.AmusicalNearCycleLaw
 import CollatzMoonshot.AmusicalReglue
 import CollatzMoonshot.AmusicalExcursionCode
+import CollatzMoonshot.AmusicalNearCycleEntropy
+import CollatzMoonshot.AmusicalSquares
+import CollatzMoonshot.AmusicalSwap
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -67,6 +70,25 @@ reopened hall keeps its row and gains a note.
 namespace CollatzMoonshot.Maze
 
 open LeanLedger
+
+/-! ## 0. Pre-flight for a new route (Klamkin (a), the amusical lane)
+
+Every amusical route through research §46 ended at the same wall; `RESEARCH-…-single-chain.md` §47
+maps it.  Before proposing a route, answer three questions.  A route that fails any of them is a
+hall already walked.
+
+1. **Which Π₁ statement does it reduce to?**  If the answer is a lower bound on forward survivors
+   (`FS` density, LIN, BHN, NC₀, a confinement such as SRC) about integers beyond depth `log X`, it
+   is the beyond-horizon wall (verdict `beyondHorizon`).  Name the new input that crosses the
+   horizon, or drop the route.
+2. **Which foil survives it?**  Run the route against `σ` (Theorem G), `τ` and `τ_odd`, the
+   masquerade, `π` and `π_β` (Theorems Π, Πβ), the block-swap family `F_L` (`ampSwap`), and
+   `U + 6^N`.  If any foil satisfies every hypothesis the route uses and fails its conclusion, the
+   route is closed.
+3. **Does it use `U`'s exact branch law along entire tails** (Theorem TT, `tail_threshold`)?  An
+   argument whose inputs are all real-affine (`Û`), windowed, sparse-robust, or bounded-depth
+   residues cannot separate `ℤ` from the masquerade.
+-/
 
 /-! ## 1. The gates
 
@@ -93,6 +115,12 @@ inductive Verdict where
   B: no cycles, or the full conjecture).
   🚨 Tell: you cannot name a proof route for the criterion that avoids the front. -/
   | costume
+  /-- **BEYOND THE HORIZON (Π₁ wall).** The route is sound but reduces to a Π₁ statement about
+  integers past the residue horizon (depth `> log X`): a survivor lower bound, LIN's tail (BHN), or
+  a return confinement.  Counting, residues and geometry stop at the horizon.
+  🚨 Tell: the last open step is "no integer below `X` follows these `≫ log X` branches", or
+  "survivors are not sparse".  Amusical research §40–§47. -/
+  | beyondHorizon
   /-- **REFUTED.** A counterexample or a computation kills the mechanism. -/
   | refuted
   /-- **WALL.** Sound, and needs an input nobody has; parked with a named reopen condition. -/
@@ -318,7 +346,22 @@ def register : List Hall := [
   ⟨"amusical: T1 integrality (C_w mod Δ_w) as an arithmetic invariant of whole excursions",
    .costume,
    "C_w mod Δ is the 2-adic code at the endpoints; integrality along an excursion is U itself",
-   "AmusicalExcursionCode.lean; agent report t1arith.md (2026-10-14)", "2026-10-14"⟩]
+   "AmusicalExcursionCode.lean; agent report t1arith.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: run-stratum and stopped-prefix counting of near-cycles past the horizon",
+   .beyondHorizon,
+   "proved to m ≤ log₂D/40 runs; the method's ceiling is 0.131 log₂D; what is left is BHN",
+   "AmusicalNearCycleEntropy.lean; agent reports ncbaker.md, ncentropy.md", "2026-10-14"⟩,
+  ⟨"amusical: square-return confinement via curve geometry (Siegel, Faltings)",
+   .beyondHorizon,
+   "SRC ⇒ (a), but each word-curve has ≤ 1 relevant point; SRC is Π⁰₁ past the horizon",
+   "AmusicalSquares.lean; agent reports newroutes-astra.md, srcprobe.md", "2026-10-14"⟩,
+  ⟨"amusical: bounded-offset real-affine maps with U's E-runs force many survivors",
+   .siblingTransfer,
+   "block-swap maps keep MR(II), T2, SQ, Lemma K; one has one orbit, sparse FS (mod EXT)",
+   "AmusicalSwap.lean; agent report gprime.md (2026-10-14)", "2026-10-14"⟩,
+  ⟨"amusical: automatic (finite-state) orbit invariants or colourings", .costume,
+   "a binary-automatic U^m-invariant colouring is constant; automatic orbits ⇔ (a)",
+   "AmusicalSquares.lean; agent report newroutes-astra.md §2 (2026-10-14)", "2026-10-14"⟩]
 
 /-! ## 4. The audit -/
 
@@ -485,7 +528,19 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.exists_reglue_sparseFS_amusical], []⟩,
   ⟨"amusical: T1 integrality (C_w mod Δ_w) as an arithmetic invariant of whole excursions",
    [``CollatzMoonshot.Amusical.defect_mod_delta,
-    ``CollatzMoonshot.Amusical.eq_amusical_of_forall_branch], []⟩]
+    ``CollatzMoonshot.Amusical.eq_amusical_of_forall_branch], []⟩,
+  ⟨"amusical: run-stratum and stopped-prefix counting of near-cycles past the horizon",
+   [``CollatzMoonshot.Amusical.ncard_deep_lowRun_le,
+    ``CollatzMoonshot.Amusical.nearCycleAt_le_of_eRuns_le], []⟩,
+  ⟨"amusical: square-return confinement via curve geometry (Siegel, Faltings)",
+   [``CollatzMoonshot.Amusical.infinitelyManyOrbits_of_squareReturnConfinement,
+    ``CollatzMoonshot.Amusical.prefixRoot_eq_iff], []⟩,
+  ⟨"amusical: bounded-offset real-affine maps with U's E-runs force many survivors",
+   [``CollatzMoonshot.Amusical.ampSwap_bijective,
+    ``CollatzMoonshot.Amusical.ampSwap_even], []⟩,
+  ⟨"amusical: automatic (finite-state) orbit invariants or colourings",
+   [``CollatzMoonshot.Amusical.invariant_kernel_three_pow,
+    ``CollatzMoonshot.Amusical.amusicalInv_iterate_cylinder], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -498,7 +553,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 59 rows, 51 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 63 rows, 55 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
