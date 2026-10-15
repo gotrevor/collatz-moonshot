@@ -158,6 +158,7 @@ import CollatzMoonshot.AmusicalPeriodicInvariant
 import CollatzMoonshot.AmusicalLoopInterleave
 import CollatzMoonshot.AmusicalNoMean
 import CollatzMoonshot.AmusicalRayJoin
+import CollatzMoonshot.AmusicalNotNormal
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
