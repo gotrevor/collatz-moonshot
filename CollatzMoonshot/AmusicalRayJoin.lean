@@ -12,8 +12,9 @@ The *ray* `2^m → 3·2^{m−1} → ⋯ → 3^m` is the maximal run of `S`-units
 orbit enters it only at `2^m` and leaves only at `3^m`.  A *join* is `U^k(3^m) = 2^{m′}`; it is the
 `S`-unit equation `2^{b_k + m′} − 3^{k+m} = C_k` for the prefix word of length `k`.  Round-5
 ideation (2026-10-15, Fable, "Theorem J") combined the exact error bound along the orbit with
-Ellison's explicit lower bound for `|2^x − 3^y|` to show a ray cannot join within about `2.1m`
-steps, past the residue horizon `≈ 1.06m`.  Ellison's theorem enters as the hypothesis `EllisonBound`.
+Ellison's explicit lower bound for `|2^x − 3^y|` to show a ray cannot join within about
+`2.1m` steps, past the residue horizon `≈ 1.06m`.  Ellison's theorem enters as the hypothesis
+`EllisonBound`.
 
 * `ray_join_three`, `ray_join_four`: the two known joins, `27 → 32` in 9 steps and `81 → 512` in 37.
 * `no_early_ray_join`: given `EllisonBound`, `U^k(3^m)` is not a power of 2 for `1 ≤ k ≤ 2m − 2`.
