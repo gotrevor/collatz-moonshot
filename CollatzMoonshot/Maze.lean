@@ -52,6 +52,7 @@ import CollatzMoonshot.AmusicalSwap
 import CollatzMoonshot.AmusicalTailEvent
 import CollatzMoonshot.AmusicalLoopInterleave
 import CollatzMoonshot.AmusicalNoMean
+import CollatzMoonshot.AmusicalRayJoin
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -376,6 +377,10 @@ def register : List Hall := [
   ⟨"amusical: dictionaries to groupoids, Schreier graphs, itinerary modules, covers", .costume,
    "(a) is the fully ramified point; ⟨n+1, U⟩ has no invariant mean, so averages cannot see it",
    "AmusicalNoMean.lean; agent reports newroutes4-fable.md, newroutes4-astra.md, pcancel.md",
+   "2026-10-15"⟩,
+  ⟨"amusical: S-unit equations along rays (ray joins, Ellison, Bennett, ESS)", .beyondHorizon,
+   "no join from 3^m within 2m − 2 steps; a late join is an open orbit; ESS transfers to F_L",
+   "AmusicalRayJoin.lean; agent reports newroutes5-fable.md, newroutes5-astra.md",
    "2026-10-15"⟩]
 
 /-! ## 4. The audit -/
@@ -565,7 +570,10 @@ def mazeLinks : List Link := [
     ``CollatzMoonshot.Amusical.pivot_lowers], []⟩,
   ⟨"amusical: dictionaries to groupoids, Schreier graphs, itinerary modules, covers",
    [``CollatzMoonshot.Amusical.no_translation_amusical_invariant_mean,
-    ``CollatzMoonshot.Amusical.amusical_image_even], []⟩]
+    ``CollatzMoonshot.Amusical.amusical_image_even], []⟩,
+  ⟨"amusical: S-unit equations along rays (ray joins, Ellison, Bennett, ESS)",
+   [``CollatzMoonshot.Amusical.no_early_ray_join,
+    ``CollatzMoonshot.Amusical.ray_join_four], []⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -578,7 +586,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 66 rows, 58 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 67 rows, 59 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
