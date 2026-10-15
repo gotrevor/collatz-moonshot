@@ -1589,3 +1589,32 @@ Target: a statement `P` about whole tails that `U` satisfies and every foil viol
 * **Reading.**  The foreign-world leap produced faithful dictionaries, but each far-side target was
   equivalent to (a) once the dictionary's kernel was understood.  The leap that would count needs a
   far side whose *tools* see integrality along whole tails.
+
+## 51. Round 4, second lap: (a) is the one fully ramified point, and ⟨n + 1, U⟩ is non-amenable (2026-10-14, Fable xhigh; Ren checked Theorem N)
+
+Fable's leap built two dictionaries that turn out to be one object, seen at its special and generic
+points.  Report: `newroutes4-fable.md` (12 worlds, 8 fields).
+
+* **D1, the two-prime Thompson groupoid.**  Let `𝒢` be the `ax + b` germ groupoid on `ℤ₂ × ℤ₃`, whose
+  topological full group is a two-prime Thompson group `V_{2,3}`; `Û` (`U` on `ℤ₂ × ℤ₃`) is a coupled
+  baker's map in it.  The integers form the one `𝒢`-orbit with full isotropy `⟨2, 3⟩ ≅ ℤ²`, and (a) says
+  the `Û`-subgroupoid has infinite index *at that point*.  **Theorem R (paper, 100%):** at every point
+  with trivial isotropy the index is infinite (translates `x + c` lie on distinct `Û`-orbits); also for
+  mismatched integer pairs `(n, n + d)`.  So the masquerade is the generic fibre, which explains why it
+  copies every windowed statistic.  **Theorem C (95%):** the isotropy characters give slope-twisted
+  Koopman operators whose spectra see exactly the cycle data and nothing of the infinite orbits.
+  Measured: 12 sub-layers `U_q` each have orbit-start density `c = 0.0499 ± 0.0005` (control `U²` at
+  `1.79c`).
+* **D2, the Schreier graph of `Γ = ⟨T, U⟩ ≤ Sym(ℤ)`, `T n = n + 1`.**  (a) says the double-coset set
+  `⟨U⟩ \ Γ / Stab(0)` is infinite.  **Theorem N (PROVED, Lean):** no finitely additive probability mean
+  on `ℤ` is invariant under both `T` and `U`, since `T`-invariance forces mass `1/2` on the evens and
+  `1/3` on the multiples of 3, and `U` maps one onto the other.  So `Γ` acts non-amenably; Fable also
+  gives an isoperimetric bound `|∂F| ≥ |F|/6` and two ends (paper).  Novelty ~60% (the RCWA literature
+  may have it).  Its Benjamini–Schramm limit is D1's random generic point (Lemma BS, 95%).
+* **Reading (70%).**  (a) is a statement about the single fully ramified fibre of a groupoid; every
+  quasi-invariant, local or K-theoretic structure is built on the generic fibre, and Theorem N says
+  averaging over `ℤ` in the way `T` allows cannot see `U` at all.  What *can* see the special fibre is
+  the lattice `ℤ[1/6] ⊂ ℝ × ℚ₂ × ℚ₃` itself, which is round 5's brief.
+* **Lean.**  `AmusicalNoMean.lean`: `amusical_image_even`, `no_translation_amusical_invariant_mean`
+  (proved, axiom-clean, verified 2026-10-15).  Maze row "dictionaries to groupoids, Schreier graphs,
+  itinerary modules, covers" (costume).
