@@ -9,8 +9,8 @@ import CollatzMoonshot.AmusicalSeventh
 # Periodic `U`-invariant functions are constant (the arithmetic core of Theorem Z, research §48)
 
 Theorem Z (research §48, checked by the "zverify" agent) says a finite affine operator that
-commutes with `U` and is an isometry is unitary.  Its only use of `U`'s arithmetic is that the column and row
-masses `‖S δ_n‖²`, `‖S* δ_m‖²` are `U`-invariant and agree with periodic functions off a finite set,
+commutes with `U` and is an isometry is unitary.  Its only use of `U`'s arithmetic is that the
+column and row masses `‖S δ_n‖²`, `‖S* δ_m‖²` are `U`-invariant and agree with periodic functions off a finite set,
 hence are constant.  That step is below.
 
 **`periodic_invariant_const`.**  An `M`-periodic function on `ℤ` with `f ∘ U = f` is constant: each
