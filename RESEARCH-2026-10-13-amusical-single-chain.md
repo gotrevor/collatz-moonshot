@@ -1794,4 +1794,15 @@ each finds the §47 wall from a new side, and three give cheap new theorems.
   (`infinitelyManyInfiniteOrbits_of_trap`), Theorem V (`amusicalV_infinitelyManyInfiniteOrbits`,
   with `amusicalV_eq_amusical` off the two swapped classes and `amusicalV_entry_iff`), mod-8
   avoidance (`amusical_visits_zero_three_five`), and the sign-blind Collatz gate
-  (`signBlind_gate`, `signCollatz_minus_cycle`).  M1 is still paper only.
+  (`signBlind_gate`, `signCollatz_minus_cycle`).  M1 is proved too: `AmusicalDepthFusion.lean`
+  (`exists_depthFusion`, axiom-clean, verified 2026-10-15), built on the odd rewire; a
+  disagreement at depth `d` at `n` is a change of `τ` on `U`'s own segment `U^i n`, `|i| ≤ d`, in
+  either time direction, so no budget on `τ⁻¹` is needed.
+* **Prior art (`priorart-trap.md`; Ren checked the quotes in the source text).**  The trap mechanism
+  is folklore: Simons 2022 (arXiv 2205.10582) §5.4 proves one instance (`P(2,6,5,3)`, divergent
+  trajectories with minima `3, 9, 15, …`, exactly `C ∖ σC`), and Kohl ("Graph theoretical criteria
+  for the wildness of rcwa permutations", Lemma 3.4) takes the same `σ(S) ⊊ S` hypothesis to
+  conclude wildness.  The density form, Theorem V as an example (no OEIS hit), and avoidance for
+  `U` look new (65-75%); avoidance is Yolcu–Aaronson–Heule's method (arXiv 2105.14697) moved to `U`.
+  Finite order ⟺ tame on `ℕ` is Kohl's (Math. Z. 2010 §6).  The sign-blind gate's substance is
+  folklore (Guy 1986, Isbell's game "Beanstalk"; the `3x − 1` cycles are classical).
