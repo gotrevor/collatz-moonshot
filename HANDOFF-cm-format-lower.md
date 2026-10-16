@@ -13,3 +13,8 @@
   by cases on `(n : Num)`, then `Primrec.nat_strong_rec`).
 - **Next:** §3 `det_lcm`, `normalAt_lcm`; §4 `stepAux_reaches`, `stuck_halt`, `halts_iff_eval`;
   §5 `reachSet_finite`, `reachSet_closed`, `undecidableCM`.
+- **§3 + `stuck_halt` proved.**  Route: `gadget_eq : gadget s v = (gadA s v).map (emb s v)`, where
+  `gadA` is an abstract rule list over the two counters (`Option Unit`) with phase sources
+  (`ARule`), so determinism is `decide` on closed lists (`pushA_det`, `popA_det`, `peekA_det`)
+  and transfers through the source-injective `emb` (`embSrc_inj`, `mem_gadget`).
+  `mem_gadget` is the tool for every "which rule is this" question (also §5 closure).

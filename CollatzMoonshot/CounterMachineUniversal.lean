@@ -274,13 +274,159 @@ def gadget : Stmt' → Option Γ' → List (Quad LState LCtr)
 def lcm (l₀ : Λ') : CM LState LCtr :=
   {ρ | ρ = ⟨.start, .nop, .stmt (tr l₀) none⟩ ∨ ∃ s v, ρ ∈ gadget s v}
 
+/-- An abstract gadget rule over the two counters a gadget touches (`none` = `tmp`,
+`some ()` = its stack): source phase (`none` = the entry `stmt s v`), operation, and target
+(`inl ph` a phase, `inr r` the `r`-th exit). -/
+structure ARule where
+  src : Option Phase
+  op : Op (Option Unit)
+  dst : Phase ⊕ Fin 5
+  deriving DecidableEq
+
+/-- Abstract division rules (mirror of `divRules`). -/
+def divA : List ARule :=
+  (List.finRange 5).flatMap (fun j => [⟨some (.da j), .test (some ()) false, .inl (.db j)⟩,
+    ⟨some (.da j), .test (some ()) true, .inl (.dc j)⟩]) ++
+  (List.finRange 4).map (fun j =>
+    ⟨some (.dc j.castSucc), .dec (some ()), .inl (.da j.succ)⟩) ++
+  [⟨some (.dc (Fin.last 4)), .dec (some ()), .inl .dd⟩,
+    ⟨some .dd, .inc none, .inl (.da 0)⟩]
+
+/-- Abstract return rules (mirror of `backRules`). -/
+def backA (e : Fin 6) : List ARule :=
+  (List.finRange 5).flatMap fun r =>
+    [⟨some (.db r), .test none true, .inl (.de r)⟩,
+      ⟨some (.de r), .dec none, .inl (.df r e)⟩,
+      ⟨some (.df r (Fin.last 5)), .inc (some ()), .inl (.db r)⟩] ++
+    (List.finRange 4).map fun j =>
+      ⟨some (.df r j.succ.castSucc), .inc (some ()), .inl (.df r j.succ.succ)⟩
+
+/-- Abstract push gadget for digit `d`. -/
+def pushA (d : Fin 5) : List ARule :=
+  [⟨none, .nop, .inl .pa⟩,
+    ⟨some .pa, .test (some ()) false, .inl .pd⟩,
+    ⟨some .pa, .test (some ()) true, .inl .pb⟩,
+    ⟨some .pb, .dec (some ()), .inl .pc⟩,
+    ⟨some .pc, .inc none, .inl .pa⟩,
+    ⟨some .pd, .test none false, .inl (.pg 0)⟩,
+    ⟨some .pd, .test none true, .inl (.pe 0)⟩,
+    ⟨some (.pe 0), .dec none, .inl (.pe 1)⟩,
+    ⟨some (.pe (Fin.last 5)), .inc (some ()), .inl .pd⟩,
+    ⟨some (.pg d), .nop, .inr 0⟩] ++
+  (List.finRange 4).map (fun j =>
+    ⟨some (.pe j.succ.castSucc), .inc (some ()), .inl (.pe j.succ.succ)⟩) ++
+  ((List.finRange 4).filter fun j => j.val < d.val).map fun j =>
+    ⟨some (.pg j.castSucc), .inc (some ()), .inl (.pg j.succ)⟩
+
+/-- Abstract pop gadget. -/
+def popA : List ARule :=
+  ⟨none, .nop, .inl (.da 0)⟩ :: divA ++ backA (Fin.last 5) ++
+    (List.finRange 5).map fun r => ⟨some (.db r), .test none false, .inr r⟩
+
+/-- Abstract peek gadget. -/
+def peekA : List ARule :=
+  ⟨none, .nop, .inl (.da 0)⟩ :: divA ++ backA 1 ++
+    (List.finRange 5).flatMap fun r =>
+      [⟨some (.db r), .test none false, .inl (.dg r 0)⟩,
+        ⟨some (.dg r r), .nop, .inr r⟩] ++
+      ((List.finRange 4).filter fun j => j.val < r.val).map fun j =>
+        ⟨some (.dg r j.castSucc), .inc (some ()), .inl (.dg r j.succ)⟩
+
+/-- The abstract rules of a statement. -/
+def gadA : Stmt' → Option Γ' → List ARule
+  | TM2.Stmt.push _ f _, v => pushA (digitF (f v))
+  | TM2.Stmt.pop .., _ => popA
+  | TM2.Stmt.peek .., _ => peekA
+  | TM2.Stmt.load .., _ => [⟨none, .nop, .inr 0⟩]
+  | TM2.Stmt.branch .., _ => [⟨none, .nop, .inr 0⟩]
+  | TM2.Stmt.goto _, _ => [⟨none, .nop, .inr 0⟩]
+  | TM2.Stmt.halt, _ => []
+
+/-- The stack a statement's gadget works on. -/
+def gadK : Stmt' → K'
+  | TM2.Stmt.push k _ _ => k
+  | TM2.Stmt.pop k _ _ => k
+  | TM2.Stmt.peek k _ _ => k
+  | _ => .main
+
+/-- The exits of a statement's gadget. -/
+def gadExit : Stmt' → Option Γ' → Fin 5 → LState
+  | TM2.Stmt.push _ _ q, v, _ => .stmt q v
+  | TM2.Stmt.pop _ f q, v, r => .stmt q (f v (undigit r))
+  | TM2.Stmt.peek _ f q, v, r => .stmt q (f v (undigit r))
+  | TM2.Stmt.load a q, v, _ => .stmt q (a v)
+  | TM2.Stmt.branch f q₁ q₂, v, _ => .stmt (cond (f v) q₁ q₂) v
+  | TM2.Stmt.goto f, v, _ => .stmt (tr (f v)) v
+  | TM2.Stmt.halt, _, _ => .start
+
+/-- The source state of an abstract source. -/
+def embSrc (s : Stmt') (v : Option Γ') : Option Phase → LState
+  | none => .stmt s v
+  | some ph => .gad s v ph
+
+/-- Realize an abstract rule in statement `s`, store `v`. -/
+def emb (s : Stmt') (v : Option Γ') (a : ARule) : Quad LState LCtr :=
+  ⟨embSrc s v a.src, a.op.map (Option.map fun _ => gadK s),
+    a.dst.elim (.gad s v) (gadExit s v)⟩
+
+theorem gadget_eq (s : Stmt') (v : Option Γ') : gadget s v = (gadA s v).map (emb s v) := by
+  cases s <;> simp [gadget, gadA, emb, embSrc, gadExit, gadK, pushA, popA, peekA, divRules,
+    divA, backRules, backA, Op.map, List.map_flatMap, Function.comp_def]
+
+/-- Abstract determinism. -/
+def ADet (L : List ARule) : Prop :=
+  ∀ a ∈ L, ∀ a' ∈ L, a ≠ a' → a.src = a'.src →
+    ∃ i b b', a.op = .test i b ∧ a'.op = .test i b' ∧ b ≠ b'
+
+instance (L : List ARule) : Decidable (ADet L) := by unfold ADet; infer_instance
+
+theorem pushA_det : ∀ d, ADet (pushA d) := by decide
+theorem popA_det : ADet popA := by decide
+set_option maxRecDepth 20000 in
+theorem peekA_det : ADet peekA := by decide
+
+theorem gadA_det (s : Stmt') (v : Option Γ') : ADet (gadA s v) := by
+  cases s <;> simp only [gadA]
+  · exact pushA_det _
+  · exact peekA_det
+  · exact popA_det
+  all_goals decide
+
+theorem embSrc_inj {s s' : Stmt'} {v v' : Option Γ'} {x x' : Option Phase}
+    (h : embSrc s v x = embSrc s' v' x') : s = s' ∧ v = v' ∧ x = x' := by
+  cases x <;> cases x' <;> simp_all [embSrc]
+
+theorem mem_gadget {ρ : Quad LState LCtr} {s : Stmt'} {v : Option Γ'} (h : ρ ∈ gadget s v) :
+    ∃ a ∈ gadA s v, ρ = emb s v a := by
+  rw [gadget_eq] at h
+  obtain ⟨a, ha, rfl⟩ := List.mem_map.1 h
+  exact ⟨a, ha, rfl⟩
+
 /-- The compiled machine is deterministic (Morita's Def 9.2). -/
 theorem det_lcm (l₀ : Λ') : (lcm l₀).Det := by
-  sorry
+  intro ρ hρ ρ' hρ' hne hsrc
+  rcases hρ with rfl | ⟨s, v, hρ⟩ <;> rcases hρ' with rfl | ⟨s', v', hρ'⟩
+  · exact absurd rfl hne
+  · obtain ⟨a', -, rfl⟩ := mem_gadget hρ'
+    rcases h : a'.src <;> simp [emb, embSrc, h] at hsrc
+  · obtain ⟨a, -, rfl⟩ := mem_gadget hρ
+    rcases h : a.src <;> simp [emb, embSrc, h] at hsrc
+  · obtain ⟨a, ha, rfl⟩ := mem_gadget hρ
+    obtain ⟨a', ha', rfl⟩ := mem_gadget hρ'
+    obtain ⟨rfl, rfl, hsa⟩ := embSrc_inj hsrc
+    have hne' : a ≠ a' := fun h => hne (h ▸ rfl)
+    obtain ⟨i, b, b', hb, hb', hbb⟩ := gadA_det s v a ha a' ha' hne' hsa
+    exact ⟨i.map fun _ => gadK s, b, b', by simp [emb, hb, Op.map], by simp [emb, hb', Op.map], hbb⟩
 
 /-- No rule enters `start`. -/
 theorem normalAt_lcm (l₀ : Λ') : (lcm l₀).NormalAt .start := by
-  sorry
+  intro ρ hρ hd
+  rcases hρ with rfl | ⟨s, v, hρ⟩
+  · simp at hd
+  · obtain ⟨a, ha, rfl⟩ := mem_gadget hρ
+    rcases h : a.dst with ph | r <;> simp only [emb, h, Sum.elim_inl, Sum.elim_inr] at hd
+    · cases hd
+    · cases s <;> simp [gadA] at ha <;> simp [gadExit] at hd
 
 /-! ## 4. Simulation -/
 
@@ -302,7 +448,15 @@ theorem stepAux_reaches (l₀ : Λ') (s : Stmt') (v : Option Γ') (S : K' → Li
 /-- A halted TM2 configuration is a halting ID. -/
 theorem stuck_halt (l₀ : Λ') (v : Option Γ') (w : LCtr → ℕ) :
     (lcm l₀).Stuck (.stmt TM2.Stmt.halt v, w) := by
-  sorry
+  rintro d ⟨ρ, hρ, hs, -, -⟩
+  rcases hρ with rfl | ⟨s, v', hρ⟩
+  · simp at hs
+  · obtain ⟨a, ha, rfl⟩ := mem_gadget hρ
+    have : s = TM2.Stmt.halt := by
+      rcases h : a.src <;> simp [emb, embSrc, h] at hs
+      injection hs with h1; exact h1.symm
+    subst this
+    simp [gadA] at ha
 
 /-- **Halting matches.**  From `start` with the stacks `S`, the counter machine halts iff the
 TM2 run of `tr` from label `l₀`, store `none` and stacks `S` halts. -/
