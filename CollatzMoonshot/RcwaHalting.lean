@@ -158,6 +158,44 @@ theorem macroStep_functional {M : CM Q ι} (hM : M.Det) {B : Set Q} {b b₁ b₂
 
 end LemmaM
 
+section Chain
+variable {Q V : Type*}
+
+/-- A run of `Step` from `c` to `m` whose targets avoid `B`, then one step into `B`, is a macro
+step. -/
+theorem macroStep_of_chain {B : Set Q} {Step : Q × V → Q × V → Prop} {c m d : Q × V}
+    (hc : c.1 ∈ B) (hcm : Relation.ReflTransGen (fun a b => Step a b ∧ b.1 ∉ B) c m)
+    (hmd : Step m d) (hd : d.1 ∈ B) : RcwaMachine.MacroStep B Step c d := by
+  have key : ∀ m, Relation.ReflTransGen (fun a b => Step a b ∧ b.1 ∉ B) c m →
+      ∃ (x : ℕ → Q × V) (n : ℕ), x 0 = c ∧ x n = m ∧ (∀ i, i < n → Step (x i) (x (i + 1))) ∧
+        ∀ i, 0 < i → i ≤ n → (x i).1 ∉ B := by
+    intro m h
+    induction h with
+    | refl => exact ⟨fun _ => c, 0, rfl, rfl, fun i hi => absurd hi (by omega),
+        fun i h1 h2 => absurd h2 (by omega)⟩
+    | tail _ hst ih =>
+      obtain ⟨x, n, h0, hn, hs, hoff⟩ := ih
+      rename_i b e _
+      refine ⟨fun i => if i ≤ n then x i else e, n + 1, by simp [h0], by simp, fun i hi => ?_,
+        fun i h1 h2 => ?_⟩
+      · by_cases hin : i + 1 ≤ n
+        · simp only [show i ≤ n by omega, hin, if_true]; exact hs i (by omega)
+        · simp only [show i ≤ n by omega, hin, if_true, if_false]
+          rw [show i = n by omega, hn]; exact hst.1
+      · by_cases hin : i ≤ n
+        · simp only [hin, if_true]; exact hoff i h1 hin
+        · simp only [hin, if_false]; exact hst.2
+  obtain ⟨x, n, h0, hn, hs, hoff⟩ := key m hcm
+  refine ⟨hc, hd, fun i => if i ≤ n then x i else d, n + 1, by omega, by simp [h0], by simp,
+    fun i hi => ?_, fun i h1 h2 => ?_⟩
+  · by_cases hin : i + 1 ≤ n
+    · simp only [show i ≤ n by omega, hin, if_true]; exact hs i (by omega)
+    · simp only [show i ≤ n by omega, hin, if_true, if_false]
+      rw [show i = n by omega, hn]; exact hmd
+  · simp only [show i ≤ n by omega, if_true]; exact hoff i h1 (by omega)
+
+end Chain
+
 /-! ## 2. The history wrapper (Lemma H) -/
 
 /-- The counters of the history wrapper: the simulated counters, the history, scratch. -/
@@ -226,19 +264,159 @@ def hcfg (v : ι → ℕ) (h : ℕ) : HCtr ι → ℕ
 
 variable {U : CM Q ι} {lab : Quad Q ι → Fin K}
 
+/-- The wrapper's counters `v`, `hist = h`, `work = w`. -/
+def hc3 (v : ι → ℕ) (h w : ℕ) : HCtr ι → ℕ
+  | .val i => v i
+  | .hist => h
+  | .work => w
+
+theorem hcfg_eq (v : ι → ℕ) (h : ℕ) : hcfg v h = hc3 v h 0 := funext fun c => by cases c <;> rfl
+
+/-- One step off the boundary. -/
+def HOff (U : CM Q ι) (lab : Quad Q ι → Fin K) (c d : Cfg (HState Q ι K) (HCtr ι)) : Prop :=
+  (histWrap U lab).Step c d ∧ d.1 ∉ Set.range HState.bnd
+
+theorem hoff_of {r : Quad (HState Q ι K) (HCtr ι)} (hr : HRule U lab r)
+    {s t : HState Q ι K} {w w' : HCtr ι → ℕ} (hs : s = r.src) (hd : t = r.dst)
+    (ha : r.op.Act w w') (hB : t ∉ Set.range HState.bnd) : HOff U lab (s, w) (t, w') :=
+  ⟨⟨r, hr, hs, hd, ha⟩, hB⟩
+
+theorem act_dec_hist (v : ι → ℕ) (h w : ℕ) :
+    (Op.dec (HCtr.hist (ι := ι))).Act (hc3 v (h + 1) w) (hc3 v h w) :=
+  ⟨by simp [hc3], by simp [hc3], fun j hj => by cases j <;> simp_all [hc3]⟩
+
+theorem act_inc_hist (v : ι → ℕ) (h w : ℕ) :
+    (Op.inc (HCtr.hist (ι := ι))).Act (hc3 v h w) (hc3 v (h + 1) w) :=
+  ⟨by simp [hc3], fun j hj => by cases j <;> simp_all [hc3]⟩
+
+theorem act_dec_work (v : ι → ℕ) (h w : ℕ) :
+    (Op.dec (HCtr.work (ι := ι))).Act (hc3 v h (w + 1)) (hc3 v h w) :=
+  ⟨by simp [hc3], by simp [hc3], fun j hj => by cases j <;> simp_all [hc3]⟩
+
+theorem act_inc_work (v : ι → ℕ) (h w : ℕ) :
+    (Op.inc (HCtr.work (ι := ι))).Act (hc3 v h w) (hc3 v h (w + 1)) :=
+  ⟨by simp [hc3], fun j hj => by cases j <;> simp_all [hc3]⟩
+
+theorem act_test (c : HCtr ι) (b : Bool) {w : HCtr ι → ℕ} (hb : decide (0 < w c) = b) :
+    (Op.test c b).Act w w := ⟨hb, rfl⟩
+
+theorem act_map {o : Op ι} {v v' : ι → ℕ} (h : o.Act v v') (x w : ℕ) :
+    (o.map HCtr.val).Act (hc3 v x w) (hc3 v' x w) := by
+  cases o with
+  | test i b => obtain ⟨h1, rfl⟩ := h; exact ⟨h1, rfl⟩
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    refine ⟨h1, h2, fun j hj => ?_⟩
+    cases j with
+    | val k => exact h3 k (fun e => hj (by rw [e]))
+    | hist => rfl
+    | work => rfl
+  | inc i =>
+    obtain ⟨h1, h3⟩ := h
+    refine ⟨h1, fun j hj => ?_⟩
+    cases j with
+    | val k => exact h3 k (fun e => hj (by rw [e]))
+    | hist => rfl
+    | work => rfl
+  | nop => cases h; rfl
+
+/-- The transfer loop moves `hist` into `work`. -/
+theorem hw_transfer {ρ : Quad Q ι} (hρ : ρ ∈ U) (v : ι → ℕ) (t : ℕ) : ∀ a b,
+    Relation.ReflTransGen (HOff U lab) (.tr ρ, hc3 v (a + t) b) (.tr ρ, hc3 v a (b + t)) := by
+  induction t with
+  | zero => intro a b; exact .refl
+  | succ t ih =>
+    intro a b
+    refine .head (hoff_of (.trP hρ) rfl rfl (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    refine .head (hoff_of (.tr₁ hρ) rfl rfl
+      (by rw [← Nat.add_assoc]; exact act_dec_hist v _ b) (by simp)) ?_
+    refine .head (hoff_of (.tr₂ hρ) rfl rfl (act_inc_work v _ b) (by simp)) ?_
+    refine .head (hoff_of (.tr₃ hρ) rfl rfl (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    rw [show b + (t + 1) = b + 1 + t by omega]
+    exact ih a (b + 1)
+
+/-- The wheel descent `wh j → wh 0` adds `j` to `hist`. -/
+theorem hw_descent {ρ : Quad Q ι} (hρ : ρ ∈ U) (v : ι → ℕ) (w : ℕ) (j : ℕ) : ∀ x (hj : j < K),
+    Relation.ReflTransGen (HOff U lab) (.wh ρ.dst ⟨j, hj⟩, hc3 v x w)
+      (.wh ρ.dst ⟨0, by omega⟩, hc3 v (x + j) w) := by
+  induction j with
+  | zero => intro x hj; exact .refl
+  | succ j ih =>
+    intro x hj
+    refine .head (hoff_of (.whInc ⟨j + 1, hj⟩ hρ (by simp)) rfl rfl (act_inc_hist v x w)
+      (by simp)) ?_
+    refine .head (hoff_of (.waP ⟨j + 1, hj⟩ ⟨j, by omega⟩ hρ rfl) rfl rfl
+      (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    rw [show x + (j + 1) = x + 1 + j by omega]
+    exact ih (x + 1) (by omega)
+
+/-- One lap of the wheel moves a unit of `work` into `K` units of `hist`. -/
+theorem hw_laps {ρ : Quad Q ι} (hρ : ρ ∈ U) (v : ι → ℕ) (hK : 0 < K) (w : ℕ) : ∀ x,
+    Relation.ReflTransGen (HOff U lab) (.wh ρ.dst ⟨0, hK⟩, hc3 v x w)
+      (.wh ρ.dst ⟨0, hK⟩, hc3 v (x + K * w) 0) := by
+  induction w with
+  | zero => intro x; exact .refl
+  | succ w ih =>
+    intro x
+    refine .head (hoff_of (.whP ⟨0, hK⟩ hρ rfl) rfl rfl (act_test _ _ (by simp [hc3]))
+      (by simp)) ?_
+    refine .head (hoff_of (.wb hρ) rfl rfl (act_dec_work v x w) (by simp)) ?_
+    refine .head (hoff_of (.wc hρ) rfl rfl (act_inc_hist v x w) (by simp)) ?_
+    refine .head (hoff_of (.wd ⟨K - 1, by omega⟩ hρ (by simp; omega)) rfl rfl
+      (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    refine (hw_descent hρ v w (K - 1) (x + 1) (by omega)).trans ?_
+    rw [show x + K * (w + 1) = x + 1 + (K - 1) + K * w by
+      rw [Nat.mul_succ]; omega]
+    exact ih _
+
 /-- The wrapper is deterministic. -/
 theorem histWrap_det (hU : U.Det) : (histWrap U lab).Det := by
-  sorry
+  rintro r₁ h₁ r₂ h₂ hne hsrc
+  cases h₁ <;> cases h₂ <;> simp only [HState.bnd.injEq, HState.act.injEq, HState.pre.injEq,
+    HState.tr.injEq, HState.tr₁.injEq, HState.tr₂.injEq, HState.tr₃.injEq, HState.wh.injEq,
+    HState.wa.injEq, HState.wb.injEq, HState.wc.injEq, HState.wd.injEq, reduceCtorEq] at hsrc
+  case op.op ρ₁ hρ₁ ρ₂ hρ₂ =>
+    obtain ⟨i, b, b', h1, h2, hb⟩ := hU _ hρ₁ _ hρ₂ (fun e => hne (by subst e; rfl)) hsrc
+    exact ⟨.val i, b, b', by simp [h1, Op.map], by simp [h2, Op.map], hb⟩
+  case waP.waP ρ₁ j₁ j₁' hρ₁ hj₁ ρ₂ j₂ j₂' hρ₂ hj₂ =>
+    obtain ⟨h1, rfl⟩ := hsrc
+    exact absurd (by rw [h1, Fin.ext (show j₁'.val = j₂'.val by omega)]) hne
+  case wd.wd ρ₁ t₁ hρ₁ ht₁ ρ₂ t₂ hρ₂ ht₂ =>
+    exact absurd (by rw [hsrc, Fin.ext (show t₁.val = t₂.val by omega)]) hne
+  all_goals simp_all
 
 /-- The wrapper is reversible: every merge is a pair of tests (`tr ρ` on `work`, `wh s j` on
 `hist`). -/
 theorem histWrap_rev (hU : U.Det) (hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val)
     (hinj : ∀ ρ ∈ U, ∀ ρ' ∈ U, lab ρ = lab ρ' → ρ = ρ') : (histWrap U lab).Rev := by
-  sorry
+  rintro r₁ h₁ r₂ h₂ hne hdst
+  cases h₁ <;> cases h₂ <;> simp only [HState.bnd.injEq, HState.act.injEq, HState.pre.injEq,
+    HState.tr.injEq, HState.tr₁.injEq, HState.tr₂.injEq, HState.tr₃.injEq, HState.wh.injEq,
+    HState.wa.injEq, HState.wb.injEq, HState.wc.injEq, HState.wd.injEq, reduceCtorEq] at hdst
+  case trZ.trZ ρ₁ hρ₁ ρ₂ hρ₂ =>
+    obtain rfl := hinj _ hρ₁ _ hρ₂ hdst.2
+    exact absurd rfl hne
+  case waP.waP ρ₁ j₁ j₁' hρ₁ hj₁ ρ₂ j₂ j₂' hρ₂ hj₂ =>
+    obtain ⟨h1, rfl⟩ := hdst
+    exact absurd (by rw [h1, Fin.ext (show j₁.val = j₂.val by omega)]) hne
+  case waP.wd ρ₁ j₁ j₁' hρ₁ hj₁ ρ₂ t hρ₂ ht =>
+    obtain ⟨-, rfl⟩ := hdst
+    exact absurd j₁.isLt (by omega)
+  case wd.waP ρ₁ t hρ₁ ht ρ₂ j₁ j₁' hρ₂ hj₁ =>
+    obtain ⟨-, rfl⟩ := hdst
+    exact absurd j₁.isLt (by omega)
+  case whZ.whZ ρ₁ j₁ hρ₁ hj₁ ρ₂ j₂ hρ₂ hj₂ =>
+    exact absurd (by rw [hdst, Fin.ext (show j₁.val = j₂.val by omega)]) hne
+  case whP.whP ρ₁ j₁ hρ₁ hj₁ ρ₂ j₂ hρ₂ hj₂ =>
+    exact absurd (by rw [hdst, Fin.ext (show j₁.val = j₂.val by omega)]) hne
+  all_goals simp_all
 
 /-- No rule enters `bnd q₀` when no rule of `U` enters `q₀`. -/
 theorem histWrap_normalAt {q₀ : Q} (hU : U.NormalAt q₀) : (histWrap U lab).NormalAt (.bnd q₀) := by
-  sorry
+  intro r hr h
+  cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h
+  rename_i ρ _ hρ _
+  exact hU ρ hρ h
 
 /-- **(S1) for the wrapper.**  The only loops off the boundary are the transfer (lap
 `hist − 1, work + 1`) and the wheel (lap `work − 1, hist + K`). -/
@@ -251,7 +429,22 @@ theorem histWrap_macro {ρ : Quad Q ι} (hρ : ρ ∈ U) {v v' : ι → ℕ} (ha
     (h : ℕ) :
     RcwaMachine.MacroStep (Set.range HState.bnd) (histWrap U lab).Step
       (.bnd ρ.src, hcfg v h) (.bnd ρ.dst, hcfg v' (K * h + (lab ρ).val)) := by
-  sorry
+  have hK : 0 < K := (lab ρ).pos
+  rw [hcfg_eq, hcfg_eq, Nat.add_comm]
+  have hchain : Relation.ReflTransGen (HOff U lab) (HState.bnd ρ.src, hc3 v h 0)
+      (HState.wh ρ.dst ⟨0, hK⟩, hc3 v' ((lab ρ).val + K * h) 0) := by
+    refine .head (hoff_of (.guard hρ) rfl rfl (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    refine .head (hoff_of (.op hρ) rfl rfl (act_map hact h 0) (by simp)) ?_
+    refine .head (hoff_of (.pre hρ) rfl rfl (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    have h1 := hw_transfer (lab := lab) hρ v' h 0 0
+    simp only [Nat.zero_add] at h1
+    refine h1.trans ?_
+    refine .head (hoff_of (.trZ hρ) rfl rfl (act_test _ _ (by simp [hc3])) (by simp)) ?_
+    have h2 := hw_descent (lab := lab) hρ v' h (lab ρ).val 0 (lab ρ).isLt
+    simp only [Nat.zero_add, Fin.eta] at h2
+    exact h2.trans (hw_laps hρ v' hK h _)
+  exact macroStep_of_chain (by simp) hchain
+    ⟨_, .whZ ⟨0, hK⟩ hρ rfl, rfl, rfl, act_test _ _ (by simp [hc3])⟩ (by simp)
 
 /-- A halting ID of `U` gives a halting run of the wrapper. -/
 theorem histWrap_halts_of_stuck {s : Q} {v : ι → ℕ} (hs : U.Stuck (s, v)) (h : ℕ) :
