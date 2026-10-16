@@ -1112,13 +1112,41 @@ def bwdStat (s : Side) (p q : ℕ) : ℚ :=
 theorem fwdStat_stationary (s : Side) (hq : 0 < q) (hqp : q < p) (hp : 3 ≤ p) :
     fwdStat s p q * fwdProb s p q 0 0 + (1 - fwdStat s p q) * fwdProb s p q 1 0 =
       fwdStat s p q := by
-  sorry
+  have hQ : (1 : ℚ) ≤ q := by exact_mod_cast hq
+  have hQP : (q : ℚ) + 1 ≤ p := by exact_mod_cast hqp
+  have hP : (3 : ℚ) ≤ p := by exact_mod_cast hp
+  have hQ0 : (q : ℚ) ≠ 0 := by positivity
+  have hR0 : (p : ℚ) - q ≠ 0 := (by linarith : (0 : ℚ) < p - q).ne'
+  cases s
+  · have hD : 2 * (q : ℚ) * ((p : ℚ) - q) - q - ((p : ℚ) - q) ≠ 0 :=
+      (by nlinarith [mul_nonneg (sub_nonneg.2 hQ) (by linarith : (0 : ℚ) ≤ (p : ℚ) - q - 1)] :
+        (0 : ℚ) < _).ne'
+    simp (config := {decide := true}) only [fwdStat, fwdProb, fwdEven, if_true, if_false]
+    generalize hDd : 2 * (q : ℚ) * ((p : ℚ) - q) - q - ((p : ℚ) - q) = D at hD ⊢
+    field_simp
+    subst hDd
+    ring
+  · have hD : 2 * (q : ℚ) * ((p : ℚ) - q) + q + ((p : ℚ) - q) ≠ 0 :=
+      (by nlinarith [mul_nonneg (by linarith : (0 : ℚ) ≤ q) (by linarith : (0 : ℚ) ≤ (p : ℚ) - q)] :
+        (0 : ℚ) < _).ne'
+    simp (config := {decide := true}) only [fwdStat, fwdProb, fwdEven, if_true, if_false]
+    generalize hDd : 2 * (q : ℚ) * ((p : ℚ) - q) + q + ((p : ℚ) - q) = D at hD ⊢
+    field_simp
+    subst hDd
+    ring
 
 /-- **(ratified).**  `bwdStat` is stationary for `bwdProb`. -/
 theorem bwdStat_stationary (s : Side) (hq : 0 < q) (hqp : q < p) (hp : 3 ≤ p) :
     bwdStat s p q * bwdProb s p q 0 0 + (1 - bwdStat s p q) * bwdProb s p q 1 0 =
       bwdStat s p q := by
-  sorry
+  have hP : (3 : ℚ) ≤ p := by exact_mod_cast hp
+  have hP0 : (p : ℚ) ≠ 0 := (by linarith : (0 : ℚ) < p).ne'
+  have hP2 : (p : ℚ) - 2 ≠ 0 := (by linarith : (0 : ℚ) < p - 2).ne'
+  have hP2' : (p : ℚ) + 2 ≠ 0 := (by linarith : (0 : ℚ) < p + 2).ne'
+  cases s <;>
+  · simp (config := {decide := true}) only [bwdStat, bwdProb, bwdEven, if_true, if_false]
+    field_simp
+    ring
 
 /-- Forward log-drift of the stationary chain: steps `log(r/2)` (even) and `log(s/2)` (odd). -/
 noncomputable def fwdDrift (s : Side) (p q : ℕ) : ℝ :=
@@ -1139,18 +1167,133 @@ noncomputable def iidBwdDrift (p q : ℕ) : ℝ :=
   (q : ℝ) / p * Real.log (2 / ((p : ℝ) / q)) +
     ((p : ℝ) - q) / p * Real.log (2 / ((p : ℝ) / ((p : ℝ) - q)))
 
+/-- Shared bounds for Prop D. -/
+theorem propD_setup (hq : 0 < q) (hqp : q < p) (hne : q ≠ p - q) :
+    (1 : ℝ) ≤ q ∧ (1 : ℝ) ≤ (p : ℝ) - q ∧ (3 : ℝ) ≤ p ∧ (q : ℝ) ≠ (p : ℝ) - q := by
+  have h3 : 3 ≤ p := by omega
+  have hQ : (1 : ℝ) ≤ q := by exact_mod_cast hq
+  have hQP : (q : ℝ) + 1 ≤ p := by exact_mod_cast hqp
+  refine ⟨hQ, by linarith, by exact_mod_cast h3, fun h => hne ?_⟩
+  have : (p : ℝ) = q + q := by linarith
+  have : p = q + q := by exact_mod_cast this
+  omega
+
+/-- `(R − Q)(log R − log Q) > 0` off the diagonal. -/
+theorem sub_mul_log_sub_pos {Q R : ℝ} (hQ : 0 < Q) (hR : 0 < R) (hne : Q ≠ R) :
+    0 < (R - Q) * (Real.log R - Real.log Q) := by
+  rcases lt_or_gt_of_ne hne with h | h
+  · exact mul_pos (by linarith) (by linarith [Real.log_lt_log hQ h])
+  · exact mul_pos_of_neg_of_neg (by linarith) (by linarith [Real.log_lt_log hR h])
+
+theorem log_div_div_two {x y : ℝ} (hx : 0 < x) (hy : 0 < y) :
+    Real.log (x / y / 2) = Real.log x - Real.log y - Real.log 2 := by
+  rw [Real.log_div (by positivity) (by norm_num), Real.log_div hx.ne' hy.ne']
+
+theorem log_two_div_div {x y : ℝ} (hx : 0 < x) (hy : 0 < y) :
+    Real.log (2 / (x / y)) = Real.log 2 - Real.log x + Real.log y := by
+  rw [Real.log_div (by norm_num) (by positivity), Real.log_div hx.ne' hy.ne']; ring
+
+/-- The forward drift excess: `(π − ½)(log R − log q)`. -/
+theorem fwdDrift_sub (s : Side) (hq : 0 < q) (hqp : q < p) :
+    fwdDrift s p q - iidFwdDrift p q =
+      (((fwdStat s p q : ℚ) : ℝ) - 1 / 2) * (Real.log ((p : ℝ) - q) - Real.log q) := by
+  have hQ : (0 : ℝ) < q := by exact_mod_cast hq
+  have hQP : (q : ℝ) < p := by exact_mod_cast hqp
+  unfold fwdDrift iidFwdDrift
+  rw [log_div_div_two (by linarith) hQ, log_div_div_two (by linarith) (by linarith)]
+  ring
+
+/-- The backward drift excess: `(π_b − q/p)(log q − log R)`. -/
+theorem bwdDrift_sub (s : Side) (hq : 0 < q) (hqp : q < p) :
+    bwdDrift s p q - iidBwdDrift p q =
+      (((bwdStat s p q : ℚ) : ℝ) - q / p) * (Real.log q - Real.log ((p : ℝ) - q)) := by
+  have hQ : (0 : ℝ) < q := by exact_mod_cast hq
+  have hQP : (q : ℝ) < p := by exact_mod_cast hqp
+  have hR : ((p : ℝ) - q) / p = 1 - q / p := by
+    rw [sub_div, div_self (by linarith : (0 : ℝ) < p).ne']
+  unfold bwdDrift iidBwdDrift
+  rw [log_two_div_div (by linarith) hQ, log_two_div_div (by linarith) (by linarith), hR]
+  ring
+
 /-- **(ratified, Prop D, `+`).**  Off `r = 2`, both drifts exceed the i.i.d. drifts.  Paper
 proof: drift − iid `= (π_E − ½) log(R/q)` with `π_E⁺ − ½ = (R−q)/(2(2qR−q−R))`; backward
 `(π_E^b − q/p) log(q/R) = (q−R) log(q/R)/(p(p−2))`. -/
 theorem propD_plus (hq : 0 < q) (hqp : q < p) (hne : q ≠ p - q) :
     iidFwdDrift p q < fwdDrift .plus p q ∧ iidBwdDrift p q < bwdDrift .plus p q := by
-  sorry
+  obtain ⟨hQ, hR, hP, hne'⟩ := propD_setup hq hqp hne
+  have hsign := sub_mul_log_sub_pos (by linarith : (0 : ℝ) < q)
+    (by linarith : (0 : ℝ) < (p : ℝ) - q) hne'
+  have hD : 0 < 2 * (q : ℝ) * ((p : ℝ) - q) - q - ((p : ℝ) - q) := by
+    nlinarith [mul_nonneg (sub_nonneg.2 hQ) (sub_nonneg.2 hR)]
+  have hD0 := hD.ne'
+  have hP0 : (p : ℝ) ≠ 0 := (by linarith : (0 : ℝ) < p).ne'
+  have hP2 : (p : ℝ) - 2 ≠ 0 := (by linarith : (0 : ℝ) < p - 2).ne'
+  constructor
+  · have hπ : ((fwdStat .plus p q : ℚ) : ℝ) - 1 / 2 =
+        (((p : ℝ) - q) - q) / (2 * (2 * (q : ℝ) * ((p : ℝ) - q) - q - ((p : ℝ) - q))) := by
+      simp only [fwdStat]; push_cast
+      generalize hDd : 2 * (q : ℝ) * ((p : ℝ) - q) - q - ((p : ℝ) - q) = D at hD0 ⊢
+      field_simp
+      subst hDd
+      ring
+    have h1 := fwdDrift_sub .plus hq hqp
+    rw [hπ, div_mul_eq_mul_div] at h1
+    have : 0 < (((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) /
+        (2 * (2 * (q : ℝ) * ((p : ℝ) - q) - q - ((p : ℝ) - q))) := div_pos hsign (by linarith)
+    linarith
+  · have hπ : ((bwdStat .plus p q : ℚ) : ℝ) - q / p =
+        ((q : ℝ) - ((p : ℝ) - q)) / (p * (p - 2)) := by
+      simp only [bwdStat]; push_cast; field_simp; ring
+    have h1 := bwdDrift_sub .plus hq hqp
+    rw [hπ, div_mul_eq_mul_div] at h1
+    have : 0 < ((q : ℝ) - ((p : ℝ) - q)) * (Real.log q - Real.log ((p : ℝ) - q)) /
+        (p * (p - 2)) := by
+      apply div_pos _ (by nlinarith)
+      rw [show ((q : ℝ) - ((p : ℝ) - q)) * (Real.log q - Real.log ((p : ℝ) - q)) =
+        (((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) by ring]
+      exact hsign
+    linarith
 
 /-- **(ratified, Prop D, `−`).**  Off `r = 2`, both drifts fall below the i.i.d. drifts:
 `π_E⁻ − ½ = (q−R)/(2(2qR+q+R))`, `π_E^{b−} − q/p = (R−q)/(p(p+2))`. -/
 theorem propD_minus (hq : 0 < q) (hqp : q < p) (hne : q ≠ p - q) :
     fwdDrift .minus p q < iidFwdDrift p q ∧ bwdDrift .minus p q < iidBwdDrift p q := by
-  sorry
+  obtain ⟨hQ, hR, hP, hne'⟩ := propD_setup hq hqp hne
+  have hsign := sub_mul_log_sub_pos (by linarith : (0 : ℝ) < q)
+    (by linarith : (0 : ℝ) < (p : ℝ) - q) hne'
+  have hD : 0 < 2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q) := by
+    nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ q) (by linarith : (0 : ℝ) ≤ (p : ℝ) - q)]
+  have hD0 := hD.ne'
+  have hP0 : (p : ℝ) ≠ 0 := (by linarith : (0 : ℝ) < p).ne'
+  have hP2 : (p : ℝ) + 2 ≠ 0 := (by linarith : (0 : ℝ) < p + 2).ne'
+  constructor
+  · have hπ : ((fwdStat .minus p q : ℚ) : ℝ) - 1 / 2 =
+        ((q : ℝ) - ((p : ℝ) - q)) / (2 * (2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q))) := by
+      simp only [fwdStat]; push_cast
+      generalize hDd : 2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q) = D at hD0 ⊢
+      field_simp
+      subst hDd
+      ring
+    have h1 := fwdDrift_sub .minus hq hqp
+    rw [hπ, div_mul_eq_mul_div] at h1
+    have : 0 < (((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) /
+        (2 * (2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q))) := div_pos hsign (by linarith)
+    have h2 : ((q : ℝ) - ((p : ℝ) - q)) * (Real.log ((p : ℝ) - q) - Real.log q) /
+        (2 * (2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q))) =
+        -((((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) /
+        (2 * (2 * (q : ℝ) * ((p : ℝ) - q) + q + ((p : ℝ) - q)))) := by ring
+    linarith
+  · have hπ : ((bwdStat .minus p q : ℚ) : ℝ) - q / p =
+        (((p : ℝ) - q) - q) / (p * (p + 2)) := by
+      simp only [bwdStat]; push_cast; field_simp; ring
+    have h1 := bwdDrift_sub .minus hq hqp
+    rw [hπ, div_mul_eq_mul_div] at h1
+    have : 0 < (((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) /
+        (p * (p + 2)) := div_pos hsign (by nlinarith)
+    have h2 : (((p : ℝ) - q) - q) * (Real.log q - Real.log ((p : ℝ) - q)) / (p * (p + 2)) =
+        -((((p : ℝ) - q) - q) * (Real.log ((p : ℝ) - q) - Real.log q) / (p * (p + 2))) := by
+      ring
+    linarith
 
 end PropD
 
