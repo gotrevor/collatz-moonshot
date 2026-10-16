@@ -1806,3 +1806,43 @@ each finds the §47 wall from a new side, and three give cheap new theorems.
   `U` look new (65-75%); avoidance is Yolcu–Aaronson–Heule's method (arXiv 2105.14697) moved to `U`.
   Finite order ⟺ tame on `ℕ` is Kohl's (Math. Z. 2010 §6).  The sign-blind gate's substance is
   folklore (Guy 1986, Isbell's game "Beanstalk"; the `3x − 1` cycles are classical).
+
+## 56. Theorem C on ℤ, and the Wythoff family through U (2026-10-15, two Opus agents; Ren checked)
+
+Follow-ups to §55.  Reports: `undec-r25.md`, `wythoff.md`.
+
+* **Theorem C survives on ℤ after three repairs (85%, was 75%).**  The full `r = 25` map (engine,
+  sink pairing, highway, every other class) was built for three reversible machines: one total
+  (`M_H`), one divergent from `C₁ = 0` (`M_inf`), one divergent only when `2^20 ∣ n` (`M_late`).
+  Bijectivity is exact, not sampled: domain and image classes each partition `ℤ` (up to 2001
+  pieces, modulus up to `25·2^20·3^37`, every slope positive in `2^ℤ3^ℤ`); inverses built two ways
+  agree on `[−10^6, 10^6]` plus 20,000 large points.  Orbit counts: `M_H` one orbit, `M_inf`
+  `81, 801, 8001, 80001` for `X = 10^3 … 10^6`, `M_late` one orbit until its engine wakes past
+  `2^20`.  Seven broken variants fail.  Ren re-ran the proof, window and orbit checks
+  (`X ≤ 10^4`): identical.  Repairs to §55: the non-engine set must contain all of `5ℤ`, not just
+  `25ℤ`; a forward-divergent source must be paired with a backward-divergent sink (the mirror chain,
+  as in `logic.md`), or the map is not onto; the prediction is `{1, ∞}` orbits, not `{2, ∞}`, since
+  `0` sits on the highway.  **The ℕ form is doubtful (40%):** the proposed ℕ highway is not RCWA
+  (`1 ↦ 0` is a one-point exception), and a fix needs a finite-orbit RCWA permutation of ℕ running to
+  `+∞` at both ends.  Remaining gap to a paper proof: a uniform reversible-machine lemma (finite runs
+  restore counters, no garbage configuration on a cycle or bi-infinite chain, divergent sources
+  mirrored, divergence ⟺ non-totality); likely via Kari–Ollinger 2008, 2–4 pages, 75%.
+* **The Wythoff amusical permutation is on the same wall (80%).**  `W(2k) = ⌊kφ²⌋`,
+  `W(2k−1) = ⌊kφ⌋` is OEIS A072061 (Kimberling).  Orbit-start density `0.025632` at `10^7` against
+  the i.i.d. prediction `0.025583`, about half `U`'s, since its drift is about half (`0.0287` forward,
+  `0.0281` backward).  Seven cycles, all with minimum `≤ 12` (Ren recomputed four); the other
+  pairing has cycles of lengths 2, 7, 9, 16, 25, the (semi)convergents of `log 2 / log φ`, the
+  same `2^t ≈ φ^c` mechanism as `U`'s 5- and 12-cycles.  One step is Fibonacci-automatic; orbits are
+  not (orbit-start subword complexity matches random).
+* **`U` is an interior point of a real family.**  In `W_α` (Beatty pairs `α, α/(α−1)`), `W_α → U` as
+  `α → 3⁺` and `→ U(x − 2) + 2` as `α → 3⁻`; the predicted start density is continuous through 3
+  and matches 26 of 29 irrational members within 0.5%.  Pisot or not makes no difference (Mignosi's
+  dichotomy does not transfer, 80%).  The phase changes only at rational `α = p/q` with `p` even
+  (75%); at `α = 2j` the evens are a trap (`2k ↦ 2jk`), so these are solved by the §55 trap theorem
+  (densities `1/4, 1/3, 3/8` at `α = 4, 6, 8`; Ren checked `α = 4`).  For irrational `α` there is
+  no proper invariant residue set (95%).  One loose thread: at `α = 2√m`, `W²` is nearly linear
+  (`W²(n) ∈ {2n − 1, 2n − 2}` after two even steps for `2√2`), breaking the coin-flip model
+  (`χ²/dof ≈ 490`) and shifting the density 1-3%, but with no trap.
+* **A 20-year-old twin of Conway's 8.**  The `α = 2 + √2` member is OEIS A094077; Brockhaus (2006,
+  A117149) lists its cycles `{1}, {2, 3}, {14, 23, 16, 27, 19}` and conjectures that the orbit of 4
+  is not periodic.  The census reproduces those cycles; the orbit of 4 passes `4·2^24` both ways.
