@@ -79,76 +79,254 @@ variable {r : ℕ}
 
 /-- **(ratified).**  Even branch. -/
 theorem wq_two_mul (r : ℕ) (k : ℤ) : wq r (2 * k) = 2 * r * k + sfl r k := by
-  sorry
+  unfold wq
+  rw [if_pos (by omega), show 2 * k / 2 = k by omega]
+  ring
 
 /-- **(ratified).**  Odd branch. -/
 theorem wq_two_mul_sub_one (r : ℕ) (k : ℤ) : wq r (2 * k - 1) = 2 * r * k - sfl r k - 1 := by
-  sorry
+  unfold wq
+  rw [if_neg (by omega), show (2 * k - 1 + 1) / 2 = k by omega]
+  ring
 
 /-- **(ratified).**  Partner, even branch. -/
 theorem wqp_two_mul (r : ℕ) (k : ℤ) : wqp r (2 * k) = 2 * r * k - sfl r k - 1 := by
-  sorry
+  unfold wqp
+  rw [if_pos (by omega), show 2 * k / 2 = k by omega]
+  ring
 
 /-- **(ratified).**  Partner, odd branch. -/
 theorem wqp_two_mul_sub_one (r : ℕ) (k : ℤ) : wqp r (2 * k - 1) = 2 * r * k + sfl r k := by
-  sorry
+  unfold wqp
+  rw [if_neg (by omega), show (2 * k - 1 + 1) / 2 = k by omega]
+  ring
 
 /-- **(ratified).**  The partner is `wq` precomposed with the involution `2k ↔ 2k − 1`. -/
 theorem wqp_eq_wq (r : ℕ) (n : ℤ) : wqp r n = wq r (if n % 2 = 0 then n - 1 else n + 1) := by
-  sorry
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, n = 2 * k ∨ n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  · rw [if_pos (by omega), wqp_two_mul, wq_two_mul_sub_one]
+  · rw [if_neg (by omega), show 2 * k - 1 + 1 = 2 * k by ring, wqp_two_mul_sub_one, wq_two_mul]
+
+/-- The radicand `r² − r` is nonnegative for every natural `r`. -/
+lemma radicand_nonneg (r : ℕ) : (0 : ℝ) ≤ (r : ℝ) ^ 2 - r := by
+  rcases Nat.eq_zero_or_pos r with rfl | h
+  · simp
+  · have : (1 : ℝ) ≤ r := by exact_mod_cast h
+    nlinarith
+
+/-- `(√(r² − r))² = r² − r`. -/
+lemma sqrt_sq_radicand (r : ℕ) : √((r : ℝ) ^ 2 - r) ^ 2 = (r : ℝ) ^ 2 - r :=
+  Real.sq_sqrt (radicand_nonneg r)
+
+/-- `r − 3/5 < √(r² − r)` for `r ≥ 2`. -/
+lemma sqrt_radicand_gt (hr : 2 ≤ r) : (r : ℝ) - 3 / 5 < √((r : ℝ) ^ 2 - r) := by
+  have : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  rw [Real.lt_sqrt (by linarith)]
+  nlinarith
+
+/-- `√(r² − r) < r − 1/2`. -/
+lemma sqrt_radicand_lt (hr : 2 ≤ r) : √((r : ℝ) ^ 2 - r) < r - 1 / 2 := by
+  have : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  rw [Real.sqrt_lt' (by linarith)]
+  nlinarith
 
 /-- **(ratified).**  `√(r² − r)` is irrational for `r ≥ 2`: `(r − 1)² < r² − r < r²`. -/
 theorem irrational_sqrt (hr : 2 ≤ r) : Irrational √((r : ℝ) ^ 2 - r) := by
-  sorry
+  have hrr : r ≤ r ^ 2 := by nlinarith
+  have hc : ((r : ℝ) ^ 2 - r) = ((r ^ 2 - r : ℕ) : ℝ) := by
+    rw [Nat.cast_sub hrr]; push_cast; ring
+  rw [hc, irrational_sqrt_natCast_iff]
+  rintro ⟨t, ht⟩
+  have h1 : t * t + r = r * r := by rw [sq] at ht hrr; omega
+  rcases lt_or_ge t r with h | h
+  · have : t + 1 ≤ r := h
+    nlinarith
+  · nlinarith
 
 /-- **(ratified).**  `α + β = 4r`. -/
 theorem alphaQ_add_betaQ (r : ℕ) : alphaQ r + betaQ r = 4 * r := by
-  sorry
+  unfold alphaQ betaQ; ring
 
 /-- **(ratified).**  `αβ = 4r`. -/
 theorem alphaQ_mul_betaQ (r : ℕ) : alphaQ r * betaQ r = 4 * r := by
-  sorry
+  unfold alphaQ betaQ
+  linear_combination (-4 : ℝ) * sqrt_sq_radicand r
 
 /-- **(ratified).**  `1 < β < 6/5` for `r ≥ 2`.  Paper proof: `β = 2r/(r + √(r² − r))`;
 `β > 1 ⇔ √(r² − r) < r`, and `β < 6/5 ⇔ √(r² − r) > 2r/3 ⇔ 5r² > 9r`.  (At `r = 2`,
 `β = 4 − 2√2 ≈ 1.1716`.) -/
 theorem one_lt_betaQ_lt (hr : 2 ≤ r) : 1 < betaQ r ∧ betaQ r < 6 / 5 := by
-  sorry
+  unfold betaQ
+  constructor <;> linarith [sqrt_radicand_lt hr, sqrt_radicand_gt hr]
 
 /-- **(ratified).**  `α` and `β` are Hölder conjugate: `1/α + 1/β = (α + β)/(αβ) = 1`. -/
 theorem alphaQ_holderConjugate (hr : 2 ≤ r) : (alphaQ r).HolderConjugate (betaQ r) := by
-  sorry
+  have hb := one_lt_betaQ_lt hr
+  have hq := Real.sqrt_nonneg ((r : ℝ) ^ 2 - r)
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have ha : 0 < alphaQ r := by unfold alphaQ; linarith
+  refine ⟨?_, ha, by linarith⟩
+  rw [inv_one, inv_add_inv ha.ne' (by linarith), alphaQ_add_betaQ, alphaQ_mul_betaQ,
+    div_self (by positivity)]
+
+/-- `sqrtPart r k` is `Nat.sqrt` of `(2|k|√m)²`. -/
+lemma sqrtPart_spec (r : ℕ) (k : ℤ) :
+    (sqrtPart r k : ℝ) ≤ 2 * |(k : ℝ)| * √((r : ℝ) ^ 2 - r) ∧
+      2 * |(k : ℝ)| * √((r : ℝ) ^ 2 - r) < sqrtPart r k + 1 := by
+  have hrr : r ≤ r ^ 2 := by nlinarith
+  have hn : ((k.natAbs : ℕ) : ℝ) = |(k : ℝ)| := by
+    rw [Nat.cast_natAbs, Int.cast_abs]
+  have hsq : √((4 * k.natAbs ^ 2 * (r ^ 2 - r) : ℕ) : ℝ) =
+      2 * |(k : ℝ)| * √((r : ℝ) ^ 2 - r) := by
+    rw [show ((4 * k.natAbs ^ 2 * (r ^ 2 - r) : ℕ) : ℝ) =
+        (2 * |(k : ℝ)|) ^ 2 * ((r : ℝ) ^ 2 - r) by
+      rw [Nat.cast_mul, Nat.cast_sub hrr, Nat.cast_mul, Nat.cast_pow, hn]; push_cast; ring]
+    rw [Real.sqrt_mul (by positivity), Real.sqrt_sq (by positivity)]
+  unfold sqrtPart
+  rw [← hsq]
+  exact ⟨Real.nat_sqrt_le_real_sqrt, Real.real_sqrt_lt_nat_sqrt_succ⟩
+
+/-- `2k√m` is irrational for `k ≠ 0`. -/
+lemma irrational_two_mul_sqrt (hr : 2 ≤ r) {k : ℤ} (hk : k ≠ 0) :
+    Irrational (2 * k * √((r : ℝ) ^ 2 - r)) := by
+  have := (irrational_sqrt hr).intCast_mul (m := 2 * k) (by omega)
+  simpa using this
+
+/-- `sfl r k ≤ 2k√m < sfl r k + 1`. -/
+lemma sfl_bounds (hr : 2 ≤ r) (k : ℤ) :
+    (sfl r k : ℝ) ≤ 2 * k * √((r : ℝ) ^ 2 - r) ∧
+      2 * k * √((r : ℝ) ^ 2 - r) < sfl r k + 1 := by
+  obtain ⟨h1, h2⟩ := sqrtPart_spec r k
+  unfold sfl
+  split_ifs with hk
+  · rw [abs_of_nonneg (by exact_mod_cast hk : (0 : ℝ) ≤ k)] at h1 h2
+    exact ⟨h1, h2⟩
+  · have hk' : (k : ℝ) < 0 := by exact_mod_cast (not_le.mp hk)
+    rw [abs_of_neg hk'] at h1 h2
+    have hne := (irrational_two_mul_sqrt hr (show k ≠ 0 by omega)).neg.ne_nat (sqrtPart r k)
+    have h3 : (sqrtPart r k : ℝ) < 2 * -(k : ℝ) * √((r : ℝ) ^ 2 - r) := by
+      refine lt_of_le_of_ne h1 fun h => hne ?_
+      rw [h]; ring
+    push_cast
+    constructor <;> linarith
 
 /-- **(ratified).**  `sfl` is the real floor.  Paper proof: `k ≥ 0` is `Nat.sqrt`'s spec
 (`Real.nat_sqrt_le_real_sqrt`, `Real.real_sqrt_lt_nat_sqrt_succ`); for `k < 0`, the value
 `2|k|√(r² − r)` is irrational, so `⌊−y⌋ = −⌊y⌋ − 1`. -/
 theorem sfl_eq_floor (hr : 2 ≤ r) (k : ℤ) :
     sfl r k = ⌊(2 * k : ℝ) * √((r : ℝ) ^ 2 - r)⌋ := by
-  sorry
+  rw [eq_comm, Int.floor_eq_iff]
+  exact sfl_bounds hr k
+
+/-- Strictness: `sfl r k < 2k√m` for `k ≠ 0`. -/
+lemma sfl_lt (hr : 2 ≤ r) {k : ℤ} (hk : k ≠ 0) :
+    (sfl r k : ℝ) < 2 * k * √((r : ℝ) ^ 2 - r) :=
+  lt_of_le_of_ne (sfl_bounds hr k).1 ((irrational_two_mul_sqrt hr hk).ne_int _).symm
+
+/-- Pinning `sfl` by its real bounds. -/
+lemma sfl_eq_of (hr : 2 ≤ r) {j T : ℤ} (h1 : (T : ℝ) ≤ 2 * j * √((r : ℝ) ^ 2 - r))
+    (h2 : 2 * j * √((r : ℝ) ^ 2 - r) < T + 1) : sfl r j = T := by
+  rw [sfl_eq_floor hr, Int.floor_eq_iff]
+  exact ⟨h1, h2⟩
+
+lemma sfl_zero (r : ℕ) : sfl r 0 = 0 := by
+  simp [sfl, sqrtPart]
+
+/-- For `k ≥ 1`: `(2r − 2)k ≤ sfl r k ≤ (2r − 1)k − 1`. -/
+lemma sfl_pos_bounds (hr : 2 ≤ r) {k : ℤ} (hk : 1 ≤ k) :
+    (2 * r - 2) * k ≤ sfl r k ∧ sfl r k + 1 ≤ (2 * r - 1) * k := by
+  obtain ⟨h1, h2⟩ := sfl_bounds hr k
+  have hk' : (1 : ℝ) ≤ k := by exact_mod_cast hk
+  have g1 := mul_lt_mul_of_pos_left (sqrt_radicand_gt hr) (show (0 : ℝ) < k by linarith)
+  have g2 := mul_lt_mul_of_pos_left (sqrt_radicand_lt hr) (show (0 : ℝ) < k by linarith)
+  have a : (((2 * r - 2) * k - 1 : ℤ) : ℝ) < sfl r k := by push_cast; nlinarith
+  have b : (sfl r k : ℝ) < (((2 * r - 1) * k : ℤ) : ℝ) := by push_cast; nlinarith
+  have a' := Int.cast_lt.mp a
+  have b' := Int.cast_lt.mp b
+  omega
+
+/-- For `k ≥ 2`: `(2r − 2)k + 1 ≤ sfl r k`. -/
+lemma sfl_ge_of_two_le (hr : 2 ≤ r) {k : ℤ} (hk : 2 ≤ k) :
+    (2 * r - 2) * k + 1 ≤ sfl r k := by
+  obtain ⟨h1, h2⟩ := sfl_bounds hr k
+  have hk' : (2 : ℝ) ≤ k := by exact_mod_cast hk
+  have g1 := mul_lt_mul_of_pos_left (sqrt_radicand_gt hr) (show (0 : ℝ) < k by linarith)
+  have a : (((2 * r - 2) * k : ℤ) : ℝ) < sfl r k := by push_cast; nlinarith
+  have a' := Int.cast_lt.mp a
+  omega
+
+/-- For `k ≤ 0`: `2rk ≤ sfl r k ≤ 0`. -/
+lemma sfl_nonpos_bounds (hr : 2 ≤ r) {k : ℤ} (hk : k ≤ 0) :
+    2 * r * k ≤ sfl r k ∧ sfl r k ≤ 0 := by
+  obtain ⟨h1, h2⟩ := sfl_bounds hr k
+  have hk' : (k : ℝ) ≤ 0 := by exact_mod_cast hk
+  have hq := Real.sqrt_nonneg ((r : ℝ) ^ 2 - r)
+  have g2 := mul_le_mul_of_nonpos_left (sqrt_radicand_lt hr).le hk'
+  have a : (((2 * r * k) - 1 : ℤ) : ℝ) < sfl r k := by push_cast; nlinarith
+  have b : (sfl r k : ℝ) < ((1 : ℤ) : ℝ) := by push_cast; nlinarith
+  have a' := Int.cast_lt.mp a
+  have b' := Int.cast_lt.mp b
+  omega
+
+/-- The increments of `sfl` are `2r − 2` or `2r − 1`. -/
+lemma sfl_succ_bounds (hr : 2 ≤ r) (k : ℤ) :
+    2 * r - 2 ≤ sfl r (k + 1) - sfl r k ∧ sfl r (k + 1) - sfl r k ≤ 2 * r - 1 := by
+  obtain ⟨h1, h2⟩ := sfl_bounds hr k
+  obtain ⟨h3, h4⟩ := sfl_bounds hr (k + 1)
+  push_cast at h3 h4
+  have g1 := sqrt_radicand_gt hr
+  have g2 := sqrt_radicand_lt hr
+  have a : ((2 * r - 3 : ℤ) : ℝ) < ((sfl r (k + 1) - sfl r k : ℤ) : ℝ) := by
+    push_cast; linarith
+  have b : ((sfl r (k + 1) - sfl r k : ℤ) : ℝ) < ((2 * r : ℤ) : ℝ) := by
+    push_cast; linarith
+  have a' := Int.cast_lt.mp a
+  have b' := Int.cast_lt.mp b
+  omega
 
 /-- **(ratified).**  `W(2k) = ⌊kα⌋` for every `k ∈ ℤ`. -/
 theorem wq_two_mul_eq_floor (hr : 2 ≤ r) (k : ℤ) : wq r (2 * k) = ⌊(k : ℝ) * alphaQ r⌋ := by
-  sorry
+  rw [wq_two_mul, sfl_eq_floor hr]
+  unfold alphaQ
+  rw [show (k : ℝ) * (2 * r + 2 * √((r : ℝ) ^ 2 - r)) =
+      2 * k * √((r : ℝ) ^ 2 - r) + ((2 * r * k : ℤ) : ℝ) by push_cast; ring,
+    Int.floor_add_intCast]
+  ring
 
 /-- **(ratified).**  `W(2k − 1) = ⌈kβ⌉ − 1` for every `k ∈ ℤ` (Mathlib's `beattySeq'`). -/
 theorem wq_two_mul_sub_one_eq_ceil (hr : 2 ≤ r) (k : ℤ) :
     wq r (2 * k - 1) = ⌈(k : ℝ) * betaQ r⌉ - 1 := by
-  sorry
+  rw [wq_two_mul_sub_one, sfl_eq_floor hr]
+  unfold betaQ
+  rw [show (k : ℝ) * (2 * r - 2 * √((r : ℝ) ^ 2 - r)) =
+      -(2 * k * √((r : ℝ) ^ 2 - r)) + ((2 * r * k : ℤ) : ℝ) by push_cast; ring,
+    Int.ceil_add_intCast, Int.ceil_neg]
+  ring
 
 /-- **(ratified).**  `W(2k − 1) = ⌊kβ⌋` for `k ≠ 0` (`kβ` is irrational). -/
 theorem wq_two_mul_sub_one_eq_floor (hr : 2 ≤ r) {k : ℤ} (hk : k ≠ 0) :
     wq r (2 * k - 1) = ⌊(k : ℝ) * betaQ r⌋ := by
-  sorry
+  rw [wq_two_mul_sub_one]
+  unfold betaQ
+  rw [show (k : ℝ) * (2 * r - 2 * √((r : ℝ) ^ 2 - r)) =
+      -(2 * k * √((r : ℝ) ^ 2 - r)) + ((2 * r * k : ℤ) : ℝ) by push_cast; ring,
+    Int.floor_add_intCast, Int.floor_neg]
+  have h : ⌈2 * (k : ℝ) * √((r : ℝ) ^ 2 - r)⌉ = sfl r k + 1 := by
+    rw [Int.ceil_eq_iff]
+    push_cast
+    constructor <;> linarith [sfl_lt hr hk, (sfl_bounds hr k).2]
+  rw [h]
+  ring
 
 /-- **(ratified).**  Partner: `W'(2k) = ⌊kβ⌋` for `k ≠ 0`. -/
 theorem wqp_two_mul_eq_floor (hr : 2 ≤ r) {k : ℤ} (hk : k ≠ 0) :
     wqp r (2 * k) = ⌊(k : ℝ) * betaQ r⌋ := by
-  sorry
+  rw [wqp_two_mul, ← wq_two_mul_sub_one, wq_two_mul_sub_one_eq_floor hr hk]
 
 /-- **(ratified).**  Partner: `W'(2k − 1) = ⌊kα⌋`. -/
 theorem wqp_two_mul_sub_one_eq_floor (hr : 2 ≤ r) (k : ℤ) :
     wqp r (2 * k - 1) = ⌊(k : ℝ) * alphaQ r⌋ := by
-  sorry
+  rw [wqp_two_mul_sub_one, ← wq_two_mul, wq_two_mul_eq_floor hr]
 
 end Bridge
 
@@ -158,12 +336,46 @@ section Bijection
 
 variable {r : ℕ}
 
+/-- The even branch is strictly increasing. -/
+lemma wq_even_strictMono (hr : 2 ≤ r) : StrictMono fun k => wq r (2 * k) := by
+  refine strictMono_int_of_lt_succ fun k => ?_
+  simp only [wq_two_mul]
+  have := sfl_succ_bounds hr k
+  nlinarith
+
+/-- The odd branch is strictly increasing. -/
+lemma wq_odd_strictMono (hr : 2 ≤ r) : StrictMono fun k => wq r (2 * k - 1) := by
+  refine strictMono_int_of_lt_succ fun k => ?_
+  simp only [wq_two_mul_sub_one]
+  have := sfl_succ_bounds hr k
+  nlinarith
+
 /-- **(ratified).**  `W` is a bijection of `ℤ`.  Paper proof: the even branch is
 `k ↦ beattySeq α k`, the odd branch `k ↦ beattySeq' β k` (`wq_two_mul_eq_floor`,
 `wq_two_mul_sub_one_eq_ceil`), both strictly increasing (`α, β > 1`), with complementary ranges
 (`compl_beattySeq` with `alphaQ_holderConjugate`). -/
 theorem wq_bijective (hr : 2 ≤ r) : Function.Bijective (wq r) := by
-  sorry
+  have hc := compl_beattySeq (alphaQ_holderConjugate hr)
+  have cross : ∀ a b : ℤ, wq r (2 * a) ≠ wq r (2 * b - 1) := by
+    intro a b h
+    have hmem : beattySeq' (betaQ r) b ∈ {x | ∃ k, beattySeq' (betaQ r) k = x} := ⟨b, rfl⟩
+    rw [← hc] at hmem
+    refine hmem ⟨a, ?_⟩
+    simp only [beattySeq, beattySeq']
+    rw [← wq_two_mul_eq_floor hr, ← wq_two_mul_sub_one_eq_ceil hr, h]
+  refine ⟨fun a b h => ?_, fun n => ?_⟩
+  · obtain ⟨k, rfl | rfl⟩ : ∃ k, a = 2 * k ∨ a = 2 * k - 1 := ⟨(a + 1) / 2, by omega⟩ <;>
+    obtain ⟨l, rfl | rfl⟩ : ∃ l, b = 2 * l ∨ b = 2 * l - 1 := ⟨(b + 1) / 2, by omega⟩
+    · rw [(wq_even_strictMono hr).injective h]
+    · exact absurd h (cross _ _)
+    · exact absurd h.symm (cross _ _)
+    · rw [(wq_odd_strictMono hr).injective h]
+  · by_cases h : n ∈ {x | ∃ k, beattySeq (alphaQ r) k = x}
+    · obtain ⟨k, hk⟩ := h
+      exact ⟨2 * k, by rw [wq_two_mul_eq_floor hr]; exact hk⟩
+    · rw [← Set.mem_compl_iff, hc] at h
+      obtain ⟨k, hk⟩ := h
+      exact ⟨2 * k - 1, by rw [wq_two_mul_sub_one_eq_ceil hr]; exact hk⟩
 
 /-- `W_α` as a permutation of `ℤ`. -/
 noncomputable def wqPerm (r : ℕ) (hr : 2 ≤ r) : Equiv.Perm ℤ :=
@@ -174,11 +386,36 @@ theorem wqPerm_apply (hr : 2 ≤ r) (n : ℤ) : wqPerm r hr n = wq r n := rfl
 /-- **(ratified).**  `W` preserves `ℕ⁺` (and hence `ℤ≤0`).  Paper proof: for `k ≥ 1`,
 `⌊kα⌋ ≥ 1` and `⌊kβ⌋ ≥ 1`; for `k ≤ 0`, `⌊kα⌋ ≤ 0` and `⌈kβ⌉ − 1 ≤ −1`. -/
 theorem wq_pos_iff (hr : 2 ≤ r) (n : ℤ) : 0 < wq r n ↔ 0 < n := by
-  sorry
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, n = 2 * k ∨ n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  · rw [wq_two_mul]
+    rcases le_or_gt k 0 with hk | hk
+    · have := sfl_nonpos_bounds hr hk
+      constructor
+      · intro h; nlinarith
+      · intro h; omega
+    · have := sfl_pos_bounds hr hk
+      constructor
+      · intro; omega
+      · intro; nlinarith
+  · rw [wq_two_mul_sub_one]
+    rcases le_or_gt k 0 with hk | hk
+    · have := sfl_nonpos_bounds hr hk
+      constructor
+      · intro h; omega
+      · intro h; omega
+    · have := sfl_pos_bounds hr hk
+      constructor
+      · intro; omega
+      · intro; nlinarith
 
 /-- **(ratified).**  The partner is a bijection of `ℤ` (`wqp_eq_wq`). -/
 theorem wqp_bijective (hr : 2 ≤ r) : Function.Bijective (wqp r) := by
-  sorry
+  have hinv : Function.Involutive fun n : ℤ => if n % 2 = 0 then n - 1 else n + 1 := by
+    intro n; dsimp only; split_ifs <;> omega
+  have : wqp r = wq r ∘ fun n : ℤ => if n % 2 = 0 then n - 1 else n + 1 :=
+    funext (wqp_eq_wq r)
+  rw [this]
+  exact (wq_bijective hr).comp hinv.bijective
 
 /-- The partner `W_β` as a permutation of `ℤ`. -/
 noncomputable def wqpPerm (r : ℕ) (hr : 2 ≤ r) : Equiv.Perm ℤ :=
@@ -188,7 +425,8 @@ theorem wqpPerm_apply (hr : 2 ≤ r) (n : ℤ) : wqpPerm r hr n = wqp r n := rfl
 
 /-- **(ratified).**  The partner preserves `ℕ⁺`. -/
 theorem wqp_pos_iff (hr : 2 ≤ r) (n : ℤ) : 0 < wqp r n ↔ 0 < n := by
-  sorry
+  rw [wqp_eq_wq, wq_pos_iff hr]
+  split_ifs <;> omega
 
 end Bijection
 
@@ -205,35 +443,100 @@ variable {r : ℕ}
 `sfl r ((2rk + s + 1)/2) = 2mk + rs + r − 1`, two polynomial inequalities (`nlinarith`). -/
 theorem wq_wq_of_odd (hr : 2 ≤ r) (k : ℤ) (h : wq r (2 * k) % 2 = 1) :
     wq r (wq r (2 * k)) = 2 * r * k := by
-  sorry
+  rw [wq_two_mul] at h ⊢
+  have hk : k ≠ 0 := by rintro rfl; simp [sfl_zero] at h
+  set s := sfl r k with hs
+  set q := √((r : ℝ) ^ 2 - r) with hq
+  obtain ⟨j, hj⟩ : ∃ j, 2 * r * k + s = 2 * j - 1 := ⟨r * k + (s + 1) / 2, by
+    rw [show (2 : ℤ) * r * k = 2 * (r * k) by ring] at h ⊢; omega⟩
+  rw [hj, wq_two_mul_sub_one]
+  have hT : sfl r j = 2 * ((r : ℤ) ^ 2 - r) * k + r * s + r - 1 := by
+    have hjR : (2 * j : ℝ) = 2 * r * k + s + 1 := by
+      have := congrArg (fun z : ℤ => (z : ℝ)) hj; push_cast at this; linarith
+    have e : 2 * (j : ℝ) * q - (((2 * ((r : ℤ) ^ 2 - r) * k + r * s + r - 1 : ℤ)) : ℝ) =
+        (r - q) * (2 * k * q - s - 1) + 1 := by
+      rw [hjR]; push_cast; linear_combination (2 * (k : ℝ)) * sqrt_sq_radicand r
+    have hb := sfl_bounds hr k
+    have hl := sfl_lt hr hk
+    rw [← hs, ← hq] at hb hl
+    have u1 := sqrt_radicand_gt hr
+    have u2 := sqrt_radicand_lt hr
+    rw [← hq] at u1 u2
+    have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+    have v1 : 0 < (r - q) * (s + 1 - 2 * k * q) := mul_pos (by linarith) (by linarith)
+    have v2 : 0 < (1 - (r - q)) * (s + 1 - 2 * k * q) := mul_pos (by linarith) (by linarith)
+    apply sfl_eq_of hr
+    · nlinarith
+    · nlinarith
+  rw [hT]
+  linear_combination (r : ℤ) * hj.symm
 
 /-- **(ratified, Theorem D for the partner).**  If `W'(2k − 1)` is even then
 `W'(W'(2k − 1)) = 2rk − 1`.  Paper proof: `W'(2k − 1) = kα − f = 2j`, so
 `W'(2j) = ⌈jβ⌉ − 1 = ⌈2rk − fβ/2⌉ − 1 = 2rk − 1`. -/
 theorem wqp_wqp_of_even (hr : 2 ≤ r) (k : ℤ) (h : wqp r (2 * k - 1) % 2 = 0) :
     wqp r (wqp r (2 * k - 1)) = 2 * r * k - 1 := by
-  sorry
+  rw [wqp_two_mul_sub_one] at h ⊢
+  set s := sfl r k with hs
+  set q := √((r : ℝ) ^ 2 - r) with hq
+  obtain ⟨j, hj⟩ : ∃ j, 2 * r * k + s = 2 * j := ⟨r * k + s / 2, by
+    rw [show (2 : ℤ) * r * k = 2 * (r * k) by ring] at h ⊢; omega⟩
+  rw [hj, wqp_two_mul]
+  have hT : sfl r j = 2 * ((r : ℤ) ^ 2 - r) * k + r * s := by
+    have hjR : (2 * j : ℝ) = 2 * r * k + s := by
+      have := congrArg (fun z : ℤ => (z : ℝ)) hj; push_cast at this; linarith
+    have e : 2 * (j : ℝ) * q - (((2 * ((r : ℤ) ^ 2 - r) * k + r * s : ℤ)) : ℝ) =
+        (r - q) * (2 * k * q - s) := by
+      rw [hjR]; push_cast; linear_combination (2 * (k : ℝ)) * sqrt_sq_radicand r
+    have hb := sfl_bounds hr k
+    rw [← hs, ← hq] at hb
+    have u1 := sqrt_radicand_gt hr
+    have u2 := sqrt_radicand_lt hr
+    rw [← hq] at u1 u2
+    have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+    have v1 : 0 ≤ (r - q) * (2 * k * q - s) := mul_nonneg (by linarith) (by linarith)
+    have v2 : 0 ≤ (1 - (r - q)) * (2 * k * q - s) := mul_nonneg (by linarith) (by linarith)
+    apply sfl_eq_of hr
+    · nlinarith
+    · nlinarith
+  rw [hT]
+  linear_combination (r : ℤ) * hj.symm
 
 /-- **(ratified).**  `1` is a fixed point: `⌊β⌋ = 1`. -/
 theorem wq_one (hr : 2 ≤ r) : wq r 1 = 1 := by
-  sorry
+  have h := wq_two_mul_sub_one r 1
+  norm_num at h
+  have h1 : sfl r 1 = 2 * r - 2 := by
+    apply sfl_eq_of hr
+    · push_cast; linarith [sqrt_radicand_gt hr]
+    · push_cast; linarith [sqrt_radicand_lt hr]
+  rw [h, h1]
+  ring
 
 /-- **(ratified).**  Even ascent, with the slope bounds `4r − 2 < α < 4r`:
 `(4r − 2)k ≤ W(2k) < 4rk` for `k ≥ 1`.  Paper proof: `(2r − 2)k ≤ ⌊2k√m⌋ < 2rk`. -/
 theorem wq_two_mul_bounds (hr : 2 ≤ r) {k : ℤ} (hk : 1 ≤ k) :
     (4 * r - 2) * k ≤ wq r (2 * k) ∧ wq r (2 * k) < 4 * r * k := by
-  sorry
+  rw [wq_two_mul]
+  have := sfl_pos_bounds hr hk
+  constructor <;> nlinarith
 
 /-- **(ratified).**  Odd descent: `j ≤ W(2j − 1)`, and `W(2j − 1) < 2j − 1` for `j ≥ 2`.
 Paper proof: `⌊jβ⌋ < 2j − 1 ⟸ j(2 − β) > 1`, true for `j ≥ 2` as `β < 6/5`. -/
 theorem wq_two_mul_sub_one_bounds (hr : 2 ≤ r) {j : ℤ} (hj : 1 ≤ j) :
     j ≤ wq r (2 * j - 1) ∧ (2 ≤ j → wq r (2 * j - 1) < 2 * j - 1) := by
-  sorry
+  rw [wq_two_mul_sub_one]
+  have := sfl_pos_bounds hr hj
+  refine ⟨by nlinarith, fun hj2 => ?_⟩
+  have := sfl_ge_of_two_le hr hj2
+  nlinarith
 
 /-- **(ratified).**  Partner steps: `k ≤ W'(2k) < 2k` and `2k − 1 < W'(2k − 1)` for `k ≥ 1`. -/
 theorem wqp_bounds (hr : 2 ≤ r) {k : ℤ} (hk : 1 ≤ k) :
     k ≤ wqp r (2 * k) ∧ wqp r (2 * k) < 2 * k ∧ 2 * k - 1 < wqp r (2 * k - 1) := by
-  sorry
+  rw [wqp_two_mul, wqp_two_mul_sub_one]
+  have := sfl_pos_bounds hr hk
+  refine ⟨by nlinarith, by nlinarith, by nlinarith⟩
 
 end Steps
 
