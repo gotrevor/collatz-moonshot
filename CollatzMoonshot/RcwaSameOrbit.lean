@@ -81,9 +81,26 @@ structure Exact (T : RcwaTable) : Prop where
   slope : ∀ p ∈ T.pieces, p.2.2 ≠ 0 ∧ ∃ i j : ℤ, (p.1 : ℚ) / p.2.2 = (2 : ℚ) ^ i * (3 : ℚ) ^ j
   dvd : ∀ n, (T.piece n).2.2 ∣ (T.piece n).1 * n + (T.piece n).2.1
 
-/-- **Open.**  An exact table evaluates to an `IsRcwa23` map. -/
+/-- The piece at `n` of an exact table is one of its pieces. -/
+theorem piece_mem {T : RcwaTable} (hT : T.Exact) (n : ℤ) : T.piece n ∈ T.pieces := by
+  have hM : (0 : ℤ) < T.modulus := by exact_mod_cast hT.pos
+  have hlt : (n % (T.modulus : ℤ)).toNat < T.pieces.length := by
+    rw [hT.length]
+    have := Int.emod_lt_of_pos n hM
+    have := Int.emod_nonneg n hM.ne'
+    omega
+  rw [piece, List.getD_eq_getElem _ _ hlt]
+  exact List.getElem_mem hlt
+
+/-- An exact table evaluates to an `IsRcwa23` map. -/
 theorem isRcwa23_eval {T : RcwaTable} (hT : T.Exact) : IsRcwa23 T.eval := by
-  sorry
+  refine ⟨T.modulus, hT.pos, fun r => ?_⟩
+  obtain ⟨hc, hs⟩ := hT.slope _ (piece_mem hT r)
+  refine ⟨(T.piece r).1, (T.piece r).2.1, (T.piece r).2.2, hc, hs, fun n hn => ?_⟩
+  have hp : T.piece n = T.piece r := by
+    rw [piece, piece, show n % (T.modulus : ℤ) = r % T.modulus from hn]
+  rw [eval, ← hp]
+  exact Int.mul_ediv_cancel' (hT.dvd n)
 
 end RcwaTable
 
@@ -95,11 +112,93 @@ def tableFrom (f : ℤ → ℤ) (M : ℕ) : RcwaTable where
     let q : ℚ := ((f (k + M) - f k : ℤ) : ℚ) / M
     (q.num, (q.den : ℤ) * f k - q.num * k, (q.den : ℤ))
 
-/-- **Open.**  If `f` is RCWA with slopes in `2^ℤ 3^ℤ` at modulus `M > 0`, `tableFrom f M` is
+/-- The slope `tableFrom` reads off class `k`. -/
+def tableSlope (f : ℤ → ℤ) (M : ℕ) (k : ℤ) : ℚ :=
+  ((f (k + M) - f k : ℤ) : ℚ) / M
+
+/-- The triple `tableFrom` stores for class `k`. -/
+def tableRow (f : ℤ → ℤ) (M : ℕ) (k : ℤ) : ℤ × ℤ × ℤ :=
+  ((tableSlope f M k).num, ((tableSlope f M k).den : ℤ) * f k - (tableSlope f M k).num * k,
+    ((tableSlope f M k).den : ℤ))
+
+theorem tableFrom_length (f : ℤ → ℤ) (M : ℕ) : (tableFrom f M).pieces.length = M := by
+  simp [tableFrom]
+
+theorem tableFrom_getElem (f : ℤ → ℤ) (M k : ℕ) (hk : k < (tableFrom f M).pieces.length) :
+    (tableFrom f M).pieces[k] = tableRow f M k := by
+  have hL : List.flatMap (fun a : ℕ => [(a : ℤ)]) (List.range M) =
+      (List.range M).map (fun a : ℕ => (a : ℤ)) := List.map_eq_flatMap.symm
+  simp [tableFrom, hL, tableRow, tableSlope]
+
+theorem tableFrom_mem {f : ℤ → ℤ} {M : ℕ} {p : ℤ × ℤ × ℤ} (hp : p ∈ (tableFrom f M).pieces) :
+    ∃ k : ℕ, p = tableRow f M k := by
+  obtain ⟨k, hk, rfl⟩ := List.getElem_of_mem hp
+  exact ⟨k, tableFrom_getElem f M k hk⟩
+
+theorem tableFrom_piece {f : ℤ → ℤ} {M : ℕ} (hM : 0 < M) (n : ℤ) :
+    (tableFrom f M).piece n = tableRow f M (n % M) := by
+  have hM' : (0 : ℤ) < M := by exact_mod_cast hM
+  have h0 := Int.emod_nonneg n hM'.ne'
+  have hlt : (n % (M : ℤ)).toNat < (tableFrom f M).pieces.length := by
+    rw [tableFrom_length]
+    have := Int.emod_lt_of_pos n hM'
+    omega
+  unfold RcwaTable.piece
+  rw [show (tableFrom f M).modulus = M from rfl, List.getD_eq_getElem _ _ hlt,
+    tableFrom_getElem, Int.toNat_of_nonneg h0]
+
+/-- On the class of `k`, the row read off at `k` is exact: `den · f n = num · n + b`, and the
+slope is in `2^ℤ 3^ℤ`. -/
+theorem tableRow_spec {f : ℤ → ℤ} {M : ℕ} (hM : 0 < M) (hf : IsRcwa23At M f) (k n : ℤ)
+    (hn : n ≡ k [ZMOD M]) :
+    (tableRow f M k).2.2 * f n = (tableRow f M k).1 * n + (tableRow f M k).2.1 ∧
+      ∃ i j : ℤ, tableSlope f M k = (2 : ℚ) ^ i * (3 : ℚ) ^ j := by
+  set q : ℚ := tableSlope f M k with hqdef
+  obtain ⟨a, b, c, hc, ⟨i, j, hij⟩, h⟩ := hf k
+  have hk := h k (Int.ModEq.refl k)
+  have hkM := h (k + M) (by simp [Int.ModEq])
+  have hnn := h n hn
+  have hcq : (c : ℚ) ≠ 0 := by exact_mod_cast hc
+  have hMq : (M : ℚ) ≠ 0 := by exact_mod_cast hM.ne'
+  have hq : q = a / c := by
+    rw [hqdef, tableSlope, div_eq_div_iff hMq hcq]
+    have : (f (k + M) - f k) * c = a * M := by linear_combination hkM - hk
+    exact_mod_cast this
+  refine ⟨?_, i, j, hq ▸ hij⟩
+  have hnum : (q.num : ℚ) = q * q.den := (Rat.mul_den_eq_num q).symm
+  have hfn : (c : ℚ) * (f n - f k) = a * (n - k) := by
+    have : c * (f n - f k) = a * (n - k) := by linear_combination hnn - hk
+    exact_mod_cast this
+  have key : ∀ d : ℚ, d * f n = q * d * n + (d * f k - q * d * k) := by
+    intro d; rw [hq]; field_simp; linear_combination d * hfn
+  have key' := key q.den
+  rw [← hnum] at key'
+  simp only [tableRow, ← hqdef]
+  exact_mod_cast key'
+
+/-- If `f` is RCWA with slopes in `2^ℤ 3^ℤ` at modulus `M > 0`, `tableFrom f M` is
 an exact table for `f`. -/
 theorem tableFrom_spec {f : ℤ → ℤ} {M : ℕ} (hM : 0 < M) (hf : IsRcwa23At M f) :
     (tableFrom f M).Exact ∧ (tableFrom f M).eval = f := by
-  sorry
+  have hkey : ∀ n : ℤ, _ := fun n =>
+    tableRow_spec hM hf (n % M) n (Int.mod_modEq n M).symm
+  have hden : ∀ k, (tableRow f M k).2.2 ≠ 0 := fun k => by
+    simp only [tableRow]; exact_mod_cast (Rat.den_pos _).ne'
+  have hev : ∀ n, (tableFrom f M).eval n = f n := by
+    intro n
+    rw [RcwaTable.eval, tableFrom_piece hM, ← (hkey n).1]
+    exact Int.mul_ediv_cancel_left _ (hden _)
+  refine ⟨⟨hM, tableFrom_length f M, ?_, fun n => ?_⟩, funext hev⟩
+  · intro p hp
+    obtain ⟨k, rfl⟩ := tableFrom_mem hp
+    refine ⟨hden k, ?_⟩
+    obtain ⟨i, j, hij⟩ := (tableRow_spec hM hf (k : ℤ) k (Int.ModEq.refl _)).2
+    refine ⟨i, j, ?_⟩
+    simp only [tableRow]
+    rw [Int.cast_natCast, Rat.num_div_den]
+    exact hij
+  · rw [tableFrom_piece hM, ← (hkey n).1]
+    exact dvd_mul_right _ _
 
 /-! ## 2. Reversible 2-counter machines -/
 
