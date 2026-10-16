@@ -66,19 +66,220 @@ def junk (n : ℤ) : ℕ × ℕ × ℤ :=
 def scale (n A B : ℤ) : ℤ :=
   n * 2 ^ A.toNat * 3 ^ B.toNat / (2 ^ (-A).toNat * 3 ^ (-B).toNat)
 
-/-- **Open.**  On the engine, `3^phase ≡ n (mod 25)` and `phase < 20`. -/
+/-! ### Helpers: residues mod `25` -/
+
+/-- `dlog3` inverts `3^·` on the units of `ZMod 25`. -/
+theorem dlog3_spec : ∀ x : ZMod 25, 5 * x ≠ 0 → dlog3 x < 20 ∧ (3 : ZMod 25) ^ dlog3 x = x := by
+  decide
+
+theorem dlog3_three_pow : ∀ s : Fin 20, dlog3 ((3 : ZMod 25) ^ (s : ℕ)) = s := by
+  decide
+
+theorem five_mul_three_pow_ne : ∀ s : Fin 20, (5 : ZMod 25) * 3 ^ (s : ℕ) ≠ 0 := by
+  decide
+
+theorem two_pow_twenty : (2 : ZMod 25) ^ 20 = 1 := by
+  decide
+
+theorem three_pow_twenty : (3 : ZMod 25) ^ 20 = 1 := by
+  decide
+
+theorem five_mul_cast_eq_zero_iff (n : ℤ) : (5 : ZMod 25) * (n : ZMod 25) = 0 ↔ (5 : ℤ) ∣ n := by
+  have h : (5 : ZMod 25) * (n : ZMod 25) = ((5 * n : ℤ) : ZMod 25) := by push_cast; rfl
+  rw [h, ZMod.intCast_zmod_eq_zero_iff_dvd]
+  push_cast
+  omega
+
+theorem three_pow_cancel {s : ℕ} (hs : s < 20) {u : ZMod 25} (h : 3 ^ s * u = 3 ^ s) : u = 1 := by
+  have h1 : (3 : ZMod 25) ^ (20 - s) * 3 ^ s = 1 := by
+    rw [← pow_add, Nat.sub_add_cancel hs.le, three_pow_twenty]
+  calc u = (3 ^ (20 - s) * 3 ^ s) * u := by rw [h1, one_mul]
+    _ = 3 ^ (20 - s) * (3 ^ s * u) := by ring
+    _ = 1 := by rw [h, h1]
+
+/-! ### Helpers: valuations -/
+
+theorem padicValInt_pow_mul {p : ℕ} [Fact p.Prime] {a : ℕ} {k : ℤ} (hk : ¬ (p : ℤ) ∣ k) :
+    padicValInt p ((p : ℤ) ^ a * k) = a := by
+  have hk0 : k ≠ 0 := by rintro rfl; exact hk (dvd_zero _)
+  have hp0 : ((p : ℤ) ^ a) ≠ 0 :=
+    pow_ne_zero _ (by exact_mod_cast (Fact.out : p.Prime).ne_zero)
+  apply le_antisymm
+  · by_contra hlt
+    push Not at hlt
+    have h := (padicValInt_dvd_iff (p := p) (a + 1) ((p : ℤ) ^ a * k)).2 (Or.inr hlt)
+    rw [pow_succ] at h
+    exact hk ((mul_dvd_mul_iff_left hp0).1 h)
+  · exact ((padicValInt_dvd_iff (p := p) a ((p : ℤ) ^ a * k)).1 (dvd_mul_right _ _)).resolve_left
+      (mul_ne_zero hp0 hk0)
+
+theorem not_dvd_mul_of_prime {p : ℤ} (hp : Prime p) {x y : ℤ} (hx : ¬ p ∣ x) (hy : ¬ p ∣ y) :
+    ¬ p ∣ x * y :=
+  fun h => (hp.dvd_or_dvd h).elim hx hy
+
+theorem not_dvd_pow_of_prime {p q : ℤ} (hp : Prime p) (hq : ¬ p ∣ q) (k : ℕ) : ¬ p ∣ q ^ k :=
+  fun h => hq (hp.dvd_of_dvd_pow h)
+
+theorem v2_mk {a b : ℕ} {m : ℤ} (h2 : ¬ (2 : ℤ) ∣ m) :
+    v2 (2 ^ a * 3 ^ b * m) = a := by
+  have h : ¬ (2 : ℤ) ∣ 3 ^ b * m :=
+    not_dvd_mul_of_prime Int.prime_two (not_dvd_pow_of_prime Int.prime_two (by decide) b) h2
+  have := padicValInt_pow_mul (p := 2) (a := a) (k := 3 ^ b * m) (by exact_mod_cast h)
+  rw [v2, mul_assoc]
+  exact_mod_cast this
+
+theorem v3_mk {a b : ℕ} {m : ℤ} (h3 : ¬ (3 : ℤ) ∣ m) :
+    v3 (2 ^ a * 3 ^ b * m) = b := by
+  have h : ¬ (3 : ℤ) ∣ 2 ^ a * m :=
+    not_dvd_mul_of_prime Int.prime_three (not_dvd_pow_of_prime Int.prime_three (by decide) a) h3
+  have := padicValInt_pow_mul (p := 3) (a := b) (k := 2 ^ a * m) (by exact_mod_cast h)
+  rw [v3, show (2 : ℤ) ^ a * 3 ^ b * m = 3 ^ b * (2 ^ a * m) by ring]
+  exact_mod_cast this
+
+/-- Every nonzero `n` is `2^{v₂} 3^{v₃} m` with `m` prime to `6`. -/
+theorem decomp {n : ℤ} (hn : n ≠ 0) :
+    ¬ (2 : ℤ) ∣ n / (2 ^ v2 n * 3 ^ v3 n) ∧ ¬ (3 : ℤ) ∣ n / (2 ^ v2 n * 3 ^ v3 n) ∧
+      n = 2 ^ v2 n * 3 ^ v3 n * (n / (2 ^ v2 n * 3 ^ v3 n)) := by
+  have h2 : (2 : ℤ) ^ v2 n ∣ n := by exact_mod_cast padicValInt_dvd (p := 2) n
+  have h3 : (3 : ℤ) ^ v3 n ∣ n := by exact_mod_cast padicValInt_dvd (p := 3) n
+  have hc : IsCoprime ((2 : ℤ) ^ v2 n) (3 ^ v3 n) := by
+    apply IsCoprime.pow
+    rw [Int.isCoprime_iff_gcd_eq_one]
+    rfl
+  have he : n = 2 ^ v2 n * 3 ^ v3 n * (n / (2 ^ v2 n * 3 ^ v3 n)) :=
+    (Int.mul_ediv_cancel' (hc.mul_dvd h2 h3)).symm
+  refine ⟨?_, ?_, he⟩
+  · rintro ⟨k, hk⟩
+    have h : (2 : ℤ) ^ (v2 n + 1) ∣ n := ⟨3 ^ v3 n * k, by nth_rw 1 [he]; rw [hk]; ring⟩
+    have h' : v2 n + 1 ≤ v2 n :=
+      ((padicValInt_dvd_iff (p := 2) _ n).1 (by exact_mod_cast h)).resolve_left hn
+    omega
+  · rintro ⟨k, hk⟩
+    have h : (3 : ℤ) ^ (v3 n + 1) ∣ n := ⟨2 ^ v2 n * k, by nth_rw 1 [he]; rw [hk]; ring⟩
+    have h' : v3 n + 1 ≤ v3 n :=
+      ((padicValInt_dvd_iff (p := 3) _ n).1 (by exact_mod_cast h)).resolve_left hn
+    omega
+
+/-! ### Helpers: building engine points from state, counters and junk -/
+
+/-- The engine point with junk `(e, D, m)`, state `s` and counters `(c₁, c₂)`. -/
+def build (e D : ℕ) (m : ℤ) (s c₁ c₂ : ℕ) : ℤ :=
+  2 ^ (20 * c₁ + e) * 3 ^ (s + 20 * c₂ + D) * m
+
+theorem build_cast (e D : ℕ) (m : ℤ) (s c₁ c₂ : ℕ) :
+    ((build e D m s c₁ c₂ : ℤ) : ZMod 25) = 3 ^ s * (2 ^ e * 3 ^ D * m) := by
+  simp only [build]
+  push_cast
+  rw [pow_add, pow_add, pow_add, pow_mul, pow_mul, two_pow_twenty, three_pow_twenty, one_pow,
+    one_pow]
+  ring
+
+theorem build_spec {e D s : ℕ} {m : ℤ} (he : e < 20) (hD : D < 20) (hs : s < 20)
+    (h2 : ¬ (2 : ℤ) ∣ m) (h3 : ¬ (3 : ℤ) ∣ m) (hu : (2 : ZMod 25) ^ e * 3 ^ D * m = 1)
+    (c₁ c₂ : ℕ) :
+    InEngine (build e D m s c₁ c₂) ∧ phase (build e D m s c₁ c₂) = s ∧
+      C1 (build e D m s c₁ c₂) = c₁ ∧ C2 (build e D m s c₁ c₂) = c₂ ∧
+      junk (build e D m s c₁ c₂) = (e, D, m) := by
+  have hv2 : v2 (build e D m s c₁ c₂) = 20 * c₁ + e := v2_mk h2
+  have hv3 : v3 (build e D m s c₁ c₂) = s + 20 * c₂ + D := v3_mk h3
+  have hmod : ((build e D m s c₁ c₂ : ℤ) : ZMod 25) = 3 ^ s := by
+    rw [build_cast, hu, mul_one]
+  have hph : phase (build e D m s c₁ c₂) = s := by
+    rw [phase, hmod]
+    exact dlog3_three_pow ⟨s, hs⟩
+  have hm0 : m ≠ 0 := by rintro rfl; exact h2 (dvd_zero _)
+  refine ⟨⟨?_, ?_, ?_⟩, hph, ?_, ?_, ?_⟩
+  · simp only [build]
+    exact mul_ne_zero (mul_ne_zero (pow_ne_zero _ (by norm_num)) (pow_ne_zero _ (by norm_num))) hm0
+  · rw [← five_mul_cast_eq_zero_iff, hmod]
+    exact five_mul_three_pow_ne ⟨s, hs⟩
+  · rw [hph, hv3]; omega
+  · rw [C1, hv2]; omega
+  · rw [C2, hv3, hph]; omega
+  · rw [junk, hv2, hv3, hph]
+    simp only [Prod.mk.injEq]
+    refine ⟨by omega, by omega, ?_⟩
+    show 2 ^ (20 * c₁ + e) * 3 ^ (s + 20 * c₂ + D) * m / (2 ^ (20 * c₁ + e) * 3 ^ (s + 20 * c₂ + D))
+      = m
+    exact Int.mul_ediv_cancel_left _ (mul_ne_zero (pow_ne_zero _ (by norm_num))
+      (pow_ne_zero _ (by norm_num)))
+
+/-- Every engine point is built from its own junk, state and counters. -/
+theorem decode_spec {n : ℤ} (hn : InEngine n) :
+    (junk n).1 < 20 ∧ (junk n).2.1 < 20 ∧ ¬ (2 : ℤ) ∣ (junk n).2.2 ∧ ¬ (3 : ℤ) ∣ (junk n).2.2 ∧
+      (2 : ZMod 25) ^ (junk n).1 * 3 ^ (junk n).2.1 * ((junk n).2.2 : ZMod 25) = 1 ∧
+      n = build (junk n).1 (junk n).2.1 (junk n).2.2 (phase n) (C1 n) (C2 n) := by
+  obtain ⟨h2, h3, he⟩ := decomp hn.1
+  have hb : phase n ≤ v3 n := hn.2.2
+  have heq : n = build (junk n).1 (junk n).2.1 (junk n).2.2 (phase n) (C1 n) (C2 n) := by
+    have ha : 20 * (v2 n / 20) + v2 n % 20 = v2 n := by omega
+    have hb' : phase n + 20 * ((v3 n - phase n) / 20) + (v3 n - phase n) % 20 = v3 n := by omega
+    simp only [build, junk, C1, C2]
+    rw [ha, hb']
+    exact he
+  have hs : phase n < 20 := (dlog3_spec _ ((five_mul_cast_eq_zero_iff n).not.2 hn.2.1)).1
+  refine ⟨by simp only [junk]; omega, by simp only [junk]; omega, h2, h3, ?_, heq⟩
+  apply three_pow_cancel hs
+  rw [← build_cast _ _ _ _ (C1 n) (C2 n), ← heq]
+  exact (dlog3_spec _ ((five_mul_cast_eq_zero_iff n).not.2 hn.2.1)).2.symm
+
+theorem build_mul_eq {e D s s' c₁ c₂ : ℕ} {m δ₁ δ₂ : ℤ} (h₁ : 0 ≤ (c₁ : ℤ) + δ₁)
+    (h₂ : 0 ≤ (c₂ : ℤ) + δ₂) :
+    build e D m s c₁ c₂ * 2 ^ (20 * δ₁).toNat * 3 ^ (20 * δ₂ + s' - s).toNat =
+      build e D m s' ((c₁ : ℤ) + δ₁).toNat ((c₂ : ℤ) + δ₂).toNat *
+        (2 ^ (-(20 * δ₁)).toNat * 3 ^ (-(20 * δ₂ + s' - s)).toNat) := by
+  have ha : 20 * c₁ + e + (20 * δ₁).toNat =
+      20 * ((c₁ : ℤ) + δ₁).toNat + e + (-(20 * δ₁)).toNat := by omega
+  have hb : s + 20 * c₂ + D + (20 * δ₂ + s' - s).toNat =
+      s' + 20 * ((c₂ : ℤ) + δ₂).toNat + D + (-(20 * δ₂ + s' - s)).toNat := by omega
+  simp only [build]
+  calc (2 : ℤ) ^ (20 * c₁ + e) * 3 ^ (s + 20 * c₂ + D) * m * 2 ^ (20 * δ₁).toNat *
+        3 ^ (20 * δ₂ + s' - s).toNat
+      = 2 ^ (20 * c₁ + e + (20 * δ₁).toNat) * 3 ^ (s + 20 * c₂ + D + (20 * δ₂ + s' - s).toNat)
+          * m := by ring
+    _ = 2 ^ (20 * ((c₁ : ℤ) + δ₁).toNat + e + (-(20 * δ₁)).toNat) *
+          3 ^ (s' + 20 * ((c₂ : ℤ) + δ₂).toNat + D + (-(20 * δ₂ + s' - s)).toNat) * m := by
+        rw [ha, hb]
+    _ = _ := by ring
+
+theorem scale_build {e D s s' c₁ c₂ : ℕ} {m δ₁ δ₂ : ℤ} (h₁ : 0 ≤ (c₁ : ℤ) + δ₁)
+    (h₂ : 0 ≤ (c₂ : ℤ) + δ₂) :
+    scale (build e D m s c₁ c₂) (20 * δ₁) (20 * δ₂ + s' - s) =
+      build e D m s' ((c₁ : ℤ) + δ₁).toNat ((c₂ : ℤ) + δ₂).toNat := by
+  rw [scale]
+  exact Int.ediv_eq_of_eq_mul_left (mul_ne_zero (pow_ne_zero _ (by norm_num))
+    (pow_ne_zero _ (by norm_num))) (build_mul_eq h₁ h₂)
+
+/-! ### Lemma P -/
+
+/-- On the engine, `3^phase ≡ n (mod 25)` and `phase < 20`. -/
 theorem phase_spec {n : ℤ} (hn : InEngine n) :
     phase n < 20 ∧ (3 : ZMod 25) ^ phase n = (n : ZMod 25) := by
-  sorry
+  exact dlog3_spec _ ((five_mul_cast_eq_zero_iff n).not.2 hn.2.1)
 
-/-- **Open.**  The first zero test is `2^20 ∣ n`. -/
+/-- The first zero test is `2^20 ∣ n`. -/
 theorem one_le_C1_iff {n : ℤ} (hn : InEngine n) : 1 ≤ C1 n ↔ (2 : ℤ) ^ 20 ∣ n := by
-  sorry
+  have h := padicValInt_dvd_iff (p := 2) 20 n
+  simp only [Nat.cast_ofNat] at h
+  rw [h, C1]
+  constructor
+  · intro h1; right; change 20 ≤ v2 n; omega
+  · rintro (h1 | h1)
+    · exact absurd h1 hn.1
+    · change 20 ≤ v2 n at h1; omega
 
-/-- **Open.**  The second zero test is `3^(20 + phase n) ∣ n`. -/
+/-- The second zero test is `3^(20 + phase n) ∣ n`. -/
 theorem one_le_C2_iff {n : ℤ} (hn : InEngine n) :
     1 ≤ C2 n ↔ (3 : ℤ) ^ (20 + phase n) ∣ n := by
-  sorry
+  have hb : phase n ≤ v3 n := hn.2.2
+  have h := padicValInt_dvd_iff (p := 3) (20 + phase n) n
+  simp only [Nat.cast_ofNat] at h
+  rw [h, C2]
+  constructor
+  · intro h1; right; change 20 + phase n ≤ v3 n; omega
+  · rintro (h1 | h1)
+    · exact absurd h1 hn.1
+    · change 20 + phase n ≤ v3 n at h1; omega
 
 section Step
 
@@ -86,45 +287,72 @@ variable {n : ℤ} (hn : InEngine n) {s' : ℕ} (hs' : s' < 20) {δ₁ δ₂ : �
   (h₁ : 0 ≤ (C1 n : ℤ) + δ₁) (h₂ : 0 ≤ (C2 n : ℤ) + δ₂)
 include hn hs' h₁ h₂
 
-/-- **Open.**  The piece is exact: `scale` really multiplies by `2^{20δ₁} 3^{20δ₂ + s' − s}`. -/
+omit hs' in
+theorem scale_eq : scale n (20 * δ₁) (20 * δ₂ + s' - phase n) =
+    build (junk n).1 (junk n).2.1 (junk n).2.2 s' ((C1 n : ℤ) + δ₁).toNat
+      ((C2 n : ℤ) + δ₂).toNat := by
+  have h := scale_build (e := (junk n).1) (D := (junk n).2.1) (m := (junk n).2.2)
+    (s := phase n) (s' := s') h₁ h₂
+  rwa [← (decode_spec hn).2.2.2.2.2] at h
+
+theorem build_scale_spec :
+    InEngine (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) ∧
+      phase (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = s' ∧
+      C1 (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = ((C1 n : ℤ) + δ₁).toNat ∧
+      C2 (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = ((C2 n : ℤ) + δ₂).toNat ∧
+      junk (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = junk n := by
+  obtain ⟨he, hD, h2, h3, hu, -⟩ := decode_spec hn
+  rw [scale_eq hn h₁ h₂]
+  exact build_spec he hD hs' h2 h3 hu _ _
+
+/-- The piece is exact: `scale` really multiplies by `2^{20δ₁} 3^{20δ₂ + s' − s}`. -/
 theorem scale_spec :
     scale n (20 * δ₁) (20 * δ₂ + s' - phase n) * 2 ^ (-(20 * δ₁)).toNat *
         3 ^ (-(20 * δ₂ + s' - phase n)).toNat =
       n * 2 ^ (20 * δ₁).toNat * 3 ^ (20 * δ₂ + s' - phase n).toNat := by
-  sorry
+  have h := build_mul_eq (e := (junk n).1) (D := (junk n).2.1) (m := (junk n).2.2)
+    (s := phase n) (s' := s') h₁ h₂
+  rw [← (decode_spec hn).2.2.2.2.2] at h
+  rw [scale_eq hn h₁ h₂, h, mul_assoc]
 
-/-- **Open.**  The piece maps the engine into the engine. -/
+/-- The piece maps the engine into the engine. -/
 theorem inEngine_scale : InEngine (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) := by
-  sorry
+  exact (build_scale_spec hn hs' h₁ h₂).1
 
-/-- **Open.**  The piece moves the state to `s'`. -/
+/-- The piece moves the state to `s'`. -/
 theorem phase_scale : phase (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = s' := by
-  sorry
+  exact (build_scale_spec hn hs' h₁ h₂).2.1
 
-/-- **Open.**  The piece adds `δ₁` to the first counter. -/
+/-- The piece adds `δ₁` to the first counter. -/
 theorem C1_scale : (C1 (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) : ℤ) = C1 n + δ₁ := by
-  sorry
+  rw [(build_scale_spec hn hs' h₁ h₂).2.2.1, Int.toNat_of_nonneg h₁]
 
-/-- **Open.**  The piece adds `δ₂` to the second counter. -/
+/-- The piece adds `δ₂` to the second counter. -/
 theorem C2_scale : (C2 (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) : ℤ) = C2 n + δ₂ := by
-  sorry
+  rw [(build_scale_spec hn hs' h₁ h₂).2.2.2.1, Int.toNat_of_nonneg h₂]
 
-/-- **Open.**  The piece leaves the junk unchanged. -/
+/-- The piece leaves the junk unchanged. -/
 theorem junk_scale : junk (scale n (20 * δ₁) (20 * δ₂ + s' - phase n)) = junk n := by
-  sorry
+  exact (build_scale_spec hn hs' h₁ h₂).2.2.2.2
 
 end Step
 
-/-- **Open.**  An engine point is determined by its state, counters and junk. -/
+/-- An engine point is determined by its state, counters and junk. -/
 theorem eq_of_decode_eq {n n' : ℤ} (hn : InEngine n) (hn' : InEngine n')
     (hp : phase n = phase n') (h1 : C1 n = C1 n') (h2 : C2 n = C2 n') (hj : junk n = junk n') :
     n = n' := by
-  sorry
+  calc n = build (junk n).1 (junk n).2.1 (junk n).2.2 (phase n) (C1 n) (C2 n) :=
+        (decode_spec hn).2.2.2.2.2
+    _ = build (junk n').1 (junk n').2.1 (junk n').2.2 (phase n') (C1 n') (C2 n') := by
+        rw [hp, h1, h2, hj]
+    _ = n' := (decode_spec hn').2.2.2.2.2.symm
 
-/-- **Open.**  The junk is independent of the configuration: every state and counter pair occurs
+/-- The junk is independent of the configuration: every state and counter pair occurs
 with the junk of any engine point. -/
 theorem exists_decode {n₀ : ℤ} (h₀ : InEngine n₀) {s : ℕ} (hs : s < 20) (c₁ c₂ : ℕ) :
     ∃ n, InEngine n ∧ phase n = s ∧ C1 n = c₁ ∧ C2 n = c₂ ∧ junk n = junk n₀ := by
-  sorry
+  obtain ⟨he, hD, h2, h3, hu, -⟩ := decode_spec h₀
+  obtain ⟨hE, hph, hc1, hc2, hj⟩ := build_spec he hD hs h2 h3 hu c₁ c₂
+  exact ⟨_, hE, hph, hc1, hc2, hj⟩
 
 end CollatzMoonshot.RcwaEngine
