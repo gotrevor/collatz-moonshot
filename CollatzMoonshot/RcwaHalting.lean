@@ -44,7 +44,7 @@ namespace CollatzMoonshot.RcwaHalting
 
 open CollatzMoonshot.CounterMachine
 open CollatzMoonshot.RcwaSameOrbit (Test Move Rule Machine step IsSource IsSink Halts
-  Deterministic Reversible HaltingUndecidable RcwaTable not_computable_sameCycle)
+  Deterministic Reversible HaltingUndecidable RcwaTable not_computable_sameCycle run)
 
 /-! ## 1. Lemma M for counter machines -/
 
@@ -559,6 +559,33 @@ theorem act_of_toRule {n : Q → ℕ} {ρ : Quad Q (Fin 2)} {s : ℕ} {v : Fin 2
     fin_cases i <;> simp_all [toRule, Rule.Fires, Test.ok, Move.val, opFiresPat]
   | nop => simp_all [toRule, Rule.Fires, Test.ok, Move.val, opFiresPat]
 
+theorem toRule_src (n : Q → ℕ) (ρ : Quad Q (Fin 2)) : (toRule n ρ).src = n ρ.src := by
+  obtain ⟨_, o, _⟩ := ρ; cases o <;> rfl
+
+theorem toRule_dst (n : Q → ℕ) (ρ : Quad Q (Fin 2)) : (toRule n ρ).dst = n ρ.dst := by
+  obtain ⟨_, o, _⟩ := ρ; cases o <;> rfl
+
+theorem run_succ (R : List Rule) (n : ℕ) (c : RcwaSameOrbit.Cfg) :
+    run R (n + 1) c = (run R n c).bind (step R) :=
+  Function.iterate_succ_apply' _ _ _
+
+theorem run_succ_of_step {R : List Rule} {c d : RcwaSameOrbit.Cfg} (h : step R c = some d)
+    (n : ℕ) : run R (n + 1) c = run R n d := by
+  simp only [run, Function.iterate_succ_apply, Option.bind_some, h]
+
+theorem run_succ_of_sink {R : List Rule} {c : RcwaSameOrbit.Cfg} (h : IsSink R c)
+    (n : ℕ) : run R (n + 1) c = none := by
+  simp only [run, Function.iterate_succ_apply, Option.bind_some]
+  rw [show step R c = none from h]
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply', ih]; rfl
+
+theorem halts_of_step {R : List Rule} {c d : RcwaSameOrbit.Cfg} (h : step R c = some d)
+    (hd : Halts R d) : Halts R c := by
+  obtain ⟨n, f, hn, hf⟩ := hd
+  exact ⟨n + 1, f, by rw [run_succ_of_step h]; exact hn, hf⟩
+
 variable [DecidableEq Q] {K : ℕ} {R : CM Q (Fin 2)} {rs : List (Quad Q (Fin 2))}
   (e : Q × Bool ≃ Fin K)
 
@@ -761,17 +788,216 @@ theorem double_isSource (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (h
   · exact absurd hb (by decide)
   · exact absurd hb (by decide)
 
+theorem exists_dcfg {x : RcwaSameOrbit.Cfg} (hx : x.1 < K) :
+    ∃ b c, x = dcfg e b (c : Cfg Q (Fin 2)) := by
+  obtain ⟨s, a₁, a₂⟩ := x
+  refine ⟨(e.symm ⟨s, hx⟩).2, ((e.symm ⟨s, hx⟩).1, ![a₁, a₂]), ?_⟩
+  simp [dcfg]
+
+theorem double_src_dst_lt {ρ' : Rule} (hρ' : ρ' ∈ (double rs e).rules) :
+    ρ'.src < K ∧ ρ'.dst < K := by
+  rcases (mem_double e).1 hρ' with ⟨ρ, -, rfl⟩ | ⟨ρ, -, rfl⟩ | ⟨q, hq⟩
+  · simp [toRule_src, toRule_dst]
+  · simp [toRule_src, toRule_dst]
+  · obtain ⟨b₀, b₁, -, rfl⟩ := (mem_turnRules).1 hq
+    simp
+
+theorem double_step_lt {x y : RcwaSameOrbit.Cfg}
+    (h : step (double rs e).rules x = some y) : x.1 < K ∧ y.1 < K := by
+  obtain ⟨ρ, hρ, hf, rfl⟩ := RcwaSameOrbit.exists_rule_of_step h
+  rw [hf.1]
+  exact ⟨(double_src_dst_lt e hρ).1, (double_src_dst_lt e hρ).2⟩
+
+theorem double_not_isSink_fwd (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
+    (c : Cfg Q (Fin 2)) : ¬ IsSink (double rs e).rules (dcfg e true c) := by
+  intro hs
+  rw [IsSink] at hs
+  by_cases h : ∃ d, R.Step c d
+  · obtain ⟨d, hd⟩ := h
+    rw [double_step_fwd e hrs hdet hrev hd] at hs; cases hs
+  · rw [double_step_turn e hrs hdet hrev (fun d hd => h ⟨d, hd⟩)] at hs; cases hs
+
+theorem double_not_isSource_bwd (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
+    (c : Cfg Q (Fin 2)) : ¬ IsSource (double rs e).rules (dcfg e false c) := by
+  intro hs
+  by_cases h : ∃ d, R.Step c d
+  · obtain ⟨d, hd⟩ := h
+    exact hs _ (double_step_bwd e hrs hdet hrev hd)
+  · exact hs _ (double_step_turn e hrs hdet hrev (fun d hd => h ⟨d, hd⟩))
+
+theorem isSource_of_double (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
+    {c : Cfg Q (Fin 2)} (hc : IsSource (double rs e).rules (dcfg e true c)) : R.IsSource c :=
+  fun d hd => hc _ (double_step_fwd e hrs hdet hrev hd)
+
+theorem double_pairFn (q : Q) (b : Bool) :
+    (double rs e).pairFn (e (q, b)).val = (e (q, !b)).val := by
+  simp [Machine.pairFn, double, List.getD_eq_getElem?_getD]
+
+theorem double_pairFn_of_le {s : ℕ} (hs : K ≤ s) : (double rs e).pairFn s = s := by
+  simp [Machine.pairFn, double, List.getD_eq_getElem?_getD, hs]
+
+/-- The run invariant from the forward copy of a source `x`. -/
+def DInv (R : CM Q (Fin 2)) (x : Cfg Q (Fin 2)) (y : RcwaSameOrbit.Cfg) : Prop :=
+  (∃ z, y = dcfg e true z ∧ R.Reaches x z) ∨
+    (∃ z, y = dcfg e false z ∧ R.Reaches x z ∧ R.Halts x)
+
+theorem dInv_step (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hrev : R.Rev) {x : Cfg Q (Fin 2)}
+    (hx : R.IsSource x) {y y' : RcwaSameOrbit.Cfg} (hy : DInv e R x y)
+    (h : step (double rs e).rules y = some y') : DInv e R x y' := by
+  rcases double_step_cases e hrs h with ⟨c, d, hs, rfl, rfl⟩ | ⟨c, hs, rfl, rfl⟩ |
+      ⟨c, d, hs, rfl, rfl⟩ <;>
+    rcases hy with ⟨z, hz, hr⟩ | ⟨z, hz, hr, hh⟩ <;> obtain ⟨hb, rfl⟩ := dcfg_inj e hz
+  · exact .inl ⟨d, rfl, hr.tail hs⟩
+  · exact absurd hb (by decide)
+  · exact .inr ⟨c, rfl, hr, c, hr, hs⟩
+  · exact absurd hb (by decide)
+  · exact absurd hb (by decide)
+  · refine .inr ⟨c, rfl, ?_, hh⟩
+    rcases Relation.ReflTransGen.cases_tail hr with rfl | ⟨w, hw, hwz⟩
+    · exact absurd hs (hx _)
+    · rwa [CM.step_injective hrev hwz hs] at hw
+
+theorem dInv_run (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hrev : R.Rev) {x : Cfg Q (Fin 2)}
+    (hx : R.IsSource x) (n : ℕ) {y : RcwaSameOrbit.Cfg}
+    (h : run (double rs e).rules n (dcfg e true x) = some y) : DInv e R x y := by
+  induction n generalizing y with
+  | zero => cases h; exact .inl ⟨x, rfl, .refl⟩
+  | succ n ih =>
+    rw [run_succ] at h
+    cases hn : run (double rs e).rules n (dcfg e true x) with
+    | none => rw [hn] at h; cases h
+    | some z =>
+      rw [hn, Option.bind_some] at h
+      exact dInv_step e hrs hrev hx (ih hn) h
+
 /-- **Lemma D.**  The doubling of a deterministic reversible machine with mortal reverse is
 `Valid`. -/
 theorem double_valid (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     (hmort : R.RevMortal) : (double rs e).Valid := by
-  sorry
+  have hlen : (double rs e).pair.length = K := by simp [double]
+  refine ⟨⟨fun ρ hρ => (double_src_dst_lt e hρ).1, fun ρ hρ => (double_src_dst_lt e hρ).2, ?_⟩,
+    double_reversible e hrs hdet hrev, ?_, ?_, ?_⟩
+  · -- `pair` is a permutation
+    let σ : Equiv.Perm (Fin K) := e.symm.trans ((Equiv.prodCongr (Equiv.refl Q)
+      (Equiv.boolNot)).trans e)
+    have : (double rs e).pair = ((List.finRange K).map σ).map Fin.val := by
+      simp only [double, List.map_map]
+      exact List.map_congr_left fun a _ => rfl
+    rw [this, ← List.map_coe_finRange_eq_range]
+    exact (Equiv.Perm.map_finRange_perm σ).map _
+  · -- sinks pair with sources
+    rintro ⟨s, a₁, a₂⟩
+    by_cases hs : s < K
+    · obtain ⟨b, c, hc⟩ := exists_dcfg e (x := (s, a₁, a₂)) hs
+      rw [hc]
+      simp only [dcfg]
+      rw [double_pairFn]
+      cases b
+      · exact (double_isSink_bwd e hrs hdet hrev c).trans
+          ⟨double_isSource e hrs hdet hrev, isSource_of_double e hrs hdet hrev⟩
+      · exact iff_of_false (double_not_isSink_fwd e hrs hdet hrev c)
+          (double_not_isSource_bwd e hrs hdet hrev c)
+    · push Not at hs
+      simp only [double_pairFn_of_le e hs]
+      refine iff_of_true ?_ fun y hy => ?_
+      · rw [IsSink, Option.eq_none_iff_forall_ne_some]
+        intro y hy
+        have := (double_step_lt e hy).1
+        simp at this; omega
+      · have := (double_step_lt e hy).2
+        simp at this; omega
+  · -- no bi-infinite run
+    intro g hg
+    have hlt : ∀ i, (g i).1 < K := fun i => (double_step_lt e (hg i)).1
+    by_cases hF : ∃ i x, g i = dcfg e false x
+    · obtain ⟨i₀, x₀, hx₀⟩ := hF
+      have hall : ∀ n : ℕ, ∃ x, g (i₀ + n) = dcfg e false x := by
+        intro n
+        induction n with
+        | zero => exact ⟨x₀, by simpa using hx₀⟩
+        | succ n ih =>
+          obtain ⟨x, hx⟩ := ih
+          have := hg (i₀ + n)
+          rw [hx] at this
+          rcases double_step_cases e hrs this with ⟨c, d, -, hz, -⟩ | ⟨c, -, hz, -⟩ |
+              ⟨c, d, -, -, hy⟩
+          · exact absurd (dcfg_inj e hz).1 (by decide)
+          · exact absurd (dcfg_inj e hz).1 (by decide)
+          · exact ⟨c, by push_cast; rw [← add_assoc]; exact hy⟩
+      choose y hy using hall
+      refine hmort ⟨y, fun n => ?_⟩
+      have := hg (i₀ + n)
+      rw [hy n, show i₀ + ↑n + 1 = i₀ + ↑(n + 1) by push_cast; ring, hy (n + 1)] at this
+      rcases double_step_cases e hrs this with ⟨c, d, -, hz, -⟩ | ⟨c, -, hz, -⟩ |
+          ⟨c, d, hs, hz, hz'⟩
+      · exact absurd (dcfg_inj e hz).1 (by decide)
+      · exact absurd (dcfg_inj e hz).1 (by decide)
+      · rwa [(dcfg_inj e hz).2, (dcfg_inj e hz').2]
+    · push Not at hF
+      have hall : ∀ i, ∃ c d, R.Step c d ∧ g i = dcfg e true c ∧ g (i + 1) = dcfg e true d := by
+        intro i
+        rcases double_step_cases e hrs (hg i) with h | ⟨c, -, -, hz⟩ | ⟨c, d, -, hz, -⟩
+        · exact h
+        · exact absurd hz (hF _ c)
+        · exact absurd hz (hF _ d)
+      choose c d hs hc hd using hall
+      refine hmort ⟨fun n => c (-n), fun n => ?_⟩
+      have h1 := hs (-(n + 1 : ℕ))
+      have h2 := hd (-(n + 1 : ℕ))
+      rw [show -((n + 1 : ℕ) : ℤ) + 1 = -n by push_cast; ring, hc] at h2
+      rw [← (dcfg_inj e h2).2] at h1
+      exact h1
+  · -- end to start
+    rintro ⟨s, a₁, a₂⟩ d n hsrc hrun hsink
+    by_cases hs : s < K
+    · obtain ⟨b, x, hx⟩ := exists_dcfg e (x := (s, a₁, a₂)) hs
+      rw [hx] at hsrc hrun ⊢
+      cases b
+      · exact absurd hsrc (double_not_isSource_bwd e hrs hdet hrev x)
+      · have hxs := isSource_of_double e hrs hdet hrev hsrc
+        rcases dInv_run e hrs hrev hxs n hrun with ⟨z, rfl, -⟩ | ⟨z, rfl, hr, -⟩
+        · exact absurd hsink (double_not_isSink_fwd e hrs hdet hrev z)
+        · have hz := (double_isSink_bwd e hrs hdet hrev z).1 hsink
+          obtain rfl : z = x := by
+            rcases Relation.ReflTransGen.cases_tail hr with rfl | ⟨w, -, hwz⟩
+            · rfl
+            · exact absurd hwz (hz _)
+          simp only [dcfg]
+          rw [double_pairFn]
+          rfl
+    · push Not at hs
+      have hsk : IsSink (double rs e).rules (s, a₁, a₂) := by
+        rw [IsSink, Option.eq_none_iff_forall_ne_some]
+        intro y hy
+        have := (double_step_lt e hy).1
+        simp at this; omega
+      cases n with
+      | zero =>
+        cases hrun
+        simp [double_pairFn_of_le e hs]
+      | succ n => rw [run_succ_of_sink hsk] at hrun; cases hrun
 
 /-- From the forward copy of a source of `R`, the doubling halts iff `R` halts. -/
 theorem double_halts_iff (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     {c : Cfg Q (Fin 2)} (hc : R.IsSource c) :
     Halts (double rs e).rules (dcfg e true c) ↔ R.Halts c := by
-  sorry
+  constructor
+  · rintro ⟨n, d, hrun, hsink⟩
+    rcases dInv_run e hrs hrev hc n hrun with ⟨z, rfl, -⟩ | ⟨z, rfl, -, hh⟩
+    · exact absurd hsink (double_not_isSink_fwd e hrs hdet hrev z)
+    · exact hh
+  · rintro ⟨d, hr, hd⟩
+    have hback : ∀ y, R.Reaches c y → Halts (double rs e).rules (dcfg e false y) := by
+      intro y hy
+      induction hy with
+      | refl => exact ⟨0, _, rfl, (double_isSink_bwd e hrs hdet hrev c).2 hc⟩
+      | tail _ hs ih => exact halts_of_step (double_step_bwd e hrs hdet hrev hs) ih
+    have hd' : Halts (double rs e).rules (dcfg e true d) :=
+      halts_of_step (double_step_turn e hrs hdet hrev hd) (hback d hr)
+    clear hback hc
+    induction hr using Relation.ReflTransGen.head_induction_on with
+    | refl => exact hd'
+    | head hs _ ih => exact halts_of_step (double_step_fwd e hrs hdet hrev hs) ih
 
 end Double
 
