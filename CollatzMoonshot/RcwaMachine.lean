@@ -99,11 +99,131 @@ def completeFun (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f �
     | none => nu f θ (Sum.inl (τ ⟨x, hx⟩))
   | Sum.inr h => nu f θ (Sum.inr h)
 
+theorem fwd_zero (f : PEquiv α α) (x : α) : fwd f 0 x = some x := rfl
+
+theorem fwd_succ (f : PEquiv α α) (n : ℕ) (x : α) : fwd f (n + 1) x = (fwd f n x).bind f :=
+  Function.iterate_succ_apply' _ _ _
+
+theorem iterate_bind_none (f : PEquiv α α) (n : ℕ) :
+    (fun o : Option α => o.bind f)^[n] none = none := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply', ih]; rfl
+
+theorem fwd_succ_of_some {f : PEquiv α α} {x z : α} (h : f x = some z) (n : ℕ) :
+    fwd f (n + 1) x = fwd f n z := by
+  simp only [fwd, Function.iterate_succ_apply, Option.bind_some, h]
+
+theorem fwd_succ_of_none {f : PEquiv α α} {x : α} (h : f x = none) (n : ℕ) :
+    fwd f (n + 1) x = none := by
+  simp only [fwd, Function.iterate_succ_apply, Option.bind_some, h, iterate_bind_none]
+
+theorem fwd_succ_eq_some {f : PEquiv α α} {n : ℕ} {x y : α} (h : fwd f (n + 1) x = some y) :
+    ∃ z, fwd f n x = some z ∧ f z = some y := by
+  rw [fwd_succ] at h
+  cases hz : fwd f n x with
+  | none => rw [hz] at h; cases h
+  | some z => rw [hz] at h; exact ⟨z, rfl, h⟩
+
+theorem fwd_symm {f : PEquiv α α} {n : ℕ} {x y : α} (h : fwd f n x = some y) :
+    fwd f.symm n y = some x := by
+  induction n generalizing y with
+  | zero => simp only [fwd_zero, Option.some.injEq] at h ⊢; exact h.symm
+  | succ n ih =>
+    obtain ⟨z, hz, hzy⟩ := fwd_succ_eq_some h
+    rw [fwd_succ_of_some ((PEquiv.eq_some_iff f).mpr hzy), ih hz]
+
+/-- A point reached in at least one step has a predecessor. -/
+theorem symm_ne_none_of_fwd {f : PEquiv α α} {n : ℕ} {x y : α}
+    (h : fwd f (n + 1) x = some y) : f.symm y ≠ none := by
+  obtain ⟨z, -, hzy⟩ := fwd_succ_eq_some h
+  rw [(PEquiv.eq_some_iff f).mpr hzy]; simp
+
+/-- A finite chain has a last point. -/
+theorem exists_last {f : PEquiv α α} {x : α} (h : ∃ n, fwd f n x = none) :
+    ∃ m y, fwd f m x = some y ∧ f y = none := by
+  classical
+  have h0 : Nat.find h ≠ 0 := fun h0 => by
+    have := Nat.find_spec h; rw [h0, fwd_zero] at this; cases this
+  obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero h0
+  have hlt : ¬ fwd f m x = none := Nat.find_min h (by omega)
+  obtain ⟨y, hy⟩ := Option.ne_none_iff_exists'.mp hlt
+  refine ⟨m, y, hy, ?_⟩
+  have := Nat.find_spec h
+  rwa [hm, fwd_succ, hy, Option.bind_some] at this
+
+theorem completeFun_some {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) {x y : α}
+    (h : f x = some y) : completeFun f τ θ (Sum.inl x) = Sum.inl y := by
+  rw [completeFun]; split <;> simp_all
+
+theorem completeFun_none {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) {x : α}
+    (h : f x = none) : completeFun f τ θ (Sum.inl x) = nu f θ (Sum.inl (τ ⟨x, h⟩)) := by
+  rw [completeFun]; split <;> simp_all
+
+theorem completeFun_inr {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) (h : H) :
+    completeFun f τ θ (Sum.inr h) = nu f θ (Sum.inr h) := rfl
+
+theorem lineEmb_injective (f : PEquiv α α) : Function.Injective (lineEmb (H := H) f) :=
+  Sum.map_injective.mpr ⟨Subtype.val_injective, Function.injective_id⟩
+
+theorem nu_injective (f : PEquiv α α) (θ : ℤ ≃ Src f ⊕ H) : Function.Injective (nu f θ) :=
+  fun p q h => by simpa using lineEmb_injective f h
+
+theorem nu_eq_lineEmb (f : PEquiv α α) (θ : ℤ ≃ Src f ⊕ H) (l : Src f ⊕ H) :
+    nu f θ (θ (θ.symm l - 1)) = lineEmb f l := by
+  simp [nu]
+
+/-- A line point is never a point with a predecessor. -/
+theorem lineEmb_ne_inl {f : PEquiv α α} (l : Src f ⊕ H) {x y : α} (h : f x = some y) :
+    lineEmb f l ≠ Sum.inl y := by
+  rcases l with s | k
+  · intro he
+    change Sum.inl s.1 = Sum.inl y at he
+    have := s.2; rw [Sum.inl.inj he, (PEquiv.eq_some_iff f).mpr h] at this; cases this
+  · exact Sum.inr_ne_inl
+
+theorem completeFun_cases (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (a : α ⊕ H) :
+    (∃ x y, a = Sum.inl x ∧ f x = some y ∧ completeFun f τ θ a = Sum.inl y) ∨
+      ∃ q : Snk f ⊕ H, a = Sum.map Subtype.val id q ∧
+        completeFun f τ θ a = nu f θ (Sum.map τ id q) := by
+  rcases a with x | k
+  · cases hx : f x with
+    | some y => exact Or.inl ⟨x, y, rfl, hx, completeFun_some τ θ hx⟩
+    | none => exact Or.inr ⟨Sum.inl ⟨x, hx⟩, rfl, completeFun_none τ θ hx⟩
+  · exact Or.inr ⟨Sum.inr k, rfl, rfl⟩
+
 /-- Part 1 of Lemma C: the completion is a bijection, for any partial injection `f`, any
 bijection `τ` and any line `θ`. -/
 theorem completeFun_bijective (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) :
     Function.Bijective (completeFun f τ θ) := by
-  sorry
+  have hnu : ∀ l, ∃ a, completeFun f τ θ a = lineEmb f l := by
+    intro l
+    rw [← nu_eq_lineEmb]
+    rcases θ (θ.symm l - 1) with s | k
+    · refine ⟨Sum.inl (τ.symm s).1, ?_⟩
+      rw [completeFun_none τ θ (τ.symm s).2]
+      show nu f θ (Sum.inl (τ (τ.symm s))) = _
+      rw [Equiv.apply_symm_apply]
+    · exact ⟨Sum.inr k, rfl⟩
+  refine ⟨fun a b hab => ?_, fun c => ?_⟩
+  · rcases completeFun_cases f τ θ a with ⟨x, y, rfl, hxy, ha⟩ | ⟨p, rfl, ha⟩ <;>
+      rcases completeFun_cases f τ θ b with ⟨x', y', rfl, hxy', hb⟩ | ⟨q, rfl, hb⟩
+    · rw [ha, hb, Sum.inl.injEq] at hab
+      subst hab
+      exact congrArg _ (PEquiv.inj f hxy hxy')
+    · rw [ha, hb, nu] at hab; exact absurd hab.symm (lineEmb_ne_inl _ hxy)
+    · rw [ha, hb, nu] at hab; exact absurd hab (lineEmb_ne_inl _ hxy')
+    · rw [ha, hb] at hab
+      have := nu_injective f θ hab
+      have := (Sum.map_injective.mpr ⟨τ.injective, Function.injective_id⟩) this
+      rw [this]
+  · rcases c with y | k
+    · cases hy : f.symm y with
+      | some x => exact ⟨Sum.inl x, completeFun_some τ θ ((PEquiv.eq_some_iff f).mp hy)⟩
+      | none => exact hnu (Sum.inl ⟨y, hy⟩)
+    · exact hnu (Sum.inr k)
+
 
 /-- The completed permutation `σ` of `α ⊕ H`. -/
 noncomputable def complete (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) :
@@ -114,13 +234,118 @@ noncomputable def complete (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ �
 abbrev Orbits {β : Type u} (σ : Equiv.Perm β) : Type u :=
   Quotient (Equiv.Perm.SameCycle.setoid σ)
 
+theorem complete_apply (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (a : α ⊕ H) : complete f τ θ a = completeFun f τ θ a := rfl
+
+/-- `σ` runs the forward `f`-chain. -/
+theorem complete_pow_inl {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H) {n : ℕ}
+    {x y : α} (h : fwd f n x = some y) : (complete f τ θ ^ n) (Sum.inl x) = Sum.inl y := by
+  induction n generalizing y with
+  | zero => simp only [fwd_zero, Option.some.injEq] at h; simp [h]
+  | succ n ih =>
+    obtain ⟨z, hz, hzy⟩ := fwd_succ_eq_some h
+    rw [pow_succ', Equiv.Perm.mul_apply, ih hz, complete_apply, completeFun_some τ θ hzy]
+
+theorem nu_inl_eq {f : PEquiv α α} (θ : ℤ ≃ Src f ⊕ H) {p : ℤ} {l : Src f ⊕ H}
+    (hp : θ p = l) : nu f θ l = lineEmb f (θ (p + 1)) := by
+  rw [nu, ← hp, Equiv.symm_apply_apply]
+
+/-- The point `a` is on its way from line position `j`: it is the highway point there, or on the
+forward chain of the source there. -/
+def OnLeg (f : PEquiv α α) (θ : ℤ ≃ Src f ⊕ H) (j : ℤ) (a : α ⊕ H) : Prop :=
+  (∃ k, θ j = Sum.inr k ∧ a = Sum.inr k) ∨
+    ∃ s n y, θ j = Sum.inl s ∧ fwd f n s.1 = some y ∧ a = Sum.inl y
+
+theorem onLeg_self (f : PEquiv α α) (θ : ℤ ≃ Src f ⊕ H) (j : ℤ) :
+    OnLeg f θ j (lineEmb f (θ j)) := by
+  rcases h : θ j with s | k
+  · exact Or.inr ⟨s, 0, s.1, h, rfl, rfl⟩
+  · exact Or.inl ⟨k, h, rfl⟩
+
+/-- The only line point on the leg from `j` is position `j` itself. -/
+theorem eq_of_onLeg {f : PEquiv α α} {θ : ℤ ≃ Src f ⊕ H} {i j : ℤ}
+    (h : OnLeg f θ j (lineEmb f (θ i))) : i = j := by
+  rcases h with ⟨k, hj, hk⟩ | ⟨s, n, y, hj, hy, he⟩
+  · have : θ i = θ j := lineEmb_injective f (by rw [hk, hj]; rfl)
+    exact θ.injective this
+  · rcases hi : θ i with s' | k
+    · rw [hi] at he
+      change Sum.inl s'.1 = Sum.inl y at he
+      have hs' := Sum.inl.inj he
+      cases n with
+      | zero =>
+        rw [fwd_zero, Option.some.injEq] at hy
+        exact θ.injective (by rw [hi, hj, Subtype.ext (hs'.trans hy.symm)])
+      | succ n => exact absurd (hs' ▸ s'.2) (symm_ne_none_of_fwd hy)
+    · rw [hi] at he; exact absurd he Sum.inr_ne_inl
+
+/-- One step of `σ` along a leg: stay on it, or (only past a non-divergent source) move to the
+next line position. -/
+theorem onLeg_step {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (h2 : EndToStart f τ) {j : ℤ} {a : α ⊕ H} (h : OnLeg f θ j a) :
+    OnLeg f θ j (complete f τ θ a) ∨
+      ((∀ s : Src f, θ j = Sum.inl s → ¬ Diverges f s.1) ∧
+        complete f τ θ a = lineEmb f (θ (j + 1))) := by
+  rcases h with ⟨k, hj, rfl⟩ | ⟨s, n, y, hj, hy, rfl⟩
+  · refine Or.inr ⟨fun s hs => (by rw [hj] at hs; cases hs), ?_⟩
+    rw [complete_apply, completeFun_inr, nu_inl_eq θ hj]
+  · cases hfy : f y with
+    | some z =>
+      refine Or.inl (Or.inr ⟨s, n + 1, z, hj, ?_, ?_⟩)
+      · rw [fwd_succ, hy, Option.bind_some, hfy]
+      · rw [complete_apply, completeFun_some τ θ hfy]
+    | none =>
+      refine Or.inr ⟨fun s' hs' hd => ?_, ?_⟩
+      · rw [hj, Sum.inl.injEq] at hs'
+        subst hs'
+        exact hd (n + 1) (by rw [fwd_succ, hy, Option.bind_some, hfy])
+      · rw [complete_apply, completeFun_none τ θ hfy, h2 s ⟨y, hfy⟩ n hy, nu_inl_eq θ hj]
+
+/-- **Forward lemma.**  The forward orbit of line position `j` visits line positions only upward,
+and never past a cut. -/
+theorem reach_le {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (h2 : EndToStart f τ) {j j' : ℤ} {n : ℕ}
+    (h : (complete f τ θ ^ n) (lineEmb f (θ j)) = lineEmb f (θ j')) :
+    j ≤ j' ∧ ∀ i, j ≤ i → i < j' → ∀ s : Src f, θ i = Sum.inl s → ¬ Diverges f s.1 := by
+  have key : ∀ n : ℕ, ∃ i, j ≤ i ∧
+      (∀ i', j ≤ i' → i' < i → ∀ s : Src f, θ i' = Sum.inl s → ¬ Diverges f s.1) ∧
+      OnLeg f θ i ((complete f τ θ ^ n) (lineEmb f (θ j))) := by
+    intro m
+    induction m with
+    | zero =>
+      refine ⟨j, le_rfl, ?_, onLeg_self f θ j⟩
+      intro i' h h'
+      omega
+    | succ m ih =>
+      obtain ⟨i, hji, hcut, hleg⟩ := ih
+      rw [pow_succ', Equiv.Perm.mul_apply]
+      rcases onLeg_step τ θ h2 hleg with hleg' | ⟨hnc, heq⟩
+      · exact ⟨i, hji, hcut, hleg'⟩
+      · refine ⟨i + 1, by omega, fun i' h h' => ?_, heq ▸ onLeg_self f θ (i + 1)⟩
+        rcases lt_or_eq_of_le (show i' ≤ i by omega) with hlt | rfl
+        · exact hcut i' h hlt
+        · exact hnc
+  obtain ⟨i, hji, hcut, hleg⟩ := key n
+  rw [h] at hleg
+  obtain rfl := eq_of_onLeg hleg
+  exact ⟨hji, hcut⟩
+
 /-- A non-divergent source at line position `p` lies on one orbit with line position `p + 1`:
 `σ` runs its finite chain and, by (H2), returns to the highway at `ν` of the source. -/
 theorem sameCycle_succ_of_not_diverges (f : PEquiv α α) (τ : Snk f ≃ Src f)
     (θ : ℤ ≃ Src f ⊕ H) (h2 : EndToStart f τ) (p : ℤ)
     (hp : ∀ s : Src f, θ p = Sum.inl s → ¬ Diverges f s.1) :
     (complete f τ θ).SameCycle (lineEmb f (θ p)) (lineEmb f (θ (p + 1))) := by
-  sorry
+  rcases hθ : θ p with s | k
+  · have hfin : ∃ n, fwd f n s.1 = none := by
+      by_contra! hd; exact hp s hθ hd
+    obtain ⟨m, t, ht, hft⟩ := exists_last hfin
+    refine ⟨((m + 1 : ℕ) : ℤ), ?_⟩
+    rw [zpow_natCast, pow_succ', Equiv.Perm.mul_apply]
+    change complete f τ θ ((complete f τ θ ^ m) (Sum.inl s.1)) = _
+    rw [complete_pow_inl τ θ ht, complete_apply, completeFun_none τ θ hft,
+      h2 s ⟨t, hft⟩ m ht, nu_inl_eq θ hθ]
+  · exact ⟨1, nu_inl_eq θ hθ⟩
 
 /-- A divergent source at line position `p` is a cut: positions `≤ p` and `> p` lie on different
 orbits.  Needs (H1) and (H2). -/
@@ -128,7 +353,13 @@ theorem not_sameCycle_of_cut (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ
     (h1 : NoBiInfinite f) (h2 : EndToStart f τ) (s : Src f) (hs : Diverges f s.1) {p q r : ℤ}
     (hp : θ p = Sum.inl s) (hq : q ≤ p) (hr : p < r) :
     ¬ (complete f τ θ).SameCycle (lineEmb f (θ q)) (lineEmb f (θ r)) := by
-  sorry
+  rintro ⟨k, hk⟩
+  obtain ⟨n, rfl | rfl⟩ := Int.eq_nat_or_neg k
+  · rw [zpow_natCast] at hk
+    exact (reach_le τ θ h2 hk).2 p hq hr s hp hs
+  · rw [zpow_neg, zpow_natCast, Equiv.Perm.inv_eq_iff_eq] at hk
+    have := (reach_le τ θ h2 hk.symm).1
+    omega
 
 /-- **Lemma C, orbit formula.**  Under (H1) and (H2), the number of orbits of the completion is
 one more than the number of forward-divergent sources (as cardinals, so `1 + ℵ₀ = ℵ₀` covers the

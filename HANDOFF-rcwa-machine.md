@@ -12,5 +12,11 @@ Kickoff: `KICKOFF-2026-10-16-rcwa-machine.md`.  Target: close every `sorry` in
   `reverse_immortal_iff_macro` (from the forward one for `flip Step`, `macroStep_flip`).
 - `TwoCounter.visits_boundary`: `lap_mixed` telescopes the lap vector.
 
+- `completeFun_bijective` (direct injective/surjective via `completeFun_cases`).
+- `sameCycle_succ_of_not_diverges`, `not_sameCycle_of_cut`.  The latter rests on the leg
+  invariant `OnLeg` / `onLeg_step` / `reach_le`: forward `σ`-orbits visit line positions only
+  upward and never past a cut.  Only (H2) is used, so (H1) is an unused binder there (linter
+  warning; the ratified statement keeps it).
+
 ## Open
-- Completion section (bijectivity, orbit lemmas, `card_orbits`, corollaries).
+- `card_orbits` and the three corollaries.
