@@ -1726,3 +1726,67 @@ normal numbers be built from these orbits?  Report: `normal.md`; cross-lane cont
   census (`Bigfoot/Clock.lean`, `Census.lean`: BBf #323 and BB(2,5) Hydra walk the same orbit
   `H^n(3)`, as the two halves of one equidistribution statement).
 * **Lean.**  `AmusicalNotNormal.lean` (proved, axiom-clean, verified 2026-10-15).
+
+## 55. Changing the question: five reframes (2026-10-15, five Opus agents; Ren checked)
+
+Trevor's prompt: get unstuck by changing the question, not by another route to (a).  Five laps:
+solved cousins (`reframe-census.md`), the family's phase diagram (`reframe-phase.md`), a barrier
+outline (`reframe-barrier.md`), a Tao-style almost-all theorem (`reframe-tao.md`), and
+undecidability for `{2,3}`-slope permutations (`reframe-undec.md`).  None moves (a) (each `< 1%`);
+each finds the §47 wall from a new side, and three give cheap new theorems.
+
+* **A one-swap neighbour of `U` is solvable (Theorem V, paper; Ren checked).**  `V` is `U` with the
+  targets of `0 (2)` and `3 (8)` swapped: `V(2k) = 6k + 2`, `V(4k+1) = 3k+1`, `V(8k+3) = 3k`,
+  `V(8k+7) = 6k+5`.  The evens are a trap (`V(2ℤ) = 2 + 6ℤ ⊊ 2ℤ`), so each orbit enters them at most
+  once, at a point `≡ 0, 4 (mod 6)` with no even preimage; those entry points have density `1/3`,
+  so `V` has infinitely many infinite orbits.  Ren re-ran bijectivity and the entry census to
+  `2^16`.  In general a residue set `C` with `σ(C) ⊊ C` gives `≥ (d(C) − d(σC))·X` infinite orbits
+  meeting `[0, X)` (trap theorem, paper, 97%).
+* **Phase diagram.**  In the family of class-wise order-preserving bijections `mj + r ↦ nj + s`,
+  members are finite-order, trapped (solvable as above), or on the wall.  Across the 120 pairings of
+  `U`'s refined partitions one bit decides: the even branch's image parity.  Even image: 48
+  solvable members at density exactly `1/3`; odd image: 48 wall members at `≈ 0.130`; `0 (3)` (`U`'s
+  choice): 24 wall members at `≈ 0.050`.  Conjecture B (70%): the boundary is whether some branch
+  fails to map onto `ℤ_p`, which is what a trap needs.  Every branch of `U` is onto `ℤ₂`, and the
+  whole two-prime ratio family `×q/p` stays on the wall (orbit-start density `c(U) = 0.049780`, 54
+  members within 0.7%).  Neighbouring a solvable member does not help: the odd-image members are
+  one swap from `V` and as hard as `U`.
+* **Avoidance (paper; Ren proved the mod-8 case).**  Every infinite orbit visits `{0, 3, 5} (mod 8)`
+  infinitely often going forward.  Proof: avoiding it, odds `≡ 1, 7 (mod 8)` map to odds and
+  `4 → {2, 6} → odd`, so the tail is eventually all `3/4`-steps and bounded.  Karp max-cycle-mean
+  certificates (Yolcu–Aaronson–Heule style) give 13 five-class sets mod 16 forward and five
+  four-class sets mod 9 backward; no set of `≤ 3` classes works mod 16 or mod 9.  Integrality-blind,
+  so it says where infinite orbits go, not whether they exist.
+* **Barrier outline.**  A method class is the fibre of maps it cannot tell from `U`; a barrier is a
+  member with the opposite answer.  Fifteen rows (Theorems R, S, N, Z, Π, the Antihydra gate, ...),
+  all keeping `U`'s cycles, so they bar "infinitely many infinite orbits", not (a) via cycles.
+  M1 (paper sketch, 80%): for depth `D` and budget `G` with `G/D* → ∞` there is a `τ` with `U`'s
+  cycles and at most one infinite orbit that agrees with `U` to depth `D` off `≤ G(X)` points; TT
+  is the infinite-depth case.  Two walls, not one: fusion (finite vs infinite depth) and the
+  residue horizon (sharp ceilings `c* = log_{4/3} 3`, Antihydra's frozen `E_k`).  The idea is
+  Conway's (2013 §5: "the number obtained by applying µ a million times to 8 might just be the same
+  as ..."; Ren opened it) and Tao's (2019 Remark 1.4; opened); the exact iff, sharp constants and
+  Lean proofs are ours.  Cheapest new barrier: sign-blind Collatz (odd `x ↦ (3x ± 1)/2`): exactly one
+  choice is odd, so the always-odd member diverges, and the all-minus member has the cycle
+  `5 → 7 → 10` (Ren checked).
+* **Tao does not transfer.**  `1/x` is an exact martingale in both time directions (forward
+  `½·⅔ + ½·4⁄3 = 1`, backward `⅓·3⁄2 + ⅔·¾ = 1`; Ren checked), so by Ville `P(min < n/K) ≤ 1/K`;
+  measured `K·P ≈ 0.87` forward, `0.84` backward on `[2²⁰, 2²¹)`.  Tao's conclusion is false for
+  `U`; the right analogue ("almost every orbit minimum `≥ n/f(n)`") implies (a) and is the late-drop
+  wall.  Theorem R's `τ` differs from `U` at `O(log² N)` points, so no log-density statement about
+  the first `C log n` steps separates them (the M1 corollary at `D = C log n`).
+* **Undecidability next door (Theorem C, paper, 75%).**  A reversible counter-machine engine runs
+  with every slope in `2^ℤ 3^ℤ = ⟨3/2, 3/4⟩` (the group of `U`'s slopes), the control state in
+  `dlog₃(n mod 5^j)`.  In that family orbit counting is `Σ⁰₂/Π⁰₂`-hard, same-orbit is
+  `Σ⁰₁`-complete, and some member's orbit count is ZFC-independent.  Ren re-ran the `r = 5` toy
+  (`106,667` engine points, 0 unfaithful, 0 collisions; a broken engine fails `26,667`); full
+  bijectivity at `r = 25` is unchecked.  Hardness needs valuation moves of both signs, which
+  `U`'s slopes `3^a/2^b` (`a, b ≥ 0`) forbid: a second description of the §47 wall.  (a) is `Π⁰₃`.
+* **Census.**  About 40 solved cousins fall into 14 mechanisms needing one of eight properties
+  (contraction, branching inverse, cone, flux, low complexity, carry-free, algebraic multiplier,
+  reversor); `U` has none usable for (a).  Nearest provable siblings: 32 of the 287 one-transposition
+  edits `τ ∘ U` (cone), `U + d`, `PP(0)`, the `F₂[t]` twin, Kohl's ω.  Unprobed reframe: the
+  "Wythoff amusical permutation" `W(2k) = ⌊kφ²⌋`, `W(2k−1) = ⌊kφ⌋` (`U` is the same pattern with the
+  Beatty-type pair `3, 3/2`).
+* **Cheap Lean targets.**  Trap theorem (~60 lines) and Theorem V (~150); mod-8 avoidance; sign-blind
+  Collatz gate; M1.  Prior-art check first: Kohl's tame/wild theory and Thompson-group dynamics.
