@@ -505,6 +505,29 @@ def bwdProb (s : Side) (p q : ℕ) (e f : ZMod 2) : ℚ :=
 
 /-! ## Theorem T: where the traps are -/
 
+section ZModTwo
+
+theorem zmod2_cases (e : ZMod 2) : e = 0 ∨ e = 1 := by revert e; decide
+
+theorem intCast_zmod2_eq_zero_iff (n : ℤ) : (n : ZMod 2) = 0 ↔ n % 2 = 0 := by
+  rw [ZMod.intCast_zmod_eq_zero_iff_dvd, Int.dvd_iff_emod_eq_zero]; norm_num
+
+theorem intCast_zmod2_eq_one_iff (n : ℤ) : (n : ZMod 2) = 1 ↔ n % 2 = 1 := by
+  rcases zmod2_cases (n : ZMod 2) with h | h
+  · have := (intCast_zmod2_eq_zero_iff n).1 h
+    rw [h]; constructor
+    · intro h'; exact absurd h' (by decide)
+    · intro h'; omega
+  · rw [h]; refine ⟨fun _ => ?_, fun _ => rfl⟩
+    by_contra h'
+    rw [(intCast_zmod2_eq_zero_iff n).2 (by omega)] at h
+    exact absurd h (by decide)
+
+theorem natCast_zmod2_of_even {p : ℕ} (hp : Even p) : ((p : ℤ) : ZMod 2) = 0 := by
+  rw [Int.cast_natCast]; exact (ZMod.natCast_eq_zero_iff_even).2 hp
+
+end ZModTwo
+
 section TheoremT
 
 variable (s : Side) {p q : ℕ}
@@ -518,7 +541,49 @@ class `e` iff every piece of type `e` has image parity `e`, i.e. (Lemma 1) `(q+1
 theorem parityClass_invariant_iff (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) :
     (∃ e : ZMod 2, ∀ n : ℤ, (n : ZMod 2) = e → (wythoff s p q n : ZMod 2) = e) ↔
       Even p ∧ s = .plus ∧ (q = 1 ∨ p - q = 1) := by
-  sorry
+  constructor
+  · rintro ⟨e, he⟩
+    have hpe : Even p := by
+      rw [← ZMod.natCast_eq_zero_iff_even, ← Int.cast_natCast]
+      rcases zmod2_cases e with rfl | rfl
+      · have h1 := he 0 (by simp)
+        have h2 := he (0 + 2 * q * 1) ((intCast_zmod2_eq_zero_iff _).2 (by omega))
+        rw [wythoff_add_even s hq (by norm_num : (0 : ℤ) % 2 = 0), Int.cast_add, h1] at h2
+        simpa using h2
+      · have h1 := he 1 (by simp)
+        have h2 := he (1 + 2 * ((p : ℤ) - q) * 1) ((intCast_zmod2_eq_one_iff _).2 (by omega))
+        rw [wythoff_add_odd s hqp (by norm_num : (1 : ℤ) % 2 = 1), Int.cast_add, h1] at h2
+        simpa using h2
+    have hq2 := odd_of_even_coprime hpe hcop
+    obtain ⟨r, hr⟩ := hpe
+    rcases zmod2_cases e with rfl | rfl
+    · have hc := card_even_image_even s ⟨r, hr⟩ hcop hq hqp
+      rw [Finset.filter_true_of_mem (fun t _ => (intCast_zmod2_eq_zero_iff _).1
+        (he _ ((intCast_zmod2_eq_zero_iff _).2 (by omega)))), Finset.card_range] at hc
+      cases s
+      · exact ⟨⟨r, hr⟩, rfl, Or.inl (by simp at hc; omega)⟩
+      · simp at hc; omega
+    · have hc := card_even_image_odd s ⟨r, hr⟩ hcop hq hqp
+      rw [Finset.filter_false_of_mem (fun u _ => by
+        have := (intCast_zmod2_eq_one_iff _).1
+          (he _ ((intCast_zmod2_eq_one_iff (2 * (u : ℤ) + 1)).2 (by omega)))
+        omega), Finset.card_empty] at hc
+      cases s
+      · exact ⟨⟨r, hr⟩, rfl, Or.inr (by simp at hc; omega)⟩
+      · simp at hc; omega
+  · rintro ⟨hpe, rfl, h | h⟩
+    · subst h
+      refine ⟨0, fun n hn => ?_⟩
+      have := (intCast_zmod2_eq_zero_iff n).1 hn
+      obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+      rw [wythoff_plus_even, Nat.cast_one, Int.ediv_one, Int.cast_mul, natCast_zmod2_of_even hpe,
+        mul_zero]
+    · refine ⟨1, fun n hn => ?_⟩
+      have := (intCast_zmod2_eq_one_iff n).1 hn
+      obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+      rw [wythoff_plus_odd, show (p : ℤ) - q = 1 by omega, Int.ediv_one, Int.cast_sub,
+        Int.cast_mul, natCast_zmod2_of_even hpe, mul_zero, Int.cast_one, zero_sub]
+      decide
 
 /-- **(ratified, Theorem T, chain form).**  For even `p` the forward or backward parity chain has
 an absorbing state iff the side is `+` and `q = 1` or `p − q = 1`.  Paper proof: read off the
@@ -528,7 +593,35 @@ diagonal entries.  `+`: `F(E→E) = (q+1)/(2q)` and `B(O→O) = (R+1)/p` are `1`
 theorem absorbing_iff (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) :
     (∃ e : ZMod 2, fwdProb s p q e e = 1 ∨ bwdProb s p q e e = 1) ↔
       s = .plus ∧ (q = 1 ∨ p - q = 1) := by
-  sorry
+  have hQ : (0 : ℚ) < q := by exact_mod_cast hq
+  have hQP : (q : ℚ) < p := by exact_mod_cast hqp
+  have hP0 : (p : ℚ) ≠ 0 := (by linarith : (0 : ℚ) < p).ne'
+  have hQ0 : (q : ℚ) ≠ 0 := hQ.ne'
+  have hR0 : (p : ℚ) - q ≠ 0 := (sub_pos.2 hQP).ne'
+  have hpq : p - q = 1 ↔ (p : ℚ) - q = 1 := by
+    constructor
+    · intro h
+      rw [show p = q + 1 by omega]; push_cast; ring
+    · intro h
+      have : p = q + 1 := by exact_mod_cast (by linarith : (p : ℚ) = q + 1)
+      omega
+  have hq1 : q = 1 ↔ (q : ℚ) = 1 := by norm_cast
+  rw [hpq, hq1]
+  constructor
+  · rintro ⟨e, h⟩
+    rcases zmod2_cases e with rfl | rfl <;> cases s <;>
+      simp (config := {decide := true}) only [fwdProb, fwdEven, bwdProb, bwdEven, if_true,
+        if_false] at h <;>
+      rcases h with h | h <;> field_simp at h <;>
+      first
+        | exact ⟨rfl, Or.inl (by linarith)⟩
+        | exact ⟨rfl, Or.inr (by linarith)⟩
+        | (exfalso; linarith)
+  · rintro ⟨rfl, h | h⟩
+    · refine ⟨0, Or.inl ?_⟩
+      simp [fwdProb, fwdEven, h]
+    · refine ⟨1, Or.inl ?_⟩
+      simp [fwdProb, fwdEven, h]
 
 end TheoremT
 
