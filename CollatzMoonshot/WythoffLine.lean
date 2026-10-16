@@ -261,19 +261,100 @@ section Identity
 
 variable {m r : ℕ}
 
+/-- `A xᵐ = r` with `A = α/2`. -/
+lemma half_alphaG_mul_pow (hr : 2 ≤ r) : alphaG m r / 2 * gRoot m r ^ m = r := by
+  obtain ⟨hx1, -, -⟩ := gRoot_spec (m := m) hr
+  have hxm : 0 < gRoot m r ^ m := pow_pos (by linarith) m
+  rw [alphaG_eq hr]
+  field_simp
+
+/-- Even step: `W(v) = ⌊(α/2)v⌋`. -/
+lemma wy_even_bounds (α : ℝ) {v : ℤ} (hv : v % 2 = 0) :
+    (wy α v : ℝ) ≤ α / 2 * v ∧ α / 2 * v - 1 < wy α v := by
+  obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k := ⟨v / 2, by omega⟩
+  rw [wy_two_mul]
+  have : α / 2 * ((2 * k : ℤ) : ℝ) = (k : ℝ) * α := by push_cast; ring
+  rw [this]
+  exact ⟨Int.floor_le _, by linarith [Int.lt_floor_add_one ((k : ℝ) * α)]⟩
+
+/-- Odd step: `W(v) = ⌈(γ/2)(v + 1)⌉ − 1` with `γ = α/(α − 1)`. -/
+lemma wy_odd_bounds (α : ℝ) {v : ℤ} (hv : v % 2 = 1) :
+    α / (α - 1) / 2 * (v + 1) - 1 ≤ wy α v ∧ (wy α v : ℝ) < α / (α - 1) / 2 * (v + 1) := by
+  obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k - 1 := ⟨(v + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one]
+  have : α / (α - 1) / 2 * (((2 * k - 1 : ℤ) : ℝ) + 1) = (k : ℝ) * (α / (α - 1)) := by
+    push_cast; ring
+  rw [this]
+  push_cast
+  exact ⟨by linarith [Int.le_ceil ((k : ℝ) * (α / (α - 1)))],
+    by linarith [Int.ceil_lt_add_one ((k : ℝ) * (α / (α - 1)))]⟩
+
+/-- **The sandwich on `E Oʲ`.**  For `n` even with `W(n), …, Wʲ(n)` odd:
+`A xʲ n < W^{j+1}(n) + 1` and `(1 − x)(W^{j+1}(n) − A xʲ n) ≤ x − x^{j+1}`. -/
+lemma run_sandwich (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 0) (j : ℕ)
+    (hodd : ∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (alphaG m r))^[i] n % 2 = 1) :
+    alphaG m r / 2 * gRoot m r ^ j * n < ((wy (alphaG m r))^[j + 1] n : ℝ) + 1 ∧
+      (1 - gRoot m r) * (((wy (alphaG m r))^[j + 1] n : ℝ) - alphaG m r / 2 * gRoot m r ^ j * n)
+        ≤ gRoot m r - gRoot m r ^ (j + 1) := by
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  induction j with
+  | zero =>
+    obtain ⟨h1, h2⟩ := wy_even_bounds (alphaG m r) hn
+    simp only [pow_zero, mul_one, zero_add, pow_one, Function.iterate_one, sub_self]
+    constructor
+    · linarith
+    · nlinarith
+  | succ j ih =>
+    obtain ⟨ih1, ih2⟩ := ih fun i hi1 hi2 => hodd i hi1 (by omega)
+    have hv := hodd (j + 1) (by omega) le_rfl
+    obtain ⟨h1, h2⟩ := wy_odd_bounds (alphaG m r) hv
+    rw [alphaG_div_sub_one hr, betaG, show 2 * gRoot m r / 2 = gRoot m r by ring] at h1 h2
+    rw [Function.iterate_succ_apply']
+    have hx0 : (0 : ℝ) < gRoot m r := by linarith
+    have hx1' : (0 : ℝ) < 1 - gRoot m r := by linarith
+    have p1 := mul_lt_mul_of_pos_left ih1 hx0
+    have p2 := mul_le_mul_of_nonneg_left h2.le hx1'.le
+    have p3 := mul_le_mul_of_nonneg_left ih2 hx0.le
+    constructor
+    · rw [pow_succ]; nlinarith
+    · rw [pow_succ, pow_succ]; nlinarith
+
 /-- **(ratified, Theorem G (1)).**  If `n` is even and `W(n), …, Wᵐ(n)` are odd, then
 `W^{m+1}(n) = r·n`; for every `n ∈ ℤ`.  Paper proof: module docstring (for `m = 0`,
 `W(2k) = ⌊2rk⌋ = 2rk`). -/
 theorem wy_iterate_eq_of_odd_run (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 0)
     (hodd : ∀ i : ℕ, 1 ≤ i → i ≤ m → (wy (alphaG m r))^[i] n % 2 = 1) :
     (wy (alphaG m r))^[m + 1] n = r * n := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  obtain ⟨h1, h2⟩ := run_sandwich hr hn m hodd
+  rw [half_alphaG_mul_pow hr] at h1 h2
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hlt : gRoot m r - gRoot m r ^ (m + 1) < 1 - gRoot m r := by rw [hx]; nlinarith
+  have hup : (((wy (alphaG m r))^[m + 1] n : ℤ) : ℝ) < ((r * n + 1 : ℤ) : ℝ) := by
+    push_cast; nlinarith
+  have hlo : ((r * n - 1 : ℤ) : ℝ) < (((wy (alphaG m r))^[m + 1] n : ℤ) : ℝ) := by
+    push_cast; linarith
+  have a := Int.cast_lt.1 hup
+  have b := Int.cast_lt.1 hlo
+  omega
 
 /-- **(ratified, Theorem G (1), runs).**  After an even point at most `m` odd points follow: some
 `W^{j+1}(n)`, `j ≤ m`, is even.  Paper proof: `wy_iterate_eq_of_odd_run` (`r·n` is even). -/
 theorem exists_even_iterate (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 0) :
     ∃ j ≤ m, (wy (alphaG m r))^[j + 1] n % 2 = 0 := by
-  sorry
+  by_contra hne
+  push Not at hne
+  have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ m → (wy (alphaG m r))^[i] n % 2 = 1 := by
+    intro i hi1 hi2
+    have := hne (i - 1) (by omega)
+    rw [show i - 1 + 1 = i by omega] at this
+    omega
+  have h2 := hne m le_rfl
+  rw [wy_iterate_eq_of_odd_run hr hn hodd] at h2
+  obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+  apply h2
+  rw [show (r : ℤ) * (2 * k) = 2 * (r * k) by ring]
+  omega
 
 /-- **(ratified, Theorem G, partial runs).**  For `n > 0` even, `j ≤ m`, and `W(n), …, Wʲ(n)`
 odd: `r·n ≤ W^{j+1}(n)`.  Paper proof: `W^{j+1}(n) = ⌊c_j n + δ_j⌋ ≥ ⌊c_j n⌋` with
@@ -281,7 +362,51 @@ odd: `r·n ≤ W^{j+1}(n)`.  Paper proof: `W^{j+1}(n) = ⌊c_j n + δ_j⌋ ≥ �
 theorem le_wy_iterate_of_odd_run (hr : 2 ≤ r) {n : ℤ} (hn0 : 0 < n) (hn : n % 2 = 0) {j : ℕ}
     (hj : j ≤ m) (hodd : ∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (alphaG m r))^[i] n % 2 = 1) :
     r * n ≤ (wy (alphaG m r))^[j + 1] n := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  obtain ⟨h1, -⟩ := run_sandwich hr hn j hodd
+  have hxj : gRoot m r ^ m ≤ gRoot m r ^ j :=
+    pow_le_pow_of_le_one (by linarith) (by linarith) hj
+  have hA : 0 < alphaG m r / 2 := by have := four_le_alphaG (m := m) hr; linarith
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn0
+  have hreq := half_alphaG_mul_pow (m := m) hr
+  have p := mul_le_mul_of_nonneg_left hxj hA.le
+  have key : (r : ℝ) * n ≤ alphaG m r / 2 * gRoot m r ^ j * n := by nlinarith
+  have hlo : ((r * n - 1 : ℤ) : ℝ) < (((wy (alphaG m r))^[j + 1] n : ℤ) : ℝ) := by
+    push_cast; linarith
+  have := Int.cast_lt.1 hlo
+  omega
+
+/-- **The mirror sandwich on `O Eʲ`.**  For `n` odd with `W′(n), …, W′ʲ(n)` even:
+`W′^{j+1}(n) < A xʲ (n + 1)` and `(1 − x)(A xʲ (n + 1) − W′^{j+1}(n)) ≤ 1 − x^{j+1}`. -/
+lemma run_sandwich_mirror (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 1) (j : ℕ)
+    (heven : ∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (betaG m r))^[i] n % 2 = 0) :
+    ((wy (betaG m r))^[j + 1] n : ℝ) < alphaG m r / 2 * gRoot m r ^ j * (n + 1) ∧
+      (1 - gRoot m r) *
+          (alphaG m r / 2 * gRoot m r ^ j * (n + 1) - ((wy (betaG m r))^[j + 1] n : ℝ))
+        ≤ 1 - gRoot m r ^ (j + 1) := by
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  have hx0 : (0 : ℝ) < gRoot m r := by linarith
+  have hx1' : (0 : ℝ) < 1 - gRoot m r := by linarith
+  induction j with
+  | zero =>
+    obtain ⟨h1, h2⟩ := wy_odd_bounds (betaG m r) hn
+    rw [betaG_div_sub_one hr] at h1 h2
+    simp only [pow_zero, mul_one, zero_add, pow_one, Function.iterate_one]
+    constructor
+    · linarith
+    · nlinarith
+  | succ j ih =>
+    obtain ⟨ih1, ih2⟩ := ih fun i hi1 hi2 => heven i hi1 (by omega)
+    have hv := heven (j + 1) (by omega) le_rfl
+    obtain ⟨h1, h2⟩ := wy_even_bounds (betaG m r) hv
+    rw [show betaG m r / 2 = gRoot m r by unfold betaG; ring] at h1 h2
+    rw [Function.iterate_succ_apply']
+    have p1 := mul_lt_mul_of_pos_left ih1 hx0
+    have p2 := mul_le_mul_of_nonneg_left h2.le hx1'.le
+    have p3 := mul_le_mul_of_nonneg_left ih2 hx0.le
+    constructor
+    · rw [pow_succ]; nlinarith
+    · rw [pow_succ, pow_succ]; nlinarith
 
 /-- **(ratified, mirror identity).**  If `n` is odd and `W′(n), …, W′ᵐ(n)` are even, then
 `W′^{m+1}(n) = r(n + 1) − 1`; for every `n ∈ ℤ`.  Paper proof (sandwich): `n = 2k − 1`,
@@ -291,7 +416,18 @@ theorem le_wy_iterate_of_odd_run (hr : 2 ≤ r) {n : ℤ} (hn0 : 0 < n) (hn : n 
 theorem wy_iterate_eq_of_even_run_mirror (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 1)
     (heven : ∀ i : ℕ, 1 ≤ i → i ≤ m → (wy (betaG m r))^[i] n % 2 = 0) :
     (wy (betaG m r))^[m + 1] n = r * (n + 1) - 1 := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  obtain ⟨h1, h2⟩ := run_sandwich_mirror hr hn m heven
+  rw [half_alphaG_mul_pow hr] at h1 h2
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hlt : 1 - gRoot m r ^ (m + 1) < 2 * (1 - gRoot m r) := by rw [hx]; nlinarith
+  have hup : (((wy (betaG m r))^[m + 1] n : ℤ) : ℝ) < ((r * (n + 1) : ℤ) : ℝ) := by
+    push_cast; linarith
+  have hlo : ((r * (n + 1) - 2 : ℤ) : ℝ) < (((wy (betaG m r))^[m + 1] n : ℤ) : ℝ) := by
+    push_cast; nlinarith
+  have a := Int.cast_lt.1 hup
+  have b := Int.cast_lt.1 hlo
+  omega
 
 end Identity
 

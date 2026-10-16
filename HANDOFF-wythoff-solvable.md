@@ -21,3 +21,7 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
 - §4 `WythoffLine.lean` root/parameters: all closed (`gRoot_spec` IVT, `gRoot_unique` via
   `no_two_roots` = `convexOn_pow` + `slope_mono_adjacent`, `irrational_gRoot` by hand rational
   root theorem with `Rat.reduced` + `IsCoprime.isUnit_of_dvd'`, `alphaG_*`, `alphaG_one`).
+- §5 identities: all 4 closed.  `run_sandwich` / `run_sandwich_mirror` carry the two-sided
+  bound in the multiplied-out form `(1 − x)(v − A xʲ n) ≤ x − x^{j+1}` (no geometric sums);
+  `wy_even_bounds`, `wy_odd_bounds` are the one-step real bounds for any `α`.  Gotcha:
+  `rw [betaG]` also unfolds inside `wy (betaG m r)`; rewrite `betaG m r / 2 = x` instead.
