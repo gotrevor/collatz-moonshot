@@ -1764,7 +1764,7 @@ each finds the §47 wall from a new side, and three give cheap new theorems.
   cycles and at most one infinite orbit that agrees with `U` to depth `D` off `≤ G(X)` points; TT
   is the infinite-depth case.  Two walls, not one: fusion (finite vs infinite depth) and the
   residue horizon (sharp ceilings `c* = log_{4/3} 3`, Antihydra's frozen `E_k`).  The idea is
-  Conway's (2013 §5: "the number obtained by applying µ a million times to 8 might just be the same
+  Conway's (2013 Appendix 1: "the number obtained by applying µ a million times to 8 might just be the same
   as ..."; Ren opened it) and Tao's (2019 Remark 1.4; opened); the exact iff, sharp constants and
   Lean proofs are ours.  Cheapest new barrier: sign-blind Collatz (odd `x ↦ (3x ± 1)/2`): exactly one
   choice is odd, so the always-odd member diverges, and the all-minus member has the cycle
