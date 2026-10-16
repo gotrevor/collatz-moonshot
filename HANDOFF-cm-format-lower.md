@@ -24,3 +24,6 @@
   `push_run`/`pop_run`/`peek_run`/`one_run`; then `real_run` transfers via `put k w u` (write the
   two counters into stack `k`/`tmp`) and `act_map_put`.  `put_self`, `put_stackVec` connect to
   `stackVec`.
+- **`halts_iff_eval` proved.**  (→) strong induction on the counted counter run
+  (`CM.StepsN.of_transGen` + `det_lcm`) against `StateTransition.reaches_eval`; (←) lift the TM2
+  `Reaches` step-by-step (`tm2_step_reaches`) and end at `stuck_halt`.

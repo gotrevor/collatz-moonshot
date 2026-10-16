@@ -841,12 +841,58 @@ theorem stuck_halt (l₀ : Λ') (v : Option Γ') (w : LCtr → ℕ) :
     subst this
     simp [gadA] at ha
 
+theorem start_step (l₀ : Λ') (w : LCtr → ℕ) :
+    (lcm l₀).Step (.start, w) (.stmt (tr l₀) none, w) :=
+  ⟨_, Or.inl rfl, rfl, rfl, rfl⟩
+
+/-- One TM2 step is a counter run between the representing configurations. -/
+theorem tm2_step_reaches (l₀ : Λ') {a b : Cfg'} (h : b ∈ TM2.step tr a) :
+    (lcm l₀).Reaches (repCfg a) (repCfg b) := by
+  obtain ⟨_ | l, v, S⟩ := a
+  · cases h
+  · cases h
+    exact (stepAux_reaches l₀ (tr l) v S).1
+
 /-- **Halting matches.**  From `start` with the stacks `S`, the counter machine halts iff the
 TM2 run of `tr` from label `l₀`, store `none` and stacks `S` halts. -/
 theorem halts_iff_eval (l₀ : Λ') (S : K' → List Γ') :
     (lcm l₀).Halts (.start, stackVec S) ↔
       (StateTransition.eval (TM2.step tr) ⟨some l₀, none, S⟩).Dom := by
-  sorry
+  constructor
+  · rintro ⟨d, hr, hd⟩
+    obtain ⟨n, hn⟩ := CM.StepsN.of_reaches hr
+    obtain ⟨m, -, hm⟩ :=
+      CM.StepsN.of_transGen (det_lcm l₀) hd (.single (start_step l₀ (stackVec S))) hn
+    clear hr hn
+    have key : ∀ m (a : Cfg'), (lcm l₀).StepsN m (repCfg a) d →
+        (StateTransition.eval (TM2.step tr) a).Dom := by
+      intro m
+      induction m using Nat.strong_induction_on with
+      | _ m ih =>
+        rintro ⟨_ | l, v, S⟩ ha
+        · exact Part.dom_iff_mem.2 ⟨_, StateTransition.mem_eval.2 ⟨.refl, rfl⟩⟩
+        · have hstep : TM2.stepAux (tr l) v S ∈ TM2.step tr ⟨some l, v, S⟩ := rfl
+          rw [StateTransition.reaches_eval (Relation.ReflTransGen.single hstep)]
+          rcases hl : (TM2.stepAux (tr l) v S).l with _ | l'
+          · exact Part.dom_iff_mem.2 ⟨_, StateTransition.mem_eval.2 ⟨.refl, by
+              simp only [TM2.step]; rw [show TM2.stepAux (tr l) v S =
+                ⟨none, (TM2.stepAux (tr l) v S).var, (TM2.stepAux (tr l) v S).stk⟩ by
+                  rw [← hl]]⟩⟩
+          · have ht := (stepAux_reaches l₀ (tr l) v S).2 (by simp [hl])
+            obtain ⟨m', hm', h'⟩ := CM.StepsN.of_transGen (det_lcm l₀) hd ht ha
+            exact ih m' hm' _ h'
+    exact key m _ hm
+  · intro h
+    obtain ⟨b, hb⟩ := Part.dom_iff_mem.1 h
+    obtain ⟨hr, hb0⟩ := StateTransition.mem_eval.1 hb
+    have hreach : (lcm l₀).Reaches (repCfg ⟨some l₀, none, S⟩) (repCfg b) := by
+      clear hb hb0 h
+      induction hr with
+      | refl => exact .refl
+      | tail _ hst ih => exact ih.trans (tm2_step_reaches l₀ hst)
+    obtain ⟨_ | l, v, S'⟩ := b
+    · exact ⟨_, Relation.ReflTransGen.head (start_step l₀ _) hreach, stuck_halt l₀ v _⟩
+    · simp [TM2.step] at hb0
 
 /-! ## 5. Finiteness and the interface -/
 
