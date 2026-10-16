@@ -724,59 +724,230 @@ section Mirror
 
 variable {m r : ℕ}
 
+/-- For `m ≥ 1` the root satisfies `x ≤ 3/5` (`x² ≥ x^{m+1} = r(2x − 1) ≥ 2(2x − 1)`). -/
+lemma gRoot_le_of_pos (hr : 2 ≤ r) (hm : 1 ≤ m) : gRoot m r ≤ 3 / 5 := by
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hpow : gRoot m r ^ (m + 1) ≤ gRoot m r ^ 2 :=
+    pow_le_pow_of_le_one (by linarith) (by linarith) (by omega)
+  nlinarith
+
+/-- **Mirror partial runs.**  For `n > 0` odd, `j ≤ m`, and `W′(n), …, W′ʲ(n)` even:
+`r(n + 1) − 1 ≤ W′^{j+1}(n)`.  At `j = m` this is the mirror identity; for `j < m` the slope
+`c_j = A xʲ ≥ r/x` beats the error `1/(1 − x)` because `x ≤ 3/5`. -/
+lemma le_wy_iterate_of_even_run_mirror (hr : 2 ≤ r) {n : ℤ} (hn0 : 0 < n) (hn : n % 2 = 1)
+    {j : ℕ} (hj : j ≤ m) (heven : ∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (betaG m r))^[i] n % 2 = 0) :
+    r * (n + 1) - 1 ≤ (wy (betaG m r))^[j + 1] n := by
+  rcases Nat.eq_or_lt_of_le hj with rfl | hjm
+  · rw [wy_iterate_eq_of_even_run_mirror hr hn heven]
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  have hx35 := gRoot_le_of_pos (m := m) hr (by omega)
+  obtain ⟨-, h2⟩ := run_sandwich_mirror hr hn j heven
+  set x := gRoot m r
+  set y := alphaG m r / 2 * x ^ j
+  set v : ℝ := (((wy (betaG m r))^[j + 1] n : ℤ) : ℝ)
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hN : (2 : ℝ) ≤ n + 1 := by
+    have : (1 : ℝ) ≤ n := by exact_mod_cast hn0
+    linarith
+  have hreq := half_alphaG_mul_pow (m := m) hr
+  have hyx : (r : ℝ) ≤ y * x := by
+    have hxp : x ^ (m - j) ≤ x := pow_le_of_le_one (by linarith) (by linarith) (by omega)
+    have hy0 : 0 ≤ y := by
+      have := four_le_alphaG (m := m) hr
+      positivity
+    have : y * x ^ (m - j) = r := by
+      rw [← hreq]; simp only [y]; rw [mul_assoc, ← pow_add, Nat.add_sub_cancel' hjm.le]
+    nlinarith [mul_le_mul_of_nonneg_left hxp hy0]
+  have hxj : 0 ≤ x ^ (j + 1) := by positivity
+  have key : (r : ℝ) * (n + 1) - 2 < v := by
+    have e1 : (1 - x) * (y * (n + 1) - v) ≤ 1 := by linarith
+    have e2 : (1 - x) * (1 - x) * (n + 1) * r ≤ (1 - x) * (n + 1) * x * (y - r) := by
+      have h1x : 0 ≤ (1 - x) * (n + 1) := by nlinarith
+      nlinarith [mul_le_mul_of_nonneg_left hyx h1x]
+    by_contra hcon
+    push Not at hcon
+    have e3 : (1 - x) * (y * (n + 1) - (r * (n + 1) - 2)) ≤ 1 := by
+      nlinarith [mul_le_mul_of_nonneg_left hcon (show (0 : ℝ) ≤ 1 - x by linarith)]
+    have e4 : x * ((1 - x) * (n + 1) * (y - r) + 2 * (1 - x)) ≤ x := by
+      have := mul_le_mul_of_nonneg_left e3 (show (0 : ℝ) ≤ x by linarith)
+      linarith
+    have hNr : (4 : ℝ) ≤ (n + 1) * r := by nlinarith
+    have e5 : (1 - x) * (1 - x) * 4 ≤ (1 - x) * (1 - x) * ((n + 1) * r) :=
+      mul_le_mul_of_nonneg_left hNr (by nlinarith)
+    nlinarith
+  have hlo : ((r * (n + 1) - 2 : ℤ) : ℝ) < (((wy (betaG m r))^[j + 1] n : ℤ) : ℝ) := by
+    push_cast; exact key
+  have := Int.cast_lt.1 hlo
+  omega
+
+lemma gmPerm_first_odd (hr : 2 ≤ r) {s : ℤ} (hs0 : 0 < s) (hs : s % 2 = 1) :
+    ∃ j ≤ m, (wy (betaG m r))^[j + 1] s % 2 = 1 ∧
+      (∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (betaG m r))^[i] s % 2 = 0) ∧
+      r * (s + 1) - 1 ≤ (wy (betaG m r))^[j + 1] s := by
+  classical
+  have hex : ∃ j, j ≤ m ∧ (wy (betaG m r))^[j + 1] s % 2 = 1 := by
+    by_contra hne
+    push Not at hne
+    have heven : ∀ i : ℕ, 1 ≤ i → i ≤ m → (wy (betaG m r))^[i] s % 2 = 0 := by
+      intro i hi1 hi2
+      have := hne (i - 1) (by omega)
+      rw [show i - 1 + 1 = i by omega] at this
+      omega
+    have h2 := hne m le_rfl
+    rw [wy_iterate_eq_of_even_run_mirror hr hs heven] at h2
+    obtain ⟨k, rfl⟩ : ∃ k, s = 2 * k - 1 := ⟨(s + 1) / 2, by omega⟩
+    apply h2
+    rw [show (r : ℤ) * (2 * k - 1 + 1) - 1 = 2 * (r * k) - 1 by ring]
+    omega
+  obtain ⟨hjm, hjo⟩ := Nat.find_spec hex
+  have heven : ∀ i : ℕ, 1 ≤ i → i ≤ Nat.find hex → (wy (betaG m r))^[i] s % 2 = 0 := by
+    intro i hi1 hi2
+    have h' : ¬ (i - 1 ≤ m ∧ (wy (betaG m r))^[i - 1 + 1] s % 2 = 1) :=
+      Nat.find_min hex (by omega)
+    rw [show i - 1 + 1 = i by omega] at h'
+    have : ¬ (wy (betaG m r))^[i] s % 2 = 1 := fun h => h' ⟨by omega, h⟩
+    omega
+  exact ⟨_, hjm, hjo, heven, le_wy_iterate_of_even_run_mirror hr hs0 hs hjm heven⟩
+
 /-- **(ratified, mirror (2)).**  Lemma P applies to the mirror with `S` = odds, `Φ = ∅`,
 `T = m + 1`.  Paper proof: (H1) is `wy_lt_of_even` (`β < 2`); (H2): by the mirror identity the
 first return word of an odd `s` is `O Eʲ`, `j ≤ m`, and `R′(s) ≥ r(s + 1) − 1 > s`
 (`returnMap_gmPerm_ge`). -/
 theorem hyp_gmPerm (hr : 2 ≤ r) : Hyp (gmPerm m r hr) {n | n % 2 = 1} ∅ (m + 1) := by
-  sorry
+  have hβ := one_lt_betaG_lt (m := m) hr
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  refine ⟨fun n => ?_, fun z => ?_, fun z hz hzS _ => ?_, fun s hs hs0 _ => ?_⟩
+  · exact wy_pos_iff hβ.1 n
+  · simp only [Set.mem_empty_iff_false]
+  · simp only [Set.mem_ofPred_eq] at hzS
+    rw [gmPerm_apply]
+    exact wy_lt_of_even (by linarith) hz (by omega)
+  · have hs' : s % 2 = 1 := hs
+    obtain ⟨j, hjm, hjo, heven, hge⟩ := gmPerm_first_odd (m := m) hr hs0 hs'
+    refine ⟨j + 1, by omega, by omega, ?_, ?_, ?_⟩
+    · rw [gmPerm_pow_apply]; exact hjo
+    · rw [gmPerm_pow_apply]; nlinarith
+    · intro i hi1 hi2
+      rw [gmPerm_pow_apply]
+      have := heven i hi1 (by omega)
+      simp only [Set.mem_ofPred_eq]
+      omega
 
 /-- **(ratified).**  The mirror's first return to the odds: `R′(s) ≥ r(s + 1) − 1`.  Paper proof:
 on `O Eʲ` (`j ≤ m`), `W′^{j+1}(s) = ⌊(s + 1) c_j − ε⌋` with slope `c_j = r x^{j−m} ≥ r` and error
 `ε = Σ_l f_l x^{j+1−l} ∈ [0, 1)`; at `j = m` this is the mirror identity. -/
 theorem returnMap_gmPerm_ge (hr : 2 ≤ r) {s : ℤ} (hs0 : 0 < s) (hs : s % 2 = 1) :
     r * (s + 1) - 1 ≤ returnMap (gmPerm m r hr) {n | n % 2 = 1} s := by
-  sorry
+  obtain ⟨j, hjm, hjo, heven, hge⟩ := gmPerm_first_odd (m := m) hr hs0 hs
+  have hrt : returnTime (gmPerm m r hr) {n | n % 2 = 1} s = j + 1 := by
+    apply returnTime_eq (by omega)
+    · rw [gmPerm_pow_apply]; exact hjo
+    · intro i hi0 hi
+      rw [gmPerm_pow_apply]
+      have := heven i hi0 (by omega)
+      simp only [Set.mem_ofPred_eq]
+      omega
+  rw [returnMap, hrt, gmPerm_pow_apply]
+  exact hge
 
 /-- **(ratified, mirror (2)).**  No finite orbit in `ℕ⁺`. -/
 theorem permOrbit_gmPerm_infinite (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     (permOrbit (gmPerm m r hr) x).Infinite := by
-  sorry
+  exact permOrbit_infinite (hyp_gmPerm hr) hx (Set.notMem_empty x)
 
 /-- **(ratified, mirror forward escape).** -/
 theorem tendsto_gmPerm_pow (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     Tendsto (fun n : ℕ => (gmPerm m r hr ^ n) x) atTop atTop := by
-  sorry
+  exact tendsto_pow (hyp_gmPerm hr) hx (Set.notMem_empty x)
 
 /-- **(ratified, mirror backward escape).** -/
 theorem tendsto_gmPerm_pow_neg (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     Tendsto (fun n : ℕ => (gmPerm m r hr ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+  exact tendsto_pow_neg (hyp_gmPerm hr) hx (Set.notMem_empty x)
 
 /-- **(ratified, mirror minima).**  For `x > 0`: `x` is the minimum of its orbit iff `x` is odd
 and its `m + 1` predecessors are even. -/
 theorem isOrbitMin_gmPerm_iff (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     IsOrbitMin (gmPerm m r hr) x ↔
       x % 2 = 1 ∧ ∀ i : ℕ, 1 ≤ i → i ≤ m + 1 → (gmPerm m r hr ^ (-(i : ℤ))) x % 2 = 0 := by
-  sorry
+  rw [isOrbitMin_iff (hyp_gmPerm hr) hx (Set.notMem_empty x)]
+  simp only [Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨h1, h2⟩; exact ⟨h1, fun i a b => by have := h2 i a b; omega⟩
+  · rintro ⟨h1, h2⟩; exact ⟨h1, fun i a b => by have := h2 i a b; omega⟩
 
 /-- **(ratified, mirror exact count).**
 `#{minima ≤ X} + #{odd s ∈ [1, X] : R′(s) ≤ X} = ⌈X/2⌉` (no `Φ` term). -/
 theorem minCount_gmPerm_add (hr : 2 ≤ r) (X : ℕ) :
     minCount (gmPerm m r hr) X + returnCount (gmPerm m r hr) {n | n % 2 = 1} ∅ X =
       (X + 1) / 2 := by
-  sorry
+  rw [minCount_add_returnCount (hyp_gmPerm (m := m) hr) (fun z hz => absurd hz (Set.notMem_empty z))
+    X, setCount_empty, setCount_odds, zero_add]
+
+/-- `#{odd s ∈ [1, X] : R′(s) ≤ X} ≤ ⌊(X + 1)/2r⌋` (`R′(s) ≥ r(s + 1) − 1`). -/
+lemma returnCount_gmPerm_le (hr : 2 ≤ r) (X : ℕ) :
+    returnCount (gmPerm m r hr) {n | n % 2 = 1} ∅ X ≤ (X + 1) / (2 * r) := by
+  classical
+  unfold returnCount
+  calc _ ≤ ((Finset.Icc 1 ((X + 1) / (2 * r))).image fun k : ℕ => 2 * (k : ℤ) - 1).card := by
+        apply Finset.card_le_card
+        intro s hs
+        simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.notMem_empty,
+          not_false_eq_true, Finset.mem_image, true_and] at hs ⊢
+        obtain ⟨⟨h1, h2⟩, hso, hR⟩ := hs
+        have hge := returnMap_gmPerm_ge (m := m) hr (by omega) hso
+        obtain ⟨k, rfl⟩ : ∃ k, s = 2 * k - 1 := ⟨(s + 1) / 2, by omega⟩
+        refine ⟨k.toNat, ⟨by omega, (Nat.le_div_iff_mul_le (by omega)).2 ?_⟩, by omega⟩
+        have : (((k.toNat * (2 * r)) : ℕ) : ℤ) ≤ X + 1 := by
+          push_cast
+          rw [Int.toNat_of_nonneg (by omega)]
+          have : k * (2 * (r : ℤ)) = r * (2 * k - 1 + 1) := by ring
+          linarith
+        exact_mod_cast this
+    _ ≤ (Finset.Icc 1 ((X + 1) / (2 * r))).card := Finset.card_image_le
+    _ = (X + 1) / (2 * r) := by simp
 
 /-- **(ratified, mirror lower bound).**  `#{minima ≤ X} ≥ ⌊(X + 1)/2⌋ − ⌊(X + 1)/2r⌋`.  Paper
 proof: `R′(s) ≤ X` forces `s + 1 ≤ (X + 1)/r` (`returnMap_gmPerm_ge`). -/
 theorem minCount_gmPerm_ge (hr : 2 ≤ r) (X : ℕ) :
     ((X : ℤ) + 1) / 2 - ((X : ℤ) + 1) / (2 * r) ≤ minCount (gmPerm m r hr) X := by
-  sorry
+  have h := minCount_gmPerm_add (m := m) hr X
+  have hB := returnCount_gmPerm_le (m := m) hr X
+  have c2 : (((X + 1) / (2 * r) : ℕ) : ℤ) = ((X : ℤ) + 1) / (2 * r) := by
+    rw [Int.natCast_div]; push_cast; ring
+  have c3 : (((X + 1) / 2 : ℕ) : ℤ) = ((X : ℤ) + 1) / 2 := by
+    rw [Int.natCast_div]; push_cast; ring
+  rw [← c2, ← c3]
+  omega
 
 /-- **(ratified, mirror).**  Infinitely many infinite orbits. -/
 theorem gmPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
     InfinitelyManyInfiniteOrbits (gmPerm m r hr) := by
-  sorry
+  apply infinitelyManyInfiniteOrbits_of_minima (hyp_gmPerm (m := m) hr)
+  by_contra hfin
+  rw [Set.not_infinite] at hfin
+  classical
+  obtain ⟨c, hc⟩ : ∃ c, hfin.toFinset.card = c := ⟨_, rfl⟩
+  have hge := minCount_gmPerm_ge (m := m) hr (4 * (c + 2))
+  have hle : minCount (gmPerm m r hr) (4 * (c + 2)) ≤ c := by
+    unfold minCount
+    calc _ ≤ hfin.toFinset.card := by
+          apply Finset.card_le_card
+          intro x hx
+          simp only [Finset.mem_filter, Finset.mem_Icc, Set.Finite.mem_toFinset,
+            Set.mem_ofPred_eq] at hx ⊢
+          exact ⟨by omega, Set.notMem_empty x, hx.2⟩
+      _ = c := hc
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  have hq0 := Int.ediv_mul_le (((4 * (c + 2) : ℕ) : ℤ) + 1) (show (2 * (r : ℤ)) ≠ 0 by omega)
+  have hq : (((4 * (c + 2) : ℕ) : ℤ) + 1) / (2 * r) ≤ c + 2 := by
+    by_contra h
+    push Not at h
+    push_cast at hq0 h
+    nlinarith
+  push_cast at hge hq
+  omega
 
 /-- **(ratified, mirror density, conditional).**  Same `d = (α − 2)/(2αβᵐ)`.  Paper proof: as
 `tendsto_minCount_gPerm`, with the parity roles swapped; the run phases are the same
