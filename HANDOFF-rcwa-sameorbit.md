@@ -28,6 +28,21 @@ Branch `wip/rcwa-sameorbit-2`.  Target: every `sorry` in `CollatzMoonshot/RcwaSa
   the class of `τ n` mod `L` constant).
 - Layer 5: `good_of_valid`, `tableOf_spec`, `not_computable_sameCycle` (uses `computable_reduce`).
 
-## Open
+- `computable_reduce`: `PrimInt` proves `ℤ` arithmetic primitive recursive by transport through
+  `(a, b) ↦ a − b` (`int_natSub`, using `encode (n : ℤ) = 2n`, `encode -[n+1] = 2n + 1`):
+  `int_add/neg/sub/mul/le/ediv/emod/dvd/natAbs`, plus `nat_pow`, `nat_gcd` (via
+  `Nat.findGreatest`), `padicValInt` (via `Nat.findGreatest`), parameterized `list_find?`,
+  `list_all`, `list_filter`.  `phase` is moved off `ZMod (5^j)` (`phase_eq`), `InEngine` gets a
+  decidable form (`inEngine_iff_dec`), `tableFrom` loses `ℚ` (`tableFrom_eq`, `numZ`, `denN` from
+  `Rat.num_mkRat`/`den_mkRat`), `sigma` is an `Option.getD` (`sigma_eq_getD`).  Then every
+  definition is proved `Primrec` in composition form (`pr_*`), and `reduce` is `Primrec`, hence
+  `Computable`.
 
-- `computable_reduce` only.
+## Status: DONE
+
+`CollatzMoonshot/RcwaSameOrbit.lean` is sorry-free; all ratified statements unchanged (checked
+textually against `f0fe61a`).  `#print axioms` of `not_computable_sameCycle`, `sameCycle_enc_iff`,
+`sameCycle_all_iff`, `isRcwa23At_sigma`, `computable_reduce`, `tableOf_spec`:
+`propext, Classical.choice, Quot.sound`.  `RcwaEngineGen.lean` untouched; `RcwaMachine.lean` only
+the `Int.leInduction` chore.  No `native_decide`, no axioms.  The literature input remains the
+hypothesis `HaltingUndecidable`.
