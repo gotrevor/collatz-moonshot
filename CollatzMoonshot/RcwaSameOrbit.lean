@@ -1258,7 +1258,7 @@ theorem F_of_find {j : ℕ} {R : List Rule} {n : ℤ} (hn : InEngine j n) :
 /-- `σ` is RCWA with all slopes in `2^ℤ 3^ℤ`, at modulus `3^N · L` for any `L > 0`
 that the highway moduli and `5^j 2^N 3^{2N}` (the zero tests) divide. -/
 theorem isRcwa23At_sigma {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {L : ℕ}
-    (hL : 0 < L) (hhw : ∀ rm ∈ hw, rm.2 ∣ L) (htest : 5 ^ j * 2 ^ N j * 3 ^ (2 * N j) ∣ L) :
+    (_hL : 0 < L) (hhw : ∀ rm ∈ hw, rm.2 ∣ L) (htest : 5 ^ j * 2 ^ N j * 3 ^ (2 * N j) ∣ L) :
     IsRcwa23At (3 ^ N j * L) (sigma j M hw) := by
   have hj := h.one_le
   intro r

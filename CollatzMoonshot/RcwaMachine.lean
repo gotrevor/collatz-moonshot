@@ -350,7 +350,7 @@ theorem sameCycle_succ_of_not_diverges (f : PEquiv α α) (τ : Snk f ≃ Src f)
 /-- A divergent source at line position `p` is a cut: positions `≤ p` and `> p` lie on different
 orbits.  Needs (H1) and (H2). -/
 theorem not_sameCycle_of_cut (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
-    (h1 : NoBiInfinite f) (h2 : EndToStart f τ) (s : Src f) (hs : Diverges f s.1) {p q r : ℤ}
+    (_h1 : NoBiInfinite f) (h2 : EndToStart f τ) (s : Src f) (hs : Diverges f s.1) {p q r : ℤ}
     (hp : θ p = Sum.inl s) (hq : q ≤ p) (hr : p < r) :
     ¬ (complete f τ θ).SameCycle (lineEmb f (θ q)) (lineEmb f (θ r)) := by
   rintro ⟨k, hk⟩
