@@ -12,3 +12,7 @@ Kickoff: `KICKOFF-2026-10-16-cm-upper.md`.  Branch `wip/cm-upper`.
   `double_halts_iff (→)`.
 - Gotcha: `![a, b] 0` inside `decide (0 < _)` leaves a `Nat.decLt 0 (![a,b] 0)` instance after simp
   that no lemma matches; state Fin-2 lemmas over a general `v : Fin 2 → ℕ` instead.
+- §2 History: done.  `histWrap_lapsMixed` via rank (`hrank`, constant on a closed walk) plus
+  integer potentials (`tF`/`tH` transfer, `wF`/`wH` wheel, `wZ` rules out `K = 0`) and
+  `walk_sum_zero` telescoping: no flow counting needed.  `macroStep_of_chain` builds a
+  `MacroStep` from a `ReflTransGen` of off-boundary steps (`HOff`).

@@ -194,6 +194,21 @@ theorem macroStep_of_chain {B : Set Q} {Step : Q × V → Q × V → Prop} {c m 
       rw [show i = n by omega, hn]; exact hmd
   · simp only [show i ≤ n by omega, if_true]; exact hoff i h1 (by omega)
 
+/-- Along a closed walk every potential telescopes to `0`. -/
+theorem walk_sum_zero {X : Type*} (f : X → ℤ) (src dst : ℕ → X) {m : ℕ} (hm : 0 < m)
+    (hchain : ∀ i, i + 1 < m → dst i = src (i + 1)) (hclose : dst (m - 1) = src 0) :
+    ∑ i ∈ Finset.range m, (f (dst i) - f (src i)) = 0 := by
+  have : ∀ i ∈ Finset.range m, f (dst i) - f (src i) =
+      f (src ((i + 1) % m)) - f (src (i % m)) := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    rw [Nat.mod_eq_of_lt hi]
+    by_cases h : i + 1 < m
+    · rw [Nat.mod_eq_of_lt h, hchain i h]
+    · rw [show i + 1 = m by omega, Nat.mod_self, ← hclose, show i = m - 1 by omega]
+  rw [Finset.sum_congr rfl this, Finset.sum_range_sub (fun i => f (src (i % m))), Nat.mod_self,
+    Nat.zero_mod, sub_self]
+
 end Chain
 
 /-! ## 2. The history wrapper (Lemma H) -/
@@ -320,6 +335,22 @@ theorem act_map {o : Op ι} {v v' : ι → ℕ} (h : o.Act v v') (x w : ℕ) :
     | work => rfl
   | nop => cases h; rfl
 
+/-- A relabelled operation acts on the `val` counters and fixes `hist` and `work`. -/
+theorem map_act_inv {o : Op ι} {w w' : HCtr ι → ℕ} (h : (o.map HCtr.val).Act w w') :
+    o.Act (fun i => w (.val i)) (fun i => w' (.val i)) ∧ w' .hist = w .hist ∧
+      w' .work = w .work := by
+  cases o with
+  | test i b => obtain ⟨h1, rfl⟩ := h; exact ⟨⟨h1, rfl⟩, rfl, rfl⟩
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    exact ⟨⟨h1, h2, fun j hj => h3 _ (fun e => hj (HCtr.val.inj e))⟩, h3 _ (by simp),
+      h3 _ (by simp)⟩
+  | inc i =>
+    obtain ⟨h1, h3⟩ := h
+    exact ⟨⟨h1, fun j hj => h3 _ (fun e => hj (HCtr.val.inj e))⟩, h3 _ (by simp),
+      h3 _ (by simp)⟩
+  | nop => cases h; exact ⟨rfl, rfl, rfl⟩
+
 /-- The transfer loop moves `hist` into `work`. -/
 theorem hw_transfer {ρ : Quad Q ι} (hρ : ρ ∈ U) (v : ι → ℕ) (t : ℕ) : ∀ a b,
     Relation.ReflTransGen (HOff U lab) (.tr ρ, hc3 v (a + t) b) (.tr ρ, hc3 v a (b + t)) := by
@@ -418,10 +449,146 @@ theorem histWrap_normalAt {q₀ : Q} (hU : U.NormalAt q₀) : (histWrap U lab).N
   rename_i ρ _ hρ _
   exact hU ρ hρ h
 
+/-- Rank of a wrapper state: rules off the boundary never lower it. -/
+def hrank : HState Q ι K → ℕ
+  | .bnd _ => 4
+  | .act _ => 0
+  | .pre _ => 1
+  | .tr _ | .tr₁ _ | .tr₂ _ | .tr₃ _ => 2
+  | .wh _ _ | .wa _ _ | .wb _ | .wc _ | .wd _ => 3
+
+/-- Transfer potential for `hist` (`4 δ = Δ − 1`). -/
+def tF : HState Q ι K → ℤ
+  | .tr₁ _ => 1
+  | .tr₂ _ => -2
+  | .tr₃ _ => -1
+  | _ => 0
+
+/-- Transfer potential for `hist + work`. -/
+def tH : HState Q ι K → ℤ
+  | .tr₂ _ => -1
+  | _ => 0
+
+/-- Wheel potential for `work` (`(2K + 2) δ = Δ − 1`). -/
+def wF : HState Q ι K → ℤ
+  | .wh _ j => 2 * K - 2 * j.val
+  | .wa _ j => 2 * K - 2 * j.val + 1
+  | .wb _ => 2 * K + 1
+  | .wd _ => 1
+  | _ => 0
+
+/-- Wheel potential for `hist + K · work`. -/
+def wH : HState Q ι K → ℤ
+  | .wh _ j => -j.val
+  | .wa _ j => 1 - j.val
+  | .wc _ => -K
+  | .wd _ => 1 - K
+  | _ => 0
+
+/-- Wheel potential when `K = 0`. -/
+def wZ : HState Q ι K → ℤ
+  | .wc _ => 1
+  | .wd _ => 2
+  | _ => 0
+
+theorem hrule_rank [DecidableEq ι] {r : Quad (HState Q ι K) (HCtr ι)} (hr : HRule U lab r)
+    (hs : r.src ∉ Set.range HState.bnd) (hd : r.dst ∉ Set.range HState.bnd) :
+    hrank r.src ≤ hrank r.dst ∧ (hrank r.src = hrank r.dst →
+      (hrank r.src = 2 ∧ 4 * r.op.delta .hist = tF r.dst - tF r.src - 1 ∧
+        r.op.delta .work + r.op.delta .hist = tH r.dst - tH r.src) ∨
+      (hrank r.src = 3 ∧ (2 * K + 2) * r.op.delta .work = wF r.dst - wF r.src - 1 ∧
+        r.op.delta .hist + K * r.op.delta .work = wH r.dst - wH r.src ∧
+        (0 < K ∨ wZ r.dst - wZ r.src = 1))) := by
+  cases hr <;> simp_all [hrank, tF, tH, wF, wH, wZ, Op.delta, Op.map]
+  all_goals omega
+
 /-- **(S1) for the wrapper.**  The only loops off the boundary are the transfer (lap
 `hist − 1, work + 1`) and the wheel (lap `work − 1, hist + K`). -/
 theorem histWrap_lapsMixed [DecidableEq ι] : LapsMixed (histWrap U lab) (Set.range HState.bnd) := by
-  sorry
+  intro ρ m hm hmem hoff hchain hclose
+  have hdoff : ∀ i, i < m → (ρ i).dst ∉ Set.range HState.bnd := by
+    intro i hi
+    by_cases h : i + 1 < m
+    · rw [hchain i h]; exact hoff _ h
+    · rw [show i = m - 1 by omega, hclose]; exact hoff 0 hm
+  have key := fun i (hi : i < m) => hrule_rank (hmem i hi) (hoff i hi) (hdoff i hi)
+  -- the rank is constant along the walk
+  have hmono : ∀ j, j < m → ∀ i, i ≤ j → hrank (ρ i).src ≤ hrank (ρ j).src := by
+    intro j
+    induction j with
+    | zero => intro _ i hi; rw [show i = 0 by omega]
+    | succ j ih =>
+      intro hj i hi
+      rcases Nat.lt_or_ge i (j + 1) with h | h
+      · exact (ih (by omega) i (by omega)).trans
+          ((key j (by omega)).1.trans (le_of_eq (by rw [hchain j hj])))
+      · rw [show i = j + 1 by omega]
+  have hconst : ∀ i, i < m → hrank (ρ i).src = hrank (ρ 0).src ∧
+      hrank (ρ i).dst = hrank (ρ 0).src := by
+    intro i hi
+    have h0 := hmono i hi 0 (Nat.zero_le _)
+    have h1 := (key i hi).1
+    have h2 : hrank (ρ i).dst ≤ hrank (ρ 0).src := by
+      by_cases h : i + 1 < m
+      · rw [hchain i h]
+        calc hrank (ρ (i + 1)).src ≤ hrank (ρ (m - 1)).src := hmono _ (by omega) _ (by omega)
+          _ ≤ hrank (ρ (m - 1)).dst := (key _ (by omega)).1
+          _ = _ := by rw [hclose]
+      · rw [show i = m - 1 by omega, hclose]
+    omega
+  have hid := fun i (hi : i < m) =>
+    (key i hi).2 ((hconst i hi).1.trans (hconst i hi).2.symm)
+  have hsum := fun (f : HState Q ι K → ℤ) =>
+    walk_sum_zero f (fun i => (ρ i).src) (fun i => (ρ i).dst) hm hchain hclose
+  rcases hid 0 hm with ⟨h2, -⟩ | ⟨h3, -⟩
+  · -- the transfer: `hist` down, `work` up
+    have hi2 : ∀ i, i < m → hrank (ρ i).src = 2 := fun i hi => (hconst i hi).1.trans h2
+    have e1 : ∑ i ∈ Finset.range m, 4 * (ρ i).op.delta .hist =
+        ∑ i ∈ Finset.range m, ((tF (ρ i).dst - tF (ρ i).src) - 1) := by
+      refine Finset.sum_congr rfl fun i hi => ?_
+      rw [Finset.mem_range] at hi
+      rcases hid i hi with ⟨-, h, -⟩ | ⟨h, -⟩
+      · rw [h]
+      · have := hi2 i hi; omega
+    have e2 : ∑ i ∈ Finset.range m, ((ρ i).op.delta .work + (ρ i).op.delta .hist) =
+        ∑ i ∈ Finset.range m, (tH (ρ i).dst - tH (ρ i).src) := by
+      refine Finset.sum_congr rfl fun i hi => ?_
+      rw [Finset.mem_range] at hi
+      rcases hid i hi with ⟨-, -, h⟩ | ⟨h, -⟩
+      · exact h
+      · have := hi2 i hi; omega
+    rw [← Finset.mul_sum, Finset.sum_sub_distrib, hsum, Finset.sum_const, Finset.card_range]
+      at e1
+    rw [Finset.sum_add_distrib, hsum] at e2
+    simp only [nsmul_eq_mul, mul_one] at e1
+    have : (0 : ℤ) < m := by exact_mod_cast hm
+    exact ⟨⟨.hist, by linarith⟩, ⟨.work, by linarith⟩⟩
+  · -- the wheel: `work` down, `hist` up
+    have hi3 : ∀ i, i < m → hrank (ρ i).src = 3 := fun i hi => (hconst i hi).1.trans h3
+    have hw := fun i (hi : i < m) => (hid i hi).resolve_left (fun h => by
+      have := hi3 i hi; omega)
+    have e1 : ∑ i ∈ Finset.range m, (2 * (K : ℤ) + 2) * (ρ i).op.delta .work =
+        ∑ i ∈ Finset.range m, ((wF (ρ i).dst - wF (ρ i).src) - 1) :=
+      Finset.sum_congr rfl fun i hi => (hw i (Finset.mem_range.1 hi)).2.1
+    have e2 : ∑ i ∈ Finset.range m, ((ρ i).op.delta .hist + K * (ρ i).op.delta .work) =
+        ∑ i ∈ Finset.range m, (wH (ρ i).dst - wH (ρ i).src) :=
+      Finset.sum_congr rfl fun i hi => (hw i (Finset.mem_range.1 hi)).2.2.1
+    have hK : 0 < K := by
+      by_contra hK
+      have e3 : ∑ i ∈ Finset.range m, (wZ (ρ i).dst - wZ (ρ i).src) =
+          ∑ i ∈ Finset.range m, (1 : ℤ) :=
+        Finset.sum_congr rfl fun i hi =>
+          (hw i (Finset.mem_range.1 hi)).2.2.2.resolve_left hK
+      rw [hsum, Finset.sum_const, Finset.card_range] at e3
+      simp at e3; omega
+    rw [← Finset.mul_sum, Finset.sum_sub_distrib, hsum, Finset.sum_const, Finset.card_range]
+      at e1
+    rw [Finset.sum_add_distrib, hsum, ← Finset.mul_sum] at e2
+    simp only [nsmul_eq_mul, mul_one] at e1
+    have : (0 : ℤ) < m := by exact_mod_cast hm
+    have hK' : (0 : ℤ) < K := by exact_mod_cast hK
+    have hwk : ∑ i ∈ Finset.range m, (ρ i).op.delta .work < 0 := by nlinarith
+    exact ⟨⟨.work, hwk⟩, ⟨.hist, by nlinarith⟩⟩
 
 /-- **The macro step.**  A step of `U` by `ρ` is one macro step of the wrapper, with history
 `K · h + lab ρ`. -/
@@ -449,24 +616,85 @@ theorem histWrap_macro {ρ : Quad Q ι} (hρ : ρ ∈ U) {v v' : ι → ℕ} (ha
 /-- A halting ID of `U` gives a halting run of the wrapper. -/
 theorem histWrap_halts_of_stuck {s : Q} {v : ι → ℕ} (hs : U.Stuck (s, v)) (h : ℕ) :
     (histWrap U lab).Halts (.bnd s, hcfg v h) := by
-  sorry
+  by_cases hex : ∃ ρ ∈ U, ρ.src = s
+  · obtain ⟨ρ, hρ, rfl⟩ := hex
+    refine ⟨(.act ρ.src, hcfg v h),
+      .single ⟨_, .guard hρ, rfl, rfl, act_test _ _ (by simp [hcfg])⟩, ?_⟩
+    rintro d ⟨r, hr, h1, -, h3⟩
+    cases hr <;> simp only [HState.act.injEq, reduceCtorEq] at h1
+    rename_i ρ' hρ'
+    exact hs (ρ'.dst, fun i => d.2 (.val i)) ⟨ρ', hρ', h1, rfl, (map_act_inv h3).1⟩
+  · refine ⟨_, .refl, ?_⟩
+    rintro d ⟨r, hr, h1, -, -⟩
+    cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h1
+    exact hex ⟨_, ‹_›, h1.symm⟩
 
 /-- Every macro step, from any boundary configuration (garbage included), raises `hist`. -/
 theorem histWrap_macro_hist (hU : U.Det) (hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val)
     {b b' : Cfg (HState Q ι K) (HCtr ι)}
     (hm : RcwaMachine.MacroStep (Set.range HState.bnd) (histWrap U lab).Step b b') :
     b.2 .hist < b'.2 .hist := by
-  sorry
+  have hm₀ := hm
+  obtain ⟨hb, hb', x, n, hn, hx0, hxn, hstep, hoff⟩ := hm
+  obtain ⟨s, hs⟩ := hb
+  -- the first step is the guard
+  obtain ⟨r, hr, h1, h2, h3⟩ := hstep 0 hn
+  rw [hx0, ← hs] at h1
+  cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h1
+  rename_i ρ hρ
+  obtain ⟨hw, hx1⟩ := h3
+  rw [hx0] at hw hx1
+  simp only [decide_eq_false_iff_not, not_lt, Nat.le_zero] at hw
+  -- the second step is `op ρ'`
+  have hn2 : 1 < n := by
+    by_contra hc
+    obtain rfl : n = 1 := by omega
+    obtain ⟨t, ht⟩ := hb'
+    rw [← hxn, h2] at ht
+    cases ht
+  obtain ⟨r', hr', h1', h2', h3'⟩ := hstep 1 hn2
+  rw [h2] at h1'
+  cases hr' <;> simp only [HState.act.injEq, reduceCtorEq] at h1'
+  rename_i ρ' hρ'
+  rw [hx1] at h3'
+  obtain ⟨hact, -, -⟩ := map_act_inv h3'
+  have hbeq : b = (.bnd ρ'.src, hcfg (fun i => b.2 (.val i)) (b.2 .hist)) := by
+    refine Prod.ext (by rw [← hs, h1, h1']) (funext fun c => ?_)
+    cases c <;> simp [hcfg, hw]
+  have hmac := histWrap_macro (lab := lab) hρ' hact (b.2 .hist)
+  rw [← hbeq] at hmac
+  have := macroStep_functional (histWrap_det hU) hm₀ hmac
+  rw [this]
+  have hK : 0 < K := (lab ρ').pos
+  have := hlab ρ' hρ'
+  simp only [hcfg]
+  have := Nat.le_mul_of_pos_left (b.2 .hist) hK
+  omega
 
 /-- **Lemma H.**  The wrapper's reverse is mortal, on all configurations. -/
 theorem histWrap_revMortal [Fintype Q] [Fintype ι] [DecidableEq Q] [DecidableEq ι]
     (hU : U.Det) (hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val) : (histWrap U lab).RevMortal := by
-  sorry
+  refine revMortal_of_macro histWrap_lapsMixed ?_
+  rintro ⟨b, hb⟩
+  have : ∀ n, (b n).2 .hist + n ≤ (b 0).2 .hist := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih => have := histWrap_macro_hist hU hlab (hb n); omega
+  have := this ((b 0).2 .hist + 1)
+  omega
 
 /-- The wrapper halts from `bnd q` with counters `v` and empty history iff `U` halts. -/
 theorem histWrap_halts_iff (hU : U.Det) (q : Q) (v : ι → ℕ) :
     (histWrap U lab).Halts (.bnd q, hcfg v 0) ↔ U.Halts (q, v) := by
-  sorry
+  refine CM.halts_iff_of_sim (histWrap_det hU)
+    (fun c c' => ∃ h, c' = (.bnd c.1, hcfg c.2 h)) ?_ ?_ ⟨0, rfl⟩
+  · rintro c d c' ⟨ρ, hρ, h1, h2, h3⟩ ⟨h, rfl⟩
+    refine ⟨(.bnd d.1, hcfg d.2 (K * h + (lab ρ).val)), ?_, _, rfl⟩
+    rw [h1, h2]
+    exact macroStep_transGen (histWrap_macro hρ h3 h)
+  · rintro ⟨q, v⟩ c' hs ⟨h, rfl⟩
+    exact histWrap_halts_of_stuck hs h
 
 end History
 
