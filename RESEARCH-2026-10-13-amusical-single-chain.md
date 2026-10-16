@@ -2041,3 +2041,17 @@ Reports: `wythoff-2adic.md`, `wythoff-solvable.md`.  Notation: `x = α/2`, `y = 
   only solvable member there is the rational `α = 4`.  `2∛2` is only approximate (`W³ = 2n − c`,
   `c ∈ {1, 2, 3}` on `EEE`, but the first return to the evens fails monotonicity at 25% of
   evens).  Nothing here bears on (a) (under 1%).
+* **Which Theorem K members are fully solved (90% + computed).**  With `D = 2b + 4c − 1`, the
+  even-odd two-step slope is `c/D + ((b + 2c)/D)·c₀`.  `D = −1` (`b = −2c`) is Theorem F;
+  `D = 1, c = −1` is `3 + √5` (the Bohr-set trap above, minima exactly on K's entry bound).  Every
+  other member fails Lemma P: `D = 1, c ≤ −2` (`5 + √17`, `7 + √37`) forces even-odd-odd and then
+  unbounded odd runs, and `|D| ≥ 3` (`4 + 2√3` and six others) has odd runs of 14-20 after an even
+  point.  K alone still gives every orbit meeting the trap a unique entry point and a strict rise;
+  a census of 12 members (minima `≤ 2·10⁴`) finds every orbit a cycle (`{1}` and at most nine
+  4-cycles) or a trap orbit (CONJ 70% in general; the gap is a Z-number-type question).
+* **The degree-`d` trap identity (proved).**  If `A = α/2` is an algebraic integer with minimal
+  polynomial `P` and `Q(t) = P(t)/(t − A)`, then on `d` consecutive even steps
+  `W^d = Σ p_j W^j` exactly iff every non-leading coefficient of `Q` is `≤ 0` and `Q(1) > 0`.
+  20 cubic members show 0 failures (Ren checked `A³ = 3A² − 1`, `α ≈ 5.7588`: `W³(n) = 3W²(n) − n`
+  on 7,503 even-even-even points, 0 failures); eight cubics violating the condition fail.  None of
+  the 20 is fully solved: the first return to the evens fails monotonicity at about 12.5%.
