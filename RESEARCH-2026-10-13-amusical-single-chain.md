@@ -1790,3 +1790,8 @@ each finds the §47 wall from a new side, and three give cheap new theorems.
   Beatty-type pair `3, 3/2`).
 * **Cheap Lean targets.**  Trap theorem (~60 lines) and Theorem V (~150); mod-8 avoidance; sign-blind
   Collatz gate; M1.  Prior-art check first: Kohl's tame/wild theory and Thompson-group dynamics.
+* **Lean.**  `AmusicalTrap.lean` (proved, axiom-clean, verified 2026-10-15): the trap theorem
+  (`infinitelyManyInfiniteOrbits_of_trap`), Theorem V (`amusicalV_infinitelyManyInfiniteOrbits`,
+  with `amusicalV_eq_amusical` off the two swapped classes and `amusicalV_entry_iff`), mod-8
+  avoidance (`amusical_visits_zero_three_five`), and the sign-blind Collatz gate
+  (`signBlind_gate`, `signCollatz_minus_cycle`).  M1 is still paper only.
