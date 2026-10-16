@@ -44,12 +44,62 @@ open CollatzMoonshot.RcwaOrbitCount (Mortal Total)
 
 /-! ## 1. A universal code and the universal counter machine -/
 
+theorem foldr_and_iff {β : Type*} (f : β → Bool) (l : List β) :
+    l.foldr (fun y s => f y && s) true = true ↔ ∀ y ∈ l, f y = true := by
+  induction l with
+  | nil => simp
+  | cons a l ih => simp [ih]
+
 /-- **A universal code for initial segments.**  `u` halts on `[a, e]` iff `φ_e` halts on every
 `y ≤ a`. -/
 theorem exists_universal₂ : ∃ u : ToPartrec.Code, ∀ a e : ℕ,
     (u.eval [a, e]).Dom ↔
       ∀ y ≤ a, (Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code e) y).Dom := by
-  sorry
+  let p : ℕ × ℕ → ℕ → Bool := fun ae k => (List.range (ae.1 + 1)).foldr
+    (fun y s => (Nat.Partrec.Code.evaln k (Denumerable.ofNat Nat.Partrec.Code ae.2) y).isSome
+      && s) true
+  have hp : Primrec₂ p := by
+    show Primrec fun x : (ℕ × ℕ) × ℕ => p x.1 x.2
+    refine Primrec.list_foldr (α := (ℕ × ℕ) × ℕ) (σ := Bool) (β := ℕ)
+      (h := fun x bs => (Nat.Partrec.Code.evaln x.2 (Denumerable.ofNat Nat.Partrec.Code x.1.2)
+        bs.1).isSome && bs.2) (Primrec.list_range.comp (Primrec.succ.comp
+      (Primrec.fst.comp Primrec.fst))) (Primrec.const true) ?_
+    refine Primrec.and.comp (Primrec.option_isSome.comp ?_) (Primrec.snd.comp Primrec.snd)
+    exact Nat.Partrec.Code.primrec_evaln.comp (Primrec.pair (Primrec.pair
+      (Primrec.snd.comp Primrec.fst) ((Primrec.ofNat _).comp
+        (Primrec.snd.comp (Primrec.fst.comp Primrec.fst)))) (Primrec.fst.comp Primrec.snd))
+  let g : ℕ → ℕ →. ℕ := fun a e => Nat.rfind fun k => Part.some (p (a, e) k)
+  have hg : Partrec₂ g := by
+    have := Partrec.rfind (hp.to_comp.partrec₂)
+    exact this.comp (Computable.pair Computable.fst Computable.snd)
+  obtain ⟨u, hu⟩ := ToPartrec.Code.exists_code (Nat.Partrec'.part_iff₂.2 hg)
+  refine ⟨u, fun a e => ?_⟩
+  have := hu ⟨[a, e], rfl⟩
+  simp only at this
+  rw [this]
+  simp only [Part.map_eq_map, Part.map_Dom, g, List.Vector.head, List.Vector.tail]
+  refine (Nat.rfind_dom (p := fun k => Part.some (p (a, e) k))).trans ?_
+  simp only [Part.mem_some_iff, Part.some_dom, implies_true, and_true]
+  constructor
+  · rintro ⟨k, hk⟩ y hy
+    have := (foldr_and_iff _ _).1 hk.symm y (List.mem_range.2 (by omega))
+    obtain ⟨x, hx⟩ := Option.isSome_iff_exists.1 this
+    exact Part.dom_iff_mem.2 ⟨x, Nat.Partrec.Code.evaln_sound hx⟩
+  · intro h
+    have hk : ∀ y, ∃ k, y ≤ a → (Nat.Partrec.Code.evaln k
+        (Denumerable.ofNat Nat.Partrec.Code e) y).isSome := by
+      intro y
+      by_cases hy : y ≤ a
+      · obtain ⟨x, hx⟩ := Part.dom_iff_mem.1 (h y hy)
+        obtain ⟨k, hk⟩ := Nat.Partrec.Code.evaln_complete.1 hx
+        exact ⟨k, fun _ => Option.isSome_iff_exists.2 ⟨x, hk⟩⟩
+      · exact ⟨0, fun h => absurd h hy⟩
+    choose kf hkf using hk
+    refine ⟨(Finset.range (a + 1)).sup kf, ((foldr_and_iff _ _).2 fun y hy => ?_).symm⟩
+    have hy' : y ≤ a := by have := List.mem_range.1 hy; omega
+    obtain ⟨x, hx⟩ := Option.isSome_iff_exists.1 (hkf y hy')
+    exact Option.isSome_iff_exists.2 ⟨x, Nat.Partrec.Code.evaln_mono
+      (Finset.le_sup (Finset.mem_range.2 (by omega))) hx⟩
 
 /-- The reachable states of the compiled code `u`. -/
 abbrev S₂ (u : ToPartrec.Code) : Type :=
@@ -71,20 +121,58 @@ def gIter (x n : ℕ) : ℕ :=
 def honest (n : ℕ) : LCtr → ℕ :=
   Pi.single (some K'.main) n
 
+theorem trNat_bit1 (m : ℕ) : trNat (2 * m + 1) = Γ'.bit1 :: trNat m := by
+  have h : ((2 * m + 1 : ℕ) : Num) = Num.bit1 (m : Num) := by
+    rw [← Num.to_nat_inj, Num.to_of_nat]
+    have hm := Num.to_of_nat m
+    generalize (m : Num) = k at hm ⊢
+    subst hm
+    rcases k with _ | p
+    · rfl
+    · show _ = ((PosNum.bit1 p : PosNum) : ℕ)
+      rw [PosNum.cast_bit1]; simp; ring
+  rw [trNat, h, trNat]
+  rcases (m : Num) with _ | p <;> rfl
+
 /-- `trNat (2 ^ x - 1)` is `x` copies of `bit1`. -/
 theorem trNat_two_pow_sub_one (x : ℕ) : trNat (2 ^ x - 1) = List.replicate x Γ'.bit1 := by
-  sorry
+  induction x with
+  | zero => simp
+  | succ x ih =>
+    rw [show 2 ^ (x + 1) - 1 = 2 * (2 ^ x - 1) + 1 by
+      have := Nat.one_le_two_pow (n := x); rw [pow_succ]; omega, trNat_bit1, ih,
+      List.replicate_succ]
 
 /-- The main-stack numeral of `[2 ^ x - 1, e]`. -/
 theorem num_trList_pair (x e : ℕ) :
     num (trList [2 ^ x - 1, e]) = gIter x (2 + 5 * inputNum e) := by
-  sorry
+  simp only [trList, trNat_two_pow_sub_one]
+  induction x with
+  | zero => simp [gIter, num, inputNum, digit, digitF, trList]
+  | succ x ih =>
+    rw [List.replicate_succ, List.cons_append, num, ih, gIter, gIter,
+      Function.iterate_succ_apply']
+    simp [digit, digitF]; ring
 
 /-- **The universal machine on honest inputs.** -/
 theorem halts_u₂_iff (u : ToPartrec.Code) (x e : ℕ) :
     (U₂ u).Halts (start₂ u, honest (gIter x (2 + 5 * inputNum e))) ↔
       (u.eval [2 ^ x - 1, e]).Dom := by
-  sorry
+  refine (CM.halts_restrict (reachSet_closed (tr_supports u Cont'.halt))
+    (q := LState.start) (Or.inl rfl) _).trans ?_
+  have hS : stackVec (K'.elim (trList [2 ^ x - 1, e]) [] [] []) =
+      honest (gIter x (2 + 5 * inputNum e)) := by
+    funext c
+    rcases c with _ | k
+    · rfl
+    · cases k
+      · simpa [stackVec, honest, K'.elim] using num_trList_pair x e
+      all_goals simp [stackVec, honest, Pi.single, Function.update, K'.elim, num]
+  rw [← hS, halts_iff_eval]
+  have := tr_eval u [2 ^ x - 1, e]
+  simp only [init] at this
+  rw [this]
+  simp
 
 /-- The universal machine is deterministic. -/
 theorem u₂_det (u : ToPartrec.Code) : (U₂ u).Det :=
