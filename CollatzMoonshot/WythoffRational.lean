@@ -976,33 +976,116 @@ proof: odd `n = 2k − 1`: both sides are `2jk − 1`.  Even `n = 2k`, `N = 2j �
 `k + ⌊k/N⌋`, the right side `k − 1 + ⌈(k+1)/N⌉`, and `⌈(k+1)/N⌉ = ⌊k/N⌋ + 1`. -/
 theorem mirrorPerm_apply (hj : 1 ≤ j) (n : ℤ) :
     mirrorPerm j hj n = evenPerm j hj (n + 1) - 1 := by
-  sorry
+  show wythoff .plus (2 * j) (2 * j - 1) n = _
+  have hc : ((2 * j - 1 : ℕ) : ℤ) = 2 * (j : ℤ) - 1 := by omega
+  have h0 : (2 * (j : ℤ) - 1) ≠ 0 := by omega
+  obtain ⟨k, rfl | rfl⟩ := even_or_odd_two_mul n
+  · rw [wythoff_plus_even, show 2 * k + 1 = 2 * (k + 1) - 1 by ring, evenPerm_two_mul_sub_one,
+      hc]
+    push_cast
+    rw [show k * (2 * (j : ℤ)) = k + (2 * (j : ℤ) - 1) * k by ring, Int.add_mul_ediv_left _ _ h0,
+      add_sub_cancel_right]
+    ring
+  · rw [wythoff_plus_odd, show 2 * k - 1 + 1 = 2 * k by ring, evenPerm_two_mul, hc]
+    push_cast
+    rw [show (2 * (j : ℤ)) - (2 * (j : ℤ) - 1) = 1 by ring, Int.ediv_one]
+    ring
 
 /-- **(ratified).**  Orbits of the mirror are the shifted orbits of `W_{2j+}`. -/
 theorem permOrbit_mirrorPerm (hj : 1 ≤ j) (x : ℤ) :
     permOrbit (mirrorPerm j hj) x = (· - 1) '' permOrbit (evenPerm j hj) (x + 1) := by
-  sorry
+  have key : ∀ z : ℤ, ∀ x : ℤ, (mirrorPerm j hj ^ z) x = (evenPerm j hj ^ z) (x + 1) - 1 := by
+    intro z
+    induction z using Int.induction_on with
+    | zero => intro x; simp
+    | succ i ih =>
+      intro x
+      rw [zpow_add_one, zpow_add_one, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, ih,
+        mirrorPerm_apply, sub_add_cancel]
+    | pred i ih =>
+      intro x
+      rw [zpow_sub_one, zpow_sub_one, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, ih]
+      congr 2
+      have h1 : evenPerm j hj ((mirrorPerm j hj)⁻¹ x + 1) - 1 = x := by
+        rw [← mirrorPerm_apply]; simp
+      rw [Equiv.Perm.eq_inv_iff_eq]
+      omega
+  unfold permOrbit
+  rw [← Set.range_comp]
+  congr 1
+  funext z
+  simp only [Function.comp_apply, key]
 
 /-- **(ratified, Theorem E′, no finite orbit in `ℕ⁺`).** -/
 theorem permOrbit_mirrorPerm_infinite (hj : 2 ≤ j) {x : ℤ} (hx : 0 < x) :
     (permOrbit (mirrorPerm j (by omega)) x).Infinite := by
-  sorry
+  rw [permOrbit_mirrorPerm]
+  exact (permOrbit_evenPerm_infinite hj (by omega)).image (sub_left_injective).injOn
+
+/-- Membership in a mirror orbit, transported. -/
+theorem mem_permOrbit_mirror (hj : 1 ≤ j) (x y : ℤ) :
+    y ∈ permOrbit (mirrorPerm j hj) x ↔ y + 1 ∈ permOrbit (evenPerm j hj) (x + 1) := by
+  rw [permOrbit_mirrorPerm]
+  constructor
+  · rintro ⟨w, hw, rfl⟩; simpa using hw
+  · intro h; exact ⟨y + 1, h, by ring⟩
 
 /-- **(ratified, Theorem E′, orbit minima).**  For `x > 0`: `x` is the minimum of its orbit iff
 `x + 1 ∈ E`, and every orbit through `x > 0` has exactly one such point. -/
 theorem mirror_isOrbitMin_iff (hj : 2 ≤ j) {x : ℤ} (hx : 0 < x) :
     (∀ y ∈ permOrbit (mirrorPerm j (by omega)) x, x ≤ y) ↔ x + 1 ∈ entrySet j := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  have key : (∀ y ∈ permOrbit (mirrorPerm j hj1) x, x ≤ y) ↔
+      (∀ y ∈ permOrbit (evenPerm j hj1) (x + 1), x + 1 ≤ y) := by
+    constructor
+    · intro h y hy
+      have := h (y - 1) ((mem_permOrbit_mirror hj1 _ _).2 (by simpa using hy))
+      omega
+    · intro h y hy
+      have := h (y + 1) ((mem_permOrbit_mirror hj1 _ _).1 hy)
+      omega
+  rw [key, isOrbitMin_iff hj (by omega)]
+  constructor
+  · rintro (h | h)
+    · omega
+    · exact h
+  · exact Or.inr
 
 /-- **(ratified, Theorem E′, indexing).** -/
 theorem mirror_existsUnique (hj : 2 ≤ j) {x : ℤ} (hx : 0 < x) :
     ∃! e, e + 1 ∈ entrySet j ∧ e ∈ permOrbit (mirrorPerm j (by omega)) x := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  obtain ⟨e, ⟨he, hmem⟩, huniq⟩ := existsUnique_entry_mem_orbit hj (x := x + 1) (by omega)
+  refine ⟨e - 1, ⟨by simpa using he, (mem_permOrbit_mirror hj1 _ _).2 (by simpa using hmem)⟩,
+    fun e' ⟨he', hmem'⟩ => ?_⟩
+  have := huniq (e' + 1) ⟨he', (mem_permOrbit_mirror hj1 _ _).1 hmem'⟩
+  omega
 
 /-- **(ratified, Theorem E′, conclusion).** -/
 theorem mirrorPerm_infinitelyManyInfiniteOrbits (hj : 2 ≤ j) :
     InfinitelyManyInfiniteOrbits (mirrorPerm j (by omega)) := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  have hodd : ∀ k : ℤ, mirrorPerm j hj1 (2 * k - 1) = 2 * j * k - 1 := fun k => by
+    rw [mirrorPerm_apply, sub_add_cancel, evenPerm_two_mul]
+  apply infinitelyManyInfiniteOrbits_of_trap _ (C := {y : ℤ | y % 2 = 1})
+  · intro y hy
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k - 1 := ⟨(y + 1) / 2, by simp at hy; omega⟩
+    show mirrorPerm j hj1 (2 * k - 1) % 2 = 1
+    rw [hodd, show 2 * (j : ℤ) * k - 1 = 2 * (j * k - 1) + 1 by ring]
+    omega
+  refine Set.infinite_of_injective_forall_mem (f := fun n : ℕ => 2 * (j : ℤ) * n + 1) ?_ ?_
+  · intro a b hab
+    simp only [add_left_inj] at hab
+    exact_mod_cast mul_left_cancel₀ (by omega : (2 * (j : ℤ)) ≠ 0) hab
+  · intro n
+    refine ⟨by positivity, ?_, ?_⟩
+    · show (2 * (j : ℤ) * n + 1) % 2 = 1
+      rw [show 2 * (j : ℤ) * n + 1 = 2 * (j * n) + 1 by ring]; omega
+    · rintro ⟨y, hy, hyx⟩
+      obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k - 1 := ⟨(y + 1) / 2, by simp at hy; omega⟩
+      rw [hodd] at hyx
+      have h1 : (j : ℤ) * (k - n) = 1 := by linarith
+      rcases le_or_gt (k - n) 0 with h | h <;> nlinarith
 
 end TheoremE'
 
