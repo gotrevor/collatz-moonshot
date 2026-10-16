@@ -281,6 +281,224 @@ theorem bwdItin_periodic (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hq
 
 end Periodic
 
+/-! ## M0: parameter arithmetic and indicator sums -/
+
+section Params
+
+open Finset
+
+theorem emod_two_eq_val (c : ℤ) : c % 2 = ((c : ZMod 2).val : ℤ) := by
+  rcases Int.emod_two_eq_zero_or_one c with h | h
+  · rw [(intCast_zmod2_eq_zero_iff c).2 h, h]; rfl
+  · rw [(intCast_zmod2_eq_one_iff c).2 h, h]; rfl
+
+/-- The coprimality facts of even `p` coprime to `q`: `p/2` is prime to `q` and to `R`. -/
+theorem half_coprime {p q : ℕ} (hp : Even p) (hcop : Nat.Coprime p q) (hqp : q < p) :
+    Nat.Coprime (p / 2) q ∧ Nat.Coprime (p / 2) (p - q) := by
+  obtain ⟨r, hr⟩ := hp
+  have hd : p / 2 ∣ p := ⟨2, by omega⟩
+  have hcop' : Nat.Coprime p (p - q) := (Nat.coprime_self_sub_right hqp.le).2 hcop
+  exact ⟨hcop.coprime_dvd_left hd, hcop'.coprime_dvd_left hd⟩
+
+theorem isCoprime_half_pow {p q : ℕ} (hp : Even p) (hcop : Nat.Coprime p q) (hqp : q < p)
+    (L : ℕ) : IsCoprime ((p / 2 : ℕ) : ℤ) (((q * (p - q)) ^ L : ℕ) : ℤ) := by
+  obtain ⟨h1, h2⟩ := half_coprime hp hcop hqp
+  exact Nat.isCoprime_iff_coprime.2 ((Nat.Coprime.mul_right h1 h2).pow_right L)
+
+/-- A sum of indicators, pulled out as a count times a constant. -/
+theorem sum_ite_const (P : ℕ → Prop) [DecidablePred P] (n X : ℕ) :
+    ∑ t ∈ range n, (if P t then X else 0) = (∑ t ∈ range n, if P t then 1 else 0) * X := by
+  rw [sum_mul]
+  apply sum_congr rfl
+  intro t _
+  split_ifs <;> simp
+
+/-- The two parity counts of a family add up. -/
+theorem sum_zmod2_add (G : ℕ → ZMod 2) (n : ℕ) :
+    (∑ t ∈ range n, if G t = 0 then 1 else 0) + (∑ t ∈ range n, if G t = 1 then 1 else 0) = n := by
+  rw [← sum_add_distrib]
+  have : ∀ t ∈ range n, ((if G t = 0 then 1 else 0) + if G t = 1 then 1 else 0) = 1 := by
+    intro t _
+    rcases zmod2_cases (G t) with h | h <;> rw [h] <;> decide
+  rw [sum_congr rfl this]
+  simp
+
+end Params
+
+/-! ## M1: forward cylinder counts -/
+
+section Forward
+
+open Finset
+
+variable (s : Side) {p q : ℕ}
+
+/-- Indicator of the forward word `w`. -/
+def fwdInd (s : Side) (p q : ℕ) (w : List (ZMod 2)) (y : ℤ) : ℕ :=
+  if fwdItin s p q y w.length = w then 1 else 0
+
+/-- Points of parity `e` in one forward period with forward word `w`: `y = e + 2i`. -/
+def fwdClass (s : Side) (p q : ℕ) (e : ZMod 2) (w : List (ZMod 2)) : ℕ :=
+  ∑ i ∈ range ((q * (p - q)) ^ w.length), fwdInd s p q w (e.val + 2 * i)
+
+theorem fwdInd_periodic (hp : Even p) (hq : 0 < q) (hqp : q < p) (w : List (ZMod 2)) :
+    Function.Periodic (fwdInd s p q w) ((2 * (q * (p - q)) ^ w.length : ℕ) : ℤ) := by
+  intro y
+  have := fwdItin_periodic s hp hq hqp y 1 w.length
+  rw [mul_one] at this
+  simp only [fwdInd]
+  rw [show (((2 * (q * (p - q)) ^ w.length : ℕ) : ℤ)) = 2 * ((q : ℤ) * ((p : ℤ) - q)) ^ w.length by
+    push_cast [Nat.cast_sub hqp.le]; ring, this]
+
+theorem fwdInd_cons (g : ZMod 2) (w : List (ZMod 2)) (y : ℤ) :
+    fwdInd s p q (g :: w) y = if ((wythoff s p q y : ℤ) : ZMod 2) = g ∧
+      fwdItin s p q (wythoff s p q y) w.length = w then 1 else 0 := by
+  simp only [fwdInd, List.length_cons, fwdItin_succ, List.cons.injEq]
+
+/-- The generic forward step: along `c + p m`, `m < K A'`, the head parity is that of `c`, and the
+tail word is equidistributed over the class of `c` (`p/2` prime to `A'`). -/
+theorem fwd_step (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) (c : ℤ)
+    (g : ZMod 2) (w : List (ZMod 2)) (K : ℕ) :
+    ∑ m ∈ range (K * (q * (p - q)) ^ w.length),
+      (if ((c + p * m : ℤ) : ZMod 2) = g ∧ fwdItin s p q (c + p * m) w.length = w then 1 else 0)
+      = if (c : ZMod 2) = g then K * fwdClass s p q g w else 0 := by
+  have hpm : ∀ m : ℤ, c + p * m = c + 2 * ((p / 2 : ℕ) : ℤ) * m := by
+    intro m; obtain ⟨r, hr⟩ := hp; rw [show p / 2 = r by omega, hr]; push_cast; ring
+  have hA : 0 < (q * (p - q)) ^ w.length := pow_pos (Nat.mul_pos hq (by omega)) _
+  simp only [hpm, cast_add_two_mul]
+  split_ifs with hc
+  · simp only [hc, true_and]
+    have hφ : Function.Periodic (fun m : ℤ => fwdInd s p q w (c + 2 * ((p / 2 : ℕ) : ℤ) * m))
+        (((q * (p - q)) ^ w.length : ℕ) : ℤ) := by
+      intro m
+      simp only
+      rw [show c + 2 * ((p / 2 : ℕ) : ℤ) * (m + (((q * (p - q)) ^ w.length : ℕ) : ℤ)) =
+        c + 2 * ((p / 2 : ℕ) : ℤ) * m +
+          ((p / 2 : ℕ) : ℤ) * (((2 * (q * (p - q)) ^ w.length : ℕ) : ℤ)) by push_cast; ring]
+      exact periodic_add_mul (fwdInd_periodic s hp hq hqp w) _ _
+    have h1 := sum_mul_period hφ 0 K
+    simp only [zero_add] at h1
+    change ∑ m ∈ range (K * (q * (p - q)) ^ w.length),
+      fwdInd s p q w (c + 2 * ((p / 2 : ℕ) : ℤ) * m) = _
+    rw [h1, sum_ap_two hA (fwdInd_periodic s hp hq hqp w) c _ (isCoprime_half_pow hp hcop hqp _),
+      emod_two_eq_val, hc]
+    rfl
+  · apply sum_eq_zero
+    intro m _
+    rw [if_neg (fun h => hc h.1)]
+
+/-- Lemma 1 as the forward chain, even branch: `#{t < q : W(2t) ≡ g} = q F(0 → g)`. -/
+theorem fwd_count_even (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p)
+    (g : ZMod 2) :
+    ((∑ t ∈ range q, if ((wythoff s p q (2 * (t : ℤ)) : ℤ) : ZMod 2) = g then 1 else 0 : ℕ) : ℚ)
+      = q * fwdProb s p q 0 g := by
+  have hq2 := odd_of_even_coprime hp hcop
+  have h0 : (∑ t ∈ range q, if ((wythoff s p q (2 * (t : ℤ)) : ℤ) : ZMod 2) = 0 then 1 else 0) =
+      if s = .plus then (q + 1) / 2 else (q - 1) / 2 := by
+    rw [← card_even_image_even s hp hcop hq hqp, card_filter]
+    apply sum_congr rfl; intro t _; simp only [intCast_zmod2_eq_zero_iff]
+  have hsum := sum_zmod2_add (fun t => ((wythoff s p q (2 * (t : ℤ)) : ℤ) : ZMod 2)) q
+  have hQ : (q : ℚ) ≠ 0 := by positivity
+  obtain ⟨a, ha⟩ : ∃ a, q = 2 * a + 1 := ⟨q / 2, by omega⟩
+  have hQa : (q : ℚ) = 2 * a + 1 := by rw [ha]; push_cast; ring
+  rcases zmod2_cases g with rfl | rfl <;> cases s
+  · rw [h0, if_pos rfl, show (q + 1) / 2 = a + 1 by omega]
+    simp only [fwdProb, fwdEven, if_true]; push_cast; field_simp; rw [hQa]; ring
+  · rw [h0, if_neg (by decide), show (q - 1) / 2 = a by omega]
+    simp only [fwdProb, fwdEven, if_true]; push_cast; field_simp; rw [hQa]; ring
+  · rw [show (∑ t ∈ range q, if ((wythoff .plus p q (2 * (t : ℤ)) : ℤ) : ZMod 2) = 1 then 1 else 0)
+        = a by rw [h0, if_pos rfl] at hsum; omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    field_simp; rw [hQa]; ring
+  · rw [show (∑ t ∈ range q, if ((wythoff .minus p q (2 * (t : ℤ)) : ℤ) : ZMod 2) = 1 then 1 else 0)
+        = a + 1 by rw [h0, if_neg (by decide)] at hsum; omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    push_cast; field_simp; rw [hQa]; ring
+
+/-- Lemma 1 as the forward chain, odd branch: `#{u < R : W(2u+1) ≡ g} = R F(1 → g)`. -/
+theorem fwd_count_odd (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p)
+    (g : ZMod 2) :
+    ((∑ u ∈ range (p - q),
+        if ((wythoff s p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2) = g then 1 else 0 : ℕ) : ℚ)
+      = ((p - q : ℕ) : ℚ) * fwdProb s p q 1 g := by
+  have hq2 := odd_of_even_coprime hp hcop
+  obtain ⟨r, hr⟩ := hp
+  have h0 : (∑ u ∈ range (p - q),
+      if ((wythoff s p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2) = 0 then 1 else 0) =
+      if s = .plus then (p - q - 1) / 2 else (p - q + 1) / 2 := by
+    rw [← card_even_image_odd s ⟨r, hr⟩ hcop hq hqp, card_filter]
+    apply sum_congr rfl; intro t _; simp only [intCast_zmod2_eq_zero_iff]
+  have hsum := sum_zmod2_add (fun u => ((wythoff s p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2)) (p - q)
+  obtain ⟨b, hb⟩ : ∃ b, p - q = 2 * b + 1 := ⟨(p - q) / 2, by omega⟩
+  have hRb : ((p - q : ℕ) : ℚ) = 2 * b + 1 := by rw [hb]; push_cast; ring
+  have hRb' : (p : ℚ) - q = 2 * b + 1 := by rw [← hRb, Nat.cast_sub hqp.le]
+  have hR : (p : ℚ) - q ≠ 0 := by rw [hRb']; positivity
+  rcases zmod2_cases g with rfl | rfl <;> cases s
+  · rw [h0, if_pos rfl, show (p - q - 1) / 2 = b by omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    rw [hRb, show (p : ℚ) - q - 1 = ((p : ℚ) - q) - 1 by ring, hRb']; field_simp; ring
+  · rw [h0, if_neg (by decide), show (p - q + 1) / 2 = b + 1 by omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    rw [hRb, show (p : ℚ) - q + 1 = ((p : ℚ) - q) + 1 by ring, hRb']; push_cast; field_simp; ring
+  · rw [show (∑ u ∈ range (p - q),
+        if ((wythoff .plus p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2) = 1 then 1 else 0) = b + 1 by
+        rw [h0, if_pos rfl] at hsum; omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    rw [hRb, show (p : ℚ) - q - 1 = ((p : ℚ) - q) - 1 by ring, hRb']; push_cast; field_simp; ring
+  · rw [show (∑ u ∈ range (p - q),
+        if ((wythoff .minus p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2) = 1 then 1 else 0) = b by
+        rw [h0, if_neg (by decide)] at hsum; omega]
+    simp (config := {decide := true}) only [fwdProb, fwdEven, if_true, if_false]
+    rw [hRb, show (p : ℚ) - q + 1 = ((p : ℚ) - q) + 1 by ring, hRb']; field_simp; ring
+
+/-- **M1.**  The forward class counts follow the chain `F`. -/
+theorem fwdClass_eq (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) :
+    ∀ (w : List (ZMod 2)) (e : ZMod 2), (fwdClass s p q e w : ℚ) =
+      (((q * (p - q)) ^ w.length : ℕ) : ℚ) * wordWeight (fwdProb s p q) e w
+  | [], e => by simp [fwdClass, fwdInd, fwdItin, wordWeight]
+  | g :: w, e => by
+    have ih := fwdClass_eq hp hcop hq hqp w g
+    have hcR : ((p - q : ℕ) : ℤ) = (p : ℤ) - q := by omega
+    rcases zmod2_cases e with rfl | rfl
+    · have key : fwdClass s p q 0 (g :: w) =
+          (∑ t ∈ range q, if ((wythoff s p q (2 * (t : ℤ)) : ℤ) : ZMod 2) = g then 1 else 0) *
+            ((p - q) * fwdClass s p q g w) := by
+        rw [fwdClass, List.length_cons, pow_succ', mul_assoc, sum_range_mul_block, ← sum_ite_const]
+        apply sum_congr rfl
+        intro t _
+        rw [← fwd_step s hp hcop hq hqp]
+        apply sum_congr rfl
+        intro m _
+        rw [fwdInd_cons, show ((0 : ZMod 2).val : ℤ) + 2 * ((t + q * m : ℕ) : ℤ) =
+          2 * (t : ℤ) + 2 * q * m by rw [show ((0 : ZMod 2).val : ℤ) = 0 from rfl]; push_cast; ring,
+          wythoff_add_even s hq (by omega)]
+      rw [key, Nat.cast_mul, fwd_count_even s hp hcop hq hqp, Nat.cast_mul, ih]
+      simp only [wordWeight, List.length_cons]
+      push_cast [Nat.cast_sub hqp.le]
+      ring
+    · have key : fwdClass s p q 1 (g :: w) =
+          (∑ u ∈ range (p - q),
+            if ((wythoff s p q (2 * (u : ℤ) + 1) : ℤ) : ZMod 2) = g then 1 else 0) *
+            (q * fwdClass s p q g w) := by
+        rw [fwdClass, List.length_cons, pow_succ', show q * (p - q) * (q * (p - q)) ^ w.length =
+          (p - q) * (q * (q * (p - q)) ^ w.length) by ring, sum_range_mul_block, ← sum_ite_const]
+        apply sum_congr rfl
+        intro u _
+        rw [← fwd_step s hp hcop hq hqp]
+        apply sum_congr rfl
+        intro m _
+        rw [fwdInd_cons, show ((1 : ZMod 2).val : ℤ) + 2 * ((u + (p - q) * m : ℕ) : ℤ) =
+          2 * (u : ℤ) + 1 + 2 * ((p : ℤ) - q) * m by
+            rw [show ((1 : ZMod 2).val : ℤ) = 1 from rfl]; push_cast [hcR]; ring,
+          wythoff_add_odd s hqp (by omega)]
+      rw [key, Nat.cast_mul, fwd_count_odd s hp hcop hq hqp, Nat.cast_mul, ih]
+      simp only [wordWeight, List.length_cons]
+      push_cast [Nat.cast_sub hqp.le]
+      ring
+
+end Forward
+
+
 /-! ## Theorem M -/
 
 section TheoremM
