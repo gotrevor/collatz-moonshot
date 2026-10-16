@@ -1338,9 +1338,11 @@ def tableOf (M : Machine) : RcwaTable :=
 def reduce (p : Machine × Cfg) : RcwaTable × ℤ × ℤ :=
   (tableOf p.1, enc (level p.1) p.2, hwNext (highwayOf p.1) (enc (level p.1) p.2))
 
-/-- **Open.**  A valid machine is good at its level with its highway. -/
+/-- A valid machine is good at its level with its highway. -/
 theorem good_of_valid {M : Machine} (hM : M.Valid) : Good (level M) M (highwayOf M) := by
-  sorry
+  have h1 : 1 ≤ level M := by simp [level]
+  exact ⟨h1, (Nat.le_succ _).trans (le_orderOf_three h1), hM.wf, hM.rev, hM.pair_sink,
+    isHighway_highwayAt h1 M.rules⟩
 
 /-- **Open.**  For a valid machine, `tableOf M` is an exact table for `σ`. -/
 theorem tableOf_spec {M : Machine} (hM : M.Valid) :
@@ -1421,12 +1423,21 @@ def HaltingUndecidable : Prop :=
     ∀ (M : Machine) (c : Cfg), M.Valid → c.1 < M.K → IsSource M.rules c →
       (g (M, c) = true ↔ Halts M.rules c)
 
-/-- **Open.**  **Same-orbit is undecidable** on exact tables with bijective evaluation (so on
+/-- **Same-orbit is undecidable** on exact tables with bijective evaluation (so on
 RCWA permutations of `ℤ` with all slopes in `2^ℤ 3^ℤ`), given `HaltingUndecidable`. -/
 theorem not_computable_sameCycle (hlit : HaltingUndecidable) :
     ¬ ∃ g : RcwaTable × ℤ × ℤ → Bool, Computable g ∧
       ∀ (T : RcwaTable) (a b : ℤ), T.Exact → ∀ hb : Function.Bijective T.eval,
         (g (T, a, b) = true ↔ Equiv.Perm.SameCycle (Equiv.ofBijective T.eval hb) a b) := by
-  sorry
+  rintro ⟨g, hg, hspec⟩
+  refine hlit ⟨g ∘ reduce, hg.comp computable_reduce, fun M c hM hK hc => ?_⟩
+  have hG := good_of_valid hM
+  obtain ⟨hex, hev⟩ := tableOf_spec hM
+  have hb : Function.Bijective (tableOf M).eval := hev ▸ sigma_bijective hG
+  have he : Equiv.ofBijective (tableOf M).eval hb = sigmaPerm hG := by
+    ext x; simp [sigmaPerm, hev]
+  have := hspec (tableOf M) (enc (level M) c) (hwNext (highwayOf M) (enc (level M) c)) hex hb
+  rw [he, sameCycle_enc_iff hG hM.noBiInfinite hM.endToStart hK hc] at this
+  exact this
 
 end CollatzMoonshot.RcwaSameOrbit
