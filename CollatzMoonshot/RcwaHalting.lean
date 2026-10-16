@@ -862,17 +862,321 @@ theorem genc_inj [Fintype ι] (hp : PrimeData p N) {J J' : ℕ} {v v' : ι → �
   refine ⟨Nat.eq_of_mul_eq_mul_right (Finset.prod_pos fun k _ => pow_pos (hp.prime k).pos _) h0,
     rfl⟩
 
+/-- Two test rules from one state test one counter. -/
+theorem det_test_counter (hB : B.Det) {q q₁ q₂ : Q} {i i' : ι} {b b' : Bool}
+    (h₁ : ⟨q, .test i b, q₁⟩ ∈ B) (h₂ : ⟨q, .test i' b', q₂⟩ ∈ B) : i = i' := by
+  by_cases he : (⟨q, .test i b, q₁⟩ : Quad Q ι) = ⟨q, .test i' b', q₂⟩
+  · simp only [Quad.mk.injEq, Op.test.injEq] at he; exact he.2.1.1
+  · obtain ⟨j, c, c', h1, h2, -⟩ := hB _ h₁ _ h₂ he rfl
+    simp only [Op.test.injEq] at h1 h2
+    rw [h1.1, h2.1]
+
+/-- Two test rules from one state with the same symbol coincide. -/
+theorem det_test_dst (hB : B.Det) {q q₁ q₂ : Q} {i i' : ι} {b : Bool}
+    (h₁ : ⟨q, .test i b, q₁⟩ ∈ B) (h₂ : ⟨q, .test i' b, q₂⟩ ∈ B) : i = i' ∧ q₁ = q₂ := by
+  by_cases he : (⟨q, .test i b, q₁⟩ : Quad Q ι) = ⟨q, .test i' b, q₂⟩
+  · simp only [Quad.mk.injEq, Op.test.injEq] at he; exact ⟨he.2.1.1, he.2.2⟩
+  · obtain ⟨j, c, c', h1, h2, hc⟩ := hB _ h₁ _ h₂ he rfl
+    simp only [Op.test.injEq] at h1 h2
+    exact absurd (h1.2.symm.trans h2.2) hc
+
+/-- A non-test rule is the only rule from its state. -/
+theorem det_nontest (hB : B.Det) {q q₁ q₂ : Q} {o o' : Op ι}
+    (h₁ : ⟨q, o, q₁⟩ ∈ B) (h₂ : ⟨q, o', q₂⟩ ∈ B) (ho : ∀ i b, o ≠ .test i b) :
+    o = o' ∧ q₁ = q₂ := by
+  by_cases he : (⟨q, o, q₁⟩ : Quad Q ι) = ⟨q, o', q₂⟩
+  · simp only [Quad.mk.injEq] at he; exact ⟨he.2.1, he.2.2⟩
+  · obtain ⟨j, c, c', h1, -, -⟩ := hB _ h₁ _ h₂ he rfl
+    exact absurd h1 (ho _ _)
+
+/-- Two test rules into one state test one counter. -/
+theorem rev_test_counter (hB : B.Rev) {s q₁ q₂ : Q} {i i' : ι} {b b' : Bool}
+    (h₁ : ⟨q₁, .test i b, s⟩ ∈ B) (h₂ : ⟨q₂, .test i' b', s⟩ ∈ B) : i = i' := by
+  by_cases he : (⟨q₁, .test i b, s⟩ : Quad Q ι) = ⟨q₂, .test i' b', s⟩
+  · simp only [Quad.mk.injEq, Op.test.injEq] at he; exact he.2.1.1
+  · obtain ⟨j, c, c', h1, h2, -⟩ := hB _ h₁ _ h₂ he rfl
+    simp only [Op.test.injEq] at h1 h2
+    rw [h1.1, h2.1]
+
+/-- A non-test rule is the only rule into its state. -/
+theorem rev_nontest (hB : B.Rev) {s q₁ q₂ : Q} {o o' : Op ι}
+    (h₁ : ⟨q₁, o, s⟩ ∈ B) (h₂ : ⟨q₂, o', s⟩ ∈ B) (ho : ∀ i b, o ≠ .test i b) :
+    o = o' ∧ q₁ = q₂ := by
+  by_cases he : (⟨q₁, o, s⟩ : Quad Q ι) = ⟨q₂, o', s⟩
+  · simp only [Quad.mk.injEq] at he; exact ⟨he.2.1, he.1⟩
+  · obtain ⟨j, c, c', h1, -, -⟩ := hB _ h₁ _ h₂ he rfl
+    exact absurd h1 (ho _ _)
+
+/-- Two test rules into one state with the same symbol coincide. -/
+theorem rev_test_src (hB : B.Rev) {s q₁ q₂ : Q} {i i' : ι} {b : Bool}
+    (h₁ : ⟨q₁, .test i b, s⟩ ∈ B) (h₂ : ⟨q₂, .test i' b, s⟩ ∈ B) : i = i' ∧ q₁ = q₂ := by
+  by_cases he : (⟨q₁, .test i b, s⟩ : Quad Q ι) = ⟨q₂, .test i' b, s⟩
+  · simp only [Quad.mk.injEq, Op.test.injEq] at he; exact ⟨he.2.1.1, he.1⟩
+  · obtain ⟨j, c, c', h1, h2, hc⟩ := hB _ h₁ _ h₂ he rfl
+    simp only [Op.test.injEq] at h1 h2
+    exact absurd (h1.2.symm.trans h2.2) hc
+
 /-- The compile is deterministic. -/
 theorem godel_det (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) : (godel B p N).Det := by
-  sorry
+  rintro r₁ h₁ r₂ h₂ hne hsrc
+  cases h₁ <;> cases h₂ <;> simp only [GState.ent.injEq, GState.grd.injEq, GState.a₁.injEq,
+    GState.a₂.injEq, GState.a₃.injEq, GState.a₄.injEq, GState.b₁.injEq, GState.b₂.injEq,
+    GState.b₃.injEq, GState.mul.injEq, GState.dv.injEq, GState.w₁.injEq, GState.w₂.injEq,
+    GState.r₁.injEq, GState.r₂.injEq, reduceCtorEq] at hsrc
+  all_goals try (simp_all; done)
+  case nop.nop q₁ q₁' h₁ q₂ q₂' h₂ =>
+    subst hsrc
+    obtain rfl := (det_nontest hB h₁ h₂ (by simp)).2
+    exact absurd rfl hne
+  case nop.aIn q₁ q₁' h₁ q₂ i q₂' h₂ =>
+    subst hsrc
+    rcases h₂ with h₂ | h₂ <;> exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case nop.wIn q₁ q₁' h₁ q₂ i b q₂' j h₂ hj =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case aIn.nop q₂ i q₂' h₂ q₁ q₁' h₁ =>
+    subst hsrc
+    rcases h₂ with h₂ | h₂ <;> exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case aIn.wIn q₁ i q₁' h₁ q₂ i' b q₂' j h₂ hj =>
+    subst hsrc
+    rcases h₁ with h₁ | h₁ <;> exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case b₁Z.b₁Z q₁ i q₁' h₁ q₂ i' q₂' h₂ =>
+    subst hsrc
+    obtain rfl : q₁' = q₂' := by
+      rcases h₁ with h₁ | h₁ <;> rcases h₂ with h₂ | h₂ <;>
+        exact (det_nontest hB h₁ h₂ (by simp)).2
+    exact absurd rfl hne
+  case mulIn.dvIn q₁ i q₁' h₁ q₂ i' q₂' j h₂ hj =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case mulB₂.mulB₂ q₁ i q₁' j h₁ hj q₂ i' q₂' j' h₂ hj' =>
+    subst hsrc
+    obtain rfl : j = j' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case mulB₂.dvB₂ q₁ i q₁' j h₁ hj q₂ i' q₂' h₂ =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case mulStep.mulStep q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : j₁' = j₂' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case mulStep.mulLast q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    omega
+  case mulLast.mulStep q₂ i' q₂' j₂ h₂ c₁ q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    omega
+  case dvIn.mulIn q₂ i' q₂' j h₂ hj q₁ i q₁' h₁ =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case dvIn.dvIn q₁ i q₁' j h₁ hj q₂ i' q₂' j' h₂ hj' =>
+    subst hsrc
+    obtain rfl : j = j' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case dvStep.dvStep q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : j₁' = j₂' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case dvStep.dvLast q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    omega
+  case dvLast.dvStep q₂ i' q₂' j₂ h₂ c₁ q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    omega
+  case dvB₂.mulB₂ q₂ i' q₂' h₂ q₁ i q₁' j h₁ hj =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case wIn.nop q₂ i b q₂' j h₂ hj q₁ q₁' h₁ =>
+    subst hsrc
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case wIn.aIn q₂ i' b q₂' j h₂ hj q₁ i q₁' h₁ =>
+    subst hsrc
+    rcases h₁ with h₁ | h₁ <;> exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case wP.wInc q₁ i b q₁' j h₁ a₁ q₂ i' b' q₂' j' h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wDec.wDec q₁ i b q₁' j₁ j₁' h₁ a₁ a₂ q₂ i' b' q₂' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : j₁' = j₂' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case wDec.wBack q₁ i b q₁' j₁ j₁' h₁ a₁ a₂ q₂ i' b' q₂' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wInc.wP q₂ i' b' q₂' j' h₂ c₁ q₁ i b q₁' j h₁ a₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wInc.exitP q₁ i b q₁' j h₁ a₁ q₂ i' q₂' j' h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    have := (hp.prime i).two_le
+    omega
+  case wInc.exitZ q₁ i b q₁' j h₁ a₁ q₂ i' q₂' j' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wBack.wDec q₂ i' b' q₂' j₂ j₂' h₂ c₁ c₂ q₁ i b q₁' j₁ j₁' h₁ a₁ a₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case exitP.wInc q₂ i' q₂' j' h₂ c₁ q₁ i b q₁' j h₁ a₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    have := (hp.prime i).two_le
+    omega
+  case exitP.exitP q₁ i q₁' j h₁ a₁ q₂ i' q₂' j' h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain ⟨rfl, rfl⟩ := det_test_dst hB h₁ h₂
+    exact absurd rfl hne
+  case exitZ.wInc q₂ i' q₂' j' h₂ c₁ c₂ q₁ i b q₁' j h₁ a₁ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case exitZ.exitZ q₁ i q₁' j h₁ a₁ a₂ q₂ i' q₂' j' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain ⟨rfl, rfl⟩ := det_test_dst hB h₁ h₂
+    exact absurd rfl hne
+  case rDec.rDec q₁ i b s j j₁' h₁ a₁ a₂ q₂ i' b' s' j' j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl := rev_test_counter hB' h₁ h₂
+    obtain rfl : j₁' = j₂' := Fin.ext (by omega)
+    exact absurd rfl hne
+  case rBack.rBack q₁ i b s j j₁' h₁ a₁ a₂ a₃ q₂ i' b' s' j' j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hsrc
+    obtain rfl : j₁' = j₂' := Fin.ext (by omega)
+    exact absurd rfl hne
 
 /-- The compile is reversible. -/
 theorem godel_rev (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) : (godel B p N).Rev := by
-  sorry
+  rintro r₁ h₁ r₂ h₂ hne hdst
+  cases h₁ <;> cases h₂ <;> simp only [GState.ent.injEq, GState.grd.injEq, GState.a₁.injEq,
+    GState.a₂.injEq, GState.a₃.injEq, GState.a₄.injEq, GState.b₁.injEq, GState.b₂.injEq,
+    GState.b₃.injEq, GState.mul.injEq, GState.dv.injEq, GState.w₁.injEq, GState.w₂.injEq,
+    GState.r₁.injEq, GState.r₂.injEq, reduceCtorEq] at hdst
+  all_goals try (simp_all; done)
+  case nop.nop q₁ s h₁ q₂ s' h₂ =>
+    subst hdst
+    obtain rfl := (rev_nontest hB' h₁ h₂ (by simp)).2
+    exact absurd rfl hne
+  case nop.b₁Z q₁ s h₁ q₂ i s' h₂ =>
+    subst hdst
+    rcases h₂ with h₂ | h₂ <;> exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case nop.rZ q₁ s h₁ q₂ i b s' j h₂ hj =>
+    subst hdst
+    exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case b₁Z.nop q₂ i s' h₂ q₁ s h₁ =>
+    subst hdst
+    rcases h₂ with h₂ | h₂ <;> exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case b₁Z.b₁Z q₁ i s h₁ q₂ i' s' h₂ =>
+    subst hdst
+    obtain rfl : q₁ = q₂ := by
+      rcases h₁ with h₁ | h₁ <;> rcases h₂ with h₂ | h₂ <;>
+        exact (rev_nontest hB' h₁ h₂ (by simp)).2
+    exact absurd rfl hne
+  case b₁Z.rZ q₁ i s h₁ q₂ i' b s' j h₂ hj =>
+    subst hdst
+    rcases h₁ with h₁ | h₁ <;> exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case rZ.nop q₂ i b s' j h₂ hj q₁ s h₁ =>
+    subst hdst
+    exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case rZ.b₁Z q₂ i' b s' j h₂ hj q₁ i s h₁ =>
+    subst hdst
+    rcases h₁ with h₁ | h₁ <;> exact absurd (rev_nontest hB' h₁ h₂ (by simp)).1 (by simp)
+  case mulIn.dvLast q₁ i q₁' h₁ q₂ i' q₂' j h₂ hj =>
+    subst hdst
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case dvLast.mulIn q₂ i' q₂' j h₂ hj q₁ i q₁' h₁ =>
+    subst hdst
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case mulLast.dvB₂ q₁ i q₁' j h₁ hj q₂ i' q₂' h₂ =>
+    subst hdst
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case dvB₂.mulLast q₂ i' q₂' h₂ q₁ i q₁' j h₁ hj =>
+    subst hdst
+    exact absurd (det_nontest hB h₁ h₂ (by simp)).1 (by simp)
+  case mulStep.mulStep q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case dvStep.dvStep q₁ i q₁' j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' q₂' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case mulLast.mulLast q₁ i q₁' j₁ h₁ a₁ q₂ i' q₂' j₂ h₂ c₁ =>
+    subst hdst
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case dvLast.dvLast q₁ i q₁' j₁ h₁ a₁ q₂ i' q₂' j₂ h₂ c₁ =>
+    subst hdst
+    obtain rfl : i = i' := by simpa using (det_nontest hB h₁ h₂ (by simp)).1
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case wP.wInc q₁ i b q₁' j h₁ a₁ q₂ i' b' q₂' j' h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wInc.wP q₂ i' b' q₂' j' h₂ c₁ q₁ i b q₁' j h₁ a₁ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := det_test_counter hB h₁ h₂
+    omega
+  case wDec.wDec q₁ i b q₁' j₁ j₁' h₁ a₁ a₂ q₂ i' b' q₂' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case wBack.wBack q₁ i b q₁' j₁ j₁' h₁ a₁ a₂ q₂ i' b' q₂' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := det_test_counter hB h₁ h₂
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
+  case exitP.exitP q₁ i s j₁ h₁ a₁ q₂ i' s' j₂ h₂ c₁ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain ⟨rfl, rfl⟩ := rev_test_src hB' h₁ h₂
+    exact absurd rfl hne
+  case exitZ.exitZ q₁ i s j₁ h₁ a₁ a₂ q₂ i' s' j₂ h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain ⟨rfl, rfl⟩ := rev_test_src hB' h₁ h₂
+    exact absurd rfl hne
+  case exitP.rDec q₁ i s j₁ h₁ a₁ q₂ i' b s' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    have := (hp.prime i').two_le
+    omega
+  case rDec.exitP q₂ i' b s' j₂ j₂' h₂ c₁ c₂ q₁ i s j₁ h₁ a₁ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    have := (hp.prime i').two_le
+    omega
+  case exitZ.rDec q₁ i s j₁ h₁ a₁ a₂ q₂ i' b s' j₂ j₂' h₂ c₁ c₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := rev_test_counter hB' h₁ h₂
+    omega
+  case rDec.exitZ q₂ i' b s' j₂ j₂' h₂ c₁ c₂ q₁ i s j₁ h₁ a₁ a₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := rev_test_counter hB' h₁ h₂
+    omega
+  case rDec.rBack q₁ i b s j₁ j₁' h₁ a₁ a₂ q₂ i' b' s' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := rev_test_counter hB' h₁ h₂
+    omega
+  case rBack.rDec q₂ i' b' s' j₂ j₂' h₂ c₁ c₂ c₃ q₁ i b s j₁ j₁' h₁ a₁ a₂ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl := rev_test_counter hB' h₁ h₂
+    omega
+  case rBack.rBack q₁ i b s j₁ j₁' h₁ a₁ a₂ a₃ q₂ i' b' s' j₂ j₂' h₂ c₁ c₂ c₃ =>
+    obtain ⟨rfl, rfl⟩ := hdst
+    obtain rfl : j₁ = j₂ := Fin.ext (by omega)
+    exact absurd rfl hne
 
 /-- No rule enters `ent q₀` when no rule of `B` enters `q₀`. -/
 theorem godel_normalAt {q₀ : Q} (hB : B.NormalAt q₀) : (godel B p N).NormalAt (.ent q₀) := by
-  sorry
+  intro r hr h
+  cases hr <;> simp only [GState.ent.injEq, reduceCtorEq] at h
+  · exact hB _ ‹_› h
+  · rename_i hm; rcases hm with hm | hm <;> exact hB _ hm h
+  · exact hB _ ‹_› h
 
 /-- **(S1) for the compile.**  Every loop off the boundary is one wheel or transfer, with lap
 `(−1, +1)`, `(+p, −1)`, `(+1, −p)`, `(−p, +1)` or `(+p, −1)`. -/
