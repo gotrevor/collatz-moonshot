@@ -18,3 +18,9 @@
   (`ARule`), so determinism is `decide` on closed lists (`pushA_det`, `popA_det`, `peekA_det`)
   and transfers through the source-injective `emb` (`embSrc_inj`, `mem_gadget`).
   `mem_gadget` is the tool for every "which rule is this" question (also §5 closure).
+- **§4 `stepAux_reaches` proved.**  Route: abstract two-counter machine `AM (gadA s v)` on
+  `AState = Option Phase ⊕ Fin 5`, counters `uv t n`; loop lemmas there (`push_move`,
+  `push_ret`, `push_digit`, `div_loop`, `pop_ret`, `peek_ret`, `peek_digit`), assembled into
+  `push_run`/`pop_run`/`peek_run`/`one_run`; then `real_run` transfers via `put k w u` (write the
+  two counters into stack `k`/`tmp`) and `act_map_put`.  `put_self`, `put_stackVec` connect to
+  `stackVec`.

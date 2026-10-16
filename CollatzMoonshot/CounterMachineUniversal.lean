@@ -437,13 +437,396 @@ def repCfg (c : Cfg') : Cfg LState LCtr :=
   | ⟨some l, v, S⟩ => (.stmt (tr l) v, stackVec S)
   | ⟨none, v, S⟩ => (.stmt TM2.Stmt.halt v, stackVec S)
 
+/-- Abstract gadget states: `inl none` the entry, `inl (some ph)` a phase, `inr r` exit `r`. -/
+abbrev AState : Type := Option Phase ⊕ Fin 5
+
+/-- The target of an abstract rule as an abstract state. -/
+def adst : Phase ⊕ Fin 5 → AState :=
+  Sum.elim (fun ph => .inl (some ph)) .inr
+
+/-- The two-counter machine of an abstract rule list. -/
+def AM (L : List ARule) : CM AState (Option Unit) :=
+  {q | ∃ a ∈ L, q = ⟨.inl a.src, a.op, adst a.dst⟩}
+
+/-- Two counters: `tmp = t`, stack `= n`. -/
+def uv (t n : ℕ) : Option Unit → ℕ
+  | none => t
+  | some _ => n
+
+theorem astep {L : List ARule} (a : ARule) (ha : a ∈ L) {u u' : Option Unit → ℕ}
+    (h : a.op.Act u u') : (AM L).Step (.inl a.src, u) (adst a.dst, u') :=
+  ⟨_, ⟨a, ha, rfl⟩, rfl, rfl, h⟩
+
+section acts
+variable {t n : ℕ}
+theorem act_nop {u : Option Unit → ℕ} : (Op.nop : Op (Option Unit)).Act u u := rfl
+theorem act_test_tmp0 : (Op.test none false).Act (uv 0 n) (uv 0 n) := ⟨rfl, rfl⟩
+theorem act_test_tmp1 : (Op.test none true).Act (uv (t + 1) n) (uv (t + 1) n) :=
+  ⟨by simp [uv], rfl⟩
+theorem act_test_stk0 : (Op.test (some ()) false).Act (uv t 0) (uv t 0) := ⟨rfl, rfl⟩
+theorem act_test_stk1 : (Op.test (some ()) true).Act (uv t (n + 1)) (uv t (n + 1)) :=
+  ⟨by simp [uv], rfl⟩
+theorem act_dec_tmp : (Op.dec none).Act (uv (t + 1) n) (uv t n) := by
+  refine ⟨by simp [uv], rfl, ?_⟩
+  rintro (_ | ⟨⟩) h
+  · exact absurd rfl h
+  · rfl
+theorem act_dec_stk : (Op.dec (some ())).Act (uv t (n + 1)) (uv t n) := by
+  refine ⟨by simp [uv], rfl, ?_⟩
+  rintro (_ | ⟨⟩) h
+  · rfl
+  · exact absurd rfl h
+theorem act_inc_tmp : (Op.inc none).Act (uv t n) (uv (t + 1) n) := by
+  refine ⟨rfl, ?_⟩
+  rintro (_ | ⟨⟩) h
+  · exact absurd rfl h
+  · rfl
+theorem act_inc_stk : (Op.inc (some ())).Act (uv t n) (uv t (n + 1)) := by
+  refine ⟨rfl, ?_⟩
+  rintro (_ | ⟨⟩) h
+  · rfl
+  · exact absurd rfl h
+end acts
+
+/-! ### Push -/
+
+theorem pushA_mems (d : Fin 5) :
+    ⟨none, .nop, .inl .pa⟩ ∈ pushA d ∧
+    ⟨some .pa, .test (some ()) false, .inl .pd⟩ ∈ pushA d ∧
+    ⟨some .pa, .test (some ()) true, .inl .pb⟩ ∈ pushA d ∧
+    ⟨some .pb, .dec (some ()), .inl .pc⟩ ∈ pushA d ∧
+    ⟨some .pc, .inc none, .inl .pa⟩ ∈ pushA d ∧
+    ⟨some .pd, .test none false, .inl (.pg 0)⟩ ∈ pushA d ∧
+    ⟨some .pd, .test none true, .inl (.pe 0)⟩ ∈ pushA d ∧
+    ⟨some (.pe 0), .dec none, .inl (.pe 1)⟩ ∈ pushA d ∧
+    ⟨some (.pe 1), .inc (some ()), .inl (.pe 2)⟩ ∈ pushA d ∧
+    ⟨some (.pe 2), .inc (some ()), .inl (.pe 3)⟩ ∈ pushA d ∧
+    ⟨some (.pe 3), .inc (some ()), .inl (.pe 4)⟩ ∈ pushA d ∧
+    ⟨some (.pe 4), .inc (some ()), .inl (.pe 5)⟩ ∈ pushA d ∧
+    ⟨some (.pe 5), .inc (some ()), .inl .pd⟩ ∈ pushA d ∧
+    ⟨some (.pg d), .nop, .inr 0⟩ ∈ pushA d := by
+  revert d; decide
+
+theorem pushA_pg : ∀ d j : Fin 5, j.val < d.val →
+    ⟨some (.pg j), .inc (some ()), .inl (.pg (j + 1))⟩ ∈ pushA d := by
+  decide
+
+theorem push_move (d : Fin 5) (n t : ℕ) :
+    (AM (pushA d)).Reaches (.inl (some .pa), uv t n) (.inl (some .pd), uv (t + n) 0) := by
+  obtain ⟨-, h1, h2, h3, h4, -⟩ := pushA_mems d
+  induction n generalizing t with
+  | zero => exact .single (astep _ h1 act_test_stk0)
+  | succ n ih =>
+    refine .head (astep _ h2 act_test_stk1) (.head (astep _ h3 act_dec_stk)
+      (.head (astep _ h4 act_inc_tmp) ?_))
+    rw [show t + (n + 1) = t + 1 + n by omega]
+    exact ih (t + 1)
+
+theorem push_ret (d : Fin 5) (t a : ℕ) :
+    (AM (pushA d)).Reaches (.inl (some .pd), uv t a) (.inl (some (.pg 0)), uv 0 (a + 5 * t)) := by
+  obtain ⟨-, -, -, -, -, h5, h6, h7, h8, h9, h10, h11, h12, -⟩ := pushA_mems d
+  induction t generalizing a with
+  | zero => exact .single (astep _ h5 act_test_tmp0)
+  | succ t ih =>
+    refine .head (astep _ h6 act_test_tmp1) (.head (astep _ h7 act_dec_tmp)
+      (.head (astep _ h8 act_inc_stk) (.head (astep _ h9 act_inc_stk)
+      (.head (astep _ h10 act_inc_stk) (.head (astep _ h11 act_inc_stk)
+      (.head (astep _ h12 act_inc_stk) ?_))))))
+    rw [show a + 5 * (t + 1) = a + 1 + 1 + 1 + 1 + 1 + 5 * t by omega]
+    exact ih _
+
+theorem push_digit (d : Fin 5) (a : ℕ) : ∀ m (j : Fin 5), j.val + m = d.val →
+    (AM (pushA d)).Reaches (.inl (some (.pg j)), uv 0 a) (.inl (some (.pg d)), uv 0 (a + m)) := by
+  intro m
+  induction m generalizing a with
+  | zero =>
+    intro j hj
+    obtain rfl : j = d := Fin.ext (by omega)
+    exact .refl
+  | succ m ih =>
+    intro j hj
+    refine .head (astep _ (pushA_pg d j (by omega)) act_inc_stk) ?_
+    rw [show a + (m + 1) = a + 1 + m by omega]
+    exact ih (a + 1) (j + 1) (by rw [Fin.val_add_one_of_lt (by
+      rw [Fin.lt_def]; simp; omega)]; omega)
+
+theorem push_run (d : Fin 5) (n : ℕ) :
+    Relation.TransGen (AM (pushA d)).Step (.inl none, uv 0 n) (.inr 0, uv 0 (5 * n + d)) := by
+  obtain ⟨h0, -, -, -, -, -, -, -, -, -, -, -, -, h13⟩ := pushA_mems d
+  have h1 := push_move d n 0
+  rw [Nat.zero_add] at h1
+  have h2 := push_digit d (0 + 5 * n) d.val 0 (by simp)
+  rw [show 0 + 5 * n + d.val = 5 * n + d by omega] at h2
+  exact Relation.TransGen.head' (astep _ h0 act_nop)
+    (((h1.trans (push_ret d n 0)).trans h2).tail (astep _ h13 act_nop))
+
+/-! ### Pop and peek -/
+
+theorem divA_mems :
+    (∀ j : Fin 5, ⟨some (.da j), .test (some ()) false, .inl (.db j)⟩ ∈ divA ∧
+      ⟨some (.da j), .test (some ()) true, .inl (.dc j)⟩ ∈ divA) ∧
+    (∀ j : Fin 5, j.val < 4 → ⟨some (.dc j), .dec (some ()), .inl (.da (j + 1))⟩ ∈ divA) ∧
+    ⟨some (.dc 4), .dec (some ()), .inl .dd⟩ ∈ divA ∧
+    ⟨some .dd, .inc none, .inl (.da 0)⟩ ∈ divA := by
+  decide
+
+/-- The remainder as a phase index. -/
+def rem5 (n : ℕ) : Fin 5 := ⟨n % 5, Nat.mod_lt _ (by norm_num)⟩
+
+theorem div_loop {L : List ARule} (hL : ∀ a ∈ divA, a ∈ L) (n : ℕ) :
+    ∀ (j : Fin 5) (t : ℕ), (AM L).Reaches (.inl (some (.da j)), uv t n)
+      (.inl (some (.db (rem5 (j.val + n)))), uv (t + (j.val + n) / 5) 0) := by
+  obtain ⟨hda, hdc, hdc4, hdd⟩ := divA_mems
+  induction n with
+  | zero =>
+    intro j t
+    have h1 : rem5 (j.val + 0) = j := Fin.ext (by simp [rem5])
+    have h2 : t + (j.val + 0) / 5 = t := by have := j.isLt; omega
+    rw [h1, h2]
+    exact .single (astep _ (hL _ (hda j).1) act_test_stk0)
+  | succ n ih =>
+    intro j t
+    refine .head (astep _ (hL _ (hda j).2) act_test_stk1) ?_
+    by_cases hj : j.val < 4
+    · refine .head (astep _ (hL _ (hdc j hj)) act_dec_stk) ?_
+      have hv : (j + 1).val = j.val + 1 := Fin.val_add_one_of_lt (by rw [Fin.lt_def]; simp; omega)
+      have := ih (j + 1) t
+      rw [hv, show j.val + 1 + n = j.val + (n + 1) by omega] at this
+      exact this
+    · obtain rfl : j = 4 := Fin.ext (by have := j.isLt; simp; omega)
+      refine .head (astep _ (hL _ hdc4) act_dec_stk) (.head (astep _ (hL _ hdd) act_inc_tmp) ?_)
+      have := ih 0 (t + 1)
+      have h1 : rem5 ((0 : Fin 5).val + n) = rem5 ((4 : Fin 5).val + (n + 1)) :=
+        Fin.ext (by simp [rem5]; omega)
+      have h2 : t + 1 + ((0 : Fin 5).val + n) / 5 = t + ((4 : Fin 5).val + (n + 1)) / 5 := by
+        simp; omega
+      rw [h1, h2] at this
+      exact this
+
+theorem popA_mems :
+    (∀ a ∈ divA, a ∈ popA) ∧ ⟨none, .nop, .inl (.da 0)⟩ ∈ popA ∧
+    (∀ r : Fin 5, ⟨some (.db r), .test none true, .inl (.de r)⟩ ∈ popA ∧
+      ⟨some (.de r), .dec none, .inl (.df r 5)⟩ ∈ popA ∧
+      ⟨some (.df r 5), .inc (some ()), .inl (.db r)⟩ ∈ popA ∧
+      ⟨some (.db r), .test none false, .inr r⟩ ∈ popA) := by
+  decide
+
+theorem pop_ret (r : Fin 5) (t a : ℕ) :
+    (AM popA).Reaches (.inl (some (.db r)), uv t a) (.inl (some (.db r)), uv 0 (a + t)) := by
+  obtain ⟨-, -, h⟩ := popA_mems
+  obtain ⟨h1, h2, h3, -⟩ := h r
+  induction t generalizing a with
+  | zero => exact .refl
+  | succ t ih =>
+    refine .head (astep _ h1 act_test_tmp1) (.head (astep _ h2 act_dec_tmp)
+      (.head (astep _ h3 act_inc_stk) ?_))
+    rw [show a + (t + 1) = a + 1 + t by omega]
+    exact ih _
+
+theorem pop_run (n : ℕ) :
+    Relation.TransGen (AM popA).Step (.inl none, uv 0 n) (.inr (rem5 n), uv 0 (n / 5)) := by
+  obtain ⟨hd, h0, h⟩ := popA_mems
+  have h1 := div_loop hd n 0 0
+  simp only [Fin.val_zero, Nat.zero_add] at h1
+  have h2 := pop_ret (rem5 n) (n / 5) 0
+  rw [Nat.zero_add] at h2
+  exact Relation.TransGen.head' (astep _ h0 act_nop)
+    ((h1.trans h2).tail (astep _ (h _).2.2.2 act_test_tmp0))
+
+theorem peekA_mems :
+    (∀ a ∈ divA, a ∈ peekA) ∧ ⟨none, .nop, .inl (.da 0)⟩ ∈ peekA ∧
+    (∀ r : Fin 5, ⟨some (.db r), .test none true, .inl (.de r)⟩ ∈ peekA ∧
+      ⟨some (.de r), .dec none, .inl (.df r 1)⟩ ∈ peekA ∧
+      ⟨some (.df r 1), .inc (some ()), .inl (.df r 2)⟩ ∈ peekA ∧
+      ⟨some (.df r 2), .inc (some ()), .inl (.df r 3)⟩ ∈ peekA ∧
+      ⟨some (.df r 3), .inc (some ()), .inl (.df r 4)⟩ ∈ peekA ∧
+      ⟨some (.df r 4), .inc (some ()), .inl (.df r 5)⟩ ∈ peekA ∧
+      ⟨some (.df r 5), .inc (some ()), .inl (.db r)⟩ ∈ peekA ∧
+      ⟨some (.db r), .test none false, .inl (.dg r 0)⟩ ∈ peekA ∧
+      ⟨some (.dg r r), .nop, .inr r⟩ ∈ peekA) ∧
+    (∀ r j : Fin 5, j.val < r.val →
+      ⟨some (.dg r j), .inc (some ()), .inl (.dg r (j + 1))⟩ ∈ peekA) := by
+  decide
+
+theorem peek_ret (r : Fin 5) (t a : ℕ) :
+    (AM peekA).Reaches (.inl (some (.db r)), uv t a) (.inl (some (.db r)), uv 0 (a + 5 * t)) := by
+  obtain ⟨-, -, h, -⟩ := peekA_mems
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, -⟩ := h r
+  induction t generalizing a with
+  | zero => exact .refl
+  | succ t ih =>
+    refine .head (astep _ h1 act_test_tmp1) (.head (astep _ h2 act_dec_tmp)
+      (.head (astep _ h3 act_inc_stk) (.head (astep _ h4 act_inc_stk)
+      (.head (astep _ h5 act_inc_stk) (.head (astep _ h6 act_inc_stk)
+      (.head (astep _ h7 act_inc_stk) ?_))))))
+    rw [show a + 5 * (t + 1) = a + 1 + 1 + 1 + 1 + 1 + 5 * t by omega]
+    exact ih _
+
+theorem peek_digit (r : Fin 5) (a : ℕ) : ∀ m (j : Fin 5), j.val + m = r.val →
+    (AM peekA).Reaches (.inl (some (.dg r j)), uv 0 a) (.inl (some (.dg r r)), uv 0 (a + m)) := by
+  obtain ⟨-, -, -, hg⟩ := peekA_mems
+  intro m
+  induction m generalizing a with
+  | zero =>
+    intro j hj
+    obtain rfl : j = r := Fin.ext (by omega)
+    exact .refl
+  | succ m ih =>
+    intro j hj
+    refine .head (astep _ (hg r j (by omega)) act_inc_stk) ?_
+    rw [show a + (m + 1) = a + 1 + m by omega]
+    exact ih (a + 1) (j + 1) (by rw [Fin.val_add_one_of_lt (by
+      rw [Fin.lt_def]; simp; omega)]; omega)
+
+theorem peek_run (n : ℕ) :
+    Relation.TransGen (AM peekA).Step (.inl none, uv 0 n) (.inr (rem5 n), uv 0 n) := by
+  obtain ⟨hd, h0, h, -⟩ := peekA_mems
+  obtain ⟨-, -, -, -, -, -, -, h8, h9⟩ := h (rem5 n)
+  have h1 := div_loop hd n 0 0
+  simp only [Fin.val_zero, Nat.zero_add] at h1
+  have h2 := peek_ret (rem5 n) (n / 5) 0
+  rw [Nat.zero_add] at h2
+  have h3 := peek_digit (rem5 n) (5 * (n / 5)) (rem5 n).val 0 (by simp)
+  rw [show 5 * (n / 5) + (rem5 n).val = n by simp [rem5]; omega] at h3
+  exact Relation.TransGen.head' (astep _ h0 act_nop)
+    ((((h1.trans h2).tail (astep _ h8 act_test_tmp0)).trans h3).tail (astep _ h9 act_nop))
+
+theorem one_run (u : Option Unit → ℕ) :
+    Relation.TransGen (AM [⟨none, .nop, .inr 0⟩]).Step (.inl none, u) (.inr 0, u) :=
+  .single (astep _ (List.mem_singleton_self _) act_nop)
+
+/-! ### Transfer to the compiled machine -/
+
+/-- Write the two abstract counters into stack `k` and `tmp` of `w`. -/
+def put (k : K') (w : LCtr → ℕ) (u : Option Unit → ℕ) : LCtr → ℕ
+  | none => u none
+  | some k' => if k' = k then u (some ()) else w (some k')
+
+theorem put_map (k : K') (w : LCtr → ℕ) (u : Option Unit → ℕ) (i : Option Unit) :
+    put k w u (i.map fun _ => k) = u i := by
+  rcases i with _ | ⟨⟩
+  · rfl
+  · simp [put]
+
+theorem put_frame (k : K') (w : LCtr → ℕ) {u u' : Option Unit → ℕ} {i : Option Unit}
+    (h : ∀ j, j ≠ i → u' j = u j) :
+    ∀ j, j ≠ i.map (fun _ => k) → put k w u' j = put k w u j := by
+  rintro (_ | k') hj
+  · rcases i with _ | ⟨⟩
+    · exact absurd rfl hj
+    · exact h none (by simp)
+  · simp only [put]
+    split_ifs with hk
+    · subst hk
+      rcases i with _ | ⟨⟩
+      · exact h (some ()) (by simp)
+      · exact absurd rfl hj
+    · rfl
+
+theorem act_map_put {o : Op (Option Unit)} (k : K') (w : LCtr → ℕ) {u u' : Option Unit → ℕ}
+    (h : o.Act u u') : (o.map (Option.map fun _ => k)).Act (put k w u) (put k w u') := by
+  cases o with
+  | test i b =>
+    obtain ⟨hb, rfl⟩ := h
+    exact ⟨by rw [put_map]; exact hb, rfl⟩
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    exact ⟨by rw [put_map]; exact h1, by rw [put_map, put_map]; exact h2, put_frame k w h3⟩
+  | inc i =>
+    obtain ⟨h1, h2⟩ := h
+    exact ⟨by rw [put_map, put_map]; exact h1, put_frame k w h2⟩
+  | nop =>
+    cases h; rfl
+
+/-- The real state of an abstract state. -/
+def embState (s : Stmt') (v : Option Γ') : AState → LState :=
+  Sum.elim (embSrc s v) (gadExit s v)
+
+theorem am_step (l₀ : Λ') {s : Stmt'} {v : Option Γ'} (w : LCtr → ℕ)
+    {c d : AState × (Option Unit → ℕ)} (h : (AM (gadA s v)).Step c d) :
+    (lcm l₀).Step (embState s v c.1, put (gadK s) w c.2)
+      (embState s v d.1, put (gadK s) w d.2) := by
+  obtain ⟨ρ, ⟨⟨src, op, dst⟩, ha, rfl⟩, hs, hd, hact⟩ := h
+  refine ⟨emb s v ⟨src, op, dst⟩, Or.inr ⟨s, v, ?_⟩, ?_, ?_, act_map_put _ w hact⟩
+  · rw [gadget_eq]; exact List.mem_map_of_mem ha
+  · rw [hs]; rfl
+  · rw [hd]; cases dst <;> rfl
+
+theorem real_run (l₀ : Λ') {s : Stmt'} {v : Option Γ'} {u u' : Option Unit → ℕ} {r : Fin 5}
+    (h : Relation.TransGen (AM (gadA s v)).Step (.inl none, u) (.inr r, u')) (w : LCtr → ℕ) :
+    Relation.TransGen (lcm l₀).Step (.stmt s v, put (gadK s) w u)
+      (gadExit s v r, put (gadK s) w u') :=
+  h.lift (fun c => (embState s v c.1, put (gadK s) w c.2)) fun _ _ h => am_step l₀ w h
+
+theorem put_stackVec (k : K') (S : K' → List Γ') (l : List Γ') :
+    put k (stackVec S) (uv 0 (num l)) = stackVec (Function.update S k l) := by
+  funext i
+  rcases i with _ | k'
+  · rfl
+  · simp only [put, stackVec, uv, Function.update]
+    split_ifs with hk
+    · subst hk; rfl
+    · rfl
+
+theorem put_self (k : K') (S : K' → List Γ') :
+    put k (stackVec S) (uv 0 (num (S k))) = stackVec S := by
+  rw [put_stackVec, Function.update_eq_self]
+
+theorem chain {l₀ : Λ'} {c d e : Cfg LState LCtr} (h : Relation.TransGen (lcm l₀).Step c d)
+    (h' : (lcm l₀).Reaches d e) :
+    (lcm l₀).Reaches c e ∧ Relation.TransGen (lcm l₀).Step c e :=
+  ⟨h.to_reflTransGen.trans h', h.trans_left h'⟩
+
+theorem one_real (l₀ : Λ') {s : Stmt'} {v : Option Γ'} (S : K' → List Γ')
+    (hs : gadA s v = [⟨none, .nop, .inr 0⟩]) :
+    Relation.TransGen (lcm l₀).Step (.stmt s v, stackVec S) (gadExit s v 0, stackVec S) := by
+  have h := real_run l₀ (s := s) (v := v) (hs ▸ one_run (uv 0 (num (S (gadK s))))) (stackVec S)
+  rwa [put_self] at h
+
 /-- **One statement.**  The gadget of `s` carries `(s, v, S)` to the configuration of
 `stepAux s v S`, in at least one step unless the result has halted. -/
 theorem stepAux_reaches (l₀ : Λ') (s : Stmt') (v : Option Γ') (S : K' → List Γ') :
     (lcm l₀).Reaches (.stmt s v, stackVec S) (repCfg (TM2.stepAux s v S)) ∧
       ((TM2.stepAux s v S).l.isSome →
         Relation.TransGen (lcm l₀).Step (.stmt s v, stackVec S) (repCfg (TM2.stepAux s v S))) := by
-  sorry
+  induction s generalizing v S with
+  | push k f q ih =>
+    have h := real_run l₀ (s := TM2.Stmt.push k f q) (v := v)
+      (push_run (digitF (f v)) (num (S k))) (stackVec S)
+    simp only [gadK, gadExit] at h
+    rw [put_self, show 5 * num (S k) + ((digitF (f v) : Fin 5) : ℕ) = num (f v :: S k) by
+      rw [num_cons]; rfl, put_stackVec] at h
+    have := chain h (ih v _).1
+    exact ⟨this.1, fun _ => this.2⟩
+  | peek k f q ih =>
+    have h := real_run l₀ (s := TM2.Stmt.peek k f q) (v := v) (peek_run (num (S k))) (stackVec S)
+    simp only [gadK, gadExit] at h
+    rw [put_self, show undigit (rem5 (num (S k))) = (S k).head? from undigit_num _] at h
+    have := chain h (ih _ S).1
+    exact ⟨this.1, fun _ => this.2⟩
+  | pop k f q ih =>
+    have h := real_run l₀ (s := TM2.Stmt.pop k f q) (v := v) (pop_run (num (S k))) (stackVec S)
+    simp only [gadK, gadExit] at h
+    rw [put_self, show undigit (rem5 (num (S k))) = (S k).head? from undigit_num _,
+      num_div_five, put_stackVec] at h
+    have := chain h (ih _ _).1
+    exact ⟨this.1, fun _ => this.2⟩
+  | load a q ih =>
+    have := chain (one_real l₀ (s := TM2.Stmt.load a q) (v := v) S rfl) (ih _ S).1
+    exact ⟨this.1, fun _ => this.2⟩
+  | branch f q₁ q₂ ih₁ ih₂ =>
+    have h := one_real l₀ (s := TM2.Stmt.branch f q₁ q₂) (v := v) S rfl
+    simp only [gadExit] at h
+    simp only [TM2.stepAux]
+    cases hf : f v <;> rw [hf] at h <;> simp only [cond_false, cond_true] at h ⊢
+    · have := chain h (ih₂ v S).1
+      exact ⟨this.1, fun _ => this.2⟩
+    · have := chain h (ih₁ v S).1
+      exact ⟨this.1, fun _ => this.2⟩
+  | goto f =>
+    have h := one_real l₀ (s := TM2.Stmt.goto f) (v := v) S rfl
+    exact ⟨h.to_reflTransGen, fun _ => h⟩
+  | halt => exact ⟨.refl, by simp [TM2.stepAux]⟩
 
 /-- A halted TM2 configuration is a halting ID. -/
 theorem stuck_halt (l₀ : Λ') (v : Option Γ') (w : LCtr → ℕ) :
