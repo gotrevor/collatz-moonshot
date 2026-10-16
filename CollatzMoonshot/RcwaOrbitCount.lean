@@ -309,12 +309,57 @@ theorem histWrap_macro_sound (hU : U.Det) {b b' : Cfg (HState Q ι K) (HCtr ι)}
     (hm : RcwaMachine.MacroStep (Set.range HState.bnd) (histWrap U lab).Step b b') :
     ∃ s s' : Q, b.1 = .bnd s ∧ b'.1 = .bnd s' ∧
       U.Step (s, fun i => b.2 (.val i)) (s', fun i => b'.2 (.val i)) := by
-  sorry
+  have hm₀ := hm
+  obtain ⟨hb, hb', x, n, hn, hx0, hxn, hstep, hoff⟩ := hm
+  obtain ⟨s, hs⟩ := hb
+  -- the first step is the guard
+  obtain ⟨r, hr, h1, h2, h3⟩ := hstep 0 hn
+  rw [hx0, ← hs] at h1
+  cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h1
+  rename_i ρ hρ
+  obtain ⟨hw, hx1⟩ := h3
+  rw [hx0] at hw hx1
+  simp only [decide_eq_false_iff_not, not_lt, Nat.le_zero] at hw
+  -- the second step is `op ρ'`
+  have hn2 : 1 < n := by
+    by_contra hc
+    obtain rfl : n = 1 := by omega
+    obtain ⟨t, ht⟩ := hb'
+    rw [← hxn, h2] at ht
+    cases ht
+  obtain ⟨r', hr', h1', h2', h3'⟩ := hstep 1 hn2
+  rw [h2] at h1'
+  cases hr' <;> simp only [HState.act.injEq, reduceCtorEq] at h1'
+  rename_i ρ' hρ'
+  rw [hx1] at h3'
+  obtain ⟨hact, -, -⟩ := map_act_inv h3'
+  have hbeq : b = (.bnd ρ'.src, hcfg (fun i => b.2 (.val i)) (b.2 .hist)) := by
+    refine Prod.ext (by rw [← hs, h1, h1']) (funext fun c => ?_)
+    cases c <;> simp [hcfg, hw]
+  have hmac := histWrap_macro (lab := lab) hρ' hact (b.2 .hist)
+  rw [← hbeq] at hmac
+  have := macroStep_functional (histWrap_det hU) hm₀ hmac
+  refine ⟨ρ'.src, ρ'.dst, by rw [hbeq], by rw [this], ρ', hρ', rfl, rfl, ?_⟩
+  rw [this]
+  exact hact
 
 /-- **Lemma H, mortality.**  The wrapper halts from every configuration iff `U` does. -/
 theorem histWrap_mortal_iff [Fintype Q] [Fintype ι] [DecidableEq Q] [DecidableEq ι]
     (hU : U.Det) : Mortal (histWrap U lab) ↔ Mortal U := by
-  sorry
+  constructor
+  · intro hm c
+    exact (histWrap_halts_iff hU c.1 c.2).1 (hm _)
+  · intro hm c
+    by_contra hnh
+    obtain ⟨b, hb⟩ := exists_macro_chain histWrap_lapsMixed hnh
+    choose s s' hs hs' hst using fun n => histWrap_macro_sound hU (hb n)
+    have key : ∀ n, s' n = s (n + 1) := fun n =>
+      HState.bnd.inj ((hs' n).symm.trans (hs (n + 1)))
+    refine CM.not_halts_of_forever hU (fun n => (s n, fun i => (b n).2 (.val i)))
+      (fun n => ?_) (hm _)
+    have := hst n
+    rw [key n] at this
+    exact this
 
 end HistoryMortal
 
@@ -325,7 +370,22 @@ variable {Q ι : Type*} {N : ℕ} {B : CM Q ι} {p : ι → ℕ}
 /-- **Lemma G, mortality.**  The compile halts from every configuration iff `B` does. -/
 theorem godel_mortal_iff [Fintype Q] [Fintype ι] [DecidableEq Q] (hB : B.Det) (hB' : B.Rev)
     (hp : PrimeData p N) : Mortal (godel B p N) ↔ Mortal B := by
-  sorry
+  constructor
+  · intro hm c
+    exact (godel_halts_iff hB hB' hp c.1 c.2).1 (hm _)
+  · intro hm c
+    by_contra hnh
+    obtain ⟨b, hb⟩ := exists_macro_chain (godel_lapsMixed hB hB' hp) hnh
+    choose q q' v v' J hJ hJp h1 h2 hst using fun n => godel_macro_sound hB hB' hp (hb n)
+    have key : ∀ n, q' n = q (n + 1) ∧ v' n = v (n + 1) := by
+      intro n
+      have e := (h2 n).symm.trans (h1 (n + 1))
+      simp only [Prod.mk.injEq, GState.ent.injEq] at e
+      exact ⟨e.1, (genc_inj hp (hJ n) (hJ (n + 1)) (hJp n) (hJp (n + 1)) e.2).2⟩
+    refine CM.not_halts_of_forever hB (fun n => (q n, v n)) (fun n => ?_) (hm _)
+    have := hst n
+    rw [(key n).1, (key n).2] at this
+    exact this
 
 end GodelMortal
 
