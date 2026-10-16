@@ -2431,7 +2431,16 @@ end Double
 /-- The encoding of the wrapper's input: `v = Pi.single i₀ n`, empty history. -/
 theorem genc_hcfg_single {ι : Type*} [Fintype ι] [DecidableEq ι] (p : HCtr ι → ℕ) (i₀ : ι)
     (n : ℕ) : genc p 1 (hcfg (Pi.single i₀ n) 0) = ![p (.val i₀) ^ n, 0] := by
-  sorry
+  have : ∏ c, p c ^ hcfg (Pi.single i₀ n) 0 c = p (.val i₀) ^ n := by
+    rw [Fintype.prod_eq_single (HCtr.val i₀) fun c hc => ?_]
+    · simp [hcfg]
+    · cases c with
+      | val i =>
+        have : i ≠ i₀ := fun h => hc (by rw [h])
+        simp [hcfg, this]
+      | hist => simp [hcfg]
+      | work => simp [hcfg]
+  simp only [genc, one_mul, this]
 
 /-- **The compiled machine.**  A deterministic `U` in normal form at `q₀` gives a valid machine
 with a source state `s₀ < K` and a prime `P` such that halting from `(s₀, P ^ n, 0)` is halting
@@ -2441,11 +2450,60 @@ theorem exists_valid_machine {Q ι : Type} [Finite Q] [Finite ι] [DecidableEq �
     ∃ (M : Machine) (s₀ P : ℕ), M.Valid ∧ s₀ < M.K ∧ ∀ n : ℕ,
       IsSource M.rules (s₀, P ^ n, 0) ∧
         (Halts M.rules (s₀, P ^ n, 0) ↔ U.Halts (q₀, Pi.single i₀ n)) := by
-  sorry
+  classical
+  have := Fintype.ofFinite Q
+  have := Fintype.ofFinite ι
+  -- labels `1, …, card` of the rules
+  let L := Fintype.card (Quad Q ι) + 1
+  let lab : Quad Q ι → Fin L := fun ρ => ⟨Fintype.equivFin (Quad Q ι) ρ + 1, by
+    have := (Fintype.equivFin (Quad Q ι) ρ).isLt; omega⟩
+  have hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val := fun ρ _ => by simp [lab]
+  have hinj : ∀ ρ ∈ U, ∀ ρ' ∈ U, lab ρ = lab ρ' → ρ = ρ' := fun ρ _ ρ' _ h => by
+    simp only [lab, Fin.mk.injEq, Nat.add_right_cancel_iff] at h
+    exact (Fintype.equivFin _).injective (Fin.ext h)
+  -- distinct primes for the wrapper's counters
+  let p : HCtr ι → ℕ := fun c => Nat.nth Nat.Prime (Fintype.equivFin (HCtr ι) c)
+  let N := ∑ c, p c
+  have hp : PrimeData p N :=
+    ⟨fun c => Nat.prime_nth_prime _,
+      fun c c' h => (Fintype.equivFin _).injective
+        (Fin.ext (Nat.nth_injective Nat.infinite_setOfPred_prime h)),
+      fun c => Finset.single_le_sum (f := p) (fun _ _ => Nat.zero_le _) (Finset.mem_univ c)⟩
+  let B := histWrap U lab
+  have hBd : B.Det := histWrap_det hU
+  have hBr : B.Rev := histWrap_rev hU hlab hinj
+  have hBm : B.RevMortal := histWrap_revMortal hU hlab
+  let R := godel B p N
+  have hRd : R.Det := godel_det hBd hBr hp
+  have hRr : R.Rev := godel_rev hBd hBr hp
+  have hRm : R.RevMortal := godel_revMortal hBd hBr hp hBm
+  let rs := (Finset.univ.filter (· ∈ R)).toList
+  have hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R := fun ρ => by simp [rs]
+  let e := Fintype.equivFin (GState (HState Q ι L) N × Bool)
+  refine ⟨double rs e, (e (.ent (.bnd q₀), true)).val, p (.val i₀), double_valid e hrs hRd hRr hRm,
+    (e _).isLt, fun n => ?_⟩
+  have hc : ((e (.ent (.bnd q₀), true)).val, p (.val i₀) ^ n, 0) =
+      dcfg e true (.ent (.bnd q₀), genc p 1 (hcfg (Pi.single i₀ n) 0)) := by
+    simp only [dcfg, genc_hcfg_single]; rfl
+  have hsrc : R.IsSource (.ent (.bnd q₀), genc p 1 (hcfg (Pi.single i₀ n) 0)) :=
+    CM.isSource_of_normalAt (godel_normalAt (histWrap_normalAt hq₀)) _
+  rw [hc]
+  exact ⟨double_isSource e hrs hRd hRr hsrc, (double_halts_iff e hrs hRd hRr hsrc).trans
+    ((godel_halts_iff hBd hBr hp _ _).trans (histWrap_halts_iff hU _ _))⟩
 
 /-- **The upper half.**  `UndecidableCM` gives `HaltingUndecidable`. -/
 theorem haltingUndecidable_of_undecidableCM (h : UndecidableCM) : HaltingUndecidable := by
-  sorry
+  obtain ⟨Q, ι, _, _, U, q₀, i₀, enc, hU, hq₀, henc, hnot⟩ := h
+  classical
+  obtain ⟨M, s₀, P, hM, hK, hn⟩ := exists_valid_machine hU hq₀ i₀
+  rintro ⟨g, hg, hspec⟩
+  apply hnot
+  have hg' : Computable fun n => g (M, (s₀, P ^ enc n, 0)) :=
+    hg.comp (Computable.pair (Computable.const M) (Computable.pair (Computable.const s₀)
+      (Computable.pair ((RcwaSameOrbit.PrimInt.nat_pow.to_comp).comp (Computable.const P) henc)
+        (Computable.const 0))))
+  refine ⟨Classical.decPred _, hg'.of_eq fun n => ?_⟩
+  rw [Bool.eq_iff_iff, hspec M _ hM hK (hn (enc n)).1, (hn (enc n)).2, decide_eq_true_iff]
 
 /-- **Halting is undecidable** for valid machines in `RcwaSameOrbit`'s format, from Mathlib's
 halting problem. -/
