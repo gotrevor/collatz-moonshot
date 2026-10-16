@@ -902,17 +902,82 @@ def reachSet (L : Finset Λ') : Set LState :=
 
 /-- Finitely many states are reachable. -/
 theorem reachSet_finite (L : Finset Λ') : (reachSet L).Finite := by
-  sorry
+  classical
+  have hT : {s : Stmt' | some s ∈ TM2.stmts tr L}.Finite :=
+    (TM2.stmts tr L).finite_toSet.preimage (Option.some_injective _).injOn
+  have h1 := (hT.prod (Set.finite_univ (α := Option Γ'))).image fun p => LState.stmt p.1 p.2
+  have h2 := (hT.prod ((Set.finite_univ (α := Option Γ')).prod
+    (Set.finite_univ (α := Phase)))).image fun p => LState.gad p.1 p.2.1 p.2.2
+  refine (((Set.finite_singleton LState.start).union h1).union h2).subset ?_
+  rintro x (rfl | ⟨s, v, hs, rfl | ⟨ph, rfl⟩⟩)
+  · simp
+  · exact Or.inl (Or.inr ⟨(s, v), ⟨hs, trivial⟩, rfl⟩)
+  · exact Or.inr ⟨(s, v, ph), ⟨hs, trivial, trivial⟩, rfl⟩
+
+/-- A label in `L` has its statement in `stmts`. -/
+theorem tr_mem_stmts {L : Finset Λ'} {l : Λ'} (hl : l ∈ L) : some (tr l) ∈ TM2.stmts tr L := by
+  classical
+  refine Finset.mem_insertNone.2 ?_
+  rintro a ⟨⟩
+  exact Finset.mem_biUnion.2 ⟨l, hl, TM2.stmts₁_self⟩
 
 /-- The reachable states are closed under the rules when `L` supports `tr` from `l₀`. -/
 theorem reachSet_closed {l₀ : Λ'} {L : Finset Λ'} (hL : @TM2.Supports _ _ _ _ ⟨l₀⟩ tr L) :
     ∀ ρ ∈ lcm l₀, ρ.src ∈ reachSet L → ρ.dst ∈ reachSet L := by
-  sorry
+  classical
+  rintro ρ (rfl | ⟨s, v, hρ⟩) hsrc
+  · exact Or.inr ⟨_, none, tr_mem_stmts hL.1, Or.inl rfl⟩
+  · obtain ⟨⟨src, op, dst⟩, ha, rfl⟩ := mem_gadget hρ
+    have hs : some s ∈ TM2.stmts tr L := by
+      rcases hsrc with h | ⟨s', v', hs', h | ⟨ph, h⟩⟩
+      · cases src <;> simp [emb, embSrc] at h
+      · cases src <;> simp [emb, embSrc] at h
+        injection h with h1; exact h1 ▸ hs'
+      · cases src <;> simp [emb, embSrc] at h
+        injection h with h1; exact h1 ▸ hs'
+    rcases dst with ph | r
+    · exact Or.inr ⟨s, v, hs, Or.inr ⟨ph, rfl⟩⟩
+    · show gadExit s v r ∈ reachSet L
+      have sub : ∀ {q : Stmt'}, q ∈ TM2.stmts₁ s → ∀ v', LState.stmt q v' ∈ reachSet L :=
+        fun h v' => Or.inr ⟨_, v', TM2.stmts_trans h hs, Or.inl rfl⟩
+      cases s with
+      | push k f q => exact sub (Finset.mem_insert_of_mem TM2.stmts₁_self) _
+      | peek k f q => exact sub (Finset.mem_insert_of_mem TM2.stmts₁_self) _
+      | pop k f q => exact sub (Finset.mem_insert_of_mem TM2.stmts₁_self) _
+      | load a q => exact sub (Finset.mem_insert_of_mem TM2.stmts₁_self) _
+      | branch f q₁ q₂ =>
+        simp only [gadExit]
+        cases f v
+        · exact sub (Finset.mem_insert_of_mem (Finset.mem_union_right _ TM2.stmts₁_self)) _
+        · exact sub (Finset.mem_insert_of_mem (Finset.mem_union_left _ TM2.stmts₁_self)) _
+      | goto f =>
+        let _ : Inhabited Λ' := ⟨l₀⟩
+        have := TM2.stmts_supportsStmt hL hs
+        exact Or.inr ⟨_, v, tr_mem_stmts (this v), Or.inl rfl⟩
+      | halt => simp [gadA] at ha
 
 /-- **The lower half.**  A fixed deterministic counter machine with an undecidable halting
 problem: `lcm (trNormal u halt)` restricted to `reachSet (codeSupp u halt)`, input `inputNum`
 on the main stack. -/
 theorem undecidableCM : UndecidableCM := by
-  sorry
+  obtain ⟨u, hu⟩ := exists_universal
+  have hL := tr_supports u Cont'.halt
+  refine ⟨reachSet (codeSupp u Cont'.halt), LCtr, (reachSet_finite _).to_subtype,
+    inferInstance, (lcm (trNormal u Cont'.halt)).restrict (reachSet (codeSupp u Cont'.halt)),
+    ⟨.start, Or.inl rfl⟩, some K'.main, inputNum,
+    CM.restrict_det (det_lcm _) _, CM.restrict_normalAt (normalAt_lcm _) _ _,
+    computable_inputNum, fun hc => not_computable_universal hu (hc.of_eq fun n => ?_)⟩
+  refine (CM.halts_restrict (reachSet_closed hL) (q := LState.start) (Or.inl rfl) _).trans ?_
+  have key : (lcm (trNormal u Cont'.halt)).Halts (.start, stackVec (K'.elim (trList [n]) [] [] []))
+      ↔ (u.eval [n]).Dom := by
+    rw [halts_iff_eval]
+    have := tr_eval u [n]
+    simp only [init] at this
+    rw [this]
+    simp
+  convert key using 4
+  rw [stackVec_init]
+  congr
+  exact Subsingleton.elim _ _
 
 end CollatzMoonshot.CounterMachineUniversal

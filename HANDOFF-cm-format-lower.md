@@ -27,3 +27,11 @@
 - **`halts_iff_eval` proved.**  (→) strong induction on the counted counter run
   (`CM.StepsN.of_transGen` + `det_lcm`) against `StateTransition.reaches_eval`; (←) lift the TM2
   `Reaches` step-by-step (`tm2_step_reaches`) and end at `stuck_halt`.
+- **§5 proved; both files sorry-free.**  `reachSet_finite` (preimage of `stmts` under `some`,
+  products with `Set.finite_univ`), `reachSet_closed` (helper `tr_mem_stmts`; exits via
+  `stmts_trans`/`stmts₁_self`, `goto` via `stmts_supportsStmt`), `undecidableCM` (assembly per the
+  kickoff; the classical vs derived `DecidableEq (Option K')` in `Pi.single` bridged by
+  `convert` + `Subsingleton.elim`).  `#print axioms undecidableCM`: `[propext, Classical.choice,
+  Quot.sound]`.  Ratified statements checked byte-identical to `664aa67`.
+
+## Status: DONE (kickoff scope complete).
