@@ -181,17 +181,49 @@ def LapNotUp (B : Set Q) (Step : Q × V → Q × V → Prop) : Prop :=
 def LapNotDown (B : Set Q) (Step : Q × V → Q × V → Prop) : Prop :=
   ∀ x m n, m < n → OffRun B Step x m n → (x m).1 = (x n).1 → ¬ (x n).2 ≤ (x m).2
 
+/-- Pigeonhole on the finite state plus Dickson's lemma on the counters. -/
+theorem exists_lt_fst_eq_snd_le [Finite Q] [WellQuasiOrderedLE V] (z : ℕ → Q × V) :
+    ∃ i j, i < j ∧ (z i).1 = (z j).1 ∧ (z i).2 ≤ (z j).2 := by
+  obtain ⟨q, hq⟩ := Finite.exists_infinite_fiber (fun n => (z n).1)
+  have hinf : (Set.ofPred fun n => (z n).1 = q).Infinite := Set.infinite_coe_iff.mp hq
+  set k := Nat.nth fun n => (z n).1 = q
+  have hk := Nat.nth_strictMono hinf
+  have hkq : ∀ n, (z (k n)).1 = q := Nat.nth_mem_of_infinite hinf
+  obtain ⟨i, j, hij, hle⟩ := wellQuasiOrdered_le (fun n => (z (k n)).2)
+  exact ⟨k i, k j, hk hij, by rw [hkq, hkq], hle⟩
+
 /-- **Lemma M, forward.**  Every forward-infinite run visits `B` infinitely often. -/
 theorem visits_boundary_forward [Finite Q] [WellQuasiOrderedLE V] (B : Set Q)
     (Step : Q × V → Q × V → Prop) (hlap : LapNotUp B Step) (x : ℕ → Q × V)
     (hx : ∀ n, Step (x n) (x (n + 1))) : ∀ N, ∃ n, N ≤ n ∧ (x n).1 ∈ B := by
-  sorry
+  intro N
+  by_contra! hoff
+  obtain ⟨i, j, hij, hq, hle⟩ := exists_lt_fst_eq_snd_le (fun n => x (N + n))
+  refine hlap x (N + i) (N + j) (by omega) ⟨fun n _ _ => hx n, fun n hn _ => ?_⟩ hq hle
+  exact hoff n (by omega)
+
+omit [Preorder V] in
+/-- Reversing a run turns an off-`B` run of `Step` into one of `flip Step`. -/
+theorem offRun_reverse {B : Set Q} {Step : Q × V → Q × V → Prop} {x : ℕ → Q × V} {m n : ℕ}
+    (h : OffRun B Step x m n) : OffRun B (flip Step) (fun i => x (m + n - i)) m n := by
+  refine ⟨fun i hm hn => ?_, fun i hm hn => h.2 _ (by omega) (by omega)⟩
+  have := h.1 (m + n - i - 1) (by omega) (by omega)
+  simp only [flip]
+  rwa [show m + n - (i + 1) = m + n - i - 1 by omega,
+    show m + n - i = m + n - i - 1 + 1 by omega]
+
+theorem lapNotUp_flip {B : Set Q} {Step : Q × V → Q × V → Prop} (h : LapNotDown B Step) :
+    LapNotUp B (flip Step) := by
+  intro y m n hmn hrun hq
+  have := h (fun i => y (m + n - i)) m n hmn (offRun_reverse hrun)
+  simp only [show m + n - n = m by omega, show m + n - m = n by omega] at this
+  exact this hq.symm
 
 /-- **Lemma M, backward.**  Every backward-infinite run visits `B` infinitely often. -/
 theorem visits_boundary_backward [Finite Q] [WellQuasiOrderedLE V] (B : Set Q)
     (Step : Q × V → Q × V → Prop) (hlap : LapNotDown B Step) (x : ℕ → Q × V)
-    (hx : ∀ n, Step (x (n + 1)) (x n)) : ∀ N, ∃ n, N ≤ n ∧ (x n).1 ∈ B := by
-  sorry
+    (hx : ∀ n, Step (x (n + 1)) (x n)) : ∀ N, ∃ n, N ≤ n ∧ (x n).1 ∈ B :=
+  visits_boundary_forward B (flip Step) (lapNotUp_flip hlap) x hx
 
 /-- One macro step: from a boundary configuration to the next one, through a nonempty run whose
 intermediate states are off `B`. -/
@@ -199,13 +231,66 @@ def MacroStep (B : Set Q) (Step : Q × V → Q × V → Prop) (c d : Q × V) : P
   c.1 ∈ B ∧ d.1 ∈ B ∧ ∃ (x : ℕ → Q × V) (n : ℕ), 0 < n ∧ x 0 = c ∧ x n = d ∧
     (∀ i, i < n → Step (x i) (x (i + 1))) ∧ ∀ i, 0 < i → i < n → (x i).1 ∉ B
 
+omit [Preorder V] in
+/-- Reversing a macro step. -/
+theorem macroStep_flip {B : Set Q} {Step : Q × V → Q × V → Prop} {c d : Q × V}
+    (h : MacroStep B Step c d) : MacroStep B (flip Step) d c := by
+  obtain ⟨hc, hd, x, n, hn, h0, hn', hstep, hoff⟩ := h
+  refine ⟨hd, hc, fun i => x (n - i), n, hn, by simpa using hn', by simpa using h0,
+    fun i hi => ?_, fun i hi hi' => hoff _ (by omega) (by omega)⟩
+  have := hstep (n - i - 1) (by omega)
+  simp only [flip]
+  rwa [show n - (i + 1) = n - i - 1 by omega, show n - i = n - i - 1 + 1 by omega]
+
 /-- **Lemma M, part 2.**  The machine is immortal iff the macro map has an infinite forward
 orbit. -/
 theorem immortal_iff_macro [Finite Q] [WellQuasiOrderedLE V] (B : Set Q)
     (Step : Q × V → Q × V → Prop) (hlap : LapNotUp B Step) :
     (∃ x : ℕ → Q × V, ∀ n, Step (x n) (x (n + 1))) ↔
       ∃ b : ℕ → Q × V, ∀ n, MacroStep B Step (b n) (b (n + 1)) := by
-  sorry
+  classical
+  constructor
+  · rintro ⟨x, hx⟩
+    have hvis := visits_boundary_forward B Step hlap x hx
+    have hinf : (Set.ofPred fun n => (x n).1 ∈ B).Infinite :=
+      Set.infinite_of_forall_exists_gt fun a => by
+        obtain ⟨n, hn, hB⟩ := hvis (a + 1); exact ⟨n, hB, by omega⟩
+    set k := Nat.nth fun n => (x n).1 ∈ B
+    have hk : StrictMono k := Nat.nth_strictMono hinf
+    have hkB : ∀ n, (x (k n)).1 ∈ B := Nat.nth_mem_of_infinite hinf
+    refine ⟨fun n => x (k n), fun n => ⟨hkB n, hkB (n + 1), fun i => x (k n + i),
+      k (n + 1) - k n, by have := hk (show n < n + 1 by omega); omega, by simp, ?_,
+      fun i _ => by simpa [Nat.add_assoc] using hx (k n + i), fun i hi hi' hB => ?_⟩⟩
+    · have := hk (show n < n + 1 by omega)
+      show x (k n + (k (n + 1) - k n)) = x (k (n + 1))
+      rw [Nat.add_sub_cancel' this.le]
+    · have hc : k (Nat.count (fun n => (x n).1 ∈ B) (k n + i)) = k n + i := Nat.nth_count hB
+      have h1 : k n < k (Nat.count (fun n => (x n).1 ∈ B) (k n + i)) := by rw [hc]; omega
+      have h2 : k (Nat.count (fun n => (x n).1 ∈ B) (k n + i)) < k (n + 1) := by
+        rw [hc]; omega
+      rw [hk.lt_iff_lt] at h1 h2
+      omega
+  · rintro ⟨b, hb⟩
+    simp only [MacroStep] at hb
+    choose hb1 hb2 X L hL hX0 hXL hstep _ using hb
+    let nxt : ℕ × ℕ → ℕ × ℕ := fun p => if p.2 + 1 < L p.1 then (p.1, p.2 + 1) else (p.1 + 1, 0)
+    let pos : ℕ → ℕ × ℕ := fun t => nxt^[t] (0, 0)
+    have hpos : ∀ t, (pos t).2 < L (pos t).1 := by
+      intro t
+      induction t with
+      | zero => exact hL 0
+      | succ t ih =>
+        simp only [pos, Function.iterate_succ_apply', nxt] at ih ⊢
+        split_ifs with h
+        · exact h
+        · exact hL _
+    refine ⟨fun t => X (pos t).1 (pos t).2, fun t => ?_⟩
+    have hp : pos (t + 1) = nxt (pos t) := Function.iterate_succ_apply' _ _ _
+    simp only [hp, nxt]
+    split_ifs with h
+    · exact hstep _ _ (hpos t)
+    · have := hstep _ _ (hpos t)
+      rwa [show (pos t).2 + 1 = L (pos t).1 by have := hpos t; omega, hXL, ← hX0] at this
 
 /-- **Lemma M, part 3.**  The reverse is immortal iff the macro map has an infinite backward
 chain. -/
@@ -213,7 +298,11 @@ theorem reverse_immortal_iff_macro [Finite Q] [WellQuasiOrderedLE V] (B : Set Q)
     (Step : Q × V → Q × V → Prop) (hlap : LapNotDown B Step) :
     (∃ x : ℕ → Q × V, ∀ n, Step (x (n + 1)) (x n)) ↔
       ∃ b : ℕ → Q × V, ∀ n, MacroStep B Step (b (n + 1)) (b n) := by
-  sorry
+  rw [show (∃ x : ℕ → Q × V, ∀ n, Step (x (n + 1)) (x n)) ↔
+      ∃ x : ℕ → Q × V, ∀ n, flip Step (x n) (x (n + 1)) from Iff.rfl,
+    immortal_iff_macro B (flip Step) (lapNotUp_flip hlap)]
+  exact exists_congr fun b => forall_congr' fun n =>
+    ⟨fun h => macroStep_flip h, fun h => macroStep_flip h⟩
 
 end LemmaM
 
@@ -256,6 +345,38 @@ def LapsMixed (B : Set Q) (R : Set (Rule Q)) : Prop :=
     let δ := ∑ i ∈ Finset.range m, (ρ i).move
     (δ.1 < 0 ∧ 0 < δ.2) ∨ (δ.2 < 0 ∧ 0 < δ.1)
 
+/-- Under (S1), an off-`B` run returning to its state moves one counter down and the other up. -/
+theorem lap_mixed {B : Set Q} {R : Set (Rule Q)} (hS1 : LapsMixed B R) (x : ℕ → Q × ℕ × ℕ)
+    {m n : ℕ} (hmn : m < n) (hstep : ∀ i, m ≤ i → i < n → Step R (x i) (x (i + 1)))
+    (hoff : ∀ i, m ≤ i → i ≤ n → (x i).1 ∉ B) (hq : (x m).1 = (x n).1) :
+    ((x n).2.1 < (x m).2.1 ∧ (x m).2.2 < (x n).2.2) ∨
+      ((x n).2.2 < (x m).2.2 ∧ (x m).2.1 < (x n).2.1) := by
+  have hex : ∀ j, ∃ ρ : Rule Q, j < n - m → ρ ∈ R ∧ ρ.Fires (x (m + j)) (x (m + j + 1)) := by
+    intro j
+    by_cases hj : j < n - m
+    · obtain ⟨ρ, hρ, hf⟩ := hstep (m + j) (by omega) (by omega)
+      exact ⟨ρ, fun _ => ⟨hρ, hf⟩⟩
+    · exact ⟨⟨(x m).1, ∅, 0, (x m).1⟩, fun h => absurd h hj⟩
+  choose ρ hρ using hex
+  have hsum : ∀ k, k ≤ n - m → ∑ i ∈ Finset.range k, (ρ i).move =
+      (((x (m + k)).2.1 : ℤ) - (x m).2.1, ((x (m + k)).2.2 : ℤ) - (x m).2.2) := by
+    intro k
+    induction k with
+    | zero => intro; ext <;> simp
+    | succ k ih =>
+      intro hk
+      obtain ⟨-, -, -, -, h1, h2⟩ := hρ k (by omega)
+      rw [Finset.sum_range_succ, ih (by omega), show m + (k + 1) = m + k + 1 by omega]
+      ext <;> simp <;> omega
+  have hlap := hS1 ρ (n - m) (by omega) (fun i hi => (hρ i hi).1)
+    (fun i hi => by rw [← (hρ i hi).2.1]; exact hoff _ (by omega) (by omega))
+    (fun i hi => by
+      rw [← (hρ i (by omega)).2.2.2.1, ← (hρ (i + 1) hi).2.1, Nat.add_assoc])
+    (by
+      rw [← (hρ _ (by omega)).2.2.2.1, ← (hρ 0 (by omega)).2.1,
+        show m + (n - m - 1) + 1 = n by omega, Nat.add_zero, hq])
+  simp only [hsum _ le_rfl, show m + (n - m) = n by omega] at hlap
+  omega
 /-- **Lemma M for 2-counter machines.**  Under (S1), every run that is infinite forward, or
 infinite backward, visits the boundary states infinitely often. -/
 theorem visits_boundary [Finite Q] (B : Set Q) (R : Set (Rule Q)) (hS1 : LapsMixed B R) :
@@ -263,7 +384,13 @@ theorem visits_boundary [Finite Q] (B : Set Q) (R : Set (Rule Q)) (hS1 : LapsMix
       ∀ N, ∃ n, N ≤ n ∧ (x n).1 ∈ B) ∧
     (∀ x : ℕ → Q × ℕ × ℕ, (∀ n, Step R (x (n + 1)) (x n)) →
       ∀ N, ∃ n, N ≤ n ∧ (x n).1 ∈ B) := by
-  sorry
+  have hup : LapNotUp B (Step R) := fun x m n hmn hrun hq hle => by
+    rcases lap_mixed hS1 x hmn hrun.1 hrun.2 hq with h | h <;>
+      simp only [Prod.le_def] at hle <;> omega
+  have hdown : LapNotDown B (Step R) := fun x m n hmn hrun hq hle => by
+    rcases lap_mixed hS1 x hmn hrun.1 hrun.2 hq with h | h <;>
+      simp only [Prod.le_def] at hle <;> omega
+  exact ⟨visits_boundary_forward B (Step R) hup, visits_boundary_backward B (Step R) hdown⟩
 
 end TwoCounter
 
