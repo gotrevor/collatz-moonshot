@@ -1178,11 +1178,165 @@ theorem godel_normalAt {q₀ : Q} (hB : B.NormalAt q₀) : (godel B p N).NormalA
   · rename_i hm; rcases hm with hm | hm <;> exact hB _ hm h
   · exact hB _ ‹_› h
 
+/-- Rank of a compile state: rules off the boundary never lower it. -/
+def grank : GState Q N → ℕ
+  | .ent _ => 5
+  | .grd _ => 0
+  | .a₁ _ | .a₂ _ | .a₃ _ | .a₄ _ => 1
+  | .b₁ _ | .b₂ _ | .b₃ _ | .mul _ _ | .dv _ _ => 2
+  | .w₁ _ _ | .w₂ _ _ => 3
+  | .r₁ _ _ | .r₂ _ _ => 4
+
+/-- The counter a family's laps lower (`x` on odd ranks, `y` on even ones). -/
+def gdn (k : ℕ) : Fin 2 := if k % 2 = 1 then 0 else 1
+
+/-- The counter a family's laps raise. -/
+def gup (k : ℕ) : Fin 2 := if k % 2 = 1 then 1 else 0
+
+open Classical in
+/-- Every rule but a decrement of `gdn` raises `gD`. -/
+noncomputable def gD (B : CM Q ι) : GState Q N → ℤ
+  | .a₁ _ => 2
+  | .a₂ _ => 3
+  | .a₄ _ => 1
+  | .b₂ q => if ∃ i q', (⟨q, .inc i, q'⟩ : Quad Q ι) ∈ B then 1 else -5
+  | .b₃ _ => -1
+  | .mul _ j => (j.val : ℤ) - (N + 3)
+  | .dv _ _ => 1
+  | .w₁ _ j => if j.val = 0 then 10 else 0
+  | .w₂ _ j => if j.val = 0 then 11 else 1
+  | .r₁ _ j => -2 * j.val
+  | .r₂ _ j => if j.val = 0 then 1 else -2 * j.val + 1
+  | _ => 0
+
+open Classical in
+/-- Every rule but an increment of `gup` raises `gI`. -/
+noncomputable def gI (B : CM Q ι) (p : ι → ℕ) : GState Q N → ℤ
+  | .a₁ _ => 1
+  | .a₂ _ => 2
+  | .a₃ _ => 3
+  | .b₂ q => if ∃ i q', (⟨q, .dec i, q'⟩ : Quad Q ι) ∈ B then N + 5 else 1
+  | .b₃ _ => -1
+  | .mul _ _ => 2
+  | .dv _ j => j.val
+  | .w₁ _ j => 2 * j.val
+  | .w₂ q j => if ∃ i b q', (⟨q, .test i b, q'⟩ : Quad Q ι) ∈ B ∧ j.val = p i then -1
+      else 2 * j.val + 1
+  | .r₁ _ j => if j.val = 0 then 0 else 2
+  | .r₂ _ j => if j.val = 0 then 1 else -10
+  | _ => 0
+
+theorem grule_lap (hB : B.Det) (hp : PrimeData p N) {r : Quad (GState Q N) (Fin 2)}
+    (hr : GRule B p N r) (hs : r.src ∉ Set.range GState.ent)
+    (hd : r.dst ∉ Set.range GState.ent) :
+    grank r.src ≤ grank r.dst ∧ (grank r.src = grank r.dst →
+      r.op.delta (gdn (grank r.src)) ≤ 0 ∧ 0 ≤ r.op.delta (gup (grank r.src)) ∧
+      (r.op = .dec (gdn (grank r.src)) ∨ gD (N := N) B r.src < gD B r.dst) ∧
+      (r.op = .inc (gup (grank r.src)) ∨ gI (N := N) B p r.src < gI B p r.dst)) := by
+  cases hr <;> simp [grank, gD, gI, gdn, gup, Op.delta] at hs hd ⊢
+  all_goals try omega
+  case mulIn q i q' h =>
+    rw [if_pos, if_neg]
+    · omega
+    · rintro ⟨i', q'', h'⟩; exact absurd (det_nontest hB h h' (by simp)).1 (by simp)
+    · exact ⟨i, q', h⟩
+  case mulB₂ q i q' j h hj =>
+    rw [if_neg]
+    rintro ⟨i', q'', h'⟩; exact absurd (det_nontest hB h h' (by simp)).1 (by simp)
+  case dvLast q i q' j h hj =>
+    rw [if_pos]
+    · have := hp.le i; omega
+    · exact ⟨i, q', h⟩
+  case dvB₂ q i q' h =>
+    rw [if_neg]
+    · omega
+    · rintro ⟨i', q'', h'⟩; exact absurd (det_nontest hB h h' (by simp)).1 (by simp)
+  case wP q i b q' j h hj =>
+    have hc : ¬ ∃ i' b' q'', (⟨q, .test i' b', q''⟩ : Quad Q ι) ∈ B ∧ j.val = p i' := by
+      rintro ⟨i', b', q'', h', hj'⟩; obtain rfl := det_test_counter hB h h'; omega
+    rw [if_neg hc]
+    simp only [Fin.ext_iff, Fin.val_zero]
+    refine ⟨by split_ifs <;> omega, by omega⟩
+  case wBack q i b q' j j' h hj hj' =>
+    have hc : ∃ i' b' q'', (⟨q, .test i' b', q''⟩ : Quad Q ι) ∈ B ∧ j.val = p i' :=
+      ⟨i, b, q', h, hj⟩
+    rw [if_pos hc]
+    have := (hp.prime i).two_le
+    simp only [Fin.ext_iff, Fin.val_zero]
+    refine ⟨by split_ifs <;> omega, by omega⟩
+  all_goals
+    simp only [Fin.ext_iff, Fin.val_zero, Fin.lt_def] at *
+    try have := (hp.prime ‹ι›).two_le
+    (try split_ifs) <;> omega
+
+/-- A potential that every non-`P` step of a closed walk raises forces a `P` step. -/
+theorem walk_exists {X : Type*} (f : X → ℤ) (src dst : ℕ → X) {m : ℕ} (hm : 0 < m)
+    (hchain : ∀ i, i + 1 < m → dst i = src (i + 1)) (hclose : dst (m - 1) = src 0)
+    (P : ℕ → Prop) (h : ∀ i, i < m → P i ∨ f (src i) < f (dst i)) : ∃ i, i < m ∧ P i := by
+  by_contra hne
+  push Not at hne
+  have h0 := walk_sum_zero f src dst hm hchain hclose
+  have : 0 < ∑ i ∈ Finset.range m, (f (dst i) - f (src i)) :=
+    Finset.sum_pos (fun i hi => by
+      have := (h i (Finset.mem_range.1 hi)).resolve_left (hne i (Finset.mem_range.1 hi))
+      omega) ⟨0, Finset.mem_range.2 hm⟩
+  omega
+
 /-- **(S1) for the compile.**  Every loop off the boundary is one wheel or transfer, with lap
 `(−1, +1)`, `(+p, −1)`, `(+1, −p)`, `(−p, +1)` or `(+p, −1)`. -/
 theorem godel_lapsMixed (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) :
     LapsMixed (godel B p N) (Set.range GState.ent) := by
-  sorry
+  intro ρ m hm hmem hoff hchain hclose
+  have hdoff : ∀ i, i < m → (ρ i).dst ∉ Set.range GState.ent := by
+    intro i hi
+    by_cases h : i + 1 < m
+    · rw [hchain i h]; exact hoff _ h
+    · rw [show i = m - 1 by omega, hclose]; exact hoff 0 hm
+  have key := fun i (hi : i < m) => grule_lap hB hp (hmem i hi) (hoff i hi) (hdoff i hi)
+  -- the rank is constant along the walk
+  have hmono : ∀ j, j < m → ∀ i, i ≤ j → grank (ρ i).src ≤ grank (ρ j).src := by
+    intro j
+    induction j with
+    | zero => intro _ i hi; rw [show i = 0 by omega]
+    | succ j ih =>
+      intro hj i hi
+      rcases Nat.lt_or_ge i (j + 1) with h | h
+      · exact (ih (by omega) i (by omega)).trans
+          ((key j (by omega)).1.trans (le_of_eq (by rw [hchain j hj])))
+      · rw [show i = j + 1 by omega]
+  have hconst : ∀ i, i < m → grank (ρ i).src = grank (ρ 0).src ∧
+      grank (ρ i).dst = grank (ρ 0).src := by
+    intro i hi
+    have h0 := hmono i hi 0 (Nat.zero_le _)
+    have h1 := (key i hi).1
+    have h2 : grank (ρ i).dst ≤ grank (ρ 0).src := by
+      by_cases h : i + 1 < m
+      · rw [hchain i h]
+        calc grank (ρ (i + 1)).src ≤ grank (ρ (m - 1)).src := hmono _ (by omega) _ (by omega)
+          _ ≤ grank (ρ (m - 1)).dst := (key _ (by omega)).1
+          _ = _ := by rw [hclose]
+      · rw [show i = m - 1 by omega, hclose]
+    omega
+  set k := grank (ρ 0).src
+  have hid : ∀ i, i < m → _ := fun i hi => by
+    have := (key i hi).2 ((hconst i hi).1.trans (hconst i hi).2.symm)
+    rw [(hconst i hi).1] at this
+    exact this
+  obtain ⟨i₁, hi₁, h₁⟩ := walk_exists (gD (N := N) B) (fun i => (ρ i).src) (fun i => (ρ i).dst)
+    hm hchain hclose (fun i => (ρ i).op = .dec (gdn k)) fun i hi => (hid i hi).2.2.1
+  obtain ⟨i₂, hi₂, h₂⟩ := walk_exists (gI (N := N) B p) (fun i => (ρ i).src)
+    (fun i => (ρ i).dst) hm hchain hclose (fun i => (ρ i).op = .inc (gup k))
+    fun i hi => (hid i hi).2.2.2
+  refine ⟨⟨gdn k, ?_⟩, ⟨gup k, ?_⟩⟩
+  · calc ∑ i ∈ Finset.range m, (ρ i).op.delta (gdn k)
+        < ∑ i ∈ Finset.range m, (0 : ℤ) :=
+          Finset.sum_lt_sum (fun i hi => (hid i (Finset.mem_range.1 hi)).1)
+            ⟨i₁, Finset.mem_range.2 hi₁, by rw [h₁]; simp [Op.delta]⟩
+      _ = 0 := by simp
+  · calc (0 : ℤ) = ∑ i ∈ Finset.range m, (0 : ℤ) := by simp
+      _ < ∑ i ∈ Finset.range m, (ρ i).op.delta (gup k) :=
+          Finset.sum_lt_sum (fun i hi => (hid i (Finset.mem_range.1 hi)).2.1)
+            ⟨i₂, Finset.mem_range.2 hi₂, by rw [h₂]; simp [Op.delta]⟩
 
 /-- Two counters `x`, `y`. -/
 def gc (x y : ℕ) : Fin 2 → ℕ := ![x, y]
