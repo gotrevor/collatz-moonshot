@@ -592,15 +592,65 @@ class to `r_0 + m_0 (t + 1)`. -/
 def hwNext (hw : List (ℤ × ℤ)) (n : ℤ) : ℤ :=
   hwPoint hw (hwPos hw n + 1)
 
-/-- **Open.**  The line positions enumerate the line: `θ = hwPoint` is a bijection `ℤ → Line`. -/
+theorem inClass_iff (rm : ℤ × ℤ) (n : ℤ) :
+    InClass rm n ↔ (n % rm.2 == rm.1 % rm.2) = true := by
+  simp [InClass, Int.ModEq]
+
+theorem IsHighway.mod_pos {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw)
+    {rm : ℤ × ℤ} (hrm : rm ∈ hw) : 0 < rm.2 := by
+  obtain ⟨α, β, he⟩ := h.modulus rm hrm
+  rw [he]; positivity
+
+theorem IsHighway.length_pos {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw) :
+    0 < hw.length := List.length_pos_iff.2 h.ne_nil
+
+/-- The class index of a point of class `i` is `i`. -/
+theorem hwIdx_eq {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw) {i : ℕ}
+    (hi : i < hw.length) {n : ℤ} (hn : InClass hw[i] n) : hwIdx hw n = i := by
+  rw [hwIdx, List.findIdx_eq hi]
+  refine ⟨(inClass_iff _ _).1 hn, fun k hk => ?_⟩
+  have hd := List.pairwise_iff_getElem.1 h.disjoint k i (by omega) hi hk n
+  rw [← Bool.not_eq_true, ← inClass_iff]
+  exact fun hk' => hd ⟨hk', hn⟩
+
+/-- The line positions enumerate the line: `θ = hwPoint` is a bijection `ℤ → Line`. -/
 theorem hwPoint_hwPos {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw)
     {n : ℤ} (hn : n ∈ Line j R) : hwPoint hw (hwPos hw n) = n := by
-  sorry
+  obtain ⟨rm, hrm, hin⟩ := (h.cover n).1 hn
+  have hlt : hwIdx hw n < hw.length :=
+    List.findIdx_lt_length_of_exists ⟨rm, hrm, (inClass_iff _ _).1 hin⟩
+  have hcl : InClass hw[hwIdx hw n] n := (inClass_iff _ _).2 (List.findIdx_getElem (w := hlt))
+  have hk := h.length_pos
+  set i := hwIdx hw n with hi
+  have hg : hw.getD i (0, 1) = hw[i] := List.getD_eq_getElem _ _ hlt
+  have hdvd : hw[i].2 ∣ n - hw[i].1 := (Int.ModEq.dvd hcl.symm)
+  have hpos : hwPos hw n = hw.length * ((n - hw[i].1) / hw[i].2) + i := by
+    rw [hwPos, ← hi, hg]
+  have hmod : hwPos hw n % hw.length = i := by
+    rw [hpos, Int.mul_add_emod_self_left]; exact Int.emod_eq_of_lt (by omega) (by omega)
+  have hdiv : hwPos hw n / hw.length = (n - hw[i].1) / hw[i].2 := by
+    rw [hpos, Int.mul_add_ediv_left _ _ (by omega),
+      Int.ediv_eq_zero_of_lt (a := (i : ℤ)) (by omega) (by omega), add_zero]
+  rw [hwPoint, hmod, hdiv, Int.toNat_natCast, hg, Int.mul_ediv_cancel' hdvd]
+  ring
 
-/-- **Open.**  The other half of the line bijection. -/
+/-- The other half of the line bijection. -/
 theorem hwPos_hwPoint {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw)
     (p : ℤ) : hwPoint hw p ∈ Line j R ∧ hwPos hw (hwPoint hw p) = p := by
-  sorry
+  have hk : (0 : ℤ) < hw.length := by exact_mod_cast h.length_pos
+  have h0 := Int.emod_nonneg p hk.ne'
+  have hlt : (p % hw.length).toNat < hw.length := by
+    have := Int.emod_lt_of_pos p hk; omega
+  set i := (p % hw.length).toNat with hi
+  have hg : hw.getD i (0, 1) = hw[i] := List.getD_eq_getElem _ _ hlt
+  have hx : hwPoint hw p = hw[i].1 + hw[i].2 * (p / hw.length) := by rw [hwPoint, ← hi, hg]
+  have hcl : InClass hw[i] (hwPoint hw p) := by
+    rw [hx, InClass]
+    exact (Int.modEq_iff_dvd.2 ⟨-(p / hw.length), by ring⟩)
+  have hm := h.mod_pos (List.getElem_mem hlt)
+  refine ⟨(h.cover _).2 ⟨_, List.getElem_mem hlt, hcl⟩, ?_⟩
+  rw [hwPos, hwIdx_eq h hlt hcl, hg, hx, add_sub_cancel_left, Int.mul_ediv_cancel_left _ hm.ne',
+    hi, Int.toNat_of_nonneg h0, Int.mul_ediv_add_emod]
 
 /-- The highway modulus at level `j`: `5^j · 2^{2N} · 3^{3N}`.  Line membership is periodic
 mod it (the counter conditions `C_i = 0`, `= 1`, `≥ 2` are `v₂`, `v₃` thresholds below `2N`,
