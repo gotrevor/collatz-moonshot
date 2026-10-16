@@ -419,7 +419,39 @@ end DoubleMortal
 valid machine all of whose sources halt iff `U` is mortal. -/
 theorem exists_valid_machine_mortal {Q ι : Type} [Finite Q] [Finite ι] [DecidableEq ι]
     {U : CM Q ι} (hU : U.Det) : ∃ M : Machine, M.Valid ∧ (SourcesHalt M ↔ Mortal U) := by
-  sorry
+  classical
+  have := Fintype.ofFinite Q
+  have := Fintype.ofFinite ι
+  -- labels `1, …, card` of the rules
+  let L := Fintype.card (Quad Q ι) + 1
+  let lab : Quad Q ι → Fin L := fun ρ => ⟨Fintype.equivFin (Quad Q ι) ρ + 1, by
+    have := (Fintype.equivFin (Quad Q ι) ρ).isLt; omega⟩
+  have hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val := fun ρ _ => by simp [lab]
+  have hinj : ∀ ρ ∈ U, ∀ ρ' ∈ U, lab ρ = lab ρ' → ρ = ρ' := fun ρ _ ρ' _ h => by
+    simp only [lab, Fin.mk.injEq, Nat.add_right_cancel_iff] at h
+    exact (Fintype.equivFin _).injective (Fin.ext h)
+  -- distinct primes for the wrapper's counters
+  let p : HCtr ι → ℕ := fun c => Nat.nth Nat.Prime (Fintype.equivFin (HCtr ι) c)
+  let N := ∑ c, p c
+  have hp : PrimeData p N :=
+    ⟨fun c => Nat.prime_nth_prime _,
+      fun c c' h => (Fintype.equivFin _).injective
+        (Fin.ext (Nat.nth_injective Nat.infinite_setOfPred_prime h)),
+      fun c => Finset.single_le_sum (f := p) (fun _ _ => Nat.zero_le _) (Finset.mem_univ c)⟩
+  let B := histWrap U lab
+  have hBd : B.Det := histWrap_det hU
+  have hBr : B.Rev := histWrap_rev hU hlab hinj
+  have hBm : B.RevMortal := histWrap_revMortal hU hlab
+  let R := godel B p N
+  have hRd : R.Det := godel_det hBd hBr hp
+  have hRr : R.Rev := godel_rev hBd hBr hp
+  have hRm : R.RevMortal := godel_revMortal hBd hBr hp hBm
+  let rs := (Finset.univ.filter (· ∈ R)).toList
+  have hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R := fun ρ => by simp [rs]
+  let e := Fintype.equivFin (GState (HState Q ι L) N × Bool)
+  refine ⟨double rs e, double_valid e hrs hRd hRr hRm, ?_⟩
+  exact (double_sourcesHalt_iff e hrs hRd hRr hRm).trans
+    ((godel_mortal_iff hBd hBr hp).trans (histWrap_mortal_iff hU))
 
 /-- **Theorem C(1), machine form (hypothesis-free).**  For every deterministic finite counter
 machine `U` there is an exact table whose map is a permutation of `ℤ` (all slopes in
@@ -429,7 +461,9 @@ theorem exists_table_iff_mortal {Q ι : Type} [Finite Q] [Finite ι] [DecidableE
     ∃ T : RcwaTable, T.Exact ∧ ∃ hb : Function.Bijective T.eval,
       (OneOrbit (Equiv.ofBijective T.eval hb) ↔ Mortal U) ∧
         (Infinite (RcwaMachine.Orbits (Equiv.ofBijective T.eval hb)) ↔ ¬ Mortal U) := by
-  sorry
+  obtain ⟨M, hM, hiff⟩ := exists_valid_machine_mortal hU
+  obtain ⟨hex, hb, h1, h2⟩ := tableOf_orbits hM
+  exact ⟨tableOf M, hex, hb, h1.trans hiff, h2.trans (not_congr hiff)⟩
 
 /-! ## 3. Undecidability of the orbit count, given undecidable mortality -/
 
