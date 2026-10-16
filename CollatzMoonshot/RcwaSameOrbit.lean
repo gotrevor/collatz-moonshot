@@ -1590,10 +1590,18 @@ theorem good_of_valid {M : Machine} (hM : M.Valid) : Good (level M) M (highwayOf
   exact ⟨h1, (Nat.le_succ _).trans (le_orderOf_three h1), hM.wf, hM.rev, hM.pair_sink,
     isHighway_highwayAt h1 M.rules⟩
 
-/-- **Open.**  For a valid machine, `tableOf M` is an exact table for `σ`. -/
+/-- For a valid machine, `tableOf M` is an exact table for `σ`. -/
 theorem tableOf_spec {M : Machine} (hM : M.Valid) :
     (tableOf M).Exact ∧ (tableOf M).eval = sigma (level M) M (highwayOf M) := by
-  sorry
+  have hG := good_of_valid hM
+  have hL := hwModulus_pos (level M)
+  refine tableFrom_spec (by positivity) (isRcwa23At_sigma hG hL ?_ ?_)
+  · intro rm hrm
+    rw [highwayOf, highwayAt_eq, List.mem_map] at hrm
+    obtain ⟨r, -, rfl⟩ := hrm
+    exact dvd_rfl
+  · unfold hwModulus
+    exact mul_dvd_mul (mul_dvd_mul_left _ (pow_dvd_pow _ (by omega))) (pow_dvd_pow _ (by omega))
 
 /-- `Test ≃ Fin 3`. -/
 def Test.equivFin : Test ≃ Fin 3 where
