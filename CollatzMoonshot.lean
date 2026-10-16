@@ -159,6 +159,7 @@ import CollatzMoonshot.AmusicalLoopInterleave
 import CollatzMoonshot.AmusicalNoMean
 import CollatzMoonshot.AmusicalRayJoin
 import CollatzMoonshot.AmusicalNotNormal
+import CollatzMoonshot.RcwaMachine
 import CollatzMoonshot.AmusicalTrap
 import CollatzMoonshot.AmusicalDepthFusion
 import CollatzMoonshot.RcwaEngine
