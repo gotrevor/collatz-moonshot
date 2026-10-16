@@ -299,6 +299,117 @@ end Pieces
 
 /-! ## Lemma 1: image parities -/
 
+section Lemma1Helpers
+
+/-- Peel the first index off a filtered `range`. -/
+theorem card_filter_range_succ' (P : ℕ → Prop) [DecidablePred P] (n : ℕ) :
+    ((Finset.range (n + 1)).filter P).card =
+      ((Finset.range n).filter fun i => P (i + 1)).card + (if P 0 then 1 else 0) := by
+  rw [Finset.card_filter, Finset.card_filter, Finset.sum_range_succ']
+
+/-- Peel the last index off a filtered `range`. -/
+theorem card_filter_range_succ (P : ℕ → Prop) [DecidablePred P] (n : ℕ) :
+    ((Finset.range (n + 1)).filter P).card =
+      ((Finset.range n).filter P).card + (if P n then 1 else 0) := by
+  rw [Finset.card_filter, Finset.card_filter, Finset.sum_range_succ]
+
+/-- A predicate swapped with its negation by `i ↦ n − 1 − i` holds on exactly half of
+`range n`. -/
+theorem two_mul_card_filter_of_flip (Q : ℕ → Prop) [DecidablePred Q] (n : ℕ)
+    (h : ∀ i < n, Q (n - 1 - i) ↔ ¬ Q i) :
+    2 * ((Finset.range n).filter Q).card = n := by
+  have h1 := Finset.card_filter_add_card_filter_not (s := Finset.range n) Q
+  have h2 : ((Finset.range n).filter Q).card =
+      ((Finset.range n).filter fun i => ¬ Q i).card := by
+    apply Finset.card_nbij' (fun i => n - 1 - i) (fun i => n - 1 - i)
+    · intro i hi
+      simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hi ⊢
+      exact ⟨by omega, fun hq => (h i hi.1).1 hq hi.2⟩
+    · intro i hi
+      simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hi ⊢
+      refine ⟨by omega, ?_⟩
+      by_contra hc
+      exact hi.2 (by have := (h (n - 1 - i) (by omega)).2 hc; rwa [show n - 1 - (n - 1 - i) = i by
+        omega] at this)
+    · intro i hi
+      simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hi
+      simp only; omega
+    · intro i hi
+      simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at hi
+      simp only; omega
+  rw [Finset.card_range] at h1
+  omega
+
+/-- The reflection `t ↦ D − t` of floor quotients, for `D ∤ tP`. -/
+theorem flip_floor {D P t : ℤ} (hD : 0 < D) (hndvd : ¬ D ∣ t * P) :
+    (D - t) * P / D = P - 1 - t * P / D ∧ (t * P - 1) / D = t * P / D := by
+  set a := t * P / D with ha
+  obtain ⟨h1, h2⟩ := (ediv_eq_iff hD).1 ha.symm
+  have h3 : a * D ≠ t * P := fun h => hndvd ⟨a, by rw [← h]; ring⟩
+  have h4 : a * D + 1 ≤ t * P := by omega
+  exact ⟨(ediv_eq_iff hD).2 ⟨by linarith, by linarith⟩,
+    (ediv_eq_iff hD).2 ⟨by linarith, by linarith⟩⟩
+
+theorem not_dvd_mul_of_coprime {D p t : ℕ} (hcop : Nat.Coprime p D) (ht1 : 1 ≤ t)
+    (ht2 : t < D) : ¬ (D : ℤ) ∣ (t : ℤ) * p := by
+  intro h
+  rw [← Nat.cast_mul, Int.natCast_dvd_natCast] at h
+  have := Nat.le_of_dvd ht1 (hcop.symm.dvd_of_dvd_mul_right h)
+  omega
+
+theorem odd_of_even_coprime {p q : ℕ} (hp : Even p) (hcop : Nat.Coprime p q) : q % 2 = 1 := by
+  by_contra h
+  have h2 : 2 ∣ Nat.gcd p q := Nat.dvd_gcd (even_iff_two_dvd.1 hp) (by omega)
+  rw [hcop] at h2
+  omega
+
+variable (s : Side) {p q : ℕ}
+
+/-- Even branch at `t = i + 1 ∈ [1, q − 1]`: both sides give `⌊tp/q⌋`, and the reflection
+`t ↦ q − t` gives `p − 1 − ⌊tp/q⌋`. -/
+theorem wythoff_even_flip (hcop : Nat.Coprime p q) (hq : 0 < q) {i : ℕ} (hi : i + 1 < q) :
+    wythoff s p q (2 * ((i + 1 : ℕ) : ℤ)) = ((i : ℤ) + 1) * p / q ∧
+      wythoff s p q (2 * ((q - 1 - 1 - i + 1 : ℕ) : ℤ)) = p - 1 - ((i : ℤ) + 1) * p / q := by
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  have hnd := not_dvd_mul_of_coprime hcop (t := i + 1) (by omega) hi
+  push_cast at hnd
+  obtain ⟨f1, f2⟩ := flip_floor hq' hnd
+  rw [show ((q - 1 - 1 - i + 1 : ℕ) : ℤ) = (q : ℤ) - ((i : ℤ) + 1) by omega]
+  push_cast
+  cases s
+  · rw [wythoff_plus_even, wythoff_plus_even, f1]; exact ⟨rfl, rfl⟩
+  · rw [wythoff_minus_even, wythoff_minus_even, f2]
+    refine ⟨rfl, ?_⟩
+    have hnd' : ¬ (q : ℤ) ∣ (q - ((i : ℤ) + 1)) * p := by
+      intro h; apply hnd
+      have : (q : ℤ) ∣ q * p := dvd_mul_right _ _
+      have := dvd_sub this h
+      rwa [show (q : ℤ) * p - (q - ((i : ℤ) + 1)) * p = ((i : ℤ) + 1) * p by ring] at this
+    rw [(flip_floor hq' hnd').2, f1]
+
+/-- Odd branch at `k = u + 1 ∈ [1, R − 1]`. -/
+theorem wythoff_odd_flip (hcop : Nat.Coprime p q) (hqp : q < p) {u : ℕ} (hu : u + 1 < p - q) :
+    wythoff s p q (2 * (u : ℤ) + 1) = ((u : ℤ) + 1) * p / ((p : ℤ) - q) ∧
+      wythoff s p q (2 * ((p - q - 1 - 1 - u : ℕ) : ℤ) + 1) =
+        p - 1 - ((u : ℤ) + 1) * p / ((p : ℤ) - q) := by
+  have hR : (0 : ℤ) < (p - q : ℕ) := by omega
+  have hcop' : Nat.Coprime p (p - q) := (Nat.coprime_self_sub_right hqp.le).2 hcop
+  have hnd := not_dvd_mul_of_coprime hcop' (t := u + 1) (by omega) hu
+  have hnd' := not_dvd_mul_of_coprime hcop' (t := p - q - (u + 1)) (by omega) (by omega)
+  have hRc : ((p - q : ℕ) : ℤ) = (p : ℤ) - q := by omega
+  rw [hRc] at hR hnd hnd'
+  push_cast at hnd
+  rw [show ((p - q - (u + 1) : ℕ) : ℤ) = ((p : ℤ) - q) - ((u : ℤ) + 1) by omega] at hnd'
+  obtain ⟨f1, f2⟩ := flip_floor hR hnd
+  have f3 := (flip_floor hR hnd').2
+  rw [show 2 * ((p - q - 1 - 1 - u : ℕ) : ℤ) + 1 = 2 * (((p : ℤ) - q) - ((u : ℤ) + 1)) - 1 by
+      omega, show 2 * (u : ℤ) + 1 = 2 * ((u : ℤ) + 1) - 1 by ring]
+  cases s
+  · rw [wythoff_plus_odd, wythoff_plus_odd, f2, f3, f1]; exact ⟨rfl, rfl⟩
+  · rw [wythoff_minus_odd, wythoff_minus_odd, f1]; exact ⟨rfl, rfl⟩
+
+end Lemma1Helpers
+
 section Lemma1
 
 variable (s : Side) {p q : ℕ}
@@ -310,14 +421,60 @@ image `−1` (odd; it stands for the paper's `t = q`, image `p − 1`). -/
 theorem card_even_image_even (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) :
     ((Finset.range q).filter fun t : ℕ => wythoff s p q (2 * (t : ℤ)) % 2 = 0).card =
       if s = .plus then (q + 1) / 2 else (q - 1) / 2 := by
-  sorry
+  have hq2 := odd_of_even_coprime hp hcop
+  obtain ⟨r, hr⟩ := hp
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  have hrange : Finset.range q = Finset.range (q - 1 + 1) := by rw [Nat.sub_add_cancel hq]
+  rw [hrange, card_filter_range_succ']
+  have hinner : 2 * ((Finset.range (q - 1)).filter fun i : ℕ =>
+      wythoff s p q (2 * ((i + 1 : ℕ) : ℤ)) % 2 = 0).card = q - 1 := by
+    apply two_mul_card_filter_of_flip
+    intro i hi
+    obtain ⟨h1, h2⟩ := wythoff_even_flip s hcop hq (i := i) (by omega)
+    rw [h1, h2]
+    have : (p : ℤ) = r + r := by exact_mod_cast hr
+    omega
+  cases s
+  · have h0 : wythoff .plus p q (2 * ((0 : ℕ) : ℤ)) = 0 := by
+      rw [Nat.cast_zero, wythoff_plus_even]; simp
+    rw [h0, if_pos (by norm_num), if_pos rfl]; omega
+  · have h0 : wythoff .minus p q (2 * ((0 : ℕ) : ℤ)) = -1 := by
+      rw [Nat.cast_zero, wythoff_minus_even, ediv_eq_iff hq']
+      constructor <;> linarith
+    rw [h0, if_neg (by norm_num), if_neg (by decide)]; omega
 
 /-- **(ratified, Lemma 1, odd branch).**  The same with `R = p − q`: `u ↦ R − u` on the images
 `W(2u + 1)`, `u < R`; `+` adds the odd image `p − 1` (at `u = R − 1`), `−` the even image `0`. -/
 theorem card_even_image_odd (hp : Even p) (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p) :
     ((Finset.range (p - q)).filter fun u : ℕ => wythoff s p q (2 * (u : ℤ) + 1) % 2 = 0).card =
       if s = .plus then (p - q - 1) / 2 else (p - q + 1) / 2 := by
-  sorry
+  have hq2 := odd_of_even_coprime hp hcop
+  obtain ⟨r, hr⟩ := hp
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  have hrange : Finset.range (p - q) = Finset.range (p - q - 1 + 1) := by
+    rw [Nat.sub_add_cancel (by omega)]
+  rw [hrange, card_filter_range_succ]
+  have hinner : 2 * ((Finset.range (p - q - 1)).filter fun u : ℕ =>
+      wythoff s p q (2 * (u : ℤ) + 1) % 2 = 0).card = p - q - 1 := by
+    apply two_mul_card_filter_of_flip
+    intro u hu
+    obtain ⟨h1, h2⟩ := wythoff_odd_flip s hcop hqp (u := u) (by omega)
+    rw [h1, h2]
+    have : (p : ℤ) = r + r := by exact_mod_cast hr
+    omega
+  have hlast : 2 * ((p - q - 1 : ℕ) : ℤ) + 1 = 2 * ((p : ℤ) - q) - 1 := by omega
+  cases s
+  · have h0 : wythoff .plus p q (2 * ((p - q - 1 : ℕ) : ℤ) + 1) = p - 1 := by
+      rw [hlast, wythoff_plus_odd, ediv_eq_iff hR]
+      constructor <;> nlinarith
+    rw [h0, if_neg (by have : (p : ℤ) = r + r := by exact_mod_cast hr
+                       omega), if_pos rfl]
+    omega
+  · have h0 : wythoff .minus p q (2 * ((p - q - 1 : ℕ) : ℤ) + 1) = p := by
+      rw [hlast, wythoff_minus_odd, mul_comm, Int.mul_ediv_cancel _ hR.ne']
+    rw [h0, if_pos (by have : (p : ℤ) = r + r := by exact_mod_cast hr
+                       omega), if_neg (by decide)]
+    omega
 
 end Lemma1
 
