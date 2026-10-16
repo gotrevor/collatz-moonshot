@@ -546,11 +546,318 @@ section TheoremF
 
 variable {r : ℕ}
 
+/-! ### An abstract skeleton for both classifications
+
+`σ` preserves `ℕ⁺`; points of the class `E` climb (`up`), an `E`-point whose image leaves `E`
+comes back to `E` higher two steps later (`twoStep`), and points outside `E` do not climb
+(`down`).  For `W` the class is the evens, for `W'` the odds. -/
+
+section Skeleton
+
+/-- The skeleton hypotheses. -/
+structure Skel (σ : Equiv.Perm ℤ) (E : ℤ → Prop) : Prop where
+  pos : ∀ y, 0 < σ y ↔ 0 < y
+  up : ∀ y, 0 < y → E y → y < σ y
+  twoStep : ∀ y, 0 < y → E y → ¬E (σ y) → E (σ (σ y)) ∧ y < σ (σ y)
+  down : ∀ y, 0 < y → ¬E y → σ y ≤ y
+
+/-- Abstract entry points: a positive `E`-point whose two predecessors are outside `E`. -/
+def SkEntry (σ : Equiv.Perm ℤ) (E : ℤ → Prop) (y : ℤ) : Prop :=
+  0 < y ∧ E y ∧ ¬E (σ.symm y) ∧ ¬E (σ.symm (σ.symm y))
+
+variable {σ : Equiv.Perm ℤ} {E : ℤ → Prop}
+
+lemma mem_permOrbit_iff {x y : ℤ} : y ∈ permOrbit σ x ↔ ∃ t : ℤ, (σ ^ t) x = y :=
+  Set.mem_range
+
+lemma mem_permOrbit_self (x : ℤ) : x ∈ permOrbit σ x := ⟨0, by simp⟩
+
+lemma zpow_mem_permOrbit (x : ℤ) (t : ℤ) : (σ ^ t) x ∈ permOrbit σ x := ⟨t, rfl⟩
+
+lemma apply_mem_permOrbit {x y : ℤ} (h : y ∈ permOrbit σ x) : σ y ∈ permOrbit σ x := by
+  obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 h
+  exact ⟨1 + t, by dsimp only; rw [zpow_add, zpow_one, Equiv.Perm.mul_apply]⟩
+
+lemma symm_mem_permOrbit {x y : ℤ} (h : y ∈ permOrbit σ x) : σ.symm y ∈ permOrbit σ x := by
+  obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 h
+  exact ⟨-1 + t, by
+    dsimp only; rw [zpow_add, zpow_neg_one, Equiv.Perm.mul_apply, Equiv.Perm.coe_inv]⟩
+
+lemma permOrbit_eq_of_mem {x y : ℤ} (h : y ∈ permOrbit σ x) : permOrbit σ y = permOrbit σ x := by
+  obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 h
+  ext z
+  simp only [mem_permOrbit_iff]
+  constructor
+  · rintro ⟨s, rfl⟩
+    exact ⟨s + t, by rw [zpow_add, Equiv.Perm.mul_apply]⟩
+  · rintro ⟨s, rfl⟩
+    refine ⟨s - t, ?_⟩
+    rw [← Equiv.Perm.mul_apply, ← zpow_add, sub_add_cancel]
+
+/-- A property closed under `σ` and `σ⁻¹` holds on the whole orbit. -/
+lemma permOrbit_induction (P : ℤ → Prop) {x : ℤ} (h0 : P x) (h1 : ∀ y, P y → P (σ y))
+    (h2 : ∀ y, P y → P (σ.symm y)) : ∀ y ∈ permOrbit σ x, P y := by
+  intro y hy
+  obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 hy
+  clear hy
+  induction t using Int.induction_on with
+  | zero => simpa using h0
+  | succ n ih =>
+    rw [add_comm, zpow_add, zpow_one, Equiv.Perm.mul_apply]; exact h1 _ ih
+  | pred n ih =>
+    rw [sub_eq_neg_add, zpow_add, zpow_neg_one, Equiv.Perm.mul_apply, Equiv.Perm.coe_inv]
+    exact h2 _ ih
+
+lemma Skel.symm_pos (hs : Skel σ E) (y : ℤ) : 0 < σ.symm y ↔ 0 < y := by
+  rw [← hs.pos, Equiv.apply_symm_apply]
+
+lemma Skel.orbit_pos (hs : Skel σ E) {x : ℤ} (hx : 0 < x) :
+    ∀ y ∈ permOrbit σ x, 0 < y :=
+  permOrbit_induction (fun y => 0 < y) hx (fun y hy => (hs.pos y).2 hy)
+    (fun y hy => (hs.symm_pos y).2 hy)
+
+/-- After an `E`-point `e`, every point is above `e`, and every non-`E` point has an `E`
+predecessor `≥ e`. -/
+lemma Skel.after (hs : Skel σ E) {e : ℤ} (he0 : 0 < e) (he : E e) (n : ℕ) :
+    e < (σ ^ (n + 1)) e ∧
+      (E ((σ ^ (n + 1)) e) ∨ (E (σ.symm ((σ ^ (n + 1)) e)) ∧ e ≤ σ.symm ((σ ^ (n + 1)) e))) := by
+  induction n with
+  | zero =>
+    simp only [zero_add, pow_one]
+    refine ⟨hs.up e he0 he, ?_⟩
+    by_cases h : E (σ e)
+    · exact Or.inl h
+    · exact Or.inr ⟨by simpa using he, by simp⟩
+  | succ n ih =>
+    rw [pow_succ', Equiv.Perm.mul_apply]
+    set z := (σ ^ (n + 1)) e with hz
+    obtain ⟨hlt, hE | ⟨hw, hwe⟩⟩ := ih
+    · have hup := hs.up z (by omega) hE
+      refine ⟨by omega, ?_⟩
+      by_cases h : E (σ z)
+      · exact Or.inl h
+      · exact Or.inr ⟨by simpa using hE, by simp; omega⟩
+    · set w := σ.symm z with hw'
+      have hzw : σ w = z := by simp [hw']
+      by_cases hz' : E z
+      · have hup := hs.up z (by omega) hz'
+        refine ⟨by omega, ?_⟩
+        by_cases h : E (σ z)
+        · exact Or.inl h
+        · exact Or.inr ⟨by simpa using hz', by simp; omega⟩
+      · have h2 := hs.twoStep w (by omega) hw (by rw [hzw]; exact hz')
+        rw [hzw] at h2
+        exact ⟨by omega, Or.inl h2.1⟩
+
+lemma Skel.lt_pow (hs : Skel σ E) {e : ℤ} (he0 : 0 < e) (he : E e) (n : ℕ) :
+    e < (σ ^ (n + 1)) e :=
+  (hs.after he0 he n).1
+
+/-- Before an entry point every point is outside `E` and above it. -/
+lemma Skel.before (hs : Skel σ E) {e : ℤ} (he : SkEntry σ E e) (n : ℕ) :
+    ¬E ((σ⁻¹ ^ (n + 1)) e) ∧ e < (σ⁻¹ ^ (n + 1)) e := by
+  obtain ⟨he0, heE, h1, h2⟩ := he
+  have hnE : ∀ n : ℕ, ¬E ((σ⁻¹ ^ (n + 1)) e) := by
+    intro n
+    cases n with
+    | zero => simpa using h1
+    | succ m =>
+      intro hw
+      set w := (σ⁻¹ ^ (m + 1 + 1)) e with hw'
+      have hw0 : 0 < w := hs.orbit_pos he0 _ ⟨-((m + 1 + 1 : ℕ) : ℤ), by
+        dsimp only; rw [hw', zpow_neg, zpow_natCast, inv_pow]⟩
+      have hback : (σ ^ (m + 1)) w = σ.symm e := by
+        rw [hw', pow_succ σ⁻¹ (m + 1), Equiv.Perm.mul_apply, inv_pow, Equiv.Perm.coe_inv (σ ^ (m + 1)),
+          Equiv.apply_symm_apply, Equiv.Perm.coe_inv]
+      obtain ⟨-, hE | ⟨hE, -⟩⟩ := hs.after hw0 hw m
+      · rw [hback] at hE; exact h1 hE
+      · rw [hback] at hE; exact h2 hE
+  refine ⟨hnE n, ?_⟩
+  induction n with
+  | zero =>
+    simp only [zero_add, pow_one, Equiv.Perm.coe_inv]
+    have hp0 : 0 < σ.symm e := (hs.symm_pos e).2 he0
+    have := hs.down _ hp0 h1
+    rw [Equiv.apply_symm_apply] at this
+    rcases this.lt_or_eq with h | h
+    · exact h
+    · exact absurd (h ▸ heE) h1
+  | succ n ih =>
+    rw [pow_succ', Equiv.Perm.mul_apply, Equiv.Perm.coe_inv]
+    set p := (σ⁻¹ ^ (n + 1)) e
+    have hp0 : 0 < σ.symm p := (hs.symm_pos p).2 (by omega)
+    have hnE' := hnE (n + 1)
+    rw [pow_succ', Equiv.Perm.mul_apply, Equiv.Perm.coe_inv] at hnE'
+    have := hs.down _ hp0 hnE'
+    rw [Equiv.apply_symm_apply] at this
+    omega
+
+/-- An entry point is strictly below every other point of its orbit. -/
+lemma Skel.entry_lt (hs : Skel σ E) {e y : ℤ} (he : SkEntry σ E e) (hy : y ∈ permOrbit σ e)
+    (hne : y ≠ e) : e < y := by
+  obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 hy
+  rcases Int.eq_nat_or_neg t with ⟨n, rfl | rfl⟩
+  · cases n with
+    | zero => simp at hne
+    | succ m => rw [zpow_natCast]; exact hs.lt_pow he.1 he.2.1 m
+  · cases n with
+    | zero => simp at hne
+    | succ m =>
+      rw [zpow_neg, zpow_natCast, ← inv_pow]
+      exact (hs.before he m).2
+
+/-- A minimum of the orbit of a non-fixed `x > 0` is an entry point. -/
+lemma Skel.entry_of_min (hs : Skel σ E) {x m : ℤ} (hx : 0 < x) (hfix : σ x ≠ x)
+    (hm : m ∈ permOrbit σ x) (hmin : ∀ y ∈ permOrbit σ x, m ≤ y) : SkEntry σ E m := by
+  have hpos := hs.orbit_pos hx
+  have hm0 := hpos m hm
+  have hmfix : σ m ≠ m := by
+    intro h
+    obtain ⟨t, ht⟩ := mem_permOrbit_iff.1 hm
+    have := Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self h (-t)
+    rw [← ht] at this
+    rw [← Equiv.Perm.mul_apply, ← zpow_add, neg_add_cancel, zpow_zero, Equiv.Perm.one_apply,
+      ht] at this
+    exact hfix (by rw [this]; exact h)
+  have hE : E m := by
+    by_contra h
+    have h1 := hs.down m hm0 h
+    have h2 := hmin _ (apply_mem_permOrbit hm)
+    exact hmfix (le_antisymm h1 h2)
+  have hm1 := symm_mem_permOrbit hm
+  have hm2 := symm_mem_permOrbit hm1
+  refine ⟨hm0, hE, fun h => ?_, fun h => ?_⟩
+  · have := hs.up _ (hpos _ hm1) h
+    rw [Equiv.apply_symm_apply] at this
+    have := hmin _ hm1
+    omega
+  · have hnE : ¬E (σ (σ.symm (σ.symm m))) := by
+      rw [Equiv.apply_symm_apply]
+      intro h'
+      have := hs.up _ (hpos _ hm1) h'
+      rw [Equiv.apply_symm_apply] at this
+      have := hmin _ hm1
+      omega
+    have := (hs.twoStep _ (hpos _ hm2) h hnE).2
+    rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at this
+    have := hmin _ hm2
+    omega
+
+/-- Orbits in `ℕ⁺` have a minimum. -/
+lemma Skel.exists_min (hs : Skel σ E) {x : ℤ} (hx : 0 < x) :
+    ∃ m ∈ permOrbit σ x, ∀ y ∈ permOrbit σ x, m ≤ y := by
+  have hpos := hs.orbit_pos hx
+  have hex : ∃ n : ℕ, ∃ y ∈ permOrbit σ x, y = n := ⟨x.toNat, x, mem_permOrbit_self x, by omega⟩
+  classical
+  obtain ⟨y, hy, hyn⟩ := Nat.find_spec hex
+  refine ⟨y, hy, fun z hz => ?_⟩
+  have := Nat.find_min' hex ⟨z, hz, (Int.toNat_of_nonneg (hpos z hz).le).symm⟩
+  have := hpos z hz
+  omega
+
+/-- The orbit of a non-fixed `x > 0` has exactly one entry point. -/
+lemma Skel.existsUnique_entry (hs : Skel σ E) {x : ℤ} (hx : 0 < x) (hfix : σ x ≠ x) :
+    ∃! e, SkEntry σ E e ∧ e ∈ permOrbit σ x := by
+  obtain ⟨m, hm, hmin⟩ := hs.exists_min hx
+  refine ⟨m, ⟨hs.entry_of_min hx hfix hm hmin, hm⟩, fun e ⟨he, hex⟩ => ?_⟩
+  by_contra hne
+  have h1 := hs.entry_lt he (by rw [permOrbit_eq_of_mem hex]; exact hm) (Ne.symm hne)
+  have h2 := hmin e hex
+  omega
+
+/-- The orbit of a non-fixed `x > 0` is not periodic: `t ↦ σ^t x` is injective. -/
+lemma Skel.zpow_injective (hs : Skel σ E) {x : ℤ} (hx : 0 < x) (hfix : σ x ≠ x) :
+    Function.Injective fun t : ℤ => (σ ^ t) x := by
+  obtain ⟨m, hm, hmin⟩ := hs.exists_min hx
+  have he := hs.entry_of_min hx hfix hm hmin
+  obtain ⟨c, rfl⟩ := mem_permOrbit_iff.1 hm
+  have key : ∀ a b : ℤ, a < b → (σ ^ a) ((σ ^ c) x) ≠ (σ ^ b) ((σ ^ c) x) := by
+    intro a b hab h
+    have hper : (σ ^ (b - a)) ((σ ^ c) x) = (σ ^ c) x := by
+      rw [show b - a = -a + b by ring, zpow_add, Equiv.Perm.mul_apply, ← h,
+        ← Equiv.Perm.mul_apply, ← zpow_add, neg_add_cancel, zpow_zero, Equiv.Perm.one_apply]
+    obtain ⟨n, hn⟩ : ∃ n : ℕ, b - a = (n + 1 : ℕ) := ⟨(b - a - 1).toNat, by omega⟩
+    rw [hn, zpow_natCast] at hper
+    have := hs.lt_pow he.1 he.2.1 n
+    omega
+  intro a b h
+  dsimp only at h
+  have h' : (σ ^ (a - c)) ((σ ^ c) x) = (σ ^ (b - c)) ((σ ^ c) x) := by
+    rw [← Equiv.Perm.mul_apply, ← zpow_add, sub_add_cancel, ← Equiv.Perm.mul_apply,
+      ← zpow_add, sub_add_cancel, h]
+  rcases lt_trichotomy (a - c) (b - c) with hlt | heq | hgt
+  · exact absurd h' (key _ _ hlt)
+  · omega
+  · exact absurd h'.symm (key _ _ hgt)
+
+/-- An injective sequence of positive integers tends to `∞`. -/
+lemma tendsto_atTop_of_injective_pos {f : ℕ → ℤ} (hf : Function.Injective f)
+    (hpos : ∀ n, 0 < f n) : Tendsto f atTop atTop := by
+  rw [tendsto_atTop]
+  intro b
+  have hfin : {n | f n < b}.Finite :=
+    ((Set.finite_Ioo 0 b).preimage hf.injOn).subset fun n hn => ⟨hpos n, hn⟩
+  obtain ⟨N, hN⟩ := hfin.bddAbove
+  refine Filter.eventually_atTop.2 ⟨N + 1, fun n hn => not_lt.mp fun h => ?_⟩
+  have := hN h
+  omega
+
+lemma Skel.permOrbit_infinite (hs : Skel σ E) {x : ℤ} (hx : 0 < x) (hfix : σ x ≠ x) :
+    (permOrbit σ x).Infinite :=
+  Set.infinite_range_of_injective (hs.zpow_injective hx hfix)
+
+lemma Skel.tendsto_pow (hs : Skel σ E) {x : ℤ} (hx : 0 < x) (hfix : σ x ≠ x) :
+    Tendsto (fun n : ℕ => (σ ^ n) x) atTop atTop := by
+  refine tendsto_atTop_of_injective_pos (fun a b h => ?_) fun n => ?_
+  · have := hs.zpow_injective hx hfix (a₁ := a) (a₂ := b) (by simpa [zpow_natCast] using h)
+    omega
+  · exact hs.orbit_pos hx _ ⟨n, by simp [zpow_natCast]⟩
+
+lemma Skel.tendsto_pow_neg (hs : Skel σ E) {x : ℤ} (hx : 0 < x) (hfix : σ x ≠ x) :
+    Tendsto (fun n : ℕ => (σ ^ (-(n : ℤ))) x) atTop atTop := by
+  refine tendsto_atTop_of_injective_pos (fun a b h => ?_) fun n => ?_
+  · have := hs.zpow_injective hx hfix h
+    omega
+  · exact hs.orbit_pos hx _ (zpow_mem_permOrbit x _)
+
+end Skeleton
+
 /-- Entry points: even `y > 0` with an odd preimage (`y = ⌊jβ⌋`) that is not `2rk` for a `k`
 with `W(2k)` odd (the only way the second preimage is even, by Theorem D). -/
 def IsEntry (r : ℕ) (y : ℤ) : Prop :=
   0 < y ∧ y % 2 = 0 ∧ (∃ j : ℤ, wq r (2 * j - 1) = y) ∧
     ∀ k : ℤ, wq r (2 * k) % 2 = 1 → 2 * r * k ≠ y
+
+/-- `W` satisfies the skeleton hypotheses with the evens as the climbing class. -/
+lemma wq_skel (hr : 2 ≤ r) : Skel (wqPerm r hr) fun y => y % 2 = 0 where
+  pos y := wq_pos_iff hr y
+  up y hy he := by
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k := ⟨y / 2, by omega⟩
+    have := (wq_two_mul_bounds hr (show 1 ≤ k by omega)).1
+    rw [wqPerm_apply]
+    have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+    nlinarith
+  twoStep y hy he hne := by
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k := ⟨y / 2, by omega⟩
+    simp only [wqPerm_apply] at hne ⊢
+    rw [wq_wq_of_odd hr k (by omega)]
+    have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+    refine ⟨by rw [mul_assoc]; exact Int.mul_emod_right _ _, by nlinarith⟩
+  down y hy he := by
+    obtain ⟨j, rfl⟩ : ∃ j, y = 2 * j - 1 := ⟨(y + 1) / 2, by omega⟩
+    rw [wqPerm_apply]
+    rcases eq_or_lt_of_le (show 1 ≤ j by omega) with rfl | hj
+    · rw [show (2 : ℤ) * 1 - 1 = 1 by norm_num, wq_one hr]
+    · exact ((wq_two_mul_sub_one_bounds hr (show 1 ≤ j by omega)).2 (by omega)).le
+
+/-- The only positive fixed point of `W` is `1`. -/
+lemma wq_ne_self (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) : wqPerm r hr x ≠ x := by
+  rw [wqPerm_apply]
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, x = 2 * k ∨ x = 2 * k - 1 := ⟨(x + 1) / 2, by omega⟩
+  · have := (wq_two_mul_bounds hr (show 1 ≤ k by omega)).1
+    have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+    intro h; nlinarith
+  · exact ((wq_two_mul_sub_one_bounds hr (show 1 ≤ k by omega)).2 (by omega)).ne
 
 /-- **(ratified).**  The paper's form: `y` is an entry point iff it is even and positive with
 `W⁻¹(y)` and `W⁻²(y)` odd.  Paper proof: `W⁻¹ y` is odd iff `y ∈ W(odd)`; if it is odd and
@@ -559,16 +866,49 @@ def IsEntry (r : ℕ) (y : ℤ) : Prop :=
 theorem isEntry_iff (hr : 2 ≤ r) (y : ℤ) :
     IsEntry r y ↔ 0 < y ∧ y % 2 = 0 ∧ (wqPerm r hr).symm y % 2 = 1 ∧
       (wqPerm r hr).symm ((wqPerm r hr).symm y) % 2 = 1 := by
-  sorry
+  set σ := wqPerm r hr with hσ
+  constructor
+  · rintro ⟨h0, h2, ⟨j, hj⟩, hk⟩
+    have hs1 : σ.symm y = 2 * j - 1 := by rw [Equiv.symm_apply_eq]; exact hj.symm
+    refine ⟨h0, h2, by rw [hs1]; omega, ?_⟩
+    rw [hs1]
+    by_contra hodd
+    obtain ⟨k, hk2⟩ : ∃ k, σ.symm (2 * j - 1) = 2 * k := ⟨σ.symm (2 * j - 1) / 2, by omega⟩
+    have hwk : wq r (2 * k) = 2 * j - 1 := by
+      rw [← wqPerm_apply hr, ← hk2]; exact σ.apply_symm_apply _
+    refine hk k (by rw [hwk]; omega) ?_
+    rw [← wq_wq_of_odd hr k (by rw [hwk]; omega), hwk, hj]
+  · rintro ⟨h0, h2, h3, h4⟩
+    refine ⟨h0, h2, ⟨(σ.symm y + 1) / 2, ?_⟩, fun k hk hy => ?_⟩
+    · rw [show 2 * ((σ.symm y + 1) / 2) - 1 = σ.symm y by omega, ← wqPerm_apply hr]
+      exact σ.apply_symm_apply y
+    · have e1 : σ.symm y = wq r (2 * k) := by
+        rw [Equiv.symm_apply_eq, wqPerm_apply, wq_wq_of_odd hr k hk, hy]
+      have e2 : σ.symm (σ.symm y) = 2 * k := by
+        rw [e1, Equiv.symm_apply_eq, wqPerm_apply]
+      rw [e2] at h4
+      omega
+
+lemma isEntry_iff_skEntry (hr : 2 ≤ r) (y : ℤ) :
+    IsEntry r y ↔ SkEntry (wqPerm r hr) (fun y => y % 2 = 0) y := by
+  rw [isEntry_iff hr]
+  unfold SkEntry
+  constructor <;> rintro ⟨a, b, c, d⟩ <;> exact ⟨a, b, by omega, by omega⟩
 
 /-- **(ratified).**  Orbits of positive points stay positive. -/
 theorem permOrbit_subset_pos (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     permOrbit (wqPerm r hr) x ⊆ {y | 0 < y} := by
-  sorry
+  exact fun y hy => (wq_skel hr).orbit_pos hx y hy
 
 /-- **(ratified).**  `{1}` is a finite orbit. -/
 theorem permOrbit_wqPerm_one (hr : 2 ≤ r) : permOrbit (wqPerm r hr) 1 = {1} := by
-  sorry
+  ext y
+  constructor
+  · intro hy
+    obtain ⟨t, rfl⟩ := mem_permOrbit_iff.1 hy
+    exact Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self (wq_one hr) t
+  · rintro rfl
+    exact mem_permOrbit_self 1
 
 /-- **(ratified, Theorem F, structure).**  Every orbit through `x > 1` contains exactly one entry
 point.  Paper proof: (a) the even points of a forward orbit strictly increase (`W(2k) > 2k`, or
@@ -580,43 +920,74 @@ and its even points increase, so there is a first one, `e`; the two points befor
 back or `W⁻¹ y` even (b), so it is not an entry point. -/
 theorem existsUnique_isEntry_mem_orbit (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     ∃! e, IsEntry r e ∧ e ∈ permOrbit (wqPerm r hr) x := by
-  sorry
+  simp_rw [isEntry_iff_skEntry hr]
+  exact (wq_skel hr).existsUnique_entry (by omega) (wq_ne_self hr hx)
 
 /-- **(ratified, Theorem F, minimum).**  An entry point is strictly below every other point of
 its orbit.  Paper proof: before `e` all points are odd and increase backward (c); after `e` the
 even points increase (a) and each odd point is `W(2k) > 2k ≥ e`. -/
 theorem isEntry_lt_of_mem_orbit (hr : 2 ≤ r) {e y : ℤ} (he : IsEntry r e)
     (hy : y ∈ permOrbit (wqPerm r hr) e) (hne : y ≠ e) : e < y := by
-  sorry
+  exact (wq_skel hr).entry_lt ((isEntry_iff_skEntry hr e).1 he) hy hne
 
 /-- **(ratified, Theorem F, no other finite orbit).**  Every orbit through `x > 1` is
 infinite. -/
 theorem permOrbit_wqPerm_infinite (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     (permOrbit (wqPerm r hr) x).Infinite := by
-  sorry
+  exact (wq_skel hr).permOrbit_infinite (by omega) (wq_ne_self hr hx)
 
 /-- **(ratified, Theorem F, forward escape).**  For `x > 1` the forward orbit tends to `∞`. -/
 theorem tendsto_wqPerm_pow (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     Tendsto (fun n : ℕ => (wqPerm r hr ^ n) x) atTop atTop := by
-  sorry
+  exact (wq_skel hr).tendsto_pow (by omega) (wq_ne_self hr hx)
 
 /-- **(ratified, Theorem F, backward escape).**  For `x > 1` the backward orbit tends to `∞`. -/
 theorem tendsto_wqPerm_pow_neg (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     Tendsto (fun n : ℕ => (wqPerm r hr ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+  exact (wq_skel hr).tendsto_pow_neg (by omega) (wq_ne_self hr hx)
 
 /-- **(ratified, Theorem F, orbit minima).**  For `x > 0`: `x` is the minimum of its orbit iff
 `x = 1` or `x` is an entry point. -/
 theorem isOrbitMin_iff (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     (∀ y ∈ permOrbit (wqPerm r hr) x, x ≤ y) ↔ x = 1 ∨ IsEntry r x := by
-  sorry
+  constructor
+  · intro hmin
+    rcases eq_or_lt_of_le (show 1 ≤ x by omega) with h | h
+    · exact Or.inl h.symm
+    · exact Or.inr ((isEntry_iff_skEntry hr x).2
+        ((wq_skel hr).entry_of_min hx (wq_ne_self hr h) (mem_permOrbit_self x) hmin))
+  · rintro (rfl | he) y hy
+    · rw [permOrbit_wqPerm_one hr] at hy
+      rw [Set.mem_singleton_iff.1 hy]
+    · by_cases h : y = x
+      · rw [h]
+      · exact (isEntry_lt_of_mem_orbit hr he hy h).le
 
 /-- **(ratified, Theorem F, indexing).**  The orbits meeting `ℕ⁺` are indexed by `{1}` and the
 entry points. -/
 theorem permOrbit_bijOn (hr : 2 ≤ r) :
     Set.BijOn (permOrbit (wqPerm r hr)) ({1} ∪ {y | IsEntry r y})
       {O | ∃ x : ℤ, 0 < x ∧ O = permOrbit (wqPerm r hr) x} := by
-  sorry
+  have hmin : ∀ z ∈ ({1} ∪ {y | IsEntry r y} : Set ℤ),
+      0 < z ∧ ∀ y ∈ permOrbit (wqPerm r hr) z, z ≤ y := by
+    intro z hz
+    have hz0 : 0 < z := by
+      rcases hz with hz | hz
+      · rw [Set.mem_singleton_iff.1 hz]; norm_num
+      · exact hz.1
+    refine ⟨hz0, (isOrbitMin_iff hr hz0).2 ?_⟩
+    rcases hz with hz | hz
+    · exact Or.inl (Set.mem_singleton_iff.1 hz)
+    · exact Or.inr hz
+  refine ⟨fun z hz => ⟨z, (hmin z hz).1, rfl⟩, fun a ha b hb hab => ?_, ?_⟩
+  · have h1 := (hmin a ha).2 b (by rw [hab]; exact mem_permOrbit_self b)
+    have h2 := (hmin b hb).2 a (by rw [← hab]; exact mem_permOrbit_self a)
+    exact le_antisymm h1 h2
+  · rintro O ⟨x, hx, rfl⟩
+    rcases eq_or_lt_of_le (show 1 ≤ x by omega) with h | h
+    · exact ⟨1, Or.inl rfl, by rw [h]⟩
+    · obtain ⟨e, ⟨he, hem⟩, -⟩ := existsUnique_isEntry_mem_orbit hr h
+      exact ⟨e, Or.inr he, permOrbit_eq_of_mem hem⟩
 
 /-- **(ratified, Theorem F, conclusion).**  `W_α` has infinitely many infinite orbits.  Paper
 proof: `C = 2ℤ ∪ W(2ℤ)` is a trap (`W(2k)` even stays in `2ℤ`; `W(2k)` odd maps to `2rk`), its
