@@ -123,29 +123,89 @@ variable {Q ι : Type*}
 `lapNotDown_of_lapsMixed`, using the negative lap entry). -/
 theorem lapNotUp_of_lapsMixed [DecidableEq ι] {M : CM Q ι} {B : Set Q} (hlap : LapsMixed M B) :
     RcwaMachine.LapNotUp B M.Step := by
-  sorry
+  intro x m n hmn hrun hq hle
+  have hex : ∀ j, ∃ ρ : Quad Q ι, j < n - m → ρ ∈ M ∧ (x (m + j)).1 = ρ.src ∧
+      (x (m + j + 1)).1 = ρ.dst ∧ ρ.op.Act (x (m + j)).2 (x (m + j + 1)).2 := by
+    intro j
+    by_cases hj : j < n - m
+    · obtain ⟨ρ, hρ, h1, h2, h3⟩ := hrun.1 (m + j) (by omega) (by omega)
+      exact ⟨ρ, fun _ => ⟨hρ, h1, h2, h3⟩⟩
+    · exact ⟨⟨(x m).1, .nop, (x m).1⟩, fun h => absurd h hj⟩
+  choose ρ hρ using hex
+  have hsum : ∀ j k, k ≤ n - m → ∑ i ∈ Finset.range k, (ρ i).op.delta j =
+      ((x (m + k)).2 j : ℤ) - (x m).2 j := by
+    intro j k
+    induction k with
+    | zero => intro; simp
+    | succ k ih =>
+      intro hk
+      have := Op.act_delta (hρ k (by omega)).2.2.2 j
+      rw [Finset.sum_range_succ, ih (by omega), show m + (k + 1) = m + k + 1 by omega]
+      omega
+  obtain ⟨⟨j, hj⟩, -⟩ := hlap ρ (n - m) (by omega) (fun i hi => (hρ i hi).1)
+    (fun i hi => by rw [← (hρ i hi).2.1]; exact hrun.2 _ (by omega) (by omega))
+    (fun i hi => by
+      rw [← (hρ i (by omega)).2.2.1, ← (hρ (i + 1) hi).2.1, Nat.add_assoc])
+    (by
+      rw [← (hρ _ (by omega)).2.2.1, ← (hρ 0 (by omega)).2.1,
+        show m + (n - m - 1) + 1 = n by omega, Nat.add_zero, hq])
+  rw [hsum j _ le_rfl, show m + (n - m) = n by omega] at hj
+  have : (x m).2 j ≤ (x n).2 j := hle j
+  omega
 
 /-- A configuration that does not halt starts an infinite run. -/
 theorem exists_forever_of_not_halts {M : CM Q ι} {c : Cfg Q ι} (h : ¬ M.Halts c) :
     ∃ x : ℕ → Cfg Q ι, x 0 = c ∧ ∀ n, M.Step (x n) (x (n + 1)) := by
-  sorry
+  have hnext : ∀ d : {d : Cfg Q ι // ¬ M.Halts d}, ∃ d' : {d : Cfg Q ι // ¬ M.Halts d},
+      M.Step d.1 d'.1 := by
+    rintro ⟨d, hd⟩
+    by_cases hst : M.Stuck d
+    · exact absurd ⟨d, .refl, hst⟩ hd
+    · simp only [CM.Stuck, not_forall, not_not] at hst
+      obtain ⟨d', hd'⟩ := hst
+      exact ⟨⟨d', fun ⟨e, he, hse⟩ => hd ⟨e, .head hd' he, hse⟩⟩, hd'⟩
+  choose f hf using hnext
+  refine ⟨fun n => (f^[n] ⟨c, h⟩).1, rfl, fun n => ?_⟩
+  simp only [Function.iterate_succ_apply']
+  exact hf _
 
 /-- Under determinism, halting passes down a run. -/
 theorem halts_of_reaches {M : CM Q ι} (hM : M.Det) {s c : Cfg Q ι} (hs : M.Halts s)
     (hr : M.Reaches s c) : M.Halts c := by
-  sorry
+  induction hr with
+  | refl => exact hs
+  | tail _ hbc ih =>
+    obtain ⟨d, hd, hst⟩ := ih
+    rcases Relation.ReflTransGen.cases_head hd with rfl | ⟨b', hb', hr'⟩
+    · exact absurd hbc (hst _)
+    · rw [CM.step_functional hM hbc hb']
+      exact ⟨d, hr', hst⟩
 
 /-- With a mortal reverse, every configuration is reached from a source. -/
 theorem exists_source_reaches {M : CM Q ι} (hM : M.RevMortal) (c : Cfg Q ι) :
     ∃ s, M.IsSource s ∧ M.Reaches s c := by
-  sorry
+  by_contra hno
+  push Not at hno
+  have hprev : ∀ d : {d : Cfg Q ι // M.Reaches d c}, ∃ d' : {d : Cfg Q ι // M.Reaches d c},
+      M.Step d'.1 d.1 := by
+    rintro ⟨d, hd⟩
+    have : ¬ M.IsSource d := fun hs => hno d hs hd
+    simp only [CM.IsSource, not_forall, not_not] at this
+    obtain ⟨d', hd'⟩ := this
+    exact ⟨⟨d', .head hd' hd⟩, hd'⟩
+  choose f hf using hprev
+  refine hM ⟨fun n => (f^[n] ⟨c, .refl⟩).1, fun n => ?_⟩
+  simp only [Function.iterate_succ_apply']
+  exact hf _
 
 /-- **Lemma M, forward, for counter machines.**  Under (S1), a configuration that does not halt
 starts an infinite forward chain of macro steps. -/
 theorem exists_macro_chain [Finite Q] [Finite ι] [DecidableEq ι] {M : CM Q ι} {B : Set Q}
     (hlap : LapsMixed M B) {c : Cfg Q ι} (h : ¬ M.Halts c) :
     ∃ b : ℕ → Cfg Q ι, ∀ n, RcwaMachine.MacroStep B M.Step (b n) (b (n + 1)) := by
-  sorry
+  have := wellQuasiOrderedLE_pi (ι := ι)
+  obtain ⟨x, -, hx⟩ := exists_forever_of_not_halts h
+  exact (RcwaMachine.immortal_iff_macro B M.Step (lapNotUp_of_lapsMixed hlap)).1 ⟨x, hx⟩
 
 end Transfer
 
