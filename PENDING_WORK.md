@@ -1,5 +1,15 @@
 # PENDING_WORK
 
+## 2026-10-16: orbit-count objective DONE, nothing owed
+
+`KICKOFF-2026-10-16-orbit-count.md` is fully discharged: `CollatzMoonshot/RcwaOrbitCount.lean` is
+sorry-free with ratified statements unchanged.  Hypothesis-free: every deterministic finite counter
+machine `U` gives an exact `{2,3}`-slope RCWA permutation of `ℤ` with one orbit iff `U` is mortal,
+infinitely many otherwise (`exists_table_iff_mortal`).  Conditional on `TotalityFamily`: Theorem
+C(1) (`orbit_count_family`) and "one orbit" neither r.e. nor co-r.e. (`oneOrbit_not_re`,
+`oneOrbit_not_coRE`).  Open next campaign: discharge `TotalityFamily` (or `MortalityUndecidable`).
+See `HANDOFF-orbit-count.md`.
+
 ## 2026-10-16: rcwa-sameorbit objective DONE, nothing owed
 
 `KICKOFF-2026-10-16-rcwa-sameorbit.md` is fully discharged: `CollatzMoonshot/RcwaSameOrbit.lean`
