@@ -797,11 +797,70 @@ structure PrimeData (p : ι → ℕ) (N : ℕ) : Prop where
 
 variable {B : CM Q ι} {p : ι → ℕ}
 
+/-- `p i` divides an encoding exactly when `v i ≥ 1`. -/
+theorem dvd_enc_iff [Fintype ι] (hp : PrimeData p N) {J : ℕ} (hJp : ∀ i, ¬ p i ∣ J)
+    (v : ι → ℕ) (i : ι) : p i ∣ J * ∏ k, p k ^ v k ↔ 1 ≤ v i := by
+  have hpi := hp.prime i
+  rw [hpi.dvd_mul, or_iff_right (hJp i), (Nat.prime_iff.1 hpi).dvd_finsetProd_iff]
+  constructor
+  · rintro ⟨k, -, hk⟩
+    rcases Nat.eq_zero_or_pos (v k) with h0 | h0
+    · rw [h0, pow_zero] at hk
+      exact absurd (Nat.le_of_dvd one_pos hk) (by have := hpi.two_le; omega)
+    · obtain rfl := hp.inj ((Nat.prime_dvd_prime_iff_eq hpi (hp.prime k)).1
+        (hpi.dvd_of_dvd_pow hk))
+      exact h0
+  · intro h
+    exact ⟨i, Finset.mem_univ _, dvd_pow_self _ (by omega)⟩
+
+/-- Products of prime powers with exponents agreeing off `i`. -/
+theorem prod_pow_split [Fintype ι] [DecidableEq ι] {v v' : ι → ℕ} {i : ι}
+    (h : ∀ k, k ≠ i → v' k = v k) :
+    ∏ k, p k ^ v' k = p i ^ v' i * ∏ k ∈ Finset.univ.erase i, p k ^ v k := by
+  rw [← Finset.mul_prod_erase _ _ (Finset.mem_univ i)]
+  congr 1
+  exact Finset.prod_congr rfl fun k hk => by rw [h k (Finset.ne_of_mem_erase hk)]
+
+theorem enc_inc [Fintype ι] {v v' : ι → ℕ} {i : ι} (h : (Op.inc i).Act v v') (J : ℕ) :
+    J * ∏ k, p k ^ v' k = p i * (J * ∏ k, p k ^ v k) := by
+  classical
+  obtain ⟨h1, h2⟩ := h
+  rw [prod_pow_split h2, prod_pow_split (v' := v) (fun _ _ => rfl), h1, pow_succ]
+  ring
+
+theorem enc_dec [Fintype ι] {v v' : ι → ℕ} {i : ι} (h : (Op.dec i).Act v v') (J : ℕ) :
+    J * ∏ k, p k ^ v k = p i * (J * ∏ k, p k ^ v' k) := by
+  classical
+  obtain ⟨-, h1, h2⟩ := h
+  rw [prod_pow_split (fun k hk => (h2 k hk).symm), prod_pow_split (v' := v') (fun _ _ => rfl),
+    ← h1, pow_succ]
+  ring
+
+theorem enc_pos [Fintype ι] (hp : PrimeData p N) {J : ℕ} (hJ : 0 < J) (v : ι → ℕ) :
+    0 < J * ∏ k, p k ^ v k :=
+  Nat.mul_pos hJ (Finset.prod_pos fun k _ => pow_pos (hp.prime k).pos _)
+
 /-- An encoding determines its junk and its counters (unique factorization). -/
 theorem genc_inj [Fintype ι] (hp : PrimeData p N) {J J' : ℕ} {v v' : ι → ℕ} (hJ : 0 < J)
     (hJ' : 0 < J') (hJp : ∀ i, ¬ p i ∣ J) (hJp' : ∀ i, ¬ p i ∣ J')
     (h : genc p J v = genc p J' v') : J = J' ∧ v = v' := by
-  sorry
+  have h0 : J * ∏ k, p k ^ v k = J' * ∏ k, p k ^ v' k := congrFun h 0
+  have hf : ∀ (J : ℕ) (v : ι → ℕ), 0 < J → (∀ i, ¬ p i ∣ J) → ∀ i,
+      (J * ∏ k, p k ^ v k).factorization (p i) = v i := by
+    intro J v hJ hJp i
+    classical
+    rw [Nat.factorization_mul hJ.ne' (Finset.prod_pos fun k _ => pow_pos (hp.prime k).pos _).ne',
+      Nat.factorization_prod fun k _ => (pow_pos (hp.prime k).pos _).ne']
+    simp only [Finsupp.coe_add, Pi.add_apply, Finsupp.coe_finsetSum, Finset.sum_apply,
+      Nat.factorization_pow, Finsupp.smul_apply, smul_eq_mul]
+    rw [Nat.factorization_eq_zero_of_not_dvd (hJp i), zero_add,
+      Finset.sum_eq_single i (fun k _ hk => by
+        rw [(hp.prime k).factorization, Finsupp.single_apply, if_neg (fun e => hk (hp.inj e)),
+          mul_zero]) (by simp), (hp.prime i).factorization_self, mul_one]
+  have hv : v = v' := funext fun i => by rw [← hf J v hJ hJp i, h0, hf J' v' hJ' hJp' i]
+  subst hv
+  refine ⟨Nat.eq_of_mul_eq_mul_right (Finset.prod_pos fun k _ => pow_pos (hp.prime k).pos _) h0,
+    rfl⟩
 
 /-- The compile is deterministic. -/
 theorem godel_det (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) : (godel B p N).Det := by
@@ -821,13 +880,287 @@ theorem godel_lapsMixed (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) :
     LapsMixed (godel B p N) (Set.range GState.ent) := by
   sorry
 
+/-- Two counters `x`, `y`. -/
+def gc (x y : ℕ) : Fin 2 → ℕ := ![x, y]
+
+theorem gc_ext (w : Fin 2 → ℕ) : w = gc (w 0) (w 1) := funext fun j => by fin_cases j <;> rfl
+
+theorem act_t0 {x y : ℕ} {b : Bool} (h : decide (0 < x) = b) :
+    (Op.test (0 : Fin 2) b).Act (gc x y) (gc x y) := ⟨h, rfl⟩
+
+theorem act_t1 {x y : ℕ} {b : Bool} (h : decide (0 < y) = b) :
+    (Op.test (1 : Fin 2) b).Act (gc x y) (gc x y) := ⟨h, rfl⟩
+
+theorem act_dec0 (x y : ℕ) : (Op.dec (0 : Fin 2)).Act (gc (x + 1) y) (gc x y) :=
+  ⟨Nat.succ_pos x, rfl, fun j hj => by fin_cases j; exact absurd rfl hj; rfl⟩
+
+theorem act_dec1 (x y : ℕ) : (Op.dec (1 : Fin 2)).Act (gc x (y + 1)) (gc x y) :=
+  ⟨Nat.succ_pos y, rfl, fun j hj => by fin_cases j; rfl; exact absurd rfl hj⟩
+
+theorem act_inc0 (x y : ℕ) : (Op.inc (0 : Fin 2)).Act (gc x y) (gc (x + 1) y) :=
+  ⟨rfl, fun j hj => by fin_cases j; exact absurd rfl hj; rfl⟩
+
+theorem act_inc1 (x y : ℕ) : (Op.inc (1 : Fin 2)).Act (gc x y) (gc x (y + 1)) :=
+  ⟨rfl, fun j hj => by fin_cases j; rfl; exact absurd rfl hj⟩
+
+/-- One step off the boundary. -/
+def GOff (B : CM Q ι) (p : ι → ℕ) (N : ℕ) (c d : Cfg (GState Q N) (Fin 2)) : Prop :=
+  (godel B p N).Step c d ∧ d.1 ∉ Set.range GState.ent
+
+theorem goff_of {r : Quad (GState Q N) (Fin 2)} (hr : GRule B p N r)
+    {s t : GState Q N} {w w' : Fin 2 → ℕ} (hs : s = r.src) (hd : t = r.dst)
+    (ha : r.op.Act w w') (hB : t ∉ Set.range GState.ent) : GOff B p N (s, w) (t, w') :=
+  ⟨⟨r, hr, hs, hd, ha⟩, hB⟩
+
+local notation "RT" => Relation.ReflTransGen (GOff B p N)
+
+/-- Transfer `x → y`. -/
+theorem g_transfer {q : Q} {i : ι} {q' : Q} (hm : MoveRule B q i q') (t : ℕ) : ∀ x y,
+    RT (.a₁ q, gc (x + t) y) (.a₁ q, gc x (y + t)) := by
+  induction t with
+  | zero => intro x y; exact .refl
+  | succ t ih =>
+    intro x y
+    refine .head (goff_of (.a₁P hm) rfl rfl (act_t0 (decide_eq_true (by omega))) (by simp)) ?_
+    refine .head (goff_of (.a₂ hm) rfl rfl (act_dec0 _ _) (by simp)) ?_
+    refine .head (goff_of (.a₃ hm) rfl rfl (act_inc1 _ _) (by simp)) ?_
+    refine .head (goff_of (.a₄ hm) rfl rfl (act_t1 (decide_eq_true (by omega))) (by simp)) ?_
+    rw [show y + (t + 1) = y + 1 + t by omega]
+    exact ih x (y + 1)
+
+/-- The multiply chain `mul j → b₃`. -/
+theorem g_mulChain (hp : PrimeData p N) {q : Q} {i : ι} {q' : Q} (hm : ⟨q, .inc i, q'⟩ ∈ B)
+    (y : ℕ) : ∀ k x (hj : p i - k < N + 1), 1 ≤ p i - k → k < p i →
+    RT (.mul q ⟨p i - k, hj⟩, gc x y) (.b₃ q, gc (x + k + 1) y) := by
+  intro k
+  induction k with
+  | zero =>
+    intro x hj h1 h2
+    exact .single (goff_of (.mulLast _ hm (by simp)) rfl rfl (act_inc0 _ _) (by simp))
+  | succ k ih =>
+    intro x hj h1 h2
+    refine .head (goff_of (.mulStep _ ⟨p i - k, by have := hp.le i; omega⟩ hm h1 (by simp; omega)
+      (by simp; omega)) rfl rfl (act_inc0 _ _) (by simp)) ?_
+    rw [show x + (k + 1) + 1 = x + 1 + k + 1 by omega]
+    exact ih _ _ (by omega) (by omega)
+
+/-- Multiply loop: `(x, y) → (x + p · y, 0)` at `b₁`. -/
+theorem g_mul (hp : PrimeData p N) {q : Q} {i : ι} {q' : Q} (hm : ⟨q, .inc i, q'⟩ ∈ B)
+    (t : ℕ) : ∀ x, RT (.b₁ q, gc x t) (.b₁ q, gc (x + p i * t) 0) := by
+  have hpi := (hp.prime i).two_le
+  have hle := hp.le i
+  induction t with
+  | zero => intro x; exact .refl
+  | succ t ih =>
+    intro x
+    refine .head (goff_of (.mulIn hm) rfl rfl (act_t1 (decide_eq_true (by omega))) (by simp)) ?_
+    refine .head (goff_of (.mulB₂ ⟨1, by omega⟩ hm rfl) rfl rfl (act_dec1 _ _) (by simp)) ?_
+    have hc := g_mulChain hp hm t (p i - 1) x (by omega) (by omega) (by omega)
+    simp only [show p i - (p i - 1) = 1 by omega] at hc
+    refine hc.trans ?_
+    refine .head (goff_of (.b₃ (.inl hm)) rfl rfl (act_t0 (decide_eq_true (by omega)))
+      (by simp)) ?_
+    rw [show x + p i * (t + 1) = x + (p i - 1) + 1 + p i * t by
+      rw [Nat.mul_succ]; omega]
+    exact ih _
+
+/-- The divide chain: `dv j → dv (j + m)` takes `m` from `y`. -/
+theorem g_dvChain (hp : PrimeData p N) {q : Q} {i : ι} {q' : Q} (hm : ⟨q, .dec i, q'⟩ ∈ B)
+    (x y : ℕ) (m : ℕ) : ∀ j (hj : j < N + 1), 1 ≤ j → (hjm : j + m ≤ p i) →
+    RT (.dv q ⟨j, hj⟩, gc x (y + m)) (.dv q ⟨j + m, by have := hp.le i; omega⟩, gc x y) := by
+  induction m with
+  | zero => intro j hj _ _; exact .refl
+  | succ m ih =>
+    intro j hj h1 h2
+    refine .head (goff_of (.dvStep ⟨j, hj⟩ ⟨j + 1, by have := hp.le i; omega⟩ hm h1
+      (by simp; omega) rfl) rfl rfl
+      (by rw [show y + (m + 1) = y + m + 1 by omega]; exact act_dec1 _ _) (by simp)) ?_
+    have := ih (j + 1) (by have := hp.le i; omega) (by omega) (by omega)
+    simp only [show j + 1 + m = j + (m + 1) by omega] at this
+    exact this
+
+/-- Divide loop with remainder: `(x, p · t + r) → (x + t, r)` at `b₁`. -/
+theorem g_dv (hp : PrimeData p N) {q : Q} {i : ι} {q' : Q} (hm : ⟨q, .dec i, q'⟩ ∈ B)
+    (r t : ℕ) : ∀ x, RT (.b₁ q, gc x (p i * t + r)) (.b₁ q, gc (x + t) r) := by
+  have hpi := (hp.prime i).two_le
+  have hle := hp.le i
+  induction t with
+  | zero => intro x; simp only [Nat.mul_zero, Nat.zero_add, Nat.add_zero]; exact .refl
+  | succ t ih =>
+    intro x
+    refine .head (goff_of (.dvIn ⟨1, by omega⟩ hm rfl) rfl rfl
+      (act_t1 (decide_eq_true (by rw [Nat.mul_succ]; omega))) (by simp)) ?_
+    have hc := g_dvChain hp hm x (p i * t + r + 1) (p i - 1) 1 (by omega) le_rfl (by omega)
+    simp only [show 1 + (p i - 1) = p i by omega,
+      show p i * t + r + 1 + (p i - 1) = p i * (t + 1) + r by rw [Nat.mul_succ]; omega] at hc
+    refine hc.trans ?_
+    refine .head (goff_of (.dvLast _ hm rfl) rfl rfl (act_dec1 _ _) (by simp)) ?_
+    refine .head (goff_of (.dvB₂ hm) rfl rfl (act_inc0 _ _) (by simp)) ?_
+    refine .head (goff_of (.b₃ (.inr hm)) rfl rfl (act_t0 (decide_eq_true (by omega)))
+      (by simp)) ?_
+    rw [show x + (t + 1) = x + 1 + t by omega]
+    exact ih _
+
+/-- The division wheel, inner part: `w₁ j → w₁ (j + m)` takes `m` from `x`. -/
+theorem g_wChain (hp : PrimeData p N) {q : Q} {i : ι} {b : Bool} {q' : Q}
+    (hm : ⟨q, .test i b, q'⟩ ∈ B) (x y m : ℕ) : ∀ j (hj : j < N + 1), (hjm : j + m ≤ p i) →
+    RT (.w₁ q ⟨j, hj⟩, gc (x + m) y) (.w₁ q ⟨j + m, by have := hp.le i; omega⟩, gc x y) := by
+  induction m with
+  | zero => intro j hj _; exact .refl
+  | succ m ih =>
+    intro j hj h2
+    refine .head (goff_of (.wP ⟨j, hj⟩ hm (by simp; omega)) rfl rfl
+      (act_t0 (decide_eq_true (by omega))) (by simp)) ?_
+    refine .head (goff_of (.wDec ⟨j, hj⟩ ⟨j + 1, by have := hp.le i; omega⟩ hm (by simp; omega)
+      rfl) rfl rfl
+      (by rw [show x + (m + 1) = x + m + 1 by omega]; exact act_dec0 _ _) (by simp)) ?_
+    have := ih (j + 1) (by have := hp.le i; omega) (by omega)
+    simp only [show j + 1 + m = j + (m + 1) by omega] at this
+    exact this
+
+/-- Division wheel laps: `(x + p · t, y) → (x, y + t)` at `w₁ 0`. -/
+theorem g_w (hp : PrimeData p N) {q : Q} {i : ι} {b : Bool} {q' : Q}
+    (hm : ⟨q, .test i b, q'⟩ ∈ B) (x t : ℕ) : ∀ y,
+    RT (.w₁ q ⟨0, by omega⟩, gc (x + p i * t) y) (.w₁ q ⟨0, by omega⟩, gc x (y + t)) := by
+  have hpi := (hp.prime i).two_le
+  have hle := hp.le i
+  induction t with
+  | zero => intro y; exact .refl
+  | succ t ih =>
+    intro y
+    have hc := g_wChain hp hm (x + p i * t) y (p i) 0 (by omega) (by omega)
+    simp only [Nat.zero_add] at hc
+    rw [show x + p i * (t + 1) = x + p i * t + p i by ring]
+    refine hc.trans ?_
+    refine .head (goff_of (.wInc _ hm rfl) rfl rfl (act_inc1 _ _) (by simp)) ?_
+    refine .head (goff_of (.wBack _ ⟨0, by omega⟩ hm rfl rfl) rfl rfl
+      (act_t1 (decide_eq_true (by omega))) (by simp)) ?_
+    rw [show y + (t + 1) = y + 1 + t by omega]
+    exact ih _
+
+/-- Restore descent: `r₁ j → r₁ 0` adds `j` to `x`. -/
+theorem g_rDesc {q : Q} {i : ι} {b : Bool} {s : Q}
+    (hm : ⟨q, .test i b, s⟩ ∈ B) (y j : ℕ) : ∀ x (hj : j < N + 1), j ≤ p i →
+    RT (.r₁ s ⟨j, hj⟩, gc x y) (.r₁ s ⟨0, by omega⟩, gc (x + j) y) := by
+  induction j with
+  | zero => intro x hj _; exact .refl
+  | succ j ih =>
+    intro x hj h2
+    refine .head (goff_of (.rInc ⟨j + 1, hj⟩ hm (by simp) h2) rfl rfl (act_inc0 _ _)
+      (by simp)) ?_
+    refine .head (goff_of (.rBack ⟨j + 1, hj⟩ ⟨j, by omega⟩ hm (by simp) h2 rfl) rfl rfl
+      (act_t0 (decide_eq_true (by omega))) (by simp)) ?_
+    rw [show x + (j + 1) = x + 1 + j by omega]
+    exact ih _ _ (by omega)
+
+/-- Restore laps: `(x, t) → (x + p · t, 0)` at `r₁ 0`. -/
+theorem g_r (hp : PrimeData p N) {q : Q} {i : ι} {b : Bool} {s : Q}
+    (hm : ⟨q, .test i b, s⟩ ∈ B) (t : ℕ) : ∀ x,
+    RT (.r₁ s ⟨0, by omega⟩, gc x t) (.r₁ s ⟨0, by omega⟩, gc (x + p i * t) 0) := by
+  have hpi := (hp.prime i).two_le
+  have hle := hp.le i
+  induction t with
+  | zero => intro x; exact .refl
+  | succ t ih =>
+    intro x
+    refine .head (goff_of (.rP _ hm rfl) rfl rfl (act_t1 (decide_eq_true (by omega)))
+      (by simp)) ?_
+    refine .head (goff_of (.rDec _ ⟨p i, by omega⟩ hm rfl rfl) rfl rfl (act_dec1 _ _)
+      (by simp)) ?_
+    refine (g_rDesc hm t (p i) x _ le_rfl).trans ?_
+    rw [show x + p i * (t + 1) = x + p i + p i * t by ring]
+    exact ih _
+
+theorem gmacro_of {c : Cfg (GState Q N) (Fin 2)} {s t : GState Q N} {w w' : Fin 2 → ℕ}
+    {r : Quad (GState Q N) (Fin 2)} (hc : c.1 ∈ Set.range GState.ent) (hchain : RT c (s, w))
+    (hr : GRule B p N r) (hs : s = r.src) (hd : t = r.dst) (ha : r.op.Act w w')
+    (ht : t ∈ Set.range GState.ent) :
+    RcwaMachine.MacroStep (Set.range GState.ent) (godel B p N).Step c (t, w') :=
+  macroStep_of_chain hc hchain ⟨r, hr, hs, hd, ha⟩ ht
+
 /-- **Faithfulness.**  On a configuration encoding `v` with junk `J` coprime to every `p i`, a
 step of `B` is one macro step of the compile. -/
 theorem godel_macro [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) {J : ℕ} (hJ : 0 < J)
     (hJp : ∀ i, ¬ p i ∣ J) {q q' : Q} {v v' : ι → ℕ} (hstep : B.Step (q, v) (q', v')) :
     RcwaMachine.MacroStep (Set.range GState.ent) (godel B p N).Step
       (.ent q, genc p J v) (.ent q', genc p J v') := by
-  sorry
+  obtain ⟨⟨src, op, dst⟩, hρ, h1, h2, h3⟩ := hstep
+  simp only at h1 h2 h3
+  subst h1 h2
+  have hX := enc_pos hp hJ v
+  change RcwaMachine.MacroStep _ _ (GState.ent q, gc (J * ∏ k, p k ^ v k) 0)
+    (GState.ent q', gc (J * ∏ k, p k ^ v' k) 0)
+  set X := J * ∏ k, p k ^ v k with hXdef
+  have hg : RT (.ent q, gc X 0) (.grd q, gc X 0) :=
+    .single (goff_of (.guard q) rfl rfl (act_t0 (decide_eq_true hX)) (by simp))
+  cases op with
+  | nop =>
+    cases h3
+    exact gmacro_of (by simp) hg (.nop hρ) rfl rfl (act_t1 rfl) (by simp)
+  | inc i =>
+    have hm : MoveRule B q i q' := .inl hρ
+    rw [enc_inc h3 J, ← hXdef]
+    refine gmacro_of (by simp) (hg.trans ?_) (.b₁Z hm) rfl rfl (act_t1 rfl) (by simp)
+    refine .head (goff_of (.aIn hm) rfl rfl (act_t1 rfl) (by simp)) ?_
+    have ht := g_transfer (p := p) (N := N) hm X 0 0
+    simp only [Nat.zero_add] at ht
+    refine ht.trans ?_
+    refine .head (goff_of (.a₁Z hm) rfl rfl (act_t0 rfl) (by simp)) ?_
+    have hmul := g_mul hp hρ X 0
+    simp only [Nat.zero_add] at hmul
+    exact hmul
+  | dec i =>
+    have hm : MoveRule B q i q' := .inr hρ
+    have hX' := enc_dec (p := p) h3 J
+    rw [← hXdef] at hX'
+    refine gmacro_of (by simp) (hg.trans ?_) (.b₁Z hm) rfl rfl (act_t1 rfl) (by simp)
+    refine .head (goff_of (.aIn hm) rfl rfl (act_t1 rfl) (by simp)) ?_
+    have ht := g_transfer (p := p) (N := N) hm X 0 0
+    simp only [Nat.zero_add] at ht
+    refine ht.trans ?_
+    refine .head (goff_of (.a₁Z hm) rfl rfl (act_t0 rfl) (by simp)) ?_
+    have hdv := g_dv hp hρ 0 (J * ∏ k, p k ^ v' k) 0
+    rw [Nat.add_zero, ← hX', Nat.zero_add] at hdv
+    exact hdv
+  | test i b =>
+    obtain ⟨hb, hvv⟩ := h3
+    rw [hvv]
+    have hpi := (hp.prime i).two_le
+    have hle := hp.le i
+    have hw : RT (.ent q, gc X 0) (.w₁ q ⟨0, by omega⟩, gc X 0) :=
+      hg.tail (goff_of (.wIn _ hρ rfl) rfl rfl (act_t1 rfl) (by simp))
+    cases b with
+    | true =>
+      obtain ⟨a, ha⟩ := (dvd_enc_iff hp hJp v i).2 (by simp at hb; omega)
+      rw [← hXdef] at ha
+      refine gmacro_of (by simp) (hw.trans ?_) (.rZ ⟨0, by omega⟩ hρ rfl) rfl rfl
+        (act_t1 rfl) (by simp)
+      have h1 := g_w hp hρ 0 a 0
+      rw [Nat.zero_add, Nat.zero_add, ← ha] at h1
+      refine h1.trans ?_
+      refine .head (goff_of (.exitP ⟨0, by omega⟩ hρ rfl) rfl rfl (act_t0 rfl) (by simp)) ?_
+      have h2 := g_r hp hρ a 0
+      rw [Nat.zero_add, ← ha] at h2
+      exact h2
+    | false =>
+      have hnd : ¬ p i ∣ X := by
+        rw [hXdef, dvd_enc_iff hp hJp v i]; simpa using hb
+      have hj1 : 1 ≤ X % p i := Nat.pos_of_ne_zero fun h => hnd (Nat.dvd_of_mod_eq_zero h)
+      have hj2 : X % p i < p i := Nat.mod_lt _ (by omega)
+      have hXe : X = X % p i + p i * (X / p i) := (Nat.mod_add_div X (p i)).symm
+      refine gmacro_of (by simp) (hw.trans ?_) (.rZ ⟨0, by omega⟩ hρ rfl) rfl rfl
+        (act_t1 rfl) (by simp)
+      have h1 := g_w hp hρ (X % p i) (X / p i) 0
+      rw [Nat.zero_add, ← hXe] at h1
+      refine h1.trans ?_
+      have h2 := g_wChain hp hρ 0 (X / p i) (X % p i) 0 (by omega) (by omega)
+      simp only [Nat.zero_add] at h2
+      refine h2.trans ?_
+      refine .head (goff_of (.exitZ _ hρ hj1 hj2) rfl rfl (act_t0 rfl) (by simp)) ?_
+      refine (g_rDesc hρ (X / p i) (X % p i) 0 _ hj2.le).trans ?_
+      have h3 := g_r hp hρ (X / p i) (X % p i)
+      rw [← hXe] at h3
+      simpa using h3
 
 /-- A halting ID of `B` gives a halting run of the compile. -/
 theorem godel_halts_of_stuck [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) {J : ℕ}
