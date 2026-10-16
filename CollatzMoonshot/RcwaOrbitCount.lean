@@ -399,17 +399,76 @@ theorem not_computable_finiteOrbits (h : MortalityUndecidable) :
 def Total (e : ℕ) : Prop :=
   ∀ x, (Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code e) x).Dom
 
+/-- Computable predicates pull back along computable maps. -/
+theorem computablePred_comp {α β : Type*} [Primcodable α] [Primcodable β] {p : β → Prop}
+    {f : α → β} (hp : ComputablePred p) (hf : Computable f) : ComputablePred fun a => p (f a) := by
+  obtain ⟨D, hD⟩ := hp
+  exact ⟨fun a => D (f a), hD.comp hf⟩
+
+/-- R.e. predicates pull back along computable maps. -/
+theorem rePred_comp {α β : Type*} [Primcodable α] [Primcodable β] {p : β → Prop}
+    {f : α → β} (hp : REPred p) (hf : Computable f) : REPred fun a => p (f a) :=
+  hp.comp hf
+
+/-- **s-m-n.**  A partial recursive `G` on `Code × ℕ` is `φ_{r c}` for a computable `r`. -/
+theorem exists_index {G : Nat.Partrec.Code × ℕ →. ℕ} (hG : Partrec G) :
+    ∃ r : Nat.Partrec.Code → ℕ, Computable r ∧ ∀ c x,
+      Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code (r c)) x = G (c, x) := by
+  have hH : Partrec fun m : ℕ =>
+      G (Denumerable.ofNat Nat.Partrec.Code m.unpair.1, m.unpair.2) :=
+    hG.comp (((Computable.ofNat _).comp (Computable.fst.comp Computable.unpair)).pair
+      (Computable.snd.comp Computable.unpair))
+  obtain ⟨d, hd⟩ := Nat.Partrec.Code.exists_code.1 (Partrec.nat_iff.1 hH)
+  refine ⟨fun c => Encodable.encode (Nat.Partrec.Code.curry d (Encodable.encode c)), ?_,
+    fun c x => ?_⟩
+  · exact Computable.encode.comp (Nat.Partrec.Code.primrec₂_curry.to_comp.comp
+      (Computable.const d) Computable.encode)
+  · rw [Denumerable.ofNat_encode, Nat.Partrec.Code.eval_curry, hd]
+    simp [Nat.unpair_pair, Denumerable.ofNat_encode]
+
 /-- Totality is not computable (Rice). -/
 theorem total_not_computable : ¬ ComputablePred Total := by
-  sorry
+  intro h
+  have hC : ComputablePred fun c : Nat.Partrec.Code =>
+      Nat.Partrec.Code.eval c ∈ {f : ℕ →. ℕ | ∀ x, (f x).Dom} :=
+    (computablePred_comp h Computable.encode).of_eq fun c => by
+      simp [Total, Denumerable.ofNat_encode]
+  have := ComputablePred.rice _ hC (f := fun _ => Part.some 0) (g := fun _ => Part.none)
+    Nat.Partrec.zero Nat.Partrec.none (fun _ => trivial)
+  exact this 0
 
 /-- Totality is not r.e. (the complement of the halting problem reduces to it). -/
 theorem total_not_re : ¬ REPred Total := by
-  sorry
+  intro h
+  have hG : Partrec fun p : Nat.Partrec.Code × ℕ =>
+      cond (Nat.Partrec.Code.evaln p.2 p.1 0).isSome (Part.none : Part ℕ) (Part.some 0) :=
+    Partrec.cond (Primrec.option_isSome.comp (Nat.Partrec.Code.primrec_evaln.comp
+      ((Primrec.snd.pair Primrec.fst).pair (Primrec.const 0)))).to_comp Partrec.none
+      (Computable.const 0).partrec
+  obtain ⟨r, hr, hre⟩ := exists_index hG
+  refine ComputablePred.halting_problem_not_re 0 ((rePred_comp h hr).of_eq fun c => ?_)
+  simp only [Total, hre]
+  constructor
+  · intro hall hd
+    obtain ⟨y, hy⟩ := Part.dom_iff_mem.1 hd
+    obtain ⟨k, hk⟩ := Nat.Partrec.Code.evaln_complete.1 hy
+    have := hall k
+    rw [show Nat.Partrec.Code.evaln k c 0 = some y from hk] at this
+    simp at this
+  · intro hnd x
+    cases he : Nat.Partrec.Code.evaln x c 0 with
+    | none => simp
+    | some y => exact absurd (Part.dom_iff_mem.2 ⟨y, Nat.Partrec.Code.evaln_sound he⟩) hnd
 
 /-- Non-totality is not r.e. (the halting problem reduces to totality). -/
 theorem total_not_coRE : ¬ REPred fun e => ¬ Total e := by
-  sorry
+  intro h
+  have hG : Partrec fun p : Nat.Partrec.Code × ℕ => Nat.Partrec.Code.eval p.1 0 :=
+    Nat.Partrec.Code.eval_part.comp Computable.fst (Computable.const 0)
+  obtain ⟨r, hr, hre⟩ := exists_index hG
+  refine ComputablePred.halting_problem_not_re 0 ((rePred_comp h hr).of_eq fun c => ?_)
+  simp only [Total, hre]
+  exact ⟨fun h1 h2 => h1 fun _ => h2, fun h1 h2 => h1 (h2 0)⟩
 
 /-- **Interface** (a hypothesis, never an axiom; Lemma A of `undec-lemma` with a uniform
 compile): a computable family of valid machines whose sources all halt iff `φ_e` is total. -/
@@ -418,7 +477,11 @@ def TotalityFamily : Prop :=
 
 /-- A totality family makes mortality undecidable. -/
 theorem mortalityUndecidable_of_totalityFamily (h : TotalityFamily) : MortalityUndecidable := by
-  sorry
+  obtain ⟨F, hF, hFe⟩ := h
+  rintro ⟨g, hg, hspec⟩
+  refine total_not_computable (ComputablePred.computable_iff.2
+    ⟨fun e => g (F e), hg.comp hF, funext fun e => propext ?_⟩)
+  exact ((hFe e).2.symm.trans (hspec _ (hFe e).1).symm)
 
 /-- **Theorem C(1)**, given a totality family: a computable `e ↦ T e` of exact tables whose maps
 are permutations of `ℤ` with one orbit if `φ_e` is total and infinitely many otherwise. -/
@@ -427,20 +490,31 @@ theorem orbit_count_family (h : TotalityFamily) :
       ∃ hb : Function.Bijective (T e).eval,
         (OneOrbit (Equiv.ofBijective _ hb) ↔ Total e) ∧
           (¬ Total e → Infinite (RcwaMachine.Orbits (Equiv.ofBijective _ hb))) := by
-  sorry
+  obtain ⟨F, hF, hFe⟩ := h
+  refine ⟨fun e => tableOf (F e), computable_tableOf.comp hF, fun e => ?_⟩
+  obtain ⟨hex, hb, h1, h2⟩ := tableOf_orbits (hFe e).1
+  exact ⟨hex, hb, h1.trans (hFe e).2, fun ht => h2.2 fun hs => ht ((hFe e).2.1 hs)⟩
 
 /-- **"One orbit" is not r.e.** on exact bijective tables, given a totality family. -/
 theorem oneOrbit_not_re (h : TotalityFamily) :
     ¬ ∃ P : RcwaTable → Prop, REPred P ∧
       ∀ (T : RcwaTable), T.Exact → ∀ hb : Function.Bijective T.eval,
         (P T ↔ OneOrbit (Equiv.ofBijective T.eval hb)) := by
-  sorry
+  rintro ⟨P, hP, hspec⟩
+  obtain ⟨T, hT, hTe⟩ := orbit_count_family h
+  refine total_not_re ((rePred_comp hP hT).of_eq fun e => ?_)
+  obtain ⟨hex, hb, h1, -⟩ := hTe e
+  exact (hspec _ hex hb).trans h1
 
 /-- **"More than one orbit" is not r.e.** on exact bijective tables, given a totality family. -/
 theorem oneOrbit_not_coRE (h : TotalityFamily) :
     ¬ ∃ P : RcwaTable → Prop, REPred P ∧
       ∀ (T : RcwaTable), T.Exact → ∀ hb : Function.Bijective T.eval,
         (P T ↔ ¬ OneOrbit (Equiv.ofBijective T.eval hb)) := by
-  sorry
+  rintro ⟨P, hP, hspec⟩
+  obtain ⟨T, hT, hTe⟩ := orbit_count_family h
+  refine total_not_coRE ((rePred_comp hP hT).of_eq fun e => ?_)
+  obtain ⟨hex, hb, h1, -⟩ := hTe e
+  exact (hspec _ hex hb).trans (not_congr h1)
 
 end CollatzMoonshot.RcwaOrbitCount
