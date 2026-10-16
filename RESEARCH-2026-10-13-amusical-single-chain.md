@@ -1846,3 +1846,31 @@ Follow-ups to §55.  Reports: `undec-r25.md`, `wythoff.md`.
 * **A 20-year-old twin of Conway's 8.**  The `α = 2 + √2` member is OEIS A094077; Brockhaus (2006,
   A117149) lists its cycles `{1}, {2, 3}, {14, 23, 16, 27, 19}` and conjectures that the orbit of 4
   is not periodic.  The census reproduces those cycles; the orbit of 4 passes `4·2^24` both ways.
+
+## 57. Theorem C closed on ℤ (paper): the reversible-machine lemma (2026-10-16, Opus agent; Ren checked)
+
+Report: `undec-lemma.md`.  **Theorem C(1), ℤ form (paper, 90%).**  There is a computable `e ↦ σ_e`,
+each `σ_e` an RCWA permutation of `ℤ` with every slope positive in `2^ℤ3^ℤ = ⟨3/2, 3/4⟩`, with one
+orbit if `φ_e` is total and infinitely many otherwise.  Totality is `Π⁰₂`-complete, so on this
+family "finitely many orbits" is `Π⁰₂`-hard.  Same-orbit is `Σ⁰₁`-complete via the highway alone
+(88%); some member has a ZFC-independent orbit count (85%).  The ℕ form stays at 40% (§56).
+
+* **The chain.**  Restart machine (A) → Bennett history wrapper in Morita normal form (H) → Gödel
+  compile to 2 counters (G) → Kari–Ollinger forward/backward doubling through the highway (D).
+  New is **Lemma M**: in a *structured* reversible machine (off a boundary set, every loop is a
+  simple cycle whose lap moves the counters with both signs; boundary states halt unless guarded),
+  every run infinite in either direction meets the boundary infinitely often, so garbage
+  configurations never need state-by-state analysis.  Kari–Ollinger (MFCS 2008, opened) assert
+  without proof that Morita's 2-counter conversion "preserves mortality status"; M + G prove it at
+  every configuration.
+* **Checks.**  A 10-state structured machine with ~50% garbage configurations, doubled to 20
+  states, through the §56 pipeline: exact bijection (7,565 pieces); census of 32,000
+  configurations with 0 cycles and 0 bi-infinite chains; orbit counts 1 (total) and 111, 1,075
+  (divergent) as predicted.  The H + G compile (61 → 519 states) has 0 reversibility overlaps,
+  the loop condition on all 153 cycles, 0 faithfulness failures in 6,588 junk configurations (Ren
+  re-ran `lemma_hg.py`: PASS).  A first compile was not reversible (76 overlaps) and was fixed by
+  compiling from Morita normal form.  Teeth: a dropped guard shows at the orbit level (77, 771
+  junk cycles); a dropped clock and a permuted `τ` show at the census level only (their orbit-level
+  effects sit beyond the windows checked).
+* **Remaining.**  Morita's 2017 book for prior art (not opened); Lemma G's gadget bookkeeping at
+  referee level (~2 pages); one compiled instance end to end (needs `r = 5^5`).
