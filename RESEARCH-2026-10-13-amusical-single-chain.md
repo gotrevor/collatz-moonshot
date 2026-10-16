@@ -1874,3 +1874,43 @@ family "finitely many orbits" is `Π⁰₂`-hard.  Same-orbit is `Σ⁰₁`-comp
   effects sit beyond the windows checked).
 * **Remaining.**  Morita's 2017 book for prior art (not opened); Lemma G's gadget bookkeeping at
   referee level (~2 pages); one compiled instance end to end (needs `r = 5^5`).
+
+## 58. Theorem C in Lean: status, and Morita's book on the machine format (2026-10-16, Ren)
+
+* **In Lean (axiom-clean, verified 2026-10-16 by `#print axioms`).**  Lemma P for `r = 25`
+  (`RcwaEngine.lean`) and for every `r = 5^j` (`RcwaEngineGen.lean`): a linear piece with slope
+  `2^{Nδ₁} 3^{Nδ₂ + s' − s}` moves the phase-coded state and both counters and fixes the junk.
+  Completion and Lemma M, abstract (`RcwaMachine.lean`): `#orbits = 1 + #cuts` under (H1) and
+  (H2) (`card_orbits`), and a structured machine's infinite runs meet the boundary infinitely
+  often (`visits_boundary`, `visits_boundary_backward`).  Same-orbit (`RcwaSameOrbit.lean`): for a
+  `Valid` reversible guarded-rule 2-counter machine and a source `c`, the completed permutation
+  `σ` (an exact RCWA table, every slope in `2^ℤ3^ℤ`) has `enc c` and its highway successor in
+  one cycle iff the machine halts from `c` (`sameCycle_enc_iff`); the reduction is computable
+  (`computable_reduce`), so same-orbit is not computable (`not_computable_sameCycle`) **given**
+  the hypothesis Prop `HaltingUndecidable`.
+* **The one hypothesis.**  `HaltingUndecidable`: halting from a source is undecidable for `Valid`
+  machines in the file's format.  Not yet in Lean: the orbit-count `Π⁰₂` layer (Lemmas A and D
+  as theorems about `σ`'s orbit count).
+* **Morita 2017, §9.2 (read for the model, `papers/2017-morita-theory-of-reversible-computing.pdf`).**
+  Morita's counter machine (Def. 9.1-9.3) is a set of quadruples: a counter test `[p, i, Z|P, q]`
+  or a count rule `[p, i, −|0|+, q]`, with a decrement allowed only from a positive counter.  Each
+  quadruple is one `Rule` of ours (the test on counter `i`, `any` on the other, no move; or `any`
+  tests and the move on counter `i`), and his syntactic determinism and reversibility (Def. 9.2:
+  distinct rules sharing a source, resp. a target, are tests of one counter with opposite symbols)
+  imply our semantic `Deterministic` and `Reversible`.  So his RCM(2) format sits inside ours.
+  The constructions to transcribe are explicit quadruple lists: Lemma 9.2 (state-degeneration
+  degree 2), Lemma 9.3 (history counter `k + 1`, one bit per irreversible merge), Lemma 9.4
+  (Bennett: forward, copy, inverse quadruples `(δ′)⁻¹`), Lemma 9.7 (RCM(k) → RCM(2) through
+  `∏ pᵢ^{nᵢ}`, with `pᵢ + 10` rules per count rule and `3pᵢ + 3` per test pair), and Theorem 9.2.
+  Every correctness statement there is about runs from encoded inputs `(q₀, ∏ pᵢ^{mᵢ}, 0)`; the
+  book does not treat other configurations.  The all-configuration clauses of `Valid` (no
+  bi-infinite run anywhere, every finite run from any source ends at its paired sink) therefore
+  rest on Lemmas M, H, G (§57), as `HaltingUndecidable`'s docstring says.  The format question
+  is settled in our favor; the residual risk is in those lemmas' paper proofs.  `HaltingUndecidable`
+  for this format: 92% (was 88%).
+* **Route to an unconditional theorem.**  Mathlib has `ComputablePred.halting_problem` and
+  `Turing.PartrecToTM2.tr_eval` (partial recursive codes run on a stack machine `TM2`).  Chain:
+  `TM2` → Morita CM(k) (each stack a base-`b` numeral, push and pop by multiply and divide with a
+  scratch counter) → Lemmas 9.3/9.4 (reversible, normal form) → Lemma 9.7 (two counters) →
+  Kari–Ollinger doubling → `Valid` (Lemmas M, H, G).  That discharges `HaltingUndecidable` and
+  makes `not_computable_sameCycle` hypothesis-free.
