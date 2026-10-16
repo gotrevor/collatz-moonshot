@@ -162,6 +162,7 @@ import CollatzMoonshot.AmusicalNotNormal
 import CollatzMoonshot.AmusicalTrap
 import CollatzMoonshot.AmusicalDepthFusion
 import CollatzMoonshot.RcwaEngine
+import CollatzMoonshot.RcwaEngineGen
 import CollatzMoonshot.GaussianRelative
 import CollatzMoonshot.BackwardClosure
 import CollatzMoonshot.Literature.TerrasParity
