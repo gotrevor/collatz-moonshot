@@ -307,9 +307,40 @@ def isSourceB (R : List Rule) (c : Cfg) : Bool :=
       decide (step R (ρ.src, ((c.2.1 : ℤ) - ρ.d₁.val).toNat, ((c.2.2 : ℤ) - ρ.d₂.val).toNat) =
         some c))
 
-/-- **Open.**  The Boolean source test is correct. -/
+/-- A step is the target of some firing rule. -/
+theorem exists_rule_of_step {R : List Rule} {c d : Cfg} (h : step R c = some d) :
+    ∃ ρ ∈ R, ρ.Fires c ∧ ρ.target c = d := by
+  simp only [step, Option.map_eq_some_iff] at h
+  obtain ⟨ρ, hρ, rfl⟩ := h
+  exact ⟨ρ, List.mem_of_find?_eq_some hρ, by simpa using List.find?_some hρ, rfl⟩
+
+/-- The Boolean source test is correct. -/
 theorem isSourceB_iff (R : List Rule) (c : Cfg) : isSourceB R c = true ↔ IsSource R c := by
-  sorry
+  rw [isSourceB, List.all_eq_true]
+  constructor
+  · intro h c' hc'
+    obtain ⟨ρ, hρ, hf, rfl⟩ := exists_rule_of_step hc'
+    have := h ρ hρ
+    obtain ⟨hs, -, -, h3, h4⟩ := hf
+    have hA : ρ.dst = (ρ.target c').1 ∧ 0 ≤ ((ρ.target c').2.1 : ℤ) - ρ.d₁.val ∧
+        0 ≤ ((ρ.target c').2.2 : ℤ) - ρ.d₂.val := by
+      simp only [Rule.target, Int.toNat_of_nonneg h3, Int.toNat_of_nonneg h4]
+      exact ⟨trivial, by omega, by omega⟩
+    have hpre : ((ρ.src, (((ρ.target c').2.1 : ℤ) - ρ.d₁.val).toNat,
+        (((ρ.target c').2.2 : ℤ) - ρ.d₂.val).toNat) : Cfg) = c' := by
+      obtain ⟨c0, c1, c2⟩ := c'
+      simp only [Rule.target, Int.toNat_of_nonneg h3, Int.toNat_of_nonneg h4] at hs ⊢
+      simp [hs]
+    have hB : step R (ρ.src, (((ρ.target c').2.1 : ℤ) - ρ.d₁.val).toNat,
+        (((ρ.target c').2.2 : ℤ) - ρ.d₂.val).toNat) = some (ρ.target c') := by
+      rw [hpre]; exact hc'
+    rw [decide_eq_true hA, decide_eq_true hB] at this
+    exact absurd this (by decide)
+  · intro h ρ hρ
+    simp only [Bool.not_eq_true', Bool.and_eq_false_iff, decide_eq_false_iff_not]
+    by_contra hc
+    push Not at hc
+    exact h _ hc.2
 
 /-- A machine: `K` states `0, …, K − 1`, its rules, and the list `pair` (state `s < K` is
 relabelled `pair[s]` when a sink returns to the highway). -/
@@ -359,15 +390,25 @@ noncomputable def ofInjective {α β : Type*} (f : α → Option β)
       have hb : ∃ a, f a = some b := ⟨a, h⟩
       rw [dif_pos hb, hf _ _ _ hb.choose_spec h]
 
-/-- **Open.**  Under determinism every firing rule gives the step. -/
+/-- Under determinism every firing rule gives the step. -/
 theorem step_eq_of_fires {R : List Rule} (hdet : Deterministic R) {ρ : Rule} (hρ : ρ ∈ R)
     {c : Cfg} (hc : ρ.Fires c) : step R c = some (ρ.target c) := by
-  sorry
+  cases h : R.find? (fun ρ => decide (ρ.Fires c)) with
+  | none =>
+    rw [List.find?_eq_none] at h
+    exact absurd (by simpa using hc) (h ρ hρ)
+  | some ρ₀ =>
+    have h0 := List.find?_some h
+    simp only [decide_eq_true_eq] at h0
+    simp only [step, h, Option.map_some, Option.some.injEq]
+    exact hdet _ (List.mem_of_find?_eq_some h) _ hρ c h0 hc
 
-/-- **Open.**  Under reversibility the step is injective. -/
+/-- Under reversibility the step is injective. -/
 theorem step_injective {R : List Rule} (hrev : Reversible R) {c c' d : Cfg}
     (h : step R c = some d) (h' : step R c' = some d) : c = c' := by
-  sorry
+  obtain ⟨ρ, hρ, hf, rfl⟩ := exists_rule_of_step h
+  obtain ⟨ρ', hρ', hf', he⟩ := exists_rule_of_step h'
+  exact hrev ρ hρ ρ' hρ' c c' hf hf' he.symm
 
 /-- The configuration graph of a reversible machine, as a partial injection. -/
 noncomputable def machine (R : List Rule) (hrev : Reversible R) : PEquiv Cfg Cfg :=
