@@ -76,46 +76,185 @@ variable {U : CM Q ι} {hole back : Q} {i : ι} {L : ℕ}
 /-- A step of `U` is a step of the glued machine. -/
 theorem glue_step_inl {q q' : Q} {v v' : ι → ℕ} (h : U.Step (q, v) (q', v')) :
     (glue U hole back i L).Step (.inl q, v) (.inl q', v') := by
-  sorry
+  obtain ⟨ρ, hρ, h1, h2, h3⟩ := h
+  exact ⟨ρ.mapQ Sum.inl, Or.inl ⟨ρ, hρ, rfl⟩, congrArg Sum.inl h1, congrArg Sum.inl h2, h3⟩
 
 /-- Off `hole`, a step of the glued machine from a state of `U` is a step of `U`. -/
 theorem glue_step_inl_inv {q : Q} {v : ι → ℕ} {d : Cfg (Q ⊕ Fin L) ι} (hq : q ≠ hole)
     (h : (glue U hole back i L).Step (.inl q, v) d) :
     ∃ q', d.1 = .inl q' ∧ U.Step (q, v) (q', d.2) := by
-  sorry
+  obtain ⟨r, hr, h1, h2, h3⟩ := h
+  rcases hr with ⟨ρ, hρ, rfl⟩ | hr
+  · exact ⟨ρ.dst, h2, ρ, hρ, Sum.inl_injective h1, rfl, h3⟩
+  · exfalso
+    rcases hr with rfl | ⟨k, rfl⟩
+    · exact hq (Sum.inl_injective h1)
+    · cases h1
+
+theorem act_inc_update [DecidableEq ι] (v : ι → ℕ) (i : ι) :
+    (Op.inc i).Act v (Function.update v i (v i + 1)) :=
+  ⟨by simp, fun j hj => by simp [hj]⟩
+
+/-- The plug: `hole` to the first chain state. -/
+theorem glue_step_plug [DecidableEq ι] (v : ι → ℕ) :
+    (glue U hole back i L).Step (.inl hole, v)
+      (chainFirst back L, Function.update v i (v i + 1)) :=
+  ⟨_, Or.inr (Or.inl rfl), rfl, rfl, act_inc_update v i⟩
+
+/-- A link: chain state `k` to its successor. -/
+theorem glue_step_link [DecidableEq ι] (k : Fin L) (v : ι → ℕ) :
+    (glue U hole back i L).Step (.inr k, v)
+      (chainNext back k, Function.update v i (v i + 1)) :=
+  ⟨_, Or.inr (Or.inr ⟨k, rfl⟩), rfl, rfl, act_inc_update v i⟩
+
+theorem update_add_add [DecidableEq ι] (v : ι → ℕ) (i : ι) (a b : ℕ) :
+    Function.update (Function.update v i (v i + a)) i
+      (Function.update v i (v i + a) i + b) = Function.update v i (v i + (a + b)) := by
+  rw [Function.update_idem, Function.update_self, Nat.add_assoc]
+
+/-- From chain state `k` the glued machine reaches `back` with `L − k` added to counter `i`. -/
+theorem glue_chain_reaches_of_inr [DecidableEq ι] (k : Fin L) (v : ι → ℕ) :
+    Relation.TransGen (glue U hole back i L).Step (.inr k, v)
+      (.inl back, Function.update v i (v i + (L - k.val))) := by
+  suffices key : ∀ n (k : ℕ) (hk : k < L) (v : ι → ℕ), L - k = n →
+      Relation.TransGen (glue U hole back i L).Step (.inr ⟨k, hk⟩, v)
+        (.inl back, Function.update v i (v i + n)) from key _ k.val k.isLt v rfl
+  intro n
+  induction n with
+  | zero => intro k hk v h; omega
+  | succ n ih =>
+    intro k hk v h
+    have h1 := glue_step_link (U := U) (hole := hole) (back := back) (i := i) ⟨k, hk⟩ v
+    by_cases hk1 : k + 1 < L
+    · rw [chainNext, dif_pos hk1] at h1
+      have h2 := ih (k + 1) hk1 (Function.update v i (v i + 1)) (by omega)
+      rw [update_add_add, show 1 + n = n + 1 by omega] at h2
+      exact Relation.TransGen.head h1 h2
+    · rw [chainNext, dif_neg hk1] at h1
+      obtain rfl : n = 0 := by omega
+      exact .single h1
 
 /-- **The chain adds `L + 1`.**  From `hole` the glued machine reaches `back` with `L + 1` added
 to counter `i`. -/
 theorem glue_chain_reaches [DecidableEq ι] (v : ι → ℕ) :
     Relation.TransGen (glue U hole back i L).Step (.inl hole, v)
       (.inl back, Function.update v i (v i + (L + 1))) := by
-  sorry
-
-/-- From chain state `k` the glued machine reaches `back` with `L − k` added to counter `i`. -/
-theorem glue_chain_reaches_of_inr [DecidableEq ι] (k : Fin L) (v : ι → ℕ) :
-    Relation.TransGen (glue U hole back i L).Step (.inr k, v)
-      (.inl back, Function.update v i (v i + (L - k.val))) := by
-  sorry
+  by_cases hL : 0 < L
+  · have h1 := glue_step_plug (U := U) (hole := hole) (back := back) (i := i) (L := L) v
+    rw [chainFirst, dif_pos hL] at h1
+    have h2 := glue_chain_reaches_of_inr (U := U) (hole := hole) (back := back) (i := i)
+      ⟨0, hL⟩
+      (Function.update v i (v i + 1))
+    rw [update_add_add] at h2
+    simpa [Nat.add_comm 1 L] using Relation.TransGen.head h1 h2
+  · obtain rfl : L = 0 := by omega
+    have h1 := glue_step_plug (U := U) (hole := hole) (back := back) (i := i) (L := 0) v
+    rw [chainFirst, dif_neg (lt_irrefl 0)] at h1
+    exact .single h1
 
 /-- No configuration on the chain (`hole` included) is a halting ID. -/
 theorem glue_not_stuck_chain {q : Q ⊕ Fin L} (hq : q = .inl hole ∨ ∃ k : Fin L, q = .inr k)
     (v : ι → ℕ) : ¬ (glue U hole back i L).Stuck (q, v) := by
-  sorry
+  classical
+  intro hs
+  rcases hq with rfl | ⟨k, rfl⟩
+  · exact hs _ (glue_step_plug v)
+  · exact hs _ (glue_step_link k v)
 
 /-- **Gluing keeps determinism** when no rule of `U` leaves `hole`. -/
 theorem glue_det (hU : U.Det) (hhole : ∀ ρ ∈ U, ρ.src ≠ hole) :
     (glue U hole back i L).Det := by
-  sorry
+  rintro r (⟨ρ, hρ, rfl⟩ | hr) r' (⟨ρ', hρ', rfl⟩ | hr') hne hsrc
+  · exact hU ρ hρ ρ' hρ' (fun h => hne (h ▸ rfl)) (Sum.inl_injective hsrc)
+  · exfalso
+    rcases hr' with rfl | ⟨k, rfl⟩
+    · exact hhole ρ hρ (Sum.inl_injective hsrc)
+    · cases hsrc
+  · exfalso
+    rcases hr with rfl | ⟨k, rfl⟩
+    · exact hhole ρ' hρ' (Sum.inl_injective hsrc).symm
+    · cases hsrc
+  · exfalso
+    rcases hr with rfl | ⟨k, rfl⟩ <;> rcases hr' with rfl | ⟨k', rfl⟩
+    · exact hne rfl
+    · cases hsrc
+    · cases hsrc
+    · cases Sum.inr_injective hsrc
+      exact hne rfl
 
 /-- **Gluing keeps reversibility** when no rule of `U` enters `back`. -/
 theorem glue_rev (hU : U.Rev) (hback : U.NormalAt back) : (glue U hole back i L).Rev := by
-  sorry
+  have hF : ∀ q, chainFirst back L = .inl q → q = back := by
+    intro q h; unfold chainFirst at h; split_ifs at h; exact (Sum.inl_injective h).symm
+  have hN : ∀ (k : Fin L) q, chainNext back k = .inl q → q = back := by
+    intro k q h; unfold chainNext at h; split_ifs at h; exact (Sum.inl_injective h).symm
+  have hFN : ∀ k : Fin L, chainFirst back L ≠ chainNext back k := by
+    intro k h
+    unfold chainFirst chainNext at h
+    have := k.isLt
+    split_ifs at h with h1 h2 h2 <;> first | omega | cases h
+  have hNN : ∀ k k' : Fin L, chainNext back k = chainNext back k' → k = k' := by
+    intro k k' h
+    unfold chainNext at h
+    have := k.isLt; have := k'.isLt
+    split_ifs at h with h1 h2 h2 <;>
+      first | exact Fin.ext (by omega) | cases h |
+        exact Fin.ext (by have := congrArg Fin.val (Sum.inr_injective h); simpa using this)
+  rintro r (⟨ρ, hρ, rfl⟩ | hr) r' (⟨ρ', hρ', rfl⟩ | hr') hne hdst
+  · exact hU ρ hρ ρ' hρ' (fun h => hne (h ▸ rfl)) (Sum.inl_injective hdst)
+  · exfalso
+    rcases hr' with rfl | ⟨k, rfl⟩
+    · exact hback ρ hρ (hF _ hdst.symm)
+    · exact hback ρ hρ (hN _ _ hdst.symm)
+  · exfalso
+    rcases hr with rfl | ⟨k, rfl⟩
+    · exact hback ρ' hρ' (hF _ hdst)
+    · exact hback ρ' hρ' (hN _ _ hdst)
+  · exfalso
+    rcases hr with rfl | ⟨k, rfl⟩ <;> rcases hr' with rfl | ⟨k', rfl⟩
+    · exact hne rfl
+    · exact hFN k' hdst
+    · exact hFN k hdst.symm
+    · cases hNN k k' hdst
+      exact hne rfl
 
 /-- (S1) passes to the glued machine, with the chain states and the boundary of `U` as
 boundary. -/
 theorem glue_lapsMixed [DecidableEq ι] {B : Set Q} (h : LapsMixed U B) (hhole : hole ∈ B) :
     LapsMixed (glue U hole back i L) (Sum.inl '' B ∪ Set.range Sum.inr) := by
-  sorry
+  intro ρ m hm hmem hoff hchain hclose
+  -- every rule of the walk is a mapped rule of `U`
+  have hex : ∀ j, ∃ σ : Quad Q ι, j < m → σ ∈ U ∧ ρ j = σ.mapQ Sum.inl := by
+    intro j
+    by_cases hj : j < m
+    · rcases hmem j hj with ⟨σ, hσ, h⟩ | hc
+      · exact ⟨σ, fun _ => ⟨hσ, h⟩⟩
+      · exfalso
+        apply hoff j hj
+        rcases hc with h | ⟨k, h⟩ <;> rw [h]
+        · exact Or.inl ⟨hole, hhole, rfl⟩
+        · exact Or.inr ⟨k, rfl⟩
+    · obtain ⟨σ, -, -⟩ | hc := hmem 0 hm
+      · exact ⟨σ, fun h => absurd h hj⟩
+      · exfalso
+        apply hoff 0 hm
+        rcases hc with h | ⟨k, h⟩ <;> rw [h]
+        · exact Or.inl ⟨hole, hhole, rfl⟩
+        · exact Or.inr ⟨k, rfl⟩
+  choose σ hσ using hex
+  have hop : ∀ j, j < m → (ρ j).op = (σ j).op := fun j hj => by rw [(hσ j hj).2]; rfl
+  have hsum : ∀ c, ∑ j ∈ Finset.range m, (ρ j).op.delta c =
+      ∑ j ∈ Finset.range m, (σ j).op.delta c := fun c =>
+    Finset.sum_congr rfl fun j hj => by rw [hop j (Finset.mem_range.1 hj)]
+  simp only [hsum]
+  refine h σ m hm (fun j hj => (hσ j hj).1) (fun j hj hB => hoff j hj ?_) (fun j hj => ?_) ?_
+  · rw [(hσ j hj).2]; exact Or.inl ⟨_, hB, rfl⟩
+  · have := hchain j hj
+    rw [(hσ j (by omega)).2, (hσ (j + 1) hj).2] at this
+    exact Sum.inl_injective this
+  · have := hclose
+    rw [(hσ _ (by omega)).2, (hσ 0 hm).2] at this
+    exact Sum.inl_injective this
 
 /-- **Macro steps of the glued machine.**  A boundary-to-boundary macro step is a macro step of
 `U` (on states of `U`) or a single chain step. -/
@@ -125,7 +264,86 @@ theorem glue_macroStep_cases {B : Set Q} (hhole : hole ∈ B) (hback : back ∈ 
       (glue U hole back i L).Step b b') :
     (∃ c c' : Cfg Q ι, b = (.inl c.1, c.2) ∧ b' = (.inl c'.1, c'.2) ∧
       RcwaMachine.MacroStep B U.Step c c') ∨ (chain hole back i L).Step b b' := by
-  sorry
+  obtain ⟨hb, hb', x, n, hn, hx0, hxn, hstep, hxoff⟩ := hm
+  have hoffB : ∀ j, 0 < j → j < n → ∃ q, (x j).1 = .inl q ∧ q ∉ B := by
+    intro j h1 h2
+    have := hxoff j h1 h2
+    rcases hx : (x j).1 with q | k
+    · exact ⟨q, rfl, fun hq => this (hx ▸ Or.inl ⟨q, hq, rfl⟩)⟩
+    · exact absurd (hx ▸ Or.inr ⟨k, rfl⟩) this
+  have hBd : ∀ q, Sum.inl q ∈ (Sum.inl '' B ∪ Set.range Sum.inr : Set (Q ⊕ Fin L)) → q ∈ B := by
+    rintro q (⟨q', hq', h⟩ | ⟨k, h⟩)
+    · exact Sum.inl_injective h ▸ hq'
+    · cases h
+  obtain ⟨r, hr, h1, h2, h3⟩ := hstep 0 hn
+  rcases hr with ⟨ρ, hρ, rfl⟩ | hr
+  · -- a mapped first step: the whole run is a run of `U`
+    left
+    have hinl : ∀ j, ∃ q : Q, j ≤ n → (x j).1 = .inl q := by
+      intro j
+      by_cases hj : j ≤ n
+      · rcases Nat.eq_zero_or_pos j with rfl | hj0
+        · exact ⟨ρ.src, fun _ => h1⟩
+        rcases Nat.lt_or_ge j n with hjn | hjn
+        · obtain ⟨q, hq, -⟩ := hoffB j hj0 hjn
+          exact ⟨q, fun _ => hq⟩
+        · rw [show j = n by omega]
+          by_cases hn1 : n = 1
+          · subst hn1; exact ⟨ρ.dst, fun _ => h2⟩
+          · obtain ⟨q, hq, hqB⟩ := hoffB (n - 1) (by omega) (by omega)
+            have hs := hstep (n - 1) (by omega)
+            rw [show n - 1 + 1 = n by omega] at hs
+            rw [show x (n - 1) = (.inl q, (x (n - 1)).2) from Prod.ext hq rfl] at hs
+            obtain ⟨q', hq', -⟩ := glue_step_inl_inv
+              (fun h => hqB (by rw [h]; exact hhole)) hs
+            exact ⟨q', fun _ => hq'⟩
+      · exact ⟨ρ.src, fun h => absurd h hj⟩
+    choose f hf using hinl
+    have hx : ∀ j, j ≤ n → x j = (.inl (f j), (x j).2) := fun j hj => Prod.ext (hf j hj) rfl
+    refine ⟨(f 0, (x 0).2), (f n, (x n).2), ?_, ?_, ?_⟩
+    · rw [← hx0]; exact hx 0 (Nat.zero_le _)
+    · rw [← hxn]; exact hx n le_rfl
+    refine ⟨hBd _ (by rw [← hf 0 (Nat.zero_le _), hx0]; exact hb),
+      hBd _ (by rw [← hf n le_rfl, hxn]; exact hb'),
+      fun j => (f j, (x j).2), n, hn, rfl, rfl, fun j hj => ?_, fun j hj0 hjn => ?_⟩
+    · have hs := hstep j hj
+      rw [hx j hj.le, hx (j + 1) hj] at hs
+      rcases Nat.eq_zero_or_pos j with rfl | hj0
+      · refine ⟨ρ, hρ, Sum.inl_injective (β := Fin L) ?_,
+          Sum.inl_injective (β := Fin L) ?_, ?_⟩
+        · rw [← hf 0 (Nat.zero_le _)]; exact h1
+        · rw [← hf 1 hj]; exact h2
+        · exact h3
+      · obtain ⟨q, hq, hqB⟩ := hoffB j hj0 hj
+        have hfq : f j = q := Sum.inl_injective ((hf j hj.le).symm.trans hq)
+        obtain ⟨q', hq', hst⟩ := glue_step_inl_inv
+          (fun h => hqB (by rw [← hfq, h]; exact hhole)) hs
+        cases Sum.inl_injective hq'
+        exact hst
+    · obtain ⟨q, hq, hqB⟩ := hoffB j hj0 hjn
+      exact fun h => hqB (Sum.inl_injective ((hf j hjn.le).symm.trans hq) ▸ h)
+  · -- a chain first step lands on the boundary, so the macro step is that one step
+    right
+    have hdst : (x 1).1 ∈ (Sum.inl '' B ∪ Set.range Sum.inr : Set (Q ⊕ Fin L)) := by
+      have hF : ∀ s : Q ⊕ Fin L, (s = chainFirst back L ∨ ∃ k : Fin L, s = chainNext back k) →
+          s ∈ (Sum.inl '' B ∪ Set.range Sum.inr : Set (Q ⊕ Fin L)) := by
+        rintro s (rfl | ⟨k, rfl⟩)
+        · unfold chainFirst; split_ifs
+          · exact Or.inr ⟨_, rfl⟩
+          · exact Or.inl ⟨back, hback, rfl⟩
+        · unfold chainNext; split_ifs
+          · exact Or.inr ⟨_, rfl⟩
+          · exact Or.inl ⟨back, hback, rfl⟩
+      rw [h2]
+      rcases hr with rfl | ⟨k, rfl⟩
+      · exact hF _ (Or.inl rfl)
+      · exact hF _ (Or.inr ⟨k, rfl⟩)
+    have hn1 : n = 1 := by
+      by_contra hn1
+      exact hxoff 1 one_pos (by omega) hdst
+    subst hn1
+    rw [← hx0, ← hxn]
+    exact ⟨r, hr, h1, h2, h3⟩
 
 end Glue
 
@@ -139,7 +357,9 @@ variable {Q ι : Type*} {K : ℕ} {U : CM Q ι} {lab : Quad Q ι → Fin K} {hol
 /-- No rule of the wrapper leaves `bnd hole` when no rule of `U` leaves `hole`. -/
 theorem histWrap_src_ne_bnd (hhole : ∀ ρ ∈ U, ρ.src ≠ hole) :
     ∀ r ∈ histWrap U lab, r.src ≠ .bnd hole := by
-  sorry
+  intro r hr h
+  cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h
+  exact hhole _ ‹_› h
 
 /-- The glued wrapper is deterministic. -/
 theorem glueH_det (hU : U.Det) (hhole : ∀ ρ ∈ U, ρ.src ≠ hole) :
