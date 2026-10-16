@@ -791,12 +791,15 @@ theorem exists_entry_mem_orbit (hj : 2 ≤ j) {x : ℤ} (hx : 1 < x) :
       have hlt : 2 * c < x := by nlinarith
       obtain ⟨e, he, hmem⟩ := ih (2 * c).toNat (by omega) (2 * c) rfl (by omega)
       refine ⟨e, he, ?_⟩
-      rw [← permOrbit_eq_of_mem (evenPerm j hj1) (mem_permOrbit_comm (evenPerm j hj1) (hσ ▸ apply_mem_permOrbit (evenPerm j hj1) (2 * c)))]
+      rw [← permOrbit_eq_of_mem _ (mem_permOrbit_comm _
+        (hσ ▸ apply_mem_permOrbit (evenPerm j hj1) (2 * c)))]
       exact hmem
     · exact ⟨x, ⟨by omega, h2, hd⟩, mem_permOrbit_self _ _⟩
-  · obtain ⟨h1, hlt⟩ : 1 < (evenPerm j hj1) x ∧ (evenPerm j hj1) x < x := evenPerm_odd_lt hj h2 (by omega)
+  · obtain ⟨h1, hlt⟩ : 1 < (evenPerm j hj1) x ∧ (evenPerm j hj1) x < x :=
+      evenPerm_odd_lt hj h2 (by omega)
     obtain ⟨e, he, hmem⟩ := ih ((evenPerm j hj1) x).toNat (by omega) ((evenPerm j hj1) x) rfl h1
-    exact ⟨e, he, by rw [← permOrbit_eq_of_mem (evenPerm j hj1) (apply_mem_permOrbit (evenPerm j hj1) x)]; exact hmem⟩
+    exact ⟨e, he, by
+      rw [← permOrbit_eq_of_mem _ (apply_mem_permOrbit (evenPerm j hj1) x)]; exact hmem⟩
 
 /-- **(ratified, Theorem E, structure).**  For `j ≥ 2`, every orbit through `x > 1` meets `E`
 in exactly one point.  Paper proof: evens go up into `2jℕ⁺` (`×j`); odd `n ≥ 3` go down
@@ -835,7 +838,8 @@ theorem entry_le_of_mem_orbit (hj : 2 ≤ j) {x e : ℤ} (hx : 1 < x) (he : e �
         rw [h1]; nlinarith
     exact (key n).1
   · rw [zpow_negSucc, ← inv_pow]
-    have key : ∀ n : ℕ, e < ((evenPerm j hj1)⁻¹ ^ (n + 1)) e ∧ ((evenPerm j hj1)⁻¹ ^ (n + 1)) e % 2 = 1 := by
+    have key : ∀ n : ℕ, e < ((evenPerm j hj1)⁻¹ ^ (n + 1)) e ∧
+        ((evenPerm j hj1)⁻¹ ^ (n + 1)) e % 2 = 1 := by
       intro n
       induction n with
       | zero =>
