@@ -2,14 +2,15 @@
 
 Kickoff: `KICKOFF-2026-10-16-totality.md`.  Branch `wip/totality-2`.
 
-## Status (2026-10-16)
+## Status (2026-10-16): DONE
 
-| File | Status |
-|---|---|
-| `RcwaTotalityGlue.lean` | **sorry-free.**  All of §1 and §2 proved. |
-| `RcwaTotality.lean` | `exists_lab`, `exists_primeData` proved; the assemblies compile on upstream `sorry`s only. |
-| `RcwaTotalityCompile.lean` | in progress (12 leaf `sorry`s at kickoff) |
-| `RcwaTotalityRestart.lean` | in progress (16 leaf `sorry`s at kickoff) |
+All four files are `sorry`-free; `lake build CollatzMoonshot.RcwaTotality` is green.
+`totalityFamily`, `mortalityUndecidable`, `mortal_iff_total`, `exists_computable_compile`,
+`glueH_mortal_iff` and the five corollaries (`orbit_count_family'`, `oneOrbit_not_re'`,
+`oneOrbit_not_coRE'`, `not_computable_oneOrbit'`, `not_computable_finiteOrbits'`) depend only on
+`[propext, Classical.choice, Quot.sound]`.  No `native_decide`, no `maxHeartbeats`, no axioms.
+No ratified statement changed (one reorder: `glue_chain_reaches_of_inr` above
+`glue_chain_reaches`).
 
 ## Notes
 
@@ -24,3 +25,11 @@ Kickoff: `KICKOFF-2026-10-16-totality.md`.  Branch `wip/totality-2`.
   projecting the macro chain to an infinite run of the glued `U` (states chosen via `choose` from
   boundary membership).
 * Fast check loop: `lake env lean CollatzMoonshot/<File>.lean` (~7-15 s against prebuilt oleans).
+* Restart garbage flush (`halts_or_reaches_restart`): predicate `GB` (halts or reaches `clr 0`),
+  `gb_next` (all successors good ⇒ good; stuck ⇒ halts), then one lemma per state family by
+  induction on the drained counter, the input loop `cx` innermost-first (`gb_ad`, `gb_ml₁`,
+  `gb_ml`, `gb_mv` under the hypothesis that `cx` is good at the current `x`).
+* Restart honest runs (`reaches_round` etc.): drain-loop lemmas `mv_loop`, `ml_loop`, `cw_loop`,
+  `bt_loop`, `clr_loop`, `cx_loop`, `clr_all`; macros `upd`, `acf` for counter-function equalities.
+* Compile: `godel_map_gen` (one 30-constructor relabelling proof), `pullG`/`roleD` for
+  `godel_single_mapQ` without injectivity; `primrec_doubleN` via `Primrec.listFilterMap`.
