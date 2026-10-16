@@ -174,3 +174,4 @@ import CollatzMoonshot.Maze
 import CollatzMoonshot.CounterMachine
 import CollatzMoonshot.CounterMachineUniversal
 import CollatzMoonshot.RcwaHalting
+import CollatzMoonshot.RcwaOrbitCount
