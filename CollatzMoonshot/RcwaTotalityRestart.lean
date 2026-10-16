@@ -356,29 +356,276 @@ section Runs
 
 variable {u : ToPartrec.Code} {L : ℕ}
 
+/-- The main counter of `U₂`, inside the restart machine. -/
+abbrev cM : ACtr := .sim (some K'.main)
+/-- The scratch counter `tmp` of `U₂`, inside the restart machine. -/
+abbrev cT : ACtr := .sim none
+
+theorem rstep {a b : AState u} {o : Op ACtr} (h : ARule u ⟨a, o, b⟩) {f g : ACtr → ℕ}
+    (ha : o.Act f g) : (Asharp u L).Step (.inl a, f) (.inl b, g) :=
+  glue_step_inl ⟨_, h, rfl, rfl, ha⟩
+
+theorem act_test' {i : ACtr} {b : Bool} {f : ACtr → ℕ} (h : decide (0 < f i) = b) :
+    (Op.test i b).Act f f := ⟨h, rfl⟩
+
+theorem act_dec' {i : ACtr} {f : ACtr → ℕ} {n : ℕ} (h : f i = n + 1) :
+    (Op.dec i).Act f (Function.update f i n) :=
+  ⟨by omega, by simp [h], fun j hj => by simp [hj]⟩
+
+theorem act_nop' (f : ACtr → ℕ) : (Op.nop : Op ACtr).Act f f := rfl
+
+macro "upd" : tactic =>
+  `(tactic| (funext j; simp only [Function.update_apply]; split_ifs <;>
+    first | rfl | omega | (simp_all <;> omega) | simp_all))
+
+theorem reaches_upd {c : Cfg (AState u ⊕ Fin L) ACtr} {q : AState u ⊕ Fin L}
+    {g g' : ACtr → ℕ} (h : (Asharp u L).Reaches c (q, g)) (he : g = g') :
+    (Asharp u L).Reaches c (q, g') := he ▸ h
+
+theorem mv_loop : ∀ n (f : ACtr → ℕ), f cM = n →
+    (Asharp u L).Reaches (.inl .mv, f)
+      (.inl .mv, Function.update (Function.update f cM 0) cT (f cT + n)) := by
+  intro n
+  induction n with
+  | zero => intro f hf; refine reaches_upd .refl ?_; upd
+  | succ n ih =>
+    intro f hf
+    have h1 := rstep (u := u) (L := L) .mvP (act_test' (f := f) (by simp [hf]))
+    have h2 := rstep (u := u) (L := L) .mv₁ (act_dec' hf)
+    have h3 := rstep (u := u) (L := L) .mv₂ (act_inc_update (Function.update f cM n) cT)
+    have h4 := ih (Function.update (Function.update f cM n) cT
+      (Function.update f cM n cT + 1)) (by simp)
+    refine .head h1 (.head h2 (.head h3 ?_))
+    exact reaches_upd h4 (by upd)
+theorem act_inc_eq {i : ACtr} {f g : ACtr → ℕ} (h : g = Function.update f i (f i + 1)) :
+    (Op.inc i).Act f g := h ▸ act_inc_update f i
+
+theorem ml_loop : ∀ n (f : ACtr → ℕ), f cT = n →
+    (Asharp u L).Reaches (.inl .ml, f)
+      (.inl .ml, Function.update (Function.update f cT 0) cM (f cM + 5 * n)) := by
+  intro n
+  induction n with
+  | zero => intro f hf; refine reaches_upd .refl ?_; upd
+  | succ n ih =>
+    intro f hf
+    let g : ℕ → ACtr → ℕ := fun k => Function.update (Function.update f cT n) cM (f cM + k)
+    have h4 := ih (g 5) (by simp [g])
+    refine .head (rstep .mlP (act_test' (f := f) (by simp [hf]))) ?_
+    refine .head (rstep .ml₀ (act_dec' hf)) ?_
+    refine .head (rstep (.mlI 1 2 (by decide) (by decide))
+      (act_inc_eq (g := g 1) (by simp only [g]; upd))) ?_
+    refine .head (rstep (.mlI 2 3 (by decide) (by decide))
+      (act_inc_eq (g := g 2) (by simp only [g]; upd))) ?_
+    refine .head (rstep (.mlI 3 4 (by decide) (by decide))
+      (act_inc_eq (g := g 3) (by simp only [g]; upd))) ?_
+    refine .head (rstep (.mlI 4 5 (by decide) (by decide))
+      (act_inc_eq (g := g 4) (by simp only [g]; upd))) ?_
+    refine .head (rstep .mlL (act_inc_eq (g := g 5) (by simp only [g]; upd))) ?_
+    exact reaches_upd h4 (by simp only [g]; upd)
+
+theorem cw_loop : ∀ n (f : ACtr → ℕ), f .w = n →
+    (Asharp u L).Reaches (.inl .cw, f)
+      (.inl .cw, Function.update (Function.update f .w 0) .x (f .x + n)) := by
+  intro n
+  induction n with
+  | zero => intro f hf; refine reaches_upd .refl ?_; upd
+  | succ n ih =>
+    intro f hf
+    have h4 := ih (Function.update (Function.update f .w n) .x
+      (Function.update f .w n .x + 1)) (by simp)
+    refine .head (rstep .cwP (act_test' (f := f) (by simp [hf])))
+      (.head (rstep .cw₁ (act_dec' hf)) (.head (rstep .cw₂ (act_inc_update _ _)) ?_))
+    exact reaches_upd h4 (by upd)
+
+theorem bt_loop : ∀ n (f : ACtr → ℕ), f .t = n →
+    (Asharp u L).Reaches (.inl .bt, f)
+      (.inl .bt, Function.update (Function.update f .t 0) .p (f .p + n)) := by
+  intro n
+  induction n with
+  | zero => intro f hf; refine reaches_upd .refl ?_; upd
+  | succ n ih =>
+    intro f hf
+    have h4 := ih (Function.update (Function.update f .t n) .p
+      (Function.update f .t n .p + 1)) (by simp)
+    refine .head (rstep .btP (act_test' (f := f) (by simp [hf])))
+      (.head (rstep .bt₁ (act_dec' hf)) (.head (rstep .bt₂ (act_inc_update _ _)) ?_))
+    exact reaches_upd h4 (by upd)
+
+theorem clr_loop (j : Fin 5) : ∀ n (f : ACtr → ℕ), f (.sim (clrCtr j)) = n →
+    (Asharp u L).Reaches (.inl (.clr j), f)
+      (.inl (.clr j), Function.update f (.sim (clrCtr j)) 0) := by
+  intro n
+  induction n with
+  | zero => intro f hf; refine reaches_upd .refl ?_; upd
+  | succ n ih =>
+    intro f hf
+    have h4 := ih (Function.update f (.sim (clrCtr j)) n) (by simp)
+    refine .head (rstep (.clrP j) (act_test' (f := f) (by simp [hf])))
+      (.head (rstep (.clrD j) (act_dec' hf)) ?_)
+    exact reaches_upd h4 (by upd)
+
+theorem cx_loop : ∀ n (f : ACtr → ℕ), f .x = n → f cT = 0 →
+    (Asharp u L).Reaches (.inl .cx, f)
+      (.inl .cx, Function.update (Function.update (Function.update f .x 0) .w (f .w + n)) cM
+        (gIter n (f cM))) := by
+  intro n
+  induction n with
+  | zero => intro f hf _; refine reaches_upd .refl ?_; simp only [gIter]; upd
+  | succ n ih =>
+    intro f hf hT
+    -- `x − 1`, `w + 1`
+    let f₂ := Function.update (Function.update f .x n) .w (f .w + 1)
+    have h1 : (Asharp u L).Reaches (.inl .cx, f) (.inl .mv, f₂) :=
+      .head (rstep .cxP (act_test' (f := f) (by simp [hf])))
+        (.head (rstep .cx₁ (act_dec' hf))
+          (.single (rstep .cx₂ (act_inc_eq (by simp only [f₂]; upd)))))
+    -- `main` into `tmp`
+    let f₃ := Function.update (Function.update f₂ cM 0) cT (f cM)
+    have h2 : (Asharp u L).Reaches (.inl .mv, f₂) (.inl .ml, f₃) :=
+      (reaches_upd (mv_loop _ f₂ rfl) (by simp only [f₂, f₃]; upd)).tail
+        (rstep .mvZ (act_test' (by simp [f₃])))
+    -- `tmp` back five-fold
+    let f₄ := Function.update f₂ cM (5 * f cM)
+    have h3 : (Asharp u L).Reaches (.inl .ml, f₃) (.inl (.ad 0), f₄) :=
+      (reaches_upd (ml_loop _ f₃ rfl) (by simp only [f₃, f₄, f₂]; upd)).tail
+        (rstep .mlZ (act_test' (by simp [f₄, f₂, hT])))
+    -- `+ 4`
+    let g : ℕ → ACtr → ℕ := fun k => Function.update f₂ cM (5 * f cM + k)
+    have h4 : (Asharp u L).Reaches (.inl (.ad 0), f₄) (.inl .cx, g 4) := by
+      refine .head (rstep (.adI 0 1 rfl) (act_inc_eq (g := g 1) (by simp only [g, f₄]; upd))) ?_
+      refine .head (rstep (.adI 1 2 rfl) (act_inc_eq (g := g 2) (by simp only [g]; upd))) ?_
+      refine .head (rstep (.adI 2 3 rfl) (act_inc_eq (g := g 3) (by simp only [g]; upd))) ?_
+      exact .single (rstep .adL (act_inc_eq (by simp only [g]; upd)))
+    have h5 := ih (g 4) (by simp [g, f₂]) (by simp [g, f₂, hT])
+    refine h1.trans (h2.trans (h3.trans (h4.trans (reaches_upd h5 ?_))))
+    rw [show gIter (n + 1) (f cM) = gIter n (5 * f cM + 4) from
+      Function.iterate_succ_apply _ _ _]
+    simp only [g, f₂]; upd
+
+/-- The clearing phase: from `clr 0` to `hole` with the five counters of `U₂` cleared. -/
+theorem clr_all (v : LCtr → ℕ) (x w p t : ℕ) :
+    (Asharp u L).Reaches (.inl (.clr 0), acfg v x w p t) (.inl .hole, acfg 0 x w p t) := by
+  have step : ∀ (j j' : Fin 5), j'.val = j.val + 1 → ∀ f : ACtr → ℕ,
+      (Asharp u L).Reaches (.inl (.clr j), f)
+        (.inl (.clr j'), Function.update f (.sim (clrCtr j)) 0) := fun j j' hj f =>
+    (clr_loop j _ f rfl).tail (rstep (.clrZ j j' hj) (act_test' (by simp)))
+  refine ((step 0 1 rfl _).trans ((step 1 2 rfl _).trans ((step 2 3 rfl _).trans
+    ((step 3 4 rfl _).trans ((clr_loop 4 _ _ rfl).tail
+      (rstep .clrH (act_test' (by simp)))))))).trans (reaches_upd .refl ?_)
+  funext j
+  rcases j with (_ | (_ | _ | _ | _)) | _ | _ | _ | _ <;>
+    simp [acfg, clrCtr]
+
+macro "acf" : tactic =>
+  `(tactic| (funext j; rcases j with (_ | (_ | _ | _ | _)) | _ | _ | _ | _ <;>
+    simp [acfg, honest, Function.update_apply, Pi.single_apply] <;> omega))
+
+theorem act_map_sim {o : Op LCtr} {v v' : LCtr → ℕ} (h : o.Act v v') (x w p t : ℕ) :
+    (o.map ACtr.sim).Act (acfg v x w p t) (acfg v' x w p t) := by
+  cases o with
+  | test i b => obtain ⟨h1, rfl⟩ := h; exact ⟨h1, rfl⟩
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    refine ⟨h1, h2, fun j hj => ?_⟩
+    rcases j with c | _ | _ | _ | _ <;> try rfl
+    exact h3 c fun hc => hj (hc ▸ rfl)
+  | inc i =>
+    obtain ⟨h2, h3⟩ := h
+    refine ⟨h2, fun j hj => ?_⟩
+    rcases j with c | _ | _ | _ | _ <;> try rfl
+    exact h3 c fun hc => hj (hc ▸ rfl)
+  | nop => cases h; rfl
+
+theorem act_map_sim_inv {o : Op LCtr} {f g : ACtr → ℕ} (h : (o.map ACtr.sim).Act f g) :
+    o.Act (fun c => f (.sim c)) (fun c => g (.sim c)) := by
+  cases o with
+  | test i b => obtain ⟨h1, rfl⟩ := h; exact ⟨h1, rfl⟩
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    exact ⟨h1, h2, fun j hj => h3 _ fun hc => hj (ACtr.sim.inj hc)⟩
+  | inc i =>
+    obtain ⟨h2, h3⟩ := h
+    exact ⟨h2, fun j hj => h3 _ fun hc => hj (ACtr.sim.inj hc)⟩
+  | nop => exact congrArg (fun f c => f (ACtr.sim c)) (show g = f from h)
+
+/-- A step of `U₂` is the `sim` step of the restart machine. -/
+theorem step_sim {s : S₂ u} {v : LCtr → ℕ} {d : Cfg (S₂ u) LCtr} (h : (U₂ u).Step (s, v) d)
+    (x w p t : ℕ) :
+    (Asharp u L).Step (.inl (.run s), acfg v x w p t) (.inl (.gate d.1), acfg d.2 x w p t) := by
+  obtain ⟨⟨a, o, b⟩, hρ, h1, h2, h3⟩ := h
+  simp only at h1 h2
+  subst h1 h2
+  exact rstep (.sim hρ) (act_map_sim h3 x w p t)
+
+/-- A token moves from `p` to `t` and the machine enters `run s`. -/
+theorem reaches_spend (s : S₂ u) (v : LCtr → ℕ) (x w p t : ℕ) :
+    Relation.TransGen (Asharp u L).Step (.inl (.gate s), acfg v x w (p + 1) t)
+      (.inl (.run s), acfg v x w p (t + 1)) :=
+  .head (rstep (.gateP s) (act_test' (by simp [acfg])))
+    (.head (rstep (.sp₁ s) (act_dec' (n := p) rfl))
+      (.single (rstep (.sp₂ s) (act_inc_eq (by acf)))))
+
 /-- **One round.**  From `clr 0` with any counters, the machine reaches `gate start` with the
 honest input built from `x`, `x := x + w`, `w := 0`, budget `p + t + 1`, nothing spent. -/
 theorem reaches_round (v : LCtr → ℕ) (x w p t : ℕ) :
     Relation.TransGen (Asharp u L).Step (.inl (.clr 0), acfg v x w p t)
       (.inl (.gate (start₂ u)), acfg (honest (gIter x (L + 1))) (x + w) 0 (p + t + 1) 0) := by
-  sorry
+  have h1 := clr_all (u := u) (L := L) v x w p t
+  have h2 := (glue_chain_reaches (U := restart u) (hole := .hole) (back := .back) (i := cM)
+    (L := L) (acfg 0 x w p t)).to_reflTransGen
+  have h3 : (Asharp u L).Step (.inl .back, Function.update (acfg 0 x w p t) cM
+      (acfg 0 x w p t cM + (L + 1))) (.inl .cx, acfg (honest (L + 1)) x w p t) :=
+    rstep .back (show _ = _ by acf)
+  have h4 := cx_loop (u := u) (L := L) x (acfg (honest (L + 1)) x w p t) rfl
+    (by simp [acfg, honest])
+  have h5 : (Asharp u L).Reaches (.inl .cx, acfg (honest (L + 1)) x w p t)
+      (.inl .cw, acfg (honest (gIter x (L + 1))) 0 (w + x) p t) :=
+    (reaches_upd h4 (by acf)).tail (rstep .cxZ (act_test' (by simp [acfg])))
+  have h6 : (Asharp u L).Reaches (.inl .cw, acfg (honest (gIter x (L + 1))) 0 (w + x) p t)
+      (.inl .bt, acfg (honest (gIter x (L + 1))) (x + w) 0 p t) :=
+    (reaches_upd (cw_loop _ _ rfl) (by acf)).tail (rstep .cwZ (act_test' (by simp [acfg])))
+  have h7 : (Asharp u L).Reaches (.inl .bt, acfg (honest (gIter x (L + 1))) (x + w) 0 p t)
+      (.inl .bt₃, acfg (honest (gIter x (L + 1))) (x + w) 0 (p + t) 0) :=
+    (reaches_upd (bt_loop _ _ rfl) (by acf)).tail (rstep .btZ (act_test' (by simp [acfg])))
+  exact Relation.TransGen.tail' (h1.trans (h2.trans ((Relation.ReflTransGen.single h3).trans
+    (h5.trans (h6.trans h7))))) (rstep .bt₃ (act_inc_eq (by acf)))
 
 /-- **Gated simulation.**  `m` steps of `U₂` cost `m` tokens. -/
 theorem reaches_gated {s s' : S₂ u} {v v' : LCtr → ℕ} {m : ℕ}
     (h : (U₂ u).StepsN m (s, v) (s', v')) (x w p t : ℕ) :
     (Asharp u L).Reaches (.inl (.gate s), acfg v x w (p + m) t)
       (.inl (.gate s'), acfg v' x w p (t + m)) := by
-  sorry
+  suffices key : ∀ m c d, (U₂ u).StepsN m c d → ∀ t, (Asharp u L).Reaches
+      (.inl (.gate c.1), acfg c.2 x w (p + m) t) (.inl (.gate d.1), acfg d.2 x w p (t + m)) from
+    key m _ _ h t
+  intro m c d hm
+  induction hm with
+  | refl c => intro t; exact .refl
+  | @head n c d e hcd _ ih =>
+    intro t
+    have h1 := (reaches_spend (u := u) (L := L) c.1 c.2 x w (p + n) t).to_reflTransGen
+    have h2 := step_sim (L := L) (show (U₂ u).Step (c.1, c.2) d from hcd) x w (p + n) (t + 1)
+    have h3 := ih (t + 1)
+    rw [show p + (n + 1) = p + n + 1 by omega]
+    rw [show t + 1 + n = t + (n + 1) by omega] at h3
+    exact h1.trans (.head h2 h3)
 
 /-- A halting ID of `U₂` with a token left halts the machine. -/
 theorem halts_of_stuck_gate {s : S₂ u} {v : LCtr → ℕ} (h : (U₂ u).Stuck (s, v)) (x w p t : ℕ) :
     (Asharp u L).Halts (.inl (.gate s), acfg v x w (p + 1) t) := by
-  sorry
+  refine ⟨_, (reaches_spend (u := u) (L := L) s v x w p t).to_reflTransGen, ?_⟩
+  intro d hd
+  obtain ⟨q', -, hst⟩ := glue_step_inl_inv (by simp) hd
+  obtain ⟨r, hr, h1, h2, h3⟩ := hst
+  cases hr <;> simp only [AState.run.injEq, reduceCtorEq] at h1
+  rename_i a b o hρ
+  subst h1
+  exact h (b, fun c => d.2 (.sim c)) ⟨_, hρ, rfl, rfl, act_map_sim_inv h3⟩
 
 /-- An empty budget restarts. -/
 theorem step_gate_zero (s : S₂ u) (v : LCtr → ℕ) (x w t : ℕ) :
-    (Asharp u L).Step (.inl (.gate s), acfg v x w 0 t) (.inl (.clr 0), acfg v x w 0 t) := by
-  sorry
+    (Asharp u L).Step (.inl (.gate s), acfg v x w 0 t) (.inl (.clr 0), acfg v x w 0 t) :=
+  rstep (.gateZ s) (act_test' (by simp [acfg]))
 
 /-- **A gated round ends.**  From `gate s` with budget `p`, the machine halts (`U₂` reached a
 halting ID) or spends the whole budget and reaches `clr 0`. -/
@@ -386,13 +633,384 @@ theorem gate_halts_or_restart (s : S₂ u) (v : LCtr → ℕ) (x w p t : ℕ) :
     (Asharp u L).Halts (.inl (.gate s), acfg v x w p t) ∨
       ∃ v', (Asharp u L).Reaches (.inl (.gate s), acfg v x w p t)
         (.inl (.clr 0), acfg v' x w 0 (t + p)) := by
-  sorry
+  induction p generalizing s v t with
+  | zero => exact Or.inr ⟨v, .single (step_gate_zero s v x w t)⟩
+  | succ p ih =>
+    by_cases hs : (U₂ u).Stuck (s, v)
+    · exact Or.inl (halts_of_stuck_gate hs x w p t)
+    simp only [CM.Stuck, not_forall, not_not] at hs
+    obtain ⟨d, hd⟩ := hs
+    have hr := reaches_gated (L := L) (CM.StepsN.head hd (.refl d)) x w p t
+    rcases ih d.1 d.2 (t + 1) with ⟨e, he, hes⟩ | ⟨v', hv'⟩
+    · exact Or.inl ⟨e, hr.trans he, hes⟩
+    · refine Or.inr ⟨v', hr.trans ?_⟩
+      rwa [show t + 1 + p = t + (p + 1) by omega] at hv'
+
+/-! ### Garbage: every configuration halts or reaches the restart -/
+
+/-- Halts, or reaches `clr 0`. -/
+def GB (u : ToPartrec.Code) (L : ℕ) (c : Cfg (AState u ⊕ Fin L) ACtr) : Prop :=
+  (Asharp u L).Halts c ∨ ∃ v x w p t, (Asharp u L).Reaches c (.inl (.clr 0), acfg v x w p t)
+
+theorem gb_eta (c : ACtr → ℕ) :
+    c = acfg (fun l => c (.sim l)) (c .x) (c .w) (c .p) (c .t) := by
+  funext k; cases k <;> rfl
+
+theorem gb_of_reaches {c d : Cfg (AState u ⊕ Fin L) ACtr} (h : (Asharp u L).Reaches c d)
+    (hd : GB u L d) : GB u L c := by
+  rcases hd with ⟨e, he, hs⟩ | ⟨v, x, w, p, t, hr⟩
+  · exact Or.inl ⟨e, h.trans he, hs⟩
+  · exact Or.inr ⟨v, x, w, p, t, h.trans hr⟩
+
+/-- A configuration all of whose successors are good is good. -/
+theorem gb_next {q : AState u} (hq : q ≠ .hole) (c : ACtr → ℕ)
+    (h : ∀ r, ARule u r → r.src = q → ∀ c', r.op.Act c c' → GB u L (.inl r.dst, c')) :
+    GB u L (.inl q, c) := by
+  by_cases hs : (Asharp u L).Stuck (.inl q, c)
+  · exact Or.inl ⟨_, .refl, hs⟩
+  simp only [CM.Stuck, not_forall, not_not] at hs
+  obtain ⟨d, hd⟩ := hs
+  obtain ⟨q', hq', ρ, hρ, h1, h2, h3⟩ := glue_step_inl_inv hq hd
+  have hd' : d = (.inl ρ.dst, d.2) := Prod.ext (hq'.trans (congrArg Sum.inl h2)) rfl
+  exact gb_of_reaches (.single hd) (hd' ▸ h ρ hρ h1.symm d.2 h3)
+
+theorem gb_clr0 (c : ACtr → ℕ) : GB u L (.inl (.clr 0), c) := by
+  refine Or.inr ⟨fun l => c (.sim l), c .x, c .w, c .p, c .t, ?_⟩
+  rw [← gb_eta c]; exact .refl
+
+theorem gb_gate (s : S₂ u) (c : ACtr → ℕ) : GB u L (.inl (.gate s), c) := by
+  rw [gb_eta c]
+  rcases gate_halts_or_restart (L := L) s _ (c .x) (c .w) (c .p) (c .t) with h | ⟨v', h⟩
+  · exact Or.inl h
+  · exact Or.inr ⟨_, _, _, _, _, h⟩
+
+theorem gb_run (s : S₂ u) (c : ACtr → ℕ) : GB u L (.inl (.run s), c) :=
+  gb_next (by simp) c fun r hr hs c' _ => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_gate _ _
+
+theorem gb_sp₂ (s : S₂ u) (c : ACtr → ℕ) : GB u L (.inl (.sp₂ s), c) :=
+  gb_next (by simp) c fun r hr hs c' _ => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_run _ _
+
+theorem gb_sp₁ (s : S₂ u) (c : ACtr → ℕ) : GB u L (.inl (.sp₁ s), c) :=
+  gb_next (by simp) c fun r hr hs c' _ => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_sp₂ _ _
+
+/-- Induction on one counter. -/
+theorem gb_ind (X : ACtr) (P : (ACtr → ℕ) → Prop) (h0 : ∀ c, c X = 0 → P c)
+    (hs : ∀ n c, c X = n + 1 → (∀ c', c' X = n → P c') → P c) : ∀ c, P c := by
+  suffices ∀ n c, c X = n → P c from fun c => this _ c rfl
+  intro n
+  induction n with
+  | zero => exact h0
+  | succ n ih => exact fun c hc => hs n c hc ih
+
+theorem gb_bt₃ (c : ACtr → ℕ) : GB u L (.inl .bt₃, c) :=
+  gb_next (by simp) c fun r hr hs c' _ => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_gate _ _
+
+theorem gb_bt (c : ACtr → ℕ) : GB u L (.inl .bt, c) := by
+  refine gb_ind .t (fun c => GB u L (.inl .bt, c)) (fun c hc => ?_) (fun n c hc ih => ?_) c
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · exact gb_bt₃ _
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+    · obtain ⟨-, rfl⟩ := ha
+      refine gb_next (q := .bt₁) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h2, h3⟩ := ha₁
+      refine gb_next (q := .bt₂) (by simp) c₁ fun r hr hs c₂ ha₂ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h5⟩ := ha₂
+      exact ih _ (by rw [h5 .t (by decide)]; omega)
+
+theorem gb_cw (c : ACtr → ℕ) : GB u L (.inl .cw, c) := by
+  refine gb_ind .w (fun c => GB u L (.inl .cw, c)) (fun c hc => ?_) (fun n c hc ih => ?_) c
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · exact gb_bt _
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+    · obtain ⟨-, rfl⟩ := ha
+      refine gb_next (q := .cw₁) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h2, h3⟩ := ha₁
+      refine gb_next (q := .cw₂) (by simp) c₁ fun r hr hs c₂ ha₂ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h5⟩ := ha₂
+      exact ih _ (by rw [h5 .w (by decide)]; omega)
+
+section CxLap
+
+variable (n : ℕ) (hcx : ∀ c : ACtr → ℕ, c .x = n → GB u L (.inl .cx, c))
+include hcx
+
+theorem gb_ad : ∀ k (j : Fin 4), j.val + k = 3 → ∀ c : ACtr → ℕ, c .x = n →
+    GB u L (.inl (.ad j), c) := by
+  intro k
+  induction k with
+  | zero =>
+    intro j hj c hc
+    refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq, AState.ad.injEq] at hs
+    · rename_i j₁ j' hj'
+      subst hs; have := j'.isLt; omega
+    · obtain ⟨-, h⟩ := ha
+      exact hcx _ (by rw [h .x (by decide), hc])
+  | succ k ih =>
+    intro j hj c hc
+    refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq, AState.ad.injEq] at hs
+    · rename_i j₁ j' hj'
+      subst hs
+      obtain ⟨-, h⟩ := ha
+      exact ih j' (by omega) _ (by rw [h .x (by decide), hc])
+    · subst hs; simp at hj
+
+omit hcx in
+theorem gb_ml₁ (m : ℕ) (hml : ∀ c : ACtr → ℕ, c .x = n → c (.sim none) = m →
+      GB u L (.inl .ml, c)) :
+    ∀ k (j : Fin 6), 1 ≤ j.val → j.val + k = 5 → ∀ c : ACtr → ℕ, c .x = n →
+      c (.sim none) = m → GB u L (.inl (.ml₁ j), c) := by
+  intro k
+  induction k with
+  | zero =>
+    intro j hj1 hj c hc hm
+    refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq, AState.ml₁.injEq] at hs
+    · subst hs; simp at hj
+    · rename_i j₁ j' h1 hj'
+      subst hs; have := j'.isLt; omega
+    · obtain ⟨-, h⟩ := ha
+      exact hml _ (by rw [h .x (by decide), hc]) (by rw [h (.sim none) (by decide), hm])
+  | succ k ih =>
+    intro j hj1 hj c hc hm
+    refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq, AState.ml₁.injEq] at hs
+    · subst hs; simp at hj1
+    · rename_i j₁ j' h1 hj'
+      subst hs
+      obtain ⟨-, h⟩ := ha
+      exact ih j' (by omega) (by omega) _ (by rw [h .x (by decide), hc])
+        (by rw [h (.sim none) (by decide), hm])
+    · subst hs; simp at hj
+
+theorem gb_ml (c : ACtr → ℕ) (hc : c .x = n) : GB u L (.inl .ml, c) := by
+  revert hc
+  refine gb_ind (.sim none) (fun c => c .x = n → GB u L (.inl .ml, c))
+    (fun c h0 hc => ?_) (fun m c hm ih hc => ?_) c
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨-, rfl⟩ := ha
+      exact gb_ad n hcx 3 0 rfl _ hc
+    · obtain ⟨h1, -⟩ := ha; simp [h0] at h1
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+    · obtain ⟨-, rfl⟩ := ha
+      refine gb_next (q := .ml₁ 0) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+      cases hr <;> simp only [reduceCtorEq, AState.ml₁.injEq] at hs
+      · obtain ⟨-, h2, h3⟩ := ha₁
+        exact gb_ml₁ n m (fun c' h1 h2 => ih c' h2 h1) 4 1 le_rfl rfl _
+          (by rw [h3 .x (by decide), hc]) (by omega)
+      · rename_i j₁ j' h1 hj'; subst hs; simp at h1
+      · simp at hs
+
+theorem gb_mv (c : ACtr → ℕ) (hc : c .x = n) : GB u L (.inl .mv, c) := by
+  revert hc
+  refine gb_ind (.sim (some K'.main)) (fun c => c .x = n → GB u L (.inl .mv, c))
+    (fun c h0 hc => ?_) (fun m c hm ih hc => ?_) c
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨-, rfl⟩ := ha
+      exact gb_ml n hcx _ hc
+    · obtain ⟨h1, -⟩ := ha; simp [h0] at h1
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+    · obtain ⟨-, rfl⟩ := ha
+      refine gb_next (q := .mv₁) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h2, h3⟩ := ha₁
+      refine gb_next (q := .mv₂) (by simp) c₁ fun r hr hs c₂ ha₂ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h5⟩ := ha₂
+      exact ih _ (by rw [h5 _ (by decide)]; omega)
+        (by rw [h5 .x (by decide), h3 .x (by decide), hc])
+
+end CxLap
+
+theorem gb_cx (c : ACtr → ℕ) : GB u L (.inl .cx, c) := by
+  refine gb_ind .x (fun c => GB u L (.inl .cx, c)) (fun c hc => ?_) (fun n c hc ih => ?_) c
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · exact gb_cw _
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+  · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+    cases hr <;> simp only [reduceCtorEq] at hs
+    · obtain ⟨h1, -⟩ := ha; simp [hc] at h1
+    · obtain ⟨-, rfl⟩ := ha
+      refine gb_next (q := .cx₁) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h2, h3⟩ := ha₁
+      refine gb_next (q := .cx₂) (by simp) c₁ fun r hr hs c₂ ha₂ => ?_
+      cases hr <;> simp only [reduceCtorEq] at hs
+      obtain ⟨-, h5⟩ := ha₂
+      exact gb_mv n ih _ (by rw [h5 .x (by decide)]; omega)
+
+theorem gb_back (c : ACtr → ℕ) : GB u L (.inl .back, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_cx _
+
+theorem gb_hole (c : ACtr → ℕ) : GB u L (.inl .hole, c) :=
+  gb_of_reaches (glue_chain_reaches c).to_reflTransGen (gb_back _)
+
+theorem gb_inr (k : Fin L) (c : ACtr → ℕ) : GB u L (.inr k, c) :=
+  gb_of_reaches (glue_chain_reaches_of_inr k c).to_reflTransGen (gb_back _)
+
+theorem gb_clr : ∀ k (j : Fin 5), j.val + k = 4 → ∀ c : ACtr → ℕ,
+    GB u L (.inl (.clr j), c) := by
+  intro k
+  induction k with
+  | zero =>
+    intro j hj c
+    refine gb_ind (.sim (clrCtr j)) (fun c => GB u L (.inl (.clr j), c))
+      (fun c h0 => ?_) (fun m c hm ih => ?_) c
+    · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+      cases hr <;> simp only [reduceCtorEq, AState.clr.injEq] at hs
+      · subst hs; obtain ⟨h1, -⟩ := ha; simp [h0] at h1
+      · rename_i j₁ j' hj'; subst hs; have := j'.isLt; omega
+      · exact gb_hole _
+    · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+      cases hr <;> simp only [reduceCtorEq, AState.clr.injEq] at hs
+      · subst hs; obtain ⟨-, rfl⟩ := ha
+        refine gb_next (q := .clr' _) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+        cases hr <;> simp only [reduceCtorEq, AState.clr'.injEq] at hs
+        subst hs; obtain ⟨-, h2, -⟩ := ha₁
+        exact ih _ (by omega)
+      · rename_i j₁ j' hj'; subst hs; obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+      · subst hs; obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+  | succ k ihk =>
+    intro j hj c
+    refine gb_ind (.sim (clrCtr j)) (fun c => GB u L (.inl (.clr j), c))
+      (fun c h0 => ?_) (fun m c hm ih => ?_) c
+    · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+      cases hr <;> simp only [reduceCtorEq, AState.clr.injEq] at hs
+      · subst hs; obtain ⟨h1, -⟩ := ha; simp [h0] at h1
+      · rename_i j₁ j' hj'; subst hs; exact ihk j' (by omega) _
+      · subst hs; simp at hj
+    · refine gb_next (by simp) c fun r hr hs c' ha => ?_
+      cases hr <;> simp only [reduceCtorEq, AState.clr.injEq] at hs
+      · subst hs; obtain ⟨-, rfl⟩ := ha
+        refine gb_next (q := .clr' _) (by simp) _ fun r hr hs c₁ ha₁ => ?_
+        cases hr <;> simp only [reduceCtorEq, AState.clr'.injEq] at hs
+        subst hs; obtain ⟨-, h2, -⟩ := ha₁
+        exact ih _ (by omega)
+      · rename_i j₁ j' hj'; subst hs; obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+      · subst hs; obtain ⟨h1, -⟩ := ha; simp [hm] at h1
+
+theorem gb_clr' (j : Fin 5) (c : ACtr → ℕ) : GB u L (.inl (.clr' j), c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq, AState.clr'.injEq] at hs
+    exact gb_clr (4 - j.val) _ (by omega) _
+
+theorem gb_mv' (c : ACtr → ℕ) : GB u L (.inl .mv, c) := gb_mv _ (fun c _ => gb_cx c) c rfl
+
+theorem gb_ml' (c : ACtr → ℕ) : GB u L (.inl .ml, c) := gb_ml _ (fun c _ => gb_cx c) c rfl
+
+theorem gb_ml₁' (j : Fin 6) (c : ACtr → ℕ) : GB u L (.inl (.ml₁ j), c) := by
+  by_cases hj : 1 ≤ j.val
+  · exact gb_ml₁ (c .x) (c (.sim none)) (fun c _ _ => gb_ml' c) (5 - j.val) j hj
+      (by omega) c rfl rfl
+  · obtain rfl : j = 0 := Fin.ext (by omega)
+    exact gb_next (by simp) c fun r hr hs c' ha => by
+      cases hr <;> simp only [reduceCtorEq, AState.ml₁.injEq] at hs
+      · exact gb_ml₁ (c' .x) (c' (.sim none)) (fun c _ _ => gb_ml' c) 4 1 le_rfl rfl c' rfl rfl
+      · rename_i j₁ j' h1 hj'; subst hs; simp at h1
+      · simp at hs
+
+theorem gb_mv₂ (c : ACtr → ℕ) : GB u L (.inl .mv₂, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_mv' _
+
+theorem gb_mv₁ (c : ACtr → ℕ) : GB u L (.inl .mv₁, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_mv₂ _
+
+theorem gb_cx₂ (c : ACtr → ℕ) : GB u L (.inl .cx₂, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_mv' _
+
+theorem gb_cx₁ (c : ACtr → ℕ) : GB u L (.inl .cx₁, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_cx₂ _
+
+theorem gb_cw₂ (c : ACtr → ℕ) : GB u L (.inl .cw₂, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_cw _
+
+theorem gb_cw₁ (c : ACtr → ℕ) : GB u L (.inl .cw₁, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_cw₂ _
+
+theorem gb_bt₂ (c : ACtr → ℕ) : GB u L (.inl .bt₂, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_bt _
+
+theorem gb_bt₁ (c : ACtr → ℕ) : GB u L (.inl .bt₁, c) :=
+  gb_next (by simp) c fun r hr hs c' ha => by
+    cases hr <;> simp only [reduceCtorEq] at hs
+    exact gb_bt₂ _
 
 /-- **Garbage.**  From every configuration the machine halts or reaches `clr 0`. -/
 theorem halts_or_reaches_restart (c : Cfg (AState u ⊕ Fin L) ACtr) :
     (Asharp u L).Halts c ∨
       ∃ v x w p t, (Asharp u L).Reaches c (.inl (.clr 0), acfg v x w p t) := by
-  sorry
+  obtain ⟨q, v⟩ := c
+  rcases q with q | k
+  · cases q with
+    | run s => exact gb_run s v
+    | gate s => exact gb_gate s v
+    | sp₁ s => exact gb_sp₁ s v
+    | sp₂ s => exact gb_sp₂ s v
+    | clr j => exact gb_clr (4 - j.val) j (by omega) v
+    | clr' j => exact gb_clr' j v
+    | hole => exact gb_hole v
+    | back => exact gb_back v
+    | cx => exact gb_cx v
+    | cx₁ => exact gb_cx₁ v
+    | cx₂ => exact gb_cx₂ v
+    | mv => exact gb_mv' v
+    | mv₁ => exact gb_mv₁ v
+    | mv₂ => exact gb_mv₂ v
+    | ml => exact gb_ml' v
+    | ml₁ j => exact gb_ml₁' j v
+    | ad j => exact gb_ad _ (fun c _ => gb_cx c) (3 - j.val) j (by omega) v rfl
+    | cw => exact gb_cw v
+    | cw₁ => exact gb_cw₁ v
+    | cw₂ => exact gb_cw₂ v
+    | bt => exact gb_bt v
+    | bt₁ => exact gb_bt₁ v
+    | bt₂ => exact gb_bt₂ v
+    | bt₃ => exact gb_bt₃ v
+  · exact gb_inr k v
 
 /-- A run of `n` steps splits after `m ≤ n` steps. -/
 theorem stepsN_split {Q ι : Type*} {M : CM Q ι} :
