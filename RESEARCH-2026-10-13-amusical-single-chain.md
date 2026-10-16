@@ -1914,3 +1914,72 @@ family "finitely many orbits" is `Π⁰₂`-hard.  Same-orbit is `Σ⁰₁`-comp
   scratch counter) → Lemmas 9.3/9.4 (reversible, normal form) → Lemma 9.7 (two counters) →
   Kari–Ollinger doubling → `Valid` (Lemmas M, H, G).  That discharges `HaltingUndecidable` and
   makes `not_computable_sameCycle` hypothesis-free.
+
+## 59. Theorem C hypothesis-free in Lean; the Wythoff family's even-numerator phase and a solved irrational line (2026-10-16, two Opus agents; Ren checked in part)
+
+Reports: `wythoff-evenp.md`, `wythoff-2sqrtm.md`.
+
+* **Theorem C in Lean, closed (axiom-clean, verified 2026-10-16 by `#print axioms`).**  The route
+  of §58 is done: `HaltingUndecidable` is discharged and the `Π⁰₂` layer is in.  Headlines:
+  `RcwaHalting.not_computable_sameCycle'`, `RcwaTotality.orbit_count_family'`, `oneOrbit_not_re'`,
+  `oneOrbit_not_coRE'`, `not_computable_oneOrbit'`, `not_computable_finiteOrbits'`, and
+  `RcwaOrbitCount.exists_table_iff_mortal` (one orbit iff the machine is mortal, else infinitely
+  many).  Each depends only on `propext`, `Classical.choice`, `Quot.sound`.
+* **Rational `W_{p/q±}` with `p` even: the itinerary is an exact Markov chain (Theorem M, 95%).**
+  Every branch of an even-`p` member sends its domain onto one residue class mod `p`, of fixed
+  parity, so the parity of `W(n)` is a function of the piece of `n`, and fresh randomness enters
+  only through the odd moduli `q` and `R = p − q`.  The forward and backward parity itineraries
+  are two-state Markov chains, independent given the parity of `x` (dependent without it); for odd
+  `p` the same argument gives the i.i.d. law.  **Lemma 1 (99%)**: the involution `t ↦ q − t`
+  pairs the even-branch images by opposite parity, leaving one unpaired piece (`t = 0`, image 0, on
+  `+`; `t = q`, image `p − 1`, on `−`), so `P(E → E) = ½ ± 1/(2q)`.  Ren re-ran `cylinders.py`:
+  every cylinder density is exact and Markov (128/128 for `10/3+`), and the i.i.d. law matches 0.
+* **The density is the Markov survival constant `c_M`, not `c(r)` (CONJ 90%; `≤` PROVED 90%).**
+  46 runs (23 values of `r`, both sides, `X = 10⁷`) match `c_M` with rms `z = 0.32`; the 28
+  non-absorbing even-`p` runs miss the i.i.d. `c(r)` by `|z| ≥ 58`.  Examples: `10/3+` 0.099483
+  (`10⁸`) vs 0.099478; `12/5−` 0.009493 vs 0.009493.  Ren's `ratc 10 3 −1 10⁷`: 0.049010 vs
+  0.048961.  This settles §56's open integer `−` deficits (`4−`: 0.03733 at `10⁸` vs `c_M`
+  0.037335).  **The ceiling** (90%): orbit minima have upper density `≤ c_M` for every rational
+  member, via a depth-`L` two-sided test of density `P_L ↓ c_M`; so `W_{4−}` sits at
+  `≤ 0.03734`, a third of `c(4) = 0.1088`.  **Prop. D** (97%): `+` over-weights the expanding
+  branch in both time directions and `−` under-weights it, so the drift excess has the sign of the
+  measured density excess (the density ordering itself is computed, not proved).
+* **Where the traps are (Theorem T, 99% at the parity level).**  A parity class is absorbing iff
+  the side is `+` and `q = 1` (Theorem E) or `R = 1`.  The second is Theorem E again:
+  **Theorem E′** (100%, Ren paper-checked) `W_{2j/(2j−1)+}(n) = W_{2j+}(n + 1) − 1`, so that member
+  has no finite orbit and density `½ − 1/p`.  Every other even-`p` member checked is
+  residue-transitive at all moduli `M ≤ 600` (CONJ 85% at every `M`), so the §55 trap theorem has
+  nothing to act on and these are wall phase.  The refinement of Conjecture B: a branch not onto
+  `ℤ₂` gives a solvable member only when it makes a parity class absorbing; otherwise it reweights
+  the masquerade constant, which still predicts the density to 0.1%.
+* **The 2√m anomaly is 2-adic (CONJ 80%).**  Across 21 irrational members, the itinerary law
+  departs from i.i.d. exactly when some composite slope over a nonempty word is rational with odd
+  denominator (for quadratic `α`: `(α/2)²`, `(β/2)²` or `αβ/4`).  Even denominators (`√6`, `√10`,
+  `√7`, `3 + √3`) show nothing, and a neighbour of `2√2` with `(α/2)² = 2·(2001/2000)²` shows
+  nothing.  The same criterion reproduces the rational phase line (`p` even iff `α/2 ∈ ℤ_(2)`).
+  Exact identities: on even-even steps `W²(n) = ⌊(α/2)²n − (α/2){kα}⌋` (for `2√2`,
+  `{2n − 1, 2n − 2}`), and even runs are affine, `W^{2j}(n) − 2 = 2^j(n − 2)` for `2√2`, with
+  length `O(log n)` by Liouville for `√m` (85%), so no cone.  A corrected model (exact 10 + 10
+  window, order-6/8 Markov tails) predicts every one of 18 members within 0.3%, where i.i.d. was
+  1-3% off; `c(2√2) = 0.03763 ± 0.00006`.
+* **Theorem F: a solved irrational line (100%, Ren paper-proved the identity).**  For integer
+  `r ≥ 2`, `α_r = 2r + 2√(r² − r)` and `β` its conjugate have `αβ = 4r`, so an even `n` with
+  `W(n)` odd has `W²(n) = r·n` exactly.  Then even points increase along forward orbits, odd points
+  above 1 decrease, and no two odd points follow an even one.  So `{1}` is the only finite orbit,
+  every other orbit runs to `∞` both ways, its minimum is its first even point, and the minima
+  number `d_r X + O(log X)` with `d_r = (r − 1 + √(r² − r))/(4r)` (`(1 + √2)/8` at `r = 2`).
+  The partner `2r − 2√(r² − r)` has no finite orbit at all, same `d_r`.  Ren's independent check
+  (`thmF.py`): 0 identity failures for `r = 2, 3, 5`, the monotonicity claim fails 9,999 times on
+  `2√2` (teeth); orbit-minimum counts 60,356 vs 60,355.34 (`r = 2`) and 74,158 vs 74,158.16
+  (`r = 3`).  These members sit at `α ≈ 4r − 1`, and their density `d_r` is not `c(α_r)`: the
+  irrational line is not one phase.
+* **For `U`.**  Nothing transfers to (a) (under 1%).  `U` has odd `p`, where Theorem M is the
+  known i.i.d. law and the ceiling is the known `0.04978`.  Every composite slope of `U` has
+  `v₂ = −a − 2b < 0`, so it sits strictly inside the generic side of the 2-adic criterion, and the
+  `W² = r·n` mechanism of Theorem F needs a two-step slope in `ℤ_{≥2}`, where `U`'s are `9/4`,
+  `9/8`, `9/16`.
+* **Next.**  Lean: the rational layer (maps, Lemma 1, Theorems T, E, E′, M as finite-depth
+  cylinder counts, Prop. D) and Theorem F claims 1-3 plus the exact count `A(X) − B(X)`.  Open:
+  the density ordering `c_M⁻ < c(r) < c_M⁺`; residue-transitivity at every modulus; the 2-adic
+  criterion at all word lengths; a parity-preserving `W³ = r·n` (e.g. the cubic `α = 2∛2`) for
+  more Theorem F members.
