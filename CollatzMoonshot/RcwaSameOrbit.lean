@@ -687,10 +687,227 @@ structure Good (j : ℕ) (M : Machine) (hw : List (ℤ × ℤ)) : Prop where
   pair_sink : ∀ c : Cfg, IsSink M.rules c ↔ IsSource M.rules (M.pairFn c.1, c.2)
   highway : IsHighway j M.rules hw
 
-/-- **Open.**  `sigma` is a bijection of `ℤ` (Lemma C part 1: no hypothesis on runs). -/
+section Assembly
+
+open CollatzMoonshot.RcwaMachine
+
+theorem ofInjective_symm_eq_none {α β : Type*} {f : α → Option β}
+    (hf : ∀ a a' b, f a = some b → f a' = some b → a = a') {b : β} :
+    (ofInjective f hf).symm b = none ↔ ∀ a, f a ≠ some b := by
+  constructor
+  · intro h a ha
+    have : (ofInjective f hf).symm b = some a := (PEquiv.eq_some_iff _).2 ha
+    rw [h] at this; cases this
+  · intro h
+    by_contra h'
+    obtain ⟨a, ha⟩ := Option.ne_none_iff_exists'.1 h'
+    exact h a ((PEquiv.eq_some_iff _).1 ha)
+
+theorem inEngine_of_F {j : ℕ} {R : List Rule} {n m : ℤ} (h : F j R n = some m) :
+    InEngine j n := by
+  by_contra hn; rw [F_of_not_inEngine j R hn] at h; cases h
+
+theorem F_eq_none_iff {j : ℕ} {R : List Rule} {n : ℤ} (hn : InEngine j n) :
+    F j R n = none ↔ step R (decode j n) = none := by
+  simp [F, step, hn]
+
+/-- A highway machine fits its level. -/
+theorem Good.fitsR {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
+    Fits j M.rules := fun ρ hρ =>
+  ⟨lt_of_lt_of_le (h.wf.src_lt ρ hρ) h.fits, lt_of_lt_of_le (h.wf.dst_lt ρ hρ) h.fits⟩
+
+/-- The engine partial injection of a good machine. -/
+noncomputable def Good.eng {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
+    PEquiv ℤ ℤ :=
+  engine h.one_le h.fitsR h.rev
+
+theorem Good.eng_apply {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) (n : ℤ) :
+    h.eng n = F j M.rules n := rfl
+
+/-- The sources of the engine are the line. -/
+theorem engine_symm_eq_none_iff {j : ℕ} (hj : 1 ≤ j) {R : List Rule} (hR : Fits j R)
+    (hrev : Reversible R) {x : ℤ} : (engine hj hR hrev).symm x = none ↔ x ∈ Line j R := by
+  rw [engine, ofInjective_symm_eq_none]
+  by_cases hx : InEngine j x
+  · simp only [Line, Set.mem_ofPred_eq, hx, not_true_eq_false, false_or]
+    constructor
+    · intro h c' hc'
+      obtain ⟨ρ, hρ, hf, -⟩ := exists_rule_of_step hc'
+      have hs : c'.1 < orderOf (3 : ZMod (5 ^ j)) := hf.1 ▸ (hR ρ hρ).1
+      obtain ⟨a, ha, h1, h2, h3, h4⟩ := exists_decode hj hx hs c'.2.1 c'.2.2
+      have hda : decode j a = c' := by rw [decode, h1, h2, h3]
+      exact h a ((F_eq_some_iff hj hR ha).2 ⟨hx, h4.symm, hda ▸ hc'⟩)
+    · intro h a ha
+      exact h _ ((F_eq_some_iff hj hR (inEngine_of_F ha)).1 ha).2.2
+  · simp only [Line, Set.mem_ofPred_eq, hx, not_false_eq_true, true_or, iff_true]
+    intro a ha
+    exact hx ((F_eq_some_iff hj hR (inEngine_of_F ha)).1 ha).1
+
+/-- The line enumeration `θ`. -/
+noncomputable def Good.theta {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
+    ℤ ≃ Src h.eng ⊕ Empty where
+  toFun p := Sum.inl ⟨hwPoint hw p, (engine_symm_eq_none_iff _ _ _).2 (hwPos_hwPoint h.highway p).1⟩
+  invFun := Sum.elim (fun s => hwPos hw s.1) Empty.elim
+  left_inv p := (hwPos_hwPoint h.highway p).2
+  right_inv := by
+    rintro (s | e)
+    · exact congrArg Sum.inl (Subtype.ext
+        (hwPoint_hwPos h.highway ((engine_symm_eq_none_iff _ _ _).1 s.2)))
+    · exact e.elim
+
+theorem Good.theta_apply {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) (p : ℤ) :
+    lineEmb h.eng (h.theta p) = Sum.inl (hwPoint hw p) := rfl
+
+theorem Good.theta_symm_apply {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (s : Src h.eng) : h.theta.symm (Sum.inl s) = hwPos hw s.1 := rfl
+
+theorem Good.nu_inl {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (s : Src h.eng) : nu h.eng h.theta (Sum.inl s) = Sum.inl (hwNext hw s.1) := rfl
+
+
+namespace Machine
+
+theorem WF.length_pair {M : Machine} (h : M.WF) : M.pair.length = M.K := by
+  rw [h.pair_perm.length_eq, List.length_range]
+
+theorem WF.pairFn_lt {M : Machine} (h : M.WF) {s : ℕ} (hs : s < M.K) : M.pairFn s < M.K := by
+  have hl : s < M.pair.length := h.length_pair ▸ hs
+  rw [pairFn, List.getD_eq_getElem _ _ hl]
+  exact List.mem_range.1 (h.pair_perm.subset (List.getElem_mem hl))
+
+theorem WF.pairFn_of_le {M : Machine} (h : M.WF) {s : ℕ} (hs : M.K ≤ s) : M.pairFn s = s := by
+  rw [pairFn, List.getD_eq_default _ _ (h.length_pair ▸ hs)]
+
+theorem WF.pairFn_injective {M : Machine} (h : M.WF) : Function.Injective M.pairFn := by
+  have hnd : M.pair.Nodup := h.pair_perm.nodup_iff.2 List.nodup_range
+  intro s t hst
+  rcases lt_or_ge s M.K with hs | hs <;> rcases lt_or_ge t M.K with ht | ht
+  · have hs' : s < M.pair.length := h.length_pair ▸ hs
+    have ht' : t < M.pair.length := h.length_pair ▸ ht
+    rw [pairFn, pairFn, List.getD_eq_getElem _ _ hs', List.getD_eq_getElem _ _ ht'] at hst
+    exact (hnd.getElem_inj_iff).1 hst
+  · have := h.pairFn_lt hs; rw [hst, h.pairFn_of_le ht] at this; omega
+  · have := h.pairFn_lt ht; rw [← hst, h.pairFn_of_le hs] at this; omega
+  · rwa [h.pairFn_of_le hs, h.pairFn_of_le ht] at hst
+
+theorem WF.pairFn_surjective {M : Machine} (h : M.WF) : Function.Surjective M.pairFn := by
+  intro t
+  rcases lt_or_ge t M.K with ht | ht
+  · obtain ⟨s, hs, he⟩ := List.getElem_of_mem (h.pair_perm.symm.subset (List.mem_range.2 ht))
+    exact ⟨s, by rw [pairFn, List.getD_eq_getElem _ _ hs, he]⟩
+  · exact ⟨t, h.pairFn_of_le ht⟩
+
+end Machine
+
+theorem Good.pairFn_lt_ord {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {s : ℕ}
+    (hs : s < orderOf (3 : ZMod (5 ^ j))) : M.pairFn s < orderOf (3 : ZMod (5 ^ j)) := by
+  rcases lt_or_ge s M.K with hK | hK
+  · exact lt_of_lt_of_le (h.wf.pairFn_lt hK) h.fits
+  · rwa [h.wf.pairFn_of_le hK]
+
+/-- The Lemma P piece with no counter move. -/
+theorem decode_move_zero {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) {s' : ℕ}
+    (hs' : s' < orderOf (3 : ZMod (5 ^ j))) :
+    InEngine j (move j n s' 0 0) ∧ decode j (move j n s' 0 0) = (s', C1 j n, C2 j n) ∧
+      junk j (move j n s' 0 0) = junk j n := by
+  obtain ⟨h0, h1, h2⟩ := decode_move hj hn hs' (δ₁ := 0) (δ₂ := 0) (by omega) (by omega)
+  refine ⟨h0, ?_, h2⟩
+  rw [h1]; simp
+
+theorem Good.isSink_of_snk {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (x : Snk h.eng) (hx : InEngine j x.1) : IsSink M.rules (decode j x.1) :=
+  (F_eq_none_iff hx).1 x.2
+
+/-- The relabelling `τ` on points. -/
+def tauPt (j : ℕ) (M : Machine) (x : ℤ) : ℤ :=
+  if InEngine j x then move j x (M.pairFn (phase j x)) 0 0 else x
+
+theorem Good.tauPt_spec {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {x : ℤ}
+    (hx : InEngine j x) :
+    InEngine j (tauPt j M x) ∧ decode j (tauPt j M x) = (M.pairFn (phase j x), C1 j x, C2 j x) ∧
+      junk j (tauPt j M x) = junk j x := by
+  rw [tauPt, if_pos hx]
+  exact decode_move_zero h.one_le hx (h.pairFn_lt_ord (phase_lt_ord h.one_le hx))
+
+theorem Good.tauPt_mem {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (x : Snk h.eng) : h.eng.symm (tauPt j M x.1) = none := by
+  change (engine h.one_le h.fitsR h.rev).symm _ = none
+  rw [engine_symm_eq_none_iff]
+  by_cases hx : InEngine j x.1
+  · obtain ⟨h0, h1, -⟩ := h.tauPt_spec hx
+    right
+    rw [h1]
+    exact (h.pair_sink (decode j x.1)).1 (h.isSink_of_snk x hx)
+  · left; rwa [tauPt, if_neg hx]
+
+theorem Good.tauPt_bijective {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
+    Function.Bijective (fun x : Snk h.eng => (⟨tauPt j M x.1, h.tauPt_mem x⟩ : Src h.eng)) := by
+  have hj := h.one_le
+  refine ⟨fun x y hxy => ?_, fun y => ?_⟩
+  · have he : tauPt j M x.1 = tauPt j M y.1 := congrArg Subtype.val hxy
+    apply Subtype.ext
+    by_cases hx : InEngine j x.1 <;> by_cases hy : InEngine j y.1
+    · obtain ⟨hx0, hx1, hx2⟩ := h.tauPt_spec hx
+      obtain ⟨hy0, hy1, hy2⟩ := h.tauPt_spec hy
+      rw [he] at hx1 hx2
+      rw [hx1] at hy1
+      simp only [Prod.mk.injEq] at hy1
+      obtain ⟨hp, hc1, hc2⟩ := hy1
+      refine decode_inj hj hx hy ?_ (hx2.symm.trans hy2)
+      rw [decode, decode, h.wf.pairFn_injective hp, hc1, hc2]
+    · have := (h.tauPt_spec hx).1; rw [he, tauPt, if_neg hy] at this; exact absurd this hy
+    · have := (h.tauPt_spec hy).1; rw [← he, tauPt, if_neg hx] at this; exact absurd this hx
+    · rwa [tauPt, tauPt, if_neg hx, if_neg hy] at he
+  · by_cases hy : InEngine j y.1
+    · have hsrc : IsSource M.rules (decode j y.1) := by
+        have := (engine_symm_eq_none_iff _ _ _).1 y.2
+        exact this.resolve_left (not_not.2 hy)
+      obtain ⟨s, hs⟩ := h.wf.pairFn_surjective (phase j y.1)
+      have hs' : s < orderOf (3 : ZMod (5 ^ j)) := by
+        rcases lt_or_ge s M.K with hK | hK
+        · exact lt_of_lt_of_le hK h.fits
+        · rw [h.wf.pairFn_of_le hK] at hs; rw [hs]; exact phase_lt_ord hj hy
+      obtain ⟨x, hx, h1, h2, h3, h4⟩ := exists_decode hj hy hs' (C1 j y.1) (C2 j y.1)
+      have hdx : decode j x = (s, C1 j y.1, C2 j y.1) := by rw [decode, h1, h2, h3]
+      have hsink : IsSink M.rules (decode j x) := by
+        rw [h.pair_sink, hdx]; simpa [hs, decode] using hsrc
+      have hxs : h.eng x = none := (F_eq_none_iff hx).2 hsink
+      refine ⟨⟨x, hxs⟩, Subtype.ext ?_⟩
+      obtain ⟨t0, t1, t2⟩ := h.tauPt_spec hx
+      refine decode_inj hj t0 hy ?_ (t2.trans h4)
+      rw [t1, h1, h2, h3, hs]; rfl
+    · have hxs : h.eng y.1 = none := F_of_not_inEngine j M.rules hy
+      refine ⟨⟨y.1, hxs⟩, Subtype.ext ?_⟩
+      show tauPt j M y.1 = y.1
+      rw [tauPt, if_neg hy]
+
+/-- The sink-to-source pairing `τ`. -/
+noncomputable def Good.tau {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
+    Snk h.eng ≃ Src h.eng :=
+  Equiv.ofBijective _ h.tauPt_bijective
+
+theorem Good.completeFun_eq {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (n : ℤ) : completeFun h.eng h.tau h.theta (Sum.inl n) = Sum.inl (sigma j M hw n) := by
+  cases hF : F j M.rules n with
+  | some m =>
+    rw [completeFun_some h.tau h.theta (show h.eng n = some m from hF)]
+    simp [sigma, hF]
+  | none =>
+    rw [completeFun_none h.tau h.theta (show h.eng n = none from hF), h.nu_inl]
+    simp only [sigma, hF, Sum.inl.injEq]
+    show hwNext hw (tauPt j M n) = _
+    rw [tauPt]
+    split_ifs <;> rfl
+
+/-- `sigma` is a bijection of `ℤ` (Lemma C part 1: no hypothesis on runs). -/
 theorem sigma_bijective {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
     Function.Bijective (sigma j M hw) := by
-  sorry
+  have he : sigma j M hw = Equiv.sumEmpty ℤ Empty ∘ completeFun h.eng h.tau h.theta ∘
+      (Equiv.sumEmpty ℤ Empty).symm := by
+    funext n
+    simp [h.completeFun_eq]
+  rw [he]
+  exact (Equiv.bijective _).comp ((completeFun_bijective _ _ _).comp (Equiv.bijective _))
 
 /-- The permutation `σ`. -/
 noncomputable def sigmaPerm {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) :
@@ -704,26 +921,208 @@ theorem isRcwa23At_sigma {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : G
     IsRcwa23At (3 ^ N j * L) (sigma j M hw) := by
   sorry
 
-/-- **Open.**  **Headline.**  Under (H1) and (H2), an engine point `n` decoding to a source and
+/-- Same-cycle transfers along an injective intertwiner. -/
+theorem sameCycle_transfer {α β : Type*} {e : α → β} (he : Function.Injective e)
+    {σ : Equiv.Perm α} {τ : Equiv.Perm β} (h : ∀ x, τ (e x) = e (σ x)) {a b : α} :
+    τ.SameCycle (e a) (e b) ↔ σ.SameCycle a b := by
+  have hk : ∀ k : ℤ, ∀ x, (τ ^ k) (e x) = e ((σ ^ k) x) := by
+    intro k
+    induction k using Int.induction_on with
+    | zero => intro x; rfl
+    | succ k ih =>
+      intro x
+      rw [zpow_add_one, zpow_add_one, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, h, ih]
+    | pred k ih =>
+      intro x
+      have hi : τ⁻¹ (e x) = e (σ⁻¹ x) := by
+        rw [Equiv.Perm.inv_eq_iff_eq, h]; simp
+      rw [zpow_sub_one, zpow_sub_one, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, hi, ih]
+  constructor
+  · rintro ⟨k, hk'⟩
+    exact ⟨k, he (by rw [← hk, hk'])⟩
+  · rintro ⟨k, hk'⟩
+    exact ⟨k, by rw [hk, hk']⟩
+
+/-- A run halts iff it stops (reaches `none`). -/
+theorem halts_iff_exists_run_eq_none {R : List Rule} {c : Cfg} :
+    Halts R c ↔ ∃ k, run R k c = none := by
+  have hsucc : ∀ k c, run R (k + 1) c = (run R k c).bind (step R) := fun k c =>
+    Function.iterate_succ_apply' _ _ _
+  constructor
+  · rintro ⟨k, d, hk, hd⟩
+    exact ⟨k + 1, by rw [hsucc, hk, Option.bind_some]; exact hd⟩
+  · intro h
+    classical
+    have h0 : Nat.find h ≠ 0 := fun h0 => by
+      have := Nat.find_spec h; rw [h0] at this; cases this
+    obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero h0
+    have hlt : ¬ run R m c = none := Nat.find_min h (by omega)
+    obtain ⟨d, hd⟩ := Option.ne_none_iff_exists'.mp hlt
+    refine ⟨m, d, hd, ?_⟩
+    have := Nat.find_spec h
+    rwa [hm, hsucc, hd, Option.bind_some] at this
+
+/-- The engine runs the machine on decoded configurations, junk fixed. -/
+theorem Good.fwd_eng {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {n : ℤ}
+    (hn : InEngine j n) (k : ℕ) :
+    (fwd h.eng k n).map (decode j) = run M.rules k (decode j n) ∧
+      ∀ x, fwd h.eng k n = some x → InEngine j x ∧ junk j x = junk j n := by
+  induction k with
+  | zero => exact ⟨rfl, fun x hx => by cases hx; exact ⟨hn, rfl⟩⟩
+  | succ k ih =>
+    have hr : run M.rules (k + 1) (decode j n) =
+        (run M.rules k (decode j n)).bind (step M.rules) := Function.iterate_succ_apply' _ _ _
+    rw [fwd_succ, hr, ← ih.1]
+    cases hx : fwd h.eng k n with
+    | none => exact ⟨rfl, fun x hx' => by cases hx'⟩
+    | some x =>
+      obtain ⟨hxE, hxj⟩ := ih.2 x hx
+      simp only [Option.bind_some, Option.map_some]
+      cases hm : h.eng x with
+      | none =>
+        refine ⟨?_, fun y hy => by cases hy⟩
+        rw [Option.map_none, eq_comm]
+        exact (F_eq_none_iff hxE).1 hm
+      | some m =>
+        obtain ⟨hmE, hmj, hs⟩ := (F_eq_some_iff h.one_le h.fitsR hxE).1 hm
+        refine ⟨by rw [Option.map_some, hs], fun y hy => ?_⟩
+        cases hy
+        exact ⟨hmE, hmj.trans hxj⟩
+
+/-- An engine point diverges iff its decoded run does not halt. -/
+theorem Good.diverges_iff {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {n : ℤ}
+    (hn : InEngine j n) : Diverges h.eng n ↔ ¬ Halts M.rules (decode j n) := by
+  rw [halts_iff_exists_run_eq_none, Diverges]
+  push Not
+  refine forall_congr' fun k => ?_
+  rw [← (h.fwd_eng hn k).1]
+  simp
+
+/-- (H1) transfers to the engine. -/
+theorem Good.noBiInfinite {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (h1 : NoBiInfinite M.rules) : RcwaMachine.NoBiInfinite h.eng := by
+  intro g hg
+  apply h1 (fun i => decode j (g i))
+  intro i
+  have hE := inEngine_of_F (hg i)
+  exact ((F_eq_some_iff h.one_le h.fitsR hE).1 (hg i)).2.2
+
+theorem Good.tau_apply {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (t : Snk h.eng) : (h.tau t).1 = tauPt j M t.1 := rfl
+
+/-- (H2) transfers to the engine. -/
+theorem Good.endToStart {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    (h2 : EndToStart M.rules M.pairFn) : RcwaMachine.EndToStart h.eng h.tau := by
+  intro s t n hst
+  have hline := (engine_symm_eq_none_iff _ _ _).1 s.2
+  apply Subtype.ext
+  rw [h.tau_apply]
+  by_cases hs : InEngine j s.1
+  · have hsrc : IsSource M.rules (decode j s.1) := hline.resolve_left (not_not.2 hs)
+    obtain ⟨hmap, hinv⟩ := h.fwd_eng hs n
+    obtain ⟨htE, htj⟩ := hinv _ hst
+    rw [hst, Option.map_some] at hmap
+    have hsink : IsSink M.rules (decode j t.1) := (F_eq_none_iff htE).1 t.2
+    have he := h2 _ _ _ hsrc hmap.symm hsink
+    obtain ⟨t0, t1, t2⟩ := h.tauPt_spec htE
+    refine decode_inj h.one_le t0 hs ?_ (t2.trans htj)
+    rw [t1, ← he]; rfl
+  · have hF : h.eng s.1 = none := F_of_not_inEngine j M.rules hs
+    cases n with
+    | zero =>
+      rw [fwd_zero, Option.some.injEq] at hst
+      rw [← hst, tauPt, if_neg hs]
+    | succ n => rw [fwd_succ_of_none hF] at hst; cases hst
+
+theorem Good.complete_inl {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) (x : ℤ) :
+    complete h.eng h.tau h.theta (Sum.inl x) = Sum.inl (sigmaPerm h x) := by
+  rw [complete_apply, h.completeFun_eq]; rfl
+
+theorem Good.sameCycle_iff {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
+    {a b : ℤ} : (complete h.eng h.tau h.theta).SameCycle (Sum.inl a) (Sum.inl b) ↔
+      (sigmaPerm h).SameCycle a b :=
+  sameCycle_transfer Sum.inl_injective h.complete_inl
+
+/-- **Headline.**  Under (H1) and (H2), an engine point `n` decoding to a source and
 the next highway point after it lie on one `σ`-orbit iff the run from `decode j n` halts. -/
 theorem sameCycle_hwNext_iff {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
     (h1 : NoBiInfinite M.rules) (h2 : EndToStart M.rules M.pairFn) {n : ℤ} (hn : InEngine j n)
     (hs : IsSource M.rules (decode j n)) :
     (sigmaPerm h).SameCycle n (hwNext hw n) ↔ Halts M.rules (decode j n) := by
-  sorry
+  have hline : n ∈ Line j M.rules := Or.inr hs
+  set p := hwPos hw n with hp
+  have hθ : ∀ s : Src h.eng, h.theta p = Sum.inl s → s.1 = n := by
+    intro s hs'
+    have := congrArg (lineEmb h.eng) hs'
+    rw [h.theta_apply, hp, hwPoint_hwPos h.highway hline] at this
+    exact (Sum.inl.inj this).symm
+  have hl0 : lineEmb h.eng (h.theta p) = Sum.inl n := by
+    rw [h.theta_apply, hp, hwPoint_hwPos h.highway hline]
+  have hl1 : lineEmb h.eng (h.theta (p + 1)) = Sum.inl (hwNext hw n) := h.theta_apply _
+  rw [← h.sameCycle_iff, ← hl0, ← hl1]
+  constructor
+  · intro hsc
+    by_contra hh
+    rcases hθp : h.theta p with s | e
+    · have hd : Diverges h.eng s.1 := by rw [hθ s hθp]; exact (h.diverges_iff hn).2 hh
+      exact not_sameCycle_of_cut _ _ _ (h.noBiInfinite h1) (h.endToStart h2) s hd hθp le_rfl
+        (lt_add_one p) hsc
+    · exact e.elim
+  · intro hh
+    refine sameCycle_succ_of_not_diverges _ _ _ (h.endToStart h2) p fun s hs' => ?_
+    rw [hθ s hs', h.diverges_iff hn]
+    exact not_not.2 hh
 
-/-- **Open.**  The headline at the encoding `enc j c` of a source `c` with state `< K`. -/
+/-- The headline at the encoding `enc j c` of a source `c` with state `< K`. -/
 theorem sameCycle_enc_iff {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
     (h1 : NoBiInfinite M.rules) (h2 : EndToStart M.rules M.pairFn) {c : Cfg} (hK : c.1 < M.K)
     (hc : IsSource M.rules c) :
     (sigmaPerm h).SameCycle (enc j c) (hwNext hw (enc j c)) ↔ Halts M.rules c := by
-  sorry
+  obtain ⟨hE, hd⟩ := enc_spec h.one_le (lt_of_lt_of_le hK h.fits)
+  have := sameCycle_hwNext_iff h h1 h2 hE (by rw [hd]; exact hc)
+  rwa [hd] at this
 
-/-- **Open.**  **One orbit iff every source halts** (Theorem C(1) shape). -/
+/-- **One orbit iff every source halts** (Theorem C(1) shape). -/
 theorem sameCycle_all_iff {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw)
     (h1 : NoBiInfinite M.rules) (h2 : EndToStart M.rules M.pairFn) :
     (∀ a b : ℤ, (sigmaPerm h).SameCycle a b) ↔ ∀ c, IsSource M.rules c → Halts M.rules c := by
-  sorry
+  have hL : (∀ a b : ℤ, (sigmaPerm h).SameCycle a b) ↔
+      ∀ a b : ℤ ⊕ Empty, (complete h.eng h.tau h.theta).SameCycle a b := by
+    constructor
+    · rintro hall (a | e) (b | e')
+      · exact h.sameCycle_iff.2 (hall a b)
+      · exact e'.elim
+      · exact e.elim
+      · exact e.elim
+    · intro hall a b
+      exact h.sameCycle_iff.1 (hall _ _)
+  rw [hL, RcwaMachine.sameCycle_all_iff _ _ _ (h.noBiInfinite h1) (h.endToStart h2)]
+  constructor
+  · intro hno c hc
+    by_cases hord : c.1 < orderOf (3 : ZMod (5 ^ j))
+    · obtain ⟨hE, hd⟩ := enc_spec h.one_le hord
+      have hsrc : h.eng.symm (enc j c) = none :=
+        (engine_symm_eq_none_iff _ _ _).2 (Or.inr (by rw [hd]; exact hc))
+      have := hno ⟨enc j c, hsrc⟩
+      rwa [h.diverges_iff hE, not_not, hd] at this
+    · refine ⟨0, c, rfl, ?_⟩
+      rw [IsSink, step, Option.map_eq_none_iff, List.find?_eq_none]
+      intro ρ hρ hf
+      have := h.wf.src_lt ρ hρ
+      have hf' : ρ.Fires c := by simpa using hf
+      have := hf'.1
+      have := h.fits
+      omega
+  · intro hall s
+    by_cases hs : InEngine j s.1
+    · have hsrc : IsSource M.rules (decode j s.1) :=
+        ((engine_symm_eq_none_iff _ _ _).1 s.2).resolve_left (not_not.2 hs)
+      rw [h.diverges_iff hs, not_not]
+      exact hall _ hsrc
+    · intro hd
+      exact hd 1 (fwd_succ_of_none (F_of_not_inEngine j M.rules hs) 0)
+
+end Assembly
 
 /-! ## 5. Undecidability of same-orbit -/
 
