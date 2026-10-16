@@ -280,21 +280,71 @@ def acfg (v : LCtr → ℕ) (x w p t : ℕ) : ACtr → ℕ
   | .p => p
   | .t => t
 
+/-- A coding of the states into a finite type. -/
+def aCode {u : ToPartrec.Code} : AState u → (Fin 4 × S₂ u) ⊕ (Fin 3 × Fin 6) ⊕ Fin 20
+  | .run s => .inl (0, s)
+  | .gate s => .inl (1, s)
+  | .sp₁ s => .inl (2, s)
+  | .sp₂ s => .inl (3, s)
+  | .clr j => .inr (.inl (0, j.castLE (by omega)))
+  | .clr' j => .inr (.inl (1, j.castLE (by omega)))
+  | .ml₁ j => .inr (.inl (2, j))
+  | .ad j => .inr (.inr (j.castLE (by omega)))
+  | .hole => .inr (.inr 4)
+  | .back => .inr (.inr 5)
+  | .cx => .inr (.inr 6)
+  | .cx₁ => .inr (.inr 7)
+  | .cx₂ => .inr (.inr 8)
+  | .mv => .inr (.inr 9)
+  | .mv₁ => .inr (.inr 10)
+  | .mv₂ => .inr (.inr 11)
+  | .ml => .inr (.inr 12)
+  | .cw => .inr (.inr 13)
+  | .cw₁ => .inr (.inr 14)
+  | .cw₂ => .inr (.inr 15)
+  | .bt => .inr (.inr 16)
+  | .bt₁ => .inr (.inr 17)
+  | .bt₂ => .inr (.inr 18)
+  | .bt₃ => .inr (.inr 19)
+
 /-- Finitely many states. -/
 theorem finite_aState (u : ToPartrec.Code) : Finite (AState u) := by
-  sorry
+  have : Finite (S₂ u) := (reachSet_finite _).to_subtype
+  refine Finite.of_injective (aCode (u := u)) ?_
+  intro a b h
+  cases a <;> cases b <;> simp [aCode, Fin.ext_iff] at h <;>
+    first
+    | rfl
+    | (subst h; rfl)
+    | (congr 1; exact Fin.ext h)
+    | (exfalso; omega)
 
 /-- The restart machine is deterministic. -/
 theorem restart_det (u : ToPartrec.Code) : (restart u).Det := by
-  sorry
+  intro ρ hρ ρ' hρ' hne hsrc
+  cases hρ <;> cases hρ' <;> (try cases hsrc) <;>
+    first
+    | exact absurd rfl hne
+    | exact ⟨_, _, _, rfl, rfl, by decide⟩
+    | (exfalso; apply hne; congr 2; exact Fin.ext (by omega))
+    | (exfalso; simp_all; omega)
+    | (exfalso; rename_i h _; exact absurd h (by decide))
+    | skip
+  rename_i s₁ o₁ h₁ s₂ o₂ h₂
+  obtain ⟨i, b, b', hb, hb', hbb⟩ := u₂_det u _ h₁ _ h₂ (fun h => hne (by cases h; rfl)) rfl
+  simp only at hb hb'
+  subst hb hb'
+  exact ⟨.sim i, b, b', rfl, rfl, hbb⟩
 
 /-- No rule leaves `hole`. -/
 theorem restart_src_ne_hole (u : ToPartrec.Code) : ∀ ρ ∈ restart u, ρ.src ≠ .hole := by
-  sorry
+  intro ρ hρ h
+  cases hρ <;> cases h
 
 /-- No rule enters `back`. -/
 theorem restart_normalAt_back (u : ToPartrec.Code) : (restart u).NormalAt .back := by
-  sorry
+  intro ρ hρ h
+  cases hρ <;> cases h
 
 /-- The glued restart machine is deterministic. -/
 theorem asharp_det (u : ToPartrec.Code) (L : ℕ) : (Asharp u L).Det :=
@@ -344,15 +394,97 @@ theorem halts_or_reaches_restart (c : Cfg (AState u ⊕ Fin L) ACtr) :
       ∃ v x w p t, (Asharp u L).Reaches c (.inl (.clr 0), acfg v x w p t) := by
   sorry
 
+/-- A run of `n` steps splits after `m ≤ n` steps. -/
+theorem stepsN_split {Q ι : Type*} {M : CM Q ι} :
+    ∀ {n m : ℕ} {c d : Cfg Q ι}, M.StepsN n c d → m ≤ n →
+      ∃ e, M.StepsN m c e ∧ M.StepsN (n - m) e d := by
+  intro n m c d h
+  induction h generalizing m with
+  | refl c => intro hm; obtain rfl : m = 0 := by omega
+              exact ⟨c, .refl _, .refl _⟩
+  | @head n c d e hs _ ih =>
+    intro hm
+    rcases m with _ | m
+    · exact ⟨c, .refl _, by simpa using CM.StepsN.head hs ‹_›⟩
+    · obtain ⟨f, h1, h2⟩ := ih (m := m) (by omega)
+      exact ⟨f, .head hs h1, by simpa [Nat.add_sub_add_right] using h2⟩
+
+/-- A run of `n` steps reaches its end. -/
+theorem reaches_of_stepsN {Q ι : Type*} {M : CM Q ι} {n : ℕ} {c d : Cfg Q ι}
+    (h : M.StepsN n c d) : M.Reaches c d := by
+  induction h with
+  | refl => exact .refl
+  | head hs _ ih => exact .head hs ih
+
+/-- The first `n` steps of an infinite run. -/
+theorem stepsN_of_forever {Q ι : Type*} {M : CM Q ι} (y : ℕ → Cfg Q ι)
+    (hy : ∀ n, M.Step (y n) (y (n + 1))) : ∀ n, M.StepsN n (y 0) (y n) := by
+  suffices ∀ n k, M.StepsN n (y k) (y (k + n)) from fun n => by simpa using this n 0
+  intro n
+  induction n with
+  | zero => intro k; exact .refl _
+  | succ n ih =>
+    intro k
+    have := ih (k + 1)
+    rw [show k + 1 + n = k + (n + 1) by omega] at this
+    exact .head (hy k) this
+
 /-- **Steady rounds halt** when `U₂` halts on the input: the budget grows by one per round. -/
 theorem halts_of_steady {x : ℕ} (h : (U₂ u).Halts (start₂ u, honest (gIter x (L + 1))))
     (v : LCtr → ℕ) (t : ℕ) : (Asharp u L).Halts (.inl (.clr 0), acfg v x 0 0 t) := by
-  sorry
+  have back : ∀ {c d : Cfg (AState u ⊕ Fin L) ACtr}, (Asharp u L).Reaches c d →
+      (Asharp u L).Halts d → (Asharp u L).Halts c :=
+    fun hr ⟨e, he, hs⟩ => ⟨e, hr.trans he, hs⟩
+  obtain ⟨d, hd, hds⟩ := h
+  obtain ⟨n, hn⟩ := CM.StepsN.of_reaches hd
+  suffices ∀ k t v, n ≤ t + k → (Asharp u L).Halts (.inl (.clr 0), acfg v x 0 0 t) from
+    this n t v (by omega)
+  intro k
+  induction k with
+  | zero =>
+    intro t v hnt
+    have hr := reaches_round (u := u) (L := L) v x 0 0 t
+    rw [Nat.add_zero, Nat.zero_add, show t + 1 = (t - n) + 1 + n by omega] at hr
+    refine back hr.to_reflTransGen (back (reaches_gated hn x 0 _ 0) ?_)
+    exact halts_of_stuck_gate hds x 0 (t - n) (0 + n)
+  | succ k ih =>
+    intro t v hnt
+    by_cases hnt' : n ≤ t
+    · exact ih t v (by omega)
+    obtain ⟨e, he, -⟩ := stepsN_split hn (m := t + 1) (by omega)
+    have hr := reaches_round (u := u) (L := L) v x 0 0 t
+    rw [Nat.add_zero, Nat.zero_add, show t + 1 = 0 + (t + 1) by omega] at hr
+    refine back hr.to_reflTransGen (back (reaches_gated he x 0 0 0) ?_)
+    refine back (.single (step_gate_zero _ _ _ _ _)) ?_
+    rw [Nat.zero_add]
+    exact ih (t + 1) e.2 (by omega)
 
 /-- **An immortal configuration** from an input on which `U₂` runs forever. -/
 theorem not_halts_of_not_halts {x : ℕ} (h : ¬ (U₂ u).Halts (start₂ u, honest (gIter x (L + 1)))) :
     ¬ (Asharp u L).Halts (.inl (.clr 0), acfg 0 x 0 0 0) := by
-  sorry
+  obtain ⟨y, hy0, hy⟩ := RcwaOrbitCount.exists_forever_of_not_halts h
+  -- one round from `clr 0` with `t` spent returns to `clr 0` with `t + 1` spent
+  have hround : ∀ (v : LCtr → ℕ) (t : ℕ), ∃ v', Relation.TransGen (Asharp u L).Step
+      (.inl (.clr 0), acfg v x 0 0 t) (.inl (.clr 0), acfg v' x 0 0 (t + 1)) := by
+    intro v t
+    have hr := reaches_round (u := u) (L := L) v x 0 0 t
+    rw [Nat.add_zero, Nat.zero_add, show t + 1 = 0 + (t + 1) by omega] at hr
+    have hg := reaches_gated (L := L) (hy0 ▸ stepsN_of_forever y hy (t + 1)) x 0 0 0
+    refine ⟨(y (t + 1)).2, ?_⟩
+    have := (hr.trans_left hg).tail (step_gate_zero _ _ _ _ _)
+    rwa [Nat.zero_add] at this
+  rintro ⟨d, hd, hds⟩
+  obtain ⟨n, hn⟩ := CM.StepsN.of_reaches hd
+  clear hd
+  suffices ∀ n (v : LCtr → ℕ) (t : ℕ),
+      (Asharp u L).StepsN n (.inl (.clr 0), acfg v x 0 0 t) d → False from this n 0 0 hn
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro v t hn
+    obtain ⟨v', hv'⟩ := hround v t
+    obtain ⟨m, hm, hmd⟩ := CM.StepsN.of_transGen (asharp_det u L) hds hv' hn
+    exact ih m hm v' (t + 1) hmd
 
 /-- **Lemma A, machine form.**  The glued restart machine is mortal iff `U₂` halts on every
 honest input. -/
