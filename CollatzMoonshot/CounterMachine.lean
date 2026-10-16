@@ -80,17 +80,57 @@ def delta [DecidableEq ι] : Op ι → ι → ℤ
 /-- An operation's counter relation is functional. -/
 theorem act_functional {o : Op ι} {v w w' : ι → ℕ}
     (h : o.Act v w) (h' : o.Act v w') : w = w' := by
-  sorry
+  cases o with
+  | test i b => exact h.2.trans h'.2.symm
+  | dec i =>
+    obtain ⟨-, h1, h2⟩ := h; obtain ⟨-, h1', h2'⟩ := h'
+    funext j; by_cases hj : j = i
+    · subst hj; omega
+    · rw [h2 j hj, h2' j hj]
+  | inc i =>
+    obtain ⟨h1, h2⟩ := h; obtain ⟨h1', h2'⟩ := h'
+    funext j; by_cases hj : j = i
+    · subst hj; omega
+    · rw [h2 j hj, h2' j hj]
+  | nop => exact h.trans h'.symm
 
 /-- An operation's counter relation is injective. -/
 theorem act_injective {o : Op ι} {v v' w : ι → ℕ}
     (h : o.Act v w) (h' : o.Act v' w) : v = v' := by
-  sorry
+  cases o with
+  | test i b => exact h.2.symm.trans h'.2
+  | dec i =>
+    obtain ⟨-, h1, h2⟩ := h; obtain ⟨-, h1', h2'⟩ := h'
+    funext j; by_cases hj : j = i
+    · subst hj; omega
+    · rw [← h2 j hj, ← h2' j hj]
+  | inc i =>
+    obtain ⟨h1, h2⟩ := h; obtain ⟨h1', h2'⟩ := h'
+    funext j; by_cases hj : j = i
+    · subst hj; omega
+    · rw [← h2 j hj, ← h2' j hj]
+  | nop => exact h.symm.trans h'
 
 /-- The inverse operation is the converse relation. -/
 theorem act_inv {o : Op ι} {v w : ι → ℕ} :
     o.inv.Act w v ↔ o.Act v w := by
-  sorry
+  cases o with
+  | test i b =>
+    simp only [inv, Act]
+    constructor
+    · rintro ⟨h1, rfl⟩; exact ⟨h1, rfl⟩
+    · rintro ⟨h1, rfl⟩; exact ⟨h1, rfl⟩
+  | dec i =>
+    simp only [inv, Act]
+    constructor
+    · rintro ⟨h1, h2⟩; exact ⟨by omega, by omega, fun j hj => (h2 j hj).symm⟩
+    · rintro ⟨-, h1, h2⟩; exact ⟨by omega, fun j hj => (h2 j hj).symm⟩
+  | inc i =>
+    simp only [inv, Act]
+    constructor
+    · rintro ⟨-, h1, h2⟩; exact ⟨by omega, fun j hj => (h2 j hj).symm⟩
+    · rintro ⟨h1, h2⟩; exact ⟨by omega, by omega, fun j hj => (h2 j hj).symm⟩
+  | nop => exact eq_comm
 
 end Op
 
@@ -168,22 +208,77 @@ def restrict (M : CM Q ι) (S : Set Q) : CM S ι :=
 /-- Syntactic determinism gives a functional step on every configuration. -/
 theorem step_functional {M : CM Q ι} (hM : M.Det) {c d d' : Cfg Q ι} (h : M.Step c d)
     (h' : M.Step c d') : d = d' := by
-  sorry
+  obtain ⟨ρ, hρ, hs, hd, ha⟩ := h
+  obtain ⟨ρ', hρ', hs', hd', ha'⟩ := h'
+  by_cases hρρ : ρ = ρ'
+  · subst hρρ
+    exact Prod.ext (hd.trans hd'.symm) (Op.act_functional ha ha')
+  · obtain ⟨i, b, b', hb, hb', hne⟩ := hM ρ hρ ρ' hρ' hρρ (hs.symm.trans hs')
+    rw [hb] at ha; rw [hb'] at ha'
+    exact absurd (ha.1.symm.trans ha'.1) hne
 
 /-- Syntactic reversibility gives an injective step on every configuration. -/
 theorem step_injective {M : CM Q ι} (hM : M.Rev) {c c' d : Cfg Q ι} (h : M.Step c d)
     (h' : M.Step c' d) : c = c' := by
-  sorry
+  obtain ⟨ρ, hρ, hs, hd, ha⟩ := h
+  obtain ⟨ρ', hρ', hs', hd', ha'⟩ := h'
+  by_cases hρρ : ρ = ρ'
+  · subst hρρ
+    exact Prod.ext (hs.trans hs'.symm) (Op.act_injective ha ha')
+  · obtain ⟨i, b, b', hb, hb', hne⟩ := hM ρ hρ ρ' hρ' hρρ (hd.symm.trans hd')
+    rw [hb] at ha; rw [hb'] at ha'
+    have h1 : c.2 = c'.2 := ha.2.symm.trans ha'.2
+    exact absurd (ha.1.symm.trans (h1 ▸ ha'.1)) hne
 
 /-- In normal form every configuration at `q₀` is a source. -/
 theorem isSource_of_normalAt {M : CM Q ι} {q₀ : Q} (hM : M.NormalAt q₀) (v : ι → ℕ) :
     M.IsSource (q₀, v) := by
-  sorry
+  rintro d ⟨ρ, hρ, -, hd, -⟩
+  exact hM ρ hρ hd.symm
 
 /-- A deterministic machine with an infinite run from `c` does not halt from `c`. -/
 theorem not_halts_of_forever {M : CM Q ι} (hM : M.Det) (x : ℕ → Cfg Q ι)
     (hx : ∀ n, M.Step (x n) (x (n + 1))) : ¬ M.Halts (x 0) := by
-  sorry
+  rintro ⟨d, hr, hs⟩
+  have key : ∃ m, d = x m := by
+    clear hs
+    induction hr with
+    | refl => exact ⟨0, rfl⟩
+    | tail _ hst ih =>
+      obtain ⟨m, rfl⟩ := ih
+      exact ⟨m + 1, step_functional hM hst (hx m)⟩
+  obtain ⟨m, rfl⟩ := key
+  exact hs _ (hx m)
+
+/-- `n`-step reachability. -/
+inductive StepsN (M : CM Q ι) : ℕ → Cfg Q ι → Cfg Q ι → Prop
+  | refl (c : Cfg Q ι) : StepsN M 0 c c
+  | head {n : ℕ} {c d e : Cfg Q ι} : M.Step c d → StepsN M n d e → StepsN M (n + 1) c e
+
+theorem StepsN.of_reaches {M : CM Q ι} {c d : Cfg Q ι} (h : M.Reaches c d) :
+    ∃ n, M.StepsN n c d := by
+  induction h using Relation.ReflTransGen.head_induction_on with
+  | refl => exact ⟨0, .refl _⟩
+  | head hs _ ih => obtain ⟨n, hn⟩ := ih; exact ⟨n + 1, .head hs hn⟩
+
+/-- Under determinism, a run to a halting ID passes every configuration on any run from its
+start, with fewer steps left. -/
+theorem StepsN.of_transGen {M : CM Q ι} (hM : M.Det) {c d e : Cfg Q ι} (hd : M.Stuck d)
+    (he : Relation.TransGen M.Step c e) :
+    ∀ {n}, M.StepsN n c d → ∃ m < n, M.StepsN m e d := by
+  induction he using Relation.TransGen.head_induction_on with
+  | single hs =>
+    intro n hn
+    cases hn with
+    | refl => exact absurd hs (hd _)
+    | head hs' hn' => exact ⟨_, Nat.lt_succ_self _, step_functional hM hs' hs ▸ hn'⟩
+  | head hs _ ih =>
+    intro n hn
+    cases hn with
+    | refl => exact absurd hs (hd _)
+    | head hs' hn' =>
+      obtain ⟨m, hm, h⟩ := ih (step_functional hM hs' hs ▸ hn')
+      exact ⟨m, by omega, h⟩
 
 /-- **Simulation.**  Let `Sim c c'` relate configurations of `M` and of a deterministic `M'`.
 If every step of `M` from a related `c` is matched by a nonempty run of `M'` to a related
@@ -194,22 +289,99 @@ theorem halts_iff_of_sim {Q' ι' : Type*} {M : CM Q ι} {M' : CM Q' ι'} (hdet :
     (hstep : ∀ c d c', M.Step c d → Sim c c' → ∃ d', Relation.TransGen M'.Step c' d' ∧ Sim d d')
     (hstuck : ∀ c c', M.Stuck c → Sim c c' → M'.Halts c') {c : Cfg Q ι} {c' : Cfg Q' ι'}
     (h : Sim c c') : M'.Halts c' ↔ M.Halts c := by
-  sorry
+  constructor
+  · rintro ⟨d', hr, hd'⟩
+    obtain ⟨n, hn⟩ := StepsN.of_reaches hr
+    clear hr
+    induction n using Nat.strong_induction_on generalizing c c' with
+    | _ n ih =>
+      by_contra hc
+      by_cases hst : M.Stuck c
+      · exact hc ⟨c, .refl, hst⟩
+      · obtain ⟨d, hcd⟩ : ∃ d, M.Step c d := by
+          simpa only [Stuck, not_forall, not_not] using hst
+        obtain ⟨e', he', hsim⟩ := hstep c d c' hcd h
+        obtain ⟨m, hm, hmn⟩ := StepsN.of_transGen hdet hd' he' hn
+        obtain ⟨z, hz, hzs⟩ := ih m hm hsim hmn
+        exact hc ⟨z, Relation.ReflTransGen.head hcd hz, hzs⟩
+  · rintro ⟨d, hr, hd⟩
+    induction hr using Relation.ReflTransGen.head_induction_on generalizing c' with
+    | refl => exact hstuck _ _ hd h
+    | head hs _ ih =>
+      obtain ⟨e', he', hsim⟩ := hstep _ _ c' hs h
+      obtain ⟨z, hz, hzs⟩ := ih hsim
+      exact ⟨z, he'.to_reflTransGen.trans hz, hzs⟩
 
 /-- Restriction keeps determinism. -/
 theorem restrict_det {M : CM Q ι} (hM : M.Det) (S : Set Q) : (M.restrict S).Det := by
-  sorry
+  intro ρ hρ ρ' hρ' hne hsrc
+  refine hM _ hρ _ hρ' ?_ (congrArg Subtype.val hsrc)
+  intro heq
+  apply hne
+  obtain ⟨s, o, d⟩ := ρ; obtain ⟨s', o', d'⟩ := ρ'
+  simp only [Quad.mk.injEq] at heq ⊢
+  exact ⟨Subtype.ext heq.1, heq.2.1, Subtype.ext heq.2.2⟩
 
 /-- Restriction keeps the normal form. -/
 theorem restrict_normalAt {M : CM Q ι} {q₀ : Q} (hM : M.NormalAt q₀) (S : Set Q)
     (hq₀ : q₀ ∈ S) : (M.restrict S).NormalAt ⟨q₀, hq₀⟩ := by
-  sorry
+  intro ρ hρ hd
+  exact hM _ hρ (congrArg Subtype.val hd)
+
+section restrict
+
+variable {M : CM Q ι} {S : Set Q}
+
+/-- Forget the membership proof. -/
+private def lift (c : Cfg S ι) : Cfg Q ι := (c.1.1, c.2)
+
+private theorem step_lift_iff {c d : Cfg S ι} :
+    (M.restrict S).Step c d ↔ M.Step (lift c) (lift d) := by
+  constructor
+  · rintro ⟨ρ, hρ, hs, hd, ha⟩
+    exact ⟨_, hρ, congrArg Subtype.val hs, congrArg Subtype.val hd, ha⟩
+  · rintro ⟨ρ, hρ, hs, hd, ha⟩
+    refine ⟨⟨c.1, ρ.op, d.1⟩, ?_, rfl, rfl, ha⟩
+    obtain ⟨s, o, t⟩ := ρ
+    simp only [lift] at hs hd
+    subst hs hd
+    exact hρ
+
+private theorem step_lift_dst (hS : ∀ ρ ∈ M, ρ.src ∈ S → ρ.dst ∈ S) {c : Cfg S ι}
+    {e : Cfg Q ι} (h : M.Step (lift c) e) : ∃ d, e = lift d ∧ (M.restrict S).Step c d := by
+  obtain ⟨ρ, hρ, hs, hd, ha⟩ := h
+  have he : e.1 ∈ S := hd ▸ hS ρ hρ (hs ▸ c.1.2)
+  exact ⟨(⟨e.1, he⟩, e.2), rfl, step_lift_iff.2 ⟨ρ, hρ, hs, hd, ha⟩⟩
+
+end restrict
 
 /-- Restricting to a set closed under the rules does not change halting. -/
 theorem halts_restrict {M : CM Q ι} {S : Set Q} (hS : ∀ ρ ∈ M, ρ.src ∈ S → ρ.dst ∈ S)
     {q : Q} (hq : q ∈ S) (v : ι → ℕ) :
     (M.restrict S).Halts (⟨q, hq⟩, v) ↔ M.Halts (q, v) := by
-  sorry
+  have stuck_iff : ∀ c : Cfg S ι, (M.restrict S).Stuck c ↔ M.Stuck (lift c) := by
+    intro c
+    constructor
+    · intro h e he
+      obtain ⟨d, -, hd⟩ := step_lift_dst hS he
+      exact h d hd
+    · intro h d hd
+      exact h _ (step_lift_iff.1 hd)
+  constructor
+  · rintro ⟨d, hr, hd⟩
+    refine ⟨lift d, ?_, (stuck_iff d).1 hd⟩
+    exact hr.lift lift fun a b h => step_lift_iff.1 h
+  · rintro ⟨e, hr, he⟩
+    have key : ∃ d, e = lift d ∧ (M.restrict S).Reaches (⟨q, hq⟩, v) d := by
+      clear he
+      induction hr with
+      | refl => exact ⟨(⟨q, hq⟩, v), rfl, .refl⟩
+      | tail _ hst ih =>
+        obtain ⟨d, rfl, hd⟩ := ih
+        obtain ⟨d', rfl, hd'⟩ := step_lift_dst hS hst
+        exact ⟨d', rfl, hd.tail hd'⟩
+    obtain ⟨d, rfl, hd⟩ := key
+    exact ⟨d, hd, (stuck_iff d).2 he⟩
 
 end CM
 
