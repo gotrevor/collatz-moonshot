@@ -1648,9 +1648,572 @@ def RcwaTable.equivProd : RcwaTable ≃ ℕ × List (ℤ × ℤ × ℤ) where
 
 instance : Primcodable RcwaTable := Primcodable.ofEquiv _ RcwaTable.equivProd
 
-/-- **Open.**  The reduction is computable (the bulk of the computability layer). -/
+/-! ### Primitive recursion on `ℤ` (transported through `(a, b) ↦ a − b`) -/
+
+namespace PrimInt
+open Encodable Denumerable
+
+theorem encode_ofNat' (n : ℕ) : encode (n : ℤ) = 2 * n := by
+  show Equiv.intEquivNat _ = _
+  simp [Equiv.intEquivNat, Equiv.intEquivNatSumNat]; rfl
+
+theorem encode_negSucc (n : ℕ) : encode (Int.negSucc n) = 2 * n + 1 := by
+  show Equiv.intEquivNat _ = _
+  simp [Equiv.intEquivNat, Equiv.intEquivNatSumNat]
+
+theorem ofNat_two_mul (k : ℕ) : ofNat ℤ (2 * k) = k := by
+  rw [← encode_ofNat', ofNat_encode]
+
+theorem ofNat_two_mul_add_one (k : ℕ) : ofNat ℤ (2 * k + 1) = Int.negSucc k := by
+  rw [← encode_negSucc, ofNat_encode]
+
+/-- The positive part. -/
+theorem int_toNat : Primrec Int.toNat := by
+  refine (Primrec.cond (Primrec.nat_bodd.comp Primrec.encode) (Primrec.const 0)
+    (Primrec.nat_div2.comp Primrec.encode)).of_eq fun z => ?_
+  rcases z with n | n
+  · simp [encode_ofNat']
+  · simp [encode_negSucc]
+
+/-- The negative part. -/
+theorem int_negPart : Primrec fun z : ℤ => (-z).toNat := by
+  refine (Primrec.cond (Primrec.nat_bodd.comp Primrec.encode)
+    (Primrec.succ.comp (Primrec.nat_div2.comp Primrec.encode)) (Primrec.const 0)).of_eq fun z => ?_
+  rcases z with n | n
+  · simp [encode_ofNat']
+  · rw [encode_negSucc]; simp [Int.negSucc_eq]
+
+/-- `(a, b) ↦ a − b` into `ℤ`. -/
+theorem int_natSub : Primrec₂ fun a b : ℕ => (a : ℤ) - b := by
+  refine ((Primrec.ofNat ℤ).comp (Primrec.ite (Primrec.nat_le.comp Primrec.snd Primrec.fst)
+    (Primrec.nat_mul.comp (Primrec.const 2) (Primrec.nat_sub.comp Primrec.fst Primrec.snd))
+    (Primrec.succ.comp (Primrec.nat_mul.comp (Primrec.const 2)
+      (Primrec.nat_sub.comp (Primrec.nat_sub.comp Primrec.snd Primrec.fst) (Primrec.const 1))))))
+    |>.of_eq fun ⟨a, b⟩ => ?_
+  dsimp only
+  split_ifs with h
+  · rw [ofNat_two_mul]; push_cast [h]; ring
+  · rw [ofNat_two_mul_add_one, Int.negSucc_eq]; push_cast [show 1 ≤ b - a by omega]
+    have : b - a - 1 + 1 = b - a := by omega
+    omega
+
+theorem of_parts {α : Type*} [Primcodable α] {f : α → ℤ} (h1 : Primrec fun a => (f a).toNat)
+    (h2 : Primrec fun a => (-f a).toNat) : Primrec f :=
+  (int_natSub.comp h1 h2).of_eq fun a => by omega
+
+theorem int_natCast : Primrec (fun n : ℕ => (n : ℤ)) :=
+  (int_natSub.comp Primrec.id (Primrec.const 0)).of_eq fun n => by simp
+
+theorem int_add : Primrec₂ (· + · : ℤ → ℤ → ℤ) :=
+  (int_natSub.comp (Primrec.nat_add.comp (int_toNat.comp Primrec.fst) (int_toNat.comp Primrec.snd))
+    (Primrec.nat_add.comp (int_negPart.comp Primrec.fst) (int_negPart.comp Primrec.snd))).of_eq
+    fun ⟨x, y⟩ => by dsimp only; push_cast; omega
+
+theorem int_neg : Primrec (fun x : ℤ => -x) :=
+  (int_natSub.comp int_negPart int_toNat).of_eq fun x => by omega
+
+theorem int_sub : Primrec₂ (· - · : ℤ → ℤ → ℤ) :=
+  (int_add.comp Primrec.fst (int_neg.comp Primrec.snd)).of_eq fun ⟨x, y⟩ => by
+    dsimp only; ring
+
+theorem int_mul : Primrec₂ (· * · : ℤ → ℤ → ℤ) := by
+  refine (int_natSub.comp
+    (Primrec.nat_add.comp (Primrec.nat_mul.comp (int_toNat.comp .fst) (int_toNat.comp .snd))
+      (Primrec.nat_mul.comp (int_negPart.comp .fst) (int_negPart.comp .snd)))
+    (Primrec.nat_add.comp (Primrec.nat_mul.comp (int_toNat.comp .fst) (int_negPart.comp .snd))
+      (Primrec.nat_mul.comp (int_negPart.comp .fst) (int_toNat.comp .snd)))).of_eq
+    fun ⟨x, y⟩ => ?_
+  dsimp only
+  have hx : x = (x.toNat : ℤ) - ((-x).toNat : ℤ) := by omega
+  have hy : y = (y.toNat : ℤ) - ((-y).toNat : ℤ) := by omega
+  push_cast
+  conv_rhs => rw [hx, hy]
+  ring
+
+theorem int_le : PrimrecRel (· ≤ · : ℤ → ℤ → Prop) :=
+  (Primrec.nat_le.comp (Primrec.nat_add.comp (int_toNat.comp .fst) (int_negPart.comp .snd))
+    (Primrec.nat_add.comp (int_toNat.comp .snd) (int_negPart.comp .fst))).of_eq fun ⟨x, y⟩ => by
+    dsimp only; omega
+
+
+/-- Division by a natural number, by cases on the sign. -/
+theorem ediv_natCast_eq (x : ℤ) (n : ℕ) : x / (n : ℤ) =
+    if n = 0 then 0 else if 0 ≤ x then ((x.toNat / n : ℕ) : ℤ)
+      else -((((-x).toNat - 1) / n : ℕ) : ℤ) - 1 := by
+  split_ifs with h0 hx
+  · subst h0; simp
+  · conv_lhs => rw [← Int.toNat_of_nonneg hx]
+    rfl
+  · obtain ⟨m, rfl⟩ : ∃ m : ℕ, x = Int.negSucc m := ⟨(-x).toNat - 1, by omega⟩
+    rw [Int.negSucc_ediv m (by omega)]
+    have : (-Int.negSucc m).toNat - 1 = m := by rw [Int.negSucc_eq]; omega
+    rw [this]
+    push_cast
+    rw [show (Int.ediv m n) = (m : ℤ) / (n : ℤ) from rfl]
+    ring
+
+theorem int_ediv_nat : Primrec₂ fun (x : ℤ) (n : ℕ) => x / (n : ℤ) := by
+  refine (Primrec.ite (Primrec.eq.comp Primrec.snd (Primrec.const 0)) (Primrec.const 0)
+    (Primrec.ite (int_le.comp (Primrec.const 0) Primrec.fst)
+      (int_natCast.comp (Primrec.nat_div.comp (int_toNat.comp Primrec.fst) Primrec.snd))
+      (int_sub.comp (int_neg.comp (int_natCast.comp (Primrec.nat_div.comp
+        (Primrec.nat_sub.comp (int_negPart.comp Primrec.fst) (Primrec.const 1)) Primrec.snd)))
+        (Primrec.const 1)))).of_eq fun ⟨x, n⟩ => ?_
+  dsimp only
+  rw [ediv_natCast_eq]
+
+theorem int_ediv : Primrec₂ (· / · : ℤ → ℤ → ℤ) := by
+  refine (Primrec.ite (int_le.comp (Primrec.const 0) Primrec.snd)
+    (int_ediv_nat.comp Primrec.fst (int_toNat.comp Primrec.snd))
+    (int_neg.comp (int_ediv_nat.comp Primrec.fst (int_negPart.comp Primrec.snd)))).of_eq
+    fun ⟨x, y⟩ => ?_
+  dsimp only
+  split_ifs with h
+  · rw [Int.toNat_of_nonneg h]
+  · rw [show ((-y).toNat : ℤ) = -y by omega, Int.ediv_neg, neg_neg]
+
+theorem int_emod : Primrec₂ (· % · : ℤ → ℤ → ℤ) :=
+  (int_sub.comp Primrec.fst (int_mul.comp Primrec.snd int_ediv)).of_eq fun ⟨x, y⟩ => by
+    dsimp only; rw [Int.emod_def]
+
+theorem int_dvd : PrimrecRel (· ∣ · : ℤ → ℤ → Prop) :=
+  (Primrec.eq.comp (int_emod.comp Primrec.snd Primrec.fst) (Primrec.const 0)).of_eq
+    fun ⟨x, y⟩ => by dsimp only; rw [Int.dvd_iff_emod_eq_zero]
+
+theorem nat_pow : Primrec₂ (· ^ · : ℕ → ℕ → ℕ) := by
+  refine (Primrec.nat_iterate Primrec.snd (Primrec.const 1)
+    (Primrec.nat_mul.comp Primrec.snd (Primrec.fst.comp Primrec.fst)).to₂).of_eq
+    fun ⟨a, k⟩ => ?_
+  dsimp only
+  induction k with
+  | zero => rfl
+  | succ k ih => rw [Function.iterate_succ_apply', ih, pow_succ]
+
+/-- `find?` with a parameter. -/
+theorem list_find? {α β : Type*} [Primcodable α] [Primcodable β] {f : α → List β}
+    {p : α → β → Bool} (hf : Primrec f) (hp : Primrec₂ p) :
+    Primrec fun a => (f a).find? (p a) := by
+  refine (Primrec.list_foldr hf (Primrec.const none)
+    (Primrec.cond (hp.comp Primrec.fst (Primrec.fst.comp Primrec.snd))
+      (Primrec.option_some.comp (Primrec.fst.comp Primrec.snd))
+      (Primrec.snd.comp Primrec.snd)).to₂).of_eq fun a => ?_
+  dsimp only
+  induction f a with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.find?_cons]; cases p a b <;> rfl
+
+/-- `all` with a parameter. -/
+theorem list_all {α β : Type*} [Primcodable α] [Primcodable β] {f : α → List β}
+    {p : α → β → Bool} (hf : Primrec f) (hp : Primrec₂ p) :
+    Primrec fun a => (f a).all (p a) := by
+  refine (Primrec.list_foldr hf (Primrec.const true)
+    (Primrec.cond (hp.comp Primrec.fst (Primrec.fst.comp Primrec.snd))
+      (Primrec.snd.comp Primrec.snd) (Primrec.const false)).to₂).of_eq fun a => ?_
+  dsimp only
+  induction f a with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.all_cons]; cases p a b <;> rfl
+
+
+theorem padicValInt_eq_findGreatest (p : ℕ) [hp : Fact p.Prime] (n : ℤ) :
+    padicValInt p n = Nat.findGreatest (fun k => (p : ℤ) ^ k ∣ n) n.natAbs := by
+  by_cases hn : n = 0
+  · subst hn; simp
+  symm
+  rw [Nat.findGreatest_eq_iff]
+  have hd : (p : ℤ) ^ padicValInt p n ∣ n := padicValInt_dvd n
+  refine ⟨?_, fun _ => hd, fun k hk _ hdk => ?_⟩
+  · have h1 : p ^ padicValInt p n ∣ n.natAbs := by
+      have := Int.natAbs_dvd_natAbs.2 hd
+      simpa [Int.natAbs_pow] using this
+    have h2 := Nat.le_of_dvd (Int.natAbs_pos.2 hn) h1
+    exact ((Nat.lt_pow_self hp.out.one_lt).le).trans h2
+  · have := ((padicValInt_dvd_iff k n).1 hdk).resolve_left hn
+    omega
+
+theorem int_natAbs : Primrec Int.natAbs :=
+  (Primrec.nat_add.comp int_toNat int_negPart).of_eq fun n => by omega
+
+theorem padicValInt_primrec (p : ℕ) [Fact p.Prime] : Primrec (padicValInt p) := by
+  have hR : PrimrecRel (fun (n : ℤ) (k : ℕ) => ((p ^ k : ℕ) : ℤ) ∣ n) :=
+    int_dvd.comp (int_natCast.comp (nat_pow.comp (Primrec.const p) Primrec.snd)) Primrec.fst
+  refine (Primrec.nat_findGreatest int_natAbs hR).of_eq fun n => ?_
+  rw [padicValInt_eq_findGreatest]
+  push_cast
+  rfl
+
+end PrimInt
+
+section Prim
+
+open PrimInt
+variable {α : Type*} [Primcodable α]
+
+theorem pr_intPow (b : ℕ) {k : α → ℕ} (hk : Primrec k) :
+    Primrec fun a => (b : ℤ) ^ k a :=
+  (int_natCast.comp (nat_pow.comp (Primrec.const b) hk)).of_eq fun a => by push_cast; rfl
+
+theorem pr_N {j : α → ℕ} (hj : Primrec j) : Primrec fun a => N (j a) :=
+  Primrec.nat_mul.comp (Primrec.const 4)
+    (nat_pow.comp (Primrec.const 5) (Primrec.nat_sub.comp hj (Primrec.const 1)))
+
+theorem phase_eq (j : ℕ) (n : ℤ) : phase j n = ((List.range (N j)).find? fun k =>
+    decide ((3 : ℤ) ^ k % (5 : ℤ) ^ j = n % (5 : ℤ) ^ j)).getD 0 := by
+  unfold phase dlog3
+  congr 2
+  funext k
+  have : ((3 : ZMod (5 ^ j)) ^ k = (n : ZMod (5 ^ j))) ↔
+      ((3 : ℤ) ^ k % (5 : ℤ) ^ j = n % (5 : ℤ) ^ j) := by
+    rw [show (3 : ZMod (5 ^ j)) ^ k = (((3 : ℤ) ^ k : ℤ) : ZMod (5 ^ j)) by push_cast; rfl,
+      ZMod.intCast_eq_intCast_iff']
+    push_cast; rfl
+  simp only [this]
+
+theorem pr_phase {j : α → ℕ} {n : α → ℤ} (hj : Primrec j) (hn : Primrec n) :
+    Primrec fun a => phase (j a) (n a) := by
+  have hp : Primrec₂ fun (a : α) (k : ℕ) =>
+      decide ((3 : ℤ) ^ k % (5 : ℤ) ^ j a = n a % (5 : ℤ) ^ j a) :=
+    (Primrec.eq.comp (int_emod.comp (pr_intPow 3 Primrec.snd) (pr_intPow 5 (hj.comp Primrec.fst)))
+      (int_emod.comp (hn.comp Primrec.fst) (pr_intPow 5 (hj.comp Primrec.fst)))).decide
+  refine (Primrec.option_getD.comp (list_find? (Primrec.list_range.comp (pr_N hj)) hp)
+    (Primrec.const 0)).of_eq fun a => ?_
+  rw [phase_eq]
+
+theorem inEngine_iff_dec (j : ℕ) (n : ℤ) : InEngine j n ↔
+    (n ≠ 0 ∧ ¬ (5 : ℤ) ∣ n ∧ (3 : ℤ) ^ phase j n % (5 : ℤ) ^ j = n % (5 : ℤ) ^ j ∧
+      (3 : ℤ) ^ phase j n ∣ n) := by
+  unfold InEngine
+  have h1 : ((3 : ZMod (5 ^ j)) ^ phase j n = (n : ZMod (5 ^ j))) ↔
+      ((3 : ℤ) ^ phase j n % (5 : ℤ) ^ j = n % (5 : ℤ) ^ j) := by
+    rw [show (3 : ZMod (5 ^ j)) ^ phase j n = (((3 : ℤ) ^ phase j n : ℤ) : ZMod (5 ^ j)) by
+      push_cast; rfl, ZMod.intCast_eq_intCast_iff']
+    push_cast; rfl
+  constructor
+  · rintro ⟨h0, h5, h3, hv⟩
+    exact ⟨h0, h5, h1.1 h3, by
+      have := (padicValInt_dvd_iff (p := 3) (phase j n) n).2 (Or.inr hv)
+      exact_mod_cast this⟩
+  · rintro ⟨h0, h5, h3, hv⟩
+    refine ⟨h0, h5, h1.2 h3, ?_⟩
+    have := (padicValInt_dvd_iff (p := 3) (phase j n) n).1 (by exact_mod_cast hv)
+    exact this.resolve_left h0
+
+theorem pr_inEngine {j : α → ℕ} {n : α → ℤ} (hj : Primrec j) (hn : Primrec n) :
+    Primrec fun a => decide (InEngine (j a) (n a)) := by
+  have hph := pr_phase hj hn
+  have h0 : PrimrecPred fun a => n a ≠ 0 := (Primrec.eq.comp hn (Primrec.const 0)).not
+  have h5 : PrimrecPred fun a => ¬ (5 : ℤ) ∣ n a := (int_dvd.comp (Primrec.const 5) hn).not
+  have h3 : PrimrecPred fun a => (3 : ℤ) ^ phase (j a) (n a) % (5 : ℤ) ^ j a =
+      n a % (5 : ℤ) ^ j a :=
+    Primrec.eq.comp (int_emod.comp (pr_intPow 3 hph) (pr_intPow 5 hj))
+      (int_emod.comp hn (pr_intPow 5 hj))
+  have hv : PrimrecPred fun a => (3 : ℤ) ^ phase (j a) (n a) ∣ n a :=
+    int_dvd.comp (pr_intPow 3 hph) hn
+  have := (h0.and (h5.and (h3.and hv))).of_eq fun a => (inEngine_iff_dec (j a) (n a)).symm
+  exact this.decide
+
+theorem pr_C1 {j : α → ℕ} {n : α → ℤ} (hj : Primrec j) (hn : Primrec n) :
+    Primrec fun a => C1 (j a) (n a) :=
+  Primrec.nat_div.comp ((padicValInt_primrec 2).comp hn) (pr_N hj)
+
+theorem pr_C2 {j : α → ℕ} {n : α → ℤ} (hj : Primrec j) (hn : Primrec n) :
+    Primrec fun a => C2 (j a) (n a) :=
+  Primrec.nat_div.comp (Primrec.nat_sub.comp ((padicValInt_primrec 3).comp hn) (pr_phase hj hn))
+    (pr_N hj)
+
+theorem pr_decode {j : α → ℕ} {n : α → ℤ} (hj : Primrec j) (hn : Primrec n) :
+    Primrec fun a => decode (j a) (n a) :=
+  (pr_phase hj hn).pair ((pr_C1 hj hn).pair (pr_C2 hj hn))
+
+
+theorem pr_rule {ρ : α → Rule} (hρ : Primrec ρ) :
+    Primrec (fun a => Rule.equivProd (ρ a)) :=
+  (Primrec.of_equiv (e := Rule.equivProd)).comp hρ
+
+theorem pr_src {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).src :=
+  Primrec.fst.comp (pr_rule hρ)
+theorem pr_t₁ {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).t₁ :=
+  Primrec.fst.comp (Primrec.snd.comp (pr_rule hρ))
+theorem pr_t₂ {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).t₂ :=
+  Primrec.fst.comp (Primrec.snd.comp (Primrec.snd.comp (pr_rule hρ)))
+theorem pr_d₁ {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).d₁ :=
+  Primrec.fst.comp (Primrec.snd.comp (Primrec.snd.comp (Primrec.snd.comp (pr_rule hρ))))
+theorem pr_d₂ {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).d₂ :=
+  Primrec.fst.comp (Primrec.snd.comp (Primrec.snd.comp (Primrec.snd.comp
+    (Primrec.snd.comp (pr_rule hρ)))))
+theorem pr_dst {ρ : α → Rule} (hρ : Primrec ρ) : Primrec fun a => (ρ a).dst :=
+  Primrec.snd.comp (Primrec.snd.comp (Primrec.snd.comp (Primrec.snd.comp
+    (Primrec.snd.comp (pr_rule hρ)))))
+
+theorem pr_testOk {t : α → Test} {c : α → ℕ} (ht : Primrec t) (hc : Primrec c) :
+    Primrec fun a => (t a).ok (c a) := by
+  refine (Primrec.cond (Primrec.beq.comp ht (Primrec.const Test.zero))
+    (Primrec.beq.comp hc (Primrec.const 0))
+    (Primrec.cond (Primrec.beq.comp ht (Primrec.const Test.pos))
+      (Primrec.nat_le.comp (Primrec.const 1) hc).decide (Primrec.const true))).of_eq fun a => ?_
+  cases t a <;> rfl
+
+theorem pr_moveVal {d : α → Move} (hd : Primrec d) : Primrec fun a => (d a).val := by
+  refine (Primrec.cond (Primrec.beq.comp hd (Primrec.const Move.minus)) (Primrec.const (-1))
+    (Primrec.cond (Primrec.beq.comp hd (Primrec.const Move.zero)) (Primrec.const 0)
+      (Primrec.const 1))).of_eq fun a => ?_
+  cases d a <;> rfl
+
+theorem pr_fires {ρ : α → Rule} {c : α → Cfg} (hρ : Primrec ρ) (hc : Primrec c) :
+    Primrec fun a => decide ((ρ a).Fires (c a)) := by
+  have h1 := (Primrec.eq.comp (Primrec.fst.comp hc) (pr_src hρ))
+  have h2 := (Primrec.eq.comp (pr_testOk (pr_t₁ hρ) (Primrec.fst.comp (Primrec.snd.comp hc)))
+    (Primrec.const true))
+  have h3 := (Primrec.eq.comp (pr_testOk (pr_t₂ hρ) (Primrec.snd.comp (Primrec.snd.comp hc)))
+    (Primrec.const true))
+  have h4 := (int_le.comp (Primrec.const 0) (int_add.comp
+    (int_natCast.comp (Primrec.fst.comp (Primrec.snd.comp hc))) (pr_moveVal (pr_d₁ hρ))))
+  have h5 := (int_le.comp (Primrec.const 0) (int_add.comp
+    (int_natCast.comp (Primrec.snd.comp (Primrec.snd.comp hc))) (pr_moveVal (pr_d₂ hρ))))
+  exact (h1.and (h2.and (h3.and (h4.and h5)))).decide
+
+theorem pr_target {ρ : α → Rule} {c : α → Cfg} (hρ : Primrec ρ) (hc : Primrec c) :
+    Primrec fun a => (ρ a).target (c a) :=
+  (pr_dst hρ).pair ((int_toNat.comp (int_add.comp
+    (int_natCast.comp (Primrec.fst.comp (Primrec.snd.comp hc))) (pr_moveVal (pr_d₁ hρ)))).pair
+    (int_toNat.comp (int_add.comp
+    (int_natCast.comp (Primrec.snd.comp (Primrec.snd.comp hc))) (pr_moveVal (pr_d₂ hρ)))))
+
+theorem pr_step {R : α → List Rule} {c : α → Cfg} (hR : Primrec R) (hc : Primrec c) :
+    Primrec fun a => step (R a) (c a) :=
+  Primrec.option_map (list_find? hR (pr_fires Primrec.snd (hc.comp Primrec.fst)).to₂)
+    (pr_target Primrec.snd (hc.comp Primrec.fst)).to₂
+
+theorem pr_isSourceB {R : α → List Rule} {c : α → Cfg} (hR : Primrec R) (hc : Primrec c) :
+    Primrec fun a => isSourceB (R a) (c a) := by
+  unfold isSourceB
+  have hc' := hc.comp (Primrec.fst (α := α) (β := Rule))
+  have hρ := Primrec.snd (α := α) (β := Rule)
+  have hpre := int_sub.comp (int_natCast.comp (Primrec.fst.comp (Primrec.snd.comp hc')))
+    (pr_moveVal (pr_d₁ hρ))
+  have hpre2 := int_sub.comp (int_natCast.comp (Primrec.snd.comp (Primrec.snd.comp hc')))
+    (pr_moveVal (pr_d₂ hρ))
+  have hA := ((Primrec.eq.comp (pr_dst hρ) (Primrec.fst.comp hc')).and
+    ((int_le.comp (Primrec.const 0) hpre).and (int_le.comp (Primrec.const 0) hpre2))).decide
+  have hB := (Primrec.eq.comp (pr_step (hR.comp Primrec.fst) ((pr_src hρ).pair
+    ((int_toNat.comp hpre).pair (int_toNat.comp hpre2)))) (Primrec.option_some.comp hc')).decide
+  exact list_all hR (Primrec.not.comp (Primrec.and.comp hA hB)).to₂
+
+
+theorem pr_scale {n A B : α → ℤ} (hn : Primrec n) (hA : Primrec A) (hB : Primrec B) :
+    Primrec fun a => scale (n a) (A a) (B a) :=
+  int_ediv.comp (int_mul.comp (int_mul.comp hn (pr_intPow 2 (int_toNat.comp hA)))
+      (pr_intPow 3 (int_toNat.comp hB)))
+    (int_mul.comp (pr_intPow 2 (int_negPart.comp hA)) (pr_intPow 3 (int_negPart.comp hB)))
+
+theorem pr_move {j : α → ℕ} {n : α → ℤ} {s : α → ℕ} {δ₁ δ₂ : α → ℤ} (hj : Primrec j)
+    (hn : Primrec n) (hs : Primrec s) (h₁ : Primrec δ₁) (h₂ : Primrec δ₂) :
+    Primrec fun a => move (j a) (n a) (s a) (δ₁ a) (δ₂ a) :=
+  pr_scale hn (int_mul.comp (int_natCast.comp (pr_N hj)) h₁)
+    (int_sub.comp (int_add.comp (int_mul.comp (int_natCast.comp (pr_N hj)) h₂)
+      (int_natCast.comp hs)) (int_natCast.comp (pr_phase hj hn)))
+
+theorem pr_F {j : α → ℕ} {R : α → List Rule} {n : α → ℤ} (hj : Primrec j) (hR : Primrec R)
+    (hn : Primrec n) : Primrec fun a => F (j a) (R a) (n a) := by
+  have hj' := hj.comp (Primrec.fst (α := α) (β := Rule))
+  have hn' := hn.comp (Primrec.fst (α := α) (β := Rule))
+  refine (Primrec.cond (pr_inEngine hj hn)
+    (Primrec.option_map (list_find? hR (pr_fires Primrec.snd (pr_decode hj' hn')).to₂)
+      (pr_move hj' hn' (pr_dst Primrec.snd) (pr_moveVal (pr_d₁ Primrec.snd))
+        (pr_moveVal (pr_d₂ Primrec.snd))).to₂)
+    (Primrec.const none)).of_eq fun a => ?_
+  unfold F
+  by_cases h : InEngine (j a) (n a) <;> simp [h]
+
+theorem pr_machine {M : α → Machine} (hM : Primrec M) :
+    Primrec (fun a => Machine.equivProd (M a)) :=
+  (Primrec.of_equiv (e := Machine.equivProd)).comp hM
+
+theorem pr_K {M : α → Machine} (hM : Primrec M) : Primrec fun a => (M a).K :=
+  Primrec.fst.comp (pr_machine hM)
+theorem pr_rules {M : α → Machine} (hM : Primrec M) : Primrec fun a => (M a).rules :=
+  Primrec.fst.comp (Primrec.snd.comp (pr_machine hM))
+theorem pr_pair {M : α → Machine} (hM : Primrec M) : Primrec fun a => (M a).pair :=
+  Primrec.snd.comp (Primrec.snd.comp (pr_machine hM))
+
+theorem pr_pairFn {M : α → Machine} {s : α → ℕ} (hM : Primrec M) (hs : Primrec s) :
+    Primrec fun a => (M a).pairFn (s a) :=
+  (Primrec.option_getD.comp (Primrec.list_getElem?.comp (pr_pair hM) hs) hs).of_eq fun a => by
+    simp [Machine.pairFn, List.getD_eq_getElem?_getD]
+
+theorem pr_hwIdx {hw : α → List (ℤ × ℤ)} {n : α → ℤ} (hhw : Primrec hw) (hn : Primrec n) :
+    Primrec fun a => hwIdx (hw a) (n a) :=
+  Primrec.list_findIdx hhw (Primrec.beq.comp
+    (int_emod.comp (hn.comp Primrec.fst) (Primrec.snd.comp Primrec.snd))
+    (int_emod.comp (Primrec.fst.comp Primrec.snd) (Primrec.snd.comp Primrec.snd))).to₂
+
+theorem pr_hwPos {hw : α → List (ℤ × ℤ)} {n : α → ℤ} (hhw : Primrec hw) (hn : Primrec n) :
+    Primrec fun a => hwPos (hw a) (n a) := by
+  have hg := (Primrec.list_getD (0, 1)).comp hhw (pr_hwIdx hhw hn)
+  exact int_add.comp (int_mul.comp (int_natCast.comp (Primrec.list_length.comp hhw))
+    (int_ediv.comp (int_sub.comp hn (Primrec.fst.comp hg)) (Primrec.snd.comp hg)))
+    (int_natCast.comp (pr_hwIdx hhw hn))
+
+theorem pr_hwPoint {hw : α → List (ℤ × ℤ)} {p : α → ℤ} (hhw : Primrec hw) (hp : Primrec p) :
+    Primrec fun a => hwPoint (hw a) (p a) := by
+  have hl := int_natCast.comp (Primrec.list_length.comp hhw)
+  have hg := (Primrec.list_getD (0, 1)).comp hhw (int_toNat.comp (int_emod.comp hp hl))
+  exact int_add.comp (Primrec.fst.comp hg) (int_mul.comp (Primrec.snd.comp hg)
+    (int_ediv.comp hp hl))
+
+theorem pr_hwNext {hw : α → List (ℤ × ℤ)} {n : α → ℤ} (hhw : Primrec hw) (hn : Primrec n) :
+    Primrec fun a => hwNext (hw a) (n a) :=
+  pr_hwPoint hhw (int_add.comp (pr_hwPos hhw hn) (Primrec.const 1))
+
+theorem pr_hwModulus {j : α → ℕ} (hj : Primrec j) : Primrec fun a => hwModulus (j a) :=
+  Primrec.nat_mul.comp (Primrec.nat_mul.comp (nat_pow.comp (Primrec.const 5) hj)
+    (nat_pow.comp (Primrec.const 2) (Primrec.nat_mul.comp (Primrec.const 2) (pr_N hj))))
+    (nat_pow.comp (Primrec.const 3) (Primrec.nat_mul.comp (Primrec.const 3) (pr_N hj)))
+
+/-- `filter` with a parameter. -/
+theorem list_filter {β : Type*} [Primcodable β] {f : α → List β} {p : α → β → Bool}
+    (hf : Primrec f) (hp : Primrec₂ p) : Primrec fun a => (f a).filter (p a) := by
+  refine (Primrec.list_foldr hf (Primrec.const [])
+    (Primrec.cond (hp.comp Primrec.fst (Primrec.fst.comp Primrec.snd))
+      (Primrec.list_cons.comp (Primrec.fst.comp Primrec.snd) (Primrec.snd.comp Primrec.snd))
+      (Primrec.snd.comp Primrec.snd)).to₂).of_eq fun a => ?_
+  dsimp only
+  induction f a with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.filter_cons]; cases p a b <;> rfl
+
+theorem pr_highwayAt {j : α → ℕ} {R : α → List Rule} (hj : Primrec j) (hR : Primrec R) :
+    Primrec fun a => highwayAt (j a) (R a) := by
+  have hj' := hj.comp (Primrec.fst (α := α) (β := ℤ))
+  have hR' := hR.comp (Primrec.fst (α := α) (β := ℤ))
+  have hpred := Primrec.or.comp (Primrec.not.comp (pr_inEngine hj' Primrec.snd))
+    (pr_isSourceB hR' (pr_decode hj' Primrec.snd))
+  refine (Primrec.list_map (list_filter (Primrec.list_map
+      (Primrec.list_range.comp (pr_hwModulus hj)) (int_natCast.comp Primrec.snd).to₂) hpred.to₂)
+    (Primrec.pair Primrec.snd (int_natCast.comp (pr_hwModulus hj'))).to₂).of_eq
+    fun a => ?_
+  rw [highwayAt_eq]
+
+
+theorem sigma_eq_getD (j : ℕ) (M : Machine) (hw : List (ℤ × ℤ)) (n : ℤ) :
+    sigma j M hw n = (F j M.rules n).getD
+      (if InEngine j n then hwNext hw (move j n (M.pairFn (phase j n)) 0 0) else hwNext hw n) := by
+  unfold sigma
+  cases F j M.rules n <;> rfl
+
+theorem pr_sigma {j : α → ℕ} {M : α → Machine} {hw : α → List (ℤ × ℤ)} {n : α → ℤ}
+    (hj : Primrec j) (hM : Primrec M) (hhw : Primrec hw) (hn : Primrec n) :
+    Primrec fun a => sigma (j a) (M a) (hw a) (n a) := by
+  refine (Primrec.option_getD.comp (pr_F hj (pr_rules hM) hn)
+    (Primrec.ite (Primrec.primrecPred (pr_inEngine hj hn))
+      (pr_hwNext hhw (pr_move hj hn (pr_pairFn hM (pr_phase hj hn)) (Primrec.const 0)
+        (Primrec.const 0)))
+      (pr_hwNext hhw hn))).of_eq fun a => ?_
+  rw [sigma_eq_getD]
+
+theorem gcd_eq_findGreatest (a b : ℕ) :
+    Nat.gcd a b = Nat.findGreatest (fun g => g ∣ a ∧ g ∣ b) (a + b) := by
+  by_cases h : a + b = 0
+  · obtain ⟨rfl, rfl⟩ : a = 0 ∧ b = 0 := by omega
+    simp
+  have hpos : 0 < Nat.gcd a b := by
+    rcases Nat.eq_zero_or_pos a with ha | ha
+    · subst ha; rw [Nat.gcd_zero_left]; omega
+    · exact Nat.gcd_pos_of_pos_left _ ha
+  symm
+  rw [Nat.findGreatest_eq_iff]
+  refine ⟨?_, fun _ => ⟨Nat.gcd_dvd_left _ _, Nat.gcd_dvd_right _ _⟩, fun k hk _ ⟨h1, h2⟩ => ?_⟩
+  · rcases Nat.eq_zero_or_pos a with ha | ha
+    · subst ha; rw [Nat.gcd_zero_left]; omega
+    · exact (Nat.gcd_le_left _ ha).trans (by omega)
+  · have := Nat.le_of_dvd hpos (Nat.dvd_gcd h1 h2)
+    omega
+
+theorem nat_gcd : Primrec₂ Nat.gcd := by
+  have hR : PrimrecRel (fun (x : ℕ × ℕ) (g : ℕ) => g ∣ x.1 ∧ g ∣ x.2) := by
+    have hd : PrimrecRel (fun a b : ℕ => a ∣ b) :=
+      (Primrec.eq.comp (Primrec.nat_mod.comp Primrec.snd Primrec.fst) (Primrec.const 0)).of_eq
+        fun ⟨a, b⟩ => by dsimp only; exact (Nat.dvd_iff_mod_eq_zero).symm
+    exact (hd.comp Primrec.snd (Primrec.fst.comp Primrec.fst)).and
+      (hd.comp Primrec.snd (Primrec.snd.comp Primrec.fst))
+  refine (Primrec.nat_findGreatest (Primrec.nat_add.comp Primrec.fst Primrec.snd) hR).of_eq
+    fun x => ?_
+  rw [gcd_eq_findGreatest]
+
+/-- The numerator of `d / m` without `ℚ`. -/
+def numZ (d : ℤ) (m : ℕ) : ℤ :=
+  if m = 0 then 0 else d / ((m.gcd d.natAbs : ℕ) : ℤ)
+
+/-- The denominator of `d / m` without `ℚ`. -/
+def denN (d : ℤ) (m : ℕ) : ℕ :=
+  if m = 0 then 1 else m / m.gcd d.natAbs
+
+theorem num_div_eq_numZ (d : ℤ) (m : ℕ) : ((d : ℚ) / m).num = numZ d m := by
+  rw [← Rat.mkRat_eq_div, Rat.num_mkRat, numZ]
+
+theorem den_div_eq_denN (d : ℤ) (m : ℕ) : ((d : ℚ) / m).den = denN d m := by
+  rw [← Rat.mkRat_eq_div, Rat.den_mkRat, denN]
+
+theorem pr_numZ {d : α → ℤ} {m : α → ℕ} (hd : Primrec d) (hm : Primrec m) :
+    Primrec fun a => numZ (d a) (m a) :=
+  Primrec.ite (Primrec.eq.comp hm (Primrec.const 0)) (Primrec.const 0)
+    (int_ediv.comp hd (int_natCast.comp (nat_gcd.comp hm (int_natAbs.comp hd))))
+
+theorem pr_denN {d : α → ℤ} {m : α → ℕ} (hd : Primrec d) (hm : Primrec m) :
+    Primrec fun a => denN (d a) (m a) :=
+  Primrec.ite (Primrec.eq.comp hm (Primrec.const 0)) (Primrec.const 1)
+    (Primrec.nat_div.comp hm (nat_gcd.comp hm (int_natAbs.comp hd)))
+
+theorem tableFrom_eq (f : ℤ → ℤ) (M : ℕ) : tableFrom f M = RcwaTable.equivProd.symm
+    (M, ((List.range M).map (fun a : ℕ => (a : ℤ))).map fun k =>
+      (numZ (f (k + M) - f k) M,
+        (denN (f (k + M) - f k) M : ℤ) * f k - numZ (f (k + M) - f k) M * k,
+        (denN (f (k + M) - f k) M : ℤ))) := by
+  unfold tableFrom
+  have hL : List.flatMap (fun a : ℕ => [(a : ℤ)]) (List.range M) =
+      (List.range M).map (fun a : ℕ => (a : ℤ)) := List.map_eq_flatMap.symm
+  simp only [RcwaTable.equivProd, Equiv.coe_fn_symm_mk, num_div_eq_numZ, den_div_eq_denN]
+  congr 1
+  rw [← hL]
+  rfl
+
+theorem pr_tableFrom {f : α → ℤ → ℤ} {m : α → ℕ} (hf : Primrec₂ f) (hm : Primrec m) :
+    Primrec fun a => tableFrom (f a) (m a) := by
+  have hm' := hm.comp (Primrec.fst (α := α) (β := ℤ))
+  have hd := int_sub.comp (hf.comp Primrec.fst (int_add.comp Primrec.snd (int_natCast.comp hm')))
+    (hf.comp Primrec.fst Primrec.snd)
+  have hden := int_natCast.comp (pr_denN hd hm')
+  have hrow := (pr_numZ hd hm').pair ((int_sub.comp (int_mul.comp hden
+    (hf.comp Primrec.fst Primrec.snd)) (int_mul.comp (pr_numZ hd hm') Primrec.snd)).pair hden)
+  refine ((Primrec.of_equiv_symm (e := RcwaTable.equivProd)).comp (hm.pair (Primrec.list_map
+    (Primrec.list_map (Primrec.list_range.comp hm) (int_natCast.comp Primrec.snd).to₂)
+    hrow.to₂))).of_eq fun a => ?_
+  rw [tableFrom_eq]
+
+theorem pr_enc {j : α → ℕ} {c : α → Cfg} (hj : Primrec j) (hc : Primrec c) :
+    Primrec fun a => enc (j a) (c a) :=
+  int_mul.comp
+    (pr_intPow 2 (Primrec.nat_mul.comp (pr_N hj) (Primrec.fst.comp (Primrec.snd.comp hc))))
+    (pr_intPow 3 (Primrec.nat_add.comp (Primrec.fst.comp hc)
+      (Primrec.nat_mul.comp (pr_N hj) (Primrec.snd.comp (Primrec.snd.comp hc)))))
+
+end Prim
+
+open PrimInt in
+/-- The reduction is computable (the bulk of the computability layer). -/
 theorem computable_reduce : Computable reduce := by
-  sorry
+  apply Primrec.to_comp
+  have hM := Primrec.fst (α := Machine) (β := Cfg)
+  have hl : Primrec fun p : Machine × Cfg => level p.1 := Primrec.succ.comp (pr_K hM)
+  have hhw : Primrec fun p : Machine × Cfg => highwayOf p.1 :=
+    pr_highwayAt hl (pr_rules hM)
+  have he := pr_enc hl Primrec.snd
+  have hs : Primrec₂ fun (p : Machine × Cfg) (n : ℤ) => sigma (level p.1) p.1 (highwayOf p.1) n :=
+    pr_sigma (hl.comp Primrec.fst) (hM.comp Primrec.fst) (hhw.comp Primrec.fst) Primrec.snd
+  have hm : Primrec fun p : Machine × Cfg => 3 ^ N (level p.1) * hwModulus (level p.1) :=
+    Primrec.nat_mul.comp (nat_pow.comp (Primrec.const 3) (pr_N hl)) (pr_hwModulus hl)
+  have ht : Primrec fun p : Machine × Cfg => tableOf p.1 := pr_tableFrom hs hm
+  exact ht.pair (he.pair (pr_hwNext hhw he))
 
 /-- **Literature input** (a hypothesis, never an axiom): halting from a source is undecidable
 for valid machines in this file's format.
