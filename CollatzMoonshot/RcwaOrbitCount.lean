@@ -398,7 +398,20 @@ halts from every configuration. -/
 theorem double_sourcesHalt_iff (e : Q × Bool ≃ Fin K) (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R)
     (hdet : R.Det) (hrev : R.Rev) (hmort : R.RevMortal) :
     SourcesHalt (double rs e) ↔ Mortal R := by
-  sorry
+  constructor
+  · intro hS c
+    obtain ⟨s, hs, hr⟩ := exists_source_reaches hmort c
+    have := (double_halts_iff e hrs hdet hrev hs).1 (hS _ (double_isSource e hrs hdet hrev hs))
+    exact halts_of_reaches hdet this hr
+  · intro hM x hx
+    by_cases hK : x.1 < K
+    · obtain ⟨b, c, rfl⟩ := exists_dcfg e hK
+      cases b with
+      | false => exact absurd hx (double_not_isSource_bwd e hrs hdet hrev c)
+      | true =>
+        exact (double_halts_iff e hrs hdet hrev (isSource_of_double e hrs hdet hrev hx)).2 (hM c)
+    · exact ⟨0, x, rfl, Option.eq_none_iff_forall_ne_some.2 fun y hy =>
+        hK (double_step_lt e hy).1⟩
 
 end DoubleMortal
 
