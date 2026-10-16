@@ -372,6 +372,28 @@ theorem glueH_rev (hU : U.Det) (hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val)
     (glue (histWrap U lab) (.bnd hole) (.bnd back) (.val i) L).Rev :=
   glue_rev (histWrap_rev hU hlab hinj) (histWrap_normalAt hback)
 
+/-- The chain's first state, lifted to the wrapper. -/
+theorem chainFirst_bnd (back : Q) (L : ℕ) :
+    chainFirst (HState.bnd (ι := ι) (K := K) back) L =
+      Sum.map HState.bnd id (chainFirst back L) := by
+  unfold chainFirst; split_ifs <;> rfl
+
+/-- The chain's next state, lifted to the wrapper. -/
+theorem chainNext_bnd (back : Q) {L : ℕ} (k : Fin L) :
+    chainNext (HState.bnd (ι := ι) (K := K) back) k = Sum.map HState.bnd id (chainNext back k) := by
+  unfold chainNext; split_ifs <;> rfl
+
+/-- The position used by the potential of `glueH_revMortal`. -/
+def gpos [DecidableEq Q] (hole : Q) (L : ℕ) : HState Q ι K ⊕ Fin L → ℕ
+  | .inl (.bnd s) => if s = hole then 0 else L + 1
+  | .inl _ => 0
+  | .inr k => k.val + 1
+
+theorem gpos_le [DecidableEq Q] (s : HState Q ι K ⊕ Fin L) : gpos hole L s ≤ L + 1 := by
+  rcases s with s | k
+  · cases s <;> simp only [gpos] <;> first | omega | (split_ifs <;> omega)
+  · simp only [gpos]; omega
+
 /-- **The glued wrapper has a mortal reverse.**  Along every boundary macro step the potential
 `(L + 2) · hist + pos` rises (`pos` is `0` at `bnd hole`, `k + 1` at chain state `k`, `L + 1` at
 every other `bnd s`): a wrapper macro step raises `hist` (`histWrap_macro_hist`), a chain step
@@ -379,7 +401,40 @@ keeps `hist` and raises `pos`. -/
 theorem glueH_revMortal [Fintype Q] [Fintype ι] [DecidableEq Q] [DecidableEq ι] (hU : U.Det)
     (hlab : ∀ ρ ∈ U, 1 ≤ (lab ρ).val) (hhb : hole ≠ back) :
     (glue (histWrap U lab) (.bnd hole) (.bnd back) (.val i) L).RevMortal := by
-  sorry
+  refine revMortal_of_macro (glue_lapsMixed histWrap_lapsMixed ⟨hole, rfl⟩) ?_
+  rintro ⟨b, hb⟩
+  let Φ : Cfg (HState Q ι K ⊕ Fin L) (HCtr ι) → ℕ :=
+    fun c => (L + 2) * c.2 .hist + gpos hole L c.1
+  have hrise : ∀ n, Φ (b (n + 1)) < Φ (b n) := by
+    intro n
+    rcases glue_macroStep_cases (B := Set.range HState.bnd) ⟨hole, rfl⟩ ⟨back, rfl⟩ (hb n) with
+      ⟨c, c', h1, h2, hm⟩ | hc
+    · have hh := histWrap_macro_hist hU hlab hm
+      have hp := gpos_le (hole := hole) (Sum.inl (β := Fin L) c.1)
+      have hmul := Nat.mul_le_mul_left (L + 2) hh
+      rw [Nat.mul_succ] at hmul
+      simp only [Φ, h1, h2]
+      omega
+    · obtain ⟨r, hr, hs, hd, ha⟩ := hc
+      have hhist := (map_act_inv (o := .inc i) (by rcases hr with rfl | ⟨k, rfl⟩ <;> exact ha)).2.1
+      simp only [Φ, hhist]
+      suffices gpos hole L (b (n + 1)).1 < gpos hole L (b n).1 by omega
+      rcases hr with rfl | ⟨k, rfl⟩
+      · rw [hs, hd, chainFirst_bnd]
+        unfold chainFirst
+        split_ifs <;> simp [gpos, Ne.symm hhb]
+      · rw [hs, hd, chainNext_bnd]
+        unfold chainNext
+        split_ifs with hk
+        · simp [gpos]
+        · simp [gpos, Ne.symm hhb]
+  have : ∀ n, Φ (b n) + n ≤ Φ (b 0) := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih => have := hrise n; omega
+  have := this (Φ (b 0) + 1)
+  omega
 
 /-- **Mortality through the glued wrapper.**  The glued wrapper halts from every configuration
 iff the glued `U` does. -/
