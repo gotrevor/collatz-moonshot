@@ -75,62 +75,169 @@ variable {m r : ℕ}
 `[1/2, 3/4]`: `F(1/2) = 2^{−m−1} > 0`, `F(3/4) ≤ 3/4 − r/2 < 0`. -/
 theorem gRoot_spec (hr : 2 ≤ r) :
     1 / 2 < gRoot m r ∧ gRoot m r < 3 / 4 ∧ gRoot m r ^ (m + 1) = r * (2 * gRoot m r - 1) := by
-  sorry
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hex : ∃ x : ℝ, 1 / 2 < x ∧ x < 3 / 4 ∧ x ^ (m + 1) = r * (2 * x - 1) := by
+    let F : ℝ → ℝ := fun t => t ^ (m + 1) - r * (2 * t - 1)
+    have hF : ContinuousOn F (Set.Icc (1 / 2) (3 / 4)) := by fun_prop
+    have h0 : (0 : ℝ) ∈ Set.Ioo (F (3 / 4)) (F (1 / 2)) := by
+      have h34 : ((3 : ℝ) / 4) ^ (m + 1) ≤ 3 / 4 :=
+        pow_le_of_le_one (by norm_num) (by norm_num) (by omega)
+      have h12 : (0 : ℝ) < (1 / 2) ^ (m + 1) := by positivity
+      constructor
+      · show (3 / 4 : ℝ) ^ (m + 1) - r * (2 * (3 / 4) - 1) < 0; nlinarith
+      · show (0 : ℝ) < (1 / 2) ^ (m + 1) - r * (2 * (1 / 2) - 1); nlinarith
+    obtain ⟨x, ⟨hx1, hx2⟩, hx⟩ := intermediate_value_Ioo' (by norm_num) hF h0
+    exact ⟨x, hx1, hx2, by simp only [F] at hx; linarith⟩
+  unfold gRoot
+  rw [dif_pos hex]
+  exact hex.choose_spec
+
+/-- Two roots of `x^{m+1} − 2rx + r` in `(1/2, 1)` coincide: the slopes of the convex
+`t ↦ t^{m+1}` increase, but the chord through two roots has slope `2r` and the chord to `1` has
+slope `< 2r`. -/
+lemma no_two_roots (hr : 2 ≤ r) {y₁ y₂ : ℝ} (h0 : 0 ≤ y₁) (h12 : y₁ < y₂) (h2 : y₂ < 1)
+    (hy₁ : y₁ ^ (m + 1) = r * (2 * y₁ - 1)) (hy₂ : y₂ ^ (m + 1) = r * (2 * y₂ - 1)) : False := by
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hs := (convexOn_pow (𝕜 := ℝ) (m + 1)).slope_mono_adjacent (Set.mem_Ici.2 h0)
+    (Set.mem_Ici.2 (zero_le_one' ℝ)) h12 h2
+  simp only [one_pow] at hs
+  rw [hy₁, hy₂, div_le_div_iff₀ (by linarith) (by linarith)] at hs
+  nlinarith
 
 /-- **(ratified).**  Uniqueness in `(1/2, 1)`.  Paper proof: `F` is convex with `F(1/2) > 0` and
 `F(1) = 1 − r < 0`, so it has one root in `(1/2, 1)`. -/
 theorem gRoot_unique (hr : 2 ≤ r) {y : ℝ} (hy1 : 1 / 2 < y) (hy2 : y < 1)
     (hy : y ^ (m + 1) = r * (2 * y - 1)) : y = gRoot m r := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  rcases lt_trichotomy y (gRoot m r) with h | h | h
+  · exact absurd (no_two_roots hr (by linarith) h (by linarith) hy hx) id
+  · exact h
+  · exact absurd (no_two_roots hr (by linarith) h hy2 hx hy) id
 
 /-- **(ratified).**  For `m ≥ 1`, `x` is irrational: a rational root of the monic integer
 polynomial `x^{m+1} − 2rx + r` is an integer, and `x ∈ (1/2, 3/4)`. -/
 theorem irrational_gRoot (hm : 1 ≤ m) (hr : 2 ≤ r) : Irrational (gRoot m r) := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  rintro ⟨q, hq⟩
+  set x := gRoot m r
+  have hd0 : (0 : ℝ) < q.den := by exact_mod_cast q.pos
+  have hqx : x = (q.num : ℝ) / q.den := by rw [← hq, Rat.cast_def]
+  -- clear denominators: `n^{m+1} = r (2n − d) d^m`
+  have hclear : (q.num : ℝ) ^ (m + 1) = r * (2 * q.num - q.den) * (q.den : ℝ) ^ m := by
+    rw [hqx, div_pow] at hx
+    field_simp at hx
+    apply mul_right_cancel₀ hd0.ne'
+    linear_combination hx
+  have hcl : q.num ^ (m + 1) = r * (2 * q.num - q.den) * (q.den : ℤ) ^ m := by exact_mod_cast hclear
+  have hdvd : (q.den : ℤ) ∣ q.num ^ (m + 1) := by
+    rw [hcl]
+    obtain ⟨m', rfl⟩ : ∃ m', m = m' + 1 := ⟨m - 1, by omega⟩
+    exact ⟨r * (2 * q.num - q.den) * (q.den : ℤ) ^ m', by ring⟩
+  have hcop : IsCoprime q.num (q.den : ℤ) := by
+    rw [Int.isCoprime_iff_gcd_eq_one]
+    exact q.reduced
+  have hunit : IsUnit (q.den : ℤ) :=
+    (hcop.pow_left (m := m + 1)).isUnit_of_dvd' hdvd dvd_rfl
+  have hd1 : q.den = 1 := by
+    rcases Int.isUnit_iff.1 hunit with h | h
+    · exact_mod_cast h
+    · have := q.pos; omega
+  rw [hqx, hd1, Nat.cast_one, div_one] at hx1 hx2
+  rcases le_or_gt q.num 0 with h | h
+  · have : (q.num : ℝ) ≤ 0 := by exact_mod_cast h
+    linarith
+  · have : (1 : ℝ) ≤ q.num := by exact_mod_cast h
+    linarith
 
 /-- **(ratified, `m = 0`).**  `x = r/(2r − 1)`. -/
 theorem gRoot_zero (hr : 2 ≤ r) : gRoot 0 r = r / (2 * r - 1) := by
-  sorry
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hd : (0 : ℝ) < 2 * r - 1 := by linarith
+  refine (gRoot_unique hr ?_ ?_ ?_).symm
+  · rw [lt_div_iff₀ hd]; linarith
+  · rw [div_lt_one hd]; linarith
+  · have hd' : (2 * (r : ℝ) - 1) ≠ 0 := hd.ne'
+    rw [zero_add, pow_one, mul_div_assoc', eq_comm, div_sub_one hd', mul_div_assoc',
+      div_eq_div_iff hd' hd']
+    ring
 
 /-- **(ratified).**  `α = 2r/xᵐ`. -/
 theorem alphaG_eq (hr : 2 ≤ r) : alphaG m r = 2 * r / gRoot m r ^ m := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  have hxm : 0 < gRoot m r ^ m := pow_pos (by linarith) m
+  unfold alphaG
+  rw [div_eq_div_iff (by linarith) hxm.ne']
+  rw [pow_succ] at hx
+  linear_combination 2 * hx
 
 /-- **(ratified).**  `α^{m+1} = 2^{m+1} r (α − 1)ᵐ` (for `m = 2, r = 2`:
 `α³ − 16α² + 32α − 16 = 0`). -/
 theorem alphaG_pow (hr : 2 ≤ r) :
     alphaG m r ^ (m + 1) = 2 ^ (m + 1) * r * (alphaG m r - 1) ^ m := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  have hu : 0 < 2 * gRoot m r - 1 := by linarith
+  have h1 : alphaG m r - 1 = 1 / (2 * gRoot m r - 1) := by
+    unfold alphaG; field_simp; ring
+  rw [h1]
+  unfold alphaG
+  rw [div_pow, mul_pow, hx, one_div_pow]
+  field_simp
+  ring
 
 /-- **(ratified).**  `4 ≤ α` (`α = 2r/xᵐ ≥ 2r`). -/
 theorem four_le_alphaG (hr : 2 ≤ r) : 4 ≤ alphaG m r := by
-  sorry
+  obtain ⟨hx1, hx2, hx⟩ := gRoot_spec (m := m) hr
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hxm : 0 < gRoot m r ^ m := pow_pos (by linarith) m
+  have hxm1 : gRoot m r ^ m ≤ 1 := pow_le_one₀ (by linarith) (by linarith)
+  rw [alphaG_eq hr, le_div_iff₀ hxm]
+  nlinarith
 
 theorem one_lt_alphaG (hr : 2 ≤ r) : 1 < alphaG m r :=
   lt_of_lt_of_le (by norm_num) (four_le_alphaG hr)
 
 /-- **(ratified).**  `1 < β < 3/2`. -/
 theorem one_lt_betaG_lt (hr : 2 ≤ r) : 1 < betaG m r ∧ betaG m r < 3 / 2 := by
-  sorry
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  unfold betaG
+  constructor <;> linarith
 
 theorem one_lt_betaG (hr : 2 ≤ r) : 1 < betaG m r := (one_lt_betaG_lt hr).1
 
 /-- **(ratified).**  `β = α/(α − 1)`. -/
 theorem alphaG_div_sub_one (hr : 2 ≤ r) : alphaG m r / (alphaG m r - 1) = betaG m r := by
-  sorry
+  obtain ⟨hx1, -, -⟩ := gRoot_spec (m := m) hr
+  have hu : 0 < 2 * gRoot m r - 1 := by linarith
+  have h1 : alphaG m r - 1 = 1 / (2 * gRoot m r - 1) := by
+    unfold alphaG; field_simp; ring
+  rw [h1]
+  unfold alphaG betaG
+  field_simp
 
 /-- **(ratified).**  `α = β/(β − 1)` (so the mirror `W_β` has partner slope `α`). -/
 theorem betaG_div_sub_one (hr : 2 ≤ r) : betaG m r / (betaG m r - 1) = alphaG m r := by
-  sorry
+  unfold alphaG betaG
+  rfl
 
 /-- **(ratified, `m = 0`: Theorem E).**  `α = 2r`. -/
 theorem alphaG_zero (hr : 2 ≤ r) : alphaG 0 r = 2 * r := by
-  sorry
+  rw [alphaG_eq hr, pow_zero, div_one]
 
 /-- **(ratified, `m = 1`: Theorem F).**  `α = 2r + 2√(r² − r)`.  Paper proof: `x = r − √(r² − r)`
 is the root of `x² − 2rx + r` in `(1/2, 3/4)` (`gRoot_unique`), and `2r/x = 2(r + √(r² − r))`. -/
 theorem alphaG_one (hr : 2 ≤ r) : alphaG 1 r = 2 * r + 2 * √((r : ℝ) ^ 2 - r) := by
-  sorry
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hD : (0 : ℝ) ≤ (r : ℝ) ^ 2 - r := by nlinarith
+  have hsq := Real.sq_sqrt hD
+  have hgt : (r : ℝ) - 3 / 5 < √((r : ℝ) ^ 2 - r) := by
+    rw [Real.lt_sqrt (by linarith)]; nlinarith
+  have hlt : √((r : ℝ) ^ 2 - r) < r - 1 / 2 := by
+    rw [Real.sqrt_lt' (by linarith)]; nlinarith
+  have hy : (r : ℝ) - √((r : ℝ) ^ 2 - r) = gRoot 1 r := by
+    refine gRoot_unique hr (by linarith) (by linarith) ?_
+    linear_combination hsq
+  rw [alphaG_eq hr, ← hy, pow_one, div_eq_iff (by linarith)]
+  linear_combination 2 * hsq
 
 end Root
 

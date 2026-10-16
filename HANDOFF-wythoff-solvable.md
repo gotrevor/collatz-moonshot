@@ -18,3 +18,6 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
 - §3 `WythoffCone.lean`: 15 of 17 closed (A′, cone/anticone bounds, irrationality via
   `sq_eq_of_between`, trap, recurrence, entry characterisation, Theorem K modulo
   `coneEntry_infinite`).  Open: `coneEntry_infinite`, `tendsto_coneEntryCount`.
+- §4 `WythoffLine.lean` root/parameters: all closed (`gRoot_spec` IVT, `gRoot_unique` via
+  `no_two_roots` = `convexOn_pow` + `slope_mono_adjacent`, `irrational_gRoot` by hand rational
+  root theorem with `Rat.reduced` + `IsCoprime.isUnit_of_dvd'`, `alphaG_*`, `alphaG_one`).
