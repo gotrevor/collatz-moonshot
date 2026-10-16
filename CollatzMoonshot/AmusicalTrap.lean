@@ -145,7 +145,7 @@ theorem amusicalV_even_trap : ∀ x ∈ {x : ℤ | x % 2 = 0}, amusicalVPerm x �
   intro x hx
   simp only [Set.mem_ofPred_eq] at hx ⊢
   change amusicalV x % 2 = 0
-  unfold amusicalV; split_ifs <;> omega
+  unfold amusicalV; split_ifs; omega
 
 /-- **Proved.**  The entry points of the even trap are the classes `0, 4 (mod 6)`.  Paper proof:
 `V(2e) = 6e + 2`. -/
@@ -163,7 +163,7 @@ theorem amusicalV_entry_iff (x : ℤ) :
     refine ⟨by omega, ?_⟩
     rintro ⟨y, hy, hyx⟩
     change amusicalV y = x at hyx
-    unfold amusicalV at hyx; split_ifs at hyx <;> omega
+    unfold amusicalV at hyx; split_ifs at hyx; omega
 
 /-- **Proved (Theorem V).**  `V` has infinitely many infinite orbits.  Paper proof: the trap
 theorem with `C` the evens, whose nonnegative entry points include every `6n`. -/
@@ -179,11 +179,78 @@ theorem amusicalV_infinitelyManyInfiniteOrbits : InfinitelyManyInfiniteOrbits am
 
 /-! ## Avoidance for `U` -/
 
-/-- **Open.**  Every infinite orbit of `U` visits `{0, 3, 5} (mod 8)` infinitely often going
-forward. -/
+/-- Off `{0, 3, 5} (mod 8)`, `U` never lands on `4 (mod 8)`. -/
+theorem amusical_mod_eight_ne_four {n : ℤ}
+    (hn : n % 8 = 1 ∨ n % 8 = 2 ∨ n % 8 = 4 ∨ n % 8 = 6 ∨ n % 8 = 7) : amusical n % 8 ≠ 4 := by
+  unfold amusical; split_ifs <;> omega
+
+/-- `U` maps `1, 2, 6, 7 (mod 8)` to odd numbers. -/
+theorem amusical_odd_of_mod_eight {n : ℤ} (hn : n % 8 = 1 ∨ n % 8 = 2 ∨ n % 8 = 6 ∨ n % 8 = 7) :
+    amusical n % 2 = 1 := by
+  unfold amusical; split_ifs <;> omega
+
+/-- On odd numbers `U` does not increase `|n|`. -/
+theorem amusical_bound_of_odd {n B : ℤ} (hn : n % 2 = 1) (hl : -B ≤ n) (hu : n ≤ B) :
+    -B ≤ amusical n ∧ amusical n ≤ B := by
+  unfold amusical; split_ifs <;> omega
+
+/-- Natural iterates of `U` are natural powers of `amusicalPerm`. -/
+theorem amusicalPerm_pow_eq_iterate (t : ℕ) (n : ℤ) :
+    (amusicalPerm ^ (t : ℤ)) n = amusical^[t] n := by
+  rw [zpow_natCast]
+  induction t generalizing n with
+  | zero => rfl
+  | succ t ih =>
+    rw [Function.iterate_succ_apply', ← ih, pow_succ', Equiv.Perm.mul_apply]; rfl
+
+/-- A periodic point of `U` has a finite orbit. -/
+theorem amusicalOrbit_finite_of_periodic {x : ℤ} {p : ℕ} (hp : 0 < p) (h : amusical^[p] x = x) :
+    (amusicalOrbit x).Finite := by
+  have hf : Function.Periodic (fun k : ℤ => (amusicalPerm ^ k) x) (p : ℤ) := fun k => by
+    dsimp only
+    rw [zpow_add, Equiv.Perm.mul_apply, amusicalPerm_pow_eq_iterate, h]
+  unfold amusicalOrbit
+  rw [← hf.image_uIcc (by exact_mod_cast hp.ne') 0]
+  exact Set.Finite.image _ (Set.finite_uIcc _ _)
+
+/-- **Proved.**  Every infinite orbit of `U` visits `{0, 3, 5} (mod 8)` infinitely often going
+forward.  Paper proof: off `{0, 3, 5}` two steps make every iterate odd, odd steps do not
+increase `|n|`, so the forward orbit is bounded and `x` is periodic. -/
 theorem amusical_visits_zero_three_five {x : ℤ} (hx : (amusicalOrbit x).Infinite) (k₀ : ℕ) :
     ∃ k ≥ k₀, amusical^[k] x % 8 = 0 ∨ amusical^[k] x % 8 = 3 ∨ amusical^[k] x % 8 = 5 := by
-  sorry
+  by_contra hcon
+  push Not at hcon
+  have hallow : ∀ k ≥ k₀, amusical^[k] x % 8 = 1 ∨ amusical^[k] x % 8 = 2 ∨
+      amusical^[k] x % 8 = 4 ∨ amusical^[k] x % 8 = 6 ∨ amusical^[k] x % 8 = 7 := by
+    intro k hk
+    obtain ⟨h0, h3, h5⟩ := hcon k hk
+    omega
+  have hodd : ∀ j : ℕ, amusical^[k₀ + 2 + j] x % 2 = 1 := by
+    intro j
+    have h1 := hallow (k₀ + j) (by omega)
+    have h2 := hallow (k₀ + j + 1) (by omega)
+    have h4 := amusical_mod_eight_ne_four h1
+    rw [show k₀ + j + 1 = (k₀ + j).succ by omega, Function.iterate_succ_apply'] at h2
+    rw [show k₀ + 2 + j = (k₀ + j).succ.succ by omega, Function.iterate_succ_apply',
+      Function.iterate_succ_apply']
+    exact amusical_odd_of_mod_eight (by omega)
+  set B := |amusical^[k₀ + 2] x| with hB
+  have hbd : ∀ j : ℕ, amusical^[k₀ + 2 + j] x ∈ Set.Icc (-B) B := by
+    intro j
+    induction j with
+    | zero => exact ⟨neg_abs_le _, le_abs_self _⟩
+    | succ j ih =>
+      rw [← add_assoc, Function.iterate_succ_apply']
+      exact amusical_bound_of_odd (hodd j) ih.1 ih.2
+  obtain ⟨m, n, hmn, heq⟩ := (Set.finite_Icc (-B) B).exists_lt_map_eq_of_forall_mem
+    (f := fun j : ℕ => amusical^[k₀ + 2 + j] x) hbd
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_lt hmn
+  have hper : amusical^[d + 1] x = x := by
+    apply amusical_injective.iterate (k₀ + 2 + m)
+    change amusical^[k₀ + 2 + m] x = amusical^[k₀ + 2 + (m + d + 1)] x at heq
+    rw [← Function.iterate_add_apply, show k₀ + 2 + m + (d + 1) = k₀ + 2 + (m + d + 1) by omega]
+    exact heq.symm
+  exact hx (amusicalOrbit_finite_of_periodic (Nat.succ_pos d) hper)
 
 /-! ## Sign-blind Collatz gate -/
 
