@@ -627,6 +627,44 @@ end TheoremT
 
 /-! ## Theorem E: the even integers `r = 2j` are solved -/
 
+section OrbitHelpers
+
+theorem mem_permOrbit_self (σ : Equiv.Perm ℤ) (x : ℤ) : x ∈ permOrbit σ x := ⟨0, by simp⟩
+
+theorem apply_mem_permOrbit (σ : Equiv.Perm ℤ) (x : ℤ) : σ x ∈ permOrbit σ x := ⟨1, by simp⟩
+
+theorem inv_apply_mem_permOrbit (σ : Equiv.Perm ℤ) (x : ℤ) : σ⁻¹ x ∈ permOrbit σ x :=
+  ⟨-1, by simp⟩
+
+/-- The orbit of any of its members. -/
+theorem permOrbit_eq_of_mem (σ : Equiv.Perm ℤ) {x y : ℤ} (h : y ∈ permOrbit σ x) :
+    permOrbit σ y = permOrbit σ x := by
+  obtain ⟨a, rfl⟩ := h
+  ext z
+  constructor
+  · rintro ⟨b, rfl⟩
+    exact ⟨b + a, by simp only [zpow_add, Equiv.Perm.mul_apply]⟩
+  · rintro ⟨b, rfl⟩
+    exact ⟨b - a, by simp only [← Equiv.Perm.mul_apply, ← zpow_add, sub_add_cancel]⟩
+
+theorem mem_permOrbit_comm (σ : Equiv.Perm ℤ) {x y : ℤ} (h : y ∈ permOrbit σ x) :
+    x ∈ permOrbit σ y := by
+  rw [permOrbit_eq_of_mem σ h]; exact mem_permOrbit_self σ x
+
+/-- A permutation preserving positivity preserves it along whole orbits. -/
+theorem zpow_pos_iff (σ : Equiv.Perm ℤ) (hσ : ∀ n, 0 < σ n ↔ 0 < n) (x : ℤ) (z : ℤ) :
+    0 < (σ ^ z) x ↔ 0 < x := by
+  have hinv : ∀ n, 0 < σ⁻¹ n ↔ 0 < n := fun n => by
+    rw [← hσ (σ⁻¹ n)]; simp
+  induction z using Int.induction_on with
+  | zero => simp
+  | succ i ih => rw [add_comm, zpow_add, zpow_one, Equiv.Perm.mul_apply, hσ]; exact ih
+  | pred i ih =>
+    rw [show -(i : ℤ) - 1 = -1 + -(i : ℤ) by ring, zpow_add, zpow_neg_one, Equiv.Perm.mul_apply,
+      hinv]; exact ih
+
+end OrbitHelpers
+
 section TheoremE
 
 variable {j : ℕ}
@@ -641,23 +679,124 @@ def entrySet (j : ℕ) : Set ℤ :=
 
 /-- **(ratified).**  `W_{2j+}(2k) = 2jk`. -/
 theorem evenPerm_two_mul (hj : 1 ≤ j) (k : ℤ) : evenPerm j hj (2 * k) = 2 * j * k := by
-  sorry
+  show wythoff .plus (2 * j) 1 (2 * k) = _
+  rw [wythoff_plus_even]; push_cast; rw [Int.ediv_one]; ring
 
 /-- **(ratified).**  `W_{2j+}(2k − 1) = k + ⌊(k − 1)/(2j − 1)⌋`, the `k`-th non-multiple of
 `2j`. -/
 theorem evenPerm_two_mul_sub_one (hj : 1 ≤ j) (k : ℤ) :
     evenPerm j hj (2 * k - 1) = k + (k - 1) / (2 * j - 1) := by
-  sorry
+  show wythoff .plus (2 * j) 1 (2 * k - 1) = _
+  have h0 : (2 * (j : ℤ) - 1) ≠ 0 := by omega
+  rw [wythoff_plus_odd]; push_cast
+  rw [show k * (2 * (j : ℤ)) - 1 = (k - 1) + (2 * (j : ℤ) - 1) * k by ring,
+    Int.add_mul_ediv_left _ _ h0, add_comm]
 
 /-- **(ratified).**  `1` is a fixed point: `{1}` is a finite orbit. -/
 theorem permOrbit_evenPerm_one (hj : 1 ≤ j) : permOrbit (evenPerm j hj) 1 = {1} := by
-  sorry
+  have h1 : evenPerm j hj 1 = 1 := by
+    have := evenPerm_two_mul_sub_one hj 1
+    norm_num at this
+    exact this
+  ext y
+  constructor
+  · rintro ⟨z, rfl⟩
+    exact Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self h1 z
+  · rintro rfl; exact mem_permOrbit_self _ _
 
 /-- **(ratified).**  The evens are a trap whose entry points are exactly `E` on `ℕ⁺`
 (`σ(2ℤ) = 2jℤ`). -/
 theorem evenPerm_entry_iff (hj : 1 ≤ j) {x : ℤ} (hx : 0 < x) :
     x ∈ {y : ℤ | y % 2 = 0} \ evenPerm j hj '' {y : ℤ | y % 2 = 0} ↔ x ∈ entrySet j := by
-  sorry
+  simp only [entrySet, Set.mem_sdiff, Set.mem_ofPred_eq, Set.mem_image]
+  constructor
+  · rintro ⟨h2, hnot⟩
+    refine ⟨hx, h2, fun hd => hnot ?_⟩
+    obtain ⟨c, hc⟩ := Int.dvd_of_emod_eq_zero hd
+    exact ⟨2 * c, by omega, by rw [evenPerm_two_mul, hc]⟩
+  · rintro ⟨-, h2, hd⟩
+    refine ⟨h2, ?_⟩
+    rintro ⟨y, hy, rfl⟩
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k := ⟨y / 2, by omega⟩
+    rw [evenPerm_two_mul] at hd
+    exact hd (Int.emod_eq_zero_of_dvd ⟨k, rfl⟩)
+
+theorem evenPerm_one (hj : 1 ≤ j) : evenPerm j hj 1 = 1 := by
+  have := evenPerm_two_mul_sub_one hj 1
+  norm_num at this
+  exact this
+
+theorem evenPerm_pos_iff (hj : 1 ≤ j) (n : ℤ) : 0 < evenPerm j hj n ↔ 0 < n :=
+  wythoff_pos_iff .plus (p := 2 * j) (q := 1) Nat.one_pos (by omega) n
+
+/-- Fact (e): on the evens `σ y = j y`, and the evens are a trap. -/
+theorem evenPerm_even (hj : 1 ≤ j) {y : ℤ} (hy : y % 2 = 0) :
+    evenPerm j hj y = j * y ∧ evenPerm j hj y % 2 = 0 := by
+  obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k := ⟨y / 2, by omega⟩
+  rw [evenPerm_two_mul]
+  exact ⟨by ring, by rw [show 2 * (j : ℤ) * k = 2 * (j * k) by ring]; omega⟩
+
+theorem evenPerm_trap (hj : 1 ≤ j) :
+    ∀ y ∈ {y : ℤ | y % 2 = 0}, evenPerm j hj y ∈ {y : ℤ | y % 2 = 0} :=
+  fun _ hy => (evenPerm_even hj hy).2
+
+/-- Fact (b): odd `y ≥ 3` go down, staying `> 1`. -/
+theorem evenPerm_odd_lt (hj : 2 ≤ j) {y : ℤ} (hy : y % 2 = 1) (h3 : 3 ≤ y) :
+    1 < evenPerm j (by omega) y ∧ evenPerm j (by omega) y < y := by
+  obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k - 1 := ⟨(y + 1) / 2, by omega⟩
+  rw [evenPerm_two_mul_sub_one]
+  have hd : (0 : ℤ) < 2 * j - 1 := by omega
+  set d := (k - 1) / (2 * (j : ℤ) - 1) with hd'
+  obtain ⟨h1, h2⟩ := (ediv_eq_iff hd).1 hd'.symm
+  have hd0 : 0 ≤ d := Int.ediv_nonneg (by omega) hd.le
+  constructor
+  · omega
+  · nlinarith [mul_nonneg hd0 (show (0 : ℤ) ≤ 2 * j - 1 - 3 by omega)]
+
+/-- Fact (c): the preimage of an odd `m > 1` is odd and larger. -/
+theorem evenPerm_inv_odd (hj : 2 ≤ j) {m : ℤ} (hm : m % 2 = 1) (h1 : 1 < m) :
+    (evenPerm j (by omega))⁻¹ m % 2 = 1 ∧ m < (evenPerm j (by omega))⁻¹ m := by
+  have hj1 : 1 ≤ j := by omega
+  set y := (evenPerm j hj1)⁻¹ m with hy
+  have hσy : evenPerm j hj1 y = m := by simp [hy]
+  have hy1 : y % 2 = 1 := by
+    by_contra h
+    have := (evenPerm_even hj1 (by omega : y % 2 = 0)).2
+    rw [hσy] at this; omega
+  have hypos : 0 < y := (evenPerm_pos_iff hj1 y).1 (by omega)
+  have hy3 : 3 ≤ y := by
+    by_contra h
+    have h1' : y = 1 := by omega
+    rw [h1', evenPerm_one] at hσy; omega
+  exact ⟨hy1, by have := (evenPerm_odd_lt hj hy1 hy3).2; rwa [hσy] at this⟩
+
+/-- Existence half of Theorem E's structure: descend to a point of `E`. -/
+theorem exists_entry_mem_orbit (hj : 2 ≤ j) {x : ℤ} (hx : 1 < x) :
+    ∃ e ∈ entrySet j, e ∈ permOrbit (evenPerm j (by omega)) x := by
+  have hj1 : 1 ≤ j := by omega
+  suffices H : ∀ n : ℕ, ∀ x : ℤ, x.toNat = n → 1 < x →
+      ∃ e ∈ entrySet j, e ∈ permOrbit (evenPerm j hj1) x from H _ x rfl hx
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  intro x hxn hx
+  rcases Int.emod_two_eq_zero_or_one x with h2 | h2
+  · by_cases hd : x % (2 * j) = 0
+    · obtain ⟨c, hc⟩ := Int.dvd_of_emod_eq_zero hd
+      have hc0 : 0 < c := by
+        by_contra h
+        have : 2 * (j : ℤ) * c ≤ 0 := by nlinarith
+        omega
+      have hσ : (evenPerm j hj1) (2 * c) = x := by rw [evenPerm_two_mul, hc]
+      have hlt : 2 * c < x := by nlinarith
+      obtain ⟨e, he, hmem⟩ := ih (2 * c).toNat (by omega) (2 * c) rfl (by omega)
+      refine ⟨e, he, ?_⟩
+      rw [← permOrbit_eq_of_mem (evenPerm j hj1) (mem_permOrbit_comm (evenPerm j hj1) (hσ ▸ apply_mem_permOrbit (evenPerm j hj1) (2 * c)))]
+      exact hmem
+    · exact ⟨x, ⟨by omega, h2, hd⟩, mem_permOrbit_self _ _⟩
+  · obtain ⟨h1, hlt⟩ : 1 < (evenPerm j hj1) x ∧ (evenPerm j hj1) x < x := evenPerm_odd_lt hj h2 (by omega)
+    obtain ⟨e, he, hmem⟩ := ih ((evenPerm j hj1) x).toNat (by omega) ((evenPerm j hj1) x) rfl h1
+    exact ⟨e, he, by rw [← permOrbit_eq_of_mem (evenPerm j hj1) (apply_mem_permOrbit (evenPerm j hj1) x)]; exact hmem⟩
 
 /-- **(ratified, Theorem E, structure).**  For `j ≥ 2`, every orbit through `x > 1` meets `E`
 in exactly one point.  Paper proof: evens go up into `2jℕ⁺` (`×j`); odd `n ≥ 3` go down
@@ -666,43 +805,159 @@ the preimage `2k` is smaller.  So the orbit is (increasing odd backward tail) �
 `E` → (increasing even forward tail in `2jℕ⁺`). -/
 theorem existsUnique_entry_mem_orbit (hj : 2 ≤ j) {x : ℤ} (hx : 1 < x) :
     ∃! e, e ∈ entrySet j ∧ e ∈ permOrbit (evenPerm j (by omega)) x := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  obtain ⟨e, he, hmem⟩ := exists_entry_mem_orbit hj hx
+  refine ⟨e, ⟨he, hmem⟩, fun e' ⟨he', hmem'⟩ => ?_⟩
+  apply AmusicalTrap.permOrbit_injOn_entry _ (evenPerm_trap hj1)
+    ((evenPerm_entry_iff hj1 he'.1).2 he') ((evenPerm_entry_iff hj1 he.1).2 he)
+  rw [permOrbit_eq_of_mem _ hmem', permOrbit_eq_of_mem _ hmem]
 
 /-- **(ratified, Theorem E, minimum).**  That point of `E` is the minimum of the orbit. -/
 theorem entry_le_of_mem_orbit (hj : 2 ≤ j) {x e : ℤ} (hx : 1 < x) (he : e ∈ entrySet j)
     (heo : e ∈ permOrbit (evenPerm j (by omega)) x) :
     ∀ y ∈ permOrbit (evenPerm j (by omega)) x, e ≤ y := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  intro y hy
+  rw [← permOrbit_eq_of_mem (evenPerm j hj1) heo] at hy
+  obtain ⟨z, rfl⟩ := hy
+  obtain ⟨he0, he2, hed⟩ := he
+  dsimp only
+  rcases z with n | n
+  · rw [Int.ofNat_eq_natCast, zpow_natCast]
+    have key : ∀ n : ℕ, e ≤ ((evenPerm j hj1) ^ n) e ∧ ((evenPerm j hj1) ^ n) e % 2 = 0 := by
+      intro n
+      induction n with
+      | zero => simp [he2]
+      | succ n ih =>
+        rw [pow_succ', Equiv.Perm.mul_apply]
+        obtain ⟨h1, h2⟩ := evenPerm_even hj1 ih.2
+        refine ⟨?_, h2⟩
+        rw [h1]; nlinarith
+    exact (key n).1
+  · rw [zpow_negSucc, ← inv_pow]
+    have key : ∀ n : ℕ, e < ((evenPerm j hj1)⁻¹ ^ (n + 1)) e ∧ ((evenPerm j hj1)⁻¹ ^ (n + 1)) e % 2 = 1 := by
+      intro n
+      induction n with
+      | zero =>
+        simp only [zero_add, pow_one]
+        set y := (evenPerm j hj1)⁻¹ e with hy
+        have hσy : (evenPerm j hj1) y = e := by simp [hy]
+        have hy1 : y % 2 = 1 := by
+          by_contra h
+          exact ((evenPerm_entry_iff hj1 he0).2 ⟨he0, he2, hed⟩).2
+            ⟨y, show y % 2 = 0 by omega, hσy⟩
+        have hypos : 0 < y := (evenPerm_pos_iff hj1 y).1 (by omega)
+        have hy3 : 3 ≤ y := by
+          by_contra h
+          have h1' : y = 1 := by omega
+          rw [h1', evenPerm_one] at hσy; omega
+        exact ⟨by have := (evenPerm_odd_lt hj hy1 hy3).2; omega, hy1⟩
+      | succ n ih =>
+        rw [pow_succ', Equiv.Perm.mul_apply]
+        obtain ⟨h1, h2⟩ := evenPerm_inv_odd hj ih.2 (by omega)
+        exact ⟨by omega, h1⟩
+    exact (key n).1.le
 
 /-- **(ratified, Theorem E, no other finite orbit).**  Every orbit through `x > 1` is
 infinite. -/
 theorem permOrbit_evenPerm_infinite (hj : 2 ≤ j) {x : ℤ} (hx : 1 < x) :
     (permOrbit (evenPerm j (by omega)) x).Infinite := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  obtain ⟨e, he, hmem⟩ := exists_entry_mem_orbit hj hx
+  rw [← permOrbit_eq_of_mem _ hmem]
+  exact AmusicalTrap.permOrbit_infinite_of_entry _ (evenPerm_trap hj1)
+    ((evenPerm_entry_iff hj1 he.1).2 he)
 
 /-- **(ratified, Theorem E, orbit minima).**  For `x > 0`: `x` is the minimum of its orbit iff
 `x = 1` or `x ∈ E`. -/
 theorem isOrbitMin_iff (hj : 2 ≤ j) {x : ℤ} (hx : 0 < x) :
     (∀ y ∈ permOrbit (evenPerm j (by omega)) x, x ≤ y) ↔ x = 1 ∨ x ∈ entrySet j := by
-  sorry
+  constructor
+  · intro h
+    rcases eq_or_lt_of_le (show 1 ≤ x by omega) with h1 | h1
+    · exact Or.inl h1.symm
+    · obtain ⟨e, he, hmem⟩ := exists_entry_mem_orbit hj h1
+      have h2 := entry_le_of_mem_orbit hj h1 he hmem x (mem_permOrbit_self _ _)
+      have h3 := h e hmem
+      exact Or.inr (by rw [show x = e by omega]; exact he)
+  · rintro (rfl | he)
+    · intro y hy
+      rw [permOrbit_evenPerm_one] at hy
+      rw [Set.mem_singleton_iff.1 hy]
+    · exact entry_le_of_mem_orbit hj (by have := he.2.1; omega) he (mem_permOrbit_self _ _)
 
 /-- **(ratified, Theorem E, indexing).**  The orbits meeting `ℕ⁺` are indexed by `{1} ∪ E`. -/
 theorem permOrbit_bijOn (hj : 2 ≤ j) :
     Set.BijOn (permOrbit (evenPerm j (by omega))) ({1} ∪ entrySet j)
       {O | ∃ x : ℤ, 0 < x ∧ O = permOrbit (evenPerm j (by omega)) x} := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  have hne : ∀ b ∈ entrySet j, permOrbit (evenPerm j hj1) 1 ≠ permOrbit (evenPerm j hj1) b := by
+    intro b hb h
+    have := mem_permOrbit_self (evenPerm j hj1) b
+    rw [← h, permOrbit_evenPerm_one, Set.mem_singleton_iff] at this
+    have := hb.2.1
+    omega
+  refine ⟨?_, ?_, ?_⟩
+  · rintro a (ha | ha)
+    · exact ⟨1, one_pos, by rw [Set.mem_singleton_iff.1 ha]⟩
+    · exact ⟨a, ha.1, rfl⟩
+  · rintro a ha b hb hab
+    rcases ha with ha | ha <;> rcases hb with hb | hb
+    · rw [Set.mem_singleton_iff.1 ha, Set.mem_singleton_iff.1 hb]
+    · rw [Set.mem_singleton_iff.1 ha] at hab; exact absurd hab (hne b hb)
+    · rw [Set.mem_singleton_iff.1 hb] at hab; exact absurd hab.symm (hne a ha)
+    · exact AmusicalTrap.permOrbit_injOn_entry _ (evenPerm_trap hj1)
+        ((evenPerm_entry_iff hj1 ha.1).2 ha) ((evenPerm_entry_iff hj1 hb.1).2 hb) hab
+  · rintro O ⟨x, hx, rfl⟩
+    rcases eq_or_lt_of_le (show 1 ≤ x by omega) with h1 | h1
+    · exact ⟨1, Or.inl rfl, by rw [h1]⟩
+    · obtain ⟨e, he, hmem⟩ := exists_entry_mem_orbit hj h1
+      exact ⟨e, Or.inr he, permOrbit_eq_of_mem _ hmem⟩
 
 /-- **(ratified, Theorem E, count).**  `#{orbit minima ≤ X} = 1 + ⌊X/2⌋ − ⌊X/2j⌋`. -/
 theorem card_orbitMin_le (hj : 2 ≤ j) (X : ℕ) (hX : 1 ≤ X) :
     ((Finset.Icc (1 : ℤ) X).filter fun x : ℤ => x = 1 ∨ (x % 2 = 0 ∧ x % (2 * (j : ℤ)) ≠ 0)).card =
       1 + X / 2 - X / (2 * j) := by
-  sorry
+  induction X, hX using Nat.le_induction with
+  | base =>
+    rw [Nat.cast_one, Finset.Icc_self, Finset.filter_singleton, if_pos (Or.inl rfl),
+      Finset.card_singleton, Nat.div_eq_of_lt (by omega : 1 < 2 * j)]
+  | succ X hX ih =>
+    have hnot : (X : ℤ) + 1 ∉ Finset.Icc (1 : ℤ) X := by simp
+    rw [Nat.cast_succ, ← Finset.insert_Icc_right_eq_Icc_add_one (by omega),
+      Finset.card_filter, Finset.sum_insert hnot, ← Finset.card_filter, ih, Nat.succ_div,
+      Nat.succ_div (b := 2 * j)]
+    have hd' : ((X : ℤ) + 1) % (2 * (j : ℤ)) = 0 ↔ 2 * j ∣ X + 1 := by
+      rw [← Int.dvd_iff_emod_eq_zero]; norm_cast
+    have hle : X / (2 * j) ≤ X / 2 := Nat.div_le_div_left (by omega) (by omega)
+    by_cases hd : 2 * j ∣ X + 1
+    · have h2 : 2 ∣ X + 1 := (Dvd.intro _ rfl).trans hd
+      rw [if_neg (by rw [hd'.2 hd]; omega), if_pos hd, if_pos h2]
+      omega
+    · rw [if_neg hd]
+      by_cases h2 : 2 ∣ X + 1
+      · rw [if_pos (Or.inr ⟨by omega, fun h => hd (hd'.1 h)⟩), if_pos h2]
+        omega
+      · rw [if_neg (by omega), if_neg h2]
+        omega
 
 /-- **(ratified, Theorem E, conclusion).**  `W_{2j+}` has infinitely many infinite orbits.
 Paper proof: `infinitelyManyInfiniteOrbits_of_trap` with `C` the evens and entry set `E`. -/
 theorem evenPerm_infinitelyManyInfiniteOrbits (hj : 2 ≤ j) :
     InfinitelyManyInfiniteOrbits (evenPerm j (by omega)) := by
-  sorry
+  have hj1 : 1 ≤ j := by omega
+  apply infinitelyManyInfiniteOrbits_of_trap _ (evenPerm_trap hj1)
+  refine Set.infinite_of_injective_forall_mem (f := fun n : ℕ => 2 * (j : ℤ) * n + 2) ?_ ?_
+  · intro a b hab
+    simp only [add_left_inj] at hab
+    exact_mod_cast mul_left_cancel₀ (by omega : (2 * (j : ℤ)) ≠ 0) hab
+  · intro n
+    have hpos : 0 < 2 * (j : ℤ) * n + 2 := by positivity
+    refine ⟨hpos.le, (evenPerm_entry_iff hj1 hpos).2 ⟨hpos, ?_, ?_⟩⟩
+    · rw [show 2 * (j : ℤ) * n + 2 = 2 * (j * n + 1) by ring]; omega
+    · rw [show 2 * (j : ℤ) * n + 2 = 2 + 2 * j * n by ring, Int.add_mul_emod_self_left,
+        Int.emod_eq_of_lt (by norm_num) (by omega)]
+      norm_num
 
 end TheoremE
 
