@@ -664,10 +664,206 @@ def highwayAt (j : ℕ) (R : List Rule) : List (ℤ × ℤ) :=
       !decide (InEngine j (r : ℤ)) || isSourceB R (decode j (r : ℤ))).map
     fun r => ((r : ℤ), (hwModulus j : ℤ))
 
-/-- **Open.**  `highwayAt j R` is a highway. -/
+/-- Firing depends only on the state and which counters are zero. -/
+theorem fires_congr {ρ : Rule} {c c' : Cfg} (h0 : c.1 = c'.1) (h1 : c.2.1 = 0 ↔ c'.2.1 = 0)
+    (h2 : c.2.2 = 0 ↔ c'.2.2 = 0) : ρ.Fires c ↔ ρ.Fires c' := by
+  obtain ⟨s, a, b⟩ := c
+  obtain ⟨s', a', b'⟩ := c'
+  simp only at h0 h1 h2
+  subst h0
+  unfold Rule.Fires
+  simp only
+  have k1 : ρ.t₁.ok a = ρ.t₁.ok a' := by
+    cases ρ.t₁ <;> simp [Test.ok] <;> omega
+  have k2 : ρ.t₂.ok b = ρ.t₂.ok b' := by
+    cases ρ.t₂ <;> simp [Test.ok] <;> omega
+  have k3 : (0 ≤ (a : ℤ) + ρ.d₁.val ↔ 0 ≤ (a' : ℤ) + ρ.d₁.val) := by
+    cases ρ.d₁ <;> simp [Move.val] <;> omega
+  have k4 : (0 ≤ (b : ℤ) + ρ.d₂.val ↔ 0 ≤ (b' : ℤ) + ρ.d₂.val) := by
+    cases ρ.d₂ <;> simp [Move.val] <;> omega
+  rw [k1, k2, k3, k4]
+
+theorem Move.val_le (d : Move) : d.val ≤ 1 := by cases d <;> simp [Move.val]
+
+theorem Move.neg_one_le_val (d : Move) : -1 ≤ d.val := by cases d <;> simp [Move.val]
+
+theorem not_isSource_of_congr {R : List Rule} {c c' : Cfg} (h0 : c.1 = c'.1)
+    (h1 : min c.2.1 2 = min c'.2.1 2) (h2 : min c.2.2 2 = min c'.2.2 2)
+    (h : ¬ IsSource R c) : ¬ IsSource R c' := by
+  simp only [IsSource, not_forall, not_not] at h ⊢
+  obtain ⟨d, hd⟩ := h
+  unfold step at hd
+  cases hF : R.find? (fun ρ => decide (ρ.Fires d)) with
+  | none => rw [hF] at hd; cases hd
+  | some ρ =>
+    rw [hF] at hd
+    simp only [Option.map_some, Option.some.injEq] at hd
+    have hf := List.find?_some hF
+    simp only [decide_eq_true_eq] at hf
+    obtain ⟨-, -, -, f1, f2⟩ := id hf
+    have e1 := Move.val_le ρ.d₁
+    have e2 := Move.val_le ρ.d₂
+    have e1' := Move.neg_one_le_val ρ.d₁
+    have e2' := Move.neg_one_le_val ρ.d₂
+    subst hd
+    simp only [Rule.target] at h0 h1 h2
+    set d' : Cfg := (d.1, ((c'.2.1 : ℤ) - ρ.d₁.val).toNat, ((c'.2.2 : ℤ) - ρ.d₂.val).toNat)
+    have hfc : ∀ ρ' : Rule, ρ'.Fires d ↔ ρ'.Fires d' := fun ρ' =>
+      fires_congr rfl (by simp only [d']; omega) (by simp only [d']; omega)
+    refine ⟨d', ?_⟩
+    unfold step
+    have hfind : R.find? (fun ρ => decide (ρ.Fires d')) =
+        R.find? (fun ρ => decide (ρ.Fires d)) := by
+      congr 1; funext ρ'; simp [hfc ρ']
+    rw [hfind, hF]
+    obtain ⟨c0, c1, c2⟩ := c'
+    simp only [Option.map_some, Rule.target, d', Option.some.injEq, Prod.mk.injEq] at h0 h1 h2 ⊢
+    exact ⟨h0, by omega, by omega⟩
+
+theorem isSource_congr {R : List Rule} {c c' : Cfg} (h0 : c.1 = c'.1)
+    (h1 : min c.2.1 2 = min c'.2.1 2) (h2 : min c.2.2 2 = min c'.2.2 2) :
+    IsSource R c ↔ IsSource R c' := by
+  constructor
+  · intro h; by_contra h'; exact not_isSource_of_congr h0.symm h1.symm h2.symm h' h
+  · intro h; by_contra h'; exact not_isSource_of_congr h0 h1 h2 h' h
+
+/-- Valuations capped at `K` agree on integers congruent mod `p^K`. -/
+theorem min_padicValInt_le {p : ℕ} [Fact p.Prime] {n n' : ℤ} (hn' : n' ≠ 0) {K : ℕ}
+    (h : (p : ℤ) ^ K ∣ n - n') : min (padicValInt p n) K ≤ min (padicValInt p n') K := by
+  have hm : (p : ℤ) ^ min (padicValInt p n) K ∣ n :=
+    (pow_dvd_pow _ (min_le_left _ _)).trans (padicValInt_dvd n)
+  have hm' : (p : ℤ) ^ min (padicValInt p n) K ∣ n' := by
+    have := dvd_sub hm ((pow_dvd_pow _ (min_le_right _ _)).trans h)
+    rwa [sub_sub_cancel] at this
+  have := ((padicValInt_dvd_iff _ n').1 hm').resolve_left hn'
+  exact le_min this (min_le_right _ _)
+
+theorem min_padicValInt_eq {p : ℕ} [Fact p.Prime] {n n' : ℤ} (hn : n ≠ 0) (hn' : n' ≠ 0)
+    {K : ℕ} (h : (p : ℤ) ^ K ∣ n - n') : min (padicValInt p n) K = min (padicValInt p n') K :=
+  le_antisymm (min_padicValInt_le hn' h)
+    (min_padicValInt_le hn (by rw [← neg_sub]; exact (dvd_neg).2 h))
+
+theorem min_div_two (v N : ℕ) (hN : 0 < N) : min (v / N) 2 = min v (2 * N) / N := by
+  rcases le_or_gt (2 * N) v with h | h
+  · rw [min_eq_right h, Nat.mul_div_cancel _ hN, min_eq_right]
+    exact (Nat.le_div_iff_mul_le hN).2 h
+  · rw [min_eq_left h.le, min_eq_left]
+    exact Nat.le_of_lt_succ ((Nat.div_lt_iff_lt_mul hN).2 (by omega))
+
+theorem hwModulus_dvd (j : ℕ) :
+    (5 : ℤ) ^ j ∣ hwModulus j ∧ (2 : ℤ) ^ (2 * N j) ∣ hwModulus j ∧
+      (3 : ℤ) ^ (3 * N j) ∣ hwModulus j := by
+  refine ⟨⟨2 ^ (2 * N j) * 3 ^ (3 * N j), ?_⟩, ⟨5 ^ j * 3 ^ (3 * N j), ?_⟩,
+    ⟨5 ^ j * 2 ^ (2 * N j), ?_⟩⟩ <;> simp [hwModulus] <;> ring
+
+theorem inEngine_of_modEq {j : ℕ} (hj : 1 ≤ j) {n n' : ℤ} (h : n ≡ n' [ZMOD hwModulus j])
+    (hn : InEngine j n) : InEngine j n' ∧ phase j n' = phase j n := by
+  obtain ⟨h5, -, h3⟩ := hwModulus_dvd j
+  have hcast : (n : ZMod (5 ^ j)) = n' := by
+    have := (Int.ModEq.of_dvd h5 h)
+    exact_mod_cast (ZMod.intCast_eq_intCast_iff _ _ _).2 (by exact_mod_cast this)
+  have hph : phase j n' = phase j n := by rw [phase, phase, hcast]
+  have h5' : ¬ (5 : ℤ) ∣ n' := by
+    intro hd
+    apply hn.2.1
+    have : (5 : ℤ) ∣ n - n' := (dvd_pow_self 5 (by omega)).trans
+      (h5.trans (Int.ModEq.dvd h.symm))
+    have := dvd_add this hd
+    rwa [sub_add_cancel] at this
+  have hn' : n' ≠ 0 := by rintro rfl; exact h5' (dvd_zero _)
+  have hv := min_padicValInt_eq (p := 3) hn.1 hn' (K := 3 * N j)
+    (by exact_mod_cast h3.trans (Int.ModEq.dvd h.symm))
+  have hlt := phase_lt hj hn
+  refine ⟨⟨hn', h5', by rw [hph, hn.2.2.1, hcast], ?_⟩, hph⟩
+  have h4 := hn.2.2.2
+  rw [hph]
+  unfold v3 at h4 ⊢
+  omega
+
+theorem line_of_modEq {j : ℕ} (hj : 1 ≤ j) {R : List Rule} {n n' : ℤ}
+    (h : n ≡ n' [ZMOD hwModulus j]) (hn : n ∈ Line j R) : n' ∈ Line j R := by
+  rcases hn with hn | hn
+  · left; intro hn'; exact hn (inEngine_of_modEq hj h.symm hn').1
+  by_cases hE : InEngine j n
+  · obtain ⟨hE', hph⟩ := inEngine_of_modEq hj h hE
+    right
+    obtain ⟨-, h2, h3⟩ := hwModulus_dvd j
+    have hd : (hwModulus j : ℤ) ∣ n - n' := Int.ModEq.dvd h.symm
+    have hv2 := min_padicValInt_eq (p := 2) hE.1 hE'.1 (K := 2 * N j)
+      (by exact_mod_cast h2.trans hd)
+    have hv3 := min_padicValInt_eq (p := 3) hE.1 hE'.1 (K := 3 * N j)
+      (by exact_mod_cast h3.trans hd)
+    have hN := N_pos j
+    have hlt := phase_lt hj hE
+    refine (isSource_congr (c := decode j n) (c' := decode j n') hph.symm ?_ ?_).1 hn
+    · show min (C1 j n) 2 = min (C1 j n') 2
+      rw [C1, C1, min_div_two _ _ hN, min_div_two _ _ hN]
+      unfold v2; rw [hv2]
+    · show min (C2 j n) 2 = min (C2 j n') 2
+      rw [C2, C2, min_div_two _ _ hN, min_div_two _ _ hN, hph]
+      unfold v3 at hv3 ⊢
+      congr 1
+      omega
+  · left
+    intro hE'
+    exact hE (inEngine_of_modEq hj h.symm hE').1
+
+theorem hwModulus_pos (j : ℕ) : 0 < hwModulus j := by
+  unfold hwModulus; positivity
+
+theorem highwayAt_eq (j : ℕ) (R : List Rule) : highwayAt j R =
+    (((List.range (hwModulus j)).map (fun a : ℕ => (a : ℤ))).filter fun r =>
+      !decide (InEngine j r) || isSourceB R (decode j r)).map fun r => (r, (hwModulus j : ℤ)) := by
+  unfold highwayAt
+  congr 2
+  exact List.map_eq_flatMap.symm
+
+/-- `highwayAt j R` is a highway. -/
 theorem isHighway_highwayAt {j : ℕ} (hj : 1 ≤ j) (R : List Rule) :
     IsHighway j R (highwayAt j R) := by
-  sorry
+  have hL := hwModulus_pos j
+  have hpred : ∀ r : ℤ, ((!decide (InEngine j r) || isSourceB R (decode j r)) = true
+      ↔ r ∈ Line j R) := by
+    intro r
+    simp [Line, isSourceB_iff]
+  rw [highwayAt_eq]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro hnil
+    have : (0, (hwModulus j : ℤ)) ∈ ((((List.range (hwModulus j)).map (fun a : ℕ => (a : ℤ))).filter
+        fun r => !decide (InEngine j r) || isSourceB R (decode j r)).map
+          fun r => (r, (hwModulus j : ℤ))) := by
+      simp only [List.mem_map, List.mem_filter, List.mem_range]
+      exact ⟨0, ⟨⟨0, hL, rfl⟩, (hpred 0).2 (Or.inl fun h => h.1 rfl)⟩, rfl⟩
+    rw [hnil] at this; cases this
+  · intro rm hrm
+    simp only [List.mem_map] at hrm
+    obtain ⟨r, -, rfl⟩ := hrm
+    exact ⟨2 * N j, 3 * N j, by simp [hwModulus]⟩
+  · refine List.Pairwise.map (R := fun a b : ℤ => ∀ n : ℤ, ¬ (n ≡ a [ZMOD hwModulus j] ∧
+      n ≡ b [ZMOD hwModulus j])) _ (fun a b h => h) (List.Pairwise.filter _ ?_)
+    have hlt : List.Pairwise (fun a b : ℤ => a < b)
+        ((List.range (hwModulus j)).map (fun a : ℕ => (a : ℤ))) :=
+      List.Pairwise.map _ (fun a b h => by exact_mod_cast h) List.pairwise_lt_range
+    refine hlt.imp_of_mem fun {a b} ha hb hab n ⟨hna, hnb⟩ => ?_
+    simp only [List.mem_map, List.mem_range] at ha hb
+    obtain ⟨a, ha, rfl⟩ := ha
+    obtain ⟨b, hb, rfl⟩ := hb
+    have := hna.symm.trans hnb
+    unfold Int.ModEq at this
+    rw [Int.emod_eq_of_lt (by omega) (by omega), Int.emod_eq_of_lt (by omega) (by omega)] at this
+    omega
+  · intro n
+    have hL' : (0 : ℤ) < hwModulus j := by exact_mod_cast hL
+    simp only [List.mem_map, List.mem_filter, List.mem_range, InClass]
+    constructor
+    · intro hn
+      refine ⟨_, ⟨n % hwModulus j, ⟨⟨(n % hwModulus j).toNat, ?_, ?_⟩, ?_⟩, rfl⟩, ?_⟩
+      · have := Int.emod_lt_of_pos n hL'; omega
+      · exact Int.toNat_of_nonneg (Int.emod_nonneg _ hL'.ne')
+      · exact (hpred _).2 (line_of_modEq hj (Int.mod_modEq n _).symm hn)
+      · exact (Int.mod_modEq n _).symm
+    · rintro ⟨_, ⟨r, ⟨-, hr⟩, rfl⟩, hin⟩
+      exact line_of_modEq hj hin.symm ((hpred r).1 hr)
 
 /-- The permutation: `F` where defined, `ν ∘ τ` on engine sinks (`τ` relabels the state by
 `pairFn`, keeping counters and junk), and `ν` off the engine. -/
