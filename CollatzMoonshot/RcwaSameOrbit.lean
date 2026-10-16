@@ -442,42 +442,114 @@ def F (j : ℕ) (R : List Rule) (n : ℤ) : Option ℤ :=
 def Fits (j : ℕ) (R : List Rule) : Prop :=
   ∀ ρ ∈ R, ρ.src < orderOf (3 : ZMod (5 ^ j)) ∧ ρ.dst < orderOf (3 : ZMod (5 ^ j))
 
-/-- **Open.**  `enc j c` lies on the engine and decodes to `c`. -/
+theorem orderOf_three_pos {j : ℕ} (hj : 1 ≤ j) : 0 < orderOf (3 : ZMod (5 ^ j)) :=
+  orderOf_pos_iff.2 (isOfFinOrder_iff_pow_eq_one.2 ⟨N j, N_pos j, three_pow_N hj⟩)
+
+/-- An engine phase is below the order of `3`. -/
+theorem phase_lt_ord {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
+    phase j n < orderOf (3 : ZMod (5 ^ j)) := by
+  have hpos := orderOf_three_pos hj
+  have hlt : phase j n % orderOf (3 : ZMod (5 ^ j)) < N j :=
+    lt_of_lt_of_le (Nat.mod_lt _ hpos) (orderOf_three_le hj)
+  have hx : (3 : ZMod (5 ^ j)) ^ (phase j n % orderOf (3 : ZMod (5 ^ j))) = (n : ZMod (5 ^ j)) := by
+    rw [pow_mod_orderOf]; exact hn.2.2.1
+  have hmin : ∀ i < phase j n, (3 : ZMod (5 ^ j)) ^ i ≠ n := (dlog3_spec hlt hx).2
+  have hle : phase j n ≤ phase j n % orderOf (3 : ZMod (5 ^ j)) := by
+    by_contra h
+    exact hmin _ (by omega) hx
+  exact lt_of_le_of_lt hle (Nat.mod_lt _ hpos)
+
+/-- The Lemma P piece on decoded configurations. -/
+theorem decode_move {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) {s' : ℕ}
+    (hs' : s' < orderOf (3 : ZMod (5 ^ j))) {δ₁ δ₂ : ℤ} (h₁ : 0 ≤ (C1 j n : ℤ) + δ₁)
+    (h₂ : 0 ≤ (C2 j n : ℤ) + δ₂) :
+    InEngine j (move j n s' δ₁ δ₂) ∧
+      decode j (move j n s' δ₁ δ₂) = (s', ((C1 j n : ℤ) + δ₁).toNat, ((C2 j n : ℤ) + δ₂).toNat) ∧
+      junk j (move j n s' δ₁ δ₂) = junk j n := by
+  obtain ⟨h0, h1, h2, h3, h4⟩ := build_scale_spec hj hn hs' h₁ h₂
+  exact ⟨h0, by rw [decode, move, h1, h2, h3], h4⟩
+
+/-- Engine points with equal decoding and junk are equal. -/
+theorem decode_inj {j : ℕ} (hj : 1 ≤ j) {n n' : ℤ} (hn : InEngine j n) (hn' : InEngine j n')
+    (hd : decode j n = decode j n') (hjk : junk j n = junk j n') : n = n' := by
+  simp only [decode, Prod.mk.injEq] at hd
+  exact eq_of_decode_eq hj hn hn' hd.1 hd.2.1 hd.2.2 hjk
+
+/-- `enc j c` lies on the engine and decodes to `c`. -/
 theorem enc_spec {j : ℕ} (hj : 1 ≤ j) {c : Cfg} (hc : c.1 < orderOf (3 : ZMod (5 ^ j))) :
     InEngine j (enc j c) ∧ decode j (enc j c) = c := by
-  sorry
+  have he : enc j c = build j 0 0 1 c.1 c.2.1 c.2.2 := by simp [enc, build]
+  obtain ⟨h0, h1, h2, h3, -⟩ := build_spec (m := 1) hj (N_pos j) (N_pos j) hc
+    (by decide) (by decide) (by simp) c.2.1 c.2.2
+  rw [he]
+  exact ⟨h0, by rw [decode, h1, h2, h3]⟩
 
 /-- `F` is undefined off the engine. -/
 theorem F_of_not_inEngine (j : ℕ) (R : List Rule) {n : ℤ} (hn : ¬ InEngine j n) :
     F j R n = none := by
   simp [F, hn]
 
-/-- **Open.**  **Conjugacy (Lemma P).**  On the engine, `F` is the machine step on decoded
+/-- **Conjugacy (Lemma P).**  On the engine, `F` is the machine step on decoded
 configurations, with the junk fixed. -/
 theorem F_eq_some_iff {j : ℕ} (hj : 1 ≤ j) {R : List Rule} (hR : Fits j R) {n m : ℤ}
     (hn : InEngine j n) :
     F j R n = some m ↔
       InEngine j m ∧ junk j m = junk j n ∧ step R (decode j n) = some (decode j m) := by
-  sorry
+  unfold F step
+  rw [if_pos hn]
+  cases h : R.find? (fun ρ => decide (ρ.Fires (decode j n))) with
+  | none => simp
+  | some ρ =>
+    have hf := List.find?_some h
+    simp only [decide_eq_true_eq] at hf
+    obtain ⟨-, -, -, h₁, h₂⟩ := hf
+    obtain ⟨hE, hd, hjk⟩ := decode_move hj hn (hR ρ (List.mem_of_find?_eq_some h)).2 h₁ h₂
+    simp only [Option.map_some, Option.some.injEq]
+    have ht : ρ.target (decode j n) = decode j (move j n ρ.dst ρ.d₁.val ρ.d₂.val) := by
+      rw [hd]; rfl
+    constructor
+    · rintro rfl; exact ⟨hE, hjk, ht⟩
+    · rintro ⟨hm, hjm, hdm⟩
+      exact decode_inj hj hE hm (ht.symm.trans hdm) (hjk.trans hjm.symm)
 
-/-- **Open.**  Under determinism, every rule firing on `decode j n` gives `F` as its piece. -/
+/-- Under determinism, every rule firing on `decode j n` gives `F` as its piece. -/
 theorem F_eq_move {j : ℕ} (hj : 1 ≤ j) {R : List Rule} (hR : Fits j R) (hdet : Deterministic R)
     {n : ℤ} (hn : InEngine j n) {ρ : Rule} (hρ : ρ ∈ R) (hf : ρ.Fires (decode j n)) :
     F j R n = some (move j n ρ.dst ρ.d₁.val ρ.d₂.val) := by
-  sorry
+  obtain ⟨-, -, -, h₁, h₂⟩ := id hf
+  obtain ⟨hE, hd, hjk⟩ := decode_move hj hn (hR ρ hρ).2 h₁ h₂
+  rw [F_eq_some_iff hj hR hn, step_eq_of_fires hdet hρ hf, hd]
+  exact ⟨hE, hjk, rfl⟩
 
-/-- **Open.**  Each piece is linear with slope in `2^ℤ 3^ℤ`. -/
+theorem zpow_toNat (x : ℚ) (hx : x ≠ 0) (A : ℤ) : x ^ A = x ^ A.toNat / x ^ (-A).toNat := by
+  conv_lhs => rw [← Int.toNat_sub_toNat_neg A]
+  rw [zpow_sub₀ hx, zpow_natCast, zpow_natCast]
+
+/-- Each piece is linear with slope in `2^ℤ 3^ℤ`. -/
 theorem move_slope {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) {s' : ℕ}
     (hs' : s' < orderOf (3 : ZMod (5 ^ j))) {δ₁ δ₂ : ℤ} (h₁ : 0 ≤ (C1 j n : ℤ) + δ₁)
     (h₂ : 0 ≤ (C2 j n : ℤ) + δ₂) :
     (move j n s' δ₁ δ₂ : ℚ) =
       (2 : ℚ) ^ ((N j : ℤ) * δ₁) * (3 : ℚ) ^ ((N j : ℤ) * δ₂ + s' - phase j n) * n := by
-  sorry
+  have h := scale_spec hj hn hs' h₁ h₂
+  have hq : (move j n s' δ₁ δ₂ : ℚ) * 2 ^ (-(N j * δ₁ : ℤ)).toNat *
+        3 ^ (-(N j * δ₂ + s' - phase j n : ℤ)).toNat =
+      n * 2 ^ (N j * δ₁ : ℤ).toNat * 3 ^ (N j * δ₂ + s' - phase j n : ℤ).toNat := by
+    exact_mod_cast h
+  rw [zpow_toNat 2 (by norm_num), zpow_toNat 3 (by norm_num)]
+  field_simp
+  linear_combination hq
 
-/-- **Open.**  Under reversibility `F` is injective. -/
+/-- Under reversibility `F` is injective. -/
 theorem F_injective {j : ℕ} (hj : 1 ≤ j) {R : List Rule} (hR : Fits j R) (hrev : Reversible R)
     {n n' m : ℤ} (h : F j R n = some m) (h' : F j R n' = some m) : n = n' := by
-  sorry
+  have hn : InEngine j n := by
+    by_contra hn; rw [F_of_not_inEngine j R hn] at h; cases h
+  have hn' : InEngine j n' := by
+    by_contra hn'; rw [F_of_not_inEngine j R hn'] at h'; cases h'
+  obtain ⟨-, hj1, hs1⟩ := (F_eq_some_iff hj hR hn).1 h
+  obtain ⟨-, hj2, hs2⟩ := (F_eq_some_iff hj hR hn').1 h'
+  exact decode_inj hj hn hn' (step_injective hrev hs1 hs2) (hj1.symm.trans hj2)
 
 /-- The engine map as a partial injection of `ℤ`. -/
 noncomputable def engine {j : ℕ} (hj : 1 ≤ j) {R : List Rule} (hR : Fits j R)
