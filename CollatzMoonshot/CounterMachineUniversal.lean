@@ -44,14 +44,31 @@ open Turing Turing.PartrecToTM2 CollatzMoonshot.CounterMachine
 /-- A fixed `ToPartrec.Code` that halts on `[n]` iff the `n`-th `Nat.Partrec.Code` halts on `0`. -/
 theorem exists_universal : ∃ u : ToPartrec.Code, ∀ n : ℕ,
     (u.eval [n]).Dom ↔ (Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code n) 0).Dom := by
-  sorry
+  let f₀ : ℕ →. ℕ := fun n => Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code n) 0
+  have hf : Partrec f₀ :=
+    Nat.Partrec.Code.eval_part.comp (Computable.ofNat _) (Computable.const 0)
+  obtain ⟨u, hu⟩ := ToPartrec.Code.exists_code (Nat.Partrec'.part_iff₁.2 hf)
+  refine ⟨u, fun n => ?_⟩
+  have := hu ⟨[n], rfl⟩
+  simp only at this
+  rw [this]
+  simp only [f₀, Part.map_eq_map, Part.map_Dom]
+  exact Iff.rfl
 
 /-- Halting of a universal code is not computable. -/
 theorem not_computable_universal {u : ToPartrec.Code}
     (hu : ∀ n : ℕ,
       (u.eval [n]).Dom ↔ (Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code n) 0).Dom) :
     ¬ ComputablePred fun n : ℕ => (u.eval [n]).Dom := by
-  sorry
+  intro h
+  obtain ⟨f, hf, hfe⟩ := ComputablePred.computable_iff.1 h
+  apply ComputablePred.halting_problem 0
+  refine ComputablePred.computable_iff.2 ⟨fun c => f (Encodable.encode c),
+    hf.comp Computable.encode, funext fun c => ?_⟩
+  have := congrFun hfe (Encodable.encode c)
+  have h1 := hu (Encodable.encode c)
+  rw [Denumerable.ofNat_encode] at h1
+  rw [← this, h1]
 
 /-! ## 2. Stacks as numerals -/
 
@@ -95,24 +112,82 @@ def inputNum (n : ℕ) : ℕ :=
 /-- The remainder mod `5` of a numeral reads the top symbol. -/
 theorem undigit_num (l : List Γ') :
     undigit ⟨num l % 5, Nat.mod_lt _ (by norm_num)⟩ = l.head? := by
-  sorry
+  cases l with
+  | nil => rfl
+  | cons a l =>
+    have : num (a :: l) % 5 = digit a := by
+      simp only [num]; cases a <;> simp [digit, digitF]
+    simp only [this]
+    cases a <;> rfl
 
 /-- The quotient by `5` of a numeral is the numeral of the tail. -/
 theorem num_div_five (l : List Γ') : num l / 5 = num l.tail := by
-  sorry
+  cases l with
+  | nil => rfl
+  | cons a l =>
+    simp only [num, List.tail_cons]
+    have : digit a < 5 := (digitF a).isLt
+    omega
 
 /-- Pushing is `n ↦ 5 n + digit a`. -/
 theorem num_cons (a : Γ') (l : List Γ') : num (a :: l) = 5 * num l + digit a := by
-  sorry
+  simp only [num]; ring
 
 /-- The initial counters: the input numeral on the main stack, everything else `0`. -/
 theorem stackVec_init (n : ℕ) :
     stackVec (K'.elim (trList [n]) [] [] []) = Pi.single (some K'.main) (inputNum n) := by
-  sorry
+  funext x
+  rcases x with _ | k
+  · rfl
+  · cases k <;> simp [stackVec, inputNum, Pi.single, Function.update, K'.elim, num]
+
+/-- The input numeral of a positive binary numeral. -/
+theorem inputNum_pos (p : PosNum) : inputNum (p : ℕ) = num (trPosNum p ++ [Γ'.cons]) := by
+  simp [inputNum, trList, trNat, trNum]
 
 /-- The input numeral is computable. -/
 theorem computable_inputNum : Computable inputNum := by
-  sorry
+  have hrec : ∀ n, inputNum n =
+      if n = 0 then 2 else 3 + n % 2 + 5 * inputNum (n / 2) := by
+    intro n
+    split_ifs with hn
+    · subst hn; rfl
+    · rw [← Num.to_of_nat n] at hn ⊢
+      generalize (n : Num) = m at hn ⊢
+      rcases m with _ | p
+      · exact absurd rfl hn
+      · rcases p with _ | q | q
+        · rfl
+        · simp only [Num.cast_pos]
+          rw [inputNum_pos, PosNum.cast_bit1,
+            show ((q : ℕ) + q + 1) / 2 = (q : ℕ) by omega, inputNum_pos]
+          simp [trPosNum, num, digit, digitF]; omega
+        · simp only [Num.cast_pos]
+          rw [inputNum_pos, PosNum.cast_bit0,
+            show ((q : ℕ) + q) / 2 = (q : ℕ) by omega, inputNum_pos]
+          simp [trPosNum, num, digit, digitF]; omega
+  let g : Unit → List ℕ → Option ℕ := fun _ l =>
+    some (if l.length = 0 then 2 else 3 + l.length % 2 + 5 * l.getD (l.length / 2) 0)
+  have hg : Primrec₂ g := by
+    refine Primrec.option_some.comp (Primrec.ite ?_ (Primrec.const 2) ?_)
+    · exact (PrimrecRel.comp Primrec.eq (Primrec.list_length.comp Primrec.snd)
+        (Primrec.const 0))
+    · have hlen : Primrec fun p : Unit × List ℕ => p.2.length :=
+        Primrec.list_length.comp Primrec.snd
+      refine Primrec.nat_add.comp (Primrec.nat_add.comp (Primrec.const 3)
+        (Primrec.nat_mod.comp hlen (Primrec.const 2)))
+        (Primrec.nat_mul.comp (Primrec.const 5) ?_)
+      exact (Primrec.list_getD 0).comp Primrec.snd (Primrec.nat_div.comp hlen (Primrec.const 2))
+  have hf : Primrec₂ fun (_ : Unit) n => inputNum n := by
+    refine Primrec.nat_strong_rec _ hg fun _ n => ?_
+    simp only [g, List.length_map, List.length_range]
+    rw [hrec n]
+    split_ifs with hn
+    · rfl
+    · congr 3
+      rw [List.getD_eq_getElem _ _ (by simp; omega)]
+      simp
+  exact (hf.comp (Primrec.const ()) Primrec.id).to_comp
 
 /-! ## 3. The compile -/
 
