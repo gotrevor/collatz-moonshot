@@ -179,3 +179,5 @@ import CollatzMoonshot.RcwaTotalityGlue
 import CollatzMoonshot.RcwaTotalityCompile
 import CollatzMoonshot.RcwaTotalityRestart
 import CollatzMoonshot.RcwaTotality
+import CollatzMoonshot.WythoffRational
+import CollatzMoonshot.WythoffRationalMarkov
