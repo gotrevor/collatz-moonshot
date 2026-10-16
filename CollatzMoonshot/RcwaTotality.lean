@@ -38,11 +38,18 @@ open CollatzMoonshot.RcwaSameOrbit (Machine RcwaTable)
 /-- Injective rule labels `≥ 1` for a finite machine type. -/
 theorem exists_lab (Q ι : Type) [Fintype Q] [Fintype ι] [DecidableEq Q] [DecidableEq ι] :
     ∃ (K : ℕ) (lab : Quad Q ι → Fin K), (∀ ρ, 1 ≤ (lab ρ).val) ∧ Function.Injective lab := by
-  sorry
+  refine ⟨Fintype.card (Quad Q ι) + 1, fun ρ => ⟨Fintype.equivFin (Quad Q ι) ρ + 1, by
+    have := (Fintype.equivFin (Quad Q ι) ρ).isLt; omega⟩, fun ρ => by simp, fun ρ ρ' h => ?_⟩
+  simp only [Fin.mk.injEq, Nat.add_right_cancel_iff] at h
+  exact (Fintype.equivFin _).injective (Fin.ext h)
 
 /-- Distinct primes for finitely many counters. -/
 theorem exists_primeData (ι : Type) [Fintype ι] : ∃ (p : ι → ℕ) (N : ℕ), PrimeData p N := by
-  sorry
+  let p : ι → ℕ := fun c => Nat.nth Nat.Prime (Fintype.equivFin ι c)
+  exact ⟨p, ∑ c, p c, fun c => Nat.prime_nth_prime _,
+    fun c c' h => (Fintype.equivFin _).injective
+      (Fin.ext (Nat.nth_injective Nat.infinite_setOfPred_prime h)),
+    fun c => Finset.single_le_sum (f := p) (fun _ _ => Nat.zero_le _) (Finset.mem_univ c)⟩
 
 /-- **The totality family.**  A computable family of valid machines whose sources all halt iff
 `φ_e` is total. -/
