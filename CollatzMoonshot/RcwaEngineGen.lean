@@ -328,11 +328,11 @@ theorem le_orderOf_three {j : ℕ} (hj : 1 ≤ j) : j ≤ orderOf (3 : ZMod (5 ^
   exact ((Nat.pow_lt_pow_iff_right (by norm_num)).1 hlt).le
 
 /-- The engine phase is below `N j`. -/
-theorem phase_lt {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) : phase j n < N j := by
+theorem phase_lt {j : ℕ} (_hj : 1 ≤ j) {n : ℤ} (_hn : InEngine j n) : phase j n < N j := by
   exact dlog3_lt j _
 
 /-- The first zero test is `2^N ∣ n`. -/
-theorem one_le_C1_iff {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
+theorem one_le_C1_iff {j : ℕ} (_hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
     1 ≤ C1 j n ↔ (2 : ℤ) ^ N j ∣ n := by
   have h := padicValInt_dvd_iff (p := 2) (N j) n
   simp only [Nat.cast_ofNat] at h
@@ -344,7 +344,7 @@ theorem one_le_C1_iff {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
     · exact h1
 
 /-- The second zero test is `3^(N + phase n) ∣ n`. -/
-theorem one_le_C2_iff {j : ℕ} (hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
+theorem one_le_C2_iff {j : ℕ} (_hj : 1 ≤ j) {n : ℤ} (hn : InEngine j n) :
     1 ≤ C2 j n ↔ (3 : ℤ) ^ (N j + phase j n) ∣ n := by
   have hb : phase j n ≤ v3 n := hn.2.2.2
   have h := padicValInt_dvd_iff (p := 3) (N j + phase j n) n
