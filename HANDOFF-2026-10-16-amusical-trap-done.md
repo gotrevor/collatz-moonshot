@@ -1,6 +1,6 @@
 # HANDOFF 2026-10-16: amusical-trap done
 
-Branch `wip/amusical-trap`.
+Branch `wip/amusical-trap`, HEAD `f2d3fe3` (plus this doc).
 
 ## Done
 * `CollatzMoonshot/AmusicalTrap.lean` is sorry-free: trap theorem, Theorem V
@@ -11,3 +11,5 @@ Branch `wip/amusical-trap`.
 
 ## Next steps
 * Host: push `wip/amusical-trap` and merge.
+* `box done` acknowledged: scoped target `sorry-free:CollatzMoonshot/AmusicalTrap.lean` is clean.
+  No further proof work open on this target.
