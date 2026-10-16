@@ -1466,11 +1466,172 @@ theorem godel_macro [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N)
       rw [← hXe] at h3
       simpa using h3
 
+theorem prod_fact [Fintype ι] (hp : PrimeData p N) (v : ι → ℕ) (q : ℕ) :
+    (∏ k, p k ^ v k).factorization q = ∑ k, if p k = q then v k else 0 := by
+  classical
+  rw [Nat.factorization_prod fun k _ => (pow_pos (hp.prime k).pos _).ne']
+  simp only [Finsupp.coe_finsetSum, Finset.sum_apply, Nat.factorization_pow,
+    Finsupp.smul_apply, smul_eq_mul, (hp.prime _).factorization, Finsupp.single_apply]
+  exact Finset.sum_congr rfl fun k _ => by split_ifs <;> simp
+
+theorem prod_fact_at [Fintype ι] (hp : PrimeData p N) (v : ι → ℕ) (i : ι) :
+    (∏ k, p k ^ v k).factorization (p i) = v i := by
+  rw [prod_fact hp, Finset.sum_eq_single i (fun k _ hk => if_neg fun e => hk (hp.inj e))
+    (by simp), if_pos rfl]
+
+/-- Every positive `x` is an encoding with junk coprime to every `p i`. -/
+theorem exists_enc [Fintype ι] (hp : PrimeData p N) {x : ℕ} (hx : 0 < x) :
+    ∃ (J : ℕ) (v : ι → ℕ), 0 < J ∧ (∀ i, ¬ p i ∣ J) ∧ x = J * ∏ k, p k ^ v k := by
+  set v : ι → ℕ := fun i => x.factorization (p i)
+  have hP : 0 < ∏ k, p k ^ v k := Finset.prod_pos fun k _ => pow_pos (hp.prime k).pos _
+  have hdvd : ∏ k, p k ^ v k ∣ x := by
+    rw [← Nat.factorization_le_iff_dvd hP.ne' hx.ne']
+    intro q
+    rw [prod_fact hp]
+    by_cases hq : ∃ i, p i = q
+    · obtain ⟨i, rfl⟩ := hq
+      rw [Finset.sum_eq_single i (fun k _ hk => if_neg fun e => hk (hp.inj e)) (by simp),
+        if_pos rfl]
+    · rw [Finset.sum_eq_zero fun k _ => if_neg fun e => hq ⟨k, e⟩]
+      exact Nat.zero_le _
+  obtain ⟨J, hJ⟩ := hdvd
+  have hJ0 : 0 < J := Nat.pos_of_ne_zero fun h => by rw [h, mul_zero] at hJ; omega
+  refine ⟨J, v, hJ0, fun i hi => ?_, by rw [hJ, mul_comm]⟩
+  have h1 := congrArg (fun n => n.factorization (p i)) hJ
+  rw [Nat.factorization_mul hP.ne' hJ0.ne', Finsupp.add_apply, prod_fact_at hp] at h1
+  have := (hp.prime i).factorization_pos_of_dvd hJ0.ne' hi
+  simp only [v] at h1
+  omega
+
+theorem act_t0_inv {x y : ℕ} {b : Bool} {w : Fin 2 → ℕ}
+    (h : (Op.test (0 : Fin 2) b).Act (gc x y) w) : decide (0 < x) = b := h.1
+
+theorem act_dec1_inv {x y : ℕ} {w : Fin 2 → ℕ}
+    (h : (Op.dec (1 : Fin 2)).Act (gc x y) w) : 0 < y := h.1
+
+/-- **The stuck run.**  At a halting ID of `B` the compile runs, off the boundary, into a stuck
+configuration. -/
+theorem godel_stuck_chain [Fintype ι] (hB : B.Det) (hp : PrimeData p N) {J : ℕ} (hJ : 0 < J)
+    (hJp : ∀ i, ¬ p i ∣ J) {q : Q} {v : ι → ℕ} (hs : B.Stuck (q, v)) :
+    ∃ d, Relation.ReflTransGen (GOff B p N) (.ent q, genc p J v) d ∧ (godel B p N).Stuck d := by
+  classical
+  have hX := enc_pos hp hJ v
+  change ∃ d, Relation.ReflTransGen (GOff B p N) (.ent q, gc (J * ∏ k, p k ^ v k) 0) d ∧ _
+  set X := J * ∏ k, p k ^ v k with hXdef
+  have hg : Relation.ReflTransGen (GOff B p N) (.ent q, gc X 0) (.grd q, gc X 0) :=
+    .single (goff_of (.guard q) rfl rfl (act_t0 (decide_eq_true hX)) (by simp))
+  by_cases hex : ∃ ρ ∈ B, ρ.src = q
+  · obtain ⟨⟨src, op, dst⟩, hρ, rfl⟩ := hex
+    simp only at hg hs ⊢
+    cases op with
+    | nop => exact absurd ⟨_, hρ, rfl, rfl, rfl⟩ (hs (dst, v))
+    | inc i =>
+      exact absurd ⟨_, hρ, rfl, rfl, by simp, fun j hj => by simp [hj]⟩
+        (hs (dst, Function.update v i (v i + 1)))
+    | dec i =>
+      by_cases hvi : 0 < v i
+      · exact absurd ⟨_, hρ, rfl, rfl, hvi, by simp; omega, fun j hj => by simp [hj]⟩
+          (hs (dst, Function.update v i (v i - 1)))
+      have hpi := (hp.prime i).two_le
+      have hle := hp.le i
+      have hnd : ¬ p i ∣ X := by rw [hXdef, dvd_enc_iff hp hJp v i]; omega
+      have hj1 : 1 ≤ X % p i := Nat.pos_of_ne_zero fun h => hnd (Nat.dvd_of_mod_eq_zero h)
+      have hj2 : X % p i < p i := Nat.mod_lt _ (by omega)
+      have hXe : X = p i * (X / p i) + X % p i := (Nat.div_add_mod X (p i)).symm
+      have hm : MoveRule B src i dst := .inr hρ
+      refine ⟨(.dv src ⟨1 + X % p i, by omega⟩, gc (X / p i) 0), ?_, ?_⟩
+      · refine hg.trans (.head (goff_of (.aIn hm) rfl rfl (act_t1 rfl) (by simp)) ?_)
+        have ht := g_transfer (p := p) (N := N) hm X 0 0
+        simp only [Nat.zero_add] at ht
+        refine ht.trans (.head (goff_of (.a₁Z hm) rfl rfl (act_t0 rfl) (by simp)) ?_)
+        have hdv := g_dv hp hρ (X % p i) (X / p i) 0
+        rw [← hXe, Nat.zero_add] at hdv
+        refine hdv.trans (.head (goff_of (.dvIn ⟨1, by omega⟩ hρ rfl) rfl rfl
+          (act_t1 (decide_eq_true (by omega))) (by simp)) ?_)
+        have hc := g_dvChain hp hρ (X / p i) 0 (X % p i) 1 (by omega) le_rfl (by omega)
+        simpa using hc
+      · rintro d ⟨r, hr, h1, -, h3⟩
+        cases hr <;> simp only [GState.dv.injEq, reduceCtorEq] at h1
+        all_goals (rw [← h1.1] at h3; exact absurd (act_dec1_inv h3) (by omega))
+    | test i b =>
+      by_cases hb : decide (0 < v i) = b
+      · exact absurd ⟨_, hρ, rfl, rfl, hb, rfl⟩ (hs (dst, v))
+      have hpi := (hp.prime i).two_le
+      have hle := hp.le i
+      -- no rule from `src` reads the value of `v i`
+      have hno : ∀ i' q'', ⟨src, .test i' (decide (0 < v i)), q''⟩ ∉ B := by
+        intro i' q'' h
+        obtain rfl := det_test_counter hB hρ h
+        exact hs (q'', v) ⟨_, h, rfl, rfl, rfl, rfl⟩
+      have hw : Relation.ReflTransGen (GOff B p N) (.ent src, gc X 0)
+          (.w₁ src ⟨0, by omega⟩, gc X 0) :=
+        hg.tail (goff_of (.wIn _ hρ rfl) rfl rfl (act_t1 rfl) (by simp))
+      by_cases hvi : 0 < v i
+      · obtain ⟨a, ha⟩ := (dvd_enc_iff hp hJp v i).2 hvi
+        rw [← hXdef] at ha
+        refine ⟨(.w₁ src ⟨0, by omega⟩, gc 0 a), ?_, ?_⟩
+        · have h1 := g_w hp hρ 0 a 0
+          rw [Nat.zero_add, Nat.zero_add, ← ha] at h1
+          exact hw.trans h1
+        · rintro d ⟨r, hr, h1, -, h3⟩
+          cases hr <;> simp only [GState.w₁.injEq, reduceCtorEq] at h1
+          · rw [← h1.1] at h3; exact absurd (act_t0_inv h3) (by simp)
+          · rename_i i' _ _ j _ hj; have := (hp.prime i').two_le
+            have := congrArg Fin.val h1.2; simp at this; omega
+          · rename_i i' q'' j h' _
+            exact hno i' q'' (by rw [h1.1]; simpa [hvi] using h')
+          · rename_i j _ hj _; have := congrArg Fin.val h1.2; simp at this; omega
+      · have hnd : ¬ p i ∣ X := by rw [hXdef, dvd_enc_iff hp hJp v i]; omega
+        have hj1 : 1 ≤ X % p i := Nat.pos_of_ne_zero fun h => hnd (Nat.dvd_of_mod_eq_zero h)
+        have hj2 : X % p i < p i := Nat.mod_lt _ (by omega)
+        have hXe : X = X % p i + p i * (X / p i) := (Nat.mod_add_div X (p i)).symm
+        refine ⟨(.w₁ src ⟨X % p i, by omega⟩, gc 0 (X / p i)), ?_, ?_⟩
+        · have h1 := g_w hp hρ (X % p i) (X / p i) 0
+          rw [Nat.zero_add, ← hXe] at h1
+          have h2 := g_wChain hp hρ 0 (X / p i) (X % p i) 0 (by omega) (by omega)
+          simp only [Nat.zero_add] at h2
+          exact hw.trans (h1.trans h2)
+        · rintro d ⟨r, hr, h1, -, h3⟩
+          cases hr <;> simp only [GState.w₁.injEq, reduceCtorEq] at h1
+          · rw [← h1.1] at h3; exact absurd (act_t0_inv h3) (by simp)
+          · rename_i i' _ _ j h' hj
+            obtain rfl := det_test_counter hB hρ (h1.1 ▸ h')
+            have := congrArg Fin.val h1.2; simp at this; omega
+          · rename_i j _ hj; have := congrArg Fin.val h1.2; simp at this; omega
+          · rename_i i' q'' j h' _ _
+            exact hno i' q'' (by rw [h1.1]; simpa [hvi] using h')
+  · refine ⟨_, hg, ?_⟩
+    rintro d ⟨r, hr, h1, -, -⟩
+    cases hr <;> simp only [GState.grd.injEq, reduceCtorEq] at h1
+    · exact hex ⟨_, ‹_›, h1.symm⟩
+    · rename_i hm; rcases hm with hm | hm <;> exact hex ⟨_, hm, h1.symm⟩
+    · exact hex ⟨_, ‹_›, h1.symm⟩
+
+/-- Under determinism, a run off `B` into a stuck configuration admits no macro step. -/
+theorem not_macro_of_stuck {M : CM Q ι} (hM : M.Det) {B : Set Q} {c d : Cfg Q ι}
+    (hcd : Relation.ReflTransGen (fun a b => M.Step a b ∧ b.1 ∉ B) c d) (hd : M.Stuck d)
+    {b' : Cfg Q ι} : ¬ RcwaMachine.MacroStep B M.Step c b' := by
+  rintro ⟨-, hb', x, n, hn, hx0, hxn, hstep, hoff⟩
+  induction hcd using Relation.ReflTransGen.head_induction_on generalizing x n with
+  | refl => exact hd _ (hx0 ▸ hstep 0 hn)
+  | head hab _ ih =>
+    have h1 := CM.step_functional hM (hx0 ▸ hstep 0 hn) hab.1
+    by_cases hn1 : n = 1
+    · subst hn1; rw [hxn] at h1; rw [h1] at hb'; exact hab.2 hb'
+    · exact ih (fun i => x (i + 1)) (n - 1) (by omega) h1
+        (by rw [show n - 1 + 1 = n by omega, hxn]) (fun i hi => hstep (i + 1) (by omega))
+        (fun i h0 hi => hoff (i + 1) (by omega) (by omega))
+
 /-- A halting ID of `B` gives a halting run of the compile. -/
 theorem godel_halts_of_stuck [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) {J : ℕ}
     (hJ : 0 < J) (hJp : ∀ i, ¬ p i ∣ J) {q : Q} {v : ι → ℕ} (hs : B.Stuck (q, v)) :
     (godel B p N).Halts (.ent q, genc p J v) := by
-  sorry
+  obtain ⟨d, hr, hd⟩ := godel_stuck_chain hB hp hJ hJp hs
+  refine ⟨d, ?_, hd⟩
+  clear hd
+  induction hr with
+  | refl => exact .refl
+  | tail _ h ih => exact Relation.ReflTransGen.tail ih h.1
 
 /-- **Soundness on garbage.**  Every macro step, from any configuration, starts at a guarded
 boundary configuration (`x ≥ 1`, `y = 0`, an encoding with some junk) and is a step of `B`. -/
@@ -1479,18 +1640,70 @@ theorem godel_macro_sound [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeDat
     (h : RcwaMachine.MacroStep (Set.range GState.ent) (godel B p N).Step b b') :
     ∃ (q q' : Q) (v v' : ι → ℕ) (J : ℕ), 0 < J ∧ (∀ i, ¬ p i ∣ J) ∧
       b = (.ent q, genc p J v) ∧ b' = (.ent q', genc p J v') ∧ B.Step (q, v) (q', v') := by
-  sorry
+  have h₀ := h
+  obtain ⟨⟨q, hq⟩, hb', x, n, hn, hx0, hxn, hstep, hoff⟩ := h
+  -- the first step is the guard
+  obtain ⟨r, hr, h1, h2, h3⟩ := hstep 0 hn
+  rw [hx0, ← hq] at h1
+  cases hr <;> simp only [GState.ent.injEq, reduceCtorEq] at h1
+  subst h1
+  obtain ⟨hx, hx1⟩ := h3
+  rw [hx0] at hx hx1
+  -- the second step is a `y = 0` test
+  have hn2 : 1 < n := by
+    by_contra hc
+    obtain rfl : n = 1 := by omega
+    obtain ⟨t, ht⟩ := hb'
+    rw [← hxn, h2] at ht
+    cases ht
+  obtain ⟨r', hr', h1', -, h3'⟩ := hstep 1 hn2
+  rw [h2] at h1'
+  have hy : b.2 1 = 0 := by
+    cases hr' <;> simp only [GState.grd.injEq, reduceCtorEq] at h1'
+    all_goals (rw [hx1] at h3'; simpa using h3'.1)
+  have hx' : 0 < b.2 0 := by simpa using hx
+  obtain ⟨J, v, hJ, hJp, hxe⟩ := exists_enc hp hx'
+  have hbe : b = (.ent q, genc p J v) := by
+    refine Prod.ext hq.symm (funext fun j => ?_)
+    fin_cases j
+    · exact hxe
+    · exact hy
+  by_cases hst : ∃ d, B.Step (q, v) d
+  · obtain ⟨⟨q', v'⟩, hst⟩ := hst
+    have hm := godel_macro hB hB' hp hJ hJp hst
+    rw [← hbe] at hm
+    exact ⟨q, q', v, v', J, hJ, hJp, hbe, macroStep_functional (godel_det hB hB' hp) h₀ hm, hst⟩
+  · obtain ⟨d, hr, hd⟩ := godel_stuck_chain hB hp hJ hJp (fun d h => hst ⟨d, h⟩)
+    rw [← hbe] at hr
+    exact absurd h₀ (not_macro_of_stuck (godel_det hB hB' hp) hr hd)
 
 /-- **Lemma G.**  The compile's reverse is mortal, on all configurations, if `B`'s is. -/
 theorem godel_revMortal [Fintype Q] [Fintype ι] [DecidableEq Q] (hB : B.Det) (hB' : B.Rev)
     (hp : PrimeData p N) (hmort : B.RevMortal) : (godel B p N).RevMortal := by
-  sorry
+  refine revMortal_of_macro (godel_lapsMixed hB hB' hp) ?_
+  rintro ⟨b, hb⟩
+  choose q q' v v' J hJ hJp h1 h2 hst using fun n => godel_macro_sound hB hB' hp (hb n)
+  have key : ∀ n, q n = q' (n + 1) ∧ v n = v' (n + 1) := by
+    intro n
+    have e := (h1 n).symm.trans (h2 (n + 1))
+    simp only [Prod.mk.injEq, GState.ent.injEq] at e
+    exact ⟨e.1, (genc_inj hp (hJ n) (hJ (n + 1)) (hJp n) (hJp (n + 1)) e.2).2⟩
+  refine hmort ⟨fun n => (q n, v n), fun n => ?_⟩
+  have := hst (n + 1)
+  rw [← (key n).1, ← (key n).2] at this
+  exact this
 
 /-- The compile halts from an encoding (junk `1`) iff `B` halts. -/
 theorem godel_halts_iff [Fintype ι] (hB : B.Det) (hB' : B.Rev) (hp : PrimeData p N) (q : Q)
     (v : ι → ℕ) :
     (godel B p N).Halts (.ent q, genc p 1 v) ↔ B.Halts (q, v) := by
-  sorry
+  have hJp : ∀ i, ¬ p i ∣ 1 := fun i h => (hp.prime i).one_lt.ne' (Nat.dvd_one.1 h)
+  refine CM.halts_iff_of_sim (godel_det hB hB' hp)
+    (fun c c' => c' = (.ent c.1, genc p 1 c.2)) ?_ ?_ rfl
+  · rintro ⟨q, v⟩ ⟨q', v'⟩ c' hst rfl
+    exact ⟨_, macroStep_transGen (godel_macro hB hB' hp one_pos hJp hst), rfl⟩
+  · rintro ⟨q, v⟩ c' hs rfl
+    exact godel_halts_of_stuck hB hB' hp one_pos hJp hs
 
 end Godel
 
