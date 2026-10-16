@@ -209,14 +209,73 @@ def layerEquiv {Q : Type*} {S : ℕ} (num : Q ≃ Fin S) : Q × Bool ≃ Fin (S 
 /-- Rule lists with the same members fire alike when one of them is deterministic. -/
 theorem step_congr {R R' : List Rule} (hmem : ∀ ρ, ρ ∈ R ↔ ρ ∈ R') (hdet : Deterministic R') :
     step R = step R' := by
-  sorry
+  have hdet' : Deterministic R := fun ρ hρ ρ' hρ' =>
+    hdet ρ ((hmem ρ).1 hρ) ρ' ((hmem ρ').1 hρ')
+  funext c
+  cases h : R.find? (fun ρ => decide (ρ.Fires c)) with
+  | none =>
+    have h1 : step R c = none := by simp [step, h]
+    rw [h1, eq_comm]
+    simp only [step, Option.map_eq_none_iff, List.find?_eq_none]
+    rw [List.find?_eq_none] at h
+    exact fun ρ hρ => h ρ ((hmem ρ).2 hρ)
+  | some ρ₀ =>
+    have hρ₀ := List.mem_of_find?_eq_some h
+    have hf : ρ₀.Fires c := by simpa using List.find?_some h
+    rw [RcwaSameOrbit.step_eq_of_fires hdet' hρ₀ hf,
+      RcwaSameOrbit.step_eq_of_fires hdet ((hmem _).1 hρ₀) hf]
+
+open RcwaSameOrbit (IsSink IsSource run NoBiInfinite EndToStart) in
+/-- `Valid` transfers along machines with the same `K`, `pair`, members and step. -/
+theorem valid_of_congr {M M' : Machine} (hK : M.K = M'.K) (hpair : M.pair = M'.pair)
+    (hmem : ∀ ρ, ρ ∈ M.rules ↔ ρ ∈ M'.rules) (hstep : step M.rules = step M'.rules)
+    (h : M'.Valid) : M.Valid := by
+  have hpf : M.pairFn = M'.pairFn := by funext s; simp [Machine.pairFn, hpair]
+  have hsink : IsSink M.rules = IsSink M'.rules := by funext c; simp [IsSink, hstep]
+  have hsrc : IsSource M.rules = IsSource M'.rules := by funext c; simp [IsSource, hstep]
+  have hrun : run M.rules = run M'.rules := by funext n c; simp [run, hstep]
+  obtain ⟨⟨h1, h2, h3⟩, h4, h5, h6, h7⟩ := h
+  refine ⟨⟨fun ρ hρ => hK ▸ h1 ρ ((hmem ρ).1 hρ), fun ρ hρ => hK ▸ h2 ρ ((hmem ρ).1 hρ),
+    by rw [hpair, hK]; exact h3⟩,
+    fun ρ hρ ρ' hρ' => h4 ρ ((hmem ρ).1 hρ) ρ' ((hmem ρ').1 hρ'), ?_, ?_, ?_⟩
+  · rw [hsink, hsrc, hpf]; exact h5
+  · unfold NoBiInfinite; rw [hstep]; exact h6
+  · unfold EndToStart; rw [hsrc, hrun, hsink, hpf]; exact h7
 
 /-- **Machines with the same members.**  Same `K`, same `pair`, the same rules up to order, one
 of them deterministic: valid together, and all sources halt together. -/
 theorem machine_congr {M M' : Machine} (hK : M.K = M'.K) (hpair : M.pair = M'.pair)
     (hmem : ∀ ρ, ρ ∈ M.rules ↔ ρ ∈ M'.rules) (hdet : Deterministic M'.rules) :
     (M.Valid ↔ M'.Valid) ∧ (SourcesHalt M ↔ SourcesHalt M') := by
-  sorry
+  have hstep := step_congr hmem hdet
+  refine ⟨⟨fun h => valid_of_congr hK.symm hpair.symm (fun ρ => (hmem ρ).symm) hstep.symm h,
+    valid_of_congr hK hpair hmem hstep⟩, ?_⟩
+  have hsink : RcwaSameOrbit.IsSink M.rules = RcwaSameOrbit.IsSink M'.rules := by
+    funext c; simp [RcwaSameOrbit.IsSink, hstep]
+  have hsrc : RcwaSameOrbit.IsSource M.rules = RcwaSameOrbit.IsSource M'.rules := by
+    funext c; simp [RcwaSameOrbit.IsSource, hstep]
+  have hrun : RcwaSameOrbit.run M.rules = RcwaSameOrbit.run M'.rules := by
+    funext n c; simp [RcwaSameOrbit.run, hstep]
+  unfold SourcesHalt RcwaSameOrbit.Halts
+  rw [hsink, hsrc, hrun]
+
+theorem layerEquiv_val {Q : Type*} {S : ℕ} (num : Q ≃ Fin S) (q : Q) (b : Bool) :
+    (layerEquiv num (q, b)).val = 2 * (num q).val + if b then 1 else 0 := by
+  cases b <;> simp [layerEquiv, finProdFinEquiv, finTwoEquiv]
+  ring
+
+theorem toRule_mapQ' {Q Q' : Type*} (n : Q' → ℕ) (f : Q → Q') (ρ : Quad Q (Fin 2)) :
+    toRule n (ρ.mapQ f) = toRule (n ∘ f) ρ := by
+  obtain ⟨s, o, d⟩ := ρ
+  cases o <;> rfl
+
+theorem Quad.inv_mapQ' {Q Q' ι : Type*} (f : Q → Q') (ρ : Quad Q ι) :
+    (ρ.mapQ f).inv = ρ.inv.mapQ f := rfl
+
+theorem turnRules_mapQ' {Q Q' : Type*} [DecidableEq Q] [DecidableEq Q'] {f : Q → Q'}
+    (hf : Function.Injective f) (rs : List (Quad Q (Fin 2))) (nP nM : Q' → ℕ) (q : Q) :
+    turnRules (rs.map (Quad.mapQ f)) nP nM (f q) = turnRules rs (nP ∘ f) (nM ∘ f) q := by
+  simp only [turnRules, List.any_map, Function.comp_def, Quad.mapQ, hf.eq_iff]
 
 /-- **The bridge.**  The doubling numbered by `layerEquiv num` is `doubleN` of the numbered rule
 list, up to the order of rules. -/
@@ -226,7 +285,47 @@ theorem doubleN_valid_iff {Q : Type*} [DecidableEq Q] {S : ℕ} (num : Q ≃ Fin
         (double rs (layerEquiv num)).Valid) ∧
       (SourcesHalt (doubleN (rs.map (Quad.mapQ fun q => (num q).val)) S) ↔
         SourcesHalt (double rs (layerEquiv num))) := by
-  sorry
+  have hplus : (fun s => 2 * s + 1) ∘ (fun q => (num q).val) =
+      fun q => (layerEquiv num (q, true)).val := by
+    funext q; simp [layerEquiv_val]
+  have hminus : (fun s => 2 * s) ∘ (fun q => (num q).val) =
+      fun q => (layerEquiv num (q, false)).val := by
+    funext q; simp [layerEquiv_val]
+  have hinj : Function.Injective fun q => (num q).val :=
+    fun a b h => num.injective (Fin.ext h)
+  refine machine_congr rfl ?_ ?_ hdet
+  · simp only [doubleN, double]
+    rw [← List.map_coe_finRange_eq_range, List.map_map]
+    refine List.map_congr_left fun n _ => ?_
+    obtain ⟨⟨q, b⟩, rfl⟩ := (layerEquiv num).surjective n
+    simp only [Function.comp, Equiv.symm_apply_apply, layerEquiv_val]
+    cases b <;> simp
+  · intro ρ'
+    rw [mem_double]
+    simp only [doubleN, List.mem_append, List.mem_map, List.mem_flatMap, List.mem_range,
+      or_assoc]
+    refine or_congr ?_ (or_congr ?_ ?_)
+    · constructor
+      · rintro ⟨_, ⟨ρ, hρ, rfl⟩, rfl⟩
+        exact ⟨ρ, hρ, by rw [toRule_mapQ', hplus]⟩
+      · rintro ⟨ρ, hρ, rfl⟩
+        exact ⟨_, ⟨ρ, hρ, rfl⟩, by rw [toRule_mapQ', hplus]⟩
+    · constructor
+      · rintro ⟨_, ⟨ρ, hρ, rfl⟩, rfl⟩
+        exact ⟨ρ, hρ, by rw [Quad.inv_mapQ', toRule_mapQ', hminus]⟩
+      · rintro ⟨ρ, hρ, rfl⟩
+        exact ⟨_, ⟨ρ, hρ, rfl⟩, by rw [Quad.inv_mapQ', toRule_mapQ', hminus]⟩
+    · constructor
+      · rintro ⟨s, hs, h⟩
+        refine ⟨num.symm ⟨s, hs⟩, ?_⟩
+        have := turnRules_mapQ' hinj rs (fun s => 2 * s + 1) (fun s => 2 * s) (num.symm ⟨s, hs⟩)
+        simp only [Equiv.apply_symm_apply] at this
+        rw [this, hplus, hminus] at h
+        exact h
+      · rintro ⟨q, h⟩
+        refine ⟨(num q).val, (num q).isLt, ?_⟩
+        rw [turnRules_mapQ' hinj, hplus, hminus]
+        exact h
 
 end DoubleN
 
@@ -247,14 +346,140 @@ noncomputable instance : Primcodable (Op (Fin 2)) :=
 noncomputable instance : Primcodable (Quad ℕ (Fin 2)) :=
   Primcodable.ofEquiv _ quadEquiv
 
+section PrimQuad
+
+open RcwaSameOrbit (Test Move)
+
+variable {α : Type*} [Primcodable α]
+
+theorem pr_quad {ρ : α → Quad ℕ (Fin 2)} (h : Primrec ρ) : Primrec fun a => quadEquiv (ρ a) :=
+  (Primrec.of_equiv (e := quadEquiv)).comp h
+
+theorem pr_qsrc {ρ : α → Quad ℕ (Fin 2)} (h : Primrec ρ) : Primrec fun a => (ρ a).src :=
+  Primrec.fst.comp (pr_quad h)
+
+theorem pr_qop {ρ : α → Quad ℕ (Fin 2)} (h : Primrec ρ) : Primrec fun a => (ρ a).op :=
+  Primrec.fst.comp (Primrec.snd.comp (pr_quad h))
+
+theorem pr_qdst {ρ : α → Quad ℕ (Fin 2)} (h : Primrec ρ) : Primrec fun a => (ρ a).dst :=
+  Primrec.snd.comp (Primrec.snd.comp (pr_quad h))
+
+theorem pr_mkQuad {s d : α → ℕ} {o : α → Op (Fin 2)} (hs : Primrec s) (ho : Primrec o)
+    (hd : Primrec d) : Primrec fun a => (⟨s a, o a, d a⟩ : Quad ℕ (Fin 2)) :=
+  (Primrec.of_equiv_symm (e := quadEquiv)).comp (hs.pair (ho.pair hd))
+
+theorem pr_mapQ {ρ : α → Quad ℕ (Fin 2)} {f : α → ℕ → ℕ} (h : Primrec ρ) (hf : Primrec₂ f) :
+    Primrec fun a => (ρ a).mapQ (f a) :=
+  pr_mkQuad (hf.comp Primrec.id (pr_qsrc h)) (pr_qop h) (hf.comp Primrec.id (pr_qdst h))
+
+theorem pr_qinv {ρ : α → Quad ℕ (Fin 2)} (h : Primrec ρ) : Primrec fun a => (ρ a).inv :=
+  pr_mkQuad (pr_qdst h) ((Primrec.dom_finite Op.inv).comp (pr_qop h)) (pr_qsrc h)
+
+theorem pr_mkRule {s d : α → ℕ} {t₁ t₂ : α → Test} {d₁ d₂ : α → Move} (hs : Primrec s)
+    (ht₁ : Primrec t₁) (ht₂ : Primrec t₂) (hd₁ : Primrec d₁) (hd₂ : Primrec d₂)
+    (hd : Primrec d) :
+    Primrec fun a => (⟨s a, t₁ a, t₂ a, d₁ a, d₂ a, d a⟩ : Rule) :=
+  (Primrec.of_equiv_symm (e := RcwaSameOrbit.Rule.equivProd)).comp
+    (hs.pair (ht₁.pair (ht₂.pair (hd₁.pair (hd₂.pair hd)))))
+
+theorem toRule_eq (n : ℕ → ℕ) (ρ : Quad ℕ (Fin 2)) : toRule n ρ =
+    ⟨n ρ.src, (toRule id ⟨0, ρ.op, 0⟩).t₁, (toRule id ⟨0, ρ.op, 0⟩).t₂,
+      (toRule id ⟨0, ρ.op, 0⟩).d₁, (toRule id ⟨0, ρ.op, 0⟩).d₂, n ρ.dst⟩ := by
+  obtain ⟨s, o, d⟩ := ρ
+  cases o <;> rfl
+
+theorem pr_toRule {ρ : α → Quad ℕ (Fin 2)} {n : α → ℕ → ℕ} (h : Primrec ρ) (hn : Primrec₂ n) :
+    Primrec fun a => toRule (n a) (ρ a) := by
+  have ho := pr_qop h
+  refine (pr_mkRule (hn.comp Primrec.id (pr_qsrc h))
+    ((Primrec.dom_finite fun o : Op (Fin 2) => (toRule id ⟨0, o, 0⟩).t₁).comp ho)
+    ((Primrec.dom_finite fun o : Op (Fin 2) => (toRule id ⟨0, o, 0⟩).t₂).comp ho)
+    ((Primrec.dom_finite fun o : Op (Fin 2) => (toRule id ⟨0, o, 0⟩).d₁).comp ho)
+    ((Primrec.dom_finite fun o : Op (Fin 2) => (toRule id ⟨0, o, 0⟩).d₂).comp ho)
+    (hn.comp Primrec.id (pr_qdst h))).of_eq fun a => (toRule_eq _ _).symm
+
+/-- `any` with a parameter. -/
+theorem list_any' {β : Type*} [Primcodable β] {f : α → List β} {p : α → β → Bool}
+    (hf : Primrec f) (hp : Primrec₂ p) : Primrec fun a => (f a).any (p a) := by
+  refine (Primrec.list_foldr hf (Primrec.const false)
+    (Primrec.cond (hp.comp Primrec.fst (Primrec.fst.comp Primrec.snd))
+      (Primrec.const true) (Primrec.snd.comp Primrec.snd)).to₂).of_eq fun a => ?_
+  dsimp only
+  induction f a with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.any_cons]; cases p a b <;> rfl
+
+theorem pr_turnRules {rs : α → List (Quad ℕ (Fin 2))} {q : α → ℕ} (hrs : Primrec rs)
+    (hq : Primrec q) :
+    Primrec fun a => turnRules (rs a) (fun s => 2 * s + 1) (fun s => 2 * s) (q a) := by
+  have hrs' := hrs.comp (Primrec.fst (α := α) (β := Bool × Bool))
+  have hq' := hq.comp (Primrec.fst (α := α) (β := Bool × Bool))
+  have hbb := Primrec.snd (α := α) (β := Bool × Bool)
+  have hany : Primrec fun x : α × (Bool × Bool) => (rs x.1).any fun ρ =>
+      decide (ρ.src = q x.1) && opFiresPat ρ.op x.2.1 x.2.2 := by
+    refine list_any' hrs' (Primrec.and.comp
+      (Primrec.eq.comp (pr_qsrc Primrec.snd) (hq'.comp Primrec.fst)).decide
+      ((Primrec.dom_finite fun y : Op (Fin 2) × Bool × Bool => opFiresPat y.1 y.2.1 y.2.2).comp
+        ((pr_qop Primrec.snd).pair ((Primrec.fst.comp (hbb.comp Primrec.fst)).pair
+          (Primrec.snd.comp (hbb.comp Primrec.fst)))))).to₂
+  have hr : Primrec fun x : α × (Bool × Bool) =>
+      (⟨2 * q x.1 + 1, testOf x.2.1, testOf x.2.2, .zero, .zero, 2 * q x.1⟩ : Rule) :=
+    pr_mkRule (Primrec.succ.comp (Primrec.nat_mul.comp (Primrec.const 2) hq'))
+      ((Primrec.dom_finite testOf).comp (Primrec.fst.comp hbb))
+      ((Primrec.dom_finite testOf).comp (Primrec.snd.comp hbb))
+      (Primrec.const _) (Primrec.const _) (Primrec.nat_mul.comp (Primrec.const 2) hq')
+  refine (Primrec.listFilterMap (Primrec.const [(false, false), (false, true), (true, false),
+    (true, true)]) (Primrec.cond hany (Primrec.const none)
+      (Primrec.option_some.comp hr)).to₂).of_eq fun a => ?_
+  unfold turnRules
+  refine List.filterMap_congr fun bb _ => ?_
+  dsimp only
+  split_ifs with h <;> simp [h]
+
+/-- **`doubleN` is computable.** -/
+theorem primrec_doubleN : Primrec₂ doubleN := by
+  have hrs := Primrec.fst (α := List (Quad ℕ (Fin 2))) (β := ℕ)
+  have hS := Primrec.snd (α := List (Quad ℕ (Fin 2))) (β := ℕ)
+  have hK := Primrec.nat_mul.comp hS (Primrec.const 2)
+  have h1 : Primrec fun x : List (Quad ℕ (Fin 2)) × ℕ =>
+      x.1.map (toRule fun s => 2 * s + 1) :=
+    Primrec.list_map hrs (pr_toRule Primrec.snd
+      (Primrec.succ.comp (Primrec.nat_mul.comp (Primrec.const 2) Primrec.snd)).to₂).to₂
+  have h2 : Primrec fun x : List (Quad ℕ (Fin 2)) × ℕ =>
+      x.1.map (fun ρ => toRule (fun s => 2 * s) ρ.inv) :=
+    Primrec.list_map hrs (pr_toRule (pr_qinv Primrec.snd)
+      (Primrec.nat_mul.comp (Primrec.const 2) Primrec.snd).to₂).to₂
+  have h3 : Primrec fun x : List (Quad ℕ (Fin 2)) × ℕ =>
+      (List.range x.2).flatMap (turnRules x.1 (fun s => 2 * s + 1) (fun s => 2 * s)) :=
+    Primrec.list_flatMap (Primrec.list_range.comp hS)
+      (pr_turnRules (hrs.comp Primrec.fst) Primrec.snd).to₂
+  have hp : Primrec fun x : List (Quad ℕ (Fin 2)) × ℕ =>
+      (List.range (x.2 * 2)).map fun n => if n % 2 = 0 then n + 1 else n - 1 :=
+    Primrec.list_map (Primrec.list_range.comp hK)
+      (Primrec.ite (Primrec.eq.comp (Primrec.nat_mod.comp Primrec.snd (Primrec.const 2))
+        (Primrec.const 0)) (Primrec.succ.comp Primrec.snd)
+        (Primrec.nat_sub.comp Primrec.snd (Primrec.const 1))).to₂
+  exact ((Primrec.of_equiv_symm (e := RcwaSameOrbit.Machine.equivProd)).comp
+    (hK.pair ((Primrec.list_append.comp (Primrec.list_append.comp h1 h2) h3).pair hp))).of_eq
+    fun x => rfl
+
+end PrimQuad
+
 /-- Relabelling a quadruple by a computable map is computable. -/
 theorem computable_mapQ {α : Type*} [Primcodable α] {f : α → ℕ → ℕ} (hf : Computable₂ f) :
     Computable₂ fun (a : α) (ρ : Quad ℕ (Fin 2)) => ρ.mapQ (f a) := by
-  sorry
+  have hq := (Primrec.of_equiv (e := quadEquiv)).to_comp.comp
+    (Computable.snd (α := α) (β := Quad ℕ (Fin 2)))
+  have hsrc := Computable.fst.comp hq
+  have hop := Computable.fst.comp (Computable.snd.comp hq)
+  have hdst := Computable.snd.comp (Computable.snd.comp hq)
+  exact ((Primrec.of_equiv_symm (e := quadEquiv)).to_comp.comp
+    ((hf.comp Computable.fst hsrc).pair (hop.pair (hf.comp Computable.fst hdst)))).of_eq
+    fun x => rfl
 
 /-- **`doubleN` is computable.** -/
-theorem computable_doubleN : Computable₂ doubleN := by
-  sorry
+theorem computable_doubleN : Computable₂ doubleN :=
+  primrec_doubleN.to_comp
 
 end Primcodable
 
@@ -441,12 +666,14 @@ theorem glueNum_plug (hole back : QB) {L : ℕ} (g : GState (Option Unit) N) :
   rw [glueNum_val, GState.base_map', GState.tag_map']
   have hT := (tagNum N g.tag).isLt
   rcases h : g.base with _ | ⟨⟨⟩⟩
-  · simp only [plugMap, Option.elim, lnum, h, plugReloc, chainFirst]
-    split_ifs with h1 h2 h2
-    · omega
-    · omega
+  · have hn : ¬ (Fintype.card (GState Unit N) + (tagNum N g.tag).val <
+        Fintype.card (GState Unit N)) := by omega
+    simp only [plugMap, Option.elim, lnum, h, plugReloc, chainFirst, hn, if_false,
+      Nat.add_sub_cancel_left]
+    split_ifs with h1
     · simp
-    · rw [fixTab_lt N back (by omega)]
+    · simp only [Sum.elim_inl]
+      rw [fixTab_lt N back hT]
       simp
   · simp only [plugMap, Option.elim, lnum, h, plugReloc, hT, if_true, Sum.elim_inl]
     rw [fixTab_lt N hole hT]
@@ -458,12 +685,14 @@ theorem glueNum_link (back : QB) {L : ℕ} (k : Fin L) (g : GState (Option Unit)
   rw [glueNum_val, GState.base_map', GState.tag_map']
   have hT := (tagNum N g.tag).isLt
   rcases h : g.base with _ | ⟨⟨⟩⟩
-  · simp only [linkMap, Option.elim, lnum, h, reloc, chainNext]
-    split_ifs with h1 h2 h2
-    · omega
-    · omega
+  · have hn : ¬ (Fintype.card (GState Unit N) + (tagNum N g.tag).val <
+        Fintype.card (GState Unit N)) := by omega
+    simp only [linkMap, Option.elim, lnum, h, reloc, chainNext, hn, if_false,
+      Nat.add_sub_cancel_left]
+    split_ifs with h1
     · simp
-    · rw [fixTab_lt N back (by omega)]
+    · simp only [Sum.elim_inl]
+      rw [fixTab_lt N back hT]
       simp
   · simp only [linkMap, Option.elim, lnum, h, reloc, hT, if_true, Sum.elim_inr]
 
@@ -471,12 +700,61 @@ theorem glueNum_link (back : QB) {L : ℕ} (k : Fin L) (g : GState (Option Unit)
 theorem rsGlue_num (B₀ : CM QB ι) (hole back : QB) (i : ι) (p : ι → ℕ) (L : ℕ) :
     (rsGlue N B₀ hole back i p L).map (Quad.mapQ fun g => (glueNum N L g).val) =
       explicitR N B₀ hole back i p L := by
-  sorry
+  simp only [rsGlue, explicitR, List.map_append, List.map_map, List.map_flatMap]
+  rw [← List.map_coe_finRange_eq_range, List.flatMap_map]
+  congr 1
+  congr 1
+  · refine List.map_congr_left fun ρ _ => ?_
+    simp only [Function.comp, Quad.mapQ, glueNum_inl]
+  · refine List.map_congr_left fun ρ _ => ?_
+    simp only [Function.comp, Quad.mapQ, glueNum_plug]
+  · refine List.flatMap_congr fun k _ => List.map_congr_left fun ρ _ => ?_
+    simp only [Function.comp, Quad.mapQ, glueNum_link]
+
+omit [DecidableEq QB] in
+theorem primrec_fixTab (q : QB) : Primrec (fixTab N q) :=
+  ((Primrec.list_getD 0).comp (Primrec.const _) Primrec.id).of_eq fun _ => rfl
+
+omit [DecidableEq QB] in
+theorem primrec_plugReloc (hole back : QB) : Primrec₂ (plugReloc N hole back) := by
+  have hL := Primrec.fst (α := ℕ) (β := ℕ)
+  have hn := Primrec.snd (α := ℕ) (β := ℕ)
+  have hm := Primrec.nat_sub.comp hn (Primrec.const (Fintype.card (GState Unit N)))
+  exact (Primrec.ite (Primrec.nat_lt.comp hn (Primrec.const _))
+    ((primrec_fixTab N hole).comp hn)
+    (Primrec.ite (Primrec.nat_lt.comp (Primrec.const 0) hL)
+      (Primrec.nat_add.comp (Primrec.const _) hm)
+      ((primrec_fixTab N back).comp hm))).of_eq fun _ => rfl
+
+omit [DecidableEq QB] in
+theorem primrec_reloc (back : QB) :
+    Primrec₂ fun (x : ℕ × ℕ) (n : ℕ) => reloc N back x.1 x.2 n := by
+  have hL := Primrec.fst.comp (Primrec.fst (α := ℕ × ℕ) (β := ℕ))
+  have hk := Primrec.snd.comp (Primrec.fst (α := ℕ × ℕ) (β := ℕ))
+  have hn := Primrec.snd (α := ℕ × ℕ) (β := ℕ)
+  have hT := Primrec.const (α := (ℕ × ℕ) × ℕ) (Fintype.card (GState Unit N))
+  have hF := Primrec.const (α := (ℕ × ℕ) × ℕ) (Fintype.card (GState QB N))
+  have hm := Primrec.nat_sub.comp hn hT
+  exact (Primrec.ite (Primrec.nat_lt.comp hn hT)
+    (Primrec.nat_add.comp hF (Primrec.nat_add.comp hn (Primrec.nat_mul.comp hT hk)))
+    (Primrec.ite (Primrec.nat_lt.comp (Primrec.succ.comp hk) hL)
+      (Primrec.nat_add.comp hF (Primrec.nat_add.comp hm
+        (Primrec.nat_mul.comp hT (Primrec.succ.comp hk))))
+      ((primrec_fixTab N back).comp hm))).of_eq fun _ => rfl
 
 /-- **The explicit list is computable in `L`.** -/
 theorem computable_explicitR (B₀ : CM QB ι) (hole back : QB) (i : ι) (p : ι → ℕ) :
     Computable (explicitR N B₀ hole back i p) := by
-  sorry
+  have h2 : Primrec fun L : ℕ =>
+      ((unitList N i p).map (Quad.mapQ (lnum N))).map (Quad.mapQ (plugReloc N hole back L)) :=
+    Primrec.list_map (Primrec.const _) (pr_mapQ Primrec.snd
+      ((primrec_plugReloc N hole back).comp (Primrec.fst.comp Primrec.fst) Primrec.snd).to₂).to₂
+  have h3 : Primrec fun L : ℕ => (List.range L).flatMap fun k =>
+      ((unitList N i p).map (Quad.mapQ (lnum N))).map (Quad.mapQ (reloc N back L k)) :=
+    Primrec.list_flatMap Primrec.list_range
+      (Primrec.list_map (Primrec.const _) (pr_mapQ Primrec.snd
+        ((primrec_reloc N back).comp (Primrec.fst.comp Primrec.fst) Primrec.snd).to₂).to₂).to₂
+  exact (Primrec.list_append.comp (Primrec.list_append.comp (Primrec.const _) h2) h3).to_comp
 
 /-- **The computable compile.**  For a fixed `B₀` and gluing data there is a computable family
 `G` of machines with `G L` valid and all its sources halting iff `godel (glue B₀ …  L)` is mortal,
