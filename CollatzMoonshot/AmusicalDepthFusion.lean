@@ -123,7 +123,7 @@ theorem card_disagree_le (τ : Equiv.Perm ℕ) (D : ℕ → ℕ) (X : ℕ) :
       omega
 
 open Classical in
-/-- **Open (M1, finite-depth fusion).**  If `G(X)/(D*(X) + 1) → ∞`, some permutation of `ℕ` with
+/-- **M1, finite-depth fusion.**  If `G(X)/(D*(X) + 1) → ∞`, some permutation of `ℕ` with
 `U`'s even branch and finite orbits, and a single infinite orbit through all infinite orbits of
 `U`, agrees with `U` to depth `D(n)` at all but at most `G(X)` points `n < X`, for all large `X`. -/
 theorem exists_depthFusion (D G : ℕ → ℕ)
@@ -135,6 +135,37 @@ theorem exists_depthFusion (D G : ℕ → ℕ)
         ∃ j : ℤ, (τ ^ j) a = b) ∧
       ∀ᶠ X in Filter.atTop,
         ((Finset.range X).filter fun n => DisagreeAtDepth τ (D n) n).card ≤ G X := by
-  sorry
+  set q : ℕ → ℕ := fun X => G X / (2 * maxDepth D X + 1)
+  set B : ℕ → ℕ := fun X => segTop D X + 1
+  set F : ℕ → ℕ := fun N => sInf (q '' {X | N ≤ B X})
+  have hFle (X : ℕ) : F (B X) ≤ q X := Nat.sInf_le ⟨X, show B X ≤ B X from le_rfl, rfl⟩
+  have hqtop (k : ℕ) : ∀ᶠ X in Filter.atTop, k ≤ q X := by
+    filter_upwards [hG (2 * k)] with X hX
+    have : k * (2 * maxDepth D X + 1) ≤ 2 * k * (maxDepth D X + 1) := by nlinarith
+    exact (Nat.le_div_iff_mul_le (by omega)).2 (this.trans hX)
+  have hF : Filter.Tendsto F Filter.atTop Filter.atTop := by
+    rw [Filter.tendsto_atTop]
+    intro k
+    obtain ⟨X₁, hX₁⟩ := Filter.eventually_atTop.1 (hqtop k)
+    rw [Filter.eventually_atTop]
+    refine ⟨(range X₁).sup B + 1, fun N hN => ?_⟩
+    apply le_csInf (Set.Nonempty.image q ⟨N, show N ≤ B N from le_segTop D N⟩)
+    rintro _ ⟨X, hX, rfl⟩
+    apply hX₁
+    by_contra hlt
+    push Not at hlt
+    have := Finset.le_sup (f := B) (Finset.mem_range.2 hlt)
+    change N ≤ B X at hX
+    omega
+  obtain ⟨τ, h1, h2, h3, h4⟩ := exists_oddRewire F hF
+  refine ⟨τ, h1, h2, h4, Filter.Eventually.of_forall fun X => ?_⟩
+  calc _ ≤ _ := card_disagree_le τ D X
+    _ ≤ (2 * maxDepth D X + 1) * F (B X) := by
+      apply Nat.mul_le_mul_left
+      refine le_trans (Finset.card_le_card fun c hc => ?_) (h3 (B X))
+      simp only [Finset.mem_filter] at hc ⊢
+      exact ⟨hc.1, fun h => hc.2 (Nat.cast_injective (by rw [h, amusicalNatPerm_apply_cast]))⟩
+    _ ≤ (2 * maxDepth D X + 1) * q X := Nat.mul_le_mul_left _ (hFle X)
+    _ ≤ G X := Nat.mul_div_le (G X) _
 
 end CollatzMoonshot.Amusical

@@ -10,5 +10,12 @@ Kickoff: `KICKOFF-2026-10-15-amusical-depth-fusion.md`.  Target: the `sorry` in
 - Step 2 proved: `segTop D X` (max of `U^i n`, `n < X`, `|i| ≤ D*`), `le_segTop` (`X ≤ segTop + 1`),
   `card_disagree_le` (union bound over `i ∈ Icc (-D*) D*` of images of the change set below
   `segTop + 1`; no injectivity argument needed).
-- Plan for step 3: `F N := sInf (q '' {X | N ≤ segTop D X + 1})`, `q X := G X / (2 D* + 1)`.
+- Step 3 proved, closing `exists_depthFusion` (ratified statement unchanged; `#print axioms`:
+  propext, Classical.choice, Quot.sound).  Budget: `F N := sInf (q '' {X | N ≤ segTop D X + 1})`, `q X := G X / (2 D* + 1)`.
   Then `F (segTop X + 1) ≤ q X` for every `X` (no eventuality needed); `hG` only feeds `F → ∞`.
+
+## Status
+
+Done.  `exists_depthFusion` is proved.  Note for the write-up: the final count holds for *every*
+`X`, not just eventually, since `F (segTop X + 1) ≤ q X` by construction; and `hG` is used only
+with `C = 2k`, to make `F → ∞`.
