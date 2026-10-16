@@ -72,6 +72,50 @@ def wythoffInv : Side → ℕ → ℕ → ℤ → ℤ
     if (m * q / p + 1) * p - m * q ≤ q then 2 * (m * q / p + 1)
     else 2 * (m + 1 - (m * q / p + 1)) - 1
 
+
+/-! ## Branch helpers -/
+
+section Helpers
+
+/-- Floor division characterized by its bracket. -/
+theorem ediv_eq_iff {a d m : ℤ} (hd : 0 < d) : a / d = m ↔ m * d ≤ a ∧ a < m * d + d := by
+  rw [show m * d + d = (m + 1) * d by ring, ← Int.le_ediv_iff_mul_le hd,
+    ← Int.ediv_lt_iff_lt_mul hd]
+  omega
+
+/-- Positivity of a floor quotient. -/
+theorem ediv_pos_iff' {a d : ℤ} (hd : 0 < d) : 0 < a / d ↔ d ≤ a := by
+  rw [show (0 : ℤ) < a / d ↔ 1 ≤ a / d by omega, Int.le_ediv_iff_mul_le hd, one_mul]
+
+variable {p q : ℕ}
+
+theorem wythoff_plus_even (k : ℤ) : wythoff .plus p q (2 * k) = k * p / q := by
+  rw [wythoff, if_pos (by omega), show 2 * k / 2 = k by omega]
+
+theorem wythoff_plus_odd (k : ℤ) :
+    wythoff .plus p q (2 * k - 1) = (k * p - 1) / ((p : ℤ) - q) := by
+  rw [wythoff, if_neg (by omega), show (2 * k - 1 + 1) / 2 = k by omega]
+
+theorem wythoff_minus_even (k : ℤ) : wythoff .minus p q (2 * k) = (k * p - 1) / q := by
+  rw [wythoff, if_pos (by omega), show 2 * k / 2 = k by omega]
+
+theorem wythoff_minus_odd (k : ℤ) :
+    wythoff .minus p q (2 * k - 1) = k * p / ((p : ℤ) - q) := by
+  rw [wythoff, if_neg (by omega), show (2 * k - 1 + 1) / 2 = k by omega]
+
+theorem wythoffInv_plus_eq {m k : ℤ} (hk : (m * q + p - 1) / p = k) :
+    wythoffInv .plus p q m = if k * p - m * q < q then 2 * k else 2 * (m + 1 - k) - 1 := by
+  subst hk; rfl
+
+theorem wythoffInv_minus_eq {m k : ℤ} (hk : m * q / p = k - 1) :
+    wythoffInv .minus p q m = if k * p - m * q ≤ q then 2 * k else 2 * (m + 1 - k) - 1 := by
+  simp only [wythoffInv, hk, sub_add_cancel]
+
+theorem even_or_odd_two_mul (n : ℤ) : ∃ k, n = 2 * k ∨ n = 2 * k - 1 :=
+  ⟨(n + 1) / 2, by omega⟩
+
+end Helpers
+
 section Bijection
 
 variable (s : Side) {p q : ℕ}
@@ -82,12 +126,52 @@ branch hits `m`) or in `[mq + q, mq + p)` (odd branch hits `m`, reflected by `kp
 `−` side with `(mq, mq + p]`. -/
 theorem wythoffInv_wythoff (hq : 0 < q) (hqp : q < p) (n : ℤ) :
     wythoffInv s p q (wythoff s p q n) = n := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  have hqp' : (q : ℤ) < p := by exact_mod_cast hqp
+  have hp' : (0 : ℤ) < p := by omega
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  obtain ⟨k, rfl | rfl⟩ := even_or_odd_two_mul n <;> cases s
+  · rw [wythoff_plus_even]
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hq').1 (rfl : k * p / q = _)
+    rw [wythoffInv_plus_eq (k := k) ((ediv_eq_iff hp').2 ⟨by linarith, by linarith⟩),
+      if_pos (by linarith)]
+  · rw [wythoff_minus_even]
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hq').1 (rfl : (k * p - 1) / q = _)
+    rw [wythoffInv_minus_eq (k := k) ((ediv_eq_iff hp').2 ⟨by linarith, by linarith⟩),
+      if_pos (by linarith)]
+  · rw [wythoff_plus_odd]
+    set m := (k * p - 1) / ((p : ℤ) - q) with hm
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hR).1 hm.symm
+    rw [wythoffInv_plus_eq (k := m + 1 - k) ((ediv_eq_iff hp').2 ⟨by linarith, by linarith⟩),
+      if_neg (by linarith)]
+    ring
+  · rw [wythoff_minus_odd]
+    set m := k * p / ((p : ℤ) - q) with hm
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hR).1 hm.symm
+    rw [wythoffInv_minus_eq (k := m + 1 - k) ((ediv_eq_iff hp').2 ⟨by linarith, by linarith⟩),
+      if_neg (by linarith)]
+    ring
 
 /-- **(ratified).**  `wythoffInv` is a right inverse. -/
 theorem wythoff_wythoffInv (hq : 0 < q) (hqp : q < p) (m : ℤ) :
     wythoff s p q (wythoffInv s p q m) = m := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  have hqp' : (q : ℤ) < p := by exact_mod_cast hqp
+  have hp' : (0 : ℤ) < p := by omega
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  cases s
+  · set k := (m * q + p - 1) / p with hk
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hp').1 hk.symm
+    rw [wythoffInv_plus_eq hk.symm]
+    split_ifs with h
+    · rw [wythoff_plus_even, ediv_eq_iff hq']; constructor <;> linarith
+    · rw [wythoff_plus_odd, ediv_eq_iff hR]; constructor <;> linarith
+  · set k := m * q / p + 1 with hk
+    obtain ⟨h1, h2⟩ := (ediv_eq_iff hp').1 (show m * q / p = k - 1 by omega)
+    rw [wythoffInv_minus_eq (show m * q / p = k - 1 by omega)]
+    split_ifs with h
+    · rw [wythoff_minus_even, ediv_eq_iff hq']; constructor <;> linarith
+    · rw [wythoff_minus_odd, ediv_eq_iff hR]; constructor <;> linarith
 
 /-- `W_{p/q±}` as a permutation of `ℤ`. -/
 def wythoffPerm (hq : 0 < q) (hqp : q < p) : Equiv.Perm ℤ where
@@ -101,12 +185,27 @@ def wythoffPerm (hq : 0 < q) (hqp : q < p) : Equiv.Perm ℤ where
 `< 0`. -/
 theorem wythoff_pos_iff (hq : 0 < q) (hqp : q < p) (n : ℤ) :
     0 < wythoff s p q n ↔ 0 < n := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  have hqp' : (q : ℤ) < p := by exact_mod_cast hqp
+  have hp' : (0 : ℤ) < p := by omega
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  have key : ∀ k : ℤ, (0 < k → (p : ℤ) ≤ k * p) ∧ (k ≤ 0 → k * p ≤ 0) := fun k =>
+    ⟨fun h => by nlinarith, fun h => by nlinarith⟩
+  obtain ⟨k, rfl | rfl⟩ := even_or_odd_two_mul n <;> cases s <;>
+    simp only [wythoff_plus_even, wythoff_minus_even, wythoff_plus_odd, wythoff_minus_odd,
+      ediv_pos_iff' hq', ediv_pos_iff' hR] <;>
+    rcases lt_or_ge 0 k with hk | hk <;> have := (key k).1 <;> have := (key k).2 <;>
+    constructor <;> intro h <;> omega
 
 /-- **(ratified).**  `W` restricts to a bijection of `ℕ⁺`. -/
 theorem wythoff_bijOn_pos (hq : 0 < q) (hqp : q < p) :
     Set.BijOn (wythoff s p q) {n : ℤ | 0 < n} {n : ℤ | 0 < n} := by
-  sorry
+  refine ⟨fun n hn => (wythoff_pos_iff s hq hqp n).2 hn,
+    fun a _ b _ h => (wythoffPerm s hq hqp).injective h, fun m hm => ?_⟩
+  refine ⟨wythoffInv s p q m, ?_, wythoff_wythoffInv s hq hqp m⟩
+  have := (wythoff_pos_iff s hq hqp (wythoffInv s p q m)).1
+  rw [wythoff_wythoffInv s hq hqp] at this
+  exact this hm
 
 end Bijection
 
@@ -117,22 +216,35 @@ variable {p q : ℕ}
 /-- **(ratified).**  The paper's floor form, `+` even branch: `W_{r+}(2k) = ⌊kr⌋`. -/
 theorem wythoff_plus_two_mul (hq : 0 < q) (k : ℤ) :
     wythoff .plus p q (2 * k) = ⌊(k * p / q : ℚ)⌋ := by
-  sorry
+  rw [wythoff_plus_even, show (k * p / q : ℚ) = ((k * p : ℤ) : ℚ) / (q : ℕ) by push_cast; ring,
+    Rat.floor_intCast_div_natCast]
 
 /-- **(ratified).**  `W_{r+}(2k − 1) = ⌈ks⌉ − 1`, `s = p/(p − q)`. -/
 theorem wythoff_plus_two_mul_sub_one (hqp : q < p) (k : ℤ) :
     wythoff .plus p q (2 * k - 1) = ⌈(k * p / ((p : ℚ) - q) : ℚ)⌉ - 1 := by
-  sorry
+  have hR : (0 : ℤ) < ((p - q : ℕ) : ℤ) := by omega
+  rw [wythoff_plus_odd, show (k * p / ((p : ℚ) - q) : ℚ) = ((k * p : ℤ) : ℚ) / (p - q : ℕ) by
+      rw [Nat.cast_sub hqp.le]; push_cast; ring,
+    Rat.ceil_intCast_div_natCast, show ((p : ℤ) - q) = ((p - q : ℕ) : ℤ) by omega,
+    ediv_eq_iff hR]
+  obtain ⟨h1, h2⟩ := (ediv_eq_iff hR).1 (rfl : (-(k * p)) / ((p - q : ℕ) : ℤ) = _)
+  constructor <;> linarith
 
 /-- **(ratified).**  `W_{r−}(2k) = ⌈kr⌉ − 1`. -/
 theorem wythoff_minus_two_mul (hq : 0 < q) (k : ℤ) :
     wythoff .minus p q (2 * k) = ⌈(k * p / q : ℚ)⌉ - 1 := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  rw [wythoff_minus_even, show (k * p / q : ℚ) = ((k * p : ℤ) : ℚ) / (q : ℕ) by push_cast; ring,
+    Rat.ceil_intCast_div_natCast, ediv_eq_iff hq']
+  obtain ⟨h1, h2⟩ := (ediv_eq_iff hq').1 (rfl : (-(k * p)) / (q : ℤ) = _)
+  constructor <;> linarith
 
 /-- **(ratified).**  `W_{r−}(2k − 1) = ⌊ks⌋`. -/
 theorem wythoff_minus_two_mul_sub_one (hqp : q < p) (k : ℤ) :
     wythoff .minus p q (2 * k - 1) = ⌊(k * p / ((p : ℚ) - q) : ℚ)⌋ := by
-  sorry
+  rw [wythoff_minus_odd, show (k * p / ((p : ℚ) - q) : ℚ) = ((k * p : ℤ) : ℚ) / (p - q : ℕ) by
+      rw [Nat.cast_sub hqp.le]; push_cast; ring,
+    Rat.floor_intCast_div_natCast, show ((p : ℤ) - q) = ((p - q : ℕ) : ℤ) by omega]
 
 end Beatty
 
@@ -146,18 +258,42 @@ variable (s : Side) {p q : ℕ}
 `⌊(k + qm)p/q⌋ = ⌊kp/q⌋ + pm` (`Int.add_mul_ediv_right`). -/
 theorem wythoff_add_even (hq : 0 < q) {n : ℤ} (hn : n % 2 = 0) (m : ℤ) :
     wythoff s p q (n + 2 * q * m) = wythoff s p q n + p * m := by
-  sorry
+  have hq' : (q : ℤ) ≠ 0 := by exact_mod_cast hq.ne'
+  obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+  rw [show 2 * k + 2 * q * m = 2 * (k + q * m) by ring]
+  cases s
+  · rw [wythoff_plus_even, wythoff_plus_even,
+      show (k + q * m) * p = k * p + q * (p * m) by ring, Int.add_mul_ediv_left _ _ hq']
+  · rw [wythoff_minus_even, wythoff_minus_even,
+      show (k + q * m) * p - 1 = k * p - 1 + q * (p * m) by ring, Int.add_mul_ediv_left _ _ hq']
 
 /-- **(ratified).**  Odd branch: `W(n + 2Rm) = W n + pm`. -/
 theorem wythoff_add_odd (hqp : q < p) {n : ℤ} (hn : n % 2 = 1) (m : ℤ) :
     wythoff s p q (n + 2 * ((p : ℤ) - q) * m) = wythoff s p q n + p * m := by
-  sorry
+  have hR : (p : ℤ) - q ≠ 0 := by omega
+  obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  rw [show 2 * k - 1 + 2 * ((p : ℤ) - q) * m = 2 * (k + ((p : ℤ) - q) * m) - 1 by ring]
+  cases s
+  · rw [wythoff_plus_odd, wythoff_plus_odd,
+      show (k + ((p : ℤ) - q) * m) * p - 1 = k * p - 1 + ((p : ℤ) - q) * (p * m) by ring,
+      Int.add_mul_ediv_left _ _ hR]
+  · rw [wythoff_minus_odd, wythoff_minus_odd,
+      show (k + ((p : ℤ) - q) * m) * p = k * p + ((p : ℤ) - q) * (p * m) by ring,
+      Int.add_mul_ediv_left _ _ hR]
 
 /-- **(ratified).**  For even `p` the parity of `W n` depends only on `n mod 2qR` (the branch
 piece of `n`). -/
 theorem wythoff_parity_periodic (hp : Even p) (hq : 0 < q) (hqp : q < p) (n m : ℤ) :
     (wythoff s p q (n + 2 * (q * ((p : ℤ) - q)) * m) : ZMod 2) = (wythoff s p q n : ZMod 2) := by
-  sorry
+  have hp2 : ((p : ℤ) : ZMod 2) = 0 := by
+    rw [Int.cast_natCast]; exact (ZMod.natCast_eq_zero_iff_even).2 hp
+  rcases Int.emod_two_eq_zero_or_one n with hn | hn
+  · rw [show n + 2 * (q * ((p : ℤ) - q)) * m = n + 2 * q * (((p : ℤ) - q) * m) by ring,
+      wythoff_add_even s hq hn]
+    rw [Int.cast_add, Int.cast_mul, hp2, zero_mul, add_zero]
+  · rw [show n + 2 * (q * ((p : ℤ) - q)) * m = n + 2 * ((p : ℤ) - q) * (q * m) by ring,
+      wythoff_add_odd s hqp hn]
+    rw [Int.cast_add, Int.cast_mul, hp2, zero_mul, add_zero]
 
 end Pieces
 
