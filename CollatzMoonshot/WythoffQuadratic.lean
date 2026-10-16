@@ -667,8 +667,8 @@ lemma Skel.before (hs : Skel σ E) {e : ℤ} (he : SkEntry σ E e) (n : ℕ) :
       have hw0 : 0 < w := hs.orbit_pos he0 _ ⟨-((m + 1 + 1 : ℕ) : ℤ), by
         dsimp only; rw [hw', zpow_neg, zpow_natCast, inv_pow]⟩
       have hback : (σ ^ (m + 1)) w = σ.symm e := by
-        rw [hw', pow_succ σ⁻¹ (m + 1), Equiv.Perm.mul_apply, inv_pow, Equiv.Perm.coe_inv (σ ^ (m + 1)),
-          Equiv.apply_symm_apply, Equiv.Perm.coe_inv]
+        rw [hw', pow_succ σ⁻¹ (m + 1), Equiv.Perm.mul_apply, inv_pow,
+          Equiv.Perm.coe_inv (σ ^ (m + 1)), Equiv.apply_symm_apply, Equiv.Perm.coe_inv]
       obtain ⟨-, hE | ⟨hE, -⟩⟩ := hs.after hw0 hw m
       · rw [hback] at hE; exact h1 hE
       · rw [hback] at hE; exact h2 hE
@@ -989,15 +989,6 @@ theorem permOrbit_bijOn (hr : 2 ≤ r) :
     · obtain ⟨e, ⟨he, hem⟩, -⟩ := existsUnique_isEntry_mem_orbit hr h
       exact ⟨e, Or.inr he, permOrbit_eq_of_mem hem⟩
 
-/-- **(ratified, Theorem F, conclusion).**  `W_α` has infinitely many infinite orbits.  Paper
-proof: `C = 2ℤ ∪ W(2ℤ)` is a trap (`W(2k)` even stays in `2ℤ`; `W(2k)` odd maps to `2rk`), its
-entry points `C ∖ W(C)` are the even `y` with `W⁻¹ y, W⁻² y` odd (`isEntry_iff`), and they are
-infinitely many by `minCount_ge` below (or apply `permOrbit_bijOn` and
-`permOrbit_wqPerm_infinite`). -/
-theorem wqPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
-    InfinitelyManyInfiniteOrbits (wqPerm r hr) := by
-  sorry
-
 end TheoremF
 
 /-! ## Theorem F: counting orbit minima -/
@@ -1020,13 +1011,190 @@ open Classical in
 noncomputable def minCount (r : ℕ) (hr : 2 ≤ r) (X : ℕ) : ℕ :=
   ((Finset.Icc (1 : ℤ) X).filter fun x => ∀ y ∈ permOrbit (wqPerm r hr) x, x ≤ y).card
 
+/-- `A(X)` counts the even `y ∈ [1, X]` in the odd branch. -/
+lemma countA_eq (hr : 2 ≤ r) (X : ℕ) [DecidablePred fun y : ℤ =>
+      y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y] :
+    countA r X = ((Finset.Icc (1 : ℤ) X).filter fun y =>
+      y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y).card := by
+  unfold countA
+  apply Finset.card_nbij (fun j : ℕ => wq r (2 * (j : ℤ) - 1))
+  · intro j hj
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hj ⊢
+    obtain ⟨⟨h1, h2⟩, h3, h4⟩ := hj
+    have := (wq_two_mul_sub_one_bounds hr (show (1 : ℤ) ≤ j by exact_mod_cast h1)).1
+    exact ⟨⟨by omega, h3⟩, h4, j, rfl⟩
+  · intro a _ b _ h
+    have := (wq_odd_strictMono hr).injective h
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    obtain ⟨⟨h1, h2⟩, h3, j, rfl⟩ := hy
+    have hj1 : 1 ≤ j := by
+      by_contra h
+      have := (wq_pos_iff hr (2 * j - 1)).1 (by omega)
+      omega
+    have := (wq_two_mul_sub_one_bounds hr hj1).1
+    refine ⟨j.toNat, ?_, ?_⟩
+    · simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq,
+        Int.toNat_of_nonneg (show 0 ≤ j by omega)]
+      exact ⟨⟨by omega, by omega⟩, h2, h3⟩
+    · simp only [Int.toNat_of_nonneg (show 0 ≤ j by omega)]
+
+/-- `B(X)` counts the `2rk ∈ [1, X]` with `W(2k)` odd. -/
+lemma countB_eq (hr : 2 ≤ r) (X : ℕ) [DecidablePred fun y : ℤ =>
+      ∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y] :
+    countB r X = ((Finset.Icc (1 : ℤ) X).filter fun y =>
+      ∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y).card := by
+  unfold countB
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  apply Finset.card_nbij (fun k : ℕ => 2 * (r : ℤ) * k)
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, h3, h4⟩ := hk
+    have h1' : (1 : ℤ) ≤ k := by exact_mod_cast h1
+    have h3' : 2 * (r : ℤ) * k ≤ X := by exact_mod_cast h3
+    exact ⟨⟨by nlinarith, h3'⟩, k, h4, rfl⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by
+      have h' : (2 * (r : ℤ)) * a = (2 * r) * b := h
+      exact mul_left_cancel₀ (by omega) h'
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    obtain ⟨⟨h1, h2⟩, k, h3, rfl⟩ := hy
+    have hk1 : 1 ≤ k := by
+      by_contra h
+      nlinarith
+    have hkX : k ≤ X := by nlinarith
+    refine ⟨k.toNat, ?_, ?_⟩
+    · simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq,
+        Int.toNat_of_nonneg (show 0 ≤ k by omega)]
+      refine ⟨⟨by omega, by omega⟩, ?_, h3⟩
+      have : ((2 * r * k.toNat : ℕ) : ℤ) ≤ X := by
+        push_cast; rw [Int.toNat_of_nonneg (by omega)]; exact h2
+      exact_mod_cast this
+    · simp only [Int.toNat_of_nonneg (show 0 ≤ k by omega)]
+
 /-- **(ratified, Theorem F, exact count).**  `#{orbit minima ≤ X} = 1 + A(X) − B(X)`.  Paper
 proof: by `isOrbitMin_iff` the minima in `[1, X]` are `1` and the entry points `≤ X`.  The even
 `y ≤ X` in `W(odd)` are the even `⌊jβ⌋ ≤ X` (`A(X)`); among them the `2rk` with `W(2k)` odd
 (`B(X)`, an injective image of `k`) are exactly the non-entries. -/
 theorem minCount_add_countB (hr : 2 ≤ r) {X : ℕ} (hX : 1 ≤ X) :
     minCount r hr X + countB r X = 1 + countA r X := by
-  sorry
+  classical
+  set S := Finset.Icc (1 : ℤ) X with hS
+  rw [countA_eq hr X, countB_eq hr X]
+  have hBA : ∀ y, (∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y) →
+      y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y := by
+    rintro y ⟨k, hk, rfl⟩
+    refine ⟨by rw [mul_assoc]; exact Int.mul_emod_right _ _, (wq r (2 * k) + 1) / 2, ?_⟩
+    rw [show 2 * ((wq r (2 * k) + 1) / 2) - 1 = wq r (2 * k) by omega, wq_wq_of_odd hr k hk]
+  have hsplitA := Finset.card_filter_add_card_filter_not
+    (s := S.filter fun y => y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y)
+    (fun y => ∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y)
+  have e1 : ((S.filter fun y => y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y).filter
+      fun y => ∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y) =
+      S.filter fun y => ∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y := by
+    ext y
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨⟨h1, _⟩, h3⟩; exact ⟨h1, h3⟩
+    · rintro ⟨h1, h3⟩; exact ⟨⟨h1, hBA y h3⟩, h3⟩
+  have hsplitM := Finset.card_filter_add_card_filter_not
+    (s := S.filter fun x => ∀ y ∈ permOrbit (wqPerm r hr) x, x ≤ y) (fun y => y = 1)
+  have e2 : ((S.filter fun x => ∀ y ∈ permOrbit (wqPerm r hr) x, x ≤ y).filter
+      fun y => y = 1) = {1} := by
+    ext y
+    simp only [Finset.mem_filter, Finset.mem_singleton, hS, Finset.mem_Icc]
+    constructor
+    · rintro ⟨-, h⟩; exact h
+    · rintro rfl
+      exact ⟨⟨⟨le_rfl, by exact_mod_cast hX⟩, (isOrbitMin_iff hr one_pos).2 (Or.inl rfl)⟩, rfl⟩
+  have e3 : ((S.filter fun x => ∀ y ∈ permOrbit (wqPerm r hr) x, x ≤ y).filter
+      fun y => ¬y = 1) = ((S.filter fun y => y % 2 = 0 ∧ ∃ j : ℤ, wq r (2 * j - 1) = y).filter
+      fun y => ¬∃ k : ℤ, wq r (2 * k) % 2 = 1 ∧ 2 * r * k = y) := by
+    ext y
+    simp only [Finset.mem_filter, hS, Finset.mem_Icc]
+    constructor
+    · rintro ⟨⟨hy, hmin⟩, h1⟩
+      rcases (isOrbitMin_iff hr (by omega)).1 hmin with h | ⟨-, h2, h3, h4⟩
+      · exact absurd h h1
+      · exact ⟨⟨hy, h2, h3⟩, fun ⟨k, hk, hky⟩ => h4 k hk hky⟩
+    · rintro ⟨⟨hy, h2, h3⟩, h4⟩
+      refine ⟨⟨hy, (isOrbitMin_iff hr (by omega)).2
+        (Or.inr ⟨by omega, h2, h3, fun k hk hky => h4 ⟨k, hk, hky⟩⟩)⟩, by omega⟩
+  unfold minCount
+  rw [← hsplitA, e1, ← hsplitM, e2, e3, Finset.card_singleton]
+  ring
+
+/-- There are `⌊X/2⌋` even integers in `[1, X]`. -/
+lemma card_filter_even (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun y => y % 2 = 0).card = X / 2 := by
+  rw [show X / 2 = (Finset.Icc 1 (X / 2)).card by simp]
+  symm
+  apply Finset.card_nbij (fun j : ℕ => 2 * (j : ℤ))
+  · intro j hj
+    simp only [Finset.coe_Icc, Set.mem_Icc, Finset.coe_filter, Finset.mem_Icc,
+      Set.mem_ofPred_eq] at hj ⊢
+    omega
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    refine ⟨(y / 2).toNat, ?_, ?_⟩
+    · simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+    · simp only; omega
+
+/-- `B(X) ≤ ⌊X/2r⌋`. -/
+lemma countB_le (hr : 2 ≤ r) (X : ℕ) : countB r X ≤ X / (2 * r) := by
+  unfold countB
+  calc _ ≤ (Finset.Icc 1 (X / (2 * r))).card := by
+          apply Finset.card_le_card
+          intro k hk
+          simp only [Finset.mem_filter, Finset.mem_Icc] at hk ⊢
+          refine ⟨hk.1.1, (Nat.le_div_iff_mul_le (by omega)).2 ?_⟩
+          nlinarith [hk.2.1]
+    _ = X / (2 * r) := by simp
+
+/-- `#{k ≥ 1 : W(2k) ≤ X} ≤ ⌊X/(4r − 2)⌋`. -/
+lemma card_even_branch_le (hr : 2 ≤ r) (X : ℕ) [DecidablePred fun y : ℤ =>
+      ∃ k : ℤ, wq r (2 * k) = y] :
+    ((Finset.Icc (1 : ℤ) X).filter fun y => ∃ k : ℤ, wq r (2 * k) = y).card ≤
+      X / (4 * r - 2) := by
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  calc _ ≤ ((Finset.Icc 1 (X / (4 * r - 2))).image fun k : ℕ => wq r (2 * (k : ℤ))).card := by
+          apply Finset.card_le_card
+          intro y hy
+          simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_image] at hy ⊢
+          obtain ⟨⟨h1, h2⟩, k, rfl⟩ := hy
+          have hk : 1 ≤ k := by
+            by_contra h
+            have := (wq_pos_iff hr (2 * k)).1 (by omega)
+            omega
+          have hb := (wq_two_mul_bounds hr hk).1
+          refine ⟨k.toNat, ⟨by omega, (Nat.le_div_iff_mul_le (by omega)).2 ?_⟩, by
+            rw [Int.toNat_of_nonneg (by omega)]⟩
+          have : ((k.toNat * (4 * r - 2) : ℕ) : ℤ) ≤ X := by
+            push_cast [Nat.cast_sub (show 2 ≤ 4 * r by omega)]
+            rw [Int.toNat_of_nonneg (by omega)]
+            nlinarith
+          exact_mod_cast this
+    _ ≤ (Finset.Icc 1 (X / (4 * r - 2))).card := Finset.card_image_le
+    _ = X / (4 * r - 2) := by simp
+
+/-- `A(X) ≥ ⌊X/2⌋ − ⌊X/(4r − 2)⌋`: every even `y ∈ [1, X]` is in one of the two branches. -/
+lemma countA_ge (hr : 2 ≤ r) (X : ℕ) : X / 2 ≤ countA r X + X / (4 * r - 2) := by
+  classical
+  rw [countA_eq hr X, ← card_filter_even X]
+  refine (Finset.card_le_card ?_).trans ((Finset.card_union_le _ _).trans
+    (Nat.add_le_add_left (card_even_branch_le hr X) _))
+  intro y hy
+  simp only [Finset.mem_filter, Finset.mem_union] at hy ⊢
+  obtain ⟨n, hn⟩ := (wq_bijective hr).2 y
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, n = 2 * k ∨ n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  · exact Or.inr ⟨hy.1, k, hn⟩
+  · exact Or.inl ⟨hy.1, hy.2, k, hn⟩
 
 /-- **(ratified, Theorem F, unconditional lower bound).**
 `#{orbit minima ≤ X} ≥ 1 + ⌊X/2⌋ − ⌊X/(4r − 2)⌋ − ⌊X/2r⌋`, linear in `X` (`≥ X/12`).
@@ -1034,11 +1202,77 @@ Paper proof: `A(X) = #{even y ≤ X} − #{even ⌊kα⌋ ≤ X} ≥ ⌊X/2⌋ �
 `wq_two_mul_bounds`, and `B(X) ≤ ⌊X/2r⌋`. -/
 theorem minCount_ge (hr : 2 ≤ r) {X : ℕ} (hX : 1 ≤ X) :
     1 + (X : ℤ) / 2 - X / (4 * r - 2) - X / (2 * r) ≤ minCount r hr X := by
-  sorry
+  have h := minCount_add_countB hr hX
+  have hA := countA_ge hr X
+  have hB := countB_le hr X
+  have c1 : ((X / (4 * r - 2) : ℕ) : ℤ) = (X : ℤ) / (4 * r - 2) := by
+    rw [Int.natCast_div]; congr 1; omega
+  have c2 : ((X / (2 * r) : ℕ) : ℤ) = (X : ℤ) / (2 * r) := by
+    rw [Int.natCast_div]; push_cast; ring
+  have c3 : ((X / 2 : ℕ) : ℤ) = (X : ℤ) / 2 := by
+    rw [Int.natCast_div]; push_cast; ring
+  rw [← c1, ← c2, ← c3]
+  omega
 
 /-- **(ratified).**  Every minimum other than `1` is even. -/
 theorem minCount_le (hr : 2 ≤ r) (X : ℕ) : minCount r hr X ≤ 1 + X / 2 := by
-  sorry
+  classical
+  unfold minCount
+  calc _ ≤ (insert 1 ((Finset.Icc (1 : ℤ) X).filter fun y => y % 2 = 0)).card := by
+          apply Finset.card_le_card
+          intro x hx
+          simp only [Finset.mem_filter, Finset.mem_insert, Finset.mem_Icc] at hx ⊢
+          rcases (isOrbitMin_iff hr (by omega)).1 hx.2 with h | h
+          · exact Or.inl h
+          · exact Or.inr ⟨hx.1, h.2.1⟩
+    _ ≤ _ := (Finset.card_insert_le _ _).trans (by rw [card_filter_even]; omega)
+
+/-- **(ratified, Theorem F, conclusion).**  `W_α` has infinitely many infinite orbits.  Paper
+proof: `C = 2ℤ ∪ W(2ℤ)` is a trap (`W(2k)` even stays in `2ℤ`; `W(2k)` odd maps to `2rk`), its
+entry points `C ∖ W(C)` are the even `y` with `W⁻¹ y, W⁻² y` odd (`isEntry_iff`), and they are
+infinitely many by `minCount_ge` below (or apply `permOrbit_bijOn` and
+`permOrbit_wqPerm_infinite`). -/
+theorem wqPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
+    InfinitelyManyInfiniteOrbits (wqPerm r hr) := by
+  have hE : {y | IsEntry r y}.Infinite := by
+    intro hfin
+    obtain ⟨B, hB⟩ := hfin.bddAbove
+    set N := B.toNat + 2 with hN
+    have hX : 1 ≤ 12 * N := by omega
+    have hge := minCount_ge hr hX
+    have hle : minCount r hr (12 * N) ≤ B.toNat + 1 := by
+      classical
+      unfold minCount
+      calc _ ≤ (Finset.Icc (1 : ℤ) (B.toNat + 1)).card := by
+              apply Finset.card_le_card
+              intro x hx
+              simp only [Finset.mem_filter, Finset.mem_Icc] at hx ⊢
+              obtain ⟨⟨h1, h2⟩, h3⟩ := hx
+              rcases (isOrbitMin_iff hr (by omega)).1 h3 with rfl | he
+              · omega
+              · have := hB he; omega
+        _ = B.toNat + 1 := by simp; omega
+    have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+    set d := ((12 * N : ℕ) : ℤ) / (4 * r - 2) with hd
+    set e := ((12 * N : ℕ) : ℤ) / (2 * r) with he
+    have d0 : 0 ≤ d := Int.ediv_nonneg (by positivity) (by omega)
+    have d1 : d * (4 * r - 2) ≤ ((12 * N : ℕ) : ℤ) := Int.ediv_mul_le _ (by omega)
+    have e0 : 0 ≤ e := Int.ediv_nonneg (by positivity) (by omega)
+    have e1 : e * (2 * r) ≤ ((12 * N : ℕ) : ℤ) := Int.ediv_mul_le _ (by omega)
+    have d2 : d ≤ 2 * N := by push_cast at d1; nlinarith
+    have e2 : e ≤ 3 * N := by push_cast at e1; nlinarith
+    have h2 : ((12 * N : ℕ) : ℤ) / 2 = 6 * N := by push_cast; omega
+    rw [h2] at hge
+    have : (minCount r hr (12 * N) : ℤ) ≤ B.toNat + 1 := by exact_mod_cast hle
+    omega
+  have hinj : Set.InjOn (permOrbit (wqPerm r hr)) {y | IsEntry r y} :=
+    (permOrbit_bijOn hr).injOn.mono Set.subset_union_right
+  refine (hE.image hinj).mono ?_
+  rintro _ ⟨e, he, rfl⟩
+  refine ⟨e, he.1.le, rfl, permOrbit_wqPerm_infinite hr ?_⟩
+  have := he.1
+  have := he.2.1
+  omega
 
 /-- **Literature hypothesis (Bohl, Sierpiński, Weyl 1909-1916; not in Mathlib).**
 `k√(r² − r)` is equidistributed mod 1, so `⌊2k√(r² − r)⌋` is odd (`{k√(r² − r)} ≥ 1/2`) for a
