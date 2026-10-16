@@ -418,7 +418,7 @@ theorem sameCycle_of_noCut {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ �
     (h2 : EndToStart f τ) {q r : ℤ} (hqr : q ≤ r)
     (h : ∀ i, q ≤ i → i < r → ∀ s : Src f, θ i = Sum.inl s → ¬ Diverges f s.1) :
     (complete f τ θ).SameCycle (lineEmb f (θ q)) (lineEmb f (θ r)) := by
-  induction r, hqr using Int.le_induction with
+  induction r, hqr using Int.leInduction with
   | base => exact Equiv.Perm.SameCycle.refl _ _
   | succ r hqr ih =>
     exact (ih fun i hi hi' => h i hi (by omega)).trans
@@ -450,7 +450,7 @@ theorem card_orbits (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src 
   have hup : ∀ j, Quotient.mk _ (lineEmb f (θ j)) ∉ Set.range φ →
       ∀ k, j ≤ k → σ.SameCycle (lineEmb f (θ j)) (lineEmb f (θ k)) := by
     intro j hj k hjk
-    induction k, hjk using Int.le_induction with
+    induction k, hjk using Int.leInduction with
     | base => exact Equiv.Perm.SameCycle.refl _ _
     | succ k hjk ih =>
       refine ih.trans (sameCycle_succ_of_not_diverges f τ θ h2 k fun s hs hd => hj ⟨⟨s, hd⟩, ?_⟩)

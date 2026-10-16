@@ -1,5 +1,12 @@
 # PENDING_WORK
 
+## 2026-10-16: rcwa-sameorbit objective DONE, nothing owed
+
+`KICKOFF-2026-10-16-rcwa-sameorbit.md` is fully discharged: `CollatzMoonshot/RcwaSameOrbit.lean`
+is sorry-free with ratified statements unchanged.  Same-orbit for `{2,3}`-slope RCWA permutations
+of `ℤ` encodes halting (`sameCycle_enc_iff`), and is undecidable given the literature hypothesis
+`HaltingUndecidable` (`not_computable_sameCycle`).  See `HANDOFF-rcwa-sameorbit.md`.
+
 ## 2026-10-14: amusical squares objective DONE, nothing owed
 
 `KICKOFF-2026-10-14-amusical-squares.md` is fully discharged.  `CollatzMoonshot/AmusicalSquares.lean`
