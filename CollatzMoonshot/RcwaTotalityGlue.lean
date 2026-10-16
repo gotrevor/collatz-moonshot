@@ -436,13 +436,122 @@ theorem glueH_revMortal [Fintype Q] [Fintype ι] [DecidableEq Q] [DecidableEq ι
   have := this (Φ (b 0) + 1)
   omega
 
+/-- A halting ID of `U` off `hole` is a halting ID of the glued machine. -/
+theorem glue_stuck_of_stuck {Q ι : Type*} {U : CM Q ι} {hole back : Q} {i : ι} {L : ℕ} {q : Q}
+    {v : ι → ℕ} (hq : q ≠ hole) (h : U.Stuck (q, v)) :
+    (glue U hole back i L).Stuck (.inl q, v) := by
+  intro d hd
+  obtain ⟨q', -, hst⟩ := glue_step_inl_inv hq hd
+  exact h _ hst
+
+/-- `histWrap_halts_of_stuck`, with the halting ID located at `bnd s` or `act s`. -/
+theorem histWrap_halts_of_stuck' {s : Q} {v : ι → ℕ} (hs : U.Stuck (s, v)) (h : ℕ) :
+    ∃ d, (histWrap U lab).Reaches (.bnd s, hcfg v h) d ∧ (histWrap U lab).Stuck d ∧
+      (d.1 = .bnd s ∨ d.1 = .act s) := by
+  by_cases hex : ∃ ρ ∈ U, ρ.src = s
+  · obtain ⟨ρ, hρ, rfl⟩ := hex
+    refine ⟨(.act ρ.src, hcfg v h),
+      .single ⟨_, .guard hρ, rfl, rfl, act_test _ _ (by simp [hcfg])⟩, ?_, Or.inr rfl⟩
+    rintro d ⟨r, hr, h1, -, h3⟩
+    cases hr <;> simp only [HState.act.injEq, reduceCtorEq] at h1
+    rename_i ρ' hρ'
+    exact hs (ρ'.dst, fun i => d.2 (.val i)) ⟨ρ', hρ', h1, rfl, (map_act_inv h3).1⟩
+  · refine ⟨_, .refl, ?_, Or.inl rfl⟩
+    rintro d ⟨r, hr, h1, -, -⟩
+    cases hr <;> simp only [HState.bnd.injEq, reduceCtorEq] at h1
+    exact hex ⟨_, ‹_›, h1.symm⟩
+
 /-- **Mortality through the glued wrapper.**  The glued wrapper halts from every configuration
 iff the glued `U` does. -/
 theorem glueH_mortal_iff [Fintype Q] [Fintype ι] [DecidableEq ι] (hU : U.Det)
     (hhole : ∀ ρ ∈ U, ρ.src ≠ hole) :
     Mortal (glue (histWrap U lab) (.bnd hole) (.bnd back) (.val i) L) ↔
       Mortal (glue U hole back i L) := by
-  sorry
+  classical
+  have hdetA : (glue U hole back i L).Det := glue_det hU hhole
+  have hdetB : (glue (histWrap U lab) (.bnd hole) (.bnd back) (.val i) L).Det :=
+    glue_det (histWrap_det hU) (histWrap_src_ne_bnd hhole)
+  let lift : Q ⊕ Fin L → HState Q ι K ⊕ Fin L := Sum.map HState.bnd id
+  have hlift : Function.Injective lift :=
+    Sum.map_injective.2 ⟨fun _ _ h => HState.bnd.inj h, Function.injective_id⟩
+  let inlC : Cfg (HState Q ι K) (HCtr ι) → Cfg (HState Q ι K ⊕ Fin L) (HCtr ι) :=
+    fun c => (.inl c.1, c.2)
+  constructor
+  · -- honest: the history simulation
+    intro hB c
+    have key := CM.halts_iff_of_sim (M := glue U hole back i L) hdetB
+      (fun c b => ∃ h, b = (lift c.1, hcfg c.2 h)) ?_ ?_ (c := c)
+      (c' := (lift c.1, hcfg c.2 0)) ⟨0, rfl⟩
+    · exact key.1 (hB _)
+    · rintro c d b ⟨r, hr, hs, hd, hact⟩ ⟨h, rfl⟩
+      rcases hr with ⟨ρ, hρ, rfl⟩ | hr
+      · refine ⟨(lift d.1, hcfg d.2 (K * h + (lab ρ).val)), ?_, _, rfl⟩
+        have hm := macroStep_transGen (histWrap_macro (lab := lab) hρ hact h)
+        have e1 : lift c.1 = .inl (.bnd ρ.src) := by rw [hs]; rfl
+        have e2 : lift d.1 = .inl (.bnd ρ.dst) := by rw [hd]; rfl
+        rw [e1, e2]
+        exact hm.lift inlC
+          (fun c d h => glue_step_inl h)
+      · have ha : (Op.inc (HCtr.val i)).Act (hcfg c.2 h) (hcfg d.2 h) := by
+          rcases hr with rfl | ⟨k, rfl⟩ <;>
+          · rw [hcfg_eq, hcfg_eq]; exact act_map (o := .inc i) hact h 0
+        refine ⟨(lift d.1, hcfg d.2 h), .single ?_, h, rfl⟩
+        rcases hr with rfl | ⟨k, rfl⟩
+        · refine ⟨_, Or.inr (Or.inl rfl), ?_, ?_, ha⟩
+          · simp only [lift, hs]; rfl
+          · simp only [hd, chainFirst_bnd, lift]
+        · refine ⟨_, Or.inr (Or.inr ⟨k, rfl⟩), ?_, ?_, ha⟩
+          · simp only [lift, hs]; rfl
+          · simp only [hd, chainNext_bnd, lift]
+    · rintro ⟨q, v⟩ b hst ⟨h, rfl⟩
+      rcases q with q | k
+      · by_cases hq : q = hole
+        · subst hq; exact absurd hst (glue_not_stuck_chain (Or.inl rfl) v)
+        · have hU' : U.Stuck (q, v) := fun d hd => hst _ (glue_step_inl hd)
+          obtain ⟨d, hr, hds, hd1⟩ := histWrap_halts_of_stuck' (lab := lab) hU' h
+          refine ⟨((Sum.inl d.1 : HState Q ι K ⊕ Fin L), d.2),
+            hr.lift inlC
+              (fun a b h => glue_step_inl h), glue_stuck_of_stuck ?_ hds⟩
+          rcases hd1 with e | e <;> rw [e] <;> simp [hq]
+      · exact absurd hst (glue_not_stuck_chain (Or.inr ⟨k, rfl⟩) v)
+  · -- garbage: an infinite run of the glued wrapper projects to one of the glued `U`
+    intro hA c
+    by_contra hnh
+    have hfin : Finite (HState Q ι K ⊕ Fin L) := inferInstance
+    obtain ⟨b, hb⟩ := RcwaOrbitCount.exists_macro_chain
+      (glue_lapsMixed (B := Set.range HState.bnd) histWrap_lapsMixed ⟨hole, rfl⟩) hnh
+    have hex : ∀ n, ∃ a : Q ⊕ Fin L, (b n).1 = lift a := by
+      intro n
+      rcases (hb n).1 with ⟨_, ⟨s, rfl⟩, h⟩ | ⟨k, h⟩
+      · exact ⟨.inl s, h.symm⟩
+      · exact ⟨.inr k, h.symm⟩
+    choose a ha using hex
+    let x : ℕ → Cfg (Q ⊕ Fin L) ι := fun n => (a n, fun j => (b n).2 (.val j))
+    have hx : ∀ n, (glue U hole back i L).Step (x n) (x (n + 1)) := by
+      intro n
+      rcases glue_macroStep_cases (B := Set.range HState.bnd) ⟨hole, rfl⟩ ⟨back, rfl⟩ (hb n) with
+        ⟨c, c', h1, h2, hm⟩ | hc
+      · obtain ⟨s, s', hs, hs', hst⟩ := RcwaOrbitCount.histWrap_macro_sound hU hm
+        have e1 : a n = .inl s := hlift (by rw [← ha, h1, hs]; rfl)
+        have e2 : a (n + 1) = .inl s' := hlift (by rw [← ha, h2, hs']; rfl)
+        simp only [x, e1, e2, h1, h2]
+        exact glue_step_inl hst
+      · obtain ⟨r, hr, hs, hd, hact⟩ := hc
+        rcases hr with rfl | ⟨k, rfl⟩
+        · have e1 : a n = .inl hole := hlift (by rw [← ha, hs]; rfl)
+          have e2 : a (n + 1) = chainFirst back L := hlift (by rw [← ha, hd, chainFirst_bnd])
+          refine ⟨_, Or.inr (Or.inl rfl), ?_, ?_, (map_act_inv (o := .inc i) hact).1⟩
+          · simp only [x, e1]
+          · simp only [x, e2]
+        · obtain ⟨k', hk'⟩ : ∃ k', a n = .inr k' := ⟨k, hlift (by rw [← ha, hs]; rfl)⟩
+          have hk : k' = k := by
+            have := ha n; rw [hk', hs] at this; exact (Sum.inr_injective this).symm
+          subst hk
+          have e2 : a (n + 1) = chainNext back k' := hlift (by rw [← ha, hd, chainNext_bnd])
+          refine ⟨_, Or.inr (Or.inr ⟨k', rfl⟩), ?_, ?_, (map_act_inv (o := .inc i) hact).1⟩
+          · simp only [x, hk']
+          · simp only [x, e2]
+    exact CM.not_halts_of_forever hdetA x hx (hA _)
 
 end GlueHist
 
