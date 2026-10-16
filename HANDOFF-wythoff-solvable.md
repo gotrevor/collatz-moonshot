@@ -15,3 +15,6 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
   `σ^[n] z` (`Equiv.Perm.coe_pow`); omega handles `↑(d + 1)` itself.  Filter-instance
   mismatch (`x ∈ S \ Φ`, classical vs `Set.decidableSdiff`): close with `convert … using 2;
   ext; simp only [Finset.mem_filter]`.
+- §3 `WythoffCone.lean`: 15 of 17 closed (A′, cone/anticone bounds, irrationality via
+  `sq_eq_of_between`, trap, recurrence, entry characterisation, Theorem K modulo
+  `coneEntry_infinite`).  Open: `coneEntry_infinite`, `tendsto_coneEntryCount`.
