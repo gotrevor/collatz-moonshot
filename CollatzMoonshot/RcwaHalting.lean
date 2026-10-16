@@ -487,46 +487,279 @@ def double [DecidableEq Q] {K : ℕ} (rs : List (Quad Q (Fin 2))) (e : Q × Bool
 def dcfg {K : ℕ} (e : Q × Bool ≃ Fin K) (b : Bool) (c : Cfg Q (Fin 2)) : RcwaSameOrbit.Cfg :=
   ((e (c.1, b)).val, c.2 0, c.2 1)
 
+theorem testOf_ok (b : Bool) (a : ℕ) : (testOf b).ok a = (decide (0 < a) == b) := by
+  cases b <;> by_cases ha : 0 < a <;> simp [testOf, Test.ok, ha] <;> omega
+
+theorem fin2_ext {v w : Fin 2 → ℕ} (h0 : v 0 = w 0) (h1 : v 1 = w 1) : v = w := by
+  ext j; fin_cases j <;> assumption
+
+/-- An operation fires on `v` iff its pattern test passes. -/
+theorem exists_act_iff (o : Op (Fin 2)) (v : Fin 2 → ℕ) :
+    (∃ w, o.Act v w) ↔ opFiresPat o (decide (0 < v 0)) (decide (0 < v 1)) = true := by
+  cases o with
+  | test i bb =>
+    fin_cases i <;> cases bb <;> simp [Op.Act, opFiresPat]
+  | dec i =>
+    simp only [Op.Act, opFiresPat]
+    constructor
+    · rintro ⟨w, h, -⟩; fin_cases i <;> simpa using h
+    · intro h
+      refine ⟨Function.update v i (v i - 1), ?_, ?_, fun j hj => by simp [hj]⟩ <;>
+        fin_cases i <;> simp_all <;> omega
+  | inc i =>
+    simp only [Op.Act, opFiresPat, iff_true]
+    exact ⟨Function.update v i (v i + 1), by simp, fun j hj => by simp [hj]⟩
+  | nop => simp [Op.Act, opFiresPat]
+
+/-- When the operation acts, the guarded rule fires and lands on the result. -/
+theorem toRule_of_act (n : Q → ℕ) {ρ : Quad Q (Fin 2)} {v w : Fin 2 → ℕ}
+    (h : ρ.op.Act v w) :
+    (toRule n ρ).Fires (n ρ.src, v 0, v 1) ∧
+      (toRule n ρ).target (n ρ.src, v 0, v 1) = (n ρ.dst, w 0, w 1) := by
+  obtain ⟨src, op, dst⟩ := ρ
+  cases op with
+  | test i bb =>
+    obtain ⟨h1, rfl⟩ := h
+    fin_cases i <;> cases bb <;>
+      simp_all [toRule, Rule.Fires, Rule.target, testOf, Test.ok, Move.val] <;> omega
+  | dec i =>
+    obtain ⟨h1, h2, h3⟩ := h
+    fin_cases i
+    · have := h3 1 (by decide)
+      simp at h1 h2 this
+      simp [toRule, Rule.Fires, Rule.target, Move.val, Test.ok, this]; omega
+    · have := h3 0 (by decide)
+      simp at h1 h2 this
+      simp [toRule, Rule.Fires, Rule.target, Move.val, Test.ok, this]; omega
+  | inc i =>
+    obtain ⟨h1, h3⟩ := h
+    fin_cases i
+    · have := h3 1 (by decide)
+      simp at h1 this
+      simp [toRule, Rule.Fires, Rule.target, Move.val, Test.ok, this, h1]; omega
+    · have := h3 0 (by decide)
+      simp at h1 this
+      simp [toRule, Rule.Fires, Rule.target, Move.val, Test.ok, this, h1]; omega
+  | nop =>
+    cases h
+    simp [toRule, Rule.Fires, Rule.target, Move.val, Test.ok]
+
+/-- A guarded rule from a quadruple fires only at its source, where the operation acts. -/
+theorem act_of_toRule {n : Q → ℕ} {ρ : Quad Q (Fin 2)} {s : ℕ} {v : Fin 2 → ℕ}
+    (h : (toRule n ρ).Fires (s, v 0, v 1)) : s = n ρ.src ∧ ∃ w, ρ.op.Act v w := by
+  rw [exists_act_iff]
+  obtain ⟨src, op, dst⟩ := ρ
+  cases op with
+  | test i bb =>
+    fin_cases i <;> cases bb <;>
+      simp_all [toRule, Rule.Fires, testOf, Test.ok, Move.val, opFiresPat] <;> omega
+  | dec i =>
+    fin_cases i <;> simp_all [toRule, Rule.Fires, Test.ok, Move.val, opFiresPat] <;> omega
+  | inc i =>
+    fin_cases i <;> simp_all [toRule, Rule.Fires, Test.ok, Move.val, opFiresPat]
+  | nop => simp_all [toRule, Rule.Fires, Test.ok, Move.val, opFiresPat]
+
 variable [DecidableEq Q] {K : ℕ} {R : CM Q (Fin 2)} {rs : List (Quad Q (Fin 2))}
   (e : Q × Bool ≃ Fin K)
+
+theorem mem_double {ρ' : Rule} : ρ' ∈ (double rs e).rules ↔
+    (∃ ρ ∈ rs, toRule (fun q => (e (q, true)).val) ρ = ρ') ∨
+    (∃ ρ ∈ rs, toRule (fun q => (e (q, false)).val) ρ.inv = ρ') ∨
+    ∃ q, ρ' ∈ turnRules rs (fun q => (e (q, true)).val) (fun q => (e (q, false)).val) q := by
+  simp only [double, List.mem_append, List.mem_map, List.mem_flatMap, List.mem_filterMap,
+    List.mem_finRange, true_and, or_assoc]
+  refine or_congr_right (or_congr_right ⟨?_, ?_⟩)
+  · rintro ⟨q, ⟨n, hn⟩, h⟩
+    exact ⟨q, h⟩
+  · rintro ⟨q, h⟩
+    exact ⟨q, ⟨e (q, true), by simp⟩, h⟩
+
+omit [DecidableEq Q] in
+theorem dcfg_inj {b b' : Bool} {c c' : Cfg Q (Fin 2)} (h : dcfg e b c = dcfg e b' c') :
+    b = b' ∧ c = c' := by
+  simp only [dcfg, Prod.mk.injEq] at h
+  obtain ⟨h1, h2, h3⟩ := h
+  have := e.injective (Fin.ext h1)
+  simp only [Prod.mk.injEq] at this
+  exact ⟨this.2, Prod.ext this.1 (fin2_ext h2 h3)⟩
+
+theorem mem_turnRules {nP nM : Q → ℕ} {q : Q} {ρ' : Rule} :
+    ρ' ∈ turnRules rs nP nM q ↔ ∃ b₀ b₁ : Bool,
+      (∀ ρ ∈ rs, ρ.src = q → opFiresPat ρ.op b₀ b₁ = false) ∧
+        ρ' = ⟨nP q, testOf b₀, testOf b₁, .zero, .zero, nM q⟩ := by
+  simp only [turnRules, List.mem_filterMap, List.mem_cons, List.not_mem_nil, or_false]
+  constructor
+  · rintro ⟨bb, hbb, h⟩
+    split_ifs at h with hany
+    refine ⟨bb.1, bb.2, fun ρ hρ hq => ?_, (Option.some.inj h).symm⟩
+    simp only [List.any_eq_true, Bool.and_eq_true, decide_eq_true_eq, not_exists,
+      not_and] at hany
+    simpa using hany ρ hρ hq
+  · rintro ⟨b₀, b₁, hno, rfl⟩
+    refine ⟨(b₀, b₁), by cases b₀ <;> cases b₁ <;> simp, ?_⟩
+    rw [if_neg]
+    simp only [List.any_eq_true, Bool.and_eq_true, decide_eq_true_eq, not_exists, not_and]
+    intro ρ hρ hq
+    simp [hno ρ hρ hq]
+
+
+omit [DecidableEq Q] in
+theorem testOf_ok_iff (b : Bool) (a : ℕ) : (testOf b).ok a = true ↔ decide (0 < a) = b := by
+  rw [testOf_ok]; simp
+
+/-- Every firing of the doubling is a forward step, a turnaround at a halting ID, or a backward
+step. -/
+theorem fires_cases (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) {ρ' : Rule} (hρ' : ρ' ∈ (double rs e).rules)
+    {x : RcwaSameOrbit.Cfg} (hf : ρ'.Fires x) :
+    (∃ c d, R.Step c d ∧ x = dcfg e true c ∧ ρ'.target x = dcfg e true d) ∨
+    (∃ c, R.Stuck c ∧ x = dcfg e true c ∧ ρ'.target x = dcfg e false c) ∨
+    (∃ c d, R.Step c d ∧ x = dcfg e false d ∧ ρ'.target x = dcfg e false c) := by
+  obtain ⟨s, a, b⟩ := x
+  rcases (mem_double e).1 hρ' with ⟨ρ, hρ, rfl⟩ | ⟨ρ, hρ, rfl⟩ | ⟨q, hq⟩
+  · obtain ⟨rfl, w, hw⟩ := act_of_toRule (v := ![a, b]) hf
+    exact .inl ⟨(ρ.src, ![a, b]), (ρ.dst, w), ⟨ρ, (hrs ρ).1 hρ, rfl, rfl, hw⟩, rfl,
+      (toRule_of_act _ hw).2⟩
+  · obtain ⟨rfl, w, hw⟩ := act_of_toRule (v := ![a, b]) hf
+    have hw' : ρ.op.Act w ![a, b] := Op.act_inv.1 hw
+    exact .inr (.inr ⟨(ρ.src, w), (ρ.dst, ![a, b]), ⟨ρ, (hrs ρ).1 hρ, rfl, rfl, hw'⟩, rfl,
+      (toRule_of_act _ hw).2⟩)
+  · obtain ⟨b₀, b₁, hno, rfl⟩ := (mem_turnRules).1 hq
+    obtain ⟨h1, h2, h3, -, -⟩ := hf
+    simp only at h1
+    rw [testOf_ok_iff] at h2 h3
+    refine .inr (.inl ⟨(q, ![a, b]), ?_, by rw [h1]; rfl, ?_⟩)
+    · rintro d ⟨ρ, hρ, hs, -, hact⟩
+      have := (exists_act_iff ρ.op ![a, b]).1 ⟨_, hact⟩
+      have h2' : decide (0 < ![a, b] 0) = b₀ := h2
+      have h3' : decide (0 < ![a, b] 1) = b₁ := h3
+      rw [h2', h3', hno ρ ((hrs ρ).2 hρ) hs.symm] at this
+      exact Bool.false_ne_true this
+    · simp [Rule.target, Move.val, dcfg]
+
+theorem double_fwd_fires (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) {c d : Cfg Q (Fin 2)} (h : R.Step c d) :
+    ∃ ρ' ∈ (double rs e).rules, ρ'.Fires (dcfg e true c) ∧
+      ρ'.target (dcfg e true c) = dcfg e true d := by
+  obtain ⟨ρ, hρ, h1, h2, h3⟩ := h
+  obtain ⟨hf, ht⟩ := toRule_of_act (fun q => (e (q, true)).val) h3
+  refine ⟨_, (mem_double e).2 (.inl ⟨ρ, (hrs ρ).2 hρ, rfl⟩), ?_, ?_⟩
+  · simpa [dcfg, h1] using hf
+  · simpa [dcfg, h1, h2] using ht
+
+theorem double_bwd_fires (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) {c d : Cfg Q (Fin 2)} (h : R.Step c d) :
+    ∃ ρ' ∈ (double rs e).rules, ρ'.Fires (dcfg e false d) ∧
+      ρ'.target (dcfg e false d) = dcfg e false c := by
+  obtain ⟨ρ, hρ, h1, h2, h3⟩ := h
+  obtain ⟨hf, ht⟩ := toRule_of_act (ρ := ρ.inv) (fun q => (e (q, false)).val) (Op.act_inv.2 h3)
+  refine ⟨_, (mem_double e).2 (.inr (.inl ⟨ρ, (hrs ρ).2 hρ, rfl⟩)), ?_, ?_⟩
+  · simpa [dcfg, h2, Quad.inv] using hf
+  · simpa [dcfg, h1, h2, Quad.inv] using ht
+
+theorem double_turn_fires (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) {c : Cfg Q (Fin 2)} (h : R.Stuck c) :
+    ∃ ρ' ∈ (double rs e).rules, ρ'.Fires (dcfg e true c) ∧
+      ρ'.target (dcfg e true c) = dcfg e false c := by
+  obtain ⟨q, v⟩ := c
+  have hno : ∀ ρ ∈ rs, ρ.src = q →
+      opFiresPat ρ.op (decide (0 < v 0)) (decide (0 < v 1)) = false := by
+    intro ρ hρ hq
+    by_contra hc
+    obtain ⟨w, hw⟩ := (exists_act_iff ρ.op v).2 (by simpa using hc)
+    exact h (ρ.dst, w) ⟨ρ, (hrs ρ).1 hρ, hq.symm, rfl, hw⟩
+  refine ⟨_, (mem_double e).2 (.inr (.inr ⟨q, (mem_turnRules).2 ⟨_, _, hno, rfl⟩⟩)), ?_, ?_⟩
+  · refine ⟨rfl, ?_, ?_, ?_, ?_⟩ <;> simp [testOf_ok_iff, Move.val, dcfg]
+  · simp [Rule.target, Move.val, dcfg]
 
 /-- The doubling is deterministic on all configurations. -/
 theorem double_deterministic (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev) :
     Deterministic (double rs e).rules := by
-  sorry
+  intro ρ hρ ρ' hρ' x hf hf'
+  rcases fires_cases e hrs hρ hf with ⟨c, d, hs, rfl, ht⟩ | ⟨c, hs, rfl, ht⟩ |
+      ⟨c, d, hs, rfl, ht⟩ <;>
+    rcases fires_cases e hrs hρ' hf' with ⟨c', d', hs', hx, ht'⟩ | ⟨c', hs', hx, ht'⟩ |
+      ⟨c', d', hs', hx, ht'⟩ <;>
+    obtain ⟨hb, rfl⟩ := dcfg_inj e hx <;>
+    first
+    | exact absurd hb (by decide)
+    | exact absurd hs (hs' _)
+    | exact absurd hs' (hs _)
+    | rw [ht, ht', CM.step_functional hdet hs hs']
+    | rw [ht, ht', CM.step_injective hrev hs hs']
+    | rw [ht, ht']
 
 /-- The doubling is reversible on all configurations. -/
 theorem double_reversible (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev) :
     Reversible (double rs e).rules := by
-  sorry
+  intro ρ hρ ρ' hρ' x x' hf hf' heq
+  rcases fires_cases e hrs hρ hf with ⟨c, d, hs, rfl, ht⟩ | ⟨c, hs, rfl, ht⟩ |
+      ⟨c, d, hs, rfl, ht⟩ <;>
+    rcases fires_cases e hrs hρ' hf' with ⟨c', d', hs', rfl, ht'⟩ | ⟨c', hs', rfl, ht'⟩ |
+      ⟨c', d', hs', rfl, ht'⟩ <;>
+    rw [ht, ht'] at heq <;>
+    obtain ⟨hb, rfl⟩ := dcfg_inj e heq <;>
+    first
+    | exact absurd hb (by decide)
+    | exact absurd hs (hs' _)
+    | exact absurd hs' (hs _)
+    | rw [CM.step_functional hdet hs hs']
+    | rw [CM.step_injective hrev hs hs']
+    | rfl
 
 /-- Forward layer: a step of `R`. -/
 theorem double_step_fwd (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     {c d : Cfg Q (Fin 2)} (h : R.Step c d) :
     step (double rs e).rules (dcfg e true c) = some (dcfg e true d) := by
-  sorry
+  obtain ⟨ρ, hρ, hf, ht⟩ := double_fwd_fires e hrs h
+  rw [RcwaSameOrbit.step_eq_of_fires (double_deterministic e hrs hdet hrev) hρ hf, ht]
 
 /-- Turnaround at a halting ID of `R`. -/
 theorem double_step_turn (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     {c : Cfg Q (Fin 2)} (h : R.Stuck c) :
     step (double rs e).rules (dcfg e true c) = some (dcfg e false c) := by
-  sorry
+  obtain ⟨ρ, hρ, hf, ht⟩ := double_turn_fires e hrs h
+  rw [RcwaSameOrbit.step_eq_of_fires (double_deterministic e hrs hdet hrev) hρ hf, ht]
 
 /-- Backward layer: a step of `R` undone. -/
 theorem double_step_bwd (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     {c d : Cfg Q (Fin 2)} (h : R.Step c d) :
     step (double rs e).rules (dcfg e false d) = some (dcfg e false c) := by
-  sorry
+  obtain ⟨ρ, hρ, hf, ht⟩ := double_bwd_fires e hrs h
+  rw [RcwaSameOrbit.step_eq_of_fires (double_deterministic e hrs hdet hrev) hρ hf, ht]
+
+/-- Every step of the doubling, classified. -/
+theorem double_step_cases (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) {x y : RcwaSameOrbit.Cfg}
+    (h : step (double rs e).rules x = some y) :
+    (∃ c d, R.Step c d ∧ x = dcfg e true c ∧ y = dcfg e true d) ∨
+    (∃ c, R.Stuck c ∧ x = dcfg e true c ∧ y = dcfg e false c) ∨
+    (∃ c d, R.Step c d ∧ x = dcfg e false d ∧ y = dcfg e false c) := by
+  obtain ⟨ρ, hρ, hf, rfl⟩ := RcwaSameOrbit.exists_rule_of_step h
+  exact fires_cases e hrs hρ hf
 
 /-- The sinks of the backward layer are the sources of `R`. -/
 theorem double_isSink_bwd (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     (c : Cfg Q (Fin 2)) : IsSink (double rs e).rules (dcfg e false c) ↔ R.IsSource c := by
-  sorry
+  constructor
+  · intro hs d hd
+    have := double_step_bwd e hrs hdet hrev hd
+    rw [IsSink] at hs
+    rw [hs] at this
+    cases this
+  · intro hc
+    rw [IsSink, Option.eq_none_iff_forall_ne_some]
+    intro y hy
+    rcases double_step_cases e hrs hy with ⟨c', d, hs, hx, -⟩ | ⟨c', hs, hx, -⟩ |
+        ⟨c', d, hs, hx, -⟩ <;> obtain ⟨hb, rfl⟩ := dcfg_inj e hx
+    · exact absurd hb (by decide)
+    · exact absurd hb (by decide)
+    · exact hc _ hs
 
 /-- The forward copy of a source of `R` is a source. -/
 theorem double_isSource (hrs : ∀ ρ, ρ ∈ rs ↔ ρ ∈ R) (hdet : R.Det) (hrev : R.Rev)
     {c : Cfg Q (Fin 2)} (hc : R.IsSource c) : IsSource (double rs e).rules (dcfg e true c) := by
-  sorry
+  intro x hx
+  rcases double_step_cases e hrs hx with ⟨c', d, hs, -, hy⟩ | ⟨c', hs, -, hy⟩ |
+      ⟨c', d, hs, -, hy⟩ <;> obtain ⟨hb, rfl⟩ := dcfg_inj e hy
+  · exact hc _ hs
+  · exact absurd hb (by decide)
+  · exact absurd hb (by decide)
 
 /-- **Lemma D.**  The doubling of a deterministic reversible machine with mortal reverse is
 `Valid`. -/
