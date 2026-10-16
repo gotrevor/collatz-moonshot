@@ -175,3 +175,7 @@ import CollatzMoonshot.CounterMachine
 import CollatzMoonshot.CounterMachineUniversal
 import CollatzMoonshot.RcwaHalting
 import CollatzMoonshot.RcwaOrbitCount
+import CollatzMoonshot.RcwaTotalityGlue
+import CollatzMoonshot.RcwaTotalityCompile
+import CollatzMoonshot.RcwaTotalityRestart
+import CollatzMoonshot.RcwaTotality
