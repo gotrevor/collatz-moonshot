@@ -1110,12 +1110,258 @@ noncomputable def sigmaPerm {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h 
     Equiv.Perm ℤ :=
   Equiv.ofBijective _ (sigma_bijective h)
 
-/-- **Open.**  `σ` is RCWA with all slopes in `2^ℤ 3^ℤ`, at modulus `3^N · L` for any `L > 0`
+/-- `InEngine` and the phase are constant mod any `Q` that `5^j` and `3^N` divide. -/
+theorem inEngine_of_dvd {j : ℕ} (hj : 1 ≤ j) {Q n n' : ℤ} (h5 : (5 : ℤ) ^ j ∣ Q)
+    (h3 : (3 : ℤ) ^ N j ∣ Q) (h : Q ∣ n - n') (hn : InEngine j n) :
+    InEngine j n' ∧ phase j n' = phase j n := by
+  have hcast : (n : ZMod (5 ^ j)) = n' := by
+    have : n ≡ n' [ZMOD 5 ^ j] := (Int.modEq_iff_dvd.2 (by
+      rw [← neg_sub]; exact (dvd_neg).2 (h5.trans h)))
+    exact_mod_cast (ZMod.intCast_eq_intCast_iff _ _ _).2 (by exact_mod_cast this)
+  have hph : phase j n' = phase j n := by rw [phase, phase, hcast]
+  have h5' : ¬ (5 : ℤ) ∣ n' := by
+    intro hd
+    apply hn.2.1
+    have : (5 : ℤ) ∣ n - n' := (dvd_pow_self 5 (by omega)).trans (h5.trans h)
+    have := dvd_add this hd
+    rwa [sub_add_cancel] at this
+  have hn' : n' ≠ 0 := by rintro rfl; exact h5' (dvd_zero _)
+  have hv := min_padicValInt_eq (p := 3) hn.1 hn' (K := N j) (by exact_mod_cast h3.trans h)
+  have hlt := phase_lt hj hn
+  refine ⟨⟨hn', h5', by rw [hph, hn.2.2.1, hcast], ?_⟩, hph⟩
+  have h4 := hn.2.2.2
+  rw [hph]
+  unfold v3 at h4 ⊢
+  omega
+
+theorem dvd_iff_of_dvd_sub {Q n n' d : ℤ} (hd : d ∣ Q) (h : Q ∣ n - n') : d ∣ n ↔ d ∣ n' := by
+  have h' := hd.trans h
+  constructor
+  · intro hn; have := dvd_sub hn h'; rwa [sub_sub_cancel] at this
+  · intro hn; have := dvd_add h' hn; rwa [sub_add_cancel] at this
+
+/-- On the engine, the firing pattern is constant mod `Q` when `5^j 2^N 3^{2N} ∣ Q`. -/
+theorem decode_class {j : ℕ} (hj : 1 ≤ j) {Q n n' : ℤ}
+    (hQ : (5 : ℤ) ^ j * 2 ^ N j * 3 ^ (2 * N j) ∣ Q) (h : Q ∣ n - n') (hn : InEngine j n) :
+    InEngine j n' ∧ (decode j n').1 = (decode j n).1 ∧
+      ((decode j n').2.1 = 0 ↔ (decode j n).2.1 = 0) ∧
+      ((decode j n').2.2 = 0 ↔ (decode j n).2.2 = 0) := by
+  have h5 : (5 : ℤ) ^ j ∣ Q := (Dvd.intro (2 ^ N j * 3 ^ (2 * N j)) (by ring)).trans hQ
+  have h2 : (2 : ℤ) ^ N j ∣ Q := (Dvd.intro (5 ^ j * 3 ^ (2 * N j)) (by ring)).trans hQ
+  have h33 : (3 : ℤ) ^ (2 * N j) ∣ Q := (Dvd.intro_left _ rfl).trans hQ
+  have h3 : (3 : ℤ) ^ N j ∣ Q := (pow_dvd_pow 3 (by omega)).trans h33
+  obtain ⟨hn', hph⟩ := inEngine_of_dvd hj h5 h3 h hn
+  have hlt := phase_lt hj hn
+  refine ⟨hn', hph, ?_, ?_⟩
+  · show C1 j n' = 0 ↔ C1 j n = 0
+    have e : 1 ≤ C1 j n' ↔ 1 ≤ C1 j n := by
+      rw [one_le_C1_iff hj hn', one_le_C1_iff hj hn]; exact (dvd_iff_of_dvd_sub h2 h).symm
+    omega
+  · show C2 j n' = 0 ↔ C2 j n = 0
+    have e : 1 ≤ C2 j n' ↔ 1 ≤ C2 j n := by
+      rw [one_le_C2_iff hj hn', one_le_C2_iff hj hn, hph]
+      exact (dvd_iff_of_dvd_sub ((pow_dvd_pow 3 (by omega)).trans h33) h).symm
+    omega
+
+theorem hwIdx_congr {hw : List (ℤ × ℤ)} {L x y : ℤ} (hhw : ∀ rm ∈ hw, rm.2 ∣ L)
+    (h : L ∣ x - y) : hwIdx hw x = hwIdx hw y := by
+  unfold hwIdx
+  induction hw with
+  | nil => rfl
+  | cons rm t ih =>
+    have hm : x % rm.2 = y % rm.2 := Int.emod_eq_emod_iff_emod_sub_eq_zero.2
+      (Int.emod_eq_zero_of_dvd ((hhw rm List.mem_cons_self).trans h))
+    rw [List.findIdx_cons, List.findIdx_cons, hm,
+      ih fun rm' h' => hhw rm' (List.mem_cons_of_mem _ h')]
+
+theorem hwPoint_mul_add {hw : List (ℤ × ℤ)} (q : ℤ) {i : ℕ} (hi : i < hw.length) :
+    hwPoint hw (hw.length * q + i) = hw[i].1 + hw[i].2 * q := by
+  have hk : (0 : ℤ) < hw.length := by omega
+  have hmod : (hw.length * q + i) % hw.length = i := by
+    rw [Int.mul_add_emod_self_left]; exact Int.emod_eq_of_lt (by omega) (by omega)
+  have hdiv : (hw.length * q + i) / hw.length = q := by
+    rw [Int.mul_add_ediv_left _ _ (by omega),
+      Int.ediv_eq_zero_of_lt (a := (i : ℤ)) (by omega) (by omega), add_zero]
+  rw [hwPoint, hmod, hdiv, Int.toNat_natCast, List.getD_eq_getElem _ _ hi]
+
+theorem IsHighway.ratio {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw)
+    {rm rm' : ℤ × ℤ} (hrm : rm ∈ hw) (hrm' : rm' ∈ hw) :
+    ∃ α β : ℤ, (rm'.2 : ℚ) / rm.2 = (2 : ℚ) ^ α * (3 : ℚ) ^ β := by
+  obtain ⟨a, b, he⟩ := h.modulus rm hrm
+  obtain ⟨a', b', he'⟩ := h.modulus rm' hrm'
+  refine ⟨(a' : ℤ) - a, (b' : ℤ) - b, ?_⟩
+  rw [he, he', zpow_sub₀ (by norm_num), zpow_sub₀ (by norm_num), zpow_natCast, zpow_natCast,
+    zpow_natCast, zpow_natCast]
+  push_cast
+  field_simp
+
+/-- `hwNext` is affine with a `{2,3}` slope on each class of the highway. -/
+theorem hwNext_affine {j : ℕ} {R : List Rule} {hw : List (ℤ × ℤ)} (h : IsHighway j R hw)
+    {i : ℕ} (hi : i < hw.length) :
+    ∃ a b c : ℤ, c ≠ 0 ∧ (∃ α β : ℤ, (a : ℚ) / c = (2 : ℚ) ^ α * (3 : ℚ) ^ β) ∧
+      ∀ x, hwIdx hw x = i → c * hwNext hw x = a * x + b := by
+  have hm := h.mod_pos (List.getElem_mem hi)
+  have hpos : ∀ x, hwIdx hw x = i →
+      hwPos hw x = hw.length * ((x - hw[i].1) / hw[i].2) + i ∧ hw[i].2 ∣ x - hw[i].1 := by
+    intro x hx
+    have hcl : InClass hw[hwIdx hw x] x := (inClass_iff _ _).2
+      (List.findIdx_getElem (w := hx ▸ hi))
+    simp only [hx] at hcl
+    refine ⟨?_, Int.ModEq.dvd hcl.symm⟩
+    rw [hwPos, hx, List.getD_eq_getElem _ _ hi]
+  rcases lt_or_ge (i + 1) hw.length with hi1 | hi1
+  · obtain ⟨α, β, hr⟩ := h.ratio (List.getElem_mem hi) (List.getElem_mem hi1)
+    refine ⟨hw[i + 1].2, hw[i].2 * hw[i + 1].1 - hw[i + 1].2 * hw[i].1, hw[i].2, hm.ne', ⟨α, β, hr⟩,
+      fun x hx => ?_⟩
+    obtain ⟨hp, hd⟩ := hpos x hx
+    rw [hwNext, hp, add_assoc, show ((i : ℤ) + 1) = ((i + 1 : ℕ) : ℤ) by push_cast; rfl,
+      hwPoint_mul_add _ hi1]
+    obtain ⟨t, ht⟩ := hd
+    rw [ht, Int.mul_ediv_cancel_left _ hm.ne']
+    linear_combination (-hw[i + 1].2) * ht
+  · have h0 : 0 < hw.length := h.length_pos
+    have hik : i + 1 = hw.length := by omega
+    obtain ⟨α, β, hr⟩ := h.ratio (List.getElem_mem hi) (List.getElem_mem h0)
+    refine ⟨hw[0].2, hw[i].2 * hw[0].1 - hw[0].2 * hw[i].1 + hw[i].2 * hw[0].2, hw[i].2, hm.ne',
+      ⟨α, β, hr⟩, fun x hx => ?_⟩
+    obtain ⟨hp, hd⟩ := hpos x hx
+    have he : hwPos hw x + 1 = hw.length * ((x - hw[i].1) / hw[i].2 + 1) + ((0 : ℕ) : ℤ) := by
+      rw [hp]; push_cast; rw [show ((hw.length : ℕ) : ℤ) = (i : ℤ) + 1 by exact_mod_cast hik.symm]
+      ring
+    rw [hwNext, he, hwPoint_mul_add _ h0]
+    obtain ⟨t, ht⟩ := hd
+    rw [ht, Int.mul_ediv_cancel_left _ hm.ne']
+    linear_combination (-hw[0].2) * ht
+
+theorem find_fires_congr {R : List Rule} {c c' : Cfg} (h : ∀ ρ : Rule, ρ.Fires c ↔ ρ.Fires c') :
+    R.find? (fun ρ => decide (ρ.Fires c)) = R.find? (fun ρ => decide (ρ.Fires c')) := by
+  congr 1; funext ρ; simp [h ρ]
+
+theorem sigma_of_F_some {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} {n m : ℤ}
+    (hF : F j M.rules n = some m) : sigma j M hw n = m := by
+  simp [sigma, hF]
+
+theorem sigma_of_sink {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} {n : ℤ} (hn : InEngine j n)
+    (hF : F j M.rules n = none) :
+    sigma j M hw n = hwNext hw (move j n (M.pairFn (phase j n)) 0 0) := by
+  simp [sigma, hF, hn]
+
+theorem sigma_of_not_inEngine {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} {n : ℤ}
+    (hn : ¬ InEngine j n) : sigma j M hw n = hwNext hw n := by
+  simp [sigma, F_of_not_inEngine j M.rules hn, hn]
+
+theorem F_of_find {j : ℕ} {R : List Rule} {n : ℤ} (hn : InEngine j n) :
+    F j R n = (R.find? fun ρ => decide (ρ.Fires (decode j n))).map fun ρ =>
+      move j n ρ.dst ρ.d₁.val ρ.d₂.val := by
+  simp [F, hn]
+
+/-- `σ` is RCWA with all slopes in `2^ℤ 3^ℤ`, at modulus `3^N · L` for any `L > 0`
 that the highway moduli and `5^j 2^N 3^{2N}` (the zero tests) divide. -/
 theorem isRcwa23At_sigma {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)} (h : Good j M hw) {L : ℕ}
     (hL : 0 < L) (hhw : ∀ rm ∈ hw, rm.2 ∣ L) (htest : 5 ^ j * 2 ^ N j * 3 ^ (2 * N j) ∣ L) :
     IsRcwa23At (3 ^ N j * L) (sigma j M hw) := by
-  sorry
+  have hj := h.one_le
+  intro r
+  have hLQ : (L : ℤ) ∣ ((3 ^ N j * L : ℕ) : ℤ) := by push_cast; exact Dvd.intro_left _ rfl
+  have hQt : (5 : ℤ) ^ j * 2 ^ N j * 3 ^ (2 * N j) ∣ ((3 ^ N j * L : ℕ) : ℤ) :=
+    (by exact_mod_cast htest : ((5 ^ j * 2 ^ N j * 3 ^ (2 * N j) : ℕ) : ℤ) ∣ (L : ℤ)).trans hLQ
+  have hcls : ∀ n, n ≡ r [ZMOD ((3 ^ N j * L : ℕ) : ℤ)] → ((3 ^ N j * L : ℕ) : ℤ) ∣ r - n :=
+    fun n hn => Int.ModEq.dvd hn
+  have hhwL : ∀ rm ∈ hw, rm.2 ∣ (L : ℤ) := hhw
+  by_cases hr : InEngine j r
+  · have hfr : ∀ n, n ≡ r [ZMOD ((3 ^ N j * L : ℕ) : ℤ)] → InEngine j n ∧
+        phase j n = phase j r ∧ M.rules.find? (fun ρ => decide (ρ.Fires (decode j n))) =
+          M.rules.find? (fun ρ => decide (ρ.Fires (decode j r))) ∧
+        ∀ ρ : Rule, ρ.Fires (decode j n) ↔ ρ.Fires (decode j r) := by
+      intro n hn
+      obtain ⟨hnE, hd0, hd1, hd2⟩ := decode_class hj hQt (hcls n hn) hr
+      have hfc : ∀ ρ : Rule, ρ.Fires (decode j n) ↔ ρ.Fires (decode j r) :=
+        fun ρ => fires_congr hd0 hd1 hd2
+      exact ⟨hnE, hd0, find_fires_congr hfc, hfc⟩
+    cases hF : M.rules.find? (fun ρ => decide (ρ.Fires (decode j r))) with
+    | some ρ =>
+      have hρ := List.mem_of_find?_eq_some hF
+      have hfρ := List.find?_some hF
+      simp only [decide_eq_true_eq] at hfρ
+      set A : ℤ := (N j : ℤ) * ρ.d₁.val
+      set B : ℤ := (N j : ℤ) * ρ.d₂.val + ρ.dst - phase j r
+      refine ⟨2 ^ A.toNat * 3 ^ B.toNat, 0, 2 ^ (-A).toNat * 3 ^ (-B).toNat, by positivity,
+        ⟨A, B, ?_⟩, fun n hn => ?_⟩
+      · push_cast
+        rw [zpow_toNat 2 (by norm_num), zpow_toNat 3 (by norm_num)]
+        field_simp
+      · obtain ⟨hnE, hph, hfind, hfc⟩ := hfr n hn
+        have hfn := (hfc ρ).2 hfρ
+        obtain ⟨-, -, -, h₁, h₂⟩ := hfn
+        have hs := scale_spec hj hnE (h.fitsR ρ hρ).2 h₁ h₂
+        rw [sigma_of_F_some (m := move j n ρ.dst ρ.d₁.val ρ.d₂.val)
+          (by rw [F_of_find hnE, hfind, hF]; rfl)]
+        rw [hph] at hs
+        unfold move
+        rw [hph]
+        linear_combination hs
+    | none =>
+      set s'' := M.pairFn (phase j r)
+      have hs'' : s'' < orderOf (3 : ZMod (5 ^ j)) := h.pairFn_lt_ord (phase_lt_ord hj hr)
+      set E : ℤ := (s'' : ℤ) - phase j r
+      -- the relabelled point `τ n` and its exact relation `τ n · 3^{E⁻} = n · 3^{E⁺}`
+      have hτ : ∀ n, InEngine j n → phase j n = phase j r →
+          move j n s'' 0 0 * 3 ^ (-E).toNat = n * 3 ^ E.toNat := by
+        intro n hnE hph
+        have hs := scale_spec hj hnE hs'' (δ₁ := 0) (δ₂ := 0) (by omega) (by omega)
+        rw [hph] at hs
+        unfold move
+        rw [hph]
+        simp only [mul_zero, neg_zero, Int.toNat_zero, pow_zero, mul_one, zero_add] at hs ⊢
+        exact hs
+      have hrL : move j r s'' 0 0 ∈ Line j M.rules := by
+        obtain ⟨-, hd, -⟩ := decode_move_zero hj hr hs''
+        right
+        rw [hd]
+        have hsink : IsSink M.rules (decode j r) := by simp [IsSink, step, hF]
+        exact (h.pair_sink (decode j r)).1 hsink
+      obtain ⟨rm, hrm, hin⟩ := (h.highway.cover _).1 hrL
+      have hi : hwIdx hw (move j r s'' 0 0) < hw.length :=
+        List.findIdx_lt_length_of_exists ⟨rm, hrm, (inClass_iff _ _).1 hin⟩
+      obtain ⟨a, b, c, hc, ⟨α, β, hab⟩, hx⟩ := hwNext_affine h.highway hi
+      refine ⟨a * 3 ^ E.toNat, 3 ^ (-E).toNat * b, 3 ^ (-E).toNat * c, by positivity,
+        ⟨α, β + E, ?_⟩, fun n hn => ?_⟩
+      · push_cast
+        rw [zpow_add₀ (by norm_num), zpow_toNat 3 (by norm_num) E]
+        have hc' : (c : ℚ) ≠ 0 := by exact_mod_cast hc
+        rw [show (a : ℚ) * 3 ^ E.toNat / (3 ^ (-E).toNat * c) =
+          (a / c) * (3 ^ E.toNat / 3 ^ (-E).toNat) by field_simp, hab]
+        ring
+      · obtain ⟨hnE, hph, hfind, -⟩ := hfr n hn
+        have hFn : F j M.rules n = none := by rw [F_of_find hnE, hfind, hF]; rfl
+        rw [sigma_of_sink hnE hFn, hph]
+        have hEle : (-E).toNat ≤ N j := by have := phase_lt hj hr; omega
+        have hidx : hwIdx hw (move j n s'' 0 0) = hwIdx hw (move j r s'' 0 0) := by
+          apply hwIdx_congr hhwL
+          have h1 := hτ n hnE hph
+          have h2 := hτ r hr rfl
+          have hd : ((3 : ℤ) ^ (-E).toNat * (3 ^ (N j - (-E).toNat) * L)) ∣
+              3 ^ (-E).toNat * (move j n s'' 0 0 - move j r s'' 0 0) := by
+            have hdiv : ((3 ^ N j * L : ℕ) : ℤ) ∣ 3 ^ E.toNat * (n - r) :=
+              (dvd_neg.2 (hcls n hn) |>.trans (by rw [neg_sub])).mul_left _
+            rw [show (3 : ℤ) ^ (-E).toNat * (move j n s'' 0 0 - move j r s'' 0 0) =
+              3 ^ E.toNat * (n - r) by linear_combination h1 - h2]
+            refine (dvd_of_eq ?_).trans hdiv
+            push_cast
+            rw [← mul_assoc, ← pow_add, Nat.add_sub_cancel' hEle]
+          exact (Dvd.intro_left _ rfl).trans
+            ((mul_dvd_mul_iff_left (by positivity)).1 hd)
+        have := hx _ hidx
+        linear_combination (3 : ℤ) ^ (-E).toNat * this + a * hτ n hnE hph
+  · obtain ⟨rm, hrm, hin⟩ := (h.highway.cover r).1 (Or.inl hr)
+    have hi : hwIdx hw r < hw.length :=
+      List.findIdx_lt_length_of_exists ⟨rm, hrm, (inClass_iff _ _).1 hin⟩
+    obtain ⟨a, b, c, hc, hab, hx⟩ := hwNext_affine h.highway hi
+    refine ⟨a, b, c, hc, hab, fun n hn => ?_⟩
+    have hnE : ¬ InEngine j n := fun hnE =>
+      hr (decode_class hj hQt (by rw [← neg_sub]; exact dvd_neg.2 (hcls n hn)) hnE).1
+    rw [sigma_of_not_inEngine hnE]
+    exact hx n (hwIdx_congr hhwL (by rw [← neg_sub]; exact dvd_neg.2 (hLQ.trans (hcls n hn))))
 
 /-- Same-cycle transfers along an injective intertwiner. -/
 theorem sameCycle_transfer {α β : Type*} {e : α → β} (he : Function.Injective e)
