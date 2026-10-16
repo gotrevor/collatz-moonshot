@@ -361,25 +361,168 @@ theorem not_sameCycle_of_cut (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ
     have := (reach_le τ θ h2 hk.symm).1
     omega
 
+/-- **Anchors.**  Under (H1), every point lies on the orbit of some line position. -/
+theorem exists_sameCycle_lineEmb {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (h1 : NoBiInfinite f) (a : α ⊕ H) :
+    ∃ j, (complete f τ θ).SameCycle (lineEmb f (θ j)) a := by
+  rcases a with x | k
+  · by_cases hb : ∃ n, fwd f.symm n x = none
+    · obtain ⟨m, s, hs, hfs⟩ := exists_last hb
+      have hx : fwd f m s = some x := fwd_symm hs
+      refine ⟨θ.symm (Sum.inl ⟨s, hfs⟩), m, ?_⟩
+      rw [zpow_natCast, θ.apply_symm_apply]
+      exact complete_pow_inl τ θ hx
+    by_cases hf : ∃ n, fwd f n x = none
+    · obtain ⟨m, t, ht, hft⟩ := exists_last hf
+      refine ⟨θ.symm (Sum.inl (τ ⟨t, hft⟩)) + 1, Equiv.Perm.SameCycle.symm ?_⟩
+      refine ⟨((m + 1 : ℕ) : ℤ), ?_⟩
+      rw [zpow_natCast, pow_succ', Equiv.Perm.mul_apply, complete_pow_inl τ θ ht, complete_apply,
+        completeFun_none τ θ hft]
+      rfl
+    push Not at hb hf
+    exfalso
+    let F : ℕ → α := fun n => (fwd f n x).get (Option.isSome_iff_ne_none.mpr (hf n))
+    let Bk : ℕ → α := fun n => (fwd f.symm n x).get (Option.isSome_iff_ne_none.mpr (hb n))
+    have hF : ∀ n, fwd f n x = some (F n) := fun n => (Option.some_get _).symm
+    have hBk : ∀ n, fwd f.symm n x = some (Bk n) := fun n => (Option.some_get _).symm
+    let g : ℤ → α := fun i => if 0 ≤ i then F i.toNat else Bk (-i).toNat
+    have gnat : ∀ n : ℕ, g n = F n := fun n => by simp [g]
+    have g0 : g 0 = F 0 := by simpa using gnat 0
+    have gneg : ∀ n : ℕ, g (-(n : ℤ)) = Bk n := by
+      intro n
+      cases n with
+      | zero =>
+        have h0 := hF 0; have h0' := hBk 0
+        rw [fwd_zero, Option.some.injEq] at h0 h0'
+        rw [Nat.cast_zero, neg_zero, g0, ← h0, ← h0']
+      | succ n => simp only [g]; rw [if_neg (by omega)]; congr
+    refine h1 g fun i => ?_
+    obtain ⟨n, rfl | rfl⟩ := Int.eq_nat_or_neg i
+    · rw [gnat, show (n : ℤ) + 1 = ((n + 1 : ℕ) : ℤ) by push_cast; rfl, gnat, ← hF (n + 1),
+        fwd_succ, hF n, Option.bind_some]
+    · cases n with
+      | zero =>
+        rw [Nat.cast_zero, neg_zero, zero_add, g0, show (1 : ℤ) = ((1 : ℕ) : ℤ) from rfl, gnat,
+          ← hF 1, fwd_succ, hF 0, Option.bind_some]
+      | succ n =>
+        rw [show -((n + 1 : ℕ) : ℤ) + 1 = -(n : ℤ) by push_cast; ring, gneg, gneg]
+        have := hBk (n + 1)
+        rw [fwd_succ, hBk n, Option.bind_some] at this
+        exact (PEquiv.eq_some_iff f).mp this
+  · refine ⟨θ.symm (Sum.inr k), ?_⟩
+    rw [θ.apply_symm_apply]
+    exact Equiv.Perm.SameCycle.refl _ _
+
+/-- A cut-free stretch of the line lies on one orbit. -/
+theorem sameCycle_of_noCut {f : PEquiv α α} (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
+    (h2 : EndToStart f τ) {q r : ℤ} (hqr : q ≤ r)
+    (h : ∀ i, q ≤ i → i < r → ∀ s : Src f, θ i = Sum.inl s → ¬ Diverges f s.1) :
+    (complete f τ θ).SameCycle (lineEmb f (θ q)) (lineEmb f (θ r)) := by
+  induction r, hqr using Int.le_induction with
+  | base => exact Equiv.Perm.SameCycle.refl _ _
+  | succ r hqr ih =>
+    exact (ih fun i hi hi' => h i hi (by omega)).trans
+      (sameCycle_succ_of_not_diverges f τ θ h2 r (h r hqr (by omega)))
+
+theorem lineEmb_symm_inl (f : PEquiv α α) (θ : ℤ ≃ Src f ⊕ H) (s : Src f) :
+    lineEmb f (θ (θ.symm (Sum.inl s))) = Sum.inl s.1 := by
+  rw [θ.apply_symm_apply]; rfl
+
 /-- **Lemma C, orbit formula.**  Under (H1) and (H2), the number of orbits of the completion is
 one more than the number of forward-divergent sources (as cardinals, so `1 + ℵ₀ = ℵ₀` covers the
 infinite case). -/
 theorem card_orbits (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
     (h1 : NoBiInfinite f) (h2 : EndToStart f τ) :
     Cardinal.mk (Orbits (complete f τ θ)) = 1 + Cardinal.mk {s : Src f // Diverges f s.1} := by
-  sorry
+  set σ := complete f τ θ
+  let D := {s : Src f // Diverges f s.1}
+  let φ : D → Orbits σ := fun d => Quotient.mk _ (Sum.inl d.1.1)
+  have hφ : Function.Injective φ := by
+    intro d e hde
+    have hsc : σ.SameCycle (Sum.inl d.1.1) (Sum.inl e.1.1) := Quotient.exact hde
+    rw [← lineEmb_symm_inl f θ d.1, ← lineEmb_symm_inl f θ e.1] at hsc
+    rcases lt_trichotomy (θ.symm (Sum.inl d.1)) (θ.symm (Sum.inl e.1)) with hlt | heq | hgt
+    · exact absurd hsc (not_sameCycle_of_cut f τ θ h1 h2 d.1 d.2 (θ.apply_symm_apply _) le_rfl hlt)
+    · exact Subtype.ext (Sum.inl.inj (θ.symm.injective heq))
+    · exact absurd hsc.symm
+        (not_sameCycle_of_cut f τ θ h1 h2 e.1 e.2 (θ.apply_symm_apply _) le_rfl hgt)
+  -- An orbit with no cut swallows every line position above one of its own.
+  have hup : ∀ j, Quotient.mk _ (lineEmb f (θ j)) ∉ Set.range φ →
+      ∀ k, j ≤ k → σ.SameCycle (lineEmb f (θ j)) (lineEmb f (θ k)) := by
+    intro j hj k hjk
+    induction k, hjk using Int.le_induction with
+    | base => exact Equiv.Perm.SameCycle.refl _ _
+    | succ k hjk ih =>
+      refine ih.trans (sameCycle_succ_of_not_diverges f τ θ h2 k fun s hs hd => hj ⟨⟨s, hd⟩, ?_⟩)
+      refine Quotient.sound (Equiv.Perm.SameCycle.symm ?_)
+      rw [hs] at ih
+      exact ih
+  have hsub : Subsingleton ((Set.range φ)ᶜ : Set (Orbits σ)) := by
+    constructor
+    rintro ⟨o, ho⟩ ⟨o', ho'⟩
+    induction o using Quotient.inductionOn with | h a => ?_
+    induction o' using Quotient.inductionOn with | h b => ?_
+    obtain ⟨j, hj⟩ := exists_sameCycle_lineEmb τ θ h1 a
+    obtain ⟨j', hj'⟩ := exists_sameCycle_lineEmb τ θ h1 b
+    have ea : Quotient.mk _ a = Quotient.mk (Equiv.Perm.SameCycle.setoid σ) (lineEmb f (θ j)) :=
+      Quotient.sound hj.symm
+    have eb : Quotient.mk _ b = Quotient.mk (Equiv.Perm.SameCycle.setoid σ) (lineEmb f (θ j')) :=
+      Quotient.sound hj'.symm
+    have hoa : Quotient.mk _ (lineEmb f (θ j)) ∉ Set.range φ := by rw [← ea]; exact ho
+    have hob : Quotient.mk _ (lineEmb f (θ j')) ∉ Set.range φ := by rw [← eb]; exact ho'
+    apply Subtype.ext
+    show Quotient.mk _ a = Quotient.mk _ b
+    rw [ea, eb]
+    rcases le_total j j' with h | h
+    · exact Quotient.sound (hup j hoa j' h)
+    · exact (Quotient.sound (hup j' hob j h)).symm
+  have hsum := Cardinal.mk_sum_compl (Set.range φ)
+  rw [Cardinal.mk_range_eq φ hφ] at hsum
+  rw [← hsum]
+  rcases finite_or_infinite D with hfin | hinf
+  · have hne : Nonempty ((Set.range φ)ᶜ : Set (Orbits σ)) := by
+      obtain ⟨M, hM⟩ := (Set.finite_range fun d : D => θ.symm (Sum.inl d.1)).bddAbove
+      refine ⟨⟨Quotient.mk _ (lineEmb f (θ (M + 1))), ?_⟩⟩
+      rintro ⟨d, hd⟩
+      have hsc : σ.SameCycle (Sum.inl d.1.1) (lineEmb f (θ (M + 1))) := Quotient.exact hd
+      rw [← lineEmb_symm_inl f θ d.1] at hsc
+      have : θ.symm (Sum.inl d.1) ≤ M := hM ⟨d, rfl⟩
+      exact not_sameCycle_of_cut f τ θ h1 h2 d.1 d.2 (θ.apply_symm_apply _) le_rfl (by omega) hsc
+    rw [Cardinal.eq_one_iff_unique.mpr ⟨hsub, hne⟩, add_comm]
+  · have h := Cardinal.infinite_iff.mp hinf
+    have h' : (1 : Cardinal) ≤ Cardinal.mk D := Cardinal.one_le_aleph0.trans h
+    rw [Cardinal.add_eq_left h ((Cardinal.le_one_iff_subsingleton.mpr hsub).trans h'),
+      Cardinal.add_eq_right h h']
 
 /-- One orbit iff no source diverges. -/
 theorem sameCycle_all_iff (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
     (h1 : NoBiInfinite f) (h2 : EndToStart f τ) :
     (∀ a b : α ⊕ H, (complete f τ θ).SameCycle a b) ↔ ∀ s : Src f, ¬ Diverges f s.1 := by
-  sorry
+  constructor
+  · intro hall s hs
+    exact not_sameCycle_of_cut f τ θ h1 h2 s hs (θ.apply_symm_apply _) le_rfl
+      (lt_add_one _) (hall _ _)
+  · intro hno a b
+    obtain ⟨j, hj⟩ := exists_sameCycle_lineEmb τ θ h1 a
+    obtain ⟨j', hj'⟩ := exists_sameCycle_lineEmb τ θ h1 b
+    have hline : ∀ q r, q ≤ r →
+        (complete f τ θ).SameCycle (lineEmb f (θ q)) (lineEmb f (θ r)) :=
+      fun q r hqr => sameCycle_of_noCut τ θ h2 hqr fun i _ _ s _ => hno s
+    rcases le_total j j' with h | h
+    · exact hj.symm.trans ((hline j j' h).trans hj')
+    · exact hj.symm.trans ((hline j' j h).symm.trans hj')
 
 /-- Infinitely many orbits iff infinitely many sources diverge. -/
 theorem infinite_orbits_iff (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : ℤ ≃ Src f ⊕ H)
     (h1 : NoBiInfinite f) (h2 : EndToStart f τ) :
     Infinite (Orbits (complete f τ θ)) ↔ Infinite {s : Src f // Diverges f s.1} := by
-  sorry
+  rw [Cardinal.infinite_iff, Cardinal.infinite_iff, card_orbits f τ θ h1 h2]
+  constructor
+  · intro h
+    by_contra h'
+    exact absurd h (not_le.mpr (Cardinal.add_lt_aleph0 Cardinal.one_lt_aleph0 (not_le.mp h')))
+  · intro h
+    exact h.trans (self_le_add_left _ _)
 
 /-- **The `{1, ∞}` dichotomy.**  If divergent sources, when present, are infinitely many (the
 junk multiplicity of the concrete encoding), the completion has one orbit or infinitely many;
@@ -389,7 +532,10 @@ theorem one_or_infinite_orbits (f : PEquiv α α) (τ : Snk f ≃ Src f) (θ : �
     (hjunk : (∃ s : Src f, Diverges f s.1) → Infinite {s : Src f // Diverges f s.1}) :
     ((∀ a b : α ⊕ H, (complete f τ θ).SameCycle a b) ∧ ∀ s : Src f, ¬ Diverges f s.1) ∨
       (Infinite (Orbits (complete f τ θ)) ∧ ∃ s : Src f, Diverges f s.1) := by
-  sorry
+  by_cases h : ∃ s : Src f, Diverges f s.1
+  · exact Or.inr ⟨(infinite_orbits_iff f τ θ h1 h2).mpr (hjunk h), h⟩
+  · push Not at h
+    exact Or.inl ⟨(sameCycle_all_iff f τ θ h1 h2).mpr h, h⟩
 
 end Completion
 

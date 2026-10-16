@@ -18,5 +18,19 @@ Kickoff: `KICKOFF-2026-10-16-rcwa-machine.md`.  Target: close every `sorry` in
   upward and never past a cut.  Only (H2) is used, so (H1) is an unused binder there (linter
   warning; the ratified statement keeps it).
 
+- `card_orbits`: anchors `exists_sameCycle_lineEmb` (H1 splices two infinite chains into a
+  bi-infinite orbit otherwise); divergent sources inject into `Orbits` (`not_sameCycle_of_cut`);
+  the complement of that range is a subsingleton (`hup`: a cut-free orbit swallows every line
+  position above it), nonempty when the cuts are finite (positions above the last cut), absorbed
+  by `ℵ₀` arithmetic when infinite.  `Cardinal.mk_sum_compl` assembles `1 + #D`.
+- `sameCycle_all_iff` (direct, via `sameCycle_of_noCut`), `infinite_orbits_iff` (from
+  `card_orbits`), `one_or_infinite_orbits` (case split).
+
+## Status
+Every `sorry` in `RcwaMachine.lean` is closed.  `#print axioms` on all twelve ratified
+theorems: `[propext, Classical.choice, Quot.sound]`.  Ratified statements unchanged since
+`f6b2832` (checked by diff: only `sorry` lines removed).  Lines ≤ 100 characters.
+
 ## Open
-- `card_orbits` and the three corollaries.
+- Nothing in this file.  Cosmetic: `Int.le_induction` deprecation warnings, unused `h1` in
+  `not_sameCycle_of_cut` (kept, ratified signature).
