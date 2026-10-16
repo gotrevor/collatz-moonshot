@@ -1305,12 +1305,64 @@ def IsEntryP (r : ℕ) (y : ℤ) : Prop :=
   0 < y ∧ y % 2 = 1 ∧ (∃ k : ℤ, wqp r (2 * k) = y) ∧
     ∀ j : ℤ, wqp r (2 * j - 1) % 2 = 0 → 2 * r * j - 1 ≠ y
 
+/-- `W'` satisfies the skeleton hypotheses with the odds as the climbing class. -/
+lemma wqp_skel (hr : 2 ≤ r) : Skel (wqpPerm r hr) fun y => y % 2 = 1 where
+  pos y := wqp_pos_iff hr y
+  up y hy he := by
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k - 1 := ⟨(y + 1) / 2, by omega⟩
+    rw [wqpPerm_apply]
+    exact (wqp_bounds hr (show 1 ≤ k by omega)).2.2
+  twoStep y hy he hne := by
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k - 1 := ⟨(y + 1) / 2, by omega⟩
+    simp only [wqpPerm_apply] at hne ⊢
+    rw [wqp_wqp_of_even hr k (by omega)]
+    have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+    refine ⟨by rw [mul_assoc]; omega, by nlinarith⟩
+  down y hy he := by
+    obtain ⟨k, rfl⟩ : ∃ k, y = 2 * k := ⟨y / 2, by omega⟩
+    rw [wqpPerm_apply]
+    exact (wqp_bounds hr (show 1 ≤ k by omega)).2.1.le
+
+/-- `W'` has no positive fixed point. -/
+lemma wqp_ne_self (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) : wqpPerm r hr x ≠ x := by
+  rw [wqpPerm_apply]
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, x = 2 * k ∨ x = 2 * k - 1 := ⟨(x + 1) / 2, by omega⟩
+  · exact (wqp_bounds hr (show 1 ≤ k by omega)).2.1.ne
+  · exact (wqp_bounds hr (show 1 ≤ k by omega)).2.2.ne'
+
 /-- **(ratified).**  Partner entry points are the positive odd `y` with `W'⁻¹ y`, `W'⁻² y`
 even. -/
 theorem isEntryP_iff (hr : 2 ≤ r) (y : ℤ) :
     IsEntryP r y ↔ 0 < y ∧ y % 2 = 1 ∧ (wqpPerm r hr).symm y % 2 = 0 ∧
       (wqpPerm r hr).symm ((wqpPerm r hr).symm y) % 2 = 0 := by
-  sorry
+  set σ := wqpPerm r hr with hσ
+  constructor
+  · rintro ⟨h0, h2, ⟨k, hk⟩, hj⟩
+    have hs1 : σ.symm y = 2 * k := by rw [Equiv.symm_apply_eq]; exact hk.symm
+    refine ⟨h0, h2, by rw [hs1]; omega, ?_⟩
+    rw [hs1]
+    by_contra hodd
+    obtain ⟨j, hj2⟩ : ∃ j, σ.symm (2 * k) = 2 * j - 1 := ⟨(σ.symm (2 * k) + 1) / 2, by omega⟩
+    have hwj : wqp r (2 * j - 1) = 2 * k := by
+      rw [← wqpPerm_apply hr, ← hj2]; exact σ.apply_symm_apply _
+    refine hj j (by rw [hwj]; omega) ?_
+    rw [← wqp_wqp_of_even hr j (by rw [hwj]; omega), hwj, hk]
+  · rintro ⟨h0, h2, h3, h4⟩
+    refine ⟨h0, h2, ⟨σ.symm y / 2, ?_⟩, fun j hj hy => ?_⟩
+    · rw [show 2 * (σ.symm y / 2) = σ.symm y by omega, ← wqpPerm_apply hr]
+      exact σ.apply_symm_apply y
+    · have e1 : σ.symm y = wqp r (2 * j - 1) := by
+        rw [Equiv.symm_apply_eq, wqpPerm_apply, wqp_wqp_of_even hr j hj, hy]
+      have e2 : σ.symm (σ.symm y) = 2 * j - 1 := by
+        rw [e1, Equiv.symm_apply_eq, wqpPerm_apply]
+      rw [e2] at h4
+      omega
+
+lemma isEntryP_iff_skEntry (hr : 2 ≤ r) (y : ℤ) :
+    IsEntryP r y ↔ SkEntry (wqpPerm r hr) (fun y => y % 2 = 1) y := by
+  rw [isEntryP_iff hr]
+  unfold SkEntry
+  constructor <;> rintro ⟨a, b, c, d⟩ <;> exact ⟨a, b, by omega, by omega⟩
 
 /-- **(ratified, partner structure).**  Every orbit through `x > 0` contains exactly one partner
 entry point.  Paper proof: Theorem F with parities swapped: odd points of a forward orbit
@@ -1318,33 +1370,41 @@ increase (`W'(2k − 1) > 2k − 1`, or `W'²(2k − 1) = 2rk − 1 > 2k − 1`)
 (`W'(2k) < 2k`), so an all-even orbit is impossible and there is a first odd point. -/
 theorem existsUnique_isEntryP_mem_orbit (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     ∃! e, IsEntryP r e ∧ e ∈ permOrbit (wqpPerm r hr) x := by
-  sorry
+  simp_rw [isEntryP_iff_skEntry hr]
+  exact (wqp_skel hr).existsUnique_entry hx (wqp_ne_self hr hx)
 
 /-- **(ratified, partner minimum).** -/
 theorem isEntryP_lt_of_mem_orbit (hr : 2 ≤ r) {e y : ℤ} (he : IsEntryP r e)
     (hy : y ∈ permOrbit (wqpPerm r hr) e) (hne : y ≠ e) : e < y := by
-  sorry
+  exact (wqp_skel hr).entry_lt ((isEntryP_iff_skEntry hr e).1 he) hy hne
 
 /-- **(ratified, partner: no finite orbit in `ℕ⁺`).** -/
 theorem permOrbit_wqpPerm_infinite (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     (permOrbit (wqpPerm r hr) x).Infinite := by
-  sorry
+  exact (wqp_skel hr).permOrbit_infinite hx (wqp_ne_self hr hx)
 
 /-- **(ratified, partner forward escape).** -/
 theorem tendsto_wqpPerm_pow (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     Tendsto (fun n : ℕ => (wqpPerm r hr ^ n) x) atTop atTop := by
-  sorry
+  exact (wqp_skel hr).tendsto_pow hx (wqp_ne_self hr hx)
 
 /-- **(ratified, partner backward escape).** -/
 theorem tendsto_wqpPerm_pow_neg (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     Tendsto (fun n : ℕ => (wqpPerm r hr ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+  exact (wqp_skel hr).tendsto_pow_neg hx (wqp_ne_self hr hx)
 
 /-- **(ratified, partner orbit minima).**  For `x > 0`: `x` is the minimum of its orbit iff `x`
 is a partner entry point. -/
 theorem isOrbitMinP_iff (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     (∀ y ∈ permOrbit (wqpPerm r hr) x, x ≤ y) ↔ IsEntryP r x := by
-  sorry
+  constructor
+  · intro hmin
+    exact (isEntryP_iff_skEntry hr x).2
+      ((wqp_skel hr).entry_of_min hx (wqp_ne_self hr hx) (mem_permOrbit_self x) hmin)
+  · intro he y hy
+    by_cases h : y = x
+    · rw [h]
+    · exact (isEntryP_lt_of_mem_orbit hr he hy h).le
 
 /-- **(ratified, partner conclusion).** -/
 theorem wqpPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
@@ -1365,10 +1425,105 @@ open Classical in
 noncomputable def minCountP (r : ℕ) (hr : 2 ≤ r) (X : ℕ) : ℕ :=
   ((Finset.Icc (1 : ℤ) X).filter fun x => ∀ y ∈ permOrbit (wqpPerm r hr) x, x ≤ y).card
 
+/-- `A′(X)` counts the odd `y ∈ [1, X]` in the even branch of `W'`. -/
+lemma countAP_eq (hr : 2 ≤ r) (X : ℕ) [DecidablePred fun y : ℤ =>
+      y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y] :
+    countAP r X = ((Finset.Icc (1 : ℤ) X).filter fun y =>
+      y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y).card := by
+  unfold countAP
+  apply Finset.card_nbij (fun k : ℕ => wqp r (2 * (k : ℤ)))
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, h3, h4⟩ := hk
+    have := (wqp_bounds hr (show (1 : ℤ) ≤ k by exact_mod_cast h1)).1
+    exact ⟨⟨by omega, h3⟩, h4, k, rfl⟩
+  · intro a _ b _ h
+    simp only [wqp_two_mul, ← wq_two_mul_sub_one] at h
+    have := (wq_odd_strictMono hr).injective h
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    obtain ⟨⟨h1, h2⟩, h3, k, rfl⟩ := hy
+    have hk1 : 1 ≤ k := by
+      by_contra h
+      have := (wqp_pos_iff hr (2 * k)).1 (by omega)
+      omega
+    have := (wqp_bounds hr hk1).1
+    refine ⟨k.toNat, ?_, ?_⟩
+    · simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq,
+        Int.toNat_of_nonneg (show 0 ≤ k by omega)]
+      exact ⟨⟨by omega, by omega⟩, h2, h3⟩
+    · simp only [Int.toNat_of_nonneg (show 0 ≤ k by omega)]
+
+/-- `B′(X)` counts the `2rj − 1 ∈ [1, X]` with `W'(2j − 1)` even. -/
+lemma countBP_eq (hr : 2 ≤ r) (X : ℕ) [DecidablePred fun y : ℤ =>
+      ∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y] :
+    countBP r X = ((Finset.Icc (1 : ℤ) X).filter fun y =>
+      ∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y).card := by
+  unfold countBP
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  apply Finset.card_nbij (fun j : ℕ => 2 * (r : ℤ) * j - 1)
+  · intro j hj
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hj ⊢
+    obtain ⟨⟨h1, h2⟩, h3, h4⟩ := hj
+    have h1' : (1 : ℤ) ≤ j := by exact_mod_cast h1
+    exact ⟨⟨by nlinarith, h3⟩, j, h4, rfl⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by
+      have h' : (2 * (r : ℤ)) * a = (2 * r) * b := by simp only at h; linarith
+      exact mul_left_cancel₀ (by omega) h'
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    obtain ⟨⟨h1, h2⟩, j, h3, rfl⟩ := hy
+    have hj1 : 1 ≤ j := by
+      by_contra h
+      nlinarith
+    have hjX : j ≤ X := by nlinarith
+    refine ⟨j.toNat, ?_, ?_⟩
+    · simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq,
+        Int.toNat_of_nonneg (show 0 ≤ j by omega)]
+      exact ⟨⟨by omega, by omega⟩, h2, h3⟩
+    · simp only [Int.toNat_of_nonneg (show 0 ≤ j by omega)]
+
 /-- **(ratified, partner exact count).**  `#{orbit minima ≤ X} = A′(X) − B′(X)`. -/
 theorem minCountP_add_countBP (hr : 2 ≤ r) (X : ℕ) :
     minCountP r hr X + countBP r X = countAP r X := by
-  sorry
+  classical
+  set S := Finset.Icc (1 : ℤ) X with hS
+  rw [countAP_eq hr X, countBP_eq hr X]
+  have hBA : ∀ y, (∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y) →
+      y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y := by
+    rintro y ⟨j, hj, rfl⟩
+    refine ⟨by rw [mul_assoc]; omega, wqp r (2 * j - 1) / 2, ?_⟩
+    rw [show 2 * (wqp r (2 * j - 1) / 2) = wqp r (2 * j - 1) by omega,
+      wqp_wqp_of_even hr j hj]
+  have hsplitA := Finset.card_filter_add_card_filter_not
+    (s := S.filter fun y => y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y)
+    (fun y => ∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y)
+  have e1 : ((S.filter fun y => y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y).filter
+      fun y => ∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y) =
+      S.filter fun y => ∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y := by
+    ext y
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨⟨h1, _⟩, h3⟩; exact ⟨h1, h3⟩
+    · rintro ⟨h1, h3⟩; exact ⟨⟨h1, hBA y h3⟩, h3⟩
+  have e3 : (S.filter fun x => ∀ y ∈ permOrbit (wqpPerm r hr) x, x ≤ y) =
+      ((S.filter fun y => y % 2 = 1 ∧ ∃ k : ℤ, wqp r (2 * k) = y).filter
+      fun y => ¬∃ j : ℤ, wqp r (2 * j - 1) % 2 = 0 ∧ 2 * r * j - 1 = y) := by
+    ext y
+    simp only [Finset.mem_filter, hS, Finset.mem_Icc]
+    constructor
+    · rintro ⟨hy, hmin⟩
+      obtain ⟨-, h2, h3, h4⟩ := (isOrbitMinP_iff hr (by omega)).1 hmin
+      exact ⟨⟨hy, h2, h3⟩, fun ⟨j, hj, hjy⟩ => h4 j hj hjy⟩
+    · rintro ⟨⟨hy, h2, h3⟩, h4⟩
+      exact ⟨hy, (isOrbitMinP_iff hr (by omega)).2
+        ⟨by omega, h2, h3, fun j hj hjy => h4 ⟨j, hj, hjy⟩⟩⟩
+  unfold minCountP
+  rw [← hsplitA, e1, e3]
+  ring
 
 /-- **(ratified, partner density, conditional on equidistribution).**  Same `d_r`:
 `⌊kβ⌋ = 2rk − sfl − 1` is odd iff `sfl r k` is even. -/
