@@ -65,43 +65,126 @@ variable {j : ℕ} {M : Machine} {hw : List (ℤ × ℤ)}
 theorem card_orbits_complete (h : Good j M hw) :
     Cardinal.mk (RcwaMachine.Orbits (RcwaMachine.complete h.eng h.tau h.theta)) =
       Cardinal.mk (RcwaMachine.Orbits (sigmaPerm h)) := by
-  sorry
+  refine Cardinal.mk_congr (Quotient.congr (Equiv.sumEmpty ℤ Empty) ?_)
+  rintro (a | e) (b | e')
+  · exact h.sameCycle_iff
+  · exact e'.elim
+  · exact e.elim
+  · exact e.elim
 
 /-- **Junk multiplicity** (Lemma P).  A source of `M` whose run does not halt gives infinitely
 many divergent engine sources, one for each junk value `1 + 6 · 5^j · k`. -/
 theorem infinite_divergent (h : Good j M hw) {c : RcwaSameOrbit.Cfg} (hc : IsSource M.rules c)
     (hnh : ¬ Halts M.rules c) :
     Infinite {s : RcwaMachine.Src h.eng // RcwaMachine.Diverges h.eng s.1} := by
-  sorry
+  have hj := h.one_le
+  have hK : c.1 < M.K := by
+    by_contra hK
+    refine hnh ⟨0, c, rfl, ?_⟩
+    rw [IsSink, RcwaSameOrbit.step, Option.map_eq_none_iff, List.find?_eq_none]
+    intro ρ hρ hf
+    have := h.wf.src_lt ρ hρ
+    have hf' : ρ.Fires c := by simpa using hf
+    have := hf'.1
+    omega
+  have hord : c.1 < orderOf (3 : ZMod (5 ^ j)) := lt_of_lt_of_le hK h.fits
+  have hspec : ∀ k : ℕ, InEngine j (build j 0 0 (1 + 6 * 5 ^ j * k) c.1 c.2.1 c.2.2) ∧
+      decode j (build j 0 0 (1 + 6 * 5 ^ j * k) c.1 c.2.1 c.2.2) = c ∧
+      junk j (build j 0 0 (1 + 6 * 5 ^ j * k) c.1 c.2.1 c.2.2) =
+        (0, 0, (1 + 6 * 5 ^ j * k : ℤ)) := by
+    intro k
+    have h2 : ¬ (2 : ℤ) ∣ 1 + 6 * 5 ^ j * k := by
+      generalize (5 : ℤ) ^ j * k = t; rw [mul_assoc]; omega
+    have h3 : ¬ (3 : ℤ) ∣ 1 + 6 * 5 ^ j * k := by
+      generalize (5 : ℤ) ^ j * k = t; rw [mul_assoc]; omega
+    have hu : (2 : ZMod (5 ^ j)) ^ 0 * 3 ^ 0 * ((1 + 6 * 5 ^ j * k : ℤ) : ZMod (5 ^ j)) = 1 := by
+      have h5 : ((5 : ℤ) : ZMod (5 ^ j)) ^ j = 0 := by
+        rw [show ((5 : ℤ) : ZMod (5 ^ j)) ^ j = ((5 ^ j : ℕ) : ZMod (5 ^ j)) by push_cast; rfl,
+          ZMod.natCast_self]
+      push_cast at h5 ⊢
+      rw [h5]; ring
+    obtain ⟨h0, h1, h2, h3, h4⟩ := build_spec hj (N_pos j) (N_pos j) hord h2 h3 hu c.2.1 c.2.2
+    exact ⟨h0, by rw [decode, h1, h2, h3], h4⟩
+  let f : ℕ → {s : RcwaMachine.Src h.eng // RcwaMachine.Diverges h.eng s.1} := fun k =>
+    ⟨⟨build j 0 0 (1 + 6 * 5 ^ j * k) c.1 c.2.1 c.2.2,
+      (RcwaSameOrbit.engine_symm_eq_none_iff _ _ _).2 (Or.inr (by rw [(hspec k).2.1]; exact hc))⟩,
+      (h.diverges_iff (hspec k).1).2 (by rw [(hspec k).2.1]; exact hnh)⟩
+  refine Infinite.of_injective f fun k k' hkk => ?_
+  have he : build j 0 0 (1 + 6 * 5 ^ j * k) c.1 c.2.1 c.2.2 =
+      build j 0 0 (1 + 6 * 5 ^ j * k') c.1 c.2.1 c.2.2 :=
+    congrArg (fun s => s.1.1) hkk
+  have hjk := congrArg (fun n => (junk j n).2.2) he
+  simp only [(hspec k).2.2, (hspec k').2.2] at hjk
+  have h5 : (5 : ℤ) ^ j ≠ 0 := pow_ne_zero _ (by norm_num)
+  have : (k : ℤ) = k' := by
+    exact mul_left_cancel₀ (mul_ne_zero (by norm_num : (6 : ℤ) ≠ 0) h5)
+      (by linarith : 6 * 5 ^ j * (k : ℤ) = 6 * 5 ^ j * k')
+  exact_mod_cast this
 
 /-- An engine source diverges only if some machine source does not halt. -/
 theorem not_diverges_of_sourcesHalt (h : Good j M hw) (hs : SourcesHalt M)
     (s : RcwaMachine.Src h.eng) : ¬ RcwaMachine.Diverges h.eng s.1 := by
-  sorry
+  by_cases hE : InEngine j s.1
+  · have hsrc : IsSource M.rules (decode j s.1) :=
+      ((RcwaSameOrbit.engine_symm_eq_none_iff _ _ _).1 s.2).resolve_left (not_not.2 hE)
+    rw [h.diverges_iff hE, not_not]
+    exact hs _ hsrc
+  · intro hd
+    exact hd 1 (RcwaMachine.fwd_succ_of_none (RcwaSameOrbit.F_of_not_inEngine j M.rules hE) 0)
 
 /-- One orbit iff every source halts (`RcwaSameOrbit.sameCycle_all_iff`, renamed). -/
 theorem oneOrbit_sigma_iff (h : Good j M hw) (h1 : RcwaSameOrbit.NoBiInfinite M.rules)
     (h2 : RcwaSameOrbit.EndToStart M.rules M.pairFn) :
     OneOrbit (sigmaPerm h) ↔ SourcesHalt M := by
-  sorry
+  exact RcwaSameOrbit.sameCycle_all_iff h h1 h2
 
 /-- **Exactly one orbit** iff every source halts. -/
 theorem card_orbits_sigma_eq_one_iff (h : Good j M hw) (h1 : RcwaSameOrbit.NoBiInfinite M.rules)
     (h2 : RcwaSameOrbit.EndToStart M.rules M.pairFn) :
     Cardinal.mk (RcwaMachine.Orbits (sigmaPerm h)) = 1 ↔ SourcesHalt M := by
-  sorry
+  rw [← card_orbits_complete h,
+    RcwaMachine.card_orbits _ _ _ (h.noBiInfinite h1) (h.endToStart h2)]
+  constructor
+  · intro hone
+    by_contra hs
+    simp only [SourcesHalt, not_forall] at hs
+    obtain ⟨c, hc, hnh⟩ := hs
+    have hinf := Cardinal.infinite_iff.1 (infinite_divergent h hc hnh)
+    have : Cardinal.aleph0 ≤ 1 := hone ▸ hinf.trans (self_le_add_left _ _)
+    exact absurd this (not_le.2 Cardinal.one_lt_aleph0)
+  · intro hs
+    have : Cardinal.mk {s : RcwaMachine.Src h.eng // RcwaMachine.Diverges h.eng s.1} = 0 :=
+      Cardinal.mk_eq_zero_iff.2 ⟨fun d => not_diverges_of_sourcesHalt h hs d.1 d.2⟩
+    rw [this, add_zero]
 
 /-- **Countably many orbits** iff some source does not halt. -/
 theorem card_orbits_sigma_eq_aleph0_iff (h : Good j M hw)
     (h1 : RcwaSameOrbit.NoBiInfinite M.rules) (h2 : RcwaSameOrbit.EndToStart M.rules M.pairFn) :
     Cardinal.mk (RcwaMachine.Orbits (sigmaPerm h)) = Cardinal.aleph0 ↔ ¬ SourcesHalt M := by
-  sorry
+  constructor
+  · intro ha hs
+    rw [(card_orbits_sigma_eq_one_iff h h1 h2).2 hs] at ha
+    exact Cardinal.one_lt_aleph0.ne ha
+  · intro hs
+    simp only [SourcesHalt, not_forall] at hs
+    obtain ⟨c, hc, hnh⟩ := hs
+    refine le_antisymm ?_ ?_
+    · exact (Cardinal.mk_le_of_surjective Quotient.mk_surjective).trans Cardinal.mk_int.le
+    · rw [← card_orbits_complete h,
+        RcwaMachine.card_orbits _ _ _ (h.noBiInfinite h1) (h.endToStart h2)]
+      exact (Cardinal.infinite_iff.1 (infinite_divergent h hc hnh)).trans (self_le_add_left _ _)
 
 /-- Infinitely many orbits iff some source does not halt. -/
 theorem infinite_orbits_sigma_iff (h : Good j M hw) (h1 : RcwaSameOrbit.NoBiInfinite M.rules)
     (h2 : RcwaSameOrbit.EndToStart M.rules M.pairFn) :
     Infinite (RcwaMachine.Orbits (sigmaPerm h)) ↔ ¬ SourcesHalt M := by
-  sorry
+  rw [Cardinal.infinite_iff]
+  constructor
+  · intro ha hs
+    rw [(card_orbits_sigma_eq_one_iff h h1 h2).2 hs] at ha
+    exact absurd ha (not_le.2 Cardinal.one_lt_aleph0)
+  · intro hs
+    exact ((card_orbits_sigma_eq_aleph0_iff h h1 h2).2 hs).ge
 
 /-- **The dichotomy on tables.**  For a valid machine, `tableOf M` is exact, its map is a
 bijection, and the permutation has one orbit iff every source halts, infinitely many otherwise. -/
@@ -109,7 +192,14 @@ theorem tableOf_orbits (hM : M.Valid) :
     (tableOf M).Exact ∧ ∃ hb : Function.Bijective (tableOf M).eval,
       (OneOrbit (Equiv.ofBijective _ hb) ↔ SourcesHalt M) ∧
         (Infinite (RcwaMachine.Orbits (Equiv.ofBijective _ hb)) ↔ ¬ SourcesHalt M) := by
-  sorry
+  have hG := RcwaSameOrbit.good_of_valid hM
+  obtain ⟨hex, hev⟩ := RcwaSameOrbit.tableOf_spec hM
+  have hb : Function.Bijective (tableOf M).eval := hev ▸ RcwaSameOrbit.sigma_bijective hG
+  have he : Equiv.ofBijective (tableOf M).eval hb = sigmaPerm hG := by
+    ext x; simp [sigmaPerm, hev]
+  refine ⟨hex, hb, ?_, ?_⟩
+  · rw [he]; exact oneOrbit_sigma_iff hG hM.noBiInfinite hM.endToStart
+  · rw [he]; exact infinite_orbits_sigma_iff hG hM.noBiInfinite hM.endToStart
 
 end Dichotomy
 
@@ -272,7 +362,9 @@ theorem exists_table_iff_mortal {Q ι : Type} [Finite Q] [Finite ι] [DecidableE
 
 /-- The table map is computable. -/
 theorem computable_tableOf : Computable tableOf := by
-  sorry
+  exact (Computable.fst.comp (RcwaSameOrbit.computable_reduce.comp
+    (Computable.pair Computable.id (Computable.const ((0, 0, 0) : RcwaSameOrbit.Cfg))))).of_eq
+    fun _ => rfl
 
 /-- **Interface** (a hypothesis, never an axiom): whether every source halts is not a
 computable property of valid machines. -/
@@ -286,14 +378,20 @@ theorem not_computable_oneOrbit (h : MortalityUndecidable) :
     ¬ ∃ g : RcwaTable → Bool, Computable g ∧
       ∀ (T : RcwaTable), T.Exact → ∀ hb : Function.Bijective T.eval,
         (g T = true ↔ OneOrbit (Equiv.ofBijective T.eval hb)) := by
-  sorry
+  rintro ⟨g, hg, hspec⟩
+  refine h ⟨g ∘ tableOf, hg.comp computable_tableOf, fun M hM => ?_⟩
+  obtain ⟨hex, hb, h1, -⟩ := tableOf_orbits hM
+  exact (hspec _ hex hb).trans h1
 
 /-- **"Finitely many orbits" is undecidable** on the same tables, given `MortalityUndecidable`. -/
 theorem not_computable_finiteOrbits (h : MortalityUndecidable) :
     ¬ ∃ g : RcwaTable → Bool, Computable g ∧
       ∀ (T : RcwaTable), T.Exact → ∀ hb : Function.Bijective T.eval,
         (g T = true ↔ Finite (RcwaMachine.Orbits (Equiv.ofBijective T.eval hb))) := by
-  sorry
+  rintro ⟨g, hg, hspec⟩
+  refine h ⟨g ∘ tableOf, hg.comp computable_tableOf, fun M hM => ?_⟩
+  obtain ⟨hex, hb, -, h2⟩ := tableOf_orbits hM
+  rw [Function.comp_apply, hspec _ hex hb, ← not_infinite_iff_finite, h2, not_not]
 
 /-! ## 4. Totality: Theorem C(1) and its arithmetic strength, given a totality family -/
 
