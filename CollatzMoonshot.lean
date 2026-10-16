@@ -171,3 +171,5 @@ import CollatzMoonshot.Literature.TerrasParity
 import CollatzMoonshot.Literature.AmusicalCycles
 import CollatzMoonshot.Literature.LocalRank
 import CollatzMoonshot.Maze
+import CollatzMoonshot.CounterMachine
+import CollatzMoonshot.CounterMachineUniversal
