@@ -1563,11 +1563,6 @@ theorem isOrbitMinP_iff (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     · rw [h]
     · exact (isEntryP_lt_of_mem_orbit hr he hy h).le
 
-/-- **(ratified, partner conclusion).** -/
-theorem wqpPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
-    InfinitelyManyInfiniteOrbits (wqpPerm r hr) := by
-  sorry
-
 /-- `A′(X) = #{k ≥ 1 : ⌊kβ⌋ ≤ X odd}`. -/
 def countAP (r X : ℕ) : ℕ :=
   ((Finset.Icc 1 X).filter fun k : ℕ => wqp r (2 * k) ≤ X ∧ wqp r (2 * k) % 2 = 1).card
@@ -1734,6 +1729,86 @@ lemma countBP_eq_evenCount (hr : 2 ≤ r) (X : ℕ) :
   · rintro ⟨⟨h1, -⟩, h3, h4⟩; exact ⟨⟨h1, h3⟩, h4⟩
   · rintro ⟨⟨h1, h3⟩, h4⟩
     exact ⟨⟨h1, by nlinarith⟩, h3, h4⟩
+
+/-- There are `⌊(X + 1)/2⌋` odd integers in `[1, X]`. -/
+lemma card_filter_odd (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun y => y % 2 = 1).card = (X + 1) / 2 := by
+  rw [show (X + 1) / 2 = (Finset.Icc 1 ((X + 1) / 2)).card by simp]
+  symm
+  apply Finset.card_nbij (fun j : ℕ => 2 * (j : ℤ) - 1)
+  · intro j hj
+    simp only [Finset.coe_Icc, Set.mem_Icc, Finset.coe_filter, Finset.mem_Icc,
+      Set.mem_ofPred_eq] at hj ⊢
+    omega
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    refine ⟨((y + 1) / 2).toNat, ?_, ?_⟩
+    · simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+    · simp only; omega
+
+/-- `A′(X) ≥ ⌊(X + 1)/2⌋ − ⌊X/(4r − 2)⌋`. -/
+lemma countAP_ge (hr : 2 ≤ r) (X : ℕ) : (X + 1) / 2 ≤ countAP r X + X / (4 * r - 2) := by
+  classical
+  rw [countAP_eq hr X, ← card_filter_odd X]
+  refine (Finset.card_le_card ?_).trans ((Finset.card_union_le _ _).trans
+    (Nat.add_le_add_left (card_even_branch_le hr X) _))
+  intro y hy
+  simp only [Finset.mem_filter, Finset.mem_union] at hy ⊢
+  obtain ⟨n, hn⟩ := (wqp_bijective hr).2 y
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, n = 2 * k ∨ n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  · exact Or.inl ⟨hy.1, hy.2, k, hn⟩
+  · refine Or.inr ⟨hy.1, k, ?_⟩
+    rw [← hn, wqp_two_mul_sub_one, wq_two_mul]
+
+/-- `B′(X) ≤ ⌊(X + 1)/2r⌋`. -/
+lemma countBP_le (hr : 2 ≤ r) (X : ℕ) : countBP r X ≤ (X + 1) / (2 * r) := by
+  unfold countBP
+  calc _ ≤ (Finset.Icc 1 ((X + 1) / (2 * r))).card := by
+          apply Finset.card_le_card
+          intro j hj
+          simp only [Finset.mem_filter, Finset.mem_Icc] at hj ⊢
+          refine ⟨hj.1.1, (Nat.le_div_iff_mul_le (by omega)).2 ?_⟩
+          have h := hj.2.1
+          have : ((j * (2 * r) : ℕ) : ℤ) ≤ ((X + 1 : ℕ) : ℤ) := by push_cast; linarith
+          exact_mod_cast this
+    _ = (X + 1) / (2 * r) := by simp
+
+/-- **(ratified, partner conclusion).** -/
+theorem wqpPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
+    InfinitelyManyInfiniteOrbits (wqpPerm r hr) := by
+  have hE : {y | IsEntryP r y}.Infinite := by
+    intro hfin
+    obtain ⟨B, hB⟩ := hfin.bddAbove
+    set N := B.toNat + 2 with hN
+    have hle : minCountP r hr (12 * N) ≤ B.toNat := by
+      classical
+      unfold minCountP
+      calc _ ≤ (Finset.Icc (1 : ℤ) B.toNat).card := by
+              apply Finset.card_le_card
+              intro x hx
+              simp only [Finset.mem_filter, Finset.mem_Icc] at hx ⊢
+              obtain ⟨⟨h1, h2⟩, h3⟩ := hx
+              have := hB ((isOrbitMinP_iff hr (by omega)).1 h3)
+              omega
+        _ = B.toNat := by simp; omega
+    have e := minCountP_add_countBP hr (12 * N)
+    have hA := countAP_ge hr (12 * N)
+    have hB' := countBP_le hr (12 * N)
+    have d1 : 12 * N / (4 * r - 2) ≤ 12 * N / 6 := Nat.div_le_div_left (by omega) (by norm_num)
+    have d2 : (12 * N + 1) / (2 * r) ≤ (12 * N + 1) / 4 :=
+      Nat.div_le_div_left (by omega) (by norm_num)
+    omega
+  have hinj : Set.InjOn (permOrbit (wqpPerm r hr)) {y | IsEntryP r y} := by
+    intro a ha b hb hab
+    have h1 := (isOrbitMinP_iff hr ha.1).2 ha b (by rw [hab]; exact mem_permOrbit_self b)
+    have h2 := (isOrbitMinP_iff hr hb.1).2 hb a (by rw [← hab]; exact mem_permOrbit_self a)
+    exact le_antisymm h1 h2
+  refine (hE.image hinj).mono ?_
+  rintro _ ⟨e, he, rfl⟩
+  exact ⟨e, he.1.le, rfl, permOrbit_wqpPerm_infinite hr he.1⟩
 
 /-- **(ratified, partner density, conditional on equidistribution).**  Same `d_r`:
 `⌊kβ⌋ = 2rk − sfl − 1` is odd iff `sfl r k` is even. -/

@@ -2,13 +2,13 @@
 
 Kickoff: `KICKOFF-2026-10-16-wythoff-thmF.md`.  Branch `wip/wythoff-thmF`.
 
-## Status (2026-10-16)
+## Status (2026-10-16) — COMPLETE
 
-Proved: §1 (bridges), §2 (bijectivity, positivity), §3 (Theorem D, partner D, step bounds),
-§4 (Theorem F classification for `W`), §5 exact count `minCount_add_countB`, `minCount_ge`,
-`minCount_le`, and `wqPerm_infinitelyManyInfiniteOrbits`.
-
-Open: `tendsto_minCount` (density, conditional on `SflOddDensityHalf`), and all of §6 (partner).
+`CollatzMoonshot/WythoffQuadratic.lean` is sorry-free; all 51 ratified statements proved.
+`#print axioms` on the headlines: `propext, Classical.choice, Quot.sound` only.  The ratified
+statement texts were checked unchanged against `04d9e26` (script diff of every declaration
+header and every ratified `def`).  `SflOddDensityHalf` stays a hypothesis of the two density
+theorems, as ratified.
 
 ## Decisions
 
@@ -29,11 +29,16 @@ Open: `tendsto_minCount` (density, conditional on `SflOddDensityHalf`), and all 
   bind mount).  Confirm green with a direct `lake build CollatzMoonshot.WythoffQuadratic`,
   then commit with `--no-verify` and say so in the message.
 
-## Next
+## Structure of the remaining proofs
 
-1. §6 partner: `wqp_skel` (E = odds; `up` = `wqp_bounds`.2.2, `twoStep` = `wqp_wqp_of_even`,
-   `down` = `wqp_bounds`.2.1), `isEntryP_iff` mirror, count `minCountP_add_countBP` mirror.
-2. Density `tendsto_minCount`, `tendsto_minCountP`.
+- Density: `countA = oddCount(⌊(X + 1)/β⌋)` exactly (`W(2j − 1) ≤ X ⇔ jβ ≤ X + 1`, ceiling
+  form), `countB = oddCount(⌊X/2r⌋)`; partner `countAP = evenCount(⌊(X + 1)/β⌋)`,
+  `countBP = evenCount(⌊(X + 1)/2r⌋)`.  Generic `tendsto_ratio_of_bounds` (squeeze) and
+  `tendsto_comp_ratio` (density along a linearly growing count); `density_value` closes the
+  constant via `1/β = (2r + 2√m)/(4r)`.
+- Both `…_infinitelyManyInfiniteOrbits` were moved (statements unchanged) below the counting
+  lemmas they use; the partner one uses the unratified helper bounds `countAP_ge`,
+  `countBP_le`.
 
 Scratch tool: `tmp/thmF/fill.py <patch.py>` replaces `  sorry` bodies by name and inserts
 helpers before a named theorem.
