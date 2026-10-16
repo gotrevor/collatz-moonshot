@@ -1983,3 +1983,61 @@ Reports: `wythoff-evenp.md`, `wythoff-2sqrtm.md`.
   the density ordering `c_M⁻ < c(r) < c_M⁺`; residue-transitivity at every modulus; the 2-adic
   criterion at all word lengths; a parity-preserving `W³ = r·n` (e.g. the cubic `α = 2∛2`) for
   more Theorem F members.
+
+## 60. The Wythoff family's 2-adic criterion, and a two-parameter solved family (2026-10-16, two Opus agents; Ren checked in part)
+
+Reports: `wythoff-2adic.md`, `wythoff-solvable.md`.  Notation: `x = α/2`, `y = β/2`.
+
+* **The 2-adic criterion, corrected (95%).**  The forward parity itinerary of `W_α` (irrational `α`)
+  is i.i.d. at every depth iff `x` is *not* integral over `ℤ_(2)`, i.e. `x` is transcendental or
+  its minimal polynomial has a coefficient with even denominator.  The mechanism is a fresh-digit
+  lemma: step `j` is a fair coin given the past iff the prefix slope `Λ_j` lies outside the
+  `ℤ_(2)`-span of `1, Λ_1, …, Λ_{j−1}` (Pontryagin duality on the hull `ℤ/M × T^d`).  The "if"
+  direction is one valuation line: at a prime over 2 where `v(x) < 0`, also `v(y) < 0` (Ren
+  checked the three cases), so the `v(Λ_j)` strictly decrease.  §59's wording (some composite
+  slope rational with odd denominator) is sufficient but not necessary: `α = 1 + √5` has no
+  rational composite, yet on even-even steps `W²(n) = W(n) + n − 1`, so `P(E | EE) = 0`.
+* **"Only if".**  At depth 2 for every `α` (97%), with a closed form; for quadratic `α` the full
+  iff (i.i.d. ⟺ `Tr x` or `N x` has even denominator), reproducing the third-parity law of §59 and
+  2√2's `P(E | OE) = 1 − 1/(4 − √2) = 0.61327`.  For degree `D ≥ 3` a defect always sits at step
+  `D` of `E^D`; it is proved `≠ ½` for `2∛2` and the plastic member, CONJ 90% in general.  The
+  backward and joint laws carry no new arithmetic: a transfer lemma writes them through forward
+  cylinder densities.  `U` (`x = 3/2`, `v₂ = −1`) is in the free class at every depth; these are
+  natural-density statistics and do not see the orbit of 8.
+* **Theorem K, an even trap (Ren checked).**  If `x² = bx + c` with `b, c ∈ ℤ` and conjugate
+  `x′ ∈ (0, 1)` (`1 ≤ −c ≤ b − 2`), then on even-even steps `W²(n) = b·W(n) + c·n` exactly
+  (`2lx = b·W(n) + c·n + {kα}x′`), so two consecutive evens stay even forever and there are at
+  least `(¼)(1 − 2/α)X` infinite orbits meeting `[1, X]`; the measured entry density sits on
+  that bound (`3 + √5`, `4 + 2√3`).  Ren's `thmK.py`: 0 failures on five members; teeth `x′ < 0`
+  and `x′ > 1` fail.
+* **Theorem G: Theorem F is one row of a solved family (97%, Ren checked the identity).**  For
+  `m ≥ 0`, `r ≥ 2`, let `x ∈ (½, ¾)` be the root of `x^{m+1} − 2rx + r`, `β = 2x`,
+  `α = 2x/(2x − 1)`.  The slope of the word `E Oᵐ` is `x^{m+1}/(2x − 1) = r`, and the floor error
+  stays below 1, so `W^{m+1}(n) = r·n` on that word; odd runs after an even point have length
+  `≤ m`.  So `{1}` is the only finite orbit, every other orbit runs to `∞` both ways, the minimum
+  is the even `y` with `m + 1` odd predecessors, and the minima have density
+  `(α − 2)/(2αβᵐ)`; the mirror has no finite orbit, same density.  Row `m = 0` is Theorems E and
+  E′, row `m = 1` is Theorem F.  Ren's `thmGY.py`: 0 identity failures on `(m, r) = (1, 2)`,
+  `(2, 2)`, `(2, 3)`, `(3, 2)` (`α` up to 28.8), runs bounded by `m`; teeth `r + 1` fails.
+* **Theorem Y, a sporadic cubic (95%, Ren checked).**  `x³ + x² + 3x − 2 = 0`, `α ≈ 20.2623`.  No
+  composite slope is an integer; instead on `E O³` the exact recurrence
+  `W⁴(n) = 4n + W³(n) − W²(n)` holds, which is even, and the same classification follows.  Minima
+  density `3/10 + x/8 + x²/10 ≈ 0.393408`; Ren measured 0.39335 at `2·10⁴`.
+* **The engine is a monotone-potential lemma (Lemma P, 100%).**  If points off `S` strictly
+  decrease (fixed points aside) and the first return to `S` strictly increases within bounded
+  time, then the finite orbits are the fixed points, every other orbit is bi-infinite and runs to
+  `∞`, and the minima are the points of `S` not in the return image.  For `W_α` with `α > 2`,
+  `S` must be the evens, and the hypotheses hold iff odd runs after an even point are bounded by
+  some `J` whose word slope exceeds 1.  For algebraic-integer `x` this reduces to a finite
+  piecewise-affine phase automaton (90%).  Exact scans (about 280,000 roots: quadratics to height
+  30, cubics to 9, monic quartics to 12, monic quintics to 5) find exactly the G members, Y and
+  their mirrors (CONJ 60%: the rest is a finite sporadic set; CONJ 75%: solvable ⇒ `x` an
+  algebraic integer).
+* **The `r = 1` edge.**  The multinacci members (`x = 1/ψ_m`) have every point of `E Oᵐ` on an
+  `(m + 1)`-cycle: infinitely many cycles.  At `α = 3 + √5` the set `{2k : {kφ} < ½}` is a
+  W-invariant trap cut out by a Bohr set rather than a residue class; cycle minima have density
+  `¼`, infinite-orbit minima `1/(4φ)`.
+* **Near `U`.**  On `2 < α < 3 + √5` every irrational member fails Lemma P's hypotheses (85%); the
+  only solvable member there is the rational `α = 4`.  `2∛2` is only approximate (`W³ = 2n − c`,
+  `c ∈ {1, 2, 3}` on `EEE`, but the first return to the evens fails monotonicity at 25% of
+  evens).  Nothing here bears on (a) (under 1%).
