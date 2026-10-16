@@ -18,9 +18,16 @@ Branch `wip/rcwa-sameorbit-2`.  Target: every `sorry` in `CollatzMoonshot/RcwaSa
   `Good.diverges_iff`, `Good.noBiInfinite`, `Good.endToStart`.
   Axioms: `propext, Classical.choice, Quot.sound`.
 
+- `isHighway_highwayAt`: `line_of_modEq` (line periodic mod `hwModulus`) from
+  `isSource_congr` (being a source depends only on the state and `min cᵢ 2`) and
+  `min_padicValInt_eq` (valuations capped at `K` agree mod `p^K`).  `highwayAt` also elaborates
+  `List.range` through a bind; `highwayAt_eq` normalizes it.
+- `isRcwa23At_sigma`: three cases on the class of `r` mod `3^N L` (`decode_class`: engine
+  membership, phase and zero pattern constant): a rule piece (`scale_spec`, `b = 0`), a highway
+  step (`hwNext_affine`), and highway ∘ `τ` (`τ n · 3^{E⁻} = n · 3^{E⁺}`; the `3^N` factor makes
+  the class of `τ n` mod `L` constant).
+- Layer 5: `good_of_valid`, `tableOf_spec`, `not_computable_sameCycle` (uses `computable_reduce`).
+
 ## Open
 
-- `isHighway_highwayAt` (periodicity of the line mod `hwModulus`).
-- `isRcwa23At_sigma`.
-- `good_of_valid`, `tableOf_spec` (Layer 5, need the two above).
-- `computable_reduce` (largest), `not_computable_sameCycle`.
+- `computable_reduce` only.
