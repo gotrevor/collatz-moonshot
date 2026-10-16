@@ -1281,6 +1281,145 @@ def SflOddDensityHalf (r : ℕ) : Prop :=
   Tendsto (fun N : ℕ => (((Finset.Icc 1 N).filter fun k : ℕ => sfl r k % 2 = 1).card : ℝ) / N)
     atTop (𝓝 (1 / 2))
 
+/-- A count `g X` pinned between `(X + a)/c − 1` and `(X + a)/c` tends to `∞` and has
+`g X / X → 1/c`. -/
+lemma tendsto_ratio_of_bounds {g : ℕ → ℕ} {a c : ℝ} (hc : 0 < c)
+    (hlo : ∀ X : ℕ, ((X : ℝ) + a) / c ≤ g X + 1) (hhi : ∀ X : ℕ, (g X : ℝ) ≤ ((X : ℝ) + a) / c) :
+    Tendsto g atTop atTop ∧ Tendsto (fun X : ℕ => (g X : ℝ) / X) atTop (𝓝 (1 / c)) := by
+  constructor
+  · have h1 : Tendsto (fun X : ℕ => ((X : ℝ) + a) / c) atTop atTop :=
+      (tendsto_atTop_add_const_right _ a tendsto_natCast_atTop_atTop).atTop_div_const hc
+    have h2 : Tendsto (fun X : ℕ => (g X : ℝ) + 1) atTop atTop := tendsto_atTop_mono hlo h1
+    have h3 := tendsto_atTop_add_const_right _ (-1) h2
+    simp only [add_neg_cancel_right] at h3
+    exact tendsto_natCast_atTop_iff.1 h3
+  · have hz : Tendsto (fun n : ℕ => 1 / (n : ℝ)) atTop (𝓝 0) :=
+      tendsto_one_div_atTop_nhds_zero_nat
+    have hl : Tendsto (fun X : ℕ => 1 / c + (a / c - 1) * (1 / (X : ℝ))) atTop (𝓝 (1 / c)) := by
+      have := (tendsto_const_nhds (x := 1 / c)).add (hz.const_mul (a / c - 1))
+      rwa [mul_zero, add_zero] at this
+    have hu : Tendsto (fun X : ℕ => 1 / c + a / c * (1 / (X : ℝ))) atTop (𝓝 (1 / c)) := by
+      have := (tendsto_const_nhds (x := 1 / c)).add (hz.const_mul (a / c))
+      rwa [mul_zero, add_zero] at this
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hl hu ?_ ?_
+    · filter_upwards [eventually_ge_atTop 1] with X hX
+      have hX' : (0 : ℝ) < X := by exact_mod_cast hX
+      rw [le_div_iff₀ hX']
+      have e : (1 / c + (a / c - 1) * (1 / (X : ℝ))) * X = ((X : ℝ) + a) / c - 1 := by
+        field_simp; ring
+      rw [e]; linarith [hlo X]
+    · filter_upwards [eventually_ge_atTop 1] with X hX
+      have hX' : (0 : ℝ) < X := by exact_mod_cast hX
+      rw [div_le_iff₀ hX']
+      have e : (1 / c + a / c * (1 / (X : ℝ))) * X = ((X : ℝ) + a) / c := by
+        field_simp
+      rw [e]; exact hhi X
+
+/-- Composing a density with a count of linear growth. -/
+lemma tendsto_comp_ratio {F g : ℕ → ℕ} {d c : ℝ}
+    (hF : Tendsto (fun N : ℕ => (F N : ℝ) / N) atTop (𝓝 d)) (hg : Tendsto g atTop atTop)
+    (hgc : Tendsto (fun X : ℕ => (g X : ℝ) / X) atTop (𝓝 c)) :
+    Tendsto (fun X : ℕ => (F (g X) : ℝ) / X) atTop (𝓝 (d * c)) := by
+  refine ((hF.comp hg).mul hgc).congr' ?_
+  filter_upwards [hg.eventually_ge_atTop 1, eventually_ge_atTop 1] with X h1 h2
+  have h1' : (g X : ℝ) ≠ 0 := by positivity
+  simp only [Function.comp]
+  field_simp
+
+/-- Real bounds for natural division. -/
+lemma natDiv_bounds (n d : ℕ) (hd : 0 < d) :
+    ((n / d : ℕ) : ℝ) ≤ (n : ℝ) / d ∧ (n : ℝ) / d ≤ ((n / d : ℕ) : ℝ) + 1 := by
+  refine ⟨Nat.cast_div_le, ?_⟩
+  have h := Nat.lt_mul_div_succ n hd
+  have hd' : (0 : ℝ) < d := by exact_mod_cast hd
+  rw [div_le_iff₀ hd']
+  have : (n : ℝ) < d * ((n / d : ℕ) + 1 : ℕ) := by exact_mod_cast h
+  push_cast at this
+  linarith
+
+/-- `#{k ∈ [1, N] : sfl r k odd}`. -/
+def oddCount (r N : ℕ) : ℕ :=
+  ((Finset.Icc 1 N).filter fun k : ℕ => sfl r k % 2 = 1).card
+
+/-- `W(2j − 1) ≤ X ⇔ jβ ≤ X + 1`. -/
+lemma wq_odd_le_iff (hr : 2 ≤ r) (j X : ℤ) :
+    wq r (2 * j - 1) ≤ X ↔ (j : ℝ) * betaQ r ≤ X + 1 := by
+  rw [wq_two_mul_sub_one_eq_ceil hr, show ((X : ℝ) + 1) = ((X + 1 : ℤ) : ℝ) by push_cast; ring,
+    ← Int.ceil_le]
+  omega
+
+/-- The number `J(X) = ⌊(X + 1)/β⌋` of `j ≥ 1` with `W(2j − 1) ≤ X`. -/
+lemma le_floor_iff_wq (hr : 2 ≤ r) (j X : ℕ) :
+    j ≤ ⌊((X : ℝ) + 1) / betaQ r⌋₊ ↔ wq r (2 * j - 1) ≤ X := by
+  have hβ := (one_lt_betaQ_lt hr).1
+  rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith), wq_odd_le_iff hr]
+  push_cast; rfl
+
+lemma countA_eq_oddCount (hr : 2 ≤ r) (X : ℕ) :
+    countA r X = oddCount r ⌊((X : ℝ) + 1) / betaQ r⌋₊ := by
+  unfold countA oddCount
+  congr 1
+  ext j
+  simp only [Finset.mem_filter, Finset.mem_Icc, le_floor_iff_wq hr]
+  have hpar : wq r (2 * j - 1) % 2 = 0 ↔ sfl r j % 2 = 1 := by
+    rw [wq_two_mul_sub_one, show (2 : ℤ) * r * j = 2 * (r * j) by ring]; omega
+  rw [hpar]
+  constructor
+  · rintro ⟨⟨h1, -⟩, h3, h4⟩; exact ⟨⟨h1, h3⟩, h4⟩
+  · rintro ⟨⟨h1, h3⟩, h4⟩
+    have := (wq_two_mul_sub_one_bounds hr (show (1 : ℤ) ≤ j by exact_mod_cast h1)).1
+    exact ⟨⟨h1, by omega⟩, h3, h4⟩
+
+lemma countB_eq_oddCount (hr : 2 ≤ r) (X : ℕ) :
+    countB r X = oddCount r (X / (2 * r)) := by
+  unfold countB oddCount
+  congr 1
+  ext k
+  simp only [Finset.mem_filter, Finset.mem_Icc]
+  have hpar : wq r (2 * k) % 2 = 1 ↔ sfl r k % 2 = 1 := by
+    rw [wq_two_mul, show (2 : ℤ) * r * k = 2 * (r * k) by ring]; omega
+  rw [hpar, Nat.le_div_iff_mul_le (by omega)]
+  constructor
+  · rintro ⟨⟨h1, -⟩, h3, h4⟩; exact ⟨⟨h1, by linarith⟩, h4⟩
+  · rintro ⟨⟨h1, h3⟩, h4⟩
+    exact ⟨⟨h1, by nlinarith⟩, by linarith, h4⟩
+
+/-- `J(X) = ⌊(X + 1)/β⌋ ∼ X/β`. -/
+lemma tendsto_J (hr : 2 ≤ r) :
+    Tendsto (fun X : ℕ => ⌊((X : ℝ) + 1) / betaQ r⌋₊) atTop atTop ∧
+      Tendsto (fun X : ℕ => (⌊((X : ℝ) + 1) / betaQ r⌋₊ : ℝ) / X) atTop
+        (𝓝 (1 / betaQ r)) := by
+  have hβ := (one_lt_betaQ_lt hr).1
+  refine tendsto_ratio_of_bounds (by linarith) (fun X => (Nat.lt_floor_add_one _).le)
+    (fun X => Nat.floor_le (by positivity))
+
+/-- `⌊(X + a)/2r⌋ ∼ X/2r`. -/
+lemma tendsto_K (hr : 2 ≤ r) (a : ℕ) :
+    Tendsto (fun X : ℕ => (X + a) / (2 * r)) atTop atTop ∧
+      Tendsto (fun X : ℕ => (((X + a) / (2 * r) : ℕ) : ℝ) / X) atTop
+        (𝓝 (1 / (2 * (r : ℝ)))) := by
+  have hr' : (0 : ℝ) < 2 * r := by positivity
+  refine tendsto_ratio_of_bounds (a := a) hr' (fun X => ?_) (fun X => ?_)
+  · have := (natDiv_bounds (X + a) (2 * r) (by omega)).2
+    push_cast at this ⊢; exact this
+  · have := (natDiv_bounds (X + a) (2 * r) (by omega)).1
+    push_cast at this ⊢; exact this
+
+/-- The density value: `1/(2β) − 1/(4r) = (r − 1 + √(r² − r))/(4r)`. -/
+lemma density_value (hr : 2 ≤ r) :
+    1 / 2 * (1 / betaQ r) - 1 / 2 * (1 / (2 * (r : ℝ))) =
+      ((r : ℝ) - 1 + √((r : ℝ) ^ 2 - r)) / (4 * r) := by
+  have hβ := (one_lt_betaQ_lt hr).1
+  have hr2 : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hr' : (0 : ℝ) < r := by linarith
+  have h1 : 1 / betaQ r = (2 * r + 2 * √((r : ℝ) ^ 2 - r)) / (4 * r) := by
+    rw [div_eq_div_iff (by linarith) (by positivity)]
+    unfold betaQ
+    linear_combination 4 * sqrt_sq_radicand r
+  rw [h1]
+  field_simp
+  ring
+
 /-- **(ratified, Theorem F, density, conditional on equidistribution).**  The orbit minima have
 density `d_r = 1/(2β) − 1/(4r) = (r − 1 + √(r² − r))/(4r)`.  Paper proof: `⌊jβ⌋` is even iff
 `sfl r j` is odd, and `⌊kα⌋` is odd iff `sfl r k` is odd; `A(X)` counts `j ≤ J(X) ∼ X/β`,
@@ -1289,7 +1428,25 @@ density `d_r = 1/(2β) − 1/(4r) = (r − 1 + √(r² − r))/(4r)`.  Paper pro
 theorem tendsto_minCount (hr : 2 ≤ r) (h : SflOddDensityHalf r) :
     Tendsto (fun X : ℕ => (minCount r hr X : ℝ) / X) atTop
       (𝓝 (((r : ℝ) - 1 + √((r : ℝ) ^ 2 - r)) / (4 * r))) := by
-  sorry
+  obtain ⟨hJ1, hJ2⟩ := tendsto_J hr
+  obtain ⟨hK1, hK2⟩ := tendsto_K hr 0
+  simp only [add_zero] at hK1 hK2
+  have hF : Tendsto (fun N : ℕ => (oddCount r N : ℝ) / N) atTop (𝓝 (1 / 2)) := h
+  have hA := tendsto_comp_ratio hF hJ1 hJ2
+  have hB := tendsto_comp_ratio hF hK1 hK2
+  have hz : Tendsto (fun n : ℕ => 1 / (n : ℝ)) atTop (𝓝 0) :=
+    tendsto_one_div_atTop_nhds_zero_nat
+  have := (hz.add hA).sub hB
+  rw [zero_add, density_value hr] at this
+  refine this.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with X hX
+  have e := minCount_add_countB hr hX
+  rw [countA_eq_oddCount hr, countB_eq_oddCount hr] at e
+  have e' : (minCount r hr X : ℝ) = 1 + oddCount r ⌊((X : ℝ) + 1) / betaQ r⌋₊ -
+      oddCount r (X / (2 * r)) := by
+    have := congrArg (fun n : ℕ => (n : ℝ)) e; push_cast at this; linarith
+  rw [e']
+  ring
 
 end Count
 
@@ -1525,12 +1682,91 @@ theorem minCountP_add_countBP (hr : 2 ≤ r) (X : ℕ) :
   rw [← hsplitA, e1, e3]
   ring
 
+/-- `#{k ∈ [1, N] : sfl r k even}`. -/
+def evenCount (r N : ℕ) : ℕ :=
+  ((Finset.Icc 1 N).filter fun k : ℕ => sfl r k % 2 = 0).card
+
+lemma evenCount_add_oddCount (r N : ℕ) : evenCount r N + oddCount r N = N := by
+  unfold evenCount oddCount
+  have := Finset.card_filter_add_card_filter_not (s := Finset.Icc 1 N)
+    (fun k : ℕ => sfl r k % 2 = 0)
+  rw [Nat.card_Icc, Nat.add_sub_cancel] at this
+  have e : ((Finset.Icc 1 N).filter fun k : ℕ => ¬sfl r k % 2 = 0) =
+      (Finset.Icc 1 N).filter fun k : ℕ => sfl r k % 2 = 1 := by
+    ext k
+    simp only [Finset.mem_filter, Finset.mem_Icc]
+    omega
+  rw [e] at this
+  exact this
+
+lemma countAP_eq_evenCount (hr : 2 ≤ r) (X : ℕ) :
+    countAP r X = evenCount r ⌊((X : ℝ) + 1) / betaQ r⌋₊ := by
+  unfold countAP evenCount
+  congr 1
+  ext k
+  simp only [Finset.mem_filter, Finset.mem_Icc, le_floor_iff_wq hr]
+  have hw : wqp r (2 * k) = wq r (2 * k - 1) := by rw [wqp_two_mul, wq_two_mul_sub_one]
+  have hpar : wqp r (2 * k) % 2 = 1 ↔ sfl r k % 2 = 0 := by
+    rw [wqp_two_mul, show (2 : ℤ) * r * k = 2 * (r * k) by ring]; omega
+  rw [hpar, hw]
+  constructor
+  · rintro ⟨⟨h1, -⟩, h3, h4⟩; exact ⟨⟨h1, h3⟩, h4⟩
+  · rintro ⟨⟨h1, h3⟩, h4⟩
+    have := (wq_two_mul_sub_one_bounds hr (show (1 : ℤ) ≤ k by exact_mod_cast h1)).1
+    exact ⟨⟨h1, by omega⟩, h3, h4⟩
+
+lemma countBP_eq_evenCount (hr : 2 ≤ r) (X : ℕ) :
+    countBP r X = evenCount r ((X + 1) / (2 * r)) := by
+  unfold countBP evenCount
+  congr 1
+  ext j
+  simp only [Finset.mem_filter, Finset.mem_Icc]
+  have hpar : wqp r (2 * j - 1) % 2 = 0 ↔ sfl r j % 2 = 0 := by
+    rw [wqp_two_mul_sub_one, show (2 : ℤ) * r * j = 2 * (r * j) by ring]; omega
+  have hle : 2 * (r : ℤ) * j - 1 ≤ X ↔ j * (2 * r) ≤ X + 1 := by
+    constructor
+    · intro h; have : ((j * (2 * r) : ℕ) : ℤ) ≤ ((X + 1 : ℕ) : ℤ) := by push_cast; linarith
+      exact_mod_cast this
+    · intro h; have : ((j * (2 * r) : ℕ) : ℤ) ≤ ((X + 1 : ℕ) : ℤ) := by exact_mod_cast h
+      push_cast at this; linarith
+  rw [hpar, hle, Nat.le_div_iff_mul_le (by omega)]
+  constructor
+  · rintro ⟨⟨h1, -⟩, h3, h4⟩; exact ⟨⟨h1, h3⟩, h4⟩
+  · rintro ⟨⟨h1, h3⟩, h4⟩
+    exact ⟨⟨h1, by nlinarith⟩, h3, h4⟩
+
 /-- **(ratified, partner density, conditional on equidistribution).**  Same `d_r`:
 `⌊kβ⌋ = 2rk − sfl − 1` is odd iff `sfl r k` is even. -/
 theorem tendsto_minCountP (hr : 2 ≤ r) (h : SflOddDensityHalf r) :
     Tendsto (fun X : ℕ => (minCountP r hr X : ℝ) / X) atTop
       (𝓝 (((r : ℝ) - 1 + √((r : ℝ) ^ 2 - r)) / (4 * r))) := by
-  sorry
+  obtain ⟨hJ1, hJ2⟩ := tendsto_J hr
+  obtain ⟨hK1, hK2⟩ := tendsto_K hr 1
+  have hF : Tendsto (fun N : ℕ => (oddCount r N : ℝ) / N) atTop (𝓝 (1 / 2)) := h
+  have hG : Tendsto (fun N : ℕ => (evenCount r N : ℝ) / N) atTop (𝓝 (1 / 2)) := by
+    have := (tendsto_const_nhds (x := (1 : ℝ))).sub hF
+    rw [show (1 : ℝ) - 1 / 2 = 1 / 2 by norm_num] at this
+    refine this.congr' ?_
+    filter_upwards [eventually_ge_atTop 1] with N hN
+    have hN' : (N : ℝ) ≠ 0 := by positivity
+    have e := evenCount_add_oddCount r N
+    have e' : (evenCount r N : ℝ) = N - oddCount r N := by
+      have := congrArg (fun n : ℕ => (n : ℝ)) e; push_cast at this; linarith
+    rw [e']
+    field_simp
+  have hA := tendsto_comp_ratio hG hJ1 hJ2
+  have hB := tendsto_comp_ratio hG hK1 hK2
+  have := hA.sub hB
+  rw [density_value hr] at this
+  refine this.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with X hX
+  have e := minCountP_add_countBP hr X
+  rw [countAP_eq_evenCount hr, countBP_eq_evenCount hr] at e
+  have e' : (minCountP r hr X : ℝ) = evenCount r ⌊((X : ℝ) + 1) / betaQ r⌋₊ -
+      evenCount r ((X + 1) / (2 * r)) := by
+    have := congrArg (fun n : ℕ => (n : ℝ)) e; push_cast at this; linarith
+  rw [e']
+  ring
 
 end Partner
 
