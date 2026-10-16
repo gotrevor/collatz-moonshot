@@ -173,3 +173,4 @@ import CollatzMoonshot.Literature.LocalRank
 import CollatzMoonshot.Maze
 import CollatzMoonshot.CounterMachine
 import CollatzMoonshot.CounterMachineUniversal
+import CollatzMoonshot.RcwaHalting
