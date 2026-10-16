@@ -437,58 +437,260 @@ section Classification
 
 variable {m r : ℕ}
 
+lemma gPerm_pow_apply (hr : 2 ≤ r) (n : ℕ) (x : ℤ) :
+    (gPerm m r hr ^ n) x = (wy (alphaG m r))^[n] x := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+lemma gmPerm_pow_apply (hr : 2 ≤ r) (n : ℕ) (x : ℤ) :
+    (gmPerm m r hr ^ n) x = (wy (betaG m r))^[n] x := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+/-- The first return of a positive even `s` to the evens: word `E Oʲ`, `j ≤ m`, landing
+`≥ r·s`. -/
+lemma gPerm_first_even (hr : 2 ≤ r) {s : ℤ} (hs0 : 0 < s) (hs : s % 2 = 0) :
+    ∃ j ≤ m, (wy (alphaG m r))^[j + 1] s % 2 = 0 ∧
+      (∀ i : ℕ, 1 ≤ i → i ≤ j → (wy (alphaG m r))^[i] s % 2 = 1) ∧
+      r * s ≤ (wy (alphaG m r))^[j + 1] s := by
+  classical
+  have hex := exists_even_iterate (m := m) hr hs
+  obtain ⟨hjm, hje⟩ := Nat.find_spec hex
+  have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ Nat.find hex → (wy (alphaG m r))^[i] s % 2 = 1 := by
+    intro i hi1 hi2
+    have h' : ¬ (i - 1 ≤ m ∧ (wy (alphaG m r))^[i - 1 + 1] s % 2 = 0) :=
+      Nat.find_min hex (by omega)
+    rw [show i - 1 + 1 = i by omega] at h'
+    have : ¬ (wy (alphaG m r))^[i] s % 2 = 0 := fun h => h' ⟨by omega, h⟩
+    omega
+  exact ⟨_, hjm, hje, hodd, le_wy_iterate_of_odd_run hr hs0 hs hjm hodd⟩
+
+lemma gPerm_fix (hr : 2 ≤ r) : ∀ z ∈ ({1} : Set ℤ), gPerm m r hr z = z := by
+  intro z hz
+  rw [Set.mem_singleton_iff] at hz
+  subst hz
+  rw [gPerm_apply]
+  exact wy_one (by linarith [four_le_alphaG (m := m) hr])
+
+lemma setCount_one {X : ℕ} (hX : 1 ≤ X) : setCount {1} X = 1 := by
+  classical
+  unfold setCount
+  rw [Finset.card_eq_one]
+  refine ⟨1, ?_⟩
+  ext y
+  simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_singleton_iff, Finset.mem_singleton]
+  constructor
+  · rintro ⟨-, h⟩; exact h
+  · rintro rfl; exact ⟨⟨le_rfl, by exact_mod_cast hX⟩, rfl⟩
+
+/-- There are `⌊X/2⌋` even integers in `[1, X]`. -/
+lemma card_filter_even (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun y => y % 2 = 0).card = X / 2 := by
+  rw [show X / 2 = (Finset.Icc 1 (X / 2)).card by simp]
+  symm
+  apply Finset.card_nbij (fun j : ℕ => 2 * (j : ℤ))
+  · intro j hj
+    simp only [Finset.coe_Icc, Set.mem_Icc, Finset.coe_filter, Finset.mem_Icc,
+      Set.mem_ofPred_eq] at hj ⊢
+    omega
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    refine ⟨(y / 2).toNat, ?_, ?_⟩
+    · simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+    · simp only; omega
+
+/-- There are `⌈X/2⌉` odd integers in `[1, X]`. -/
+lemma card_filter_odd (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun y => y % 2 = 1).card = (X + 1) / 2 := by
+  rw [show (X + 1) / 2 = (Finset.Icc 1 ((X + 1) / 2)).card by simp]
+  symm
+  apply Finset.card_nbij (fun j : ℕ => 2 * (j : ℤ) - 1)
+  · intro j hj
+    simp only [Finset.coe_Icc, Set.mem_Icc, Finset.coe_filter, Finset.mem_Icc,
+      Set.mem_ofPred_eq] at hj ⊢
+    omega
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro y hy
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hy
+    refine ⟨((y + 1) / 2).toNat, ?_, ?_⟩
+    · simp only [Finset.coe_Icc, Set.mem_Icc]; omega
+    · simp only; omega
+
+lemma setCount_evens (X : ℕ) : setCount ({n : ℤ | n % 2 = 0} \ {1}) X = X / 2 := by
+  classical
+  unfold setCount
+  rw [← card_filter_even X]
+  congr 1
+  ext y
+  simp only [Finset.mem_filter, Set.mem_sdiff, Set.mem_ofPred_eq, Set.mem_singleton_iff]
+  constructor
+  · rintro ⟨h1, h2, -⟩; exact ⟨h1, h2⟩
+  · rintro ⟨h1, h2⟩; exact ⟨h1, h2, by omega⟩
+
+lemma setCount_odds (X : ℕ) : setCount ({n : ℤ | n % 2 = 1} \ ∅) X = (X + 1) / 2 := by
+  classical
+  unfold setCount
+  rw [← card_filter_odd X]
+  congr 1
+  ext y
+  simp only [Finset.mem_filter, Set.mem_sdiff, Set.mem_ofPred_eq, Set.notMem_empty,
+    not_false_eq_true, and_true]
+
+lemma setCount_empty (X : ℕ) : setCount (∅ : Set ℤ) X = 0 := by
+  classical
+  unfold setCount
+  simp
+
 /-- **(ratified, Theorem G (2)).**  Lemma P applies with `S` = evens, `Φ = {1}`, `T = m + 1`.
 Paper proof: `pos_iff` is `wy_pos_iff`; `W(1) = 1` (`wy_one`); (H1) is `wy_lt_of_odd`
 (`α ≥ 4`); (H2): by `exists_even_iterate` the first return word is `E Oʲ` with `j ≤ m`, and
 `R(s) ≥ r·s > s` by `le_wy_iterate_of_odd_run`. -/
 theorem hyp_gPerm (hr : 2 ≤ r) : Hyp (gPerm m r hr) {n | n % 2 = 0} {1} (m + 1) := by
-  sorry
+  have h4 := four_le_alphaG (m := m) hr
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  refine ⟨fun n => ?_, fun z => ?_, fun z hz hzS hzF => ?_, fun s hs hs0 hsF => ?_⟩
+  · exact wy_pos_iff (one_lt_alphaG hr) n
+  · simp only [Set.mem_singleton_iff, gPerm_apply]
+    have h1 : wy (alphaG m r) 1 = 1 := wy_one (by linarith)
+    constructor
+    · intro h; exact (wy_bijective (one_lt_alphaG hr)).1 (h.trans h1.symm)
+    · rintro rfl; exact h1
+  · simp only [Set.mem_ofPred_eq, Set.mem_singleton_iff] at hzS hzF
+    rw [gPerm_apply]
+    exact wy_lt_of_odd (by linarith) (by omega) (by omega)
+  · have hs' : s % 2 = 0 := hs
+    obtain ⟨j, hjm, hje, hodd, hge⟩ := gPerm_first_even (m := m) hr hs0 hs'
+    refine ⟨j + 1, by omega, by omega, ?_, ?_, ?_⟩
+    · rw [gPerm_pow_apply]; exact hje
+    · rw [gPerm_pow_apply]; nlinarith
+    · intro i hi1 hi2
+      rw [gPerm_pow_apply]
+      have := hodd i hi1 (by omega)
+      simp only [Set.mem_ofPred_eq]
+      omega
 
 /-- **(ratified).**  The first return to the evens at least multiplies by `r`. -/
 theorem returnMap_gPerm_ge (hr : 2 ≤ r) {s : ℤ} (hs0 : 0 < s) (hs : s % 2 = 0) :
     r * s ≤ returnMap (gPerm m r hr) {n | n % 2 = 0} s := by
-  sorry
+  obtain ⟨j, hjm, hje, hodd, hge⟩ := gPerm_first_even (m := m) hr hs0 hs
+  have hrt : returnTime (gPerm m r hr) {n | n % 2 = 0} s = j + 1 := by
+    apply returnTime_eq (by omega)
+    · rw [gPerm_pow_apply]; exact hje
+    · intro i hi0 hi
+      rw [gPerm_pow_apply]
+      have := hodd i hi0 (by omega)
+      simp only [Set.mem_ofPred_eq]
+      omega
+  rw [returnMap, hrt, gPerm_pow_apply]
+  exact hge
 
 /-- **(ratified, Theorem G (2)).**  `{1}` is the only finite orbit in `ℕ⁺`. -/
 theorem permOrbit_gPerm_finite_iff (hr : 2 ≤ r) {x : ℤ} (hx : 0 < x) :
     (permOrbit (gPerm m r hr) x).Finite ↔ x = 1 := by
-  sorry
+  rw [permOrbit_finite_iff (hyp_gPerm hr) (gPerm_fix hr) hx, Set.mem_singleton_iff]
 
 /-- **(ratified, Theorem G (2), forward escape).** -/
 theorem tendsto_gPerm_pow (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     Tendsto (fun n : ℕ => (gPerm m r hr ^ n) x) atTop atTop := by
-  sorry
+  exact tendsto_pow (hyp_gPerm hr) (by omega) fun h => by rw [Set.mem_singleton_iff] at h; omega
 
 /-- **(ratified, Theorem G (2), backward escape).** -/
 theorem tendsto_gPerm_pow_neg (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     Tendsto (fun n : ℕ => (gPerm m r hr ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+  exact tendsto_pow_neg (hyp_gPerm hr) (by omega) fun h => by
+    rw [Set.mem_singleton_iff] at h; omega
 
 /-- **(ratified, Theorem G (2), minima).**  For `x > 1`: `x` is the minimum of its orbit iff `x`
 is even and its `m + 1` predecessors are odd. -/
 theorem isOrbitMin_gPerm_iff (hr : 2 ≤ r) {x : ℤ} (hx : 1 < x) :
     IsOrbitMin (gPerm m r hr) x ↔
       x % 2 = 0 ∧ ∀ i : ℕ, 1 ≤ i → i ≤ m + 1 → (gPerm m r hr ^ (-(i : ℤ))) x % 2 = 1 := by
-  sorry
+  rw [isOrbitMin_iff (hyp_gPerm hr) (by omega) fun h => by rw [Set.mem_singleton_iff] at h; omega]
+  simp only [Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨h1, h2⟩; exact ⟨h1, fun i a b => by have := h2 i a b; omega⟩
+  · rintro ⟨h1, h2⟩; exact ⟨h1, fun i a b => by have := h2 i a b; omega⟩
 
 /-- **(ratified, Theorem G (3), exact count).**
 `#{minima ≤ X} + #{even s ∈ [1, X] : R(s) ≤ X} = 1 + ⌊X/2⌋`.  Paper proof:
 `minCount_add_returnCount` with `Φ = {1}` (`#Φ ∩ [1, X] = 1`) and `#(evens ∩ [1, X]) = ⌊X/2⌋`. -/
 theorem minCount_gPerm_add (hr : 2 ≤ r) {X : ℕ} (hX : 1 ≤ X) :
     minCount (gPerm m r hr) X + returnCount (gPerm m r hr) {n | n % 2 = 0} {1} X = 1 + X / 2 := by
-  sorry
+  rw [minCount_add_returnCount (hyp_gPerm (m := m) hr) (gPerm_fix hr) X, setCount_one hX,
+    setCount_evens X]
+
+/-- `#{even s ∈ [1, X] : R(s) ≤ X} ≤ ⌊X/2r⌋` (`R(s) ≥ r·s`). -/
+lemma returnCount_gPerm_le (hr : 2 ≤ r) (X : ℕ) :
+    returnCount (gPerm m r hr) {n | n % 2 = 0} {1} X ≤ X / (2 * r) := by
+  classical
+  unfold returnCount
+  calc _ ≤ ((Finset.Icc 1 (X / (2 * r))).image fun k : ℕ => 2 * (k : ℤ)).card := by
+        apply Finset.card_le_card
+        intro s hs
+        simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.mem_singleton_iff,
+          Finset.mem_image] at hs ⊢
+        obtain ⟨⟨h1, h2⟩, hse, -, hR⟩ := hs
+        have hge := returnMap_gPerm_ge (m := m) hr (by omega) hse
+        obtain ⟨k, rfl⟩ : ∃ k, s = 2 * k := ⟨s / 2, by omega⟩
+        refine ⟨k.toNat, ⟨by omega, (Nat.le_div_iff_mul_le (by omega)).2 ?_⟩, by omega⟩
+        have : (((k.toNat * (2 * r)) : ℕ) : ℤ) ≤ X := by
+          push_cast
+          rw [Int.toNat_of_nonneg (by omega)]
+          have : k * (2 * (r : ℤ)) = r * (2 * k) := by ring
+          linarith
+        exact_mod_cast this
+    _ ≤ (Finset.Icc 1 (X / (2 * r))).card := Finset.card_image_le
+    _ = X / (2 * r) := by simp
 
 /-- **(ratified, Theorem G (3), unconditional lower bound).**
 `#{minima ≤ X} ≥ 1 + ⌊X/2⌋ − ⌊X/2r⌋`.  Paper proof: `R(s) ≥ r·s` (`returnMap_gPerm_ge`), so
 `R(s) ≤ X` forces `s ≤ X/r`, and there are `⌊X/2r⌋` even `s ≤ X/r`. -/
 theorem minCount_gPerm_ge (hr : 2 ≤ r) {X : ℕ} (hX : 1 ≤ X) :
     1 + (X : ℤ) / 2 - (X : ℤ) / (2 * r) ≤ minCount (gPerm m r hr) X := by
-  sorry
+  have h := minCount_gPerm_add (m := m) hr hX
+  have hB := returnCount_gPerm_le (m := m) hr X
+  have c2 : ((X / (2 * r) : ℕ) : ℤ) = (X : ℤ) / (2 * r) := by
+    rw [Int.natCast_div]; push_cast; ring
+  have c3 : ((X / 2 : ℕ) : ℤ) = (X : ℤ) / 2 := by
+    rw [Int.natCast_div]; push_cast; ring
+  rw [← c2, ← c3]
+  omega
 
 /-- **(ratified, Theorem G (2)).**  Infinitely many infinite orbits. -/
 theorem gPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
     InfinitelyManyInfiniteOrbits (gPerm m r hr) := by
-  sorry
+  apply infinitelyManyInfiniteOrbits_of_minima (hyp_gPerm (m := m) hr)
+  by_contra hfin
+  rw [Set.not_infinite] at hfin
+  classical
+  obtain ⟨c, hc⟩ : ∃ c, hfin.toFinset.card = c := ⟨_, rfl⟩
+  have hX : 1 ≤ 4 * (c + 2) := by omega
+  have hge := minCount_gPerm_ge (m := m) hr hX
+  have hle : minCount (gPerm m r hr) (4 * (c + 2)) ≤ c + 1 := by
+    unfold minCount
+    calc _ ≤ (insert 1 hfin.toFinset).card := by
+          apply Finset.card_le_card
+          intro x hx
+          simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_insert,
+            Set.Finite.mem_toFinset, Set.mem_ofPred_eq, Set.mem_singleton_iff] at hx ⊢
+          by_cases h1 : x = 1
+          · exact Or.inl h1
+          · exact Or.inr ⟨by omega, h1, hx.2⟩
+      _ ≤ c + 1 := hc ▸ Finset.card_insert_le _ _
+  have hr' : (2 : ℤ) ≤ r := by exact_mod_cast hr
+  have hq0 := Int.ediv_mul_le ((4 * (c + 2) : ℕ) : ℤ) (show (2 * (r : ℤ)) ≠ 0 by omega)
+  have hq1 := Int.ediv_nonneg (show (0 : ℤ) ≤ ((4 * (c + 2) : ℕ) : ℤ) by positivity)
+    (show (0 : ℤ) ≤ 2 * r by omega)
+  have hq : ((4 * (c + 2) : ℕ) : ℤ) / (2 * r) ≤ c + 2 := by
+    by_contra h
+    push Not at h
+    push_cast at hq0 h
+    nlinarith
+  push_cast at hge hq
+  omega
 
 /-- **(ratified).**  The two forms of the density: `(α − 2)/(2αβᵐ) = (r − xᵐ)/(2^{m+1} r xᵐ)`. -/
 theorem densityG_eq (hr : 2 ≤ r) :
