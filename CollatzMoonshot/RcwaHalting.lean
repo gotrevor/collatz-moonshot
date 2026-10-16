@@ -62,8 +62,58 @@ def LapsMixed [DecidableEq ι] (M : CM Q ι) (B : Set Q) : Prop :=
       (∃ j, 0 < ∑ i ∈ Finset.range m, (ρ i).op.delta j)
 
 /-- Dickson's lemma for finitely many counters. -/
-theorem wellQuasiOrderedLE_pi [Finite ι] : WellQuasiOrderedLE (ι → ℕ) := by
-  sorry
+theorem wellQuasiOrderedLE_pi [Finite ι] : WellQuasiOrderedLE (ι → ℕ) :=
+  Pi.wellQuasiOrderedLE
+
+/-- An operation changes each counter by its `delta`. -/
+theorem Op.act_delta [DecidableEq ι] {o : Op ι} {v w : ι → ℕ} (h : o.Act v w) (j : ι) :
+    (w j : ℤ) = v j + o.delta j := by
+  cases o with
+  | test i b => obtain ⟨-, rfl⟩ := h; simp [Op.delta]
+  | dec i =>
+    obtain ⟨-, h1, h2⟩ := h
+    by_cases hj : j = i
+    · subst hj; simp [Op.delta]; omega
+    · simp [Op.delta, hj, h2 j hj]
+  | inc i =>
+    obtain ⟨h1, h2⟩ := h
+    by_cases hj : j = i
+    · subst hj; simp [Op.delta, h1]
+    · simp [Op.delta, hj, h2 j hj]
+  | nop => cases h; simp [Op.delta]
+
+/-- (S1) gives the backward loop condition of `RcwaMachine`'s Lemma M. -/
+theorem lapNotDown_of_lapsMixed [DecidableEq ι] {M : CM Q ι} {B : Set Q}
+    (hlap : LapsMixed M B) : RcwaMachine.LapNotDown B M.Step := by
+  intro x m n hmn hrun hq hle
+  have hex : ∀ j, ∃ ρ : Quad Q ι, j < n - m → ρ ∈ M ∧ (x (m + j)).1 = ρ.src ∧
+      (x (m + j + 1)).1 = ρ.dst ∧ ρ.op.Act (x (m + j)).2 (x (m + j + 1)).2 := by
+    intro j
+    by_cases hj : j < n - m
+    · obtain ⟨ρ, hρ, h1, h2, h3⟩ := hrun.1 (m + j) (by omega) (by omega)
+      exact ⟨ρ, fun _ => ⟨hρ, h1, h2, h3⟩⟩
+    · exact ⟨⟨(x m).1, .nop, (x m).1⟩, fun h => absurd h hj⟩
+  choose ρ hρ using hex
+  have hsum : ∀ j k, k ≤ n - m → ∑ i ∈ Finset.range k, (ρ i).op.delta j =
+      ((x (m + k)).2 j : ℤ) - (x m).2 j := by
+    intro j k
+    induction k with
+    | zero => intro; simp
+    | succ k ih =>
+      intro hk
+      have := Op.act_delta (hρ k (by omega)).2.2.2 j
+      rw [Finset.sum_range_succ, ih (by omega), show m + (k + 1) = m + k + 1 by omega]
+      omega
+  obtain ⟨-, j, hj⟩ := hlap ρ (n - m) (by omega) (fun i hi => (hρ i hi).1)
+    (fun i hi => by rw [← (hρ i hi).2.1]; exact hrun.2 _ (by omega) (by omega))
+    (fun i hi => by
+      rw [← (hρ i (by omega)).2.2.1, ← (hρ (i + 1) hi).2.1, Nat.add_assoc])
+    (by
+      rw [← (hρ _ (by omega)).2.2.1, ← (hρ 0 (by omega)).2.1,
+        show m + (n - m - 1) + 1 = n by omega, Nat.add_zero, hq])
+  rw [hsum j _ le_rfl, show m + (n - m) = n by omega] at hj
+  have : (x n).2 j ≤ (x m).2 j := hle j
+  omega
 
 /-- **Lemma M, reverse.**  Under (S1), the reverse is mortal if the macro map on boundary
 configurations has no infinite backward chain. -/
@@ -71,18 +121,40 @@ theorem revMortal_of_macro [Finite Q] [Finite ι] [DecidableEq ι] {M : CM Q ι}
     (hlap : LapsMixed M B)
     (hmac : ¬ ∃ b : ℕ → Cfg Q ι, ∀ n, RcwaMachine.MacroStep B M.Step (b (n + 1)) (b n)) :
     M.RevMortal := by
-  sorry
+  have := wellQuasiOrderedLE_pi (ι := ι)
+  exact fun h => hmac
+    ((RcwaMachine.reverse_immortal_iff_macro B M.Step (lapNotDown_of_lapsMixed hlap)).1 h)
 
 /-- A macro step is a nonempty run. -/
 theorem macroStep_transGen {M : CM Q ι} {B : Set Q} {b b' : Cfg Q ι}
     (h : RcwaMachine.MacroStep B M.Step b b') : Relation.TransGen M.Step b b' := by
-  sorry
+  obtain ⟨-, -, x, n, hn, rfl, rfl, hstep, -⟩ := h
+  have key : ∀ k, k < n → Relation.TransGen M.Step (x 0) (x (k + 1)) := by
+    intro k
+    induction k with
+    | zero => intro h; exact .single (hstep 0 h)
+    | succ k ih => intro h; exact .tail (ih (by omega)) (hstep _ h)
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  exact key k (by omega)
 
 /-- Under determinism a boundary configuration has at most one macro successor. -/
 theorem macroStep_functional {M : CM Q ι} (hM : M.Det) {B : Set Q} {b b₁ b₂ : Cfg Q ι}
     (h₁ : RcwaMachine.MacroStep B M.Step b b₁) (h₂ : RcwaMachine.MacroStep B M.Step b b₂) :
     b₁ = b₂ := by
-  sorry
+  obtain ⟨-, hb₁, x, n, hn, hx0, rfl, hx, hxoff⟩ := h₁
+  obtain ⟨-, hb₂, y, n', hn', hy0, rfl, hy, hyoff⟩ := h₂
+  have heq : ∀ i, i ≤ n → i ≤ n' → x i = y i := by
+    intro i
+    induction i with
+    | zero => intros; rw [hx0, hy0]
+    | succ i ih =>
+      intro h1 h2
+      exact CM.step_functional hM (hx i (by omega))
+        (by rw [ih (by omega) (by omega)]; exact hy i (by omega))
+  rcases lt_trichotomy n n' with h | rfl | h
+  · exact absurd (heq n le_rfl h.le ▸ hb₁) (hyoff n hn h)
+  · exact heq n le_rfl le_rfl
+  · exact absurd ((heq n' h.le le_rfl).symm ▸ hb₂) (hxoff n' hn' h)
 
 end LemmaM
 
