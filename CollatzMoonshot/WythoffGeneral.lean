@@ -51,12 +51,56 @@ theorem wy_two_mul_sub_one (α : ℝ) (k : ℤ) :
 theorem holderConjugate (hα : 1 < α) : α.HolderConjugate (α / (α - 1)) :=
   Real.HolderConjugate.conjExponent hα
 
+/-- `β = α/(α − 1) > 1`. -/
+lemma one_lt_beta (hα : 1 < α) : 1 < α / (α - 1) := by
+  rw [one_lt_div (by linarith)]; linarith
+
+/-- The even branch `k ↦ ⌊kα⌋` is strictly increasing. -/
+lemma floor_strictMono (hα : 1 < α) : StrictMono fun k : ℤ => ⌊(k : ℝ) * α⌋ := by
+  refine strictMono_int_of_lt_succ fun k => ?_
+  have h : (k : ℝ) * α + 1 ≤ ((k + 1 : ℤ) : ℝ) * α := by push_cast; nlinarith
+  calc ⌊(k : ℝ) * α⌋ < ⌊(k : ℝ) * α⌋ + 1 := by omega
+    _ = ⌊(k : ℝ) * α + 1⌋ := (Int.floor_add_one _).symm
+    _ ≤ _ := Int.floor_mono h
+
+/-- The odd branch `k ↦ ⌈kβ⌉ − 1` is strictly increasing. -/
+lemma ceil_strictMono {γ : ℝ} (hγ : 1 < γ) : StrictMono fun k : ℤ => ⌈(k : ℝ) * γ⌉ - 1 := by
+  refine strictMono_int_of_lt_succ fun k => ?_
+  have h : (k : ℝ) * γ + 1 ≤ ((k + 1 : ℤ) : ℝ) * γ := by push_cast; nlinarith
+  have : ⌈(k : ℝ) * γ⌉ + 1 ≤ ⌈((k + 1 : ℤ) : ℝ) * γ⌉ := by
+    rw [← Int.ceil_add_one]; exact Int.ceil_mono h
+  show ⌈(k : ℝ) * γ⌉ - 1 < ⌈((k + 1 : ℤ) : ℝ) * γ⌉ - 1
+  omega
+
 /-- **(ratified).**  `W_α` is a bijection of `ℤ` for every `α > 1`.  Paper proof: the even branch
 is `beattySeq α`, the odd branch `beattySeq' β`, both strictly increasing (`α, β > 1`), with
 complementary ranges (`compl_beattySeq` with `holderConjugate`); the same argument as
 `WythoffQuadratic.wq_bijective`. -/
 theorem wy_bijective (hα : 1 < α) : Function.Bijective (wy α) := by
-  sorry
+  have hc := compl_beattySeq (holderConjugate hα)
+  have hβ := one_lt_beta hα
+  have cross : ∀ a b : ℤ, wy α (2 * a) ≠ wy α (2 * b - 1) := by
+    intro a b h
+    have hmem : beattySeq' (α / (α - 1)) b ∈ {x | ∃ k, beattySeq' (α / (α - 1)) k = x} :=
+      ⟨b, rfl⟩
+    rw [← hc] at hmem
+    refine hmem ⟨a, ?_⟩
+    simp only [beattySeq, beattySeq']
+    rw [← wy_two_mul, ← wy_two_mul_sub_one, h]
+  refine ⟨fun a b h => ?_, fun n => ?_⟩
+  · obtain ⟨k, rfl | rfl⟩ : ∃ k, a = 2 * k ∨ a = 2 * k - 1 := ⟨(a + 1) / 2, by omega⟩ <;>
+    obtain ⟨l, rfl | rfl⟩ : ∃ l, b = 2 * l ∨ b = 2 * l - 1 := ⟨(b + 1) / 2, by omega⟩
+    · rw [wy_two_mul, wy_two_mul] at h; rw [(floor_strictMono hα).injective h]
+    · exact absurd h (cross _ _)
+    · exact absurd h.symm (cross _ _)
+    · rw [wy_two_mul_sub_one, wy_two_mul_sub_one] at h
+      rw [(ceil_strictMono hβ).injective h]
+  · by_cases h : n ∈ {x | ∃ k, beattySeq α k = x}
+    · obtain ⟨k, hk⟩ := h
+      exact ⟨2 * k, by rw [wy_two_mul]; exact hk⟩
+    · rw [← Set.mem_compl_iff, hc] at h
+      obtain ⟨k, hk⟩ := h
+      exact ⟨2 * k - 1, by rw [wy_two_mul_sub_one]; exact hk⟩
 
 /-- `W_α` as a permutation of `ℤ`. -/
 noncomputable def wyPerm (α : ℝ) (hα : 1 < α) : Equiv.Perm ℤ :=
@@ -68,35 +112,94 @@ theorem wyPerm_apply (hα : 1 < α) (n : ℤ) : wyPerm α hα n = wy α n := rfl
 `⌊kα⌋ ≥ k ≥ 1` and `kβ > 1` so `⌈kβ⌉ − 1 ≥ 1`; `W(0) = 0`, `W(−1) = ⌈0⌉ − 1 = −1`; for `k < 0`,
 `⌊kα⌋ < 0` and `⌈kβ⌉ ≤ 0`. -/
 theorem wy_pos_iff (hα : 1 < α) (n : ℤ) : 0 < wy α n ↔ 0 < n := by
-  sorry
+  have hβ := one_lt_beta hα
+  obtain ⟨k, rfl | rfl⟩ : ∃ k, n = 2 * k ∨ n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+  · rw [wy_two_mul, Int.floor_pos]
+    rcases le_or_gt k 0 with hk | hk
+    · have : (k : ℝ) ≤ 0 := by exact_mod_cast hk
+      constructor
+      · intro h; nlinarith
+      · intro h; omega
+    · have : (1 : ℝ) ≤ k := by exact_mod_cast hk
+      constructor
+      · intro; omega
+      · intro; nlinarith
+  · rw [wy_two_mul_sub_one, sub_pos, Int.lt_ceil]
+    push_cast
+    rcases le_or_gt k 0 with hk | hk
+    · have : (k : ℝ) ≤ 0 := by exact_mod_cast hk
+      constructor
+      · intro h; nlinarith
+      · intro h; omega
+    · have : (1 : ℝ) ≤ k := by exact_mod_cast hk
+      constructor
+      · intro; omega
+      · intro; nlinarith
 
 /-- **(ratified).**  For irrational `α` and `k ≠ 0`, the odd branch is the floor `⌊kβ⌋`
 (`kβ ∉ ℤ` since `β = 1 + 1/(α − 1)` is irrational). -/
 theorem wy_two_mul_sub_one_eq_floor (hα : 1 < α) (hirr : Irrational α) {k : ℤ} (hk : k ≠ 0) :
     wy α (2 * k - 1) = ⌊(k : ℝ) * (α / (α - 1))⌋ := by
-  sorry
+  rw [wy_two_mul_sub_one]
+  have hβ : α / (α - 1) = 1 + (α - 1)⁻¹ := by
+    have : α - 1 ≠ 0 := by linarith
+    field_simp; ring
+  have hirr' : Irrational ((k : ℝ) * (α / (α - 1))) := by
+    rw [hβ]
+    have h1 : Irrational (α - 1) := by exact_mod_cast hirr.sub_intCast 1
+    exact (h1.inv.intCast_add 1).intCast_mul hk |> fun h => by exact_mod_cast h
+  have := (Int.ceil_eq_floor_add_one_iff_notMem _).mpr (fun ⟨z, hz⟩ => hirr'.ne_int z hz.symm)
+  omega
 
 /-- **(ratified).**  `1` is a fixed point once `α ≥ 2`: `W(1) = ⌈β⌉ − 1 = 1` as `1 < β ≤ 2`. -/
 theorem wy_one (hα : 2 ≤ α) : wy α 1 = 1 := by
-  sorry
+  have h1 : (1 : ℤ) = 2 * 1 - 1 := by norm_num
+  rw [h1, wy_two_mul_sub_one]
+  have hβ1 := one_lt_beta (by linarith : 1 < α)
+  have hβ2 : α / (α - 1) ≤ 2 := by rw [div_le_iff₀ (by linarith)]; linarith
+  have : ⌈((1 : ℤ) : ℝ) * (α / (α - 1))⌉ = 2 := by
+    rw [Int.ceil_eq_iff]; push_cast; constructor <;> linarith
+  omega
 
 /-- **(ratified).**  For `α ≥ 3`, positive evens step up: `W(2k) = ⌊kα⌋ ≥ 3k > 2k`. -/
 theorem lt_wy_of_even (hα : 3 ≤ α) {z : ℤ} (hz : 0 < z) (he : z % 2 = 0) : z < wy α z := by
-  sorry
+  obtain ⟨k, rfl⟩ : ∃ k, z = 2 * k := ⟨z / 2, by omega⟩
+  rw [wy_two_mul]
+  have hk : (1 : ℝ) ≤ k := by exact_mod_cast (show (1 : ℤ) ≤ k by omega)
+  have : ((2 * k + 1 : ℤ) : ℝ) ≤ (k : ℝ) * α := by push_cast; nlinarith
+  have := Int.le_floor.mpr this
+  omega
 
 /-- **(ratified).**  For `α ≥ 3`, odd `z ≥ 3` step down: `β ≤ 3/2`, so for `j ≥ 2`,
 `jβ ≤ 2j − 1` and `⌈jβ⌉ − 1 < 2j − 1`. -/
 theorem wy_lt_of_odd (hα : 3 ≤ α) {z : ℤ} (hz : 1 < z) (ho : z % 2 = 1) : wy α z < z := by
-  sorry
+  obtain ⟨j, rfl⟩ : ∃ j, z = 2 * j - 1 := ⟨(z + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one]
+  have hj : (2 : ℝ) ≤ j := by exact_mod_cast (show (2 : ℤ) ≤ j by omega)
+  have hβ0 : 0 < α / (α - 1) := by have := one_lt_beta (by linarith : 1 < α); linarith
+  have hβ2 : α / (α - 1) ≤ 3 / 2 := by rw [div_le_iff₀ (by linarith)]; linarith
+  have : (j : ℝ) * (α / (α - 1)) ≤ ((2 * j - 1 : ℤ) : ℝ) := by push_cast; nlinarith
+  have := Int.ceil_le.mpr this
+  omega
 
 /-- **(ratified).**  For `1 < α < 2`, positive evens step down: `⌊kα⌋ < 2k`. -/
 theorem wy_lt_of_even (hα : α < 2) {z : ℤ} (hz : 0 < z) (he : z % 2 = 0) : wy α z < z := by
-  sorry
+  obtain ⟨k, rfl⟩ : ∃ k, z = 2 * k := ⟨z / 2, by omega⟩
+  rw [wy_two_mul]
+  have hk : (0 : ℝ) < k := by exact_mod_cast (show (0 : ℤ) < k by omega)
+  have : (k : ℝ) * α < ((2 * k : ℤ) : ℝ) := by push_cast; nlinarith
+  exact Int.floor_lt.mpr this
 
 /-- **(ratified).**  For `1 < α < 2`, positive odds step up: `β > 2`, so `⌈kβ⌉ − 1 ≥ 2k`. -/
 theorem lt_wy_of_odd (hα1 : 1 < α) (hα : α < 2) {z : ℤ} (hz : 0 < z) (ho : z % 2 = 1) :
     z < wy α z := by
-  sorry
+  obtain ⟨k, rfl⟩ : ∃ k, z = 2 * k - 1 := ⟨(z + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one]
+  have hk : (1 : ℝ) ≤ k := by exact_mod_cast (show (1 : ℤ) ≤ k by omega)
+  have hβ2 : 2 < α / (α - 1) := by rw [lt_div_iff₀ (by linarith)]; linarith
+  have : ((2 * k : ℤ) : ℝ) < (k : ℝ) * (α / (α - 1)) := by push_cast; nlinarith
+  have := Int.lt_ceil.mpr this
+  omega
 
 end Branches
 
