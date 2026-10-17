@@ -8,7 +8,7 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
 |---|---|
 | `WythoffAutomaton.lean` | 0 (Theorems N, O proved; `#print axioms thmO_iff` = propext, choice, Quot.sound) |
 | `WythoffSeven.lean` | 0 (`infinite_minimalPeriod_seven` unconditional; axioms standard) |
-| `WythoffMirrorY.lean` | 15 |
+| `WythoffMirrorY.lean` | 1: `tendsto_minCount_ymPerm` (the conditional Y′ density) |
 
 ## Notes
 
@@ -26,6 +26,20 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
   no torus coordinates.  Translation lemma split into `tstep1..6` over a `TCtx` bundle: one
   theorem with all steps hit the 200k heartbeat limit.
 
+* Y′ §4-§5: Theorem M transfers verbatim; the phase identities are
+  `linear_combination (∓(s+1)/2) * g_mul_alphaY (+ W′ s * cubic)`.  `four_eq` uses `τ = −t` in
+  Theorem Y's `yPhase4_of_one` / `_of_neg_one`.  (H2) uses the chain
+  `x^i (A(s+1) + 6/5) ≤ W′^{i+1}(s) + 11/5` (`1 + xK ≤ K` at `K = 11/5`), `s ∈ {1, 3}` by
+  `ymEvenEval` / `ymOddEval`.  `setCount` helpers copied locally (`WythoffLine` is not imported).
+
 ## Next
 
-Y′ §4 (`WythoffMirrorY`), then §5, density last.
+The last sorry: `WythoffMirrorY.tendsto_minCount_ymPerm` (Weyl-conditional density; kickoff §5,
+≈ 450 lines).  Template: `WythoffSporadic` §Density (`yPh`, `yWord`, `yPh_mem_yWord`,
+`returnTime_yPerm_eq_iff`, `yReturn_bound`, `tendsto_returnCount_yPerm`, `densityY_sum_eq`).
+Plan: for `s = 2k − 1` show the mirror cylinder `O Eʲ` is cut out by the same polygons in
+`(Int.fract (k·yc0), Int.fract (k·yc1))` (Theorem M: `ymF1 = 1 − {kα}`-type phases), reuse
+`tendsto_yWordCount`, then `minCount_ymPerm_add` and `densityY_sum_eq`.  Read how
+`minCount_yPerm` density is assembled at the end of `WythoffSporadic.lean` first.
+
+HEAD at handoff: see `git log` (branch `wip/wythoff-mirrorY`); no uncommitted edits.
