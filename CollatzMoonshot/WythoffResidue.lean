@@ -36,6 +36,14 @@ for even `p` (`residueTransitive_base_two_pow`; stationary law `φ × uniform`, 
 non-absorbing).  **Lifts** one prime at a time: Lemma D (`2`, `4 ∣ p`), Lemma B (odd `ℓ ∣ p`, via
 `W⁻¹`), Lemma A (odd `ℓ ∣ qR`, routed through parity), Lemma A₂ (`2`, `p` odd).
 
+Formal route.  Every lift is one instance of `ClassIn.drop`: a closed set containing a full
+class mod `K₁` contains the class of the image mod `K₂` when `f` is affine from `K₁`-steps to
+`K₂`-steps with a multiplier coprime to `M / K₂` (`W(n + 2Qm) = W n + pm`, `wythoffInv_add_piece`).
+Levels are classes mod `ℓ^j M'`; no valuations are needed.  (B0) is a translation argument
+(`residueTransitive_of_translate`), and (B1) replaces the circulation by counting
+(`exists_preimage_of_counting`): the even and odd parts of a closed set inject into each other, so
+every window map is onto its parity part, and two adjacent window indices translate by `1/Q`.
+
 Sharpness: at `p = 2`, `W_{2/1−}` is the swap `2k ↔ 2k − 1`, not residue-transitive at any even
 `M ≥ 4` (`two_minus_not_residueTransitive`).
 
@@ -483,7 +491,8 @@ theorem isCoprime_pow_of_prime {ℓ M' : ℕ} (hℓ : ℓ.Prime) (hℓM : ¬ ℓ
     IsCoprime ((ℓ : ℤ) ^ k) M' :=
   (Nat.isCoprime_iff_coprime.2 ((Nat.Prime.coprime_iff_not_dvd hℓ).2 hℓM)).pow_left
 
-theorem pow_mul_split (ℓ M' : ℤ) {j e : ℕ} (hj : j ≤ e) : ℓ ^ e * M' = ℓ ^ j * M' * ℓ ^ (e - j) := by
+theorem pow_mul_split (ℓ M' : ℤ) {j e : ℕ} (hj : j ≤ e) :
+    ℓ ^ e * M' = ℓ ^ j * M' * ℓ ^ (e - j) := by
   rw [mul_right_comm, ← pow_add, Nat.add_sub_cancel' hj]
 
 theorem odd_intCast {p : ℕ} (hp : Odd p) : Odd (p : ℤ) := by
@@ -496,7 +505,8 @@ theorem isCoprime_two_branchQ_of_dvd_p (hcop : Nat.Coprime p q) (hqp : q < p) {�
   have h2 : IsCoprime (2 : ℤ) ℓ := by
     have := Nat.isCoprime_iff_coprime.2 ((Nat.coprime_primes Nat.prime_two hℓ).2 hℓ2.symm)
     simpa using this
-  have hq : IsCoprime (ℓ : ℤ) q := Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓp hcop)
+  have hq : IsCoprime (ℓ : ℤ) q :=
+    Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓp hcop)
   have hR : IsCoprime (ℓ : ℤ) ((p : ℤ) - q) := by
     have := Nat.isCoprime_iff_coprime.2
       (Nat.Coprime.coprime_dvd_left hℓp ((Nat.coprime_self_sub_right hqp.le).2 hcop))
@@ -558,6 +568,60 @@ theorem coprime_of_primes {p q M : ℕ}
   · exact Or.inr (Or.inr (dvd_mul_of_dvd_right h1 _))
 
 end Assembly
+
+/-! ## The counting step of (B1) -/
+
+section Counting
+
+/-- **Counting.**  Two parity classes, and for each parity `β` a family of maps `H β j`
+(`j ∈ J β`), injective on parity `β`, sending the `β`-part of `C` into the `j`-part of `C`.
+If `J 0` has an odd index and `J 1` an even one, the two parts of `C` have the same size, so each
+`H β j` maps the `β`-part of `C` *onto* the `j`-part of `C`. -/
+theorem exists_preimage_of_counting {X : Type*} [Finite X] (φ : X → ZMod 2) (C : Set X)
+    (H : ZMod 2 → ℤ → X → X) (J : ZMod 2 → Set ℤ)
+    (hmaps : ∀ β j, j ∈ J β → ∀ x ∈ C, φ x = β → H β j x ∈ C ∧ φ (H β j x) = j)
+    (hinj : ∀ β j, j ∈ J β → Set.InjOn (H β j) {x | φ x = β})
+    (h01 : ∃ j ∈ J 0, (j : ZMod 2) = 1) (h10 : ∃ j ∈ J 1, (j : ZMod 2) = 0)
+    (β : ZMod 2) (j : ℤ) (hj : j ∈ J β) (z : X) (hz : z ∈ C) (hzj : φ z = j) :
+    ∃ x ∈ C, φ x = β ∧ H β j x = z := by
+  let S : ZMod 2 → Set X := fun b => {x | x ∈ C ∧ φ x = b}
+  have hle : ∀ b j, j ∈ J b → (S b).ncard ≤ (S (j : ZMod 2)).ncard := fun b j hj =>
+    Set.ncard_le_ncard_of_injOn (H b j) (fun x hx => hmaps b j hj x hx.1 hx.2)
+      ((hinj b j hj).mono fun x hx => hx.2)
+  obtain ⟨j0, hj0, hj01⟩ := h01
+  obtain ⟨j1, hj1, hj10⟩ := h10
+  have heq : (S 0).ncard = (S 1).ncard :=
+    le_antisymm (hj01 ▸ hle 0 j0 hj0) (hj10 ▸ hle 1 j1 hj1)
+  have hall : ∀ b b', (S b).ncard = (S b').ncard := by
+    intro b b'
+    rcases zmod2_cases b with rfl | rfl <;> rcases zmod2_cases b' with rfl | rfl
+    · rfl
+    · exact heq
+    · exact heq.symm
+    · rfl
+  have himg : H β j '' S β = S j := by
+    refine Set.eq_of_subset_of_ncard_le ?_ ?_
+    · rintro _ ⟨x, hx, rfl⟩; exact hmaps β j hj x hx.1 hx.2
+    · rw [Set.InjOn.ncard_image ((hinj β j hj).mono fun x hx => hx.2)]; exact (hall _ _).le
+  have hzS : z ∈ S j := ⟨hz, hzj⟩
+  rw [← himg] at hzS
+  obtain ⟨x, hx, rfl⟩ := hzS
+  exact ⟨x, hx.1, hx.2, rfl⟩
+
+/-- A set closed under subtracting a unit is empty or everything. -/
+theorem eq_univ_of_sub_mem {M : ℕ} [NeZero M] {C : Set (ZMod M)} {u : ZMod M} (hu : IsUnit u)
+    {a : ZMod M} (ha : a ∈ C) (hstep : ∀ z ∈ C, z - u ∈ C) : C = Set.univ := by
+  have hk : ∀ k : ℕ, a - k * u ∈ C := by
+    intro k
+    induction k with
+    | zero => simpa using ha
+    | succ k ih => have := hstep _ ih; rwa [Nat.cast_succ, add_mul, one_mul, ← sub_sub]
+  refine Set.eq_univ_of_forall fun b => ?_
+  obtain ⟨v, rfl⟩ := hu
+  have := hk ((a - b) * ↑v⁻¹).val
+  rwa [ZMod.natCast_zmod_val, mul_assoc, Units.inv_mul, mul_one, sub_sub_cancel] at this
+
+end Counting
 
 /-! ## C. Odd `p`, and `U` -/
 
@@ -923,7 +987,181 @@ theorem residueTransitive_base_two_pow (hp : Even p) (hp4 : 4 ≤ p) (hcop : Nat
     (hq : 0 < q) (hqp : q < p) (hna : ¬ (s = .plus ∧ (q = 1 ∨ p - q = 1))) {e M₀ : ℕ}
     (he : 1 ≤ e) (h4 : p % 4 = 2 ∨ e = 1) (hM₀ : Nat.Coprime M₀ (2 * p * q * (p - q))) :
     ResidueTransitive (wythoff s p q) (2 ^ e * M₀) := by
-  sorry
+  obtain ⟨p', hp'⟩ : ∃ p', p = 2 * p' := ⟨p / 2, by obtain ⟨r, hr⟩ := hp; omega⟩
+  have hq2 : q % 2 = 1 := odd_of_even_coprime hp hcop
+  have hR2 : (p - q) % 2 = 1 := by omega
+  have hM0 : M₀ ≠ 0 := by
+    rintro rfl
+    have h1 := Nat.coprime_zero_left _ |>.1 hM₀
+    have : 1 ≤ q * (p - q) := Nat.mul_pos hq (by omega)
+    have : 2 * 3 ≤ 2 * p * (q * (p - q)) := by
+      have := Nat.mul_le_mul (Nat.mul_le_mul_left 2 (show 3 ≤ p by omega)) this; simpa using this
+    rw [← mul_assoc] at this; omega
+  have hcd : ∀ d, d ∣ 2 * p * q * (p - q) → Nat.Coprime d M₀ := fun d hd =>
+    (hM₀.coprime_dvd_right hd).symm
+  set L := 2 ^ (e - 1) * M₀ with hLdef
+  have hML : 2 ^ e * M₀ = 2 * L := by
+    rw [hLdef, ← mul_assoc, ← pow_succ', Nat.sub_add_cancel he]
+  rw [hML]
+  have : NeZero (2 * L) := ⟨by rw [← hML]; positivity⟩
+  have hodd2 : ∀ {d : ℕ}, d % 2 = 1 → Nat.Coprime d 2 := fun hd =>
+    (Nat.Prime.coprime_iff_not_dvd Nat.prime_two |>.2 (by omega)).symm
+  have hcopL : ∀ {d : ℕ}, d % 2 = 1 → d ∣ 2 * p * q * (p - q) → Nat.Coprime d L := fun hd hdd =>
+    Nat.Coprime.mul_right ((hodd2 hd).pow_right _) (hcd _ hdd)
+  have hqL := hcopL hq2 ⟨2 * p * (p - q), by ring⟩
+  have hRL := hcopL hR2 ⟨2 * p * q, by ring⟩
+  have hcopM : ∀ {d : ℕ}, d % 2 = 1 → Nat.Coprime d L → Nat.Coprime d (2 * L) := fun hd h =>
+    Nat.Coprime.mul_right (hodd2 hd) h
+  let uq := ZMod.unitOfCoprime q (hcopM hq2 hqL)
+  let uR := ZMod.unitOfCoprime (p - q) (hcopM hR2 hRL)
+  have huq : (uq : ZMod (2 * L)) = q := by simp [uq]
+  have huR : (uR : ZMod (2 * L)) = (p : ZMod (2 * L)) - q := by simp [uR, Nat.cast_sub hqp.le]
+  have hRc : ((p - q : ℕ) : ℤ) = (p : ℤ) - q := by omega
+  have hLq : IsCoprime ((p : ℤ) * (L : ℤ)) q := by
+    rw [← Nat.cast_mul]; exact Nat.isCoprime_iff_coprime.2 (Nat.Coprime.mul_left hcop hqL.symm)
+  have hLR : IsCoprime ((p : ℤ) * L) ((p : ℤ) - q) := by
+    rw [← Nat.cast_mul, ← hRc]
+    exact Nat.isCoprime_iff_coprime.2
+      (Nat.Coprime.mul_left ((Nat.coprime_self_sub_right hqp.le).2 hcop) hRL.symm)
+  have hL2 : ((2 * L : ℕ) : ℤ) ∣ 2 * L := by push_cast; exact dvd_rfl
+  have hpL : ((2 * L : ℕ) : ℤ) ∣ p * L := ⟨p', by rw [hp']; push_cast; ring⟩
+  -- `p'` is coprime to `L` (here `p ≡ 2 (mod 4)` or `e = 1` is used)
+  have hp'L : IsCoprime (p' : ℤ) L := by
+    have hp'M : Nat.Coprime p' M₀ := hcd p' ⟨4 * q * (p - q), by rw [hp']; ring⟩
+    refine Nat.isCoprime_iff_coprime.2 (Nat.Coprime.mul_right ?_ hp'M)
+    rcases h4 with h4 | rfl
+    · exact (hodd2 (by omega)).pow_right _
+    · simp
+  have h2M : 2 ∣ 2 * L := dvd_mul_right 2 L
+  let φ := ZMod.castHom h2M (ZMod 2)
+  have hφ : ∀ n : ℤ, φ (n : ZMod (2 * L)) = (n : ZMod 2) := fun n => by simp [φ]
+  have hφx : ∀ x : ZMod (2 * L), φ x = ((x.cast : ℤ) : ZMod 2) := fun x => by
+    rw [← hφ, ZMod.intCast_zmod_cast]
+  -- injectivity on a parity class
+  have hcancel : ∀ d : ZMod (2 * L), φ d = 0 → (p' : ZMod (2 * L)) * d = 0 → d = 0 := by
+    intro d hd0 hpd
+    set D : ℤ := d.cast with hD
+    have hDd : (D : ZMod (2 * L)) = d := ZMod.intCast_zmod_cast d
+    rw [hφx, intCast_zmod2_eq_zero_iff] at hd0
+    obtain ⟨k, hk⟩ : ∃ k, D = 2 * k := ⟨D / 2, by omega⟩
+    rw [← hDd, ← Int.cast_natCast, ← Int.cast_mul, ZMod.intCast_zmod_eq_zero_iff_dvd] at hpd
+    obtain ⟨c, hc⟩ := hpd
+    have hLk : (L : ℤ) ∣ p' * k := ⟨c, by push_cast at hc; rw [hk] at hc; linarith⟩
+    obtain ⟨c', hc'⟩ := hp'L.symm.dvd_of_dvd_mul_left hLk
+    rw [← hDd, ZMod.intCast_zmod_eq_zero_iff_dvd]
+    exact ⟨c', by rw [hk, hc']; push_cast; ring⟩
+  have hφq : φ (↑uq⁻¹ : ZMod (2 * L)) = 1 := by
+    have := congrArg φ (Units.inv_mul uq)
+    rwa [map_mul, map_one, huq, map_natCast, ZMod.natCast_eq_one_iff_odd.2 (Nat.odd_iff.2 hq2),
+      mul_one] at this
+  have hφR : φ (↑uR⁻¹ : ZMod (2 * L)) = 1 := by
+    have := congrArg φ (Units.inv_mul uR)
+    have huR' : (uR : ZMod (2 * L)) = ((p - q : ℕ) : ZMod (2 * L)) := by simp [uR]
+    rwa [map_mul, map_one, huR', map_natCast,
+      ZMod.natCast_eq_one_iff_odd.2 (Nat.odd_iff.2 hR2), mul_one] at this
+  -- the edges `x → (p' x − j) / q` (even `x`) and `x → (p' (x + 1) − j) / R` (odd `x`)
+  have edgeE : ∀ x : ZMod (2 * L), φ x = 0 → ∀ j : ℤ, evenLo s ≤ j ∧ j < evenLo s + q →
+      ResidueEdge (wythoff s p q) (2 * L) x ((p' * x - j) * ↑uq⁻¹) := by
+    intro x hx j hj
+    have hDx : ((x.cast : ℤ) : ZMod (2 * L)) = x := ZMod.intCast_zmod_cast x
+    rw [hφx, intCast_zmod2_eq_zero_iff] at hx
+    have hy : ((2 * ((x.cast : ℤ) / 2) : ℤ) : ZMod (2 * L)) = x := by
+      rw [show 2 * ((x.cast : ℤ) / 2) = x.cast by omega, hDx]
+    have := residueEdge_even s hq hLq hL2 hpL (by rw [← huq]; exact uq.isUnit)
+      ((x.cast : ℤ) / 2) j hj ((p' * x - j) * ↑uq⁻¹) (by
+        rw [← huq, mul_assoc, Units.inv_mul, mul_one]
+        conv_lhs => rw [← hy]
+        rw [hp']; push_cast; ring)
+    rwa [hy] at this
+  have edgeO : ∀ x : ZMod (2 * L), φ x = 1 → ∀ j : ℤ,
+      oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q) →
+      ResidueEdge (wythoff s p q) (2 * L) x ((p' * (x + 1) - j) * ↑uR⁻¹) := by
+    intro x hx j hj
+    have hDx : ((x.cast : ℤ) : ZMod (2 * L)) = x := ZMod.intCast_zmod_cast x
+    rw [hφx, intCast_zmod2_eq_one_iff] at hx
+    have hy : ((2 * (((x.cast : ℤ) + 1) / 2) - 1 : ℤ) : ZMod (2 * L)) = x := by
+      rw [show 2 * (((x.cast : ℤ) + 1) / 2) - 1 = x.cast by omega, hDx]
+    have := residueEdge_odd s hqp hLR hL2 hpL (by rw [← huR]; exact uR.isUnit)
+      (((x.cast : ℤ) + 1) / 2) j hj ((p' * (x + 1) - j) * ↑uR⁻¹) (by
+        rw [← huR, mul_assoc, Units.inv_mul, mul_one]
+        conv_lhs => rw [← hy]
+        rw [hp']; push_cast; ring)
+    rwa [hy] at this
+  let H : ZMod 2 → ℤ → ZMod (2 * L) → ZMod (2 * L) := fun β j x =>
+    if β = 0 then (p' * x - j) * ↑uq⁻¹ else (p' * (x + 1) - j) * ↑uR⁻¹
+  let J : ZMod 2 → Set ℤ := fun β => if β = 0 then {j | evenLo s ≤ j ∧ j < evenLo s + q}
+    else {j | oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q)}
+  have h10 : (1 : ZMod 2) ≠ 0 := by decide
+  have hH0 : ∀ j x, H 0 j x = (p' * x - j) * ↑uq⁻¹ := fun j x => if_pos rfl
+  have hH1 : ∀ j x, H 1 j x = (p' * (x + 1) - j) * ↑uR⁻¹ := fun j x => if_neg h10
+  have hJ0 : ∀ j, j ∈ J 0 ↔ evenLo s ≤ j ∧ j < evenLo s + q := fun j => by
+    simp only [J, if_pos rfl]; rfl
+  have hJ1 : ∀ j, j ∈ J 1 ↔ oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q) := fun j => by
+    simp only [J, if_neg h10]; rfl
+  rw [residueTransitive_iff_closed]
+  intro C hC
+  rw [residueClosed_iff_edge] at hC
+  have hmaps : ∀ β j, j ∈ J β → ∀ x ∈ C, φ x = β → H β j x ∈ C ∧ φ (H β j x) = j := by
+    intro β j hj x hxC hxβ
+    rcases zmod2_cases β with rfl | rfl
+    · rw [hJ0] at hj
+      rw [hH0]
+      refine ⟨hC _ _ hxC (edgeE x hxβ j hj), ?_⟩
+      rw [map_mul, map_sub, map_mul, map_natCast, map_intCast, hxβ, hφq]
+      simp [ZMod.neg_eq_self_mod_two]
+    · rw [hJ1] at hj
+      rw [hH1]
+      refine ⟨hC _ _ hxC (edgeO x hxβ j hj), ?_⟩
+      rw [map_mul, map_sub, map_mul, map_natCast, map_intCast, map_add, map_one, hxβ, hφR,
+        show (1 + 1 : ZMod 2) = 0 by decide]
+      simp [ZMod.neg_eq_self_mod_two]
+  have hinj : ∀ β j, j ∈ J β → Set.InjOn (H β j) {x | φ x = β} := by
+    intro β j _ x hx x' hx' heq
+    have hsub : φ (x - x') = 0 := by
+      rw [map_sub]; rw [show φ x = β from hx, show φ x' = β from hx', sub_self]
+    rw [← sub_eq_zero]
+    refine hcancel _ hsub ?_
+    rcases zmod2_cases β with rfl | rfl
+    · rw [hH0, hH0] at heq
+      have := sub_left_injective ((Units.mul_left_inj uq⁻¹).1 heq)
+      rw [mul_sub, this, sub_self]
+    · rw [hH1, hH1] at heq
+      have := sub_left_injective ((Units.mul_left_inj uR⁻¹).1 heq)
+      rw [mul_add, mul_add] at this
+      rw [mul_sub, add_right_cancel this, sub_self]
+  have hq1 : s = .plus → 2 ≤ q := fun h => by have := hna; simp [h] at this; omega
+  have hR1 : s = .plus → 2 ≤ p - q := fun h => by have := hna; simp [h] at this; omega
+  have hJ01 : ∃ j ∈ J 0, (j : ZMod 2) = 1 := ⟨1, (hJ0 1).2 (by
+    cases s
+    · have := hq1 rfl; simp [evenLo]; omega
+    · simp [evenLo]; omega), by simp⟩
+  have hJ10 : ∃ j ∈ J 1, (j : ZMod 2) = 0 := by
+    cases s
+    · exact ⟨2, (hJ1 2).2 (by have := hR1 rfl; simp [oddLo]; omega), by decide⟩
+    · exact ⟨0, (hJ1 0).2 (by simp [oddLo]; omega), by simp⟩
+  by_cases hne : C.Nonempty
+  · right
+    obtain ⟨a, ha⟩ := hne
+    have hpick : ∀ (lo : ℤ) (π : ZMod 2), ∃ k : ℤ, 0 ≤ k ∧ k ≤ 1 ∧ ((lo + k : ℤ) : ZMod 2) = π :=
+      fun lo π => ⟨((π - (lo : ZMod 2)).val : ℤ), by positivity,
+        by have := ZMod.val_lt (π - (lo : ZMod 2)); omega,
+        by push_cast; rw [ZMod.natCast_zmod_val]; ring⟩
+    rcases (show 3 ≤ q ∨ 3 ≤ p - q by omega) with hq3 | hR3
+    · refine eq_univ_of_sub_mem (u := ↑uq⁻¹) (Units.isUnit _) ha fun z hz => ?_
+      obtain ⟨k, hk0, hk1, hk⟩ := hpick (evenLo s) (φ z)
+      obtain ⟨x, hxC, hx0, hxz⟩ := exists_preimage_of_counting φ C H J hmaps hinj hJ01 hJ10 0
+        (evenLo s + k) ((hJ0 _).2 ⟨by omega, by omega⟩) z hz hk.symm
+      have := hC _ _ hxC (edgeE x hx0 (evenLo s + k + 1) ⟨by omega, by omega⟩)
+      convert this using 1
+      rw [← hxz, hH0]; push_cast; ring
+    · refine eq_univ_of_sub_mem (u := ↑uR⁻¹) (Units.isUnit _) ha fun z hz => ?_
+      obtain ⟨k, hk0, hk1, hk⟩ := hpick (oddLo s) (φ z)
+      obtain ⟨x, hxC, hx0, hxz⟩ := exists_preimage_of_counting φ C H J hmaps hinj hJ01 hJ10 1
+        (oddLo s + k) ((hJ1 _).2 ⟨by omega, by omega⟩) z hz hk.symm
+      have := hC _ _ hxC (edgeO x hx0 (oddLo s + k + 1) ⟨by omega, by omega⟩)
+      convert this using 1
+      rw [← hxz, hH1]; push_cast; ring
+  · left; exact Set.not_nonempty_iff_eq_empty.mp hne
 
 /-- **(ratified).**  **Lemma D** (`4 ∣ p`, the prime `2`): lift `2M₀ → 2^e M₀`; `W⁻¹` expands
 `2`-adically by `2^{v₂(p) − 1}`.  Paper proof: note §2 Lemma D. -/

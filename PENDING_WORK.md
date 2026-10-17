@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-10-17: wythoff-rt objective DONE, nothing owed
+
+`KICKOFF-2026-10-16-wythoff-rt.md` is fully discharged: `CollatzMoonshot/WythoffResidue.lean`
+is sorry-free with ratified statements unchanged.  Theorem RT (`residueTransitive_iff`): every
+rational Wythoff member with `p ≥ 3` is residue-transitive at every modulus, except the
+absorbing members, which are residue-transitive exactly at odd moduli.  `U` has no periodic trap
+at any modulus (`amusical_residueTransitive`, `amusical_eventually_mem_or_not_mem`).  See
+`HANDOFF-wythoff-rt.md`.
+
 ## 2026-10-16: rcwa-sameorbit objective DONE, nothing owed
 
 `KICKOFF-2026-10-16-rcwa-sameorbit.md` is fully discharged: `CollatzMoonshot/RcwaSameOrbit.lean`
