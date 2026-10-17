@@ -2440,3 +2440,63 @@ three precise forms.
 * **Status.**  CONJ P 90%, CONJ LS\* 85%, no solvable unit 92% (was 90%), CONJ E 40%, CONJ C′ 85%,
   CONJ C 75%.  For `U`: `x = 3/4` is not an algebraic integer, so nothing new.  Under 1% that this
   moves (a).
+
+## 70. Off the G line, the only bounded non-unit in every computed box is Y (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-excess.md`.  Notation of §69; "candidate" = irreducible, root in the U\* window,
+every other root in `|z| > 1` (N3), `1 ≤ |N| < 3^{d−1}` (U2).
+
+* **Correction to §69.**  CONJ E as stated there (units included) is false: the multinacci members
+  `x = 1/ψ_d` (`P = t^d + … + t − 1`, the `r = 1` edge of the G line, `t^{d+1} − 2t + 1 = (t − 1)P`)
+  are bounded with `J = d` in every degree (`c_d = 1` exactly, so they are not solvable).  CONJ E is
+  restated for `|a₀| ≥ 2`, the only place Lemma EX uses it: 65% (was 40%).
+* **Computed.**  In every box below, the bounded members with `|a₀| ≥ 2` are exactly the G members
+  (`J = d − 1`) and Y (`d = 3`, `J = 3`).  Boxes: `|a₀| = 2` for `d ≤ 10`, `|a₀| = 3` for `d ≤ 7`,
+  `|a₀| ≤ 8` at `d = 4`, `|a₀|` up to 20 at `d = 3`, and near-G families `t^d + E(t) + a₀(1 − 2t)`
+  (`E` with at most two nonzero coefficients in `{±1, ±2}`) for `d = 9..14`.  388,431 candidates;
+  every off-G candidate other than Y is certified unbounded (Lemma G / FP1, 212,741) or has a
+  verified run longer than `3d` (`2d` at `d = 9, 10`), and a deeper pass certifies 74,566 of the
+  76,361 long-run members unbounded by Lemma T, with the rest past depth 60 (40 at `d = 9, 10`).
+  No member has `1 < J/d ≤ 3`.  Since `J_cap` is below the search depth in every box (from U2's
+  `|q̃₀| > 3^{1−d}`), the solvable members of these boxes are exactly the G members and Y; this
+  extends §64's complete lists to `d = 7` at `|a₀| ≤ 3` and `d = 8, 9, 10` at `|a₀| = 2`.
+* **Tools.**  `nenum.py`: complete enumeration by Newton power sums of the reciprocal roots
+  (`|p_k − θ^k| < d − 1`), to `d = 10` (5.7·10¹⁰ nodes); identical to brute force at `d = 4, 5`, and
+  unchanged when every float margin is loosened 1000× for `d = 5..8` (a too-strict setting loses
+  candidates, so the comparison can fail).  `jlib.py`: exact `J` by depth-first search over integer
+  row values with max-slack LPs, or a `J > L` witness re-verified at 60 digits (0 failures).
+  Controls: G gives `J = d − 1`, Y 3, tribonacci 3, `x³ + x − 1` 4, multinacci `d`.
+* **Lemma 2R (99%; Ren paper-checked).**  `J ≥ d + 1` iff some `ε ∈ (0, ½)^d` has the top row
+  `T ∈ ℤ` and `frac(V) > ½`, where `V = q₀ε₁ + … + q_{d−2}ε_{d−1}`: `R₁ = V + ε_d` and `ε_d` occurs in
+  no other row to depth `d + 1`.  So a section `{T = b}` on which `V` sweeps more than ½ already
+  gives `J ≥ d + 1`, and `|q₀| > 2|a₀| − 1 ≥ 3` makes that the usual case.  Y is a near miss: on
+  `b = 1`, `V` ranges over `(2.009, 2.414)`, inside `(2, 2.5)` by 0.009.
+* **Lemma FW (90%, given Hurkens 1990; Ren paper-checked).**  `J = d` makes the open zonogon
+  `Σ (0, ½)g_k` (`g₀ = (q̃₀, 0)`, `g_k = (q_k, q_{k−1})`, `g_d = (0, 1)`) lattice-free, so it has width
+  at most `1 + 2/√3` in some integer direction `(n₁, n₂)`.  Landau's inequality with
+  `M(Q) = |q₀|` (all roots of `Q` outside the disk) gives `(n₂² − n₁²)q₀² < 18.6`, so `|n₂| ≤ |n₁|`
+  except `(0, ±1)` at `|a₀| = 2`.
+* **Mechanism (heuristic, computed support).**  Feasible cylinders grow like `(|q₀|/2)^n`: below 1
+  for units (runs die late: the unit `1.8668` has 1, 2, 4, 3, 2, 0 cylinders from depth 4, so
+  `J = 8`, matching Ren's direct `W`), at least 1.5 for non-units (tail ratios 1.75-3.7).  So a
+  bounded non-unit must die at entry, G at depth `d` and Y at `d + 1`, and the content of CONJ E for
+  non-units is existence.  Lemma SL, a grid slide for non-units, reproduces `J ≥ d` off the G line but
+  not the long runs (negative as a mechanism).
+* **Ren's checks.**  Paper-checked Lemma 2R (row structure and the Horner form
+  `V = ⟨a′, ε⟩ + x(b − q̃₀ε₀)`), Lemma FW's Landau step and case split, and the multinacci identity
+  `x^{d+1} = 2x − 1` at `x = 1/ψ_d`.  Re-ran `nenum.py 5 −2`, `sweep.py 5 −2`, `jrun.py 4 2` and
+  `yslab.py`: identical.  Independent code: Ren's brute-force enumerator (`ren_enum.py`, the
+  Mahler box with a sign-change prefilter) gives the same candidate sets at `d = 4`,
+  `a₀ = ±2, ±3` (34, 41, 107, 123) and `d = 5`, `a₀ = ±2` (96, 237); Ren's own two-row computation
+  for Y (plane-edge intersections of the cube) reproduces both slab ranges to five digits; Ren's
+  own `W` (to `3·10⁵`) gives Y a maximum run of 3, and eight random off-G long-run members at
+  `d = 6, 7, 8, 10` maximum runs 13-21, every one past its `J_cap` (1 to 8).
+* **Conjectures.**  CONJ O2 (70%): for `|a₀| ≥ 2` the `J = d` class off the G line is `{Y}` (and
+  mirror) in every degree; with Lemma EX it excludes solvable members off the G line at `|a₀| = 2`,
+  `|Π_half| < 1.3|N|`.  CONJ B (55%): for `|a₀| ≥ 2` the bounded members are exactly the G line, Y
+  and mirrors.  CONJ B + CONJ P ⇒ CONJ C, with no Bilu step.  A two-case plan for O2 (long top row
+  via a room lemma, Lemma RM; short top row via an integrality squeeze) is outlined in the report,
+  not completed.  CONJ C′ 86%, CONJ C 77%.
+* **Weakest steps.**  Enumerator completeness at `d = 9, 10` (88%; margins tested only to
+  `d = 8`), and the classification is computed, not proved.  For `U`: nothing new.  Under 1% that
+  this moves (a).
