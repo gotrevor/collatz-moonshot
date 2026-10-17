@@ -2611,3 +2611,38 @@ Report: `wythoff-o2neg.md`.  Notation of §71, with `a₀ = −2`: `q₀ = 2/x �
 * **Status.**  CONJ O2 88% (was 82%): proved at `|a₀| = 2`, computed at `|a₀| ≥ 3`.  For even `a₀` the
   centre again lies on a lattice line, so the N2 mechanism may transfer (CONJ, 50%); odd `a₀` needs a
   different line.  CONJ B 60%.  For `U`: nothing new.  Under 1% that this moves (a).
+
+## 73. Even a₀: a convexity proof of N2's knapsack step, and a₀ = −4 down to one branch (2026-10-17, Opus agent, one-hour run; Ren checked in part)
+
+Report: `wythoff-o2even.md`.  Notation of §72 with `a₀ = −2m`: the centre of `Z` lies on `y − x = m`;
+`θ = 4m − q₀ ∈ (0, 1)`, `β = m − ½ − ½θ`; `F(s)` is the minimum of `Σ_Π ε_kq_k` over `ε ∈ [0, ½]^Π`
+with `Σ_Π ε_kD_k = s` (`Π = {k : D_k > 0}`), so `X_min = −½θ + F(β)`.
+
+* **Transfers (paper, 98%).**  Lemma ORG⁻ (origin outside `Z` iff every `q_k ≥ 0`), Lemma CD, D1
+  (`ε_k = m/(q₀ − 1)`, giving `X_max ≥ mS₁/(q₀ − 1)`) and K hold for every `a₀ = −2m`, with knapsack
+  capacity `β + m + ½Σ_N|D_k|`.
+* **Lemma R (paper, 97%; Ren checked).**  In the positive family, `X_max ≥ (m/β)·F(β)`.  `F` is the
+  value function of a parametric LP, hence convex, with `F(0) = 0`; so
+  `X_max = ½Σ_N q_k + F(cap) − F(β) ≥ (cap − β)F(β)/β ≥ mF(β)/β`.  If the central chord holds no
+  integer and `n = ⌊X_min⌋ ≥ 0`, then `(n + 1)(1 + θ) ≤ m(2 − θ)`.  At `m = 1` this forces `n = 0`,
+  which is §72's Lemma M (its weakest step) by a shorter route; Ren re-derived the convexity
+  step, the capacity and the inequality.
+* **`a₀ = −4` (paper, 90%, one branch open).**  Every `P` with a root in the window has a lattice
+  point in `Z` except possibly in branch M₂ (positive family, `X_min ≥ 1`, no integer in the chord),
+  which Lemma R confines to `n ∈ {1, 2}` with `θ ≤ ½`, `S₁ ≤ 7 − θ` (resp. `θ ≤ 0.2`,
+  `S₁ ≤ 10.5`).  The complement `S₁ ≤ (q₀ − 1)/2` is `T_d = t^d + 7t − 4` or `S_d = t^d + t² + 7t − 4`
+  (Lemma C₂, 92%; its `a_k = −1` exclusion is hand casework), both with lattice points (`S₄..S₇` by
+  60-digit witness; `S₃` off the central line, at `(0, 1)` and `(1, 4)`).  M₂ is empty on the
+  complete lists for `d = 3..7` (CONJ M₂, 85%).
+* **Computed.**  The central line alone does not certify every member at `a₀ = −4`, `+4` or `+2`;
+  the central line together with the origin certifies everything off the G line through `d = 7`
+  except `S₃`.  At `a₀ = +2` the central line `y = x − 1` is weaker than the origin, so it gives no
+  shorter route than §71's Theorem A2.
+* **Ren's checks.**  Paper: Lemma R and Corollary R′ (above).  Independent code (`ren_zono.py`,
+  the LP-free slab scan of §72) on the complete candidate lists: at `a₀ = −4`, `d = 3, 4, 5` (16, 225,
+  2,441, `S₃` included) every candidate has a lattice point; at `a₀ = +4` (10, 207, 1,731) only
+  G(d − 1, 4) has none.  So the `J = d` class is empty at `a₀ = −4` and at `a₀ = +4` for `d ≤ 5`.
+  Not re-derived by Ren: Lemma C₂'s casework and the `S_d` chain for `d ≥ 8`.
+* **Status.**  CONJ O2 89%.  Open: branch M₂ at `a₀ = −4` (a β-expansion-style search upward from
+  `q₀` is the suggested route), the general `C_m` complement, `a₀ = +4` (computed only) and odd
+  `a₀`.  For `U`: nothing new.  Under 1% that this moves (a).
