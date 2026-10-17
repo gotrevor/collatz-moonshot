@@ -7,7 +7,7 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
 | file | sorries left |
 |---|---|
 | `WythoffAutomaton.lean` | 0 (Theorems N, O proved; `#print axioms thmO_iff` = propext, choice, Quot.sound) |
-| `WythoffSeven.lean` | 12 |
+| `WythoffSeven.lean` | 0 (`infinite_minimalPeriod_seven` unconditional; axioms standard) |
 | `WythoffMirrorY.lean` | 15 |
 
 ## Notes
@@ -21,6 +21,11 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
 * Scratch files live in `tmp/scratch/` (gitignored); `tmp/tools/fill.py FILE NAME PROOF`
   splices a proof body into the first `sorry` of a named theorem.
 
+* Seven labels: each `K_i` is an exact linear form in the step phases (`evenStep`, `oddStep`),
+  remainder 0 mod the cubic (computed with `tmp/tools/poly.py`, a tiny Q[x,…] division helper);
+  no torus coordinates.  Translation lemma split into `tstep1..6` over a `TCtx` bundle: one
+  theorem with all steps hit the 200k heartbeat limit.
+
 ## Next
 
-§6 WythoffSeven labels (`wy_alphaP_eoo` first), then infinitude, then Y′ §4-§5.
+Y′ §4 (`WythoffMirrorY`), then §5, density last.
