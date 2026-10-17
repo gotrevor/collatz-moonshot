@@ -505,6 +505,49 @@ theorem isCoprime_two_branchQ_of_dvd_p (hcop : Nat.Coprime p q) (hqp : q < p) {�
 
 end LiftHelpers
 
+/-! ## Assembly (H5) -/
+
+section Assembly
+
+/-- **Assembly.**  Strong induction on `M`: while some prime `ℓ ∣ M` admits a lift, split
+`M = ℓ^e M'` with `ℓ ∤ M'` and recurse on `M' < M`; otherwise `M` is a base modulus.  `S`
+(closed under divisors) restricts the moduli, e.g. to odd ones. -/
+theorem residueTransitive_of_lifts {f : ℤ → ℤ} (S : ℕ → Prop) (hS : ∀ M d, S M → d ∣ M → S d)
+    (good : ℕ → Prop)
+    (hlift : ∀ ℓ M', ℓ.Prime → good ℓ → 0 < M' → ¬ ℓ ∣ M' → S M' →
+      ResidueTransitive f M' → ∀ e, ResidueTransitive f (ℓ ^ e * M'))
+    (hbase : ∀ M, 0 < M → S M → (∀ ℓ, ℓ.Prime → ℓ ∣ M → ¬ good ℓ) → ResidueTransitive f M) :
+    ∀ M, 0 < M → S M → ResidueTransitive f M := by
+  intro M
+  induction M using Nat.strong_induction_on with
+  | _ M ih =>
+    intro hM hSM
+    by_cases hex : ∃ ℓ, ℓ.Prime ∧ ℓ ∣ M ∧ good ℓ
+    · obtain ⟨ℓ, hℓ, hℓM, hg⟩ := hex
+      obtain ⟨e, M', hndvd, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hM.ne' ℓ hℓ.ne_one
+      have hM'pos : 0 < M' := Nat.pos_of_ne_zero (by rintro rfl; simp at hM)
+      have he : e ≠ 0 := by rintro rfl; simp at hℓM; exact hndvd hℓM
+      have hlt : M' < ℓ ^ e * M' := by
+        have := Nat.one_lt_pow he hℓ.one_lt; nlinarith
+      have hSM' := hS _ _ hSM (dvd_mul_left M' (ℓ ^ e))
+      exact hlift ℓ M' hℓ hg hM'pos hndvd hSM' (ih M' hlt hM'pos hSM') e
+    · exact hbase M hM hSM (fun ℓ hℓ hd hg => hex ⟨ℓ, hℓ, hd, hg⟩)
+
+/-- A modulus none of whose primes is `2` or divides `pqR` is coprime to `2pqR`. -/
+theorem coprime_of_primes {p q M : ℕ}
+    (h : ∀ ℓ, ℓ.Prime → ℓ ∣ M → ¬ (ℓ = 2 ∨ ℓ ∣ p ∨ ℓ ∣ q * (p - q))) :
+    Nat.Coprime M (2 * p * q * (p - q)) := by
+  refine Nat.coprime_of_dvd fun k hk hkM hkd => h k hk hkM ?_
+  rcases (Nat.Prime.dvd_mul hk).1 hkd with h1 | h1
+  · rcases (Nat.Prime.dvd_mul hk).1 h1 with h2 | h2
+    · rcases (Nat.Prime.dvd_mul hk).1 h2 with h3 | h3
+      · exact Or.inl ((Nat.prime_dvd_prime_iff_eq hk Nat.prime_two).1 h3)
+      · exact Or.inr (Or.inl h3)
+    · exact Or.inr (Or.inr (dvd_mul_of_dvd_left h2 _))
+  · exact Or.inr (Or.inr (dvd_mul_of_dvd_right h1 _))
+
+end Assembly
+
 /-! ## C. Odd `p`, and `U` -/
 
 section OddP
@@ -752,7 +795,19 @@ theorem residueTransitive_lift_two_of_odd (hp : Odd p) (hcop : Nat.Coprime p q) 
 `M ≥ 1`.  Paper proof: (B0) mod `M₀`, then Lemma A₂, Lemma B, Lemma A one prime at a time. -/
 theorem residueTransitive_of_odd (hp : Odd p) (hcop : Nat.Coprime p q) (hq : 0 < q)
     (hqp : q < p) {M : ℕ} (hM : 0 < M) : ResidueTransitive (wythoff s p q) M := by
-  sorry
+  have hp3 : 3 ≤ p := by obtain ⟨k, rfl⟩ := hp; omega
+  refine residueTransitive_of_lifts (fun _ => True) (fun _ _ _ _ => trivial)
+    (fun ℓ => ℓ = 2 ∨ ℓ ∣ p ∨ ℓ ∣ q * (p - q)) ?_ ?_ M hM trivial
+  · rintro ℓ M' hℓ hg hM' hℓM - hT e
+    by_cases h2 : ℓ = 2
+    · subst h2
+      exact residueTransitive_lift_two_of_odd s hp hcop hq hqp
+        (Nat.odd_iff.2 (Nat.two_dvd_ne_zero.1 hℓM)) hT e
+    · rcases hg.resolve_left h2 with hℓp | hℓqR
+      · exact residueTransitive_lift_dvd_p s hcop hq hqp hℓ h2 hℓp hM' hℓM hT e
+      · exact residueTransitive_lift_dvd_qR s hcop hq hqp hℓ h2 hℓqR hM' hℓM hT e
+  · intro M _ _ hgood
+    exact residueTransitive_base_coprime s hp3 hcop hq hqp (coprime_of_primes hgood)
 
 /-- **(ratified).**  `U` is residue-transitive mod every `M ≥ 1`: no union of residue classes is
 a proper nonempty trap for `U`. -/
@@ -820,7 +875,19 @@ theorem residueTransitive_of_even_nonabsorbing (hp : Even p) (hp4 : 4 ≤ p)
 (absorbing members included: (B0), Lemma B and Lemma A at odd `M'` never use the parity chain). -/
 theorem residueTransitive_of_odd_modulus (hp3 : 3 ≤ p) (hcop : Nat.Coprime p q) (hq : 0 < q)
     (hqp : q < p) {M : ℕ} (hM : Odd M) : ResidueTransitive (wythoff s p q) M := by
-  sorry
+  refine residueTransitive_of_lifts Odd (fun _ _ hM hd => Odd.of_dvd_nat hM hd)
+    (fun ℓ => ℓ ≠ 2 ∧ (ℓ ∣ p ∨ ℓ ∣ q * (p - q))) ?_ ?_ M (by obtain ⟨k, rfl⟩ := hM; omega) hM
+  · rintro ℓ M' hℓ ⟨h2, hg⟩ hM' hℓM - hT e
+    rcases hg with hℓp | hℓqR
+    · exact residueTransitive_lift_dvd_p s hcop hq hqp hℓ h2 hℓp hM' hℓM hT e
+    · exact residueTransitive_lift_dvd_qR s hcop hq hqp hℓ h2 hℓqR hM' hℓM hT e
+  · intro M _ hMo hgood
+    refine residueTransitive_base_coprime s hp3 hcop hq hqp (coprime_of_primes fun ℓ hℓ hd => ?_)
+    have h2 : ℓ ≠ 2 := by
+      rintro rfl; exact (Nat.not_even_iff_odd.2 hMo) (even_iff_two_dvd.2 hd)
+    rintro (h | h)
+    · exact h2 h
+    · exact hgood ℓ hℓ hd ⟨h2, h⟩
 
 /-- **(ratified).**  Absorbing members are not residue-transitive at any even `M`: the absorbing
 parity class is closed (Theorem T, `parityClass_invariant_iff`).  Holds at `p = 2` too. -/
