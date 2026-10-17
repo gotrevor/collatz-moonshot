@@ -503,6 +503,24 @@ theorem exists_even_iterate_Y {n : ℤ} (hn : n % 2 = 0) :
   have h5 : (wy alphaY)^[4] n % 2 ≠ 0 := hne 3 le_rfl
   omega
 
+theorem alphaY_bounds : 2026 / 100 < alphaY ∧ alphaY < 203 / 10 := by
+  have h := yRoot_bounds
+  have hp : 0 < 2 * yRoot - 1 := by linarith
+  unfold alphaY
+  constructor
+  · rw [lt_div_iff₀ hp]; linarith
+  · rw [div_lt_iff₀ hp]; linarith
+
+/-- Floor step of the sandwich: `(n/2)·α < W(n) + 1` for even `n`. -/
+theorem wy_even_add_one_gt {n : ℤ} (hn : n % 2 = 0) :
+    ((n / 2 : ℤ) : ℝ) * alphaY < wy alphaY n + 1 := by
+  have := (yF1_mem hn).2; unfold yF1 at this; linarith
+
+/-- Odd step of the sandwich: `x(v + 1) ≤ W(v) + 1` for odd `v`. -/
+theorem wy_odd_add_one_ge {v : ℤ} (hv : v % 2 = 1) :
+    yRoot * ((v : ℝ) + 1) ≤ wy alphaY v + 1 := by
+  have := (yFodd_mem hv).2; unfold yFodd at this; linarith
+
 /-- **(drafted, 97%; the (H2) input).**  For `n > 0` even, `j ≤ 3`, and `W(n), …, Wʲ(n)` odd:
 `4n ≤ 3·W^{j+1}(n)`.  Paper proof: the sandwich of `WythoffLine` (`y₁ = An`,
 `y_{i+1} = x(Wⁱ n + 1)`, `x yᵢ ≤ y_{i+1}`, strict at `i = 1`) gives `W^{j+1}(n) > c_j n − 1` with
@@ -512,7 +530,58 @@ and `W(n) = ⌊nα/2⌋ ≥ 10n`.  (Measured: `min R(s)/s = 1.4722` at `s = 72`;
 theorem le_wy_iterate_of_odd_run_Y {n : ℤ} (hn0 : 0 < n) (hn : n % 2 = 0) {j : ℕ} (hj : j ≤ 3)
     (hodd : ∀ i : ℕ, 1 ≤ i → i ≤ j → (wy alphaY)^[i] n % 2 = 1) :
     4 * n ≤ 3 * (wy alphaY)^[j + 1] n := by
-  sorry
+  have hx := yRoot_bounds
+  have hα := alphaY_bounds
+  have hnk : n = 2 * (n / 2) := by omega
+  have hk1 : (1 : ℝ) ≤ ((n / 2 : ℤ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ n / 2)
+  have hn' : (n : ℝ) = 2 * ((n / 2 : ℤ) : ℝ) := by exact_mod_cast hnk
+  have hchain : ∀ i : ℕ, i ≤ j → yRoot ^ i * (((n / 2 : ℤ) : ℝ) * alphaY) <
+      ((wy alphaY)^[i + 1] n : ℝ) + 1 := by
+    intro i
+    induction i with
+    | zero => intro _; simpa using wy_even_add_one_gt hn
+    | succ i ih =>
+      intro hi
+      have h1 := ih (by omega)
+      have h2 := wy_odd_add_one_ge (hodd (i + 1) (by omega) hi)
+      rw [wy_iterate_succ (i + 1)]
+      calc yRoot ^ (i + 1) * (((n / 2 : ℤ) : ℝ) * alphaY)
+          = yRoot * (yRoot ^ i * (((n / 2 : ℤ) : ℝ) * alphaY)) := by ring
+        _ < yRoot * (((wy alphaY)^[i + 1] n : ℝ) + 1) :=
+          mul_lt_mul_of_pos_left h1 (by linarith)
+        _ ≤ _ := h2
+  have hfin := hchain j le_rfl
+  suffices key : ((4 * n : ℤ) : ℝ) < ((3 * (wy alphaY)^[j + 1] n : ℤ) : ℝ) from
+    (Int.cast_lt.1 key).le
+  push_cast
+  rcases Nat.eq_zero_or_pos j with hj0 | hj0
+  · subst hj0
+    simp only [pow_zero, one_mul] at hfin
+    nlinarith
+  · rcases le_or_gt (n / 2) 3 with hk3 | hk4
+    · -- `n ∈ {2, 4, 6}`: `W(n) = 20·(n/2)` is even, so no odd run follows
+      exfalso
+      have h1 := hodd 1 le_rfl hj0
+      rw [Function.iterate_one, hnk, wy_two_mul] at h1
+      have hk3' : ((n / 2 : ℤ) : ℝ) ≤ 3 := by exact_mod_cast hk3
+      have hfl : ⌊((n / 2 : ℤ) : ℝ) * alphaY⌋ = 20 * (n / 2) := by
+        rw [Int.floor_eq_iff]; push_cast; constructor <;> nlinarith
+      rw [hfl] at h1
+      omega
+    · have hk4' : (4 : ℝ) ≤ ((n / 2 : ℤ) : ℝ) := by exact_mod_cast hk4
+      have hx3 : (1454 : ℝ) / 10000 < yRoot ^ 3 := by
+        have : ((52595748 : ℝ) / 10 ^ 8) ^ 3 < yRoot ^ 3 :=
+          pow_lt_pow_left₀ hx.1 (by norm_num) (by norm_num)
+        norm_num at this ⊢; linarith
+      have hxj : yRoot ^ 3 ≤ yRoot ^ j :=
+        pow_le_pow_of_le_one (by linarith) (by linarith) (by omega)
+      have hprod : (1454 : ℝ) / 10000 * 2026 / 100 * ((n / 2 : ℤ) : ℝ) ≤
+          yRoot ^ j * (((n / 2 : ℤ) : ℝ) * alphaY) := by
+        have := mul_le_mul (hx3.le.trans hxj) (mul_le_mul_of_nonneg_left hα.1.le
+          (by linarith : (0 : ℝ) ≤ ((n / 2 : ℤ) : ℝ))) (by nlinarith)
+          (pow_nonneg (by linarith) _)
+        linarith
+      nlinarith
 
 /-! ## Theorem Y (2)-(4): classification, count, density -/
 
