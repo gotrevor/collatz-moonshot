@@ -88,27 +88,128 @@ theorem goldPerm_apply (n : ℤ) : goldPerm n = Wg n := rfl
 
 /-! ## The even branch and the 3-cycles -/
 
+theorem gold_bounds : (1618 : ℝ) / 1000 < φ ∧ φ < 16181 / 10000 := by
+  have h := goldenRatio_sq
+  have hp := goldenRatio_pos
+  constructor <;> nlinarith
+
+/-- `β = α/(α − 1) = 2φ − 2` for `α = 2 + 2φ`. -/
+theorem gold_beta : alphaK 3 (-1) / (alphaK 3 (-1) - 1) = 2 * φ - 2 := by
+  rw [alphaK_three_neg_one_eq_gold]
+  have hp := goldenRatio_pos
+  have h : (2 + 2 * φ - 1) ≠ 0 := by linarith
+  rw [div_eq_iff h]
+  linear_combination (-4 : ℝ) * goldenRatio_sq
+
+/-- `W(2m − 1) = ⌈m(2φ − 2)⌉ − 1`. -/
+theorem wy_gold_two_mul_sub_one (m : ℤ) : Wg (2 * m - 1) = ⌈(m : ℝ) * (2 * φ - 2)⌉ - 1 := by
+  rw [wy_two_mul_sub_one, gold_beta]
+
+theorem floor_two_mul_of_lt {y : ℝ} (h : Int.fract y < 1 / 2) : ⌊2 * y⌋ = 2 * ⌊y⌋ := by
+  rw [Int.floor_eq_iff]
+  have := Int.fract_nonneg y
+  unfold Int.fract at *
+  push_cast
+  constructor <;> linarith
+
+theorem floor_two_mul_of_ge {y : ℝ} (h : 1 / 2 ≤ Int.fract y) : ⌊2 * y⌋ = 2 * ⌊y⌋ + 1 := by
+  rw [Int.floor_eq_iff]
+  have := Int.fract_lt_one y
+  unfold Int.fract at *
+  push_cast
+  constructor <;> linarith
+
 /-- **(drafted, 99%).**  `W(2k) = 2k + ⌊2kφ⌋` (`wy_two_mul`, `alphaK_three_neg_one_eq_gold`,
 `Int.floor_intCast_add`). -/
 theorem wy_gold_two_mul (k : ℤ) : Wg (2 * k) = 2 * k + ⌊2 * (k : ℝ) * φ⌋ := by
-  sorry
+  rw [wy_two_mul, alphaK_three_neg_one_eq_gold,
+    show (k : ℝ) * (2 + 2 * φ) = ((2 * k : ℤ) : ℝ) + 2 * (k : ℝ) * φ by push_cast; ring]
+  exact Int.floor_intCast_add _ _
 
 /-- **(drafted, 99%).**  `W(2k)` is even iff `{kφ} < 1/2`
 (`⌊2kφ⌋ = 2⌊kφ⌋ + ⌊2{kφ}⌋`). -/
 theorem wy_gold_two_mul_even_iff (k : ℤ) :
     Wg (2 * k) % 2 = 0 ↔ Int.fract ((k : ℝ) * φ) < 1 / 2 := by
-  sorry
+  rw [wy_gold_two_mul, show 2 * (k : ℝ) * φ = 2 * ((k : ℝ) * φ) by ring]
+  rcases lt_or_ge (Int.fract ((k : ℝ) * φ)) (1 / 2) with h | h
+  · rw [floor_two_mul_of_lt h]; simp only [h, iff_true]; omega
+  · rw [floor_two_mul_of_ge h]; simp only [not_lt.2 h, iff_false]; omega
+
+/-- The 3-cycle through `2k` when `{kφ} ≥ 1/2`, explicitly (`F = ⌊kφ⌋`):
+`2k ↦ 2(k + F) + 1 ↦ 2F + 1 ↦ 2k`. -/
+theorem gold_cycle (k : ℤ) (hu : 1 / 2 ≤ Int.fract ((k : ℝ) * φ)) :
+    Wg (2 * k) = 2 * (k + ⌊(k : ℝ) * φ⌋) + 1 ∧
+      Wg (2 * (k + ⌊(k : ℝ) * φ⌋) + 1) = 2 * ⌊(k : ℝ) * φ⌋ + 1 ∧
+      Wg (2 * ⌊(k : ℝ) * φ⌋ + 1) = 2 * k := by
+  have hg := gold_bounds
+  have hsq := goldenRatio_sq
+  have hkF : (k : ℝ) * φ = ⌊(k : ℝ) * φ⌋ + Int.fract ((k : ℝ) * φ) :=
+    (Int.floor_add_fract _).symm
+  have hu1 := Int.fract_lt_one ((k : ℝ) * φ)
+  set F := ⌊(k : ℝ) * φ⌋ with hF
+  set u := Int.fract ((k : ℝ) * φ) with hu_def
+  refine ⟨?_, ?_, ?_⟩
+  · rw [wy_gold_two_mul, show 2 * (k : ℝ) * φ = 2 * ((k : ℝ) * φ) by ring,
+      floor_two_mul_of_ge hu]
+    ring
+  · rw [show 2 * (k + F) + 1 = 2 * (k + F + 1) - 1 by ring, wy_gold_two_mul_sub_one]
+    have hid : ((k + F + 1 : ℤ) : ℝ) * (2 * φ - 2) = 2 * F + 2 * (u * (2 - φ) + φ - 1) := by
+      push_cast
+      linear_combination (4 - 2 * φ) * hkF + 2 * (k : ℝ) * hsq
+    have hw1 : 0 ≤ u * (2 - φ) := mul_nonneg (Int.fract_nonneg _) (by linarith)
+    have hw2 : u * (2 - φ) < 2 - φ := by nlinarith
+    have : ⌈((k + F + 1 : ℤ) : ℝ) * (2 * φ - 2)⌉ = 2 * F + 2 := by
+      rw [Int.ceil_eq_iff, hid]; push_cast; constructor <;> linarith
+    rw [this]; ring
+  · rw [show 2 * F + 1 = 2 * (F + 1) - 1 by ring, wy_gold_two_mul_sub_one]
+    have hid : ((F + 1 : ℤ) : ℝ) * (2 * φ - 2) = 2 * k + 2 * ((φ - 1) * (1 - u)) := by
+      push_cast
+      linear_combination (2 - 2 * φ) * hkF + 2 * (k : ℝ) * hsq
+    have hw1 : 0 < (φ - 1) * (1 - u) := mul_pos (by linarith) (by linarith)
+    have hw2 : (φ - 1) * (1 - u) ≤ 1 / 2 := by nlinarith
+    have : ⌈((F + 1 : ℤ) : ℝ) * (2 * φ - 2)⌉ = 2 * k + 1 := by
+      rw [Int.ceil_eq_iff, hid]; push_cast; constructor <;> linarith
+    rw [this]; ring
+
+theorem fract_ge_of_odd {n : ℤ} (hn : n % 2 = 0) (h : Wg n % 2 = 1) :
+    1 / 2 ≤ Int.fract (((n / 2 : ℤ) : ℝ) * φ) := by
+  have hn2 : n = 2 * (n / 2) := by omega
+  rw [hn2] at h
+  by_contra hc
+  have := (wy_gold_two_mul_even_iff (n / 2)).2 (not_le.1 hc)
+  omega
 
 /-- **(drafted, 97%; EO ⇒ EOO).**  If `n` is even and `W(n)` is odd, `W²(n)` is odd; for every
 `n ∈ ℤ`.  Paper proof: module docstring (the next phase is `{u(2 − φ) + φ} ≥ 0.809`). -/
 theorem wy_gold_odd_of_odd {n : ℤ} (hn : n % 2 = 0) (h : Wg n % 2 = 1) : Wg (Wg n) % 2 = 1 := by
-  sorry
+  obtain ⟨h1, h2, -⟩ := gold_cycle _ (fract_ge_of_odd hn h)
+  have hn2 : n = 2 * (n / 2) := by omega
+  rw [hn2, h1, h2]
+  omega
 
 /-- **(drafted, 98%; 3-cycles).**  If `n` is even and `W(n)` is odd, then `W³(n) = n`; for every
 `n ∈ ℤ`.  Paper proof: the `WythoffLine` sandwich with `c_2 = 1`, `x + x² = 1`, after
 `wy_gold_odd_of_odd` (module docstring). -/
 theorem wy_gold_iterate_three {n : ℤ} (hn : n % 2 = 0) (h : Wg n % 2 = 1) : Wg^[3] n = n := by
-  sorry
+  obtain ⟨h1, h2, h3⟩ := gold_cycle _ (fract_ge_of_odd hn h)
+  have hn2 : n = 2 * (n / 2) := by omega
+  simp only [Function.iterate_succ, Function.iterate_zero, Function.comp_apply, id]
+  conv_lhs => rw [hn2]
+  rw [h1, h2, h3, ← hn2]
+
+/-- Orbits stay in a set closed under `σ` and `σ⁻¹`. -/
+theorem zpow_mem_of_closed (σ : Equiv.Perm ℤ) {C : Set ℤ} (h1 : ∀ x ∈ C, σ x ∈ C)
+    (h2 : ∀ x ∈ C, σ.symm x ∈ C) (m : ℤ) : ∀ x ∈ C, (σ ^ m) x ∈ C := by
+  induction m using Int.induction_on with
+  | zero => intro x hx; simpa using hx
+  | succ m ih =>
+    intro x hx
+    rw [zpow_add_one, Equiv.Perm.mul_apply]
+    exact ih _ (h1 x hx)
+  | pred m ih =>
+    intro x hx
+    rw [zpow_sub_one, Equiv.Perm.mul_apply, Equiv.Perm.inv_def]
+    exact ih _ (h2 x hx)
 
 /-- **(drafted, 98%).**  For `n > 0` even with `W(n)` odd, `n` is the minimum of its (3-cycle)
 orbit.  Paper proof: the orbit is `{n, W n, W² n}` (`wy_gold_iterate_three`); `W n > n`
@@ -116,7 +217,37 @@ orbit.  Paper proof: the orbit is `{n, W n, W² n}` (`wy_gold_iterate_three`); `
 `n = W(W² n) < W² n` (`wy_lt_of_odd`). -/
 theorem isOrbitMin_of_cycle_gold {n : ℤ} (hn0 : 0 < n) (hn : n % 2 = 0) (h : Wg n % 2 = 1) :
     IsOrbitMin goldPerm n := by
-  sorry
+  have hg := gold_bounds
+  obtain ⟨h1, h2, h3⟩ := gold_cycle _ (fract_ge_of_odd hn h)
+  have hn2 : n = 2 * (n / 2) := by omega
+  set k := n / 2 with hk
+  set F := ⌊(k : ℝ) * φ⌋ with hF
+  have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast (by omega : 1 ≤ k)
+  have hFk : k ≤ F := by
+    rw [hF, Int.le_floor]; nlinarith
+  set C : Set ℤ := {n, 2 * (k + F) + 1, 2 * F + 1} with hC
+  have hσ : ∀ x ∈ C, goldPerm x ∈ C := by
+    intro x hx
+    simp only [hC, Set.mem_insert_iff, Set.mem_singleton_iff] at hx ⊢
+    rcases hx with rfl | rfl | rfl
+    · rw [goldPerm_apply, hn2, h1]; simp
+    · rw [goldPerm_apply, h2]; simp
+    · rw [goldPerm_apply, h3, ← hn2]; simp
+  have hσ' : ∀ x ∈ C, goldPerm.symm x ∈ C := by
+    intro x hx
+    simp only [hC, Set.mem_insert_iff, Set.mem_singleton_iff] at hx ⊢
+    rcases hx with rfl | rfl | rfl
+    · right; right
+      rw [Equiv.symm_apply_eq, goldPerm_apply, h3, ← hn2]
+    · left
+      rw [Equiv.symm_apply_eq, goldPerm_apply, hn2, h1]
+    · right; left
+      rw [Equiv.symm_apply_eq, goldPerm_apply, h2]
+  rintro y ⟨m, rfl⟩
+  show n ≤ (goldPerm ^ m) n
+  have := zpow_mem_of_closed goldPerm hσ hσ' m n (by simp [hC])
+  simp only [hC, Set.mem_insert_iff, Set.mem_singleton_iff] at this
+  omega
 
 /-- **(drafted, 98%; infinitely many 3-cycles, unconditional).**  Infinitely many `n > 0` are
 even with `W(n)` odd, each the minimum of its own 3-cycle.  Paper proof: among any three
@@ -125,14 +256,53 @@ consecutive `k ≥ 1` one has `{kφ} ≥ 1/2`: `{(k + 1)φ} = {kφ + (φ − 1)}
 next is `u − 0.382 < 0.118` and the one after lies in `[0.618, 0.736)`
 (`wy_gold_two_mul_even_iff`). -/
 theorem goldCycleEvens_infinite : {n : ℤ | 0 < n ∧ n % 2 = 0 ∧ Wg n % 2 = 1}.Infinite := by
-  sorry
+  have hg := gold_bounds
+  have key : ∀ k : ℤ, ∃ i : ℤ, 0 ≤ i ∧ i ≤ 2 ∧ 1 / 2 ≤ Int.fract (((k + i : ℤ) : ℝ) * φ) := by
+    intro k
+    have hkF : (k : ℝ) * φ = ⌊(k : ℝ) * φ⌋ + Int.fract ((k : ℝ) * φ) :=
+      (Int.floor_add_fract _).symm
+    have hu0 := Int.fract_nonneg ((k : ℝ) * φ)
+    have hu1 := Int.fract_lt_one ((k : ℝ) * φ)
+    set u := Int.fract ((k : ℝ) * φ)
+    rcases le_or_gt (1 / 2) u with h | h
+    · exact ⟨0, le_rfl, by norm_num, by simpa using h⟩
+    rcases lt_or_ge u (2 - φ) with h' | h'
+    · refine ⟨1, by norm_num, by norm_num, ?_⟩
+      have : Int.fract (((k + 1 : ℤ) : ℝ) * φ) = u + φ - 1 := by
+        rw [Int.fract_eq_iff]
+        refine ⟨by linarith, by linarith, ⌊(k : ℝ) * φ⌋ + 1, ?_⟩
+        push_cast; linarith
+      rw [this]; linarith
+    · refine ⟨2, by norm_num, le_rfl, ?_⟩
+      have : Int.fract (((k + 2 : ℤ) : ℝ) * φ) = u + 2 * φ - 3 := by
+        rw [Int.fract_eq_iff]
+        refine ⟨by linarith, by linarith, ⌊(k : ℝ) * φ⌋ + 3, ?_⟩
+        push_cast; linarith
+      rw [this]; linarith
+  apply Set.infinite_of_not_bddAbove
+  rintro ⟨N, hN⟩
+  obtain ⟨i, hi0, hi2, hi⟩ := key (max N 0 + 1)
+  have hmem : 2 * (max N 0 + 1 + i) ∈ {n : ℤ | 0 < n ∧ n % 2 = 0 ∧ Wg n % 2 = 1} := by
+    refine ⟨by omega, by omega, ?_⟩
+    have := (wy_gold_two_mul_even_iff (max N 0 + 1 + i)).not.2 (not_lt.2 hi)
+    omega
+  have := hN hmem
+  omega
 
 /-! ## The Sturmian trap `S′ = coneSet 3 (−1)` -/
 
 /-- **(drafted, 99%).**  `S′ = {2k : k > 0, {kφ} < 1/2}` (`wy_gold_two_mul_even_iff`). -/
 theorem mem_coneSet_gold_iff (n : ℤ) :
     n ∈ coneSet 3 (-1) ↔ ∃ k : ℤ, 0 < k ∧ n = 2 * k ∧ Int.fract ((k : ℝ) * φ) < 1 / 2 := by
-  sorry
+  unfold coneSet
+  simp only [Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨h0, h2, hW⟩
+    have hn2 : n = 2 * (n / 2) := by omega
+    rw [hn2] at hW
+    exact ⟨n / 2, by omega, hn2, (wy_gold_two_mul_even_iff _).1 hW⟩
+  · rintro ⟨k, hk, rfl, hu⟩
+    exact ⟨by omega, by omega, (wy_gold_two_mul_even_iff _).2 hu⟩
 
 /-- **(proved: an instance of Theorem K).**  `S′` is `W`-invariant. -/
 theorem goldPerm_mapsTo_coneSet : ∀ n ∈ coneSet 3 (-1), goldPerm n ∈ coneSet 3 (-1) :=
@@ -144,7 +314,22 @@ theorem goldPerm_mapsTo_coneSet : ∀ n ∈ coneSet 3 (-1), goldPerm n ∈ coneS
 theorem fract_gold_image {k : ℤ} (hk : Int.fract ((k : ℝ) * φ) < 1 / 2) :
     Wg (2 * k) = 2 * (k + ⌊(k : ℝ) * φ⌋) ∧
       Int.fract (((k + ⌊(k : ℝ) * φ⌋ : ℤ) : ℝ) * φ) = Int.fract ((k : ℝ) * φ) / φ ^ 2 := by
-  sorry
+  have hg := gold_bounds
+  have hsq := goldenRatio_sq
+  have hkF : (k : ℝ) * φ = ⌊(k : ℝ) * φ⌋ + Int.fract ((k : ℝ) * φ) :=
+    (Int.floor_add_fract _).symm
+  have hu0 := Int.fract_nonneg ((k : ℝ) * φ)
+  refine ⟨?_, ?_⟩
+  · rw [wy_gold_two_mul, show 2 * (k : ℝ) * φ = 2 * ((k : ℝ) * φ) by ring,
+      floor_two_mul_of_lt hk]
+    ring
+  · have hinv : 1 / φ ^ 2 = 2 - φ := by
+      rw [div_eq_iff (by positivity)]; linear_combination (φ - 1) * hsq
+    rw [div_eq_mul_one_div, hinv, Int.fract_eq_iff]
+    refine ⟨mul_nonneg hu0 (by linarith), by nlinarith,
+      2 * ⌊(k : ℝ) * φ⌋ + k, ?_⟩
+    push_cast
+    linear_combination (2 - φ) * hkF + (k : ℝ) * hsq
 
 /-- **(drafted, 96%).**  `W(S′) = {2k′ : k′ > 0, {k′φ} < 1/(2φ²)}`.  Paper proof: `⊆` by
 `fract_gold_image`; `⊇`: for `{k′φ} < 1/(2φ²)` put `k = ⌈k′/φ²⌉`; then `k′ = ⌊kφ²⌋ = k + ⌊kφ⌋`
@@ -153,7 +338,45 @@ theorem fract_gold_image {k : ℤ} (hk : Int.fract ((k : ℝ) * φ) < 1 / 2) :
 theorem mem_image_coneSet_gold_iff (n : ℤ) :
     n ∈ goldPerm '' coneSet 3 (-1) ↔
       ∃ k : ℤ, 0 < k ∧ n = 2 * k ∧ Int.fract ((k : ℝ) * φ) < 1 / (2 * φ ^ 2) := by
-  sorry
+  have hg := gold_bounds
+  have hsq := goldenRatio_sq
+  have hφ2 : 0 < φ ^ 2 := by positivity
+  constructor
+  · rintro ⟨m, hm, rfl⟩
+    obtain ⟨k, hk, rfl, hu⟩ := (mem_coneSet_gold_iff m).1 hm
+    obtain ⟨h1, h2⟩ := fract_gold_image hu
+    have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast (by omega : 1 ≤ k)
+    have hF : 1 ≤ ⌊(k : ℝ) * φ⌋ := by rw [Int.le_floor]; push_cast; nlinarith
+    refine ⟨k + ⌊(k : ℝ) * φ⌋, by omega, by rw [goldPerm_apply, h1], ?_⟩
+    rw [h2, div_lt_div_iff₀ hφ2 (by positivity)]
+    nlinarith
+  · rintro ⟨k', hk', rfl, hv⟩
+    have hkG : (k' : ℝ) * φ = ⌊(k' : ℝ) * φ⌋ + Int.fract ((k' : ℝ) * φ) :=
+      (Int.floor_add_fract _).symm
+    have hv0 := Int.fract_nonneg ((k' : ℝ) * φ)
+    set G := ⌊(k' : ℝ) * φ⌋ with hG
+    set v := Int.fract ((k' : ℝ) * φ) with hv_def
+    have hv' : v * φ ^ 2 < 1 / 2 := by
+      rw [lt_div_iff₀ (by positivity)] at hv; linarith
+    have hk'1 : (1 : ℝ) ≤ k' := by exact_mod_cast (by omega : 1 ≤ k')
+    -- `k = 2k' − G`: `kφ = (G − k') + vφ²`
+    have hkφ : ((2 * k' - G : ℤ) : ℝ) * φ = ((G - k' : ℤ) : ℝ) + v * φ ^ 2 := by
+      push_cast
+      linear_combination (φ + 1) * hkG - ((k' : ℝ) + v) * hsq
+    have hfr : Int.fract (((2 * k' - G : ℤ) : ℝ) * φ) = v * φ ^ 2 := by
+      rw [Int.fract_eq_iff]
+      exact ⟨by positivity, by linarith, G - k', by rw [hkφ]; ring⟩
+    have hfl : ⌊((2 * k' - G : ℤ) : ℝ) * φ⌋ = G - k' := by
+      rw [hkφ, Int.floor_intCast_add, Int.floor_eq_zero_iff.2 ⟨by positivity, by linarith⟩]
+      ring
+    have hfr' : Int.fract (((2 * k' - G : ℤ) : ℝ) * φ) < 1 / 2 := by rw [hfr]; exact hv'
+    have hGlt : G < 2 * k' := by
+      have : (G : ℝ) < 2 * k' := by
+        have := Int.floor_le ((k' : ℝ) * φ); rw [← hG] at this; nlinarith
+      exact_mod_cast this
+    refine ⟨2 * (2 * k' - G), (mem_coneSet_gold_iff _).2 ⟨2 * k' - G, by omega, rfl, hfr'⟩, ?_⟩
+    rw [goldPerm_apply, (fract_gold_image hfr').1, hfl]
+    ring
 
 /-! ## Classification via Lemma P -/
 
