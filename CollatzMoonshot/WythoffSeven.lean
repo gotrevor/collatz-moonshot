@@ -451,39 +451,241 @@ def sevenCyl : Set ℤ :=
   {n | n % 2 = 0 ∧ wy alphaP n % 2 = 1 ∧ (wy alphaP)^[2] n % 2 = 0 ∧
     ∀ i : ℕ, 3 ≤ i → i ≤ 6 → (wy alphaP)^[i] n % 2 = 1}
 
-/-- **(drafted, 95%).**  Every point of the cylinder has minimal period exactly `7`.  Paper
+/-- **(proved).**  Every point of the cylinder has minimal period exactly `7`.  Paper
 proof: `wy_alphaP_iterate_seven_eq` gives `IsPeriodicPt W 7 n`, so the minimal period divides
 `7` (`Function.IsPeriodicPt.minimalPeriod_dvd`); it is not `1` since `W(n)` is odd and `n` even;
 `Nat.Prime 7`. -/
 theorem minimalPeriod_alphaP_of_cyl {n : ℤ} (hn : n ∈ sevenCyl) :
     Function.minimalPeriod (wy alphaP) n = 7 := by
-  sorry
+  obtain ⟨h0, h1, h2, h⟩ := hn
+  have hp : Function.IsPeriodicPt (wy alphaP) 7 n :=
+    wy_alphaP_iterate_seven_eq h0 h1 h2 (h 3 le_rfl (by norm_num)) (h 4 (by norm_num) (by norm_num))
+      (h 5 (by norm_num) (by norm_num)) (h 6 (by norm_num) le_rfl)
+  rcases (Nat.prime_seven.eq_one_or_self_of_dvd _ hp.minimalPeriod_dvd) with h7 | h7
+  · rw [Function.minimalPeriod_eq_one_iff_isFixedPt] at h7
+    have : wy alphaP n = n := h7
+    omega
+  · exact h7
 
-/-- **(drafted, 97%; unconditional example).**  `20 → 81 → 46 → 187 → 107 → 61 → 35 → 20`.
+/-- **(proved).**  Evaluating `W` on an even point from a floor bracket. -/
+theorem evenEval {u w : ℤ} (hu : u % 2 = 0) (h1 : (w : ℝ) ≤ alphaP / 2 * u)
+    (h2 : alphaP / 2 * u < w + 1) : wy alphaP u = w := by
+  obtain ⟨k, rfl⟩ : ∃ k, u = 2 * k := ⟨u / 2, by omega⟩
+  rw [wy_two_mul, Int.floor_eq_iff]
+  push_cast at h1 h2
+  constructor <;> linarith
+
+/-- **(proved).**  Evaluating `W` on an odd point from a ceiling bracket
+(`W(u) + 1 = ⌈x(u + 1)⌉`). -/
+theorem oddEval {u w : ℤ} (hu : u % 2 = 1) (h1 : (w : ℝ) < pRoot * (u + 1))
+    (h2 : pRoot * (u + 1) ≤ w + 1) : wy alphaP u = w := by
+  obtain ⟨k, rfl⟩ : ∃ k, u = 2 * k - 1 := ⟨(u + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one, alphaP_div_sub_one, betaP]
+  have : ⌈(k : ℝ) * (2 * pRoot)⌉ = w + 1 := by
+    rw [Int.ceil_eq_iff]; push_cast at h1 h2 ⊢; constructor <;> linarith
+  omega
+
+/-- **(proved; unconditional example).**  `20 → 81 → 46 → 187 → 107 → 61 → 35 → 20`.
 Paper proof: `20 ∈ sevenCyl` by evaluating the seven floors with `alphaP_mem` (`⌊10α⌋ = 81`,
 `⌈41β⌉ − 1 = 46`, `⌊23α⌋ = 187`, `⌈94β⌉ − 1 = 107`, `⌈54β⌉ − 1 = 61`, `⌈31β⌉ − 1 = 35`; `β`
 from `alphaP_div_sub_one` and `pRoot_bounds`); `minimalPeriod_alphaP_of_cyl`. -/
 theorem minimalPeriod_alphaP_twenty : Function.minimalPeriod (wy alphaP) 20 = 7 := by
-  sorry
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  obtain ⟨hα1, hα2⟩ := alphaP_mem
+  have s1 : wy alphaP 20 = 81 := evenEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  have s2 : wy alphaP 81 = 46 := oddEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  have s3 : wy alphaP 46 = 187 := evenEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  have s4 : wy alphaP 187 = 107 := oddEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  have s5 : wy alphaP 107 = 61 := oddEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  have s6 : wy alphaP 61 = 35 := oddEval (by norm_num) (by push_cast; linarith)
+    (by push_cast; linarith)
+  refine minimalPeriod_alphaP_of_cyl ⟨by norm_num, by rw [s1]; norm_num, ?_, ?_⟩
+  · simp only [Function.iterate_succ_apply', Function.iterate_zero_apply, s1, s2]; norm_num
+  · intro i hi3 hi6
+    interval_cases i <;>
+      simp only [Function.iterate_succ_apply', Function.iterate_zero_apply, s1, s2, s3, s4, s5,
+        s6] <;> norm_num
 
-/-- **(drafted, 97%; simultaneous Dirichlet approximation).**  For reals `θ₁, θ₂` and `Q ≥ 1`
+/-- **(proved).**  Two points of `[0, ∞)` in the same cell of side `1/Q` are `1/Q`-close. -/
+theorem abs_sub_le_of_floor_eq {Q : ℕ} (hQ : 0 < Q) {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
+    (h : ⌊(Q : ℝ) * a⌋₊ = ⌊(Q : ℝ) * b⌋₊) : |a - b| ≤ 1 / Q := by
+  have hQ' : (0 : ℝ) < Q := by exact_mod_cast hQ
+  have h1 := Nat.floor_le (mul_nonneg hQ'.le ha)
+  have h2 := Nat.lt_floor_add_one ((Q : ℝ) * a)
+  have h3 := Nat.floor_le (mul_nonneg hQ'.le hb)
+  have h4 := Nat.lt_floor_add_one ((Q : ℝ) * b)
+  rw [h] at h1 h2
+  have : |(Q : ℝ) * a - Q * b| ≤ 1 := abs_le.2 ⟨by linarith, by linarith⟩
+  rw [← mul_sub, abs_mul, abs_of_pos hQ'] at this
+  rw [le_div_iff₀ hQ', mul_comm]; exact this
+
+/-- **(proved; simultaneous Dirichlet approximation).**  For reals `θ₁, θ₂` and `Q ≥ 1`
 there is `1 ≤ q ≤ Q²` with `‖qθ₁‖, ‖qθ₂‖ ≤ 1/Q`.  Paper proof: pigeonhole on the `Q² + 1`
 points `({qθ₁}, {qθ₂})`, `0 ≤ q ≤ Q²`, in the `Q²` boxes of side `1/Q`
 (`Finset.exists_ne_map_eq_of_card_lt_of_maps_to`); subtract the two indices. -/
 theorem exists_simultaneous_approx (θ₁ θ₂ : ℝ) {Q : ℕ} (hQ : 1 ≤ Q) :
     ∃ q : ℤ, 1 ≤ q ∧ q ≤ (Q : ℤ) ^ 2 ∧ ∃ m₁ m₂ : ℤ,
       |q * θ₁ - m₁| ≤ 1 / Q ∧ |q * θ₂ - m₂| ≤ 1 / Q := by
-  sorry
+  let f : ℕ → ℕ × ℕ := fun k =>
+    (⌊(Q : ℝ) * Int.fract ((k : ℝ) * θ₁)⌋₊, ⌊(Q : ℝ) * Int.fract ((k : ℝ) * θ₂)⌋₊)
+  have hQ' : (0 : ℝ) < Q := by exact_mod_cast hQ
+  have hmaps : Set.MapsTo f (Finset.range (Q ^ 2 + 1) : Set ℕ)
+      ((Finset.range Q ×ˢ Finset.range Q : Finset (ℕ × ℕ)) : Set (ℕ × ℕ)) := by
+    intro k _
+    rw [Finset.mem_coe, Finset.mem_product, Finset.mem_range, Finset.mem_range]
+    constructor <;> rw [Nat.floor_lt (mul_nonneg hQ'.le (Int.fract_nonneg _))] <;>
+      nlinarith [Int.fract_lt_one ((k : ℝ) * θ₁), Int.fract_lt_one ((k : ℝ) * θ₂)]
+  have hcard : (Finset.range Q ×ˢ Finset.range Q).card < (Finset.range (Q ^ 2 + 1)).card := by
+    simp [Finset.card_product]; nlinarith
+  -- the core: from `a < b` with `f a = f b`
+  have key : ∀ a b : ℕ, a < b → b ≤ Q ^ 2 → f a = f b → ∃ q : ℤ, 1 ≤ q ∧ q ≤ (Q : ℤ) ^ 2 ∧
+      ∃ m₁ m₂ : ℤ, |q * θ₁ - m₁| ≤ 1 / Q ∧ |q * θ₂ - m₂| ≤ 1 / Q := by
+    intro a b hab hb hf
+    simp only [f, Prod.mk.injEq] at hf
+    have hb' : (b : ℤ) ≤ (Q : ℤ) ^ 2 := by exact_mod_cast hb
+    refine ⟨(b : ℤ) - a, by omega, by omega,
+      ⌊(b : ℝ) * θ₁⌋ - ⌊(a : ℝ) * θ₁⌋, ⌊(b : ℝ) * θ₂⌋ - ⌊(a : ℝ) * θ₂⌋, ?_, ?_⟩
+    · have := abs_sub_le_of_floor_eq (by omega) (Int.fract_nonneg _) (Int.fract_nonneg _) hf.1
+      rw [abs_sub_comm] at this
+      convert this using 2
+      simp only [Int.fract]; push_cast; ring
+    · have := abs_sub_le_of_floor_eq (by omega) (Int.fract_nonneg _) (Int.fract_nonneg _) hf.2
+      rw [abs_sub_comm] at this
+      convert this using 2
+      simp only [Int.fract]; push_cast; ring
+  obtain ⟨a, ha, b, hb, hne, hab⟩ := Finset.exists_ne_map_eq_of_card_lt_of_maps_to hcard hmaps
+  rw [Finset.mem_range] at ha hb
+  rcases lt_or_gt_of_ne hne with h | h
+  · exact key a b h (by omega) hab
+  · exact key b a h (by omega) hab.symm
 
-/-- **(drafted, 96%).**  If `θ₁` is irrational, then for every `ε > 0` infinitely many `q ≥ 1`
+/-- **(proved).**  If `θ₁` is irrational, then for every `ε > 0` infinitely many `q ≥ 1`
 have `‖qθ₁‖ < ε` and `‖qθ₂‖ < ε`.  Paper proof: if the set were finite, `μ = min ‖qθ₁‖ > 0` over
 it (`θ₁` irrational, `q ≠ 0`); `exists_simultaneous_approx` with `Q > max(1/μ, 1/ε)` produces a
 member with `‖qθ₁‖ < μ`. -/
 theorem infinite_simultaneous_approx {θ₁ : ℝ} (θ₂ : ℝ) (h : Irrational θ₁) {ε : ℝ} (hε : 0 < ε) :
     {q : ℤ | 1 ≤ q ∧ ∃ m₁ m₂ : ℤ, |q * θ₁ - m₁| < ε ∧ |q * θ₂ - m₂| < ε}.Infinite := by
-  sorry
+  apply Set.infinite_of_not_bddAbove
+  rintro ⟨N, hN⟩
+  let g : ℤ → ℝ := fun q => |q * θ₁ - round ((q : ℝ) * θ₁)|
+  have gpos : ∀ q : ℤ, q ≠ 0 → 0 < g q := fun q hq => by
+    refine abs_pos.2 (sub_ne_zero.2 fun he => ?_)
+    exact (h.intCast_mul hq).ne_int _ he
+  obtain ⟨δ, hδ, hδle⟩ : ∃ δ : ℝ, 0 < δ ∧ ∀ q ∈ Finset.Icc (1 : ℤ) N, δ ≤ g q := by
+    by_cases hne : (Finset.Icc (1 : ℤ) N).Nonempty
+    · obtain ⟨q₀, hq₀, hmin⟩ := Finset.exists_min_image _ g hne
+      exact ⟨g q₀, gpos q₀ (by rw [Finset.mem_Icc] at hq₀; omega), hmin⟩
+    · exact ⟨1, one_pos, fun q hq => absurd ⟨q, hq⟩ hne⟩
+  obtain ⟨Q, hQ⟩ := exists_nat_gt (max (1 / δ) (1 / ε))
+  have hQ0 : (0 : ℝ) < Q := lt_of_le_of_lt (by positivity) (lt_of_le_of_lt (le_max_left _ _) hQ)
+  have hQ1 : 1 ≤ Q := by exact_mod_cast hQ0
+  have h1Q : 1 / (Q : ℝ) < δ := by
+    rw [div_lt_iff₀ hQ0]; have := lt_of_le_of_lt (le_max_left _ _) hQ
+    rw [div_lt_iff₀ hδ] at this; linarith
+  have h1Q' : 1 / (Q : ℝ) < ε := by
+    rw [div_lt_iff₀ hQ0]; have := lt_of_le_of_lt (le_max_right _ _) hQ
+    rw [div_lt_iff₀ hε] at this; linarith
+  obtain ⟨q, hq1, -, m₁, m₂, hm₁, hm₂⟩ := exists_simultaneous_approx θ₁ θ₂ hQ1
+  have hmem : q ∈ {q : ℤ | 1 ≤ q ∧ ∃ m₁ m₂ : ℤ, |q * θ₁ - m₁| < ε ∧ |q * θ₂ - m₂| < ε} :=
+    ⟨hq1, m₁, m₂, by linarith, by linarith⟩
+  have hqN := hN hmem
+  have := hδle q (Finset.mem_Icc.2 ⟨hq1, hqN⟩)
+  have := round_le ((q : ℝ) * θ₁) m₁
+  simp only [g] at *
+  linarith
 
-/-- **(drafted, 95%; the translation lemma).**  If `‖qA‖ < 1/200` and `‖qAx‖ < 1/200`
+/-- The hypotheses of the translation lemma, in pure real arithmetic. -/
+structure TCtx (x A d₁ d₂ : ℝ) : Prop where
+  hx1 : 56984029 / 10 ^ 8 < x
+  hx2 : x < 56984030 / 10 ^ 8
+  hA1 : 40795 / 10000 < A
+  hA2 : A < 40797 / 10000
+  d1l : -(1 / 200) < d₁
+  d1u : d₁ < 1 / 200
+  d2l : -(1 / 200) < d₂
+  d2u : d₂ < 1 / 200
+
+/-- The error products of the translation lemma. -/
+theorem TCtx.xd1 {x A d₁ d₂ : ℝ} (c : TCtx x A d₁ d₂) :
+    -(1 / 200) < x * d₁ ∧ x * d₁ < 1 / 200 := by
+  have := c.hx1; have := c.hx2; have := c.d1l; have := c.d1u
+  constructor <;> nlinarith
+
+theorem TCtx.xd2 {x A d₁ d₂ : ℝ} (c : TCtx x A d₁ d₂) :
+    -(1 / 200) < x * d₂ ∧ x * d₂ < 1 / 200 := by
+  have := c.hx1; have := c.hx2; have := c.d2l; have := c.d2u
+  constructor <;> nlinarith
+
+theorem TCtx.Ad2 {x A d₁ d₂ : ℝ} (c : TCtx x A d₁ d₂) :
+    -(40797 / 10000 / 200) < A * d₂ ∧ A * d₂ < 40797 / 10000 / 200 := by
+  have := c.hA1; have := c.hA2; have := c.d2l; have := c.d2u
+  constructor <;> nlinarith
+
+/-- The seven-step translation, step by step (`TCtx`; the slope relations `r1`-`r4`). -/
+theorem tstep1 {x A d₁ d₂ q m₁ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁) :
+    81 + 2 * m₁ ≤ A * (20 + 2 * q) ∧ A * (20 + 2 * q) < 81 + 2 * m₁ + 1 := by
+  have e : A * (20 + 2 * q) = 81 + 2 * m₁ + (20 * A - 81 + 2 * d₁) := by rw [hm₁]; ring
+  have := c.hA1; have := c.hA2; have := c.d1l; have := c.d1u
+  rw [e]; constructor <;> linarith
+
+theorem tstep2 {x A d₁ d₂ q m₁ m₂ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁)
+    (hm₂ : m₂ = q * (A * x) - d₂) :
+    46 + 2 * m₂ < x * (81 + 2 * m₁ + 1) ∧ x * (81 + 2 * m₁ + 1) ≤ 46 + 2 * m₂ + 1 := by
+  have e : x * (81 + 2 * m₁ + 1) = 46 + 2 * m₂ + (82 * x - 46 + 2 * d₂ - 2 * (x * d₁)) := by
+    rw [hm₁, hm₂]; ring
+  have := c.hx1; have := c.hx2; have := c.d2l; have := c.d2u; have := c.xd1
+  rw [e]; constructor <;> linarith
+
+theorem tstep3 {x A d₁ d₂ q m₁ m₂ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁)
+    (hm₂ : m₂ = q * (A * x) - d₂) (r1 : A * A * x = -1 + 2 * A + A * x) :
+    187 + 2 * (-q + 2 * m₁ + m₂) ≤ A * (46 + 2 * m₂) ∧
+      A * (46 + 2 * m₂) < 187 + 2 * (-q + 2 * m₁ + m₂) + 1 := by
+  have e : A * (46 + 2 * m₂) = 187 + 2 * (-q + 2 * m₁ + m₂) +
+      (46 * A - 187 + 2 * (2 * d₁ + d₂) - 2 * (A * d₂)) := by
+    rw [hm₁, hm₂]; linear_combination (2 * q) * r1
+  have := c.hA1; have := c.hA2; have := c.d1l; have := c.d1u; have := c.d2l; have := c.d2u
+  have := c.Ad2
+  rw [e]; constructor <;> linarith
+
+theorem tstep4 {x A d₁ d₂ q m₁ m₂ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁)
+    (hm₂ : m₂ = q * (A * x) - d₂) (r2 : x * (-1 + 2 * A + A * x) = -1 + A + A * x) :
+    107 + 2 * (-q + m₁ + m₂) < x * (187 + 2 * (-q + 2 * m₁ + m₂) + 1) ∧
+      x * (187 + 2 * (-q + 2 * m₁ + m₂) + 1) ≤ 107 + 2 * (-q + m₁ + m₂) + 1 := by
+  have e : x * (187 + 2 * (-q + 2 * m₁ + m₂) + 1) = 107 + 2 * (-q + m₁ + m₂) +
+      (188 * x - 107 + 2 * (d₁ + d₂) - 4 * (x * d₁) - 2 * (x * d₂)) := by
+    rw [hm₁, hm₂]; linear_combination (2 * q) * r2
+  have := c.hx1; have := c.hx2; have := c.d1l; have := c.d1u; have := c.d2l; have := c.d2u
+  have := c.xd1; have := c.xd2
+  rw [e]; constructor <;> linarith
+
+theorem tstep5 {x A d₁ d₂ q m₁ m₂ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁)
+    (hm₂ : m₂ = q * (A * x) - d₂) (r3 : x * (-1 + A + A * x) = -1 + A) :
+    61 + 2 * (-q + m₁) < x * (107 + 2 * (-q + m₁ + m₂) + 1) ∧
+      x * (107 + 2 * (-q + m₁ + m₂) + 1) ≤ 61 + 2 * (-q + m₁) + 1 := by
+  have e : x * (107 + 2 * (-q + m₁ + m₂) + 1) = 61 + 2 * (-q + m₁) +
+      (108 * x - 61 + 2 * d₁ - 2 * (x * d₁) - 2 * (x * d₂)) := by
+    rw [hm₁, hm₂]; linear_combination (2 * q) * r3
+  have := c.hx1; have := c.hx2; have := c.d1l; have := c.d1u
+  have := c.xd1; have := c.xd2
+  rw [e]; constructor <;> linarith
+
+theorem tstep6 {x A d₁ d₂ q m₁ m₂ : ℝ} (c : TCtx x A d₁ d₂) (hm₁ : m₁ = q * A - d₁)
+    (hm₂ : m₂ = q * (A * x) - d₂) (r4 : x * (-1 + A) = A - A * x) :
+    35 + 2 * (m₁ - m₂) < x * (61 + 2 * (-q + m₁) + 1) ∧
+      x * (61 + 2 * (-q + m₁) + 1) ≤ 35 + 2 * (m₁ - m₂) + 1 := by
+  have e : x * (61 + 2 * (-q + m₁) + 1) = 35 + 2 * (m₁ - m₂) +
+      (62 * x - 35 + 2 * d₁ - 2 * d₂ - 2 * (x * d₁)) := by
+    rw [hm₁, hm₂]; linear_combination (2 * q) * r4
+  have := c.hx1; have := c.hx2; have := c.d1l; have := c.d1u; have := c.d2l; have := c.d2u
+  have := c.xd1
+  rw [e]; constructor <;> linarith
+
+/-- **(proved; the translation lemma).**  If `‖qA‖ < 1/200` and `‖qAx‖ < 1/200`
 (`A = α/2`), then `20 + 2q` lies on the cylinder.  Paper proof: write `qA = m₁ + δ₁`,
 `qAx = m₂ + δ₂`.  The prefix slopes `s_i` of `E O E O⁴` have coordinates `(c₀, c₁, c₂)` on the
 `ℤ`-basis `1, A, Ax`: `s_0 = 1`, `s_1 = A`, `s_2 = Ax`, `s_3 = −1 + 2A + Ax`, `s_4 = −1 + A + Ax`,
@@ -496,15 +698,68 @@ distance `≥ 0.1299` from `ℤ`, so each floor/ceiling moves by exactly `D_i`
 (`pRoot_bounds`, `alphaP_mem`).  Parities are preserved. -/
 theorem twenty_add_two_mul_mem_sevenCyl {q m₁ m₂ : ℤ} (h₁ : |q * (alphaP / 2) - m₁| < 1 / 200)
     (h₂ : |q * (alphaP / 2 * pRoot) - m₂| < 1 / 200) : 20 + 2 * q ∈ sevenCyl := by
-  sorry
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  obtain ⟨hα1, hα2⟩ := alphaP_mem
+  have hc := pRoot_spec.2.2
+  have hA := half_alphaP_eq
+  have r1 : alphaP / 2 * (alphaP / 2) * pRoot = -1 + 2 * (alphaP / 2) + alphaP / 2 * pRoot := by
+    rw [hA]; linear_combination (7 + 4 * pRoot ^ 2) * hc
+  have r2 : pRoot * (-1 + 2 * (alphaP / 2) + alphaP / 2 * pRoot) =
+      -1 + alphaP / 2 + alphaP / 2 * pRoot := by
+    rw [hA]; linear_combination (3 + 2 * pRoot) * hc
+  have r3 : pRoot * (-1 + alphaP / 2 + alphaP / 2 * pRoot) = -1 + alphaP / 2 := by
+    rw [hA]; linear_combination (3 + 2 * pRoot) * hc
+  have r4 : pRoot * (-1 + alphaP / 2) = alphaP / 2 - alphaP / 2 * pRoot := by
+    rw [hA]; linear_combination 4 * hc
+  obtain ⟨d₁, hm₁⟩ : ∃ d : ℝ, (m₁ : ℝ) = q * (alphaP / 2) - d := ⟨q * (alphaP / 2) - m₁, by ring⟩
+  obtain ⟨d₂, hm₂⟩ : ∃ d : ℝ, (m₂ : ℝ) = q * (alphaP / 2 * pRoot) - d :=
+    ⟨q * (alphaP / 2 * pRoot) - m₂, by ring⟩
+  rw [hm₁, sub_sub_cancel] at h₁
+  rw [hm₂, sub_sub_cancel] at h₂
+  have c : TCtx pRoot (alphaP / 2) d₁ d₂ :=
+    ⟨hx1, hx2, by linarith, by linarith, (abs_lt.1 h₁).1, (abs_lt.1 h₁).2, (abs_lt.1 h₂).1,
+      (abs_lt.1 h₂).2⟩
+  have s1 : wy alphaP (20 + 2 * q) = 81 + 2 * m₁ := by
+    obtain ⟨a, b⟩ := tstep1 (q := q) c hm₁
+    exact evenEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  have s2 : wy alphaP (81 + 2 * m₁) = 46 + 2 * m₂ := by
+    obtain ⟨a, b⟩ := tstep2 c hm₁ hm₂
+    exact oddEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  have s3 : wy alphaP (46 + 2 * m₂) = 187 + 2 * (-q + 2 * m₁ + m₂) := by
+    obtain ⟨a, b⟩ := tstep3 c hm₁ hm₂ r1
+    exact evenEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  have s4 : wy alphaP (187 + 2 * (-q + 2 * m₁ + m₂)) = 107 + 2 * (-q + m₁ + m₂) := by
+    obtain ⟨a, b⟩ := tstep4 c hm₁ hm₂ r2
+    exact oddEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  have s5 : wy alphaP (107 + 2 * (-q + m₁ + m₂)) = 61 + 2 * (-q + m₁) := by
+    obtain ⟨a, b⟩ := tstep5 c hm₁ hm₂ r3
+    exact oddEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  have s6 : wy alphaP (61 + 2 * (-q + m₁)) = 35 + 2 * (m₁ - m₂) := by
+    obtain ⟨a, b⟩ := tstep6 c hm₁ hm₂ r4
+    exact oddEval (by omega) (by push_cast; exact a) (by push_cast; exact b)
+  refine ⟨by omega, ?_, ?_, ?_⟩
+  · rw [s1]; omega
+  · simp only [Function.iterate_succ_apply', Function.iterate_zero_apply, s1, s2]; omega
+  · intro i hi3 hi6
+    interval_cases i <;>
+      simp only [Function.iterate_succ_apply', Function.iterate_zero_apply, s1, s2, s3, s4, s5,
+        s6] <;> omega
 
-/-- **(drafted, 95%; infinitely many 7-cycles, unconditional).**  Infinitely many positive integers
+/-- **(proved; infinitely many 7-cycles, unconditional).**  Infinitely many positive integers
 have minimal period `7`.  Paper proof: `infinite_simultaneous_approx` with `θ₁ = A`
 (irrational, `irrational_alphaP`), `θ₂ = Ax`, `ε = 1/200`; the injective map `q ↦ 20 + 2q` sends
 that infinite set into `{n > 0 : n ∈ sevenCyl}` (`twenty_add_two_mul_mem_sevenCyl`), and every
 cylinder point has minimal period `7` (`minimalPeriod_alphaP_of_cyl`). -/
 theorem infinite_minimalPeriod_seven :
     {n : ℤ | 0 < n ∧ Function.minimalPeriod (wy alphaP) n = 7}.Infinite := by
-  sorry
+  have hirr : Irrational (alphaP / 2) := by
+    simpa using irrational_alphaP.div_natCast (m := 2) (by norm_num)
+  have hS := infinite_simultaneous_approx (alphaP / 2 * pRoot) hirr
+    (show (0 : ℝ) < 1 / 200 by norm_num)
+  refine Set.infinite_of_injOn_mapsTo (f := fun q : ℤ => 20 + 2 * q)
+    (fun a _ b _ hab => by simp only at hab; omega) ?_ hS
+  rintro q ⟨hq, m₁, m₂, h₁, h₂⟩
+  exact ⟨by show 0 < 20 + 2 * q; omega,
+    minimalPeriod_alphaP_of_cyl (twenty_add_two_mul_mem_sevenCyl h₁ h₂)⟩
 
 end CollatzMoonshot.WythoffSeven
