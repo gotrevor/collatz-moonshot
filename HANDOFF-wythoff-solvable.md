@@ -55,3 +55,15 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
   over j; (e) independence of `Fin.cons 1 (A xⁱ)` from `hind` (multiply by xᵐ, `A xᵐ = r`);
   (f) algebra `1/2 − Σ_{j<m} 1/(2αβʲ) − 1/(αβᵐ) = (α−2)/(2αβᵐ)`.  m = 0: α = 2r rational, run
   lemma vacuous (hypotheses gated on `1 ≤ m`).
+
+## DONE (2026-10-17)
+
+All four files sorry-free; `lake build CollatzMoonshot.WythoffLine CollatzMoonshot.WythoffCone`
+green; `#print axioms` of `tendsto_minCount_gPerm/gmPerm`, `gPerm/gmPerm/wkPerm_
+infinitelyManyInfiniteOrbits`, `tendsto_coneEntryCount` = `[propext, Classical.choice,
+Quot.sound]`.  Every ratified statement/def checked unchanged against `2769ba3` (script compared
+110 declaration headers).  Weyl hypotheses stay hypotheses; `hind` stays a hypothesis.
+§7 route as planned above: `section Density` in `WythoffLine.lean` (`run_Nf`, `wordSet`,
+`returnTime_eq_iff`, `tendsto_returnCount_div`, `linearIndependent_theta`, `tendsto_wordCount`,
+`density_sum_eq`), instantiated with ρ = 1 (`gPerm`, `n₀ = 2k`) and ρ = 0 (`gmPerm`,
+`n₀ = 2k − 1`).
