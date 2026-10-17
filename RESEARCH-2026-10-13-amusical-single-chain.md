@@ -2176,3 +2176,47 @@ Report: `wythoff-pisot.md`.  Notation as in §61: `x = min(α, β)/2`, `P` its m
   `0(2) ↦ 2(6)` or `4(6)`.  Non-absorbing ⇒ no trap is computed to `M = 48`, not proved.
 * **For `U`.**  `x = 3/4` is not an algebraic integer, so N3 adds nothing beyond Theorem A.
   Under 1% that this moves (a).
+
+## 64. The sporadic set is finite in each degree (2026-10-17, Opus agent; Ren checked in part)
+
+Report: `wythoff-finite.md`.  Notation of §61 and §63; `q̃_0 = q_0 + 2a_0 = a_0(2x − 1)/x`,
+`N = 2^d P(½)` (odd).  In Lean on main since §63: Theorem N3 (`WythoffPisot`, #68) and the run
+criterion from Weyl (`WythoffRunCriterion`, #69), so N3's headline is conditional on Weyl alone.
+
+* **Lemma U\* (same confidence as the run criterion).**  If `|q̃_0| > 1`, runs are unbounded:
+  the constant tail `ε_i = 1 − x` has every standard row `= P(1)`, and the top row needs an
+  integer strictly between `q̃_0/2` and `q̃_0`.  So bounded ⇒ `|q̃_0| < 1`, i.e.
+  `x < |a_0|/(2|a_0| − 1)`, and `1 ≤ |N| < 3^{d−1}`.  This explains the unbounded member
+  `x³ + 2x − 2` of §63 (`|q̃_0| = 1.41`, every other conjugate at `1.61`).  Ren's checks: the
+  whole G line (`d ≤ 10`, `r ≤ 1000`, proved solvable in Lean) has `|q̃_0| ≤ 0.586`, and Y,
+  tribonacci, `x³ + x − 1`, `x³ − x² + 2x − 1` are all below 1; Ren's exact `W` on `x³ + 2x − 2`
+  gives maximum runs `8 → 15` up to `3·10⁵`.
+* **Theorem C′(d) (80% given the run criterion, N3, B2; about 70% end to end).**  For each
+  degree `d`, only finitely many solvable members lie off the G line `t^d − 2rt + r` (mirrors
+  included).  Not effective.  Proof shape: (1) *Lemma FL*: bounded runs make a lattice translate
+  miss the cube `(0, ½)^{n+1}`, so the flatness theorem gives a bounded integer `v` with `v·h_j`
+  nearly integral (`h_j` the complete symmetric functions of the `1/x_s`).  (2) *Theorem L*: as
+  `|a_0| → ∞` every other conjugate escapes to `∞` or converges to a root of unity (the limit
+  `h_j` have polynomially bounded denominators, so `1/Σh_jz^j` has no zero in any open `p`-adic
+  unit disk, hence lies in `ℤ[z]`; then Kronecker).  (3) *Case A*, a conjugate near a root of
+  unity: sliding a periodic orbit along it with `ε_0` on the grid `(1/(2a_0))ℤ` (Lemma SG) gives
+  runs of length about `log|a_0|/log|x_s|`, far past B2's cap `(1 + o(1))log₂|a_0|`.  (4)
+  *Case B*, all escape: `P = E + a_0(1 − 2t)` with finitely many `E`, and only `E = t^d` passes
+  the limit of Theorem O's sum test (Lemma O∞); every other `E` has unbounded runs for large
+  `|a_0|` by a tracking construction (Lemma T).  The weakest step is Theorem L (85%).  Ren
+  paper-checked U\*, the half-point identity, Lemma O∞, FL step 1 and Theorem L's `p`-adic and
+  Kronecker steps; Case A's periodic orbit and Case B's uniformity are the agent's.
+* **Units reduce to a Pisot statement.**  A solvable unit of degree `d` would make `1/x` a Pisot
+  number of degree `d` in `(ψ_d, 2)`, `ψ_d` the `d`-bonacci number.  CONJ P (90%): there is
+  none.  COMPUTED: none for `d ≤ 7` (the `d = 6` Salem number `1.98779` is excluded by N3; control
+  windows find `ψ_d`, Amara's limit points and other Pisot numbers), and none among 1,789 regular
+  Pisot numbers of degree up to 35.  For non-units nothing bounds `d`; by C′(d), CONJ C′ is now
+  equivalent to a degree bound.
+* **Complete lists (COMPUTED).**  Cubics `|a_0| ≤ 1000`: exactly G(2, 2..1000) and Y (4.0
+  million candidate roots).  Quartics `|a_0| ≤ 20`: exactly G(3, 2..20).  Quintics `|a_0| ≤ 8`:
+  exactly G(4, 2..8).  Sextics `|a_0| ≤ 3`: exactly G(5, 2..3).  Ren re-ran `checks.py`
+  (identical) and the cubic `|a_0| ≤ 40` enumeration (the same 40 survivors, = §63's list).
+* **Status.**  CONJ C′ 85% (was 75%); CONJ C (solvable set = G line, Y, mirrors) 75% (was 65%).
+  The bounded-but-not-solvable residue off the G line looks cyclotomic (a conjugate near a root
+  of unity), as Theorem L predicts.  For `U`: nothing new (`x = 3/4` is not an algebraic
+  integer).  Under 1% that this moves (a).
