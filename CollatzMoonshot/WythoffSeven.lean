@@ -231,7 +231,27 @@ section Labels
 
 local notation "W" => wy alphaP
 
-/-- **(drafted, 96%; Theorem N (2) instance).**  On `E O O`: if `v` is even and `W(v), W²(v)`
+/-- **(proved).**  The even step: `W(m) + 1 = Am + g` with `g ∈ (0, 1]` (`A = α/2`). -/
+theorem evenStep {m : ℤ} (hm : m % 2 = 0) : ∃ g : ℝ, 0 < g ∧ g ≤ 1 ∧
+    ((W m : ℤ) : ℝ) = (2 * pRoot ^ 2 - pRoot + 4) * m + g - 1 := by
+  obtain ⟨k, rfl⟩ : ∃ k, m = 2 * k := ⟨m / 2, by omega⟩
+  rw [wy_two_mul, ← half_alphaP_eq]
+  refine ⟨(⌊(k : ℝ) * alphaP⌋ : ℝ) + 1 - k * alphaP, ?_, ?_, ?_⟩
+  · linarith [Int.lt_floor_add_one ((k : ℝ) * alphaP)]
+  · linarith [Int.floor_le ((k : ℝ) * alphaP)]
+  · push_cast; ring
+
+/-- **(proved).**  The odd step: `W(m) + 1 = x(m + 1) + g` with `g ∈ [0, 1)` (`β = 2x`). -/
+theorem oddStep {m : ℤ} (hm : m % 2 = 1) : ∃ g : ℝ, 0 ≤ g ∧ g < 1 ∧
+    ((W m : ℤ) : ℝ) = pRoot * (m + 1) + g - 1 := by
+  obtain ⟨k, rfl⟩ : ∃ k, m = 2 * k - 1 := ⟨(m + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one, alphaP_div_sub_one, betaP]
+  refine ⟨(⌈(k : ℝ) * (2 * pRoot)⌉ : ℝ) - k * (2 * pRoot), ?_, ?_, ?_⟩
+  · linarith [Int.le_ceil ((k : ℝ) * (2 * pRoot))]
+  · linarith [Int.ceil_lt_add_one ((k : ℝ) * (2 * pRoot))]
+  · push_cast; ring
+
+/-- **(proved; Theorem N (2) instance).**  On `E O O`: if `v` is even and `W(v), W²(v)`
 are odd, then `W³(v) = W²(v) − v` (so `W³(v)` is odd).  Paper proof:
 `WythoffAutomaton.first_step_eq_ceil` with `P = t³ − t² + 2t − 1`: `q = (2 − x + x², x − 1, 1)`,
 `q_0 + 2a_0 = x² − x`, `Φ₀ = −(1 − x)(x G_E + G) ∈ (−(1 − x²), 0)` since `G_E ∈ (0, 1]`,
@@ -240,46 +260,187 @@ are odd, then `W³(v) = W²(v) − v` (so `W³(v)` is odd).  Paper proof:
 `W³ v − W² v + v = Φ₀ + G″ ∈ (−1, 1)`. -/
 theorem wy_alphaP_eoo {v : ℤ} (hv : v % 2 = 0) (h₁ : W v % 2 = 1) (h₂ : W^[2] v % 2 = 1) :
     W^[3] v = W^[2] v - v := by
-  sorry
+  simp only [Function.iterate_succ_apply', Function.iterate_zero_apply] at h₂ ⊢
+  obtain ⟨g1, a1, b1, e1⟩ := evenStep hv
+  obtain ⟨g2, a2, b2, e2⟩ := oddStep h₁
+  obtain ⟨g3, a3, b3, e3⟩ := oddStep h₂
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  have hc := pRoot_spec.2.2
+  set x := pRoot
+  have hK : ((W (W (W v)) - W (W v) + v : ℤ) : ℝ) = (x ^ 2 - x) * g1 + (x - 1) * g2 + g3 := by
+    push_cast
+    rw [e3, e2, e1]
+    linear_combination (2 * x - 1) * (v : ℝ) * hc
+  have q1 : x ^ 2 - x < 0 := by nlinarith
+  have p1 : x ^ 2 - x ≤ (x ^ 2 - x) * g1 := by nlinarith
+  have p2 : (x ^ 2 - x) * g1 < 0 := mul_neg_of_neg_of_pos q1 a1
+  have p3 : x - 1 < (x - 1) * g2 := by nlinarith
+  have p4 : (x - 1) * g2 ≤ 0 := by nlinarith
+  have l1 : -1 < W (W (W v)) - W (W v) + v := by
+    have : ((-1 : ℤ) : ℝ) < ((W (W (W v)) - W (W v) + v : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  have l2 : W (W (W v)) - W (W v) + v < 1 := by
+    have : ((W (W (W v)) - W (W v) + v : ℤ) : ℝ) < ((1 : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  omega
 
-/-- **(drafted, 95%).**  On `E O E O`: `W³(n) − (−n + 2W(n) + W²(n)) ∈ {−1, 1}`.  Paper proof:
-module docstring (`K_3`; torus coordinates, two cases `⌈z⌉ ∈ {1, 3}`, parity). -/
+/-- **(proved).**  On `E O E O`: `W³(n) − (−n + 2W(n) + W²(n)) ∈ {−1, 1}`.  Lean proof (no torus
+coordinates needed): with the phases `g_1 ∈ (0, 1]`, `g_2 ∈ [0, 1)`, `g_3 ∈ (0, 1]` of the steps
+into `u_1, u_2, u_3`, the cubic gives exactly
+`K_3 = (x² − x)g_1 + (A − 1)(g_2 − 1) + g_3 + 1 ∈ (−x² − 2, 2) ⊂ (−3, 2)`, and `K_3` is odd. -/
 theorem wy_alphaP_iterate_three_sub_mem {n : ℤ} (hn : n % 2 = 0) (h₁ : W n % 2 = 1)
     (h₂ : W^[2] n % 2 = 0) (h₃ : W^[3] n % 2 = 1) :
     W^[3] n - (-n + 2 * W n + W^[2] n) ∈ ({-1, 1} : Set ℤ) := by
-  sorry
+  simp only [Function.iterate_succ_apply', Function.iterate_zero_apply] at h₂ h₃ ⊢
+  obtain ⟨g1, a1, b1, e1⟩ := evenStep hn
+  obtain ⟨g2, a2, b2, e2⟩ := oddStep h₁
+  obtain ⟨g3, a3, b3, e3⟩ := evenStep h₂
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  have hc := pRoot_spec.2.2
+  set x := pRoot
+  have hK : ((W (W (W n)) - (-n + 2 * W n + W (W n)) : ℤ) : ℝ) =
+      (x ^ 2 - x) * g1 + (2 * x ^ 2 - x + 3) * (g2 - 1) + g3 + 1 := by
+    push_cast
+    rw [e3, e2, e1]
+    linear_combination (2 * g1 + 7 * n + 4 * n * x ^ 2) * hc
+  have q1 : x ^ 2 - x < 0 := by nlinarith
+  have p1 : x ^ 2 - x ≤ (x ^ 2 - x) * g1 := by nlinarith
+  have p2 : (x ^ 2 - x) * g1 < 0 := mul_neg_of_neg_of_pos q1 a1
+  have p3 : -(2 * x ^ 2 - x + 3) ≤ (2 * x ^ 2 - x + 3) * (g2 - 1) := by nlinarith
+  have p4 : (2 * x ^ 2 - x + 3) * (g2 - 1) < 0 := by nlinarith
+  have l1 : -3 < W (W (W n)) - (-n + 2 * W n + W (W n)) := by
+    have : ((-3 : ℤ) : ℝ) < ((W (W (W n)) - (-n + 2 * W n + W (W n)) : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  have l2 : W (W (W n)) - (-n + 2 * W n + W (W n)) < 2 := by
+    have : ((W (W (W n)) - (-n + 2 * W n + W (W n)) : ℤ) : ℝ) < ((2 : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
+  omega
 
-/-- **(drafted, 95%).**  On `E O E O O`: `W⁴(n) = −n + W(n) + W²(n)`.  Paper proof: module
-docstring (`K_4 ∈ (−1.39, 1.57)`, even). -/
+/-- **(proved).**  On `E O E O O`: `W⁴(n) = −n + W(n) + W²(n)`.  Lean proof: exactly
+`K_4 = (x² − x)g_1 + (x² + 1)g_2 + xg_3 + g_4 − x² − 1 ∈ (−1 − x, 1 + x)`, and `K_4` is even
+(the value of `K_3` is not needed). -/
 theorem wy_alphaP_iterate_four_eq {n : ℤ} (hn : n % 2 = 0) (h₁ : W n % 2 = 1)
     (h₂ : W^[2] n % 2 = 0) (h₃ : W^[3] n % 2 = 1) (h₄ : W^[4] n % 2 = 1) :
     W^[4] n = -n + W n + W^[2] n := by
-  sorry
+  simp only [Function.iterate_succ_apply', Function.iterate_zero_apply] at h₂ h₃ h₄ ⊢
+  obtain ⟨g1, a1, b1, e1⟩ := evenStep hn
+  obtain ⟨g2, a2, b2, e2⟩ := oddStep h₁
+  obtain ⟨g3, a3, b3, e3⟩ := evenStep h₂
+  obtain ⟨g4, a4, b4, e4⟩ := oddStep h₃
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  have hc := pRoot_spec.2.2
+  set x := pRoot
+  have hK : ((W (W (W (W n))) + n - W n - W (W n) : ℤ) : ℝ) =
+      (x ^ 2 - x) * g1 + (x ^ 2 + 1) * g2 + x * g3 + g4 - x ^ 2 - 1 := by
+    push_cast
+    rw [e4, e3, e2, e1]
+    linear_combination (-2 + g1 + 2 * g1 * x + 2 * g2 + 3 * n + 9 * n * x + 4 * n * x ^ 3) * hc
+  have q1 : x ^ 2 - x < 0 := by nlinarith
+  have p1 : x ^ 2 - x ≤ (x ^ 2 - x) * g1 := by nlinarith
+  have p2 : (x ^ 2 - x) * g1 < 0 := mul_neg_of_neg_of_pos q1 a1
+  have p3 : 0 ≤ (x ^ 2 + 1) * g2 := by positivity
+  have p4 : (x ^ 2 + 1) * g2 < x ^ 2 + 1 := by nlinarith
+  have p5 : 0 < x * g3 := by nlinarith
+  have p6 : x * g3 ≤ x := by nlinarith
+  have l1 : -2 < W (W (W (W n))) + n - W n - W (W n) := by
+    have : ((-2 : ℤ) : ℝ) < ((W (W (W (W n))) + n - W n - W (W n) : ℤ) : ℝ) := by
+      rw [hK]; push_cast; linarith
+    exact_mod_cast this
+  have l2 : W (W (W (W n))) + n - W n - W (W n) < 2 := by
+    have : ((W (W (W (W n))) + n - W n - W (W n) : ℤ) : ℝ) < ((2 : ℤ) : ℝ) := by
+      rw [hK]; push_cast; linarith
+    exact_mod_cast this
+  omega
 
-/-- **(drafted, 95%).**  On `E O E O O`: `W⁵(n) = −n + W(n)`, odd.  Paper proof:
+/-- **(proved).**  On `E O E O O`: `W⁵(n) = −n + W(n)`, odd.  Paper proof:
 `wy_alphaP_eoo` at `v = W²(n)` and `wy_alphaP_iterate_four_eq`. -/
 theorem wy_alphaP_iterate_five_eq {n : ℤ} (hn : n % 2 = 0) (h₁ : W n % 2 = 1)
     (h₂ : W^[2] n % 2 = 0) (h₃ : W^[3] n % 2 = 1) (h₄ : W^[4] n % 2 = 1) :
     W^[5] n = -n + W n := by
-  sorry
+  have h4 := wy_alphaP_iterate_four_eq hn h₁ h₂ h₃ h₄
+  have h3' : W (W^[2] n) % 2 = 1 := by
+    rw [← Function.iterate_succ_apply' (f := W)]; exact h₃
+  have h4' : W^[2] (W^[2] n) % 2 = 1 := by
+    rw [← Function.iterate_add_apply]; exact h₄
+  have e := wy_alphaP_eoo h₂ h3' h4'
+  rw [← Function.iterate_add_apply, ← Function.iterate_add_apply] at e
+  rw [e, h4]; ring
 
-/-- **(drafted, 95%).**  On `E O E O O O O`: `W⁶(n) = W(n) − W²(n)`.  Paper proof: module
-docstring (`K_6 ∈ (−1.43, 1.57)`, even). -/
+/-- **(proved).**  On `E O E O O O O`: `W⁶(n) = W(n) − W²(n)`.  Lean proof: exactly
+`K_6 = (2x − 1)g_1 + g_2 + g_6 − 1 ∈ (−1, 2x)`, and `K_6` is even. -/
 theorem wy_alphaP_iterate_six_eq {n : ℤ} (hn : n % 2 = 0) (h₁ : W n % 2 = 1)
     (h₂ : W^[2] n % 2 = 0) (h₃ : W^[3] n % 2 = 1) (h₄ : W^[4] n % 2 = 1)
     (h₆ : W^[6] n % 2 = 1) :
     W^[6] n = W n - W^[2] n := by
-  sorry
+  have h5 := wy_alphaP_iterate_five_eq hn h₁ h₂ h₃ h₄
+  rw [Function.iterate_succ_apply', h5] at h₆ ⊢
+  simp only [Function.iterate_succ_apply', Function.iterate_zero_apply] at h₂ ⊢
+  have h5o : (-n + W n) % 2 = 1 := by omega
+  obtain ⟨g1, a1, b1, e1⟩ := evenStep hn
+  obtain ⟨g2, a2, b2, e2⟩ := oddStep h₁
+  obtain ⟨g6, a6, b6, e6⟩ := oddStep h5o
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  have hc := pRoot_spec.2.2
+  set x := pRoot
+  have hK : ((W (-n + W n) - W n + W (W n) : ℤ) : ℝ) = (2 * x - 1) * g1 + g2 + g6 - 1 := by
+    push_cast
+    rw [e6, e2]; push_cast; rw [e1]
+    linear_combination (4 * n) * hc
+  have p1 : 0 < (2 * x - 1) * g1 := by nlinarith
+  have p2 : (2 * x - 1) * g1 ≤ 2 * x - 1 := by nlinarith
+  have l1 : -1 < W (-n + W n) - W n + W (W n) := by
+    have : ((-1 : ℤ) : ℝ) < ((W (-n + W n) - W n + W (W n) : ℤ) : ℝ) := by
+      rw [hK]; push_cast; linarith
+    exact_mod_cast this
+  have l2 : W (-n + W n) - W n + W (W n) < 2 := by
+    have : ((W (-n + W n) - W n + W (W n) : ℤ) : ℝ) < ((2 : ℤ) : ℝ) := by
+      rw [hK]; push_cast; linarith
+    exact_mod_cast this
+  omega
 
-/-- **(drafted, 95%; the 7-cycle identity).**  If `n` is even and `W(n), …, W⁶(n)` have parities
+/-- **(proved; the 7-cycle identity).**  If `n` is even and `W(n), …, W⁶(n)` have parities
 `O, E, O, O, O, O`, then `W⁷(n) = n`; for every `n ∈ ℤ`.  Paper proof: module docstring
-(`K_7 = x(1 − x)G_1 − xG_2 + x − 1 + h_7 ∈ (−1, 1)` given `K_6 = 0`).  The hypothesis on
+(`K_7 = x(1 − x)G_1 − xG_2 + x − 1 + h_7 ∈ (−1, 2x − x²)` given `K_6 = 0`).  The hypothesis on
 `W⁵(n)` is automatic (`wy_alphaP_iterate_five_eq`); it is kept to state the cylinder. -/
 theorem wy_alphaP_iterate_seven_eq {n : ℤ} (hn : n % 2 = 0) (h₁ : W n % 2 = 1)
     (h₂ : W^[2] n % 2 = 0) (h₃ : W^[3] n % 2 = 1) (h₄ : W^[4] n % 2 = 1)
     (h₅ : W^[5] n % 2 = 1) (h₆ : W^[6] n % 2 = 1) :
     W^[7] n = n := by
-  sorry
+  have _ := h₅  -- automatic (`wy_alphaP_iterate_five_eq`); kept to state the cylinder
+  have h6 := wy_alphaP_iterate_six_eq hn h₁ h₂ h₃ h₄ h₆
+  rw [h6] at h₆
+  rw [Function.iterate_succ_apply', h6]
+  simp only [Function.iterate_succ_apply', Function.iterate_zero_apply] at h₆ ⊢
+  obtain ⟨g1, a1, b1, e1⟩ := evenStep hn
+  obtain ⟨g2, a2, b2, e2⟩ := oddStep h₁
+  obtain ⟨g7, a7, b7, e7⟩ := oddStep h₆
+  obtain ⟨hx1, hx2⟩ := pRoot_bounds
+  have hc := pRoot_spec.2.2
+  set x := pRoot
+  have hK : ((W (W n - W (W n)) - n : ℤ) : ℝ) = x * (1 - x) * g1 - x * g2 + g7 + x - 1 := by
+    push_cast
+    rw [e7]; push_cast; rw [e2, e1]
+    linear_combination (n - 2 * n * x) * hc
+  have p1 : 0 < x * (1 - x) * g1 := by
+    have : 0 < x * (1 - x) := by nlinarith
+    positivity
+  have p2 : x * (1 - x) * g1 ≤ x * (1 - x) := by nlinarith
+  have p3 : x * g2 < x := by nlinarith
+  have p4 : 0 ≤ x * g2 := by nlinarith
+  have l1 : -1 < W (W n - W (W n)) - n := by
+    have : ((-1 : ℤ) : ℝ) < ((W (W n - W (W n)) - n : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  have l2 : W (W n - W (W n)) - n < 1 := by
+    have : ((W (W n - W (W n)) - n : ℤ) : ℝ) < ((1 : ℤ) : ℝ) := by
+      rw [hK]; push_cast; nlinarith
+    exact_mod_cast this
+  omega
 
 end Labels
 
