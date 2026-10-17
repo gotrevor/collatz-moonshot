@@ -2132,3 +2132,47 @@ Report: `wythoff-transitive.md`.  `W_{p/q±}` is *residue-transitive mod `M`* wh
 * **Side answer to §59's question on `4 | p`.**  The 2-adic contraction does show at moduli `2^e`,
   `e ≥ 2`: `φ × uniform` is not stationary there (0 of 752 exact checks); transitivity survives
   because Lemma D goes through `W⁻¹`.
+
+## 63. Bounded runs force a Pisot-dual slope: Theorem N3 (2026-10-16, Opus agent; Ren checked)
+
+Report: `wythoff-pisot.md`.  Notation as in §61: `x = min(α, β)/2`, `P` its minimal polynomial,
+`Q = P/(t − x) = Σ q_k t^k`, `q̃_0 = q_0 + 2a_0`.  In Lean on main since §62: Theorem RT
+(`WythoffResidue`, #65) and the degree-`d` even trap (`WythoffTrapDegree`, #64).
+
+* **Theorem N3 (92%).**  If `x ∈ (1/2, 1)` is an algebraic integer with some other conjugate in
+  the closed unit disk, runs after up-points reach every length with positive density, on both
+  sides, so `W_α` is not solvable.  With Theorem A: **bounded runs ⇒ `x` is an algebraic integer
+  whose other conjugates all lie in `|z| > 1`**; for a unit, `1/x` is a Pisot number in `(1, 2)`.
+  The unit-circle case is included.  §61's CONJ 75% is now a theorem.  The converse fails
+  (`x³ + 2x − 2`: all other conjugates at `|z| = 1.61`, runs unbounded).
+* **Proof shape.**  In half-scale `ε = G/2` the run criterion of §61 reads: some `ε ∈ (0, ½)^n`
+  makes the standard rows `R_i = Σ q_k ε_{i+k}` (`i ≥ 1`) and the top row
+  `T = R_0 + 2a_0 ε_0` integers.  (1) The constant `γ = (1 − x)/|P(1)| < ½` is always a fixed
+  point, with every row `Q(1)γ = ±1`.  (2) A conjugate with `|x_s| ≤ 1` gives the homogeneous
+  direction `c_i = Re(x_s^i)`, with `c_0 = 1` and `|c_i| < 1` for `i ≥ 1` (on the circle because
+  `x_s` is not a root of unity).  Sliding `γ + κc_i` puts `ε_0` on `{0, ½}`, where `T` is
+  automatically an integer, and keeps every later entry strictly inside.  (3) A compensating
+  homogeneous perturbation on indices `≥ 1` (it exists because `q_0 = −a_0/x ≠ 0`) moves `ε_0`
+  inside while keeping `T` integral.  The 8% reserve is the imported run criterion (§61, 95-97%).
+  Ren paper-checked steps (1)-(3): `P(1) = (1 − x)Q(1)`, real `q_k` keep `Re` homogeneous, both
+  `κ` cases land strictly inside, and the perturbation coefficient is `Re(−ω q_0/x_r)`.
+* **Checks.**  120-digit certificates succeed on 6 members, including the Salem-type
+  `x⁴ − x³ − x² − x + 1`, and fail on all 5 bounded members tried (teeth).  The population
+  certificate succeeds on 616 of 616 roots with a non-expanding conjugate and fails on 501 of 501
+  without.  Ren re-ran `n3cert.py`, `popcert.py 3 6` (byte-identical) and `pairchain.py`.  Ren's
+  independent check (own `W` from mpmath roots, guarded 400-bit floors, every up-point to
+  `3·10⁵`): maximum run grows `8 → 11 → 14` on the Salem-type member, `9 → 17` and `8 → 19` on two
+  cubics with a conjugate inside the disk, and stays at 2 on G(2, 2) and 4 on `x³ + x − 1`.
+* **Toward CONJ C′ (sporadic set finite; still 75%).**  Bounded runs now give Mahler measure
+  `M(P) = |a_0|/x < 2|a_0|`, so `|a_k| < 2·C(d, k)·|a_0|` and each `(d, a_0)` admits finitely
+  many members (92%).  For solvable members, `2^d P(1/2)` odd gives
+  `J + 1 < log(2·3^{d−1}|a_0|)/log(1/x_d*)`, with `x_d*` the root of `t^d = 2t − 1` in `(½, 1)`
+  (95%).  Together these make an exhaustive list complete within its box (COMPUTED): cubics with
+  `|a_0| ≤ 40` give exactly G(2, 2..40) and Y; quartics with `|a_0| ≤ 8`, exactly G(3, 2..8);
+  quintics with `|a_0| ≤ 2`, exactly G(4, 2).  Missing for C′: a degree bound, and an `|a_0|`
+  bound off the G line.  CONJ C (solvable set = G line, Y, mirrors) 65%.
+* **§62's question on `U`'s 120 partition pairings.**  The 48 TRAP pairings are exactly the 48
+  with an absorbing parity chain (144 of 144 with the S4 family).  Absorbing is equivalent to
+  `0(2) ↦ 2(6)` or `4(6)`.  Non-absorbing ⇒ no trap is computed to `M = 48`, not proved.
+* **For `U`.**  `x = 3/4` is not an algebraic integer, so N3 adds nothing beyond Theorem A.
+  Under 1% that this moves (a).
