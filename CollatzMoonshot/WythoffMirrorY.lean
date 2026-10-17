@@ -493,18 +493,347 @@ theorem ymPerm_infinitelyManyInfiniteOrbits : InfinitelyManyInfiniteOrbits ymPer
   push_cast at hge
   omega
 
-/-- **(drafted, 88%; Theorem Y′ (4), density, conditional).**  Assuming multidimensional Weyl
+/-! ### Theorem Y′ (4): the density
+
+The involution `σ(m) = −m − 1` conjugates `W′ = σ ∘ W ∘ σ` exactly (`wy_betaY_eq_neg`; Theorem M
+as an identity of maps).  So the return word `O Eʲ` of `s = 2k − 1` under `W′` is the return word
+`E Oʲ` of `−2k` under Theorem Y's `W`, which Theorem Y reads off the phase of `−k`
+(`yPhZ_mem_yWord`, valid for every integer).  The phase of `−k` is the Weyl sequence of the
+frequencies `−(c₀, c₁)` (`ymPh`), still `ℚ`-independent of `1`, with Theorem Y's cylinders
+`yWord j` and areas `yVol j`; Theorem Y's sandwich at `−2k` gives `|R′(s) − αxʲk| < 3`. -/
+
+/-- **(proved; Theorem M as an identity of maps, every member).**  For `α > 1`, the mirror
+`W_β`, `β = α/(α − 1)`, is conjugate to `W_α` by the involution `σ(m) = −m − 1`:
+`W_β(n) = −W_α(−n − 1) − 1` for every `n ∈ ℤ` (`⌈−y⌉ = −⌊y⌋`). -/
+theorem wy_mirror_eq_neg {α : ℝ} (hα : 1 < α) (n : ℤ) :
+    wy (α / (α - 1)) n = -wy α (-n - 1) - 1 := by
+  have hβ : α / (α - 1) / (α / (α - 1) - 1) = α := by
+    have : α - 1 ≠ 0 := by linarith
+    field_simp
+    ring
+  rcases Int.emod_two_eq_zero_or_one n with h | h
+  · obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+    rw [wy_two_mul, show -(2 * k) - 1 = 2 * (-k) - 1 by ring, wy_two_mul_sub_one]
+    push_cast
+    rw [neg_mul, Int.ceil_neg]
+    omega
+  · obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k - 1 := ⟨(n + 1) / 2, by omega⟩
+    rw [wy_two_mul_sub_one, hβ, show -(2 * k - 1) - 1 = 2 * (-k) by ring, wy_two_mul]
+    push_cast
+    rw [neg_mul, Int.floor_neg]
+    omega
+/-- The involution `σ(m) = −m − 1` conjugates: `W′(n) = −W(−n − 1) − 1`. -/
+theorem wy_betaY_eq_neg (n : ℤ) : wy betaY n = -wy alphaY (-n - 1) - 1 := by
+  rw [← alphaY_div_sub_one]; exact wy_mirror_eq_neg one_lt_alphaY n
+
+theorem wy_betaY_iterate_eq_neg (i : ℕ) (n : ℤ) :
+    (wy betaY)^[i] n = -(wy alphaY)^[i] (-n - 1) - 1 := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', Function.iterate_succ_apply', ih, wy_betaY_eq_neg]
+    rw [show -(-(wy alphaY)^[i] (-n - 1) - 1) - 1 = (wy alphaY)^[i] (-n - 1) by ring]
+
+/-- The phase of an integer `K`: `({K c₀}, {K c₁})`. -/
+noncomputable def yPhZ (K : ℤ) : Fin 2 → ℝ := fun i => Int.fract ((K : ℝ) * yTheta i)
+
+lemma yPhZ_zero (K : ℤ) : yPhZ K 0 = Int.fract ((K : ℝ) * yc0) := by
+  simp [yPhZ, yTheta]
+
+lemma yPhZ_one (K : ℤ) : yPhZ K 1 = Int.fract ((K : ℝ) * yc1) := by
+  simp [yPhZ, yTheta]
+
+lemma yPhZ_mem (K : ℤ) : yPhZ K ∈ yCube :=
+  mem_yCube.2 ⟨⟨Int.fract_nonneg _, Int.fract_lt_one _⟩, ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩⟩
+
+/-- Theorem Y's word reading, for every integer `K`: if `W^i(2K)` is odd for `1 ≤ i < τ` and
+`W^τ(2K)` is even (`1 ≤ τ ≤ 4`), the phase of `K` lies in `yWord (τ − 1)`. -/
+lemma yPhZ_mem_yWord (K : ℤ) {τ : ℕ} (hτ1 : 1 ≤ τ) (hτ4 : τ ≤ 4)
+    (hodd : ∀ i, 1 ≤ i → i < τ → (wy alphaY)^[i] (2 * K) % 2 = 1)
+    (hev : (wy alphaY)^[τ] (2 * K) % 2 = 0) : yPhZ K ∈ yWord (τ - 1) := by
+  have hc := yPhZ_mem K
+  have hu := yPhZ_zero K
+  have hw := yPhZ_one K
+  have hτ : τ = 1 ∨ τ = 2 ∨ τ = 3 ∨ τ = 4 := by omega
+  rcases hτ with h | h | h | h
+  · subst h
+    refine ⟨hc, ?_⟩
+    rw [hu]
+    by_contra hne
+    have := (wy_two_mul_odd_iff K).2 (not_lt.1 hne)
+    simp only [Function.iterate_one] at hev
+    omega
+  · subst h
+    have hW := hodd 1 le_rfl (by norm_num)
+    simp only [Function.iterate_one] at hW
+    have hu' := (wy_two_mul_odd_iff K).1 hW
+    refine ⟨hc, ?_⟩
+    rintro (h0 | ⟨-, -, hs⟩)
+    · exact absurd h0.2 (by rw [hu]; linarith)
+    · have := (wy_wy_two_mul_odd_iff hu').2 (by rw [← hu, ← hw]; exact hs)
+      rw [wy_iterate_two] at hev
+      omega
+  · subst h
+    have hW := hodd 1 le_rfl (by norm_num)
+    have hW2 := hodd 2 (by norm_num) (by norm_num)
+    simp only [Function.iterate_one] at hW
+    rw [wy_iterate_two] at hW2
+    have hu' := (wy_two_mul_odd_iff K).1 hW
+    have hs := (wy_three_even_iff_strip hu' hW2).1 hev
+    refine ⟨hc, by rw [hu]; exact hu', ?_⟩
+    rw [hu, hw]
+    exact hs
+  · subst h
+    have hW := hodd 1 le_rfl (by norm_num)
+    have hW2 := hodd 2 (by norm_num) (by norm_num)
+    have hW3 := hodd 3 (by norm_num) (by norm_num)
+    simp only [Function.iterate_one] at hW
+    rw [wy_iterate_two] at hW2
+    have hu' := (wy_two_mul_odd_iff K).1 hW
+    have hs := (wy_wy_two_mul_odd_iff hu').1 hW2
+    refine ⟨⟨hc, by rw [hu]; exact hu', by rw [hu, hw]; exact hs.1,
+      by rw [hu, hw]; exact hs.2⟩, ?_⟩
+    rintro ⟨-, -, hs2⟩
+    have := (wy_three_even_iff_strip hu' hW2).2 (by rw [← hu, ← hw]; exact hs2)
+    omega
+
+/-- The mirror Weyl frequencies `−(c₀, c₁)`. -/
+noncomputable def ymTheta : Fin 2 → ℝ := -yTheta
+
+/-- The mirror phase `({−k c₀}, {−k c₁})`. -/
+noncomputable def ymPh (k : ℕ) : Fin 2 → ℝ := fun i => Int.fract ((k : ℝ) * ymTheta i)
+
+lemma ymPh_eq (k : ℕ) : ymPh k = yPhZ (-(k : ℤ)) := by
+  funext i
+  simp [ymPh, yPhZ, ymTheta]
+
+lemma odds_mem (k : ℕ) (_hk : 1 ≤ k) : 2 * (k : ℤ) - 1 ∈ {n : ℤ | n % 2 = 1} := by
+  simp only [Set.mem_ofPred_eq]; omega
+
+/-- The return word of `2k − 1` under `W′` is read off the mirror phase of `k`. -/
+lemma ymPh_mem_yWord (k : ℕ) (hk : 1 ≤ k) :
+    ymPh k ∈ yWord (returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) - 1) := by
+  obtain ⟨h1, hT, hRS, -, hint⟩ :=
+    returnTime_spec hyp_ymPerm (odds_mem k hk) (by omega) (Set.notMem_empty _)
+  set τ := returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1)
+  have hσ : ∀ i, (wy betaY)^[i] (2 * (k : ℤ) - 1) =
+      -(wy alphaY)^[i] (2 * (-(k : ℤ))) - 1 := by
+    intro i; rw [wy_betaY_iterate_eq_neg]; congr 3; ring
+  rw [ymPh_eq]
+  apply yPhZ_mem_yWord _ h1 hT
+  · intro i hi1 hi2
+    have := hint i hi1 hi2
+    simp only [Set.mem_ofPred_eq, ymPerm_pow_apply, hσ] at this
+    omega
+  · have := hRS
+    simp only [returnMap, Set.mem_ofPred_eq, ymPerm_pow_apply, hσ] at this
+    change (-(wy alphaY)^[τ] _ - 1) % 2 = 1 at this
+    omega
+
+/-- `returnTime = j + 1` iff the mirror phase lies in the `j`-th word cylinder. -/
+lemma returnTime_ymPerm_eq_iff (k : ℕ) (hk : 1 ≤ k) {j : ℕ} (hj : j ≤ 3) :
+    returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) = j + 1 ↔ ymPh k ∈ yWord j := by
+  have hmem := ymPh_mem_yWord k hk
+  obtain ⟨h1, hT, -⟩ :=
+    returnTime_spec hyp_ymPerm (odds_mem k hk) (by omega) (Set.notMem_empty _)
+  constructor
+  · intro he; rw [he] at hmem; simpa using hmem
+  · intro hw
+    by_contra hne
+    rcases lt_or_gt_of_ne (show returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) - 1 ≠ j by
+      omega) with hlt | hgt
+    · exact Set.disjoint_left.1 (yWord_disjoint hlt hj) hmem hw
+    · exact Set.disjoint_left.1 (yWord_disjoint hgt (by omega)) hw hmem
+
+lemma linearIndependent_ymTheta :
+    LinearIndependent ℚ (Fin.cons (1 : ℝ) ymTheta : Fin 3 → ℝ) := by
+  have h := linearIndependent_yTheta.units_smul (fun i : Fin 3 =>
+    if i = 0 then (1 : ℚˣ) else -1)
+  convert h using 1
+  funext i
+  fin_cases i <;> (simp [ymTheta, Units.smul_def]; try rfl)
+
+open Classical in
+/-- Weyl for the mirror word cylinders. -/
+lemma tendsto_ymWordCount (hW : WeylEquidistributionMulti) (j : ℕ) :
+    Tendsto (fun N : ℕ =>
+      (((Finset.Icc 1 N).filter fun k : ℕ => ymPh k ∈ yWord j).card : ℝ) / N)
+        atTop (𝓝 (yVol j)) := by
+  have := hW 2 ymTheta linearIndependent_ymTheta (yWord j) (measurableSet_yWord j)
+    (volume_frontier_yWord j)
+  rw [volume_yWord] at this
+  exact this
+
+
+/-- On word `j`, `|R′(2k − 1) − αxʲk| < 3` (Theorem Y's sandwich at `−2k`, through `σ`). -/
+lemma ymReturn_bound (k : ℕ) (hk : 1 ≤ k) :
+    |(returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) : ℝ) -
+      alphaY * yRoot ^ (returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) - 1) * k| < 3 := by
+  obtain ⟨h1, hT, -, -, hint⟩ :=
+    returnTime_spec hyp_ymPerm (odds_mem k hk) (by omega) (Set.notMem_empty _)
+  set τ := returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1)
+  have hσ : ∀ i, (wy betaY)^[i] (2 * (k : ℤ) - 1) =
+      -(wy alphaY)^[i] (2 * (-(k : ℤ))) - 1 := by
+    intro i; rw [wy_betaY_iterate_eq_neg]; congr 3; ring
+  have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ τ - 1 → (wy alphaY)^[i] (2 * (-(k : ℤ))) % 2 = 1 := by
+    intro i hi1 hi2
+    have := hint i hi1 (by omega)
+    rw [ymPerm_pow_apply, Set.mem_ofPred_eq, hσ] at this
+    omega
+  have hs := yRun_sandwich (show (2 * (-(k : ℤ))) % 2 = 0 by omega) (τ - 1) hodd
+  have hRm : returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) =
+      -(wy alphaY)^[τ - 1 + 1] (2 * (-(k : ℤ))) - 1 := by
+    rw [returnMap, ymPerm_pow_apply, ← hσ]; congr 1; omega
+  rw [hRm]
+  rw [show 2 * (-(k : ℤ)) / 2 = -k by omega] at hs
+  rw [abs_lt] at hs ⊢
+  push_cast at hs ⊢
+  constructor <;> nlinarith [hs.1, hs.2]
+
+lemma ymPerm_returnCount_eq (X : ℕ) :
+    returnCount ymPerm {n | n % 2 = 1} ∅ X =
+      ((Finset.Icc 1 ((X + 1) / 2)).filter fun k : ℕ =>
+        returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) ≤ X).card := by
+  classical
+  unfold returnCount
+  symm
+  apply Finset.card_nbij (fun k : ℕ => 2 * (k : ℤ) - 1)
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.notMem_empty,
+      not_false_eq_true, true_and] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, hR⟩ := hk
+    exact ⟨⟨by omega, by omega⟩, by omega, hR⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro s hs
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.notMem_empty,
+      not_false_eq_true, true_and] at hs
+    obtain ⟨⟨h1, h2⟩, ho, hR⟩ := hs
+    refine ⟨((s + 1) / 2).toNat, ?_, by simp only; omega⟩
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq]
+    refine ⟨⟨by omega, by omega⟩, ?_⟩
+    rw [show 2 * ((((s + 1) / 2).toNat : ℕ) : ℤ) - 1 = s by omega]
+    exact hR
+
+open Classical in
+/-- **Return-count density.**  `#{odd s ≤ X : R′(s) ≤ X}/X → Σ_{j ≤ 3} P_j/(αxʲ)`. -/
+theorem tendsto_returnCount_ymPerm (hW : WeylEquidistributionMulti) :
+    Tendsto (fun X : ℕ => (returnCount ymPerm {n | n % 2 = 1} ∅ X : ℝ) / X) atTop
+      (𝓝 (∑ j ∈ Finset.range 4, yVol j * (alphaY * yRoot ^ j)⁻¹)) := by
+  set c : ℕ → ℝ := fun j => alphaY * yRoot ^ j
+  set Cnt : ℕ → ℕ → ℕ := fun j N =>
+    ((Finset.Icc 1 N).filter fun k : ℕ => ymPh k ∈ yWord j).card
+  set T : ℕ → ℕ → ℕ := fun j X => ((Finset.Icc 1 ((X + 1) / 2)).filter fun k : ℕ =>
+    returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) = j + 1 ∧
+      returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) ≤ X).card
+  have hspec : ∀ k : ℕ, 1 ≤ k → 1 ≤ returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) ∧
+      returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) ≤ 4 := by
+    intro k hk
+    obtain ⟨h1, hT, -⟩ :=
+      returnTime_spec hyp_ymPerm (odds_mem k hk) (by omega) (Set.notMem_empty _)
+    exact ⟨h1, hT⟩
+  have hsum : ∀ X, returnCount ymPerm {n | n % 2 = 1} ∅ X =
+      ∑ j ∈ Finset.range 4, T j X := by
+    intro X
+    rw [ymPerm_returnCount_eq, Finset.card_eq_sum_card_fiberwise
+      (f := fun k : ℕ => returnTime ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) - 1)
+      (t := Finset.range 4)]
+    · refine Finset.sum_congr rfl fun j _ => ?_
+      simp only [T, Finset.filter_filter]
+      congr 1
+      refine Finset.filter_congr fun k hk => ?_
+      have := (hspec k (Finset.mem_Icc.1 hk).1).1
+      omega
+    · intro k hk
+      simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hk
+      have := (hspec k hk.1.1).2
+      simp only [Finset.coe_range, Set.mem_Iio]
+      omega
+  have hlo : ∀ j, j ≤ 3 → ∀ X : ℕ, Cnt j ⌊(c j)⁻¹ * X + -3 / c j⌋₊ ≤ T j X := by
+    intro j hj X
+    apply Finset.card_le_card
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hk ⊢
+    obtain ⟨⟨hk1, hk2⟩, hw⟩ := hk
+    have hcj : 2 ≤ c j := two_le_alphaY_mul_pow hj
+    have hkr := (Nat.le_floor_iff' (by omega)).1 hk2
+    have hck : c j * k ≤ X - 3 := by
+      have := mul_le_mul_of_nonneg_left hkr (by linarith : (0 : ℝ) ≤ c j)
+      rw [mul_add, ← mul_assoc, mul_inv_cancel₀ (by linarith), one_mul,
+        mul_div_cancel₀ _ (by linarith)] at this
+      linarith
+    have hrt := (returnTime_ymPerm_eq_iff k hk1 hj).2 hw
+    have hb := ymReturn_bound k hk1
+    rw [hrt, Nat.add_sub_cancel] at hb
+    have hRX : (returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) : ℝ) < X := by
+      linarith [(abs_lt.1 hb).2]
+    refine ⟨⟨hk1, ?_⟩, hrt, by exact_mod_cast hRX.le⟩
+    have : (2 : ℝ) * k ≤ X := by
+      have : (2 : ℝ) * k ≤ c j * k := by
+        have : (0 : ℝ) ≤ k := by positivity
+        nlinarith
+      linarith
+    have : 2 * k ≤ X := by exact_mod_cast this
+    omega
+  have hhi : ∀ j, j ≤ 3 → ∀ X : ℕ, T j X ≤ Cnt j ⌊(c j)⁻¹ * X + 3 / c j⌋₊ := by
+    intro j hj X
+    apply Finset.card_le_card
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hk ⊢
+    obtain ⟨⟨hk1, -⟩, hrt, hRX⟩ := hk
+    have hcj : 2 ≤ c j := two_le_alphaY_mul_pow hj
+    refine ⟨⟨hk1, Nat.le_floor ?_⟩, (returnTime_ymPerm_eq_iff k hk1 hj).1 hrt⟩
+    have hb := ymReturn_bound k hk1
+    rw [hrt, Nat.add_sub_cancel] at hb
+    have hRX' : (returnMap ymPerm {n | n % 2 = 1} (2 * (k : ℤ) - 1) : ℝ) ≤ X := by
+      exact_mod_cast hRX
+    have : c j * k < X + 3 := by linarith [(abs_lt.1 hb).1]
+    rw [show (c j)⁻¹ * X + 3 / c j = (X + 3) / c j by field_simp, le_div_iff₀ (by linarith)]
+    linarith
+  have hlimT : ∀ j ∈ Finset.range 4, Tendsto (fun X : ℕ => (T j X : ℝ) / X) atTop
+      (𝓝 (yVol j * (alphaY * yRoot ^ j)⁻¹)) := by
+    intro j hj
+    rw [Finset.mem_range] at hj
+    have hcj : 2 ≤ c j := two_le_alphaY_mul_pow (by omega)
+    have hcpos : 0 < (c j)⁻¹ := inv_pos.2 (by linarith)
+    have L1 := yTendsto_comp_div (tendsto_ymWordCount hW j)
+      (yTendsto_floor_linear hcpos (-3 / c j)) (yTendsto_floor_linear_div hcpos (-3 / c j))
+    have L2 := yTendsto_comp_div (tendsto_ymWordCount hW j)
+      (yTendsto_floor_linear hcpos (3 / c j)) (yTendsto_floor_linear_div hcpos (3 / c j))
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le L1 L2 (fun X => ?_) (fun X => ?_)
+    · exact div_le_div_of_nonneg_right (Nat.cast_le.2 (hlo j (by omega) X)) (by positivity)
+    · exact div_le_div_of_nonneg_right (Nat.cast_le.2 (hhi j (by omega) X)) (by positivity)
+  refine (tendsto_finsetSum (Finset.range 4) hlimT).congr fun X => ?_
+  simp only [hsum X, Nat.cast_sum, Finset.sum_div]
+
+/-- **(proved, conditional on Weyl; Theorem Y′ (4), density).**  Assuming multidimensional Weyl
 equidistribution, the orbit minima have Theorem Y's density
 `d = 3/10 + x/8 + x²/10 ≈ 0.39340781`.  Paper proof: by `minCount_ymPerm_add`,
 `d = 1/2 − (1/2) Σ_{j ≤ 3} P′_j / c_j`, with `P′_j` the density among the odds of the return
-word `O Eʲ` and `R′(s) = c_j (s + 1) + O(1)` (the mirror sandwich).  For `s = 2k − 1`,
-`m = 2k` and the run phases are `({k c_0}, {k c_1})`, `c_0 = α/2`, `c_1 = xα/2`, Theorem Y's
-torus coordinates (`yc0`, `yc1`); by Theorem M the cylinders `O Eʲ` are Theorem Y's cylinders
-`E Oʲ` under the phase map `(a, b) ↦ (f₁, f₂)` (same box, same polygons `R_a`, `R_b`), so
-`P′ = P = (1/2, 1/4, 1/(4(1 + x)), x/(4(1 + x)))`, the slopes agree, and the sum is
-`densityY_sum_eq`.  (Census: 786 810 minima `≤ 2·10⁶`, `dX = 786 815.6`.) -/
+word `O Eʲ` and `|R′(2k − 1) − c_j k| < 3`, `c_j = αxʲ` (`ymReturn_bound`).  By the conjugacy
+`W′ = σ W σ` (`wy_betaY_eq_neg`) the word of `2k − 1` is Theorem Y's word of `−2k`, read off the
+phase of `−k` in Theorem Y's cylinders (`returnTime_ymPerm_eq_iff`); Weyl at the frequencies
+`−(c₀, c₁)` gives `P′ = (1/2, 1/4, 1/(4(1 + x)), x/(4(1 + x)))` (`tendsto_ymWordCount`), and
+the sum is `densityY_sum_eq`.  (Census: 786 810 minima `≤ 2·10⁶`, `dX = 786 815.6`.) -/
 theorem tendsto_minCount_ymPerm (hW : WeylEquidistributionMulti) :
     Tendsto (fun X : ℕ => (minCount ymPerm X : ℝ) / X) atTop (𝓝 densityY) := by
-  sorry
+  have hR := tendsto_returnCount_ymPerm hW
+  have hX : ∀ X : ℕ, (minCount ymPerm X : ℝ) / X =
+      (((X + 1) / 2 : ℕ) : ℝ) / X - (returnCount ymPerm {n | n % 2 = 1} ∅ X : ℝ) / X := by
+    intro X
+    have := minCount_ymPerm_add X
+    rw [div_sub_div_same]
+    congr 1
+    rw [eq_sub_iff_add_eq]; exact_mod_cast this
+  have hhalf : Tendsto (fun X : ℕ => (((X + 1) / 2 : ℕ) : ℝ) / X) atTop (𝓝 (1 / 2)) := by
+    have := yTendsto_floor_linear_div (c := 1 / 2) (by norm_num) (1 / 2)
+    refine this.congr fun X => ?_
+    have h := Nat.floor_div_eq_div (K := ℝ) (X + 1) 2
+    push_cast at h
+    rw [show (1 / 2 : ℝ) * X + 1 / 2 = (X + 1) / 2 by ring, h]
+  have hlim := hhalf.sub hR
+  rw [densityY_sum_eq] at hlim
+  exact hlim.congr fun X => (hX X).symm
 
 end CollatzMoonshot.WythoffMirrorY

@@ -8,7 +8,7 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
 |---|---|
 | `WythoffAutomaton.lean` | 0 (Theorems N, O proved; `#print axioms thmO_iff` = propext, choice, Quot.sound) |
 | `WythoffSeven.lean` | 0 (`infinite_minimalPeriod_seven` unconditional; axioms standard) |
-| `WythoffMirrorY.lean` | 1: `tendsto_minCount_ymPerm` (the conditional Y′ density) |
+| `WythoffMirrorY.lean` | 0 (`tendsto_minCount_ymPerm` proved, conditional on `WeylEquidistributionMulti` only) |
 
 ## Notes
 
@@ -32,14 +32,20 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-classify.md`.  Branch `wip/wythoff-mirrorY`
   `x^i (A(s+1) + 6/5) ≤ W′^{i+1}(s) + 11/5` (`1 + xK ≤ K` at `K = 11/5`), `s ∈ {1, 3}` by
   `ymEvenEval` / `ymOddEval`.  `setCount` helpers copied locally (`WythoffLine` is not imported).
 
+* Y′ density: no polygon work at all.  `wy_mirror_eq_neg` (any `α > 1`):
+  `W_β(n) = −W_α(−n − 1) − 1`, i.e. `W_β = σ W_α σ`, `σ(m) = −m − 1`.  So the return word of
+  `2k − 1` under `W′` is Theorem Y's word of `−2k`, and Y's phase lemmas
+  (`wy_two_mul_odd_iff`, `wy_wy_two_mul_odd_iff`, `wy_three_even_iff_strip`) already hold for all
+  integer `k`; the phase of `−k` is Weyl at frequencies `−(c₀, c₁)` (`ymTheta`,
+  `LinearIndependent.units_smul`), with Y's own `yWord`, `yVol`; Y's sandwich at `−2k` gives
+  `|R′ − αxʲk| < 3`.
+
 ## Next
 
-The last sorry: `WythoffMirrorY.tendsto_minCount_ymPerm` (Weyl-conditional density; kickoff §5,
-≈ 450 lines).  Template: `WythoffSporadic` §Density (`yPh`, `yWord`, `yPh_mem_yWord`,
-`returnTime_yPerm_eq_iff`, `yReturn_bound`, `tendsto_returnCount_yPerm`, `densityY_sum_eq`).
-Plan: for `s = 2k − 1` show the mirror cylinder `O Eʲ` is cut out by the same polygons in
-`(Int.fract (k·yc0), Int.fract (k·yc1))` (Theorem M: `ymF1 = 1 − {kα}`-type phases), reuse
-`tendsto_yWordCount`, then `minCount_ymPerm_add` and `densityY_sum_eq`.  Read how
-`minCount_yPerm` density is assembled at the end of `WythoffSporadic.lean` first.
+All 46 kickoff statements are proved (`#print axioms` of `thmO_iff`, `first_step_odd_iff`,
+`infinite_minimalPeriod_seven`, `minimalPeriod_alphaP_twenty`, `tendsto_minCount_ymPerm`:
+propext, choice, Quot.sound).  The kickoff's out-of-scope list is the next layer.  The
+conjugacy `wy_mirror_eq_neg` suggests the G mirror density (`WythoffLine`) and any future mirror
+could be derived from the main side directly rather than re-proved.
 
 HEAD at handoff: see `git log` (branch `wip/wythoff-mirrorY`); no uncommitted edits.
