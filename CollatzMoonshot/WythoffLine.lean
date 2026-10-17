@@ -431,6 +431,357 @@ theorem wy_iterate_eq_of_even_run_mirror (hr : 2 ≤ r) {n : ℤ} (hn : n % 2 = 
 
 end Identity
 
+/-! ## The parity engine for the density (§7)
+
+Along a run, the parities of `W(n), W²(n), …` are read off the phases `ψ_l = {k·A·xˡ}`
+(`n = 2k`): `N₀ = ⌊2ψ₀⌋`, `N_{l+1} = ⌊2ψ_{l+1} + x(ρ + N_l − 2ψ_l)⌋` (`Nf`), with `ρ` the run
+parity.  Translating `ψ_i` by `1/2` flips `N_i` by one and fixes every other `N_l`
+(`Nf_update`), so every word cylinder on `|I|` coordinates has volume `2^{−|I|}`
+(`volume_cyl`); the engine is bounded, its level sets are convex, so cylinders have null
+frontier (`volume_frontier_cyl`). -/
+
+namespace Engine
+
+open MeasureTheory
+
+/-- Parity engine: `N₀ = ⌊2ψ₀⌋`, `N_{l+1} = ⌊2ψ_{l+1} + x(ρ + N_l − 2ψ_l)⌋`. -/
+noncomputable def Nf (x : ℝ) (ρ : ℤ) (ψ : ℕ → ℝ) : ℕ → ℤ
+  | 0 => ⌊2 * ψ 0⌋
+  | l + 1 => ⌊2 * ψ (l + 1) + x * (ρ + Nf x ρ ψ l - 2 * ψ l)⌋
+
+/-- Extend `ψ : Fin m → ℝ` by `0`. -/
+noncomputable def ext {m : ℕ} (ψ : Fin m → ℝ) (l : ℕ) : ℝ := if h : l < m then ψ ⟨l, h⟩ else 0
+
+/-- Shifting coordinate `i` by `t/2` shifts `N_i` by `t` and leaves the other `N_l`. -/
+lemma Nf_update (x : ℝ) (ρ : ℤ) (ψ : ℕ → ℝ) (i : ℕ) (t : ℤ) (l : ℕ) :
+    Nf x ρ (Function.update ψ i (ψ i + t / 2)) l = Nf x ρ ψ l + if l = i then t else 0 := by
+  induction l with
+  | zero =>
+    simp only [Nf]
+    by_cases hi : 0 = i
+    · subst hi
+      rw [Function.update_self, if_pos rfl, show 2 * (ψ 0 + t / 2) = 2 * ψ 0 + t by ring,
+        Int.floor_add_intCast]
+    · rw [Function.update_of_ne hi, if_neg hi, add_zero]
+  | succ l ih =>
+    simp only [Nf]
+    rw [ih]
+    by_cases h1 : l + 1 = i
+    · subst h1
+      rw [Function.update_self, Function.update_of_ne (by omega), if_neg (by omega), if_pos rfl,
+        add_zero, show 2 * (ψ (l + 1) + t / 2) + x * (ρ + Nf x ρ ψ l - 2 * ψ l) =
+          2 * ψ (l + 1) + x * (ρ + Nf x ρ ψ l - 2 * ψ l) + t by ring, Int.floor_add_intCast]
+    · rw [Function.update_of_ne h1, if_neg h1, add_zero]
+      by_cases h2 : l = i
+      · subst h2
+        rw [Function.update_self, if_pos rfl]
+        congr 1
+        push_cast
+        ring
+      · rw [Function.update_of_ne h2, if_neg h2, add_zero]
+
+/-- The unit cube `[0, 1)^m`. -/
+def cube (m : ℕ) : Set (Fin m → ℝ) := Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1
+
+lemma ext_add_single {m : ℕ} (ψ : Fin m → ℝ) (i : Fin m) :
+    ext (Pi.single i (1 / 2 : ℝ) + ψ) =
+      Function.update (ext ψ) i (ext ψ i + ((1 : ℤ) : ℝ) / 2) := by
+  funext l
+  unfold ext
+  by_cases hl : l < m
+  · rw [dif_pos hl]
+    by_cases hli : l = (i : ℕ)
+    · subst hli
+      rw [Function.update_self, dif_pos i.2]
+      simp
+      ring
+    · rw [Function.update_of_ne hli, dif_pos hl]
+      have : (⟨l, hl⟩ : Fin m) ≠ i := fun h => hli (by rw [← h])
+      simp [this]
+  · rw [dif_neg hl, Function.update_of_ne (by omega), dif_neg hl]
+
+lemma measurable_Nf (x : ℝ) (ρ : ℤ) (m : ℕ) (l : ℕ) :
+    Measurable fun ψ : Fin m → ℝ => Nf x ρ (ext ψ) l := by
+  have he : ∀ l, Measurable fun ψ : Fin m → ℝ => ext ψ l := by
+    intro l
+    unfold ext
+    by_cases hl : l < m
+    · simp only [dif_pos hl]; exact measurable_pi_apply _
+    · simp only [dif_neg hl]; exact measurable_const
+  induction l with
+  | zero => exact ((he 0).const_mul 2).floor
+  | succ l ih =>
+    simp only [Nf]
+    have hc : Measurable fun ψ : Fin m → ℝ => (Nf x ρ (ext ψ) l : ℝ) :=
+      (Measurable.of_discrete (f := fun z : ℤ => (z : ℝ))).comp ih
+    exact (((he (l + 1)).const_mul 2).add
+      (((measurable_const.add hc).sub ((he l).const_mul 2)).const_mul x)).floor
+
+/-- Word cylinders: `N_l ≡ p_l (mod 2)` for `l ∈ I`. -/
+def cyl (x : ℝ) (ρ : ℤ) (m : ℕ) (I : Finset ℕ) (p : ℕ → ℤ) : Set (Fin m → ℝ) :=
+  cube m ∩ ⋂ l ∈ I, {ψ | (Nf x ρ (ext ψ) l - p l) % 2 = 0}
+
+lemma mem_cyl {x : ℝ} {ρ : ℤ} {m : ℕ} {I : Finset ℕ} {p : ℕ → ℤ} {ψ : Fin m → ℝ} :
+    ψ ∈ cyl x ρ m I p ↔ ψ ∈ cube m ∧ ∀ l ∈ I, (Nf x ρ (ext ψ) l - p l) % 2 = 0 := by
+  simp [cyl]
+
+lemma measurableSet_cyl (x : ℝ) (ρ : ℤ) (m : ℕ) (I : Finset ℕ) (p : ℕ → ℤ) :
+    MeasurableSet (cyl x ρ m I p) := by
+  refine MeasurableSet.inter (MeasurableSet.univ_pi fun _ => measurableSet_Ico) ?_
+  refine Finset.measurableSet_biInter I fun l _ => ?_
+  exact measurable_Nf x ρ m l (MeasurableSet.of_discrete (s := {z : ℤ | (z - p l) % 2 = 0}))
+
+lemma Nf_ext_add (x : ℝ) (ρ : ℤ) {m : ℕ} (φ : Fin m → ℝ) (i : Fin m) (l : ℕ) :
+    Nf x ρ (ext (Pi.single i (1 / 2 : ℝ) + φ)) l = Nf x ρ (ext φ) l + if l = i then 1 else 0 := by
+  rw [ext_add_single, Nf_update]
+
+lemma mem_cube {m : ℕ} {ψ : Fin m → ℝ} : ψ ∈ cube m ↔ ∀ j, 0 ≤ ψ j ∧ ψ j < 1 := by
+  simp [cube]
+
+/-- `φ ∈ [0,1)^m` with `φ_i < 1/2` iff its half-translate is in the cube with coordinate
+`≥ 1/2`. -/
+lemma cube_add_single_iff {m : ℕ} (φ : Fin m → ℝ) (ii : Fin m) :
+    (Pi.single ii (1 / 2 : ℝ) + φ ∈ cube m ∧
+        ¬ (Pi.single ii (1 / 2 : ℝ) + φ : Fin m → ℝ) ii < 1 / 2) ↔
+      (φ ∈ cube m ∧ φ ii < 1 / 2) := by
+  have h1 : (Pi.single ii (1 / 2 : ℝ) + φ : Fin m → ℝ) ii = φ ii + 1 / 2 := by simp; ring
+  have h2 : ∀ j, j ≠ ii → (Pi.single ii (1 / 2 : ℝ) + φ : Fin m → ℝ) j = φ j := by
+    intro j hj; simp [hj]
+  rw [mem_cube, mem_cube, h1]
+  constructor
+  · rintro ⟨hc, hn⟩
+    refine ⟨fun j => ?_, by have := (hc ii).2; rw [h1] at this; linarith⟩
+    by_cases hj : j = ii
+    · subst hj; have := hc j; rw [h1] at this; constructor <;> linarith
+    · rw [← h2 j hj]; exact hc j
+  · rintro ⟨hc, hlt⟩
+    refine ⟨fun j => ?_, by linarith [(hc ii).1]⟩
+    by_cases hj : j = ii
+    · subst hj; rw [h1]; constructor <;> linarith [hc j]
+    · rw [h2 j hj]; exact hc j
+
+/-- The half-translation in coordinate `i` swaps the two parities of `N_i`. -/
+lemma volume_cyl_flip (x : ℝ) (ρ : ℤ) (m : ℕ) (J : Finset ℕ) (p : ℕ → ℤ) {i : ℕ} (hi : i < m) :
+    volume (cyl x ρ m J (Function.update p i (p i + 1))) = volume (cyl x ρ m J p) := by
+  set ii : Fin m := ⟨i, hi⟩
+  set v : Fin m → ℝ := Pi.single ii (1 / 2 : ℝ)
+  set L : Set (Fin m → ℝ) := {ψ | ψ ii < 1 / 2}
+  have hL : MeasurableSet L := measurableSet_lt (measurable_pi_apply ii) measurable_const
+  have hpl : ∀ l, Function.update p i (p i + 1) l = p l + if l = i then 1 else 0 := by
+    intro l
+    by_cases h : l = i
+    · subst h; simp
+    · simp [h]
+  have key : ∀ φ : Fin m → ℝ, ∀ l, Nf x ρ (ext (v + φ)) l = Nf x ρ (ext φ) l +
+      if l = i then 1 else 0 := fun φ l => Nf_ext_add x ρ φ ii l
+  have par1 : ∀ φ : Fin m → ℝ, (∀ l ∈ J, (Nf x ρ (ext (v + φ)) l - p l) % 2 = 0) ↔
+      ∀ l ∈ J, (Nf x ρ (ext φ) l - Function.update p i (p i + 1) l) % 2 = 0 := by
+    intro φ
+    refine forall₂_congr fun l _ => ?_
+    rw [key, hpl]
+    split_ifs <;> omega
+  have par2 : ∀ φ : Fin m → ℝ,
+      (∀ l ∈ J, (Nf x ρ (ext (v + φ)) l - Function.update p i (p i + 1) l) % 2 = 0) ↔
+      ∀ l ∈ J, (Nf x ρ (ext φ) l - p l) % 2 = 0 := by
+    intro φ
+    refine forall₂_congr fun l _ => ?_
+    rw [key, hpl]
+    split_ifs <;> omega
+  have ha : cyl x ρ m J (Function.update p i (p i + 1)) ∩ L =
+      (fun ψ => v + ψ) ⁻¹' (cyl x ρ m J p \ L) := by
+    ext ψ
+    simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_sdiff, mem_cyl, L,
+      Set.mem_ofPred_eq, par1]
+    have := cube_add_single_iff ψ ii
+    tauto
+  have hb : cyl x ρ m J (Function.update p i (p i + 1)) \ L =
+      (fun ψ => -v + ψ) ⁻¹' (cyl x ρ m J p ∩ L) := by
+    ext ψ
+    have hψ : ψ = v + (-v + ψ) := by abel
+    conv_lhs => rw [hψ]
+    simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_sdiff, mem_cyl, L,
+      Set.mem_ofPred_eq, par2]
+    have := cube_add_single_iff (-v + ψ) ii
+    tauto
+  rw [← measure_inter_add_sdiff _ hL, ha, hb, measure_preimage_add, measure_preimage_add,
+    add_comm, measure_inter_add_sdiff _ hL]
+
+
+lemma volume_cube (m : ℕ) : volume (cube m) = 1 := by
+  rw [cube, Real.volume_pi_Ico]
+  simp
+
+/-- **Fair coins.**  Each word cylinder on `|I|` coordinates has volume `2^{−|I|}`. -/
+lemma volume_cyl (x : ℝ) (ρ : ℤ) (m : ℕ) (I : Finset ℕ) (hI : ∀ l ∈ I, l < m) (p : ℕ → ℤ) :
+    volume (cyl x ρ m I p) = 2⁻¹ ^ I.card := by
+  induction I using Finset.induction_on generalizing p with
+  | empty =>
+    rw [Finset.card_empty, pow_zero, ← volume_cube m]
+    congr 1
+    ext ψ
+    simp [mem_cyl]
+  | insert i I hiI ih =>
+    have hi : i < m := hI i (Finset.mem_insert_self i I)
+    have hI' : ∀ l ∈ I, l < m := fun l hl => hI l (Finset.mem_insert_of_mem hl)
+    set p' := Function.update p i (p i + 1)
+    have hsplit : cyl x ρ m I p = cyl x ρ m (insert i I) p ∪ cyl x ρ m (insert i I) p' := by
+      ext ψ
+      simp only [Set.mem_union, mem_cyl, Finset.mem_insert, forall_eq_or_imp]
+      have hp' : ∀ l ∈ I, p' l = p l := fun l hl =>
+        Function.update_of_ne (fun h => hiI (by rw [← h]; exact hl)) _ _
+      have hpi : p' i = p i + 1 := by simp [p']
+      constructor
+      · rintro ⟨hc, hJ⟩
+        by_cases h : (Nf x ρ (ext ψ) i - p i) % 2 = 0
+        · exact Or.inl ⟨hc, h, hJ⟩
+        · refine Or.inr ⟨hc, by rw [hpi]; omega, fun l hl => by rw [hp' l hl]; exact hJ l hl⟩
+      · rintro (⟨hc, -, hJ⟩ | ⟨hc, -, hJ⟩)
+        · exact ⟨hc, hJ⟩
+        · exact ⟨hc, fun l hl => by have := hJ l hl; rwa [hp' l hl] at this⟩
+    have hdisj : Disjoint (cyl x ρ m (insert i I) p) (cyl x ρ m (insert i I) p') := by
+      rw [Set.disjoint_left]
+      intro ψ h1 h2
+      rw [mem_cyl] at h1 h2
+      have a := h1.2 i (Finset.mem_insert_self i I)
+      have b := h2.2 i (Finset.mem_insert_self i I)
+      simp only [p', Function.update_self] at b
+      omega
+    have hflip := volume_cyl_flip x ρ m (insert i I) p hi
+    have h2 := ih hI' p
+    rw [hsplit, measure_union hdisj (measurableSet_cyl _ _ _ _ _), hflip, ← two_mul] at h2
+    rw [Finset.card_insert_of_notMem hiI, pow_succ', ← h2, ← mul_assoc,
+      ENNReal.inv_mul_cancel two_ne_zero ENNReal.ofNat_ne_top, one_mul]
+
+/-- The engine stays bounded on the cube: `−4 < N_l − 2ψ_l < 3`. -/
+lemma Nf_sub_bound {x : ℝ} (hx0 : 0 < x) (hx1 : x < 3 / 4) {ρ : ℤ} (hρ : ρ = 0 ∨ ρ = 1)
+    (ψ : ℕ → ℝ) (l : ℕ) :
+    -4 < (Nf x ρ ψ l : ℝ) - 2 * ψ l ∧ (Nf x ρ ψ l : ℝ) - 2 * ψ l < 3 := by
+  induction l with
+  | zero =>
+    simp only [Nf]
+    have := Int.floor_le (2 * ψ 0)
+    have := Int.lt_floor_add_one (2 * ψ 0)
+    constructor <;> linarith
+  | succ l ih =>
+    simp only [Nf]
+    set h := x * (ρ + Nf x ρ ψ l - 2 * ψ l)
+    have hρ' : (0 : ℝ) ≤ ρ ∧ (ρ : ℝ) ≤ 1 := by
+      rcases hρ with rfl | rfl <;> norm_num
+    have hh : -3 < h ∧ h < 3 := by
+      obtain ⟨a, b⟩ := ih
+      constructor
+      · have : (-4 : ℝ) < ρ + Nf x ρ ψ l - 2 * ψ l := by linarith
+        nlinarith
+      · have : (ρ : ℝ) + Nf x ρ ψ l - 2 * ψ l < 4 := by linarith
+        nlinarith
+    have := Int.floor_le (2 * ψ (l + 1) + h)
+    have := Int.lt_floor_add_one (2 * ψ (l + 1) + h)
+    constructor <;> linarith
+
+lemma ext_mem {m : ℕ} {ψ : Fin m → ℝ} (hψ : ψ ∈ cube m) (l : ℕ) : 0 ≤ ext ψ l ∧ ext ψ l < 1 := by
+  unfold ext
+  split_ifs with h
+  · exact (mem_cube.1 hψ) _
+  · norm_num
+
+lemma ext_combo {m : ℕ} (ψ φ : Fin m → ℝ) (a b : ℝ) (l : ℕ) :
+    ext (a • ψ + b • φ) l = a * ext ψ l + b * ext φ l := by
+  unfold ext
+  split_ifs <;> simp
+
+/-- Level sets of the engine are convex. -/
+lemma convex_level (x : ℝ) (ρ : ℤ) (m : ℕ) (n : ℕ → ℤ) :
+    Convex ℝ {ψ : Fin m → ℝ | ψ ∈ cube m ∧ ∀ l < m, Nf x ρ (ext ψ) l = n l} := by
+  intro ψ ⟨hψc, hψ⟩ φ ⟨hφc, hφ⟩ a b ha hb hab
+  have hcube : Convex ℝ (cube m) := convex_pi fun _ _ => convex_Ico 0 1
+  refine ⟨hcube hψc hφc ha hb hab, ?_⟩
+  have comb : ∀ (N : ℤ) (u w : ℝ), ⌊u⌋ = N → ⌊w⌋ = N → ⌊a * u + b * w⌋ = N := by
+    intro N u w hu hw
+    rw [Int.floor_eq_iff] at hu hw ⊢
+    obtain ⟨hu1, hu2⟩ := hu
+    obtain ⟨hw1, hw2⟩ := hw
+    have e1 := mul_le_mul_of_nonneg_left hu1 ha
+    have e2 := mul_le_mul_of_nonneg_left hw1 hb
+    have s1 : a * (N : ℝ) + b * N = N := by rw [← add_mul, hab, one_mul]
+    have s2 : a * ((N : ℝ) + 1) + b * (N + 1) = N + 1 := by rw [← add_mul, hab, one_mul]
+    refine ⟨by linarith, ?_⟩
+    rcases ha.eq_or_lt with h0 | h0
+    · subst h0
+      have : b = 1 := by linarith
+      subst this
+      linarith
+    · have e3 := mul_lt_mul_of_pos_left hu2 h0
+      have e4 := mul_le_mul_of_nonneg_left hw2.le hb
+      linarith
+  intro l hl
+  induction l with
+  | zero =>
+    have h1 := hψ 0 hl
+    have h2 := hφ 0 hl
+    simp only [Nf] at h1 h2 ⊢
+    rw [ext_combo]
+    rw [show 2 * (a * ext ψ 0 + b * ext φ 0) = a * (2 * ext ψ 0) + b * (2 * ext φ 0) by ring]
+    exact comb _ _ _ h1 h2
+  | succ l ih =>
+    have h1 := hψ (l + 1) hl
+    have h2 := hφ (l + 1) hl
+    simp only [Nf] at h1 h2 ⊢
+    rw [ih (by omega), ext_combo, ext_combo]
+    rw [hψ l (by omega)] at h1
+    rw [hφ l (by omega)] at h2
+    convert comb _ _ _ h1 h2 using 2
+    linear_combination (-(x * ((ρ : ℝ) + n l))) * hab
+
+lemma frontier_iUnion_subset_of_finite {X ι : Type*} [TopologicalSpace X] [Finite ι]
+    (s : ι → Set X) : frontier (⋃ i, s i) ⊆ ⋃ i, frontier (s i) := by
+  intro y hy
+  rw [frontier, closure_iUnion_of_finite, Set.mem_sdiff, Set.mem_iUnion] at hy
+  obtain ⟨⟨i, hi⟩, hn⟩ := hy
+  exact Set.mem_iUnion.2 ⟨i, hi, fun h => hn (interior_mono (Set.subset_iUnion s i) h)⟩
+
+/-- **Null frontier.**  A word cylinder is a finite union of convex pieces (level sets of the
+bounded engine), so its frontier is Lebesgue-null. -/
+lemma volume_frontier_cyl {x : ℝ} (hx0 : 0 < x) (hx1 : x < 3 / 4) {ρ : ℤ} (hρ : ρ = 0 ∨ ρ = 1)
+    (m : ℕ) (I : Finset ℕ) (hI : ∀ l ∈ I, l < m) (p : ℕ → ℤ) :
+    volume (frontier (cyl x ρ m I p)) = 0 := by
+  set nf : (Fin m → Fin 8) → ℕ → ℤ := fun g l => if h : l < m then (g ⟨l, h⟩ : ℤ) - 3 else 0
+  set P : (Fin m → Fin 8) → Set (Fin m → ℝ) := fun g =>
+    cyl x ρ m I p ∩ {ψ | ψ ∈ cube m ∧ ∀ l < m, Nf x ρ (ext ψ) l = nf g l}
+  have hcover : cyl x ρ m I p = ⋃ g, P g := by
+    ext ψ
+    simp only [Set.mem_iUnion, P, Set.mem_inter_iff, Set.mem_setOf_eq]
+    constructor
+    · intro hψ
+      have hc := (mem_cyl.1 hψ).1
+      have hb : ∀ l, -3 ≤ Nf x ρ (ext ψ) l ∧ Nf x ρ (ext ψ) l ≤ 4 := by
+        intro l
+        obtain ⟨a, b⟩ := Nf_sub_bound hx0 hx1 hρ (ext ψ) l
+        obtain ⟨c, d⟩ := ext_mem hc l
+        have h1 : (-4 : ℝ) < Nf x ρ (ext ψ) l := by linarith
+        have h2 : (Nf x ρ (ext ψ) l : ℝ) < 5 := by linarith
+        constructor
+        · have : (-4 : ℤ) < Nf x ρ (ext ψ) l := by exact_mod_cast h1
+          omega
+        · have : Nf x ρ (ext ψ) l < (5 : ℤ) := by exact_mod_cast h2
+          omega
+      refine ⟨fun j => ⟨(Nf x ρ (ext ψ) j + 3).toNat, by have := hb j; omega⟩, hψ, hc,
+        fun l hl => ?_⟩
+      simp only [nf, dif_pos hl]
+      have := hb l
+      omega
+    · rintro ⟨g, hψ, -⟩
+      exact hψ
+  have hconv : ∀ g, Convex ℝ (P g) := by
+    intro g ψ ⟨hψ, hψl⟩ φ ⟨hφ, hφl⟩ a b ha hb hab
+    have hχ := convex_level x ρ m (nf g) hψl hφl ha hb hab
+    refine ⟨mem_cyl.2 ⟨hχ.1, fun l hl => ?_⟩, hχ⟩
+    rw [hχ.2 l (hI l hl), ← hψl.2 l (hI l hl)]
+    exact (mem_cyl.1 hψ).2 l hl
+  refine measure_mono_null (hcover ▸ frontier_iUnion_subset_of_finite P) ?_
+  exact measure_iUnion_null fun g => (hconv g).addHaar_frontier volume
+
+end Engine
+
 /-! ## Theorem G (2)-(4): classification, count, density -/
 
 section Classification

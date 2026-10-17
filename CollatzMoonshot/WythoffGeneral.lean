@@ -229,4 +229,49 @@ def WeylEquidistributionMulti : Prop :=
             (fun i => Int.fract ((k : ℝ) * θ i)) ∈ B).card : ℝ) / N)
         atTop (𝓝 (MeasureTheory.volume (B ∩ Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1)).toReal)
 
+/-! ## Counting limits -/
+
+/-- `⌊cX + d⌋₊ / X → c`. -/
+lemma tendsto_floor_linear_div {c : ℝ} (hc : 0 < c) (d : ℝ) :
+    Tendsto (fun X : ℕ => (⌊c * X + d⌋₊ : ℝ) / X) atTop (𝓝 c) := by
+  have hlo : Tendsto (fun X : ℕ => c + (d - 1) / X) atTop (𝓝 c) := by
+    simpa using tendsto_const_nhds.add (tendsto_const_div_atTop_nhds_zero_nat (d - 1))
+  have hhi : Tendsto (fun X : ℕ => c + d / X) atTop (𝓝 c) := by
+    simpa using tendsto_const_nhds.add (tendsto_const_div_atTop_nhds_zero_nat d)
+  have hev : ∀ᶠ X : ℕ in atTop, 0 ≤ c * X + d ∧ (0 : ℝ) < X := by
+    obtain ⟨N, hN⟩ := exists_nat_gt (|d| / c)
+    refine eventually_atTop.2 ⟨N + 1, fun X hX => ⟨?_, Nat.cast_pos.2 (by omega)⟩⟩
+    have hX' : (N : ℝ) + 1 ≤ X := by exact_mod_cast hX
+    have : |d| < c * X := by rw [div_lt_iff₀ hc] at hN; nlinarith
+    linarith [neg_abs_le d]
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo hhi ?_ ?_
+  · filter_upwards [hev] with X ⟨h0, hX⟩
+    have := Nat.lt_floor_add_one (c * X + d)
+    rw [le_div_iff₀ hX]
+    have e : (c + (d - 1) / X) * X = c * X + d - 1 := by field_simp; ring
+    linarith
+  · filter_upwards [hev] with X ⟨h0, hX⟩
+    have := Nat.floor_le h0
+    rw [div_le_iff₀ hX]
+    have e : (c + d / X) * X = c * X + d := by field_simp
+    linarith
+
+/-- Rescaling a counting limit: if `C(N)/N → L`, `f → ∞` and `f(X)/X → c`, then
+`C(f(X))/X → L c`. -/
+lemma tendsto_comp_div {C f : ℕ → ℕ} {L c : ℝ}
+    (hC : Tendsto (fun N : ℕ => (C N : ℝ) / N) atTop (𝓝 L)) (hf : Tendsto f atTop atTop)
+    (hfr : Tendsto (fun X : ℕ => (f X : ℝ) / X) atTop (𝓝 c)) :
+    Tendsto (fun X : ℕ => (C (f X) : ℝ) / X) atTop (𝓝 (L * c)) := by
+  refine ((hC.comp hf).mul hfr).congr' ?_
+  filter_upwards [hf.eventually_ge_atTop 1] with X hX
+  have : (f X : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
+  show (C (f X) : ℝ) / f X * (f X / X) = _
+  rw [div_mul_div_cancel₀ this]
+
+/-- `⌊c·X + d⌋₊ → ∞`. -/
+lemma tendsto_floor_linear {c : ℝ} (hc : 0 < c) (d : ℝ) :
+    Tendsto (fun X : ℕ => ⌊c * X + d⌋₊) atTop atTop :=
+  tendsto_nat_floor_atTop.comp
+    ((tendsto_natCast_atTop_atTop.const_mul_atTop hc).atTop_add tendsto_const_nhds)
+
 end CollatzMoonshot.WythoffGeneral
