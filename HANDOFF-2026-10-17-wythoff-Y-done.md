@@ -1,6 +1,7 @@
 # HANDOFF 2026-10-17: wythoff-Y done
 
-Branch `wip/wythoff-Y`.  No uncommitted proof edits (`CLAUDE.local.md` untracked, left alone).
+Branch `wip/wythoff-Y`, HEAD `e76fb02` before this edit (proof commit `909b0b9`).  Stop signalled
+with `box done --green`.  No uncommitted proof edits (`CLAUDE.local.md` untracked, left alone).
 
 **Done.**  Kickoff `KICKOFF-2026-10-16-wythoff-Y.md` complete: all 52 sorries closed in
 `WythoffSporadic` (Theorem Y: recurrence `W⁴ = 4n + W³ − W²` on `E O³`, classification, count,
