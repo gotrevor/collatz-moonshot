@@ -837,7 +837,8 @@ theorem tendsto_count_half {A : ℕ → ℕ} {c : ℝ} (m : ℕ)
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds ?_ ?_
     · filter_upwards [eventually_ge_atTop 1] with X hX
       have hX' : (0 : ℝ) < X := by exact_mod_cast hX
-      have : (X : ℝ) ≤ 2 * ((X / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast (by omega : X ≤ 2 * (X / 2) + 1)
+      have : (X : ℝ) ≤ 2 * ((X / 2 : ℕ) : ℝ) + 1 := by
+        exact_mod_cast (by omega : X ≤ 2 * (X / 2) + 1)
       rw [sub_div' hX'.ne', div_le_div_iff_of_pos_right hX']
       linarith
     · filter_upwards [eventually_ge_atTop 1] with X hX
