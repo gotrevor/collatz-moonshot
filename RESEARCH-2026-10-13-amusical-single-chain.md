@@ -2557,3 +2557,57 @@ so `ê₀ = q̃₀` and `ê_k = q_k` (`k ≥ 1`) are the top-row coefficients; `
 * **Status.**  CONJ O2 82% (was 70%), CONJ B 58%, CONJ E (non-units) 66%; CONJ C′ / C unchanged.
   Weakest step: the chain casework of §2.4-§2.5 is hand-checked (twice now), not formalized, and no
   data point reaches the R branch.  For `U`: nothing new.  Under 1% that this moves (a).
+
+## 72. CONJ O2 at a₀ = −2, hence at |a₀| = 2: the centre of Z sits on a lattice line (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-o2neg.md`.  Notation of §71, with `a₀ = −2`: `q₀ = 2/x ∈ (3, 4)`, `θ := |q̃₀| = 4 − 2/x ∈ (0, 1)`,
+`S₁ = Σ_{k=1}^{d−1} q_k`, `D_k = q_{k−1} − q_k`; the "positive family" means every `q_k ≥ 0`.
+
+* **Theorem N2 (paper; 93% as written, about 85% end to end; Ren re-derived it).**  Let `a₀ = −2`,
+  `d ≥ 3`, and `P` monic integer with a root `x ∈ (½, ⅔)`.  Then `Z ∩ ℤ² = ∅` only for
+  `P = Y = t³ + t² + 3t − 2`.  It uses only the window and integrality (no N3, U2, irreducibility or
+  Theorem O).  Since the G line has no member at `a₀ = −2` (`t^d + 4t − 2` has its root below ½),
+  Lemma 2R gives: **the `J = d` class at `a₀ = −2` is `{Y}` in every degree.  With Theorem A2 (§71),
+  CONJ O2 holds at `|a₀| = 2`,** and by Lemma EX a solvable member off the G line with `|a₀| = 2` and
+  `|Π_half| < 1.3|N|` is Y.
+* **Proof shape.**
+  * *Lemma ORG⁻.*  At `a₀ = −2` the origin is outside `Z` iff the positive family: a separating
+    `(−1, μ)` forces `q_k ≤ μq_{k−1}`, and `q_{d−1} = 1` propagates positivity downward.
+  * *Lemma CD.*  The centre `¼Σg_k = ¼(q̃₀ + S₁, Q(1))` lies on `y − x = ¼(q₀ − q̃₀) = −a₀/2 = 1`, a
+    lattice line, so `y = x + 1` cuts `Z` in a central chord `(X_min, X_max)` with
+    `X_min + X_max = ½(S₁ − θ)`.  (For general `a₀` the centre lies on `y − x = −a₀/2`, a lattice line
+    exactly when `a₀` is even.)
+  * *Lemma D1.*  `ε_k = 1/(q₀ − 1) ∈ (⅓, ½)` (`1 ≤ k ≤ d − 1`; this is `x < ⅔`) lies on the line, so
+    `X_max ≥ S₁/(q₀ − 1)`.
+  * *Lemmas K, M.*  In the positive family `X_min = −½θ + B`, with `B` a fractional knapsack over
+    the indices with `D_k > 0` (capacity at least `β₁ + 1`, `β₁ = ½(1 − θ)`); if `X_min ≥ 1`, the
+    greedy stopping ratio `ρ* ≥ (2 + θ)/(1 − θ)` makes the chord longer than
+    `½θ + (1 + θ)(2 + θ)/(2(1 − θ)) > 1`.  So `S₁ > q₀ − 1` always gives an integer `b` with
+    `(b, b + 1) ∈ Z`.
+  * *Lemma C.*  `S₁ ≤ q₀ − 1` forces `a₁ = 3`, `a_k ≥ 0`, `P(1) ∈ {2, 3}`: `t^d + 3t − 2` (whose chord
+    contains 0) or `t^d + t^j + 3t − 2` with `x ≤ 4 − 2√3`, impossible for `d ≥ 4` since
+    `x₀⁴ + x₀² + 3x₀ − 2 = 1590 − 918√3 < 0` at `x₀ = 4 − 2√3`; at `d = 3` it is Y.
+* **Ren's checks.**  Re-derived all seven inequalities the report lists: the centre identity and
+  the generator diagonals `θ, D_k, 1` summing to `θ + q₀ = 4`; D1's admissibility `q₀ > 3 ⇔ x < ⅔`
+  and `Σ D_k = q₀ − 1`; K's lower bound (writing `ε₀ = ½ − δ`, `ε_d = ½ − η` and rescaling the pool
+  part) and capacity `(3 − θ)/2 + ½Σ_N|D_k|`; M's chain `B ≤ ρ*β₁`,
+  `X_max = ½Σ_N q_k + Σ_Π(½ − ε′_k)D_kρ_k ≥ ρ*`, `X_max − X_min ≥ ρ*(1 − β₁) + ½θ`; C's
+  `p ≤ (1 − x)(4 − x)/x < 3.5`, `a₁ ∈ (2/x + 2x − 2, q₀]`, the threshold `x² − 8x + 4 ≥ 0`;
+  `(4 − 2√3)⁴ + (4 − 2√3)² + 3(4 − 2√3) − 2 = 1590 − 918√3` and `1590² < 3·918²`; and T3's
+  `q₁ = x^{d−2} < 1 < θq₀`.  Re-ran `cverify.py 6`, `thm_neg.py 5 5`, `thm_neg.py 4 6 relax` and
+  `medtest.py 20000 2`: identical (relaxed window: D1 and K fail on 105 of 232; synthetic M branch 1,360 cases, 0 failures).  Independent code (`ren_zono.py`: no LP; a lattice point is in
+  the open zonogon iff it is strictly inside every edge-normal slab, tested on every integer point of
+  the bounding box) on every `a₀ = −2` candidate for `d = 3..8` (8, 41, 237, 816, 3,994, 10,660): Y is the only one with no lattice point; controls: G(4, 2) at `a₀ = +2` has none, as it must, and the `d = 5`, `a₀ = +2` box (96) has no other.
+* **Computed.**  On the complete candidate lists at `a₀ = −2`, `d = 3..10` (168,466), the origin or
+  the theorem's `(b, b + 1)` (`b ∈ {0, 1}` throughout) certifies every candidate except Y, each with a
+  60-digit witness.  Without N3 or irreducibility (`d = 3..8, 10, 12`, reducible polynomials
+  included), every lemma checked separately: 0 violations, Y the only miss.  Teeth: the same test
+  on the non-central line `y − x = 2` misses 2-10 members per box; widening the window to `x < 0.8`
+  breaks D1 and K on 105 of 232 members; Lemma M's branch (`X_min ≥ 1`), which no integer
+  polynomial in any box reaches, holds on about 1,350 synthetic sequences per run with the bound
+  tight to a factor 1.2.
+* **Weakest step.**  Lemma M is exercised only on synthetic real sequences, since its branch never
+  occurs for an integer polynomial in the boxes; Ren's re-derivation is the paper check.
+* **Status.**  CONJ O2 88% (was 82%): proved at `|a₀| = 2`, computed at `|a₀| ≥ 3`.  For even `a₀` the
+  centre again lies on a lattice line, so the N2 mechanism may transfer (CONJ, 50%); odd `a₀` needs a
+  different line.  CONJ B 60%.  For `U`: nothing new.  Under 1% that this moves (a).
