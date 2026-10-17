@@ -83,6 +83,79 @@ theorem alphaK_two_mul_neg (r : ℕ) :
     Real.sqrt_mul (by norm_num : (0 : ℝ) ≤ 4), show (4 : ℝ) = 2 ^ 2 by norm_num,
     Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 2)]
 
+/-- An increasing arithmetic progression with step `d ∈ (0, 1/2)` meets `{fract < 1/2}` within
+`⌈1/d⌉` steps. -/
+lemma fract_hit_pos (a d : ℝ) (hd0 : 0 < d) (hd : d < 1 / 2) :
+    ∃ i : ℕ, i ≤ ⌈1 / d⌉₊ ∧ Int.fract (a + i * d) < 1 / 2 := by
+  set n : ℤ := ⌊a⌋ + 1 with hn
+  have hna : a < n := by rw [hn]; push_cast; exact Int.lt_floor_add_one a
+  have hna' : (n : ℝ) ≤ a + 1 := by rw [hn]; push_cast; linarith [Int.floor_le a]
+  have hq0 : 0 ≤ ((n : ℝ) - a) / d := div_nonneg (by linarith) hd0.le
+  refine ⟨⌈((n : ℝ) - a) / d⌉₊, Nat.ceil_mono ?_, ?_⟩
+  · exact div_le_div_of_nonneg_right (by linarith) hd0.le
+  · have h1 := Nat.le_ceil (((n : ℝ) - a) / d)
+    have h2 := Nat.ceil_lt_add_one hq0
+    rw [div_le_iff₀ hd0] at h1
+    have e : ((n : ℝ) - a) / d * d = n - a := div_mul_cancel₀ _ hd0.ne'
+    have h2' := mul_lt_mul_of_pos_right h2 hd0
+    rw [add_mul, e, one_mul] at h2'
+    have hfl : ⌊a + (⌈((n : ℝ) - a) / d⌉₊ : ℝ) * d⌋ = n := by
+      rw [Int.floor_eq_iff]; constructor <;> linarith
+    rw [Int.fract, hfl]
+    linarith
+
+/-- A decreasing arithmetic progression with step `d ∈ (0, 1/2)` meets `{fract < 1/2}` within
+`⌈1/d⌉` steps. -/
+lemma fract_hit_neg (a d : ℝ) (hd0 : 0 < d) (hd : d < 1 / 2) :
+    ∃ i : ℕ, i ≤ ⌈1 / d⌉₊ ∧ Int.fract (a - i * d) < 1 / 2 := by
+  by_cases h0 : Int.fract a < 1 / 2
+  · exact ⟨0, Nat.zero_le _, by simpa using h0⟩
+  push Not at h0
+  set n : ℤ := ⌊a⌋
+  have hfa : Int.fract a = a - n := rfl
+  have hf1 := Int.fract_lt_one a
+  have hq0 : 0 ≤ (a - n - 1 / 2) / d := div_nonneg (by linarith) hd0.le
+  set i : ℕ := ⌊(a - n - 1 / 2) / d⌋₊ + 1 with hi
+  have h1 := Nat.lt_floor_add_one ((a - n - 1 / 2) / d)
+  have h2 := Nat.floor_le hq0
+  have hic : (i : ℝ) = (⌊(a - n - 1 / 2) / d⌋₊ : ℝ) + 1 := by rw [hi]; push_cast; ring
+  rw [← hic, div_lt_iff₀ hd0] at h1
+  rw [le_div_iff₀ hd0] at h2
+  refine ⟨i, ?_, ?_⟩
+  · have hle : (i : ℝ) ≤ 1 / d := by
+      have : (a - n - 1 / 2) / d ≤ 1 / (2 * d) := by
+        rw [div_le_div_iff₀ hd0 (by linarith)]; nlinarith
+      have h3 : 1 / (2 * d) + 1 ≤ 1 / d := by
+        rw [div_add_one (by linarith), div_le_div_iff₀ (by linarith) hd0]; nlinarith
+      have := Nat.floor_le hq0
+      linarith
+    exact_mod_cast hle.trans (Nat.le_ceil _)
+  · have hfl : ⌊a - (i : ℝ) * d⌋ = n := by
+      rw [Int.floor_eq_iff]; constructor <;> nlinarith
+    rw [Int.fract, hfl]
+    linarith
+
+/-- An arithmetic progression with step `ε`, `0 < |ε| < 1/2`, meets `{fract < 1/2}` within
+`⌈1/|ε|⌉` steps. -/
+lemma fract_hit (a ε : ℝ) (h0 : ε ≠ 0) (h : |ε| < 1 / 2) :
+    ∃ i : ℕ, i ≤ ⌈1 / |ε|⌉₊ ∧ Int.fract (a + i * ε) < 1 / 2 := by
+  rcases lt_or_gt_of_ne h0 with hn | hp
+  · rw [abs_of_neg hn] at h ⊢
+    obtain ⟨i, hi, hf⟩ := fract_hit_neg a (-ε) (by linarith) h
+    exact ⟨i, hi, by rw [show a + i * ε = a - i * -ε by ring]; exact hf⟩
+  · rw [abs_of_pos hp] at h ⊢
+    exact fract_hit_pos a ε hp h
+
+/-- `⌊2v⌋` is even when `{v} < 1/2`. -/
+lemma floor_two_mul_even {v : ℝ} (h : Int.fract v < 1 / 2) : ⌊2 * v⌋ % 2 = 0 := by
+  have : ⌊2 * v⌋ = 2 * ⌊v⌋ := by
+    rw [Int.floor_eq_iff]
+    have := Int.fract_nonneg v
+    rw [Int.fract] at h this
+    push_cast
+    constructor <;> linarith
+  omega
+
 section Cone
 
 variable {b c : ℤ}
@@ -226,6 +299,90 @@ theorem mem_coneEntry_iff (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) (n : ℤ) :
     rw [← hp, Equiv.symm_apply_apply] at hodd
     omega
 
+/-- **Syndeticity of `T`.**  There is `L` with a point of `T` in every window `(Y, Y + L]`,
+`Y ≥ 0`.  Dirichlet gives `q ≥ 1` with `0 < |q·α/2 − p| ≤ 1/5`; along `k₀ + iq` the phase
+`{k·α/2}` is an arithmetic progression mod 1 (`fract_hit`). -/
+lemma coneSet_syndetic (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) :
+    ∃ L : ℤ, 0 ≤ L ∧ ∀ Y : ℤ, 0 ≤ Y → ∃ t ∈ coneSet b c, Y < t ∧ t ≤ Y + L := by
+  set α := alphaK b c
+  have hθ : Irrational (α / 2) := (irrational_alphaK_cone h1 h2).div_natCast (m := 2) (by norm_num)
+  obtain ⟨p, q, hq0, -, hpq⟩ := Real.exists_int_int_abs_mul_sub_le (α / 2) (n := 4) (by norm_num)
+  set ε : ℝ := q * (α / 2) - p with hε
+  have hε0 : ε ≠ 0 := by
+    intro h
+    exact (hθ.intCast_mul hq0.ne').ne_int p (by linarith)
+  have hεh : |ε| < 1 / 2 := by
+    have : |ε| ≤ 1 / 5 := by rw [hε]; convert hpq using 2; norm_num
+    linarith
+  set M : ℕ := ⌈1 / |ε|⌉₊
+  refine ⟨2 + 2 * ((M : ℤ) * q), by positivity, fun Y hY => ?_⟩
+  set k0 : ℤ := Y / 2 + 1
+  obtain ⟨i, hiM, hfr⟩ := fract_hit ((k0 : ℝ) * (α / 2)) ε hε0 hεh
+  set k : ℤ := k0 + i * q
+  have hk : (k : ℝ) * (α / 2) = ((k0 : ℝ) * (α / 2) + i * ε) + ((i * p : ℤ) : ℝ) := by
+    simp only [k, hε]; push_cast; ring
+  have hfk : Int.fract ((k : ℝ) * (α / 2)) < 1 / 2 := by rw [hk, Int.fract_add_intCast]; exact hfr
+  have hiq : (i : ℤ) * q ≤ M * q := by
+    have : (i : ℤ) ≤ M := by exact_mod_cast hiM
+    nlinarith
+  have hi0 : (0 : ℤ) ≤ i * q := by positivity
+  refine ⟨2 * k, ⟨by omega, by omega, ?_⟩, by omega, by omega⟩
+  rw [wy_two_mul, show (k : ℝ) * α = 2 * ((k : ℝ) * (α / 2)) by ring]
+  exact floor_two_mul_even hfk
+
+/-- On `T`, `W(t) ≥ (3/2)t`. -/
+lemma three_le_two_mul_wy (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) {t : ℤ} (ht : t ∈ coneSet b c) :
+    3 * t ≤ 2 * wy (alphaK b c) t := by
+  obtain ⟨ht0, hte, -⟩ := ht
+  obtain ⟨k, rfl⟩ : ∃ k, t = 2 * k := ⟨t / 2, by omega⟩
+  rw [wy_two_mul]
+  have h3 := three_lt_alphaK_cone h1 h2
+  have hk : (0 : ℝ) ≤ k := by exact_mod_cast (show (0 : ℤ) ≤ k by omega)
+  have : 3 * k ≤ ⌊(k : ℝ) * alphaK b c⌋ := by
+    rw [Int.le_floor]; push_cast; nlinarith
+  omega
+
+lemma iterate_mem_coneSet (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) {t : ℤ} (ht : t ∈ coneSet b c)
+    (i : ℕ) : (wy (alphaK b c))^[i] t ∈ coneSet b c := by
+  induction i with
+  | zero => exact ht
+  | succ i ih =>
+    rw [Function.iterate_succ_apply']
+    exact coneSet_trap h1 h2 _ ih
+
+/-- Along `T`, every later point is `≥ (3/2)` times an earlier one. -/
+lemma three_le_two_mul_iterate (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) {t : ℤ} (ht : t ∈ coneSet b c)
+    (i : ℕ) : 3 * t ≤ 2 * (wy (alphaK b c))^[i + 1] t := by
+  induction i with
+  | zero => simpa using three_le_two_mul_wy h1 h2 ht
+  | succ i ih =>
+    rw [Function.iterate_succ_apply']
+    have hT := iterate_mem_coneSet h1 h2 ht (i + 1)
+    have := three_le_two_mul_wy h1 h2 hT
+    have := hT.1
+    omega
+
+/-- Every point of `T` lies on the forward orbit of an entry point. -/
+lemma exists_entry (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) (t : ℤ) :
+    ∃ e : ℤ, ∃ j : ℕ, t ∈ coneSet b c →
+      (0 ≤ e ∧ e ∈ coneSet b c \ wkPerm b c h1 h2 '' coneSet b c) ∧
+        (wy (alphaK b c))^[j] e = t := by
+  induction t using Int.strongRec (m := 0) with
+  | lt t ht => exact ⟨0, 0, fun h => absurd h.1 (by omega)⟩
+  | ge t ht ih =>
+    by_cases hT : t ∈ coneSet b c
+    · by_cases hW : t ∈ wkPerm b c h1 h2 '' coneSet b c
+      · obtain ⟨s, hs, rfl⟩ := hW
+        rw [wkPerm_apply] at ih ⊢
+        have h3 := three_le_two_mul_wy h1 h2 hs
+        have := hs.1
+        obtain ⟨e, j, hej⟩ := ih s (by omega)
+        obtain ⟨he, hj⟩ := hej hs
+        refine ⟨e, j + 1, fun _ => ⟨he, ?_⟩⟩
+        rw [Function.iterate_succ_apply', hj]
+      · exact ⟨t, 0, fun _ => ⟨⟨by omega, hT, hW⟩, rfl⟩⟩
+    · exact ⟨0, 0, fun h => absurd h hT⟩
+
 /-- **(ratified, Theorem K, infinitely many entry points; unconditional).**  Paper proof: if
 `E = T ∖ W(T)` were finite, every `t ∈ T` would lie on the forward orbit of a point of `E`
 (read backward inside `T` the values strictly decrease, `W(t) > t` on `T`, so the backward
@@ -236,7 +393,78 @@ orbit leaves `T` at an entry point); along `T`, `W(t) ≥ (3/2)t − 1`, so each
 `⌈1/δ⌉ + 1` steps, giving `#(T ∩ [1, X]) ≥ X/(2q(⌈1/δ⌉ + 1)) − 1`. -/
 theorem coneEntry_infinite (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) :
     {n : ℤ | 0 ≤ n ∧ n ∈ coneSet b c \ wkPerm b c h1 h2 '' coneSet b c}.Infinite := by
-  sorry
+  by_contra hfin
+  rw [Set.not_infinite] at hfin
+  classical
+  set E := hfin.toFinset
+  set N := E.card
+  obtain ⟨L, hL0, hsyn⟩ := coneSet_syndetic h1 h2
+  choose tf htf using hsyn
+  choose ef jf hef using exists_entry h1 h2
+  set Y : ℤ := 2 * (N + 1) * (L + 1) + 1
+  have hY0 : 0 ≤ Y := by positivity
+  -- the window points `t_i ∈ (Y + iL, Y + (i + 1)L]`, `i ≤ N`
+  have hwin : ∀ i : ℕ, i ∈ Finset.range (N + 1) →
+      tf (Y + i * L) (by positivity) ∈ coneSet b c ∧ Y + i * L < tf (Y + i * L) (by positivity) ∧
+        tf (Y + i * L) (by positivity) ≤ Y + i * L + L := fun i _ => htf _ _
+  have hmaps : ∀ i ∈ Finset.range (N + 1),
+      ef (tf (Y + i * L) (by positivity)) ∈ E := by
+    intro i hi
+    obtain ⟨hT, -, -⟩ := hwin i hi
+    obtain ⟨he, -⟩ := hef _ hT
+    simpa [E] using he
+  have hinj : Set.InjOn (fun i : ℕ => ef (tf (Y + i * L) (by positivity)))
+      (Finset.range (N + 1) : Set ℕ) := by
+    intro i hi i' hi' heq
+    obtain ⟨hT, hlo, hhi⟩ := hwin i hi
+    obtain ⟨hT', hlo', hhi'⟩ := hwin i' hi'
+    simp only [Finset.coe_range, Set.mem_Iio] at hi hi'
+    simp only at heq
+    obtain ⟨⟨-, heT, -⟩, hj⟩ := hef _ hT
+    obtain ⟨-, hj'⟩ := hef _ hT'
+    rw [heq] at hj
+    set t := tf (Y + i * L) (by positivity)
+    set t' := tf (Y + i' * L) (by positivity)
+    have hiL : (i : ℤ) * L ≤ N * L := by
+      have : (i : ℤ) ≤ N := by omega
+      nlinarith
+    have hiL' : (i' : ℤ) * L ≤ N * L := by
+      have : (i' : ℤ) ≤ N := by omega
+      nlinarith
+    have hNL : 0 ≤ (N : ℤ) * L := by positivity
+    have hil0 : 0 ≤ (i : ℤ) * L := by positivity
+    have hil0' : 0 ≤ (i' : ℤ) * L := by positivity
+    -- both points lie in `[Y, 3Y/2)`
+    have hsmall : 2 * t < 3 * Y := by nlinarith
+    have hsmall' : 2 * t' < 3 * Y := by nlinarith
+    have htt : t = t' := by
+      rcases lt_trichotomy (jf t) (jf t') with hlt | hjj | hgt
+      · obtain ⟨d, hd⟩ : ∃ d, jf t' = jf t + (d + 1) := ⟨jf t' - jf t - 1, by omega⟩
+        have := three_le_two_mul_iterate h1 h2 (hT) d
+        rw [← hj, ← Function.iterate_add_apply, show d + 1 + jf t = jf t' by omega, hj'] at this
+        omega
+      · rw [hjj] at hj; exact hj.symm.trans hj'
+      · obtain ⟨d, hd⟩ : ∃ d, jf t = jf t' + (d + 1) := ⟨jf t - jf t' - 1, by omega⟩
+        have := three_le_two_mul_iterate h1 h2 (hT') d
+        rw [← hj', ← Function.iterate_add_apply, show d + 1 + jf t' = jf t by omega, hj] at this
+        omega
+    rw [htt] at hlo hhi
+    have hLp : 0 < L ∨ L = 0 := by omega
+    rcases hLp with hLp | hL
+    · by_contra hne
+      rcases lt_or_gt_of_ne hne with h | h
+      · have : (i : ℤ) + 1 ≤ i' := by exact_mod_cast h
+        nlinarith
+      · have : (i' : ℤ) + 1 ≤ i := by exact_mod_cast h
+        nlinarith
+    · subst hL; omega
+  have hcard : (Finset.range (N + 1)).card ≤ E.card := by
+    refine Finset.card_le_card_of_injOn
+      (fun i : ℕ => ef (tf (Y + i * L) (by positivity))) ?_ ?_
+    · exact fun i hi => hmaps i hi
+    · exact hinj
+  rw [Finset.card_range] at hcard
+  omega
 
 /-- **(ratified, Theorem K).**  Every cone member has infinitely many infinite orbits.  Paper
 proof: `infinitelyManyInfiniteOrbits_of_trap` with `coneSet_trap` and `coneEntry_infinite`. -/
