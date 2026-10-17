@@ -2259,3 +2259,42 @@ Lemma U\*, Corollaries U1-U2, Lemma SG and Lemma O∞ (`WythoffUStar`, #71).
 * **Status.**  The cubic case of CONJ C is settled at the confidence above.  CONJ C′ stays 85%
   (degree bound open).  Next: the same method for quartics (`h₂` enters `q̃₀`).  For `U`: nothing
   new.  Under 1% that this moves (a).
+
+## 66. The solvable quartic members are G(3, r) and their mirrors (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-quartic.md`.  A quartic member is `P = t⁴ + b₃t³ + b₂t² + a₁t + A`; under
+bounded runs U2 gives `N = 16P(½)` odd with `|N| < 27`, so a member is a quadruple
+`(A, b₃, b₂, N)`.  `B(z) = Q(z)/q₀ = 1 − h₁z + e₂z² − e₃z³`, with `h₁ = q₁x/A`, `e₂ = −q₂x/A`,
+`e₃ = x/A`.
+
+* **Classification (88% given the run criterion, N3, U\*/U2, B2, Theorems O/M, Lemmas T and SG;
+  about 75% end to end).**  A quartic member is solvable iff it is G(3, r) = `t⁴ − 2rt + r`
+  (`r ≥ 2`) or a mirror: there is no quartic sporadic member.  For `|a₀| ≥ 650` this is Theorem
+  C4, proved with one monotone interval-arithmetic check (`effective4.py 650`); for `|a₀| < 650`
+  it is computed: complete enumeration (`|a₀| ≤ 250`: 180,884,390 candidates; `251-649`:
+  2,980,166,430), with automaton witnesses and explicit certificates agreeing on `|a₀| ≤ 250` and
+  on the 2,042 members of the 13 class boxes the interval route leaves open in `251-649`.
+* **Proof shape of Theorem C4.**  The two-dimensional version of §65.  Multi-row perturbations
+  shift the top-row quantity by `−Σ Δ_j h_j` (Lemma K\*), so bounded runs force every `h_j` within
+  `O(1/|A|)` of rationals whose denominators have lcm at most `1/ℓ ≤ 37` (Lemma AP-rel: one
+  level's progression spreads around the lcm grid of the others).  The region `|x_s| > 1` is
+  exactly Jury's test on `z³B(1/z)` (Lemma R4).  Near eight of the nine Kronecker points of
+  `(h₁, e₂)` a conjugate sits near the unit circle, and Lemma SG kills a whole neighbourhood
+  (certified by a Jury test on `B(Yz)`).  The ninth, `(0, 0)`, leaves 22 shapes `(b₃, b₂, N)`: 21
+  get explicit Lemma T balls, and the 22nd is the G line.  Teeth: the same check fails at
+  `|a₀| = 620` (1 class) and `600` (2 classes), each the predicted class.
+* **Cancellation classes.**  The only obstruction between 250 and 650: `h₁ ≈ ±1/q`, `h₂ ≈ 0`,
+  `e₃ ≈ h₁³` at `|A| ≈ q³/2` (`q = 8, 9, 10`), where `P ≈ (t − ½)(t − q)(t² + q²)`.  Gap arguments
+  are borderline there; all 96 members get explicit infinite sequences.
+* **Ren's checks.**  Paper: the quadruple form, `B(z)` and its coefficients, Lemma R4's reduction
+  to Jury's conditions (`a₂ = −h₁`, `a₁ = e₂`, `a₀ = −e₃`).  Re-ran `effective4.py 650` (0
+  failures) and `620` (1 failure, the teeth).  Ren's independent degree-`d` certificate code (U\*,
+  Lemma K to level 6, SG, Lemma T; every certificate an explicit sequence verified at 60 digits):
+  all 96 cancellation members certified; 300 + 300 uniformly random N3-passing candidates at
+  `A = 650` and `A = −651` all certified; of 150 random members from the hardest residue (the 956
+  that needed the agent's exhaustive row search), 146 certified directly and the other 4 by an
+  exhaustive Lemma T scan; G(3, 200) and G(3, 650) never certified.
+* **Status.**  CONJ C at degrees 3 and 4 is settled at the confidences above (§65, §66): the only
+  sporadic solvable member through degree 4 is Y (and its mirror).  CONJ C′ stays 85% (a degree
+  bound is still open).  CONJ (65%): at degree 5 the exhaustive row search, not gap bounds, is
+  the certificate that scales.  For `U`: nothing new.  Under 1% that this moves (a).
