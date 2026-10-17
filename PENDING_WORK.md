@@ -1,5 +1,12 @@
 # PENDING_WORK
 
+## 2026-10-17: wythoff-Y objective DONE, nothing owed
+
+`KICKOFF-2026-10-16-wythoff-Y.md` is fully discharged: `WythoffSporadic.lean` and
+`WythoffGolden.lean` are sorry-free with ratified statements unchanged.  Last piece:
+`tendsto_minCount_yPerm` (2D Weyl on the phase square; word cylinders a box, two convex
+polygons and differences, areas by Fubini).  See `HANDOFF-wythoff-Y.md`.
+
 ## 2026-10-16: rcwa-sameorbit objective DONE, nothing owed
 
 `KICKOFF-2026-10-16-rcwa-sameorbit.md` is fully discharged: `CollatzMoonshot/RcwaSameOrbit.lean`
