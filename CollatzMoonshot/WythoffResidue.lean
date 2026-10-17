@@ -617,6 +617,95 @@ theorem residueTransitive_lift_dvd_p (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp 
       rw [hp₁]; push_cast; ring]
     exact wythoffInv_add_scaled s hq hqp x _ v
 
+/-- **Lemma A, parametrized by the dropping parity `ε`.**  The `ε`-branch divisor is divisible
+by `ℓ` (those pieces drop the `ℓ`-level), the other is coprime to `ℓ` (those pieces keep it).
+A class with no `ε`-point is routed, at constant level, along a path mod `M'` to the residue
+`ε`, whose classes always contain an `ε`-point. -/
+theorem residueTransitive_lift_branch (hq : 0 < q) (hqp : q < p) {ℓ : ℕ} (hℓ : ℓ.Prime)
+    (hℓ2 : ℓ ≠ 2) (hℓp : IsCoprime (ℓ : ℤ) p) {ε : ℤ} (hε : ε = 0 ∨ ε = 1)
+    (hdrop : ∀ n, n % 2 = ε → (ℓ : ℤ) ∣ branchQ p q n)
+    (hkeep : ∀ n, n % 2 ≠ ε → IsCoprime (ℓ : ℤ) (branchQ p q n))
+    {M' : ℕ} (hℓM : ¬ ℓ ∣ M') (h : ResidueTransitive (wythoff s p q) M') (e : ℕ) :
+    ResidueTransitive (wythoff s p q) (ℓ ^ e * M') := by
+  have hpℓ : ∀ k : ℕ, IsCoprime (p : ℤ) ((ℓ : ℤ) ^ k) := fun k => hℓp.symm.pow_right
+  have hℓM' : ∀ k : ℕ, IsCoprime ((ℓ : ℤ) ^ k) M' := isCoprime_pow_of_prime hℓ hℓM
+  have hℓodd : Odd (ℓ : ℤ) := odd_intCast (hℓ.odd_of_ne_two hℓ2)
+  have h2ℓ : ∀ k : ℕ, IsCoprime (2 : ℤ) ((ℓ : ℤ) ^ k) := fun k =>
+    (isCoprime_of_odd hℓodd).symm.pow_right
+  refine residueTransitive_of_classIn h (fun C hC n hn => ?_) (fun C hC hne => ?_)
+  · refine hn.drop hC (A := 2 * branchQ p q n) (B := p) (N := ℓ ^ e) (fun v => ?_)
+      (by push_cast; ring) (hpℓ e)
+    rw [show n + (M' : ℤ) * (2 * branchQ p q n * v) = n + 2 * M' * (branchQ p q n * v) by ring]
+    exact wythoff_add_scaled s hq hqp n M' v
+  refine exists_classIn_of_step (ℓ := ℓ) (e := e) (by push_cast; ring) (fun j hj x hx => ?_) hne
+  have hKN : ((ℓ ^ e * M' : ℕ) : ℤ) = (ℓ : ℤ) ^ j * M' * ℓ ^ (e - j) := by
+    push_cast; exact pow_mul_split _ _ hj.le
+  have hKN' : ((ℓ ^ e * M' : ℕ) : ℤ) = (ℓ : ℤ) ^ (j + 1) * M' * ℓ ^ (e - (j + 1)) := by
+    push_cast; exact pow_mul_split _ _ hj
+  -- a class containing an `ε`-point drops a level
+  have hdropC : ∀ z, ClassIn C ((ℓ : ℤ) ^ (j + 1) * M') z → z % 2 = ε →
+      ∃ x', ClassIn C ((ℓ : ℤ) ^ j * M') x' := by
+    intro z hz hzε
+    obtain ⟨Q₁, hQ₁⟩ := hdrop z hzε
+    refine ⟨_, hz.drop hC (A := 2 * Q₁) (B := p) (N := ℓ ^ (e - j)) (fun v => ?_) hKN (hpℓ _)⟩
+    rw [show z + (ℓ : ℤ) ^ (j + 1) * M' * (2 * Q₁ * v) =
+      z + 2 * ((ℓ : ℤ) ^ j * M') * (branchQ p q z * v) by rw [hQ₁]; ring]
+    exact wythoff_add_scaled s hq hqp z _ v
+  by_contra hcon
+  have hno : ∀ z, ClassIn C ((ℓ : ℤ) ^ (j + 1) * M') z → z % 2 ≠ ε := fun z hz hzε =>
+    hcon (hdropC z hz hzε)
+  let T : Set (ZMod M') := {b | ∃ z : ℤ, (z : ZMod M') = b ∧ ClassIn C ((ℓ : ℤ) ^ (j + 1) * M') z}
+  have hTc : ResidueClosed (wythoff s p q) M' T := by
+    rintro n ⟨z, hz, hzC⟩
+    have hMz : (M' : ℤ) ∣ n - z := (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hz
+    by_cases hn : n % 2 = ε
+    · exfalso
+      obtain ⟨t, ht⟩ := exists_crt ((h2ℓ (j + 1)).mul_left (hℓM' (j + 1)).symm) n z
+      have hK : (ℓ : ℤ) ^ (j + 1) * M' ∣ n + 2 * M' * t - z := (hℓM' (j + 1)).mul_dvd ht (by
+        rw [show n + 2 * (M' : ℤ) * t - z = (n - z) + M' * (2 * t) by ring]
+        exact hMz.add (dvd_mul_right _ _))
+      refine hno _ (hzC.of_dvd hK) ?_
+      rw [show n + 2 * (M' : ℤ) * t = n + 2 * (M' * t) by ring]; omega
+    · have hQk := hkeep n hn
+      have hcop' : IsCoprime (2 * branchQ p q n * M') ((ℓ : ℤ) ^ (j + 1)) :=
+        ((h2ℓ _).mul_left hQk.symm.pow_right).mul_left (hℓM' _).symm
+      obtain ⟨t, ht⟩ := exists_crt hcop' n z
+      set n' := n + 2 * branchQ p q n * M' * t with hn'
+      have hK : (ℓ : ℤ) ^ (j + 1) * M' ∣ n' - z := (hℓM' (j + 1)).mul_dvd ht (by
+        rw [show n' - z = (n - z) + M' * (2 * branchQ p q n * t) by rw [hn']; ring]
+        exact hMz.add (dvd_mul_right _ _))
+      have hn'C := hzC.of_dvd hK
+      have hpar : n' % 2 = n % 2 := by
+        rw [hn', show 2 * branchQ p q n * M' * t = 2 * (branchQ p q n * M' * t) by ring]; omega
+      have hQeq : branchQ p q n' = branchQ p q n := by unfold branchQ; rw [hpar]
+      have hkeepC : ClassIn C ((ℓ : ℤ) ^ (j + 1) * M') (wythoff s p q n') := by
+        refine hn'C.drop hC (A := 2 * branchQ p q n') (B := p) (N := ℓ ^ (e - (j + 1)))
+          (fun v => ?_) hKN' (hpℓ _)
+        rw [show n' + (ℓ : ℤ) ^ (j + 1) * M' * (2 * branchQ p q n' * v) =
+          n' + 2 * ((ℓ : ℤ) ^ (j + 1) * M') * (branchQ p q n' * v) by ring]
+        exact wythoff_add_scaled s hq hqp n' _ v
+      refine ⟨wythoff s p q n', (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).2 ⟨-(p * t), ?_⟩,
+        hkeepC⟩
+      rw [hn', show n + 2 * branchQ p q n * M' * t = n + 2 * branchQ p q n * (M' * t) by ring,
+        wythoff_add_piece s hq hqp]
+      ring
+  have hxT : (x : ZMod M') ∈ T := ⟨x, rfl, hx⟩
+  rcases (residueTransitive_iff_closed _ M').1 h T hTc with h0 | h1
+  · rw [h0] at hxT; exact hxT
+  · obtain ⟨z, hz, hzC⟩ : ((ε : ℤ) : ZMod M') ∈ T := by rw [h1]; trivial
+    have hMz : (M' : ℤ) ∣ z - ε := by
+      have := (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hz
+      rw [← dvd_neg, neg_sub] at this; exact this
+    refine hno (z + (ℓ : ℤ) ^ (j + 1) * M' * (z - ε)) (hzC.shift _) ?_
+    have h2 : (2 : ℤ) ∣ (z - ε) * (1 + (ℓ : ℤ) ^ (j + 1) * M') := by
+      rcases Int.even_or_odd (M' : ℤ) with hev | hod
+      · exact (hev.two_dvd.trans hMz).mul_right _
+      · obtain ⟨k, hk⟩ := (hℓodd.pow (n := j + 1)).mul hod
+        exact (show (2 : ℤ) ∣ 1 + (ℓ : ℤ) ^ (j + 1) * M' from ⟨k + 1, by rw [hk]; ring⟩).mul_left _
+    rw [show (z - ε) * (1 + (ℓ : ℤ) ^ (j + 1) * M') =
+      z - ε + (ℓ : ℤ) ^ (j + 1) * M' * (z - ε) by ring] at h2
+    omega
+
 /-- **(ratified).**  **Lemma A** (odd primes of `qR`): lift `M' → ℓ^e M'` for an odd prime
 `ℓ ∣ qR`, `ℓ ∤ M'`; `W` expands `ℓ`-adically on one branch, routed through parity.  Paper proof:
 note §3 Lemma A. -/
@@ -624,7 +713,22 @@ theorem residueTransitive_lift_dvd_qR (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp
     {ℓ : ℕ} (hℓ : ℓ.Prime) (hℓ2 : ℓ ≠ 2) (hℓqR : ℓ ∣ q * (p - q)) {M' : ℕ} (hM' : 0 < M')
     (hℓM : ¬ ℓ ∣ M') (h : ResidueTransitive (wythoff s p q) M') (e : ℕ) :
     ResidueTransitive (wythoff s p q) (ℓ ^ e * M') := by
-  sorry
+  have hqR : Nat.Coprime q (p - q) := (Nat.coprime_sub_self_right hqp.le).2 hcop.symm
+  have hpR : Nat.Coprime p (p - q) := (Nat.coprime_self_sub_right hqp.le).2 hcop
+  have hRc : ((p - q : ℕ) : ℤ) = (p : ℤ) - q := by omega
+  rcases (Nat.Prime.dvd_mul hℓ).1 hℓqR with hℓq | hℓR
+  · refine residueTransitive_lift_branch s hq hqp hℓ hℓ2
+      (Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓq hcop.symm)) (ε := 0)
+      (Or.inl rfl) (fun n hn => ?_) (fun n hn => ?_) hℓM h e
+    · unfold branchQ; rw [if_pos hn]; exact_mod_cast hℓq
+    · unfold branchQ; rw [if_neg hn, ← hRc]
+      exact Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓq hqR)
+  · refine residueTransitive_lift_branch s hq hqp hℓ hℓ2
+      (Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓR hpR.symm)) (ε := 1)
+      (Or.inr rfl) (fun n hn => ?_) (fun n hn => ?_) hℓM h e
+    · unfold branchQ; rw [if_neg (by omega), ← hRc]; exact_mod_cast hℓR
+    · unfold branchQ; rw [if_pos (by omega)]
+      exact Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓR hqR.symm)
 
 /-- **(ratified).**  **Lemma A₂** (`p` odd, the prime `2`): every piece `a + 2Qℤ ↦ c + pℤ`
 drops the `2`-level.  Paper proof: note §3 Lemma A₂. -/
