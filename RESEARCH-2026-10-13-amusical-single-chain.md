@@ -2500,3 +2500,60 @@ every other root in `|z| > 1` (N3), `1 ≤ |N| < 3^{d−1}` (U2).
 * **Weakest steps.**  Enumerator completeness at `d = 9, 10` (88%; margins tested only to
   `d = 8`), and the classification is computed, not proved.  For `U`: nothing new.  Under 1% that
   this moves (a).
+
+## 71. CONJ O2 at a₀ = +2: the origin always lies in the two-row zonogon off the G line (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-o2.md`.  Notation of §70, plus `E = P − a₀(1 − 2t)`, `Ê = (E − E(x))/(t − x) = Q + 2a₀`,
+so `ê₀ = q̃₀` and `ê_k = q_k` (`k ≥ 1`) are the top-row coefficients; `Z = Σ_{k=0}^{d}(0, ½)g_k` with
+`g₀ = (q̃₀, 0)`, `g_k = (q_k, q_{k−1})`, `g_d = (0, 1)`.  Off the G line, `J ≥ d + 1` iff `Z ∩ ℤ² ≠ ∅`
+(Lemma 2R).
+
+* **Theorem A2 (paper; 90% given the run criterion, N3, U\* and Theorem O; Ren re-derived it).**  Let
+  `a₀ = 2`, `d ≥ 5`, and `P` a bounded member.  If `(0, 0) ∉ Z`, then `P = t^d − 4t + 2`.  With the
+  complete census at `d = 3, 4` (§70): **at `a₀ = +2` every bounded member off the G line has
+  `J ≥ d + 1`, in every degree, so the `J = d` class is empty there.**  With Lemma EX (§69), no
+  solvable member off the G line has `a₀ = +2` and `|Π_half| < 1.3|N|`.
+* **Proof shape.**
+  * *Lemma ORG (Stiemke).*  `(0, 0) ∉ Z` iff some `n ≠ 0` has every `f_k = ⟨n, g_k⟩ ≥ 0`; the `f_k` are
+    the coefficients of `(n₁ + n₂t)Ê − 2a₀n₂t`.  At `a₀ > 0` the separating directions are `(λ, 1)`,
+    `λ ∈ (0, ∞)`, or `(1, 0)`.
+  * *Lemma P1.*  N3 makes `Q(0) = −a₀/x` and `Q(1)` share a sign, so `sign(a₀)P(1) ≤ −1`; at
+    `a₀ = 2` this is the budget `Ê(1) = 4 + P(1)/(1 − x) < 2`.
+  * `λ = ∞`: all top-row coefficients are `≥ 0`, so the top-row range is `(0, Ê(1)/2) ⊂ (0, 1)`,
+    `J = d − 1`, and Theorem O puts `P` on the G line.
+  * `λ ≤ 1`: weights `w₀ = 1/(2λ)`, `w₁ = ½`, `w_{k+1} = 1 − λw_k` lie in `[0, 1]` and give
+    `Σ w_k f_k = Ê(1) − 2`, so `Ê(1) ≥ 2`, against the budget.
+  * `λ ≥ 3`: negative top-row coefficients are isolated, and integrality of `e_{j+1} = −s_j − xê_{j+1}`
+    at the successor of the highest negative costs more than the budget allows (`x < ⅔`, `d ≥ 5`).
+  * `1 < λ < 3`: the coefficients alternate in sign from index 1; the potential
+    `Φ_i = Σ_{j<i}c_j + κp_i`, `κ = λ/(λ + 1)`, is nondecreasing along the chain, which rules out every
+    chain that ends below `d − 1`.  The one remaining shape (R: alternating up to `d − 2`) needs
+    `λ² − 3λ + p_r > ê₀λ² > 0`, while integrality at the top two coefficients forces
+    `s_{d−2} = m − x` with `m ∈ {1, 2}` (`m ≥ 3` breaks the budget), `e_{d−2} = 1` or `3`, and then
+    the quadratic is `≤ 0` on the whole feasible `λ`-interval.
+* **Ren's checks.**  Re-derived every step of §2.2-§2.5 by hand, including the two top-pair cases:
+  for `m = 1`, `e_{d−2} ∈ (1 − x², 2 − x²)` forces `p_r = 1 − x + x²`, the feasible `λ ≤ 7/3`, and the
+  quadratic's roots lie outside `(0.29, 2.71)`; for `m = 2`, with `u = 2x − 1`, the roots are
+  `(3 ± √(u(2 − u)))/2` and the feasible interval `[(3 − u)/2, (3 − u)/2 + 2u/(3 − u)]` sits between
+  them.  Re-ran `thm_check.py 5 6` (identical) and `rsearch.py 6` (0 survivors; relaxed: survivors
+  found).  Independent code (`ren_org.py`: own roots and deflation at 50 digits, the separating
+  `λ`-interval in closed form): on every `a₀ = +2` candidate for `d = 5, 6, 7, 8` (96, 691, 1,763,
+  9,758) the origin is excluded only for G(d − 1, 2).  Teeth: on all 325 `a₀ = 2`, `d = 4`
+  polynomials with `|a_k| ≤ 8` and one root in the window, without N3, the origin is excluded on 35
+  of the 52 with `P(1) ≥ 0` (outside the theorem) and, of the 273 with `P(1) ≤ −1`, only on G.
+* **Computed.**  A lattice-point certificate census over the §70 boxes (388,431 candidates, every
+  certificate a 60-digit witness, 0 failures): the members with no lattice point in `Z` are exactly G
+  and Y, by a method sharing only the enumerator with §70's run search.  At `a₀ = +2` the origin
+  alone certifies every non-G member; at `a₀ = −2`, the origin, the U\* point `(P(1) + a₀, P(1))` and
+  its neighbour `(P(1) + a₀ − 1, P(1) − 2)` certify everything except Y; at `|a₀| = 3` one or two more
+  neighbours are needed.
+* **Negative.**  §70's plan (i) is false as stated: `t⁴ − 2t³ + 3t² − 5t + 2` has top-row length
+  2.435 but no section longer than 0.2945, yet `(0, 0) ∈ Z`.  The working object is a separating
+  direction for one lattice point, not the sections.
+* **Open for O2.**  `a₀ = −2`: show "origin fails ⇒ the U\* point or its neighbour hits, except Y"; the
+  hard core is the family with all `q_k ≥ 0`, where Y lives, and there P1 only gives a lower bound on
+  `Ê(1)`.  `|a₀| ≥ 3`: the origin alone cannot suffice (the `λ ≤ 1` weighting gives only
+  `Ê(1) ≥ a₀` against `Ê(1) < 2a₀ − 2`).
+* **Status.**  CONJ O2 82% (was 70%), CONJ B 58%, CONJ E (non-units) 66%; CONJ C′ / C unchanged.
+  Weakest step: the chain casework of §2.4-§2.5 is hand-checked (twice now), not formalized, and no
+  data point reaches the R branch.  For `U`: nothing new.  Under 1% that this moves (a).
