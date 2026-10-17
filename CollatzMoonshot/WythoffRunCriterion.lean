@@ -370,7 +370,24 @@ section Independence
 
 variable {α : ℝ} {P : ℤ[X]}
 
-/-- **(drafted, 93%).**  If `x = xOf α` is a root of a monic irreducible `P ∈ ℤ[t]` of degree
+/-- **(proved).**  A rational polynomial of degree `< d` vanishing at `x = xOf α` is zero, when `x`
+is a root of a monic irreducible `P ∈ ℤ[t]` of degree `d`.  Paper proof: `P.map (algebraMap ℤ ℚ)`
+is irreducible (Gauss) and monic, hence `minpoly ℚ x`; `minpoly.degree_le_of_ne_zero`. -/
+theorem eq_zero_of_natDegree_lt (hP : P.Monic) (hirr : Irreducible P)
+    (hroot : aeval (xOf α) P = 0) (Q : ℚ[X]) (hQ : Q.natDegree < P.natDegree)
+    (hQx : aeval (xOf α) Q = 0) : Q = 0 := by
+  set PQ : ℚ[X] := P.map (algebraMap ℤ ℚ) with hPQ
+  have hirrQ : Irreducible PQ := (hP.irreducible_iff_irreducible_map_fraction_map).1 hirr
+  have hxQ : aeval (xOf α) PQ = 0 := by rw [hPQ, aeval_map_algebraMap]; exact hroot
+  have hmin : PQ = minpoly ℚ (xOf α) := minpoly.eq_of_irreducible_of_monic hirrQ hxQ (hP.map _)
+  have hdeg : PQ.natDegree = P.natDegree := hP.natDegree_map _
+  by_contra hne
+  have h := minpoly.degree_le_of_ne_zero ℚ (xOf α) hne hQx
+  rw [← hmin, degree_eq_natDegree (hP.map _).ne_zero, degree_eq_natDegree hne, hdeg] at h
+  have : P.natDegree ≤ Q.natDegree := by exact_mod_cast h
+  omega
+
+/-- **(proved).**  If `x = xOf α` is a root of a monic irreducible `P ∈ ℤ[t]` of degree
 `d` (`α > 1`), then `1, θ_0, …, θ_{d−2}` (`θ_l = (α/2)x^l`) are linearly independent over `ℚ`.
 Paper proof: `α/2 = x/(2x − 1)` (`xOf_div_two_mul_sub_one`).  A relation
 `c_0 + Σ_l c_{l+1}θ_l = 0` times `2x − 1` is `c_0(2x − 1) + Σ_{l<d−1} c_{l+1}x^{l+1} = 0`, a
@@ -382,7 +399,54 @@ theorem linearIndependent_freqVec (hα : 1 < α) (hP : P.Monic) (hirr : Irreduci
     (hroot : aeval (xOf α) P = 0) :
     LinearIndependent ℚ
       (Fin.cons (1 : ℝ) (freqVec α (P.natDegree - 1)) : Fin (P.natDegree - 1 + 1) → ℝ) := by
-  sorry
+  rw [Fintype.linearIndependent_iff]
+  intro g hg
+  rw [Fin.sum_univ_succ] at hg
+  simp only [Fin.cons_zero, Fin.cons_succ, freqVec, Rat.smul_def, mul_one] at hg
+  by_cases hd : P.natDegree ≤ 1
+  · have e : P.natDegree - 1 = 0 := by omega
+    have : IsEmpty (Fin (P.natDegree - 1)) := by rw [e]; infer_instance
+    simp only [Finset.univ_eq_empty, Finset.sum_empty, add_zero, Rat.cast_eq_zero] at hg
+    intro i
+    exact Fin.cases hg (fun j => isEmptyElim j) i
+  push Not at hd
+  have hα2 : α / 2 = xOf α / (2 * xOf α - 1) := (xOf_div_two_mul_sub_one hα).symm
+  have h2x : 2 * xOf α - 1 ≠ 0 := by
+    intro h; rw [h, div_zero] at hα2; linarith
+  set Q : ℚ[X] := C (g 0) * (C 2 * X - 1) +
+    ∑ l : Fin (P.natDegree - 1), C (g l.succ) * X ^ ((l : ℕ) + 1) with hQdef
+  have hQx : aeval (xOf α) Q = 0 := by
+    have e : aeval (xOf α) Q = (2 * xOf α - 1) * ((g 0 : ℝ) +
+        ∑ l : Fin (P.natDegree - 1), (g l.succ : ℝ) * (α / 2 * xOf α ^ (l : ℕ))) := by
+      simp only [hQdef, map_add, map_mul, map_sum, map_sub, map_pow, aeval_C, aeval_X, map_one,
+        eq_ratCast, Rat.cast_ofNat, mul_add, Finset.mul_sum, hα2]
+      congr 1
+      · ring
+      · refine Finset.sum_congr rfl fun l _ => ?_
+        field_simp
+        ring
+    rw [e, hg, mul_zero]
+  have hQdeg : Q.natDegree < P.natDegree := by
+    have h1 : Q.natDegree ≤ P.natDegree - 1 := by
+      refine natDegree_add_le_of_degree_le ?_ ?_
+      · refine (natDegree_C_mul_le _ _).trans ?_
+        refine (natDegree_sub_le _ _).trans ?_
+        simp only [natDegree_one]
+        refine max_le ((natDegree_C_mul_le _ _).trans ?_) (Nat.zero_le _)
+        rw [natDegree_X]; omega
+      · refine natDegree_sum_le_of_forall_le _ _ fun l _ => ?_
+        refine (natDegree_C_mul_le _ _).trans ?_
+        rw [natDegree_X_pow]; omega
+    omega
+  have hQ0 := eq_zero_of_natDegree_lt hP hirr hroot Q hQdeg hQx
+  have hc : ∀ j, Q.coeff j = 0 := by rw [hQ0]; simp
+  have g0 : g 0 = 0 := by
+    have := hc 0
+    simpa [hQdef, finsetSum_coeff] using this
+  intro i
+  refine Fin.cases g0 (fun j => ?_) i
+  have := hc ((j : ℕ) + 1)
+  simpa [hQdef, finsetSum_coeff, g0, Fin.val_inj] using this
 
 end Independence
 
