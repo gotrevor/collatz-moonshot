@@ -503,6 +503,17 @@ theorem isCoprime_two_branchQ_of_dvd_p (hcop : Nat.Coprime p q) (hqp : q < p) {�
     rwa [Nat.cast_sub hqp.le] at this
   exact h2.mul_left (isCoprime_branchQ hq hR n).symm
 
+/-- For even `p`, both branch divisors are odd. -/
+theorem isCoprime_branchQ_two (hp : Even p) (hcop : Nat.Coprime p q) (hqp : q < p) (n : ℤ) :
+    IsCoprime (branchQ p q n) 2 := by
+  have hq2 := odd_of_even_coprime hp hcop
+  obtain ⟨r, hr⟩ := hp
+  apply isCoprime_of_odd
+  unfold branchQ
+  split_ifs
+  · exact ⟨(q / 2 : ℕ), by omega⟩
+  · exact ⟨((p - q) / 2 : ℕ), by omega⟩
+
 end LiftHelpers
 
 /-! ## Assembly (H5) -/
@@ -920,7 +931,26 @@ theorem residueTransitive_lift_two_of_four_dvd (h4 : 4 ∣ p) (hcop : Nat.Coprim
     (hq : 0 < q) (hqp : q < p) {M₀ : ℕ} (hM₀ : Nat.Coprime M₀ (2 * p * q * (p - q)))
     (h : ResidueTransitive (wythoff s p q) (2 * M₀)) {e : ℕ} (he : 1 ≤ e) :
     ResidueTransitive (wythoff s p q) (2 ^ e * M₀) := by
-  sorry
+  have hQ := isCoprime_branchQ_two (even_iff_two_dvd.2 (dvd_trans ⟨2, rfl⟩ h4)) hcop hqp
+  obtain ⟨p₄, hp₄⟩ := h4
+  rw [← residueTransitive_inv_iff s hq hqp]
+  have hM : ((2 ^ e * M₀ : ℕ) : ℤ) = 2 ^ (e - 1) * (2 * M₀ : ℕ) := by
+    push_cast
+    rw [← mul_assoc, ← pow_succ, Nat.sub_add_cancel he]
+  refine residueTransitive_of_classIn ((residueTransitive_inv_iff s hq hqp _).2 h)
+    (fun C hC n hn => ?_) (fun C hC hne => ?_)
+  · refine hn.drop hC (A := 2 * p₄) (B := branchQ p q (wythoffInv s p q n)) (N := 2 ^ (e - 1))
+      (fun v => ?_) (by rw [hM]; push_cast; ring) (hQ _).pow_right
+    rw [show n + ((2 * M₀ : ℕ) : ℤ) * (2 * p₄ * v) = n + p * (M₀ * v) by rw [hp₄]; push_cast; ring,
+      wythoffInv_add_scaled s hq hqp]
+    push_cast; ring
+  · refine exists_classIn_of_step (ℓ := 2) (e := e - 1) hM
+      (fun j hj x hx => ⟨_, hx.drop hC (A := p₄) (B := branchQ p q (wythoffInv s p q x))
+        (N := 2 ^ (e - 1 - j)) (fun v => ?_) (by rw [hM]; exact pow_mul_split _ _ hj.le)
+        (hQ _).pow_right⟩) hne
+    rw [show x + (2 : ℤ) ^ (j + 1) * ((2 * M₀ : ℕ) : ℤ) * (p₄ * v) = x + p * (2 ^ j * M₀ * v) by
+      rw [hp₄]; push_cast; ring, wythoffInv_add_scaled s hq hqp]
+    push_cast; ring
 
 /-- **(ratified).**  **Theorem RT, even `p`, non-absorbing.**  Residue-transitive mod every
 `M ≥ 1`.  Paper proof: (B0)/(B1)/Lemma D at `2^e M₀`, then Lemma B, Lemma A. -/
@@ -928,7 +958,27 @@ theorem residueTransitive_of_even_nonabsorbing (hp : Even p) (hp4 : 4 ≤ p)
     (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp : q < p)
     (hna : ¬ (s = .plus ∧ (q = 1 ∨ p - q = 1))) {M : ℕ} (hM : 0 < M) :
     ResidueTransitive (wythoff s p q) M := by
-  sorry
+  refine residueTransitive_of_lifts (fun _ => True) (fun _ _ _ _ => trivial)
+    (fun ℓ => ℓ ≠ 2 ∧ (ℓ ∣ p ∨ ℓ ∣ q * (p - q))) ?_ ?_ M hM trivial
+  · rintro ℓ M' hℓ ⟨h2, hg⟩ hM' hℓM - hT e
+    rcases hg with hℓp | hℓqR
+    · exact residueTransitive_lift_dvd_p s hcop hq hqp hℓ h2 hℓp hM' hℓM hT e
+    · exact residueTransitive_lift_dvd_qR s hcop hq hqp hℓ h2 hℓqR hM' hℓM hT e
+  · intro M hM _ hgood
+    obtain ⟨e, M₀, hM₀2, rfl⟩ := Nat.exists_eq_pow_mul_and_not_dvd hM.ne' 2 (by norm_num)
+    have hM₀ : Nat.Coprime M₀ (2 * p * q * (p - q)) := coprime_of_primes fun ℓ hℓ hd => by
+      have h2 : ℓ ≠ 2 := by rintro rfl; exact hM₀2 hd
+      rintro (h | h)
+      · exact h2 h
+      · exact hgood ℓ hℓ (dvd_mul_of_dvd_right hd _) ⟨h2, h⟩
+    rcases Nat.eq_zero_or_pos e with he | he
+    · subst he; rw [pow_zero, one_mul]
+      exact residueTransitive_base_coprime s (by omega) hcop hq hqp hM₀
+    rcases (show p % 4 = 2 ∨ 4 ∣ p by obtain ⟨r, hr⟩ := hp; omega) with h4 | h4
+    · exact residueTransitive_base_two_pow s hp hp4 hcop hq hqp hna he (Or.inl h4) hM₀
+    · refine residueTransitive_lift_two_of_four_dvd s h4 hcop hq hqp hM₀ ?_ he
+      have := residueTransitive_base_two_pow s hp hp4 hcop hq hqp hna le_rfl (Or.inr rfl) hM₀
+      rwa [pow_one] at this
 
 /-- **(ratified).**  Every member with `p ≥ 3` is residue-transitive at every odd `M`
 (absorbing members included: (B0), Lemma B and Lemma A at odd `M'` never use the parity chain). -/
