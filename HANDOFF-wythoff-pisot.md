@@ -8,7 +8,11 @@ Kickoff: `KICKOFF-2026-10-17-wythoff-pisot.md`.  File: `CollatzMoonshot/WythoffP
   `eval_one_ne_zero_of_irreducible`, `coeff_zero_ne_zero_of_irreducible`,
   `two_pow_mul_aeval_half_odd`.  Theorem N3 (`n3_runSystem`, `n3_infinite_runs` conditional on
   `RunCriterion`) is fully proved.
-* Open: `two_mul_sub_one_gt` (Lemma B2 gap; root factorisation over `ℂ`).
+* Closed: `two_mul_sub_one_gt` (Lemma B2 gap), hence `run_bound_B2`.
+* **File sorry-free.**  `lake build CollatzMoonshot.WythoffPisot` green with no warnings;
+  `#print axioms` on all 41 declarations: `propext, Classical.choice, Quot.sound` only.
+  `RunCriterion` stays a hypothesis of `n3_infinite_runs`, as ratified.  No ratified statement
+  changed.
 
 ## Notes
 
@@ -21,3 +25,13 @@ Kickoff: `KICKOFF-2026-10-17-wythoff-pisot.md`.  File: `CollatzMoonshot/WythoffP
 * `perturb`'s `hd` is unused; `clear hd` does not silence the unused-variable linter, a
   `have _ : 1 ≤ d := hd` does.
 * Helpers added: `natDegree_eq_one_of_dvd`, `sum_coeff_mul_eq_synDiv_complex`.
+* B2 gap: only the non-strict `∏‖1/2 − s‖ ≤ (3/2)^{d−1}∏‖s‖` is needed (multiset induction,
+  `prod_norm_half_sub_le`); strictness comes from `∏‖s‖ = |a_0|/x < 2|a_0|`.  Factorisation via
+  `IsAlgClosed.card_roots_eq_natDegree` + `prod_multiset_X_sub_C_of_monic_of_roots_card_eq`,
+  `Multiset.cons_erase`; real/complex bridge `eval_ofReal_map` (`algebraMap_int_eq`,
+  `eval_map_algebraMap`, `aeval_algebraMap_apply`).
+
+## Next (out of scope here, later layers)
+
+Proving `RunCriterion` (Theorem N4 + zonotope openness, from `WeylEquidistributionMulti`); classify
+Theorem M (mirror side); Proposition B1 and the `(d, |a_0|)` lists; pisot §4 U pairings.

@@ -601,7 +601,44 @@ theorem abs_aeval_half_ge (hP : P.Monic) :
     _ = |aeval (1 / 2 : ℝ) P| * 2 ^ P.natDegree := by
       rw [← hm, abs_mul, abs_of_pos h2, mul_comm]
 
-/-- **(drafted, 93%; Lemma B2, the gap `2x − 1`).**  Let `x ∈ (1/2, 1)` be a root of a monic
+/-- `‖∏(c − s)‖ = ∏‖c − s‖` over a multiset. -/
+theorem norm_multiset_prod_sub (S : Multiset ℂ) (c : ℂ) :
+    ‖(S.map fun s => c - s).prod‖ = (S.map fun s => ‖c - s‖).prod := by
+  induction S using Multiset.induction_on with
+  | empty => simp
+  | cons a S ih => simp [ih]
+
+/-- `∏|1/2 − s| ≤ (3/2)^{#S}∏|s|` when every `‖s‖ > 1`. -/
+theorem prod_norm_half_sub_le (S : Multiset ℂ) (hS : ∀ s ∈ S, 1 < ‖s‖) :
+    (S.map fun s => ‖(1 / 2 : ℂ) - s‖).prod ≤
+      (3 / 2) ^ Multiset.card S * (S.map fun s => ‖(0 : ℂ) - s‖).prod := by
+  induction S using Multiset.induction_on with
+  | empty => simp
+  | cons a S ih =>
+    have ha := hS a (Multiset.mem_cons_self a S)
+    have ih' := ih fun s hs => hS s (Multiset.mem_cons_of_mem hs)
+    simp only [Multiset.map_cons, Multiset.prod_cons, Multiset.card_cons, pow_succ]
+    have h1 : ‖(1 / 2 : ℂ) - a‖ ≤ 3 / 2 * ‖(0 : ℂ) - a‖ := by
+      rw [zero_sub, norm_neg]
+      calc ‖(1 / 2 : ℂ) - a‖ ≤ ‖(1 / 2 : ℂ)‖ + ‖a‖ := norm_sub_le _ _
+        _ = 1 / 2 + ‖a‖ := by norm_num
+        _ ≤ 3 / 2 * ‖a‖ := by linarith
+    have h0 : 0 ≤ (S.map fun s => ‖(1 / 2 : ℂ) - s‖).prod :=
+      Multiset.prod_nonneg fun y hy => by
+        obtain ⟨s, _, rfl⟩ := Multiset.mem_map.1 hy; exact norm_nonneg _
+    calc ‖(1 / 2 : ℂ) - a‖ * (S.map fun s => ‖(1 / 2 : ℂ) - s‖).prod
+        ≤ (3 / 2 * ‖(0 : ℂ) - a‖) *
+            ((3 / 2) ^ Multiset.card S * (S.map fun s => ‖(0 : ℂ) - s‖).prod) :=
+          mul_le_mul h1 ih' h0 (by positivity)
+      _ = _ := by ring
+
+/-- Evaluating `P` over `ℂ` at a real point is the cast of the real evaluation. -/
+theorem eval_ofReal_map {P : ℤ[X]} (t : ℝ) :
+    eval (t : ℂ) (P.map (Int.castRingHom ℂ)) = ((aeval t P : ℝ) : ℂ) := by
+  rw [← algebraMap_int_eq, eval_map_algebraMap]
+  exact aeval_algebraMap_apply ℂ t P
+
+/-- **(proved; Lemma B2, the gap `2x − 1`).**  Let `x ∈ (1/2, 1)` be a root of a monic
 `P ∈ ℤ[t]` of degree `d ≥ 2` whose other complex roots (the multiset of roots of `P` over `ℂ`
 with one copy of `x` removed) all have `‖z‖ > 1`.  Then `2x − 1 > 1/(2·3^{d−1}|a_0|)`.  Paper
 proof: over `ℂ`, `P = (t − x)∏_s(t − x_s)` (`Polynomial.eq_prod_roots_of_monic_of_splits_id`,
@@ -613,9 +650,70 @@ theorem two_mul_sub_one_gt (hP : P.Monic) (hd : 2 ≤ P.natDegree) {x : ℝ} (hx
     (hx2 : x < 1) (hroot : aeval x P = 0)
     (hconj : ∀ z ∈ (P.map (Int.castRingHom ℂ)).roots.erase (x : ℂ), 1 < ‖z‖) :
     1 / (2 * 3 ^ (P.natDegree - 1) * |(P.coeff 0 : ℝ)|) < 2 * x - 1 := by
-  sorry
+  set Pc := P.map (Int.castRingHom ℂ) with hPcdef
+  set S := Pc.roots.erase (x : ℂ) with hSdef
+  have hPc : Pc.Monic := hP.map _
+  have hdeg : Pc.natDegree = P.natDegree := hP.natDegree_map _
+  have hcard : Multiset.card Pc.roots = Pc.natDegree := IsAlgClosed.card_roots_eq_natDegree
+  have hfac := prod_multiset_X_sub_C_of_monic_of_roots_card_eq hPc hcard
+  have hx : (x : ℂ) ∈ Pc.roots := by
+    rw [mem_roots hPc.ne_zero, IsRoot.def, hPcdef, eval_ofReal_map, hroot, Complex.ofReal_zero]
+  have hroots : Pc.roots = (x : ℂ) ::ₘ S := (Multiset.cons_erase hx).symm
+  have hcardS : Multiset.card S = P.natDegree - 1 := by
+    rw [hSdef, Multiset.card_erase_of_mem hx, hcard, hdeg]; rfl
+  have hev : ∀ c : ℂ, ‖eval c Pc‖ = ‖c - x‖ * (S.map fun s => ‖c - s‖).prod := by
+    intro c
+    conv_lhs => rw [← hfac, hroots]
+    rw [Multiset.map_cons, Multiset.prod_cons, eval_mul, eval_multiset_prod, Multiset.map_map,
+      norm_mul, ← norm_multiset_prod_sub]
+    simp
+  -- evaluate at `1/2` and at `0`
+  have hhalf := hev (1 / 2)
+  have e1 : eval (1 / 2 : ℂ) Pc = ((aeval (1 / 2 : ℝ) P : ℝ) : ℂ) := by
+    rw [← eval_ofReal_map]; push_cast; rfl
+  rw [e1, Complex.norm_real, Real.norm_eq_abs] at hhalf
+  have e2 : ‖(1 / 2 : ℂ) - x‖ = x - 1 / 2 := by
+    rw [show (1 / 2 : ℂ) - x = ((1 / 2 - x : ℝ) : ℂ) by push_cast; rfl, Complex.norm_real,
+      Real.norm_eq_abs, abs_sub_comm, abs_of_pos (by linarith)]
+  rw [e2] at hhalf
+  have hzero := hev 0
+  have e3 : eval (0 : ℂ) Pc = ((P.coeff 0 : ℝ) : ℂ) := by
+    rw [← coeff_zero_eq_eval_zero, hPcdef, coeff_map]; simp
+  rw [e3, Complex.norm_real, Real.norm_eq_abs, zero_sub, norm_neg, Complex.norm_real,
+    Real.norm_eq_abs, abs_of_pos (by linarith : (0 : ℝ) < x)] at hzero
+  set A := (S.map fun s => ‖(1 / 2 : ℂ) - s‖).prod
+  set B := (S.map fun s => ‖(0 : ℂ) - s‖).prod
+  have hAB : A ≤ (3 / 2) ^ (P.natDegree - 1) * B := by
+    rw [← hcardS]; exact prod_norm_half_sub_le S hconj
+  have hlow := abs_aeval_half_ge hP
+  rw [hhalf] at hlow
+  obtain ⟨k, hk⟩ : ∃ k, P.natDegree = k + 1 := ⟨P.natDegree - 1, by omega⟩
+  rw [hk, Nat.add_sub_cancel] at hAB ⊢
+  rw [hk] at hlow
+  have hT : (1 / 2 : ℝ) ^ k * 2 ^ k = 1 := by rw [← mul_pow]; norm_num
+  have hK : (3 / 2 : ℝ) ^ k * 2 ^ k = 3 ^ k := by rw [← mul_pow]; norm_num
+  have h2k : (0 : ℝ) < 2 ^ k := by positivity
+  have hB0 : 0 ≤ B := Multiset.prod_nonneg fun y hy => by
+    obtain ⟨s, _, rfl⟩ := Multiset.mem_map.1 hy; exact norm_nonneg _
+  have hA : (x - 1 / 2) * A ≤ (x - 1 / 2) * ((3 / 2) ^ k * B) :=
+    mul_le_mul_of_nonneg_left hAB (by linarith)
+  have hone : 1 ≤ (2 * x - 1) * 3 ^ k * B := by
+    have h := mul_le_mul_of_nonneg_right (hlow.trans hA) (by positivity : (0 : ℝ) ≤ 2 * 2 ^ k)
+    rw [pow_succ] at h
+    have e : (1 / 2 : ℝ) ^ k * (1 / 2) * (2 * 2 ^ k) = (1 / 2) ^ k * 2 ^ k := by ring
+    have e' : (x - 1 / 2) * ((3 / 2) ^ k * B) * (2 * 2 ^ k) =
+        (2 * x - 1) * ((3 / 2) ^ k * 2 ^ k) * B := by ring
+    rw [e, e', hT, hK] at h
+    exact h
+  have hpos : 0 < (2 * x - 1) * 3 ^ k * B := by linarith
+  have hBpos : 0 < B := by
+    rcases hB0.lt_or_eq with h | h
+    · exact h
+    · rw [← h, mul_zero] at hpos; exact absurd hpos (lt_irrefl 0)
+  rw [hzero, div_lt_iff₀ (by positivity)]
+  nlinarith [mul_pos hpos (by linarith : (0 : ℝ) < 2 * x - 1)]
 
-/-- **(drafted, 93%; Lemma B2, the run bound; assembled).**  Under `two_mul_sub_one_gt`'s
+/-- **(proved; Lemma B2, the run bound).**  Under `two_mul_sub_one_gt`'s
 hypotheses, a run bound `J` with return slope `c_J = x^{J+1}/(2x − 1) > 1` forces
 `2·3^{d−1}|a_0|·x^{J+1} > 1`, i.e. `(J + 1)·log(1/x) < log(2·3^{d−1}|a_0|)`.  (With `J ≥ d − 1`
 and `x^d ≥ x^{J+1} > 2x − 1` one gets `x < x_d*`, the root of `t^d = 2t − 1` in `(1/2, 1)` for
