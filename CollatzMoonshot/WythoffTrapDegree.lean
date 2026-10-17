@@ -70,16 +70,6 @@ open Filter Topology Polynomial
 noncomputable def quotCoeff (A : ℝ) (d : ℕ) (p : ℕ → ℤ) (k : ℕ) : ℝ :=
   A ^ (d - 1 - k) - ∑ j ∈ Finset.Ioo k d, (p j : ℝ) * A ^ (j - k - 1)
 
-/-- **(drafted, 99%).**  The `q_k` are the coefficients of the quotient:
-`(t − A)·Σ_{k<d} q_k t^k = P(t) − P(A)`.  Paper proof: `P(t) − P(A) = Σ_j c_j (t^j − A^j)` with
-`c_d = 1`, `c_j = −p_j`, and `t^j − A^j = (t − A) Σ_{k<j} t^k A^{j−1−k}`
-(`Commute.geom_sum₂_mul`); swap the double sum (`Finset.sum_sigma'` / `Finset.sum_comm'`). -/
-theorem sub_mul_sum_quotCoeff (A t : ℝ) (d : ℕ) (p : ℕ → ℤ) :
-    (t - A) * ∑ k ∈ Finset.range d, quotCoeff A d p k * t ^ k =
-      (t ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * t ^ j) -
-        (A ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * A ^ j) := by
-  sorry
-
 /-- **(proved).**  The leading coefficient `q_{d−1} = 1`. -/
 theorem quotCoeff_last (A : ℝ) {d : ℕ} (hd : 1 ≤ d) (p : ℕ → ℤ) :
     quotCoeff A d p (d - 1) = 1 := by
@@ -88,20 +78,47 @@ theorem quotCoeff_last (A : ℝ) {d : ℕ} (hd : 1 ≤ d) (p : ℕ → ℤ) :
     ext j; simp only [Finset.mem_Ioo, Finset.notMem_empty, iff_false]; omega
   rw [this, Finset.sum_empty, show d - 1 - (d - 1) = 0 by omega, pow_zero, sub_zero]
 
-/-- **(helper, drafted 99%).**  Horner step: `q_k = A·q_{k+1} − p_{k+1}` for `k + 1 < d`.
+/-- **(helper, proved).**  Horner step: `q_k = A·q_{k+1} − p_{k+1}` for `k + 1 < d`.
 Paper proof: split `j = k + 1` off `Ioo k d = insert (k+1) (Ioo (k+1) d)`; `A·A^{j−k−2} =
 A^{j−k−1}`. -/
 theorem quotCoeff_rec (A : ℝ) {d k : ℕ} (hk : k + 1 < d) (p : ℕ → ℤ) :
     quotCoeff A d p k = A * quotCoeff A d p (k + 1) - p (k + 1) := by
-  sorry
+  unfold quotCoeff
+  rw [← Finset.Ico_add_one_left_eq_Ioo k d, Finset.sum_eq_sum_Ico_succ_bot hk,
+    Finset.Ico_add_one_left_eq_Ioo (k + 1) d]
+  have h1 : A ^ (d - 1 - k) = A * A ^ (d - 1 - (k + 1)) := by
+    rw [← pow_succ']; congr 1; omega
+  have h2 : ∑ j ∈ Finset.Ioo (k + 1) d, (p j : ℝ) * A ^ (j - k - 1) =
+      A * ∑ j ∈ Finset.Ioo (k + 1) d, (p j : ℝ) * A ^ (j - (k + 1) - 1) := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    rw [Finset.mem_Ioo] at hj
+    rw [show j - k - 1 = j - (k + 1) - 1 + 1 by omega, pow_succ]
+    ring
+  rw [h1, h2, show k + 1 - k - 1 = 0 by omega]
+  ring
 
-/-- **(helper, drafted 99%).**  `A·q_0 = P(A) + p_0` (for `1 ≤ d`).  Paper proof: as
+/-- **(helper, proved).**  `A·q_0 = P(A) + p_0` (for `1 ≤ d`).  Paper proof: as
 `quotCoeff_rec`, with `range d = insert 0 (Ioo 0 d)`. -/
 theorem mul_quotCoeff_zero (A : ℝ) {d : ℕ} (hd : 1 ≤ d) (p : ℕ → ℤ) :
     A * quotCoeff A d p 0 = (A ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * A ^ j) + p 0 := by
-  sorry
+  unfold quotCoeff
+  rw [Finset.range_eq_Ico, Finset.sum_eq_sum_Ico_succ_bot (by omega : 0 < d),
+    Finset.Ico_add_one_left_eq_Ioo 0 d]
+  have h1 : A * A ^ (d - 1 - 0) = A ^ d := by
+    rw [← pow_succ']; congr 1; omega
+  have h2 : A * ∑ j ∈ Finset.Ioo 0 d, (p j : ℝ) * A ^ (j - 0 - 1) =
+      ∑ j ∈ Finset.Ioo 0 d, (p j : ℝ) * A ^ j := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    rw [Finset.mem_Ioo] at hj
+    rw [show A ^ j = A * A ^ (j - 0 - 1) by rw [← pow_succ']; congr 1; omega]
+    ring
+  rw [mul_sub, h1, h2]
+  simp
+  ring
 
-/-- **(drafted, 99%).**  The phase identity, for **any** real sequence `v`:
+/-- **(proved).**  The phase identity, for **any** real sequence `v`:
 `v_d − Σ_{j<d} p_j v_j = P(A)·v_0 − Σ_{i<d} q_i (A v_i − v_{i+1})`.  Paper proof: expand the
 right sum as `Σ_i (A q_i − q_{i−1}) v_i − q_{d−1} v_d` (`q_{−1} := 0`,
 `Finset.sum_range_succ_sub_sum`-style reindexing) and use `mul_quotCoeff_zero`,
@@ -111,7 +128,46 @@ theorem phase_identity (A : ℝ) (d : ℕ) (p : ℕ → ℤ) (v : ℕ → ℝ) :
     v d - ∑ j ∈ Finset.range d, (p j : ℝ) * v j =
       (A ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * A ^ j) * v 0 -
         ∑ i ∈ Finset.range d, quotCoeff A d p i * (A * v i - v (i + 1)) := by
-  sorry
+  rcases d with _ | m
+  · simp
+  have hl : quotCoeff A (m + 1) p m = 1 := by
+    simpa using quotCoeff_last A (d := m + 1) (by omega) p
+  have h0 := mul_quotCoeff_zero A (d := m + 1) (by omega) p
+  set q := quotCoeff A (m + 1) p with hqdef
+  set P := A ^ (m + 1) - ∑ j ∈ Finset.range (m + 1), (p j : ℝ) * A ^ j
+  have hsplit : ∑ i ∈ Finset.range (m + 1), q i * (A * v i - v (i + 1)) =
+      ∑ i ∈ Finset.range (m + 1), A * q i * v i -
+        ∑ i ∈ Finset.range (m + 1), q i * v (i + 1) := by
+    rw [← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun i _ => by ring
+  have hrec : ∑ i ∈ Finset.range m, A * q (i + 1) * v (i + 1) =
+      ∑ i ∈ Finset.range m, q i * v (i + 1) +
+        ∑ i ∈ Finset.range m, (p (i + 1) : ℝ) * v (i + 1) := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Finset.mem_range] at hi
+    rw [hqdef, quotCoeff_rec A (by omega : i + 1 < m + 1) p]
+    ring
+  rw [hsplit, Finset.sum_range_succ' (fun i => A * q i * v i), hrec,
+    Finset.sum_range_succ (fun i => q i * v (i + 1)), hl,
+    Finset.sum_range_succ' (fun j => (p j : ℝ) * v j)]
+  linear_combination v 0 * h0
+
+/-- **(proved).**  The `q_k` are the coefficients of the quotient:
+`(t − A)·Σ_{k<d} q_k t^k = P(t) − P(A)`.  Proof: `phase_identity` with `v_i = tⁱ`, where
+`A tⁱ − t^{i+1} = −(t − A)tⁱ`.  (Stated after `phase_identity` for that reason.) -/
+theorem sub_mul_sum_quotCoeff (A t : ℝ) (d : ℕ) (p : ℕ → ℤ) :
+    (t - A) * ∑ k ∈ Finset.range d, quotCoeff A d p k * t ^ k =
+      (t ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * t ^ j) -
+        (A ^ d - ∑ j ∈ Finset.range d, (p j : ℝ) * A ^ j) := by
+  have h := phase_identity A d p (fun i => t ^ i)
+  simp only [pow_zero, mul_one] at h
+  have h2 : ∑ i ∈ Finset.range d, quotCoeff A d p i * (A * t ^ i - t ^ (i + 1)) =
+      -((t - A) * ∑ k ∈ Finset.range d, quotCoeff A d p k * t ^ k) := by
+    rw [Finset.mul_sum, ← Finset.sum_neg_distrib]
+    exact Finset.sum_congr rfl fun i _ => by ring
+  rw [h2] at h
+  linarith
 
 /-! ## Phases and the identity on `E^d` -/
 
@@ -139,7 +195,23 @@ theorem ePhase_mem {α : ℝ} {n : ℤ} {i : ℕ} (h : (wy α)^[i] n % 2 = 0) :
   rw [ePhase_eq_fract h]
   exact ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
 
-/-- **(drafted, 99%; the degree-`d` identity).**  If `A = α/2` satisfies `A^d = Σ_{j<d} p_j A^j`
+/-- helper: the integer `W^d − Σ p_j W^j` equals `X − f_{d−1}` -/
+theorem wy_iterate_sub_eq {α : ℝ} {m : ℕ} {p : ℕ → ℤ}
+    (hP : (α / 2) ^ (m + 1) = ∑ j ∈ Finset.range (m + 1), (p j : ℝ) * (α / 2) ^ j) (n : ℤ) :
+    (((wy α)^[m + 1] n - ∑ j ∈ Finset.range (m + 1), p j * (wy α)^[j] n : ℤ) : ℝ) =
+      -∑ i ∈ Finset.range m, quotCoeff (α / 2) (m + 1) p i * ePhase α n i - ePhase α n m := by
+  have h := phase_identity (α / 2) (m + 1) p (fun i => ((wy α)^[i] n : ℝ))
+  have hl : quotCoeff (α / 2) (m + 1) p m = 1 := by
+    simpa using quotCoeff_last (α / 2) (d := m + 1) (by omega) p
+  rw [hP, sub_self, zero_mul, zero_sub, Finset.sum_range_succ (fun i =>
+    quotCoeff (α / 2) (m + 1) p i * (α / 2 * ((wy α)^[i] n : ℝ) - ((wy α)^[i + 1] n : ℝ))),
+    hl, one_mul] at h
+  push_cast
+  rw [h]
+  simp only [ePhase]
+  ring
+
+/-- **(proved; the degree-`d` identity).**  If `A = α/2` satisfies `A^d = Σ_{j<d} p_j A^j`
 and `n, W n, …, W^{d−1} n` are even, then
 `W^d(n) = Σ_{j<d} p_j W^j(n) + ⌊−Σ_{i<d−1} q_i f_{i+1}⌋`, for any real `α` and `n ∈ ℤ`.  Paper
 proof: `phase_identity` with `v_i = Wⁱ(n)` (cast), `P(A) = 0`; split off `i = d − 1`
@@ -151,11 +223,20 @@ theorem wy_iterate_eq_floor {α : ℝ} {d : ℕ} {p : ℕ → ℤ}
     (hE : ∀ i < d, (wy α)^[i] n % 2 = 0) :
     (wy α)^[d] n = ∑ j ∈ Finset.range d, p j * (wy α)^[j] n +
       ⌊-∑ i ∈ Finset.range (d - 1), quotCoeff (α / 2) d p i * ePhase α n i⌋ := by
-  sorry
+  rcases d with _ | m
+  · simp at hP
+  have h := wy_iterate_sub_eq hP n
+  obtain ⟨hf0, hf1⟩ := ePhase_mem (hE m (by omega))
+  have hfl : ⌊-∑ i ∈ Finset.range m, quotCoeff (α / 2) (m + 1) p i * ePhase α n i⌋ =
+      (wy α)^[m + 1] n - ∑ j ∈ Finset.range (m + 1), p j * (wy α)^[j] n := by
+    rw [Int.floor_eq_iff, h]
+    constructor <;> linarith
+  simp only [Nat.add_sub_cancel, hfl]
+  ring
 
 /-! ## The trap -/
 
-/-- **(drafted, 99%; exact identity).**  If moreover `q_k ≤ 0` for `k < d − 1` and
+/-- **(proved; exact identity).**  If moreover `q_k ≤ 0` for `k < d − 1` and
 `Q(1) = Σ_{k<d} q_k ≥ 0`, then `W^d(n) = Σ_{j<d} p_j W^j(n)` on `E^d`.  Paper proof:
 `X = Σ_{i<d−1} (−q_i) f_{i+1} ≥ 0`; with `F = max_i f_{i+1} < 1`,
 `X ≤ F·Σ_{i<d−1}(−q_i) = F·(1 − Q(1)) ≤ F < 1` (`quotCoeff_last`: `Q(1) = 1 + Σ_{i<d−1} q_i`;
@@ -166,13 +247,46 @@ theorem wy_iterate_eq_of_trap {α : ℝ} {d : ℕ} {p : ℕ → ℤ}
     (hQ : 0 ≤ ∑ k ∈ Finset.range d, quotCoeff (α / 2) d p k) {n : ℤ}
     (hE : ∀ i < d, (wy α)^[i] n % 2 = 0) :
     (wy α)^[d] n = ∑ j ∈ Finset.range d, p j * (wy α)^[j] n := by
-  sorry
+  rw [wy_iterate_eq_floor hP hE]
+  rcases d with _ | m
+  · simp at hP
+  simp only [Nat.add_sub_cancel] at hq ⊢
+  set q := quotCoeff (α / 2) (m + 1) p
+  have hl : q m = 1 := by simpa using quotCoeff_last (α / 2) (d := m + 1) (by omega) p
+  rw [Finset.sum_range_succ, hl] at hQ
+  have hf : ∀ i ∈ Finset.range m, 0 ≤ ePhase α n i ∧ ePhase α n i < 1 := fun i hi =>
+    ePhase_mem (hE i (by rw [Finset.mem_range] at hi; omega))
+  have hX : -∑ i ∈ Finset.range m, q i * ePhase α n i =
+      ∑ i ∈ Finset.range m, -q i * ePhase α n i := by
+    rw [← Finset.sum_neg_distrib]; exact Finset.sum_congr rfl fun i _ => by ring
+  have hS : ∑ i ∈ Finset.range m, -q i ≤ 1 := by
+    rw [Finset.sum_neg_distrib]; linarith
+  have hX0 : 0 ≤ ∑ i ∈ Finset.range m, -q i * ePhase α n i :=
+    Finset.sum_nonneg fun i hi => mul_nonneg (by
+      have := hq i (by rw [Finset.mem_range] at hi; omega); linarith) (hf i hi).1
+  have hgap : ∑ i ∈ Finset.range m, -q i * ePhase α n i =
+      ∑ i ∈ Finset.range m, -q i - ∑ i ∈ Finset.range m, -q i * (1 - ePhase α n i) := by
+    rw [← Finset.sum_sub_distrib]; exact Finset.sum_congr rfl fun i _ => by ring
+  have hg0 : ∀ i ∈ Finset.range m, 0 ≤ -q i * (1 - ePhase α n i) := fun i hi =>
+    mul_nonneg (by have := hq i (by rw [Finset.mem_range] at hi; omega); linarith)
+      (by linarith [(hf i hi).2])
+  have hX1 : ∑ i ∈ Finset.range m, -q i * ePhase α n i < 1 := by
+    rcases hS.lt_or_eq with hS | hS
+    · rw [hgap]; linarith [Finset.sum_nonneg hg0]
+    · obtain ⟨i, hi, hqi⟩ : ∃ i ∈ Finset.range m, 0 < -q i := by
+        by_contra hcon
+        simp only [not_exists, not_and, not_lt] at hcon
+        linarith [Finset.sum_nonpos hcon]
+      have : 0 < ∑ i ∈ Finset.range m, -q i * (1 - ePhase α n i) :=
+        Finset.sum_pos' hg0 ⟨i, hi, mul_pos hqi (by linarith [(hf i hi).2])⟩
+      rw [hgap]; linarith
+  rw [hX, Int.floor_eq_zero_iff.2 ⟨hX0, hX1⟩, add_zero]
 
 /-- The trap `T_d = {n > 0 : n, W n, …, W^{d−1} n even}`. -/
 def trapSetD (α : ℝ) (d : ℕ) : Set ℤ :=
   {n | 0 < n ∧ ∀ i < d, (wy α)^[i] n % 2 = 0}
 
-/-- **(drafted, 99%; trap).**  `W(T_d) ⊆ T_d`.  Paper proof: for `n ∈ T_d`, `W n > 0`
+/-- **(proved; trap).**  `W(T_d) ⊆ T_d`.  Paper proof: for `n ∈ T_d`, `W n > 0`
 (`wy_pos_iff`); `W^i(W n) = W^{i+1} n` is even for `i + 1 < d` by hypothesis and for
 `i + 1 = d` by `wy_iterate_eq_of_trap` (a `ℤ`-combination of evens); `d = 0` contradicts
 `hP`. -/
@@ -181,9 +295,29 @@ theorem trapSetD_trap {α : ℝ} (hα : 1 < α) {d : ℕ} {p : ℕ → ℤ}
     (hq : ∀ k < d - 1, quotCoeff (α / 2) d p k ≤ 0)
     (hQ : 0 ≤ ∑ k ∈ Finset.range d, quotCoeff (α / 2) d p k) :
     ∀ n ∈ trapSetD α d, wyPerm α hα n ∈ trapSetD α d := by
-  sorry
+  rintro n ⟨hn, hE⟩
+  rw [wyPerm_apply]
+  refine ⟨(wy_pos_iff hα n).2 hn, fun i hi => ?_⟩
+  rw [← Function.iterate_succ_apply]
+  rcases Nat.lt_or_ge (i + 1) d with h | h
+  · exact hE _ h
+  · rw [show i.succ = d by omega, wy_iterate_eq_of_trap hP hq hQ hE]
+    apply Int.emod_eq_zero_of_dvd
+    refine Finset.dvd_sum fun j hj => Dvd.dvd.mul_left ?_ _
+    exact Int.dvd_of_emod_eq_zero (hE j (Finset.mem_range.1 hj))
 
-/-- **(drafted, 99%; recurrence).**  Along the trap, `W^{j+d} = Σ_{i<d} p_i W^{j+i}`.  Paper
+theorem trapSetD_iterate {α : ℝ} (hα : 1 < α) {d : ℕ} {p : ℕ → ℤ}
+    (hP : (α / 2) ^ d = ∑ j ∈ Finset.range d, (p j : ℝ) * (α / 2) ^ j)
+    (hq : ∀ k < d - 1, quotCoeff (α / 2) d p k ≤ 0)
+    (hQ : 0 ≤ ∑ k ∈ Finset.range d, quotCoeff (α / 2) d p k) {n : ℤ}
+    (hn : n ∈ trapSetD α d) (j : ℕ) : (wy α)^[j] n ∈ trapSetD α d := by
+  induction j with
+  | zero => exact hn
+  | succ j ih =>
+    rw [Function.iterate_succ_apply']
+    exact trapSetD_trap hα hP hq hQ _ ih
+
+/-- **(proved; recurrence).**  Along the trap, `W^{j+d} = Σ_{i<d} p_i W^{j+i}`.  Paper
 proof: `Wʲ n ∈ T_d` (induction with `trapSetD_trap`), then `wy_iterate_eq_of_trap` at `Wʲ n`
 (`Function.iterate_add_apply`). -/
 theorem wy_iterate_add_of_mem_trapSetD {α : ℝ} (hα : 1 < α) {d : ℕ} {p : ℕ → ℤ}
@@ -192,7 +326,10 @@ theorem wy_iterate_add_of_mem_trapSetD {α : ℝ} (hα : 1 < α) {d : ℕ} {p : 
     (hQ : 0 ≤ ∑ k ∈ Finset.range d, quotCoeff (α / 2) d p k) {n : ℤ}
     (hn : n ∈ trapSetD α d) (j : ℕ) :
     (wy α)^[j + d] n = ∑ i ∈ Finset.range d, p i * (wy α)^[j + i] n := by
-  sorry
+  have h := wy_iterate_eq_of_trap hP hq hQ (trapSetD_iterate hα hP hq hQ hn j).2
+  simp only [← Function.iterate_add_apply] at h
+  rw [add_comm j d, h]
+  exact Finset.sum_congr rfl fun i _ => by rw [add_comm i j]
 
 /-- **(drafted, 95%; infinitely many entry points, conditional on Weyl).**  For `α > 2` of
 degree `d + 1` (`hind`) satisfying the trap conditions, `T_{d+1} ∖ W(T_{d+1})` is infinite.
@@ -240,7 +377,7 @@ theorem quotCoeff_two (A : ℝ) (p : ℕ → ℤ) : quotCoeff A 2 p 0 = A - p 1 
   rw [show Finset.Ioo 0 2 = {1} by decide]
   simp
 
-/-- **(drafted, 99%; consistency with Theorem A′).**  The identity at `d = 2`, `p = (c, b)`, is
+/-- **(proved; consistency with Theorem A′).**  The identity at `d = 2`, `p = (c, b)`, is
 `WythoffCone.wy_wy_of_even_even`.  Prove it **from** `wy_iterate_eq_floor` (not by citing
 Theorem A′), so that it checks the general statement: `p 0 = c`, `p 1 = b`, `quotCoeff_two`,
 `ePhase_eq_fract` at `i = 0` with `α/2·(2k) = kα`, and `⌊−(A − b)f⌋ = ⌊(b − A)f⌋`. -/
@@ -248,7 +385,22 @@ theorem wy_iterate_two_eq_floor {α : ℝ} {b c : ℤ} (hx : (α / 2) ^ 2 = b * 
     (h : wy α (2 * k) % 2 = 0) :
     (wy α)^[2] (2 * k) =
       b * wy α (2 * k) + c * (2 * k) + ⌊((b : ℝ) - α / 2) * Int.fract ((k : ℝ) * α)⌋ := by
-  sorry
+  set p : ℕ → ℤ := fun j => if j = 0 then c else b with hp
+  have hP : (α / 2) ^ 2 = ∑ j ∈ Finset.range 2, (p j : ℝ) * (α / 2) ^ j := by
+    simp [Finset.sum_range_succ, hp, hx]; ring
+  have hE : ∀ i < 2, (wy α)^[i] (2 * k) % 2 = 0 := by
+    intro i hi
+    interval_cases i
+    · simp
+    · simpa using h
+  rw [wy_iterate_eq_floor hP hE]
+  have h0 : ePhase α (2 * k) 0 = Int.fract ((k : ℝ) * α) := by
+    rw [ePhase_eq_fract (by simp)]
+    congr 1
+    simp
+    ring
+  simp [Finset.sum_range_succ, hp, quotCoeff_two, h0]
+  ring_nf
 
 /-- **(proved).**  `T_2` is the E-cone of Theorem K. -/
 theorem trapSetD_two_alphaK (b c : ℤ) : trapSetD (alphaK b c) 2 = coneSet b c := by
