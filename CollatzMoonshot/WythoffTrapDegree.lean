@@ -331,7 +331,269 @@ theorem wy_iterate_add_of_mem_trapSetD {α : ℝ} (hα : 1 < α) {d : ℕ} {p : 
   rw [add_comm j d, h]
   exact Finset.sum_congr rfl fun i _ => by rw [add_comm i j]
 
-/-- **(drafted, 95%; infinitely many entry points, conditional on Weyl).**  For `α > 2` of
+/-! ## Entry points (conditional on Weyl) -/
+
+section Entry
+
+open MeasureTheory
+
+/-! ### Box ⇒ trap -/
+
+theorem wy_iterate_two_mul_floor {α : ℝ} {k : ℤ} {m : ℕ}
+    (hψ : ∀ i < m, 0 ≤ Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) -
+        α / 2 * Int.fract ((k : ℝ) * (α / 2) ^ i) ∧
+      Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) - α / 2 * Int.fract ((k : ℝ) * (α / 2) ^ i) <
+        1 / 2) :
+    ∀ i ≤ m, (wy α)^[i] (2 * k) = 2 * ⌊(k : ℝ) * (α / 2) ^ i⌋ := by
+  intro i hi
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', ih (by omega), wy_two_mul, Int.floor_eq_iff]
+    obtain ⟨h0, h1⟩ := hψ i (by omega)
+    have e1 : (⌊(k : ℝ) * (α / 2) ^ i⌋ : ℝ) =
+        k * (α / 2) ^ i - Int.fract ((k : ℝ) * (α / 2) ^ i) := by rw [Int.fract]; ring
+    have e2 : (⌊(k : ℝ) * (α / 2) ^ (i + 1)⌋ : ℝ) =
+        k * (α / 2) ^ (i + 1) - Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) := by
+      rw [Int.fract]; ring
+    have key : (⌊(k : ℝ) * (α / 2) ^ i⌋ : ℝ) * α =
+        2 * (⌊(k : ℝ) * (α / 2) ^ (i + 1)⌋ : ℝ) + 2 * (Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) -
+          α / 2 * Int.fract ((k : ℝ) * (α / 2) ^ i)) := by
+      rw [e1, e2, pow_succ]; ring
+    push_cast
+    constructor <;> linarith
+
+/-- The lower corners of the box: `L_0 = 0`, `L_{j+1} = A(L_j + η)`. -/
+noncomputable def boxLow (A η : ℝ) : ℕ → ℝ
+  | 0 => 0
+  | j + 1 => A * (boxLow A η j + η)
+
+lemma boxLow_nonneg {A η : ℝ} (hA : 0 ≤ A) (hη : 0 ≤ η) (j : ℕ) : 0 ≤ boxLow A η j := by
+  induction j with
+  | zero => simp [boxLow]
+  | succ j ih => simp only [boxLow]; positivity
+
+lemma boxLow_add_le {A η : ℝ} (hA : 0 ≤ A) (hη : 0 ≤ η) (j : ℕ) :
+    boxLow A η j + η ≤ η * (A + 2) ^ j := by
+  induction j with
+  | zero => simp [boxLow]
+  | succ j ih =>
+    simp only [boxLow]
+    have h1 : (1 : ℝ) ≤ (A + 2) ^ j := one_le_pow₀ (by linarith)
+    rw [pow_succ]
+    nlinarith [mul_le_mul_of_nonneg_left ih hA]
+
+/-- The box `Π_{j<d} [L_j, L_j + η)`. -/
+def trapBox (A η : ℝ) (d : ℕ) : Set (Fin d → ℝ) :=
+  Set.univ.pi fun i => Set.Ico (boxLow A η i) (boxLow A η i + η)
+
+lemma two_mul_mem_trapSetD_of_box {α η : ℝ} (hα : 0 ≤ α) (hη : 0 ≤ η)
+    (hη2 : (α / 2 + 1) * η ≤ 1 / 2) {d : ℕ} {k : ℤ} (hk : 0 < k)
+    (hB : (fun i : Fin d => Int.fract ((k : ℝ) * (α / 2) ^ ((i : ℕ) + 1))) ∈
+      trapBox (α / 2) η d) :
+    2 * k ∈ trapSetD α (d + 1) := by
+  have hA : 0 ≤ α / 2 := by linarith
+  simp only [trapBox, Set.mem_univ_pi, Set.mem_Ico] at hB
+  have hψ : ∀ i < d, 0 ≤ Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) -
+        α / 2 * Int.fract ((k : ℝ) * (α / 2) ^ i) ∧
+      Int.fract ((k : ℝ) * (α / 2) ^ (i + 1)) - α / 2 * Int.fract ((k : ℝ) * (α / 2) ^ i) <
+        1 / 2 := by
+    intro i hi
+    rcases i with _ | i
+    · obtain ⟨h0, h1⟩ := hB ⟨0, hi⟩
+      simp only [boxLow, zero_add] at h0 h1
+      simp only [pow_zero, mul_one, Int.fract_intCast, mul_zero, sub_zero]
+      constructor
+      · exact h0
+      · nlinarith
+    · obtain ⟨h0, h1⟩ := hB ⟨i + 1, hi⟩
+      obtain ⟨h2, h3⟩ := hB ⟨i, by omega⟩
+      simp only [boxLow] at h0 h1 h2 h3
+      constructor
+      · nlinarith [mul_le_mul_of_nonneg_left h3.le hA]
+      · nlinarith [mul_le_mul_of_nonneg_left h2 hA]
+  refine ⟨by omega, fun i hi => ?_⟩
+  rw [wy_iterate_two_mul_floor hψ i (by omega)]
+  exact Int.mul_emod_right 2 _
+
+lemma measurableSet_trapBox (A η : ℝ) (d : ℕ) : MeasurableSet (trapBox A η d) :=
+  MeasurableSet.univ_pi fun _ => measurableSet_Ico
+
+lemma volume_frontier_trapBox {A η : ℝ} (hη : 0 < η) (d : ℕ) :
+    volume (frontier (trapBox A η d)) = 0 := by
+  set a : Fin d → ℝ := fun i => boxLow A η i
+  set b : Fin d → ℝ := fun i => boxLow A η i + η
+  have hsub : frontier (trapBox A η d) ⊆
+      Set.Icc a b \ Set.univ.pi fun i => Set.Ioo (a i) (b i) := by
+    rw [frontier, trapBox, closure_pi_set, interior_pi_set Set.finite_univ, ← Set.pi_univ_Icc]
+    refine Set.sdiff_subset_sdiff (Set.pi_mono fun i _ => ?_) (Set.pi_mono fun i _ => ?_)
+    · rw [closure_Ico (by simp; linarith)]
+    · rw [interior_Ico]
+  refine measure_mono_null hsub ?_
+  rw [measure_sdiff (fun x hx => Set.mem_Icc.2 ⟨fun i => (hx i (Set.mem_univ _)).1.le,
+      fun i => (hx i (Set.mem_univ _)).2.le⟩)
+    (MeasurableSet.univ_pi fun _ => measurableSet_Ioo).nullMeasurableSet
+    (by rw [Real.volume_pi_Ioo]; exact ENNReal.prod_ne_top fun _ _ => ENNReal.ofReal_ne_top),
+    Real.volume_Icc_pi, Real.volume_pi_Ioo, tsub_self]
+
+lemma volume_trapBox {A η : ℝ} (hA : 0 ≤ A) (hη : 0 < η) {d : ℕ}
+    (hsmall : η * (A + 2) ^ d < 1) :
+    (volume (trapBox A η d ∩ Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1)).toReal = η ^ d := by
+  have hsub : trapBox A η d ⊆ Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1 := by
+    intro x hx
+    simp only [trapBox, Set.mem_univ_pi, Set.mem_Ico] at hx ⊢
+    intro i
+    obtain ⟨h0, h1⟩ := hx i
+    have := boxLow_nonneg hA hη.le i
+    have h2 := boxLow_add_le hA hη.le i
+    have h3 : (A + 2) ^ (i : ℕ) ≤ (A + 2) ^ d :=
+      pow_le_pow_right₀ (by linarith) i.isLt.le
+    have := mul_le_mul_of_nonneg_left h3 hη.le
+    refine ⟨by linarith, by linarith⟩
+  rw [Set.inter_eq_left.2 hsub, trapBox, Real.volume_pi_Ico_toReal fun i => by simp [hη.le]]
+  simp
+
+/-! ### Growth along the trap -/
+
+section Growth
+
+variable {α : ℝ} {d : ℕ} {p : ℕ → ℤ}
+
+lemma wy_eq_floor_of_mem {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) :
+    wy α t = ⌊α / 2 * (t : ℝ)⌋ :=
+  wy_of_even α (ht.2 0 (by omega))
+
+lemma le_wy_of_mem (hα : 2 < α) {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) : t ≤ wy α t := by
+  rw [wy_eq_floor_of_mem ht, Int.le_floor]
+  have : (0 : ℝ) < t := by exact_mod_cast ht.1
+  nlinarith
+
+lemma lt_wy_of_mem {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) (h1 : 1 ≤ (α / 2 - 1) * t) :
+    t < wy α t := by
+  rw [wy_eq_floor_of_mem ht]
+  have := Int.lt_floor_add_one (α / 2 * (t : ℝ))
+  have : (t : ℝ) < ⌊α / 2 * (t : ℝ)⌋ := by linarith
+  exact_mod_cast this
+
+lemma growth_of_mem {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) (h2 : 2 ≤ (α / 2 - 1) * t) :
+    (α / 2 + 1) * t ≤ 2 * (wy α t : ℝ) := by
+  rw [wy_eq_floor_of_mem ht]
+  have := Int.lt_floor_add_one (α / 2 * (t : ℝ))
+  linarith
+
+variable (hα : 2 < α)
+  (hP : (α / 2) ^ (d + 1) = ∑ j ∈ Finset.range (d + 1), (p j : ℝ) * (α / 2) ^ j)
+  (hq : ∀ k < d, quotCoeff (α / 2) (d + 1) p k ≤ 0)
+  (hQ : 0 ≤ ∑ k ∈ Finset.range (d + 1), quotCoeff (α / 2) (d + 1) p k)
+include hα hP hq hQ
+
+lemma iterate_mem {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) (i : ℕ) :
+    (wy α)^[i] t ∈ trapSetD α (d + 1) := by
+  induction i with
+  | zero => exact ht
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', ← wyPerm_apply (one_lt_two.trans hα)]
+    exact trapSetD_trap _ hP (by simpa using hq) hQ _ ih
+
+lemma le_iterate {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) (i : ℕ) : t ≤ (wy α)^[i] t := by
+  induction i with
+  | zero => exact le_rfl
+  | succ i ih =>
+    rw [Function.iterate_succ_apply']
+    exact ih.trans (le_wy_of_mem hα (iterate_mem hα hP hq hQ ht i))
+
+lemma growth_iterate {t : ℤ} (ht : t ∈ trapSetD α (d + 1)) (h2 : 2 ≤ (α / 2 - 1) * t)
+    (i : ℕ) : (α / 2 + 1) * t ≤ 2 * ((wy α)^[i + 1] t : ℝ) := by
+  rw [Function.iterate_succ_apply]
+  have h := le_iterate hα hP hq hQ (iterate_mem hα hP hq hQ ht 1) i
+  simp only [Function.iterate_one] at h
+  have h' : (wy α t : ℝ) ≤ (wy α)^[i] (wy α t) := by exact_mod_cast h
+  linarith [growth_of_mem ht h2]
+
+/-- Two trap points on one forward orbit, both large, within a factor `(A + 1)/2` of each
+other, coincide. -/
+lemma eq_of_iterate {e t t' : ℤ} {j j' : ℕ} (hj : (wy α)^[j] e = t)
+    (hj' : (wy α)^[j'] e = t') (ht : t ∈ trapSetD α (d + 1)) (ht' : t' ∈ trapSetD α (d + 1))
+    (h2 : 2 ≤ (α / 2 - 1) * t) (h2' : 2 ≤ (α / 2 - 1) * t')
+    (hlt : 2 * (t' : ℝ) < (α / 2 + 1) * t) (hlt' : 2 * (t : ℝ) < (α / 2 + 1) * t') :
+    t = t' := by
+  rcases lt_trichotomy j j' with h | h | h
+  · obtain ⟨i, rfl⟩ : ∃ i, j' = i + 1 + j := ⟨j' - j - 1, by omega⟩
+    rw [Function.iterate_add_apply, hj] at hj'
+    have := growth_iterate hα hP hq hQ ht h2 i
+    rw [hj'] at this
+    linarith
+  · subst h; exact hj.symm.trans hj'
+  · obtain ⟨i, rfl⟩ : ∃ i, j = i + 1 + j' := ⟨j - j' - 1, by omega⟩
+    rw [Function.iterate_add_apply, hj'] at hj
+    have := growth_iterate hα hP hq hQ ht' h2' i
+    rw [hj] at this
+    linarith
+
+omit hP hq hQ in
+/-- Every trap point is a forward iterate of an entry point or of a small point
+(`(A − 1)e < 1`). -/
+lemma exists_seed (t : ℤ) :
+    ∃ e : ℤ, ∃ j : ℕ, t ∈ trapSetD α (d + 1) →
+      ((0 ≤ e ∧ e ∈ trapSetD α (d + 1) \
+          wyPerm α (one_lt_two.trans hα) '' trapSetD α (d + 1)) ∨
+        (0 ≤ e ∧ (α / 2 - 1) * (e : ℝ) < 1)) ∧ (wy α)^[j] e = t := by
+  induction t using Int.strongRec (m := 0) with
+  | lt t ht => exact ⟨0, 0, fun h => absurd h.1 (by omega)⟩
+  | ge t ht ih =>
+    by_cases hT : t ∈ trapSetD α (d + 1)
+    · by_cases hs : (α / 2 - 1) * (t : ℝ) < 1
+      · exact ⟨t, 0, fun _ => ⟨Or.inr ⟨ht, hs⟩, rfl⟩⟩
+      by_cases hW : t ∈ wyPerm α (one_lt_two.trans hα) '' trapSetD α (d + 1)
+      · obtain ⟨s, hsT, rfl⟩ := hW
+        rw [wyPerm_apply] at ih hs ⊢
+        have hst : s < wy α s := by
+          by_contra hle
+          rw [not_lt] at hle
+          have hle' : (wy α s : ℝ) ≤ s := by exact_mod_cast hle
+          exact absurd (lt_wy_of_mem hsT (by nlinarith)) (not_lt.2 hle)
+        obtain ⟨e, j, hej⟩ := ih s hst
+        obtain ⟨he, hj⟩ := hej hsT
+        exact ⟨e, j + 1, fun _ => ⟨he, by rw [Function.iterate_succ_apply', hj]⟩⟩
+      · exact ⟨t, 0, fun _ => ⟨Or.inl ⟨ht, hT, hW⟩, rfl⟩⟩
+    · exact ⟨0, 0, fun h => absurd h hT⟩
+
+end Growth
+
+/-! ### Window counting -/
+
+lemma exists_window {c : ℕ → ℕ} {v : ℝ} (hv : 0 < v)
+    (hc : Tendsto (fun N : ℕ => (c N : ℝ) / N) atTop (𝓝 v)) {L : ℕ} (hL : 1 ≤ L) (M : ℕ) :
+    ∃ N : ℕ, 1 ≤ N ∧ c (L * N) + M < c ((L + 1) * N) := by
+  have hmul : ∀ K : ℕ, 1 ≤ K → Tendsto (fun N : ℕ => K * N) atTop atTop := fun K hK =>
+    tendsto_atTop_mono (fun N => Nat.le_mul_of_pos_left N hK) tendsto_id
+  have h1 := hc.comp (hmul (L + 1) (by omega))
+  have h2 := hc.comp (hmul L hL)
+  have hg : Tendsto (fun N : ℕ => ((L : ℝ) + 1) * ((c ((L + 1) * N) : ℝ) / ((L + 1) * N : ℕ)) -
+      L * ((c (L * N) : ℝ) / (L * N : ℕ))) atTop (𝓝 (((L : ℝ) + 1) * v - L * v)) :=
+    (h1.const_mul _).sub (h2.const_mul _)
+  rw [show ((L : ℝ) + 1) * v - L * v = v by ring] at hg
+  obtain ⟨N, hN1, hN2, hN3⟩ := ((hg.eventually (lt_mem_nhds (half_lt_self hv))).and
+    ((eventually_ge_atTop 1).and (eventually_ge_atTop ⌈2 * (M + 1) / v⌉₊))).exists
+  refine ⟨N, hN2, ?_⟩
+  have hN : (1 : ℝ) ≤ N := by exact_mod_cast hN2
+  have hNv : 2 * ((M : ℝ) + 1) / v ≤ N := (Nat.le_ceil _).trans (by exact_mod_cast hN3)
+  have hNv' : 2 * ((M : ℝ) + 1) ≤ N * v := by rwa [div_le_iff₀ hv] at hNv
+  have hL' : (1 : ℝ) ≤ L := by exact_mod_cast hL
+  have e1 : ((L : ℝ) + 1) * ((c ((L + 1) * N) : ℝ) / ((L + 1) * N : ℕ)) * N =
+      c ((L + 1) * N) := by
+    push_cast; field_simp
+  have e2 : (L : ℝ) * ((c (L * N) : ℝ) / (L * N : ℕ)) * N = c (L * N) := by
+    push_cast; field_simp
+  have key : (c (L * N) : ℝ) + M < c ((L + 1) * N) := by
+    have := mul_lt_mul_of_pos_right hN1 (show (0 : ℝ) < N by linarith)
+    rw [sub_mul, e1, e2] at this
+    nlinarith
+  exact_mod_cast key
+
+end Entry
+
+/-- **(proved; infinitely many entry points, conditional on Weyl).**  For `α > 2` of
 degree `d + 1` (`hind`) satisfying the trap conditions, `T_{d+1} ∖ W(T_{d+1})` is infinite.
 Paper proof.  *Lower bound.*  For `k ≥ 1` put `φ_i = {k Aⁱ}`, `N_i = ⌊k Aⁱ⌋` (`1 ≤ i ≤ d`),
 `ψ_i = φ_i − A φ_{i−1}` (`φ_0 = 0`).  If every `ψ_i ∈ [0, 1/2)` then `Wⁱ(2k) = 2N_i` for
@@ -345,7 +607,10 @@ were finite, every `t ∈ T_{d+1}` above the finitely many `t` with `W(t) ≤ t`
 iterate of a point of `E` (backward inside `T_{d+1}` the values decrease, as in
 `WythoffCone.exists_entry`), and each forward orbit has `O(log X)` points `≤ X`.
 Contradiction.  (`WythoffCone.coneEntry_infinite` is the `d = 1` model, with Dirichlet in place
-of Weyl.) -/
+of Weyl.)  *Formal route:* instead of the `O(log X)` count, Weyl on the window `k ∈ (LN, (L+1)N]`
+(`exists_window`, `L ≥ 2/(A − 1)`) gives more box points than seeds (`exists_seed`: entry
+points and the finitely many `t` with `(A − 1)t < 1`), and two trap points of one orbit in the
+window coincide (`eq_of_iterate`, growth `W(t) ≥ ((A + 1)/2)t`). -/
 theorem trapSetD_entry_infinite {α : ℝ} (hα : 2 < α) {d : ℕ} {p : ℕ → ℤ}
     (hP : (α / 2) ^ (d + 1) = ∑ j ∈ Finset.range (d + 1), (p j : ℝ) * (α / 2) ^ j)
     (hq : ∀ k < d, quotCoeff (α / 2) (d + 1) p k ≤ 0)
@@ -354,7 +619,101 @@ theorem trapSetD_entry_infinite {α : ℝ} (hα : 2 < α) {d : ℕ} {p : ℕ →
     (hW : WeylEquidistributionMulti) :
     {n : ℤ | 0 ≤ n ∧
       n ∈ trapSetD α (d + 1) \ wyPerm α (one_lt_two.trans hα) '' trapSetD α (d + 1)}.Infinite := by
-  sorry
+  have hA1 : 1 < α / 2 := by linarith
+  have hA0 : 0 ≤ α / 2 := by linarith
+  by_contra hfin
+  rw [Set.not_infinite] at hfin
+  classical
+  set E := hfin.toFinset
+  set C : ℕ := ⌈1 / (α / 2 - 1)⌉₊
+  set S : Finset ℤ := E ∪ Finset.Icc 0 (C : ℤ)
+  choose ef jf hef using exists_seed hα (d := d)
+  have hS : ∀ t ∈ trapSetD α (d + 1), ef t ∈ S := by
+    intro t ht
+    rcases (hef t ht).1 with he | ⟨h0, h1⟩
+    · exact Finset.mem_union_left _ (by simpa [E] using he)
+    · refine Finset.mem_union_right _ (Finset.mem_Icc.2 ⟨h0, ?_⟩)
+      have h2 : (ef t : ℝ) < 1 / (α / 2 - 1) := by
+        rw [lt_div_iff₀ (by linarith)]; linarith
+      have h3 : (ef t : ℝ) < C := h2.trans_le (Nat.le_ceil _)
+      exact_mod_cast h3.le
+  -- the box
+  set η : ℝ := 1 / (2 * (α / 2 + 2) ^ (d + 1)) with hη
+  have hη0 : 0 < η := by positivity
+  have hpd : (α / 2 + 2) ^ d ≤ (α / 2 + 2) ^ (d + 1) :=
+    pow_le_pow_right₀ (by linarith) (by omega)
+  have hp1 : α / 2 + 1 ≤ (α / 2 + 2) ^ (d + 1) := by
+    calc α / 2 + 1 ≤ α / 2 + 2 := by linarith
+      _ = (α / 2 + 2) ^ 1 := (pow_one _).symm
+      _ ≤ _ := pow_le_pow_right₀ (by linarith) (by omega)
+  have hpos : 0 < (α / 2 + 2) ^ (d + 1) := by positivity
+  have hηsmall : η * (α / 2 + 2) ^ d < 1 := by
+    rw [hη, div_mul_eq_mul_div, one_mul, div_lt_one (by positivity)]
+    linarith
+  have hη2 : (α / 2 + 1) * η ≤ 1 / 2 := by
+    rw [hη, mul_one_div, div_le_div_iff₀ (by positivity) (by norm_num)]
+    linarith
+  set θ : Fin d → ℝ := fun i => (α / 2) ^ ((i : ℕ) + 1)
+  have hlin : LinearIndependent ℚ (Fin.cons (1 : ℝ) θ : Fin (d + 1) → ℝ) := by
+    convert hind using 1
+    funext i
+    refine Fin.cases ?_ (fun i => ?_) i <;> simp [θ]
+  have hT := hW d θ hlin (trapBox (α / 2) η d) (measurableSet_trapBox _ _ _)
+    (volume_frontier_trapBox hη0 d)
+  rw [volume_trapBox hA0 hη0 hηsmall] at hT
+  set L : ℕ := ⌈2 / (α / 2 - 1)⌉₊ + 1 with hLdef
+  obtain ⟨N, hN1, hN⟩ := exists_window (pow_pos hη0 d) hT (L := L) (by omega) S.card
+  set Wd := (Finset.Ioc (L * N) ((L + 1) * N)).filter fun k : ℕ =>
+    (fun i => Int.fract ((k : ℝ) * θ i)) ∈ trapBox (α / 2) η d
+  have hcount : ((Finset.Icc 1 ((L + 1) * N)).filter fun k : ℕ =>
+        (fun i => Int.fract ((k : ℝ) * θ i)) ∈ trapBox (α / 2) η d).card ≤
+      ((Finset.Icc 1 (L * N)).filter fun k : ℕ =>
+        (fun i => Int.fract ((k : ℝ) * θ i)) ∈ trapBox (α / 2) η d).card + Wd.card := by
+    refine (Finset.card_le_card ?_).trans (Finset.card_union_le _ _)
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_union, Finset.mem_Ioc, Wd] at hk ⊢
+    by_cases h : k ≤ L * N
+    · exact Or.inl ⟨⟨hk.1.1, h⟩, hk.2⟩
+    · exact Or.inr ⟨⟨by omega, hk.1.2⟩, hk.2⟩
+  have hmem : ∀ k ∈ Wd, 2 * (k : ℤ) ∈ trapSetD α (d + 1) := by
+    intro k hk
+    simp only [Wd, Finset.mem_filter, Finset.mem_Ioc] at hk
+    refine two_mul_mem_trapSetD_of_box (by linarith) hη0.le hη2 ?_ ?_
+    · have : 0 < k := by
+        have := Nat.zero_le (L * N); omega
+      exact_mod_cast this
+    · simpa [θ] using hk.2
+  have hLr : 2 ≤ (α / 2 - 1) * L := by
+    have h1 : 2 / (α / 2 - 1) ≤ L := by
+      rw [hLdef]; push_cast; linarith [Nat.le_ceil (2 / (α / 2 - 1))]
+    rw [div_le_iff₀ (by linarith)] at h1
+    linarith
+  have hinj : Set.InjOn (fun k : ℕ => ef (2 * (k : ℤ))) Wd := by
+    intro k hk k' hk' hkk
+    have hT1 := hmem k hk
+    have hT2 := hmem k' hk'
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq, Finset.mem_Ioc, Wd] at hk hk'
+    simp only at hkk
+    obtain ⟨-, hj⟩ := hef _ hT1
+    obtain ⟨-, hj'⟩ := hef _ hT2
+    rw [hkk] at hj
+    have hNr : (1 : ℝ) ≤ N := by exact_mod_cast hN1
+    have hk1 : (L : ℝ) * N < k := by exact_mod_cast hk.1.1
+    have hk2 : (k : ℝ) ≤ (L + 1) * N := by exact_mod_cast hk.1.2
+    have hk1' : (L : ℝ) * N < k' := by exact_mod_cast hk'.1.1
+    have hk2' : (k' : ℝ) ≤ (L + 1) * N := by exact_mod_cast hk'.1.2
+    have hL0 : (0 : ℝ) ≤ L := by positivity
+    have hLN : (L : ℝ) ≤ L * N := le_mul_of_one_le_right hL0 hNr
+    have hprod : 0 ≤ ((α / 2 - 1) * L - 2) * N := mul_nonneg (by linarith) (by linarith)
+    have e := eq_of_iterate hα hP hq hQ hj hj' hT1 hT2 ?_ ?_ ?_ ?_
+    · omega
+    all_goals push_cast
+    · nlinarith
+    · nlinarith
+    · nlinarith
+    · nlinarith
+  have := Finset.card_le_card_of_injOn _ (fun k hk => hS _ (hmem k hk)) hinj
+  omega
 
 /-- **(proved from the two above; conditional on Weyl).**  Every member as in
 `trapSetD_entry_infinite` has infinitely many infinite orbits:
