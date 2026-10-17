@@ -541,7 +541,128 @@ theorem half_int_pin {a b e μ : ℝ} (ha : 0 ≤ a ∧ a ≤ 1 / 2) (hb : μ �
   rw [h0, Int.cast_zero] at hm
   linarith
 
-/-- **(drafted, 88%; the box of followers).**  Let `α > 1`, `P` monic of degree `2 ≤ d ≤ n`
+/-- **(proved; a fresh step of the box of followers).**  For `l` with `ε'_l ∈ [0, 1/2]`
+(`ε'` the phase vector of `2k`), `ε*_l ∈ [μ, 1/2 − μ]`, and
+`T = {kθ_l} − {−S*_l} + Σ_{j<l} x^{l−j}(ε'_j − ε*_j)` of size `< μ`: `W^{l+1}(2k)` is odd and
+`ε'_l − ε*_l = −T`.  Paper proof: `kθ_l + S'_l − (⌊kθ_l⌋ − ⌊−S*_l⌋) = (ε'_l − ε*_l) + T` lies in
+`½ℤ` (`half_iterate_eq`), so `half_int_pin` makes it `0`; `iterate_odd_iff_fresh`. -/
+theorem fresh_step (α : ℝ) (k : ℤ) (l : ℕ) (ε : ℕ → ℝ) {μ : ℝ}
+    (ha : 0 ≤ phaseVec α (2 * k) l ∧ phaseVec α (2 * k) l ≤ 1 / 2)
+    (hb : μ ≤ ε l ∧ ε l ≤ 1 / 2 - μ)
+    (he : |Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+        Int.fract (-∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * ε j) +
+        ∑ j ∈ Finset.range l, xOf α ^ (l - j) * (phaseVec α (2 * k) j - ε j)| < μ) :
+    (wy α)^[l + 1] (2 * k) % 2 = 1 ∧
+      phaseVec α (2 * k) l - ε l = -(Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+        Int.fract (-∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * ε j) +
+        ∑ j ∈ Finset.range l, xOf α ^ (l - j) * (phaseVec α (2 * k) j - ε j)) := by
+  set S' := ∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * phaseVec α (2 * k) j with hS'
+  set S := ∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * ε j with hSd
+  set E := ∑ j ∈ Finset.range l, xOf α ^ (l - j) * (phaseVec α (2 * k) j - ε j) with hE
+  have hS : S' - S = (phaseVec α (2 * k) l - ε l) + E := by
+    simp only [hS', hSd, hE, Finset.sum_range_succ, Nat.sub_self, pow_zero, one_mul, mul_sub,
+      Finset.sum_sub_distrib]
+    ring
+  have hfr1 := Int.self_sub_floor ((k : ℝ) * (α / 2 * xOf α ^ l))
+  have hfr2 := Int.self_sub_floor (-S)
+  have hw := half_iterate_eq α k l
+  rw [← hS'] at hw
+  have hA : (k : ℝ) * (α / 2 * xOf α ^ l) + S' -
+      ((⌊(k : ℝ) * (α / 2 * xOf α ^ l)⌋ : ℝ) - (⌊-S⌋ : ℝ)) =
+      phaseVec α (2 * k) l - ε l + (Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+        Int.fract (-S) + E) := by
+    rw [← hfr1, ← hfr2]; linarith
+  have hz : ∃ m : ℤ, 2 * (phaseVec α (2 * k) l - ε l + (Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+        Int.fract (-S) + E)) = m :=
+    ⟨(wy α)^[l + 1] (2 * k) + 1 - 2 * (⌊(k : ℝ) * (α / 2 * xOf α ^ l)⌋ - ⌊-S⌋), by
+      rw [← hA]; push_cast; linarith⟩
+  have h0 := half_int_pin ha hb he hz
+  refine ⟨(iterate_odd_iff_fresh α k l).2 ⟨⌊(k : ℝ) * (α / 2 * xOf α ^ l)⌋ - ⌊-S⌋, ?_⟩, by linarith⟩
+  push_cast; linarith
+
+/-- **(proved; the top-row step of the box of followers).**  With the fresh steps odd,
+`T(ε*) ∈ ℤ`, `ε*_{d−1} ∈ [μ, 1/2 − μ]` and `E = q̃_0(ε'_0 − ε*_0) + Σ_{1≤k<d−1} q_k(ε'_k − ε*_k)`
+of size `< μ`: `W^d u` is odd and `ε'_{d−1} − ε*_{d−1} = −E`.  Paper proof:
+`T(ε') − T(ε*) = (ε'_{d−1} − ε*_{d−1}) + E` (`q_{d−1} = 1`), `2T(ε') ∈ ℤ`
+(`two_mul_topRow_phaseVec`); `half_int_pin`, then `topRow_phaseVec_int_iff`. -/
+theorem top_step (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree)
+    (hroot : aeval (xOf α) P = 0) {u : ℤ} (hu : u % 2 = 0)
+    (hfresh : ∀ i : ℕ, 1 ≤ i → i < P.natDegree → (wy α)^[i] u % 2 = 1) {ε : ℕ → ℝ} {μ : ℝ}
+    (hT : ∃ m : ℤ, topRow (synDiv P (xOf α)) P.natDegree (P.coeff 0) ε = m)
+    (hb : μ ≤ ε (P.natDegree - 1) ∧ ε (P.natDegree - 1) ≤ 1 / 2 - μ)
+    (he : |(synDiv P (xOf α) 0 + 2 * P.coeff 0) * (phaseVec α u 0 - ε 0) +
+        ∑ k ∈ Finset.Ico 1 (P.natDegree - 1), synDiv P (xOf α) k * (phaseVec α u k - ε k)| < μ) :
+    (wy α)^[P.natDegree] u % 2 = 1 ∧
+      phaseVec α u (P.natDegree - 1) - ε (P.natDegree - 1) =
+        -((synDiv P (xOf α) 0 + 2 * P.coeff 0) * (phaseVec α u 0 - ε 0) +
+          ∑ k ∈ Finset.Ico 1 (P.natDegree - 1), synDiv P (xOf α) k * (phaseVec α u k - ε k)) := by
+  obtain ⟨m, hm⟩ := hT
+  have hodd := hfresh (P.natDegree - 1) (by omega) (by omega)
+  have ha := phaseVec_mem_of_odd (α := α) (u := u) (by omega : P.natDegree - 1 ≠ 0) hodd
+  have hsplit : ∀ f : ℕ → ℝ, ∑ k ∈ Finset.Ico 1 P.natDegree, f k =
+      ∑ k ∈ Finset.Ico 1 (P.natDegree - 1), f k + f (P.natDegree - 1) := by
+    intro f
+    have := Finset.sum_Ico_succ_top (show 1 ≤ P.natDegree - 1 by omega) f
+    rwa [Nat.sub_add_cancel (by omega)] at this
+  have hdiff : topRow (synDiv P (xOf α)) P.natDegree (P.coeff 0) (phaseVec α u) -
+      topRow (synDiv P (xOf α)) P.natDegree (P.coeff 0) ε =
+      phaseVec α u (P.natDegree - 1) - ε (P.natDegree - 1) +
+        ((synDiv P (xOf α) 0 + 2 * P.coeff 0) * (phaseVec α u 0 - ε 0) +
+          ∑ k ∈ Finset.Ico 1 (P.natDegree - 1), synDiv P (xOf α) k * (phaseVec α u k - ε k)) := by
+    unfold topRow
+    rw [hsplit, hsplit, synDiv_natDegree_sub_one hP (by omega)]
+    simp only [mul_sub, Finset.sum_sub_distrib]
+    ring
+  have hid := two_mul_topRow_phaseVec hα (by omega) hroot u
+  set N : ℤ := ∑ j ∈ Finset.Ico 1 (P.natDegree + 1), P.coeff j * ((wy α)^[j] u + 1) +
+      2 * P.coeff 0 * (wy α u + 1) - P.coeff 0 * u with hNdef
+  have hN : 2 * topRow (synDiv P (xOf α)) P.natDegree (P.coeff 0) (phaseVec α u) = (N : ℝ) := by
+    rw [hid, hNdef]; push_cast; ring
+  have h0 := half_int_pin ⟨ha.1, ha.2.le⟩ hb he ⟨N - 2 * m, by rw [← hdiff]; push_cast; linarith⟩
+  refine ⟨(topRow_phaseVec_int_iff hα hP hd hroot hu hfresh).1 ⟨m, by linarith⟩, by linarith⟩
+
+/-- **(proved; a standard-row step of the box of followers).**  For `i ≥ 1` with
+`W^i u, …, W^{i+d−1} u` odd, `R_i(ε*) ∈ ℤ`, `ε*_{i+d−1} ∈ [μ, 1/2 − μ]` and
+`E = Σ_{k<d−1} q_k(ε'_{i+k} − ε*_{i+k})` of size `< μ`: `W^{i+d} u` is odd and
+`ε'_{i+d−1} − ε*_{i+d−1} = −E`.  Paper proof: as `top_step`, with `two_mul_stdRow_phaseVec` and
+`stdRow_phaseVec_int_iff`. -/
+theorem std_step (hP : P.Monic) (hd : 2 ≤ P.natDegree) (hroot : aeval (xOf α) P = 0)
+    {u : ℤ} {i : ℕ} (hi : 1 ≤ i)
+    (hodd : ∀ j < P.natDegree, (wy α)^[i + j] u % 2 = 1) {ε : ℕ → ℝ} {μ : ℝ}
+    (hR : ∃ m : ℤ, stdRow (synDiv P (xOf α)) P.natDegree ε i = m)
+    (hb : μ ≤ ε (i + (P.natDegree - 1)) ∧ ε (i + (P.natDegree - 1)) ≤ 1 / 2 - μ)
+    (he : |∑ k ∈ Finset.range (P.natDegree - 1),
+        synDiv P (xOf α) k * (phaseVec α u (i + k) - ε (i + k))| < μ) :
+    (wy α)^[i + P.natDegree] u % 2 = 1 ∧
+      phaseVec α u (i + (P.natDegree - 1)) - ε (i + (P.natDegree - 1)) =
+        -∑ k ∈ Finset.range (P.natDegree - 1),
+          synDiv P (xOf α) k * (phaseVec α u (i + k) - ε (i + k)) := by
+  obtain ⟨m, hm⟩ := hR
+  have ha := phaseVec_mem_of_odd (α := α) (u := u) (by omega : i + (P.natDegree - 1) ≠ 0)
+    (hodd (P.natDegree - 1) (by omega))
+  have hsplit : ∀ f : ℕ → ℝ, ∑ k ∈ Finset.range P.natDegree, f k =
+      ∑ k ∈ Finset.range (P.natDegree - 1), f k + f (P.natDegree - 1) := by
+    intro f
+    have := Finset.sum_range_succ f (P.natDegree - 1)
+    rwa [Nat.sub_add_cancel (by omega)] at this
+  have hdiff : stdRow (synDiv P (xOf α)) P.natDegree (phaseVec α u) i -
+      stdRow (synDiv P (xOf α)) P.natDegree ε i =
+      phaseVec α u (i + (P.natDegree - 1)) - ε (i + (P.natDegree - 1)) +
+        ∑ k ∈ Finset.range (P.natDegree - 1),
+          synDiv P (xOf α) k * (phaseVec α u (i + k) - ε (i + k)) := by
+    unfold stdRow
+    rw [hsplit, hsplit, synDiv_natDegree_sub_one hP (by omega)]
+    simp only [mul_sub, Finset.sum_sub_distrib]
+    ring
+  have hid := two_mul_stdRow_phaseVec (α := α) hroot u hi
+  set N : ℤ := ∑ j ∈ Finset.range (P.natDegree + 1), P.coeff j * ((wy α)^[i + j] u + 1)
+    with hNdef
+  have hN : 2 * stdRow (synDiv P (xOf α)) P.natDegree (phaseVec α u) i = (N : ℝ) := by
+    rw [hid, hNdef]; push_cast; ring
+  have h0 := half_int_pin ⟨ha.1, ha.2.le⟩ hb he ⟨N - 2 * m, by rw [← hdiff]; push_cast; linarith⟩
+  exact ⟨(stdRow_phaseVec_int_iff hP hroot hi hodd).1 ⟨m, by linarith⟩, by linarith⟩
+
+/-- **(proved; the box of followers).**  Let `α > 1`, `P` monic of degree `2 ≤ d ≤ n`
 with `P(x) = 0`, and let `ε*` solve `RunSystem` of length `n`.  Then there is `r > 0` with
 `f_l + r ≤ 1` (`f = boxCorner x ε* (d − 1)`) such that every `k ∈ ℤ` with `{kθ_l} ∈ (f_l, f_l + r)`
 for all `l < d − 1` has `W^1(2k), …, W^n(2k)` all odd.  Paper proof (module docstring,
@@ -565,7 +686,154 @@ theorem exists_runBox (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree)
       ∀ k : ℤ, (fun l => Int.fract ((k : ℝ) * freqVec α (P.natDegree - 1) l)) ∈
           openBox (boxCorner (xOf α) ε (P.natDegree - 1)) r →
         ∀ j ∈ Finset.Icc 1 n, (wy α)^[j] (2 * k) % 2 = 1 := by
-  sorry
+  have hx0 : 0 < xOf α := by
+    unfold xOf; have : 0 < α - 1 := by linarith
+    positivity
+  set K : ℝ := |synDiv P (xOf α) 0 + 2 * P.coeff 0| +
+    ∑ k ∈ Finset.range P.natDegree, |synDiv P (xOf α) k| +
+    ∑ j ∈ Finset.range (n + 1), xOf α ^ j with hK
+  have hs1 : 0 ≤ ∑ k ∈ Finset.range P.natDegree, |synDiv P (xOf α) k| :=
+    Finset.sum_nonneg fun _ _ => abs_nonneg _
+  have hs2 : 0 ≤ ∑ j ∈ Finset.range (n + 1), xOf α ^ j :=
+    Finset.sum_nonneg fun _ _ => by positivity
+  have hK0 : 0 ≤ K := by positivity
+  have hKq0 : |synDiv P (xOf α) 0 + 2 * P.coeff 0| ≤ K := by linarith
+  have hKq : ∀ k < P.natDegree, |synDiv P (xOf α) k| ≤ K := fun k hk => by
+    have := Finset.single_le_sum (f := fun k => |synDiv P (xOf α) k|)
+      (fun _ _ => abs_nonneg _) (Finset.mem_range.2 hk)
+    linarith [abs_nonneg (synDiv P (xOf α) 0 + 2 * P.coeff 0)]
+  have hKx : ∀ j ≤ n, xOf α ^ j ≤ K := fun j hj => by
+    have := Finset.single_le_sum (f := fun j => xOf α ^ j)
+      (fun _ _ => by positivity) (Finset.mem_range.2 (show j < n + 1 by omega))
+    linarith [abs_nonneg (synDiv P (xOf α) 0 + 2 * P.coeff 0)]
+  have hev : ∀ᶠ r in 𝓝[>] (0 : ℝ), (0 < r ∧
+      ∀ l, boxCorner (xOf α) ε (P.natDegree - 1) l + r ≤ 1) ∧
+      ∀ l ∈ Finset.range n, (1 + K) ^ n * r < min (ε l) (1 / 2 - ε l) := by
+    refine (eventually_mem_nhdsWithin.and ?_).and ?_
+    · refine nhdsWithin_le_nhds (Filter.eventually_all.2 fun l => ?_)
+      have := Int.fract_lt_one (-∑ j ∈ Finset.range ((l : ℕ) + 1),
+        xOf α ^ ((l : ℕ) - j) * ε j)
+      exact (eventually_lt_nhds (show (0 : ℝ) < 1 - boxCorner (xOf α) ε _ l by
+        unfold boxCorner; linarith)).mono fun r hr => by linarith
+    · refine (Filter.eventually_all_finset _).2 fun l hl => ?_
+      have h := hε.1 l (Finset.mem_range.1 hl)
+      have ht : Tendsto (fun r : ℝ => (1 + K) ^ n * r) (𝓝[>] 0) (𝓝 0) := by
+        refine tendsto_nhdsWithin_of_tendsto_nhds ?_
+        have hc : Continuous fun r : ℝ => (1 + K) ^ n * r := by fun_prop
+        exact hc.tendsto' 0 0 (by simp)
+      exact ht.eventually_lt_const (lt_min h.1 (by linarith))
+  obtain ⟨r, ⟨hr0, hr1⟩, hrμ⟩ := hev.exists
+  refine ⟨r, hr0, hr1, fun k hk => ?_⟩
+  simp only [openBox, Set.mem_univ_pi, Set.mem_Ioo, freqVec, boxCorner] at hk
+  have hgeo : ∀ l : ℕ, r + K * ∑ j ∈ Finset.range l, (1 + K) ^ j * r = (1 + K) ^ l * r := by
+    intro l
+    induction l with
+    | zero => simp
+    | succ l ih => rw [Finset.sum_range_succ, mul_add, ← add_assoc, ih]; ring
+  have hηC : ∀ l, l < n → (1 + K) ^ l * r ≤ (1 + K) ^ n * r := fun l hl =>
+    mul_le_mul_of_nonneg_right (pow_le_pow_right₀ (by linarith) hl.le) hr0.le
+  have hu : 2 * k % 2 = 0 := by omega
+  have claim : ∀ l, l < n → (wy α)^[l + 1] (2 * k) % 2 = 1 ∧
+      |phaseVec α (2 * k) l - ε l| ≤ (1 + K) ^ l * r := by
+    intro l
+    induction l using Nat.strong_induction_on with
+    | _ l ih =>
+    intro hln
+    have hμ := hrμ l (Finset.mem_range.2 hln)
+    have hb : min (ε l) (1 / 2 - ε l) ≤ ε l ∧ ε l ≤ 1 / 2 - min (ε l) (1 / 2 - ε l) :=
+      ⟨min_le_left _ _, by linarith [min_le_right (ε l) (1 / 2 - ε l)]⟩
+    have hηl := hηC l hln
+    rcases lt_trichotomy l (P.natDegree - 1) with hl | hl | hl
+    · -- fresh step
+      have hbox := hk ⟨l, hl⟩
+      simp only at hbox
+      have ha : 0 ≤ phaseVec α (2 * k) l ∧ phaseVec α (2 * k) l ≤ 1 / 2 := by
+        rcases Nat.eq_zero_or_pos l with h0 | h0
+        · subst h0
+          exact ⟨(phaseVec_zero_mem hu).1.le, (phaseVec_zero_mem hu).2⟩
+        · have h' := (ih (l - 1) (by omega) (by omega)).1
+          rw [Nat.sub_add_cancel h0] at h'
+          have := phaseVec_mem_of_odd (α := α) (by omega : l ≠ 0) h'
+          exact ⟨this.1, this.2.le⟩
+      have hE : |∑ j ∈ Finset.range l, xOf α ^ (l - j) * (phaseVec α (2 * k) j - ε j)| ≤
+          K * ∑ j ∈ Finset.range l, (1 + K) ^ j * r := by
+        refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+        rw [Finset.mul_sum]
+        refine Finset.sum_le_sum fun j hj => ?_
+        have hj' := Finset.mem_range.1 hj
+        rw [abs_mul, abs_of_pos (pow_pos hx0 _)]
+        exact mul_le_mul (hKx _ (by omega)) (ih j hj' (by omega)).2 (abs_nonneg _) hK0
+      set T := Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+        Int.fract (-∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * ε j) +
+        ∑ j ∈ Finset.range l, xOf α ^ (l - j) * (phaseVec α (2 * k) j - ε j) with hT
+      have hTl : |T| < (1 + K) ^ l * r := by
+        rw [← hgeo]
+        have hs : |Int.fract ((k : ℝ) * (α / 2 * xOf α ^ l)) -
+            Int.fract (-∑ j ∈ Finset.range (l + 1), xOf α ^ (l - j) * ε j)| < r := by
+          rw [abs_lt]; constructor <;> linarith [hbox.1, hbox.2]
+        exact (abs_add_le _ _).trans_lt (by linarith)
+      obtain ⟨hodd, heq⟩ := fresh_step α k l ε ha hb (by linarith)
+      exact ⟨hodd, by rw [heq, abs_neg]; exact hTl.le⟩
+    · -- top step
+      subst hl
+      have hfresh : ∀ i : ℕ, 1 ≤ i → i < P.natDegree → (wy α)^[i] (2 * k) % 2 = 1 := by
+        intro i hi1 hid
+        have h' := (ih (i - 1) (by omega) (by omega)).1
+        rwa [Nat.sub_add_cancel hi1] at h'
+      have hE : |(synDiv P (xOf α) 0 + 2 * P.coeff 0) * (phaseVec α (2 * k) 0 - ε 0) +
+          ∑ j ∈ Finset.Ico 1 (P.natDegree - 1),
+            synDiv P (xOf α) j * (phaseVec α (2 * k) j - ε j)| ≤
+          K * ∑ j ∈ Finset.range (P.natDegree - 1), (1 + K) ^ j * r := by
+        rw [Finset.sum_range_eq_add_Ico _ (by omega), mul_add, Finset.mul_sum]
+        refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
+        · rw [abs_mul]
+          exact mul_le_mul hKq0 (ih 0 (by omega) (by omega)).2 (abs_nonneg _) hK0
+        · refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j hj => ?_)
+          have hj' := Finset.mem_Ico.1 hj
+          rw [abs_mul]
+          exact mul_le_mul (hKq j (by omega)) (ih j (by omega) (by omega)).2 (abs_nonneg _) hK0
+      have hEl := hgeo (P.natDegree - 1)
+      obtain ⟨hodd, heq⟩ := top_step hα hP hd hroot hu hfresh hε.2.1 hb (by linarith)
+      refine ⟨by rwa [Nat.sub_add_cancel (by omega)], ?_⟩
+      rw [heq, abs_neg]; linarith
+    · -- standard-row step
+      obtain ⟨i, rfl⟩ : ∃ i, l = i + (P.natDegree - 1) := ⟨l - (P.natDegree - 1), by omega⟩
+      have hi : 1 ≤ i := by omega
+      have hodd : ∀ j < P.natDegree, (wy α)^[i + j] (2 * k) % 2 = 1 := by
+        intro j hj
+        have h' := (ih (i + j - 1) (by omega) (by omega)).1
+        rwa [Nat.sub_add_cancel (by omega)] at h'
+      have hR := hε.2.2 i hi (by omega)
+      have hE : |∑ j ∈ Finset.range (P.natDegree - 1),
+          synDiv P (xOf α) j * (phaseVec α (2 * k) (i + j) - ε (i + j))| ≤
+          K * ∑ j ∈ Finset.range (i + (P.natDegree - 1)), (1 + K) ^ j * r := by
+        refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+        have h1 : ∑ j ∈ Finset.range (P.natDegree - 1),
+            |synDiv P (xOf α) j * (phaseVec α (2 * k) (i + j) - ε (i + j))| ≤
+            ∑ j ∈ Finset.range (P.natDegree - 1), K * ((1 + K) ^ (i + j) * r) := by
+          refine Finset.sum_le_sum fun j hj => ?_
+          have hj' := Finset.mem_range.1 hj
+          rw [abs_mul]
+          exact mul_le_mul (hKq j (by omega)) (ih (i + j) (by omega) (by omega)).2
+            (abs_nonneg _) hK0
+        refine h1.trans ?_
+        rw [← Finset.mul_sum]
+        refine mul_le_mul_of_nonneg_left ?_ hK0
+        have h2 := Finset.sum_Ico_eq_sum_range (fun j => (1 + K) ^ j * r) i
+          (i + (P.natDegree - 1))
+        rw [show i + (P.natDegree - 1) - i = P.natDegree - 1 by omega] at h2
+        rw [← h2]
+        exact Finset.sum_le_sum_of_subset_of_nonneg
+          (fun j hj => Finset.mem_range.2 (Finset.mem_Ico.1 hj).2)
+          (fun j _ _ => by positivity)
+      have hEl := hgeo (i + (P.natDegree - 1))
+      obtain ⟨hodd', heq⟩ := std_step hP hd hroot hi hodd hR hb (by linarith)
+      refine ⟨by rwa [show i + (P.natDegree - 1) + 1 = i + P.natDegree by omega], ?_⟩
+      rw [heq, abs_neg]; linarith
+  intro j hj
+  obtain ⟨hj1, hjn⟩ := Finset.mem_Icc.1 hj
+  have h' := (claim (j - 1) (by omega)).1
+  rwa [Nat.sub_add_cancel hj1] at h'
 
 end Openness
 
@@ -573,7 +841,7 @@ end Openness
 
 section Headline
 
-/-- **(assembled from `exists_runBox` and `linearIndependent_freqVec`, 88%; conditional on
+/-- **(proved; conditional on
 Weyl).**  `RunCriterion` (the sufficiency half of
 `wythoff-classify`'s zonotope criterion, exactly as stated in `WythoffPisot`) follows from
 `WeylEquidistributionMulti`.  Paper proof: given a solution `ε*` of length `n ≥ d`,
@@ -598,7 +866,7 @@ theorem runCriterion_of_weyl (hW : WeylEquidistributionMulti) : RunCriterion := 
   refine ⟨show (0 : ℤ) < 2 * (k : ℤ) by omega, show 2 * (k : ℤ) % 2 = 0 by omega, hbox k ?_⟩
   simpa only [Int.cast_natCast] using hk
 
-/-- **(assembled, 88%; Theorem N3, headline, conditional on Weyl alone).**  Let `α > 2` with
+/-- **(proved; Theorem N3, headline, conditional on Weyl alone).**  Let `α > 2` with
 `x = xOf α` a root of a monic irreducible `P ∈ ℤ[t]` of degree `≥ 2` having another complex root
 `z ≠ x` with `‖z‖ ≤ 1`.  Then, under `WeylEquidistributionMulti`, for every `n` infinitely many
 positive even `u` are followed by `n` odd iterates.  Paper proof: `n3_infinite_runs` with
