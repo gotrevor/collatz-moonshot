@@ -696,7 +696,12 @@ theorem gPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
 theorem densityG_eq (hr : 2 ≤ r) :
     (alphaG m r - 2) / (2 * alphaG m r * betaG m r ^ m) =
       (r - gRoot m r ^ m) / (2 ^ (m + 1) * r * gRoot m r ^ m) := by
-  sorry
+  obtain ⟨hx1, -, -⟩ := gRoot_spec (m := m) hr
+  have hxm : 0 < gRoot m r ^ m := pow_pos (by linarith) m
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  rw [alphaG_eq hr, betaG, mul_pow]
+  field_simp
+  ring
 
 /-- **(ratified, Theorem G (4), density, conditional).**  If `deg x = m + 1` (stated as the
 `ℚ`-independence of `1, x, …, xᵐ`; `x^{m+1} − 2rx + r` is Eisenstein at any `p ∥ r`, and
