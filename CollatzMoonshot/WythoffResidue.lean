@@ -438,6 +438,73 @@ theorem residueTransitive_of_translate [NeZero M] {f : ℤ → ℤ} (g : ZMod M 
 
 end Translate
 
+/-! ## Lift helpers -/
+
+section LiftHelpers
+
+variable (s : Side) {p q : ℕ}
+
+theorem isCoprime_of_odd {a : ℤ} (ha : Odd a) : IsCoprime a 2 := by
+  obtain ⟨k, rfl⟩ := ha; exact ⟨1, -k, by ring⟩
+
+/-- Chinese remainder in the form used for routing: `n + a t` can be moved into any class
+mod `b`. -/
+theorem exists_crt {a b : ℤ} (hab : IsCoprime a b) (n z : ℤ) : ∃ t, b ∣ n + a * t - z := by
+  obtain ⟨u, v, huv⟩ := hab
+  exact ⟨u * (z - n), ⟨(n - z) * v, by linear_combination (z - n) * huv⟩⟩
+
+/-- `W` along a scaled piece step. -/
+theorem wythoff_add_scaled (hq : 0 < q) (hqp : q < p) (n K v : ℤ) :
+    wythoff s p q (n + 2 * K * (branchQ p q n * v)) = wythoff s p q n + K * (p * v) := by
+  rw [show n + 2 * K * (branchQ p q n * v) = n + 2 * branchQ p q n * (K * v) by ring,
+    wythoff_add_piece s hq hqp]
+  ring
+
+/-- `W⁻¹` along a scaled piece step. -/
+theorem wythoffInv_add_scaled (hq : 0 < q) (hqp : q < p) (m K v : ℤ) :
+    wythoffInv s p q (m + p * (K * v)) =
+      wythoffInv s p q m + K * (2 * branchQ p q (wythoffInv s p q m) * v) := by
+  rw [wythoffInv_add_piece s hq hqp]; ring
+
+theorem coe_wythoffPerm (hq : 0 < q) (hqp : q < p) :
+    ⇑(wythoffPerm s hq hqp) = wythoff s p q := rfl
+
+theorem coe_wythoffPerm_symm (hq : 0 < q) (hqp : q < p) :
+    ⇑(wythoffPerm s hq hqp).symm = wythoffInv s p q := rfl
+
+/-- Transitivity transfers between `W` and `W⁻¹`. -/
+theorem residueTransitive_inv_iff (hq : 0 < q) (hqp : q < p) (M : ℕ) :
+    ResidueTransitive (wythoffInv s p q) M ↔ ResidueTransitive (wythoff s p q) M := by
+  rw [← coe_wythoffPerm_symm s hq hqp, ← coe_wythoffPerm s hq hqp]
+  exact residueTransitive_symm_iff _ M
+
+/-- An odd prime power is coprime to the modulus part it does not divide. -/
+theorem isCoprime_pow_of_prime {ℓ M' : ℕ} (hℓ : ℓ.Prime) (hℓM : ¬ ℓ ∣ M') (k : ℕ) :
+    IsCoprime ((ℓ : ℤ) ^ k) M' :=
+  (Nat.isCoprime_iff_coprime.2 ((Nat.Prime.coprime_iff_not_dvd hℓ).2 hℓM)).pow_left
+
+theorem pow_mul_split (ℓ M' : ℤ) {j e : ℕ} (hj : j ≤ e) : ℓ ^ e * M' = ℓ ^ j * M' * ℓ ^ (e - j) := by
+  rw [mul_right_comm, ← pow_add, Nat.add_sub_cancel' hj]
+
+theorem odd_intCast {p : ℕ} (hp : Odd p) : Odd (p : ℤ) := by
+  obtain ⟨k, rfl⟩ := hp; exact ⟨k, by push_cast; ring⟩
+
+/-- An odd prime `ℓ ∣ p` is coprime to `2`, `q` and `R`, hence to every `2Q`. -/
+theorem isCoprime_two_branchQ_of_dvd_p (hcop : Nat.Coprime p q) (hqp : q < p) {ℓ : ℕ}
+    (hℓ : ℓ.Prime) (hℓ2 : ℓ ≠ 2) (hℓp : ℓ ∣ p) (n : ℤ) :
+    IsCoprime (2 * branchQ p q n) (ℓ : ℤ) := by
+  have h2 : IsCoprime (2 : ℤ) ℓ := by
+    have := Nat.isCoprime_iff_coprime.2 ((Nat.coprime_primes Nat.prime_two hℓ).2 hℓ2.symm)
+    simpa using this
+  have hq : IsCoprime (ℓ : ℤ) q := Nat.isCoprime_iff_coprime.2 (Nat.Coprime.coprime_dvd_left hℓp hcop)
+  have hR : IsCoprime (ℓ : ℤ) ((p : ℤ) - q) := by
+    have := Nat.isCoprime_iff_coprime.2
+      (Nat.Coprime.coprime_dvd_left hℓp ((Nat.coprime_self_sub_right hqp.le).2 hcop))
+    rwa [Nat.cast_sub hqp.le] at this
+  exact h2.mul_left (isCoprime_branchQ hq hR n).symm
+
+end LiftHelpers
+
 /-! ## C. Odd `p`, and `U` -/
 
 section OddP
@@ -533,7 +600,22 @@ theorem residueTransitive_lift_dvd_p (hcop : Nat.Coprime p q) (hq : 0 < q) (hqp 
     {ℓ : ℕ} (hℓ : ℓ.Prime) (hℓ2 : ℓ ≠ 2) (hℓp : ℓ ∣ p) {M' : ℕ} (hM' : 0 < M')
     (hℓM : ¬ ℓ ∣ M') (h : ResidueTransitive (wythoff s p q) M') (e : ℕ) :
     ResidueTransitive (wythoff s p q) (ℓ ^ e * M') := by
-  sorry
+  have hQ := isCoprime_two_branchQ_of_dvd_p hcop hqp hℓ hℓ2 hℓp
+  obtain ⟨p₁, hp₁⟩ := hℓp
+  rw [← residueTransitive_inv_iff s hq hqp]
+  refine residueTransitive_of_classIn ((residueTransitive_inv_iff s hq hqp M').2 h)
+    (fun C hC n hn => ?_) (fun C hC hne => ?_)
+  · refine hn.drop hC (A := p) (B := 2 * branchQ p q (wythoffInv s p q n)) (N := ℓ ^ e)
+      (fun v => ?_) (by push_cast; ring) (hQ _).pow_right
+    rw [show n + (M' : ℤ) * (p * v) = n + p * (M' * v) by ring]
+    exact wythoffInv_add_scaled s hq hqp n M' v
+  · refine exists_classIn_of_step (ℓ := ℓ) (e := e) (by push_cast; ring)
+      (fun j hj x hx => ⟨_, hx.drop hC (A := p₁) (B := 2 * branchQ p q (wythoffInv s p q x))
+        (N := ℓ ^ (e - j)) (fun v => ?_) (by push_cast; exact pow_mul_split _ _ hj.le)
+        (hQ _).pow_right⟩) hne
+    rw [show x + (ℓ : ℤ) ^ (j + 1) * M' * (p₁ * v) = x + p * (ℓ ^ j * M' * v) by
+      rw [hp₁]; push_cast; ring]
+    exact wythoffInv_add_scaled s hq hqp x _ v
 
 /-- **(ratified).**  **Lemma A** (odd primes of `qR`): lift `M' → ℓ^e M'` for an odd prime
 `ℓ ∣ qR`, `ℓ ∤ M'`; `W` expands `ℓ`-adically on one branch, routed through parity.  Paper proof:
@@ -549,7 +631,18 @@ drops the `2`-level.  Paper proof: note §3 Lemma A₂. -/
 theorem residueTransitive_lift_two_of_odd (hp : Odd p) (hcop : Nat.Coprime p q) (hq : 0 < q)
     (hqp : q < p) {M' : ℕ} (hM' : Odd M') (h : ResidueTransitive (wythoff s p q) M') (e : ℕ) :
     ResidueTransitive (wythoff s p q) (2 ^ e * M') := by
-  sorry
+  have hp2 : IsCoprime (p : ℤ) 2 := isCoprime_of_odd (odd_intCast hp)
+  refine residueTransitive_of_classIn h (fun C hC n hn => ?_) (fun C hC hne => ?_)
+  · refine hn.drop hC (A := 2 * branchQ p q n) (B := p) (N := 2 ^ e) (fun v => ?_)
+      (by push_cast; ring) hp2.pow_right
+    rw [show n + (M' : ℤ) * (2 * branchQ p q n * v) = n + 2 * M' * (branchQ p q n * v) by ring]
+    exact wythoff_add_scaled s hq hqp n M' v
+  · refine exists_classIn_of_step (ℓ := 2) (e := e) (by push_cast; ring)
+      (fun j hj x hx => ⟨_, hx.drop hC (A := branchQ p q x) (B := p) (N := 2 ^ (e - j))
+        (fun v => ?_) (by push_cast; exact pow_mul_split _ _ hj.le) hp2.pow_right⟩) hne
+    rw [show x + (2 : ℤ) ^ (j + 1) * M' * (branchQ p q x * v) =
+      x + 2 * (2 ^ j * M') * (branchQ p q x * v) by ring]
+    exact wythoff_add_scaled s hq hqp x _ v
 
 /-- **(ratified).**  **Theorem RT, odd `p`.**  `W_{p/q±}` is residue-transitive mod every
 `M ≥ 1`.  Paper proof: (B0) mod `M₀`, then Lemma A₂, Lemma B, Lemma A one prime at a time. -/
