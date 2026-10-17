@@ -58,7 +58,7 @@ Truth checks: `tmp/drafter-pisot/check.py` (gitignored; mpmath, exact Fractions,
 
 namespace CollatzMoonshot.WythoffPisot
 
-open CollatzMoonshot.WythoffGeneral CollatzMoonshot.WythoffAutomaton Polynomial
+open CollatzMoonshot.WythoffGeneral CollatzMoonshot.WythoffAutomaton Polynomial Filter Topology
 
 /-! ## Definitions -/
 
@@ -218,27 +218,53 @@ theorem abs_re_pow_lt_one_of_norm_le {z : ℂ} (hz : ‖z‖ ≤ 1)
   · rw [norm_pow]; exact pow_le_one₀ (norm_nonneg _) hz
   · rw [← pow_mul]; exact hru _ (by omega)
 
-/-- **(drafted, 95%; the bridge).**  A complex root `z` of a monic irreducible `P ∈ ℤ[t]` that
+/-- **(proved; the bridge).**  A complex root `z` of a monic irreducible `P ∈ ℤ[t]` that
 also has a real root `x ∈ (0, 1)` is not a root of unity (in particular `z ≠ ±1`).  Paper proof:
 `P = minpoly ℤ z` (`minpoly.eq_of_irreducible_of_monic`), so `z^m = 1` gives
 `P ∣ t^m − 1` (`minpoly.isIntegrallyClosed_dvd`), hence `x^m = 1`, but `0 < x^m < 1`. -/
 theorem pow_ne_one_of_irreducible {P : ℤ[X]} (hP : P.Monic) (hirr : Irreducible P) {x : ℝ}
     (hx0 : 0 < x) (hx1 : x < 1) (hroot : aeval x P = 0) {z : ℂ} (hz : aeval z P = 0) {m : ℕ}
     (hm : 0 < m) : z ^ m ≠ 1 := by
-  sorry
+  intro hzm
+  set PQ : ℚ[X] := P.map (algebraMap ℤ ℚ) with hPQ
+  have hirrQ : Irreducible PQ := (hP.irreducible_iff_irreducible_map_fraction_map).1 hirr
+  have hzQ : aeval z PQ = 0 := by rw [hPQ, aeval_map_algebraMap]; exact hz
+  have hxQ : aeval x PQ = 0 := by rw [hPQ, aeval_map_algebraMap]; exact hroot
+  have hmin : PQ = minpoly ℚ z := minpoly.eq_of_irreducible_of_monic hirrQ hzQ (hP.map _)
+  have hdvd : PQ ∣ X ^ m - 1 := by
+    rw [hmin]
+    exact minpoly.dvd ℚ z (by rw [map_sub, map_pow, aeval_X, map_one, hzm, sub_self])
+  obtain ⟨R, hR⟩ := hdvd
+  have h : aeval x ((X : ℚ[X]) ^ m - 1) = 0 := by rw [hR, map_mul, hxQ, zero_mul]
+  rw [map_sub, map_pow, aeval_X, map_one] at h
+  have := pow_lt_one₀ hx0.le hx1 hm.ne'
+  linarith
 
-/-- **(drafted, 97%).**  An irreducible `P ∈ ℤ[t]` of degree `≥ 2` has `P(1) ≠ 0`.  Paper
+/-- A polynomial divisible by a monic linear `D` and irreducible has degree `1`. -/
+theorem natDegree_eq_one_of_dvd {P D : ℤ[X]} (hirr : Irreducible P) (hD : D.natDegree = 1)
+    (hDm : D.Monic) (hdvd : D ∣ P) : P.natDegree = 1 := by
+  obtain ⟨R, rfl⟩ := hdvd
+  rcases hirr.isUnit_or_isUnit rfl with h | h
+  · have := natDegree_eq_zero_of_isUnit h; omega
+  · rw [hDm.natDegree_mul' (by rintro rfl; simp at h), natDegree_eq_zero_of_isUnit h, hD]
+
+/-- **(proved).**  An irreducible `P ∈ ℤ[t]` of degree `≥ 2` has `P(1) ≠ 0`.  Paper
 proof: `P(1) = 0` gives `t − 1 ∣ P` (`Polynomial.mul_divByMonic_eq_iff_isRoot`), so `P` is
 associated to `t − 1` and has degree `1`. -/
 theorem eval_one_ne_zero_of_irreducible {P : ℤ[X]} (hirr : Irreducible P)
     (hd : 2 ≤ P.natDegree) : P.eval 1 ≠ 0 := by
-  sorry
+  intro h
+  have := natDegree_eq_one_of_dvd hirr (natDegree_X_sub_C 1) (monic_X_sub_C 1)
+    (dvd_iff_isRoot.2 h)
+  omega
 
-/-- **(drafted, 97%).**  An irreducible `P ∈ ℤ[t]` of degree `≥ 2` has `a_0 = P(0) ≠ 0`.
+/-- **(proved).**  An irreducible `P ∈ ℤ[t]` of degree `≥ 2` has `a_0 = P(0) ≠ 0`.
 Paper proof: `a_0 = 0` gives `t ∣ P` (`Polynomial.X_dvd_iff`), so `P` is associated to `t`. -/
 theorem coeff_zero_ne_zero_of_irreducible {P : ℤ[X]} (hirr : Irreducible P)
     (hd : 2 ≤ P.natDegree) : P.coeff 0 ≠ 0 := by
-  sorry
+  intro h
+  have := natDegree_eq_one_of_dvd hirr natDegree_X monic_X (X_dvd_iff.2 h)
+  omega
 
 /-- **(proved).**  `q_0 ≠ 0` when `a_0 ≠ 0`.  Paper proof: `a_0 = −x q_0`
 (`coeff_zero_eq_synDiv`). -/
@@ -249,15 +275,38 @@ theorem synDiv_zero_ne_zero {P : ℤ[X]} {x : ℝ} (hroot : aeval x P = 0)
   rw [h, mul_zero, neg_zero] at this
   exact ha0 (by exact_mod_cast this)
 
-/-- **(drafted, 96%).**  For another root `z ≠ x` of `P`, `Q(z) = Σ_{k<d} q_k z^k = 0`.  Paper
+/-- `sum_coeff_mul_eq_synDiv` for a complex sequence `w` (real and imaginary parts). -/
+theorem sum_coeff_mul_eq_synDiv_complex {P : ℤ[X]} {x : ℝ} (hroot : aeval x P = 0)
+    (w : ℕ → ℂ) :
+    ∑ j ∈ Finset.range (P.natDegree + 1), (((P.coeff j : ℝ)) : ℂ) * w j =
+      ∑ k ∈ Finset.range P.natDegree, (synDiv P x k : ℂ) * (w (k + 1) - x * w k) := by
+  have hre := sum_coeff_mul_eq_synDiv hroot (fun j => (w j).re)
+  have him := sum_coeff_mul_eq_synDiv hroot (fun j => (w j).im)
+  apply Complex.ext
+  · simp only [Complex.re_sum, Complex.re_ofReal_mul, Complex.sub_re] at *
+    rw [hre]
+  · simp only [Complex.im_sum, Complex.im_ofReal_mul, Complex.sub_im] at *
+    rw [him]
+
+/-- **(proved).**  For another root `z ≠ x` of `P`, `Q(z) = Σ_{k<d} q_k z^k = 0`.  Paper
 proof: `P(z) = (z − x)Q(z)` (`sum_coeff_mul_eq_synDiv` applied to `w_j = Re(z^j)` and to
 `w_j = Im(z^j)`, recombined), and `z − x ≠ 0`. -/
 theorem sum_synDiv_mul_pow_eq_zero {P : ℤ[X]} {x : ℝ} (hroot : aeval x P = 0) {z : ℂ}
     (hz : aeval z P = 0) (hzx : z ≠ (x : ℂ)) :
     ∑ k ∈ Finset.range P.natDegree, (synDiv P x k : ℂ) * z ^ k = 0 := by
-  sorry
+  have h := sum_coeff_mul_eq_synDiv_complex hroot (fun j => z ^ j)
+  have key : aeval z P = (z - x) * ∑ k ∈ Finset.range P.natDegree, (synDiv P x k : ℂ) * z ^ k := by
+    rw [aeval_eq_sum_range]
+    have e1 : ∑ i ∈ Finset.range (P.natDegree + 1), P.coeff i • z ^ i =
+        ∑ j ∈ Finset.range (P.natDegree + 1), (((P.coeff j : ℝ)) : ℂ) * z ^ j :=
+      Finset.sum_congr rfl fun j _ => by rw [zsmul_eq_mul]; push_cast; rfl
+    rw [e1, h, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    ring
+  rw [key] at hz
+  exact (mul_eq_zero.1 hz).resolve_left (sub_ne_zero.2 hzx)
 
-/-- **(drafted, 96%; N3 step 1, homogeneity; assembled).**  `c_i = Re(z^i)` is homogeneous:
+/-- **(proved; N3 step 1, homogeneity).**  `c_i = Re(z^i)` is homogeneous:
 `R_i(c) = Re(z^i Q(z)) = 0` (the `q_k` are real). -/
 theorem stdRow_re_pow {P : ℤ[X]} {x : ℝ} (hroot : aeval x P = 0) {z : ℂ}
     (hz : aeval z P = 0) (hzx : z ≠ (x : ℂ)) (i : ℕ) :
@@ -336,7 +385,7 @@ theorem n3_boundary (hd : 1 ≤ d) (a0 : ℤ) {γ : ℝ} (hγ0 : 0 < γ) (hγ1 :
     · exact ⟨m, by rw [h]; ring⟩
     · exact ⟨m + a0, by rw [h]; push_cast; ring⟩
 
-/-- **(drafted, 96%; N3 step 3, the perturbation).**  Let `e` have `e_0 ∈ [0, 1/2]`,
+/-- **(proved; N3 step 3, the perturbation).**  Let `e` have `e_0 ∈ [0, 1/2]`,
 `e_i ∈ (0, 1/2)` for `i ≥ 1`, an integral top row and integral standard rows `R_i`, `i ≥ 1`.
 If `b` is homogeneous on indices `≥ 1` (`R_i(b) = 0` for `i ≥ 1`) with
 `S_b = Σ_{k=1}^{d−1} q_k b_k ≠ 0`, the run system has a solution of every length `n`.  Paper
@@ -350,9 +399,66 @@ theorem perturb (hd : 1 ≤ d) (a0 : ℤ) {e : ℕ → ℝ} (he0 : 0 ≤ e 0 ∧
     (hrow : ∀ i, 1 ≤ i → ∃ m : ℤ, stdRow q d e i = m) {b : ℕ → ℝ}
     (hb : ∀ i, 1 ≤ i → stdRow q d b i = 0) (hSb : ∑ k ∈ Finset.Ico 1 d, q k * b k ≠ 0)
     (n : ℕ) : ∃ ε : ℕ → ℝ, RunSystem q d a0 n ε := by
-  sorry
+  have _ : 1 ≤ d := hd  -- `d ≥ 1` is part of the setting; the construction does not need it
+  set Sb := ∑ k ∈ Finset.Ico 1 d, q k * b k with hSbdef
+  set σ : ℝ := if e 0 ≤ 1 / 4 then 1 else -1 with hσ
+  set qt : ℝ := q 0 + 2 * a0 with hqt
+  let ε : ℝ → ℕ → ℝ := fun δ i =>
+    if i = 0 then e 0 + σ * δ else e i + (-σ * qt * δ / Sb) * b i
+  -- the rows hold for every δ
+  have hrows : ∀ δ : ℝ, (∃ m : ℤ, topRow q d a0 (ε δ) = m) ∧
+      ∀ i, 1 ≤ i → i + d ≤ n → ∃ m : ℤ, stdRow q d (ε δ) i = m := by
+    intro δ
+    refine ⟨?_, fun i hi _ => ?_⟩
+    · obtain ⟨m, hm⟩ := htop
+      refine ⟨m, ?_⟩
+      rw [← hm]
+      unfold topRow
+      have hsum : ∑ k ∈ Finset.Ico 1 d, q k * ε δ k =
+          ∑ k ∈ Finset.Ico 1 d, q k * e k + (-σ * qt * δ / Sb) * Sb := by
+        rw [hSbdef, Finset.mul_sum, ← Finset.sum_add_distrib]
+        refine Finset.sum_congr rfl fun k hk => ?_
+        have hk0 : k ≠ 0 := by have := (Finset.mem_Ico.1 hk).1; omega
+        simp only [ε, if_neg hk0]
+        ring
+      rw [hsum]
+      simp only [ε, if_pos rfl]
+      rw [div_mul_cancel₀ _ hSb, ← hqt]
+      ring
+    · obtain ⟨m, hm⟩ := hrow i hi
+      refine ⟨m, ?_⟩
+      have heq : stdRow q d (ε δ) i =
+          stdRow q d (fun j => e j + (-σ * qt * δ / Sb) * b j) i := by
+        unfold stdRow
+        refine Finset.sum_congr rfl fun k _ => ?_
+        have : i + k ≠ 0 := by omega
+        simp only [ε, if_neg this]
+      rw [heq, stdRow_add_smul, hb i hi, mul_zero, add_zero, hm]
+  -- the box holds eventually as δ → 0⁺
+  have hbox : ∀ᶠ δ in 𝓝[>] (0 : ℝ), ∀ i ∈ Finset.range n, 0 < ε δ i ∧ ε δ i < 1 / 2 := by
+    rw [Filter.eventually_all_finset]
+    intro i _
+    rcases Nat.eq_zero_or_pos i with rfl | hi
+    · have h4 : ∀ᶠ δ in 𝓝[>] (0 : ℝ), δ ∈ Set.Ioo (0 : ℝ) (1 / 4) :=
+        Ioo_mem_nhdsGT (by norm_num)
+      filter_upwards [h4] with δ hδ
+      obtain ⟨hδ0, hδ1⟩ := hδ
+      simp only [ε, if_pos rfl, hσ]
+      split_ifs with h
+      · constructor <;> linarith
+      · rw [not_le] at h; constructor <;> linarith
+    · have hcont : Tendsto (fun δ : ℝ => e i + (-σ * qt * δ / Sb) * b i) (𝓝 0) (𝓝 (e i)) := by
+        have : Continuous (fun δ : ℝ => e i + (-σ * qt * δ / Sb) * b i) := by fun_prop
+        simpa using this.tendsto 0
+      have hev := (hcont.mono_left (nhdsWithin_le_nhds (s := Set.Ioi 0))).eventually
+        (Ioo_mem_nhds (he i hi).1 (he i hi).2)
+      filter_upwards [hev] with δ hδ
+      simp only [ε, if_neg (Nat.pos_iff_ne_zero.1 hi)]
+      exact hδ
+  obtain ⟨δ, hδ⟩ := hbox.exists
+  exact ⟨ε δ, fun i hi => hδ i (Finset.mem_range.2 hi), (hrows δ).1, (hrows δ).2⟩
 
-/-- **(drafted, 96%; the N3 core; assembled).**  For real `q` with `q_0 ≠ 0`, `γ ∈ (0, 1/2)` with
+/-- **(proved; the N3 core).**  For real `q` with `q_0 ≠ 0`, `γ ∈ (0, 1/2)` with
 `Q(1)γ ∈ ℤ`, and a homogeneous `c` with `c_0 = 1` and `|c_i| < 1` for `i ≥ 1`, the run system (any
 integer `a_0`) has a solution of every length.  Paper proof: `n3_boundary`, then `perturb` with
 `b = c`: `R_i(c) = 0`, and `S_c = R_0(c) − q_0c_0 = −q_0 ≠ 0`. -/
@@ -376,7 +482,7 @@ end Core
 
 section TheoremN3
 
-/-- **(drafted, 93%; Theorem N3, automaton form; assembled).**  Let `x ∈ (1/2, 1)` be a root of a
+/-- **(proved; Theorem N3, automaton form).**  Let `x ∈ (1/2, 1)` be a root of a
 monic irreducible `P ∈ ℤ[t]` of degree `d ≥ 2` with another complex root `z ≠ x`, `‖z‖ ≤ 1`.  Then
 for every `n` the run system with `q = synDiv P x` and `a_0 = P.coeff 0` has a solution in
 `(0, 1/2)^n`.  Paper proof: `n3_core` with `γ = fixGamma P x` (`fixGamma_mem`,
@@ -429,7 +535,7 @@ theorem xOf_mem {α : ℝ} (hα : 2 < α) : 1 / 2 < xOf α ∧ xOf α < 1 := by
   · rw [lt_div_iff₀ (by norm_num), lt_div_iff₀ h]; linarith
   · rw [div_lt_iff₀ (by norm_num), div_lt_iff₀ h]; linarith
 
-/-- **(drafted, 92%; Theorem N3, headline, conditional on `RunCriterion`; assembled).**  Let `α > 2`
+/-- **(proved; Theorem N3, headline, conditional on `RunCriterion`).**  Let `α > 2`
 with `x = xOf α` a root of a monic irreducible `P ∈ ℤ[t]` of degree `≥ 2` having another complex
 root `z ≠ x` with `‖z‖ ≤ 1`.  Then for every `n` infinitely many positive even `u` are followed by
 `n` odd iterates: `W_α` does not have bounded runs (so it is not solvable, `wythoff-classify`
@@ -459,14 +565,30 @@ section LemmaB2
 
 variable {P : ℤ[X]}
 
-/-- **(drafted, 98%; Lemma B2, parity).**  For monic `P` of degree `d`, `2^d P(1/2)` is an odd
+/-- **(proved; Lemma B2, parity).**  For monic `P` of degree `d`, `2^d P(1/2)` is an odd
 integer.  Paper proof: `2^d P(1/2) = Σ_{j ≤ d} a_j 2^{d−j}`; the `j = d` term is `1`
 (`Monic.coeff_natDegree`), every other term is even. -/
 theorem two_pow_mul_aeval_half_odd (hP : P.Monic) :
     ∃ m : ℤ, Odd m ∧ (2 : ℝ) ^ P.natDegree * aeval (1 / 2 : ℝ) P = m := by
-  sorry
+  set d := P.natDegree
+  refine ⟨2 * ∑ j ∈ Finset.range d, P.coeff j * 2 ^ (d - j - 1) + 1, odd_two_mul_add_one _, ?_⟩
+  rw [aeval_eq_sum_range, Finset.sum_range_succ, mul_add, Finset.mul_sum]
+  have hlast : (2 : ℝ) ^ d * (P.coeff d • (1 / 2 : ℝ) ^ d) = 1 := by
+    rw [hP.coeff_natDegree, one_smul, ← mul_pow]; norm_num
+  rw [hlast]
+  push_cast
+  rw [Finset.mul_sum]
+  congr 1
+  refine Finset.sum_congr rfl fun j hj => ?_
+  have hj : j < d := Finset.mem_range.1 hj
+  rw [zsmul_eq_mul]
+  have h2 : (2 : ℝ) ^ d = 2 ^ (d - j - 1) * 2 * 2 ^ j := by
+    rw [← pow_succ, ← pow_add]; congr 1; omega
+  have h3 : (2 : ℝ) ^ j * (1 / 2) ^ j = 1 := by rw [← mul_pow]; norm_num
+  rw [h2]
+  linear_combination (2 ^ (d - j - 1) * 2 * (P.coeff j : ℝ)) * h3
 
-/-- **(drafted, 98%; Lemma B2, size; assembled).**  `|P(1/2)| ≥ 2^{−d}` for monic `P` of degree `d`.
+/-- **(proved; Lemma B2, size).**  `|P(1/2)| ≥ 2^{−d}` for monic `P` of degree `d`.
 Paper proof: `two_pow_mul_aeval_half_odd`; an odd integer has `|m| ≥ 1`. -/
 theorem abs_aeval_half_ge (hP : P.Monic) :
     (1 / 2 : ℝ) ^ P.natDegree ≤ |aeval (1 / 2 : ℝ) P| := by
@@ -498,8 +620,8 @@ hypotheses, a run bound `J` with return slope `c_J = x^{J+1}/(2x − 1) > 1` for
 `2·3^{d−1}|a_0|·x^{J+1} > 1`, i.e. `(J + 1)·log(1/x) < log(2·3^{d−1}|a_0|)`.  (With `J ≥ d − 1`
 and `x^d ≥ x^{J+1} > 2x − 1` one gets `x < x_d*`, the root of `t^d = 2t − 1` in `(1/2, 1)` for
 `d ≥ 3`, hence the research note's `J + 1 < log(2·3^{d−1}|a_0|)/log(1/x_d*)`.)  Paper proof:
-`x^{J+1} > 2x − 1 > 1/(2·3^{d−1}|a_0|)` by `two_mul_sub_one_gt`; multiply out, with `a_0 ≠ 0` because
-otherwise `0` would be another root with `‖0‖ ≤ 1`. -/
+`x^{J+1} > 2x − 1 > 1/(2·3^{d−1}|a_0|)` by `two_mul_sub_one_gt`; multiply out, with `a_0 ≠ 0`
+because otherwise `0` would be another root with `‖0‖ ≤ 1`. -/
 theorem run_bound_B2 (hP : P.Monic) (hd : 2 ≤ P.natDegree) {x : ℝ} (hx1 : 1 / 2 < x)
     (hx2 : x < 1) (hroot : aeval x P = 0)
     (hconj : ∀ z ∈ (P.map (Int.castRingHom ℂ)).roots.erase (x : ℂ), 1 < ‖z‖) {J : ℕ}
