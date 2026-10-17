@@ -2055,3 +2055,45 @@ Reports: `wythoff-2adic.md`, `wythoff-solvable.md`.  Notation: `x = α/2`, `y = 
   20 cubic members show 0 failures (Ren checked `A³ = 3A² − 1`, `α ≈ 5.7588`: `W³(n) = 3W²(n) − n`
   on 7,503 even-even-even points, 0 failures); eight cubics violating the condition fail.  None of
   the 20 is fully solved: the first return to the evens fails monotonicity at about 12.5%.
+
+## 61. Which Wythoff members are solvable: algebraic integers, an automaton, and the G line as the minimal class (2026-10-16, Opus agent; Ren checked in part)
+
+Report: `wythoff-classify.md`.  Here `x = min(α, β)/2`, the slope of the descending branch (`β/2`
+for `α > 2`, as in Theorem G).  "Solvable" means Lemma P's hypotheses hold with `S` = evens: odd
+runs after an even point are bounded and the first return to the evens increases.  In Lean on
+main (`daf38cf`): Lemma P, Theorems G, K, Y and the golden member (§60, `docs/notes`).
+
+* **Solvable ⇒ `x` is an algebraic integer (Theorem A, 95%).**  For `i ≥ 2`, step `i` of a run is
+  deterministic exactly when `x` is integral of degree `≤ i`.  Otherwise, by the fresh-digit lemma
+  of §60, the step continues with probability `½`, or `(N₀ ± 1)/(2N₀)` with `N₀` odd `≥ 3` when `x`
+  is 2-integral but not integral; never below `1/3`, so runs of every length have positive
+  density.  Transcendental `α` included.  So §60's CONJ 75% is now a theorem, and no 2-integral
+  non-integral `x` is solvable.  Ren re-ran `thmA.py`: identical (`4 + 2√3` and `2√2` step ratios
+  inside `[1/3, 2/3]` and `[3/7, 4/7]`; G(2,2) and Y have no runs past their bound).
+* **The run as an automaton (Theorem N, 97%).**  For algebraic-integer `x` with minimal polynomial
+  `P`, `Q = P/(t − x)`, a run's continuation is decided by the parity of `⌊Φ(g)⌋`, where `Φ` is
+  linear in the free phases with the coefficients of `Q`: the other conjugates drive the run.
+  0 mismatches against exact `W` on 70,000 runs (Ren re-ran `validate.py`: identical).
+* **The G line is the minimal-run class (Theorem O, 95%).**  A run never reaches length `d`
+  (`d = deg x`) iff `P = t^d − 2rt + r`.  **Theorem Q (92%):** the only solvable irrational
+  quadratics are Theorem F's; `3 + √5` is the cycle boundary.  **Proposition F (93%):** if a
+  periodic even-digit sequence of `Q` is reachable through the first step, runs are unbounded; the
+  period-1 case is an explicit inequality in `Q(1)`, `Q(0)`, `2x − 1`, which certifies 91% of the
+  unbounded cubics of height `≤ 8` and never fires on a bounded member.  CONJ (75%): bounded runs
+  need every other conjugate outside the unit disk (0 of 2,985 roots with a conjugate inside are
+  bounded).
+* **Scans.**  Exhaustive cubics to height 100, quartics to 25, quintics to 10, sextics to 5, plus
+  random samples (cubic height 1000, quartic 100) and families with `x → ½`: about 7 million
+  roots.  Survivors are exactly the G line, Y, their mirrors and the multinacci boundary; the G
+  members predicted outside every scanned range (`G(2, 60)`, `G(4, 40)`, `G(9, 2)`) pass exact
+  checks to `10⁵`.  CONJ 60%: the solvable set is exactly these; CONJ 75%: the sporadic set is
+  finite.
+* **Y's mirror (92%).**  No finite orbit; every orbit tends to `∞` both ways; minima are the odd
+  `y` with four even predecessors, at Y's density (786,810 vs `dX = 786,815.6` at `2·10⁶`).
+* **A 7-cycle member (Ren checked).**  For `x³ − x² + 2x − 1 = 0` (`α ≈ 8.1592`),
+  `x⁷ = (2x − 1)²`, so the word `E O E O⁴` has composite slope `x⁷/(2x − 1)² = 1`, and `W⁷(n) = n`
+  on it: 9.4% of evens lie on 7-cycles.  Ren's independent check: `x⁷ − (2x − 1)² = 0` to 90
+  digits, and `W⁷(n) = n` on all 9,427 hits among the first `10⁵` evens.
+* **For `U`.**  `x = 3/4` takes a fresh 2-adic digit at every step, so no identity-potential
+  classification of `U` exists for any `S`.  That rules out one method only; under 1% that this
+  moves (a).
