@@ -2337,3 +2337,46 @@ Report: `wythoff-quintic.md`.  The §65/§66 method at degree 5: `N = 32P(½)` o
 * **Status.**  Through degree 4 the solvable set is settled (§65, §66); at degree 5 the only gap
   is `51 ≤ |a₀| < 1,200`, where no non-G member is known.  CONJ C′ stays 85%.  For `U`: nothing
   new.  Under 1% that this moves (a).
+
+## 68. The quintic gap shrinks to 55 ≤ |a₀| ≤ 599 (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-quintic-gap.md`.  Notation as in §67.
+
+* **Computed (78% for the rung end to end, 85% for the enumeration).**  Every quintic member off the G
+  line with `600 ≤ |a₀| ≤ 1,199` or `|a₀| ∈ {51, 52, 53, 54}` is unsolvable.  The open range is now
+  `55 ≤ |a₀| ≤ 599`, where no non-G member is known.
+* **Proof shape.**  One bounded-interval tree rung (`effective5.py 600 1199 --nmax 4`, both signs, every
+  odd `|N| ≤ 79`, 79 jobs) fails only on 278,927 explicit level-4 boxes.  Level 4 is where the class
+  count bottoms out (level 3: 44,717; 4: 7,370; 5: 44,704; 6: 362,063 on the heaviest chunk), which is
+  why §67's `--nmax 6` rung at 600 never finished.  The boxes hold 387,985 members, none on the G line.
+  Each member gets two certificates: the AP/SG lemma pipeline (leaving 150) and the automaton
+  witnesses (leaving 911), with the two leftover sets disjoint; all 1,061 leftovers get explicit
+  infinite feasible sequences (`cert5`, 80 digits, 0 open).  At the bottom, complete enumeration of
+  `|a₀| = 51..54` (53,229,335 candidates) leaves only G(4, 51..54).
+* **One change to the tree, SGLO (paper, Ren checked).**  Interval mode now evaluates Lemma SGJ at the
+  lower end `A₀`, as uniform mode does.  With `v(|A|) = log(4μ|A|)/log Y` and
+  `b̄(|A|) = log(|A|/ℓ_lo)/log(1/X_hi)`, the cap `log Y ≤ log(1/X_hi)` makes `v − b̄` nondecreasing in
+  `log |A|`, so `v(A₀) + 1 ≥ b̄(A₀)` gives it on the whole interval.  Ren checked the code: `Y` is
+  chosen to make this an equality at `A₀`, and every rounding direction (num down, bound up, the cap)
+  shrinks `Y` and so enlarges `v`.
+* **Ren's checks.**  Re-ran `summarize.sh` (79/79 jobs, failures = dumped boxes per job, 0 non-box
+  failures, 387,985 members, 0 on G).  Re-ran three tree jobs (`|N| = 3` chunks 0 and 1, `|N| = 5`):
+  failing-box files identical.  Re-ran `memcert` on G(4, 51..1,199): 0 of 1,149 certified by either
+  pipeline (teeth).  Re-ran `cert5` on all 32 ILP members and 100 random leftovers: all certified.
+  Re-ran the `|a₀| = 51` enumeration: same 12,179,901 candidates, same pipeline counts, identical residue set (28,630).  Re-ran `targeted5v.py` on the two re-run `|N| = 3` box files: same members (589 and 0).  Independent code: Ren's `dcert` (U\*, Lemma K, SG, Lemma T;
+  60 digits) certifies 300 of 300 random box members and 100 of 100 random automaton survivors, and 16
+  of the 32 ILP members; it never certifies G(4, r) for ten `r` from 51 to 1,199.  For all 32 ILP
+  members, Ren's `ilpcheck.py` uses `cert5` only to find `(tail, R, K)`, then rebuilds the root, the
+  deflation and the tail at 120 digits and checks every entry in `(0, ½)` and every row integral: 32 of
+  32 pass, and a certificate with `K + 1` fails (teeth).
+* **Weakest steps.**  The inherited bookkeeping in `effective5.py` (85%), and float-level box-member
+  enumeration (`targeted5v.py`, 85%): a member missed at a box boundary would go uncovered silently.
+  Its controls are agreement with the older `targeted5.py` on 523 members and 200 of 200 planted
+  members recovered.
+* **Cost of the rest.**  Enumeration runs about `96m³` candidates per `|a₀| = m`, so `[55, 100]` is
+  about 2.2·10⁹ candidates (50-75 process-hours) and 150 is out of reach.  At a 300 rung the class
+  count grows from level 3 to level 4 (74,570 to 391,497 on a partial chunk), so the tree needs a
+  sharper treatment: 95-99% of level-3 branches die immediately to the SG radius, which suggests
+  narrowing `e₃` by Lemma SGJ\* before branching (untested).
+* **Status.**  CONJ C′ stays 85%; the degree-5 classification is complete outside `55 ≤ |a₀| ≤ 599`.
+  For `U`: nothing new.  Under 1% that this moves (a).
