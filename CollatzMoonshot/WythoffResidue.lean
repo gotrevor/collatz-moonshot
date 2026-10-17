@@ -202,6 +202,242 @@ theorem exists_odd_window (hqp : q < p) (y : ℤ) :
 
 end Window
 
+/-! ## Class-drop machinery
+
+A closed set that contains a whole residue class mod `K₁` contains the class of the image mod
+`K₂` whenever `f` is affine from steps of `K₁` to steps of `K₂` with a multiplier coprime to
+`M / K₂` (`ClassIn.drop`).  The same lemma, with `K₁ = K₂ = M'`, transports full fibers over
+`ZMod M'` along the edges mod `M'`; with `K₁ = ℓ^{j+1} M'`, `K₂ = ℓ^j M'` it drops the level by
+one.  Every lift (A₂, B, A, D) is an instance. -/
+
+section Machinery
+
+variable {M : ℕ}
+
+/-- `C` contains the whole class of `x` mod `K` (read in `ZMod M`). -/
+def ClassIn (C : Set (ZMod M)) (K x : ℤ) : Prop :=
+  ∀ t : ℤ, ((x + K * t : ℤ) : ZMod M) ∈ C
+
+theorem ClassIn.shift {C : Set (ZMod M)} {K x : ℤ} (h : ClassIn C K x) (k : ℤ) :
+    ClassIn C K (x + K * k) := fun t => by
+  have := h (k + t)
+  rwa [show x + K * (k + t) = x + K * k + K * t by ring] at this
+
+theorem ClassIn.of_dvd {C : Set (ZMod M)} {K x x' : ℤ} (h : ClassIn C K x) (hd : K ∣ x' - x) :
+    ClassIn C K x' := by
+  obtain ⟨k, hk⟩ := hd
+  rw [show x' = x + K * k by linarith]
+  exact h.shift k
+
+theorem ClassIn.mem {C : Set (ZMod M)} {K x : ℤ} (h : ClassIn C K x) : ((x : ℤ) : ZMod M) ∈ C := by
+  simpa using h 0
+
+/-- Coverage: `K · (B · v)` hits every multiple of `K` mod `M = K N` when `B` is coprime to
+`N`. -/
+theorem exists_cover {K B N : ℤ} (hKN : (M : ℤ) = K * N) (hB : IsCoprime B N) (t : ℤ) :
+    ∃ v, ((K * (B * v) : ℤ) : ZMod M) = ((K * t : ℤ) : ZMod M) := by
+  obtain ⟨a, b, hab⟩ := hB
+  refine ⟨a * t, (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).2 ⟨b * t, ?_⟩⟩
+  rw [hKN]
+  linear_combination (-(K * t)) * hab
+
+/-- **The drop lemma.** -/
+theorem ClassIn.drop {f : ℤ → ℤ} {C : Set (ZMod M)} (hC : ResidueClosed f M C)
+    {K₁ K₂ A B N x : ℤ} (hx : ClassIn C K₁ x)
+    (hf : ∀ v, f (x + K₁ * (A * v)) = f x + K₂ * (B * v))
+    (hKN : (M : ℤ) = K₂ * N) (hB : IsCoprime B N) : ClassIn C K₂ (f x) := by
+  intro t
+  obtain ⟨v, hv⟩ := exists_cover hKN hB t
+  have := hC _ (hx (A * v))
+  rwa [hf, Int.cast_add, hv, ← Int.cast_add] at this
+
+/-- A point of `C` is a class mod `M`. -/
+theorem classIn_self {C : Set (ZMod M)} {a : ZMod M} (ha : a ∈ C) : ClassIn C M (a.cast : ℤ) :=
+  fun t => by simpa using ha
+
+/-- Descent through the levels `ℓ^j M'`: if every class mod `ℓ^{j+1} M'` in `C` yields a class
+mod `ℓ^j M'` in `C`, a nonempty `C` contains a class mod `M'`. -/
+theorem exists_classIn_of_step {C : Set (ZMod M)} {ℓ M' : ℤ} {e : ℕ}
+    (hM : (M : ℤ) = ℓ ^ e * M')
+    (hstep : ∀ j, j < e → ∀ x, ClassIn C (ℓ ^ (j + 1) * M') x → ∃ x', ClassIn C (ℓ ^ j * M') x')
+    (hne : C.Nonempty) : ∃ x, ClassIn C M' x := by
+  obtain ⟨a, ha⟩ := hne
+  suffices h : ∀ i, i ≤ e → ∃ x, ClassIn C (ℓ ^ (e - i) * M') x by simpa using h e le_rfl
+  intro i
+  induction i with
+  | zero => intro _; exact ⟨_, by rw [Nat.sub_zero, ← hM]; exact classIn_self ha⟩
+  | succ i ih =>
+    intro hi
+    obtain ⟨x, hx⟩ := ih (by omega)
+    exact hstep (e - (i + 1)) (by omega) x (by rwa [show e - (i + 1) + 1 = e - i by omega])
+
+/-- **The lift.**  If `f` is residue-transitive mod `M'`, carries full classes mod `M'` to full
+classes mod `M'`, and every nonempty closed set mod `M` contains a full class mod `M'`, then `f`
+is residue-transitive mod `M`. -/
+theorem residueTransitive_of_classIn {f : ℤ → ℤ} {M' : ℕ} (hT : ResidueTransitive f M')
+    (hfib : ∀ C : Set (ZMod M), ResidueClosed f M C → ∀ n, ClassIn C M' n → ClassIn C M' (f n))
+    (hdrop : ∀ C : Set (ZMod M), ResidueClosed f M C → C.Nonempty → ∃ x, ClassIn C M' x) :
+    ResidueTransitive f M := by
+  rw [residueTransitive_iff_closed]
+  intro C hC
+  by_cases hne : C.Nonempty
+  · right
+    obtain ⟨x, hx⟩ := hdrop C hC hne
+    let T : Set (ZMod M') := {b | ∃ z : ℤ, (z : ZMod M') = b ∧ ClassIn C M' z}
+    have hTc : ResidueClosed f M' T := by
+      rintro n ⟨z, hz, hzC⟩
+      exact ⟨f n, rfl, hfib C hC n (hzC.of_dvd ((ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hz))⟩
+    have hxT : (x : ZMod M') ∈ T := ⟨x, rfl, hx⟩
+    rcases (residueTransitive_iff_closed f M').1 hT T hTc with h0 | h1
+    · rw [h0] at hxT; exact absurd hxT (Set.notMem_empty _)
+    · refine Set.eq_univ_of_forall fun a => ?_
+      have haT : (((a.cast : ℤ) : ZMod M') ∈ T) := by rw [h1]; trivial
+      obtain ⟨z, hz, hzC⟩ := haT
+      have := (hzC.of_dvd ((ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hz)).mem
+      simpa using this
+  · left; exact Set.not_nonempty_iff_eq_empty.mp hne
+
+end Machinery
+
+/-! ## Pieces of `W` and `W⁻¹` -/
+
+section PiecesInv
+
+variable (s : Side) {p q : ℕ}
+
+/-- The branch divisor of `n`: `q` on evens, `R = p − q` on odds. -/
+def branchQ (p q : ℕ) (n : ℤ) : ℤ := if n % 2 = 0 then (q : ℤ) else (p : ℤ) - q
+
+theorem wythoff_add_piece (hq : 0 < q) (hqp : q < p) (n m : ℤ) :
+    wythoff s p q (n + 2 * branchQ p q n * m) = wythoff s p q n + p * m := by
+  unfold branchQ
+  split_ifs with h
+  · exact wythoff_add_even s hq h m
+  · exact wythoff_add_odd s hqp (by omega) m
+
+/-- `W⁻¹(m + py) = W⁻¹ m + 2Qy` (the pieces `c + pℤ ↦ a + 2Qℤ`). -/
+theorem wythoffInv_add_piece (hq : 0 < q) (hqp : q < p) (m y : ℤ) :
+    wythoffInv s p q (m + p * y) =
+      wythoffInv s p q m + 2 * branchQ p q (wythoffInv s p q m) * y := by
+  have hm : wythoff s p q (wythoffInv s p q m) = m := wythoff_wythoffInv s hq hqp m
+  rw [← wythoffInv_wythoff s hq hqp (wythoffInv s p q m + 2 * branchQ p q _ * y),
+    wythoff_add_piece s hq hqp, hm]
+
+theorem branchQ_pos (hq : 0 < q) (hqp : q < p) (n : ℤ) : 0 < branchQ p q n := by
+  unfold branchQ; split_ifs <;> omega
+
+/-- Every odd prime power coprime to `q` and `R` is coprime to the branch divisor. -/
+theorem isCoprime_branchQ {a : ℤ} (hq : IsCoprime a q) (hR : IsCoprime a ((p : ℤ) - q))
+    (n : ℤ) : IsCoprime a (branchQ p q n) := by
+  unfold branchQ; split_ifs <;> assumption
+
+end PiecesInv
+
+/-! ## Edge realization and the translation argument (bases B0, B1) -/
+
+section Edges
+
+variable (s : Side) {p q : ℕ}
+
+/-- Every `j` of the even window is realized along `y + Lℤ` when `gcd(pL, q) = 1`. -/
+theorem exists_even_rep (hq : 0 < q) {L : ℤ} (hL : IsCoprime ((p : ℤ) * L) q) (y j : ℤ)
+    (hj : evenLo s ≤ j ∧ j < evenLo s + q) :
+    ∃ t, wythoff s p q (2 * (y + L * t)) * q = p * (y + L * t) - j := by
+  obtain ⟨a, b, hab⟩ := hL
+  refine ⟨a * (j - p * y), (wythoff_even_window s hq _ j hj).2 ⟨(p * y - j) * b, ?_⟩⟩
+  linear_combination (j - p * y) * hab
+
+/-- Every `j` of the odd window is realized along `y + Lℤ` when `gcd(pL, R) = 1`. -/
+theorem exists_odd_rep (hqp : q < p) {L : ℤ} (hL : IsCoprime ((p : ℤ) * L) ((p : ℤ) - q))
+    (y j : ℤ) (hj : oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q)) :
+    ∃ t, wythoff s p q (2 * (y + L * t) - 1) * ((p : ℤ) - q) = p * (y + L * t) - j := by
+  obtain ⟨a, b, hab⟩ := hL
+  refine ⟨a * (j - p * y), (wythoff_odd_window s hqp _ j hj).2 ⟨(p * y - j) * b, ?_⟩⟩
+  linear_combination (j - p * y) * hab
+
+variable {M : ℕ}
+
+/-- Even edge: `2y → z` mod `M` whenever `z q = py − j`, `j` in the even window. -/
+theorem residueEdge_even (hq : 0 < q) {L : ℤ} (hL : IsCoprime ((p : ℤ) * L) q)
+    (hL2 : (M : ℤ) ∣ 2 * L) (hpL : (M : ℤ) ∣ p * L) (hqu : IsUnit (q : ZMod M)) (y j : ℤ)
+    (hj : evenLo s ≤ j ∧ j < evenLo s + q) (z : ZMod M) (hz : z * q = p * y - j) :
+    ResidueEdge (wythoff s p q) M ((2 * y : ℤ) : ZMod M) z := by
+  obtain ⟨t, ht⟩ := exists_even_rep s hq hL y j hj
+  obtain ⟨c, hc⟩ := hL2
+  obtain ⟨d, hd⟩ := hpL
+  refine ⟨2 * (y + L * t), ?_, ?_⟩
+  · rw [show 2 * (y + L * t) = 2 * y + 2 * L * t by ring, hc]; simp
+  · apply hqu.mul_right_cancel
+    have := congrArg (fun w : ℤ => (w : ZMod M)) ht
+    simp only [Int.cast_mul, Int.cast_sub, Int.cast_add, Int.cast_natCast] at this
+    rw [this, hz, mul_add, ← mul_assoc, show ((p : ZMod M) * (L : ZMod M)) = ((p * L : ℤ) : ZMod M)
+      by push_cast; ring, hd]
+    simp
+
+/-- Odd edge: `2y − 1 → z` mod `M` whenever `z R = py − j`, `j` in the odd window. -/
+theorem residueEdge_odd (hqp : q < p) {L : ℤ} (hL : IsCoprime ((p : ℤ) * L) ((p : ℤ) - q))
+    (hL2 : (M : ℤ) ∣ 2 * L) (hpL : (M : ℤ) ∣ p * L) (hRu : IsUnit ((p : ZMod M) - q))
+    (y j : ℤ) (hj : oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q)) (z : ZMod M)
+    (hz : z * ((p : ZMod M) - q) = p * y - j) :
+    ResidueEdge (wythoff s p q) M ((2 * y - 1 : ℤ) : ZMod M) z := by
+  obtain ⟨t, ht⟩ := exists_odd_rep s hqp hL y j hj
+  obtain ⟨c, hc⟩ := hL2
+  obtain ⟨d, hd⟩ := hpL
+  refine ⟨2 * (y + L * t) - 1, ?_, ?_⟩
+  · rw [show 2 * (y + L * t) - 1 = 2 * y - 1 + 2 * L * t by ring, hc]; simp
+  · apply hRu.mul_right_cancel
+    have := congrArg (fun w : ℤ => (w : ZMod M)) ht
+    simp only [Int.cast_mul, Int.cast_sub, Int.cast_add, Int.cast_natCast] at this
+    rw [this, hz, mul_add, ← mul_assoc,
+      show ((p : ZMod M) * (L : ZMod M)) = ((p * L : ℤ) : ZMod M) by push_cast; ring, hd]
+    simp
+
+end Edges
+
+section Translate
+
+variable {M : ℕ}
+
+theorem affine_injective {R : Type*} [CommRing R] (a b : Rˣ) (c : R) :
+    Function.Injective (fun x : R => (↑a * x - c) * ↑b) := by
+  intro x x' h
+  have h' : (↑a * x - c) * ↑b * ↑b⁻¹ = (↑a * x' - c) * ↑b * ↑b⁻¹ := by
+    simp only at h; rw [h]
+  rw [mul_assoc, mul_assoc, Units.mul_inv, mul_one, mul_one, sub_left_inj] at h'
+  exact a.isUnit.mul_left_cancel h'
+
+/-- **The translation argument.**  If the residue digraph of `f` mod `M` contains the graph of an
+injective `g` and of `g − u` for a unit `u`, then `f` is residue-transitive mod `M`: a closed `C`
+is mapped onto itself by `g`, so `z ∈ C ⇒ z − u ∈ C`, and `u` generates `ZMod M`. -/
+theorem residueTransitive_of_translate [NeZero M] {f : ℤ → ℤ} (g : ZMod M → ZMod M)
+    (hg : Function.Injective g) (u : ZMod M) (hu : IsUnit u)
+    (h1 : ∀ x, ResidueEdge f M x (g x)) (h2 : ∀ x, ResidueEdge f M x (g x - u)) :
+    ResidueTransitive f M := by
+  rw [residueTransitive_iff_closed]
+  intro C hC
+  rw [residueClosed_iff_edge] at hC
+  by_cases hne : C.Nonempty
+  · right
+    obtain ⟨a, ha⟩ := hne
+    have hmaps : Set.MapsTo g C C := fun x hx => hC _ _ hx (h1 x)
+    have hbij := (Set.toFinite C).injOn_iff_bijOn_of_mapsTo hmaps |>.1 hg.injOn
+    have hstep : ∀ z ∈ C, z - u ∈ C := by
+      intro z hz
+      obtain ⟨x, hx, rfl⟩ := hbij.surjOn hz
+      exact hC _ _ hx (h2 x)
+    have hk : ∀ k : ℕ, a - k * u ∈ C := by
+      intro k
+      induction k with
+      | zero => simpa using ha
+      | succ k ih => have := hstep _ ih; rwa [Nat.cast_succ, add_mul, one_mul, ← sub_sub]
+    refine Set.eq_univ_of_forall fun b => ?_
+    obtain ⟨v, rfl⟩ := hu
+    have := hk ((a - b) * ↑v⁻¹).val
+    rwa [ZMod.natCast_zmod_val, mul_assoc, Units.inv_mul, mul_one, sub_sub_cancel] at this
+  · left; exact Set.not_nonempty_iff_eq_empty.mp hne
+
+end Translate
+
 /-! ## C. Odd `p`, and `U` -/
 
 section OddP
@@ -220,7 +456,76 @@ absorbing members included.  Paper proof: note §2 (B0). -/
 theorem residueTransitive_base_coprime (hp3 : 3 ≤ p) (hcop : Nat.Coprime p q) (hq : 0 < q)
     (hqp : q < p) {M₀ : ℕ} (hM₀ : Nat.Coprime M₀ (2 * p * q * (p - q))) :
     ResidueTransitive (wythoff s p q) M₀ := by
-  sorry
+  have hM0 : M₀ ≠ 0 := by
+    rintro rfl
+    have h1 := Nat.coprime_zero_left _ |>.1 hM₀
+    have : 1 ≤ q * (p - q) := Nat.mul_pos hq (by omega)
+    have : 2 * 3 ≤ 2 * p * (q * (p - q)) := by
+      have := Nat.mul_le_mul (Nat.mul_le_mul_left 2 hp3) this; simpa using this
+    rw [← mul_assoc] at this; omega
+  have : NeZero M₀ := ⟨hM0⟩
+  have hcd : ∀ d, d ∣ 2 * p * q * (p - q) → Nat.Coprime d M₀ := fun d hd =>
+    (hM₀.coprime_dvd_right hd).symm
+  have h2 := hcd 2 ⟨p * q * (p - q), by ring⟩
+  have hqM := hcd q ⟨2 * p * (p - q), by ring⟩
+  have hRM := hcd (p - q) ⟨2 * p * q, by ring⟩
+  have hRc : ((p - q : ℕ) : ℤ) = (p : ℤ) - q := by omega
+  let u2 := ZMod.unitOfCoprime 2 h2
+  let uq := ZMod.unitOfCoprime q hqM
+  let uR := ZMod.unitOfCoprime (p - q) hRM
+  have hu2 : (u2 : ZMod M₀) = 2 := by simp [u2]
+  have huq : (uq : ZMod M₀) = q := by simp [uq]
+  have huR : (uR : ZMod M₀) = (p : ZMod M₀) - q := by simp [uR, Nat.cast_sub hqp.le]
+  have hLq : IsCoprime ((p : ℤ) * (M₀ : ℤ)) q := by
+    rw [← Nat.cast_mul]; exact Nat.isCoprime_iff_coprime.2 (Nat.Coprime.mul_left hcop hqM.symm)
+  have hLR : IsCoprime ((p : ℤ) * M₀) ((p : ℤ) - q) := by
+    rw [← Nat.cast_mul, ← hRc]
+    exact Nat.isCoprime_iff_coprime.2
+      (Nat.Coprime.mul_left ((Nat.coprime_self_sub_right hqp.le).2 hcop) hRM.symm)
+  have hL2 : (M₀ : ℤ) ∣ 2 * M₀ := dvd_mul_left _ _
+  have hpL : (M₀ : ℤ) ∣ p * M₀ := dvd_mul_left _ _
+  -- `y := x / 2`
+  have hy : ∀ x : ZMod M₀, (((2 * ((x * ↑u2⁻¹ : ZMod M₀).cast : ℤ)) : ℤ) : ZMod M₀) = x := by
+    intro x
+    rw [Int.cast_mul, ZMod.intCast_zmod_cast, Int.cast_ofNat, ← hu2, mul_left_comm,
+      Units.mul_inv, mul_one]
+  have hy' : ∀ x : ZMod M₀,
+      (((2 * ((x * ↑u2⁻¹ + ↑u2⁻¹ : ZMod M₀).cast : ℤ) - 1 : ℤ)) : ZMod M₀) = x := by
+    intro x
+    rw [Int.cast_sub, Int.cast_mul, ZMod.intCast_zmod_cast, Int.cast_ofNat, Int.cast_one, ← hu2,
+      mul_add, mul_left_comm, Units.mul_inv, mul_one, add_sub_cancel_right]
+  let up := ZMod.unitOfCoprime p (hcd p ⟨2 * q * (p - q), by ring⟩)
+  have hup : (up : ZMod M₀) = p := by simp [up]
+  rcases (show 2 ≤ q ∨ 2 ≤ p - q by omega) with hq2 | hR2
+  · -- even branch: `x ↦ (p x / 2 − j) / q`
+    have edge : ∀ x : ZMod M₀, ∀ j : ℤ, evenLo s ≤ j ∧ j < evenLo s + q →
+        ResidueEdge (wythoff s p q) M₀ x ((↑(up * u2⁻¹) * x - j) * ↑uq⁻¹) := by
+      intro x j hj
+      have := residueEdge_even s hq hLq hL2 hpL (by rw [← huq]; exact uq.isUnit)
+        ((x * ↑u2⁻¹ : ZMod M₀).cast) j hj ((↑(up * u2⁻¹) * x - j) * ↑uq⁻¹)
+        (by rw [ZMod.intCast_zmod_cast, ← huq, mul_assoc _ (↑uq⁻¹ : ZMod M₀), Units.inv_mul,
+          mul_one, Units.val_mul, hup]; ring)
+      rwa [hy] at this
+    refine residueTransitive_of_translate _ (affine_injective (up * u2⁻¹) uq⁻¹ (evenLo s))
+      (↑uq⁻¹) (Units.isUnit _) (fun x => edge x _ ⟨le_rfl, by omega⟩) (fun x => ?_)
+    have := edge x (evenLo s + 1) ⟨by omega, by omega⟩
+    convert this using 1; push_cast; ring
+  · -- odd branch: `x ↦ (p (x + 1) / 2 − j) / R`
+    have edge : ∀ x : ZMod M₀, ∀ j : ℤ, oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q) →
+        ResidueEdge (wythoff s p q) M₀ x
+          ((↑(up * u2⁻¹) * x - (j - ↑(up * u2⁻¹))) * ↑uR⁻¹) := by
+      intro x j hj
+      have := residueEdge_odd s hqp hLR hL2 hpL (by rw [← huR]; exact uR.isUnit)
+        ((x * ↑u2⁻¹ + ↑u2⁻¹ : ZMod M₀).cast) j hj
+        ((↑(up * u2⁻¹) * x - (j - ↑(up * u2⁻¹))) * ↑uR⁻¹)
+        (by rw [ZMod.intCast_zmod_cast, ← huR, mul_assoc _ (↑uR⁻¹ : ZMod M₀), Units.inv_mul,
+          mul_one, Units.val_mul, hup]; ring)
+      rwa [hy'] at this
+    refine residueTransitive_of_translate _
+      (affine_injective (up * u2⁻¹) uR⁻¹ (oddLo s - ↑(up * u2⁻¹)))
+      (↑uR⁻¹) (Units.isUnit _) (fun x => edge x _ ⟨le_rfl, by omega⟩) (fun x => ?_)
+    have := edge x (oddLo s + 1) ⟨by omega, by omega⟩
+    convert this using 1; push_cast; ring
 
 /-- **(ratified).**  **Lemma B** (odd primes of `p`): lift `M' → ℓ^e M'` for an odd prime
 `ℓ ∣ p`, `ℓ ∤ M'`; `W⁻¹` expands `ℓ`-adically.  Paper proof: note §3 Lemma B. -/
