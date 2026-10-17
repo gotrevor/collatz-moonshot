@@ -40,3 +40,7 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
   induction), and on `T` every later orbit point is `≥ 3/2 ×` an earlier one, so each entry's
   forward orbit has at most one point in `[Y, 3Y/2)`; `N + 1` window points inject into `E`.
 - Open (3): `tendsto_coneEntryCount` (Weyl 1-dim), `tendsto_minCount_gPerm/gmPerm` (Weyl multi).
+- `tendsto_coneEntryCount` closed: `phaseCount`, `card_coneSet_Icc` (= phaseCount (X/2)),
+  `card_image_coneSet_Icc` (= phaseCount ⌊(X+1)/α⌋₊, irrationality excludes `kα = X + 1`),
+  generic `tendsto_floor_linear_div`, `tendsto_comp_div`.  `WythoffCone.lean` sorry-free.
+- Open (2): `tendsto_minCount_gPerm`, `tendsto_minCount_gmPerm` (§7, multi-dim Weyl).
