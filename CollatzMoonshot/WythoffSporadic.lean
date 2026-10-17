@@ -241,12 +241,23 @@ noncomputable def yPhase4 (t : ℤ) (f₁ f₂ : ℝ) : ℝ :=
   3 * yRoot - yRoot ^ 2 + yRoot * t - (1 - yRoot - yRoot ^ 2) * (1 + yRoot) * f₁ -
     (2 - yRoot) * f₂
 
+theorem yG_pos : 0 < 1 - yRoot - yRoot ^ 2 := by
+  have h := yRoot_bounds
+  nlinarith
+
 /-- **(drafted, 99%).**  On the closed box, `−1 < Δ′ < 2`.  Paper proof: `Δ′` is affine, its
 extremes over `[0, 1]²` are at the corners: `Δ′(0, 1) = −g ≈ −0.197` and
 `Δ′(1, 0) = 1 + x ≈ 1.526`; `nlinarith` with `yRoot_bounds`. -/
 theorem yPhase3_mem {f₁ f₂ : ℝ} (h₁ : 0 ≤ f₁) (h₁' : f₁ ≤ 1) (h₂ : 0 ≤ f₂) (h₂' : f₂ ≤ 1) :
     -1 < yPhase3 f₁ f₂ ∧ yPhase3 f₁ f₂ < 2 := by
-  sorry
+  have hg := yG_pos
+  have hx := yRoot_bounds
+  unfold yPhase3
+  constructor
+  · nlinarith [mul_nonneg hg.le h₁,
+      mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + yRoot) (sub_nonneg.2 h₂')]
+  · nlinarith [mul_nonneg hg.le (sub_nonneg.2 h₁'),
+      mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + yRoot) h₂]
 
 /-- **(drafted, 98%; polygon `R_a`).**  If `Δ′ ≥ 1` on the closed box then `1 < Δ_1 < 2`.
 Paper proof: the polygon `{Δ′ ≥ 1} ∩ [0, 1]²` has vertices `(0, 0), (1, 0), (1, x/(1 + x)),
@@ -256,7 +267,22 @@ Paper proof: the polygon `{Δ′ ≥ 1} ∩ [0, 1]²` has vertices `(0, 0), (1, 
 decreasing in both phases. -/
 theorem yPhase4_of_one {f₁ f₂ : ℝ} (h₁ : 0 ≤ f₁) (h₁' : f₁ ≤ 1) (h₂ : 0 ≤ f₂) (h₂' : f₂ ≤ 1)
     (h : 1 ≤ yPhase3 f₁ f₂) : 1 < yPhase4 1 f₁ f₂ ∧ yPhase4 1 f₁ f₂ < 2 := by
-  sorry
+  have hg := yG_pos
+  have hx := yRoot_bounds
+  have key : (1 + yRoot) * (yPhase4 1 f₁ f₂ - 1) = (2 - yRoot) * (yPhase3 f₁ f₂ - 1) +
+      (1 - yRoot - yRoot ^ 2) * (yRoot ^ 2 + yRoot + 3) * (1 - f₁) +
+        yRoot * (2 * yRoot - 1) := by
+    unfold yPhase3 yPhase4; push_cast; linear_combination (yRoot + 1) * yRoot_spec.2.2
+  constructor
+  · have hA : 0 ≤ (2 - yRoot) * (yPhase3 f₁ f₂ - 1) := mul_nonneg (by linarith) (by linarith)
+    have hB : 0 ≤ (1 - yRoot - yRoot ^ 2) * (yRoot ^ 2 + yRoot + 3) * (1 - f₁) :=
+      mul_nonneg (mul_nonneg hg.le (by nlinarith [sq_nonneg yRoot])) (by linarith)
+    have hC : 0 < yRoot * (2 * yRoot - 1) := mul_pos (by linarith) (by linarith)
+    by_contra hn
+    nlinarith
+  · unfold yPhase4; push_cast
+    nlinarith [mul_nonneg (mul_nonneg hg.le (by linarith : (0 : ℝ) ≤ 1 + yRoot)) h₁,
+      mul_nonneg (by linarith : (0 : ℝ) ≤ 2 - yRoot) h₂]
 
 /-- **(drafted, 98%; polygon `R_b`).**  If `Δ′ ≤ 0`, `0 ≤ f₁ < 1` and `0 ≤ f₂ ≤ 1` then
 `−1 < Δ_{−1} < 0`.  Paper proof: the polygon `{Δ′ ≤ 0} ∩ [0, 1]²` has vertices
@@ -268,7 +294,24 @@ The bound is tight: with `f₁ = 1` allowed the lemma is false (`f = (1, 1, 1, 1
 `t = −1`, `u = −2`, the tooth in `check.py`). -/
 theorem yPhase4_of_neg_one {f₁ f₂ : ℝ} (h₁ : 0 ≤ f₁) (h₁' : f₁ < 1) (h₂ : 0 ≤ f₂)
     (h₂' : f₂ ≤ 1) (h : yPhase3 f₁ f₂ ≤ 0) : -1 < yPhase4 (-1) f₁ f₂ ∧ yPhase4 (-1) f₁ f₂ < 0 := by
-  sorry
+  have hg := yG_pos
+  have hx := yRoot_bounds
+  constructor
+  · have key : yPhase4 (-1) f₁ f₂ + 1 =
+        (1 - yRoot - yRoot ^ 2) * (1 + yRoot) * (1 - f₁) + (2 - yRoot) * (1 - f₂) := by
+      unfold yPhase4; push_cast; linear_combination yRoot_spec.2.2
+    have hA : 0 < (1 - yRoot - yRoot ^ 2) * (1 + yRoot) * (1 - f₁) :=
+      mul_pos (mul_pos hg (by linarith)) (by linarith)
+    have hB : 0 ≤ (2 - yRoot) * (1 - f₂) := mul_nonneg (by linarith) (by linarith)
+    linarith
+  · have key : (1 + yRoot) * yPhase4 (-1) f₁ f₂ = (2 - yRoot) * yPhase3 f₁ f₂ -
+        (1 - yRoot - yRoot ^ 2) * (yRoot ^ 2 + yRoot + 3) * f₁ + (yRoot ^ 2 - 2 * yRoot) := by
+      unfold yPhase3 yPhase4; push_cast; ring
+    have hA : (2 - yRoot) * yPhase3 f₁ f₂ ≤ 0 := mul_nonpos_of_nonneg_of_nonpos (by linarith) h
+    have hB : 0 ≤ (1 - yRoot - yRoot ^ 2) * (yRoot ^ 2 + yRoot + 3) * f₁ :=
+      mul_nonneg (mul_nonneg hg.le (by nlinarith [sq_nonneg yRoot])) h₁
+    by_contra hn
+    nlinarith
 
 /-- **(proved from `yRoot_spec`).**  Substituting `f₃ = Δ′ − t`:
 `2 − g f₁ − (2 + x²) f₂ − x(Δ′ − t) = Δ_t`.  Paper proof: `ring_nf` and `x³ = 2 − 3x − x²`
@@ -292,13 +335,51 @@ noncomputable def yFodd (v : ℤ) : ℝ :=
 /-- **(drafted, 99%).**  For even `n`, `0 ≤ f₁ < 1` (`wy_two_mul`, `Int.fract_nonneg`,
 `Int.fract_lt_one`). -/
 theorem yF1_mem {n : ℤ} (hn : n % 2 = 0) : 0 ≤ yF1 n ∧ yF1 n < 1 := by
-  sorry
+  have h : n = 2 * (n / 2) := by omega
+  have hw : wy alphaY n = ⌊((n / 2 : ℤ) : ℝ) * alphaY⌋ := by
+    conv_lhs => rw [h]
+    exact wy_two_mul _ _
+  unfold yF1
+  rw [hw]
+  constructor
+  · linarith [Int.floor_le (((n / 2 : ℤ) : ℝ) * alphaY)]
+  · linarith [Int.lt_floor_add_one (((n / 2 : ℤ) : ℝ) * alphaY)]
 
 /-- **(drafted, 99%).**  For odd `v`, `0 < f(v) ≤ 1`.  Paper proof: `v = 2j − 1`,
 `W(v) = ⌈jβ⌉ − 1` (`wy_two_mul_sub_one`, `alphaY_div_sub_one`) and `jβ = 2jx = x(v + 1)`;
 `⌈y⌉ − 1 ∈ [y − 1, y)` (`Int.ceil_lt_add_one`, `Int.le_ceil`). -/
 theorem yFodd_mem {v : ℤ} (hv : v % 2 = 1) : 0 < yFodd v ∧ yFodd v ≤ 1 := by
-  sorry
+  have h : v = 2 * ((v + 1) / 2) - 1 := by omega
+  have hw : wy alphaY v = ⌈(((v + 1) / 2 : ℤ) : ℝ) * (alphaY / (alphaY - 1))⌉ - 1 := by
+    conv_lhs => rw [h]
+    exact wy_two_mul_sub_one _ _
+  have hy : (((v + 1) / 2 : ℤ) : ℝ) * (alphaY / (alphaY - 1)) = yRoot * ((v : ℝ) + 1) := by
+    rw [alphaY_div_sub_one, betaY]
+    have : ((v + 1 : ℤ) : ℝ) = 2 * (((v + 1) / 2 : ℤ) : ℝ) := by
+      exact_mod_cast (by omega : v + 1 = 2 * ((v + 1) / 2))
+    push_cast at this
+    rw [this]; ring
+  unfold yFodd
+  rw [hw, hy]
+  push_cast
+  constructor
+  · linarith [Int.ceil_lt_add_one (yRoot * ((v : ℝ) + 1))]
+  · linarith [Int.le_ceil (yRoot * ((v : ℝ) + 1))]
+
+/-- `g α = 4` (the cubic, after clearing `2x − 1`). -/
+theorem g_mul_alphaY : (1 - yRoot - yRoot ^ 2) * alphaY = 4 := by
+  have h := yRoot_spec
+  have hp : 2 * yRoot - 1 ≠ 0 := by linarith
+  unfold alphaY
+  rw [← mul_div_assoc, div_eq_iff hp]
+  linear_combination (-2 : ℝ) * h.2.2
+
+theorem wy_iterate_two (n : ℤ) : (wy alphaY)^[2] n = wy alphaY (wy alphaY n) := by
+  rw [Function.iterate_succ_apply', Function.iterate_one]
+
+theorem wy_iterate_succ (i : ℕ) (n : ℤ) :
+    (wy alphaY)^[i + 1] n = wy alphaY ((wy alphaY)^[i] n) :=
+  Function.iterate_succ_apply' _ _ _
 
 /-- **(drafted, 99%; algebra, any parities).**  For even `n`:
 `W³ = −2n + W − W² + Δ′(f₁, f(W n)) − f(W² n)`.  Paper proof: unfold `yF1`, `yFodd`,
@@ -308,7 +389,10 @@ theorem wy_iterate_three_phase {n : ℤ} (hn : n % 2 = 0) :
     (((wy alphaY)^[3] n : ℤ) : ℝ) =
       -2 * n + wy alphaY n - (wy alphaY)^[2] n +
         yPhase3 (yF1 n) (yFodd (wy alphaY n)) - yFodd ((wy alphaY)^[2] n) := by
-  sorry
+  have hn' : (n : ℝ) = 2 * ((n / 2 : ℤ) : ℝ) := by exact_mod_cast (by omega : n = 2 * (n / 2))
+  unfold yF1 yFodd yPhase3
+  rw [hn', wy_iterate_succ 2, wy_iterate_two]
+  linear_combination (-((n / 2 : ℤ) : ℝ)) * g_mul_alphaY
 
 /-- **(drafted, 99%; algebra, any parities).**  For even `n`:
 `W⁴ = 2n + W − 2W² + 2 − g f₁ − (2 + x²) f₂ − x f₃ − f₄` with `f₂, f₃, f₄` the defects at
@@ -319,7 +403,11 @@ theorem wy_iterate_four_phase {n : ℤ} (hn : n % 2 = 0) :
       2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n + 2 -
         (1 - yRoot - yRoot ^ 2) * yF1 n - (2 + yRoot ^ 2) * yFodd (wy alphaY n) -
         yRoot * yFodd ((wy alphaY)^[2] n) - yFodd ((wy alphaY)^[3] n) := by
-  sorry
+  have hn' : (n : ℝ) = 2 * ((n / 2 : ℤ) : ℝ) := by exact_mod_cast (by omega : n = 2 * (n / 2))
+  unfold yF1 yFodd
+  rw [hn', wy_iterate_succ 3, wy_iterate_succ 2, wy_iterate_two]
+  linear_combination (((n / 2 : ℤ) : ℝ)) * g_mul_alphaY +
+    (1 + (wy alphaY n : ℝ)) * yRoot_spec.2.2
 
 /-! ## Theorem Y (1): the recurrence on `E O³` -/
 
@@ -329,7 +417,21 @@ theorem wy_iterate_four_phase {n : ℤ} (hn : n % 2 = 0) :
 theorem wy_iterate_three_sub_mem {n : ℤ} (hn : n % 2 = 0) (h₁ : wy alphaY n % 2 = 1)
     (h₂ : (wy alphaY)^[2] n % 2 = 1) :
     (wy alphaY)^[3] n - (-2 * n + wy alphaY n - (wy alphaY)^[2] n) ∈ ({-1, 0, 1} : Set ℤ) := by
-  sorry
+  have hph := wy_iterate_three_phase hn
+  obtain ⟨a1, a2⟩ := yF1_mem hn
+  obtain ⟨b1, b2⟩ := yFodd_mem h₁
+  obtain ⟨c1, c2⟩ := yFodd_mem h₂
+  obtain ⟨d1, d2⟩ := yPhase3_mem a1 a2.le b1.le b2
+  have hlo : ((-2 : ℤ) : ℝ) <
+      (((wy alphaY)^[3] n - (-2 * n + wy alphaY n - (wy alphaY)^[2] n) : ℤ) : ℝ) := by
+    push_cast; linarith
+  have hhi : (((wy alphaY)^[3] n - (-2 * n + wy alphaY n - (wy alphaY)^[2] n) : ℤ) : ℝ) <
+      ((2 : ℤ) : ℝ) := by
+    push_cast; linarith
+  have hlo' := Int.cast_lt.1 hlo
+  have hhi' := Int.cast_lt.1 hhi
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
+  omega
 
 /-- **(drafted, 95%; Theorem Y (1)).**  If `n` is even and `W(n), W²(n), W³(n)` are odd, then
 `W⁴(n) = 4n + W³(n) − W²(n)`; for every `n ∈ ℤ`.  Paper proof: module docstring (`t = ±1` by
@@ -338,14 +440,68 @@ parity and `wy_iterate_three_sub_mem`; `u = Δ_t − f₄` by `wy_iterate_four_p
 theorem wy_iterate_four_eq {n : ℤ} (hn : n % 2 = 0)
     (hodd : ∀ i : ℕ, 1 ≤ i → i ≤ 3 → (wy alphaY)^[i] n % 2 = 1) :
     (wy alphaY)^[4] n = 4 * n + (wy alphaY)^[3] n - (wy alphaY)^[2] n := by
-  sorry
+  have o1 := hodd 1 le_rfl (by norm_num)
+  have o2 := hodd 2 (by norm_num) (by norm_num)
+  have o3 := hodd 3 (by norm_num) le_rfl
+  rw [Function.iterate_one] at o1
+  have ht := wy_iterate_three_sub_mem hn o1 o2
+  have hph3 := wy_iterate_three_phase hn
+  have hph4 := wy_iterate_four_phase hn
+  obtain ⟨a1, a2⟩ := yF1_mem hn
+  obtain ⟨b1, b2⟩ := yFodd_mem o1
+  obtain ⟨c1, c2⟩ := yFodd_mem o2
+  obtain ⟨e1, e2⟩ := yFodd_mem o3
+  set t : ℤ := (wy alphaY)^[3] n - (-2 * n + wy alphaY n - (wy alphaY)^[2] n) with ht_def
+  have hf3 : yFodd ((wy alphaY)^[2] n) = yPhase3 (yF1 n) (yFodd (wy alphaY n)) - t := by
+    rw [ht_def]; push_cast; linarith
+  have hu : ((((wy alphaY)^[4] n - (2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n)) : ℤ) : ℝ) =
+      yPhase4 t (yF1 n) (yFodd (wy alphaY n)) - yFodd ((wy alphaY)^[3] n) := by
+    rw [← yPhase4_sub, ← hf3]; push_cast; linarith
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at ht
+  rcases ht with h | h | h
+  · -- `t = −1`
+    rw [h] at hf3 hu
+    obtain ⟨p1, p2⟩ := yPhase4_of_neg_one a1 a2 b1.le b2 (by push_cast at hf3; linarith)
+    have hlo : ((-2 : ℤ) : ℝ) <
+        ((((wy alphaY)^[4] n - (2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n)) : ℤ) : ℝ) := by
+      rw [hu]; push_cast; linarith
+    have hhi : ((((wy alphaY)^[4] n - (2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n)) : ℤ) : ℝ) <
+        ((0 : ℤ) : ℝ) := by
+      rw [hu]; push_cast; linarith
+    have := Int.cast_lt.1 hlo
+    have := Int.cast_lt.1 hhi
+    omega
+  · omega
+  · -- `t = 1`
+    rw [h] at hf3 hu
+    obtain ⟨p1, p2⟩ := yPhase4_of_one a1 a2.le b1.le b2 (by push_cast at hf3; linarith)
+    have hlo : ((0 : ℤ) : ℝ) <
+        ((((wy alphaY)^[4] n - (2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n)) : ℤ) : ℝ) := by
+      rw [hu]; push_cast; linarith
+    have hhi : ((((wy alphaY)^[4] n - (2 * n + wy alphaY n - 2 * (wy alphaY)^[2] n)) : ℤ) : ℝ) <
+        ((2 : ℤ) : ℝ) := by
+      rw [hu]; push_cast; linarith
+    have := Int.cast_lt.1 hlo
+    have := Int.cast_lt.1 hhi
+    omega
 
 /-- **(drafted, 95%; Theorem Y (1), runs).**  After an even point at most three odd points
 follow: some `W^{j+1}(n)`, `j ≤ 3`, is even.  Paper proof: `wy_iterate_four_eq`
 (`4n + W³ − W²` is even when `W², W³` are odd). -/
 theorem exists_even_iterate_Y {n : ℤ} (hn : n % 2 = 0) :
     ∃ j ≤ 3, (wy alphaY)^[j + 1] n % 2 = 0 := by
-  sorry
+  by_contra hne
+  push Not at hne
+  have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ 3 → (wy alphaY)^[i] n % 2 = 1 := by
+    intro i hi1 hi3
+    have := hne (i - 1) (by omega)
+    rw [show i - 1 + 1 = i by omega] at this
+    omega
+  have h4 := wy_iterate_four_eq hn hodd
+  have h2 := hodd 2 (by norm_num) (by norm_num)
+  have h3 := hodd 3 (by norm_num) le_rfl
+  have h5 : (wy alphaY)^[4] n % 2 ≠ 0 := hne 3 le_rfl
+  omega
 
 /-- **(drafted, 97%; the (H2) input).**  For `n > 0` even, `j ≤ 3`, and `W(n), …, Wʲ(n)` odd:
 `4n ≤ 3·W^{j+1}(n)`.  Paper proof: the sandwich of `WythoffLine` (`y₁ = An`,
