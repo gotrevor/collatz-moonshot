@@ -169,6 +169,26 @@ theorem coeff_zero_eq_synDiv (hroot : aeval x P = 0) :
   refine Finset.sum_congr rfl fun j _ => ?_
   rw [show 1 + j - 0 - 1 = j by omega, add_comm 1 j, pow_succ]; ring
 
+/-- **(proved; the telescoping behind Theorem N).**  For any real sequence `w` and a root `x` of
+`P`, `Σ_{j ≤ d} a_j w_j = Σ_{k < d} q_k (w_{k+1} − x w_k)`. -/
+theorem sum_coeff_mul_eq_synDiv (hroot : aeval x P = 0) (w : ℕ → ℝ) :
+    ∑ j ∈ Finset.range (P.natDegree + 1), (P.coeff j : ℝ) * w j =
+      ∑ k ∈ Finset.range P.natDegree, synDiv P x k * (w (k + 1) - x * w k) := by
+  have h1 : ∑ k ∈ Finset.range P.natDegree, synDiv P x (k + 1) * w (k + 1) =
+      ∑ k ∈ Finset.range P.natDegree, synDiv P x k * w k - synDiv P x 0 * w 0 := by
+    have := Finset.sum_range_succ' (fun k => synDiv P x k * w k) P.natDegree
+    rw [Finset.sum_range_succ, synDiv_of_le le_rfl, zero_mul, add_zero] at this
+    linarith
+  rw [Finset.sum_range_succ', coeff_zero_eq_synDiv hroot]
+  simp_rw [coeff_succ_eq_synDiv (x := x), sub_mul, mul_sub, Finset.sum_sub_distrib]
+  have h2 : ∑ k ∈ Finset.range P.natDegree, x * synDiv P x (k + 1) * w (k + 1) =
+      x * ∑ k ∈ Finset.range P.natDegree, synDiv P x (k + 1) * w (k + 1) := by
+    rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun _ _ => by ring
+  have h3 : ∑ k ∈ Finset.range P.natDegree, synDiv P x k * (x * w k) =
+      x * ∑ k ∈ Finset.range P.natDegree, synDiv P x k * w k := by
+    rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun _ _ => by ring
+  rw [h2, h3, h1]; ring
+
 end SynDiv
 
 /-! ## Lemma N0 and the phases -/
@@ -231,7 +251,9 @@ for `j = 0` (`coeff_zero_eq_synDiv`). -/
 theorem sum_coeff_iterate_eq (hroot : aeval (xOf α) P = 0) (u : ℤ) :
     ∑ j ∈ Finset.range (P.natDegree + 1), (P.coeff j : ℝ) * (((wy α)^[j] u : ℝ) + 1) =
       ∑ k ∈ Finset.range P.natDegree, synDiv P (xOf α) k * oddPhase α ((wy α)^[k] u) := by
-  sorry
+  rw [sum_coeff_mul_eq_synDiv hroot]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [Function.iterate_succ_apply', oddPhase]
 
 /-- **(drafted, 97%; Theorem N (1)).**  If `W^{d−1}(u)` is odd (in particular along `d`
 consecutive odd points `u, …, W^{d−1}u`), `Σ_{j ≤ d} a_j (W^j u + 1) = ⌈Φ⌉`.  Paper proof:
@@ -241,7 +263,16 @@ theorem sum_coeff_iterate_eq_ceil (hP : P.Monic) (hd : 1 ≤ P.natDegree)
     (hroot : aeval (xOf α) P = 0) {u : ℤ} (hodd : (wy α)^[P.natDegree - 1] u % 2 = 1) :
     ∑ j ∈ Finset.range (P.natDegree + 1), P.coeff j * ((wy α)^[j] u + 1) =
       ⌈autoPhi P α u⌉ := by
-  sorry
+  have h := sum_coeff_iterate_eq hroot u
+  have hs := Finset.sum_range_succ
+    (fun k => synDiv P (xOf α) k * oddPhase α ((wy α)^[k] u)) (P.natDegree - 1)
+  rw [Nat.sub_add_cancel hd, synDiv_natDegree_sub_one hP hd, one_mul] at hs
+  have hG := oddPhase_mem (α := α) hodd
+  symm; rw [Int.ceil_eq_iff]
+  push_cast
+  rw [h, hs]
+  unfold autoPhi
+  constructor <;> linarith
 
 /-- **(drafted, 96%; Theorem N (1), research-note form).**  If moreover `x` is irrational and
 `W^{d−1}(u) ≠ −1`, then `Φ ∉ ℤ`, so the integer is `⌊Φ⌋ + 1`.  Paper proof: `Φ ∈ ℤ` forces
@@ -252,7 +283,30 @@ theorem sum_coeff_iterate_eq_floor_add_one (hP : P.Monic) (hd : 1 ≤ P.natDegre
     (hodd : (wy α)^[P.natDegree - 1] u % 2 = 1) (hne : (wy α)^[P.natDegree - 1] u ≠ -1) :
     ∑ j ∈ Finset.range (P.natDegree + 1), P.coeff j * ((wy α)^[j] u + 1) =
       ⌊autoPhi P α u⌋ + 1 := by
-  sorry
+  rw [sum_coeff_iterate_eq_ceil hP hd hroot hodd, Int.ceil_eq_floor_add_one_iff_notMem]
+  rintro ⟨z, hz⟩
+  have h := sum_coeff_iterate_eq hroot u
+  have hs := Finset.sum_range_succ
+    (fun k => synDiv P (xOf α) k * oddPhase α ((wy α)^[k] u)) (P.natDegree - 1)
+  rw [Nat.sub_add_cancel hd, synDiv_natDegree_sub_one hP hd, one_mul] at hs
+  set v := (wy α)^[P.natDegree - 1] u
+  set N := ∑ j ∈ Finset.range (P.natDegree + 1), P.coeff j * ((wy α)^[j] u + 1)
+  have hN : (N : ℝ) = z + oddPhase α v := by
+    rw [hz]; simp only [N]; push_cast; rw [h, hs]; rfl
+  have hG := oddPhase_mem (α := α) hodd
+  have h1 : (0 : ℤ) ≤ N - z := by
+    have : (0 : ℝ) ≤ ((N - z : ℤ) : ℝ) := by push_cast; linarith
+    exact_mod_cast this
+  have h2 : N - z < 1 := by
+    have : ((N - z : ℤ) : ℝ) < 1 := by push_cast; linarith
+    exact_mod_cast this
+  have h0 : oddPhase α v = 0 := by
+    have : (N : ℝ) = z := by exact_mod_cast (show N = z by omega)
+    linarith
+  unfold oddPhase at h0
+  have hv : ((v + 1 : ℤ) : ℝ) ≠ 0 := by exact_mod_cast (show v + 1 ≠ 0 by omega)
+  apply (hirr.mul_intCast (m := v + 1) (by omega)).ne_int (wy α v + 1)
+  push_cast; linarith
 
 /-- **(drafted, 97%; Theorem N (1), parity).**  If `u, W(u), …, W^{d−1}(u)` are odd, then
 `W^d(u)` is odd iff `⌈Φ⌉` is even.  Paper proof: `sum_coeff_iterate_eq_ceil`; for `j < d`,
@@ -261,7 +315,14 @@ theorem iterate_odd_iff_autoPhi (hP : P.Monic) (hd : 1 ≤ P.natDegree)
     (hroot : aeval (xOf α) P = 0) {u : ℤ}
     (hodd : ∀ i < P.natDegree, (wy α)^[i] u % 2 = 1) :
     (wy α)^[P.natDegree] u % 2 = 1 ↔ ⌈autoPhi P α u⌉ % 2 = 0 := by
-  sorry
+  have h := sum_coeff_iterate_eq_ceil hP hd hroot (hodd _ (by omega))
+  rw [Finset.sum_range_succ, hP.coeff_natDegree, one_mul] at h
+  have hev : (2 : ℤ) ∣ ∑ j ∈ Finset.range P.natDegree, P.coeff j * ((wy α)^[j] u + 1) :=
+    Finset.dvd_sum fun j hj =>
+      Dvd.dvd.mul_left (by have := hodd j (Finset.mem_range.1 hj); omega) _
+  rw [← h]
+  generalize ∑ j ∈ Finset.range P.natDegree, P.coeff j * ((wy α)^[j] u + 1) = S at hev
+  omega
 
 /-- **(drafted, 96%; Theorem N (2), the first deterministic step).**  For `α > 1`, `d ≥ 2` and
 `W^{d−1}(n)` odd (in particular on the cylinder `E O^{d−1}`):
@@ -275,7 +336,62 @@ theorem first_step_eq_ceil (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree
     ∑ j ∈ Finset.Ico 1 (P.natDegree + 1), P.coeff j * ((wy α)^[j] n + 1) +
         2 * P.coeff 0 * (wy α n + 1) - P.coeff 0 * n =
       ⌈autoPhi0 P α n⌉ := by
-  sorry
+  set d := P.natDegree with hdd
+  set x := xOf α
+  let w : ℕ → ℝ := fun j => if j = 0 then (n : ℝ) * (α - 1) else ((wy α)^[j] n : ℝ) + 1
+  have h := sum_coeff_mul_eq_synDiv hroot w
+  have hx : x * (α - 1) = α / 2 := by
+    simp only [x, xOf]; have : α - 1 ≠ 0 := by linarith
+    field_simp
+  -- left side
+  simp only [Finset.range_eq_Ico] at h
+  rw [Finset.sum_eq_sum_Ico_succ_bot (by omega)] at h
+  have hL : ∑ j ∈ Finset.Ico (0 + 1) (d + 1), (P.coeff j : ℝ) * w j =
+      ∑ j ∈ Finset.Ico 1 (d + 1), (P.coeff j : ℝ) * (((wy α)^[j] n : ℝ) + 1) :=
+    Finset.sum_congr rfl fun j hj => by
+      rw [Finset.mem_Ico] at hj; simp only [w, if_neg (show j ≠ 0 by omega)]
+  -- right side
+  have hR : ∑ k ∈ Finset.Ico 0 d, synDiv P x k * (w (k + 1) - x * w k) =
+      synDiv P x 0 * evenPhase α n +
+        ∑ k ∈ Finset.Ico 1 (d - 1), synDiv P x k * oddPhase α ((wy α)^[k] n) +
+          oddPhase α ((wy α)^[d - 1] n) := by
+    have e1 := Finset.sum_eq_sum_Ico_succ_bot (show 0 < d by omega)
+      (fun k => synDiv P x k * (w (k + 1) - x * w k))
+    have e2 := Finset.sum_Ico_succ_top (show 0 + 1 ≤ d - 1 by omega)
+      (fun k => synDiv P x k * (w (k + 1) - x * w k))
+    rw [Nat.sub_add_cancel (by omega)] at e2
+    rw [e1, e2, synDiv_natDegree_sub_one hP (by omega), one_mul]
+    have g0 : w (0 + 1) - x * w 0 = evenPhase α n := by
+      simp only [w, if_pos rfl, evenPhase, Function.iterate_one, zero_add, if_neg one_ne_zero]
+      linear_combination (-(n : ℝ)) * hx
+    have gk : ∀ k, 1 ≤ k → w (k + 1) - x * w k = oddPhase α ((wy α)^[k] n) := by
+      intro k hk
+      simp only [w, if_neg (show k + 1 ≠ 0 by omega), if_neg (show k ≠ 0 by omega), oddPhase,
+        Function.iterate_succ_apply']
+      rfl
+    have gd := gk (d - 1) (by omega)
+    rw [Nat.sub_add_cancel (by omega)] at gd
+    rw [g0, gd, add_assoc]
+    congr 2
+    exact Finset.sum_congr rfl fun k hk => by rw [gk k (Finset.mem_Ico.1 hk).1]
+  rw [hR, hL, coeff_zero_eq_synDiv hroot] at h
+  have hw0 : w 0 = (n : ℝ) * (α - 1) := if_pos rfl
+  rw [hw0] at h
+  have hE : evenPhase α n = ((wy α n : ℤ) : ℝ) + 1 - α / 2 * n := rfl
+  have hG := oddPhase_mem (α := α) hodd
+  symm; rw [Int.ceil_eq_iff]
+  push_cast
+  unfold autoPhi0
+  rw [coeff_zero_eq_synDiv hroot]
+  have key : ∑ j ∈ Finset.Ico 1 (d + 1), (P.coeff j : ℝ) * (((wy α)^[j] n : ℝ) + 1) +
+      2 * -(x * synDiv P x 0) * ((wy α n : ℝ) + 1) - -(x * synDiv P x 0) * n =
+      (synDiv P x 0 + 2 * -(x * synDiv P x 0)) * evenPhase α n +
+        ∑ k ∈ Finset.Ico 1 (d - 1), synDiv P x k * oddPhase α ((wy α)^[k] n) +
+          oddPhase α ((wy α)^[d - 1] n) := by
+    rw [hE] at h ⊢
+    linear_combination h
+  rw [key]
+  constructor <;> linarith
 
 /-- **(drafted, 96%; Theorem N (2), parity).**  For even `n` with `W(n), …, W^{d−1}(n)` odd,
 `W^d(n)` is odd iff `⌈Φ₀⌉` is even.  Paper proof: `first_step_eq_ceil`; `n`, `2a_0 w_1` and
@@ -284,7 +400,18 @@ theorem first_step_odd_iff (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree
     (hroot : aeval (xOf α) P = 0) {n : ℤ} (hn : n % 2 = 0)
     (hodd : ∀ i : ℕ, 1 ≤ i → i < P.natDegree → (wy α)^[i] n % 2 = 1) :
     (wy α)^[P.natDegree] n % 2 = 1 ↔ ⌈autoPhi0 P α n⌉ % 2 = 0 := by
-  sorry
+  have h := first_step_eq_ceil hα hP hd hroot (hodd _ (by omega) (by omega))
+  rw [Finset.sum_Ico_succ_top (by omega), hP.coeff_natDegree, one_mul] at h
+  have hev : (2 : ℤ) ∣ ∑ j ∈ Finset.Ico 1 P.natDegree, P.coeff j * ((wy α)^[j] n + 1) :=
+    Finset.dvd_sum fun j hj => Dvd.dvd.mul_left (by
+      have := hodd j (Finset.mem_Ico.1 hj).1 (Finset.mem_Ico.1 hj).2; omega) _
+  have hn' : (2 : ℤ) ∣ P.coeff 0 * n := Dvd.dvd.mul_left (by omega) _
+  have h2 : (2 : ℤ) ∣ 2 * P.coeff 0 * (wy α n + 1) := ⟨_, mul_assoc _ _ _⟩
+  rw [← h]
+  generalize ∑ j ∈ Finset.Ico 1 P.natDegree, P.coeff j * ((wy α)^[j] n + 1) = S at hev
+  generalize P.coeff 0 * n = T at hn'
+  generalize 2 * P.coeff 0 * (wy α n + 1) = U at h2
+  omega
 
 end TheoremN
 
