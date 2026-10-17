@@ -385,6 +385,47 @@ theorem mem_image_coneSet_gold_iff (n : ℤ) :
 def goldCycles : Set ℤ :=
   {z | Wg^[3] z = z}
 
+theorem three_le_gold : 3 ≤ alphaK 3 (-1) := by
+  rw [alphaK_three_neg_one_eq_gold]; linarith [gold_bounds.1]
+
+theorem gold_one : Wg 1 = 1 := wy_one (by linarith [three_le_gold])
+
+theorem gold_iter_two (n : ℤ) : Wg^[2] n = Wg (Wg n) := rfl
+
+theorem goldPerm_pow_apply (j : ℕ) (x : ℤ) : (goldPerm ^ j) x = Wg^[j] x := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+theorem goldPerm_zpow_natCast (j : ℕ) (x : ℤ) : (goldPerm ^ (j : ℤ)) x = Wg^[j] x := by
+  rw [zpow_natCast, goldPerm_pow_apply]
+
+theorem mem_goldCycles_W {z : ℤ} (h : z ∈ goldCycles) : Wg z ∈ goldCycles := by
+  show Wg (Wg (Wg (Wg z))) = Wg z
+  have : Wg (Wg (Wg z)) = z := h
+  rw [this]
+
+theorem goldCycles_iff_W (z : ℤ) : goldPerm z ∈ goldCycles ↔ z ∈ goldCycles := by
+  constructor
+  · intro h
+    have h' : Wg (Wg (Wg (Wg z))) = Wg z := h
+    exact goldPerm.injective h'
+  · exact mem_goldCycles_W
+
+theorem lt_wy_gold_of_mem_coneSet {n : ℤ} (h : n ∈ coneSet 3 (-1)) : n < Wg n :=
+  lt_wy_of_even three_le_gold h.1 h.2.1
+
+/-- Points of the trap are off the cycles (`W` strictly increases on `S′`). -/
+theorem not_mem_goldCycles_of_mem_coneSet {n : ℤ} (h : n ∈ coneSet 3 (-1)) :
+    n ∉ goldCycles := by
+  intro hc
+  have h1 := goldPerm_mapsTo_coneSet n h
+  have h2 := goldPerm_mapsTo_coneSet _ h1
+  simp only [goldPerm_apply] at h1 h2
+  have a := lt_wy_gold_of_mem_coneSet h
+  have b := lt_wy_gold_of_mem_coneSet h1
+  have c := lt_wy_gold_of_mem_coneSet h2
+  have : Wg (Wg (Wg n)) = n := hc
+  omega
+
 /-- **(drafted, 97%).**  The positive points of `Φ` are `1` and the points of the 3-cycles
 `{n, W n, W² n}`, `n > 0` even with `W n` odd.  Paper proof: `⊇` by `wy_one` and
 `wy_gold_iterate_three` (`W³` commutes with `W`).  `⊆`: a positive cycle of length dividing `3`
@@ -394,7 +435,84 @@ increases (`lt_wy_of_even`), so it could not return. -/
 theorem mem_goldCycles_iff {z : ℤ} (hz : 0 < z) :
     z ∈ goldCycles ↔ z = 1 ∨ ∃ n : ℤ, 0 < n ∧ n % 2 = 0 ∧ Wg n % 2 = 1 ∧
       (z = n ∨ z = Wg n ∨ z = Wg^[2] n) := by
-  sorry
+  have hpos : ∀ y, 0 < Wg y ↔ 0 < y := fun y => wy_pos_iff (by linarith [three_le_gold]) y
+  constructor
+  · intro h
+    have h3 : Wg (Wg (Wg z)) = z := h
+    by_cases h1 : z = 1
+    · exact Or.inl h1
+    right
+    have hW1 : Wg z ≠ 1 := fun e => h1 (goldPerm.injective (e.trans gold_one.symm))
+    have hW2 : Wg (Wg z) ≠ 1 := fun e => hW1 (goldPerm.injective (e.trans gold_one.symm))
+    -- an even point `e` of the cycle has `W e` odd (else it lies in the trap)
+    have key : ∀ e, 0 < e → e % 2 = 0 → Wg (Wg (Wg e)) = e → Wg e % 2 = 1 := by
+      intro e he0 he3 hc
+      by_contra ho
+      exact not_mem_goldCycles_of_mem_coneSet ⟨he0, he3, by omega⟩ hc
+    have hz1 := (hpos z).2 hz
+    have hz2 := (hpos _).2 hz1
+    rcases Int.emod_two_eq_zero_or_one z with hze | hzo
+    · exact ⟨z, hz, hze, key z hz hze h3, Or.inl rfl⟩
+    rcases Int.emod_two_eq_zero_or_one (Wg z) with hwe | hwo
+    · exact ⟨Wg z, hz1, hwe, key _ hz1 hwe (by rw [h3]), Or.inr (Or.inr h3.symm)⟩
+    rcases Int.emod_two_eq_zero_or_one (Wg (Wg z)) with hve | hvo
+    · exact ⟨Wg (Wg z), hz2, hve, key _ hz2 hve (by rw [h3]), Or.inr (Or.inl h3.symm)⟩
+    · exfalso
+      have a := wy_lt_of_odd three_le_gold (by omega) hzo
+      have b := wy_lt_of_odd three_le_gold (by omega) hwo
+      have c := wy_lt_of_odd three_le_gold (by omega) hvo
+      rw [h3] at c
+      omega
+  · rintro (rfl | ⟨n, hn0, hn, hW, hx⟩)
+    · show Wg (Wg (Wg 1)) = 1
+      rw [gold_one, gold_one, gold_one]
+    · have hn3 : n ∈ goldCycles := wy_gold_iterate_three hn hW
+      rcases hx with rfl | rfl | rfl
+      · exact hn3
+      · exact mem_goldCycles_W hn3
+      · exact mem_goldCycles_W (mem_goldCycles_W hn3)
+
+theorem mem_orbit_of_iter (j : ℕ) {x y : ℤ} (h : Wg^[j] x = y) : y ∈ permOrbit goldPerm x :=
+  ⟨(j : ℤ), by beta_reduce; rw [goldPerm_zpow_natCast]; exact h⟩
+
+/-- The orbit of a point of the 3-cycle through `n` is the cycle. -/
+theorem permOrbit_gold_cycle {n x : ℤ} (hn : n % 2 = 0) (hW : Wg n % 2 = 1)
+    (hx : x = n ∨ x = Wg n ∨ x = Wg^[2] n) :
+    permOrbit goldPerm x = {n, Wg n, Wg^[2] n} := by
+  have h3 : Wg (Wg (Wg n)) = n := wy_gold_iterate_three hn hW
+  have hC1 : ∀ y ∈ ({n, Wg n, Wg^[2] n} : Set ℤ),
+      goldPerm y ∈ ({n, Wg n, Wg^[2] n} : Set ℤ) := by
+    intro y hy
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, goldPerm_apply, gold_iter_two] at hy ⊢
+    rcases hy with rfl | rfl | rfl
+    · simp
+    · simp
+    · rw [h3]; simp
+  have hC2 : ∀ y ∈ ({n, Wg n, Wg^[2] n} : Set ℤ),
+      goldPerm.symm y ∈ ({n, Wg n, Wg^[2] n} : Set ℤ) := by
+    intro y hy
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, gold_iter_two] at hy ⊢
+    rcases hy with rfl | rfl | rfl
+    · right; right; rw [Equiv.symm_apply_eq, goldPerm_apply, h3]
+    · left; rw [Equiv.symm_apply_eq, goldPerm_apply]
+    · right; left; rw [Equiv.symm_apply_eq, goldPerm_apply]
+  have hxC : x ∈ ({n, Wg n, Wg^[2] n} : Set ℤ) := by
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff]; exact hx
+  apply Set.Subset.antisymm
+  · rintro y ⟨m, rfl⟩
+    exact zpow_mem_of_closed goldPerm hC1 hC2 m x hxC
+  · intro y hy
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hy
+    rcases hx with rfl | rfl | rfl <;> rcases hy with rfl | rfl | rfl
+    · exact mem_orbit_of_iter 0 rfl
+    · exact mem_orbit_of_iter 1 rfl
+    · exact mem_orbit_of_iter 2 rfl
+    · exact mem_orbit_of_iter 2 h3
+    · exact mem_orbit_of_iter 0 rfl
+    · exact mem_orbit_of_iter 1 rfl
+    · exact mem_orbit_of_iter 1 h3
+    · exact mem_orbit_of_iter 2 (by show Wg (Wg (Wg (Wg _))) = _; rw [h3])
+    · exact mem_orbit_of_iter 0 rfl
 
 /-- **(drafted, 97%).**  Lemma P applies with `S` = evens, `Φ = {z | W³ z = z}`, `T = 1`.  Paper
 proof: `pos_iff` is `wy_pos_iff`; `mem_fix_iff`: `W³(W z) = W(W³ z)` and injectivity; (H1): a
@@ -402,30 +520,61 @@ positive odd `z ∉ Φ` has `z ≠ 1` (`wy_one`), so `W z < z` (`wy_lt_of_odd`);
 positive even `s ∉ Φ` has `W s` even (else `W³ s = s`, `wy_gold_iterate_three`) and `W s > s`
 (`lt_wy_of_even`). -/
 theorem hyp_goldPerm : Hyp goldPerm {n | n % 2 = 0} goldCycles 1 := by
-  sorry
+  refine ⟨fun n => wy_pos_iff (by linarith [three_le_gold]) n, goldCycles_iff_W, ?_, ?_⟩
+  · intro z hz hS hΦ
+    simp only [Set.mem_ofPred_eq] at hS
+    rw [goldPerm_apply]
+    have h1 : z ≠ 1 := by
+      rintro rfl; apply hΦ; show Wg (Wg (Wg 1)) = 1; rw [gold_one, gold_one, gold_one]
+    exact wy_lt_of_odd three_le_gold (by omega) (by omega)
+  · intro s hs hs0 hsΦ
+    simp only [Set.mem_ofPred_eq] at hs
+    have hW : Wg s % 2 = 0 := by
+      by_contra hc
+      exact hsΦ (wy_gold_iterate_three hs (by omega))
+    refine ⟨1, le_rfl, le_rfl, ?_, ?_, ?_⟩
+    · simp only [Set.mem_ofPred_eq, pow_one, goldPerm_apply]; exact hW
+    · rw [pow_one, goldPerm_apply]; exact lt_wy_of_even three_le_gold hs0 hs
+    · intro i h1 h2; omega
 
 /-- **(drafted, 97%).**  For `x > 0`: the orbit is finite iff `x ∈ Φ`.  Paper proof: `x ∈ Φ`
 gives an orbit inside `{x, W x, W² x}`; `x ∉ Φ` gives `permOrbit_infinite` (`hyp_goldPerm`). -/
 theorem permOrbit_goldPerm_finite_iff {x : ℤ} (hx : 0 < x) :
     (permOrbit goldPerm x).Finite ↔ x ∈ goldCycles := by
-  sorry
+  constructor
+  · intro hfin
+    by_contra hΦ
+    exact permOrbit_infinite hyp_goldPerm hx hΦ hfin
+  · intro h
+    rcases (mem_goldCycles_iff hx).1 h with rfl | ⟨n, -, hn, hW, hxn⟩
+    · rw [permOrbit_eq_singleton_of_fixed (σ := goldPerm) gold_one]
+      exact Set.finite_singleton 1
+    · rw [permOrbit_gold_cycle hn hW hxn]
+      exact Set.toFinite _
 
 /-- **(drafted, 97%; forward escape off the cycles).** -/
 theorem tendsto_goldPerm_pow {x : ℤ} (hx : 0 < x) (hxΦ : x ∉ goldCycles) :
-    Tendsto (fun n : ℕ => (goldPerm ^ n) x) atTop atTop := by
-  sorry
+    Tendsto (fun n : ℕ => (goldPerm ^ n) x) atTop atTop :=
+  tendsto_pow hyp_goldPerm hx hxΦ
 
 /-- **(drafted, 97%; backward escape off the cycles).** -/
 theorem tendsto_goldPerm_pow_neg {x : ℤ} (hx : 0 < x) (hxΦ : x ∉ goldCycles) :
-    Tendsto (fun n : ℕ => (goldPerm ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+    Tendsto (fun n : ℕ => (goldPerm ^ (-(n : ℤ))) x) atTop atTop :=
+  tendsto_pow_neg hyp_goldPerm hx hxΦ
 
 /-- **(drafted, 97%).**  An orbit through a positive point off `Φ` meets the trap `S′`.  Paper
 proof: its minimum `y` (`exists_isOrbitMin`) is even (`isOrbitMin_iff`) and off `Φ`, so `W y` is
 even (`hyp_goldPerm`'s (H2) argument): `y ∈ S′`. -/
 theorem exists_mem_orbit_mem_coneSet_gold {x : ℤ} (hx : 0 < x) (hxΦ : x ∉ goldCycles) :
     ∃ y ∈ permOrbit goldPerm x, y ∈ coneSet 3 (-1) := by
-  sorry
+  obtain ⟨y, hy, hmin⟩ := exists_isOrbitMin hyp_goldPerm hx hxΦ
+  have hy0 : 0 < y := permOrbit_subset_pos hyp_goldPerm hx hy
+  have hyΦ : y ∉ goldCycles := permOrbit_subset_compl hyp_goldPerm hxΦ hy
+  have hye := ((isOrbitMin_iff hyp_goldPerm hy0 hyΦ).1 hmin).1
+  simp only [Set.mem_ofPred_eq] at hye
+  refine ⟨y, hy, hy0, hye, ?_⟩
+  by_contra hc
+  exact hyΦ (wy_gold_iterate_three hye (by omega))
 
 /-- **(drafted, 96%; classification).**  Every orbit through `ℕ⁺` is `{1}`, a 3-cycle
 `{n, W n, W² n}` (`n > 0` even, `W n` odd), or infinite, tending to `∞` in both time directions
@@ -439,13 +588,35 @@ theorem goldPerm_trichotomy {x : ℤ} (hx : 0 < x) :
         Tendsto (fun n : ℕ => (goldPerm ^ n) x) atTop atTop ∧
         Tendsto (fun n : ℕ => (goldPerm ^ (-(n : ℤ))) x) atTop atTop ∧
         ∃ y ∈ permOrbit goldPerm x, y ∈ coneSet 3 (-1)) := by
-  sorry
+  by_cases hΦ : x ∈ goldCycles
+  · rcases (mem_goldCycles_iff hx).1 hΦ with rfl | ⟨n, hn0, hn, hW, hxn⟩
+    · left; exact permOrbit_eq_singleton_of_fixed (σ := goldPerm) gold_one
+    · right; left; exact ⟨n, hn0, hn, hW, permOrbit_gold_cycle hn hW hxn⟩
+  · right; right
+    exact ⟨permOrbit_infinite hyp_goldPerm hx hΦ, tendsto_goldPerm_pow hx hΦ,
+      tendsto_goldPerm_pow_neg hx hΦ, exists_mem_orbit_mem_coneSet_gold hx hΦ⟩
 
 /-- **(drafted, 97%; Lemma P minimum test, `T = 1`).**  For `x > 0` off `Φ`: `x` is the minimum
 of its orbit iff `x` is even and `W⁻¹(x)` is odd (`isOrbitMin_iff`, `zpow_neg_one`). -/
 theorem isOrbitMin_goldPerm_iff_pred {x : ℤ} (hx : 0 < x) (hxΦ : x ∉ goldCycles) :
     IsOrbitMin goldPerm x ↔ x % 2 = 0 ∧ goldPerm.symm x % 2 = 1 := by
-  sorry
+  rw [isOrbitMin_iff hyp_goldPerm hx hxΦ]
+  simp only [Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨h1, h2⟩
+    refine ⟨h1, ?_⟩
+    have := h2 1 le_rfl le_rfl
+    rw [Nat.cast_one, zpow_neg_one, Equiv.Perm.inv_def] at this
+    omega
+  · rintro ⟨h1, h2⟩
+    refine ⟨h1, fun i hi1 hi2 => ?_⟩
+    obtain rfl : i = 1 := by omega
+    rw [Nat.cast_one, zpow_neg_one, Equiv.Perm.inv_def]
+    omega
+
+theorem gold_thresh_lt : 1 / (2 * φ ^ 2) < 1 / 2 := by
+  have hg := gold_bounds
+  exact one_div_lt_one_div_of_lt (by norm_num) (by nlinarith)
 
 /-- **(drafted, 96%; infinite-orbit minima, explicit).**  For `x > 0`: `x` is the minimum of an
 infinite orbit iff `x = 2k` with `1/(2φ²) ≤ {kφ} < 1/2`.  Paper proof: off `Φ`, the minima are the
@@ -457,7 +628,34 @@ theorem isOrbitMin_and_infinite_iff {x : ℤ} (hx : 0 < x) :
     IsOrbitMin goldPerm x ∧ (permOrbit goldPerm x).Infinite ↔
       ∃ k : ℤ, x = 2 * k ∧ 1 / (2 * φ ^ 2) ≤ Int.fract ((k : ℝ) * φ) ∧
         Int.fract ((k : ℝ) * φ) < 1 / 2 := by
-  sorry
+  constructor
+  · rintro ⟨hmin, hinf⟩
+    have hΦ : x ∉ goldCycles := fun h => hinf ((permOrbit_goldPerm_finite_iff hx).2 h)
+    obtain ⟨he, hs⟩ := (isOrbitMin_goldPerm_iff_pred hx hΦ).1 hmin
+    have hW : Wg x % 2 = 0 := by
+      by_contra hc; exact hΦ (wy_gold_iterate_three he (by omega))
+    obtain ⟨k, hk, rfl, hu⟩ := (mem_coneSet_gold_iff x).1 ⟨hx, he, hW⟩
+    refine ⟨k, rfl, ?_, hu⟩
+    by_contra hc
+    obtain ⟨y, hy, hyx⟩ := (mem_image_coneSet_gold_iff (2 * k)).2 ⟨k, hk, rfl, not_le.1 hc⟩
+    have : goldPerm.symm (2 * k) = y := by rw [← hyx]; simp
+    rw [this] at hs
+    have := hy.2.1
+    omega
+  · rintro ⟨k, rfl, h1, h2⟩
+    have hk : 0 < k := by omega
+    have hcone : 2 * k ∈ coneSet 3 (-1) := (mem_coneSet_gold_iff _).2 ⟨k, hk, rfl, h2⟩
+    have hΦ := not_mem_goldCycles_of_mem_coneSet hcone
+    refine ⟨(isOrbitMin_goldPerm_iff_pred hx hΦ).2 ⟨by omega, ?_⟩,
+      fun hfin => hΦ ((permOrbit_goldPerm_finite_iff hx).1 hfin)⟩
+    by_contra hc
+    have hyx : goldPerm (goldPerm.symm (2 * k)) = 2 * k := by simp
+    have hy0 : 0 < goldPerm.symm (2 * k) := (hyp_goldPerm.pos_iff _).1 (by rw [hyx]; omega)
+    have hycone : goldPerm.symm (2 * k) ∈ coneSet 3 (-1) :=
+      ⟨hy0, by omega, by show Wg _ % 2 = 0; rw [← goldPerm_apply, hyx]; omega⟩
+    obtain ⟨k', hk', hkk, hv⟩ := (mem_image_coneSet_gold_iff (2 * k)).1 ⟨_, hycone, hyx⟩
+    obtain rfl : k' = k := by omega
+    linarith
 
 /-- **(drafted, 97%; finite-orbit minima).**  For `x > 0`: `x` is the minimum of a finite orbit
 iff `x = 1` or `x = 2k` with `{kφ} ≥ 1/2` (`mem_goldCycles_iff`, `isOrbitMin_of_cycle_gold`,
@@ -465,14 +663,49 @@ iff `x = 1` or `x = 2k` with `{kφ} ≥ 1/2` (`mem_goldCycles_iff`, `isOrbitMin_
 theorem isOrbitMin_and_finite_iff {x : ℤ} (hx : 0 < x) :
     IsOrbitMin goldPerm x ∧ (permOrbit goldPerm x).Finite ↔
       x = 1 ∨ ∃ k : ℤ, x = 2 * k ∧ 1 / 2 ≤ Int.fract ((k : ℝ) * φ) := by
-  sorry
+  constructor
+  · rintro ⟨hmin, hfin⟩
+    have hΦ := (permOrbit_goldPerm_finite_iff hx).1 hfin
+    rcases (mem_goldCycles_iff hx).1 hΦ with rfl | ⟨n, hn0, hn, hW, hxn⟩
+    · exact Or.inl rfl
+    right
+    have hnx : n ∈ permOrbit goldPerm x := by rw [permOrbit_gold_cycle hn hW hxn]; simp
+    have hxn' : x ∈ permOrbit goldPerm n := by
+      rw [permOrbit_gold_cycle hn hW (Or.inl rfl)]
+      rcases hxn with h | h | h <;> simp [h]
+    have hxeq : x = n := le_antisymm (hmin n hnx) (isOrbitMin_of_cycle_gold hn0 hn hW x hxn')
+    subst hxeq
+    exact ⟨x / 2, by omega, fract_ge_of_odd hn hW⟩
+  · rintro (rfl | ⟨k, rfl, hu⟩)
+    · refine ⟨isOrbitMin_of_fixed (σ := goldPerm) gold_one, ?_⟩
+      rw [permOrbit_eq_singleton_of_fixed (σ := goldPerm) gold_one]
+      exact Set.finite_singleton 1
+    · have hW : Wg (2 * k) % 2 = 1 := by
+        have := (wy_gold_two_mul_even_iff k).not.2 (not_lt.2 hu); omega
+      have hn : (2 * k) % 2 = 0 := by omega
+      refine ⟨isOrbitMin_of_cycle_gold hx hn hW, ?_⟩
+      rw [permOrbit_gold_cycle hn hW (Or.inl rfl)]
+      exact Set.toFinite _
 
 /-- **(drafted, 96%; all minima).**  For `x > 0`: `x` is an orbit minimum iff `x = 1` or `x = 2k`
 with `{kφ} ≥ 1/(2φ²)` (`isOrbitMin_and_infinite_iff`, `isOrbitMin_and_finite_iff`). -/
 theorem isOrbitMin_goldPerm_iff {x : ℤ} (hx : 0 < x) :
     IsOrbitMin goldPerm x ↔
       x = 1 ∨ ∃ k : ℤ, x = 2 * k ∧ 1 / (2 * φ ^ 2) ≤ Int.fract ((k : ℝ) * φ) := by
-  sorry
+  have hlt := gold_thresh_lt
+  constructor
+  · intro hmin
+    rcases (permOrbit goldPerm x).finite_or_infinite with hf | hi
+    · rcases (isOrbitMin_and_finite_iff hx).1 ⟨hmin, hf⟩ with h | ⟨k, rfl, hu⟩
+      · exact Or.inl h
+      · exact Or.inr ⟨k, rfl, by linarith⟩
+    · obtain ⟨k, rfl, h1, -⟩ := (isOrbitMin_and_infinite_iff hx).1 ⟨hmin, hi⟩
+      exact Or.inr ⟨k, rfl, h1⟩
+  · rintro (rfl | ⟨k, rfl, hu⟩)
+    · exact isOrbitMin_of_fixed (σ := goldPerm) gold_one
+    · rcases lt_or_ge (Int.fract ((k : ℝ) * φ)) (1 / 2) with h | h
+      · exact ((isOrbitMin_and_infinite_iff hx).2 ⟨k, rfl, hu, h⟩).1
+      · exact ((isOrbitMin_and_finite_iff hx).2 (Or.inr ⟨k, rfl, h⟩)).1
 
 /-- **(drafted, 96%; the infinite-orbit minima are Theorem K's entry points).**  `S′ ∖ W(S′)` is
 exactly the set of positive minima of infinite orbits, so every infinite orbit enters the trap
@@ -481,7 +714,19 @@ at its minimum, and K's entry density `(1/4)(1 − 2/α) = 1/(4φ)` is attained.
 theorem mem_coneEntry_gold_iff (x : ℤ) :
     x ∈ coneSet 3 (-1) \ goldPerm '' coneSet 3 (-1) ↔
       0 < x ∧ IsOrbitMin goldPerm x ∧ (permOrbit goldPerm x).Infinite := by
-  sorry
+  constructor
+  · rintro ⟨hc, hni⟩
+    obtain ⟨k, hk, rfl, hu⟩ := (mem_coneSet_gold_iff _).1 hc
+    have hx : 0 < 2 * k := by omega
+    refine ⟨hx, (isOrbitMin_and_infinite_iff hx).2 ⟨k, rfl, ?_, hu⟩⟩
+    by_contra h
+    exact hni ((mem_image_coneSet_gold_iff _).2 ⟨k, hk, rfl, not_le.1 h⟩)
+  · rintro ⟨hx, hmi⟩
+    obtain ⟨k, rfl, h1, h2⟩ := (isOrbitMin_and_infinite_iff hx).1 hmi
+    refine ⟨(mem_coneSet_gold_iff _).2 ⟨k, by omega, rfl, h2⟩, fun hi => ?_⟩
+    obtain ⟨k', -, hkk, hv⟩ := (mem_image_coneSet_gold_iff _).1 hi
+    obtain rfl : k' = k := by omega
+    linarith
 
 /-- **(proved: an instance of Theorem K).**  Infinitely many infinite orbits. -/
 theorem goldPerm_infinitelyManyInfiniteOrbits : InfinitelyManyInfiniteOrbits goldPerm :=
@@ -507,7 +752,25 @@ Paper proof: `isOrbitMin_goldPerm_iff`; the map `k ↦ 2k` is a bijection onto t
 theorem minCount_goldPerm_eq {X : ℕ} (hX : 1 ≤ X) :
     minCount goldPerm X = 1 + ((Finset.Icc (1 : ℤ) ((X / 2 : ℕ) : ℤ)).filter
       fun k : ℤ => 1 / (2 * φ ^ 2) ≤ Int.fract ((k : ℝ) * φ)).card := by
-  sorry
+  unfold minCount
+  have hset : ((Finset.Icc (1 : ℤ) X).filter fun x => IsOrbitMin goldPerm x) =
+      insert 1 (((Finset.Icc (1 : ℤ) ((X / 2 : ℕ) : ℤ)).filter
+        fun k : ℤ => 1 / (2 * φ ^ 2) ≤ Int.fract ((k : ℝ) * φ)).image fun k => 2 * k) := by
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_insert, Finset.mem_image]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, hm⟩
+      rcases (isOrbitMin_goldPerm_iff (by omega)).1 hm with h | ⟨k, rfl, hu⟩
+      · exact Or.inl h
+      · exact Or.inr ⟨k, ⟨⟨by omega, by omega⟩, hu⟩, rfl⟩
+    · rintro (rfl | ⟨k, ⟨⟨h1, h2⟩, hu⟩, rfl⟩)
+      · exact ⟨⟨le_rfl, by exact_mod_cast hX⟩, (isOrbitMin_goldPerm_iff one_pos).2 (Or.inl rfl)⟩
+      · exact ⟨⟨by omega, by omega⟩,
+          (isOrbitMin_goldPerm_iff (by omega)).2 (Or.inr ⟨k, rfl, hu⟩)⟩
+  rw [hset, Finset.card_insert_of_notMem, Finset.card_image_of_injective _ (fun a b h => by
+    have : 2 * a = 2 * b := h; omega)]
+  · omega
+  · simp only [Finset.mem_image]; rintro ⟨k, -, hk⟩; omega
 
 /-- **(drafted, 95%; 3-cycle density, conditional).**  Assuming one-dimensional Weyl
 equidistribution (a literature hypothesis), the 3-cycle minima have density `1/4`.  Paper proof:
