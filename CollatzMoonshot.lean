@@ -188,3 +188,6 @@ import CollatzMoonshot.WythoffCone
 import CollatzMoonshot.WythoffLine
 import CollatzMoonshot.WythoffSporadic
 import CollatzMoonshot.WythoffGolden
+import CollatzMoonshot.WythoffAutomaton
+import CollatzMoonshot.WythoffMirrorY
+import CollatzMoonshot.WythoffSeven
