@@ -650,7 +650,7 @@ theorem synDiv_half_zero {E : ℤ[X]} (hE0 : E.coeff 0 = 0) :
   rw [zsmul_eq_mul, show 1 + k - 0 - 1 = k by omega, show 1 + k = k + 1 by omega, pow_succ]
   ring
 
-/-- **(drafted, 95%; Lemma O∞, the limit Theorem O).**  Let `E = t^d + Σ_{k=1}^{d−1}e_kt^k`
+/-- **(proved; Lemma O∞, the limit Theorem O).**  Let `E = t^d + Σ_{k=1}^{d−1}e_kt^k`
 (monic, `E(0) = 0`) and `c_k = synDiv E (1/2) k = Σ_{j>k} e_j2^{−(j−k−1)}` (`c_0 = 2E(1/2)` by
 `synDiv_half_zero`).  If every `c_k ≥ 0` (`k < d`) and `Σ_{k<d} c_k ≤ 2`, then `E = t^d`.  Paper
 proof: `m_k := 2^{d−k−1}c_k = Σ_{k<j≤d} e_j2^{d−j}` is an odd integer (the `j = d` term is `1`,
@@ -662,7 +662,105 @@ theorem oInf {E : ℤ[X]} (hE : E.Monic) (hE0 : E.coeff 0 = 0)
     (hc : ∀ k < E.natDegree, 0 ≤ synDiv E (1 / 2) k)
     (hsum : ∑ k ∈ Finset.range E.natDegree, synDiv E (1 / 2) k ≤ 2) :
     E = X ^ E.natDegree := by
-  sorry
+  obtain ⟨n, hn⟩ : ∃ n, E.natDegree = n + 1 := by
+    refine ⟨E.natDegree - 1, ?_⟩
+    by_contra h
+    have : E = 1 := hE.natDegree_eq_zero.1 (by omega)
+    rw [this, coeff_one_zero] at hE0
+    exact one_ne_zero hE0
+  have hlead : E.coeff (n + 1) = 1 := by rw [← hn]; exact hE.coeff_natDegree
+  -- `m_k = Σ_{k<j≤d} e_j2^{d−j} = 2^{d−k−1}c_k`
+  set m : ℕ → ℤ := fun k => ∑ j ∈ Finset.Ioc k (n + 1), E.coeff j * 2 ^ (n + 1 - j) with hmdef
+  have hm_eq : ∀ k, k ≤ n → (2 : ℝ) ^ (n - k) * synDiv E (1 / 2) k = m k := by
+    intro k hk
+    rw [hmdef, synDiv, hn, Finset.mul_sum]
+    push_cast
+    refine Finset.sum_congr rfl fun j hj => ?_
+    obtain ⟨hj1, hj2⟩ := Finset.mem_Ioc.1 hj
+    have h2 : (2 : ℝ) ^ (n - k) = 2 ^ (n + 1 - j) * 2 ^ (j - k - 1) := by
+      rw [← pow_add]; congr 1; omega
+    have h3 : (2 : ℝ) ^ (j - k - 1) * (1 / 2) ^ (j - k - 1) = 1 := by
+      rw [← mul_pow]; norm_num
+    rw [h2]
+    linear_combination (2 ^ (n + 1 - j) * (E.coeff j : ℝ)) * h3
+  have hm_odd : ∀ k, k ≤ n → Odd (m k) := by
+    intro k hk
+    rw [hmdef]
+    dsimp only
+    rw [Finset.sum_Ioc_succ_top hk, Nat.sub_self, pow_zero, mul_one, hlead]
+    refine ⟨∑ j ∈ Finset.Ioc k n, E.coeff j * 2 ^ (n - j), ?_⟩
+    rw [Finset.mul_sum]
+    congr 1
+    refine Finset.sum_congr rfl fun j hj => ?_
+    rw [show n + 1 - j = (n - j) + 1 by have := (Finset.mem_Ioc.1 hj).2; omega, pow_succ]
+    ring
+  have hm_pos : ∀ k, k ≤ n → 1 ≤ m k := by
+    intro k hk
+    have h0 : (0 : ℝ) ≤ m k := by
+      rw [← hm_eq k hk]; exact mul_nonneg (by positivity) (hc k (by omega))
+    have h0' : 0 ≤ m k := by exact_mod_cast h0
+    obtain ⟨r, hr⟩ := hm_odd k hk
+    omega
+  -- `Σ_{k<d} 2^km_k = 2^{d−1}Σc_k ≤ 2^d`
+  have hsumm : ∑ k ∈ Finset.range (n + 1), 2 ^ k * m k ≤ 2 ^ (n + 1) := by
+    have e : ((∑ k ∈ Finset.range (n + 1), 2 ^ k * m k : ℤ) : ℝ) =
+        (2 : ℝ) ^ n * ∑ k ∈ Finset.range (n + 1), synDiv E (1 / 2) k := by
+      push_cast
+      rw [Finset.mul_sum]
+      refine Finset.sum_congr rfl fun k hk => ?_
+      have hk := Finset.mem_range.1 hk
+      rw [← hm_eq k (by omega), ← mul_assoc, ← pow_add, show k + (n - k) = n by omega]
+    have h : ((∑ k ∈ Finset.range (n + 1), 2 ^ k * m k : ℤ) : ℝ) ≤ ((2 ^ (n + 1) : ℤ) : ℝ) := by
+      rw [e]
+      rw [hn] at hsum
+      push_cast
+      rw [pow_succ]
+      nlinarith [pow_pos (two_pos : (0 : ℝ) < 2) n]
+    exact_mod_cast h
+  have hgeom : ∀ N, ∑ k ∈ Finset.range N, (2 : ℤ) ^ k = 2 ^ N - 1 := by
+    intro N
+    induction N with
+    | zero => simp
+    | succ N ih => rw [Finset.sum_range_succ, ih, pow_succ]; ring
+  -- so every `m_k = 1`
+  have hm1 : ∀ k, k ≤ n → m k = 1 := by
+    intro k hk
+    have hle : 2 ^ k * (m k - 1) ≤ ∑ j ∈ Finset.range (n + 1), 2 ^ j * (m j - 1) :=
+      Finset.single_le_sum (f := fun j => 2 ^ j * (m j - 1))
+        (fun j hj => mul_nonneg (by positivity)
+          (by linarith [hm_pos j (by have := Finset.mem_range.1 hj; omega)]))
+        (Finset.mem_range.2 (by omega))
+    have htot : ∑ j ∈ Finset.range (n + 1), 2 ^ j * (m j - 1) ≤ 1 := by
+      simp only [mul_sub, mul_one, Finset.sum_sub_distrib]
+      rw [hgeom]
+      linarith
+    have h2k : (1 : ℤ) ≤ 2 ^ k := one_le_pow₀ (by norm_num)
+    obtain ⟨r, hr⟩ := hm_odd k hk
+    have := hm_pos k hk
+    have hr0 : r ≤ 0 := by nlinarith
+    omega
+  -- `e_k2^{d−k} = m_{k−1} − m_k = 0`
+  have hek : ∀ k, 1 ≤ k → k ≤ n → E.coeff k = 0 := by
+    intro k hk1 hk2
+    obtain ⟨k', rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
+    have hsplit : m k' = E.coeff (k' + 1) * 2 ^ (n + 1 - (k' + 1)) + m (k' + 1) := by
+      rw [hmdef]
+      dsimp only
+      rw [← Finset.sum_Ioc_consecutive _ (Nat.le_succ k') (by omega : k' + 1 ≤ n + 1),
+        Nat.Ioc_succ_singleton, Finset.sum_singleton]
+    rw [hm1 _ (by omega), hm1 _ hk2] at hsplit
+    have h : E.coeff (k' + 1) * 2 ^ (n + 1 - (k' + 1)) = 0 := by linarith
+    exact (mul_eq_zero.1 h).resolve_right (by positivity)
+  ext j
+  rw [coeff_X_pow, hn]
+  rcases Nat.lt_trichotomy j (n + 1) with h | h | h
+  · rw [if_neg (by omega)]
+    rcases Nat.eq_zero_or_pos j with h0 | h0
+    · subst h0; exact hE0
+    · exact hek j h0 (by omega)
+  · rw [if_pos h, h, hlead]
+  · rw [if_neg (by omega)]
+    exact coeff_eq_zero_of_natDegree_lt (by omega)
 
 end OInf
 
