@@ -772,6 +772,90 @@ theorem minCount_goldPerm_eq {X : ℕ} (hX : 1 ≤ X) :
   · omega
   · simp only [Finset.mem_image]; rintro ⟨k, -, hk⟩; omega
 
+/-- Counting even orbit points `2k ∈ [1, X]` by `k ∈ [1, ⌊X/2⌋] ⊆ ℕ`. -/
+theorem card_two_mul (X : ℕ) (Q : ℤ → Prop) [DecidablePred Q] (P : ℝ → Prop)
+    [DecidablePred fun k : ℕ => P (k : ℝ)]
+    (hQ : ∀ x : ℤ, 0 < x → (Q x ↔ ∃ k : ℤ, x = 2 * k ∧ P (k : ℝ))) :
+    ((Finset.Icc (1 : ℤ) X).filter Q).card =
+      ((Finset.Icc 1 (X / 2)).filter fun k : ℕ => P (k : ℝ)).card := by
+  have hset : ((Finset.Icc (1 : ℤ) X).filter Q) =
+      ((Finset.Icc 1 (X / 2)).filter fun k : ℕ => P (k : ℝ)).image
+        fun k : ℕ => 2 * (k : ℤ) := by
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_image]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, hq⟩
+      obtain ⟨k, rfl, hk⟩ := (hQ _ (by omega)).1 hq
+      refine ⟨k.toNat, ⟨⟨by omega, by omega⟩, ?_⟩, by omega⟩
+      have : ((k.toNat : ℕ) : ℝ) = (k : ℝ) := by
+        rw [← Int.cast_natCast, Int.toNat_of_nonneg (by omega)]
+      rw [this]; exact hk
+    · rintro ⟨k, ⟨⟨h1, h2⟩, hk⟩, rfl⟩
+      exact ⟨⟨by omega, by omega⟩, (hQ _ (by omega)).2 ⟨k, rfl, by rw [Int.cast_natCast]; exact hk⟩⟩
+  rw [hset, Finset.card_image_of_injective _ (fun a b h => by
+    have : 2 * (a : ℤ) = 2 * (b : ℤ) := h; omega)]
+
+/-- As `card_two_mul`, with the extra point `1`. -/
+theorem card_one_two_mul {X : ℕ} (hX : 1 ≤ X) (Q : ℤ → Prop) [DecidablePred Q] (P : ℝ → Prop)
+    [DecidablePred fun k : ℕ => P (k : ℝ)]
+    (hQ : ∀ x : ℤ, 0 < x → (Q x ↔ x = 1 ∨ ∃ k : ℤ, x = 2 * k ∧ P (k : ℝ))) :
+    ((Finset.Icc (1 : ℤ) X).filter Q).card =
+      1 + ((Finset.Icc 1 (X / 2)).filter fun k : ℕ => P (k : ℝ)).card := by
+  have hsplit : (Finset.Icc (1 : ℤ) X).filter Q =
+      insert 1 ((Finset.Icc (1 : ℤ) X).filter fun x => Q x ∧ x ≠ 1) := by
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_insert]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, hq⟩
+      by_cases hx : x = 1
+      · exact Or.inl hx
+      · exact Or.inr ⟨⟨h1, h2⟩, hq, hx⟩
+    · rintro (rfl | ⟨⟨h1, h2⟩, hq, -⟩)
+      · exact ⟨⟨le_rfl, by exact_mod_cast hX⟩, (hQ 1 one_pos).2 (Or.inl rfl)⟩
+      · exact ⟨⟨h1, h2⟩, hq⟩
+  rw [hsplit, Finset.card_insert_of_notMem (by simp), card_two_mul X _ P ?_, add_comm]
+  intro x hx
+  rw [hQ x hx]
+  constructor
+  · rintro ⟨h | h, hne⟩
+    · exact absurd h hne
+    · exact h
+  · rintro ⟨k, rfl, hk⟩
+    exact ⟨Or.inr ⟨k, rfl, hk⟩, by omega⟩
+
+/-- A frequency `A(N)/N → c` along `N = ⌊X/2⌋` gives density `c/2` in `X`. -/
+theorem tendsto_count_half {A : ℕ → ℕ} {c : ℝ} (m : ℕ)
+    (hA : Tendsto (fun N : ℕ => (A N : ℝ) / N) atTop (𝓝 c)) :
+    Tendsto (fun X : ℕ => ((m + A (X / 2) : ℕ) : ℝ) / X) atTop (𝓝 (c / 2)) := by
+  have hN : Tendsto (fun X : ℕ => X / 2) atTop atTop :=
+    Filter.tendsto_atTop_atTop.2 fun b => ⟨2 * b, fun X hX => by omega⟩
+  have h1 := hA.comp hN
+  have h2 : Tendsto (fun X : ℕ => ((X / 2 : ℕ) : ℝ) / X) atTop (𝓝 (1 / 2)) := by
+    have hlo : Tendsto (fun X : ℕ => 1 / 2 - (1 / 2 : ℝ) / X) atTop (𝓝 (1 / 2)) := by
+      simpa using (tendsto_const_nhds (x := (1 / 2 : ℝ))).sub
+        (tendsto_const_div_atTop_nhds_zero_nat (1 / 2 : ℝ))
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds ?_ ?_
+    · filter_upwards [eventually_ge_atTop 1] with X hX
+      have hX' : (0 : ℝ) < X := by exact_mod_cast hX
+      have : (X : ℝ) ≤ 2 * ((X / 2 : ℕ) : ℝ) + 1 := by exact_mod_cast (by omega : X ≤ 2 * (X / 2) + 1)
+      rw [sub_div' hX'.ne', div_le_div_iff_of_pos_right hX']
+      linarith
+    · filter_upwards [eventually_ge_atTop 1] with X hX
+      have hX' : (0 : ℝ) < X := by exact_mod_cast hX
+      have : 2 * ((X / 2 : ℕ) : ℝ) ≤ X := by exact_mod_cast (by omega : 2 * (X / 2) ≤ X)
+      rw [div_le_iff₀ hX']
+      linarith
+  have h3 : Tendsto (fun X : ℕ => (m : ℝ) / X) atTop (𝓝 0) :=
+    tendsto_const_div_atTop_nhds_zero_nat (m : ℝ)
+  have h4 := h3.add (h1.mul h2)
+  rw [show c / 2 = 0 + c * (1 / 2) by ring]
+  refine h4.congr' ?_
+  filter_upwards [eventually_ge_atTop 2] with X hX
+  have hX2 : (0 : ℝ) < ((X / 2 : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < X / 2)
+  have hX' : (0 : ℝ) < X := by exact_mod_cast (by omega : 0 < X)
+  simp only [Function.comp, Nat.cast_add]
+  field_simp
+
 /-- **(drafted, 95%; 3-cycle density, conditional).**  Assuming one-dimensional Weyl
 equidistribution (a literature hypothesis), the 3-cycle minima have density `1/4`.  Paper proof:
 `isOrbitMin_and_finite_iff`: the count is `1 + #{k ≤ X/2 : {kφ} ∈ [1/2, 1)}`;
@@ -779,7 +863,19 @@ equidistribution (a literature hypothesis), the 3-cycle minima have density `1/4
 `N = ⌊X/2⌋`. -/
 theorem tendsto_goldCycleMinCount (hW : WeylEquidistribution) :
     Tendsto (fun X : ℕ => (goldCycleMinCount X : ℝ) / X) atTop (𝓝 (1 / 4)) := by
-  sorry
+  have hW1 := hW φ goldenRatio_irrational (1 / 2) 1 (by norm_num) (by norm_num) le_rfl
+  have h := tendsto_count_half 1 hW1
+  rw [show (1 : ℝ) / 4 = (1 - 1 / 2) / 2 by norm_num]
+  refine h.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with X hX
+  classical
+  unfold goldCycleMinCount
+  have hQ : ∀ x : ℤ, 0 < x → ((IsOrbitMin goldPerm x ∧ (permOrbit goldPerm x).Finite) ↔
+      x = 1 ∨ ∃ k : ℤ, x = 2 * k ∧ Int.fract ((k : ℝ) * φ) ∈ Set.Ico (1 / 2 : ℝ) 1) := by
+    intro x hx
+    rw [isOrbitMin_and_finite_iff hx]
+    simp only [Set.mem_Ico, Int.fract_lt_one, and_true]
+  rw [card_one_two_mul hX _ (fun r : ℝ => Int.fract (r * φ) ∈ Set.Ico (1 / 2 : ℝ) 1) hQ]
 
 /-- **(drafted, 95%; infinite-orbit minima density, conditional).**  Assuming one-dimensional
 Weyl equidistribution, the infinite-orbit minima have density `1/(4φ)`.  Paper proof:
@@ -787,12 +883,47 @@ Weyl equidistribution, the infinite-orbit minima have density `1/(4φ)`.  Paper 
 `(φ² − 1)/(2φ²) = 1/(2φ)`, at `N = ⌊X/2⌋`. -/
 theorem tendsto_goldInfMinCount (hW : WeylEquidistribution) :
     Tendsto (fun X : ℕ => (goldInfMinCount X : ℝ) / X) atTop (𝓝 (1 / (4 * φ))) := by
-  sorry
+  have hg := gold_bounds
+  have hlt := gold_thresh_lt
+  have hW1 := hW φ goldenRatio_irrational (1 / (2 * φ ^ 2)) (1 / 2) (by positivity) hlt.le
+    (by norm_num)
+  have h := tendsto_count_half 0 hW1
+  rw [show 1 / (4 * φ) = (1 / 2 - 1 / (2 * φ ^ 2)) / 2 by
+    have h5 : √5 ^ 2 = 5 := Real.sq_sqrt (by norm_num)
+    field_simp; linear_combination (-2 : ℝ) * goldenRatio_sq + (-7 / 2 : ℝ) * h5]
+  refine h.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with X hX
+  classical
+  unfold goldInfMinCount
+  have hQ : ∀ x : ℤ, 0 < x → ((IsOrbitMin goldPerm x ∧ (permOrbit goldPerm x).Infinite) ↔
+      ∃ k : ℤ, x = 2 * k ∧ Int.fract ((k : ℝ) * φ) ∈ Set.Ico (1 / (2 * φ ^ 2)) (1 / 2)) := by
+    intro x hx
+    rw [isOrbitMin_and_infinite_iff hx]
+    simp only [Set.mem_Ico]
+  rw [card_two_mul X _ (fun r : ℝ => Int.fract (r * φ) ∈ Set.Ico (1 / (2 * φ ^ 2)) (1 / 2)) hQ]
+  try simp
 
 /-- **(drafted, 95%; total minima density, conditional).**  `1/4 + 1/(4φ) = 1/2 − 1/(4φ²)`
 (`minCount = goldCycleMinCount + goldInfMinCount`, or directly from `minCount_goldPerm_eq`). -/
 theorem tendsto_minCount_goldPerm (hW : WeylEquidistribution) :
     Tendsto (fun X : ℕ => (minCount goldPerm X : ℝ) / X) atTop (𝓝 (1 / 4 + 1 / (4 * φ))) := by
-  sorry
+  have hg := gold_bounds
+  have hlt := gold_thresh_lt
+  have hW1 := hW φ goldenRatio_irrational (1 / (2 * φ ^ 2)) 1 (by positivity) (by linarith)
+    le_rfl
+  have h := tendsto_count_half 1 hW1
+  rw [show 1 / 4 + 1 / (4 * φ) = (1 - 1 / (2 * φ ^ 2)) / 2 by
+    have h5 : √5 ^ 2 = 5 := Real.sq_sqrt (by norm_num)
+    field_simp; linear_combination (-4 : ℝ) * goldenRatio_sq + (-1 : ℝ) * h5]
+  refine h.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with X hX
+  classical
+  unfold minCount
+  have hQ : ∀ x : ℤ, 0 < x → (IsOrbitMin goldPerm x ↔
+      x = 1 ∨ ∃ k : ℤ, x = 2 * k ∧ Int.fract ((k : ℝ) * φ) ∈ Set.Ico (1 / (2 * φ ^ 2)) 1) := by
+    intro x hx
+    rw [isOrbitMin_goldPerm_iff hx]
+    simp only [Set.mem_Ico, Int.fract_lt_one, and_true]
+  rw [card_one_two_mul hX _ (fun r : ℝ => Int.fract (r * φ) ∈ Set.Ico (1 / (2 * φ ^ 2)) 1) hQ]
 
 end CollatzMoonshot.WythoffGolden
