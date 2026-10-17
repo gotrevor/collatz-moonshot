@@ -73,7 +73,7 @@ namespace CollatzMoonshot.WythoffSporadic
 
 open CollatzMoonshot.WythoffGeneral CollatzMoonshot.MonotonePotential
 open CollatzMoonshot.AmusicalTrap (permOrbit InfinitelyManyInfiniteOrbits)
-open Filter Topology
+open Filter Topology Polynomial
 
 /-! ## The root `x` and the parameters `α`, `β` -/
 
@@ -90,35 +90,103 @@ noncomputable def alphaY : ℝ :=
 noncomputable def betaY : ℝ :=
   2 * yRoot
 
+/-- The cubic changes sign on `[1/2, 3/5]` (IVT). -/
+theorem exists_yRoot : ∃ x : ℝ, 1 / 2 < x ∧ x < 3 / 5 ∧ x ^ 3 + x ^ 2 + 3 * x - 2 = 0 := by
+  have hc : ContinuousOn (fun x : ℝ => x ^ 3 + x ^ 2 + 3 * x - 2) (Set.Icc (1 / 2) (3 / 5)) := by
+    fun_prop
+  obtain ⟨x, ⟨h1, h2⟩, hx⟩ := intermediate_value_Icc (by norm_num) hc
+    (show (0 : ℝ) ∈ Set.Icc _ _ by constructor <;> norm_num)
+  simp only at hx
+  refine ⟨x, lt_of_le_of_ne h1 ?_, lt_of_le_of_ne h2 ?_, hx⟩ <;> rintro rfl <;> norm_num at hx
+
+/-- `F(x) = x³ + x² + 3x − 2` is strictly increasing. -/
+theorem yCubic_lt {a b : ℝ} (h : a < b) :
+    a ^ 3 + a ^ 2 + 3 * a - 2 < b ^ 3 + b ^ 2 + 3 * b - 2 := by
+  have : 0 < b ^ 2 + a * b + a ^ 2 + b + a + 3 := by
+    nlinarith [sq_nonneg (a + b + 1), sq_nonneg (a - b)]
+  nlinarith [mul_pos (sub_pos.2 h) this]
+
 /-- **(drafted, 99%).**  The root exists.  Paper proof: IVT for `F(x) = x³ + x² + 3x − 2` on
 `[1/2, 3/5]`: `F(1/2) = −1/8 < 0`, `F(3/5) = 0.176 > 0`; then `dif_pos`,
 `Classical.choose_spec`. -/
 theorem yRoot_spec :
     1 / 2 < yRoot ∧ yRoot < 3 / 5 ∧ yRoot ^ 3 + yRoot ^ 2 + 3 * yRoot - 2 = 0 := by
-  sorry
+  unfold yRoot
+  rw [dif_pos exists_yRoot]
+  exact exists_yRoot.choose_spec
 
 /-- **(drafted, 99%).**  `x³ + x² + 3x − 2` has exactly one real root.  Paper proof: it is
 strictly increasing (`F′ = 3x² + 2x + 3 > 0`; or directly, `F(y) − F(x) =
 (y − x)(y² + xy + x² + y + x + 3)` and the second factor is `> 0`). -/
 theorem yRoot_unique {y : ℝ} (hy : y ^ 3 + y ^ 2 + 3 * y - 2 = 0) : y = yRoot := by
-  sorry
+  have h := yRoot_spec.2.2
+  rcases lt_trichotomy y yRoot with hl | he | hl
+  · linarith [yCubic_lt hl]
+  · exact he
+  · linarith [yCubic_lt hl]
 
 /-- **(drafted, 99%).**  Interval bounds used by the polygon lemmas.  Paper proof: `F` is
 increasing and `F(0.52595748) < 0 < F(0.52595749)` (`norm_num`). -/
 theorem yRoot_bounds : (52595748 : ℝ) / 10 ^ 8 < yRoot ∧ yRoot < 52595749 / 10 ^ 8 := by
-  sorry
+  have h := yRoot_spec.2.2
+  constructor
+  · by_contra hc
+    rcases (not_lt.1 hc).lt_or_eq with hl | he
+    · have := yCubic_lt hl; norm_num at this; linarith
+    · rw [he] at h; norm_num at h
+  · by_contra hc
+    rcases (not_lt.1 hc).lt_or_eq with hl | he
+    · have := yCubic_lt hl; norm_num at this; linarith
+    · rw [← he] at h; norm_num at h
+
+/-- The cubic has no rational root (a rational root of the monic integer cubic is an integer,
+and `F(z) ≤ −2` for `z ≤ 0`, `F(z) ≥ 3` for `z ≥ 1`). -/
+theorem yCubic_ne_zero_rat (q : ℚ) : q ^ 3 + q ^ 2 + 3 * q - 2 ≠ 0 := by
+  intro h
+  have hmon : (X ^ 3 + X ^ 2 + C 3 * X - C 2 : ℤ[X]).Monic := by monicity!
+  have hr : aeval q (X ^ 3 + X ^ 2 + C 3 * X - C 2 : ℤ[X]) = 0 := by
+    simp only [map_sub, map_add, map_pow, map_mul, aeval_X, aeval_C]
+    simpa using h
+  obtain ⟨z, hz⟩ := isInteger_of_is_root_of_monic hmon hr
+  have hz' : (z : ℚ) = q := hz
+  subst hz'
+  have hz3 : z ^ 3 + z ^ 2 + 3 * z - 2 = 0 := by exact_mod_cast h
+  rcases le_or_gt z 0 with h0 | h0
+  · nlinarith [sq_nonneg z, sq_nonneg (z + 1)]
+  · nlinarith [sq_nonneg z, sq_nonneg (z - 1)]
+
+theorem natDegree_yCubic : (X ^ 3 + X ^ 2 + C 3 * X - C 2 : ℚ[X]).natDegree = 3 := by
+  compute_degree!
+
+theorem irreducible_yCubic : Irreducible (X ^ 3 + X ^ 2 + C 3 * X - C 2 : ℚ[X]) := by
+  apply Polynomial.irreducible_of_degree_le_three_of_not_isRoot
+  · rw [natDegree_yCubic]; decide
+  · intro q hq
+    apply yCubic_ne_zero_rat q
+    simpa using hq
 
 /-- **(drafted, 99%).**  `x` is irrational: a rational root of the monic integer cubic would be
 an integer dividing `2`, and `F(±1), F(±2) = 3, −5, 16, −12 ≠ 0`. -/
 theorem irrational_yRoot : Irrational yRoot := by
-  sorry
+  rintro ⟨q, hq⟩
+  apply yCubic_ne_zero_rat q
+  have h := yRoot_spec.2.2
+  rw [← hq] at h
+  exact_mod_cast h
 
 /-- **(drafted, 97%).**  `deg x = 3`: `1, x, x²` are `ℚ`-independent.  Paper proof: the monic cubic
 has no rational root (`irrational_yRoot`'s argument), hence is irreducible over `ℚ` and is the
 minimal polynomial of `x`; a `ℚ`-relation `a + bx + cx² = 0` would give a polynomial of degree
 `≤ 2` vanishing at `x` (`minpoly.degree_le_of_ne_zero`). -/
 theorem linearIndependent_yRoot : LinearIndependent ℚ fun i : Fin 3 => yRoot ^ (i : ℕ) := by
-  sorry
+  have hmin : (X ^ 3 + X ^ 2 + C 3 * X - C 2 : ℚ[X]) = minpoly ℚ yRoot := by
+    apply minpoly.eq_of_irreducible_of_monic irreducible_yCubic
+    · simp only [map_sub, map_add, map_pow, map_mul, aeval_X, aeval_C]
+      simpa using yRoot_spec.2.2
+    · monicity!
+  have h := linearIndependent_pow (K := ℚ) yRoot
+  rw [← hmin, natDegree_yCubic] at h
+  exact h
 
 /-- **(proved from `yRoot_spec`).**  `β = α/(α − 1)` (`field_simp`; `2x − 1 > 0`). -/
 theorem alphaY_div_sub_one : alphaY / (alphaY - 1) = betaY := by
@@ -151,7 +219,14 @@ theorem one_lt_alphaY : 1 < alphaY := by
 
 /-- **(drafted, 99%).**  `α` is irrational (`α = 1 + 1/(2x − 1)`, `irrational_yRoot`). -/
 theorem irrational_alphaY : Irrational alphaY := by
-  sorry
+  have hp : 2 * yRoot - 1 ≠ 0 := by linarith [yRoot_spec.1]
+  have h : alphaY = 1 + (2 * yRoot - 1)⁻¹ := by
+    unfold alphaY; field_simp; ring
+  rw [h]
+  have h2 : Irrational (2 * yRoot - 1) := by
+    have := irrational_yRoot.ratCast_mul (q := 2) (by norm_num)
+    simpa using this.sub_ratCast (q := 1)
+  simpa using (h2.inv).ratCast_add (q := 1)
 
 /-! ## The polygon computation on the phase square -/
 
