@@ -591,34 +591,99 @@ noncomputable def yPerm : Equiv.Perm ℤ :=
 
 theorem yPerm_apply (n : ℤ) : yPerm n = wy alphaY n := rfl
 
+theorem yPerm_pow_apply (i : ℕ) (s : ℤ) : (yPerm ^ i) s = (wy alphaY)^[i] s := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+theorem yPerm_one : yPerm 1 = 1 := wy_one (by linarith [alphaY_mem.1])
+
+theorem yPerm_fix : ∀ z ∈ ({1} : Set ℤ), yPerm z = z := by
+  intro z hz
+  rw [Set.mem_singleton_iff] at hz
+  subst hz
+  exact yPerm_one
+
+/-- `#(evens ∩ [1, M]) = ⌊M/2⌋`. -/
+theorem card_filter_even_Icc (M : ℕ) :
+    ((Finset.Icc (1 : ℤ) M).filter fun x => x % 2 = 0).card = M / 2 := by
+  have : ((Finset.Icc (1 : ℤ) M).filter fun x => x % 2 = 0) =
+      (Finset.Icc (1 : ℤ) ((M : ℤ) / 2)).image fun k => 2 * k := by
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_image]
+    constructor
+    · rintro ⟨⟨h1, h2⟩, h3⟩; exact ⟨x / 2, ⟨by omega, by omega⟩, by omega⟩
+    · rintro ⟨k, ⟨h1, h2⟩, rfl⟩; omega
+  rw [this, Finset.card_image_of_injective _ (fun a b h => by
+    have : 2 * a = 2 * b := h; omega),
+    Int.card_Icc]
+  omega
+
 /-- **(drafted, 96%; Theorem Y (2)).**  Lemma P applies with `S` = evens, `Φ = {1}`, `T = 4`.
 Paper proof: `pos_iff` is `wy_pos_iff`; `W(1) = 1` (`wy_one`, `α ≥ 2`) and injectivity give
 `mem_fix_iff`; (H1) is `wy_lt_of_odd` (`α ≥ 3`); (H2): by `exists_even_iterate_Y` the first
 return word is `E Oʲ`, `j ≤ 3` (take the least such `j`, `Nat.find`), and
 `R(s) ≥ 4s/3 > s` by `le_wy_iterate_of_odd_run_Y`. -/
 theorem hyp_yPerm : Hyp yPerm {n | n % 2 = 0} {1} 4 := by
-  sorry
+  have hα := alphaY_mem
+  refine ⟨fun n => wy_pos_iff one_lt_alphaY n, ?_, ?_, ?_⟩
+  · intro z
+    simp only [Set.mem_singleton_iff]
+    constructor
+    · intro h; rw [← yPerm_one] at h; exact yPerm.injective h
+    · rintro rfl; exact yPerm_one
+  · intro z hz hS hΦ
+    simp only [Set.mem_ofPred_eq, Set.mem_singleton_iff] at hS hΦ
+    rw [yPerm_apply]
+    exact wy_lt_of_odd (by linarith) (by omega) (by omega)
+  · intro s hs hs0 hsΦ
+    simp only [Set.mem_ofPred_eq] at hs
+    have hex := exists_even_iterate_Y hs
+    classical
+    have hj : Nat.find hex ≤ 3 ∧ (wy alphaY)^[Nat.find hex + 1] s % 2 = 0 := Nat.find_spec hex
+    have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ Nat.find hex → (wy alphaY)^[i] s % 2 = 1 := by
+      intro i hi1 hij
+      have := Nat.find_min hex (show i - 1 < Nat.find hex by omega)
+      rw [show i - 1 + 1 = i by omega] at this
+      omega
+    have hrun := le_wy_iterate_of_odd_run_Y hs0 hs hj.1 hodd
+    refine ⟨Nat.find hex + 1, by omega, by omega, ?_, ?_, ?_⟩
+    · simp only [Set.mem_ofPred_eq, yPerm_pow_apply]; exact hj.2
+    · rw [yPerm_pow_apply]; omega
+    · intro i hi1 hi2
+      simp only [Set.mem_ofPred_eq, yPerm_pow_apply]
+      have := hodd i hi1 (by omega); omega
 
 /-- **(drafted, 96%).**  The first return to the evens at least multiplies by `4/3`. -/
 theorem returnMap_yPerm_ge {s : ℤ} (hs0 : 0 < s) (hs : s % 2 = 0) :
     4 * s ≤ 3 * returnMap yPerm {n | n % 2 = 0} s := by
-  sorry
+  have hΦ : s ∉ ({1} : Set ℤ) := by simp only [Set.mem_singleton_iff]; omega
+  obtain ⟨h1, h2, -, -, h5⟩ :=
+    returnTime_spec hyp_yPerm (show s ∈ {n : ℤ | n % 2 = 0} from hs) hs0 hΦ
+  unfold returnMap
+  rw [yPerm_pow_apply]
+  obtain ⟨j, hj⟩ : ∃ j, returnTime yPerm {n | n % 2 = 0} s = j + 1 := 
+    ⟨returnTime yPerm {n | n % 2 = 0} s - 1, by omega⟩
+  rw [hj] at h2 h5 ⊢
+  apply le_wy_iterate_of_odd_run_Y hs0 hs (by omega)
+  intro i hi1 hij
+  have := h5 i hi1 (by omega)
+  simp only [Set.mem_ofPred_eq, yPerm_pow_apply] at this
+  omega
 
 /-- **(drafted, 96%; Theorem Y (2)).**  `{1}` is the only finite orbit in `ℕ⁺`
 (`permOrbit_finite_iff` with `hyp_yPerm`). -/
 theorem permOrbit_yPerm_finite_iff {x : ℤ} (hx : 0 < x) :
     (permOrbit yPerm x).Finite ↔ x = 1 := by
-  sorry
+  rw [permOrbit_finite_iff hyp_yPerm yPerm_fix hx, Set.mem_singleton_iff]
 
 /-- **(drafted, 96%; Theorem Y (2), forward escape).** -/
 theorem tendsto_yPerm_pow {x : ℤ} (hx : 1 < x) :
-    Tendsto (fun n : ℕ => (yPerm ^ n) x) atTop atTop := by
-  sorry
+    Tendsto (fun n : ℕ => (yPerm ^ n) x) atTop atTop :=
+  tendsto_pow hyp_yPerm (by omega) (by simp only [Set.mem_singleton_iff]; omega)
 
 /-- **(drafted, 96%; Theorem Y (2), backward escape).** -/
 theorem tendsto_yPerm_pow_neg {x : ℤ} (hx : 1 < x) :
-    Tendsto (fun n : ℕ => (yPerm ^ (-(n : ℤ))) x) atTop atTop := by
-  sorry
+    Tendsto (fun n : ℕ => (yPerm ^ (-(n : ℤ))) x) atTop atTop :=
+  tendsto_pow_neg hyp_yPerm (by omega) (by simp only [Set.mem_singleton_iff]; omega)
 
 /-- **(drafted, 96%; Theorem Y (2), minima).**  For `x > 1`: `x` is the minimum of its orbit iff
 `x` is even and its four predecessors are odd (`isOrbitMin_iff`, `T = 4`).  (Three predecessors
@@ -626,7 +691,11 @@ do not suffice: 582 mismatches with brute force for `y ≤ 2·10⁴`.) -/
 theorem isOrbitMin_yPerm_iff {x : ℤ} (hx : 1 < x) :
     IsOrbitMin yPerm x ↔
       x % 2 = 0 ∧ ∀ i : ℕ, 1 ≤ i → i ≤ 4 → (yPerm ^ (-(i : ℤ))) x % 2 = 1 := by
-  sorry
+  rw [isOrbitMin_iff hyp_yPerm (by omega) (by simp only [Set.mem_singleton_iff]; omega)]
+  simp only [Set.mem_ofPred_eq]
+  refine and_congr Iff.rfl (forall_congr' fun i => imp_congr_right fun _ =>
+    imp_congr_right fun _ => ?_)
+  constructor <;> intro h <;> omega
 
 /-- **(drafted, 96%; Theorem Y (3), exact count).**
 `#{minima ≤ X} + #{even s ∈ [1, X] : R(s) ≤ X} = 1 + ⌊X/2⌋`.  Paper proof:
@@ -634,20 +703,64 @@ theorem isOrbitMin_yPerm_iff {x : ℤ} (hx : 1 < x) :
 `WythoffLine.minCount_gPerm_add`. -/
 theorem minCount_yPerm_add {X : ℕ} (hX : 1 ≤ X) :
     minCount yPerm X + returnCount yPerm {n | n % 2 = 0} {1} X = 1 + X / 2 := by
-  sorry
+  rw [minCount_add_returnCount hyp_yPerm yPerm_fix X]
+  congr 1
+  · unfold setCount
+    rw [Finset.card_eq_one]
+    refine ⟨1, ?_⟩
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_singleton_iff, Finset.mem_singleton]
+    omega
+  · unfold setCount
+    rw [← card_filter_even_Icc X]
+    congr 1
+    ext x
+    simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_diff, Set.mem_ofPred_eq,
+      Set.mem_singleton_iff]
+    omega
 
 /-- **(drafted, 96%; Theorem Y (3), unconditional lower bound).**
 `#{minima ≤ X} ≥ 1 + ⌊X/2⌋ − ⌊3X/8⌋`.  Paper proof: `R(s) ≤ X` forces `4s ≤ 3X`
 (`returnMap_yPerm_ge`), and there are `⌊3X/8⌋` even `s ≥ 1` with `4s ≤ 3X`. -/
 theorem minCount_yPerm_ge {X : ℕ} (hX : 1 ≤ X) :
     1 + (X : ℤ) / 2 - 3 * (X : ℤ) / 8 ≤ minCount yPerm X := by
-  sorry
+  have hadd := minCount_yPerm_add hX
+  have hle : returnCount yPerm {n | n % 2 = 0} {1} X ≤ 3 * X / 8 := by
+    unfold returnCount
+    calc _ ≤ ((Finset.Icc (1 : ℤ) ((3 * X / 8 : ℕ) : ℤ)).image fun k => 2 * k).card := by
+          apply Finset.card_le_card
+          intro s hs
+          simp only [Finset.mem_filter, Finset.mem_Icc, Set.mem_ofPred_eq,
+            Set.mem_singleton_iff] at hs
+          obtain ⟨⟨h1, h2⟩, h3, h4, h5⟩ := hs
+          have := returnMap_yPerm_ge (by omega) h3
+          simp only [Finset.mem_image, Finset.mem_Icc]
+          exact ⟨s / 2, ⟨by omega, by omega⟩, by omega⟩
+      _ ≤ _ := Finset.card_image_le.trans (by rw [Int.card_Icc]; omega)
+  omega
 
 /-- **(drafted, 96%; Theorem Y (2)).**  Infinitely many infinite orbits.  Paper proof:
 `minCount_yPerm_ge` is unbounded, so the minima `> 1` are infinite;
 `infinitelyManyInfiniteOrbits_of_minima`. -/
 theorem yPerm_infinitelyManyInfiniteOrbits : InfinitelyManyInfiniteOrbits yPerm := by
-  sorry
+  apply infinitelyManyInfiniteOrbits_of_minima hyp_yPerm
+  intro hfin
+  classical
+  have hX : 1 ≤ 8 * (hfin.toFinset.card + 2) := by omega
+  have hge := minCount_yPerm_ge hX
+  have hle : minCount yPerm (8 * (hfin.toFinset.card + 2)) ≤ hfin.toFinset.card + 1 := by
+    unfold minCount
+    calc _ ≤ (insert 1 hfin.toFinset).card := by
+          apply Finset.card_le_card
+          intro x hx
+          simp only [Finset.mem_filter, Finset.mem_Icc] at hx
+          rw [Finset.mem_insert, Set.Finite.mem_toFinset]
+          by_cases h1 : x = 1
+          · exact Or.inl h1
+          · exact Or.inr ⟨by omega, by simpa using h1, hx.2⟩
+      _ ≤ _ := Finset.card_insert_le _ _
+  push_cast at hge
+  omega
 
 /-- The minima density `d = 3/10 + x/8 + x²/10 ≈ 0.3934078`. -/
 noncomputable def densityY : ℝ :=
