@@ -335,7 +335,7 @@ theorem irrational_xOf (hα : 1 < α) (hirr : Irrational α) : Irrational (xOf �
   unfold xOf
   exact_mod_cast h2.div_natCast (m := 2) (by norm_num)
 
-/-- **(drafted, 90%; odd ⇒ solves).**  For irrational `α > 1`, `P` monic of degree
+/-- **(proved; odd ⇒ solves).**  For irrational `α > 1`, `P` monic of degree
 `2 ≤ d ≤ n`, `k ≥ 1`: if `W^1(2k), …, W^n(2k)` are all odd, the phase vector of `2k` solves
 `RunSystem` of length `n`.  Paper proof.  *Box:* `ε_0 = G_E(2k)/2 ∈ (0, 1/2]` with
 `G_E(2k) = 1 − {kα} < 1` (`kα ∉ ℤ`); for `1 ≤ l < n`, `ε_l = G(v)/2 ∈ [0, 1/2)` with
@@ -346,9 +346,42 @@ theorem runSystem_phaseVec_of_odd (hα : 1 < α) (hirr : Irrational α) (hP : P.
     (hd : 2 ≤ P.natDegree) (hroot : aeval (xOf α) P = 0) {k : ℤ} (hk : 0 < k) {n : ℕ}
     (hn : P.natDegree ≤ n) (hodd : ∀ j ∈ Finset.Icc 1 n, (wy α)^[j] (2 * k) % 2 = 1) :
     RunSystem (synDiv P (xOf α)) P.natDegree (P.coeff 0) n (phaseVec α (2 * k)) := by
-  sorry
+  have hu : 2 * k % 2 = 0 := by omega
+  have hpos : ∀ i : ℕ, 0 < (wy α)^[i] (2 * k) := by
+    intro i
+    induction i with
+    | zero => simp only [Function.iterate_zero, id_eq]; omega
+    | succ i ih => rw [Function.iterate_succ_apply']; exact (wy_pos_iff hα _).2 ih
+  have hfresh : ∀ i : ℕ, 1 ≤ i → i < P.natDegree → (wy α)^[i] (2 * k) % 2 = 1 :=
+    fun i hi1 hid => hodd i (Finset.mem_Icc.2 ⟨hi1, by omega⟩)
+  refine ⟨fun i hi => ?_, ?_, fun i hi hin => ?_⟩
+  · rcases Nat.eq_zero_or_pos i with h0 | h0
+    · subst h0
+      refine ⟨(phaseVec_zero_mem hu).1, ?_⟩
+      rw [phaseVec_zero]
+      unfold evenPhase
+      rw [wy_two_mul]
+      have hne : (k : ℝ) * α ≠ (⌊(k : ℝ) * α⌋ : ℝ) :=
+        (hirr.intCast_mul (by omega : k ≠ 0)).ne_int _
+      have hlt : (⌊(k : ℝ) * α⌋ : ℝ) < k * α := lt_of_le_of_ne (Int.floor_le _) (Ne.symm hne)
+      have e : α / 2 * ((2 * k : ℤ) : ℝ) = k * α := by push_cast; ring
+      rw [e]; linarith
+    · have hv := hodd i (Finset.mem_Icc.2 ⟨h0, hi.le⟩)
+      have hm := phaseVec_mem_of_odd (α := α) (by omega : i ≠ 0) hv
+      refine ⟨lt_of_le_of_ne hm.1 fun h => ?_, hm.2⟩
+      rw [phaseVec_of_ne_zero α _ (by omega)] at h
+      unfold oddPhase at h
+      set v := (wy α)^[i] (2 * k)
+      have hv0 : v + 1 ≠ 0 := by have := hpos i; omega
+      have hx := (irrational_xOf hα hirr).mul_intCast hv0
+      apply hx.ne_int (wy α v + 1)
+      push_cast; linarith
+  · exact (topRow_phaseVec_int_iff hα hP hd hroot hu hfresh).2
+      (hodd _ (Finset.mem_Icc.2 ⟨by omega, hn⟩))
+  · exact (stdRow_phaseVec_int_iff hP hroot hi fun j hj =>
+      hodd _ (Finset.mem_Icc.2 ⟨by omega, by omega⟩)).2 (hodd _ (Finset.mem_Icc.2 ⟨by omega, hin⟩))
 
-/-- **(assembled from `runSystem_phaseVec_of_odd`, 90%; the exact
+/-- **(proved; the exact
 correspondence).**  For irrational `α > 1`, `P` monic of degree
 `2 ≤ d ≤ n` with `P(x) = 0`, `k ≥ 1`, and the fresh steps `W^1(2k), …, W^{d−1}(2k)` odd: the phase
 vector of `2k` solves `RunSystem` of length `n` iff `W^1(2k), …, W^n(2k)` are all odd.  Paper
