@@ -2097,3 +2097,38 @@ main (`daf38cf`): Lemma P, Theorems G, K, Y and the golden member (§60, `docs/n
 * **For `U`.**  `x = 3/4` takes a fresh 2-adic digit at every step, so no identity-potential
   classification of `U` exists for any `S`.  That rules out one method only; under 1% that this
   moves (a).
+
+## 62. No residue trap on the rational line: Theorem RT (2026-10-16, Opus agent; Ren checked)
+
+Report: `wythoff-transitive.md`.  `W_{p/q±}` is *residue-transitive mod `M`* when the digraph on
+`ℤ/M` with an edge `a → b` whenever some `n ≡ a` has `W(n) ≡ b` is strongly connected.
+
+* **Theorem RT (92%).**  For `p ≥ 3`, `gcd(p, q) = 1`, `R = p − q`, `W_{p/q±}` is
+  residue-transitive mod every `M ≥ 2`, except the absorbing members of Theorem T (`p` even, side
+  `+`, `q = 1` or `R = 1`), which are transitive exactly at the odd `M`.  This covers odd `p`, so
+  `U = W_3` has no proper invariant residue set at any modulus.  At `p = 2` the statement fails
+  (the `−` map is the swap `2k ↔ 2k − 1`, not transitive at even `M ≥ 4`), so §59's CONJ 85%
+  needs `p ≥ 4`.
+* **Proof shape.**  A window formula, `W(2y) = (py − j)/q` with `j` the unique element of a window
+  of `q` consecutive integers with `j ≡ py (mod q)` (and the same with `R` on the odd branch),
+  drives every step.  Base case `M = 2^e M₀`, `gcd(M₀, 2pqR) = 1`: the residue digraph carries
+  the stationary law `φ × uniform` (`φ` the forward parity chain's), which has full support exactly
+  when the chain is not absorbing, so every edge lies on a cycle and weak connectivity (step by
+  `1/q`) gives strong connectivity.  Then prime by prime: Lemma D lifts powers of 2 when `4 | p`
+  through `W⁻¹` (which expands 2-adically), Lemma B adds the odd primes of `p` (where `W⁻¹`
+  expands), Lemma A adds the primes of `qR` (where `W` expands; a routing argument through
+  parities).  The 8% reserve is Lemma A's valuation bookkeeping.
+* **Checks.**  The agent's scan (`transitive.py 300 24`): 113,046 (member, `M`) pairs, all
+  `p ≤ 24`, both sides, `M ≤ 300` plus mixed prime powers to 6000, 0 mismatches with the
+  prediction; the 22 absorbing members fail at every even `M` and pass at every odd `M`.  Ren's
+  independent checker (built on the Lean `wythoff` definition): 4,136 pairs (`p ≤ 12`, `M ≤ 48`),
+  0 mismatches; `U` transitive for `M ≤ 40`; the `p = 2` swap fails exactly at even `M ≥ 4`.  Ren
+  re-ran the exact proof-step checks (`steps.py`): identical.
+* **What it buys.**  For non-absorbing members there is no eventually periodic `C` with
+  `W(C) ⊆ C`, on `ℤ` or `ℕ⁺`, so the §55 trap theorem has nothing to act on: along the rational
+  line, "solvable by a periodic trap" is equivalent to "parity chain absorbing".  It says nothing
+  about whether infinite orbits exist, and leaves non-periodic routes open (Bohr-set traps as at
+  `3 + √5`, Lemma P potentials, conjugacies).  Under 1% that this moves (a).
+* **Side answer to §59's question on `4 | p`.**  The 2-adic contraction does show at moduli `2^e`,
+  `e ≥ 2`: `φ × uniform` is not stationary there (0 of 752 exact checks); transitivity survives
+  because Lemma D goes through `W⁻¹`.
