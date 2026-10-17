@@ -195,3 +195,4 @@ import CollatzMoonshot.WythoffMirrorY
 import CollatzMoonshot.WythoffSeven
 import CollatzMoonshot.WythoffPisot
 import CollatzMoonshot.WythoffRunCriterion
+import CollatzMoonshot.WythoffUStar
