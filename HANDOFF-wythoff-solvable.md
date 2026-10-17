@@ -25,3 +25,13 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
   bound in the multiplied-out form `(1 − x)(v − A xʲ n) ≤ x − x^{j+1}` (no geometric sums);
   `wy_even_bounds`, `wy_odd_bounds` are the one-step real bounds for any `α`.  Gotcha:
   `rw [betaG]` also unfolds inside `wy (betaG m r)`; rewrite `betaG m r / 2 = x` instead.
+- §6 classification + mirror: all closed (`hyp_gPerm`, `hyp_gmPerm`, counts, lower bounds,
+  both `InfinitelyManyInfiniteOrbits`).  Mirror partial runs `j < m` need `x ≤ 3/5`
+  (`gRoot_le_of_pos`, from `x² ≥ 2(2x − 1)` when `m ≥ 1`); helper
+  `le_wy_iterate_of_even_run_mirror`.  `densityG_eq` closed.
+  Gotchas: `Φ` is not a valid identifier character (`hzΦ` breaks the parser: use `hzF`);
+  structure-instance `refine { … }` across lines failed to parse, anonymous `⟨…⟩` works.
+  Box builds intermittently hit "Too many open files" (environmental); retry loop `/tmp/lb.sh`.
+- Open (4): `coneEntry_infinite`, `tendsto_coneEntryCount` (Cone), `tendsto_minCount_gPerm`,
+  `tendsto_minCount_gmPerm` (Line §7).  Next: `coneEntry_infinite` (unconditional; Dirichlet
+  syndeticity of `T` vs. log-sparse forward orbits from a finite entry set).
