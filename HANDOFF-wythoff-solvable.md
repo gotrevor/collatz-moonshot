@@ -35,3 +35,8 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
 - Open (4): `coneEntry_infinite`, `tendsto_coneEntryCount` (Cone), `tendsto_minCount_gPerm`,
   `tendsto_minCount_gmPerm` (Line §7).  Next: `coneEntry_infinite` (unconditional; Dirichlet
   syndeticity of `T` vs. log-sparse forward orbits from a finite entry set).
+- `coneEntry_infinite` closed (no logs needed): syndetic `T` (`coneSet_syndetic`: Dirichlet
+  `Real.exists_int_int_abs_mul_sub_le` + `fract_hit`), entry map (`exists_entry`, strong
+  induction), and on `T` every later orbit point is `≥ 3/2 ×` an earlier one, so each entry's
+  forward orbit has at most one point in `[Y, 3Y/2)`; `N + 1` window points inject into `E`.
+- Open (3): `tendsto_coneEntryCount` (Weyl 1-dim), `tendsto_minCount_gPerm/gmPerm` (Weyl multi).
