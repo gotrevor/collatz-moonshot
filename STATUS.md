@@ -1,5 +1,13 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-17, rational Wythoff maps `W_{p/q±}` COMPLETE:** `CollatzMoonshot/WythoffRational.lean`
+> and `CollatzMoonshot/WythoffRationalMarkov.lean` are sorry-free, ratified statements unchanged,
+> headline axioms trust-base only.  Theorem M: for even `p` the parity itineraries are exactly
+> Markov on every window that is a multiple of `2(qR)^L(p/2)^{L'}` (`cylCount_eq`), forward and
+> backward words are independent given the parity of `x` (`cylCount_condIndep`) but not without it
+> (`tenThirds_dependent`); for odd `p` the law is i.i.d. (`cylCount_eq_odd`).  The backward chain
+> satisfies `(p/2) B(e → 0) = q F(0 → e)`.  Read `HANDOFF-wythoff-rational.md`.
+
 > **2026-10-14, amusical block-swap objective COMPLETE:** `CollatzMoonshot/AmusicalSwap.lean`
 > is sorry-free with `ampSwap` and all six ratified statements unchanged.  Every swap pattern of
 > the family `F_1` is a permutation of `ℕ` (explicit inverse), keeps `U`'s even branch and offset
