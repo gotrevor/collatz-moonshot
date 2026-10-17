@@ -953,7 +953,23 @@ parity class is closed (Theorem T, `parityClass_invariant_iff`).  Holds at `p = 
 theorem not_residueTransitive_of_absorbing_even (hp : Even p) (hcop : Nat.Coprime p q)
     (hq : 0 < q) (hqp : q < p) (habs : s = .plus ∧ (q = 1 ∨ p - q = 1)) {M : ℕ}
     (hM0 : 0 < M) (hM : Even M) : ¬ ResidueTransitive (wythoff s p q) M := by
-  sorry
+  obtain ⟨e, he⟩ := (parityClass_invariant_iff s hcop hq hqp).2 ⟨hp, habs⟩
+  have h2 : 2 ∣ M := even_iff_two_dvd.1 hM
+  let φ := ZMod.castHom h2 (ZMod 2)
+  have hφ : ∀ n : ℤ, φ (n : ZMod M) = (n : ZMod 2) := fun n => by simp [φ]
+  let C : Set (ZMod M) := {a | φ a = e}
+  have hC : ResidueClosed (wythoff s p q) M C := fun n hn => by
+    simp only [C, Set.mem_ofPred_eq, hφ] at hn ⊢; exact he n hn
+  intro hT
+  rcases (residueTransitive_iff_closed _ M).1 hT C hC with h0 | h1
+  · have : (((e.val : ℤ) : ZMod M)) ∈ C := by
+      simp only [C, Set.mem_ofPred_eq, hφ]; simp
+    rw [h0] at this; exact this
+  · have : (((e.val + 1 : ℤ) : ZMod M)) ∈ C := by rw [h1]; trivial
+    simp only [C, Set.mem_ofPred_eq, hφ] at this
+    push_cast at this
+    rw [ZMod.natCast_zmod_val] at this
+    revert this; generalize e = e'; revert e'; decide
 
 /-- **(ratified).**  **Theorem RT, absorbing members.**  For even `p ≥ 4`, side `+`, `q = 1` or
 `R = 1`: residue-transitive mod `M` iff `M` is odd. -/
@@ -989,7 +1005,32 @@ theorem residueTransitive_iff (hp3 : 3 ≤ p) (hcop : Nat.Coprime p q) (hq : 0 <
 `{1, 2}` is a closed proper set mod every even `M ≥ 4`. -/
 theorem two_minus_not_residueTransitive {M : ℕ} (hM4 : 4 ≤ M) (hM : Even M) :
     ¬ ResidueTransitive (wythoff .minus 2 1) M := by
-  sorry
+  have h2 : (2 : ℤ) ∣ M := by exact_mod_cast even_iff_two_dvd.1 hM
+  have hWe : ∀ n : ℤ, n % 2 = 0 → wythoff .minus 2 1 n = n - 1 := fun n hn => by
+    simp only [wythoff, hn, if_true, Nat.cast_ofNat, Nat.cast_one, Int.ediv_one]; omega
+  have hWo : ∀ n : ℤ, n % 2 = 1 → wythoff .minus 2 1 n = n + 1 := fun n hn => by
+    simp only [wythoff, hn, Nat.cast_ofNat, Nat.cast_one]; norm_num; omega
+  have hpar : ∀ (n c : ℤ), (n : ZMod M) = (c : ZMod M) → n % 2 = c % 2 := fun n c h => by
+    have := h2.trans ((ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 h); omega
+  let C : Set (ZMod M) := {1, 2}
+  have hC : ResidueClosed (wythoff .minus 2 1) M C := by
+    intro n hn
+    rcases hn with hn | hn
+    · have h1 := hpar n 1 (by simpa using hn)
+      rw [hWo n (by omega)]; right; push_cast; rw [hn]; norm_num
+    · have h1 := hpar n 2 (by simpa using hn)
+      rw [hWe n (by omega)]; left; push_cast; rw [hn]; norm_num
+  intro hT
+  have h0C : (0 : ZMod M) ∉ C := by
+    rintro (h | h)
+    · have := (ZMod.natCast_eq_zero_iff 1 M).1 (by simpa using h.symm)
+      have := Nat.le_of_dvd one_pos this; omega
+    · have := (ZMod.natCast_eq_zero_iff 2 M).1 (by simpa using h.symm)
+      have := Nat.le_of_dvd two_pos this; omega
+  rcases (residueTransitive_iff_closed _ M).1 hT C hC with h0 | h1
+  · have : (1 : ZMod M) ∈ C := Or.inl rfl
+    rw [h0] at this; exact this
+  · exact h0C (by rw [h1]; trivial)
 
 end EvenP
 
