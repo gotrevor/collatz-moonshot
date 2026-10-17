@@ -44,3 +44,14 @@ Kickoff: `KICKOFF-2026-10-16-wythoff-solvable.md`.  Branch `wip/wythoff-solvable
   `card_image_coneSet_Icc` (= phaseCount ⌊(X+1)/α⌋₊, irrationality excludes `kα = X + 1`),
   generic `tendsto_floor_linear_div`, `tendsto_comp_div`.  `WythoffCone.lean` sorry-free.
 - Open (2): `tendsto_minCount_gPerm`, `tendsto_minCount_gmPerm` (§7, multi-dim Weyl).
+- §7 engine landed (`WythoffLine.Engine`): `Nf x ρ ψ` (N₀ = ⌊2ψ₀⌋, N_{l+1} = ⌊2ψ_{l+1} +
+  x(ρ + N_l − 2ψ_l)⌋), `volume_cyl` (= 2⁻¹^|I|, via half-translation `volume_cyl_flip`; no
+  Fubini), `volume_frontier_cyl` (finite union of convex level sets, `Convex.addHaar_frontier`).
+  ρ = 1 main (odd runs, step v ↦ ⌊xv + x⌋), ρ = 0 mirror (even runs, v ↦ ⌊xv⌋).
+  **Plan for the two densities:** (a) run lemma: if `W(n₀) = ⌊2kA⌋` and the first `l` iterates
+  have parity ρ, `W^{l+1}(n₀) = N_l(Ψ k) + 2⌊kAxˡ⌋`, `Ψ k = ({k A xⁱ})_{i<m}`; (b) returnTime
+  = j+1 ⟺ Ψ k ∈ `cyl (range (min (j+1) m)) (update (const ρ) j (ρ+1))`; (c) |R − 2kAxʲ| < 4
+  from the sandwiches; (d) squeeze with `tendsto_comp_div`/`tendsto_floor_linear_div`, sum
+  over j; (e) independence of `Fin.cons 1 (A xⁱ)` from `hind` (multiply by xᵐ, `A xᵐ = r`);
+  (f) algebra `1/2 − Σ_{j<m} 1/(2αβʲ) − 1/(αβᵐ) = (α−2)/(2αβᵐ)`.  m = 0: α = 2r rational, run
+  lemma vacuous (hypotheses gated on `1 ≤ m`).
