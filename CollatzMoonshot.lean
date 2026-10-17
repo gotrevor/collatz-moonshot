@@ -186,3 +186,5 @@ import CollatzMoonshot.MonotonePotential
 import CollatzMoonshot.WythoffGeneral
 import CollatzMoonshot.WythoffCone
 import CollatzMoonshot.WythoffLine
+import CollatzMoonshot.WythoffSporadic
+import CollatzMoonshot.WythoffGolden
