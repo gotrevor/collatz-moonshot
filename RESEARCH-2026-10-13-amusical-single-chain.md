@@ -2220,3 +2220,42 @@ criterion from Weyl (`WythoffRunCriterion`, #69), so N3's headline is conditiona
   The bounded-but-not-solvable residue off the G line looks cyclotomic (a conjugate near a root
   of unity), as Theorem L predicts.  For `U`: nothing new (`x = 3/4` is not an algebraic
   integer).  Under 1% that this moves (a).
+
+## 65. The solvable cubic members are G(2, r), Y and their mirrors (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-cubic.md`.  A cubic member is `P = t³ + bt² + a₁t + A` (`A = a₀`), other roots
+`y, z`, `h_j` the complete symmetric functions of `1/y, 1/z`.  In Lean on main since §64:
+Lemma U\*, Corollaries U1-U2, Lemma SG and Lemma O∞ (`WythoffUStar`, #71).
+
+* **Classification (92% given the run criterion, N3, U\*/U2; about 80% end to end).**  A cubic
+  member is solvable iff it is G(2, r) = `t³ − 2rt + r` (`r ≥ 2`), Y = `t³ + t² + 3t − 2`, or a
+  mirror.  "If" is Theorems G and Y (in Lean).  For `|a₀| ≥ 800` "only if" is Theorem C3, proved
+  with a finite interval-arithmetic check; for `|a₀| < 800` it is computed, by two independent
+  pipelines that agree member by member.
+* **Exact setup.**  Under bounded runs, U2 gives `N = 8P(½)` odd with `|N| ≤ 7`, and every
+  cubic member is a triple `(A, b, N)`: `P = (1 − 2t)(A − bt/2) + t³ + ((N − 1)/4)t`.  Then
+  `h₁ = (b + x)x/A`, `h_j = h₁h_{j−1} + (x/A)h_{j−2}`, `q̃₀ = N/(4 − 2h₁ + e₂)`.
+* **Proof shape of Theorem C3.**  *Lemma K:* adding `(Δ/q₀)h_{j−i}` to a period-1 or -2 base orbit
+  at indices `1..j` keeps every standard row integral (only `R_j` moves, by `Δ`) and shifts the
+  top-row quantity by exactly `−Δh_j`; if the points `{−Δh_j}` fill the top-row window, runs are
+  unbounded.  *Proposition R:* at level 1 this fails only if `h₁` is within `O(1/|A|)` of `p/q`
+  with `q ≤ 12` (gap bounds for arithmetic progressions mod 1); then `h_n ≈ (p/q)^n` fills at a
+  level `n ≤ 4` unless `q = 1`.  `q = 1` leaves `p = 0` (small `|b|`: five shapes, each with an
+  explicit Lemma T ball for all `|A| ≥ 800`, and the sixth shape `(b, N) = (0, 1)` is exactly the G
+  line) or `p = ±1` (a conjugate within `2/|A|` of `±1`: Lemma SG gives runs of length `≥ 3543` at
+  `|A| = 800`, against a solvability cap of `13.6`).  All bounds are monotone in `|A|`.
+* **Ren's checks.**  Paper: the triple form (I1), `h₁`, `e₂`, the recursion, `q̃₀` via H½, and
+  Lemma K's row and top-row shifts.  Re-ran `effective.py 800` (0 failures, identical) and
+  `effective.py 750` (fails at `p/q = −10/11, −9/11`: the teeth), and `percert.py 201 1000`
+  (3,839,200 candidates; uncertified = exactly the 800 G members).  Ren's independent certificate
+  code (U\*, Lemma K to level 6 with the full `Δ` range, Lemma SG, a brute-force Lemma T; every
+  certificate an explicit sequence verified at 60 digits): at `A = 800, −801, 1234, −2000` every
+  off-G candidate is certified (≈ 28,000 candidates after the N3 and U\* windows), and the G
+  member stays uncertified.
+* **CONJ P (units; still 90%).**  Partial: if `θ ∈ (ψ_d, 2)` is a Parry number, its Parry
+  polynomial has degree `≥ d + 1`, so CONJ P holds whenever that polynomial is irreducible, and in
+  general it is a cofactor-degree bound.  The degree-6 Salem number `1.98779` lies in `(ψ₆, 2)`, so
+  any proof must use the Pisot hypothesis.
+* **Status.**  The cubic case of CONJ C is settled at the confidence above.  CONJ C′ stays 85%
+  (degree bound open).  Next: the same method for quartics (`h₂` enters `q̃₀`).  For `U`: nothing
+  new.  Under 1% that this moves (a).
