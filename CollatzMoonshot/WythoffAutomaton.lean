@@ -119,7 +119,7 @@ section SynDiv
 
 variable {P : ℤ[X]} {x : ℝ}
 
-/-- **(drafted, 99%).**  `q_{d−1} = a_d = 1` for monic `P` of degree `≥ 1`.  Paper proof:
+/-- **(proved).**  `q_{d−1} = a_d = 1` for monic `P` of degree `≥ 1`.  Paper proof:
 `Finset.Ioc (d − 1) d = {d}`, `P.coeff d = 1` (`Monic.coeff_natDegree`), `x⁰ = 1`. -/
 theorem synDiv_natDegree_sub_one (hP : P.Monic) (hd : 1 ≤ P.natDegree) :
     synDiv P x (P.natDegree - 1) = 1 := by
@@ -135,7 +135,7 @@ theorem synDiv_of_le {k : ℕ} (hk : P.natDegree ≤ k) : synDiv P x k = 0 := by
   unfold synDiv
   rw [Finset.Ioc_eq_empty (by omega), Finset.sum_empty]
 
-/-- **(drafted, 99%; the Horner recursion, unconditional).**  `a_{k+1} = q_k − x q_{k+1}` for
+/-- **(proved; the Horner recursion, unconditional).**  `a_{k+1} = q_k − x q_{k+1}` for
 every `k`.  Paper proof: `Ioc k d = insert (k + 1) (Ioc (k + 1) d)` when `k < d` (and both sides
 vanish when `k ≥ d`, `coeff_eq_zero_of_natDegree_lt`); `x · x^{j−k−2} = x^{j−k−1}`. -/
 theorem coeff_succ_eq_synDiv (k : ℕ) :
@@ -154,7 +154,7 @@ theorem coeff_succ_eq_synDiv (k : ℕ) :
       coeff_eq_zero_of_natDegree_lt (by omega)]
     simp
 
-/-- **(drafted, 99%).**  `a_0 = −x q_0` iff `P(x) = 0`; here the forward direction.  Paper proof:
+/-- **(proved).**  `a_0 = −x q_0` iff `P(x) = 0`; here the forward direction.  Paper proof:
 `aeval x P = Σ_{j ≤ d} a_j x^j` (`aeval_eq_sum_range`) `= a_0 + x Σ_{0<j≤d} a_j x^{j−1}`. -/
 theorem coeff_zero_eq_synDiv (hroot : aeval x P = 0) :
     (P.coeff 0 : ℝ) = -(x * synDiv P x 0) := by
@@ -197,7 +197,7 @@ section Phases
 
 variable {α : ℝ}
 
-/-- **(drafted, 99%; Lemma N0).**  For odd `v`, `W(v) + 1 = ⌈x(v + 1)⌉` (`x = β/2`).  Paper proof:
+/-- **(proved; Lemma N0).**  For odd `v`, `W(v) + 1 = ⌈x(v + 1)⌉` (`x = β/2`).  Paper proof:
 `v = 2k − 1`, `W(v) = ⌈kβ⌉ − 1` (`wy_two_mul_sub_one`) and `x(v + 1) = kβ`.  No hypothesis on
 `α`. -/
 theorem wy_add_one_eq_ceil (α : ℝ) {v : ℤ} (hv : v % 2 = 1) :
@@ -206,7 +206,7 @@ theorem wy_add_one_eq_ceil (α : ℝ) {v : ℤ} (hv : v % 2 = 1) :
   rw [wy_two_mul_sub_one, sub_add_cancel]
   congr 1; unfold xOf; push_cast; ring
 
-/-- **(drafted, 99%).**  For odd `v`, `0 ≤ G(v) < 1` (`Int.le_ceil`, `Int.ceil_lt_add_one`). -/
+/-- **(proved).**  For odd `v`, `0 ≤ G(v) < 1` (`Int.le_ceil`, `Int.ceil_lt_add_one`). -/
 theorem oddPhase_mem {v : ℤ} (hv : v % 2 = 1) : 0 ≤ oddPhase α v ∧ oddPhase α v < 1 := by
   unfold oddPhase
   have h' : (wy α v : ℝ) + 1 = ⌈xOf α * ((v : ℝ) + 1)⌉ := by
@@ -216,7 +216,7 @@ theorem oddPhase_mem {v : ℤ} (hv : v % 2 = 1) : 0 ≤ oddPhase α v ∧ oddPha
   · linarith [Int.le_ceil (xOf α * ((v : ℝ) + 1))]
   · linarith [Int.ceil_lt_add_one (xOf α * ((v : ℝ) + 1))]
 
-/-- **(drafted, 99%).**  For even `n`, `0 < G_E(n) ≤ 1` (`W(2k) = ⌊kα⌋`, `(α/2)·2k = kα`). -/
+/-- **(proved).**  For even `n`, `0 < G_E(n) ≤ 1` (`W(2k) = ⌊kα⌋`, `(α/2)·2k = kα`). -/
 theorem evenPhase_mem {n : ℤ} (hn : n % 2 = 0) : 0 < evenPhase α n ∧ evenPhase α n ≤ 1 := by
   obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
   unfold evenPhase
@@ -227,7 +227,7 @@ theorem evenPhase_mem {n : ℤ} (hn : n % 2 = 0) : 0 < evenPhase α n ∧ evenPh
   · linarith [Int.lt_floor_add_one ((k : ℝ) * α)]
   · linarith [Int.floor_le ((k : ℝ) * α)]
 
-/-- **(drafted, 99%).**  The virtual-point identity `x/(2x − 1) = α/2` for `α > 1`
+/-- **(proved).**  The virtual-point identity `x/(2x − 1) = α/2` for `α > 1`
 (`2x − 1 = β − 1 = 1/(α − 1)`; `field_simp`). -/
 theorem xOf_div_two_mul_sub_one (hα : 1 < α) : xOf α / (2 * xOf α - 1) = α / 2 := by
   unfold xOf
@@ -243,7 +243,7 @@ section TheoremN
 
 variable {α : ℝ} {P : ℤ[X]}
 
-/-- **(drafted, 98%; Theorem N (1), the algebra).**  For every `u ∈ ℤ` (no parity hypothesis),
+/-- **(proved; Theorem N (1), the algebra).**  For every `u ∈ ℤ` (no parity hypothesis),
 `Σ_{j ≤ d} a_j (W^j u + 1) = Σ_{k < d} q_k G(W^k u)`.  Paper proof: `G(W^k u) = w_{k+1} − x w_k`
 by definition (`w_j = W^j u + 1`); expand, reindex, and collect: the coefficient of `w_j` is
 `q_{j−1} − x q_j = a_j` for `1 ≤ j ≤ d` (`coeff_succ_eq_synDiv`, `q_d = 0`) and `−x q_0 = a_0`
@@ -255,7 +255,7 @@ theorem sum_coeff_iterate_eq (hroot : aeval (xOf α) P = 0) (u : ℤ) :
   refine Finset.sum_congr rfl fun k _ => ?_
   rw [Function.iterate_succ_apply', oddPhase]
 
-/-- **(drafted, 97%; Theorem N (1)).**  If `W^{d−1}(u)` is odd (in particular along `d`
+/-- **(proved; Theorem N (1)).**  If `W^{d−1}(u)` is odd (in particular along `d`
 consecutive odd points `u, …, W^{d−1}u`), `Σ_{j ≤ d} a_j (W^j u + 1) = ⌈Φ⌉`.  Paper proof:
 `sum_coeff_iterate_eq`, split off `k = d − 1` (`q_{d−1} = 1`): the integer equals
 `Φ + G(W^{d−1}u)` with `G ∈ [0, 1)` (`oddPhase_mem`); `Int.ceil_eq_iff`. -/
@@ -274,7 +274,7 @@ theorem sum_coeff_iterate_eq_ceil (hP : P.Monic) (hd : 1 ≤ P.natDegree)
   unfold autoPhi
   constructor <;> linarith
 
-/-- **(drafted, 96%; Theorem N (1), research-note form).**  If moreover `x` is irrational and
+/-- **(proved; Theorem N (1), research-note form).**  If moreover `x` is irrational and
 `W^{d−1}(u) ≠ −1`, then `Φ ∉ ℤ`, so the integer is `⌊Φ⌋ + 1`.  Paper proof: `Φ ∈ ℤ` forces
 `G(W^{d−1}u) = 0`, i.e. `x(v + 1) = W(v) + 1 ∈ ℤ` with `v + 1 ≠ 0`;
 `Int.ceil_eq_floor_add_one_iff_notMem`. -/
@@ -308,7 +308,7 @@ theorem sum_coeff_iterate_eq_floor_add_one (hP : P.Monic) (hd : 1 ≤ P.natDegre
   apply (hirr.mul_intCast (m := v + 1) (by omega)).ne_int (wy α v + 1)
   push_cast; linarith
 
-/-- **(drafted, 97%; Theorem N (1), parity).**  If `u, W(u), …, W^{d−1}(u)` are odd, then
+/-- **(proved; Theorem N (1), parity).**  If `u, W(u), …, W^{d−1}(u)` are odd, then
 `W^d(u)` is odd iff `⌈Φ⌉` is even.  Paper proof: `sum_coeff_iterate_eq_ceil`; for `j < d`,
 `W^j u + 1` is even, and `a_d = 1`, so the sum is `≡ W^d u + 1 (mod 2)`. -/
 theorem iterate_odd_iff_autoPhi (hP : P.Monic) (hd : 1 ≤ P.natDegree)
@@ -324,7 +324,7 @@ theorem iterate_odd_iff_autoPhi (hP : P.Monic) (hd : 1 ≤ P.natDegree)
   generalize ∑ j ∈ Finset.range P.natDegree, P.coeff j * ((wy α)^[j] u + 1) = S at hev
   omega
 
-/-- **(drafted, 96%; Theorem N (2), the first deterministic step).**  For `α > 1`, `d ≥ 2` and
+/-- **(proved; Theorem N (2), the first deterministic step).**  For `α > 1`, `d ≥ 2` and
 `W^{d−1}(n)` odd (in particular on the cylinder `E O^{d−1}`):
 `w_d + Σ_{1 ≤ j < d} a_j w_j + 2a_0 w_1 − a_0 n = ⌈Φ₀⌉`, `w_j = W^j n + 1`.  Paper proof: apply
 the algebra of `sum_coeff_iterate_eq` from the virtual real `w_0 = n/(2x − 1)`, for which
@@ -393,7 +393,7 @@ theorem first_step_eq_ceil (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree
   rw [key]
   constructor <;> linarith
 
-/-- **(drafted, 96%; Theorem N (2), parity).**  For even `n` with `W(n), …, W^{d−1}(n)` odd,
+/-- **(proved; Theorem N (2), parity).**  For even `n` with `W(n), …, W^{d−1}(n)` odd,
 `W^d(n)` is odd iff `⌈Φ₀⌉` is even.  Paper proof: `first_step_eq_ceil`; `n`, `2a_0 w_1` and
 `w_j` (`1 ≤ j < d`) are even. -/
 theorem first_step_odd_iff (hα : 1 < α) (hP : P.Monic) (hd : 2 ≤ P.natDegree)
@@ -419,15 +419,27 @@ end TheoremN
 
 section TheoremO
 
-/-- **(drafted, 99%).**  `t^d − 2rt + r` is monic of degree `d` for `d ≥ 2`. -/
+/-- **(proved).**  The coefficients of `t^d − 2rt + r` (`d ≥ 2`). -/
+theorem coeff_gPoly {d : ℕ} (hd : 2 ≤ d) (r : ℤ) (j : ℕ) :
+    (gPoly d r).coeff j = if j = d then 1 else if j = 1 then -(2 * r) else
+      if j = 0 then r else 0 := by
+  unfold gPoly
+  rw [coeff_add, coeff_sub, coeff_X_pow, coeff_C_mul_X, coeff_C]
+  split_ifs <;> omega
+
+/-- **(proved).**  `t^d − 2rt + r` is monic of degree `d` for `d ≥ 2`. -/
 theorem monic_gPoly {d : ℕ} (hd : 2 ≤ d) (r : ℤ) : (gPoly d r).Monic := by
-  sorry
+  have hdeg : (gPoly d r).natDegree = d := by
+    unfold gPoly; compute_degree!
+    all_goals omega
+  rw [Monic, leadingCoeff, hdeg, coeff_gPoly hd, if_pos rfl]
 
-/-- **(drafted, 99%).** -/
+/-- **(proved).** -/
 theorem natDegree_gPoly {d : ℕ} (hd : 2 ≤ d) (r : ℤ) : (gPoly d r).natDegree = d := by
-  sorry
+  unfold gPoly; compute_degree!
+  all_goals omega
 
-/-- **(drafted, 97%; the G line's Horner coefficients).**  For `P = t^d − 2rt + r` (`d ≥ 2`):
+/-- **(proved; the G line's Horner coefficients).**  For `P = t^d − 2rt + r` (`d ≥ 2`):
 `q_k = x^{d−1−k}` for `1 ≤ k ≤ d − 1` and `q_0 = x^{d−1} − 2r` (unconditional: `synDiv` does
 not use the root).  Paper proof: `coeff_gPoly`: `a_d = 1`, `a_1 = −2r`, `a_0 = r`, others `0`;
 the sum `Σ_{k<j≤d}` has the single term `j = d` for `k ≥ 1`, and the terms `j ∈ {1, d}` for
@@ -435,33 +447,180 @@ the sum `Σ_{k<j≤d}` has the single term `j = d` for `k ≥ 1`, and the terms 
 theorem synDiv_gPoly {d : ℕ} (hd : 2 ≤ d) (r : ℤ) (x : ℝ) (k : ℕ) :
     synDiv (gPoly d r) x k = if k = 0 then x ^ (d - 1) - 2 * r else
       if k < d then x ^ (d - 1 - k) else 0 := by
-  sorry
+  have hdeg := natDegree_gPoly hd r
+  unfold synDiv
+  rw [hdeg]
+  split_ifs with h0 hk
+  · subst h0
+    rw [Finset.sum_eq_add 1 d (by omega)]
+    · rw [coeff_gPoly hd, coeff_gPoly hd]
+      simp only [if_neg (show 1 ≠ d by omega), Nat.sub_zero]
+      push_cast; ring
+    · intro c hc hne
+      rw [coeff_gPoly hd]
+      rw [Finset.mem_Ioc] at hc
+      simp [if_neg hne.2, if_neg hne.1, show c ≠ 0 by omega]
+    · intro h; exact absurd (Finset.mem_Ioc.2 ⟨by omega, by omega⟩) h
+    · intro h; exact absurd (Finset.mem_Ioc.2 ⟨by omega, le_rfl⟩) h
+  · rw [Finset.sum_eq_single d]
+    · rw [coeff_gPoly hd, if_pos rfl]; push_cast; rw [one_mul]; congr 1; omega
+    · intro c hc hne
+      rw [Finset.mem_Ioc] at hc
+      rw [coeff_gPoly hd]
+      simp [hne, show c ≠ 1 by omega, show c ≠ 0 by omega]
+    · intro h; exact absurd (Finset.mem_Ioc.2 ⟨by omega, le_rfl⟩) h
+  · rw [Finset.Ioc_eq_empty (by omega), Finset.sum_empty]
 
-/-- **(drafted, 95%; Theorem O, algebraic core).**  If `x ∈ (1/2, 1)` is a root of a monic
+/-- An integer strictly between `−1` and `1` (as a real) is `0`. -/
+theorem int_eq_zero_of_abs_lt {a : ℤ} (h1 : (-1 : ℝ) < a) (h2 : (a : ℝ) < 1) : a = 0 := by
+  have : -1 < a := by exact_mod_cast h1
+  have : a < 1 := by exact_mod_cast h2
+  omega
+
+/-- The geometric identity `(1 − x)(x^{m+1} + Σ_{k=1}^{m} x^{m+1−k}) = x − x^{m+2}`. -/
+theorem one_sub_mul_geom_Icc (x : ℝ) (m : ℕ) :
+    (1 - x) * (x ^ (m + 1) + ∑ k ∈ Finset.Icc 1 m, x ^ (m + 1 - k)) = x - x ^ (m + 2) := by
+  have hr : ∑ k ∈ Finset.Icc 1 m, x ^ (m + 1 - k) = ∑ i ∈ Finset.Icc 1 m, x ^ i := by
+    refine Finset.sum_nbij' (fun k => m + 1 - k) (fun k => m + 1 - k) ?_ ?_ ?_ ?_ ?_ <;>
+      intro k hk <;> simp only [Finset.mem_Icc] at hk ⊢
+    all_goals omega
+  rw [hr]
+  clear hr
+  induction m with
+  | zero => simp; ring
+  | succ m ih =>
+    rw [Finset.sum_Icc_succ_top (by omega)]
+    linear_combination ih
+
+/-- **(proved; Theorem O, algebraic core).**  If `x ∈ (1/2, 1)` is a root of a monic
 `P ∈ ℤ[t]` of degree `d ≥ 2` satisfying the first-row condition, then `P = t^d − 2rt + r` for an
-integer `r ≥ 1`.  Paper proof: module docstring.  (No irreducibility is assumed; `r = 1` occurs:
-the multinacci factor of `(t − 1)(t^{d−1} + ⋯ + t − 1)`, with equality in the sum condition.) -/
+integer `r ≥ 1`.  Paper proof: module docstring; the Lean proof avoids its `a_k = 1` case
+split: downward, `q_k = x^{d−1−k}` gives `a_k = q_{k−1} − x^{d−k} ∈ [−x^{d−k}, 1 − x^{d−k}]`,
+a closed subinterval of `(−1, 1)`, so `a_k = 0` and `q_{k−1} = x^{d−k}` at once.  (No
+irreducibility is assumed; `r = 1` occurs: the multinacci factor of
+`(t − 1)(t^{d−1} + ⋯ + t − 1)`, with equality in the sum condition.) -/
 theorem thmO {x : ℝ} (hx1 : 1 / 2 < x) (hx2 : x < 1) {P : ℤ[X]} (hP : P.Monic)
     (hd : 2 ≤ P.natDegree) (hroot : aeval x P = 0) (hc : FirstRowCond P x) :
     ∃ r : ℤ, 1 ≤ r ∧ P = gPoly P.natDegree r := by
-  sorry
+  obtain ⟨h0, hk, hs⟩ := hc
+  set d := P.natDegree with hdd
+  have hx0 : 0 < x := by linarith
+  have hnn : 0 ≤ ∑ k ∈ Finset.Icc 1 (d - 2), synDiv P x k := Finset.sum_nonneg hk
+  have hle : ∀ k ∈ Finset.Icc 1 (d - 2), synDiv P x k ≤ 1 := fun k hk' => by
+    have := Finset.single_le_sum hk hk'
+    linarith
+  -- downward induction: `q_{d−1−m} = x^m`
+  have hdown : ∀ m, m + 1 < d → synDiv P x (d - 1 - m) = x ^ m := by
+    intro m
+    induction m with
+    | zero => intro _; rw [Nat.sub_zero, synDiv_natDegree_sub_one hP (by omega), pow_zero]
+    | succ m ih =>
+      intro hm
+      have ih' := ih (by omega)
+      have ha := coeff_succ_eq_synDiv (P := P) (x := x) (d - 2 - m)
+      rw [show d - 2 - m + 1 = d - 1 - m by omega, ih'] at ha
+      have hm1 : d - 2 - m ∈ Finset.Icc 1 (d - 2) := Finset.mem_Icc.2 ⟨by omega, by omega⟩
+      have q0 := hk _ hm1
+      have q1 := hle _ hm1
+      have p0 : 0 < x ^ (m + 1) := by positivity
+      have p1 : x ^ (m + 1) < 1 := pow_lt_one₀ hx0.le hx2 (by omega)
+      have hxm : x * x ^ m = x ^ (m + 1) := by ring
+      have hz := int_eq_zero_of_abs_lt (a := P.coeff (d - 1 - m)) (by rw [ha]; linarith)
+        (by rw [ha]; linarith)
+      rw [hz, Int.cast_zero] at ha
+      rw [show d - 1 - (m + 1) = d - 2 - m by omega]; linarith
+  have hq1 : synDiv P x 1 = x ^ (d - 2) := by
+    rw [← hdown (d - 2) (by omega), show d - 1 - (d - 2) = 1 by omega]
+  have ha1 := coeff_succ_eq_synDiv (P := P) (x := x) 0
+  rw [zero_add, hq1] at ha1
+  have ha0 := coeff_zero_eq_synDiv hroot
+  -- `a_0 ≥ 0`
+  have hq0 : synDiv P x 0 ≤ 0 := by
+    rw [ha0] at h0; nlinarith
+  have ha0nn : (0 : ℤ) ≤ P.coeff 0 := by
+    have : (0 : ℝ) ≤ P.coeff 0 := by rw [ha0]; nlinarith
+    exact_mod_cast this
+  -- `a_1 = −2a_0`
+  have hxd : 0 < x ^ (d - 1) := by positivity
+  have hxd1 : x ^ (d - 1) < 1 := pow_lt_one₀ hx0.le hx2 (by omega)
+  have hxd' : x * x ^ (d - 2) = x ^ (d - 1) := by
+    rw [← pow_succ']; congr 1; omega
+  have h12 : P.coeff 1 + 2 * P.coeff 0 = 0 := by
+    apply int_eq_zero_of_abs_lt <;> push_cast <;> rw [ha1] <;> linarith
+  -- `a_0 ≠ 0`
+  have ha0pos : P.coeff 0 ≠ 0 := by
+    intro h
+    rw [h, Int.cast_zero] at ha0
+    have : synDiv P x 0 = 0 := by
+      rcases mul_eq_zero.1 (neg_eq_zero.1 ha0.symm) with h' | h'
+      · linarith
+      · exact h'
+    have h1 : P.coeff 1 = 0 := by omega
+    rw [h1, Int.cast_zero, this] at ha1
+    linarith
+  refine ⟨P.coeff 0, by omega, Polynomial.ext fun j => ?_⟩
+  rw [coeff_gPoly hd]
+  split_ifs with hj1 hj2 hj3
+  · rw [hj1]; exact hP.coeff_natDegree
+  · subst hj2; omega
+  · subst hj3; rfl
+  · rcases lt_or_gt_of_ne hj1 with hj | hj
+    · have ha := coeff_succ_eq_synDiv (P := P) (x := x) (j - 1)
+      rw [Nat.sub_add_cancel (by omega)] at ha
+      have e1 := hdown (d - j) (by omega)
+      have e2 := hdown (d - 1 - j) (by omega)
+      rw [show d - 1 - (d - j) = j - 1 by omega] at e1
+      rw [show d - 1 - (d - 1 - j) = j by omega] at e2
+      rw [e1, e2, ← pow_succ', show d - 1 - j + 1 = d - j by omega, sub_self] at ha
+      exact_mod_cast ha
+    · exact coeff_eq_zero_of_natDegree_lt hj
 
-/-- **(drafted, 97%; Theorem O, converse).**  Every root `x ∈ (1/2, 1)` of `t^d − 2rt + r`
+/-- **(proved; Theorem O, converse).**  Every root `x ∈ (1/2, 1)` of `t^d − 2rt + r`
 (`d ≥ 2`, `r ≥ 1`) satisfies the first-row condition.  Paper proof: `synDiv_gPoly`;
 `q̃_0 = (x^{d−1} − 2r) + 2r = x^{d−1} ≥ 0`; `q_k = x^{d−1−k} ≥ 0`; the sum is
 `x + ⋯ + x^{d−1}`, and `(1 − x)(x + ⋯ + x^{d−1}) = x − x^d = x − r(2x − 1) ≤ 1 − x` is
 `(r − 1)(2x − 1) ≥ 0`. -/
 theorem firstRowCond_gPoly {x : ℝ} (hx1 : 1 / 2 < x) (hx2 : x < 1) {d : ℕ} (hd : 2 ≤ d)
     {r : ℤ} (hr : 1 ≤ r) (hroot : aeval x (gPoly d r) = 0) : FirstRowCond (gPoly d r) x := by
-  sorry
+  have hq := synDiv_gPoly hd r x
+  have hc0 : (gPoly d r).coeff 0 = r := by
+    rw [coeff_gPoly hd, if_neg (by omega), if_neg (by omega), if_pos rfl]
+  have hx0 : 0 < x := by linarith
+  have hroot' : x ^ d = r * (2 * x - 1) := by
+    have e : aeval x (gPoly d r) = x ^ d - 2 * r * x + r := by
+      simp only [gPoly, map_add, map_sub, map_pow, aeval_X, map_mul, eq_intCast, map_intCast,
+        map_ofNat]
+    rw [e] at hroot; linear_combination hroot
+  have hsum : ∑ k ∈ Finset.Icc 1 (d - 2), synDiv (gPoly d r) x k =
+      ∑ k ∈ Finset.Icc 1 (d - 2), x ^ (d - 2 + 1 - k) := by
+    refine Finset.sum_congr rfl fun k hk => ?_
+    rw [Finset.mem_Icc] at hk
+    rw [hq, if_neg (by omega), if_pos (by omega)]; congr 1; omega
+  have hq0 : synDiv (gPoly d r) x 0 + 2 * (gPoly d r).coeff 0 = x ^ (d - 2 + 1) := by
+    rw [hq, if_pos rfl, hc0, show d - 2 + 1 = d - 1 by omega]; ring
+  refine ⟨?_, ?_, ?_⟩
+  · rw [hq0]; positivity
+  · intro k hk
+    rw [natDegree_gPoly hd, Finset.mem_Icc] at hk
+    rw [hq, if_neg (by omega), if_pos (by omega)]; positivity
+  · rw [natDegree_gPoly hd, hsum, hq0]
+    have g := one_sub_mul_geom_Icc x (d - 2)
+    rw [show d - 2 + 2 = d by omega, hroot'] at g
+    have hr' : (1 : ℝ) ≤ r := by exact_mod_cast hr
+    have : (1 - x) * (x ^ (d - 2 + 1) + ∑ k ∈ Finset.Icc 1 (d - 2), x ^ (d - 2 + 1 - k)) ≤
+        (1 - x) * 1 := by rw [g]; nlinarith
+    exact le_of_mul_le_mul_left this (by linarith)
 
-/-- **(drafted, 95%; Theorem O).**  For a root `x ∈ (1/2, 1)` of a monic `P ∈ ℤ[t]` of degree
+/-- **(proved; Theorem O).**  For a root `x ∈ (1/2, 1)` of a monic `P ∈ ℤ[t]` of degree
 `d ≥ 2`: the first-row condition holds iff `P = t^d − 2rt + r` with `r ≥ 1`.  Paper proof:
 `thmO` and `firstRowCond_gPoly`. -/
 theorem thmO_iff {x : ℝ} (hx1 : 1 / 2 < x) (hx2 : x < 1) {P : ℤ[X]} (hP : P.Monic)
     (hd : 2 ≤ P.natDegree) (hroot : aeval x P = 0) :
     FirstRowCond P x ↔ ∃ r : ℤ, 1 ≤ r ∧ P = gPoly P.natDegree r := by
-  sorry
+  refine ⟨thmO hx1 hx2 hP hd hroot, ?_⟩
+  rintro ⟨r, hr, hPe⟩
+  have h := firstRowCond_gPoly hx1 hx2 hd hr (by rw [← hPe]; exact hroot)
+  rwa [← hPe] at h
 
 end TheoremO
 
