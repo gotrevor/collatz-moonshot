@@ -193,3 +193,4 @@ import CollatzMoonshot.WythoffResidue
 import CollatzMoonshot.WythoffAutomaton
 import CollatzMoonshot.WythoffMirrorY
 import CollatzMoonshot.WythoffSeven
+import CollatzMoonshot.WythoffPisot
