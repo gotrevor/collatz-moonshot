@@ -2298,3 +2298,42 @@ bounded runs U2 gives `N = 16P(½)` odd with `|N| < 27`, so a member is a quadru
   sporadic solvable member through degree 4 is Y (and its mirror).  CONJ C′ stays 85% (a degree
   bound is still open).  CONJ (65%): at degree 5 the exhaustive row search, not gap bounds, is
   the certificate that scales.  For `U`: nothing new.  Under 1% that this moves (a).
+
+## 67. Quintic members: solvable ⇒ G(4, r) for |a₀| ≥ 45,000 and in the computed ranges (2026-10-17, Opus agent; Ren checked)
+
+Report: `wythoff-quintic.md`.  The §65/§66 method at degree 5: `N = 32P(½)` odd, `|N| ≤ 79`,
+`B(z) = Q(z)/q₀` of degree 4, three-dimensional residual analysis in `(h₁, h₂, h₃)`.
+
+* **Theorem C5 (85% given the run criterion, N3, U\*/U2, B2, Theorems O/M, Lemmas T and SG;
+  about 70% end to end).**  Every quintic member with `|a₀| ≥ 45,000` off the G line
+  `t⁵ − 2rt + r` (and its mirror) is unsolvable.  One uniform interval-arithmetic class tree
+  (`effective5.py 45000`, every odd `|N| ≤ 79`).  New tools: a Schur-Cohn reduction of the
+  degree-4 stability region to a cubic Jury test (Lemma R5), SG applied to whole boxes intersected
+  with stability at the SG radius (Lemma SGJ\*), which removes every non-origin Kronecker class,
+  and the identity `Ψ = −Σ h_m R_m` for bounded sequences with integral rows (Lemma Ψ).  The G
+  shape is refused a Lemma T ball at every rung.  Teeth: the tree at 44,000 fails on exactly one
+  class, the predicted cancellation class `h₁ ≈ −1/17`.
+* **Computed.**  `|a₀| ≤ 50`: complete enumeration (148,764,512 candidates), automaton witnesses
+  and certificates (ending in an integer-program head search) each leave exactly G(4, 2..50).
+  `1,200 ≤ |a₀| < 45,000`: trees at 5,000, 2,500 and 1,200 fail only on explicit boxes, and all 523
+  members inside them get explicit infinite feasible sequences (80 digits).  **Open: `51 ≤ |a₀|
+  < 1,200`** (projected about 6 hours on 8 processes to reach 100 by enumeration; further tree
+  rungs at 600, 300, 150 are the cheaper route, with a likely stall below about 100).
+* **Obstruction families.**  Quintic cancellation classes: `h ≈ (±1/q, 0, 0, 0)` at
+  `|A| ≈ q⁴/2`, `A < 0`, `P ≈ (t − ½)(t⁵ ± q⁵)/(t ± q)`; in the exact model `Ψ = u(ε₅ − R₁)`, the
+  reachable set is a half-grid and the window sits beside an integer, so gap arguments cannot close
+  below `q ≈ 1/(2ℓ) ≈ 16`, which is why `A(5) ≈ 17⁴/2`.  All 162 members in `[2,500, 45,000)` are
+  certified.  A second family near `|A| ≈ 1,200-2,500`, at the cusp where three conjugates
+  coalesce near `−1.58`, is probably an artefact of the box method (CONJ 70%); its 255 members are
+  certified.
+* **Ren's checks.**  Re-ran the tree at 45,000 (48 jobs, 0 failures) and 44,000 (one job, one
+  failing class: the teeth).  Ren's independent certificate code (sped up with float prefilters;
+  every certificate an explicit sequence verified at 60 digits): 100 + 100 uniformly random
+  N3-passing candidates at `A = 45,000` and `−45,001` all certified; 200 members of a family built
+  to sit near Theorem L's limit shapes, `P = t⁵ + E(t) + r(1 − 2t)K(t)` with `K` a product of
+  cyclotomic factors, `E` small and `|r| ∈ [45,000, 60,000]` (the region where Lemma SGJ\* does
+  the work), all certified by U\* or Lemma K, independently of SGJ\*; G(4, 45,000) and
+  G(4, 50,000) never certified.
+* **Status.**  Through degree 4 the solvable set is settled (§65, §66); at degree 5 the only gap
+  is `51 ≤ |a₀| < 1,200`, where no non-G member is known.  CONJ C′ stays 85%.  For `U`: nothing
+  new.  Under 1% that this moves (a).
