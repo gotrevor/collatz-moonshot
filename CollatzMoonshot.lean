@@ -190,3 +190,6 @@ import CollatzMoonshot.WythoffSporadic
 import CollatzMoonshot.WythoffGolden
 import CollatzMoonshot.WythoffTrapDegree
 import CollatzMoonshot.WythoffResidue
+import CollatzMoonshot.WythoffAutomaton
+import CollatzMoonshot.WythoffMirrorY
+import CollatzMoonshot.WythoffSeven
