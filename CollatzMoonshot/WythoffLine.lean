@@ -782,6 +782,405 @@ lemma volume_frontier_cyl {x : ℝ} (hx0 : 0 < x) (hx1 : x < 3 / 4) {ρ : ℤ} (
 
 end Engine
 
+/-! ## The density: phases, word cylinders, and the generic count -/
+
+section Density
+
+open Engine MeasureTheory
+
+variable {m r : ℕ}
+
+/-- The Weyl frequencies `θ_i = A xⁱ`, `i < m`. -/
+noncomputable def theta (m r : ℕ) : Fin m → ℝ := fun i => alphaG m r / 2 * gRoot m r ^ (i : ℕ)
+
+/-- The phase vector `Ψ(k) = ({k θ_i})_{i < m}`. -/
+noncomputable def phase (m r : ℕ) (k : ℕ) : Fin m → ℝ :=
+  fun i => Int.fract ((k : ℝ) * theta m r i)
+
+lemma ext_phase (k : ℕ) {l : ℕ} (hl : l < m) :
+    ext (phase m r k) l = Int.fract ((k : ℝ) * (alphaG m r / 2 * gRoot m r ^ l)) := by
+  simp [ext, hl, phase, theta]
+
+/-- **Run lemma.**  If `W(n₀) = ⌊2kA⌋` and `W(n₀), …, Wˡ(n₀)` have parity `ρ` (`l < m`), then
+`W^{l+1}(n₀) = N_l(Ψ k) + 2⌊k A xˡ⌋`. -/
+lemma run_Nf (γ : ℝ) (ρ : ℤ) (hpos : ∀ n, 0 < wy γ n ↔ 0 < n)
+    (hstep : 2 ≤ m → ∀ v : ℤ, 0 < v → v % 2 = ρ → wy γ v = ⌊gRoot m r * v + gRoot m r * ρ⌋)
+    (k : ℕ) {n₀ : ℤ} (hn₀ : 0 < n₀)
+    (hfirst : 1 ≤ m → wy γ n₀ = ⌊2 * (k : ℝ) * (alphaG m r / 2)⌋) :
+    ∀ l, l < m → (∀ i : ℕ, 1 ≤ i → i ≤ l → (wy γ)^[i] n₀ % 2 = ρ) →
+      (wy γ)^[l + 1] n₀ = Nf (gRoot m r) ρ (ext (phase m r k)) l +
+        2 * ⌊(k : ℝ) * (alphaG m r / 2 * gRoot m r ^ l)⌋ := by
+  set x := gRoot m r
+  set A := alphaG m r / 2
+  intro l
+  induction l with
+  | zero =>
+    intro hl _
+    rw [Function.iterate_one, hfirst (by omega), Nf, ext_phase k hl]
+    set u := (k : ℝ) * (A * x ^ 0)
+    have : 2 * (k : ℝ) * A = 2 * Int.fract u + ((2 * ⌊u⌋ : ℤ) : ℝ) := by
+      simp only [u, pow_zero, mul_one, Int.fract]; push_cast; ring
+    rw [this, Int.floor_add_intCast]
+  | succ l ih =>
+    intro hl hpar
+    have hv := ih (by omega) fun i h1 h2 => hpar i h1 (by omega)
+    have hvp : (wy γ)^[l + 1] n₀ % 2 = ρ := hpar (l + 1) (by omega) le_rfl
+    have hvpos : 0 < (wy γ)^[l + 1] n₀ := by
+      clear hv hvp ih hpar
+      induction (l + 1) with
+      | zero => exact hn₀
+      | succ i ihi => rw [Function.iterate_succ_apply', hpos]; exact ihi
+    rw [Function.iterate_succ_apply', hstep (by omega) _ hvpos hvp, hv]
+    simp only [Nf]
+    rw [ext_phase k hl, ext_phase k (by omega)]
+    set u := (k : ℝ) * (A * x ^ l)
+    set u' := (k : ℝ) * (A * x ^ (l + 1))
+    have hu' : u' = x * u := by simp only [u, u']; ring
+    have : x * (((Nf x ρ (ext (phase m r k)) l + 2 * ⌊u⌋ : ℤ)) : ℝ) + x * ρ =
+        2 * Int.fract u' + x * (ρ + Nf x ρ (ext (phase m r k)) l - 2 * Int.fract u) +
+          ((2 * ⌊u'⌋ : ℤ) : ℝ) := by
+      simp only [Int.fract]; push_cast; rw [hu']; ring
+    rw [this, Int.floor_add_intCast]
+
+/-- The word cylinder of return word `j`: the first `j` run parities are `ρ` and (if `j < m`)
+the next one is not. -/
+def wordSet (m r : ℕ) (ρ : ℤ) (j : ℕ) : Set (Fin m → ℝ) :=
+  cyl (gRoot m r) ρ m (Finset.range (min (j + 1) m)) (Function.update (fun _ => ρ) j (ρ + 1))
+
+lemma phase_mem_cube (k : ℕ) : phase m r k ∈ cube m :=
+  mem_cube.2 fun _ => ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+lemma wordSet_disjoint (ρ : ℤ) {j j' : ℕ} (hjj : j < j') (hj' : j' ≤ m) :
+    Disjoint (wordSet m r ρ j) (wordSet m r ρ j') := by
+  rw [Set.disjoint_left]
+  intro ψ h1 h2
+  have a := (mem_cyl.1 h1).2 j (Finset.mem_range.2 (by omega))
+  have b := (mem_cyl.1 h2).2 j (Finset.mem_range.2 (by omega))
+  rw [Function.update_self] at a
+  rw [Function.update_of_ne (by omega)] at b
+  omega
+
+section Generic
+
+variable {σ : Equiv.Perm ℤ} {γ : ℝ} {S Φ : Set ℤ} {ρ : ℤ}
+
+lemma perm_pow_apply (hσ : ∀ n, σ n = wy γ n) (i : ℕ) (n : ℤ) : (σ ^ i) n = (wy γ)^[i] n := by
+  rw [Equiv.Perm.coe_pow]
+  congr 1
+  funext n
+  exact hσ n
+
+/-- The return word of `n₀` is read off the phase of `k`. -/
+lemma phase_mem_wordSet (hσ : ∀ n, σ n = wy γ n) (hρ : ρ = 0 ∨ ρ = 1)
+    (hS : ∀ n, n ∈ S ↔ n % 2 ≠ ρ) (h : Hyp σ S Φ (m + 1))
+    (hstep : 2 ≤ m → ∀ v : ℤ, 0 < v → v % 2 = ρ → wy γ v = ⌊gRoot m r * v + gRoot m r * ρ⌋)
+    (k : ℕ) {n₀ : ℤ} (hS₀ : n₀ ∈ S) (hn₀ : 0 < n₀) (hΦ₀ : n₀ ∉ Φ)
+    (hfirst : 1 ≤ m → wy γ n₀ = ⌊2 * (k : ℝ) * (alphaG m r / 2)⌋) :
+    phase m r k ∈ wordSet m r ρ (returnTime σ S n₀ - 1) := by
+  obtain ⟨h1, hT, hRS, -, hint⟩ := returnTime_spec h hS₀ hn₀ hΦ₀
+  set τ := returnTime σ S n₀
+  have hpos : ∀ n, 0 < wy γ n ↔ 0 < n := fun n => by rw [← hσ]; exact h.pos_iff n
+  have hodd : ∀ i : ℕ, 1 ≤ i → i < τ → (wy γ)^[i] n₀ % 2 = ρ := by
+    intro i hi1 hi2
+    have := hint i hi1 hi2
+    rw [hS, perm_pow_apply hσ, not_not] at this
+    exact this
+  refine mem_cyl.2 ⟨phase_mem_cube k, fun l hl => ?_⟩
+  rw [Finset.mem_range] at hl
+  have hlm : l < m := by omega
+  have hrun := run_Nf γ ρ hpos hstep k hn₀ hfirst l hlm fun i hi1 hi2 => hodd i hi1 (by omega)
+  by_cases hlτ : l = τ - 1
+  · rw [hlτ, Function.update_self]
+    have hR : (wy γ)^[τ] n₀ % 2 ≠ ρ := by
+      rw [returnMap, perm_pow_apply hσ, hS] at hRS; exact hRS
+    rw [show τ = l + 1 by omega, hrun] at hR
+    rw [← hlτ]
+    rcases hρ with rfl | rfl <;> omega
+  · rw [Function.update_of_ne hlτ]
+    have := hodd (l + 1) (by omega) (by omega)
+    rw [hrun] at this
+    omega
+
+/-- `returnTime = j + 1` iff the phase lies in the `j`-th word cylinder. -/
+lemma returnTime_eq_iff (hσ : ∀ n, σ n = wy γ n) (hρ : ρ = 0 ∨ ρ = 1)
+    (hS : ∀ n, n ∈ S ↔ n % 2 ≠ ρ) (h : Hyp σ S Φ (m + 1))
+    (hstep : 2 ≤ m → ∀ v : ℤ, 0 < v → v % 2 = ρ → wy γ v = ⌊gRoot m r * v + gRoot m r * ρ⌋)
+    (k : ℕ) {n₀ : ℤ} (hS₀ : n₀ ∈ S) (hn₀ : 0 < n₀) (hΦ₀ : n₀ ∉ Φ)
+    (hfirst : 1 ≤ m → wy γ n₀ = ⌊2 * (k : ℝ) * (alphaG m r / 2)⌋) {j : ℕ} (hj : j ≤ m) :
+    returnTime σ S n₀ = j + 1 ↔ phase m r k ∈ wordSet m r ρ j := by
+  have hmem := phase_mem_wordSet hσ hρ hS h hstep k hS₀ hn₀ hΦ₀ hfirst
+  obtain ⟨h1, hT, -⟩ := returnTime_spec h hS₀ hn₀ hΦ₀
+  constructor
+  · intro he; rw [he] at hmem; simpa using hmem
+  · intro hw
+    by_contra hne
+    rcases lt_or_gt_of_ne (show returnTime σ S n₀ - 1 ≠ j by omega) with hlt | hgt
+    · exact Set.disjoint_left.1 (wordSet_disjoint ρ hlt hj) hmem hw
+    · exact Set.disjoint_left.1 (wordSet_disjoint ρ hgt (by omega)) hw hmem
+
+end Generic
+
+lemma volume_wordSet (ρ : ℤ) (j : ℕ) :
+    (volume (wordSet m r ρ j ∩ Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1)).toReal =
+      (1 / 2 : ℝ) ^ min (j + 1) m := by
+  have hsub : wordSet m r ρ j ⊆ Set.univ.pi fun _ => Set.Ico (0 : ℝ) 1 :=
+    fun ψ hψ => (mem_cyl.1 hψ).1
+  rw [Set.inter_eq_left.2 hsub, wordSet, volume_cyl _ _ _ _ (fun l hl => by
+    rw [Finset.mem_range] at hl; omega), Finset.card_range, ENNReal.toReal_pow,
+    ENNReal.toReal_inv]
+  norm_num
+
+lemma measurableSet_wordSet (ρ : ℤ) (j : ℕ) : MeasurableSet (wordSet m r ρ j) :=
+  measurableSet_cyl _ _ _ _ _
+
+lemma volume_frontier_wordSet (hr : 2 ≤ r) {ρ : ℤ} (hρ : ρ = 0 ∨ ρ = 1) (j : ℕ) :
+    volume (frontier (wordSet m r ρ j)) = 0 := by
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  exact volume_frontier_cyl (by linarith) hx2 hρ m _ (fun l hl => by
+    rw [Finset.mem_range] at hl; omega) _
+
+section Generic2
+
+variable {σ : Equiv.Perm ℤ} {γ : ℝ} {S Φ : Set ℤ} {ρ : ℤ}
+
+open Classical in
+/-- **Generic return-count density.**  Under Weyl, if the return word of `n₀(k)` is read off
+the phase of `k`, and the first return is within `4` of `2k·A·xʲ` on word `j`, then
+`#{s ≤ X : R(s) ≤ X}/X → Σ_j 2^{−min(j+1, m)}/(α xʲ)`. -/
+theorem tendsto_returnCount_div (hr : 2 ≤ r)
+    (hWd : ∀ j, j ≤ m → Tendsto (fun N : ℕ =>
+      (((Finset.Icc 1 N).filter fun k : ℕ => phase m r k ∈ wordSet m r ρ j).card : ℝ) / N)
+        atTop (𝓝 ((1 / 2 : ℝ) ^ min (j + 1) m)))
+    (hσ : ∀ n, σ n = wy γ n) (hρ : ρ = 0 ∨ ρ = 1)
+    (hS : ∀ n, n ∈ S ↔ n % 2 ≠ ρ) (h : Hyp σ S Φ (m + 1))
+    (hstep : 2 ≤ m → ∀ v : ℤ, 0 < v → v % 2 = ρ → wy γ v = ⌊gRoot m r * v + gRoot m r * ρ⌋)
+    (n₀ : ℕ → ℤ) (hn₀ : ∀ k, 1 ≤ k → n₀ k ∈ S ∧ 0 < n₀ k ∧ n₀ k ∉ Φ)
+    (hfirst : 1 ≤ m → ∀ k, 1 ≤ k → wy γ (n₀ k) = ⌊2 * (k : ℝ) * (alphaG m r / 2)⌋)
+    (hbound : ∀ k, 1 ≤ k → |(returnMap σ S (n₀ k) : ℝ) -
+      2 * k * (alphaG m r / 2 * gRoot m r ^ (returnTime σ S (n₀ k) - 1))| < 4)
+    (KX : ℕ → ℕ) (hcount : ∀ X, returnCount σ S Φ X =
+      ((Finset.Icc 1 (KX X)).filter fun k => returnMap σ S (n₀ k) ≤ X).card)
+    (hK : ∀ X k : ℕ, 4 * k ≤ X → k ≤ KX X) :
+    Tendsto (fun X : ℕ => (returnCount σ S Φ X : ℝ) / X) atTop
+      (𝓝 (∑ j ∈ Finset.range (m + 1),
+        (1 / 2 : ℝ) ^ min (j + 1) m * (alphaG m r * gRoot m r ^ j)⁻¹)) := by
+  classical
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  set x := gRoot m r
+  set A := alphaG m r / 2
+  set c : ℕ → ℝ := fun j => alphaG m r * x ^ j
+  have hreq : A * x ^ m = r := half_alphaG_mul_pow (m := m) hr
+  have hr' : (2 : ℝ) ≤ r := by exact_mod_cast hr
+  have hc : ∀ j, j ≤ m → 4 ≤ c j := by
+    intro j hj
+    have hxj : x ^ m ≤ x ^ j := pow_le_pow_of_le_one (by linarith) (by linarith) hj
+    have hA : 0 < A := by have := four_le_alphaG (m := m) hr; simp only [A]; linarith
+    have : (2 : ℝ) * r ≤ c j := by
+      simp only [c]
+      rw [show alphaG m r = 2 * A by simp only [A]; ring, ← hreq]
+      nlinarith [mul_le_mul_of_nonneg_left hxj hA.le]
+    linarith
+  have h2c : ∀ j (k : ℕ), 2 * (k : ℝ) * (A * x ^ j) = c j * k := by
+    intro j k; simp only [c, A]; ring
+  set Cnt : ℕ → ℕ → ℕ := fun j N =>
+    ((Finset.Icc 1 N).filter fun k : ℕ => phase m r k ∈ wordSet m r ρ j).card
+  set T : ℕ → ℕ → ℕ := fun j X => ((Finset.Icc 1 (KX X)).filter fun k =>
+    returnTime σ S (n₀ k) = j + 1 ∧ returnMap σ S (n₀ k) ≤ X).card
+  have hiff : ∀ k, 1 ≤ k → ∀ j, j ≤ m →
+      (returnTime σ S (n₀ k) = j + 1 ↔ phase m r k ∈ wordSet m r ρ j) := by
+    intro k hk j hj
+    obtain ⟨a, b, d⟩ := hn₀ k hk
+    exact returnTime_eq_iff hσ hρ hS h hstep k a b d (fun hm => hfirst hm k hk) hj
+  have hsum : ∀ X, returnCount σ S Φ X = ∑ j ∈ Finset.range (m + 1), T j X := by
+    intro X
+    rw [hcount, Finset.card_eq_sum_card_fiberwise
+      (f := fun k => returnTime σ S (n₀ k) - 1) (t := Finset.range (m + 1))]
+    · refine Finset.sum_congr rfl fun j _ => ?_
+      simp only [T, Finset.filter_filter]
+      congr 1
+      refine Finset.filter_congr fun k hk => ?_
+      obtain ⟨a, b, d⟩ := hn₀ k (Finset.mem_Icc.1 hk).1
+      have := (returnTime_spec h a b d).1
+      omega
+    · intro k hk
+      simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hk
+      obtain ⟨a, b, d⟩ := hn₀ k hk.1.1
+      have := (returnTime_spec h a b d).2.1
+      simp only [Finset.coe_range, Set.mem_Iio]
+      omega
+  have hlo : ∀ j, j ≤ m → ∀ X : ℕ, Cnt j ⌊(c j)⁻¹ * X + -4 / c j⌋₊ ≤ T j X := by
+    intro j hj X
+    apply Finset.card_le_card
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hk ⊢
+    obtain ⟨⟨hk1, hk2⟩, hw⟩ := hk
+    have hcj := hc j hj
+    have hkr := (Nat.le_floor_iff' (by omega)).1 hk2
+    have hck : c j * k ≤ X - 4 := by
+      have := mul_le_mul_of_nonneg_left hkr (by linarith : (0 : ℝ) ≤ c j)
+      rw [mul_add, ← mul_assoc, mul_inv_cancel₀ (by linarith), one_mul,
+        mul_div_cancel₀ _ (by linarith)] at this
+      linarith
+    have hrt := (hiff k hk1 j hj).2 hw
+    have hb := hbound k hk1
+    rw [hrt, Nat.add_sub_cancel, h2c] at hb
+    have hRX : (returnMap σ S (n₀ k) : ℝ) < X := by linarith [(abs_lt.1 hb).2]
+    refine ⟨⟨hk1, hK X k ?_⟩, hrt, by exact_mod_cast hRX.le⟩
+    have : (4 : ℝ) * k ≤ X := by
+      have : (4 : ℝ) * k ≤ c j * k := by
+        have : (0 : ℝ) ≤ k := by positivity
+        nlinarith
+      linarith
+    exact_mod_cast this
+  have hhi : ∀ j, j ≤ m → ∀ X : ℕ, T j X ≤ Cnt j ⌊(c j)⁻¹ * X + 4 / c j⌋₊ := by
+    intro j hj X
+    apply Finset.card_le_card
+    intro k hk
+    simp only [Finset.mem_filter, Finset.mem_Icc] at hk ⊢
+    obtain ⟨⟨hk1, -⟩, hrt, hRX⟩ := hk
+    have hcj := hc j hj
+    refine ⟨⟨hk1, Nat.le_floor ?_⟩, (hiff k hk1 j hj).1 hrt⟩
+    have hb := hbound k hk1
+    rw [hrt, Nat.add_sub_cancel, h2c] at hb
+    have hRX' : (returnMap σ S (n₀ k) : ℝ) ≤ X := by exact_mod_cast hRX
+    have : c j * k < X + 4 := by linarith [(abs_lt.1 hb).1]
+    rw [show (c j)⁻¹ * X + 4 / c j = (X + 4) / c j by field_simp, le_div_iff₀ (by linarith)]
+    linarith
+  have hlimT : ∀ j ∈ Finset.range (m + 1), Tendsto (fun X : ℕ => (T j X : ℝ) / X) atTop
+      (𝓝 ((1 / 2 : ℝ) ^ min (j + 1) m * (alphaG m r * x ^ j)⁻¹)) := by
+    intro j hj
+    rw [Finset.mem_range] at hj
+    have hcj := hc j (by omega)
+    have hcpos : 0 < (c j)⁻¹ := inv_pos.2 (by linarith)
+    have L1 := tendsto_comp_div (hWd j (by omega)) (tendsto_floor_linear hcpos (-4 / c j))
+      (tendsto_floor_linear_div hcpos (-4 / c j))
+    have L2 := tendsto_comp_div (hWd j (by omega)) (tendsto_floor_linear hcpos (4 / c j))
+      (tendsto_floor_linear_div hcpos (4 / c j))
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le L1 L2 (fun X => ?_) (fun X => ?_)
+    · exact div_le_div_of_nonneg_right (Nat.cast_le.2 (hlo j (by omega) X)) (by positivity)
+    · exact div_le_div_of_nonneg_right (Nat.cast_le.2 (hhi j (by omega) X)) (by positivity)
+  refine (tendsto_finsetSum (Finset.range (m + 1)) hlimT).congr fun X => ?_
+  simp only [hsum X, Nat.cast_sum, Finset.sum_div]
+
+end Generic2
+
+/-- `1, A, Ax, …, Ax^{m−1}` are `ℚ`-independent when `1, x, …, xᵐ` are (multiply by `xᵐ`,
+`A xᵐ = r`). -/
+lemma linearIndependent_theta (hr : 2 ≤ r)
+    (hind : LinearIndependent ℚ fun i : Fin (m + 1) => gRoot m r ^ (i : ℕ)) :
+    LinearIndependent ℚ (Fin.cons (1 : ℝ) (theta m r) : Fin (m + 1) → ℝ) := by
+  have hreq := half_alphaG_mul_pow (m := m) hr
+  rw [Fintype.linearIndependent_iff] at hind ⊢
+  intro g hg
+  rw [Fin.sum_univ_succ] at hg
+  simp only [Fin.cons_zero, Fin.cons_succ, Rat.smul_def, mul_one, theta] at hg
+  set g' : Fin (m + 1) → ℚ := Fin.snoc (fun i : Fin m => (r : ℚ) * g i.succ) (g 0)
+  have h' : ∑ i, g' i • gRoot m r ^ (i : ℕ) = 0 := by
+    rw [Fin.sum_univ_castSucc]
+    simp only [g', Fin.snoc_castSucc, Fin.snoc_last, Fin.val_castSucc, Fin.val_last,
+      Rat.smul_def]
+    have : ∑ i : Fin m, (((r : ℚ) * g i.succ : ℚ) : ℝ) * gRoot m r ^ (i : ℕ) +
+        ((g 0 : ℚ) : ℝ) * gRoot m r ^ m =
+        gRoot m r ^ m * ((g 0 : ℝ) + ∑ i : Fin m, (g i.succ : ℝ) *
+          (alphaG m r / 2 * gRoot m r ^ (i : ℕ))) := by
+      rw [mul_add, Finset.mul_sum]
+      rw [add_comm]
+      congr 1
+      · ring
+      · refine Finset.sum_congr rfl fun i _ => ?_
+        push_cast
+        rw [← hreq]
+        ring
+    rw [this, hg, mul_zero]
+  have hz := hind g' h'
+  intro i
+  refine Fin.cases ?_ (fun i => ?_) i
+  · have := hz (Fin.last m)
+    simpa [g'] using this
+  · have := hz (Fin.castSucc i)
+    simp only [g', Fin.snoc_castSucc, mul_eq_zero, Nat.cast_eq_zero] at this
+    rcases this with h0 | h0
+    · omega
+    · exact h0
+
+open Classical in
+/-- Weyl for the word cylinders. -/
+lemma tendsto_wordCount (hr : 2 ≤ r) (hW : WeylEquidistributionMulti)
+    (hind : LinearIndependent ℚ fun i : Fin (m + 1) => gRoot m r ^ (i : ℕ))
+    {ρ : ℤ} (hρ : ρ = 0 ∨ ρ = 1) (j : ℕ) :
+    Tendsto (fun N : ℕ =>
+      (((Finset.Icc 1 N).filter fun k : ℕ => phase m r k ∈ wordSet m r ρ j).card : ℝ) / N)
+        atTop (𝓝 ((1 / 2 : ℝ) ^ min (j + 1) m)) := by
+  classical
+  have := hW m (theta m r) (linearIndependent_theta hr hind) (wordSet m r ρ j)
+    (measurableSet_wordSet ρ j) (volume_frontier_wordSet hr hρ j)
+  rw [volume_wordSet] at this
+  exact this
+
+/-- The closed form of the density: `1/2 − Σ_j 2^{−min(j+1,m)}/(α xʲ) = (α − 2)/(2αβᵐ)`. -/
+lemma density_sum_eq (hr : 2 ≤ r) :
+    1 / 2 - ∑ j ∈ Finset.range (m + 1),
+        (1 / 2 : ℝ) ^ min (j + 1) m * (alphaG m r * gRoot m r ^ j)⁻¹ =
+      (alphaG m r - 2) / (2 * alphaG m r * betaG m r ^ m) := by
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  set x := gRoot m r
+  have hα : alphaG m r = 2 * x / (2 * x - 1) := rfl
+  have hx0 : 0 < x := by linarith
+  have hu : 0 < 2 * x - 1 := by linarith
+  have hα4 := four_le_alphaG (m := m) hr
+  have hgeo : ∀ n, ∑ j ∈ Finset.range n, (1 / 2 : ℝ) ^ (j + 1) * (alphaG m r * x ^ j)⁻¹ =
+      (1 - (2 * x)⁻¹ ^ n) / 2 := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      have e : (1 / 2 : ℝ) ^ (n + 1) * (alphaG m r * x ^ n)⁻¹ =
+          (1 - (2 * x)⁻¹) * (2 * x)⁻¹ ^ n / 2 := by
+        rw [hα, inv_pow, mul_pow, one_div, inv_pow]
+        have hxn : 0 < x ^ n := pow_pos hx0 n
+        field_simp
+        ring
+      rw [e, pow_succ]
+      ring
+  have hs : ∑ j ∈ Finset.range m, (1 / 2 : ℝ) ^ min (j + 1) m * (alphaG m r * x ^ j)⁻¹ =
+      ∑ j ∈ Finset.range m, (1 / 2 : ℝ) ^ (j + 1) * (alphaG m r * x ^ j)⁻¹ :=
+    Finset.sum_congr rfl fun j hj => by
+      rw [Finset.mem_range] at hj; rw [min_eq_left (by omega)]
+  have hβ : betaG m r = 2 * x := rfl
+  rw [Finset.sum_range_succ, hs, hgeo, min_eq_right (by omega), hβ, inv_pow]
+  have e2 : (1 / 2 : ℝ) ^ m * (alphaG m r * x ^ m)⁻¹ = (alphaG m r * (2 * x) ^ m)⁻¹ := by
+    rw [mul_pow, one_div, inv_pow]
+    have hxm : 0 < x ^ m := pow_pos hx0 m
+    field_simp
+  rw [e2]
+  have hy : 0 < (2 * x) ^ m := pow_pos (by linarith) m
+  field_simp
+  ring
+
+lemma irrational_alphaG (hm : 1 ≤ m) (hr : 2 ≤ r) : Irrational (alphaG m r) := by
+  obtain ⟨hx1, -, -⟩ := gRoot_spec (m := m) hr
+  have hx := irrational_gRoot hm hr
+  have h2 : Irrational (2 * gRoot m r - 1) := by
+    have := (hx.intCast_mul (m := 2) (by norm_num)).sub_intCast 1
+    push_cast at this
+    exact this
+  have : alphaG m r = ((1 : ℤ) : ℝ) + (2 * gRoot m r - 1)⁻¹ := by
+    unfold alphaG
+    have : 2 * gRoot m r - 1 ≠ 0 := by linarith
+    field_simp
+    push_cast
+    ring
+  rw [this]
+  exact h2.inv.intCast_add 1
+
+lemma irrational_betaG (hm : 1 ≤ m) (hr : 2 ≤ r) : Irrational (betaG m r) := by
+  have := (irrational_gRoot hm hr).intCast_mul (m := 2) (by norm_num)
+  push_cast at this
+  exact this
+
+end Density
+
 /-! ## Theorem G (2)-(4): classification, count, density -/
 
 section Classification
@@ -1054,6 +1453,30 @@ theorem densityG_eq (hr : 2 ≤ r) :
   field_simp
   ring
 
+lemma gPerm_returnCount_eq (hr : 2 ≤ r) (X : ℕ) :
+    returnCount (gPerm m r hr) {n | n % 2 = 0} {1} X =
+      ((Finset.Icc 1 (X / 2)).filter fun k : ℕ =>
+        returnMap (gPerm m r hr) {n | n % 2 = 0} (2 * (k : ℤ)) ≤ X).card := by
+  classical
+  unfold returnCount
+  symm
+  apply Finset.card_nbij (fun k : ℕ => 2 * (k : ℤ))
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.mem_singleton_iff] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, hR⟩ := hk
+    exact ⟨⟨by omega, by omega⟩, by omega, by omega, hR⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro s hs
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.mem_singleton_iff] at hs
+    obtain ⟨⟨h1, h2⟩, he, -, hR⟩ := hs
+    refine ⟨(s / 2).toNat, ?_, by simp only; omega⟩
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq]
+    refine ⟨⟨by omega, by omega⟩, ?_⟩
+    rw [show 2 * (((s / 2).toNat : ℕ) : ℤ) = s by omega]
+    exact hR
+
 /-- **(ratified, Theorem G (4), density, conditional).**  If `deg x = m + 1` (stated as the
 `ℚ`-independence of `1, x, …, xᵐ`; `x^{m+1} − 2rx + r` is Eisenstein at any `p ∥ r`, and
 irreducible for all `m ≤ 8, r ≤ 60` by computation), then, assuming multidimensional Weyl
@@ -1070,7 +1493,82 @@ theorem tendsto_minCount_gPerm (hr : 2 ≤ r) (hW : WeylEquidistributionMulti)
     (hind : LinearIndependent ℚ fun i : Fin (m + 1) => gRoot m r ^ (i : ℕ)) :
     Tendsto (fun X : ℕ => (minCount (gPerm m r hr) X : ℝ) / X) atTop
       (𝓝 ((alphaG m r - 2) / (2 * alphaG m r * betaG m r ^ m))) := by
-  sorry
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  have hα1 := one_lt_alphaG (m := m) hr
+  have hS : ∀ n : ℤ, n ∈ {n : ℤ | n % 2 = 0} ↔ n % 2 ≠ 1 := fun n => by
+    simp only [Set.mem_ofPred_eq]; omega
+  have hR := tendsto_returnCount_div (ρ := 1) (S := {n : ℤ | n % 2 = 0}) (Φ := {1}) hr
+    (fun j _ => tendsto_wordCount hr hW hind (Or.inr rfl) j) (fun n => gPerm_apply hr n)
+    (Or.inr rfl) hS (hyp_gPerm hr) ?step (fun k => 2 * (k : ℤ)) ?n0 ?first ?bound
+    (fun X => X / 2) (gPerm_returnCount_eq hr) (fun X k hk => by omega)
+  case step =>
+    intro hm v hv hvo
+    obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k - 1 := ⟨(v + 1) / 2, by omega⟩
+    rw [wy_two_mul_sub_one_eq_floor hα1 (irrational_alphaG (by omega) hr) (by omega),
+      alphaG_div_sub_one hr, betaG]
+    congr 1
+    push_cast
+    ring
+  case n0 =>
+    intro k hk
+    refine ⟨?_, by omega, ?_⟩
+    · simp only [Set.mem_ofPred_eq]; omega
+    · simp only [Set.mem_singleton_iff]; omega
+  case first =>
+    intro _ k _
+    rw [wy_two_mul]
+    congr 1
+    push_cast
+    ring
+  case bound =>
+    intro k hk
+    have hS0 : 2 * (k : ℤ) ∈ {n : ℤ | n % 2 = 0} := by simp only [Set.mem_ofPred_eq]; omega
+    have hΦ0 : 2 * (k : ℤ) ∉ ({1} : Set ℤ) := by simp only [Set.mem_singleton_iff]; omega
+    obtain ⟨h1, hT, -, -, hint⟩ := returnTime_spec (hyp_gPerm (m := m) hr) hS0 (by omega) hΦ0
+    set τ := returnTime (gPerm m r hr) {n | n % 2 = 0} (2 * (k : ℤ))
+    have hodd : ∀ i : ℕ, 1 ≤ i → i ≤ τ - 1 →
+        (wy (alphaG m r))^[i] (2 * (k : ℤ)) % 2 = 1 := by
+      intro i hi1 hi2
+      have := hint i hi1 (by omega)
+      rw [gPerm_pow_apply, Set.mem_ofPred_eq] at this
+      omega
+    obtain ⟨s1, s2⟩ := run_sandwich hr (show (2 * (k : ℤ)) % 2 = 0 by omega) (τ - 1) hodd
+    have hRm : returnMap (gPerm m r hr) {n | n % 2 = 0} (2 * (k : ℤ)) =
+        (wy (alphaG m r))^[τ - 1 + 1] (2 * (k : ℤ)) := by
+      rw [returnMap, gPerm_pow_apply]; congr 1; omega
+    rw [hRm]
+    have hxj : 0 ≤ gRoot m r ^ (τ - 1 + 1) := pow_nonneg (by linarith) _
+    push_cast at s1 s2
+    set D := (((wy (alphaG m r))^[τ - 1 + 1] (2 * (k : ℤ)) : ℤ) : ℝ) -
+      alphaG m r / 2 * gRoot m r ^ (τ - 1) * (2 * (k : ℝ)) with hDdef
+    have hD1 : -1 < D := by rw [hDdef]; linarith
+    have hD2 : D < 4 := by
+      by_contra hc
+      push Not at hc
+      have := mul_le_mul_of_nonneg_left hc (show (0 : ℝ) ≤ 1 - gRoot m r by linarith)
+      linarith
+    rw [abs_lt]
+    constructor <;> linarith
+  have hX : ∀ X : ℕ, 1 ≤ X → (minCount (gPerm m r hr) X : ℝ) / X =
+      1 / X + ((X / 2 : ℕ) : ℝ) / X - (returnCount (gPerm m r hr) {n | n % 2 = 0} {1} X : ℝ) / X
+      := by
+    intro X hX1
+    have := minCount_gPerm_add (m := m) hr hX1
+    rw [← add_div, div_sub_div_same]
+    congr 1
+    have : (minCount (gPerm m r hr) X : ℝ) =
+        1 + (X / 2 : ℕ) - returnCount (gPerm m r hr) {n | n % 2 = 0} {1} X := by
+      rw [eq_sub_iff_add_eq]; exact_mod_cast this
+    exact this
+  have hhalf : Tendsto (fun X : ℕ => ((X / 2 : ℕ) : ℝ) / X) atTop (𝓝 (1 / 2)) := by
+    have := tendsto_floor_linear_div (c := 1 / 2) (by norm_num) 0
+    refine this.congr fun X => ?_
+    have h := Nat.floor_div_eq_div (K := ℝ) X 2
+    push_cast at h
+    rw [add_zero, one_div_mul_eq_div, h]
+  have hlim := ((tendsto_const_div_atTop_nhds_zero_nat (1 : ℝ)).add hhalf).sub hR
+  rw [zero_add, density_sum_eq hr] at hlim
+  refine hlim.congr' (eventually_atTop.2 ⟨1, fun X hX1 => (hX X hX1).symm⟩)
 
 end Classification
 
@@ -1305,6 +1803,32 @@ theorem gmPerm_infinitelyManyInfiniteOrbits (hr : 2 ≤ r) :
   push_cast at hge hq
   omega
 
+lemma gmPerm_returnCount_eq (hr : 2 ≤ r) (X : ℕ) :
+    returnCount (gmPerm m r hr) {n | n % 2 = 1} ∅ X =
+      ((Finset.Icc 1 ((X + 1) / 2)).filter fun k : ℕ =>
+        returnMap (gmPerm m r hr) {n | n % 2 = 1} (2 * (k : ℤ) - 1) ≤ X).card := by
+  classical
+  unfold returnCount
+  symm
+  apply Finset.card_nbij (fun k : ℕ => 2 * (k : ℤ) - 1)
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.notMem_empty,
+      not_false_eq_true, true_and] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, hR⟩ := hk
+    exact ⟨⟨by omega, by omega⟩, by omega, hR⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro s hs
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq, Set.notMem_empty,
+      not_false_eq_true, true_and] at hs
+    obtain ⟨⟨h1, h2⟩, ho, hR⟩ := hs
+    refine ⟨((s + 1) / 2).toNat, ?_, by simp only; omega⟩
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq]
+    refine ⟨⟨by omega, by omega⟩, ?_⟩
+    rw [show 2 * ((((s + 1) / 2).toNat : ℕ) : ℤ) - 1 = s by omega]
+    exact hR
+
 /-- **(ratified, mirror density, conditional).**  Same `d = (α − 2)/(2αβᵐ)`.  Paper proof: as
 `tendsto_minCount_gPerm`, with the parity roles swapped; the run phases are the same
 `{k c_i}`. -/
@@ -1312,7 +1836,81 @@ theorem tendsto_minCount_gmPerm (hr : 2 ≤ r) (hW : WeylEquidistributionMulti)
     (hind : LinearIndependent ℚ fun i : Fin (m + 1) => gRoot m r ^ (i : ℕ)) :
     Tendsto (fun X : ℕ => (minCount (gmPerm m r hr) X : ℝ) / X) atTop
       (𝓝 ((alphaG m r - 2) / (2 * alphaG m r * betaG m r ^ m))) := by
-  sorry
+  obtain ⟨hx1, hx2, -⟩ := gRoot_spec (m := m) hr
+  have hβ1 := one_lt_betaG (m := m) hr
+  have hS : ∀ n : ℤ, n ∈ {n : ℤ | n % 2 = 1} ↔ n % 2 ≠ 0 := fun n => by
+    simp only [Set.mem_ofPred_eq]; omega
+  have hR := tendsto_returnCount_div (ρ := 0) (S := {n : ℤ | n % 2 = 1}) (Φ := ∅) hr
+    (fun j _ => tendsto_wordCount hr hW hind (Or.inl rfl) j) (fun n => gmPerm_apply hr n)
+    (Or.inl rfl) hS (hyp_gmPerm hr) ?step (fun k => 2 * (k : ℤ) - 1) ?n0 ?first ?bound
+    (fun X => (X + 1) / 2) (gmPerm_returnCount_eq hr) (fun X k hk => by omega)
+  case step =>
+    intro _ v hv hve
+    obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k := ⟨v / 2, by omega⟩
+    rw [wy_two_mul, betaG]
+    congr 1
+    push_cast
+    ring
+  case n0 =>
+    intro k hk
+    refine ⟨?_, by omega, Set.notMem_empty _⟩
+    simp only [Set.mem_ofPred_eq]; omega
+  case first =>
+    intro hm k hk
+    rw [wy_two_mul_sub_one_eq_floor hβ1 (irrational_betaG hm hr) (by omega),
+      betaG_div_sub_one hr]
+    congr 1
+    push_cast
+    ring
+  case bound =>
+    intro k hk
+    have hS0 : 2 * (k : ℤ) - 1 ∈ {n : ℤ | n % 2 = 1} := by simp only [Set.mem_ofPred_eq]; omega
+    obtain ⟨h1, hT, -, -, hint⟩ :=
+      returnTime_spec (hyp_gmPerm (m := m) hr) hS0 (by omega) (Set.notMem_empty _)
+    set τ := returnTime (gmPerm m r hr) {n | n % 2 = 1} (2 * (k : ℤ) - 1)
+    have hev : ∀ i : ℕ, 1 ≤ i → i ≤ τ - 1 →
+        (wy (betaG m r))^[i] (2 * (k : ℤ) - 1) % 2 = 0 := by
+      intro i hi1 hi2
+      have := hint i hi1 (by omega)
+      rw [gmPerm_pow_apply, Set.mem_ofPred_eq] at this
+      omega
+    obtain ⟨s1, s2⟩ :=
+      run_sandwich_mirror hr (show (2 * (k : ℤ) - 1) % 2 = 1 by omega) (τ - 1) hev
+    have hRm : returnMap (gmPerm m r hr) {n | n % 2 = 1} (2 * (k : ℤ) - 1) =
+        (wy (betaG m r))^[τ - 1 + 1] (2 * (k : ℤ) - 1) := by
+      rw [returnMap, gmPerm_pow_apply]; congr 1; omega
+    rw [hRm]
+    have hxj : 0 ≤ gRoot m r ^ (τ - 1 + 1) := pow_nonneg (by linarith) _
+    push_cast at s1 s2
+    have e : (2 * (k : ℝ) - 1 + 1) = 2 * k := by ring
+    rw [e] at s1 s2
+    set D := alphaG m r / 2 * gRoot m r ^ (τ - 1) * (2 * (k : ℝ)) -
+      (((wy (betaG m r))^[τ - 1 + 1] (2 * (k : ℤ) - 1) : ℤ) : ℝ) with hDdef
+    have hD1 : 0 < D := by rw [hDdef]; linarith
+    have hD2 : D < 4 := by
+      by_contra hc
+      push Not at hc
+      have := mul_le_mul_of_nonneg_left hc (show (0 : ℝ) ≤ 1 - gRoot m r by linarith)
+      linarith
+    rw [abs_lt]
+    constructor <;> linarith
+  have hX : ∀ X : ℕ, (minCount (gmPerm m r hr) X : ℝ) / X =
+      (((X + 1) / 2 : ℕ) : ℝ) / X - (returnCount (gmPerm m r hr) {n | n % 2 = 1} ∅ X : ℝ) / X
+      := by
+    intro X
+    have := minCount_gmPerm_add (m := m) hr X
+    rw [div_sub_div_same]
+    congr 1
+    rw [eq_sub_iff_add_eq]; exact_mod_cast this
+  have hhalf : Tendsto (fun X : ℕ => (((X + 1) / 2 : ℕ) : ℝ) / X) atTop (𝓝 (1 / 2)) := by
+    have := tendsto_floor_linear_div (c := 1 / 2) (by norm_num) (1 / 2)
+    refine this.congr fun X => ?_
+    have h := Nat.floor_div_eq_div (K := ℝ) (X + 1) 2
+    push_cast at h
+    rw [show (1 / 2 : ℝ) * X + 1 / 2 = (X + 1) / 2 by ring, h]
+  have hlim := hhalf.sub hR
+  rw [density_sum_eq hr] at hlim
+  exact hlim.congr fun X => (hX X).symm
 
 end Mirror
 
