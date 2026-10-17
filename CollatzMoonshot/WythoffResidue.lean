@@ -145,29 +145,60 @@ def oddLo : Side → ℤ
   | .plus => 1
   | .minus => 0
 
+/-- Floor division recovers `t − j` exactly when `d ∣ t − j`, for `j ∈ [0, d)`. -/
+theorem ediv_mul_eq_sub_iff {t j d : ℤ} (hd : 0 < d) (hj : 0 ≤ j ∧ j < d) :
+    t / d * d = t - j ↔ d ∣ t - j := by
+  constructor
+  · intro h; exact ⟨t / d, by linarith⟩
+  · rintro ⟨c, hc⟩
+    rw [(ediv_eq_iff hd).2 ⟨by linarith, by linarith⟩]
+    linarith
+
 /-- **(ratified).**  Even-branch window formula: for `j` in the window `J_E`,
 `q · W(2y) = py − j` iff `j ≡ py (mod q)`.  Paper proof: `⌊x/q⌋ = (x − x mod q)/q`, and
 `⌈x/q⌉ − 1 = (x − j)/q` with `j ∈ [1, q]`, `j ≡ x`. -/
 theorem wythoff_even_window (hq : 0 < q) (y j : ℤ) (hj : evenLo s ≤ j ∧ j < evenLo s + q) :
     wythoff s p q (2 * y) * q = p * y - j ↔ (q : ℤ) ∣ p * y - j := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  cases s
+  · rw [wythoff_plus_even, mul_comm y]
+    exact ediv_mul_eq_sub_iff hq' (by simpa [evenLo] using hj)
+  · rw [wythoff_minus_even, mul_comm y,
+      show (p : ℤ) * y - j = p * y - 1 - (j - 1) by ring]
+    exact ediv_mul_eq_sub_iff hq' (by simp [evenLo] at hj; omega)
 
 /-- **(ratified).**  Odd-branch window formula: for `j` in the window `J_O`,
 `R · W(2y − 1) = py − j` iff `j ≡ py (mod R)`. -/
 theorem wythoff_odd_window (hqp : q < p) (y j : ℤ)
     (hj : oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q)) :
     wythoff s p q (2 * y - 1) * ((p : ℤ) - q) = p * y - j ↔ ((p : ℤ) - q) ∣ p * y - j := by
-  sorry
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  cases s
+  · rw [wythoff_plus_odd, mul_comm y,
+      show (p : ℤ) * y - j = p * y - 1 - (j - 1) by ring]
+    exact ediv_mul_eq_sub_iff hR (by simp [oddLo] at hj; omega)
+  · rw [wythoff_minus_odd, mul_comm y]
+    exact ediv_mul_eq_sub_iff hR (by simpa [oddLo] using hj)
 
 /-- **(ratified).**  The even window contains an element `≡ py (mod q)`. -/
 theorem exists_even_window (hq : 0 < q) (y : ℤ) :
     ∃ j, (evenLo s ≤ j ∧ j < evenLo s + q) ∧ (q : ℤ) ∣ p * y - j := by
-  sorry
+  have hq' : (0 : ℤ) < q := by exact_mod_cast hq
+  refine ⟨evenLo s + (p * y - evenLo s) % q, ⟨?_, ?_⟩, ?_⟩
+  · have := Int.emod_nonneg (p * y - evenLo s) hq'.ne'; omega
+  · have := Int.emod_lt_of_pos (p * y - evenLo s) hq'; omega
+  · exact ⟨(p * y - evenLo s) / q, by
+      have := Int.mul_ediv_add_emod (p * y - evenLo s) q; linarith⟩
 
 /-- **(ratified).**  The odd window contains an element `≡ py (mod R)`. -/
 theorem exists_odd_window (hqp : q < p) (y : ℤ) :
     ∃ j, (oddLo s ≤ j ∧ j < oddLo s + ((p : ℤ) - q)) ∧ ((p : ℤ) - q) ∣ p * y - j := by
-  sorry
+  have hR : (0 : ℤ) < (p : ℤ) - q := by omega
+  refine ⟨oddLo s + (p * y - oddLo s) % ((p : ℤ) - q), ⟨?_, ?_⟩, ?_⟩
+  · have := Int.emod_nonneg (p * y - oddLo s) hR.ne'; omega
+  · have := Int.emod_lt_of_pos (p * y - oddLo s) hR; omega
+  · exact ⟨(p * y - oddLo s) / ((p : ℤ) - q), by
+      have := Int.mul_ediv_add_emod (p * y - oddLo s) ((p : ℤ) - q); linarith⟩
 
 end Window
 
