@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-10-17: wythoff-rational objective DONE, nothing owed
+
+`KICKOFF-2026-10-16-wythoff-rational.md` is fully discharged: `CollatzMoonshot/WythoffRational.lean`
+and `CollatzMoonshot/WythoffRationalMarkov.lean` are sorry-free with ratified statements unchanged.
+Theorem M (`cylCount_eq`, even `p`: exact Markov joint counts; `cylCount_eq_odd`, odd `p`: i.i.d.),
+conditional independence (`cylCount_condIndep`) and the `10/3` dependence witness
+(`tenThirds_dependent`) are proved.  Not ratified, not attempted: the note's Theorem C (density
+ceiling).  See `HANDOFF-wythoff-rational.md`.
+
 ## 2026-10-16: rcwa-sameorbit objective DONE, nothing owed
 
 `KICKOFF-2026-10-16-rcwa-sameorbit.md` is fully discharged: `CollatzMoonshot/RcwaSameOrbit.lean`
