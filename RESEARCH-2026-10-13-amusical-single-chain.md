@@ -2380,3 +2380,63 @@ Report: `wythoff-quintic-gap.md`.  Notation as in §67.
   narrowing `e₃` by Lemma SGJ\* before branching (untested).
 * **Status.**  CONJ C′ stays 85%; the degree-5 classification is complete outside `55 ≤ |a₀| ≤ 599`.
   For `U`: nothing new.  Under 1% that this moves (a).
+
+## 69. The degree bound: an exact backward chain, a slide for units, and an excess budget off the G line (2026-10-17, Opus agent; Ren checked in part)
+
+Report: `wythoff-degree-bound.md`.  Notation of §61-§67, plus `θ = 1/x`, `A = 1/(2 − θ)`, `K` with
+`θ ∈ (ψ_K, ψ_{K+1})`, `Π_half = ∏_{s≥2}(1 − 1/(2x_s))`, `c_J = x^{J+1}/(2x − 1)`.  The degree bound
+(the one missing piece of CONJ C′, §64) stays open for units and for non-units.  It is now stated in
+three precise forms.
+
+* **Lemma BC (97%; Ren paper-checked).**  Runs are integer chains `m_{l+1} − x m_l ∈ (0, ½)`.
+  Backward, the odd point `2M − 1` has the odd predecessor `2⌊θM⌋ − 1` iff `{θM} < θ/2`; otherwise its
+  predecessor is the up-point `2⌊(2 − θ)M⌋`, which happens iff `M ∈ H = ⋃_j (jA, jA + ½)`.  So
+  `J = 1 + sup` of the finite hitting times of `H` under `T(M) = ⌊θM⌋`.
+* **Lemma Two (95%; Ren paper-checked).**  For `K ≥ 3`: `T^i(2) = 2^i + 1` while below `A`, and
+  `A > ψ_K^K ≥ 2^{K−1} + 1`, so if the `T`-orbit of 2 ever meets `H` then `J ≥ K + 1`, hence
+  `θ < ψ_J` and `c_J < 1`: unsolvable.  It rarely fires on units (1 of 17).
+* **Lemma DC (98%; Ren paper-checked).**  For a Pisot unit `θ`, the fractional parts `u_i = {θM_i}`
+  along the backward chain satisfy `Σ_k p_k M_{i+k} = −Σ_j r_j u_{i+j} ∈ ℤ`, with `r_j` the coefficients
+  of `P_θ/(t − θ)`.  Since `r_{d−1} = 1`, the state evolves by an injective piecewise-affine map whose
+  linear part has the conjugates `θ_s` as eigenvalues.  For a non-unit `r_{d−1} = a₀` and each step
+  branches `|a₀|` ways.  The fixed point `u* = θ − 1` sits only `(2 − θ)/2` below the up threshold,
+  which is where the long unit runs come from.
+* **Lemma LS, local slide (93%).**  If a real combination `z` of the modes `x_s^k` (`s ≥ 2`) has
+  `1 < z₀ < 2` and `−2(θ − 1)/(2 − θ) < z_k < 1` for `1 ≤ k < L`, then runs of length `≥ L` occur with
+  positive density (put `u_i = u* + ((2 − θ)/2) z_{L−1−i}`; every row is the integer `P_θ(1)`).  It is
+  a linear program, with a Farkas form for infeasibility.  Ren paper-checked the three threshold
+  translations and the row identity; the density step (Weyl plus a triangular change of variables) is
+  the agent's.
+* **Computed (units).**  On all 102 irreducible Pisot units of degree `≤ 8` and height `≤ 2`, the 7
+  multinacci numbers give `L_max = d` (their known `J = d`, the control), and all 95 others give
+  `L_max ≥ K + 1` (in fact `≥ d + 1`, typically `2d`-`7d`), so all 95 are unsolvable without CONJ P.
+  Twelve LP certificates replay exactly `L` steps in an independent forward automaton; tribonacci at
+  `L = 4` is infeasible (teeth).  CONJ LS\* (85%): every non-multinacci Pisot unit in `(1, 2)` reaches
+  `L ≥ max(d, K) + 1`, which would give "no solvable unit" independently of CONJ P.  The data never
+  reaches `K ≥ d`, the case CONJ P forbids, so LS\* is untested exactly where it matters.
+* **Lemma EX, excess budget (99%; Ren re-derived it).**  For any member, `c_J > 1` iff
+  `J − d + 1 < log(|a₀||Π_half|(2x)^{d−1}/|N|)/log(1/x)`, using `2x − 1 = x|q̃₀|/|a₀|` and Lemma H½,
+  `|q̃₀| = |N|/(2^{d−1}|Π_half|)` (Ren re-derived H½ from `N = 2^d ∏(½ − x_s)`).  Off the G line
+  `J ≥ d` (Theorem O), which forces `x < 1/ψ_d`; then `|a₀| = 2` with `|Π_half| < 1.3|N|` forces
+  `J = d` exactly (Ren checked `2.6(2/ψ_d)^{d−1}/ψ_d² < 1` for every `d ≥ 3`; the bound uses
+  `x < 1/ψ_d`, slightly sharper than the report's `1/ψ_{d−1}`).
+* **No-go (paper).**  G(m, 2) has `|a₀| = 2`, `N = 1`, `M(P) < 4` and equidistributing conjugates, and
+  is solvable in every degree, so no argument that sees only `|a₀|`, `N`, `M(P)` or the conjugate
+  distribution bounds `d`; "off the G line" has to enter through the run structure.
+* **Conditional bound (paper, given Bilu 1997 and CONJ E).**  `h(x) < log(2|a₀|)/d → 0`, so by Bilu's
+  equidistribution theorem (Duke Math. J. 89) the conjugates other than `x` equidistribute on the
+  circle; `log|1 − 1/(2z)|` is bounded on `|z| > 1` and has mean 0 there (Jensen), so
+  `log|Π_half| = o(d)` and the budget is `o(d)`.  CONJ E (40%): off the G line, bounded-run members of
+  large degree have `J ≥ (1 + c)d`.  Given E, each bound on `|a₀|` bounds `d`; a quantitative Bilu
+  would give `d = O(log|a₀|)`.  Nothing yet controls `|a₀|` and `d` growing together.
+* **Ren's checks.**  Re-ran `localslide.py 80`, `verify_ls.py` and `excess.py`: outputs identical.
+  Paper-checked BC, Two, DC, EX and H½, and LS's thresholds and row identity (above).  Independent
+  code (`n3indep.py`: Ren's own `W` from 150-digit roots, guarded floors, every up-point to `10⁶`):
+  tribonacci stays at maximum run 3 = `d` (control); the units `1.8668` (`d = 4`, `K = 3`), χ = `1.9052`
+  (`d = 4`, `K = 3`), `1.9706` (`d = 8`, `K = 5`), `1.9814` (`d = 6`, `K = 5`) and `1.9958` (`d = 8`,
+  `K = 7`) reach 8, 16, 16, 16 and 19, all past `K + 1`, so each is unsolvable by direct observation.
+  The two `d = 4` units meet or pass their LS lengths (7 and 13); the three high-`K` units have not
+  yet reached theirs (47, 31, 48) by `10⁶`, consistent with a slide window of width about `2^{−K}`.
+* **Status.**  CONJ P 90%, CONJ LS\* 85%, no solvable unit 92% (was 90%), CONJ E 40%, CONJ C′ 85%,
+  CONJ C 75%.  For `U`: `x = 3/4` is not an algebraic integer, so nothing new.  Under 1% that this
+  moves (a).
