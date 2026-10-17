@@ -825,7 +825,66 @@ theorem eventually_mem_or_not_mem_of_closed (hq : 0 < q) (hqp : q < p) {M : ℕ}
     (hper : ∀ᶠ n in (Filter.atTop : Filter ℤ), (n ∈ C ↔ n + M ∈ C))
     (hfwd : ∀ᶠ n in (Filter.atTop : Filter ℤ), n ∈ C → wythoff s p q n ∈ C) :
     (∀ᶠ n in (Filter.atTop : Filter ℤ), n ∈ C) ∨ (∀ᶠ n in (Filter.atTop : Filter ℤ), n ∉ C) := by
-  sorry
+  obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.1 hper
+  obtain ⟨N₂, hN₂⟩ := Filter.eventually_atTop.1 hfwd
+  have hM' : (0 : ℤ) < M := by exact_mod_cast hM
+  -- membership is `M`-periodic beyond `N₁`
+  have hstep : ∀ k : ℕ, ∀ m, N₁ ≤ m → (m ∈ C ↔ m + M * k ∈ C) := by
+    intro k
+    induction k with
+    | zero => intro m _; simp
+    | succ k ih =>
+      intro m hm
+      rw [ih m hm, hN₁ (m + M * k) (by nlinarith)]
+      push_cast; ring_nf
+  have hperiod : ∀ m n, N₁ ≤ m → N₁ ≤ n → (M : ℤ) ∣ n - m → (m ∈ C ↔ n ∈ C) := by
+    have key : ∀ m n, N₁ ≤ m → m ≤ n → (M : ℤ) ∣ n - m → (m ∈ C ↔ n ∈ C) := by
+      rintro m n hm hmn ⟨k, hk⟩
+      have hk0 : 0 ≤ k := by
+        by_contra h; push Not at h; nlinarith
+      rw [hstep k.toNat m hm, Int.toNat_of_nonneg hk0, show m + M * k = n by linarith]
+    intro m n hm hn hd
+    rcases le_total m n with h | h
+    · exact key m n hm h hd
+    · exact (key n m hn h (by rw [← dvd_neg, neg_sub]; exact hd)).symm
+  set N := max N₁ N₂
+  let D : Set (ZMod M) := {a | ∃ n : ℤ, N ≤ n ∧ (n : ZMod M) = a ∧ n ∈ C}
+  have hD : ResidueClosed (wythoff s p q) M D := by
+    rintro n ⟨m, hm, hmn, hmC⟩
+    set k : ℤ := |N - n| + |N - wythoff s p q n| with hk
+    have hk0 : 0 ≤ k := by positivity
+    have hQ := branchQ_pos hq hqp n
+    set n' := n + 2 * branchQ p q n * (M * k) with hn'
+    have hW : wythoff s p q n' = wythoff s p q n + M * (p * k) := by
+      rw [hn', wythoff_add_piece s hq hqp]; ring
+    have hn'N : N ≤ n' := by
+      have h1 : k ≤ (M : ℤ) * k := le_mul_of_one_le_left hk0 (by omega)
+      have : k ≤ 2 * branchQ p q n * (M * k) :=
+        h1.trans (le_mul_of_one_le_left (by linarith) (by linarith))
+      have := le_abs_self (N - n); have := abs_nonneg (N - wythoff s p q n); linarith
+    have hp1 : (1 : ℤ) ≤ p := by exact_mod_cast (show 1 ≤ p by omega)
+    have hWN : N ≤ wythoff s p q n' := by
+      have h1 : k ≤ (p : ℤ) * k := le_mul_of_one_le_left hk0 hp1
+      have : k ≤ M * (p * k) := h1.trans (le_mul_of_one_le_left (by linarith) (by omega))
+      have := le_abs_self (N - wythoff s p q n); have := abs_nonneg (N - n); linarith
+    have hn'C : n' ∈ C := by
+      refine (hperiod m n' (le_trans (le_max_left _ _) hm) (le_trans (le_max_left _ _) hn'N)
+        ?_).1 hmC
+      have := (ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hmn
+      rw [show n' - m = (n - m) + M * (2 * branchQ p q n * k) by rw [hn']; ring]
+      exact this.add (dvd_mul_right _ _)
+    refine ⟨wythoff s p q n', hWN, ?_, hN₂ n' (le_trans (le_max_right _ _) hn'N) hn'C⟩
+    rw [hW]; simp
+  rcases (residueTransitive_iff_closed _ M).1 hRT D hD with h0 | h1
+  · right
+    refine Filter.eventually_atTop.2 ⟨N, fun n hn hnC => ?_⟩
+    have : (n : ZMod M) ∈ D := ⟨n, hn, rfl, hnC⟩
+    rw [h0] at this; exact this
+  · left
+    refine Filter.eventually_atTop.2 ⟨N, fun n hn => ?_⟩
+    obtain ⟨m, hm, hmn, hmC⟩ : (n : ZMod M) ∈ D := by rw [h1]; trivial
+    exact (hperiod m n (le_trans (le_max_left _ _) hm) (le_trans (le_max_left _ _) hn)
+      ((ZMod.intCast_eq_intCast_iff_dvd_sub _ _ _).1 hmn)).1 hmC
 
 /-- **(ratified).**  For `U`: an eventually-periodic set eventually mapped into itself by `U`
 is eventually everything or eventually empty.  (Finite cycles are the only trap-free exceptions
