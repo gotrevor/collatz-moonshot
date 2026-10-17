@@ -472,11 +472,162 @@ theorem wkPerm_infinitelyManyInfiniteOrbits (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) 
     InfinitelyManyInfiniteOrbits (wkPerm b c h1 h2) :=
   infinitelyManyInfiniteOrbits_of_trap _ (coneSet_trap h1 h2) (coneEntry_infinite h1 h2)
 
+/-- `⌊2v⌋` is even iff `{v} < 1/2`. -/
+lemma floor_two_mul_even_iff (v : ℝ) : ⌊2 * v⌋ % 2 = 0 ↔ Int.fract v < 1 / 2 := by
+  refine ⟨fun h => ?_, floor_two_mul_even⟩
+  by_contra hc
+  push Not at hc
+  have : ⌊2 * v⌋ = 2 * ⌊v⌋ + 1 := by
+    rw [Int.floor_eq_iff]
+    have := Int.fract_lt_one v
+    rw [Int.fract] at hc this
+    push_cast
+    constructor <;> linarith
+  omega
+
+/-- `⌊cX + d⌋₊ / X → c`. -/
+lemma tendsto_floor_linear_div {c : ℝ} (hc : 0 < c) (d : ℝ) :
+    Tendsto (fun X : ℕ => (⌊c * X + d⌋₊ : ℝ) / X) atTop (𝓝 c) := by
+  have hlo : Tendsto (fun X : ℕ => c + (d - 1) / X) atTop (𝓝 c) := by
+    simpa using tendsto_const_nhds.add (tendsto_const_div_atTop_nhds_zero_nat (d - 1))
+  have hhi : Tendsto (fun X : ℕ => c + d / X) atTop (𝓝 c) := by
+    simpa using tendsto_const_nhds.add (tendsto_const_div_atTop_nhds_zero_nat d)
+  have hev : ∀ᶠ X : ℕ in atTop, 0 ≤ c * X + d ∧ (0 : ℝ) < X := by
+    obtain ⟨N, hN⟩ := exists_nat_gt (|d| / c)
+    refine eventually_atTop.2 ⟨N + 1, fun X hX => ⟨?_, Nat.cast_pos.2 (by omega)⟩⟩
+    have hX' : (N : ℝ) + 1 ≤ X := by exact_mod_cast hX
+    have : |d| < c * X := by rw [div_lt_iff₀ hc] at hN; nlinarith
+    linarith [neg_abs_le d]
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo hhi ?_ ?_
+  · filter_upwards [hev] with X ⟨h0, hX⟩
+    have := Nat.lt_floor_add_one (c * X + d)
+    rw [le_div_iff₀ hX]
+    have e : (c + (d - 1) / X) * X = c * X + d - 1 := by field_simp; ring
+    linarith
+  · filter_upwards [hev] with X ⟨h0, hX⟩
+    have := Nat.floor_le h0
+    rw [div_le_iff₀ hX]
+    have e : (c + d / X) * X = c * X + d := by field_simp
+    linarith
+
+/-- Rescaling a counting limit: if `C(N)/N → L`, `f → ∞` and `f(X)/X → c`, then
+`C(f(X))/X → L c`. -/
+lemma tendsto_comp_div {C f : ℕ → ℕ} {L c : ℝ}
+    (hC : Tendsto (fun N : ℕ => (C N : ℝ) / N) atTop (𝓝 L)) (hf : Tendsto f atTop atTop)
+    (hfr : Tendsto (fun X : ℕ => (f X : ℝ) / X) atTop (𝓝 c)) :
+    Tendsto (fun X : ℕ => (C (f X) : ℝ) / X) atTop (𝓝 (L * c)) := by
+  refine ((hC.comp hf).mul hfr).congr' ?_
+  filter_upwards [hf.eventually_ge_atTop 1] with X hX
+  have : (f X : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
+  show (C (f X) : ℝ) / f X * (f X / X) = _
+  rw [div_mul_div_cancel₀ this]
+
+/-- `⌊c·X + d⌋₊ → ∞`. -/
+lemma tendsto_floor_linear {c : ℝ} (hc : 0 < c) (d : ℝ) :
+    Tendsto (fun X : ℕ => ⌊c * X + d⌋₊) atTop atTop :=
+  tendsto_nat_floor_atTop.comp
+    ((tendsto_natCast_atTop_atTop.const_mul_atTop hc).atTop_add tendsto_const_nhds)
+
 open Classical in
 /-- The number of entry points `T ∖ W(T)` in `[1, X]`. -/
 noncomputable def coneEntryCount (b c : ℤ) (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) (X : ℕ) : ℕ :=
   ((Finset.Icc (1 : ℤ) X).filter fun n =>
     n ∈ coneSet b c \ wkPerm b c h1 h2 '' coneSet b c).card
+
+open Classical in
+/-- The phase count `#{k ∈ [1, N] : {k·α/2} < 1/2}`. -/
+noncomputable def phaseCount (α : ℝ) (N : ℕ) : ℕ :=
+  ((Finset.Icc 1 N).filter fun k : ℕ => Int.fract ((k : ℝ) * (α / 2)) ∈ Set.Ico 0 (1 / 2)).card
+
+lemma mem_coneSet_two_mul_iff {k : ℤ} :
+    2 * k ∈ coneSet b c ↔ 0 < k ∧ Int.fract ((k : ℝ) * (alphaK b c / 2)) < 1 / 2 := by
+  unfold coneSet
+  simp only [Set.mem_ofPred_eq]
+  rw [wy_two_mul, show (k : ℝ) * alphaK b c = 2 * ((k : ℝ) * (alphaK b c / 2)) by ring,
+    floor_two_mul_even_iff]
+  constructor
+  · rintro ⟨h0, -, h⟩; exact ⟨by omega, h⟩
+  · rintro ⟨h0, h⟩; exact ⟨by omega, by omega, h⟩
+
+open Classical in
+/-- `#(T ∩ [1, X]) = #{k ≤ X/2 : {kα/2} < 1/2}`. -/
+lemma card_coneSet_Icc (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun n => n ∈ coneSet b c).card =
+      phaseCount (alphaK b c) (X / 2) := by
+  unfold phaseCount
+  symm
+  apply Finset.card_nbij (fun k : ℕ => 2 * (k : ℤ))
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_Ico, Set.mem_ofPred_eq] at hk ⊢
+    obtain ⟨⟨h1, h2⟩, -, hf⟩ := hk
+    refine ⟨⟨by omega, by omega⟩, mem_coneSet_two_mul_iff.2 ⟨by omega, by exact_mod_cast hf⟩⟩
+  · intro a _ b _ h
+    have : (a : ℤ) = b := by simp only at h; omega
+    exact_mod_cast this
+  · intro n hn
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hn
+    obtain ⟨⟨h1, h2⟩, hT⟩ := hn
+    have he := hT.2.1
+    obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+    obtain ⟨hk0, hf⟩ := mem_coneSet_two_mul_iff.1 hT
+    refine ⟨k.toNat, ?_, by simp only; omega⟩
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_Ico, Set.mem_ofPred_eq]
+    refine ⟨⟨by omega, by omega⟩, Int.fract_nonneg _, ?_⟩
+    have : ((k.toNat : ℕ) : ℝ) = (k : ℝ) := by exact_mod_cast Int.toNat_of_nonneg (by omega)
+    rw [this]; exact hf
+
+open Classical in
+/-- `#(W(T) ∩ [1, X]) = #{k ≤ ⌊(X + 1)/α⌋ : {kα/2} < 1/2}`. -/
+lemma card_image_coneSet_Icc (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) (X : ℕ) :
+    ((Finset.Icc (1 : ℤ) X).filter fun n => n ∈ wkPerm b c h1 h2 '' coneSet b c).card =
+      phaseCount (alphaK b c) ⌊(alphaK b c)⁻¹ * X + (alphaK b c)⁻¹⌋₊ := by
+  set α := alphaK b c
+  have hα3 := three_lt_alphaK_cone h1 h2
+  have hirr := irrational_alphaK_cone h1 h2
+  have hα0 : 0 < α := by linarith
+  -- `⌊kα⌋ ≤ X ↔ k ≤ ⌊(X + 1)/α⌋₊` for `k ≥ 1`
+  have hkey : ∀ k : ℕ, 1 ≤ k → (⌊(k : ℝ) * α⌋ ≤ X ↔ k ≤ ⌊α⁻¹ * X + α⁻¹⌋₊) := by
+    intro k hk
+    have hne : (k : ℝ) * α ≠ ((X + 1 : ℕ) : ℝ) := by
+      have := (hirr.natCast_mul (m := k) (by omega)).ne_nat (X + 1)
+      exact this
+    rw [Int.floor_le_iff, Nat.le_floor_iff (by positivity)]
+    have e : α⁻¹ * X + α⁻¹ = (X + 1) / α := by field_simp
+    rw [e, le_div_iff₀ hα0]
+    push_cast at hne ⊢
+    constructor
+    · intro h; linarith
+    · intro h; exact lt_of_le_of_ne h hne
+  unfold phaseCount
+  symm
+  apply Finset.card_nbij (fun k : ℕ => wy α (2 * (k : ℤ)))
+  · intro k hk
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_Ico, Set.mem_ofPred_eq] at hk ⊢
+    obtain ⟨⟨hk1, hk2⟩, -, hf⟩ := hk
+    have hT : 2 * (k : ℤ) ∈ coneSet b c :=
+      mem_coneSet_two_mul_iff.2 ⟨by omega, by exact_mod_cast hf⟩
+    have hWT := coneSet_trap h1 h2 _ hT
+    rw [wkPerm_apply] at hWT
+    refine ⟨⟨hWT.1, ?_⟩, ⟨_, hT, rfl⟩⟩
+    rw [wy_two_mul]; push_cast
+    exact (hkey k hk1).2 hk2
+  · intro a _ b _ h
+    have := (wy_bijective (one_lt_alphaK_cone h1 h2)).1 h
+    omega
+  · intro n hn
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_ofPred_eq] at hn
+    obtain ⟨⟨hn1, hn2⟩, s, hs, rfl⟩ := hn
+    have he := hs.2.1
+    obtain ⟨k, rfl⟩ : ∃ k, s = 2 * k := ⟨s / 2, by omega⟩
+    obtain ⟨hk0, hf⟩ := mem_coneSet_two_mul_iff.1 hs
+    have hkn : ((k.toNat : ℕ) : ℤ) = k := Int.toNat_of_nonneg (by omega)
+    refine ⟨k.toNat, ?_, by simp only [hkn]; rfl⟩
+    simp only [Finset.coe_filter, Finset.mem_Icc, Set.mem_Ico, Set.mem_ofPred_eq]
+    have hkr : ((k.toNat : ℕ) : ℝ) = (k : ℝ) := by exact_mod_cast hkn
+    refine ⟨⟨by omega, (hkey _ (by omega)).1 ?_⟩, Int.fract_nonneg _, by rw [hkr]; exact hf⟩
+    rw [hkr, ← wy_two_mul]
+    rw [wkPerm_apply] at hn2
+    exact hn2
 
 /-- **(ratified, Theorem K, entry density, conditional on equidistribution).**  The entry points
 have density `(1/4)(1 − 2/α)`, so at least that many infinite orbits per unit meet `[1, X]`.
@@ -486,7 +637,49 @@ Paper proof: `⌊kα⌋` is even iff `{kα/2} < 1/2`; by `WeylEquidistribution` 
 theorem tendsto_coneEntryCount (h1 : 1 ≤ -c) (h2 : -c ≤ b - 2) (hW : WeylEquidistribution) :
     Tendsto (fun X : ℕ => (coneEntryCount b c h1 h2 X : ℝ) / X) atTop
       (𝓝 ((1 - 2 / alphaK b c) / 4)) := by
-  sorry
+  classical
+  set α := alphaK b c
+  have hα3 := three_lt_alphaK_cone h1 h2
+  have hα0 : 0 < α := by linarith
+  have hθ : Irrational (α / 2) := (irrational_alphaK_cone h1 h2).div_natCast (m := 2) (by norm_num)
+  have hW' : Tendsto (fun N : ℕ => (phaseCount α N : ℝ) / N) atTop (𝓝 (1 / 2)) := by
+    have := hW (α / 2) hθ 0 (1 / 2) le_rfl (by norm_num) (by norm_num)
+    simpa [phaseCount] using this
+  -- the count splits as `#(T ∩ [1, X]) − #(W(T) ∩ [1, X])`
+  have hsplit : ∀ X : ℕ, (coneEntryCount b c h1 h2 X : ℝ) =
+      phaseCount α (X / 2) - phaseCount α ⌊α⁻¹ * X + α⁻¹⌋₊ := by
+    intro X
+    rw [← card_coneSet_Icc, ← card_image_coneSet_Icc h1 h2]
+    have hsub : (Finset.Icc (1 : ℤ) X).filter (fun n => n ∈ wkPerm b c h1 h2 '' coneSet b c) ⊆
+        (Finset.Icc (1 : ℤ) X).filter (fun n => n ∈ coneSet b c) := by
+      intro n hn
+      simp only [Finset.mem_filter] at hn ⊢
+      obtain ⟨hI, s, hs, rfl⟩ := hn
+      exact ⟨hI, coneSet_trap h1 h2 s hs⟩
+    rw [← Nat.cast_sub (Finset.card_le_card hsub), ← Finset.card_sdiff_of_subset hsub]
+    unfold coneEntryCount
+    congr 2
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_sdiff, Set.mem_sdiff]
+    tauto
+  have hA : Tendsto (fun X : ℕ => (phaseCount α (X / 2) : ℝ) / X) atTop (𝓝 (1 / 2 * (1 / 2))) := by
+    have hfe : ∀ X : ℕ, ⌊(1 / 2 : ℝ) * X + 0⌋₊ = X / 2 := by
+      intro X
+      have := Nat.floor_div_eq_div (K := ℝ) X 2
+      push_cast at this
+      rw [add_zero, one_div_mul_eq_div, this]
+    refine (tendsto_comp_div hW' (tendsto_floor_linear (by norm_num) 0)
+      (tendsto_floor_linear_div (by norm_num) 0)).congr' (Eventually.of_forall fun X => ?_)
+    simp only [hfe]
+  have hB : Tendsto (fun X : ℕ => (phaseCount α ⌊α⁻¹ * X + α⁻¹⌋₊ : ℝ) / X) atTop
+      (𝓝 (1 / 2 * α⁻¹)) :=
+    tendsto_comp_div hW' (tendsto_floor_linear (inv_pos.2 hα0) _)
+      (tendsto_floor_linear_div (inv_pos.2 hα0) _)
+  have hlim : (1 - 2 / α) / 4 = 1 / 2 * (1 / 2) - 1 / 2 * α⁻¹ := by field_simp; ring
+  rw [hlim]
+  refine (hA.sub hB).congr' (Eventually.of_forall fun X => ?_)
+  show _ = (coneEntryCount b c h1 h2 X : ℝ) / X
+  rw [hsplit, sub_div]
 
 end Cone
 
