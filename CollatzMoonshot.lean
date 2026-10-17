@@ -189,3 +189,4 @@ import CollatzMoonshot.WythoffLine
 import CollatzMoonshot.WythoffSporadic
 import CollatzMoonshot.WythoffGolden
 import CollatzMoonshot.WythoffTrapDegree
+import CollatzMoonshot.WythoffResidue
