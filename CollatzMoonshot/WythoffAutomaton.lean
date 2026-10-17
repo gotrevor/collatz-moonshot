@@ -123,7 +123,12 @@ variable {P : ℤ[X]} {x : ℝ}
 `Finset.Ioc (d − 1) d = {d}`, `P.coeff d = 1` (`Monic.coeff_natDegree`), `x⁰ = 1`. -/
 theorem synDiv_natDegree_sub_one (hP : P.Monic) (hd : 1 ≤ P.natDegree) :
     synDiv P x (P.natDegree - 1) = 1 := by
-  sorry
+  unfold synDiv
+  have : Finset.Ioc (P.natDegree - 1) P.natDegree = {P.natDegree} := by
+    ext j; simp; omega
+  rw [this, Finset.sum_singleton, hP.coeff_natDegree,
+    show P.natDegree - (P.natDegree - 1) - 1 = 0 by omega]
+  simp
 
 /-- **(proved).**  `q_k = 0` for `k ≥ d` (empty sum). -/
 theorem synDiv_of_le {k : ℕ} (hk : P.natDegree ≤ k) : synDiv P x k = 0 := by
@@ -135,13 +140,34 @@ every `k`.  Paper proof: `Ioc k d = insert (k + 1) (Ioc (k + 1) d)` when `k < d`
 vanish when `k ≥ d`, `coeff_eq_zero_of_natDegree_lt`); `x · x^{j−k−2} = x^{j−k−1}`. -/
 theorem coeff_succ_eq_synDiv (k : ℕ) :
     (P.coeff (k + 1) : ℝ) = synDiv P x k - x * synDiv P x (k + 1) := by
-  sorry
+  unfold synDiv
+  rcases lt_or_ge k P.natDegree with hk | hk
+  · have hI : Finset.Ioc k P.natDegree = insert (k + 1) (Finset.Ioc (k + 1) P.natDegree) := by
+      ext j; simp; omega
+    rw [hI, Finset.sum_insert (by simp), Finset.mul_sum, show k + 1 - k - 1 = 0 by omega,
+      pow_zero, mul_one, add_sub_assoc, left_eq_add, sub_eq_zero]
+    refine Finset.sum_congr rfl fun j hj => ?_
+    rw [Finset.mem_Ioc] at hj
+    rw [mul_left_comm, ← pow_succ']
+    congr 2; omega
+  · rw [Finset.Ioc_eq_empty (by omega), Finset.Ioc_eq_empty (by omega),
+      coeff_eq_zero_of_natDegree_lt (by omega)]
+    simp
 
 /-- **(drafted, 99%).**  `a_0 = −x q_0` iff `P(x) = 0`; here the forward direction.  Paper proof:
 `aeval x P = Σ_{j ≤ d} a_j x^j` (`aeval_eq_sum_range`) `= a_0 + x Σ_{0<j≤d} a_j x^{j−1}`. -/
 theorem coeff_zero_eq_synDiv (hroot : aeval x P = 0) :
     (P.coeff 0 : ℝ) = -(x * synDiv P x 0) := by
-  sorry
+  rw [aeval_eq_sum_range, Finset.sum_range_succ'] at hroot
+  unfold synDiv
+  rw [Finset.mul_sum]
+  have hI : Finset.Ioc 0 P.natDegree = Finset.Ico 1 (P.natDegree + 1) := by ext j; simp; omega
+  rw [hI, Finset.sum_Ico_eq_sum_range, show P.natDegree + 1 - 1 = P.natDegree by omega]
+  simp only [zsmul_eq_mul, pow_zero, mul_one] at hroot
+  rw [eq_neg_iff_add_eq_zero, ← hroot, add_comm]
+  congr 1
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [show 1 + j - 0 - 1 = j by omega, add_comm 1 j, pow_succ]; ring
 
 end SynDiv
 
@@ -156,20 +182,38 @@ variable {α : ℝ}
 `α`. -/
 theorem wy_add_one_eq_ceil (α : ℝ) {v : ℤ} (hv : v % 2 = 1) :
     wy α v + 1 = ⌈xOf α * ((v : ℝ) + 1)⌉ := by
-  sorry
+  obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k - 1 := ⟨(v + 1) / 2, by omega⟩
+  rw [wy_two_mul_sub_one, sub_add_cancel]
+  congr 1; unfold xOf; push_cast; ring
 
 /-- **(drafted, 99%).**  For odd `v`, `0 ≤ G(v) < 1` (`Int.le_ceil`, `Int.ceil_lt_add_one`). -/
 theorem oddPhase_mem {v : ℤ} (hv : v % 2 = 1) : 0 ≤ oddPhase α v ∧ oddPhase α v < 1 := by
-  sorry
+  unfold oddPhase
+  have h' : (wy α v : ℝ) + 1 = ⌈xOf α * ((v : ℝ) + 1)⌉ := by
+    exact_mod_cast wy_add_one_eq_ceil α hv
+  rw [h']
+  constructor
+  · linarith [Int.le_ceil (xOf α * ((v : ℝ) + 1))]
+  · linarith [Int.ceil_lt_add_one (xOf α * ((v : ℝ) + 1))]
 
 /-- **(drafted, 99%).**  For even `n`, `0 < G_E(n) ≤ 1` (`W(2k) = ⌊kα⌋`, `(α/2)·2k = kα`). -/
 theorem evenPhase_mem {n : ℤ} (hn : n % 2 = 0) : 0 < evenPhase α n ∧ evenPhase α n ≤ 1 := by
-  sorry
+  obtain ⟨k, rfl⟩ : ∃ k, n = 2 * k := ⟨n / 2, by omega⟩
+  unfold evenPhase
+  rw [wy_two_mul]
+  have e : α / 2 * ((2 * k : ℤ) : ℝ) = k * α := by push_cast; ring
+  rw [e]
+  constructor
+  · linarith [Int.lt_floor_add_one ((k : ℝ) * α)]
+  · linarith [Int.floor_le ((k : ℝ) * α)]
 
 /-- **(drafted, 99%).**  The virtual-point identity `x/(2x − 1) = α/2` for `α > 1`
 (`2x − 1 = β − 1 = 1/(α − 1)`; `field_simp`). -/
 theorem xOf_div_two_mul_sub_one (hα : 1 < α) : xOf α / (2 * xOf α - 1) = α / 2 := by
-  sorry
+  unfold xOf
+  have h1 : α - 1 ≠ 0 := by linarith
+  have h2 : 2 * (α / (α - 1) / 2) - 1 = 1 / (α - 1) := by field_simp; ring
+  rw [h2]; field_simp
 
 end Phases
 
