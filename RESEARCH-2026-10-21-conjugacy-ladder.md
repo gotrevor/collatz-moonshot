@@ -837,6 +837,64 @@ Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the age
 (verified 2026-10-21; the parity-recursion and periodicity theorems re-verified by my own
 `lake env lean` `#print axioms` runs at ~04:05, ~04:13, ~04:18 and ~04:25); no `native_decide` in the Conjugacy modules.
 
+### 10.6 Against Tao 2019: no bridge, an exact mirror, and why the method does not transfer (~07:15)
+
+**The question.**  Does Tao's fine-scale mixing (Prop 1.14, proved in Lean as `fine_scale_mixing` in
+`gotrevor/tao-collatz`, read from `origin/main` at `95a7172`) give `WeakDecayOnZ3` or `BiasDecays`?
+**No, not by a lemma** (90%).  Tao bounds `osc m n (syracZ n)`: the unweighted law of a 3-adic
+random variable, the Syracuse offset `X_n = Σ_{k=1}^n 3^{k−1} 2^{−T_k}` in `ℤ/3^n`, with `T_k` the
+partial sums of iid `Geom(2)`.  Our conjectures are *signed* statements: residue classes of the
+start mod `3^k` (`WeakDecayOnZ3`) or the whole window (`BiasDecays`), weighted by the
+beyond-Terras sign `(−1)^{T^j r}`.  Tao's law says nothing about that weight.  The earlier 30% for
+a bridge is withdrawn; 5%.
+
+**The exact mirror.**  The digit form (`bias_eq_one_add_digitSum`, Digits.lean) reads the bias off
+`Y = N_u/3^a = Σ_{i=1}^a 3^{−i} 2^{t_i}` in `ℤ₂`, with `t_1 < … < t_a` the odd-step times of a
+uniform `j`-letter word.  Those gaps are iid `Geom(2)` too.  So `Y` is Tao's `X` with the primes
+swapped and the exponents inverted: the same random input, read 2-adically.  Terras is the mirror's
+exact half: `Y mod 2^j` is uniform (verified, a bijection at every `j ≤ 22`, `mirror.py`), and
+`BiasDecays` is the balance of digit `j` (the digit form reproduces `E_j` at every `j ≤ 22`).  On the
+3-adic side nothing is exact (`Syrac(ℤ/3)` puts mass `2/3, 1/3` on `2, 1`), and Tao proves
+approximate uniformity at fine scales instead.
+
+**The mirror recursion (exact; numerics to `10^{−16}`, `recur.py`; proof is the two-line parity
+split).**  Let `G_j(ξ) = 2^{−(j+1)} Σ_{r mod 2^{j+1}} g_j(r) e(ξr/2^{j+1})`, the Fourier transform of
+the beyond-Terras sign.  It lives on odd `ξ` (`g_j` is `2^j`-antiperiodic).  From `g_j(2s) =
+g_{j−1}(s)` and `g_j(2s+1) = g_{j−1}(3s+2)`, with `u = 3^{−1} mod 2^{j+1}`,
+
+    G_j(ξ) = ½ [ G_{j−1}(ξ) + e(ξ(1−4u)/2^{j+1}) · G_{j−1}(uξ) ].
+
+This is the 2-adic twin of Tao's Lemma 1.12 recursion (`syracZ_recursion` in the repo), with one
+difference that decides everything: Tao's step multiplies frequencies by the *random* `2^{−a}`,
+`a ~ Geom(2)`, which spreads them; ours multiplies by the *deterministic* `3^{−1}`.  For `ξ = 3^k`
+the phase is `e(−3^{k−1}/2^{j+1}) ≈ 1` and `uξ = 3^{k−1}` exactly, so the powers of 3 form a
+**coherent chain**.
+
+**Consequence: the literal mirror of Tao's Prop 1.17 is false.**  Tao gets
+`|E e(ξX_n/3^n)| ≪ n^{−A}` for every `A`, uniformly in `ξ` prime to 3.  In the mirror,
+`sup_{ξ odd} |G_j(ξ)| ≈ 1.5/j` (`sup·j = 1.45, 1.46, 1.49` at `j = 16, 18, 20`), attained at `ξ = 3^k`
+near `2^{j/2}` (`729, 729, 2187`), against a median `≈ 0.55·2^{−j/2}`.  The profile of `|G_j(3^k)|`
+in `k` is a bell centred near `k ≈ j/2 − 2.5`; a weaker chain `13·3^k` also shows.  So uniform
+character decay is not available, and the crude sufficient condition `sup = o(1/j)` (from the
+square-wave expansion of the top digit) fails by a constant factor.
+
+**But the resonance is harmless for the bias.**  Exactly, `|bias_j|/2^j ≤ W_j := 2^{−j} Σ_{ξ odd}
+|G_j(ξ)| / sin(πξ/2^{j+1})`, and the resonant frequencies are large, so their weight is small.
+Measured (`weighted.py`): `W_j = 0.290, 0.173, 0.090, 0.052, 0.029, 0.015, 0.0078, 0.0047` at
+`j = 8, 10, …, 22`, i.e. `W_j ≈ 0.45·j·2^{−j/2}`, with the `3^k` chain carrying about a quarter.
+So `W_j → 0` is a Fourier-side sufficient condition for `BiasDecays` that the data satisfy
+comfortably (node candidate `WeightedCharDecay`, 80%, not yet in Lean).  In the recursion, the
+first branch contracts the weighted sum by exactly `1/√2` per level (pair `ξ, ξ + 2^j`:
+`1/sin x + 1/cos x ≤ 2√2 · 1/sin 2x`), which matches the observed `2^{−j/2}` rate.  The second
+branch scrambles the weights through `ξ ↦ 3^{−1}ξ`, and that is where a proof would have to work.
+
+**Reading for the moonshot.**  Collatz is "3 deterministic, 2 random".  Tao works on the side
+where the randomness acts as the multiplier and mixes; the beyond-Terras questions live on the
+mirror side, where the deterministic `×3` makes frequencies resonate.  That is a concrete
+reason the almost-all methods stop short of the per-level bias, not a vague one.  Known or new?
+The 2-adic recursion is elementary and may well be folklore; the resonance measurements and the
+weighted criterion I have not seen.
+
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
 depth `j`, the digit form, the band decomposition with its exact small bands and inheritance

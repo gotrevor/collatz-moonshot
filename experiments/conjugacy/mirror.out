@@ -1,0 +1,8 @@
+j= 8: E_j=34 digit-form=34 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.17488 at xi=9; sup*2^(j/2)=2.80; sup*j=1.3990; E[(-1)^digit] direct=-0.125000 via characters=-0.125000
+j=10: E_j=14 digit-form=14 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.14435 at xi=27; sup*2^(j/2)=4.62; sup*j=1.4435; E[(-1)^digit] direct=-0.011719 via characters=-0.011719
+j=12: E_j=42 digit-form=42 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.12078 at xi=81; sup*2^(j/2)=7.73; sup*j=1.4494; E[(-1)^digit] direct=-0.009766 via characters=-0.009766
+j=14: E_j=178 digit-form=178 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.10359 at xi=243; sup*2^(j/2)=13.26; sup*j=1.4503; E[(-1)^digit] direct=-0.010742 via characters=-0.010742
+j=16: E_j=362 digit-form=362 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.09074 at xi=729; sup*2^(j/2)=23.23; sup*j=1.4519; E[(-1)^digit] direct=-0.005493 via characters=-0.005493
+j=18: E_j=570 digit-form=570 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.08135 at xi=729; sup*2^(j/2)=41.65; sup*j=1.4643; E[(-1)^digit] direct=-0.002167 via characters=-0.002167
+j=20: E_j=1042 digit-form=1042 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.07471 at xi=2187; sup*2^(j/2)=76.50; sup*j=1.4942; E[(-1)^digit] direct=-0.000992 via characters=-0.000992
+j=22: E_j=4206 digit-form=4206 OK; Y mod 2^j bijective=True; max|phi| over even xi != 0 = 0.0e+00; sup_odd|phi|=0.06932 at xi=6561; sup*2^(j/2)=141.97; sup*j=1.5250; E[(-1)^digit] direct=-0.001002 via characters=-0.001002
