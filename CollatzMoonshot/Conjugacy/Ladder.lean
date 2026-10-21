@@ -402,21 +402,21 @@ Mechanism: none proved; the feedback term is the parity of a `j`-step orbit of a
 where an equidistribution argument would start. -/
 def BiasDecays : Prop := Tendsto (fun j => (bias j : ℝ) / 2 ^ j) atTop (𝓝 0)
 
-/-- **Conjecture C2a (square-root law).**  `|bias j| ≤ C · 2^(j/2)`.  Numerics `j ≤ 37`
+/-- **Conjecture C2a (square-root law).**  `|bias j| ≤ C · 2^(j/2)`.  Numerics `j ≤ 40`
 (2026-10-21): `bias j / 2^(j/2)` stays in `[0.44, 2.1]`, falling from `1.80` at `j = 31` to
-`0.585` at `j = 37`.  Confidence 70%: through the mod-3 recursion (`bias_succ`, Recursion.lean)
+`0.585` at `j = 37` and wandering (`0.635, 0.797, 0.655` at `j = 38, 39, 40`).  Confidence 70%: through the mod-3 recursion (`bias_succ`, Recursion.lean)
 the normalised bias is an AR(1) process with coefficient `(4/3)/√2 = 0.943` whose innovations
 have no detectable drift, and a stationary normalised bias is exactly this law. -/
 def BiasSqrtLaw : Prop := ∃ C : ℝ, 0 < C ∧ ∀ j, |(bias j : ℝ)| ≤ C * Real.sqrt 2 ^ j
 
 /-- **Conjecture C2b (positivity).**  `0 < bias j` for `j ≥ 1`: the `j`-th letter agrees with
-the `j`-th digit more often than not.  True for `j ≤ 37` (numerics, 2026-10-21, `u64` Rust
-sweep) and for `j ≤ 8` by the kernel checks above; `bias j ≡ 2 (mod 4)` for all `j ≥ 1` is a
+the `j`-th digit more often than not.  True for `j ≤ 40` (numerics, 2026-10-21, Rust
+sweep, `u128` for `j ≥ 39`) and for `j ≤ 8` by the kernel checks above; `bias j ≡ 2 (mod 4)` for all `j ≥ 1` is a
 theorem (`bias_mod_four`, Recursion.lean), so the bias is never zero.  Confidence 25% (down from
 60%): the recursion gives the sign a memory of about 17 levels for every map of the family, the
 zero-mean null reproduces 22 consecutive positive values with probability 0.40, the siblings
 `3x+5`, `3x+7`, `5x+1` flip sign at the predicted rate, and the normalised bias fell from `1.80`
-to `0.585` over `j = 31..37`.  Positivity so far is memory plus a positive start, not evidence of
+to `0.585` over `j = 31..37`, then wandered (`0.655` at `j = 40`).  Positivity so far is memory plus a positive start, not evidence of
 a mechanism; the honest open statement is `biasDecays_iff_classFluct` (Recursion.lean). -/
 def BiasPositive : Prop := ∀ j, 1 ≤ j → 0 < bias j
 

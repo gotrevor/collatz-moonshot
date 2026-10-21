@@ -633,21 +633,21 @@ is established).
 
 ### 10.5 Results that arrived late (`bige_rs`, `drift.py`), and the Lean status
 
-**`E_j` to `j = 39`** (Rust, 16 threads; `u64` to `j = 38`, 10 min; `u128` for `j = 39`, 37 min; `j = 40`
-was running at the time of writing - `experiments/conjugacy/bias_rust_j32_38.out`, `bias_rust_j39_40.out`):
+**`E_j` to `j = 40`** (Rust, 16 threads; `u64` to `j = 38`, 10 min for 38; `u128` for `j = 39, 40`, 37 and 70
+min - `experiments/conjugacy/bias_rust_j32_38.out`, `bias_rust_j39_40.out`):
 
-| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
-|---|---|---|---|---|---|---|---|---|---|
-| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 | 332758 | 590942 |
-| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 | 0.635 | 0.797 |
-| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
-| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 | 23/12 | 24/12 |
+| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 | 332758 | 590942 | 686434 |
+| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 | 0.635 | 0.797 | 0.655 |
+| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 | 23/12 | 24/12 | 27/10 |
 
-The normalised bias falls from `1.80` to `0.585` over six levels (then `0.635`, `0.797` at `j = 38, 39`: innovations `+0.04`, `+0.20`, the walk turning) - the relaxation
+The normalised bias falls from `1.80` to `0.585` over six levels (then `0.635`, `0.797`, `0.655` at `j = 38, 39, 40`: innovations `+0.04`, `+0.20`, `−0.10` - wandering, as the null says) - the relaxation
 toward `0` that the zero-mean null of §10.4 predicts (`1.80·0.943^6 = 1.27`; the observed fall is
 faster, innovations `−0.52, −0.21, −0.09, −0.09, +0.10, −0.07`).  **The `+0.14` innovation drift
 of §10.4 was a fluctuation**: over `j = 10..37` the mean innovation is `≈ +0.08` (`t ≈ 1.2`), and
-under drift `b̃` would have risen toward `2.5`.  `BiasPositive` survives to `j = 37` (`E_j ≡ 2
+under drift `b̃` would have risen toward `2.5`.  `BiasPositive` survives to `j = 40` (`E_j ≡ 2
 (mod 4)` throughout, as proved), but with `b̃_37 = 0.585` and innovation sd `0.33` a sign change
 within the next ten levels is now the likelier outcome: confidence **25%**.  The within-level band
 coherence weakens with it (`+0.33..+0.44` mean, `18/14` at `j = 35`).  `BiasSqrtLaw` (stationary
