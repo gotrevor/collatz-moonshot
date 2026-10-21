@@ -307,8 +307,7 @@ quantitative shadow.
 
 `E_j/2^{j/2}` at `j = 15..20`: `3x+1`: `1.56 1.41 0.98 1.11 1.09 1.02`; `3x+5`: `0.08 −0.24
 −0.56 −1.14 −0.68 −0.43`; `3x+7`: `0.77 0.33 −0.48 −0.28 −0.09 0.20`; `5x+1`: `0.54 0.35 0.41
-0.36 −0.83 0.00`; `7x+1`: `−0.65 −0.34 0.05 −0.28 0.89 0.94`; `x+1`: `−2^{j/2}` exactly (`T^j(r) =
-⌈r/2^j⌉ = 1` for `r ≥ 1`).  The `2^{j/2}` size is generic for the class `qx+c`; the sign is not.
+0.36 −0.83 0.00`; `7x+1`: `−0.65 −0.34 0.05 −0.28 0.89 0.94`; `x+1`: `E_j = 2 − 2^j` exactly (`T^j(r) = ⌈r/2^j⌉ = 1` for `r ≥ 1`).  The `2^{j/2}` size is generic for the class `qx+c`; the sign is not.
 
 ## 8. Novelty (literature pass 2026-10-21, sources read in full: B-L 1996, both Lagarias
 bibliographies, K-L 2009, López-Stoll 2009)
@@ -331,3 +330,230 @@ bibliographies, K-L 2009, López-Stoll 2009)
    equidistribution; the (3.3) recursion as a theorem (`decide`-checkable to small `m`).
 4. C1 via (3.4): a treadmill-shaped target is the `L²` estimate for one odd step with the
    alternating translates; measure the actual contraction ratio `‖μ_m‖₂/‖μ_{m−1}‖₂` first.
+
+## 10. Second half (02:00-05:30): exact consequences, the band law, the Champernowne threshold
+
+### 10.1 Exact (Lean: `Conjugacy/Recursion.lean`, `Conjugacy/Bands.lean`; status in §10.5)
+
+- **`bias j ≡ 2 (mod 4)` for every `j ≥ 1`, hence `bias j ≠ 0`.**  The first beyond-Terras letter
+  is never exactly balanced over `[0, 2^j)`.  From the mod-3 recursion: `E_m = 2(E_{m−1} −
+  G_{m−1}(c_m))`, and `E_{m−1} − G_{m−1}(c_m)` is odd because `E_{m−1}` is even, `G_{m−1}(c) ≡
+  #{y < 2^{m−1} : y ≡ c (3)} (mod 2)`, and the class `c_m` has `(2^{m−1} − 1)/3` (`m−1` even,
+  `c_m = 1`) or `(2^{m−1} + 1)/3` (`m−1` odd, `c_m = 0`) elements, both odd.  Matches all 31
+  computed values (`E_j mod 4 = 2`; mod 8 shows no pattern).
+- **Aligned-window invariance.**  `Σ_{r ∈ [c·2^j, (c+1)·2^j)} (−1)^{T^j r} = (−1)^c E_j` (lift
+  identity).  The bias is a constant of the level, not a small-numbers effect; the sign question is
+  exactly "lower half versus upper half of each period `2^{j+1}`", i.e. the correlation between
+  bit `j` and letter `j`, and `E_j = Σ_{r<2^j} (−1)^{f_j(r)}` is the Walsh coefficient `f̂_j(∅)` of
+  the feedback.  All other digit-letter correlations vanish: `E[(−1)^{ε_i + w_j}] = δ_{ij} b_j`.
+- **Terras at depth `j`.**  `#{r < 2^{j+i} : T^j r ≡ c (mod 2^i)} = 2^j` for every `c < 2^i`
+  (induction on `i` with the lift identity: the two lifts `r₀`, `r₀ + 2^{j+i}` have `T^j` values
+  differing by `2^i·3^a`, an odd multiple of `2^i`).  Hence one bit beyond the range `dev(c) =
+  −dev(c + 2^i)`, §2.2 generalised, and `E_j = 2 Σ_{c<2^L} dev_L(c)(−1)^{w_L(c)}` for every `L`.
+- **Digit form of the bias.**  For `u = {d_0 < … < d_{a−1}} ⊂ [0, j)` put `S(u) := Σ_{i<a}
+  2^{d_i}/3^{i+1} ∈ ℤ₂` (so `S(u) = N_v/3^a`, and `S({d_0} ∪ u') = (2^{d_0} + S(u'))/3`).  Then
+  `r_u = (−S(u)) mod 2^j`, `T^j(r_u) = 3^a (r_u + S(u))/2^j`, and since `S(u)` has a one at
+  `d_0 < j`, the parity of `T^j(r_u)` is `¬ s_j(S(u))` (`s_j` = the `j`-th 2-adic digit), so
+
+      E_j = 1 − Σ_{∅ ≠ u ⊂ [0,j)} (−1)^{s_j(S(u))}.
+
+  `BiasPositive` ⟺ among the nonempty `u`, the `j`-th 2-adic digit of `Σ_i 2^{d_i}/3^{i+1}` is `1`
+  strictly more often than `0`.  The digit sequence of the rational `N/3^a` is the parity sequence
+  of the halving dynamics `t ↦ t·2^{−1} mod 3^a`, i.e. the binary digits of the real `N/3^a` read
+  backwards within each period: the beyond-Terras parity is a *binary digit of a fraction with
+  denominator `3^a`*, Erdős-style, averaged over the structured set of numerators `N_v`.  (Not yet
+  in Lean; routine.)
+- **Small bands** (`E_{j,a} := Σ_{r<2^j, a(r)=a} (−1)^{T^j r}`): `E_{j,0} = E_{j,j} = 1` (`r = 0`,
+  `r = 2^j − 1`), `E_{j,1} = j mod 2` (one odd step at position `d`: `T^j(r) = 1` if `j − d` even,
+  `2` if odd), `E_{j,2} = O(j)` (`4, 13` at `j = 8, 26`).
+
+### 10.2 The band law (numerics: `tmp/ren-qladder-b-20261021/aband.py`, `aband2.py`)
+
+Split `E_j` by `a = ` number of odd steps; the band has `C(j,a)` members (Terras).  At `j = 26`,
+`a = 2..24`: `13, 56, 160, 358, 560, 564, 393, 574, 131, 1752, −2454, 1456, 4440, 1866, −1333,
+1500, 2167, 1210, 182, 28, 84, 24, 5` - 21 positive, 2 negative, each of size `(0.1..1.7)·√C(j,a)`.
+Over `j = 16..26` the inner bands `2 ≤ a ≤ j−2` are positive 156 times and negative 41, with
+mean normalised value `E_{j,a}/√C(j,a) = +0.40 .. +0.67` (rising slowly in `j`) and spread
+`≈ 0.6`.  So:
+
+**Within a level, the bands share a sign.**  In a random-sign model the bands would be `±1` in
+these units with mean `0`; here they are coherent, at the `√C(j,a)` scale, with no privileged band:
+not the cycle, not the `(4/3)^j` boundary mode (`= Σ_a C(j,a)/3^a`, the `ξ = 0` term below), not
+the small-`a` bands (exactly computable, `O(j)`).  Frozen as `BandCoherence` (`Bands.lean`).
+
+**Control (siblings, `aband2.py`, `j = 18..24`).**  The within-level coherence is *generic*: for
+`3x+5`, `3x+7`, `5x+1`, `7x+1` the bands of a level also share a sign - but that sign wanders with
+`j` (`3x+5`: band mean `−0.65` at `j = 18`, `+0.24` at `j = 24`, `E_j` from `−586` to `+7970`;
+`3x+7`: `−0.24 → +0.12`; `7x+1`: `+0.2 .. +0.55`, 16 of 18 bands positive at `j = 21`), and
+`3x−1` mirrors `3x+1` band by band (`E_j(3x−1) = 2 − E_j(3x+1)`).  So "coherent bands" is a
+property of the family, and "persistent sign" is specific to `3x+1` (and its mirror).
+
+**Mechanism of the coherence: inheritance.**  Splitting the mod-3 recursion by band,
+
+    E_{m,a} = E_{m−1,a} + E_{m−1,a−1} − 2·G_{m−1,a−1}(c_m),
+
+band `a` at level `m` is the sum of bands `a` and `a−1` at level `m−1` minus twice the class-`c_m`
+slice of band `a−1`: a Pascal recursion with a leak of about one third.  Signs propagate down the
+triangle from common ancestors, which is why a level's bands agree; the `√C(j,a)` size is the
+accumulated leak noise along the inheritance paths (the exactly-positive seeds `E_{j,0} = E_{j,j} =
+1` and the odd-interval mean `C(j,a)/3^a` are negligible against it).  The band law
+`E_{j,a} ≈ κ_j √C(j,a)` therefore just re-expresses `b̃_j := E_j/2^{j/2} = Σ_a κ_{j,a}
+√(C(j,a)/2^j) ≈ κ_j (2πj)^{1/4}` with a *level-dependent* `κ_j`; a `j^{1/4}` growth of `b̃_j`
+would need `κ_j` to stay put, and §10.4 says it need not (frozen anyway as `BiasQuarterPowerLaw`,
+25%).
+
+Where this moves the puzzle.  The archimedean constraint is automatic (`2^j ν − N_v = 3^a r_v ≥
+0`), so the multiplicity of a residue is purely 3-adic: `m_a(y) = M_a(y) := #{v : ones(v) = a,
+N_v ≡ 2^j y (mod 3^a)}`, and
+
+    E_{j,a} = Σ_{z ∈ ℤ/3^a} P_j(z) M_a(z),   P_j(z) = (−1)^{least residue of 2^{−j} z}.
+
+Fourier on `ℤ/3^a`: `P̂_j(ξ) = 2/(1 + e(−2^j ξ/3^a))` (modulus `1/|cos(π 2^j ξ/3^a)|`, large at the
+parity frequencies `2^j ξ ≈ 3^a/2`), and `M̂_a(ξ) = Σ_{d_0<…<d_{a−1}} Π_i e(ξ 2^{d_i}/3^{i+1})`, a
+rank-indexed product - a 3-adic Horner transform of the binomial lattice, in which the `i`-th one
+sees `ξ` only mod `3^{i+1}` and its position only mod `2·3^i`.  The `√C(j,a)` coherence has to
+come from the pairing of `P̂_j` with `M̂_a` at the parity frequencies.  That is the object to
+compute next; it is a finite transfer-matrix calculation per `(j, a)`.
+
+### 10.3 The Collatz-Champernowne family (Lean: `Conjugacy/Champernowne.lean`)
+
+`𝒞_C` := the concatenation, over `n = 1, 2, 3, …`, of the first `C·size(n)` parity letters of `n`
+(`size` = bit length).  Three statements, all new:
+
+1. **`𝒞_1` is normal, unconditionally** (believed, 85%; frozen with `sorry`).  For `n ∈ [2^{k−1},
+   2^k)` the word is the `k`-letter Terras word; its first `k−1` letters depend only on `n mod
+   2^{k−1}` and run bijectively over all `(k−1)`-words across the stage, so every block fully inside
+   them has exact frequency `2^{−L}`; the one feedback-determined letter per word and the word
+   boundaries are `O(L/k)` of the letters.  Initial segments: a run of `m` consecutive `n`
+   decomposes into dyadic blocks of length `2^b` whose `n mod 2^b` cover all residues once, so the
+   determined letters number `≤ 2m(k − log₂ m + 2)`, `o` of the prefix length `≥ (k−2)2^{k−1}`
+   uniformly in `m`.  Champernowne with the within-stage order permuted; no Collatz input.  The §5
+   remark "even `C = 1` is not automatic" was too pessimistic: the partial-stage problem is
+   handled by the dyadic decomposition.
+2. **`C ≥ 2`: normality ⟸ short-interval beyond-Terras mixing** (`ShortIntervalMixing C`: for every
+   block `p`, the letters at positions `t ∈ [k, Ck]` of `n` in every initial segment of
+   `[2^{k−1}, 2^k)` are jointly uniform with error `o(2^k)`, uniformly in `t` and the segment).
+   The converse yields only the `t`-average.  Evidence for the hypothesis: §2.3 (`b_{j,t} ≈
+   10^{−3}..10^{−2}` for `t ≤ j` at `j = 20`), and `b_j ≍ 2^{−j/2}` for the first letter.
+3. **A normality threshold at the stopping-time constant.**  For `C > C* := 2/(2 − log₂ 3) ≈
+   4.82` (the Kontorovich-Lagarias total-stopping-time constant, `σ_∞(n) ≈ C* log₂ n` with
+   `O(√log n)` fluctuations in the stochastic model), a density-one set of words contain the cycle
+   tail `1010…` on a positive fraction of their letters, so the alternating block `(10)^{L/2}` has
+   a density bounded below independently of `L` against the required `2^{−L}`, and `𝒞_C` is not
+   normal (the agent's correction: a deficit of `11` alone could be compensated by in-flight
+   letters, the alternating block cannot; the premise is frozen as `EarlyArrival C`, the
+   implication `not_normal_of_earlyArrival` at 90%); for `C < C*` the beyond-range letters are in flight and (conjecturally)
+   mixing.  Frozen: `ChampernowneNormalBelowThreshold` (`C ≤ 4`, 70%),
+   `ChampernowneNotNormalAboveThreshold` (`C ≥ 5`, 80%, conditional on stopping-time concentration,
+   itself open - Tao 2019 controls almost-bounded values in logarithmic density, not total stopping
+   times).  So *the normality threshold of the Collatz-Champernowne family is the Collatz
+   stopping-time constant*: a normal-numbers statement whose critical value is `2/(2 − log₂ 3)`.
+4. **`𝒞_⋆`** (stop at 1): word of `n` = its letters until the orbit first reaches `1`.  The
+   definition is total exactly when every `n ≥ 1` reaches `1` - a binary sequence whose
+   well-definedness *is* the Collatz conjecture and whose normality (`ChampernowneStopNormal`, 65%)
+   is the mixing conjecture; the forced approach `…, 8, 4, 2, 1` contributes `O(1)` letters per word.
+
+Not in print (same search as §8; "Collatz Champernowne" has no hits in either Lagarias
+bibliography).  The nearest objects are the Copeland-Erdős and Champernowne constants themselves
+and the "concatenate `f(n)`" normality results (Nakai-Shiokawa for polynomials), none with a
+feedback-defined word or a threshold.
+
+**Numerics (`champ.py`, `champstage.py`; evidence with its limits).**  First `4·10^6` letters,
+max relative block-frequency deviation at `L = 1..8` against the iid level `2.5·√(2^L/M)`:
+`𝒞_1` sits at or below the iid level at every `L` (`f(11) = 0.2502`), no cycle-tail letters at
+all; `𝒞_2`: `5-10×` the iid level (`f(11) = 0.2464`, tail letters `0.7%`); `𝒞_3, 𝒞_4, 𝒞_5, 𝒞_8`:
+`f(11) = 0.235, 0.221, 0.203, 0.144` with cycle-tail fractions `5.8%, 13.8%, 22%, 43%` - the
+threshold mechanism, visible as stated.  Per stage `k` (the `2^{k−1}` words of `k`-bit `n`,
+beyond-range positions only): for `C = 2` the `L = 2` deviation falls `0.103, 0.089, 0.064,
+0.056, 0.041, 0.039, 0.032, 0.026, 0.023, 0.016, 0.013` over `k = 10..20` (about `2^{−0.3k}`,
+slower than the noise `2^{−k/2}`, so it is structure that *decays*), tracking the share of
+orbits that reach `1` within `2k` steps (`14.5% → 2.5%`); the beyond-range single-letter bias is
+`−0.002..−0.004` at `k = 20`.  For `C = 4` the share finishing inside the window is still `42%` at
+`k = 18` (down from `55%` at `k = 10`, about `1.5` points per level) and `f(11) = 0.216`, so the
+`C ≤ 4` side of the threshold converges only as the stopping-time distribution concentrates -
+`O(1/√k)` relative width - and no finite computation at this size can separate `C = 4` from
+`C = 5`.  The asymptotic claims rest on the stochastic model, not on these numbers.
+
+### 10.4 The sign, recalibrated (`ar1.py`)
+
+The mod-3 recursion `E_m = 2E_{m−1} − 2G_{m−1}(c_m)`, with `G_{m−1}(c_m) = E_{m−1}/3 + ξ_m`, reads
+in normalised units `b̃_m = E_m/2^{m/2}` as
+
+    b̃_m = ρ₀ b̃_{m−1} + η_m,    ρ₀ = (4/3)/√2 = 0.943,    η_m = −2ξ_m/2^{m/2}.
+
+So the normalised bias is an AR(1) process with memory `1/(1−ρ₀) ≈ 17` levels, for *every* map in
+the family; the `(4/3)^m` mode is its homogeneous solution and adds no innovation.  Fitted on
+`j = 10..31`: innovations `η` have mean `+0.14`, sd `0.33` (the through-origin regression gives
+`ρ̂ = 0.99-1.01`, consistent with `ρ₀` plus drift).  A stationary Gaussian AR(1) with `ρ₀` crosses
+zero `arccos(ρ₀)/π = 0.108` times per level; simulating the zero-mean null from the observed
+`b̃_9 = 1.33` gives **`P(all 22 values j = 10..31 positive) = 0.40`** and `P(run mean ≥ observed
+1.41) = 0.13`.
+
+Consequences.  (i) `BiasPositive` has, at this depth, no evidential support beyond the
+recursion's memory and a positive start: confidence down from 60% to **35%**.  (ii) The sibling
+sign flips (§7, §10.2) are exactly what `ρ₀ = 0.943` predicts (one crossing per ~9 levels).  (iii)
+`BiasSqrtLaw` is what the null predicts (stationary `b̃`), so it stays at 60%, and the `j^{1/4}`
+refinement is disfavoured.  (iv) The one residual signal is the innovation drift `+0.14 ± 0.33`
+per level (`t ≈ 2.0` over 22 roughly independent innovations): a genuine arithmetic bias would be
+"the class-`c_m` mass `G_{m−1}(c_m)` sits *below* `E_{m−1}/3` by about `0.07·2^{(m−1)/2}` on
+average", a statement about the 3-adic class split of the signs, not about the parity sum itself.
+Under drift the stationary mean of `b̃` is `0.14/(1−ρ₀) ≈ 2.5`; under the null `b̃` relaxes toward
+`0`.  The `j = 32..38` run (§10.5) is the discriminator: `b̃_38 ≳ 2.2` favours drift, `≲ 1.2`
+favours the null, and a negative value refutes `BiasPositive` outright.
+
+**The whole family (`ar1sib.py`, `drift.py`).**  For `T(n) = n/2 | (qn + c)/2` the odd branch
+lands in one residue class mod `q` of `[0, q·2^{m−1})`, the `q` blocks of length `2^{m−1}` carry
+signs `(−1)^k` by the lift identity, and under the uniform-class null `E_m = (1 + 1/q)E_{m−1} +
+innovation`, so `ρ₀(q) = (1 + 1/q)/√2`: `0.943, 0.849, 0.808` for `q = 3, 5, 7`, memories `17,
+6.6, 5.2` levels.  Fitted on `j = 11..24`: `ρ̂ = 1.04, 1.02, 0.99, 1.04` for `3x+1, 3x+5, 3x+7,
+3x−1` (0, 3, 2, 0 sign flips), `0.34, 0.76` for `5x+1, 5x+3` (3, 4 flips), `0.70, 0.56` for `7x+1,
+7x+3` (6, 3 flips): the memory ordering is as predicted, and the `q = 3` fits sit above `ρ₀`
+because of the trend.  Every non-mirror map has a positive innovation mean over this window
+(`+0.04 .. +0.18`; `3x−1` the mirror value `−0.18`), each individually weak; a 16-map run to
+`j = 26` is in §10.5.  If that drift is real it is a *family* property (the classes receiving the
+`−` sign carry less than their share of the signed mass), not a `3x+1` fact.
+
+**What this does to the ladder.**  Nothing: the crux (§6) was never the sign but the decay
+`b_j → 0`, i.e. `|η|` summable against `ρ₀^m`, and the AR(1) reading makes the decay statement
+precise: `BiasDecays` ⟺ the class-mass fluctuations `ξ_m = G_{m−1}(c_m) − E_{m−1}/3` are
+`o(2^{m−1})`, i.e. **the signs are equidistributed across the three residue classes of the start
+mod 3 at the scale of the level** - the first non-trivial 3-adic equidistribution statement, and
+the honest target for a proof (a `3x+1`-specific sign result is not on the table until the drift
+is established).
+
+### 10.5 Results that arrived late (`bige_rs`, `drift.py`), and the Lean status
+
+**`E_j` to `j = 37`** (Rust, 16 threads, `u64`; `j = 38` in `u64`, `39-40` in `u128` were running at
+the time of writing - see the survival file / `tmp/…/bige.out`, `bige128.out`):
+
+| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 |
+|---|---|---|---|---|---|---|---|
+| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 |
+| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 |
+| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 |
+
+The normalised bias falls monotonically from `1.80` to `0.585` over six levels - the relaxation
+toward `0` that the zero-mean null of §10.4 predicts (`1.80·0.943^6 = 1.27`; the observed fall is
+faster, innovations `−0.52, −0.21, −0.09, −0.09, +0.10, −0.07`).  **The `+0.14` innovation drift
+of §10.4 was a fluctuation**: over `j = 10..37` the mean innovation is `≈ +0.08` (`t ≈ 1.2`), and
+under drift `b̃` would have risen toward `2.5`.  `BiasPositive` survives to `j = 37` (`E_j ≡ 2
+(mod 4)` throughout, as proved), but with `b̃_37 = 0.585` and innovation sd `0.33` a sign change
+within the next ten levels is now the likelier outcome: confidence **25%**.  The within-level band
+coherence weakens with it (`+0.33..+0.44` mean, `18/14` at `j = 35`).  `BiasSqrtLaw` (stationary
+`b̃`) is what the data now look like: 60% → **70%**.
+
+**Family drift (`drift.py`, 16 maps `qx+c`, `j = 11..26`).**  Innovation means `η̄ ∈ [−0.20,
++0.16]`, positive for 13 of 16, mean of means `+0.044 ± 0.090`, `t = 1.97` - borderline on its own
+and contradicted by `3x+1`'s own reversal at `j = 32..37`.  Verdict: no established drift in the
+family; the AR(1) null with `ρ₀(q) = (1 + 1/q)/√2` is the working model, and the open statement
+is `BiasDecays`, equivalently `biasDecays_iff_classFluct` (the class-`c_m` signed mass is
+asymptotically one third of the total).
+
+**What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
+identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
+depth `j`, the digit form, the band decomposition with its exact small bands and inheritance
+recursion, the AR(1) reading with `ρ₀(q)`); the conjugacy complexity ladder with `Q` scrambling
+every zero-entropy input tried; the Collatz-Champernowne family with its conjectured normality
+threshold at `2/(2 − log₂ 3)`; and the recalibration that the sign of `E_j` is memory, not
+arithmetic, at the depth reachable tonight.
