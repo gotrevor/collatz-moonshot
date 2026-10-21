@@ -440,6 +440,13 @@ compute next; it is a finite transfer-matrix calculation per `(j, a)`.
    `[2^{k−1}, 2^k)` are jointly uniform with error `o(2^k)`, uniformly in `t` and the segment).
    The converse yields only the `t`-average.  Evidence for the hypothesis: §2.3 (`b_{j,t} ≈
    10^{−3}..10^{−2}` for `t ≤ j` at `j = 20`), and `b_j ≍ 2^{−j/2}` for the first letter.
+   **Proved edge** (`biasDecays_of_shortIntervalMixing`, with `shortIntervalMixing_mono`):
+   `ShortIntervalMixing C → BiasDecays` for every `C ≥ 2` - the bias over `[0, 2^K)` is the sum
+   over dyadic stages of the letter-`K` imbalance, the stages `i > K/2` have that letter inside
+   their beyond-range window `[i, 2i)`, and the stages `i ≤ K/2` hold at most `2^{K/2+1}`
+   integers.  So C1 is the single-letter, full-stage shadow of the hypothesis behind the
+   normality of `𝒞_2`: the conjecture graph now has the edge mixing ⇒ decay ⇔ 3-adic class
+   equidistribution (`biasDecays_iff_classFluct`).
 3. **A normality threshold at the stopping-time constant.**  For `C > C* := 2/(2 − log₂ 3) ≈
    4.82` (the Kontorovich-Lagarias total-stopping-time constant, `σ_∞(n) ≈ C* log₂ n` with
    `O(√log n)` fluctuations in the stochastic model), a density-one set of words contain the cycle
@@ -478,6 +485,15 @@ orbits that reach `1` within `2k` steps (`14.5% → 2.5%`); the beyond-range sin
 `C ≤ 4` side of the threshold converges only as the stopping-time distribution concentrates -
 `O(1/√k)` relative width - and no finite computation at this size can separate `C = 4` from
 `C = 5`.  The asymptotic claims rest on the stochastic model, not on these numbers.
+
+**`𝒞_⋆` numerics (`champstop.py`, `4·10^6` letters, `n ≤ 58636`).**  Mean word length `4.74·size(n)`
+(the stopping-time constant `C* = 4.82`, approached from below at this size).  Block deviations:
+`L = 2: 0.026` (`f(00) = 0.2566`), `L = 4: 0.24`, `L = 8: 2.2` - far above iid, and accounted for
+by the forced ending of every word: each orbit enters `1` through `8 → 4 → 2`, so every word ends
+`1000` (via `5 → 8`) or `0000` (via `16 → 8`), a fixed 4-letter suffix once per `≈ 4.8k` letters;
+that is a `1/k` effect (`≈ 1/75` per position here, matching the `0.24` at `L = 4`), vanishing but
+slowly.  So the evidence for `ChampernowneStopNormal` is "consistent, with `O(1/log n)`
+convergence dominated by the suffix", not "looks iid".
 
 ### 10.3b The sparse rung (`qsparse.py`, `M = 30000`)
 
@@ -587,11 +603,16 @@ all wired into the root build (`lake build CollatzMoonshot` green): `Recursion.l
 `biasBand_zero/top/one`, `sum_biasBand`, `biasBand_succ_succ_inherit`; frozen `BandCoherence` 60%,
 `BiasQuarterPowerLaw` 25%), `Digits.lean` (all proved: `corr_diag`, `corr_off`,
 `bias_eq_one_add_digitSum`, Terras bijection `onesSet_injOn`/`onesSet_surjOn`),
-`Champernowne.lean` (`concat_apply`, `collatzChampernowne_apply`, `threshold_bounds` proved; three
+`Champernowne.lean` (`concat_apply`, `collatzChampernowne_apply`, `threshold_bounds`,
+`biasDecays_of_shortIntervalMixing`, `shortIntervalMixing_mono` proved; three
 believed theorems with `sorry`: `collatzChampernowne_one_normal` 85%, `normal_of_shortIntervalMixing`
 75%, `not_normal_of_earlyArrival` 90%; nodes `ShortIntervalMixing`, `EarlyArrival`,
 `ChampernowneNormalBelowThreshold` 70%, `ChampernowneNotNormalAboveThreshold` 80%,
-`ChampernowneStopNormal` 65%).  Ladder.lean gained `SquaresCollatzGeneric`, `PrimesCollatzGeneric`,
+`ChampernowneStopNormal` 65%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
+for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
+non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a graph: `EarlyArrival C`
+⇒ `¬ ShortIntervalMixing C` (proved) and ⇒ `¬ Normal 𝒞_C` (believed, 90%); `ShortIntervalMixing C`
+⇒ `Normal 𝒞_C` (believed, 75%) and ⇒ `BiasDecays` (proved, `C ≥ 2`).  Ladder.lean gained `SquaresCollatzGeneric`, `PrimesCollatzGeneric`,
 `PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
 Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
 (verified 2026-10-21); no `native_decide` in the Conjugacy modules.

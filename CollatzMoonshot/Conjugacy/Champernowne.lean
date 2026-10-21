@@ -28,7 +28,9 @@ orbit, not on a residue.
 * **`C ≥ 2`**: normality of `𝒞_C` is read as a **short-interval, beyond-Terras
   equidistribution** of the parity letters of `k`-bit integers, `ShortIntervalMixing C`.  The
   direction `ShortIntervalMixing C → Normal 𝒞_C` is frozen (`normal_of_shortIntervalMixing`,
-  75%); the converse only returns an average over positions, so it is not stated.
+  75%); the converse only returns an average over positions, so it is not stated.  The
+  single-letter shadow is proved: `ShortIntervalMixing 2` implies the bias-decay conjecture
+  C1 of `Ladder.lean` (`biasDecays_of_shortIntervalMixing`).
 * **The threshold** `C* = 2 / (2 − log₂ 3) ≈ 4.82` (`threshold_bounds`: `4 < C* < 5`).  Under
   the stochastic model (Lagarias–Weiss 1992, Kontorovich–Lagarias 2009) the total stopping
   time of a typical `n` is `≈ C* · log₂ n`.  For `C > C*` a positive fraction of a typical word
@@ -249,6 +251,152 @@ which is why only this direction is frozen. -/
 theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortIntervalMixing C) :
     Normal (collatzChampernowne C) := by
   sorry
+
+/-! ## The edge to the bias conjecture C1 -/
+
+/-- Mixing to a longer horizon is mixing to a shorter one: the hypothesis for `C'` covers every
+position the hypothesis for `C ≤ C'` asks about. -/
+theorem shortIntervalMixing_mono {C C' : ℕ} (hCC' : C ≤ C') (h : ShortIntervalMixing C') :
+    ShortIntervalMixing C := by
+  intro L p δ hδ
+  obtain ⟨K, hK⟩ := h L p δ hδ
+  exact ⟨K, fun k hk m hm t ht htL =>
+    hK k hk m hm t ht (htL.trans (Nat.mul_le_mul_right k hCC'))⟩
+
+/-- The single-letter even pattern of `ShortIntervalMixing`, read as the parity of the iterate. -/
+theorem filter_even_letter (s : Finset ℕ) (t : ℕ) :
+    (s.filter fun n => ∀ j : Fin 1, accWord n (t + j) = false) =
+      s.filter fun n => tstep^[t] n % 2 = 0 := by
+  apply Finset.filter_congr
+  intro n _
+  simp only [Fin.forall_fin_one, Fin.val_zero, add_zero, accWord, decide_eq_false_iff_not]
+  omega
+
+/-- The `±1` sum over an interval is twice the even count minus the length. -/
+theorem sum_Ico_sgn_eq (a m K : ℕ) :
+    ∑ n ∈ Finset.Ico a (a + m), (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1) =
+      2 * (((Finset.Ico a (a + m)).filter fun n => tstep^[K] n % 2 = 0).card : ℝ) - m := by
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, mul_one,
+    mul_neg_one]
+  have hc := Finset.card_filter_add_card_filter_not (s := Finset.Ico a (a + m))
+    (fun n => tstep^[K] n % 2 = 0)
+  rw [Nat.card_Ico, Nat.add_sub_cancel_left] at hc
+  have hc' : ((((Finset.Ico a (a + m)).filter fun n => tstep^[K] n % 2 = 0).card : ℕ) : ℝ) +
+      ((((Finset.Ico a (a + m)).filter fun n => ¬ tstep^[K] n % 2 = 0).card : ℕ) : ℝ) = m := by
+    exact_mod_cast hc
+  linarith
+
+/-- A stage whose even count is within `δ · 2^i` of half has `±1` sum within `δ · 2^(i+1)` of
+zero. -/
+theorem stage_imbalance_le {δ : ℝ} {i K : ℕ}
+    (h : |(((Finset.Ico (2 ^ i) (2 ^ i + 2 ^ i)).filter fun n => tstep^[K] n % 2 = 0).card : ℝ) -
+      (2 : ℝ) ^ i / 2| ≤ δ * 2 ^ i) :
+    |∑ n ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)), (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1)| ≤
+      δ * 2 ^ (i + 1) := by
+  have e : 2 ^ (i + 1) = 2 ^ i + 2 ^ i := by rw [pow_succ, mul_two]
+  rw [e, sum_Ico_sgn_eq]
+  push_cast
+  rw [abs_le] at h ⊢
+  rw [pow_succ]
+  constructor <;> linarith [h.1, h.2]
+
+/-- `[0, 2^K) = [0, 2^J) ∪ ⋃_{J ≤ i < K} [2^i, 2^(i+1))`, as a sum identity. -/
+theorem sum_range_two_pow_split (f : ℕ → ℝ) {J K : ℕ} (hJK : J ≤ K) :
+    ∑ r ∈ Finset.range (2 ^ K), f r =
+      ∑ r ∈ Finset.range (2 ^ J), f r +
+        ∑ i ∈ Finset.Ico J K, ∑ r ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)), f r := by
+  induction K, hJK using Nat.le_induction with
+  | base => simp
+  | succ K hJK ih =>
+    rw [Finset.sum_Ico_succ_top hJK, ← add_assoc, ← ih]
+    simp only [Finset.range_eq_Ico]
+    rw [Finset.sum_Ico_consecutive f (Nat.zero_le _)
+      (Nat.pow_le_pow_right (by norm_num) (Nat.le_succ K))]
+
+theorem sum_range_two_pow_succ_le (K : ℕ) :
+    ∑ i ∈ Finset.range K, (2 : ℝ) ^ (i + 1) ≤ 2 ^ (K + 1) := by
+  induction K with
+  | zero => simp
+  | succ n ih => rw [Finset.sum_range_succ, pow_succ 2 (n + 1)]; linarith [ih]
+
+theorem sum_Ico_two_pow_succ_le (J K : ℕ) :
+    ∑ i ∈ Finset.Ico J K, (2 : ℝ) ^ (i + 1) ≤ 2 ^ (K + 1) :=
+  (Finset.sum_le_sum_of_subset_of_nonneg
+    (by rw [Finset.range_eq_Ico]; exact Finset.Ico_subset_Ico_left (Nat.zero_le _))
+    (fun _ _ _ => by positivity)).trans (sum_range_two_pow_succ_le K)
+
+theorem bias_cast_eq_sum (K : ℕ) :
+    (bias K : ℝ) = ∑ r ∈ Finset.range (2 ^ K), (if tstep^[K] r % 2 = 0 then (1 : ℝ) else -1) := by
+  simp [bias]
+
+/-- **Edge: the Champernowne mixing hypothesis implies the decay conjecture.**  The bias
+`bias K` over `[0, 2^K)` is the sum over dyadic stages `[2^(i-1), 2^i)` of the letter-`K`
+imbalance; for `K/2 < i ≤ K` that letter lies in the beyond-range window `[i, 2i)` of the
+`i`-bit integers and `ShortIntervalMixing 2` makes each stage's imbalance `o(2^i)`; the stages
+`i ≤ K/2` carry at most `2^(K/2+1)` integers.  So `C1` (`BiasDecays`) is the single-letter,
+full-stage shadow of the mixing hypothesis behind the normality of `𝒞_2`.  With
+`shortIntervalMixing_mono`, every `ShortIntervalMixing C`, `C ≥ 2`, implies `BiasDecays`.
+
+Proof: with `J = K / 2` and `K ≥ 2 K₀ + 2 M + 2`, every stage `[2^i, 2^(i+1))`, `J ≤ i < K`,
+has `i + 1 ≥ K₀` and `K + 1 ≤ 2 (i + 1)`, so the hypothesis (pattern `[false]`, `t = K`,
+`m = 2^i`) bounds its imbalance by `δ 2^(i+1)`; the stages below `J` contribute at most `2^J`
+in absolute value.  Hence `|bias K| ≤ 2^J + δ 2^(K+1)`, and `2^J ≤ 2^K / 2^J ≤ 2^K / 2^M`. -/
+theorem biasDecays_of_shortIntervalMixing (h : ShortIntervalMixing 2) : BiasDecays := by
+  rw [BiasDecays, Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨K₀, hK₀⟩ := h 1 (fun _ => false) (ε / 4) (by positivity)
+  obtain ⟨M, hM⟩ := exists_nat_gt (2 / ε)
+  refine ⟨2 * K₀ + 2 * M + 2, fun K hK => ?_⟩
+  have hKpos : (0 : ℝ) < 2 ^ K := by positivity
+  rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos hKpos, div_lt_iff₀ hKpos]
+  set J := K / 2 with hJ
+  -- the stage bound from the hypothesis
+  have hstage : ∀ i ∈ Finset.Ico J K,
+      |∑ n ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)), (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1)| ≤
+        ε / 4 * 2 ^ (i + 1) := by
+    intro i hi
+    rw [Finset.mem_Ico] at hi
+    have h1 : K₀ ≤ i + 1 := by omega
+    have h3 : K + 1 ≤ 2 * (i + 1) := by omega
+    have := hK₀ (i + 1) h1 (2 ^ i) (by simp) K (by omega) h3
+    simp only [Nat.add_sub_cancel, pow_one, filter_even_letter] at this
+    push_cast at this
+    exact stage_imbalance_le this
+  -- the two pieces
+  have hA : |∑ r ∈ Finset.range (2 ^ J), (if tstep^[K] r % 2 = 0 then (1 : ℝ) else -1)| ≤
+      2 ^ J := by
+    calc |∑ r ∈ Finset.range (2 ^ J), (if tstep^[K] r % 2 = 0 then (1 : ℝ) else -1)|
+        ≤ ∑ r ∈ Finset.range (2 ^ J), |if tstep^[K] r % 2 = 0 then (1 : ℝ) else -1| :=
+          Finset.abs_sum_le_sum_abs _ _
+      _ = ∑ r ∈ Finset.range (2 ^ J), (1 : ℝ) := by
+          apply Finset.sum_congr rfl
+          intro r _
+          split_ifs <;> simp
+      _ = 2 ^ J := by simp
+  have hB : |∑ i ∈ Finset.Ico J K, ∑ n ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)),
+      (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1)| ≤ ε / 4 * 2 ^ (K + 1) := by
+    calc |∑ i ∈ Finset.Ico J K, ∑ n ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)),
+          (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1)|
+        ≤ ∑ i ∈ Finset.Ico J K, |∑ n ∈ Finset.Ico (2 ^ i) (2 ^ (i + 1)),
+            (if tstep^[K] n % 2 = 0 then (1 : ℝ) else -1)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ i ∈ Finset.Ico J K, ε / 4 * 2 ^ (i + 1) := Finset.sum_le_sum hstage
+      _ = ε / 4 * ∑ i ∈ Finset.Ico J K, (2 : ℝ) ^ (i + 1) := by rw [Finset.mul_sum]
+      _ ≤ ε / 4 * 2 ^ (K + 1) := by gcongr; exact sum_Ico_two_pow_succ_le J K
+  have habs : |(bias K : ℝ)| ≤ 2 ^ J + ε / 4 * 2 ^ (K + 1) := by
+    rw [bias_cast_eq_sum, sum_range_two_pow_split _ (Nat.div_le_self K 2)]
+    exact (abs_add_le _ _).trans (add_le_add hA hB)
+  -- the arithmetic: `2^J < ε 2^K / 2`
+  have h2J : (2 : ℝ) ^ J * 2 ^ J ≤ 2 ^ K := by
+    rw [← pow_add]; exact pow_le_pow_right₀ one_le_two (by omega)
+  have hM2 : (2 : ℝ) ^ M ≤ 2 ^ J := pow_le_pow_right₀ one_le_two (by omega)
+  have hMlt : (M : ℝ) < 2 ^ M := by exact_mod_cast Nat.lt_two_pow_self
+  have hpos : (0 : ℝ) < 2 ^ J := by positivity
+  have h1 : 2 / ε < 2 ^ J := by linarith
+  have h2 : (2 : ℝ) < ε * 2 ^ J := by rwa [div_lt_iff₀' hε] at h1
+  have h3 : 2 * 2 ^ J < ε * 2 ^ J * 2 ^ J := mul_lt_mul_of_pos_right h2 hpos
+  have h4 : ε * (2 ^ J * 2 ^ J) ≤ ε * 2 ^ K := mul_le_mul_of_nonneg_left h2J hε.le
+  rw [pow_succ] at habs
+  linarith
 
 /-! ## The threshold `C* = 2 / (2 − log₂ 3)` -/
 

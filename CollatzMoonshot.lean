@@ -126,4 +126,5 @@ import CollatzMoonshot.Conjugacy.Recursion
 import CollatzMoonshot.Conjugacy.Bands
 import CollatzMoonshot.Conjugacy.Champernowne
 import CollatzMoonshot.Conjugacy.Digits
+import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Maze
