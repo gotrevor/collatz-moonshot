@@ -703,16 +703,21 @@ What the first finding says: by Parseval on the cylinder filtration, the energy 
 of the sum of the `2^m` beyond-Terras letters in a cylinder (an arithmetic progression of step
 `2^{j−m}`).  The law `= 2^{−m}` says **the beyond-Terras letters in a cylinder sum like fair
 coins**, so the `√`-law `E_j ≈ 2^{j/2}` (`BiasSqrtLaw`, the `m = j` case: `(E_j/2^j)² = 9.8·10^{−7}`
-vs `2^{−20} = 9.5·10^{−7}` at `j = 20`) holds at *every* cylinder depth, with the ratio to the
-fair-coin value `ρ(m) = 1.00, 1.00, 1.01, 1.04, 1.15, 1.5` at `m = 1, 2, 3, 4, 6, 8`: the excess is
-the positive autocorrelation `R_j(2^{j−m})` of §10.3c (coalescence at spacing `2^{j−m}`), which is
-negligible at the top scales and grows as the spacing shrinks, exactly as the walk's block
-variance did.  So the Walsh spectrum in the parity-word basis is the autocorrelation function read
-at dyadic spacings, and the geometric reach is its near-zero at the two or three largest scales.
-Conjecture (`CylinderFairCoin`, not yet in Lean, 75%): for each fixed `m` the ratio `ρ_j(m)` has a
-limit `ρ(m)`, with `ρ(1) = ρ(2) = 1` and `ρ(m)` increasing to the walk's variance profile.  The
-exact Parseval identity behind the reading is standard harmonic analysis on `(ℤ/2)^j` and is a
-candidate for `Digits.lean` when wanted.
+vs `2^{−20} = 9.5·10^{−7}` at `j = 20`) holds at *every* cylinder depth.  The ratio to the
+fair-coin value, computed directly (`rhocheck.py`, `j = 20`), is `ρ_j(m) = 1.000, 1.004, 1.006,
+1.040, 0.886, 1.160, 1.410, 1.562` at `m = 1..8` - unity within sampling noise (`≈ 0.003`) at the
+three largest scales, then *not* monotone: the exact identity
+`ρ_j(m) = 1 + 2 Σ_{i<2^m} A_j(i·2^{j−m})` (expand the square; `A_j(d)` the window autocorrelation
+at lag `d`, checked to four decimals at every `m`) reads the dyadic autocorrelation
+`A_20(2^{19}, …, 2^{12}) = +0.0000, +0.0009, +0.0010, +0.0067, −0.0343, +0.0544, +0.0109, −0.0280`,
+which is zero at the top scales and *sign-alternating* from spacing `2^{15}` down, the block
+anticorrelation of the walk (§10.3c) seen letter by letter.  So the Walsh spectrum in the
+parity-word basis is the autocorrelation function read at dyadic spacings, and the geometric
+reach is its vanishing at the three largest scales.  Conjecture (`CylinderFairCoin`, not yet in
+Lean, 75%): `ρ_j(m) → 1` for each fixed `m ≤ 3`, i.e. the window autocorrelation at spacings
+`2^{j−1}, 2^{j−2}, 2^{j−3}` vanishes as `j → ∞`; what happens at `m ≈ j/4..j/2` is the walk's
+block structure and is not conjectured here.  The Parseval identity behind the reading is
+standard harmonic analysis on `(ℤ/2)^j` and is a candidate for `Digits.lean` when wanted.
 
 ### 10.4 The sign, recalibrated (`ar1.py`)
 
