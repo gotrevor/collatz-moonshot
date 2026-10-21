@@ -570,7 +570,13 @@ themselves.  So the negative remainder is a property of in-flight orbits that st
 boundary or about-to-merge effect; open (a selection effect of non-merging on the odd-step counts
 is the natural guess).  Asymptotically every pair either merges or reaches the cycle in opposite
 phase (product `−1` forever), so for fixed `r` the pair correlation is eventually `±1`; the
-average over `r < 2^j` stays in flight.
+average over `r < 2^j` stays in flight.  **Eventual fates (`coalfinal.py`, `r ≤ 2^22`, 400
+steps, none undecided):** consecutive pairs merge before either reaches the cycle `48.95%` of the
+time, arrive in phase `25.2%`, in antiphase `25.8%` (fixed-start limit correlation `+0.48`); for
+`d = 2, 3, 4`: merge `0.39, 0.30, 0.33`, with the non-merged half split evenly.  So about half of
+all consecutive integers share their orbit before reaching `1`.  The within-`j` fraction
+`coal_j(1)` climbs `0.344, 0.361, 0.375, 0.385, 0.394, 0.402, 0.409` for `j = 10, 12, …, 22`,
+toward the eventual value.
 
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
