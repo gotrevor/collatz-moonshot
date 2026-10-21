@@ -680,6 +680,40 @@ density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne
 walk with long-range positive dependence of a known origin, and the `2^{j/2}` scale at which the
 block variance peaks is where coalescence gives way to the lift-identity anticorrelation.
 
+### 10.3d The Walsh spectrum of the beyond-Terras letter: the √-law at every cylinder depth (`walsh.py`, ~04:28)
+
+Read the beyond-Terras letter `g_j(r) = (−1)^{T^j r}` as a function of the parity word
+`v = (v_1, …, v_j)` of `r` (Terras), and expand it in the Walsh basis: `ĝ(S)` = correlation of
+the next letter with the XOR of the letters in `S ⊆ {1..j}`; `ĝ(∅) = E_j/2^j`; Parseval
+`Σ ĝ(S)² = 1`.  Two findings at `j = 12, 16, 20`:
+
+- **The reach is geometric, exactly.**  The energy on sets whose most recent letter is `m`
+  letters back is `2^{−(m+1)}`: `0.500, 0.249, 0.125, 0.061, 0.037, 0.010, 0.007, 0.005, …`
+  (`j = 20`, from position `j` backwards), identical at `j = 16` and `j = 12` to two decimals.
+  Cumulatively, the energy within the last `1, 2, 3, 4, 6, 8` letters is
+  `0.500, 0.749, 0.874, 0.935, 0.982, 0.994` against the fair-coin `1 − 2^{−m}` =
+  `0.5, 0.75, 0.875, 0.9375, 0.984, 0.996`.
+- **The degree is high.**  The energy sits at degree `6-10` and beyond (`j = 20`: degree `≤ 8`
+  carries `31%`, the rest is higher); the next letter is a high-degree function of the word, with
+  no single small set of letters explaining it (largest `|ĝ(S)|` is `0.013` at `j = 20`).
+
+What the first finding says: by Parseval on the cylinder filtration, the energy on sets with
+`max S ≤ j − m` is the mean square of the conditional bias of the next letter given the first
+`j − m` letters, i.e. `2^{−(j+m)} Σ_{c mod 2^{j−m}} (Σ_{r ≡ c} g_j(r))²` - the normalised variance
+of the sum of the `2^m` beyond-Terras letters in a cylinder (an arithmetic progression of step
+`2^{j−m}`).  The law `= 2^{−m}` says **the beyond-Terras letters in a cylinder sum like fair
+coins**, so the `√`-law `E_j ≈ 2^{j/2}` (`BiasSqrtLaw`, the `m = j` case: `(E_j/2^j)² = 9.8·10^{−7}`
+vs `2^{−20} = 9.5·10^{−7}` at `j = 20`) holds at *every* cylinder depth, with the ratio to the
+fair-coin value `ρ(m) = 1.00, 1.00, 1.01, 1.04, 1.15, 1.5` at `m = 1, 2, 3, 4, 6, 8`: the excess is
+the positive autocorrelation `R_j(2^{j−m})` of §10.3c (coalescence at spacing `2^{j−m}`), which is
+negligible at the top scales and grows as the spacing shrinks, exactly as the walk's block
+variance did.  So the Walsh spectrum in the parity-word basis is the autocorrelation function read
+at dyadic spacings, and the geometric reach is its near-zero at the two or three largest scales.
+Conjecture (`CylinderFairCoin`, not yet in Lean, 75%): for each fixed `m` the ratio `ρ_j(m)` has a
+limit `ρ(m)`, with `ρ(1) = ρ(2) = 1` and `ρ(m)` increasing to the walk's variance profile.  The
+exact Parseval identity behind the reading is standard harmonic analysis on `(ℤ/2)^j` and is a
+candidate for `Digits.lean` when wanted.
+
 ### 10.4 The sign, recalibrated (`ar1.py`)
 
 The mod-3 recursion `E_m = 2E_{m−1} − 2G_{m−1}(c_m)`, with `G_{m−1}(c_m) = E_{m−1}/3 + ξ_m`, reads
@@ -806,5 +840,7 @@ every zero-entropy input tried; the Collatz-Champernowne family with its conject
 threshold at `2/(2 − log₂ 3)`; the identification of the beyond-Terras letter autocorrelation with
 orbit coalescence (exact decomposition, merge-next anticorrelation, the parity recursion at even
 distance, the residue-class mechanism behind its uniform odd-image rate, the convergent window
-density, and the measured gap between it and the eventual merge density); and the recalibration that the sign of `E_j` is memory, not
+density, and the measured gap between it and the eventual merge density); the Walsh spectrum of the
+beyond-Terras letter in the parity-word basis, with its exact geometric reach (the √-law at every
+cylinder depth); and the recalibration that the sign of `E_j` is memory, not
 arithmetic, at the depth reachable tonight.
