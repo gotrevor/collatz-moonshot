@@ -548,10 +548,29 @@ density, with the non-merged pairs essentially uncorrelated** (`coal_20(d) = 0.4
 0.198, 0.182, 0.129, 0.110, 0.140` for `d = 1..8`; `0.063, 0.039, 0.013, 0.003` for `d = 32, 64,
 256, 1024`).  The power law in `d` is the coalescence probability of two orbits started `d`
 apart; the anticorrelation at large scales is the lift identity (`d = 2^j` flips the letter).
-Coalescence of consecutive integers is classical (Garner 1985 on equal heights of `n` and `n+1`;
-the density value here, `0.40` within 20 steps, is to be checked against that literature), the
+Coalescence of consecutive integers is classical: Garner 1985 (*On heights in the Collatz 3n+1
+problem*, Discrete Math. 55, 57-64; citation verified via OEIS A078417/A006666) gave a sufficient
+condition in terms of parity vectors for `n`, `n+1` to have equal height and conjectured it
+necessary; Elia-Tucker 2015 (Integers 15, arXiv:1511.09141, abstract read) give an infinite family
+of counterexamples to the necessity; Gao 1993 (Discrete Math. 112) is the other reference.  No
+density statement was found in what I could open tonight, so the value `coal_20(1) = 0.40` (merging
+within 20 steps) stands as a measurement to be compared with Garner's paper itself.  The
 identification with the letter autocorrelation is not in print to my knowledge, and the small
-negative `R^{nc}` is a new, unexplained number.  Lean: `Coalescence.lean` (§10.5).
+negative `R^{nc}` is a new number.  Lean: `Coalescence.lean` (§10.5).
+
+**Anatomy of `R^{nc}` (`mergenext.py`, `j = 20`, `d = 1, 2, 4, 16`).**  Split the non-merged pairs by
+the step at which they merge later.  Pairs merging at exactly `j+1` have sign product **`−1.000`**
+- a theorem: two distinct starts with the same image have opposite parities (`y/2 = (3y'+1)/2`
+forces `y` even, `y'` odd).  Pairs merging at `j+2` have product `+0.998` (the relation
+`T(y) = 3T(y') + 1` with `T(y)` even allows `(y, y') = (3y'+2, y')` both even or `(9y'+5, y')` with
+`y'` odd; the ratio-9 case is rare), at `j+3`: `+0.10..+0.16`, `j+4`: `−0.13..−0.21`, `j+5`:
+`−0.07..−0.10`, later: `≈ −0.01`.  These classes are each `0.3-0.6%` of pairs and roughly cancel;
+the pairs that have not merged by `j + 40` (`52-76%` of all pairs) carry `−0.031 .. −0.041`
+themselves.  So the negative remainder is a property of in-flight orbits that stay apart, not a
+boundary or about-to-merge effect; open (a selection effect of non-merging on the odd-step counts
+is the natural guess).  Asymptotically every pair either merges or reaches the cycle in opposite
+phase (product `−1` forever), so for fixed `r` the pair correlation is eventually `±1`; the
+average over `r < 2^j` stays in flight.
 
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
@@ -608,17 +627,17 @@ is established).
 
 ### 10.5 Results that arrived late (`bige_rs`, `drift.py`), and the Lean status
 
-**`E_j` to `j = 38`** (Rust, 16 threads, `u64`, 10 min for `j = 38`; `j = 39, 40` in `u128` were
-running at the time of writing - `experiments/conjugacy/bias_rust_j32_38.out`, `bias_rust_j39_40.out`):
+**`E_j` to `j = 39`** (Rust, 16 threads; `u64` to `j = 38`, 10 min; `u128` for `j = 39`, 37 min; `j = 40`
+was running at the time of writing - `experiments/conjugacy/bias_rust_j32_38.out`, `bias_rust_j39_40.out`):
 
-| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 |
-|---|---|---|---|---|---|---|---|---|
-| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 | 332758 |
-| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 | 0.635 |
-| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
-| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 | 23/12 |
+| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
+|---|---|---|---|---|---|---|---|---|---|
+| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 | 332758 | 590942 |
+| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 | 0.635 | 0.797 |
+| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 | 23/12 | 24/12 |
 
-The normalised bias falls from `1.80` to `0.585` over six levels (then `0.635` at `j = 38`) - the relaxation
+The normalised bias falls from `1.80` to `0.585` over six levels (then `0.635`, `0.797` at `j = 38, 39`: innovations `+0.04`, `+0.20`, the walk turning) - the relaxation
 toward `0` that the zero-mean null of §10.4 predicts (`1.80·0.943^6 = 1.27`; the observed fall is
 faster, innovations `−0.52, −0.21, −0.09, −0.09, +0.10, −0.07`).  **The `+0.14` innovation drift
 of §10.4 was a fluctuation**: over `j = 10..37` the mean innovation is `≈ +0.08` (`t ≈ 1.2`), and
@@ -648,7 +667,12 @@ all wired into the root build (`lake build CollatzMoonshot` green): `Recursion.l
 believed theorems with `sorry`: `collatzChampernowne_one_normal` 85%, `normal_of_shortIntervalMixing`
 75%, `not_normal_of_earlyArrival` 90%; nodes `ShortIntervalMixing`, `EarlyArrival`,
 `ChampernowneNormalBelowThreshold` 70%, `ChampernowneNotNormalAboveThreshold` 80%,
-`ChampernowneStopNormal` 65%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
+`ChampernowneStopNormal` 65%), `Coalescence.lean` (all proved: `letterCorr_eq` and the refined
+`letterCorr_eq_refined` - the autocorrelation of the beyond-Terras letter is the coalescence count
+minus the merge-next count plus the still-apart remainder; `coalesces_four_mod_eight`,
+`coalCount_one_ge` (`2^j/8 ≤ coalCount j 1`), `coalescenceDensityPositive_one`,
+`mod_two_ne_of_tstep_eq`; frozen `NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
+`CoalescenceDensityPositive` 90%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
 for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
 non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a graph: `EarlyArrival C`
 ⇒ `¬ ShortIntervalMixing C` (proved) and ⇒ `¬ Normal 𝒞_C` (believed, 90%); `ShortIntervalMixing C`
