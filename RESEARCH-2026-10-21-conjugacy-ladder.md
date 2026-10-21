@@ -659,6 +659,21 @@ filter since eventual merging is an unbounded search), and three frozen nodes ca
 `EventualMergeDensityConverges` 80%, `WindowLimitLtEventual` 90%, `ConsecutiveAntiphasePositive`
 55% (status §10.5).
 
+**Where the late merges happen (`latevalue.py`, ~04:26): in the descent, at height `≈ s^{0.55}`.**
+Record the merge value `m = T^k s` at the first merge.  Merges inside the window (`k ≤ j`) happen
+at `log₂ m / j` with median `0.83-0.88` (percentiles `10/50/90`: `0.72 / 0.88 / 0.96` at `j = 20`),
+the orbit's typical height during the window (`T^j s ≈ 2^{0.79j}` since each shortcut step
+multiplies by `3/2` or `1/2`, mean `log₂` factor `−0.2075`).  The late merges (`k > j`) happen at
+median `log₂ m / j ≈ 0.55` (`0.28 / 0.53 / 0.74` at `j = 20`), `38-43%` of them below `2^{j/2}`,
+with a profile that is stable in units of `j` across `j = 14..20`.  Reading: an integer `s < 2^j`
+is the 2-adic number `s` followed by zeros, so its orbit beyond step `j` is the orbit of the
+*small* integer `T^j s` descending to `1` over the next `≈ 4j` steps, and the pair keeps a chance
+to merge all the way down; a generic 2-adic start never descends, and the window limit
+`L = μ(U)` of `genericCoalDensity_tendsto` is exactly the generic-start merge measure.  That is
+the mechanism of `WindowLimitLtEventual` (80%): the gap `E − L` is the descent's share of the
+merging, invisible to every finite window because the window is measured at the start's own
+scale.
+
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
 density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
