@@ -42,6 +42,13 @@ up to a remainder from non-merged pairs that is `−0.03 .. −0.01` for every `
   (`mod_two_ne_of_tstep_eq`), so a pair that merges exactly one step past the window contributes
   `−1`.  The small negative remainder among non-merged pairs (`−0.03` at `j = 20`) has an exact
   negative component from the pairs that merge next.
+* **The parity recursion at even distance** (`coalCount_succ_two_mul`): an even start halves
+  the pair and an odd start triples it, so `coalCount (j+1) (2d) = coalCount j d +
+  oddImageCoalCount j (3d)` exactly.  Numerically the odd-image starts coalesce at the uniform
+  rate (`experiments/conjugacy/coalrec.py`, `j = 20`: `coal_20(2) = 0.2796`, `coal_19(1) = 0.3984`,
+  odd-image `coal_19(3) = 0.1609` against uniform `0.1609`), so the even-distance profile is the
+  parity mixture `coal_j(2d) ≈ (coal_{j−1}(d) + coal_{j−1}(3d))/2` to four decimals; odd
+  distances, `d = 1` first, are the irreducible base case.
 * **Frozen conjectures**: `NonCoalescedDecorrelated` (the remainder vanishes in the limit),
   `LetterCorrIsCoalescence` (equivalent to it, `letterCorrIsCoalescence_iff`), and
   `CoalescenceDensityPositive` (a positive fraction of starts merge with `r + d` within the
@@ -231,6 +238,111 @@ theorem letterCorr_eq_refined (j d : ℕ) :
 theorem mergeNextCount_three_one : mergeNextCount 3 1 = 1 := by decide
 theorem mergeNextCount_four_one : mergeNextCount 4 1 = 1 := by decide
 theorem mergeNextCount_five_one : mergeNextCount 5 1 = 1 := by decide
+
+/-! ## The parity recursion at even distance -/
+
+/-- Doubling both the start and the gap delays a merge by exactly one step, and conversely: with
+`d ≥ 1` the pair `(2r, 2r + 2d)` is not merged at step `0`, and one step sends it to `(r, r + d)`. -/
+theorem coalesces_two_mul_iff {r d j : ℕ} (hd : 1 ≤ d) :
+    Coalesces (2 * r) (2 * d) (j + 1) ↔ Coalesces r d j := by
+  refine ⟨fun h => ?_, coalesces_two_mul⟩
+  obtain ⟨k, hk, hm⟩ := h
+  cases k with
+  | zero =>
+    simp only [Function.iterate_zero, id_eq] at hm
+    omega
+  | succ k =>
+    refine ⟨k, by omega, ?_⟩
+    have h1 : tstep (2 * r) = r := by unfold tstep; split_ifs <;> omega
+    have h2 : tstep (2 * r + 2 * d) = r + d := by unfold tstep; split_ifs <;> omega
+    rwa [Function.iterate_succ_apply, Function.iterate_succ_apply, h1, h2] at hm
+
+/-- Doubling injects the starts coalesced at gap `d` within `j` steps into those coalesced at gap
+`2d` within `j + 1` steps, so `coalCount j d ≤ coalCount (j + 1) (2d)`. -/
+theorem coalCount_le_coalCount_succ_two_mul (j d : ℕ) :
+    coalCount j d ≤ coalCount (j + 1) (2 * d) := by
+  unfold coalCount
+  refine Finset.card_le_card_of_injOn (fun r => 2 * r) ?_ ?_
+  · intro r hr
+    simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq, pow_succ] at hr ⊢
+    exact ⟨by omega, coalesces_two_mul hr.2⟩
+  · intro a _ b _ hab
+    simp only at hab
+    omega
+
+/-- An odd start triples the pair: `tstep (2r + 1) = 3r + 2` and
+`tstep (2r + 1 + 2d) = 3r + 2 + 3d`, so with `d ≥ 1` the pair `(2r + 1, 2r + 1 + 2d)` merges within
+`j + 1` steps iff `(3r + 2, 3r + 2 + 3d)` merges within `j`. -/
+theorem coalesces_odd_iff {r d j : ℕ} (hd : 1 ≤ d) :
+    Coalesces (2 * r + 1) (2 * d) (j + 1) ↔ Coalesces (3 * r + 2) (3 * d) j := by
+  have h1 : tstep (2 * r + 1) = 3 * r + 2 := by unfold tstep; split_ifs <;> omega
+  have h2 : tstep (2 * r + 1 + 2 * d) = 3 * r + 2 + 3 * d := by
+    unfold tstep; split_ifs <;> omega
+  constructor
+  · rintro ⟨k, hk, hm⟩
+    cases k with
+    | zero =>
+      simp only [Function.iterate_zero, id_eq] at hm
+      omega
+    | succ k =>
+      refine ⟨k, by omega, ?_⟩
+      rwa [Function.iterate_succ_apply, Function.iterate_succ_apply, h1, h2] at hm
+  · rintro ⟨k, hk, hm⟩
+    refine ⟨k + 1, by omega, ?_⟩
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply, h1, h2, hm]
+
+/-- The number of odd starts `2r + 1 < 2^(j+1)` whose image `3r + 2` merges with `3r + 2 + d`
+within `j` steps: the odd half of the parity recursion `coalCount_succ_two_mul`. -/
+def oddImageCoalCount (j d : ℕ) : ℕ :=
+  ((Finset.range (2 ^ j)).filter (fun r => Coalesces (3 * r + 2) d j)).card
+
+/-- **The parity recursion at even distance.**  Splitting the starts `s < 2^(j+1)` by parity, an
+even start `2r` halves the pair to `(r, r + d)` and an odd start `2r + 1` triples it to
+`(3r + 2, 3r + 2 + 3d)`, so `coalCount (j+1) (2d) = coalCount j d + oddImageCoalCount j (3d)`
+exactly. -/
+theorem coalCount_succ_two_mul (j d : ℕ) (hd : 1 ≤ d) :
+    coalCount (j + 1) (2 * d) = coalCount j d + oddImageCoalCount j (3 * d) := by
+  unfold coalCount oddImageCoalCount
+  have hset : (Finset.range (2 ^ (j + 1))).filter (fun s => Coalesces s (2 * d) (j + 1)) =
+      ((Finset.range (2 ^ j)).filter (fun r => Coalesces r d j)).image (fun r => 2 * r) ∪
+      ((Finset.range (2 ^ j)).filter (fun r => Coalesces (3 * r + 2) (3 * d) j)).image
+        (fun r => 2 * r + 1) := by
+    ext s
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_union, Finset.mem_image, pow_succ]
+    constructor
+    · rintro ⟨hs, hc⟩
+      obtain ⟨r, rfl | rfl⟩ := Nat.even_or_odd' s
+      · exact Or.inl ⟨r, ⟨by omega, (coalesces_two_mul_iff hd).1 hc⟩, rfl⟩
+      · exact Or.inr ⟨r, ⟨by omega, (coalesces_odd_iff hd).1 hc⟩, rfl⟩
+    · rintro (⟨r, ⟨hr, hc⟩, rfl⟩ | ⟨r, ⟨hr, hc⟩, rfl⟩)
+      · exact ⟨by omega, (coalesces_two_mul_iff hd).2 hc⟩
+      · exact ⟨by omega, (coalesces_odd_iff hd).2 hc⟩
+  have hdisj : Disjoint
+      (((Finset.range (2 ^ j)).filter (fun r => Coalesces r d j)).image (fun r => 2 * r))
+      (((Finset.range (2 ^ j)).filter (fun r => Coalesces (3 * r + 2) (3 * d) j)).image
+        (fun r => 2 * r + 1)) := by
+    rw [Finset.disjoint_left]
+    intro x hx hx'
+    simp only [Finset.mem_image] at hx hx'
+    obtain ⟨a, _, rfl⟩ := hx
+    obtain ⟨b, _, hb⟩ := hx'
+    omega
+  have hinj1 : Function.Injective (fun r : ℕ => 2 * r) := fun a b h => by
+    simp only at h
+    omega
+  have hinj2 : Function.Injective (fun r : ℕ => 2 * r + 1) := fun a b h => by
+    simp only at h
+    omega
+  rw [hset, Finset.card_union_of_disjoint hdisj, Finset.card_image_of_injective _ hinj1,
+    Finset.card_image_of_injective _ hinj2]
+
+theorem oddImageCoalCount_four_three : oddImageCoalCount 4 3 = 0 := by decide
+theorem oddImageCoalCount_five_three : oddImageCoalCount 5 3 = 0 := by decide
+
+/-- The parity recursion at `j = 4`, `d = 1`, checked against the kernel values
+`coalCount 5 2 = 3`, `coalCount 4 1 = 3`, `oddImageCoalCount 4 3 = 0`. -/
+theorem coalCount_five_two_eq_recursion :
+    coalCount 5 2 = coalCount 4 1 + oddImageCoalCount 4 3 := by decide
 
 /-! ## Frozen conjectures -/
 

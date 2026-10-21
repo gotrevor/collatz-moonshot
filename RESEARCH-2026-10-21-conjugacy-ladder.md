@@ -578,6 +578,27 @@ all consecutive integers share their orbit before reaching `1`.  The within-`j` 
 `coal_j(1)` climbs `0.344, 0.361, 0.375, 0.385, 0.394, 0.402, 0.409` for `j = 10, 12, …, 22`,
 toward the eventual value.
 
+**The parity recursion at even distance (`coalrec.py`, ~04:00).**  For an even gap `2d` the first
+step splits the pair by the parity of the start: `(2r, 2r+2d) ↦ (r, r+d)` and
+`(2r+1, 2r+1+2d) ↦ (3r+2, 3r+2+3d)`, so exactly
+
+    coal_j(2d) = ½·coal_{j−1}(d) + ½·coal^{odd}_{j−1}(3d),
+
+where `coal^{odd}_{j−1}(3d)` counts merges within `j−1` steps over the odd-image starts `3r+2`,
+`r < 2^{j−1}` (the even half is `coalesces_two_mul` run backwards, the odd half the same peel;
+Lean in `Coalescence.lean`, status §10.5).  The content is numerical: **the odd-image starts
+coalesce at the uniform rate.**  At `j = 20`, `coal^{odd}_{19}(3) = 0.1609 = coal_{19}(3)`, and
+likewise `0.1221/0.1221`, `0.0967/0.0967`, `0.0878/0.0878` for `3d = 6, 9, 12`; the gap is
+`≤ 0.0008` at `j = 14` and below `0.0001` at `j = 20`.  So the closed recursion
+`coal_j(2d) ≈ (coal_{j−1}(d) + coal_{j−1}(3d))/2` holds to four decimals (`coal_20(2) = 0.2796`,
+`coal_20(4) = 0.1982`, `coal_20(6) = 0.1288`, `coal_20(8) = 0.1397`, each reproduced), and the
+whole even-distance profile is a parity mixture of the odd-distance profile: `coal(2) = ½(coal(1)
++ coal(3))`, `coal(4) = ½(coal(2) + coal(6))`, and so on.  The odd distances, `d = 1` first, are
+the irreducible base case: for odd `d` the two starts have opposite parity, one halves and one
+triples, and the gap after one step depends on `r`, so no closed recursion of this shape exists.
+Directly, `coal_19(1) = 0.3984`, and `(0.3984 + 0.1609)/2 = 0.2796 = coal_20(2)` closes the `d = 1 → 2` step
+exactly to four decimals.
+
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
 density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
@@ -677,7 +698,11 @@ believed theorems with `sorry`: `collatzChampernowne_one_normal` 85%, `normal_of
 `letterCorr_eq_refined` - the autocorrelation of the beyond-Terras letter is the coalescence count
 minus the merge-next count plus the still-apart remainder; `coalesces_four_mod_eight`,
 `coalCount_one_ge` (`2^j/8 ≤ coalCount j 1`), `coalescenceDensityPositive_one`,
-`mod_two_ne_of_tstep_eq`; frozen `NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
+`mod_two_ne_of_tstep_eq`; the parity recursion at even distance `coalCount_succ_two_mul`
+(`coalCount (j+1) (2d) = coalCount j d + oddImageCoalCount j (3d)`, exact, via
+`coalesces_two_mul_iff` and `coalesces_odd_iff`), the inequality
+`coalCount_le_coalCount_succ_two_mul`, and `decide` teeth at `j = 4, 5`; frozen
+`NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
 `CoalescenceDensityPositive` 90%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
 for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
 non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a graph: `EarlyArrival C`
@@ -685,12 +710,15 @@ non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a gra
 ⇒ `Normal 𝒞_C` (believed, 75%) and ⇒ `BiasDecays` (proved, `C ≥ 2`).  Ladder.lean gained `SquaresCollatzGeneric`, `PrimesCollatzGeneric`,
 `PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
 Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
-(verified 2026-10-21); no `native_decide` in the Conjugacy modules.
+(verified 2026-10-21; the parity-recursion theorems re-verified by my own `lake env lean`
+`#print axioms` run at ~04:05); no `native_decide` in the Conjugacy modules.
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
 depth `j`, the digit form, the band decomposition with its exact small bands and inheritance
 recursion, the AR(1) reading with `ρ₀(q)`); the conjugacy complexity ladder with `Q` scrambling
 every zero-entropy input tried; the Collatz-Champernowne family with its conjectured normality
-threshold at `2/(2 − log₂ 3)`; and the recalibration that the sign of `E_j` is memory, not
+threshold at `2/(2 − log₂ 3)`; the identification of the beyond-Terras letter autocorrelation with
+orbit coalescence (exact decomposition, merge-next anticorrelation, the parity recursion at even
+distance with its uniform odd-image rate); and the recalibration that the sign of `E_j` is memory, not
 arithmetic, at the depth reachable tonight.
