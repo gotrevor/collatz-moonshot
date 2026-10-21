@@ -31,6 +31,9 @@ Two exact identities for the first beyond-Terras letter, both corollaries of the
   mass of the leaking class `leakClass m` is asymptotically one third of `bias m`, at the scale
   `2^m`.  The recursion in the normalised variable `x m = bias m / 2^m` reads
   `x (m+1) = (2/3) · x m − y m`, a contraction with forcing `y`; `x → 0` iff `y → 0`.
+* **Every 3-adic scale** (`biasClassPow`, `WeakDecayOnZ3`): the signed mass of each residue class
+  of the start mod `3^k`; the conjecture that all of them are `o(2^m)` is the statement the
+  recursion closes on, and its `k = 0` case is `BiasDecays` (`biasDecays_of_weakDecayOnZ3`).
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -454,5 +457,39 @@ theorem biasDecays_iff_classFluct :
     rw [bias_div_succ]
     refine (abs_sub _ _).trans (le_of_eq ?_)
     rw [abs_mul, abs_of_pos (by norm_num : (0 : ℝ) < 2 / 3)]
+
+/-! ## Decay at every 3-adic scale -/
+
+/-- The signed mass of the residue class `c` mod `3^k` of the start:
+`biasClassPow m k c = ∑_{y < 2^m, y ≡ c (3^k)} (−1)^(tstep^[m] y)`.  `k = 0` is `bias`
+(`biasClassPow_zero`) and `k = 1` is `biasClass` (`biasClassPow_one`). -/
+def biasClassPow (m k c : ℕ) : ℤ :=
+  ∑ y ∈ (Finset.range (2 ^ m)).filter (fun y => y % 3 ^ k = c),
+    (if tstep^[m] y % 2 = 0 then (1 : ℤ) else -1)
+
+theorem biasClassPow_zero (m : ℕ) : biasClassPow m 0 0 = bias m := by
+  unfold biasClassPow bias
+  refine Finset.sum_congr ?_ fun _ _ => rfl
+  exact Finset.filter_true_of_mem fun y _ => Nat.mod_one y
+
+theorem biasClassPow_one (m c : ℕ) : biasClassPow m 1 c = biasClass m c := by
+  simp only [biasClassPow, biasClass, pow_one]
+
+/-- **Conjecture C1⁺ (decay at every 3-adic scale).**  The signed measure
+`μ_m = Σ_{y<2^m} (−1)^{tstep^[m] y} δ_y` on `ℤ₃`, normalised by `2^m`, converges weakly to zero:
+every residue class of the start mod `3^k` carries `o(2^m)` signed mass.  The mod-3 recursion
+feeds the class-`c_m` excess at level `m` from the mod-9 classes at level `m−1` and so on down
+the scales (renormalisation, research note §3.4), so this is the statement the recursion
+naturally closes on; its `k = 0` case is `BiasDecays` (`biasDecays_of_weakDecayOnZ3`), and its
+`k = 1` case is the equivalent form `biasDecays_iff_classFluct`.  Numerics (2026-10-21,
+`threeadic.py`, `m ≤ 28`): the 3-adic Fourier coefficients `|μ̂_m(1/3)|, |μ̂_m(1/9)|` are
+`(0.1..2.3) · 2^(m/2)`, i.e. at the noise scale.  Confidence 80%. -/
+def WeakDecayOnZ3 : Prop :=
+  ∀ k c : ℕ, Tendsto (fun m => (biasClassPow m k c : ℝ) / 2 ^ m) atTop (𝓝 0)
+
+/-- The `k = 0` edge: decay at every 3-adic scale implies the decay conjecture. -/
+theorem biasDecays_of_weakDecayOnZ3 (h : WeakDecayOnZ3) : BiasDecays := by
+  unfold BiasDecays
+  exact (h 0 0).congr fun m => by rw [biasClassPow_zero]
 
 end CollatzMoonshot.Conjugacy

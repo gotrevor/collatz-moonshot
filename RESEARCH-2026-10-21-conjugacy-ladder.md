@@ -520,6 +520,45 @@ Frozen as `SquaresCollatzGeneric`, `PrimesCollatzGeneric`, `PrimesQinvNormal` (L
 C4c-d, 70%).  Rung added to the §5 table: *density zero (Liouville-type, primes)* → normal-looking,
 both directions.
 
+### 10.3c The parity walk and orbit coalescence (`walk.py`, `autocorr.py`, `coalesce.py`)
+
+By the aligned-window theorem the sign sum over any shifted window `[s, s + 2^j)` is `E_j − 2P_j(s)`
+with `P_j(s) := Σ_{r<s} (−1)^{T^j r}` - so the natural object behind every "initial segment"
+statement is the **walk** `s ↦ P_j(s)` on `[0, 2^j]`, endpoint `E_j`.  It is not Brownian.  At
+`j = 28` the increment variance per unit length over blocks of length `2^i` is `8.8` (`i = 6`),
+`26.9` (`i = 10`), `38.5` (`i = 14 ≈ j/2`), then `16.3, 12.0, 3.5, 3.0, 1.2` (`i = 18..26`), with
+lag-one block autocorrelation `+0.37` at small scales and `−0.59` at `i = 24`; the walk is positive
+for `99.8-100%` of `s`, with a single hump (max `≈ 1.2·E_j` at `s/2^j ≈ 0.33-0.56`).  So the letter
+signs of nearby starts are strongly *positively* correlated out to scale `≈ 2^{j/2}` and
+anticorrelated beyond (the exact `R_j(2^j) = −1` is the extreme case).
+
+**Autocorrelation.**  `R_j(d) := 2^{−(j+1)} Σ_r g_j(r) g_j(r+d)`, `g_j = (−1)^{T^j ·}` on `ℤ/2^{j+1}`:
+`R_20(1..8) = +0.384, +0.254, +0.137, +0.168, +0.152, +0.097, +0.080, +0.109`, `R(2^i) ≈ 0.38·0.65^i`
+for `i ≤ 7` (a power law `≈ d^{−0.6}`), slowly *increasing* with `j` at fixed `d` (`R_16(1) =
+0.360`, `R_20(1) = 0.384`).  Consecutive `j`-bit starts have the same first beyond-Terras letter
+`69%` of the time.
+
+**Mechanism: orbit coalescence, exactly.**  Let `coal_j(d)` be the fraction of `r < 2^j` whose
+orbit has *merged* with that of `r + d` by step `j` (`T^k r = T^k (r+d)` for some `k ≤ j`; the
+classical example is `r ≡ 4 (mod 8)`, which merges with `r+1` at `k = 3`).  Merged pairs have equal
+letters forever, so `R_j(d) = coal_j(d) + (1 − coal_j(d))·R^{nc}_j(d)` with `R^{nc}` the
+correlation among the non-merged pairs - and the data at `j = 20` give `R^{nc}_j(d) = −0.03 .. −0.01`
+for every `d ≤ 256`: **the correlation of beyond-Terras letters across starts is the coalescence
+density, with the non-merged pairs essentially uncorrelated** (`coal_20(d) = 0.402, 0.280, 0.167,
+0.198, 0.182, 0.129, 0.110, 0.140` for `d = 1..8`; `0.063, 0.039, 0.013, 0.003` for `d = 32, 64,
+256, 1024`).  The power law in `d` is the coalescence probability of two orbits started `d`
+apart; the anticorrelation at large scales is the lift identity (`d = 2^j` flips the letter).
+Coalescence of consecutive integers is classical (Garner 1985 on equal heights of `n` and `n+1`;
+the density value here, `0.40` within 20 steps, is to be checked against that literature), the
+identification with the letter autocorrelation is not in print to my knowledge, and the small
+negative `R^{nc}` is a new, unexplained number.  Lean: `Coalescence.lean` (§10.5).
+
+What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
+bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
+density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
+walk with long-range positive dependence of a known origin, and the `2^{j/2}` scale at which the
+block variance peaks is where coalescence gives way to the lift-identity anticorrelation.
+
 ### 10.4 The sign, recalibrated (`ar1.py`)
 
 The mod-3 recursion `E_m = 2E_{m−1} − 2G_{m−1}(c_m)`, with `G_{m−1}(c_m) = E_{m−1}/3 + ξ_m`, reads
@@ -599,7 +638,8 @@ asymptotically one third of the total).
 **Lean status (commit after this note).**  `Conjugacy/Ladder.lean` (first half) + four new modules,
 all wired into the root build (`lake build CollatzMoonshot` green): `Recursion.lean` (all proved:
 `bias_succ`, `bias_mod_four`, `bias_ne_zero`, `depth_count`, `depth_antisymm`, `bias_window`,
-`bias_eq_two_mul_card_sub`, `biasDecays_iff_classFluct`), `Bands.lean` (all proved: `card_band`,
+`bias_eq_two_mul_card_sub`, `biasDecays_iff_classFluct`, `biasDecays_of_weakDecayOnZ3`; node `WeakDecayOnZ3`
+= C1⁺, decay at every 3-adic scale, 80%), `Bands.lean` (all proved: `card_band`,
 `biasBand_zero/top/one`, `sum_biasBand`, `biasBand_succ_succ_inherit`; frozen `BandCoherence` 60%,
 `BiasQuarterPowerLaw` 25%), `Digits.lean` (all proved: `corr_diag`, `corr_off`,
 `bias_eq_one_add_digitSum`, Terras bijection `onesSet_injOn`/`onesSet_surjOn`),
