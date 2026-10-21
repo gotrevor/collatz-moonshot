@@ -599,6 +599,19 @@ triples, and the gap after one step depends on `r`, so no closed recursion of th
 Directly, `coal_19(1) = 0.3984`, and `(0.3984 + 0.1609)/2 = 0.2796 = coal_20(2)` closes the `d = 1 → 2` step
 exactly to four decimals.
 
+**Why the odd-image rate is uniform (`mergeodd.py`, ~04:05).**  By the iterate identity
+`2^k·T^k s = 3^a·s + numer(v)` (`tstep_iterate_identity`; `a = ones v`, `v` the parity trace of
+`s` over `k` steps, a function of `s mod 2^k`), a merge `T^k s = T^k(s+D)` at a step with **equal
+odd-step counts** `a = a'` is the condition `numer(v) − numer(v') = 3^a·D` on the two traces
+alone, hence a property of `s mod 2^k`; with `a ≠ a'` it is a linear equation in `s` with at most
+one solution per pair of traces.  Measured at `j = 20`, every in-window merge has `a = a'` except
+`2-3·10^{−5}` of starts (`D = 1`: none to four decimals; `D = 2, 3, 4, 6, 9, 12`: `0.0001-0.0003`
+of merges).  So `coal_j(D)` is, up to that coincidence term, a function of the residue `s mod 2^j`,
+and every complete residue system gives the same density - the odd-image set `3r+2`, `r < 2^{j−1}`,
+is one mod `2^{j−1}` because `3` is a unit.  That is the four-decimal agreement above, and the
+`≤ 10^{−4}` gap is the coincidence term.  Lean: `GenericCoalesces` (merging with equal odd
+counts) and its `2^j`-periodicity, status §10.5.
+
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
 density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
@@ -701,7 +714,11 @@ minus the merge-next count plus the still-apart remainder; `coalesces_four_mod_e
 `mod_two_ne_of_tstep_eq`; the parity recursion at even distance `coalCount_succ_two_mul`
 (`coalCount (j+1) (2d) = coalCount j d + oddImageCoalCount j (3d)`, exact, via
 `coalesces_two_mul_iff` and `coalesces_odd_iff`), the inequality
-`coalCount_le_coalCount_succ_two_mul`, and `decide` teeth at `j = 4, 5`; frozen
+`coalCount_le_coalCount_succ_two_mul`, and `decide` teeth at `j = 4, 5`; equal-odd-count merging
+`GenericCoalesces` is `2^j`-periodic in the start (`genericCoalesces_add_pow_two_mul_iff`,
+`genericCoalesces_iff_mod`, via the cylinder offset `tstep_iterate_pow_two_offset`), so the
+odd-image starts `3r+2` see exactly the uniform count (`oddImage_genericCoalCount`, the bijection
+`r ↦ (3r+2) mod 2^j`); teeth `genericCoalCount = coalCount` at `j ≤ 5`; frozen
 `NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
 `CoalescenceDensityPositive` 90%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
 for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
@@ -710,8 +727,8 @@ non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a gra
 ⇒ `Normal 𝒞_C` (believed, 75%) and ⇒ `BiasDecays` (proved, `C ≥ 2`).  Ladder.lean gained `SquaresCollatzGeneric`, `PrimesCollatzGeneric`,
 `PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
 Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
-(verified 2026-10-21; the parity-recursion theorems re-verified by my own `lake env lean`
-`#print axioms` run at ~04:05); no `native_decide` in the Conjugacy modules.
+(verified 2026-10-21; the parity-recursion and periodicity theorems re-verified by my own
+`lake env lean` `#print axioms` runs at ~04:05 and ~04:13); no `native_decide` in the Conjugacy modules.
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
@@ -720,5 +737,5 @@ recursion, the AR(1) reading with `ρ₀(q)`); the conjugacy complexity ladder w
 every zero-entropy input tried; the Collatz-Champernowne family with its conjectured normality
 threshold at `2/(2 − log₂ 3)`; the identification of the beyond-Terras letter autocorrelation with
 orbit coalescence (exact decomposition, merge-next anticorrelation, the parity recursion at even
-distance with its uniform odd-image rate); and the recalibration that the sign of `E_j` is memory, not
+distance, and the residue-class mechanism behind its uniform odd-image rate); and the recalibration that the sign of `E_j` is memory, not
 arithmetic, at the depth reachable tonight.

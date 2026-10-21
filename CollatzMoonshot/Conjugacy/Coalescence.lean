@@ -5,6 +5,8 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Conjugacy.Ladder
+import CollatzMoonshot.FrontA.OrbitPacking
+import CollatzMoonshot.Obstructions.Q1Coalescence
 
 /-!
 # Orbit coalescence: why the beyond-Terras letter is correlated across starts
@@ -49,6 +51,15 @@ up to a remainder from non-merged pairs that is `−0.03 .. −0.01` for every `
   odd-image `coal_19(3) = 0.1609` against uniform `0.1609`), so the even-distance profile is the
   parity mixture `coal_j(2d) ≈ (coal_{j−1}(d) + coal_{j−1}(3d))/2` to four decimals; odd
   distances, `d = 1` first, are the irreducible base case.
+* **Equal-odd-count merging is a residue-class property**
+  (`genericCoalesces_add_pow_two_mul_iff`): by the cylinder offset
+  `tstep^[k] (x + 2^k d) = tstep^[k] x + 3^a d` a merge at a step with equal odd-step counts
+  depends only on `s mod 2^j` (`genericCoalesces_iff_mod`), so its density is the same over every
+  complete residue system mod `2^j`; in particular the odd-image starts `3r + 2` of the parity
+  recursion see exactly the uniform count (`oddImage_genericCoalCount`).  Numerically
+  (`experiments/conjugacy/mergeodd.py`, `j = 20`) all but `2-3·10^{−5}` of starts
+  (`0.0001-0.0003` of merges) merge this way, which is why the odd-image starts of the parity
+  recursion coalesce at the uniform rate to four decimals.
 * **Frozen conjectures**: `NonCoalescedDecorrelated` (the remainder vanishes in the limit),
   `LetterCorrIsCoalescence` (equivalent to it, `letterCorrIsCoalescence_iff`), and
   `CoalescenceDensityPositive` (a positive fraction of starts merge with `r + d` within the
@@ -343,6 +354,137 @@ theorem oddImageCoalCount_five_three : oddImageCoalCount 5 3 = 0 := by decide
 `coalCount 5 2 = 3`, `coalCount 4 1 = 3`, `oddImageCoalCount 4 3 = 0`. -/
 theorem coalCount_five_two_eq_recursion :
     coalCount 5 2 = coalCount 4 1 + oddImageCoalCount 4 3 := by decide
+
+/-! ## Equal-odd-count merging is a residue-class property -/
+
+/-- Adding a multiple of `2^k` leaves the length-`k` parity trace unchanged
+(`FrontA.OrbitPacking.traceWord_add_mul`, restated with the power on the left). -/
+theorem traceWord_add_pow_two_mul (k x d : ℕ) :
+    traceWord (x + 2 ^ k * d) k = traceWord x k := by
+  rw [mul_comm]
+  exact CollatzMoonshot.FrontA.OrbitPacking.traceWord_add_mul k x d
+
+/-- `GenericCoalesces s D j`: the orbits of `s` and `s + D` meet within `j` steps at a step where
+their odd-step counts agree.  Unlike a bare merge, this is a property of `s mod 2^j`
+(`genericCoalesces_add_pow_two_mul_iff`). -/
+def GenericCoalesces (s D j : ℕ) : Prop :=
+  ∃ k ≤ j, ones (traceWord s k) = ones (traceWord (s + D) k) ∧ tstep^[k] s = tstep^[k] (s + D)
+
+/-- An equal-odd-count merge is a merge. -/
+theorem coalesces_of_genericCoalesces {s D j : ℕ} (h : GenericCoalesces s D j) :
+    Coalesces s D j :=
+  let ⟨k, hk, _, hm⟩ := h
+  ⟨k, hk, hm⟩
+
+/-- **The cylinder offset at one step `k ≤ j`.**  Shifting the start by `2^j t = 2^k (2^(j−k) t)`
+leaves both length-`k` traces unchanged (`traceWord_add_pow_two_mul`) and shifts both `k`-th
+iterates by `3^a · 2^(j−k) t` (`tstep_iterate_pow_two_offset`), where `a` is the common odd-step
+count; so the equal-odd-count merge condition at step `k` is invariant under the shift. -/
+theorem genericCoalesces_step_add_pow_two_mul_iff {s D k j t : ℕ} (hk : k ≤ j) :
+    (ones (traceWord (s + 2 ^ j * t) k) = ones (traceWord (s + 2 ^ j * t + D) k) ∧
+        tstep^[k] (s + 2 ^ j * t) = tstep^[k] (s + 2 ^ j * t + D)) ↔
+      (ones (traceWord s k) = ones (traceWord (s + D) k) ∧
+        tstep^[k] s = tstep^[k] (s + D)) := by
+  obtain ⟨m, rfl⟩ := Nat.exists_eq_add_of_le hk
+  have e1 : s + 2 ^ (k + m) * t = s + 2 ^ k * (2 ^ m * t) := by rw [pow_add]; ring
+  have e2 : s + 2 ^ k * (2 ^ m * t) + D = s + D + 2 ^ k * (2 ^ m * t) := by ring
+  rw [e1, e2, traceWord_add_pow_two_mul, traceWord_add_pow_two_mul,
+    CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair.tstep_iterate_pow_two_offset,
+    CollatzMoonshot.Obstructions.ArithmeticLifts.RestrictedRepair.tstep_iterate_pow_two_offset]
+  constructor
+  · rintro ⟨ha, hm⟩
+    refine ⟨ha, ?_⟩
+    rw [ha] at hm
+    exact Nat.add_right_cancel hm
+  · rintro ⟨ha, hm⟩
+    refine ⟨ha, ?_⟩
+    rw [ha, hm]
+
+/-- **Equal-odd-count merging is a residue-class property.**  Shifting the start by a multiple of
+`2^j` neither creates nor destroys a merge with equal odd-step counts inside the window. -/
+theorem genericCoalesces_add_pow_two_mul_iff (s D j t : ℕ) :
+    GenericCoalesces (s + 2 ^ j * t) D j ↔ GenericCoalesces s D j := by
+  unfold GenericCoalesces
+  exact exists_congr fun k => and_congr_right fun hk => genericCoalesces_step_add_pow_two_mul_iff hk
+
+/-- The forward half of `genericCoalesces_add_pow_two_mul_iff`. -/
+theorem genericCoalesces_add_pow_two_mul {s D j t : ℕ} (h : GenericCoalesces s D j) :
+    GenericCoalesces (s + 2 ^ j * t) D j :=
+  (genericCoalesces_add_pow_two_mul_iff s D j t).2 h
+
+/-- The converse half of `genericCoalesces_add_pow_two_mul_iff`. -/
+theorem genericCoalesces_of_add_pow_two_mul {s D j t : ℕ}
+    (h : GenericCoalesces (s + 2 ^ j * t) D j) : GenericCoalesces s D j :=
+  (genericCoalesces_add_pow_two_mul_iff s D j t).1 h
+
+/-- An equal-odd-count merge depends only on the residue `s mod 2^j`. -/
+theorem genericCoalesces_iff_mod (s D j : ℕ) :
+    GenericCoalesces s D j ↔ GenericCoalesces (s % 2 ^ j) D j := by
+  have h := genericCoalesces_add_pow_two_mul_iff (s % 2 ^ j) D j (s / 2 ^ j)
+  rwa [Nat.mod_add_div] at h
+
+theorem genericCoalesces_iff_exists_mem_range (s D j : ℕ) :
+    GenericCoalesces s D j ↔ ∃ k ∈ Finset.range (j + 1),
+      ones (traceWord s k) = ones (traceWord (s + D) k) ∧ tstep^[k] s = tstep^[k] (s + D) := by
+  simp [GenericCoalesces]
+
+/-- Equal-odd-count coalescence within a window is a bounded search, hence decidable. -/
+instance decidableGenericCoalesces (s D j : ℕ) : Decidable (GenericCoalesces s D j) :=
+  decidable_of_iff _ (genericCoalesces_iff_exists_mem_range s D j).symm
+
+/-- The number of starts `s < 2^j` whose orbit meets that of `s + D` within `j` steps at a step
+with equal odd-step counts.  By `genericCoalesces_iff_mod` this count is the same over every
+complete residue system mod `2^j`. -/
+def genericCoalCount (j D : ℕ) : ℕ :=
+  ((Finset.range (2 ^ j)).filter (fun s => GenericCoalesces s D j)).card
+
+/-- The map `r ↦ (3r + 2) mod 2^j` is injective on `r < 2^j`, since `3` is a unit mod `2^j`. -/
+theorem three_mul_add_two_mod_pow_two_injOn {j a b : ℕ} (ha : a < 2 ^ j) (hb : b < 2 ^ j)
+    (hab : (3 * a + 2) % 2 ^ j = (3 * b + 2) % 2 ^ j) : a = b := by
+  have hcop : Nat.Coprime (2 ^ j) 3 := Nat.Coprime.pow_left j (by norm_num)
+  have h1 : 3 * a + 2 ≡ 3 * b + 2 [MOD 2 ^ j] := hab
+  have h2 : 3 * a ≡ 3 * b [MOD 2 ^ j] := Nat.ModEq.add_right_cancel' 2 h1
+  have h3 : a ≡ b [MOD 2 ^ j] := Nat.ModEq.cancel_left_of_coprime hcop h2
+  exact Nat.ModEq.eq_of_lt_of_lt h3 ha hb
+
+/-- **The odd-image starts see the uniform count.**  The starts `3r + 2`, `r < 2^j`, of the odd
+half of the parity recursion run through a complete residue system mod `2^j`, so the number of
+them that merge with equal odd-step counts equals `genericCoalCount j D`. -/
+theorem oddImage_genericCoalCount (j D : ℕ) :
+    ((Finset.range (2 ^ j)).filter (fun r => GenericCoalesces (3 * r + 2) D j)).card =
+      genericCoalCount j D := by
+  unfold genericCoalCount
+  have hmaps : ∀ a ∈ Finset.range (2 ^ j), (3 * a + 2) % 2 ^ j ∈ Finset.range (2 ^ j) := by
+    intro a _
+    exact Finset.mem_range.2 (Nat.mod_lt _ (by positivity))
+  have hinj : ∀ a₁ a₂, a₁ ∈ Finset.range (2 ^ j) → a₂ ∈ Finset.range (2 ^ j) →
+      (3 * a₁ + 2) % 2 ^ j = (3 * a₂ + 2) % 2 ^ j → a₁ = a₂ := by
+    intro a₁ a₂ h₁ h₂ h
+    exact three_mul_add_two_mod_pow_two_injOn (Finset.mem_range.1 h₁) (Finset.mem_range.1 h₂) h
+  have hsurj := Finset.surj_on_of_inj_on_of_card_le (s := Finset.range (2 ^ j))
+    (t := Finset.range (2 ^ j)) (fun a _ => (3 * a + 2) % 2 ^ j) hmaps hinj le_rfl
+  refine Finset.card_bij (fun r _ => (3 * r + 2) % 2 ^ j) ?_ ?_ ?_
+  · intro r hr
+    rw [Finset.mem_filter] at hr ⊢
+    exact ⟨hmaps r hr.1, (genericCoalesces_iff_mod _ _ _).1 hr.2⟩
+  · intro a₁ h₁ a₂ h₂ h
+    rw [Finset.mem_filter] at h₁ h₂
+    exact hinj a₁ a₂ h₁.1 h₂.1 h
+  · intro b hb
+    rw [Finset.mem_filter] at hb
+    obtain ⟨a, ha, hab⟩ := hsurj b hb.1
+    refine ⟨a, ?_, hab.symm⟩
+    rw [Finset.mem_filter]
+    refine ⟨ha, ?_⟩
+    rw [genericCoalesces_iff_mod, ← hab]
+    exact hb.2
+
+/-- At `j ≤ 5`, `D ∈ {1, 2}` every in-window merge has equal odd-step counts: the kernel values
+agree with `coalCount_three_one`, `coalCount_four_one`, `coalCount_five_one`, `coalCount_five_two`. -/
+theorem genericCoalCount_three_one : genericCoalCount 3 1 = 1 := by decide
+theorem genericCoalCount_four_one : genericCoalCount 4 1 = 3 := by decide
+theorem genericCoalCount_five_one : genericCoalCount 5 1 = 8 := by decide
+theorem genericCoalCount_five_two : genericCoalCount 5 2 = 3 := by decide
 
 /-! ## Frozen conjectures -/
 

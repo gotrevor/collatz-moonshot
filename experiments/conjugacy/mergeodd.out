@@ -1,0 +1,7 @@
+j=20 D= 1: merges  421662 (0.4021)  equal odd-counts 1.0000  unequal 0.0000  (unequal/N = 0.00002)
+j=20 D= 2: merges  293216 (0.2796)  equal odd-counts 0.9999  unequal 0.0001  (unequal/N = 0.00002)
+j=20 D= 3: merges  175355 (0.1672)  equal odd-counts 0.9998  unequal 0.0002  (unequal/N = 0.00003)
+j=20 D= 4: merges  207793 (0.1982)  equal odd-counts 0.9999  unequal 0.0001  (unequal/N = 0.00003)
+j=20 D= 6: merges  135061 (0.1288)  equal odd-counts 0.9998  unequal 0.0002  (unequal/N = 0.00002)
+j=20 D= 9: merges  107993 (0.1030)  equal odd-counts 0.9998  unequal 0.0002  (unequal/N = 0.00002)
+j=20 D=12: merges   99159 (0.0946)  equal odd-counts 0.9997  unequal 0.0003  (unequal/N = 0.00003)
