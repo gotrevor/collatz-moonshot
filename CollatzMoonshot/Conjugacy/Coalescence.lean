@@ -60,6 +60,12 @@ up to a remainder from non-merged pairs that is `−0.03 .. −0.01` for every `
   (`experiments/conjugacy/mergeodd.py`, `j = 20`) all but `2-3·10^{−5}` of starts
   (`0.0001-0.0003` of merges) merge this way, which is why the odd-image starts of the parity
   recursion coalesce at the uniform rate to four decimals.
+* **The generic density is monotone in the window, hence convergent**
+  (`two_mul_genericCoalCount_le`, `genericCoalDensity_tendsto`): a merging residue class mod `2^j`
+  lifts to two classes mod `2^(j+1)`, so `coal^gen_j(D)` is nondecreasing in `j`, bounded by `1`,
+  and converges; the limit is the Haar measure of the 2-adic open set of starts that merge
+  generically with `s + D`.  Numerically `coal_j(1)` climbs `0.344, 0.361, …, 0.409` over
+  `j = 10, 12, …, 22` (`experiments/conjugacy/coalfinal.py`).
 * **Frozen conjectures**: `NonCoalescedDecorrelated` (the remainder vanishes in the limit),
   `LetterCorrIsCoalescence` (equivalent to it, `letterCorrIsCoalescence_iff`), and
   `CoalescenceDensityPositive` (a positive fraction of starts merge with `r + d` within the
@@ -485,6 +491,85 @@ theorem genericCoalCount_three_one : genericCoalCount 3 1 = 1 := by decide
 theorem genericCoalCount_four_one : genericCoalCount 4 1 = 3 := by decide
 theorem genericCoalCount_five_one : genericCoalCount 5 1 = 8 := by decide
 theorem genericCoalCount_five_two : genericCoalCount 5 2 = 3 := by decide
+
+/-! ### The generic density is monotone in the window, hence convergent -/
+
+/-- A longer window sees every equal-odd-count merge the shorter one saw. -/
+theorem genericCoalesces_mono {s D j j' : ℕ} (hjj' : j ≤ j') (h : GenericCoalesces s D j) :
+    GenericCoalesces s D j' :=
+  let ⟨k, hk, ha, hm⟩ := h
+  ⟨k, hk.trans hjj', ha, hm⟩
+
+/-- **A merging residue class lifts to two.**  Each `s < 2^j` merging generically within `j` steps
+yields the two starts `s` and `s + 2^j` below `2^(j+1)`, both merging generically within `j + 1`
+steps (`genericCoalesces_add_pow_two_mul` with `t = 1`, then `genericCoalesces_mono`), so
+`2 · genericCoalCount j D ≤ genericCoalCount (j + 1) D`. -/
+theorem two_mul_genericCoalCount_le (j D : ℕ) :
+    2 * genericCoalCount j D ≤ genericCoalCount (j + 1) D := by
+  unfold genericCoalCount
+  have hsub : (Finset.range (2 ^ j)).filter (fun s => GenericCoalesces s D j) ∪
+      ((Finset.range (2 ^ j)).filter (fun s => GenericCoalesces s D j)).image
+        (fun s => s + 2 ^ j) ⊆
+      (Finset.range (2 ^ (j + 1))).filter (fun s => GenericCoalesces s D (j + 1)) := by
+    intro x hx
+    simp only [Finset.mem_union, Finset.mem_image, Finset.mem_filter, Finset.mem_range,
+      pow_succ] at hx ⊢
+    rcases hx with ⟨hx, hc⟩ | ⟨s, ⟨hs, hc⟩, rfl⟩
+    · exact ⟨by omega, genericCoalesces_mono (Nat.le_succ j) hc⟩
+    · refine ⟨by omega, genericCoalesces_mono (Nat.le_succ j) ?_⟩
+      have h1 := genericCoalesces_add_pow_two_mul (t := 1) hc
+      rwa [mul_one] at h1
+  have hdisj : Disjoint ((Finset.range (2 ^ j)).filter (fun s => GenericCoalesces s D j))
+      (((Finset.range (2 ^ j)).filter (fun s => GenericCoalesces s D j)).image
+        (fun s => s + 2 ^ j)) := by
+    rw [Finset.disjoint_left]
+    intro x hx hx'
+    simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_range] at hx hx'
+    obtain ⟨s, _, rfl⟩ := hx'
+    omega
+  have hinj : Function.Injective (fun s : ℕ => s + 2 ^ j) := add_left_injective _
+  have hcard := Finset.card_le_card hsub
+  rw [Finset.card_union_of_disjoint hdisj, Finset.card_image_of_injective _ hinj] at hcard
+  omega
+
+/-- The generic coalescence density `coal^gen_j(D) = genericCoalCount j D / 2^j`: the fraction of
+starts `s < 2^j` that merge with `s + D` within the window at a step with equal odd-step counts. -/
+noncomputable def genericCoalDensity (j D : ℕ) : ℝ := (genericCoalCount j D : ℝ) / 2 ^ j
+
+/-- **The generic density is nondecreasing in the window**: `a / 2^j ≤ b / 2^(j+1)` whenever
+`2a ≤ b` (`two_mul_genericCoalCount_le`). -/
+theorem genericCoalDensity_mono (D : ℕ) : Monotone (fun j => genericCoalDensity j D) := by
+  refine monotone_nat_of_le_succ fun j => ?_
+  simp only [genericCoalDensity]
+  have h : (2 * genericCoalCount j D : ℝ) ≤ genericCoalCount (j + 1) D := by
+    exact_mod_cast two_mul_genericCoalCount_le j D
+  rw [div_le_div_iff₀ (by positivity) (by positivity), pow_succ]
+  nlinarith [h, pow_pos (two_pos : (0 : ℝ) < 2) j]
+
+/-- The generic density is at most `1`: the window holds only `2^j` starts. -/
+theorem genericCoalDensity_le_one (j D : ℕ) : genericCoalDensity j D ≤ 1 := by
+  unfold genericCoalDensity
+  rw [div_le_one (by positivity)]
+  have h : genericCoalCount j D ≤ 2 ^ j := by
+    unfold genericCoalCount
+    exact (Finset.card_filter_le _ _).trans (Finset.card_range _).le
+  exact_mod_cast h
+
+/-- **The generic density converges.**  Nondecreasing in `j` and bounded by `1`, `coal^gen_j(D)`
+tends to its supremum `L ≤ 1`, the Haar measure of the 2-adic open set of starts that merge
+generically with `s + D`. -/
+theorem genericCoalDensity_tendsto (D : ℕ) :
+    ∃ L : ℝ, L ≤ 1 ∧ Tendsto (fun j => genericCoalDensity j D) atTop (𝓝 L) := by
+  have hbdd : BddAbove (Set.range fun j => genericCoalDensity j D) :=
+    ⟨1, Set.forall_mem_range.2 fun j => genericCoalDensity_le_one j D⟩
+  exact ⟨⨆ j, genericCoalDensity j D, ciSup_le fun j => genericCoalDensity_le_one j D,
+    tendsto_atTop_ciSup (genericCoalDensity_mono D) hbdd⟩
+
+/-- The lift at `j = 4`, `D = 1`, against the kernel values: `2 · 3 ≤ 8`. -/
+theorem two_mul_genericCoalCount_four_one_le :
+    2 * genericCoalCount 4 1 ≤ genericCoalCount 5 1 := by
+  rw [genericCoalCount_four_one, genericCoalCount_five_one]
+  norm_num
 
 /-! ## Frozen conjectures -/
 

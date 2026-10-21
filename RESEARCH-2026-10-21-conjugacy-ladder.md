@@ -612,6 +612,19 @@ is one mod `2^{j−1}` because `3` is a unit.  That is the four-decimal agreemen
 `≤ 10^{−4}` gap is the coincidence term.  Lean: `GenericCoalesces` (merging with equal odd
 counts) and its `2^j`-periodicity, status §10.5.
 
+**The generic density is monotone in the window (~04:15).**  Because a generic merge at step `k`
+is a cylinder condition on `s mod 2^k`, every merging residue class mod `2^j` lifts to the two
+classes `s, s + 2^j` mod `2^{j+1}`, so `2·genericCoalCount_j(D) ≤ genericCoalCount_{j+1}(D)`: the
+generic density `coal^gen_j(D)` is nondecreasing in `j`, bounded by `1`, and **converges** - its
+limit `L(D)` is the Haar measure of the 2-adic open set of starts that merge generically with
+`s + D`.  That is the climb `0.344 → 0.409` of `coal_j(1)` over `j = 10..22` seen above (the
+measured `coal_j` and the generic count differ by the `10^{−5}` coincidence term).  What the
+theorem does not say: the value of `L(1)`.  The eventual-fate measurement (`coalfinal.py`,
+`48.95%` of `r ≤ 2^22` merge at *some* step before the cycle) counts merges beyond the window too,
+and orbits of `s ≈ 2^j` take about `j` shortcut steps to reach `1`, so the window genuinely
+truncates; `0.409 ≤ L(1)` at `j = 22`, and `L(1) ≤ 0.49` is expected, not proved.  Lean:
+`two_mul_genericCoalCount_le`, `genericCoalDensity_tendsto` (status §10.5).
+
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
 density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
@@ -718,7 +731,10 @@ minus the merge-next count plus the still-apart remainder; `coalesces_four_mod_e
 `GenericCoalesces` is `2^j`-periodic in the start (`genericCoalesces_add_pow_two_mul_iff`,
 `genericCoalesces_iff_mod`, via the cylinder offset `tstep_iterate_pow_two_offset`), so the
 odd-image starts `3r+2` see exactly the uniform count (`oddImage_genericCoalCount`, the bijection
-`r ↦ (3r+2) mod 2^j`); teeth `genericCoalCount = coalCount` at `j ≤ 5`; frozen
+`r ↦ (3r+2) mod 2^j`); teeth `genericCoalCount = coalCount` at `j ≤ 5`; the generic density is
+monotone in the window and converges (`two_mul_genericCoalCount_le`, `genericCoalDensity_mono`,
+`genericCoalDensity_le_one`, **`genericCoalDensity_tendsto`**: `∃ L ≤ 1`, the Haar measure of a
+2-adic open set); frozen
 `NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
 `CoalescenceDensityPositive` 90%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
 for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
@@ -728,7 +744,7 @@ non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a gra
 `PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
 Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
 (verified 2026-10-21; the parity-recursion and periodicity theorems re-verified by my own
-`lake env lean` `#print axioms` runs at ~04:05 and ~04:13); no `native_decide` in the Conjugacy modules.
+`lake env lean` `#print axioms` runs at ~04:05, ~04:13 and ~04:18); no `native_decide` in the Conjugacy modules.
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
