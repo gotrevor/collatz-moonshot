@@ -625,6 +625,36 @@ and orbits of `s ≈ 2^j` take about `j` shortcut steps to reach `1`, so the win
 truncates; `0.409 ≤ L(1)` at `j = 22`, and `L(1) ≤ 0.49` is expected, not proved.  Lean:
 `two_mul_genericCoalCount_le`, `genericCoalDensity_tendsto` (status §10.5).
 
+**Which constant is `L(1)`?  Not the eventual merge density (`mergetime.py`, ~04:20).**  The
+merge-time profile of consecutive pairs `(s, s+1)`, `s < 2^j`, first step `k` with
+`T^k s = T^k(s+1)`, in units of `j`:
+
+| `j` | window `coal_j(1)` (`k ≤ j`) | pre-cycle merge, any `k` | late mass (`k > j`) | in-phase cycle arrival | antiphase forever |
+|---|---|---|---|---|---|
+| 12 | 0.3613 | 0.3965 | 0.035 | 0.3059 | 0.2976 |
+| 14 | 0.3745 | 0.4233 | 0.049 | 0.2893 | 0.2874 |
+| 16 | 0.3853 | 0.4452 | 0.060 | 0.2773 | 0.2775 |
+| 18 | 0.3943 | 0.4631 | 0.069 | 0.2655 | 0.2714 |
+| 20 | 0.4021 | 0.4777 | 0.076 | 0.2577 | 0.2646 |
+| 22 | 0.4090 | 0.4895 | 0.081 | 0.2524 | 0.2581 |
+
+In-phase arrival at the cycle happens at `k ≈ 5.4j` (mean `k/j = 5.3-5.5` at every `j`), outside
+every window, so the window limit never sees it.  The pre-cycle merges beyond the window are not a
+vanishing boundary effect: their mass *grows* with `j` (`0.035 → 0.081`, increments shrinking
+`0.012, 0.011, 0.009, 0.007, 0.005`), the mean merge time `k/j` drifts up (`0.52 → 0.58`), and the
+`(2j, 3j]` bin alone grows `0.002 → 0.022`.  So the limit `L(1)` of `genericCoalDensity_tendsto`
+and the eventual pre-cycle merge density `E(1)` are apparently two different constants: a
+geometric extrapolation of the increments gives `L(1) ≈ 0.45` and `E(1) ≈ 0.54` (40%; the
+increments decay slowly and the extrapolation is crude).  Both the in-phase and the antiphase
+fractions fall with `j` (`0.306 → 0.252`, `0.298 → 0.258`, decrements `≈ 0.005-0.010` per two
+levels and shrinking), so whether *almost all* consecutive integers share their orbit before
+reaching `1` (`E(1) = 1`) or a positive fraction stays apart is open on this evidence; the data
+favour a positive antiphase limit but not strongly.  Known or new?  Garner 1985 and Gao 1993
+concern consecutive integers of equal height, which is the in-phase-or-merged event, not the
+window density; I did not find the three-way fate split or the window/eventual distinction in
+what I could open tonight.  Lean: the window limit is a theorem; the eventual density has no node
+yet (merging at an unbounded step is not a bounded search, so it enters as a `Prop` when wanted).
+
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
 density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne family) live on a
@@ -753,5 +783,6 @@ recursion, the AR(1) reading with `ρ₀(q)`); the conjugacy complexity ladder w
 every zero-entropy input tried; the Collatz-Champernowne family with its conjectured normality
 threshold at `2/(2 − log₂ 3)`; the identification of the beyond-Terras letter autocorrelation with
 orbit coalescence (exact decomposition, merge-next anticorrelation, the parity recursion at even
-distance, and the residue-class mechanism behind its uniform odd-image rate); and the recalibration that the sign of `E_j` is memory, not
+distance, the residue-class mechanism behind its uniform odd-image rate, the convergent window
+density, and the measured gap between it and the eventual merge density); and the recalibration that the sign of `E_j` is memory, not
 arithmetic, at the depth reachable tonight.

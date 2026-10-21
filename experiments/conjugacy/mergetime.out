@@ -1,0 +1,12 @@
+j=12 pre-cycle merge 0.3965 | in-phase cycle 0.3059 | never 0.2976 | pre-cycle merges by k/j:  (0,1] 0.3596  (1,2] 0.0344  (2,3] 0.0024  (3,4] 0.0000  (4,5] 0.0000  (5,6] 0.0000  (6,8] 0.0000  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.3613;  mean k/j at pre-cycle merge = 0.522;  in-phase arrivals: mean k/j = 5.30
+j=14 pre-cycle merge 0.4233 | in-phase cycle 0.2893 | never 0.2874 | pre-cycle merges by k/j:  (0,1] 0.3740  (1,2] 0.0414  (2,3] 0.0064  (3,4] 0.0008  (4,5] 0.0002  (5,6] 0.0004  (6,8] 0.0001  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.3745;  mean k/j at pre-cycle merge = 0.528;  in-phase arrivals: mean k/j = 5.50
+j=16 pre-cycle merge 0.4452 | in-phase cycle 0.2773 | never 0.2775 | pre-cycle merges by k/j:  (0,1] 0.3851  (1,2] 0.0451  (2,3] 0.0105  (3,4] 0.0032  (4,5] 0.0008  (5,6] 0.0002  (6,8] 0.0003  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.3853;  mean k/j at pre-cycle merge = 0.549;  in-phase arrivals: mean k/j = 5.45
+j=18 pre-cycle merge 0.4631 | in-phase cycle 0.2655 | never 0.2714 | pre-cycle merges by k/j:  (0,1] 0.3943  (1,2] 0.0469  (2,3] 0.0156  (3,4] 0.0044  (4,5] 0.0010  (5,6] 0.0004  (6,8] 0.0005  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.3943;  mean k/j at pre-cycle merge = 0.564;  in-phase arrivals: mean k/j = 5.43
+j=20 pre-cycle merge 0.4777 | in-phase cycle 0.2577 | never 0.2646 | pre-cycle merges by k/j:  (0,1] 0.4021  (1,2] 0.0482  (2,3] 0.0194  (3,4] 0.0055  (4,5] 0.0014  (5,6] 0.0007  (6,8] 0.0004  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.4021;  mean k/j at pre-cycle merge = 0.573;  in-phase arrivals: mean k/j = 5.44
+j=22 pre-cycle merge 0.4895 | in-phase cycle 0.2524 | never 0.2581 | pre-cycle merges by k/j:  (0,1] 0.4090  (1,2] 0.0485  (2,3] 0.0219  (3,4] 0.0070  (4,5] 0.0019  (5,6] 0.0009  (6,8] 0.0003  (8,30] 0.0000
+        coal_j(1) [k<=j, any] = 0.4090;  mean k/j at pre-cycle merge = 0.580;  in-phase arrivals: mean k/j = 5.44
