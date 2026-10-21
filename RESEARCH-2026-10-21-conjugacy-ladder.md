@@ -226,9 +226,10 @@ cancellation mechanism.
   2-adic integer.  These are explicit "Collatz-generic" points; a proof would be a normality proof
   for a specific sequence and is out of reach without new structure.
 
-**(3.6) Not yet in Lean:** the mod-3 recursion (3.3), the renormalisation (3.4), and the
-one-bit-short antisymmetry `dev(c) = −dev(c + 2^{K−1})` of §2.2; all three are `decide`-checkable
-at small `m` and routine inductions.  Next-lap targets.
+**(3.6) Lean status after the second half (§10.5):** the mod-3 recursion (3.3) is `bias_succ`
+(`Recursion.lean`, proved), the one-bit-short antisymmetry is `depth_antisymm` (proved, from
+`depth_count`); the renormalisation (3.4) as a measure identity is not in Lean (its mod-3 shadow,
+`biasDecays_iff_classFluct`, is).
 
 ## 5. The ladder, and why Collatz is its bottom rung
 
@@ -242,6 +243,7 @@ maps rung `k` into rung `k`.
 | `ℚ ∩ ℤ₂` | eventually periodic | **Lagarias periodicity conjecture**; converse proved |
 | automatic (Thue-Morse, period-doubling) | normal-looking | C4; "normal" is the opposite end |
 | Sturmian | full-complexity (López-Stoll, to length 5); normal-looking here | C4 |
+| density zero (`Σ 2^{n²}`, `Σ 2^{2^n}`, primes) | normal-looking, both directions | §10.3b, C4c-d |
 | finite-state dim `< 1` (biased coin) | normal-looking | C3 |
 | normal | not necessarily normal (`Q^{−1}` golden-mean) | C3 |
 | Kolmogorov dimension `d` | dimension `d` | **exact**: `Q_k` is a computable bijection on prefixes |
@@ -361,8 +363,11 @@ bibliographies, K-L 2009, López-Stoll 2009)
   strictly more often than `0`.  The digit sequence of the rational `N/3^a` is the parity sequence
   of the halving dynamics `t ↦ t·2^{−1} mod 3^a`, i.e. the binary digits of the real `N/3^a` read
   backwards within each period: the beyond-Terras parity is a *binary digit of a fraction with
-  denominator `3^a`*, Erdős-style, averaged over the structured set of numerators `N_v`.  (Not yet
-  in Lean; routine.)
+  denominator `3^a`*, Erdős-style, averaged over the structured set of numerators `N_v`.  Lean:
+  `bias_eq_one_add_digitSum` (`Digits.lean`, proved; `digitSum j = Σ_{u≠∅} (if s_j then 1 else −1)
+  = −Σ (−1)^{s_j}`), with the per-element lemma `tstep_iterate_even_iff_padicDigit` and the Terras
+  bijection `onesSet_injOn`/`onesSet_surjOn` as theorems.  Also proved there: the digit-letter
+  correlation matrix is diagonal (`corr_diag`, `corr_off`).
 - **Small bands** (`E_{j,a} := Σ_{r<2^j, a(r)=a} (−1)^{T^j r}`): `E_{j,0} = E_{j,j} = 1` (`r = 0`,
   `r = 2^j − 1`), `E_{j,1} = j mod 2` (one odd step at position `d`: `T^j(r) = 1` if `j − d` even,
   `2` if odd), `E_{j,2} = O(j)` (`4, 13` at `j = 8, 26`).
@@ -474,6 +479,31 @@ orbits that reach `1` within `2k` steps (`14.5% → 2.5%`); the beyond-range sin
 `O(1/√k)` relative width - and no finite computation at this size can separate `C = 4` from
 `C = 5`.  The asymptotic claims rest on the stochastic model, not on these numbers.
 
+### 10.3b The sparse rung (`qsparse.py`, `M = 30000`)
+
+Zero-density inputs of a different kind from the automatic and Sturmian ones of §2.4: the
+characteristic words of the squares (`x = Σ 2^{n²}`, not automatic), of the powers of two
+(`Σ 2^{2^n}`, 2-automatic and sparse), and of the primes (density `0.108` at this length).
+`Q` and `Q^{−1}` of all three come out at the iid level (`L = 1..10` deviations `0.001 .. 0.74`
+against the control's `0.007 .. 0.71`; ones-density `0.497-0.503`).  Two readings:
+
+- **A single-orbit Collatz-Champernowne sequence.**  For `x = Σ 2^{n²}` the digits between
+  consecutive ones are `0`, so the letters `w_j`, `n² < j < (n+1)²`, are the pure feedback bits of
+  the *integer* `N_n = Σ_{k≤n} 2^{k²}`: `Q(x)` is the concatenation of the first `2n+1`
+  beyond-Terras letters of the specific integers `N_n`, with no averaging over starts - and it
+  looks normal.  For `Σ 2^{2^n}` the stretch between ones has length `2^n`, the full in-flight
+  window `[k, 2k)` of a `(2^n + 1)`-bit integer: the `C = 2` Champernowne stretch for one integer
+  per stage.  The §10.3 family averages over all `k`-bit integers; here the same statement is
+  being asked of one orbit per stage, and the numerics do not object.
+- **The Collatz number of the primes.**  `Q^{−1}(primes)` is the 2-adic integer whose Collatz
+  parity word is the characteristic word of the primes (an irrational, by López-Stoll: density
+  `0 < log 2/log 3`); its binary digits look normal.  `Q(primes)`, the parity word of
+  `Σ_p 2^p`, likewise.
+
+Frozen as `SquaresCollatzGeneric`, `PrimesCollatzGeneric`, `PrimesQinvNormal` (Ladder.lean,
+C4c-d, 70%).  Rung added to the §5 table: *density zero (Liouville-type, primes)* → normal-looking,
+both directions.
+
 ### 10.4 The sign, recalibrated (`ar1.py`)
 
 The mod-3 recursion `E_m = 2E_{m−1} − 2G_{m−1}(c_m)`, with `G_{m−1}(c_m) = E_{m−1}/3 + ξ_m`, reads
@@ -523,17 +553,17 @@ is established).
 
 ### 10.5 Results that arrived late (`bige_rs`, `drift.py`), and the Lean status
 
-**`E_j` to `j = 37`** (Rust, 16 threads, `u64`; `j = 38` in `u64`, `39-40` in `u128` were running at
-the time of writing - see the survival file / `tmp/…/bige.out`, `bige128.out`):
+**`E_j` to `j = 38`** (Rust, 16 threads, `u64`, 10 min for `j = 38`; `j = 39, 40` in `u128` were
+running at the time of writing - `experiments/conjugacy/bias_rust_j32_38.out`, `bias_rust_j39_40.out`):
 
-| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 |
-|---|---|---|---|---|---|---|---|
-| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 |
-| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 |
-| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
-| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 |
+| `j` | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 |
+|---|---|---|---|---|---|---|---|---|
+| `E_j` | 83458 | 77334 | 83582 | 99598 | 116298 | 180842 | 216810 | 332758 |
+| `E_j/2^{j/2}` | 1.80 | 1.18 | 0.90 | 0.76 | 0.63 | 0.69 | 0.585 | 0.635 |
+| `E_j mod 4` | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| bands `+/−` | | 24/5 | 19/11 | 20/11 | 18/14 | 22/11 | 24/10 | 23/12 |
 
-The normalised bias falls monotonically from `1.80` to `0.585` over six levels - the relaxation
+The normalised bias falls from `1.80` to `0.585` over six levels (then `0.635` at `j = 38`) - the relaxation
 toward `0` that the zero-mean null of §10.4 predicts (`1.80·0.943^6 = 1.27`; the observed fall is
 faster, innovations `−0.52, −0.21, −0.09, −0.09, +0.10, −0.07`).  **The `+0.14` innovation drift
 of §10.4 was a fluctuation**: over `j = 10..37` the mean innovation is `≈ +0.08` (`t ≈ 1.2`), and
@@ -549,6 +579,22 @@ and contradicted by `3x+1`'s own reversal at `j = 32..37`.  Verdict: no establis
 family; the AR(1) null with `ρ₀(q) = (1 + 1/q)/√2` is the working model, and the open statement
 is `BiasDecays`, equivalently `biasDecays_iff_classFluct` (the class-`c_m` signed mass is
 asymptotically one third of the total).
+
+**Lean status (commit after this note).**  `Conjugacy/Ladder.lean` (first half) + four new modules,
+all wired into the root build (`lake build CollatzMoonshot` green): `Recursion.lean` (all proved:
+`bias_succ`, `bias_mod_four`, `bias_ne_zero`, `depth_count`, `depth_antisymm`, `bias_window`,
+`bias_eq_two_mul_card_sub`, `biasDecays_iff_classFluct`), `Bands.lean` (all proved: `card_band`,
+`biasBand_zero/top/one`, `sum_biasBand`, `biasBand_succ_succ_inherit`; frozen `BandCoherence` 60%,
+`BiasQuarterPowerLaw` 25%), `Digits.lean` (all proved: `corr_diag`, `corr_off`,
+`bias_eq_one_add_digitSum`, Terras bijection `onesSet_injOn`/`onesSet_surjOn`),
+`Champernowne.lean` (`concat_apply`, `collatzChampernowne_apply`, `threshold_bounds` proved; three
+believed theorems with `sorry`: `collatzChampernowne_one_normal` 85%, `normal_of_shortIntervalMixing`
+75%, `not_normal_of_earlyArrival` 90%; nodes `ShortIntervalMixing`, `EarlyArrival`,
+`ChampernowneNormalBelowThreshold` 70%, `ChampernowneNotNormalAboveThreshold` 80%,
+`ChampernowneStopNormal` 65%).  Ladder.lean gained `SquaresCollatzGeneric`, `PrimesCollatzGeneric`,
+`PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
+Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
+(verified 2026-10-21); no `native_decide` in the Conjugacy modules.
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at

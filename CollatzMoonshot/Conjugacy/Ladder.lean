@@ -452,4 +452,29 @@ Confidence 65%: the Sturmian input has the lowest possible complexity, so this i
 sharpest form of "the conjugacy manufactures randomness". -/
 def SturmianCollatzGeneric : Prop := Normal (Qword fibonacciWord)
 
+/-- The characteristic word of the squares: the digits of `Σ_n 2^(n²)`, a density-zero,
+non-automatic 2-adic integer (Liouville-type). -/
+def squaresWord (n : ℕ) : Bool := decide (IsSquare n)
+
+/-- The characteristic word of the primes: the digits of `Σ_p 2^p`. -/
+def primesWord (n : ℕ) : Bool := decide (Nat.Prime n)
+
+/-- **Conjecture C4c (the sparse rung).**  `Q` of a density-zero digit sequence is normal.  For
+`x = Σ 2^(n²)` the letters `w_j`, `n² < j < (n+1)²`, are the pure feedback bits of the integer
+`Σ_(k ≤ n) 2^(k²)`, so `Qword squaresWord` is a *single-orbit* Collatz-Champernowne sequence:
+the first `2n+1` beyond-Terras letters of one specific integer per stage, concatenated.
+Numerics (2026-10-21, `experiments/conjugacy/qsparse.py`, `M = 30000`): block deviations at the
+iid level for `Σ 2^(n²)`, `Σ 2^(2^n)` and the primes' characteristic word, in both directions.
+Confidence 70%. -/
+def SquaresCollatzGeneric : Prop := Normal (Qword squaresWord)
+
+/-- **Conjecture C4c'.**  The parity word of `Σ_p 2^p` is normal.  Same numerics. -/
+def PrimesCollatzGeneric : Prop := Normal (Qword primesWord)
+
+/-- **Conjecture C4d (the Collatz number of the primes).**  The 2-adic integer whose Collatz
+parity word is the characteristic word of the primes has normal binary digits.  It is
+irrational (an aperiodic word of 1-density `0 < log 2 / log 3`, López-Stoll 2021).  Numerics as
+above.  Confidence 70%. -/
+def PrimesQinvNormal : Prop := Normal (Qinv primesWord)
+
 end CollatzMoonshot.Conjugacy
