@@ -121,4 +121,5 @@ import CollatzMoonshot.Benchmark.ArcCarryWitness
 import CollatzMoonshot.Benchmark.ArcSolverInclusion
 import CollatzMoonshot.Benchmark.ArcSolverComputable
 import CollatzMoonshot.Benchmark.FlattoCeiling
+import CollatzMoonshot.Conjugacy.Ladder
 import CollatzMoonshot.Maze
