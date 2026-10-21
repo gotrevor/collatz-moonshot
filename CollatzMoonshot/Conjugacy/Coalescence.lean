@@ -66,10 +66,18 @@ up to a remainder from non-merged pairs that is `−0.03 .. −0.01` for every `
   and converges; the limit is the Haar measure of the 2-adic open set of starts that merge
   generically with `s + D`.  Numerically `coal_j(1)` climbs `0.344, 0.361, …, 0.409` over
   `j = 10, 12, …, 22` (`experiments/conjugacy/coalfinal.py`).
+* **Eventual merging** (`EventuallyMerges`): the parity recursion lifts verbatim
+  (`eventuallyMerges_two_mul_iff`, `eventuallyMerges_odd_iff`) and the window count is bounded by
+  the eventual count (`coalCount_le_eventualMergeCount`); the fates of consecutive pairs at
+  `j = 22` (`experiments/conjugacy/mergetime.py`): pre-cycle merge `0.49`, in-phase cycle arrival
+  `0.25`, antiphase forever `0.26`, with the window limit strictly below the eventual density
+  (frozen `WindowLimitLtEventual`, `EventualMergeDensityConverges`,
+  `ConsecutiveAntiphasePositive`).
 * **Frozen conjectures**: `NonCoalescedDecorrelated` (the remainder vanishes in the limit),
-  `LetterCorrIsCoalescence` (equivalent to it, `letterCorrIsCoalescence_iff`), and
+  `LetterCorrIsCoalescence` (equivalent to it, `letterCorrIsCoalescence_iff`),
   `CoalescenceDensityPositive` (a positive fraction of starts merge with `r + d` within the
-  window), a theorem for `d = 1`.
+  window), a theorem for `d = 1`, and the three eventual-merging conjectures
+  `EventualMergeDensityConverges`, `WindowLimitLtEventual`, `ConsecutiveAntiphasePositive`.
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -571,6 +579,73 @@ theorem two_mul_genericCoalCount_four_one_le :
   rw [genericCoalCount_four_one, genericCoalCount_five_one]
   norm_num
 
+/-! ## Eventual merging, and the fates of consecutive pairs -/
+
+/-- `EventuallyMerges s D`: the shortcut orbits of `s` and `s + D` meet at some step - a merge
+before the cycle, or arrival at the cycle `{1, 2}` in phase.  Its negation is "antiphase forever":
+both orbits reach the cycle, but never at the same point at the same time. -/
+def EventuallyMerges (s D : ℕ) : Prop := ∃ k, tstep^[k] s = tstep^[k] (s + D)
+
+/-- A merge inside a window is an eventual merge. -/
+theorem eventuallyMerges_of_coalesces {s D j : ℕ} (h : Coalesces s D j) :
+    EventuallyMerges s D :=
+  let ⟨k, _, hm⟩ := h
+  ⟨k, hm⟩
+
+/-- Eventual merging is coalescence within some window. -/
+theorem eventuallyMerges_iff_exists_coalesces (s D : ℕ) :
+    EventuallyMerges s D ↔ ∃ j, Coalesces s D j :=
+  ⟨fun ⟨k, hk⟩ => ⟨k, k, le_rfl, hk⟩, fun ⟨_, h⟩ => eventuallyMerges_of_coalesces h⟩
+
+/-- The classical seed: `r ≡ 4 (mod 8)` eventually merges with `r + 1`. -/
+theorem eventuallyMerges_four_mod_eight (t : ℕ) : EventuallyMerges (8 * t + 4) 1 :=
+  eventuallyMerges_of_coalesces (coalesces_four_mod_eight t)
+
+/-- **The parity recursion lifts to eventual merging, even case**: with `d ≥ 1`, the pair
+`(2r, 2r + 2d)` eventually merges iff `(r, r + d)` does (`coalesces_two_mul_iff`, over all
+windows). -/
+theorem eventuallyMerges_two_mul_iff {r d : ℕ} (hd : 1 ≤ d) :
+    EventuallyMerges (2 * r) (2 * d) ↔ EventuallyMerges r d := by
+  simp only [eventuallyMerges_iff_exists_coalesces]
+  constructor
+  · rintro ⟨j, h⟩
+    exact ⟨j, (coalesces_two_mul_iff hd).1 (coalesces_mono (Nat.le_succ j) h)⟩
+  · rintro ⟨j, h⟩
+    exact ⟨j + 1, (coalesces_two_mul_iff hd).2 h⟩
+
+/-- **The parity recursion lifts to eventual merging, odd case**: with `d ≥ 1`, the pair
+`(2r + 1, 2r + 1 + 2d)` eventually merges iff `(3r + 2, 3r + 2 + 3d)` does (`coalesces_odd_iff`,
+over all windows). -/
+theorem eventuallyMerges_odd_iff {r d : ℕ} (hd : 1 ≤ d) :
+    EventuallyMerges (2 * r + 1) (2 * d) ↔ EventuallyMerges (3 * r + 2) (3 * d) := by
+  simp only [eventuallyMerges_iff_exists_coalesces]
+  constructor
+  · rintro ⟨j, h⟩
+    exact ⟨j, (coalesces_odd_iff hd).1 (coalesces_mono (Nat.le_succ j) h)⟩
+  · rintro ⟨j, h⟩
+    exact ⟨j + 1, (coalesces_odd_iff hd).2 h⟩
+
+open Classical in
+/-- The number of starts `s < N` whose orbit eventually meets that of `s + D`.  Eventual merging
+is an unbounded search, so the filter uses classical decidability. -/
+noncomputable def eventualMergeCount (N D : ℕ) : ℕ :=
+  ((Finset.range N).filter (fun s => EventuallyMerges s D)).card
+
+/-- **The window count is bounded by the eventual count**: every start that merges inside the
+window `j` eventually merges. -/
+theorem coalCount_le_eventualMergeCount (j D : ℕ) :
+    coalCount j D ≤ eventualMergeCount (2 ^ j) D := by
+  classical
+  unfold coalCount eventualMergeCount
+  refine Finset.card_le_card ?_
+  intro s hs
+  simp only [Finset.mem_filter] at hs ⊢
+  exact ⟨hs.1, eventuallyMerges_of_coalesces hs.2⟩
+
+/-- The eventual merge density `eventualMergeCount N D / N`: the fraction of starts `s < N` whose
+orbit eventually meets that of `s + D`. -/
+noncomputable def eventualMergeDensity (N D : ℕ) : ℝ := (eventualMergeCount N D : ℝ) / N
+
 /-! ## Frozen conjectures -/
 
 /-- **Conjecture (non-merged pairs decorrelate).**  The autocorrelation among pairs that have not
@@ -627,5 +702,33 @@ theorem coalescenceDensityPositive_one :
     ring
   calc (1 / 8 : ℝ) * 2 ^ j = ((2 ^ j / 8 : ℕ) : ℝ) := by rw [hcast]; ring
     _ ≤ (coalCount j 1 : ℝ) := by exact_mod_cast h
+
+/-- **Conjecture (the eventual merge density converges).**  For every `D ≥ 1` the fraction of
+starts `s < N` whose orbit eventually meets that of `s + D` has a limit.  Numerics (2026-10-21,
+`experiments/conjugacy/mergetime.py`, `D = 1`, `N = 2^j`): the density of eventual merging
+(pre-cycle merge plus in-phase cycle arrival) is `0.702, 0.713, 0.723, 0.729, 0.735, 0.742` at
+`j = 12, 14, …, 22`, rising with shrinking increments.  Confidence 80%. -/
+def EventualMergeDensityConverges : Prop :=
+  ∀ D : ℕ, 1 ≤ D → ∃ E : ℝ, Tendsto (fun N => eventualMergeDensity N D) atTop (𝓝 E)
+
+/-- **Conjecture (the window limit is strictly below the eventual density).**  The limit `L` of
+`genericCoalDensity_tendsto` at `D = 1` lies strictly below the eventual merge density `E`:
+in-phase cycle arrival happens at `k ≈ 5.4 j`, outside every window, and the pre-cycle merges
+beyond the window carry a mass that grows with `j` (`0.035 → 0.081` over `j = 12..22`).  Numerics
+(2026-10-21, `experiments/conjugacy/mergetime.py`): window `0.409` against eventual `0.742` at
+`j = 22`.  Confidence 90%. -/
+def WindowLimitLtEventual : Prop :=
+  ∀ L E : ℝ, Tendsto (fun j => genericCoalDensity j 1) atTop (𝓝 L) →
+    Tendsto (fun N => eventualMergeDensity N 1) atTop (𝓝 E) → L < E
+
+/-- **Conjecture (a positive fraction of consecutive pairs stay antiphase forever).**  For a
+positive fraction of starts both orbits of `s` and `s + 1` reach the cycle `{1, 2}`, never in
+phase.  Numerics (2026-10-21, `experiments/conjugacy/mergetime.py`, `N = 2^j`): the antiphase
+fraction falls slowly, `0.298, 0.287, 0.278, 0.271, 0.265, 0.258` at `j = 12, 14, …, 22`, with
+shrinking decrements; whether it tends to `0` (almost all consecutive integers share their orbit)
+or to a positive limit is open on this evidence.  Confidence 55% for a positive limit. -/
+def ConsecutiveAntiphasePositive : Prop :=
+  ∃ ρ : ℝ, 0 < ρ ∧ ∀ᶠ N in atTop, eventualMergeDensity N 1 ≤ 1 - ρ
+
 
 end CollatzMoonshot.Conjugacy

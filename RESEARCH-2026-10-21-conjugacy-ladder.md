@@ -652,8 +652,12 @@ reaching `1` (`E(1) = 1`) or a positive fraction stays apart is open on this evi
 favour a positive antiphase limit but not strongly.  Known or new?  Garner 1985 and Gao 1993
 concern consecutive integers of equal height, which is the in-phase-or-merged event, not the
 window density; I did not find the three-way fate split or the window/eventual distinction in
-what I could open tonight.  Lean: the window limit is a theorem; the eventual density has no node
-yet (merging at an unbounded step is not a bounded search, so it enters as a `Prop` when wanted).
+what I could open tonight.  Lean (~04:25): `EventuallyMerges s D := ∃ k, T^k s = T^k(s+D)`; the
+parity recursion lifts verbatim (`eventuallyMerges_two_mul_iff`, `eventuallyMerges_odd_iff`), the
+window count is bounded by the eventual count (`coalCount_le_eventualMergeCount`, a classical
+filter since eventual merging is an unbounded search), and three frozen nodes carry the numbers:
+`EventualMergeDensityConverges` 80%, `WindowLimitLtEventual` 90%, `ConsecutiveAntiphasePositive`
+55% (status §10.5).
 
 What it does to the ladder: nothing for the mean (merged pairs double the variance, not the
 bias), but it fixes the *second* moment: the walk's variance profile is the integrated coalescence
@@ -764,7 +768,10 @@ odd-image starts `3r+2` see exactly the uniform count (`oddImage_genericCoalCoun
 `r ↦ (3r+2) mod 2^j`); teeth `genericCoalCount = coalCount` at `j ≤ 5`; the generic density is
 monotone in the window and converges (`two_mul_genericCoalCount_le`, `genericCoalDensity_mono`,
 `genericCoalDensity_le_one`, **`genericCoalDensity_tendsto`**: `∃ L ≤ 1`, the Haar measure of a
-2-adic open set); frozen
+2-adic open set); eventual merging `EventuallyMerges` with the parity recursion lifted
+(`eventuallyMerges_two_mul_iff`, `eventuallyMerges_odd_iff`), `eventuallyMerges_four_mod_eight`,
+`coalCount_le_eventualMergeCount`, `eventualMergeDensity`; frozen `EventualMergeDensityConverges`
+80%, `WindowLimitLtEventual` 90%, `ConsecutiveAntiphasePositive` 55%, and the earlier
 `NonCoalescedDecorrelated` 65% ⇔ `LetterCorrIsCoalescence`,
 `CoalescenceDensityPositive` 90%), `Bridges.lean` (all proved: `not_shortIntervalMixing_of_earlyArrival`
 for every `C`, via the `1010…` tail lemma `accWord_of_reaches_one` and the count `2^L − 2` of
@@ -774,7 +781,7 @@ non-alternating blocks; `earlyArrival_mono`).  So the threshold picture is a gra
 `PrimesQinvNormal` (70%) and the recalibrated confidences (`BiasPositive` 25%, `BiasSqrtLaw` 70%).
 Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the agents' `#print axioms`
 (verified 2026-10-21; the parity-recursion and periodicity theorems re-verified by my own
-`lake env lean` `#print axioms` runs at ~04:05, ~04:13 and ~04:18); no `native_decide` in the Conjugacy modules.
+`lake env lean` `#print axioms` runs at ~04:05, ~04:13, ~04:18 and ~04:25); no `native_decide` in the Conjugacy modules.
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
