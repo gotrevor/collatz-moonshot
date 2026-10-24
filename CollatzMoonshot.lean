@@ -128,5 +128,6 @@ import CollatzMoonshot.Conjugacy.Champernowne
 import CollatzMoonshot.Conjugacy.Digits
 import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Conjugacy.Coalescence
+import CollatzMoonshot.Conjugacy.Fourier
 import CollatzMoonshot.Conjugacy.Bridge3
 import CollatzMoonshot.Maze
