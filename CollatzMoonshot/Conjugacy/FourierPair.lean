@@ -87,6 +87,82 @@ the integers, and the second term lies in `[0, 1/q)`.  Checked exhaustively (`pr
 equality attained.  Confidence 99%. -/
 theorem pairTheta_far (ξ k t : ℕ) (h3 : ¬ 3 ^ t ∣ ξ) (hk : ξ < 2 ^ k) (z : ℤ) :
     (1 - (ξ : ℝ) / 2 ^ k) / 3 ^ t ≤ |pairTheta ξ k t - z| := by
-  sorry
+  let q : ℕ := 3 ^ t
+  let N : ℕ := 2 ^ k
+  let a : ZMod N := (3 : ZMod N)⁻¹
+  let X : ℕ := (a ^ t * ξ).val
+  have hqpos : 0 < q := by simp [q]
+  have hNpos : 0 < N := by simp [N]
+  have hcop : Nat.Coprime 3 N := by
+    dsimp only [N]
+    exact Nat.Coprime.pow_right k (by decide)
+  have hunit : IsUnit (3 : ZMod N) := (ZMod.isUnit_iff_coprime 3 N).2 hcop
+  have h3a : (3 : ZMod N) * a = 1 := by
+    simpa only [a] using ZMod.mul_inv_of_unit (3 : ZMod N) hunit
+  have hX : (X : ZMod N) = a ^ t * ξ := by
+    exact ZMod.natCast_zmod_val _
+  have hcast : ((q * X : ℕ) : ZMod N) = (ξ : ZMod N) := by
+    push_cast
+    rw [hX]
+    dsimp only [q]
+    rw [Nat.cast_pow]
+    change (3 : ZMod N) ^ t * (a ^ t * ξ) = ξ
+    calc
+      (3 : ZMod N) ^ t * (a ^ t * ξ) = ((3 : ZMod N) ^ t * a ^ t) * ξ := by ring
+      _ = ξ := by rw [← mul_pow, h3a, one_pow, one_mul]
+  have hzero : ((((q * X : ℕ) : ℤ) - (ξ : ℤ) : ℤ) : ZMod N) = 0 := by
+    push_cast
+    exact sub_eq_zero.mpr (by simpa only [Nat.cast_mul] using hcast)
+  have hdiv : (N : ℤ) ∣ (q * X : ℕ) - (ξ : ℤ) :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).1 hzero
+  let M : ℤ := ((q * X : ℕ) - (ξ : ℤ)) / N
+  have hM : (q * X : ℕ) - (ξ : ℤ) = M * N := by
+    exact (Int.ediv_mul_cancel hdiv).symm
+  have hEq : ((q : ℤ) * X : ℤ) = ξ + N * M := by
+    norm_num only [Nat.cast_mul] at hM
+    calc
+      (q : ℤ) * X = ξ + M * N := by omega
+      _ = ξ + N * M := by ring
+  have hqM : ¬(q : ℤ) ∣ M := by
+    intro hdvd
+    obtain ⟨c, hc⟩ := hdvd
+    apply h3
+    rw [← Int.ofNat_dvd]
+    refine ⟨(X : ℤ) - N * c, ?_⟩
+    rw [hc] at hEq
+    nlinarith
+  let A : ℤ := M - q * z
+  have hA : A ≠ 0 := by
+    intro hAzero
+    apply hqM
+    refine ⟨z, ?_⟩
+    dsimp only [A] at hAzero
+    omega
+  have hAabs : (1 : ℝ) ≤ |(A : ℝ)| := by
+    rw [← Int.cast_abs]
+    exact_mod_cast Int.one_le_abs hA
+  have hquot : (1 : ℝ) / q ≤ |(A : ℝ) / q| := by
+    rw [abs_div, abs_of_pos (by exact_mod_cast hqpos : (0 : ℝ) < q)]
+    exact (div_le_div_iff₀ (by positivity : (0 : ℝ) < q) (by positivity : (0 : ℝ) < q)).2
+      (by nlinarith)
+  have hdelta : 0 ≤ (ξ : ℝ) / ((q : ℝ) * N) := by positivity
+  have hEqR : (q : ℝ) * X = ξ + N * M := by exact_mod_cast hEq
+  have hdecomp :
+      (X : ℝ) / N - z = (A : ℝ) / q + (ξ : ℝ) / ((q : ℝ) * N) := by
+    dsimp only [A]
+    push_cast
+    field_simp [show (q : ℝ) ≠ 0 by positivity, show (N : ℝ) ≠ 0 by positivity]
+    nlinarith
+  have hresult : (1 - (ξ : ℝ) / N) / q ≤ |(X : ℝ) / N - z| := by
+    rw [hdecomp]
+    calc
+      (1 - (ξ : ℝ) / N) / q =
+          1 / q - (ξ : ℝ) / ((q : ℝ) * N) := by field_simp
+      _ ≤ |(A : ℝ) / q| - |(ξ : ℝ) / ((q : ℝ) * N)| := by
+        rw [abs_of_nonneg hdelta]
+        linarith
+      _ ≤ |(A : ℝ) / q + (ξ : ℝ) / ((q : ℝ) * N)| :=
+        abs_sub_abs_le_abs_add _ _
+  simpa only [pairTheta, q, N, a, X, Nat.cast_pow, Nat.cast_ofNat] using hresult
 
 end CollatzMoonshot.Conjugacy
