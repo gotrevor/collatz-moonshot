@@ -1,0 +1,5 @@
+       collatz: mean -0.52210  sd 0.00255  n=5  [-0.52606, -0.51974]
+ random 2-adic: mean -0.51073  sd 0.00295  n=20  [-0.51570, -0.50488]
+    iid phases: mean -0.51220  sd 0.00363  n=20  [-0.51935, -0.50478]
+collatz - random 2-adic: -0.01137  (Welch z = -8.6)
+collatz - iid phases: -0.00990  (Welch z = -7.1)

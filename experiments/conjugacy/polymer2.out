@@ -1,0 +1,10 @@
+collatz       1: slope -0.52314
+collatz       5: slope -0.51974
+collatz       7: slope -0.52606
+collatz      27: slope -0.52289
+collatz     1/3: slope -0.52315
+collatz     5/7: slope -0.52040
+collatz  rand64: slope -0.52117
+collatz panel: mean -0.52237  sd 0.00213  n=7
+iid seeds    : mean -0.51220  sd 0.00363  n=20  min -0.51935 max -0.50478
+difference -0.01017  (Welch z = -8.9)
