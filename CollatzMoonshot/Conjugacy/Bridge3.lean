@@ -190,14 +190,15 @@ private theorem abs_levelSign_le_card (j a : ℕ) :
       Finset.abs_sum_le_sum_abs _ _
     _ = (levelSet j a).card := by simp [abs_paritySign]
 
-private theorem sum_high_levelSet_card (j : ℕ) :
-    ∑ a ∈ (Finset.range (j + 1)).filter (fun a => 11 * j / 20 < a),
-      (levelSet j a).card = (highOddSet j).card := by
+private theorem sum_out_levelSet_card (j : ℕ) :
+    ∑ a ∈ (Finset.range (j + 1)).filter
+        (fun a => 4 * a < j ∨ 11 * j / 20 < a),
+      (levelSet j a).card = (outOddSet j).card := by
   unfold levelSet
   rw [Finset.sum_card_fiberwise_eq_card_filter]
   congr 1
   ext r
-  simp [highOddSet, oddCount_le]
+  simp [outOddSet, oddCount_le]
 
 private theorem sum_levelSet_card (j : ℕ) :
     ∑ a ∈ Finset.range (j + 1), (levelSet j a).card = 2 ^ j := by
@@ -209,10 +210,10 @@ private theorem sum_levelSet_card (j : ℕ) :
     simp [oddCount_le]
   rw [heq, Finset.card_range]
 
-private theorem highOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
-    ((highOddSet j).card : ℝ) / 2 ^ j ≤ 100 / (j : ℝ) := by
+private theorem outOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
+    ((outOddSet j).card : ℝ) / 2 ^ j ≤ 100 / (j : ℝ) := by
   apply (div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 ^ j) (by exact_mod_cast hj)).2
-  have hm := highOddSet_card_mul_sq_le j
+  have hm := outOddSet_card_mul_sq_le j
   have hj' : (0 : ℝ) < j := by exact_mod_cast hj
   nlinarith
 
@@ -229,11 +230,101 @@ def TruncatedSyracMixing : Prop :=
   ∀ ε > (0 : ℝ), ∀ᶠ j in atTop, ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 → ∃ m ≤ a,
     levelOsc j a m ≤ ε * (levelSet j a).card ∧ (3 : ℝ) ^ m ≤ ε * 3 ^ a
 
+private theorem abs_bias_le_of_levelMixing (j : ℕ) {ε : ℝ} (hε : 0 ≤ ε)
+    (hmix : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 → ∃ m ≤ a,
+      levelOsc j a m ≤ ε * (levelSet j a).card ∧ (3 : ℝ) ^ m ≤ ε * 3 ^ a) :
+    |(bias j : ℝ)| ≤ 2 * ε * 2 ^ j + (outOddSet j).card := by
+  let I := Finset.range (j + 1)
+  let L := I.filter (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20)
+  let H := I.filter (fun a => 4 * a < j ∨ 11 * j / 20 < a)
+  have hslice (a : ℕ) (ha : j ≤ 4 * a ∧ a ≤ 11 * j / 20) :
+      |(levelSign j a : ℝ)| ≤ 2 * ε * (levelSet j a).card := by
+    obtain ⟨m, hma, hosc, hpow⟩ := hmix a ha.1 ha.2
+    have hratio : (3 : ℝ) ^ m / 3 ^ a ≤ ε := by
+      apply (div_le_iff₀ (by positivity : (0 : ℝ) < 3 ^ a)).2
+      simpa [mul_comm] using hpow
+    have hred := abs_levelSign_le j a m hma
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    nlinarith
+  have hLcard : ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤ 2 ^ j := by
+    calc
+      ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤
+          ∑ a ∈ I, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+          (fun _ _ _ => by positivity)
+      _ = 2 ^ j := by
+        exact_mod_cast sum_levelSet_card j
+  have hlow : |∑ a ∈ L, (levelSign j a : ℝ)| ≤ 2 * ε * 2 ^ j := by
+    calc
+      |∑ a ∈ L, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ L, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ L, 2 * ε * (levelSet j a).card := by
+        exact Finset.sum_le_sum fun a ha => hslice a (Finset.mem_filter.1 ha).2
+      _ = 2 * ε * ∑ a ∈ L, ((levelSet j a).card : ℝ) := by
+        rw [Finset.mul_sum]
+      _ ≤ 2 * ε * 2 ^ j := mul_le_mul_of_nonneg_left hLcard (by positivity)
+  have hHcard : ∑ a ∈ H, ((levelSet j a).card : ℝ) = (outOddSet j).card := by
+    exact_mod_cast sum_out_levelSet_card j
+  have hhigh : |∑ a ∈ H, (levelSign j a : ℝ)| ≤ (outOddSet j).card := by
+    calc
+      |∑ a ∈ H, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ H, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ H, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum fun a _ => abs_levelSign_le_card j a
+      _ = (outOddSet j).card := hHcard
+  have hpartition :
+      ∑ a ∈ I, (levelSign j a : ℝ) =
+        (∑ a ∈ L, (levelSign j a : ℝ)) +
+          ∑ a ∈ H, (levelSign j a : ℝ) := by
+    have hs := Finset.sum_filter_add_sum_filter_not I
+      (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20) (fun a => (levelSign j a : ℝ))
+    rw [show I.filter (fun a => ¬(j ≤ 4 * a ∧ a ≤ 11 * j / 20)) = H by
+      ext a
+      simp [H]
+      omega] at hs
+    exact hs.symm
+  have hbias : (bias j : ℝ) = ∑ a ∈ I, (levelSign j a : ℝ) := by
+    have hb := congrArg (fun z : ℤ => (z : ℝ)) (bias_eq_sum_levelSign j)
+    simpa [I] using hb
+  rw [hbias, hpartition]
+  exact (abs_add_le _ _).trans (add_le_add hlow hhigh)
+
 /-- **Edge: truncated mixing gives C1.**  Proof owed: split `bias j` by `bias_eq_sum_levelSign`,
 bound slices with `j/4 ≤ a ≤ 11j/20` by `abs_levelSign_le` and the node (total `≤ 2ε·2^j`), and
 the rest by the two binomial tails, `#{r : 4·oddCount r j < j ∨ 11j/20 < oddCount r j} ≤ 100·2^j/j`
 (Chebyshev on `oddDeviation`).  Commit aadd4d6 proved the version for the old one-sided node. -/
 theorem biasDecays_of_truncatedSyracMixing (h : TruncatedSyracMixing) : BiasDecays := by
-  sorry
+  rw [BiasDecays, Metric.tendsto_atTop]
+  intro ε hε
+  have hmix := h (ε / 4) (by positivity)
+  rw [Filter.eventually_atTop] at hmix
+  obtain ⟨J, hJ⟩ := hmix
+  obtain ⟨M, hM⟩ := exists_nat_gt (200 / ε)
+  refine ⟨max J (M + 1), fun j hj => ?_⟩
+  have hjJ : J ≤ j := le_trans (le_max_left _ _) hj
+  have hMj : M + 1 ≤ j := le_trans (le_max_right _ _) hj
+  have hjpos : 0 < j := by omega
+  have hjreal : 200 / ε < (j : ℝ) := by
+    exact hM.trans_le (by exact_mod_cast (show M ≤ j by omega))
+  have htailSmall : 100 / (j : ℝ) < ε / 2 := by
+    have hcross : (200 : ℝ) < ε * j := by
+      rwa [div_lt_iff₀' hε] at hjreal
+    have hjrealpos : (0 : ℝ) < j := by exact_mod_cast hjpos
+    rw [div_lt_iff₀ hjrealpos]
+    nlinarith
+  have habs := abs_bias_le_of_levelMixing j (show 0 ≤ ε / 4 by positivity) (hJ j hjJ)
+  have hpowpos : (0 : ℝ) < 2 ^ j := by positivity
+  have hnorm :
+      |(bias j : ℝ)| / 2 ^ j ≤ ε / 2 + ((outOddSet j).card : ℝ) / 2 ^ j := by
+    apply (div_le_iff₀ hpowpos).2
+    calc
+      |(bias j : ℝ)| ≤
+          2 * (ε / 4) * 2 ^ j + ((outOddSet j).card : ℝ) := habs
+      _ = (ε / 2 + ((outOddSet j).card : ℝ) / 2 ^ j) * 2 ^ j := by
+        field_simp
+        <;> ring
+  have htail := outOddSet_ratio_le j hjpos
+  rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos hpowpos]
+  linarith
 
 end CollatzMoonshot.Conjugacy

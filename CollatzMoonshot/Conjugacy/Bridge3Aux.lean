@@ -104,26 +104,33 @@ theorem sum_oddDeviation_sq_real (j : ℕ) :
     ∑ r ∈ Finset.range (2 ^ j), (oddDeviation r j : ℝ) ^ 2 = (j : ℝ) * 2 ^ j := by
   exact_mod_cast sum_oddDeviation_sq j
 
-/-- The starts whose odd-step count lies above the `11/20` cutoff. -/
-def highOddSet (j : ℕ) : Finset ℕ :=
-  (Finset.range (2 ^ j)).filter (fun r => 11 * j / 20 < oddCount r j)
+/-- The starts whose odd-step count lies outside the mixing band
+`j/4 ≤ oddCount r j ≤ 11j/20`. -/
+def outOddSet (j : ℕ) : Finset ℕ :=
+  (Finset.range (2 ^ j)).filter
+    (fun r => 4 * oddCount r j < j ∨ 11 * j / 20 < oddCount r j)
 
-/-- Chebyshev's inequality for the `11/20` upper tail, in a division-free form. -/
-theorem highOddSet_card_mul_sq_le (j : ℕ) :
-    (highOddSet j).card * (j : ℝ) ^ 2 ≤ 100 * (j : ℝ) * 2 ^ j := by
-  have hlarge (r : ℕ) (hr : r ∈ highOddSet j) :
+/-- Chebyshev's inequality for both tails outside the mixing band, in a division-free form. -/
+theorem outOddSet_card_mul_sq_le (j : ℕ) :
+    (outOddSet j).card * (j : ℝ) ^ 2 ≤ 100 * (j : ℝ) * 2 ^ j := by
+  have hlarge (r : ℕ) (hr : r ∈ outOddSet j) :
       (j : ℝ) ^ 2 ≤ 100 * (oddDeviation r j : ℝ) ^ 2 := by
-    have hcut : 11 * j / 20 < oddCount r j := (Finset.mem_filter.1 hr).2
-    have hz : (j : ℤ) ≤ 10 * oddDeviation r j := by
-      unfold oddDeviation
-      omega
-    have hz' : (j : ℝ) ≤ 10 * (oddDeviation r j : ℝ) := by exact_mod_cast hz
     have hj : (0 : ℝ) ≤ j := by positivity
-    nlinarith [sq_nonneg ((oddDeviation r j : ℝ) * 10 - j)]
+    rcases (Finset.mem_filter.1 hr).2 with hlow | hhigh
+    · have hz : (j : ℤ) ≤ -2 * oddDeviation r j := by
+        unfold oddDeviation
+        omega
+      have hz' : (j : ℝ) ≤ -2 * (oddDeviation r j : ℝ) := by exact_mod_cast hz
+      nlinarith [sq_nonneg (-2 * (oddDeviation r j : ℝ) - j)]
+    · have hz : (j : ℤ) ≤ 10 * oddDeviation r j := by
+        unfold oddDeviation
+        omega
+      have hz' : (j : ℝ) ≤ 10 * (oddDeviation r j : ℝ) := by exact_mod_cast hz
+      nlinarith [sq_nonneg ((oddDeviation r j : ℝ) * 10 - j)]
   calc
-    (highOddSet j).card * (j : ℝ) ^ 2 =
-        ∑ _r ∈ highOddSet j, (j : ℝ) ^ 2 := by simp
-    _ ≤ ∑ r ∈ highOddSet j, 100 * (oddDeviation r j : ℝ) ^ 2 := by
+    (outOddSet j).card * (j : ℝ) ^ 2 =
+        ∑ _r ∈ outOddSet j, (j : ℝ) ^ 2 := by simp
+    _ ≤ ∑ r ∈ outOddSet j, 100 * (oddDeviation r j : ℝ) ^ 2 := by
       exact Finset.sum_le_sum fun r hr => hlarge r hr
     _ ≤ ∑ r ∈ Finset.range (2 ^ j), 100 * (oddDeviation r j : ℝ) ^ 2 := by
       exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
