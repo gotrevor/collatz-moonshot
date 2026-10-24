@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
-import CollatzMoonshot.Conjugacy.Ladder
+import CollatzMoonshot.Conjugacy.Bridge3Aux
 
 /-!
 # The 3-adic bridge for `BiasDecays` (research note §11, 2026-10-24)
@@ -57,6 +57,68 @@ noncomputable def levelOsc (j a m : ℕ) : ℝ :=
   ∑ y ∈ Finset.range (3 ^ a),
     |(levelMass j a y : ℝ) - (3 : ℝ) ^ m / 3 ^ a * levelClass j a m (y % 3 ^ m)|
 
+private theorem levelSign_cast_eq_sum_mass (j a : ℕ) :
+    (levelSign j a : ℝ) =
+      ∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℝ) * paritySign y := by
+  have hfiber := Finset.sum_fiberwise_of_maps_to
+    (s := levelSet j a) (t := Finset.range (3 ^ a)) (g := fun r => tstep^[j] r)
+    (fun r hr => Finset.mem_range.2 (by
+      have hlt := tstep_iterate_lt_three_pow
+        (Finset.mem_range.1 (Finset.mem_filter.1 hr).1)
+      simpa [(Finset.mem_filter.1 hr).2] using hlt))
+    (fun r => paritySign (tstep^[j] r))
+  calc
+    (levelSign j a : ℝ) = ∑ r ∈ levelSet j a, paritySign (tstep^[j] r) := by
+      simp [levelSign, paritySign_eq_ite]
+    _ = ∑ y ∈ Finset.range (3 ^ a),
+        ∑ r ∈ (levelSet j a).filter (fun r => tstep^[j] r = y),
+          paritySign (tstep^[j] r) := hfiber.symm
+    _ = ∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℝ) * paritySign y := by
+      apply Finset.sum_congr rfl
+      intro y hy
+      rw [levelMass]
+      calc
+        ∑ r ∈ (levelSet j a).filter (fun r => tstep^[j] r = y), paritySign (tstep^[j] r) =
+            ∑ _r ∈ (levelSet j a).filter (fun r => tstep^[j] r = y), paritySign y := by
+          apply Finset.sum_congr rfl
+          intro r hr
+          rw [(Finset.mem_filter.1 hr).2]
+        _ = (((levelSet j a).filter (fun r => tstep^[j] r = y)).card : ℝ) * paritySign y := by
+          simp
+
+private theorem sum_levelClass (j a m : ℕ) :
+    ∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) = (levelSet j a).card := by
+  have hfiber := Finset.sum_fiberwise_of_maps_to
+    (s := levelSet j a) (t := Finset.range (3 ^ m))
+    (g := fun r => tstep^[j] r % 3 ^ m)
+    (fun r _ => Finset.mem_range.2 (Nat.mod_lt _ (pow_pos (by omega) _)))
+    (fun _ => (1 : ℝ))
+  calc
+    ∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) =
+        ∑ c ∈ Finset.range (3 ^ m),
+          ∑ r ∈ (levelSet j a).filter (fun r => tstep^[j] r % 3 ^ m = c), (1 : ℝ) := by
+      simp [levelClass]
+    _ = ∑ _r ∈ levelSet j a, (1 : ℝ) := hfiber
+    _ = (levelSet j a).card := by simp
+
+private theorem abs_sum_levelClass_paritySign_le (j a m : ℕ) (hma : m ≤ a) :
+    |∑ y ∈ Finset.range (3 ^ a),
+        (levelClass j a m (y % 3 ^ m) : ℝ) * paritySign y| ≤ (levelSet j a).card := by
+  have halt := sum_mod_three_pow_mul_paritySign
+    (fun c => (levelClass j a m c : ℝ)) m (a - m)
+  have hpow : 3 ^ a = 3 ^ m * 3 ^ (a - m) := by
+    rw [← pow_add, Nat.add_sub_of_le hma]
+  rw [hpow, halt]
+  calc
+    |∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) * paritySign c| ≤
+        ∑ c ∈ Finset.range (3 ^ m),
+          |(levelClass j a m c : ℝ) * paritySign c| := Finset.abs_sum_le_sum_abs _ _
+    _ = ∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) := by
+      apply Finset.sum_congr rfl
+      intro c hc
+      simp [abs_mul, abs_paritySign]
+    _ = (levelSet j a).card := sum_levelClass j a m
+
 /-! **Teeth test.**  Kernel-checked slice values.  The slices of `bias 4 = 6` are `1, 0, 4, 0, 1`,
 and those of `bias 5 = 14` are `1, 1, 4, 4, 3, 1`.  The slice sizes are `C(j, a)` (Terras). -/
 
@@ -69,7 +131,7 @@ theorem levelSet_card_five : (List.range 6).map (fun a => (levelSet 5 a).card) =
 `oddCount r j ∈ range (j+1)`.) -/
 theorem bias_eq_sum_levelSign (j : ℕ) :
     bias j = ∑ a ∈ Finset.range (j + 1), levelSign j a := by
-  sorry
+  exact (sum_biasBand j).symm
 
 /-- **Edge (the reduction).**  The slice's signed count is at most its oscillation at any
 coarser scale, plus the lift term.  Proof owed.  Sketch: compare with the uniform lift
@@ -79,7 +141,79 @@ parities alternate, so `|Σ_y λ(y)(−1)^y| ≤ 3^{m−a}·#slice`; and
 `range (3^a)`).  Verified numerically at every `j ≤ 20`, `a`, `m`. -/
 theorem abs_levelSign_le (j a m : ℕ) (hma : m ≤ a) :
     |(levelSign j a : ℝ)| ≤ levelOsc j a m + (levelSet j a).card * ((3 : ℝ) ^ m / 3 ^ a) := by
-  sorry
+  let q : ℝ := (3 : ℝ) ^ m / 3 ^ a
+  let D : ℝ := ∑ y ∈ Finset.range (3 ^ a),
+    ((levelMass j a y : ℝ) - q * levelClass j a m (y % 3 ^ m)) * paritySign y
+  let U : ℝ := ∑ y ∈ Finset.range (3 ^ a),
+    (levelClass j a m (y % 3 ^ m) : ℝ) * paritySign y
+  have hq : 0 ≤ q := div_nonneg (by positivity) (by positivity)
+  have hdecomp :
+      ∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℝ) * paritySign y = D + q * U := by
+    dsimp [D, U]
+    rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro y hy
+    ring
+  have hD : |D| ≤ levelOsc j a m := by
+    calc
+      |D| ≤ ∑ y ∈ Finset.range (3 ^ a),
+          |((levelMass j a y : ℝ) - q * levelClass j a m (y % 3 ^ m)) * paritySign y| := by
+        exact Finset.abs_sum_le_sum_abs _ _
+      _ = levelOsc j a m := by
+        rw [levelOsc]
+        apply Finset.sum_congr rfl
+        intro y hy
+        simp [q, abs_mul, abs_paritySign]
+  have hU : |U| ≤ (levelSet j a).card := by
+    exact abs_sum_levelClass_paritySign_le j a m hma
+  have hqU : |q * U| ≤ (levelSet j a).card * q := by
+    rw [abs_mul, abs_of_nonneg hq]
+    nlinarith
+  calc
+    |(levelSign j a : ℝ)| =
+        |∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℝ) * paritySign y| := by
+      rw [levelSign_cast_eq_sum_mass]
+    _ = |D + q * U| := by rw [hdecomp]
+    _ ≤ |D| + |q * U| := abs_add_le _ _
+    _ ≤ levelOsc j a m + (levelSet j a).card * q := add_le_add hD hqU
+    _ = levelOsc j a m + (levelSet j a).card * ((3 : ℝ) ^ m / 3 ^ a) := rfl
+
+private theorem abs_levelSign_le_card (j a : ℕ) :
+    |(levelSign j a : ℝ)| ≤ (levelSet j a).card := by
+  calc
+    |(levelSign j a : ℝ)| =
+        |∑ r ∈ levelSet j a, paritySign (tstep^[j] r)| := by
+      congr 1
+      simp [levelSign, paritySign_eq_ite]
+    _ ≤ ∑ r ∈ levelSet j a, |paritySign (tstep^[j] r)| :=
+      Finset.abs_sum_le_sum_abs _ _
+    _ = (levelSet j a).card := by simp [abs_paritySign]
+
+private theorem sum_high_levelSet_card (j : ℕ) :
+    ∑ a ∈ (Finset.range (j + 1)).filter (fun a => 11 * j / 20 < a),
+      (levelSet j a).card = (highOddSet j).card := by
+  unfold levelSet
+  rw [Finset.sum_card_fiberwise_eq_card_filter]
+  congr 1
+  ext r
+  simp [highOddSet, oddCount_le]
+
+private theorem sum_levelSet_card (j : ℕ) :
+    ∑ a ∈ Finset.range (j + 1), (levelSet j a).card = 2 ^ j := by
+  unfold levelSet
+  rw [Finset.sum_card_fiberwise_eq_card_filter]
+  have heq : (Finset.range (2 ^ j)).filter (fun r => oddCount r j ∈ Finset.range (j + 1)) =
+      Finset.range (2 ^ j) := by
+    ext r
+    simp [oddCount_le]
+  rw [heq, Finset.card_range]
+
+private theorem highOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
+    ((highOddSet j).card : ℝ) / 2 ^ j ≤ 100 / (j : ℝ) := by
+  apply (div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 ^ j) (by exact_mod_cast hj)).2
+  have hm := highOddSet_card_mul_sq_le j
+  have hj' : (0 : ℝ) < j := by exact_mod_cast hj
+  nlinarith
 
 /-- **Node: truncated fine-scale mixing.**  Uniformly over slices with `a ≤ 11j/20`, the
 oscillation at some scale `m` with `3^{a−m}` large is a vanishing fraction of the slice.  The
@@ -92,11 +226,100 @@ def TruncatedSyracMixing : Prop :=
   ∀ ε > (0 : ℝ), ∀ᶠ j in atTop, ∀ a ≤ 11 * j / 20, ∃ m ≤ a,
     levelOsc j a m ≤ ε * (levelSet j a).card ∧ (3 : ℝ) ^ m ≤ ε * 3 ^ a
 
+private theorem abs_bias_le_of_levelMixing (j : ℕ) {ε : ℝ} (hε : 0 ≤ ε)
+    (hmix : ∀ a ≤ 11 * j / 20, ∃ m ≤ a,
+      levelOsc j a m ≤ ε * (levelSet j a).card ∧ (3 : ℝ) ^ m ≤ ε * 3 ^ a) :
+    |(bias j : ℝ)| ≤ 2 * ε * 2 ^ j + (highOddSet j).card := by
+  let I := Finset.range (j + 1)
+  let L := I.filter (fun a => a ≤ 11 * j / 20)
+  let H := I.filter (fun a => 11 * j / 20 < a)
+  have hslice (a : ℕ) (ha : a ≤ 11 * j / 20) :
+      |(levelSign j a : ℝ)| ≤ 2 * ε * (levelSet j a).card := by
+    obtain ⟨m, hma, hosc, hpow⟩ := hmix a ha
+    have hratio : (3 : ℝ) ^ m / 3 ^ a ≤ ε := by
+      apply (div_le_iff₀ (by positivity : (0 : ℝ) < 3 ^ a)).2
+      simpa [mul_comm] using hpow
+    have hred := abs_levelSign_le j a m hma
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    nlinarith
+  have hLcard : ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤ 2 ^ j := by
+    calc
+      ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤
+          ∑ a ∈ I, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+          (fun _ _ _ => by positivity)
+      _ = 2 ^ j := by
+        exact_mod_cast sum_levelSet_card j
+  have hlow : |∑ a ∈ L, (levelSign j a : ℝ)| ≤ 2 * ε * 2 ^ j := by
+    calc
+      |∑ a ∈ L, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ L, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ L, 2 * ε * (levelSet j a).card := by
+        exact Finset.sum_le_sum fun a ha => hslice a (Finset.mem_filter.1 ha).2
+      _ = 2 * ε * ∑ a ∈ L, ((levelSet j a).card : ℝ) := by
+        rw [Finset.mul_sum]
+      _ ≤ 2 * ε * 2 ^ j := mul_le_mul_of_nonneg_left hLcard (by positivity)
+  have hHcard : ∑ a ∈ H, ((levelSet j a).card : ℝ) = (highOddSet j).card := by
+    exact_mod_cast sum_high_levelSet_card j
+  have hhigh : |∑ a ∈ H, (levelSign j a : ℝ)| ≤ (highOddSet j).card := by
+    calc
+      |∑ a ∈ H, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ H, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ H, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum fun a _ => abs_levelSign_le_card j a
+      _ = (highOddSet j).card := hHcard
+  have hpartition :
+      ∑ a ∈ I, (levelSign j a : ℝ) =
+        (∑ a ∈ L, (levelSign j a : ℝ)) +
+          ∑ a ∈ H, (levelSign j a : ℝ) := by
+    have hs := Finset.sum_filter_add_sum_filter_not I (fun a => a ≤ 11 * j / 20)
+      (fun a => (levelSign j a : ℝ))
+    rw [show I.filter (fun a => ¬a ≤ 11 * j / 20) = H by
+      ext a
+      simp [H]] at hs
+    exact hs.symm
+  have hbias : (bias j : ℝ) = ∑ a ∈ I, (levelSign j a : ℝ) := by
+    have hb := congrArg (fun z : ℤ => (z : ℝ)) (bias_eq_sum_levelSign j)
+    simpa [I] using hb
+  rw [hbias, hpartition]
+  exact (abs_add_le _ _).trans (add_le_add hlow hhigh)
+
 /-- **Edge: truncated mixing gives C1.**  Proof owed: split `bias j` by `bias_eq_sum_levelSign`,
 bound slices with `a ≤ 11j/20` by `abs_levelSign_le` and the node (total `≤ 2ε·2^j`), and the
 rest by the binomial tail `Σ_{a > 11j/20} C(j,a) = o(2^j)`, using
 `#levelSet j a = C(j,a)` (Terras). -/
 theorem biasDecays_of_truncatedSyracMixing (h : TruncatedSyracMixing) : BiasDecays := by
-  sorry
+  rw [BiasDecays, Metric.tendsto_atTop]
+  intro ε hε
+  have hmix := h (ε / 4) (by positivity)
+  rw [Filter.eventually_atTop] at hmix
+  obtain ⟨J, hJ⟩ := hmix
+  obtain ⟨M, hM⟩ := exists_nat_gt (200 / ε)
+  refine ⟨max J (M + 1), fun j hj => ?_⟩
+  have hjJ : J ≤ j := le_trans (le_max_left _ _) hj
+  have hMj : M + 1 ≤ j := le_trans (le_max_right _ _) hj
+  have hjpos : 0 < j := by omega
+  have hjreal : 200 / ε < (j : ℝ) := by
+    exact hM.trans_le (by exact_mod_cast (show M ≤ j by omega))
+  have htailSmall : 100 / (j : ℝ) < ε / 2 := by
+    have hcross : (200 : ℝ) < ε * j := by
+      rwa [div_lt_iff₀' hε] at hjreal
+    have hjrealpos : (0 : ℝ) < j := by exact_mod_cast hjpos
+    rw [div_lt_iff₀ hjrealpos]
+    nlinarith
+  have habs := abs_bias_le_of_levelMixing j (show 0 ≤ ε / 4 by positivity) (hJ j hjJ)
+  have hpowpos : (0 : ℝ) < 2 ^ j := by positivity
+  have hnorm :
+      |(bias j : ℝ)| / 2 ^ j ≤ ε / 2 + ((highOddSet j).card : ℝ) / 2 ^ j := by
+    apply (div_le_iff₀ hpowpos).2
+    calc
+      |(bias j : ℝ)| ≤
+          2 * (ε / 4) * 2 ^ j + ((highOddSet j).card : ℝ) := habs
+      _ = (ε / 2 + ((highOddSet j).card : ℝ) / 2 ^ j) * 2 ^ j := by
+        field_simp
+        <;> ring
+  have htail := highOddSet_ratio_le j hjpos
+  rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos hpowpos]
+  linarith
 
 end CollatzMoonshot.Conjugacy
