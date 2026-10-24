@@ -2,45 +2,42 @@
 
 ## Checkpoint
 
-Proved `CollatzMoonshot.Conjugacy.lowFreqDecay_of_twoAdicFreqDecay` without changing its frozen
-statement.  The proof now factors through two public helpers in
-`CollatzMoonshot/Conjugacy/Fourier.lean`:
+Proved `CollatzMoonshot.Conjugacy.fourierCoeff_succ` without changing its frozen statement.  The
+proof splits the level-`j+1` numerator into even and odd inputs.  The even half is the level-`j`
+coefficient directly.  For the odd half it proves and uses:
 
-- `fourierCoeff_add_period`: `fourierCoeff j` is periodic in its frequency with period
-  `2^(j+1)`;
-- `padicInt_appr_natCast`: the level-`n` approximant of an embedded natural is its remainder
-  modulo `2^n`.
+- `beyondSign_congr_mod`: the beyond-Terras sign depends only on the input modulo `2^(j+1)`;
+- `sum_affineThreeMod`: when `3u ≡ 1 (mod n)`, the map `s ↦ (3s+2) mod n` permutes `range n`,
+  with the explicit inverse `t ↦ u(t+n-2) mod n`;
+- exact periodicity and phase helpers for the additive character, including the factor
+  `exp(2πi ξ(1-4u)/2^(j+2))`.
 
-For an odd natural frequency `ξ`, the p-adic norm criterion proves `(ξ : ℤ_[2])` is a unit.
-`TwoAdicFreqDecay` therefore supplies convergence along its p-adic approximants, and the two
-helpers identify every term of that sequence with the fixed-frequency coefficient.
-
-Four declarations in the scoped file remain unproved:
+The prior checkpoint's `lowFreqDecay_of_twoAdicFreqDecay` proof remains intact.  Three declarations
+in the scoped file remain unproved:
 
 1. `sum_norm_sq_fourierCoeff`
 2. `bias_div_le_lowFreq_add_tail`
 3. `biasDecays_of_lowFreqDecay`
-4. `fourierCoeff_succ`
 
-Following the kickoff's suggested dependency order, the next target is `fourierCoeff_succ`.
+Following the kickoff's dependency order, the next target is `sum_norm_sq_fourierCoeff`.
 
 ## Verification
 
-- `lake env lean CollatzMoonshot/Conjugacy/Fourier.lean` — passes; only the four pre-existing
-  unresolved declarations warn.
+- `lake env lean CollatzMoonshot/Conjugacy/Fourier.lean` — passes; only the three remaining
+  pre-existing unresolved declarations warn.
 - `git diff --check` — passes.
 - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-fourier --target
-  CollatzMoonshot.Conjugacy.Fourier --axioms
-  CollatzMoonshot.Conjugacy.lowFreqDecay_of_twoAdicFreqDecay` — `FORMALIZE-TIER GREEN`, 8719 jobs;
-  the proved edge has axioms `[Classical.choice, Quot.sound, propext]`.
+  CollatzMoonshot.Conjugacy.Fourier --axioms CollatzMoonshot.Conjugacy.fourierCoeff_succ` —
+  `FORMALIZE-TIER GREEN`, 8719 jobs; the proved recursion has axioms
+  `[Classical.choice, Quot.sound, propext]`.
 
 ## Current blocker and next attack
 
-The next crux is the odd-half reindexing in `fourierCoeff_succ`.  Split the level-`j+1` sum into
-even and odd indices.  The even half reduces directly to `fourierCoeff j ξ`.  For the odd half,
-prove that `beyondSign j` is periodic modulo `2^(j+1)` from
-`tstep_iterate_add_mul_two_pow`, then reindex `s ↦ (3*s+2) % 2^(j+1)` using the supplied inverse
-`u` (`3*u % 2^(j+1)=1`).  The newly proved `fourierCoeff_add_period` handles frequency reductions
-needed by this and later steps.
+The next crux is Parseval in `sum_norm_sq_fourierCoeff`.  Expand both squared norms using complex
+conjugation, interchange the finite sums, and prove the character orthogonality identity over
+`range (2^(j+1))`: the frequency sum is the period at equal residues and zero otherwise.  The
+new `beyondSign_congr_mod` and additive-character periodicity pattern are available, while mathlib's
+`IsPrimitiveRoot.geom_sum_eq_zero` or the `ZMod` DFT/additive-character API should discharge the
+orthogonality leaf.  Finish with `beyondSign j r ∈ {1,-1}`, hence squared modulus one.
 
-No operator decision is needed; this is a hard-but-doable Lean reindexing proof.
+No operator decision is needed; this is a hard-but-doable finite Fourier identity.

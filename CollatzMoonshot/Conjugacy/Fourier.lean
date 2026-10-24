@@ -44,6 +44,17 @@ open Filter Topology CollatzMoonshot.FrontB CollatzMoonshot.Obstructions.ParityW
 /-- The beyond-Terras sign `(−1)^{tstep^[j] r}` as a real number. -/
 def beyondSign (j r : ℕ) : ℝ := if tstep^[j] r % 2 = 0 then 1 else -1
 
+/-- The beyond-Terras sign depends only on its `(j+1)`-bit input truncation. -/
+theorem beyondSign_congr_mod {r s : ℕ} (j : ℕ)
+    (h : r % 2 ^ (j + 1) = s % 2 ^ (j + 1)) :
+    beyondSign j r = beyondSign j s := by
+  have ha := accWord_congr_mod j h
+  simp only [accWord, decide_eq_decide] at ha
+  unfold beyondSign
+  rcases Nat.mod_two_eq_zero_or_one (tstep^[j] r) with hr | hr <;>
+    rcases Nat.mod_two_eq_zero_or_one (tstep^[j] s) with hs | hs <;>
+    simp [hr, hs] at ha ⊢
+
 /-- The Fourier coefficient `G_j(ξ) = 2^{−(j+1)} Σ_{r < 2^(j+1)} g_j(r) e(ξ r / 2^(j+1))` of the
 beyond-Terras sign on `ℤ / 2^(j+1)`. -/
 noncomputable def fourierCoeff (j ξ : ℕ) : ℂ :=
@@ -116,6 +127,145 @@ their sum is eventually below `ε/2`; conclude by `bias_div_le_lowFreq_add_tail`
 theorem biasDecays_of_lowFreqDecay (h : LowFreqDecay) : BiasDecays := by
   sorry
 
+private theorem affineThreeMod_left (n u s : ℕ) (hn : 2 ≤ n)
+    (hu : 3 * u % n = 1) (hs : s < n) :
+    (u * ((3 * s + 2) % n + n - 2)) % n = s := by
+  have hu' : 3 * u ≡ 1 [MOD n] := by
+    show (3 * u) % n = 1 % n
+    rw [hu, Nat.mod_eq_of_lt (by omega)]
+  have hf : 3 * s + 2 ≡ (3 * s + 2) % n [MOD n] := (Nat.mod_modEq _ _).symm
+  have hfn : (3 * s + 2) % n ≡ (3 * s + 2) % n + n [MOD n] := by
+    simp [Nat.ModEq]
+  have hsum : 3 * s + 2 ≡ ((3 * s + 2) % n + n - 2) + 2 [MOD n] := by
+    have heq : (3 * s + 2) % n + n = ((3 * s + 2) % n + n - 2) + 2 := by
+      omega
+    rw [← heq]
+    exact hf.trans hfn
+  have hbase : 3 * s ≡ (3 * s + 2) % n + n - 2 [MOD n] :=
+    Nat.ModEq.add_right_cancel (Nat.ModEq.refl 2) hsum
+  have huv : u * (3 * s) ≡ s [MOD n] := by
+    calc
+      u * (3 * s) = (3 * u) * s := by ring
+      _ ≡ 1 * s [MOD n] := hu'.mul (Nat.ModEq.refl s)
+      _ = s := by simp
+  have hmod : u * ((3 * s + 2) % n + n - 2) ≡ s [MOD n] :=
+    (hbase.mul_left u).symm.trans huv
+  show (u * ((3 * s + 2) % n + n - 2)) % n = s
+  change (u * ((3 * s + 2) % n + n - 2)) % n = s % n at hmod
+  simpa [Nat.mod_eq_of_lt hs] using hmod
+
+private theorem affineThreeMod_right (n u t : ℕ) (hn : 2 ≤ n)
+    (hu : 3 * u % n = 1) (ht : t < n) :
+    (3 * ((u * (t + n - 2)) % n) + 2) % n = t := by
+  have hu' : 3 * u ≡ 1 [MOD n] := by
+    show (3 * u) % n = 1 % n
+    rw [hu, Nat.mod_eq_of_lt (by omega)]
+  have hg : (u * (t + n - 2)) % n ≡ u * (t + n - 2) [MOD n] := Nat.mod_modEq _ _
+  have hmul : 3 * ((u * (t + n - 2)) % n) ≡ t + n - 2 [MOD n] := by
+    calc
+      3 * ((u * (t + n - 2)) % n) ≡ 3 * (u * (t + n - 2)) [MOD n] :=
+        hg.mul_left 3
+      _ = (3 * u) * (t + n - 2) := by ring
+      _ ≡ 1 * (t + n - 2) [MOD n] := hu'.mul (Nat.ModEq.refl _)
+      _ = t + n - 2 := by simp
+  have hadd := hmul.add_right 2
+  have heq : t + n - 2 + 2 = t + n := by omega
+  rw [heq] at hadd
+  have htn : t + n ≡ t [MOD n] := by
+    simp [Nat.ModEq]
+  have hmod := hadd.trans htn
+  show (3 * ((u * (t + n - 2)) % n) + 2) % n = t
+  change (3 * ((u * (t + n - 2)) % n) + 2) % n = t % n at hmod
+  simpa [Nat.mod_eq_of_lt ht] using hmod
+
+/-- If `3u = 1 (mod n)`, the affine map `s ↦ 3s+2` permutes the residues modulo `n`. -/
+theorem sum_affineThreeMod {M : Type*} [AddCommMonoid M]
+    (F : ℕ → M) (n u : ℕ) (hn : 2 ≤ n) (hu : 3 * u % n = 1) :
+    ∑ s ∈ Finset.range n, F ((3 * s + 2) % n) = ∑ t ∈ Finset.range n, F t := by
+  apply Finset.sum_nbij' (fun s => (3 * s + 2) % n) (fun t => (u * (t + n - 2)) % n)
+  · intro s hs
+    simp only [Finset.mem_range] at hs ⊢
+    exact Nat.mod_lt _ (by omega)
+  · intro t ht
+    simp only [Finset.mem_range] at ht ⊢
+    exact Nat.mod_lt _ (by omega)
+  · intro s hs
+    simp only [Finset.mem_range] at hs
+    exact affineThreeMod_left n u s hn hu hs
+  · intro t ht
+    simp only [Finset.mem_range] at ht
+    exact affineThreeMod_right n u t hn hu ht
+  · intro s hs
+    rfl
+
+private theorem fourierChar_arg_add_period (n ξ r k : ℕ) (hn : 0 < n) :
+    Complex.exp (2 * Real.pi * Complex.I * ξ * (r + n * k) / n) =
+      Complex.exp (2 * Real.pi * Complex.I * ξ * r / n) := by
+  rw [show
+      2 * Real.pi * Complex.I * (ξ : ℂ) * ((r : ℂ) + (n : ℂ) * (k : ℂ)) / (n : ℂ) =
+        2 * Real.pi * Complex.I * (ξ : ℂ) * (r : ℂ) / (n : ℂ) +
+          ((ξ * k : ℕ) : ℂ) * (2 * Real.pi * Complex.I) by
+    push_cast
+    field_simp [show (n : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hn)]]
+  rw [Complex.exp_add, Complex.exp_periodic.nat_mul_eq]
+  simp
+
+private theorem fourierChar_arg_congr_mod (n ξ r s : ℕ) (hn : 0 < n)
+    (h : r % n = s % n) :
+    Complex.exp (2 * Real.pi * Complex.I * ξ * r / n) =
+      Complex.exp (2 * Real.pi * Complex.I * ξ * s / n) := by
+  conv_lhs => rw [← Nat.mod_add_div r n]
+  conv_rhs => rw [← Nat.mod_add_div s n]
+  push_cast
+  rw [fourierChar_arg_add_period _ _ _ _ hn, fourierChar_arg_add_period _ _ _ _ hn, h]
+
+private theorem fourierOddPhase (n ξ u s : ℕ) (hn : 0 < n) (hu : 3 * u % n = 1) :
+    Complex.exp (2 * Real.pi * Complex.I * ξ * (2 * s + 1) / (2 * n)) =
+      Complex.exp (2 * Real.pi * Complex.I * ξ * (1 - 4 * (u : ℂ)) / (2 * n)) *
+        Complex.exp (2 * Real.pi * Complex.I * (u * ξ) * (3 * s + 2) / n) := by
+  have hq : 3 * u = 1 + n * (3 * u / n) := by
+    conv_lhs => rw [← Nat.mod_add_div (3 * u) n]
+    rw [hu]
+  have hqC : (3 : ℂ) * (u : ℂ) = 1 + (n : ℂ) * (3 * u / n : ℕ) := by
+    exact_mod_cast hq
+  rw [← Complex.exp_add]
+  rw [show
+      2 * Real.pi * Complex.I * (ξ : ℂ) * (1 - 4 * (u : ℂ)) / (2 * (n : ℂ)) +
+          2 * Real.pi * Complex.I * ((u : ℂ) * (ξ : ℂ)) * (3 * (s : ℂ) + 2) / (n : ℂ) =
+        2 * Real.pi * Complex.I * (ξ : ℂ) * (2 * (s : ℂ) + 1) / (2 * (n : ℂ)) +
+          ((ξ * s * (3 * u / n) : ℕ) : ℂ) * (2 * Real.pi * Complex.I) by
+    push_cast
+    field_simp [show (n : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hn)]
+    linear_combination (2 * (ξ : ℂ) * (s : ℂ)) * hqC]
+  rw [Complex.exp_add, Complex.exp_periodic.nat_mul_eq]
+  simp
+
+private theorem sum_range_even_odd {M : Type*} [AddCommMonoid M] (g : ℕ → M) (n : ℕ) :
+    ∑ r ∈ Finset.range (2 * n), g r = ∑ s ∈ Finset.range n, (g (2 * s) + g (2 * s + 1)) := by
+  induction n with
+  | zero => simp
+  | succ k ih =>
+    rw [Nat.mul_succ, Finset.sum_range_succ, Finset.sum_range_succ, ih, Finset.sum_range_succ,
+      add_assoc]
+
+private theorem beyondSign_succ_even (j s : ℕ) :
+    beyondSign (j + 1) (2 * s) = beyondSign j s := by
+  unfold beyondSign
+  rw [Function.iterate_succ_apply]
+  have ht : tstep (2 * s) = s := by
+    unfold tstep
+    split_ifs <;> omega
+  rw [ht]
+
+private theorem beyondSign_succ_odd (j s : ℕ) :
+    beyondSign (j + 1) (2 * s + 1) = beyondSign j (3 * s + 2) := by
+  unfold beyondSign
+  rw [Function.iterate_succ_apply]
+  have ht : tstep (2 * s + 1) = 3 * s + 2 := by
+    unfold tstep
+    split_ifs <;> omega
+  rw [ht]
+
 /-- **The mirror recursion.**  With `3u ≡ 1 (mod 2^(j+1))`,
 `G_{j+1}(ξ) = ½ G_j(ξ) + ½ e(ξ (1 − 4u) / 2^(j+2)) G_j(u ξ)`.
 
@@ -134,7 +284,74 @@ theorem fourierCoeff_succ (j ξ u : ℕ) (hu : 3 * u % 2 ^ (j + 1) = 1) :
         (1 / 2 : ℂ) *
             Complex.exp (2 * Real.pi * Complex.I * ξ * (1 - 4 * (u : ℂ)) / 2 ^ (j + 2)) *
           fourierCoeff j (u * ξ) := by
-  sorry
+  let n := 2 ^ (j + 1)
+  have hn : 0 < n := by simp [n]
+  have hn2 : 2 ≤ n := by
+    have hp : 0 < 2 ^ j := Nat.pow_pos (n := j) (by omega)
+    simp only [n, pow_succ]
+    omega
+  let A : ℂ := Complex.exp
+    (2 * Real.pi * Complex.I * ξ * (1 - 4 * (u : ℂ)) / (2 * n))
+  let F : ℕ → ℂ := fun t =>
+    (beyondSign j t : ℂ) * Complex.exp (2 * Real.pi * Complex.I * (u * ξ) * t / n)
+  have hFmod (r : ℕ) : F (r % n) = F r := by
+    unfold F
+    congr 1
+    · exact_mod_cast beyondSign_congr_mod j (by simp [n])
+    · simpa only [Nat.cast_mul] using
+        fourierChar_arg_congr_mod n (u * ξ) (r % n) r hn (Nat.mod_mod r n)
+  have hodd :
+      ∑ s ∈ Finset.range n,
+          (beyondSign (j + 1) (2 * s + 1) : ℂ) *
+            Complex.exp (2 * Real.pi * Complex.I * ξ * (2 * s + 1) / (2 * n)) =
+        A * ∑ t ∈ Finset.range n, F t := by
+    rw [Finset.mul_sum]
+    calc
+      _ = ∑ s ∈ Finset.range n, A * F (3 * s + 2) := by
+        apply Finset.sum_congr rfl
+        intro s hs
+        rw [beyondSign_succ_odd, fourierOddPhase n ξ u s hn hu]
+        simp only [A, F]
+        push_cast
+        ring
+      _ = ∑ s ∈ Finset.range n, A * F ((3 * s + 2) % n) := by
+        apply Finset.sum_congr rfl
+        intro s hs
+        rw [hFmod]
+      _ = _ := by
+        simpa only [Finset.mul_sum] using
+          congrArg (A * ·) (sum_affineThreeMod F n u hn2 hu)
+  have heven :
+      ∑ s ∈ Finset.range n,
+          (beyondSign (j + 1) (2 * s) : ℂ) *
+            Complex.exp (2 * Real.pi * Complex.I * ξ * (2 * s) / (2 * n)) =
+        ∑ s ∈ Finset.range n,
+          (beyondSign j s : ℂ) * Complex.exp (2 * Real.pi * Complex.I * ξ * s / n) := by
+    apply Finset.sum_congr rfl
+    intro s hs
+    rw [beyondSign_succ_even]
+    congr 1
+    congr 1
+    field_simp [show (n : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hn)]
+  unfold fourierCoeff
+  have hpowN : 2 ^ (j + 2) = 2 * n := by simp [n, pow_succ, mul_comm]
+  have hbaseN : 2 ^ (j + 1) = n := rfl
+  have hnC : (2 : ℂ) ^ (j + 1) = (n : ℂ) := by simp [n]
+  have hpowC : (2 : ℂ) ^ (j + 2) = 2 * (n : ℂ) := by
+    rw [pow_succ, hnC]
+    ring
+  change
+    ((2 : ℂ) ^ (j + 2))⁻¹ *
+        ∑ r ∈ Finset.range (2 ^ (j + 2)),
+          (beyondSign (j + 1) r : ℂ) *
+            Complex.exp (2 * Real.pi * Complex.I * ξ * r / 2 ^ (j + 2)) = _
+  rw [hpowN, hpowC, hnC, hbaseN]
+  rw [sum_range_even_odd, Finset.sum_add_distrib]
+  push_cast
+  rw [heven, hodd]
+  simp only [A, F, n]
+  simp only [mul_inv_rev]
+  ring
 
 /-- **Node: decay at every fixed odd 2-adic frequency.**  For each `2`-adic unit `η`, the
 coefficient at its truncation `η mod 2^(j+1)` tends to `0`.  Unrolling the first branch of
