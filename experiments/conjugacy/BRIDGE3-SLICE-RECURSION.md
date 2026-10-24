@@ -94,3 +94,18 @@ in the window `SliceCharDecay` needs (`p ≤ 3/5`), the pairing bound decays ste
 `Pascal(p)`.  The slowing above 0.7 fits a threshold near 0.63–0.7, but `n ≤ 14` cannot place
 it.  This supports the edge `SliceCharDecay ⇐ Prop 7.3 at Pascal(p)`; it is not a proof of
 Prop 7.3 there.
+
+## The geometric threshold is Collatz contraction (2026-10-24)
+
+Tao's §7 needs the renewal walk to cross the black triangles transversally.  His walk climbs
+4 in `l` per pair against a hypotenuse slope `log 9/log 2 ≈ 3.17`, and the budget (7.52)
+uses the ratio `≈ 0.79 < 1`.  At pair-sum law `Pascal(p)` the climb is `2/p`, so the condition is
+`p·log₂ 3 < 1`, i.e. `3^a < 2^j` for slices with `a/j = p`.  That is the condition that the slice
+contracts.  It is a different threshold from the entropy cutoff (`a/j ≈ 0.609`, where
+`#slice ≈ 3^a`), though the two are close.  The window `a/j ≤ 3/5` passes both, with a thin
+geometric margin at the top (`0.6·log₂ 3 = 0.951`).  The window can be narrowed: sub-slice
+fluctuations are `O(j^{−1/2})` relative, so any fixed margin suffices.
+
+personal-2c (§12, eaa011a) found that the 2-adic mirror walk fails the same check: one step of `t`
+per pair against slope `log 4/log 3 ≈ 1.26`.  So the ratio `½ < log 2/log 3` helps the 3-adic route
+and hurts the 2-adic one, and the 3-adic route is the live route to C1.
