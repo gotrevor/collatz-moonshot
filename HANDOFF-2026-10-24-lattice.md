@@ -1,9 +1,10 @@
 # Fourier lattice treadmill handoff — 2026-10-24
 
-## Current checkpoint
+## Final checkpoint
 
-The first kickoff stage is complete: all three frozen edge statements in
-`CollatzMoonshot/Conjugacy/FourierSup.lean` are proved.
+The kickoff is complete.  All five frozen statements are unchanged and proved, and both
+`CollatzMoonshot/Conjugacy/FourierSup.lean` and
+`CollatzMoonshot/Conjugacy/FourierLattice.lean` are sorry-free.
 
 - `lowFreqDecay_of_fixedFreqExpDecay` rewrites the exponential majorant as a geometric
   sequence with ratio `2^(-(1/2+δ)) < 1` and squeezes the coefficient norms to zero.
@@ -13,9 +14,12 @@ The first kickoff stage is complete: all three frozen edge statements in
   is odd: otherwise both the approximation error and the approximant are divisible by `2`,
   contradicting the unit norm.
 
-The two frozen lattice statements remain open.  The next attack is
-`fourierCoeff_eq_latticeCoeff`, by the prescribed induction on the level, followed by its
-`m = 0` corollary.
+- `fourierCoeff_eq_latticeCoeff` is proved by induction on the level.  Reduction through
+  `ZMod.castHom` preserves `3⁻¹`, giving the two lower-level frequencies.  In the phase,
+  `3a = 1` for `a = 3⁻¹` gives `x(1-4a) = -ax` modulo `2^(n+2)`; integer-periodicity of
+  the complex exponential turns this congruence into exactly `latticePhase`.
+- `fourierCoeff_eq_latticeCoeff_zero` specializes the formula at `m = 0` and uses the
+  `2^(j+1)` frequency periodicity to replace the canonical `ZMod` representative by `ξ`.
 
 ## Verification
 
@@ -35,7 +39,23 @@ Exact checkpoint gate:
 All three declarations report exactly `[propext, Classical.choice, Quot.sound]` (sorted order
 varies in the gate output).
 
-## Current blocker
+Exact lattice gate:
 
-No external blocker.  The remaining crux is the modular-arithmetic and complex-phase alignment
-in the induction step of `fourierCoeff_eq_latticeCoeff`.
+```text
+~/personal/bin/lean-green ~/src/collatz-moonshot-fourier \
+  --target CollatzMoonshot.Conjugacy.FourierLattice \
+  --import CollatzMoonshot.Conjugacy.FourierLattice \
+  --axioms CollatzMoonshot.Conjugacy.fourierCoeff_eq_latticeCoeff \
+  --axioms CollatzMoonshot.Conjugacy.fourierCoeff_eq_latticeCoeff_zero
+
+✅ FORMALIZE-TIER GREEN
+```
+
+Both lattice declarations report exactly `[propext, Classical.choice, Quot.sound]`.  `rg` finds
+no `sorry`, `sorryAx`, `native_decide`, or declared axiom in either scoped module.
+
+## Current blocker and next attack
+
+None.  The host predicate `sorry-free:CollatzMoonshot/Conjugacy/FourierLattice.lean` and the full
+ordered kickoff objective are met.  No stretch objective was authorized; preserve this green
+checkpoint and return to the operator.
