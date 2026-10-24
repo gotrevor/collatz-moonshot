@@ -907,3 +907,67 @@ density, and the measured gap between it and the eventual merge density); the Wa
 beyond-Terras letter in the parity-word basis, with its exact geometric reach (the √-law at every
 cylinder depth); and the recalibration that the sign of `E_j` is memory, not
 arithmetic, at the depth reachable tonight.
+
+## 11. The 3-adic bridge: `BiasDecays` from truncated fine-scale mixing (2026-10-24, Ren on Opus 5.5)
+
+§10.6 withdrew the Tao bridge because "our conjectures are signed statements … Tao's law says
+nothing about that weight".  On the 3-adic side that is not so.  The sign is a function of the
+Syracuse value itself.
+
+**The identification (exact).**  For `r < 2^j` with `a = oddCount r j`, `T^j r < 3^a`
+(`tstep_iterate_lt_three_pow`), and `T^j r ≡ Σ_{k=1}^{a} 3^{k−1} 2^{−T_k} (mod 3^a)`, where
+`T_k = j − d_{a+1−k}` and `d_1 < … < d_a` are the odd-step times.  So `T^j r` is the least residue
+of Tao's Syracuse variable at level `a`.  By Terras the word is uniform, so given `a` the set
+`{T_k}` is a uniform `a`-subset of `[1, j]`.  That is iid geometric gaps sliced at
+`T_a ≤ j < T_{a+1}`, and the slice is the same for every gap parameter `p`.
+
+**The reduction (exact; `Bridge3.lean` `abs_levelSign_le`, proof owed).**  Write `μ_{j,a}` for
+the slice law on `ℤ/3^a`.  For every `m ≤ a`,
+
+    |E_{μ_{j,a}} (−1)^{T^j r}|  ≤  osc_{m,a}(μ_{j,a}) + 3^{m−a},
+
+because the `3^{a−m}` lifts `c + 3^m t` of a least residue alternate in parity.
+`experiments/conjugacy/fsm_bridge.py` checks it at every `j ≤ 20`, every `a` in the binomial
+bulk, and every `m`, with no violation.  It also reproduces `E_16 = 362` and `E_20 = 1042`.
+The best bound at `a ≈ j/2` is `0.375` (`j = 16`) and `0.291` (`j = 20`), falling at
+polynomial speed.  At high `a` it degenerates: past `a/j ≈ 0.63` the slice has about `3^a`
+atoms or fewer and cannot mix, but that range has mass `≲ e^{−0.034 j}`.
+
+**The input it needs, measured (`twisted_charfn.py`).**  Fine-scale mixing for a sliced law
+follows, as in Tao's deduction of Prop 1.14 from 1.17, from characteristic-function decay
+**twisted by `e(θ T_n)`, uniformly in `θ`**.  Exact via Tao's recursion plus the twist,
+`φ_n(ξ, θ) = Σ_g P(g) e(θg) e(ξ 2^{−g}/3^n) φ_{n−1}(ξ 2^{−g}, θ)`:
+
+| `n` | `sup_ξ |φ_n|`, `θ = 0` (Tao, control) | `sup_{ξ, θ} |φ_n|` |
+|---|---|---|
+| 5 | 0.129 | 0.145 |
+| 8 | 0.061 | 0.066 |
+| 10 | 0.038 | 0.048 |
+| 11 | 0.032 | 0.042 |
+
+The twist costs a bounded factor and the decay continues.  No `θ` resonates.  The worst `ξ` are
+powers of 2: the 3-adic mirror of §10.6's `3^k` chain, and here harmless.  Tilted gap laws,
+needed for `a` away from `j/2`, behave as entropy predicts.  At `p = 0.4` (mean gap 2.5) the
+decay is fast, `0.018` at `n = 9`.  At `p = 0.6` (mean 1.67, entropy 1.62 bits, just above
+`log₂ 3 = 1.585`) it is slow, `0.143`.
+
+**The graph (`Bridge3.lean`).**
+
+- **Node `TwistedSyracCharDecay` (prose):** for gap laws in an entropy-safe range,
+  `sup_θ |E e(ξ X_n/3^n + θ T_n)| ≪_A n^{−A}` uniformly in `ξ` prime to 3.  Odds: 75% true,
+  35% that Tao's §6-7 proof adapts.  It uses memorylessness, which every geometric law has, and
+  `|e(θg)| = 1`.
+- **Node `TruncatedSyracMixing` (Lean):** slice fine-scale mixing for `a ≤ 11j/20`.  80% true.
+- **Edges, proofs owed:** `abs_levelSign_le` (elementary), `bias_eq_sum_levelSign` (fiberwise
+  sum), and `biasDecays_of_truncatedSyracMixing` (adds the binomial tail).  The missing middle
+  edge is `TwistedSyracCharDecay ⇒ TruncatedSyracMixing`, Tao's 1.17 ⇒ 1.14 deduction for a
+  sliced law.
+- **Teeth:** `levelSign_four`, `levelSign_five` and `levelSet_card_five` are kernel-checked.
+
+**What changes.**  C1 is no longer "mechanism: none".  It now sits on the almost-all side of
+Collatz, where Tao's methods live.  The obstruction §10.6 found, the deterministic `×3`
+resonance, belongs to the 2-adic Fourier picture and does not arise here.  The sign `E_j > 0`
+(C2b) stays unexplained: mixing bounds give `|b_j| → 0` at polynomial rate at best, nowhere near
+`2^{−j/2}`.  So this route reaches C1 and nothing finer.  Known or new: I have not seen the
+identification of the beyond-Terras bias with a sliced Syracuse least-residue parity; not
+searched.
