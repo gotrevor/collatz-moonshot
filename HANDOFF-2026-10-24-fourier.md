@@ -2,43 +2,39 @@
 
 ## Checkpoint
 
-Proved `CollatzMoonshot.Conjugacy.bias_div_le_lowFreq_add_tail` without changing its frozen
-statement.  The quantitative reduction now follows the docstring's finite Fourier argument:
+Proved `CollatzMoonshot.Conjugacy.biasDecays_of_lowFreqDecay` without changing its frozen
+statement.  The proof follows the advertised finite-frequency epsilon argument:
 
-- `beyondSign_add_half_period` proves the exact half-period sign flip, and
-  `fourierCoeff_eq_zero_of_even` kills the even Fourier frequencies;
-- `bias_eq_fourier_window` and `bias_eq_sum_range_fourier_window` identify `bias` with the DFT
-  pairing against the first-half indicator;
-- `norm_half_geom_sum_le` evaluates the odd half-window geometric sum and applies Jordan's sine
-  inequality, while the two conjugate-symmetry lemmas pair positive and negative frequencies;
-- `bias_div_le_weighted_fourier` gives the weighted finite-frequency bound;
-- `two_mul_sum_sq_fourierCoeff_Ico_le`, Parseval, finite Cauchy–Schwarz, and
-  `sum_Ioc_inv_sq_le_sub` give the sharp `sqrt (2 / K)` tail.
+- the real sequence `K ↦ sqrt (2 / K)` tends to zero by composing division at infinity with
+  continuity of `Real.sqrt`, so a fixed `K ≥ 1` makes the tail smaller than `ε / 2`;
+- `LowFreqDecay` makes each weighted coefficient `2 * ‖fourierCoeff j ξ‖ / ξ` tend to zero, and
+  `tendsto_finsetSum` combines this over the finite set of odd `ξ ≤ K`;
+- `bias_div_le_lowFreq_add_tail` then bounds the normalized absolute bias by two terms smaller
+  than `ε / 2`.
 
-The earlier `lowFreqDecay_of_twoAdicFreqDecay`, `fourierCoeff_succ`, and
-`sum_norm_sq_fourierCoeff` proofs remain intact.  One declaration in the scoped file remains
-unproved:
+The review reconstructed the route from the frozen source, kickoff, history, and current proof
+dependencies.  The quantitative reduction is exactly the load-bearing input for this last edge;
+no route correction was needed, and the five frozen statements plus `LowFreqDecay`,
+`TwoAdicFreqDecay`, `fourierCoeff`, and `beyondSign` retain their original shapes.
 
-1. `biasDecays_of_lowFreqDecay`
-
-Following the kickoff's dependency order, this final declaration is the next target.
+All five declarations assigned by `KICKOFF-2026-10-24-fourier.md` are now proved, and
+`CollatzMoonshot/Conjugacy/Fourier.lean` is sorry-free.
 
 ## Verification
 
-- `lake env lean CollatzMoonshot/Conjugacy/Fourier.lean` — passes; the only unresolved
-  declaration warning in the file is `biasDecays_of_lowFreqDecay`.
+- `lake env lean CollatzMoonshot/Conjugacy/Fourier.lean` — passes with no unresolved-declaration
+  warning.
+- `rg -n "\\bsorry\\b|sorryAx" CollatzMoonshot/Conjugacy/Fourier.lean` — no matches.
 - `git diff --check` — passes.
 - `/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-fourier --target
   CollatzMoonshot.Conjugacy.Fourier --axioms
-  CollatzMoonshot.Conjugacy.bias_div_le_lowFreq_add_tail` — `FORMALIZE-TIER GREEN`, 8719 jobs;
-  the proved reduction has axioms `[Classical.choice, Quot.sound, propext]`.
+  CollatzMoonshot.Conjugacy.biasDecays_of_lowFreqDecay` — `FORMALIZE-TIER GREEN`, 8719 jobs;
+  the final edge has axioms `[Classical.choice, Quot.sound, propext]`.
 
 ## Current blocker and next attack
 
-The remaining proof is the finite-set epsilon argument in `biasDecays_of_lowFreqDecay`.  Given
-`0 < ε`, choose a natural `K ≥ 1` with `sqrt (2 / K) < ε / 2` (an Archimedean choice such
-as `K > 8 / ε²` suffices).  For the finite set `(range (K+1)).filter Odd`, use `h` and the
-finite-sum `Tendsto` API to show
-`j ↦ ∑ ξ, 2 * ‖fourierCoeff j ξ‖ / ξ` tends to zero.  Eventually it is below
-`ε / 2`; combine this with `bias_div_le_lowFreq_add_tail`, then remove the absolute value to
-prove the `BiasDecays` limit.  No operator decision is needed.
+There is no remaining scoped blocker or unproved declaration in `Fourier.lean`; the host
+predicate `sorry-free:CollatzMoonshot/Conjugacy/Fourier.lean` is met.  Stop this campaign with
+`box done`.  A later, separately authorized research campaign could attack the open proposition
+`LowFreqDecay` itself through phase cancellation in `fourierCoeff_succ`, but that is beyond this
+formalization checkpoint.

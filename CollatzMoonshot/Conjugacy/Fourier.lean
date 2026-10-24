@@ -815,7 +815,36 @@ choose `K` with `√(2/K) < ε/2`; the finitely many odd `ξ ≤ K` have `2 ‖G
 their sum is eventually below `ε/2`; conclude by `bias_div_le_lowFreq_add_tail`.  Confidence
 99% given the reduction. -/
 theorem biasDecays_of_lowFreqDecay (h : LowFreqDecay) : BiasDecays := by
-  sorry
+  rw [BiasDecays, Metric.tendsto_atTop]
+  intro ε hε
+  have htail_tendsto :
+      Tendsto (fun K : ℕ => Real.sqrt (2 / (K : ℝ))) atTop (𝓝 0) := by
+    have hdiv : Tendsto (fun K : ℕ => (2 : ℝ) / (K : ℝ)) atTop (𝓝 0) :=
+      tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
+    convert Real.continuous_sqrt.continuousAt.tendsto.comp hdiv using 1 <;>
+      simp [Function.comp_def]
+  obtain ⟨K, htail, hK⟩ :=
+    (((tendsto_order.1 htail_tendsto).2 (ε / 2) (by linarith)).and
+      (eventually_ge_atTop 1)).exists
+  let S := (Finset.range (K + 1)).filter Odd
+  have hsum :
+      Tendsto (fun j => ∑ ξ ∈ S, 2 * ‖fourierCoeff j ξ‖ / ξ) atTop (𝓝 0) := by
+    convert tendsto_finsetSum S (fun ξ hξ => by
+        have hξodd : Odd ξ := (Finset.mem_filter.mp hξ).2
+        simpa using ((h ξ hξodd).const_mul (2 : ℝ)).div_const (ξ : ℝ)) using 1 <;>
+      simp
+  have hsum_eventually :
+      ∀ᶠ j in atTop, (∑ ξ ∈ S, 2 * ‖fourierCoeff j ξ‖ / ξ) < ε / 2 :=
+    (tendsto_order.1 hsum).2 (ε / 2) (by linarith)
+  obtain ⟨J, hJ⟩ := hsum_eventually.exists_forall_of_atTop
+  refine ⟨J, fun j hj => ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 2 ^ j)]
+  calc
+    |(bias j : ℝ)| / 2 ^ j ≤
+        (∑ ξ ∈ S, 2 * ‖fourierCoeff j ξ‖ / ξ) + Real.sqrt (2 / K) := by
+      simpa only [S] using bias_div_le_lowFreq_add_tail j K hK
+    _ < ε / 2 + ε / 2 := add_lt_add (hJ j hj) htail
+    _ = ε := by ring
 
 private theorem affineThreeMod_left (n u s : ℕ) (hn : 2 ≤ n)
     (hu : 3 * u % n = 1) (hs : s < n) :
