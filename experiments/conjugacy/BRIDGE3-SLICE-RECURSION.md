@@ -73,3 +73,24 @@ cutoff enters at §6's Cauchy–Schwarz step (`osc ≤ √(3^a Σ_high |F|²)`),
 `a ≤ 11j/20`, including `a = 0`, where `3^m ≤ ε·3^a` forces `1 ≤ ε`.  So the node was false and
 the edge from it vacuous.  Fixed by adding the lower cutoff `j ≤ 4a`.  The edge to `BiasDecays`
 now also needs the lower binomial tail `Σ_{a < j/4} C(j,a) = o(2^j)`.
+
+## Tao's (7.5) bound at Pascal(p) (2026-10-24)
+
+`pascal_damping.py` computes `D(n,p) = sup_{3∤ξ} E_{Pascal(p)^{n/2}} ∏_j |f(x_j, b_j)|` exactly.
+It runs a backward DP over the prefix residue mod `2·3^{n−1}`, and agrees with brute force at
+`(n,p) = (4, 0.5), (4, 0.6), (6, 0.5)`.  At `p = 1/2` this is Tao's bound, which sits above the
+true sup (0.384 against 0.061 at n = 8).
+
+| n | p=0.35 | 0.45 | 0.5 | 0.55 | 0.6 | 0.65 | 0.7 | 0.8 |
+|---|---|---|---|---|---|---|---|---|
+| 4 | 0.310 | 0.451 | 0.522 | 0.590 | 0.655 | 0.716 | 0.773 | 0.870 |
+| 8 | 0.161 | 0.301 | 0.384 | 0.467 | 0.546 | 0.618 | 0.697 | 0.835 |
+| 12 | 0.093 | 0.217 | 0.301 | 0.389 | 0.478 | 0.567 | 0.648 | 0.796 |
+| 14 | 0.071 | 0.186 | 0.269 | 0.358 | 0.452 | 0.542 | 0.632 | 0.790 |
+
+The ratio per step of 2 in `n` is steady for `p ≤ 0.65`: about 0.89 at `p = 1/2`, 0.945 at
+0.6 and 0.955 at 0.65.  At 0.7 and 0.8 it drifts toward 1 (0.976 and 0.992 on the last step).  So
+in the window `SliceCharDecay` needs (`p ≤ 3/5`), the pairing bound decays steadily under
+`Pascal(p)`.  The slowing above 0.7 fits a threshold near 0.63–0.7, but `n ≤ 14` cannot place
+it.  This supports the edge `SliceCharDecay ⇐ Prop 7.3 at Pascal(p)`; it is not a proof of
+Prop 7.3 there.
