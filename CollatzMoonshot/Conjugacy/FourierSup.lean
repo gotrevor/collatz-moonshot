@@ -69,16 +69,66 @@ def FixedFreqExpDecay : Prop :=
 /-- **Edge: the exponential rate implies `LowFreqDecay`.**  `C · 2^{−(1/2+δ) j} → 0`.
 Confidence 99%. -/
 theorem lowFreqDecay_of_fixedFreqExpDecay (h : FixedFreqExpDecay) : LowFreqDecay := by
-  sorry
+  obtain ⟨δ, hδ, h⟩ := h
+  intro ξ hξ
+  obtain ⟨C, hC⟩ := h ξ hξ
+  have hbase_nonneg : 0 ≤ (2 : ℝ) ^ (-(1 / 2 + δ)) := Real.rpow_nonneg (by norm_num) _
+  have hbase_lt : (2 : ℝ) ^ (-(1 / 2 + δ)) < 1 := by
+    rw [Real.rpow_neg (by norm_num : (0 : ℝ) ≤ 2)]
+    exact inv_lt_one_of_one_lt₀ (Real.one_lt_rpow (by norm_num) (by linarith))
+  have hbound : Tendsto
+      (fun j : ℕ => C * (2 : ℝ) ^ (-((1 / 2 + δ) * j))) atTop (nhds 0) := by
+    have hp := tendsto_pow_atTop_nhds_zero_of_lt_one hbase_nonneg hbase_lt
+    convert hp.const_mul C using 1
+    · ext j
+      rw [show -((1 / 2 + δ) * (j : ℝ)) = (-(1 / 2 + δ)) * j by ring,
+        Real.rpow_mul (by norm_num : (0 : ℝ) ≤ 2), Real.rpow_natCast]
+    · simp
+  exact squeeze_zero (fun j => norm_nonneg _) hC hbound
 
 /-- **Edge: the rate implies uniform decay.**  `C / √j → 0`.  Confidence 99%. -/
 theorem supFreqDecay_of_sqrtBound (h : SupFreqSqrtBound) : SupFreqDecay := by
-  sorry
+  obtain ⟨C, hC⟩ := h
+  intro ε hε
+  have hbound : Tendsto (fun j : ℕ => C / Real.sqrt (j : ℝ)) atTop (nhds 0) :=
+    tendsto_const_nhds.div_atTop
+      (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
+  have hevent : ∀ᶠ j : ℕ in atTop, C / Real.sqrt (j : ℝ) < ε :=
+    (tendsto_order.1 hbound).2 ε hε
+  filter_upwards [hevent, eventually_ge_atTop 1] with j hj hj1
+  intro ξ hξ
+  exact (lt_of_le_of_lt (hC j hj1 ξ hξ) hj).le
 
 /-- **Edge: uniform decay implies decay at every fixed 2-adic unit.**  The approximant of a
 `2`-adic unit modulo `2^(j+1)` is odd (its residue mod `2` is the unit's, which is nonzero), so
 the uniform bound applies to it.  Confidence 99%. -/
 theorem twoAdicFreqDecay_of_supFreqDecay (h : SupFreqDecay) : TwoAdicFreqDecay := by
-  sorry
+  intro η hη
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨J, hJ⟩ := (h (ε / 2) (by linarith)).exists_forall_of_atTop
+  refine ⟨J, fun j hj => ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _)]
+  apply lt_of_le_of_lt (hJ j hj _ ?_) (by linarith)
+  rw [← Nat.not_even_iff_odd]
+  intro heven
+  apply (show ¬(2 : ℤ_[2]) ∣ η by
+    intro hdvd
+    have hlt := (PadicInt.norm_lt_one_iff_dvd η).2 hdvd
+    rw [PadicInt.isUnit_iff] at hη
+    linarith)
+  have hpow : (2 : ℤ_[2]) ^ (j + 1) ∣ η - PadicInt.appr η (j + 1) := by
+    have hs := PadicInt.appr_spec (j + 1) η
+    rw [Ideal.mem_span_singleton] at hs
+    norm_num at hs ⊢
+    exact hs
+  have hdiff : (2 : ℤ_[2]) ∣ η - PadicInt.appr η (j + 1) :=
+    (dvd_pow_self (2 : ℤ_[2]) (by omega)).trans hpow
+  have happr : (2 : ℤ_[2]) ∣ (PadicInt.appr η (j + 1) : ℤ_[2]) := by
+    obtain ⟨k, hk⟩ := even_iff_two_dvd.mp heven
+    refine ⟨(k : ℤ_[2]), ?_⟩
+    exact_mod_cast hk
+  rw [← sub_add_cancel η (PadicInt.appr η (j + 1) : ℤ_[2])]
+  exact dvd_add hdiff happr
 
 end CollatzMoonshot.Conjugacy
