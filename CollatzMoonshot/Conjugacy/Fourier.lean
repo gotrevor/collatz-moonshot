@@ -50,6 +50,24 @@ noncomputable def fourierCoeff (j ξ : ℕ) : ℂ :=
   ((2 : ℂ) ^ (j + 1))⁻¹ * ∑ r ∈ Finset.range (2 ^ (j + 1)),
     (beyondSign j r : ℂ) * Complex.exp (2 * Real.pi * Complex.I * ξ * r / 2 ^ (j + 1))
 
+/-- The Fourier coefficient at level `j` is periodic in the frequency with period `2^(j+1)`. -/
+theorem fourierCoeff_add_period (j ξ k : ℕ) :
+    fourierCoeff j (ξ + 2 ^ (j + 1) * k) = fourierCoeff j ξ := by
+  unfold fourierCoeff
+  congr 1
+  apply Finset.sum_congr rfl
+  intro r hr
+  congr 1
+  push_cast
+  rw [show
+      2 * Real.pi * Complex.I * (ξ + 2 ^ (j + 1) * k) * r / 2 ^ (j + 1) =
+        2 * Real.pi * Complex.I * ξ * r / 2 ^ (j + 1) +
+          ((k * r : ℕ) : ℂ) * (2 * Real.pi * Complex.I) by
+    push_cast
+    field_simp]
+  rw [Complex.exp_add, Complex.exp_periodic.nat_mul_eq]
+  simp
+
 /-- **Parseval.**  The sign has unit modulus, so the squared Fourier coefficients over one period
 sum to `1`.  Orthogonality of the characters `r ↦ e(ξ r / 2^(j+1))` on `ℤ / 2^(j+1)`. -/
 theorem sum_norm_sq_fourierCoeff (j : ℕ) :
@@ -133,10 +151,36 @@ def TwoAdicFreqDecay : Prop :=
   ∀ η : ℤ_[2], IsUnit η →
     Tendsto (fun j => ‖fourierCoeff j (PadicInt.appr η (j + 1))‖) atTop (𝓝 0)
 
+/-- The canonical natural approximant to an embedded natural is its remainder modulo `2^n`. -/
+theorem padicInt_appr_natCast (ξ n : ℕ) :
+    PadicInt.appr (ξ : ℤ_[2]) n = ξ % 2 ^ n := by
+  have hz :
+      ((PadicInt.appr (ξ : ℤ_[2]) n : ℕ) : ZMod (2 ^ n)) =
+        (ξ : ZMod (2 ^ n)) := by
+    change PadicInt.toZModPow n (ξ : ℤ_[2]) = (ξ : ZMod (2 ^ n))
+    simp
+  have hm := (ZMod.natCast_eq_natCast_iff _ _ _).mp hz
+  rw [Nat.ModEq, Nat.mod_eq_of_lt (PadicInt.appr_lt _ _)] at hm
+  exact hm
+
 /-- **Edge: the 2-adic node contains the integer one.**  For odd `ξ : ℕ`, `(ξ : ℤ_[2])` is a unit
 and its approximant mod `2^(j+1)` is `ξ mod 2^(j+1)`; `fourierCoeff j` is periodic in the
 frequency mod `2^(j+1)`.  Confidence 99%. -/
 theorem lowFreqDecay_of_twoAdicFreqDecay (h : TwoAdicFreqDecay) : LowFreqDecay := by
-  sorry
+  intro ξ hξ
+  have hunit : IsUnit (ξ : ℤ_[2]) := by
+    rw [PadicInt.isUnit_iff, PadicInt.norm_natCast_eq_one_iff,
+      Nat.prime_two.coprime_iff_not_dvd]
+    intro hdvd
+    rw [Nat.dvd_iff_mod_eq_zero] at hdvd
+    rw [Nat.odd_iff] at hξ
+    omega
+  apply (h (ξ : ℤ_[2]) hunit).congr'
+  filter_upwards [] with j
+  congr 1
+  rw [padicInt_appr_natCast]
+  symm
+  conv_lhs => rw [← Nat.mod_add_div ξ (2 ^ (j + 1))]
+  exact fourierCoeff_add_period j _ _
 
 end CollatzMoonshot.Conjugacy
