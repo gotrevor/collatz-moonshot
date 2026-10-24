@@ -1,8 +1,9 @@
 # Fourier pairing treadmill handoff — 2026-10-24
 
-## Checkpoint
+## Final checkpoint
 
-The first two ordered kickoff obligations are proved with their frozen statements unchanged.
+The kickoff is complete.  All three ordered obligations are proved with their frozen statements
+unchanged, and `CollatzMoonshot/Conjugacy/FourierPair.lean` is sorry-free.
 
 For `pairTheta_far`, write `q = 3^t`, `N = 2^k`, and
 `X = ((3 : ZMod N)⁻¹ ^ t * ξ).val`, the proof lifts `qX = ξ` in `ZMod N` to
@@ -33,15 +34,38 @@ half-angle formula
 gives exactly the middle coefficient `1/2 * pairCos`.  A two-level induction then applies the
 triangle inequality and the three induction hypotheses at offsets `m`, `m+1`, and `m+2`.
 
+Finally, `lowFreqDecay_of_pairBoundDecay` splits an arbitrary level into `2i` or `2i+1`.  At
+even levels, `fourierCoeff_eq_latticeCoeff_zero` and the pairing estimate give the direct bound
+by `pairBound ξ i 0`.  At odd levels, one lattice unfolding and the unit norm of the phase give
+
+```text
+‖fourierCoeff (2i+1) ξ‖ ≤ 1/2 pairBound ξ i 0 + 1/2 pairBound ξ i 1.
+```
+
+Both offsets tend to zero by `PairBoundDecay`, so the parity-uniform epsilon argument proves
+`LowFreqDecay`.
+
 ## Verification
 
-- `lake env lean CollatzMoonshot/Conjugacy/FourierPair.lean` — passes; the only remaining
-  unresolved-declaration warning is `lowFreqDecay_of_pairBoundDecay`.
+- `lake env lean CollatzMoonshot/Conjugacy/FourierPair.lean` — passes with no unresolved-
+  declaration warning.
+- `rg -n "\\bsorry\\b|sorryAx|native_decide|^axiom "
+  CollatzMoonshot/Conjugacy/FourierPair.lean` — no matches.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-fourier --target
+  CollatzMoonshot.Conjugacy.FourierPair --import CollatzMoonshot.Conjugacy.FourierPair --axioms
+  CollatzMoonshot.Conjugacy.pairTheta_far --axioms
+  CollatzMoonshot.Conjugacy.norm_latticeCoeff_le_pairBound --axioms
+  CollatzMoonshot.Conjugacy.lowFreqDecay_of_pairBoundDecay` — `FORMALIZE-TIER GREEN`, 8721 jobs;
+  all three declarations report exactly `[Classical.choice, Quot.sound, propext]`.
+- `~/personal/bin/lean-green ~/src/collatz-moonshot-fourier` — `FORMALIZE-TIER GREEN`, 8857
+  jobs.
+- `git diff --check` — passes.  The diff against kickoff commit `ea2d3ae` confirms the five
+  frozen definitions/statements remain unchanged; only proof bodies and new helper declarations
+  were added to `FourierPair.lean`.
 
 ## Current blocker and next attack
 
-The only remaining scoped obligation is `lowFreqDecay_of_pairBoundDecay`.  Split the level into
-even and odd cases; the even subsequence is bounded directly by `pairBound ξ i 0`, while one
-lattice unfolding bounds the odd subsequence by
-`1/2 * pairBound ξ i 0 + 1/2 * pairBound ξ i 1`.  Apply `squeeze_zero` to both and combine the
-two parity subsequences.
+There is no remaining scoped blocker.  After the scoped axiom gate and full repository build are
+green, the host predicate `sorry-free:CollatzMoonshot/Conjugacy/FourierPair.lean` is met; stop
+this campaign with `box done`.  `PairBoundDecay` intentionally remains an open `Prop`, not a
+proof obligation in this kickoff.

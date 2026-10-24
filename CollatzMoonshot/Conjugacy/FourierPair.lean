@@ -282,7 +282,45 @@ def PairBoundDecay : Prop :=
 `j = 2i + 1`: one level of `latticeCoeff` gives `‖G_{2i+1}(ξ)‖ ≤ ½ U_i(0) + ½ U_i(1)`.  Squeeze.
 Confidence 98%. -/
 theorem lowFreqDecay_of_pairBoundDecay (h : PairBoundDecay) : LowFreqDecay := by
-  sorry
+  intro ξ hξ
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have hevent0 : ∀ᶠ i : ℕ in atTop, pairBound ξ i 0 < ε :=
+    (tendsto_order.1 (h ξ hξ 0)).2 ε hε
+  have hevent1 : ∀ᶠ i : ℕ in atTop, pairBound ξ i 1 < ε :=
+    (tendsto_order.1 (h ξ hξ 1)).2 ε hε
+  obtain ⟨I0, hI0⟩ := hevent0.exists_forall_of_atTop
+  obtain ⟨I1, hI1⟩ := hevent1.exists_forall_of_atTop
+  refine ⟨2 * max I0 I1, fun j hj => ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _)]
+  obtain ⟨i, rfl | rfl⟩ := Nat.even_or_odd' j
+  · rw [fourierCoeff_eq_latticeCoeff_zero ξ (2 * i) hξ]
+    exact (norm_latticeCoeff_le_pairBound ξ i 0).trans_lt
+      (hI0 i (by omega))
+  · rw [fourierCoeff_eq_latticeCoeff_zero ξ (2 * i + 1) hξ]
+    simp only [latticeCoeff]
+    calc
+      ‖(1 / 2 : ℂ) * latticeCoeff ξ (2 * i) 0 +
+          (1 / 2 : ℂ) * latticePhase ξ (2 * i) 0 * latticeCoeff ξ (2 * i) 1‖ ≤
+          (1 / 2 : ℝ) * ‖latticeCoeff ξ (2 * i) 0‖ +
+            (1 / 2 : ℝ) * ‖latticeCoeff ξ (2 * i) 1‖ := by
+        calc
+          _ ≤ ‖(1 / 2 : ℂ) * latticeCoeff ξ (2 * i) 0‖ +
+              ‖(1 / 2 : ℂ) * latticePhase ξ (2 * i) 0 *
+                latticeCoeff ξ (2 * i) 1‖ := norm_add_le _ _
+          _ = _ := by
+            simp only [norm_mul, norm_latticePhase]
+            have hhalf : ‖(1 / 2 : ℂ)‖ = (1 / 2 : ℝ) := by norm_num [norm_div]
+            rw [hhalf]
+            ring
+      _ ≤ (1 / 2 : ℝ) * pairBound ξ i 0 + (1 / 2 : ℝ) * pairBound ξ i 1 := by
+        gcongr
+        · exact norm_latticeCoeff_le_pairBound ξ i 0
+        · exact norm_latticeCoeff_le_pairBound ξ i 1
+      _ < ε := by
+        have hi0 : I0 ≤ i := by omega
+        have hi1 : I1 ≤ i := by omega
+        nlinarith [hI0 i hi0, hI1 i hi1]
 
 /-- **The protection lemma** (mirror of Tao 2019, eq. 7.16).  If `3^t ∤ ξ` and `ξ < 2^k`, then
 `Θ(k, t)` is at distance at least `(1 − ξ/2^k)/3^t` from every integer.  Proof: with `q = 3^t`
