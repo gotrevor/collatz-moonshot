@@ -26,7 +26,8 @@ the Tao-type input (the analogue of Tao 2019 Prop 1.17) and the edge from it.
 The remaining input is Tao's white-encounter bound (Prop 7.3, `renewal_white_encounters`) at
 pair-sum law `Pascal(p)` in place of `Pascal(1/2)`, for `p ≤ 3/5`.  Heuristically, the walk
 `(i, Σ b)` has drift `1/p` per step against the black-triangle slope `log₂ 3`, so the condition is
-`p < 1/log₂ 3 ≈ 0.631`, the same threshold as the slice entropy cutoff.  That heuristic is
+`p < 1/log₂ 3 ≈ 0.631`.  That is close to, but above, the slice entropy cutoff `a/j ≈ 0.609`
+(`H(ρ) = ρ log₂ 3`), so the two need not coincide.  That heuristic is
 unproved.  The same pairing argument shows the `θ`-twisted 1.17 (`TwistedSyracCharDecay`, note
 §11) is a corollary of Tao's bound itself, because `e(θ T_n)` is `b`-measurable of modulus 1.
 

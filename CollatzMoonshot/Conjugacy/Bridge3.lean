@@ -25,7 +25,7 @@ parity of the least residue of a truncated Syracuse variable.
   (`3^m` is odd), so the uniform lift has signed mass at most `3^{m−a}` per unit.  Exact numerics
   (`experiments/conjugacy/fsm_bridge.py`) confirm it at every `j ≤ 20`, `a`, `m`.
 * **Node** `TruncatedSyracMixing`: fine-scale mixing of the slices, uniformly for
-  `j/4 ≤ a ≤ 11j/20`.  Above `≈ 0.63 j` the slice has about `3^a` atoms or fewer and cannot mix;
+  `j/4 ≤ a ≤ 11j/20`.  Above `≈ 0.609 j` (where `H(a/j) = (a/j)·log₂ 3`) the slice has about `3^a` atoms or fewer and cannot mix;
   below, small `a` cannot mix at all (at `a = 0` the scale condition `3^m ≤ ε·3^a` is `1 ≤ ε`).
   Both excluded ranges have binomially small mass.  Confidence 80% true.  The Tao-type input that should give it, the
   characteristic-function decay twisted by `e(θ T_n)` uniformly in `θ`, is measured in
@@ -220,7 +220,7 @@ private theorem outOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
 /-- **Node: truncated fine-scale mixing.**  Uniformly over slices with `j/4 ≤ a ≤ 11j/20`, the
 oscillation at some scale `m` with `3^{a−m}` large is a vanishing fraction of the slice.  The
 analogue of Tao 2019 Prop 1.14 for the uniform-subset law, which is the geometric-gap law
-sliced at `T_a ≤ j < T_{a+1}`.  Below the entropy threshold `a/j ≈ 0.63` the slice has more
+sliced at `T_a ≤ j < T_{a+1}`.  Below the entropy threshold `a/j ≈ 0.609` the slice has more
 than `3^a` atoms; the cutoff `11/20` leaves margin.  Confidence 80% true, 30% provable by
 adapting Tao's §5-7.  Refutation probe: `experiments/conjugacy/fsm_bridge.py` (the bound at
 `a ≈ j/2` falls `0.375 → 0.291` from `j = 16` to `20`).  The lower cutoff `j ≤ 4a` is needed:
