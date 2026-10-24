@@ -1,6 +1,6 @@
 # Handoff: Bridge3 edges
 
-Branch `ren/bridge3-edges` (worktree `~/src/collatz-moonshot/worktrees/bridge3-edges`), cut from
+Branch `ren/bridge3` (worktree `~/src/collatz-moonshot-bridge3`), cut from
 `ren/conjugacy-ladder` at daad7a1.  Operator plan: `BRIDGE3-NEXT.md`.  Scoped completion target:
 `sorry-free:CollatzMoonshot/Conjugacy/Bridge3.lean`.
 
