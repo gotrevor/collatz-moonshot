@@ -79,11 +79,133 @@ theorem fourierCoeff_add_period (j ξ k : ℕ) :
   rw [Complex.exp_add, Complex.exp_periodic.nat_mul_eq]
   simp
 
+/-- Orthogonality of the standard characters, in the normalization used below. -/
+private theorem zmodParseval (n : ℕ) [NeZero n] (f : ZMod n → ℂ) :
+    ∑ k : ZMod n, Complex.normSq (∑ r : ZMod n, ZMod.stdAddChar (r * k) * f r) =
+      n * ∑ r : ZMod n, Complex.normSq (f r) := by
+  apply Complex.ofReal_injective
+  push_cast
+  have hchar (r s k : ZMod n) :
+      (starRingEnd ℂ) (ZMod.stdAddChar (r * k)) * ZMod.stdAddChar (s * k) =
+        ZMod.stdAddChar ((s - r) * k) := by
+    rw [← AddChar.inv_apply_eq_conj, ← AddChar.map_neg_eq_inv,
+      ← AddChar.map_add_eq_mul]
+    congr 1
+    ring
+  have horth (a : ZMod n) :
+      ∑ k : ZMod n, ZMod.stdAddChar (k * a) =
+        (if a = 0 then n else 0 : ℂ) := by
+    simpa using AddChar.sum_mulShift a (ZMod.isPrimitive_stdAddChar n)
+  simp_rw [Complex.normSq_eq_conj_mul_self, map_sum, map_mul]
+  simp_rw [Finset.sum_mul_sum]
+  calc
+    _ = ∑ r : ZMod n, ∑ s : ZMod n,
+        (starRingEnd ℂ) (f r) * f s *
+          ∑ k : ZMod n, ZMod.stdAddChar (k * (s - r)) := by
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro r hr
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro s hs
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [mul_comm k, ← hchar]
+      ring
+    _ = ∑ r : ZMod n, ∑ s : ZMod n,
+        (starRingEnd ℂ) (f r) * f s * (if s - r = 0 then n else 0 : ℂ) := by
+      simp_rw [horth]
+    _ = (n : ℂ) * ∑ r : ZMod n, (starRingEnd ℂ) (f r) * f r := by
+      simp [sub_eq_zero, Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro r hr
+      ring
+
+/-- `ZMod.finEquiv` sends a bounded natural to its residue class. -/
+private theorem finEquiv_apply_cast (n : ℕ) [NeZero n] (r : Fin n) :
+    (ZMod.finEquiv n).toEquiv r = (r : ZMod n) := by
+  cases n with
+  | zero => exact Fin.elim0 r
+  | succ n =>
+      apply Fin.ext
+      change r.val = r.val % (n + 1)
+      exact (Nat.mod_eq_of_lt r.isLt).symm
+
+/-- Reindex the defining range sum as a sum over `ZMod`. -/
+private theorem fourierCoeff_eq_zmod (j ξ : ℕ) :
+    fourierCoeff j ξ =
+      let n : ℕ := 2 ^ (j + 1)
+      (n : ℂ)⁻¹ * ∑ r : ZMod n,
+        ZMod.stdAddChar ((ξ : ZMod n) * r) * (beyondSign j r.val : ℂ) := by
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n]⟩
+  unfold fourierCoeff
+  dsimp only
+  rw [show (2 : ℂ) ^ (j + 1) = (n : ℂ) by simp [n]]
+  congr 1
+  change (∑ r ∈ Finset.range n,
+    (beyondSign j r : ℂ) * Complex.exp (2 * Real.pi * Complex.I * ξ * r / n)) = _
+  rw [← Fin.sum_univ_eq_sum_range]
+  rw [← Equiv.sum_comp (ZMod.finEquiv n).toEquiv]
+  apply Finset.sum_congr rfl
+  intro r hr
+  rw [finEquiv_apply_cast]
+  rw [show (ξ : ZMod n) * (r : ZMod n) = (((ξ * r : ℕ) : ℤ) : ZMod n) by
+    norm_cast]
+  rw [ZMod.stdAddChar_coe]
+  simp only [ZMod.val_natCast]
+  have hrn : (r : ℕ) < 2 ^ (j + 1) := by simpa [n] using r.isLt
+  rw [Nat.mod_eq_of_lt hrn]
+  rw [show
+    2 * Real.pi * Complex.I * (((ξ * r : ℕ) : ℤ) : ℂ) / (n : ℂ) =
+      2 * Real.pi * Complex.I * (ξ : ℂ) * (r : ℂ) / (n : ℂ) by
+    push_cast
+    ring]
+  ring
+
 /-- **Parseval.**  The sign has unit modulus, so the squared Fourier coefficients over one period
 sum to `1`.  Orthogonality of the characters `r ↦ e(ξ r / 2^(j+1))` on `ℤ / 2^(j+1)`. -/
 theorem sum_norm_sq_fourierCoeff (j : ℕ) :
     ∑ ξ ∈ Finset.range (2 ^ (j + 1)), ‖fourierCoeff j ξ‖ ^ 2 = 1 := by
-  sorry
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n]⟩
+  let f : ZMod n → ℂ := fun r => (beyondSign j r.val : ℂ)
+  have hcoeff (k : ZMod n) :
+      fourierCoeff j k.val =
+        (n : ℂ)⁻¹ * ∑ r : ZMod n, ZMod.stdAddChar (k * r) * f r := by
+    rw [fourierCoeff_eq_zmod]
+    dsimp only
+    rw [ZMod.natCast_zmod_val]
+  change ∑ ξ ∈ Finset.range n, ‖fourierCoeff j ξ‖ ^ 2 = 1
+  rw [← Fin.sum_univ_eq_sum_range]
+  calc
+    _ = ∑ k : ZMod n, ‖fourierCoeff j k.val‖ ^ 2 := by
+      rw [← Equiv.sum_comp (ZMod.finEquiv n).toEquiv]
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [finEquiv_apply_cast, ZMod.val_natCast_of_lt k.isLt]
+    _ = ∑ k : ZMod n, Complex.normSq
+        ((n : ℂ)⁻¹ * ∑ r : ZMod n, ZMod.stdAddChar (r * k) * f r) := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [hcoeff, ← Complex.normSq_eq_norm_sq]
+      congr 2
+      apply Finset.sum_congr rfl
+      intro r hr
+      rw [mul_comm r k]
+    _ = 1 := by
+      simp only [map_mul]
+      rw [← Finset.mul_sum]
+      rw [zmodParseval]
+      simp only [Complex.normSq_inv, Complex.normSq_natCast]
+      have hf (r : ZMod n) : Complex.normSq (f r) = 1 := by
+        dsimp only [f, beyondSign]
+        split_ifs <;> norm_num [Complex.normSq_ofReal]
+      simp_rw [hf]
+      simp only [Finset.sum_const, Finset.card_univ, ZMod.card, nsmul_eq_mul, mul_one]
+      apply inv_mul_cancel₀
+      apply mul_ne_zero <;> exact_mod_cast (NeZero.ne n)
 
 /-- **The reduction.**  For every `K ≥ 1`,
 `|bias j| / 2^j ≤ Σ_{odd ξ ≤ K} 2 ‖G_j(ξ)‖ / ξ + √(2/K)`.
