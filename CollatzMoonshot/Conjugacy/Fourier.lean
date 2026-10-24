@@ -207,6 +207,462 @@ theorem sum_norm_sq_fourierCoeff (j : ℕ) :
       apply inv_mul_cancel₀
       apply mul_ne_zero <;> exact_mod_cast (NeZero.ne n)
 
+/-- The beyond-Terras sign flips on translation by half of its period. -/
+private theorem beyondSign_add_half_period (j r : ℕ) :
+    beyondSign j (r + 2 ^ j) = -beyondSign j r := by
+  have h := accWord_add_two_pow r j
+  simp only [accWord, decide_eq_decide] at h
+  unfold beyondSign
+  rcases Nat.mod_two_eq_zero_or_one (tstep^[j] r) with hr | hr <;>
+    rcases Nat.mod_two_eq_zero_or_one (tstep^[j] (r + 2 ^ j)) with hs | hs <;>
+    simp [hr, hs] at h ⊢
+
+/-- Jordan's inequality gives the needed bound for a half-period geometric sum. -/
+private theorem norm_half_geom_sum_le (N k : ℕ) (hN : 0 < N) (hk : 1 ≤ k)
+    (hkN : k ≤ N) (hodd : Odd k) :
+    ‖∑ r ∈ Finset.range N,
+        Complex.exp (-2 * Real.pi * Complex.I * k * r / (2 * N))‖ ≤ (N : ℝ) / k := by
+  let q : ℂ := Complex.exp (-2 * Real.pi * Complex.I * k / (2 * N))
+  have hterm (r : ℕ) :
+      Complex.exp (-2 * Real.pi * Complex.I * k * r / (2 * N)) = q ^ r := by
+    rw [← Complex.exp_nat_mul]
+    congr 1
+    push_cast
+    field_simp [show (N : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hN)]
+  simp_rw [hterm]
+  have hqpow : q ^ N = -1 := by
+    obtain ⟨a, rfl⟩ := hodd
+    rw [← Complex.exp_nat_mul]
+    rw [show
+        (N : ℂ) * (-2 * Real.pi * Complex.I * (((2 * a + 1 : ℕ) : ℂ)) / (2 * N)) =
+          -(Real.pi * Complex.I) + (-(a : ℂ)) * (2 * Real.pi * Complex.I) by
+      push_cast
+      field_simp [show (N : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hN)]
+      ring]
+    rw [Complex.exp_add]
+    rw [show Complex.exp (-(Real.pi * Complex.I)) = -1 by
+      rw [Complex.exp_neg, Complex.exp_pi_mul_I]
+      norm_num]
+    rw [show (-(a : ℂ)) * (2 * Real.pi * Complex.I) =
+        -((a : ℂ) * (2 * Real.pi * Complex.I)) by ring,
+      Complex.exp_neg, Complex.exp_periodic.nat_mul_eq]
+    norm_num
+  have hprod := geom_sum_mul q N
+  rw [hqpow] at hprod
+  have hnormprod := congrArg norm hprod
+  simp only [norm_mul, norm_sub_rev] at hnormprod
+  have hqsub :
+      ‖1 - q‖ = 2 * Real.sin (Real.pi * k / (2 * N)) := by
+    rw [norm_sub_rev]
+    rw [show q = Complex.exp (Complex.I * (-(Real.pi * k / N) : ℝ)) by
+      dsimp [q]
+      congr 1
+      push_cast
+      field_simp [show (N : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hN)]]
+    rw [Complex.norm_exp_I_mul_ofReal_sub_one]
+    norm_cast
+    rw [show -(Real.pi * (k : ℝ) / N) / 2 = -(Real.pi * k / (2 * N)) by ring]
+    have harg_le : Real.pi * (k : ℝ) / (2 * N) ≤ Real.pi / 2 := by
+      apply (div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 * N)
+        (by positivity : (0 : ℝ) < 2)).2
+      nlinarith [Real.pi_pos, show (k : ℝ) ≤ N by exact_mod_cast hkN]
+    have hsin0 : 0 ≤ Real.sin (Real.pi * k / (2 * N)) :=
+      Real.sin_nonneg_of_nonneg_of_le_pi (by positivity)
+        (harg_le.trans (half_le_self Real.pi_pos.le))
+    rw [Real.sin_neg, Real.norm_eq_abs, abs_mul, abs_neg, abs_of_nonneg hsin0]
+    norm_num
+  have hsin : (k : ℝ) / N ≤ Real.sin (Real.pi * k / (2 * N)) := by
+    have harg0 : 0 ≤ Real.pi * (k : ℝ) / (2 * N) := by positivity
+    have harg_le : Real.pi * (k : ℝ) / (2 * N) ≤ Real.pi / 2 := by
+      apply (div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 * N)
+        (by positivity : (0 : ℝ) < 2)).2
+      nlinarith [Real.pi_pos, show (k : ℝ) ≤ N by exact_mod_cast hkN]
+    have := Real.mul_le_sin harg0 harg_le
+    convert this using 1 <;> field_simp <;> ring
+  rw [hqsub] at hnormprod
+  have hkR : (0 : ℝ) < k := by exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_one hk)
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hqpos : 0 < 2 * Real.sin (Real.pi * k / (2 * N)) := by
+    have : 0 < Real.sin (Real.pi * k / (2 * N)) :=
+      lt_of_lt_of_le (div_pos hkR hNR) hsin
+    positivity
+  norm_num at hnormprod
+  have hsumeq : ‖∑ i ∈ Finset.range N, q ^ i‖ =
+      2 / (2 * Real.sin (Real.pi * k / (2 * N))) :=
+    (eq_div_iff hqpos.ne').2 hnormprod
+  rw [hsumeq]
+  apply (div_le_div_of_nonneg_left (by norm_num)
+    (mul_pos (by norm_num) (div_pos hkR hNR))
+    (mul_le_mul_of_nonneg_left hsin (by norm_num))).trans_eq
+  field_simp
+
+/-- The repository normalization is the inverse `ZMod` DFT of the sign. -/
+private theorem invDFT_beyondSign (j : ℕ) :
+    let n : ℕ := 2 ^ (j + 1)
+    let f : ZMod n → ℂ := fun r => (beyondSign j r.val : ℂ)
+    ∀ k : ZMod n, ZMod.dft.symm f k = fourierCoeff j k.val := by
+  dsimp only
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n]⟩
+  intro k
+  rw [ZMod.invDFT_apply, fourierCoeff_eq_zmod]
+  dsimp only
+  rw [ZMod.natCast_zmod_val]
+  simp only [smul_eq_mul]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro r hr
+  rw [mul_comm r k]
+
+/-- Fourier inversion paired with the indicator of the first half-period. -/
+private theorem bias_eq_fourier_window (j : ℕ) :
+    let N : ℕ := 2 ^ j
+    let n : ℕ := 2 ^ (j + 1)
+    (bias j : ℂ) = ∑ k : ZMod n, fourierCoeff j k.val *
+      ∑ r ∈ Finset.range N, ZMod.stdAddChar (-((r : ZMod n) * k)) := by
+  dsimp only
+  let N : ℕ := 2 ^ j
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n, N]⟩
+  let f : ZMod n → ℂ := fun r => (beyondSign j r.val : ℂ)
+  have hG (k : ZMod n) : ZMod.dft.symm f k = fourierCoeff j k.val := by
+    exact invDFT_beyondSign j k
+  calc
+    (bias j : ℂ) = ∑ r ∈ Finset.range N, f (r : ZMod n) := by
+      unfold bias
+      rw [Int.cast_sum]
+      apply Finset.sum_congr rfl
+      intro r hr
+      have hNn : N ≤ n := by
+        have hp : 0 < 2 ^ j := by positivity
+        simp only [N, n, pow_succ]
+        omega
+      have hrn : r < n := (Finset.mem_range.mp hr).trans_le hNn
+      simp only [f, ZMod.val_natCast_of_lt hrn, beyondSign]
+      split_ifs <;> norm_num
+    _ = ∑ r ∈ Finset.range N, ZMod.dft (ZMod.dft.symm f) (r : ZMod n) := by
+      rw [LinearEquiv.apply_symm_apply]
+    _ = ∑ r ∈ Finset.range N, ∑ k : ZMod n,
+        ZMod.stdAddChar (-((r : ZMod n) * k)) * fourierCoeff j k.val := by
+      apply Finset.sum_congr rfl
+      intro r hr
+      rw [ZMod.dft_apply]
+      apply Finset.sum_congr rfl
+      intro k hk
+      simp only [smul_eq_mul, hG]
+      rw [mul_comm k]
+    _ = _ := by
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro r hr
+      ring
+
+/-- Half-period antiperiodicity kills every even Fourier frequency. -/
+private theorem fourierCoeff_eq_zero_of_even (j ξ : ℕ) (hξ : Even ξ) :
+    fourierCoeff j ξ = 0 := by
+  let N : ℕ := 2 ^ j
+  have hN : 0 < N := by simp [N]
+  have hn : 2 ^ (j + 1) = N + N := by
+    simp only [N, pow_succ]
+    omega
+  have hnC : (2 : ℂ) ^ (j + 1) = ((N + N : ℕ) : ℂ) := by
+    exact_mod_cast hn
+  unfold fourierCoeff
+  rw [hn, hnC, Finset.sum_range_add]
+  push_cast
+  have hsecond (s : ℕ) :
+      (beyondSign j (N + s) : ℂ) *
+          Complex.exp (2 * Real.pi * Complex.I * ξ * (N + s) / (N + N)) =
+        -((beyondSign j s : ℂ) *
+          Complex.exp (2 * Real.pi * Complex.I * ξ * s / (N + N))) := by
+    rw [show beyondSign j (N + s) = -beyondSign j s by
+      simpa [add_comm] using beyondSign_add_half_period j s]
+    have hphase :
+        Complex.exp (2 * Real.pi * Complex.I * ξ * (N + s) / (N + N)) =
+          Complex.exp (2 * Real.pi * Complex.I * ξ * s / (N + N)) := by
+      obtain ⟨a, ha⟩ := hξ
+      rw [ha]
+      rw [show
+          2 * Real.pi * Complex.I * (((a + a : ℕ) : ℂ)) *
+                ((N : ℂ) + (s : ℂ)) /
+              ((N : ℂ) + (N : ℂ)) =
+            2 * Real.pi * Complex.I * (((a + a : ℕ) : ℂ)) * (s : ℂ) /
+                ((N : ℂ) + (N : ℂ)) +
+              (a : ℂ) * (2 * Real.pi * Complex.I) by
+        push_cast
+        field_simp [show (N : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hN)]
+        ring]
+      rw [Complex.exp_add, Complex.exp_periodic.nat_mul_eq]
+      simp
+    rw [hphase]
+    push_cast
+    ring
+  have hsumsecond :
+      ∑ s ∈ Finset.range N,
+          (beyondSign j (N + s) : ℂ) *
+            Complex.exp (2 * Real.pi * Complex.I * ξ * (N + s) / (N + N)) =
+        -∑ s ∈ Finset.range N,
+          (beyondSign j s : ℂ) *
+            Complex.exp (2 * Real.pi * Complex.I * ξ * s / (N + N)) := by
+    rw [← Finset.sum_neg_distrib]
+    exact Finset.sum_congr rfl fun s _ => hsecond s
+  rw [hsumsecond, add_neg_cancel, mul_zero]
+
+/-- The Fourier transform of the real-valued sign has conjugate-symmetric magnitudes. -/
+private theorem norm_fourierCoeff_sub_period (j k : ℕ) (hk : k ≤ 2 ^ (j + 1)) :
+    ‖fourierCoeff j (2 ^ (j + 1) - k)‖ = ‖fourierCoeff j k‖ := by
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n]⟩
+  have hcast : ((n - k : ℕ) : ZMod n) = -(k : ZMod n) := by
+    rw [Nat.cast_sub (by simpa [n] using hk)]
+    simp
+  have hconj : fourierCoeff j (n - k) = (starRingEnd ℂ) (fourierCoeff j k) := by
+    rw [fourierCoeff_eq_zmod, fourierCoeff_eq_zmod]
+    dsimp only
+    rw [hcast]
+    simp only [neg_mul, AddChar.map_neg_eq_inv, AddChar.inv_apply_eq_conj, map_mul, map_sum,
+      map_inv₀, map_natCast]
+    congr 1
+    apply Finset.sum_congr rfl
+    intro r hr
+    rw [show (starRingEnd ℂ) (beyondSign j r.val : ℂ) =
+        (beyondSign j r.val : ℂ) by
+      push_cast
+      simp]
+  simp only [n] at hconj ⊢
+  rw [hconj]
+  exact Complex.norm_conj _
+
+/-- Natural-number form of the half-window Fourier inversion identity. -/
+private theorem bias_eq_sum_range_fourier_window (j : ℕ) :
+    let N : ℕ := 2 ^ j
+    let n : ℕ := 2 ^ (j + 1)
+    (bias j : ℂ) = ∑ k ∈ Finset.range n, fourierCoeff j k *
+      ∑ r ∈ Finset.range N,
+        Complex.exp (-2 * Real.pi * Complex.I * k * r / n) := by
+  dsimp only
+  let N : ℕ := 2 ^ j
+  let n : ℕ := 2 ^ (j + 1)
+  letI : NeZero n := ⟨by simp [n]⟩
+  rw [bias_eq_fourier_window]
+  change (∑ k : ZMod n, fourierCoeff j k.val *
+    ∑ r ∈ Finset.range N, ZMod.stdAddChar (-((r : ZMod n) * k))) = _
+  rw [← Fin.sum_univ_eq_sum_range]
+  rw [← Equiv.sum_comp (ZMod.finEquiv n).toEquiv]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [finEquiv_apply_cast]
+  rw [ZMod.val_natCast_of_lt k.isLt]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro r hr
+  rw [show -((r : ZMod n) * (k : ZMod n)) =
+      (((-((r * k : ℕ) : ℤ)) : ℤ) : ZMod n) by
+    push_cast
+    ring]
+  rw [ZMod.stdAddChar_coe]
+  congr 1
+  dsimp [n]
+  push_cast
+  field_simp
+
+/-- The two signed representatives of a frequency give conjugate half-window sums. -/
+private theorem norm_fourierWindow_sub_period (j k : ℕ) (hk : k ≤ 2 ^ (j + 1)) :
+    let N : ℕ := 2 ^ j
+    let n : ℕ := 2 ^ (j + 1)
+    ‖∑ r ∈ Finset.range N,
+        Complex.exp (-2 * Real.pi * Complex.I * (n - k) * r / n)‖ =
+      ‖∑ r ∈ Finset.range N,
+        Complex.exp (-2 * Real.pi * Complex.I * k * r / n)‖ := by
+  dsimp only
+  let n : ℕ := 2 ^ (j + 1)
+  have hn : 0 < n := by simp [n]
+  have hterm (r : ℕ) :
+      Complex.exp (-2 * Real.pi * Complex.I * (n - k) * r / n) =
+        (starRingEnd ℂ) (Complex.exp (-2 * Real.pi * Complex.I * k * r / n)) := by
+    rw [show
+        -2 * Real.pi * Complex.I * ((n : ℂ) - (k : ℂ)) * (r : ℂ) / (n : ℂ) =
+          2 * Real.pi * Complex.I * (k : ℂ) * (r : ℂ) / (n : ℂ) +
+            (((-(r : ℤ) : ℤ) : ℂ)) * (2 * Real.pi * Complex.I) by
+      push_cast
+      field_simp [show (n : ℂ) ≠ 0 by exact_mod_cast (Nat.ne_of_gt hn)]
+      ring]
+    rw [Complex.exp_add, Complex.exp_periodic.int_mul_eq, Complex.exp_zero, mul_one]
+    rw [← Complex.exp_conj]
+    congr 1
+    push_cast
+    simp [map_ofNat]
+  have hsum :
+      ∑ r ∈ Finset.range (2 ^ j),
+          Complex.exp (-2 * Real.pi * Complex.I * (n - k) * r / n) =
+        ∑ r ∈ Finset.range (2 ^ j),
+          (starRingEnd ℂ) (Complex.exp (-2 * Real.pi * Complex.I * k * r / n)) := by
+    exact Finset.sum_congr rfl fun r _ => hterm r
+  rw [hsum]
+  rw [← map_sum]
+  exact Complex.norm_conj _
+
+/-- Fourier inversion, paired signed frequencies, and Jordan's inequality. -/
+private theorem bias_div_le_weighted_fourier (j : ℕ) :
+    |(bias j : ℝ)| / 2 ^ j ≤
+      ∑ k ∈ Finset.Icc 1 (2 ^ j), 2 * ‖fourierCoeff j k‖ / k := by
+  let N : ℕ := 2 ^ j
+  let n : ℕ := 2 ^ (j + 1)
+  let W : ℕ → ℂ := fun k => ∑ r ∈ Finset.range N,
+    Complex.exp (-2 * Real.pi * Complex.I * k * r / n)
+  let A : ℕ → ℝ := fun k => ‖fourierCoeff j k‖ * ‖W k‖
+  have hN : 0 < N := by simp [N]
+  have hn : n = 2 * N := by simp [n, N, pow_succ, mul_comm]
+  have hA0 : A 0 = 0 := by
+    simp [A, fourierCoeff_eq_zero_of_even j 0 (by simp)]
+  have hAsymm (k : ℕ) (hk : k ≤ n) : A (n - k) = A k := by
+    dsimp only [A, W]
+    rw [show n = 2 ^ (j + 1) by simp [n], norm_fourierCoeff_sub_period j k (by simpa [n] using hk)]
+    congr 1
+    rw [Nat.cast_sub (by simpa [n] using hk)]
+    simpa [n, N] using norm_fourierWindow_sub_period j k (by simpa [n] using hk)
+  have hAbound (k : ℕ) (hk : k ∈ Finset.Icc 1 N) :
+      A k ≤ (N : ℝ) * (‖fourierCoeff j k‖ / k) := by
+    simp only [Finset.mem_Icc] at hk
+    dsimp only [A]
+    rcases Nat.even_or_odd k with heven | hodd
+    · rw [fourierCoeff_eq_zero_of_even j k heven]
+      simp
+    · dsimp only [W]
+      have hw := norm_half_geom_sum_le N k hN hk.1 hk.2 hodd
+      have hw' :
+          ‖∑ r ∈ Finset.range N,
+              Complex.exp (-2 * Real.pi * Complex.I * k * r / n)‖ ≤ (N : ℝ) / k := by
+        simpa [hn] using hw
+      calc
+        _ ≤ ‖fourierCoeff j k‖ * ((N : ℝ) / k) :=
+          mul_le_mul_of_nonneg_left hw' (norm_nonneg _)
+        _ = _ := by
+          have hk0 : (k : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hk.1)
+          field_simp
+  have hbias : |(bias j : ℝ)| ≤ ∑ k ∈ Finset.range n, A k := by
+    have hfourier := bias_eq_sum_range_fourier_window j
+    change (bias j : ℂ) = ∑ k ∈ Finset.range n, fourierCoeff j k * W k at hfourier
+    calc
+      |(bias j : ℝ)| = ‖(bias j : ℂ)‖ := by simp [Real.norm_eq_abs]
+      _ = ‖∑ k ∈ Finset.range n, fourierCoeff j k * W k‖ := by rw [hfourier]
+      _ ≤ ∑ k ∈ Finset.range n, ‖fourierCoeff j k * W k‖ := norm_sum_le _ _
+      _ = ∑ k ∈ Finset.range n, A k := by
+        apply Finset.sum_congr rfl
+        intro k hk
+        simp [A, norm_mul]
+  have hpair : ∑ k ∈ Finset.range n, A k ≤
+      2 * ∑ k ∈ Finset.Icc 1 N, A k := by
+    have hNn : N + 1 ≤ n := by omega
+    have hn1 : 1 ≤ n := by omega
+    have hreflect : ∑ k ∈ Finset.Ico (N + 1) n, A k =
+        ∑ k ∈ Finset.Ico 1 N, A k := by
+      have href := Finset.sum_Ico_reflect A 1 (m := N) (n := n) (by omega)
+      have hleft : ∑ k ∈ Finset.Ico 1 N, A (n - k) =
+          ∑ k ∈ Finset.Ico 1 N, A k := by
+        apply Finset.sum_congr rfl
+        intro k hk
+        rw [hAsymm k]
+        simp only [Finset.mem_Ico] at hk
+        omega
+      rw [hleft] at href
+      rw [hn] at href ⊢
+      have hlo : 2 * N + 1 - N = N + 1 := by omega
+      have hhi : 2 * N + 1 - 1 = 2 * N := by omega
+      rw [hlo, hhi] at href
+      exact href.symm
+    have hsub : ∑ k ∈ Finset.Ico 1 N, A k ≤
+        ∑ k ∈ Finset.Ico 1 (N + 1), A k := by
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · intro k hk
+        simp only [Finset.mem_Ico] at hk ⊢
+        omega
+      · intro k hk hnot
+        positivity
+    rw [← Finset.sum_range_add_sum_Ico A hn1]
+    simp only [Finset.sum_range_one, hA0, zero_add]
+    rw [← Finset.sum_Ico_consecutive A (by omega : 1 ≤ N + 1) hNn]
+    rw [hreflect]
+    have hIcc : Finset.Icc 1 N = Finset.Ico 1 (N + 1) := by
+      ext k
+      simp
+    rw [hIcc]
+    linarith
+  have hweighted : ∑ k ∈ Finset.Icc 1 N, A k ≤
+      (N : ℝ) * ∑ k ∈ Finset.Icc 1 N, ‖fourierCoeff j k‖ / k := by
+    calc
+      _ ≤ ∑ k ∈ Finset.Icc 1 N,
+          (N : ℝ) * (‖fourierCoeff j k‖ / k) :=
+        Finset.sum_le_sum fun k hk => hAbound k hk
+      _ = _ := by rw [Finset.mul_sum]
+  change |(bias j : ℝ)| / (2 : ℝ) ^ j ≤
+    ∑ k ∈ Finset.Icc 1 N, 2 * ‖fourierCoeff j k‖ / k
+  rw [show (2 : ℝ) ^ j = (N : ℝ) by norm_cast]
+  calc
+    |(bias j : ℝ)| / (N : ℝ) ≤
+        (2 * ∑ k ∈ Finset.Icc 1 N, A k) / N :=
+      div_le_div_of_nonneg_right (hbias.trans hpair) (by positivity)
+    _ ≤ (2 * ((N : ℝ) * ∑ k ∈ Finset.Icc 1 N,
+        ‖fourierCoeff j k‖ / k)) / N := by
+      gcongr
+    _ = ∑ k ∈ Finset.Icc 1 N, 2 * ‖fourierCoeff j k‖ / k := by
+      field_simp
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro k hk
+      ring
+
+/-- At most half of the Parseval energy lies in the strictly positive half-spectrum. -/
+private theorem two_mul_sum_sq_fourierCoeff_Ico_le (j : ℕ) :
+    2 * ∑ k ∈ Finset.Ico 1 (2 ^ j), ‖fourierCoeff j k‖ ^ 2 ≤ 1 := by
+  let N : ℕ := 2 ^ j
+  let n : ℕ := 2 ^ (j + 1)
+  let Q : ℕ → ℝ := fun k => ‖fourierCoeff j k‖ ^ 2
+  have hN : 0 < N := by simp [N]
+  have hn : n = 2 * N := by simp [n, N, pow_succ, mul_comm]
+  have hNn : N + 1 ≤ n := by omega
+  have hn1 : 1 ≤ n := by omega
+  have hreflect : ∑ k ∈ Finset.Ico (N + 1) n, Q k =
+      ∑ k ∈ Finset.Ico 1 N, Q k := by
+    have href := Finset.sum_Ico_reflect Q 1 (m := N) (n := n) (by omega)
+    have hleft : ∑ k ∈ Finset.Ico 1 N, Q (n - k) =
+        ∑ k ∈ Finset.Ico 1 N, Q k := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      dsimp only [Q]
+      rw [norm_fourierCoeff_sub_period j k]
+      simp only [Finset.mem_Ico] at hk
+      omega
+    rw [hleft] at href
+    rw [hn] at href ⊢
+    have hlo : 2 * N + 1 - N = N + 1 := by omega
+    have hhi : 2 * N + 1 - 1 = 2 * N := by omega
+    rw [hlo, hhi] at href
+    exact href.symm
+  have hdecomp :
+      1 = Q 0 + ((∑ k ∈ Finset.Ico 1 N, Q k) + Q N) +
+        ∑ k ∈ Finset.Ico (N + 1) n, Q k := by
+    calc
+      1 = ∑ k ∈ Finset.range n, Q k := by
+        simpa only [Q, n] using (sum_norm_sq_fourierCoeff j).symm
+      _ = (∑ k ∈ Finset.range 1, Q k) + ∑ k ∈ Finset.Ico 1 n, Q k :=
+        (Finset.sum_range_add_sum_Ico Q hn1).symm
+      _ = Q 0 + ∑ k ∈ Finset.Ico 1 n, Q k := by simp
+      _ = Q 0 + ((∑ k ∈ Finset.Ico 1 (N + 1), Q k) +
+          ∑ k ∈ Finset.Ico (N + 1) n, Q k) := by
+        rw [Finset.sum_Ico_consecutive Q (by omega : 1 ≤ N + 1) hNn]
+      _ = _ := by
+        rw [Finset.sum_Ico_succ_top (by omega : 1 ≤ N)]
+        ring
+  change 2 * ∑ k ∈ Finset.Ico 1 N, Q k ≤ 1
+  rw [hreflect] at hdecomp
+  have hq0 : 0 ≤ Q 0 := by positivity
+  have hqN : 0 ≤ Q N := by positivity
+  linarith
+
 /-- **The reduction.**  For every `K ≥ 1`,
 `|bias j| / 2^j ≤ Σ_{odd ξ ≤ K} 2 ‖G_j(ξ)‖ / ξ + √(2/K)`.
 
@@ -227,7 +683,119 @@ theorem bias_div_le_lowFreq_add_tail (j K : ℕ) (hK : 1 ≤ K) :
     |(bias j : ℝ)| / 2 ^ j ≤
       (∑ ξ ∈ (Finset.range (K + 1)).filter Odd, 2 * ‖fourierCoeff j ξ‖ / ξ) +
         Real.sqrt (2 / K) := by
-  sorry
+  let N : ℕ := 2 ^ j
+  let F : ℕ → ℝ := fun k => 2 * ‖fourierCoeff j k‖ / k
+  let O := (Finset.Icc 1 N).filter Odd
+  let T := O.filter fun k => K < k
+  have hweighted := bias_div_le_weighted_fourier j
+  change |(bias j : ℝ)| / 2 ^ j ≤ _ at hweighted
+  have hoddSum : ∑ k ∈ Finset.Icc 1 N, F k = ∑ k ∈ O, F k := by
+    symm
+    apply Finset.sum_subset
+    · intro k hk
+      exact (Finset.mem_filter.mp hk).1
+    intro k hk hko
+    simp only [O, Finset.mem_filter] at hko
+    rcases Nat.even_or_odd k with heven | hodd
+    · simp [F, fourierCoeff_eq_zero_of_even j k heven]
+    · exact (hko ⟨hk, hodd⟩).elim
+  have hlow : ∑ k ∈ O.filter (fun k => ¬K < k), F k ≤
+      ∑ k ∈ (Finset.range (K + 1)).filter Odd, F k := by
+    apply Finset.sum_le_sum_of_subset_of_nonneg
+    · intro k hk
+      simp only [O, Finset.mem_filter, Finset.mem_Icc, Finset.mem_range] at hk ⊢
+      exact ⟨by omega, hk.1.2⟩
+    · intro k hk hnot
+      positivity
+  have htail : ∑ k ∈ T, F k ≤ Real.sqrt (2 / K) := by
+    by_cases hKN : K ≤ N
+    · have hTsub : T ⊆ Finset.Ico 1 N := by
+        intro k hk
+        simp only [T, O, Finset.mem_filter, Finset.mem_Icc, Finset.mem_Ico] at hk ⊢
+        refine ⟨hk.1.1.1, ?_⟩
+        cases j with
+        | zero =>
+            simp [N] at hk
+            omega
+        | succ j =>
+            have hevenN : (N % 2) = 0 := by simp [N, pow_succ]
+            rw [Nat.odd_iff] at hk
+            omega
+      have henergy : ∑ k ∈ T, ‖fourierCoeff j k‖ ^ 2 ≤ (1 / 2 : ℝ) := by
+        have hsub : ∑ k ∈ T, ‖fourierCoeff j k‖ ^ 2 ≤
+            ∑ k ∈ Finset.Ico 1 N, ‖fourierCoeff j k‖ ^ 2 := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg hTsub
+          intro k hk hnot
+          positivity
+        have hhalf := two_mul_sum_sq_fourierCoeff_Ico_le j
+        change 2 * ∑ k ∈ Finset.Ico 1 N, ‖fourierCoeff j k‖ ^ 2 ≤ 1 at hhalf
+        linarith
+      have hrecip : ∑ k ∈ T, ((k : ℝ)⁻¹) ^ 2 ≤ (K : ℝ)⁻¹ := by
+        calc
+          _ ≤ ∑ k ∈ Finset.Ioc K N, ((k : ℝ)⁻¹) ^ 2 := by
+            apply Finset.sum_le_sum_of_subset_of_nonneg
+            · intro k hk
+              simp only [T, O, Finset.mem_filter, Finset.mem_Icc, Finset.mem_Ioc] at hk ⊢
+              exact ⟨hk.2, hk.1.1.2⟩
+            · intro k hk hnot
+              positivity
+          _ = ∑ k ∈ Finset.Ioc K N, (((k : ℝ) ^ 2)⁻¹) := by
+            apply Finset.sum_congr rfl
+            intro k hk
+            rw [inv_pow]
+          _ ≤ (K : ℝ)⁻¹ - (N : ℝ)⁻¹ :=
+            sum_Ioc_inv_sq_le_sub (by omega) hKN
+          _ ≤ (K : ℝ)⁻¹ := sub_le_self _ (by positivity)
+      have hcs := Finset.sum_mul_sq_le_sq_mul_sq T
+        (fun k => ‖fourierCoeff j k‖) (fun k => (k : ℝ)⁻¹)
+      have hbase :
+          (∑ k ∈ T, ‖fourierCoeff j k‖ / k) ^ 2 ≤ 1 / (2 * K : ℝ) := by
+        calc
+          _ = (∑ k ∈ T, ‖fourierCoeff j k‖ * (k : ℝ)⁻¹) ^ 2 := by
+            rfl
+          _ ≤ (∑ k ∈ T, ‖fourierCoeff j k‖ ^ 2) *
+              ∑ k ∈ T, ((k : ℝ)⁻¹) ^ 2 := hcs
+          _ ≤ (1 / 2 : ℝ) * (K : ℝ)⁻¹ := by
+            exact mul_le_mul henergy hrecip (by positivity) (by positivity)
+          _ = 1 / (2 * K : ℝ) := by
+            have hKR : (K : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hK)
+            field_simp
+      have hbase0 : 0 ≤ ∑ k ∈ T, ‖fourierCoeff j k‖ / k := by positivity
+      have hsqrt : 2 * (∑ k ∈ T, ‖fourierCoeff j k‖ / k) ≤
+          Real.sqrt (2 / K) := by
+        apply (Real.le_sqrt (by positivity) (by positivity)).2
+        have hKR : (0 : ℝ) < K := by exact_mod_cast (lt_of_lt_of_le Nat.zero_lt_one hK)
+        calc
+          (2 * ∑ k ∈ T, ‖fourierCoeff j k‖ / k) ^ 2 ≤
+              4 * (1 / (2 * K : ℝ)) := by nlinarith
+          _ = 2 / K := by field_simp; ring
+      calc
+        _ = 2 * ∑ k ∈ T, ‖fourierCoeff j k‖ / k := by
+          rw [Finset.mul_sum]
+          apply Finset.sum_congr rfl
+          intro k hk
+          simp only [F]
+          ring
+        _ ≤ _ := hsqrt
+    · have hTempty : T = ∅ := by
+        apply Finset.eq_empty_of_forall_notMem
+        intro k hk
+        simp only [T, O, Finset.mem_filter, Finset.mem_Icc] at hk
+        omega
+      rw [hTempty]
+      simp
+      positivity
+  calc
+    |(bias j : ℝ)| / 2 ^ j ≤ ∑ k ∈ Finset.Icc 1 N, F k := by
+      simpa only [F, N] using hweighted
+    _ = (∑ k ∈ T, F k) + ∑ k ∈ O.filter (fun k => ¬K < k), F k := by
+      rw [hoddSum, Finset.sum_filter_add_sum_filter_not O (fun k => K < k) F]
+    _ ≤ Real.sqrt (2 / K) +
+        ∑ k ∈ (Finset.range (K + 1)).filter Odd, F k := add_le_add htail hlow
+    _ = (∑ k ∈ (Finset.range (K + 1)).filter Odd,
+        2 * ‖fourierCoeff j k‖ / k) + Real.sqrt (2 / K) := by
+      simp only [F]
+      ring
 
 /-- **Node: decay of every fixed odd frequency.**  For each fixed odd `ξ`, the Fourier coefficient
 `G_j(ξ)` of the beyond-Terras sign tends to `0` as `j → ∞`.
