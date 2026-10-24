@@ -1,0 +1,13 @@
+chain N=  256: sup|G|=1.4702e-02  k*=  125  k*/N=0.488  sup*sqrt(N)=0.2352  sup*N=3.764
+chain N=  512: sup|G|=1.0193e-02  k*=  253  k*/N=0.494  sup*sqrt(N)=0.2306  sup*N=5.219
+Traceback (most recent call last):
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 34, in <module>
+    chain(N)
+    ~~~~~^^^
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 21, in chain
+    levels = lattice_levels(3 ** N, 3 * N + 1, N)
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/latticedp.py", line 74, in lattice_levels
+    V = [0.5 * V[m] + 0.5 * cmath.exp(2j * math.pi * ((f[m] * c) % q) / q) * V[m + 1]
+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~
+OverflowError: int too large to convert to float
+./latticerun.py chain 256 512 1024 2048  4.54s user 0.04s system 99% cpu 4.586 total

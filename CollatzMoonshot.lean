@@ -130,6 +130,7 @@ import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Conjugacy.Coalescence
 import CollatzMoonshot.Conjugacy.Fourier
 import CollatzMoonshot.Conjugacy.FourierSup
+import CollatzMoonshot.Conjugacy.FourierLattice
 import CollatzMoonshot.Conjugacy.Bridge3
 import CollatzMoonshot.Conjugacy.SliceDecay
 import CollatzMoonshot.Maze

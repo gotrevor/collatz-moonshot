@@ -35,18 +35,41 @@ open Filter Topology
 
 Evidence with control: see the module docstring (`supfreq.py`, `chainsup.py`, `j ≤ 33`).  The
 sup is attained on the resonant chain `±3^k`, so this node is exactly the statement that the
-resonance is transient uniformly in `k`.  Confidence 65%. -/
+resonance is transient uniformly in `k`.  The lattice DP (`FourierLattice.lean`,
+`latticerun.py`) extends the chain to `N = 4096`: `sup · √N = 0.2352, 0.2306, 0.2284, 0.2272,
+0.2267` at `N = 256, …, 4096`, maximiser `k/N = 0.488 → 0.499`.  Confidence 80%. -/
 def SupFreqDecay : Prop :=
   ∀ ε > (0 : ℝ), ∀ᶠ j in atTop, ∀ ξ : ℕ, Odd ξ → ‖fourierCoeff j ξ‖ ≤ ε
 
 /-- **Node: the `j^{−1/2}` rate.**  Some constant bounds `‖G_j(ξ)‖ · √j` for every `j ≥ 1` and odd
 `ξ`.
 
-Evidence: measured `sup · √j ≤ 0.92` for `2 ≤ j ≤ 33`, and `≤ 0.39` from `j = 14` on, still slowly
-falling at `j = 33`.  The transport heuristic predicts exactly this rate.  What would refute it:
-`sup · √j` turning upward at larger `j`, or `k/j` stalling well below `1/2`.  Confidence 50%. -/
+Evidence: measured `sup · √j ≤ 0.92` for `2 ≤ j ≤ 33` (FFT and direct sum), and on the chain
+`|k| ≤ N` by the lattice DP, `sup · √N` settling at `0.2267` by `N = 4096` with the maximiser at
+`k/N → 1/2`, as the transport heuristic predicts.  What would refute it: `sup · √N` turning
+upward, or the sup leaving the window `|k| ≤ N` (checked only by FFT, `N ≤ 24`).
+Confidence 75%. -/
 def SupFreqSqrtBound : Prop :=
   ∃ C : ℝ, ∀ j ≥ 1, ∀ ξ : ℕ, Odd ξ → ‖fourierCoeff j ξ‖ ≤ C / Real.sqrt j
+
+/-- **Node: fixed integer frequencies decay exponentially, beyond square-root cancellation.**
+
+Evidence with control (`experiments/conjugacy/latticerun.py seqs`, lattice DP;
+`latticemp.py` reruns it at 60 digits and agrees to relative `2.5e-13` at `j = 1000`):
+`log₂‖G_j(ξ)‖ / j ∈ [−0.530, −0.520]` for `j = 1000, …, 1600` at `ξ = 1, 5, 7, 27`, and the same
+at the `2`-adic frequencies `1/3`, `5/7` and a random 64-bit unit.  The exponent `≈ 0.526` is
+not identified.  Not uniform over `2`-adic units: `η = 3^a` with `a ∈ ℤ₂` super-sparse in
+binary sits at chain position `k ≈ j/2` along a subsequence of levels, where the coefficient is
+`≈ 0.22/√j` (research note §12).  So the integer form is frozen, not the `2`-adic one.
+Confidence 55%. -/
+def FixedFreqExpDecay : Prop :=
+  ∃ δ > (0 : ℝ), ∀ ξ : ℕ, Odd ξ → ∃ C : ℝ, ∀ j : ℕ,
+    ‖fourierCoeff j ξ‖ ≤ C * (2 : ℝ) ^ (-((1 / 2 + δ) * j))
+
+/-- **Edge: the exponential rate implies `LowFreqDecay`.**  `C · 2^{−(1/2+δ) j} → 0`.
+Confidence 99%. -/
+theorem lowFreqDecay_of_fixedFreqExpDecay (h : FixedFreqExpDecay) : LowFreqDecay := by
+  sorry
 
 /-- **Edge: the rate implies uniform decay.**  `C / √j → 0`.  Confidence 99%. -/
 theorem supFreqDecay_of_sqrtBound (h : SupFreqSqrtBound) : SupFreqDecay := by

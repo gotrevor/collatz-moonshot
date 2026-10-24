@@ -1,0 +1,46 @@
+chain N= 1024: sup|G|=7.1361e-03  k*=  509  k*/N=0.497  sup*sqrt(N)=0.2284  sup*N=7.307
+chain N= 2048: sup|G|=5.0210e-03  k*= 1021  k*/N=0.499  sup*sqrt(N)=0.2272  sup*N=10.283
+chain N= 4096: sup|G|=3.5416e-03  k*= 2045  k*/N=0.499  sup*sqrt(N)=0.2267  sup*N=14.506
+seq xi=1: n |G_n| |G_n|*2^(n/2)
+  250 1.764e-40     0.0075
+  500 7.929e-81     0.0000
+  750 4.131e-119     0.0000
+ 1000 5.505e-159     0.0000
+ 1250 3.298e-197     0.0000
+ 1500 2.070e-238     0.0000
+ 1750 4.995e-278     0.0000
+ 2000 6.709e-317     0.0000
+Traceback (most recent call last):
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 30, in <module>
+    seq(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 17, in seq
+    print(f"{n:>5} {g:.3e} {g * 2 ** (n / 2):10.4f}", flush=True)
+                                ~~^^~~~~~~~~
+OverflowError: (34, 'Result too large')
+seq xi=5: n |G_n| |G_n|*2^(n/2)
+  500 1.292e-80     0.0000
+ 1000 8.109e-160     0.0000
+ 1500 1.380e-237     0.0000
+ 2000 6.865e-316     0.0000
+Traceback (most recent call last):
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 30, in <module>
+    seq(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 17, in seq
+    print(f"{n:>5} {g:.3e} {g * 2 ** (n / 2):10.4f}", flush=True)
+                                ~~^^~~~~~~~~
+OverflowError: (34, 'Result too large')
+seq xi=27: n |G_n| |G_n|*2^(n/2)
+  500 2.039e-79     0.0004
+ 1000 4.129e-159     0.0000
+ 1500 4.612e-237     0.0000
+ 2000 5.830e-316     0.0000
+Traceback (most recent call last):
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 30, in <module>
+    seq(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gotrevor/src/collatz-moonshot-conjugacy/experiments/conjugacy/./latticerun.py", line 17, in seq
+    print(f"{n:>5} {g:.3e} {g * 2 ** (n / 2):10.4f}", flush=True)
+                                ~~^^~~~~~~~~
+OverflowError: (34, 'Result too large')
