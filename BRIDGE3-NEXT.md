@@ -48,3 +48,19 @@ first.
 
 **Verify:** `lake build CollatzMoonshot.Conjugacy.Bridge3`; `#print axioms` on the three theorems;
 the teeth `levelSign_four`, `levelSign_five` and `levelSet_card_five` must stay green.
+
+## Lap 2 (2026-10-24): the node was false; re-prove edge 3 for the fixed node
+
+Lap 1 proved all three edges (aadd4d6, axiom-clean).  But the node quantified over every
+`a ≤ 11j/20`, including `a = 0`, where `3^m ≤ ε·3^a` reads `1 ≤ ε`, so it was false.  The operator
+fixed it: `∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 → ∃ m ≤ a, …`.  Edges 1 and 2 stand unchanged.
+
+**Objective now:** re-prove `biasDecays_of_truncatedSyracMixing` against the fixed node.  Do not
+change the node or any theorem statement.
+- Recover lap 1's private helper `abs_bias_le_of_levelMixing` and the edge proof from aadd4d6
+  (`git show aadd4d6:CollatzMoonshot/Conjugacy/Bridge3.lean`).
+- Change the slice split to `L = {a : j ≤ 4a ∧ a ≤ 11j/20}` and its complement in `range (j+1)`.
+- Replace `highOddSet` by a two-sided set `outOddSet j`, the starts with
+  `4 * oddCount r j < j ∨ 11 * j / 20 < oddCount r j`.  Chebyshev holds with the same constant:
+  on the lower side `oddDeviation r j < −j/2`, so `j² ≤ 4·dev² ≤ 100·dev²`.  Keep or generalize
+  `highOddSet_card_mul_sq_le` in Bridge3Aux.lean.
