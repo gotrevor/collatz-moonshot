@@ -54,6 +54,15 @@ Exact lattice gate:
 Both lattice declarations report exactly `[propext, Classical.choice, Quot.sound]`.  `rg` finds
 no `sorry`, `sorryAx`, `native_decide`, or declared axiom in either scoped module.
 
+Final repository gate:
+
+```text
+~/personal/bin/lean-green ~/src/collatz-moonshot-fourier
+
+Build completed successfully (8856 jobs).
+✅ FORMALIZE-TIER GREEN
+```
+
 ## Current blocker and next attack
 
 None.  The host predicate `sorry-free:CollatzMoonshot/Conjugacy/FourierLattice.lean` and the full
