@@ -363,6 +363,168 @@ theorem levelSign_eq_fourier_slice (j a : ℕ) :
   rw [ZMod.val_natCast_of_lt hlt] at hinv
   simpa only [ZMod.natCast_zmod_val] using hinv.symm
 
+/-! ## Exact Fourier weights -/
+
+/-- Reindex a sum over `ZMod M` by the least representatives in `[0,M)`. -/
+theorem sum_zmod_eq_sum_range {M : ℕ} [NeZero M] {R : Type*} [AddCommMonoid R]
+    (f : ZMod M → R) :
+    (∑ y : ZMod M, f y) = ∑ n ∈ Finset.range M, f n := by
+  apply Finset.sum_bij (fun y _ => y.val)
+  · intro y hy
+    exact Finset.mem_range.mpr y.val_lt
+  · intro y₁ h₁ y₂ h₂ h
+    exact ZMod.val_injective M h
+  · intro n hn
+    refine ⟨(n : ZMod M), Finset.mem_univ _, ?_⟩
+    exact ZMod.val_natCast_of_lt (Finset.mem_range.mp hn)
+  · intro y hy
+    rw [ZMod.natCast_zmod_val]
+
+theorem parity_addChar_term (a n : ℕ) (ξ : ZMod (3 ^ a)) :
+    (paritySign n : ℂ) * ZMod.stdAddChar (-(ξ * (n : ZMod (3 ^ a)))) =
+      (-ZMod.stdAddChar (-ξ)) ^ n := by
+  rw [show -(ξ * (n : ZMod (3 ^ a))) = n • (-ξ) by
+    simp only [nsmul_eq_mul]
+    ring]
+  rw [AddChar.map_nsmul_eq_pow]
+  rw [show (paritySign n : ℂ) = (-1 : ℂ) ^ n by simp [paritySign]]
+  rw [← mul_pow]
+  congr 1
+  ring
+
+/-- The parity transform is a geometric sum of odd length `3^a`. -/
+theorem gHatZ_eq_geom (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    gHatZ a ξ = ((3 ^ a : ℕ) : ℂ)⁻¹ *
+      ∑ n ∈ Finset.range (3 ^ a), (-ZMod.stdAddChar (-ξ)) ^ n := by
+  unfold gHatZ
+  congr 1
+  rw [sum_zmod_eq_sum_range]
+  apply Finset.sum_congr rfl
+  intro n hn
+  rw [ZMod.val_natCast_of_lt (Finset.mem_range.mp hn)]
+  exact parity_addChar_term a n ξ
+
+theorem stdAddChar_pow_card (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ZMod.stdAddChar (-ξ) ^ (3 ^ a) = 1 := by
+  rw [← AddChar.map_nsmul_eq_pow]
+  have : (3 ^ a) • (-ξ) = 0 := by
+    simp only [nsmul_eq_mul]
+    have hcast : ((3 ^ a : ℕ) : ZMod (3 ^ a)) = 0 := ZMod.natCast_self _
+    rw [hcast]
+    simp
+  rw [this]
+  simp
+
+/-- A character of an odd cyclic group cannot take the value `-1`. -/
+theorem stdAddChar_ne_neg_one (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ZMod.stdAddChar (-ξ) ≠ -1 := by
+  intro h
+  have hp := stdAddChar_pow_card a ξ
+  rw [h] at hp
+  have hodd : Odd (3 ^ a) := (show Odd 3 by norm_num).pow
+  rw [hodd.neg_one_pow] at hp
+  norm_num at hp
+
+/-- Closed form for the normalized Fourier coefficient of least-residue parity. -/
+theorem gHatZ_closed (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    gHatZ a ξ = 2 / (((3 ^ a : ℕ) : ℂ) * (1 + ZMod.stdAddChar (-ξ))) := by
+  rw [gHatZ_eq_geom, geom_sum_eq]
+  · have hodd : Odd (3 ^ a) := (show Odd 3 by norm_num).pow
+    have hpow : (-ZMod.stdAddChar (-ξ)) ^ (3 ^ a) = -1 := by
+      rw [neg_pow, hodd.neg_one_pow, stdAddChar_pow_card]
+      ring
+    rw [hpow]
+    have hM : (((3 ^ a : ℕ) : ℂ)) ≠ 0 := by
+      exact_mod_cast (pow_ne_zero a (by norm_num : (3 : ℕ) ≠ 0))
+    have hq : (1 + ZMod.stdAddChar (-ξ)) ≠ 0 := by
+      intro hz
+      apply stdAddChar_ne_neg_one a ξ
+      exact eq_neg_of_add_eq_zero_right hz
+    have hden : -ZMod.stdAddChar (-ξ) - 1 ≠ 0 := by
+      intro hz
+      apply hq
+      linear_combination -hz
+    calc
+      ((3 ^ a : ℕ) : ℂ)⁻¹ * ((-1 - 1) / (-ZMod.stdAddChar (-ξ) - 1)) =
+          ((3 ^ a : ℕ) : ℂ)⁻¹ * (2 / (1 + ZMod.stdAddChar (-ξ))) := by
+            congr 1
+            field_simp [hden, hq]
+            ring
+      _ = 2 / (((3 ^ a : ℕ) : ℂ) * (1 + ZMod.stdAddChar (-ξ))) := by
+        field_simp
+  · intro h
+    have := congrArg Neg.neg h
+    simp only [neg_neg] at this
+    exact stdAddChar_ne_neg_one a ξ this
+
+theorem norm_gHatZ_closed (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ‖gHatZ a ξ‖ = 2 / ((3 ^ a : ℝ) * ‖1 + ZMod.stdAddChar (-ξ)‖) := by
+  rw [gHatZ_closed, norm_div, norm_mul]
+  norm_num
+
+theorem stdAddChar_neg_eq_exp (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ZMod.stdAddChar (-ξ) =
+      Complex.exp (-(2 * Real.pi * Complex.I * (ξ.val : ℂ) / (3 ^ a : ℂ))) := by
+  rw [show -ξ = ((-(ξ.val : ℤ)) : ZMod (3 ^ a)) by
+    simpa only [Int.cast_neg, Int.cast_natCast] using
+      (congrArg Neg.neg (ZMod.natCast_zmod_val ξ)).symm]
+  have h := ZMod.stdAddChar_coe (N := 3 ^ a) (-(ξ.val : ℤ))
+  convert h using 1 <;> push_cast <;> ring
+
+theorem one_add_exp_neg_two_mul_I (x : ℝ) :
+    1 + Complex.exp (-(2 * x * Complex.I)) =
+      (2 * Real.cos x : ℂ) * Complex.exp (-(x * Complex.I)) := by
+  rw [show -(2 * x * Complex.I) = ((-2 * x : ℝ) : ℂ) * Complex.I by
+    push_cast
+    ring]
+  rw [show -(x * Complex.I) = ((-x : ℝ) : ℂ) * Complex.I by
+    push_cast
+    ring]
+  rw [Complex.exp_mul_I, Complex.exp_mul_I]
+  simp_rw [← Complex.ofReal_cos, ← Complex.ofReal_sin]
+  rw [show -2 * x = -(2 * x) by ring]
+  simp only [Real.cos_neg, Real.sin_neg]
+  rw [Real.cos_two_mul, Real.sin_two_mul]
+  push_cast
+  ring
+
+/-- The character denominator has exactly the expected half-angle norm. -/
+theorem norm_one_add_stdAddChar (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ‖1 + ZMod.stdAddChar (-ξ)‖ =
+      2 * |Real.cos (Real.pi * ξ.val / 3 ^ a)| := by
+  rw [stdAddChar_neg_eq_exp]
+  let x : ℝ := Real.pi * ξ.val / 3 ^ a
+  have he : -(2 * Real.pi * Complex.I * (ξ.val : ℂ) / (3 ^ a : ℂ)) =
+      -(2 * x * Complex.I) := by
+    dsimp [x]
+    push_cast
+    ring
+  rw [he, one_add_exp_neg_two_mul_I]
+  rw [norm_mul]
+  rw [show (2 : ℂ) * (Real.cos x : ℂ) = ((2 * Real.cos x : ℝ) : ℂ) by norm_num]
+  rw [Complex.norm_real, Real.norm_eq_abs, abs_mul]
+  have hn : ‖Complex.exp (-(x * Complex.I))‖ = 1 := by
+    rw [show -(x * Complex.I) = ((-x : ℝ) : ℂ) * Complex.I by
+      push_cast
+      ring]
+    exact Complex.norm_exp_ofReal_mul_I (-x)
+  rw [hn, mul_one]
+  simp [x]
+
+/-- Exact norm of a Fourier weight, the starting point for the odd harmonic bound. -/
+theorem norm_gHatZ_cos (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ‖gHatZ a ξ‖ =
+      1 / ((3 ^ a : ℝ) * |Real.cos (Real.pi * ξ.val / 3 ^ a)|) := by
+  rw [norm_gHatZ_closed, norm_one_add_stdAddChar]
+  ring
+
+/-- The zero frequency is exactly the normalized slice cardinality coefficient. -/
+theorem gHatZ_zero (a : ℕ) :
+    gHatZ a 0 = (((3 ^ a : ℕ) : ℂ))⁻¹ := by
+  rw [gHatZ_closed]
+  simp
+  ring
+
 /-- **Edge: slice character decay gives C1 directly** (no fine-scale mixing, no Tao §6).  Proof owed,
 plan in the module docstring.  With `sliceCharDecay_of_pascalDampingDecay` (SliceSeven.lean) this
 makes `BiasDecays` follow from `PascalDampingDecay` alone.  Confidence 75%. -/
