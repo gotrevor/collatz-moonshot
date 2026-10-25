@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Conjugacy.SliceDecay
+import CollatzMoonshot.Conjugacy.Digits
 
 /-!
 # Tao 2019 §7 at the pair-sum law `Pascal(p)`: the input for `SliceCharDecay`
@@ -38,7 +39,7 @@ and `0.310 … 0.071` at `p = 0.35`, with a steady per-2-step ratio for `p ≤ 0
 
 namespace CollatzMoonshot.Conjugacy
 
-open Filter Topology
+open Filter Topology CollatzMoonshot.FrontB
 
 /-- `e(−x/3^n)` for `x ∈ ℤ/3^n`. -/
 noncomputable def charZ (n : ℕ) (x : ZMod (3 ^ n)) : ℂ :=
@@ -77,6 +78,160 @@ probabilistic half (`HoldBasics`, `HoldLocal`, `Holding`, `FpLocation`, `BlackEd
 def PascalDampingDecay : Prop :=
   ∀ A > (0 : ℝ), ∃ C > (0 : ℝ), ∀ p : ℝ, 1 / 5 ≤ p → p ≤ 3 / 5 → ∀ n ξ : ℕ, 1 ≤ n → ¬ 3 ∣ ξ →
     pascalDamping n p ξ ≤ C * (n : ℝ) ^ (-A)
+
+/-! ## The exact slice law -/
+
+/-- The character attached to a set of odd-step positions.  Terras's bijection identifies the
+`a`-slice with the `a`-element subsets of `[0,j)`, and the shortcut iterate is the least residue
+of `wordNumer u · 2⁻ʲ` modulo `3ᵃ`. -/
+noncomputable def subsetCharTerm (j a ξ : ℕ) (u : Finset ℕ) : ℂ :=
+  Complex.exp
+    (2 * Real.pi * Complex.I *
+      ((ξ * (((wordNumer u : ZMod (3 ^ a)) *
+        (2 : ZMod (3 ^ a))⁻¹ ^ j).val) : ℕ) : ℂ) / (3 ^ a : ℂ))
+
+/-- The residue form of the slice character, indexed by `a`-subsets of `[0,j)`. -/
+noncomputable def subsetChar (j a ξ : ℕ) : ℂ :=
+  ∑ u ∈ (Finset.range j).powersetCard a, subsetCharTerm j a ξ u
+
+/-- The shortcut iterate has the advertised truncated-Syracuse residue.  This is the exact
+algebraic part of kickoff step 1; the remaining pairing argument only sees the ordered elements
+of `onesSet r j`. -/
+theorem tstep_iterate_cast_eq_wordNumer_inv {j a r : ℕ} (ha : oddCount r j = a) :
+    (tstep^[j] r : ZMod (3 ^ a)) =
+      (wordNumer (onesSet r j) : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j := by
+  have hmod := tstep_iterate_modEq j r
+  rw [ha, ← wordNumer_onesSet] at hmod
+  have hz : (2 ^ j : ZMod (3 ^ a)) * (tstep^[j] r : ZMod (3 ^ a)) =
+      (wordNumer (onesSet r j) : ZMod (3 ^ a)) := by
+    have hc : ((2 ^ j * tstep^[j] r : ℕ) : ZMod (3 ^ a)) =
+        (wordNumer (onesSet r j) : ZMod (3 ^ a)) :=
+      (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
+    simpa only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat] using hc
+  have hcop : Nat.Coprime 2 (3 ^ a) :=
+    Nat.Coprime.pow_right a (by decide : Nat.Coprime 2 3)
+  have hcancel : (2 : ZMod (3 ^ a))⁻¹ * 2 = 1 := by
+    simpa [mul_comm] using ZMod.coe_mul_inv_eq_one 2 hcop
+  calc
+    (tstep^[j] r : ZMod (3 ^ a)) = 1 * (tstep^[j] r : ZMod (3 ^ a)) := by rw [one_mul]
+    _ = (((2 : ZMod (3 ^ a))⁻¹ * 2) ^ j) * (tstep^[j] r : ZMod (3 ^ a)) := by
+      rw [hcancel, one_pow]
+    _ = (2 : ZMod (3 ^ a))⁻¹ ^ j *
+        ((2 ^ j : ZMod (3 ^ a)) * (tstep^[j] r : ZMod (3 ^ a))) := by ring
+    _ = (2 : ZMod (3 ^ a))⁻¹ ^ j * (wordNumer (onesSet r j) : ZMod (3 ^ a)) := by rw [hz]
+    _ = (wordNumer (onesSet r j) : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j := by ring
+
+/-- **Terras reindexing of the slice law.**  The dynamical character sum is exactly the sum over
+`a`-subsets of odd-step positions of the truncated-Syracuse residue character. -/
+theorem sliceChar_eq_subsetChar (j a ξ : ℕ) : sliceChar j a ξ = subsetChar j a ξ := by
+  unfold sliceChar subsetChar
+  refine Finset.sum_nbij (fun r => onesSet r j) ?_ ?_ ?_ ?_
+  · intro r hr
+    rw [Finset.mem_powersetCard]
+    exact ⟨Finset.mem_powerset.mp (onesSet_mem_powerset r j),
+      card_onesSet r j |>.trans (Finset.mem_filter.mp hr).2⟩
+  · intro r hr s hs hrs
+    exact onesSet_injOn j
+      (Finset.mem_coe.mpr (Finset.mem_filter.mp hr).1)
+      (Finset.mem_coe.mpr (Finset.mem_filter.mp hs).1) hrs
+  · intro u hu
+    have hu' := Finset.mem_coe.mp hu
+    rw [Finset.mem_powersetCard] at hu'
+    rcases onesSet_surjOn j
+      (Finset.mem_coe.mpr (Finset.mem_powerset.mpr hu'.1)) with ⟨r, hr, hru⟩
+    refine ⟨r, ?_, hru⟩
+    apply Finset.mem_coe.mpr
+    rw [levelSet, Finset.mem_filter]
+    refine ⟨Finset.mem_coe.mp hr, ?_⟩
+    change onesSet r j = u at hru
+    rw [← card_onesSet r j, hru, hu'.2]
+  · intro r hr
+    have hrange : r < 2 ^ j := Finset.mem_range.mp (Finset.mem_filter.mp hr).1
+    have ha : oddCount r j = a := (Finset.mem_filter.mp hr).2
+    have hlt : tstep^[j] r < 3 ^ a := by
+      simpa [ha] using tstep_iterate_lt_three_pow hrange
+    unfold subsetCharTerm
+    rw [← ZMod.val_natCast_of_lt hlt, tstep_iterate_cast_eq_wordNumer_inv ha]
+
+/-- For `u = {t₁ < ⋯ < tₐ} ⊆ [0,j)`, these are the reversed times
+`Tₘ = j - tₐ₋₁₋ₘ`.  They are the partial sums of the positive gaps used in the
+Pascal pairing. -/
+def reverseOddTime (j : ℕ) (u : Finset ℕ) {a : ℕ} (hu : u.card = a) (i : Fin a) : ℕ :=
+  j - u.orderEmbOfFin hu (Fin.rev i)
+
+theorem reverseOddTime_pos {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.range j)
+    (hu : u.card = a) (i : Fin a) : 0 < reverseOddTime j u hu i := by
+  have hmem : u.orderEmbOfFin hu (Fin.rev i) ∈ u := Finset.orderEmbOfFin_mem u hu _
+  have hlt : u.orderEmbOfFin hu (Fin.rev i) < j := Finset.mem_range.mp (hsub hmem)
+  unfold reverseOddTime
+  omega
+
+theorem reverseOddTime_le (j : ℕ) (u : Finset ℕ) {a : ℕ} (hu : u.card = a)
+    (i : Fin a) : reverseOddTime j u hu i ≤ j := by
+  unfold reverseOddTime
+  omega
+
+theorem reverseOddTime_strictMono {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.range j)
+    (hu : u.card = a) : StrictMono (reverseOddTime j u hu) := by
+  intro i k hik
+  have himem : u.orderEmbOfFin hu (Fin.rev i) ∈ u := Finset.orderEmbOfFin_mem u hu _
+  have hkmem : u.orderEmbOfFin hu (Fin.rev k) ∈ u := Finset.orderEmbOfFin_mem u hu _
+  have hil : u.orderEmbOfFin hu (Fin.rev i) < j := Finset.mem_range.mp (hsub himem)
+  have hkl : u.orderEmbOfFin hu (Fin.rev k) < j := Finset.mem_range.mp (hsub hkmem)
+  have hrev : Fin.rev k < Fin.rev i := Fin.rev_lt_rev.mpr hik
+  have hord : u.orderEmbOfFin hu (Fin.rev k) < u.orderEmbOfFin hu (Fin.rev i) :=
+    (u.orderEmbOfFin hu).lt_iff_lt.mpr hrev
+  unfold reverseOddTime
+  omega
+
+/-- The positive gaps whose prefix sums are the reverse odd-step times. -/
+def subsetGap (j : ℕ) (u : Finset ℕ) {a : ℕ} (hu : u.card = a + 1) : Fin (a + 1) → ℕ :=
+  Fin.cases (reverseOddTime j u hu 0)
+    (fun i => reverseOddTime j u hu i.succ - reverseOddTime j u hu i.castSucc)
+
+theorem subsetGap_pos {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.range j)
+    (hu : u.card = a + 1) (i : Fin (a + 1)) : 0 < subsetGap j u hu i := by
+  refine Fin.cases ?_ (fun k => ?_) i
+  · simpa [subsetGap] using reverseOddTime_pos hsub hu (0 : Fin (a + 1))
+  · simp only [subsetGap, Fin.cases_succ]
+    have hmono := reverseOddTime_strictMono hsub hu
+      (show k.castSucc < k.succ from Fin.castSucc_lt_succ)
+    omega
+
+/-- The gap vector extended by zero outside its natural index range. -/
+def subsetGapNat (j : ℕ) (u : Finset ℕ) {a : ℕ} (hu : u.card = a + 1) (m : ℕ) : ℕ :=
+  if hm : m < a + 1 then subsetGap j u hu ⟨m, hm⟩ else 0
+
+theorem subsetGapNat_of_lt {j a m : ℕ} {u : Finset ℕ} (hu : u.card = a + 1)
+    (hm : m < a + 1) : subsetGapNat j u hu m = subsetGap j u hu ⟨m, hm⟩ := by
+  simp [subsetGapNat, hm]
+
+/-- The gaps telescope: their prefix through `k` is exactly `Tₖ`. -/
+theorem sum_subsetGapNat_eq_reverseOddTime {j a : ℕ} {u : Finset ℕ}
+    (hsub : u ⊆ Finset.range j) (hu : u.card = a + 1) (k : ℕ) (hk : k < a + 1) :
+    ∑ m ∈ Finset.range (k + 1), subsetGapNat j u hu m =
+      reverseOddTime j u hu ⟨k, hk⟩ := by
+  induction k with
+  | zero => simp [subsetGapNat, subsetGap]
+  | succ k ih =>
+      rw [Finset.sum_range_succ, ih (by omega)]
+      rw [subsetGapNat_of_lt hu (by omega)]
+      have hi : (⟨k + 1, hk⟩ : Fin (a + 1)) = Fin.succ ⟨k, by omega⟩ := Fin.ext rfl
+      rw [hi]
+      simp only [subsetGap, Fin.cases_succ]
+      have hmono := reverseOddTime_strictMono hsub hu
+        (show (Fin.castSucc ⟨k, by omega⟩ : Fin (a + 1)) <
+          (Fin.succ ⟨k, by omega⟩ : Fin (a + 1)) from Fin.castSucc_lt_succ)
+      have hfin : (⟨k, by omega⟩ : Fin (a + 1)) =
+          (Fin.castSucc ⟨k, by omega⟩ : Fin (a + 1)) := Fin.ext rfl
+      rw [hfin]
+      omega
+
+/-- The last partial sum lies in the slice budget `j`. -/
+theorem sum_subsetGapNat_le {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.range j)
+    (hu : u.card = a + 1) : ∑ m ∈ Finset.range (a + 1), subsetGapNat j u hu m ≤ j := by
+  rw [sum_subsetGapNat_eq_reverseOddTime hsub hu a (by omega)]
+  exact reverseOddTime_le j u hu ⟨a, by omega⟩
 
 /-- **Edge: the uniform damping bound gives slice character decay.**  Sketch (personal-c5's two
 facts, `SliceDecay.lean`): write the slice law at `(j, a)` as `Σ_k 3^{k−1} 2^{−T_k} mod 3^a` with
