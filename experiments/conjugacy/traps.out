@@ -1,0 +1,8 @@
+         1 eps=0.02   comps= 80018  max L/t_in=0.80 [L=4 t_in=5 line N=2197 corner=(k*=2187, t*=8) size=4.88]
+                                     max L=9 [L=9 t_in=977 line N=5521 corner=(k*=3567, t*=985) size=11.83]
+         5 eps=0.02   comps= 80025  max L/t_in=1.20 [L=6 t_in=5 line N=2463 corner=(k*=2453, t*=10) size=7.07]
+                                     max L=8 [L=8 t_in=858 line N=2861 corner=(k*=1145, t*=865) size=10.52]
+         7 eps=0.02   comps= 79673  max L/t_in=0.80 [L=4 t_in=5 line N=1861 corner=(k*=1851, t*=9) size=5.28]
+                                     max L=8 [L=8 t_in=404 line N=3145 corner=(k*=2337, t*=412) size=11.05]
+    3^1000 eps=0.02   comps= 47993  max L/t_in=1000.00 [L=1000 t_in=1 line N=2007 corner=(k*=3999, t*=1000) size=inf]
+                                     max L=1000 [L=1000 t_in=1 line N=2007 corner=(k*=3999, t*=1000) size=inf]
