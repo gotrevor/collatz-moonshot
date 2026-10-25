@@ -179,7 +179,7 @@ theorem abs_levelSign_le (j a m : ℕ) (hma : m ≤ a) :
     _ ≤ levelOsc j a m + (levelSet j a).card * q := add_le_add hD hqU
     _ = levelOsc j a m + (levelSet j a).card * ((3 : ℝ) ^ m / 3 ^ a) := rfl
 
-private theorem abs_levelSign_le_card (j a : ℕ) :
+theorem abs_levelSign_le_card (j a : ℕ) :
     |(levelSign j a : ℝ)| ≤ (levelSet j a).card := by
   calc
     |(levelSign j a : ℝ)| =
@@ -190,7 +190,7 @@ private theorem abs_levelSign_le_card (j a : ℕ) :
       Finset.abs_sum_le_sum_abs _ _
     _ = (levelSet j a).card := by simp [abs_paritySign]
 
-private theorem sum_out_levelSet_card (j : ℕ) :
+theorem sum_out_levelSet_card (j : ℕ) :
     ∑ a ∈ (Finset.range (j + 1)).filter
         (fun a => 4 * a < j ∨ 11 * j / 20 < a),
       (levelSet j a).card = (outOddSet j).card := by
@@ -200,7 +200,7 @@ private theorem sum_out_levelSet_card (j : ℕ) :
   ext r
   simp [outOddSet, oddCount_le]
 
-private theorem sum_levelSet_card (j : ℕ) :
+theorem sum_levelSet_card (j : ℕ) :
     ∑ a ∈ Finset.range (j + 1), (levelSet j a).card = 2 ^ j := by
   unfold levelSet
   rw [Finset.sum_card_fiberwise_eq_card_filter]
@@ -210,7 +210,7 @@ private theorem sum_levelSet_card (j : ℕ) :
     simp [oddCount_le]
   rw [heq, Finset.card_range]
 
-private theorem outOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
+theorem outOddSet_ratio_le (j : ℕ) (hj : 0 < j) :
     ((outOddSet j).card : ℝ) / 2 ^ j ≤ 100 / (j : ℝ) := by
   apply (div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 ^ j) (by exact_mod_cast hj)).2
   have hm := outOddSet_card_mul_sq_le j
