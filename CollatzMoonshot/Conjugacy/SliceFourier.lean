@@ -975,10 +975,522 @@ theorem sum_norm_gHatZ_dvd_le (a K : ℕ) (hKa : K ≤ a) :
       exact mul_le_mul_of_nonneg_left
         (mul_le_mul_of_nonneg_left hsubR (by norm_num)) (by positivity)
 
-/-- **Edge: slice character decay gives C1 directly** (no fine-scale mixing, no Tao §6).  Proof owed,
-plan in the module docstring.  With `sliceCharDecay_of_pascalDampingDecay` (SliceSeven.lean) this
-makes `BiasDecays` follow from `PascalDampingDecay` alone.  Confidence 75%. -/
+/-! ## Uniform bounds for the sub-slice expansion -/
+
+/-- The trivial cardinality bound for a slice character. -/
+theorem norm_sliceChar_le_card (j a ξ : ℕ) :
+    ‖sliceChar j a ξ‖ ≤ (levelSet j a).card := by
+  unfold sliceChar
+  calc
+    ‖∑ r ∈ levelSet j a,
+        Complex.exp
+          (2 * Real.pi * Complex.I * ((ξ * tstep^[j] r : ℕ) : ℂ) / (3 ^ a : ℂ))‖ ≤
+        ∑ r ∈ levelSet j a,
+          ‖Complex.exp
+            (2 * Real.pi * Complex.I * ((ξ * tstep^[j] r : ℕ) : ℂ) / (3 ^ a : ℂ))‖ :=
+      norm_sum_le _ _
+    _ = (levelSet j a).card := by
+      have hphase (r : ℕ) :
+          ‖Complex.exp
+            (2 * Real.pi * Complex.I * ((ξ * tstep^[j] r : ℕ) : ℂ) / (3 ^ a : ℂ))‖ = 1 := by
+        rw [show
+          2 * Real.pi * Complex.I * ((ξ * tstep^[j] r : ℕ) : ℂ) / (3 ^ a : ℂ) =
+              ((2 * Real.pi * (ξ * tstep^[j] r : ℕ) / (3 ^ a : ℕ) : ℝ) : ℂ) *
+                Complex.I by
+          push_cast
+          ring]
+        exact Complex.norm_exp_ofReal_mul_I _
+      simp_rw [hphase]
+      simp
+
+/-- A pointwise estimate on the early sub-slices, plus the exact late-tail mass, controls a
+frequency divisible by `3^k`.  Keeping this bookkeeping lemma independent of the decay window
+makes the analytic input below transparent. -/
+theorem norm_sliceChar_pow_le_good_add_tail (j a k u m : ℕ) (E : ℝ)
+    (hE : 0 ≤ E) (hk : 1 ≤ k) (hka : k ≤ a)
+    (hgood : ∀ t ∈ Finset.range j, t < m →
+      ‖sliceChar (j - 1 - t) (a - k) u‖ ≤
+        E * (levelSet (j - 1 - t) (a - k)).card) :
+    ‖sliceChar j a (3 ^ k * u)‖ ≤
+      E * j.choose a + subsliceTail j a k m := by
+  rw [sliceChar_eq_subsliceSum j a k u hk hka]
+  unfold subsliceSum
+  calc
+    ‖∑ t ∈ Finset.range j,
+        (t.choose (k - 1) : ℂ) * sliceChar (j - 1 - t) (a - k) u‖ ≤
+        ∑ t ∈ Finset.range j,
+          (E * (subsliceWeight j a k t : ℝ) +
+            if m ≤ t then (subsliceWeight j a k t : ℝ) else 0) := by
+      apply norm_sum_le_of_le
+      intro t ht
+      rw [norm_mul, Complex.norm_natCast]
+      by_cases htm : m ≤ t
+      · rw [if_pos htm]
+        have htriv := norm_sliceChar_le_card (j - 1 - t) (a - k) u
+        rw [card_levelSet_eq_choose] at htriv
+        have hweight : (0 : ℝ) ≤ t.choose (k - 1) := by positivity
+        calc
+          (t.choose (k - 1) : ℝ) * ‖sliceChar (j - 1 - t) (a - k) u‖ ≤
+              (subsliceWeight j a k t : ℝ) := by
+            rw [subsliceWeight, Nat.cast_mul]
+            exact mul_le_mul_of_nonneg_left htriv hweight
+          _ ≤ E * (subsliceWeight j a k t : ℝ) +
+              (subsliceWeight j a k t : ℝ) := by
+            have hw : (0 : ℝ) ≤ subsliceWeight j a k t := by positivity
+            nlinarith [mul_nonneg hE hw]
+      · rw [if_neg htm, add_zero]
+        have hg := hgood t ht (Nat.lt_of_not_ge htm)
+        rw [card_levelSet_eq_choose] at hg
+        have hweight : (0 : ℝ) ≤ t.choose (k - 1) := by positivity
+        calc
+          (t.choose (k - 1) : ℝ) * ‖sliceChar (j - 1 - t) (a - k) u‖ ≤
+              (t.choose (k - 1) : ℝ) *
+                (E * ((j - 1 - t).choose (a - k) : ℝ)) :=
+            mul_le_mul_of_nonneg_left hg hweight
+          _ = E * (subsliceWeight j a k t : ℝ) := by
+            rw [subsliceWeight, Nat.cast_mul]
+            ring
+    _ = E * j.choose a + subsliceTail j a k m := by
+      rw [Finset.sum_add_distrib, ← Finset.mul_sum]
+      have htotal :
+          (∑ t ∈ Finset.range j, (subsliceWeight j a k t : ℝ)) =
+            (j.choose a : ℝ) := by
+        exact_mod_cast sum_subsliceWeight j a k hk hka
+      rw [htotal]
+      congr 1
+      simp only [subsliceTail, Finset.sum_filter, Nat.cast_sum]
+      apply Finset.sum_congr rfl
+      intro t ht
+      split_ifs <;> norm_num
+
+/-- Real-valued normalized form of `subslice_tail_le`. -/
+theorem subslice_tail_real_le (j a k : ℕ) (hj : 32 ≤ j)
+    (hjlow : 4096 * k ≤ j) (hja : j ≤ 4 * a) (hk : 1 ≤ k) (hka : k ≤ a) :
+    (subsliceTail j a k (j / 16) : ℝ) ≤
+      (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32) * j.choose a := by
+  let r := j / 16 - j / 32
+  have htail := subslice_tail_le j a k hj hjlow hja hk hka
+  have htailR :
+      (8 : ℝ) ^ r * subsliceTail j a k (j / 16) ≤
+        (j : ℝ) * 7 ^ r * j.choose a := by
+    exact_mod_cast htail
+  have h8 : (0 : ℝ) < 8 ^ r := by positivity
+  calc
+    (subsliceTail j a k (j / 16) : ℝ) =
+        ((8 : ℝ) ^ r * subsliceTail j a k (j / 16)) / 8 ^ r := by
+      field_simp
+    _ ≤ ((j : ℝ) * 7 ^ r * j.choose a) / 8 ^ r :=
+      div_le_div_of_nonneg_right htailR h8.le
+    _ = (j : ℝ) * ((7 : ℝ) / 8) ^ r * j.choose a := by
+      rw [div_pow]
+      field_simp
+
+/-- Uniform decay for every low-valuation Fourier frequency in the central slice window.  The
+cutoff `4096*k ≤ j` is chosen to match `subslice_tail_le`; the early sub-slices remain in the
+window of `SliceCharDecay`, while the late sub-slices contribute the geometric error. -/
+theorem exists_norm_sliceChar_pow_le (h : SliceCharDecay) :
+    ∃ C > (0 : ℝ), ∀ j a k u : ℕ, 128 ≤ j → j ≤ 4 * a → a ≤ 11 * j / 20 →
+      4096 * k ≤ j → ¬3 ∣ u →
+      ‖sliceChar j a (3 ^ k * u)‖ ≤
+        (4 * C / (j : ℝ) ^ 2 +
+          (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * j.choose a := by
+  obtain ⟨C, hCpos, hC⟩ := h 2 (by norm_num)
+  refine ⟨C, hCpos, fun j a k u hj hja haj hjk hu => ?_⟩
+  have hjpos : 0 < j := by omega
+  by_cases hkzero : k = 0
+  · subst k
+    simp only [pow_zero, one_mul]
+    have hd := hC j a u (by omega) (by omega) (by omega) hu
+    rw [card_levelSet_eq_choose] at hd
+    have hjRpos : (0 : ℝ) < j := by exact_mod_cast hjpos
+    calc
+      ‖sliceChar j a u‖ ≤ C * (j : ℝ) ^ (-(2 : ℝ)) * j.choose a := hd
+      _ = (C / (j : ℝ) ^ 2) * j.choose a := by
+        rw [Real.rpow_neg (by positivity), Real.rpow_two]
+        ring
+      _ ≤ (4 * C / (j : ℝ) ^ 2) * j.choose a := by
+        gcongr
+        nlinarith [hCpos]
+      _ ≤ (4 * C / (j : ℝ) ^ 2 +
+            (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * j.choose a := by
+        exact mul_le_mul_of_nonneg_right (le_add_of_nonneg_right (by positivity)) (by positivity)
+  · have hk : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hkzero
+    have hka : k ≤ a := by omega
+    have hE : 0 ≤ 4 * C / (j : ℝ) ^ 2 := by positivity
+    have hgood (t : ℕ) (ht : t ∈ Finset.range j) (htm : t < j / 16) :
+        ‖sliceChar (j - 1 - t) (a - k) u‖ ≤
+          (4 * C / (j : ℝ) ^ 2) * (levelSet (j - 1 - t) (a - k)).card := by
+      have htj : t < j := Finset.mem_range.mp ht
+      have hj' : 1 ≤ j - 1 - t := by omega
+      have hlower : j - 1 - t ≤ 5 * (a - k) := by omega
+      have hupper : 5 * (a - k) ≤ 3 * (j - 1 - t) := by omega
+      have hd := hC (j - 1 - t) (a - k) u hj' hlower hupper hu
+      have hhalfNat : j ≤ 2 * (j - 1 - t) := by omega
+      have hhalf : (j : ℝ) / 2 ≤ (j - 1 - t : ℕ) := by
+        exact (div_le_iff₀' (by norm_num : (0 : ℝ) < 2)).2 (by exact_mod_cast hhalfNat)
+      have hj'pos : (0 : ℝ) < (j - 1 - t : ℕ) := by exact_mod_cast hj'
+      have hjRpos : (0 : ℝ) < j := by exact_mod_cast hjpos
+      have hsquare : (j : ℝ) ^ 2 / 4 ≤ ((j - 1 - t : ℕ) : ℝ) ^ 2 := by
+        nlinarith [sq_nonneg ((j - 1 - t : ℕ) : ℝ), sq_nonneg ((j : ℝ) / 2)]
+      have hrpow :
+          ((j - 1 - t : ℕ) : ℝ) ^ (-(2 : ℝ)) ≤ 4 / (j : ℝ) ^ 2 := by
+        rw [Real.rpow_neg (by positivity), Real.rpow_two]
+        calc
+          (((j - 1 - t : ℕ) : ℝ) ^ 2)⁻¹ ≤ (((j : ℝ) ^ 2 / 4))⁻¹ := by
+            exact (inv_le_inv₀ (by positivity) (by positivity)).2 hsquare
+          _ = 4 / (j : ℝ) ^ 2 := by field_simp
+      have hcard : (0 : ℝ) ≤ (levelSet (j - 1 - t) (a - k)).card := by positivity
+      calc
+        ‖sliceChar (j - 1 - t) (a - k) u‖ ≤
+            C * ((j - 1 - t : ℕ) : ℝ) ^ (-(2 : ℝ)) *
+              (levelSet (j - 1 - t) (a - k)).card := hd
+        _ ≤ C * (4 / (j : ℝ) ^ 2) *
+              (levelSet (j - 1 - t) (a - k)).card := by
+          gcongr
+        _ = (4 * C / (j : ℝ) ^ 2) *
+              (levelSet (j - 1 - t) (a - k)).card := by ring
+    have hmain := norm_sliceChar_pow_le_good_add_tail j a k u (j / 16)
+      (4 * C / (j : ℝ) ^ 2) hE hk hka hgood
+    have htail := subslice_tail_real_le j a k (by omega) hjk hja hk hka
+    calc
+      ‖sliceChar j a (3 ^ k * u)‖ ≤
+          (4 * C / (j : ℝ) ^ 2) * j.choose a +
+            subsliceTail j a k (j / 16) := hmain
+      _ ≤ (4 * C / (j : ℝ) ^ 2) * j.choose a +
+            ((j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * j.choose a := by
+        gcongr
+      _ = (4 * C / (j : ℝ) ^ 2 +
+            (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * j.choose a := by ring
+
+/-- Fourier inversion plus the valuation split turns the low-frequency slice estimate into a
+uniform bound for the signed cardinality of every central slice. -/
+theorem exists_abs_levelSign_le (h : SliceCharDecay) :
+    ∃ C > (0 : ℝ), ∀ j a : ℕ, 4096 ≤ j → j ≤ 4 * a → a ≤ 11 * j / 20 →
+      |(levelSign j a : ℝ)| ≤
+        ((4 * C / (j : ℝ) ^ 2 +
+            (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (a + 1)) +
+          ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (a + 1))) * (levelSet j a).card := by
+  obtain ⟨C, hCpos, hlow⟩ := exists_norm_sliceChar_pow_le h
+  refine ⟨C, hCpos, fun j a hj hja haj => ?_⟩
+  let K := j / 4096
+  let E := 4 * C / (j : ℝ) ^ 2 +
+    (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)
+  have hKpos : 1 ≤ K := by dsimp [K]; omega
+  have hKa : K ≤ a := by dsimp [K]; omega
+  have hE : 0 ≤ E := by dsimp [E]; positivity
+  have hlowξ (ξ : ZMod (3 ^ a)) (hξ : ¬3 ^ K ∣ ξ.val) :
+      ‖sliceChar j a ξ.val‖ ≤ E * (levelSet j a).card := by
+    have hξ0 : ξ.val ≠ 0 := by
+      intro hz
+      apply hξ
+      rw [hz]
+      exact dvd_zero _
+    let k := padicValNat 3 ξ.val
+    let u := ξ.val.divMaxPow 3
+    have hku : 3 ^ k * u = ξ.val := by
+      exact Nat.pow_padicValNat_mul_divMaxPow 3 ξ.val
+    have hu : ¬3 ∣ u := by
+      exact Nat.not_dvd_divMaxPow (by norm_num) hξ0
+    have hkK : k < K := by
+      by_contra hnot
+      apply hξ
+      exact (Nat.pow_dvd_pow 3 (Nat.le_of_not_gt hnot)).trans pow_padicValNat_dvd
+    have hjk : 4096 * k ≤ j := by
+      dsimp [K] at hkK
+      omega
+    have hb := hlow j a k u (by omega) hja haj hjk hu
+    rw [hku] at hb
+    rw [card_levelSet_eq_choose]
+    simpa [E] using hb
+  have hpoint (ξ : ZMod (3 ^ a)) :
+      ‖gHatZ a ξ * sliceChar j a ξ.val‖ ≤
+        E * (levelSet j a).card * ‖gHatZ a ξ‖ +
+          if 3 ^ K ∣ ξ.val then (levelSet j a).card * ‖gHatZ a ξ‖ else 0 := by
+    rw [norm_mul]
+    by_cases hξ : 3 ^ K ∣ ξ.val
+    · rw [if_pos hξ]
+      have ht := norm_sliceChar_le_card j a ξ.val
+      have hg : 0 ≤ ‖gHatZ a ξ‖ := norm_nonneg _
+      have hc : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+      have hmain : ‖gHatZ a ξ‖ * ‖sliceChar j a ξ.val‖ ≤
+          ‖gHatZ a ξ‖ * (levelSet j a).card :=
+        mul_le_mul_of_nonneg_left ht hg
+      nlinarith [mul_nonneg hE (mul_nonneg hc hg)]
+    · rw [if_neg hξ]
+      have hb := hlowξ ξ hξ
+      calc
+        ‖gHatZ a ξ‖ * ‖sliceChar j a ξ.val‖ ≤
+            ‖gHatZ a ξ‖ * (E * (levelSet j a).card) :=
+          mul_le_mul_of_nonneg_left hb (norm_nonneg _)
+        _ = E * (levelSet j a).card * ‖gHatZ a ξ‖ + 0 := by ring
+  have hsum :
+      |(levelSign j a : ℝ)| ≤
+        E * (levelSet j a).card * (∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ‖) +
+          (levelSet j a).card *
+            (∑ ξ : ZMod (3 ^ a), if 3 ^ K ∣ ξ.val then ‖gHatZ a ξ‖ else 0) := by
+    calc
+      |(levelSign j a : ℝ)| = ‖(levelSign j a : ℂ)‖ := by
+        rw [Complex.norm_intCast]
+      _ = ‖∑ ξ : ZMod (3 ^ a), gHatZ a ξ * sliceChar j a ξ.val‖ := by
+        rw [← levelSign_eq_fourier_slice]
+      _ ≤ ∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ * sliceChar j a ξ.val‖ :=
+        norm_sum_le _ _
+      _ ≤ ∑ ξ : ZMod (3 ^ a),
+          (E * (levelSet j a).card * ‖gHatZ a ξ‖ +
+            if 3 ^ K ∣ ξ.val then (levelSet j a).card * ‖gHatZ a ξ‖ else 0) := by
+        exact Finset.sum_le_sum fun ξ _ => hpoint ξ
+      _ = E * (levelSet j a).card * (∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ‖) +
+          (levelSet j a).card *
+            (∑ ξ : ZMod (3 ^ a), if 3 ^ K ∣ ξ.val then ‖gHatZ a ξ‖ else 0) := by
+        rw [Finset.sum_add_distrib, Finset.mul_sum, Finset.mul_sum]
+        congr 1
+        apply Finset.sum_congr rfl
+        intro ξ hξ
+        split_ifs <;> ring
+  have hall := sum_norm_gHatZ_le a
+  have hhigh := sum_norm_gHatZ_dvd_le a K hKa
+  have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+  have hEa : 0 ≤ 4 * (a + 1 : ℝ) := by positivity
+  calc
+    |(levelSign j a : ℝ)| ≤
+        E * (levelSet j a).card * (∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ‖) +
+          (levelSet j a).card *
+            (∑ ξ : ZMod (3 ^ a), if 3 ^ K ∣ ξ.val then ‖gHatZ a ξ‖ else 0) := hsum
+    _ ≤ E * (levelSet j a).card * (4 * (a + 1)) +
+          (levelSet j a).card * (((3 : ℝ) ^ K)⁻¹ * (4 * (a + 1))) := by
+      gcongr
+    _ = (E * (4 * (a + 1)) + ((3 : ℝ) ^ K)⁻¹ * (4 * (a + 1))) *
+          (levelSet j a).card := by ring
+    _ = ((4 * C / (j : ℝ) ^ 2 +
+            (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (a + 1)) +
+          ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (a + 1))) * (levelSet j a).card := by
+      rfl
+
+/-- A single-variable majorant for the normalized signed count in the central slice window. -/
+noncomputable def sliceFourierMajorant (C : ℝ) (j : ℕ) : ℝ :=
+  (4 * C / (j : ℝ) ^ 2 +
+      (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (j + 1)) +
+    ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (j + 1))
+
+/-- The polynomial losses in the Fourier and sub-slice bounds are absorbed by their geometric
+factors. -/
+theorem tendsto_sliceFourierMajorant (C : ℝ) (_hC : 0 ≤ C) :
+    Tendsto (sliceFourierMajorant C) atTop (𝓝 0) := by
+  let r : ℕ → ℕ := fun j => j / 16 - j / 32
+  let K : ℕ → ℕ := fun j => j / 4096
+  have hr : Tendsto r atTop atTop := by
+    rw [tendsto_atTop]
+    intro b
+    rw [eventually_atTop]
+    refine ⟨64 * b + 64, fun j hj => ?_⟩
+    dsimp [r]
+    omega
+  have hK : Tendsto K atTop atTop := by
+    rw [tendsto_atTop]
+    intro b
+    rw [eventually_atTop]
+    refine ⟨4096 * b + 4096, fun j hj => ?_⟩
+    dsimp [K]
+    omega
+  have hone : Tendsto (fun j : ℕ => (1 : ℝ) / j) atTop (𝓝 0) :=
+    tendsto_one_div_atTop_nhds_zero_nat
+  have hrat : Tendsto
+      (fun j : ℕ => (4 * C / (j : ℝ) ^ 2) * (4 * (j + 1 : ℕ))) atTop (𝓝 0) := by
+    have ht := (hone.add (hone.pow 2)).const_mul (16 * C)
+    have ht0 : Tendsto (fun j : ℕ => 16 * C * ((1 : ℝ) / j + ((1 : ℝ) / j) ^ 2))
+        atTop (𝓝 0) := by simpa using ht
+    apply ht0.congr'
+    filter_upwards [eventually_ge_atTop 1] with j hj
+    have hj0 : (j : ℝ) ≠ 0 := by exact_mod_cast (Nat.ne_of_gt hj)
+    push_cast
+    field_simp
+    ring
+  have hrpow : Tendsto
+      (fun j : ℕ => ((r j : ℝ) ^ 2) * ((7 : ℝ) / 8) ^ r j) atTop (𝓝 0) := by
+    have ht := (tendsto_pow_const_mul_const_pow_of_lt_one 2
+      (by norm_num : (0 : ℝ) ≤ 7 / 8) (by norm_num : (7 : ℝ) / 8 < 1)).comp hr
+    simpa [Function.comp_def] using ht
+  have htail : Tendsto
+      (fun j : ℕ => ((j : ℝ) * ((7 : ℝ) / 8) ^ r j) * (4 * (j + 1 : ℕ)))
+      atTop (𝓝 0) := by
+    have hu : Tendsto
+        (fun j : ℕ => 32768 * ((r j : ℝ) ^ 2 * ((7 : ℝ) / 8) ^ r j))
+        atTop (𝓝 0) := by simpa using hrpow.const_mul 32768
+    apply squeeze_zero' (Eventually.of_forall (fun _ => by positivity)) _ hu
+    filter_upwards [eventually_ge_atTop 64] with j hj
+    have hdiv : j / 32 = (j / 16) / 2 := by rw [Nat.div_div_eq_div_mul]
+    have hqr : j / 32 ≤ r j := by dsimp [r]; omega
+    have hjq : j < 32 * (j / 32 + 1) := by omega
+    have hjr : j ≤ 64 * r j := by omega
+    have hj1r : j + 1 ≤ 128 * r j := by omega
+    have hmulNat : j * (j + 1) ≤ 8192 * (r j) ^ 2 := by
+      calc
+        j * (j + 1) ≤ (64 * r j) * (128 * r j) := Nat.mul_le_mul hjr hj1r
+        _ = 8192 * (r j) ^ 2 := by ring
+    have hmul : (j : ℝ) * (j + 1 : ℕ) ≤ 8192 * (r j : ℝ) ^ 2 := by
+      exact_mod_cast hmulNat
+    have hq : (0 : ℝ) ≤ ((7 : ℝ) / 8) ^ r j := by positivity
+    calc
+      ((j : ℝ) * ((7 : ℝ) / 8) ^ r j) * (4 * (j + 1 : ℕ)) =
+          4 * ((j : ℝ) * (j + 1 : ℕ)) * ((7 : ℝ) / 8) ^ r j := by ring
+      _ ≤ 4 * (8192 * (r j : ℝ) ^ 2) * ((7 : ℝ) / 8) ^ r j := by
+        gcongr
+      _ = 32768 * ((r j : ℝ) ^ 2 * ((7 : ℝ) / 8) ^ r j) := by ring
+  have hKpow : Tendsto
+      (fun j : ℕ => (K j : ℝ) * ((1 : ℝ) / 3) ^ K j) atTop (𝓝 0) := by
+    have ht := (tendsto_pow_const_mul_const_pow_of_lt_one 1
+      (by norm_num : (0 : ℝ) ≤ 1 / 3) (by norm_num : (1 : ℝ) / 3 < 1)).comp hK
+    simpa [Function.comp_def] using ht
+  have hhigh : Tendsto
+      (fun j : ℕ => ((3 : ℝ) ^ K j)⁻¹ * (4 * (j + 1 : ℕ))) atTop (𝓝 0) := by
+    have hu : Tendsto
+        (fun j : ℕ => 32768 * ((K j : ℝ) * ((1 : ℝ) / 3) ^ K j))
+        atTop (𝓝 0) := by simpa using hKpow.const_mul 32768
+    apply squeeze_zero' (Eventually.of_forall (fun _ => by positivity)) _ hu
+    filter_upwards [eventually_ge_atTop 4096] with j hj
+    have hjK : j + 1 ≤ 8192 * K j := by dsimp [K]; omega
+    have hjKR : (j + 1 : ℕ) ≤ (8192 : ℝ) * K j := by exact_mod_cast hjK
+    have heq : ((3 : ℝ) ^ K j)⁻¹ = ((1 : ℝ) / 3) ^ K j := by
+      rw [one_div, inv_pow]
+    rw [heq]
+    have hq : (0 : ℝ) ≤ ((1 : ℝ) / 3) ^ K j := by positivity
+    calc
+      ((1 : ℝ) / 3) ^ K j * (4 * (j + 1 : ℕ)) ≤
+          ((1 : ℝ) / 3) ^ K j * (4 * (8192 * K j)) := by
+        gcongr
+      _ = 32768 * ((K j : ℝ) * ((1 : ℝ) / 3) ^ K j) := by ring
+  have hsum := (hrat.add htail).add hhigh
+  have hsum0 : Tendsto
+      (fun j : ℕ =>
+        (4 * C / (j : ℝ) ^ 2) * (4 * (j + 1 : ℕ)) +
+          ((j : ℝ) * ((7 : ℝ) / 8) ^ r j) * (4 * (j + 1 : ℕ)) +
+          ((3 : ℝ) ^ K j)⁻¹ * (4 * (j + 1 : ℕ))) atTop (𝓝 0) := by
+    simpa using hsum
+  apply hsum0.congr'
+  filter_upwards with j
+  simp only [sliceFourierMajorant, r, K]
+  push_cast
+  ring
+
+/-- The central-window signed slices are uniformly negligible. -/
+theorem eventually_abs_levelSign_le (h : SliceCharDecay) (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ j in atTop, ∀ a : ℕ, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      |(levelSign j a : ℝ)| ≤ ε * (levelSet j a).card := by
+  obtain ⟨C, hCpos, hsign⟩ := exists_abs_levelSign_le h
+  have hlim := tendsto_sliceFourierMajorant C hCpos.le
+  have hsmall : ∀ᶠ j in atTop, sliceFourierMajorant C j < ε :=
+    hlim.eventually (gt_mem_nhds hε)
+  filter_upwards [hsmall, eventually_ge_atTop 4096] with j hjε hj
+  intro a hja haj
+  have haj' : a ≤ j := by omega
+  have hbound := hsign j a hj hja haj
+  have hE : 0 ≤ 4 * C / (j : ℝ) ^ 2 +
+      (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32) := by positivity
+  have hhigh : 0 ≤ ((3 : ℝ) ^ (j / 4096))⁻¹ := by positivity
+  have hacast : (a + 1 : ℕ) ≤ (j + 1 : ℕ) := Nat.add_le_add_right haj' 1
+  have hcoef :
+      (4 * C / (j : ℝ) ^ 2 +
+          (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (a + 1)) +
+        ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (a + 1)) ≤
+        sliceFourierMajorant C j := by
+    unfold sliceFourierMajorant
+    have hacastR : ((a + 1 : ℕ) : ℝ) ≤ (j + 1 : ℕ) := by exact_mod_cast hacast
+    gcongr
+  have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+  calc
+    |(levelSign j a : ℝ)| ≤
+        ((4 * C / (j : ℝ) ^ 2 +
+            (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (a + 1)) +
+          ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (a + 1))) *
+            (levelSet j a).card := hbound
+    _ ≤ sliceFourierMajorant C j * (levelSet j a).card :=
+      mul_le_mul_of_nonneg_right hcoef hcard
+    _ ≤ ε * (levelSet j a).card :=
+      mul_le_mul_of_nonneg_right hjε.le hcard
+
+/-- Sum a uniform central-slice bound and control the complementary slices by their cardinality. -/
+theorem abs_bias_le_of_levelSign (j : ℕ) {ε : ℝ} (hε : 0 ≤ ε)
+    (hslice : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      |(levelSign j a : ℝ)| ≤ ε * (levelSet j a).card) :
+    |(bias j : ℝ)| ≤ ε * 2 ^ j + (outOddSet j).card := by
+  let I := Finset.range (j + 1)
+  let L := I.filter (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20)
+  let H := I.filter (fun a => 4 * a < j ∨ 11 * j / 20 < a)
+  have hLcard : ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤ 2 ^ j := by
+    calc
+      ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤
+          ∑ a ∈ I, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+          (fun _ _ _ => by positivity)
+      _ = 2 ^ j := by
+        exact_mod_cast sum_levelSet_card j
+  have hlow : |∑ a ∈ L, (levelSign j a : ℝ)| ≤ ε * 2 ^ j := by
+    calc
+      |∑ a ∈ L, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ L, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ L, ε * (levelSet j a).card := by
+        exact Finset.sum_le_sum fun a ha => hslice a
+          (Finset.mem_filter.mp ha).2.1 (Finset.mem_filter.mp ha).2.2
+      _ = ε * ∑ a ∈ L, ((levelSet j a).card : ℝ) := by rw [Finset.mul_sum]
+      _ ≤ ε * 2 ^ j := mul_le_mul_of_nonneg_left hLcard hε
+  have hHcard : ∑ a ∈ H, ((levelSet j a).card : ℝ) = (outOddSet j).card := by
+    exact_mod_cast sum_out_levelSet_card j
+  have hhigh : |∑ a ∈ H, (levelSign j a : ℝ)| ≤ (outOddSet j).card := by
+    calc
+      |∑ a ∈ H, (levelSign j a : ℝ)| ≤
+          ∑ a ∈ H, |(levelSign j a : ℝ)| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ a ∈ H, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum fun a _ => abs_levelSign_le_card j a
+      _ = (outOddSet j).card := hHcard
+  have hpartition :
+      ∑ a ∈ I, (levelSign j a : ℝ) =
+        (∑ a ∈ L, (levelSign j a : ℝ)) + ∑ a ∈ H, (levelSign j a : ℝ) := by
+    have hs := Finset.sum_filter_add_sum_filter_not I
+      (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20) (fun a => (levelSign j a : ℝ))
+    rw [show I.filter (fun a => ¬(j ≤ 4 * a ∧ a ≤ 11 * j / 20)) = H by
+      ext a
+      simp [H]
+      omega] at hs
+    exact hs.symm
+  have hbias : (bias j : ℝ) = ∑ a ∈ I, (levelSign j a : ℝ) := by
+    have hb := congrArg (fun z : ℤ => (z : ℝ)) (bias_eq_sum_levelSign j)
+    simpa [I] using hb
+  rw [hbias, hpartition]
+  exact (abs_add_le _ _).trans (add_le_add hlow hhigh)
+
+/-- **Edge: slice character decay gives C1 directly** (no fine-scale mixing, no Tao §6).
+With `sliceCharDecay_of_pascalDampingDecay` (SliceSeven.lean) this makes `BiasDecays` follow from
+`PascalDampingDecay` alone. -/
 theorem biasDecays_of_sliceCharDecay (h : SliceCharDecay) : BiasDecays := by
-  sorry
+  rw [BiasDecays, Metric.tendsto_atTop]
+  intro ε hε
+  have hslices := eventually_abs_levelSign_le h (ε / 2) (by positivity)
+  rw [Filter.eventually_atTop] at hslices
+  obtain ⟨J, hJ⟩ := hslices
+  obtain ⟨M, hM⟩ := exists_nat_gt (200 / ε)
+  refine ⟨max J (M + 1), fun j hj => ?_⟩
+  have hjJ : J ≤ j := le_trans (le_max_left _ _) hj
+  have hMj : M + 1 ≤ j := le_trans (le_max_right _ _) hj
+  have hjpos : 0 < j := by omega
+  have hjreal : 200 / ε < (j : ℝ) := by
+    exact hM.trans_le (by exact_mod_cast (show M ≤ j by omega))
+  have htailSmall : 100 / (j : ℝ) < ε / 2 := by
+    have hcross : (200 : ℝ) < ε * j := by
+      rwa [div_lt_iff₀' hε] at hjreal
+    have hjrealpos : (0 : ℝ) < j := by exact_mod_cast hjpos
+    rw [div_lt_iff₀ hjrealpos]
+    nlinarith
+  have habs := abs_bias_le_of_levelSign j (show 0 ≤ ε / 2 by positivity) (hJ j hjJ)
+  have hpowpos : (0 : ℝ) < 2 ^ j := by positivity
+  have hnorm :
+      |(bias j : ℝ)| / 2 ^ j ≤ ε / 2 + ((outOddSet j).card : ℝ) / 2 ^ j := by
+    apply (div_le_iff₀ hpowpos).2
+    calc
+      |(bias j : ℝ)| ≤ (ε / 2) * 2 ^ j + ((outOddSet j).card : ℝ) := habs
+      _ = (ε / 2 + ((outOddSet j).card : ℝ) / 2 ^ j) * 2 ^ j := by
+        field_simp
+  have htail := outOddSet_ratio_le j hjpos
+  rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos hpowpos]
+  linarith
 
 end CollatzMoonshot.Conjugacy

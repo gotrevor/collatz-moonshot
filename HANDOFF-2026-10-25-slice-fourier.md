@@ -144,3 +144,46 @@ normalized real bound
 `sliceChar j a (3^k*u)` when `3 ∤ u`.  Finally split Fourier frequencies by 3-adic valuation,
 use `sum_norm_gHatZ_dvd_le` for the high-valuation remainder, prove the suggested uniform
 `levelSign` estimate, and copy the Bridge3 slice assembly into the frozen headline theorem.
+
+## Checkpoint 4: uniform Fourier bound and headline complete
+
+The scoped objective is complete: `CollatzMoonshot/Conjugacy/SliceFourier.lean` is sorry-free, and
+the frozen theorem `biasDecays_of_sliceCharDecay` is proved with exactly
+`[Classical.choice, Quot.sound, propext]`.  No frozen statement or definition was changed.  In
+`Bridge3.lean`, the only edits are the explicitly permitted deletion of `private` from
+`abs_levelSign_le_card`, `sum_out_levelSet_card`, `sum_levelSet_card`, and
+`outOddSet_ratio_le` so the final assembly can reuse them.
+
+- `norm_sliceChar_pow_le_good_add_tail` separates the exact sub-slice expansion into an early
+  pointwise term and `subsliceTail`; `subslice_tail_real_le` normalizes the existing integral tail
+  inequality to `j * (7/8)^(j/16-j/32)`.
+- `exists_norm_sliceChar_pow_le` checks the full `SliceCharDecay` window for every early sub-slice,
+  including valuation zero, and proves a uniform low-valuation character bound.
+- `exists_abs_levelSign_le` splits Fourier frequencies at `K = j/4096`.  Below `K`, maximal
+  powers of three and `divMaxPow` feed the sub-slice estimate; above `K`,
+  `sum_norm_gHatZ_dvd_le` supplies the exponentially small weight.
+- `tendsto_sliceFourierMajorant` proves the explicit one-variable error tends to zero, and
+  `eventually_abs_levelSign_le` packages the uniform central-window estimate.
+- `abs_bias_le_of_levelSign` sums the central slices and bounds the complement by `outOddSet`;
+  the headline then follows from `outOddSet_ratio_le` exactly as in the Bridge3 assembly.
+
+Exact scoped gate:
+
+```text
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-slicefourier \
+  --target CollatzMoonshot.Conjugacy.SliceFourier \
+  --import CollatzMoonshot.Conjugacy.SliceFourier \
+  --axioms CollatzMoonshot.Conjugacy.biasDecays_of_sliceCharDecay \
+  --axioms CollatzMoonshot.Conjugacy.eventually_abs_levelSign_le \
+  --axioms CollatzMoonshot.Conjugacy.exists_abs_levelSign_le
+
+Build completed successfully (8726 jobs).
+All three declarations: [Classical.choice, Quot.sound, propext]
+✅ FORMALIZE-TIER GREEN
+```
+
+Also checked `lake env lean CollatzMoonshot/Conjugacy/Bridge3.lean`,
+`lake env lean CollatzMoonshot/Conjugacy/SliceFourier.lean`, `git diff --check`, and the scoped
+`sorry` / `native_decide` / `axiom` / heartbeat hygiene search.  The operator-owned untracked
+`CLAUDE.local.md` remains untouched.  There is no remaining scoped blocker; the next action is the
+host completion gate (`box done`).
