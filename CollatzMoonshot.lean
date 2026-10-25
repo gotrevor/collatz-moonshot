@@ -136,4 +136,5 @@ import CollatzMoonshot.Conjugacy.FourierTraps
 import CollatzMoonshot.Conjugacy.Bridge3
 import CollatzMoonshot.Conjugacy.SliceDecay
 import CollatzMoonshot.Conjugacy.SliceSeven
+import CollatzMoonshot.Conjugacy.SliceFourier
 import CollatzMoonshot.Maze
