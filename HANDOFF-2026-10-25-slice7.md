@@ -1,6 +1,82 @@
 # SliceSeven treadmill handoff — 2026-10-25
 
-## Checkpoint
+## Checkpoint 2: exact pair factor and reweighting foundations
+
+The second lap formalized the load-bearing algebra underneath kickoff steps 2–5, without changing
+any frozen statement.  The edge `sliceCharDecay_of_pascalDampingDecay` is still the sole sorry in
+`SliceSeven.lean`; no sorry was moved or added.
+
+- `charZ_eq_inv_stdAddChar`, `charZ_add`, and `charZ_sum` identify the hand-written negative
+  exponential with mathlib's standard additive character and expose its multiplicativity.
+  `subsetCharTerm_eq_stdAddChar` / `subsetCharTerm_eq_inv_charZ` close the sign bridge from the
+  positive slice character.
+- `wordNumer_eq_sum_orderEmbOfFin`, `wordNumer_mul_inv_eq_sum_reverseOddTime`, and
+  `wordNumer_mul_inv_eq_sum_subsetGap` prove the complete formula
+  `wordNumer(u)·2⁻ʲ = Σ_m 3^m·2⁻(g₀+⋯+g_m)` in `ZMod (3^a)`.  Thus kickoff step 1 is now fully
+  expanded into the coordinates used by the pairing, not just reindexed onto subsets.
+- `subsetGap_injective` proves these positive gaps are faithful coordinates on the slice.
+  `gapPairSum`, `sum_gapPairSum_range`, `subsetPairSum`, and `subsetPairSum_two_le` set up the
+  pair-sum vector and its prefixes.
+- `two_residue_terms_eq_pairFactor` and `charZ_two_gap_terms` prove the decisive adjacent-pair
+  identity: the two character factors at gaps `(g₀,g₁)` combine into exactly the
+  `charZ (xArg · (2^g₁+3))` summand used by frozen `fPair`.
+- `sum_charZ_splits_eq_mul_fPair` and `norm_sum_charZ_splits` prove that summing over all positive
+  splits of a fixed `b≥2` yields exactly `(b-1)·fPair`, including the norm identity.  This closes
+  the local finite-pairing calculation requested in kickoff step 3.
+- `geom_split_weight_eq`, `pascalWeight_of_two_le`, and `pascalWeight_nonneg` formalize the
+  split-independent geometric weight.  `card_levelSet_eq_choose` and
+  `sum_binomialSliceWeight` formalize the binomial slice cardinality and total mass.
+
+Exact scoped gate:
+
+```text
+~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-fourier \
+  --target CollatzMoonshot.Conjugacy.SliceSeven \
+  --import CollatzMoonshot.Conjugacy.SliceSeven \
+  --axioms CollatzMoonshot.Conjugacy.charZ_two_gap_terms \
+  --axioms CollatzMoonshot.Conjugacy.wordNumer_mul_inv_eq_sum_subsetGap \
+  --axioms CollatzMoonshot.Conjugacy.subsetGap_injective \
+  --axioms CollatzMoonshot.Conjugacy.norm_sum_charZ_splits \
+  --axioms CollatzMoonshot.Conjugacy.sum_binomialSliceWeight
+
+Build completed successfully (8725 jobs).
+All five declarations: [Classical.choice, Quot.sound, propext]
+✅ FORMALIZE-TIER GREEN
+```
+
+Also run repeatedly while iterating:
+
+```text
+lake env lean CollatzMoonshot/Conjugacy/SliceSeven.lean
+git diff --check
+```
+
+Both pass; the Lean command reports only the pre-existing final edge sorry.
+
+### Current blocker and next attack
+
+The local pair identity is no longer the blocker.  The remaining route-decisive lemma is the
+**global finite grouping inequality**: reindex `(range j).powersetCard a` by the faithful positive
+gap vector, group the first `2*(a/2)` gaps by `subsetPairSum`, apply
+`norm_sum_charZ_splits` independently to every pair, and discard the unit-norm final factor when
+`a` is odd.  Its target should expose exactly
+
+```text
+‖sliceChar j a ξ‖ * binomialSliceWeight j a p
+  ≤ (levelSet j a).card * pascalDamping a p ξ
+```
+
+for `0 < p < 1`.  Use `sum_gapPairSum_range` to identify the `xArg` prefix; do not reprove the
+pair algebra.  The finite domain can be represented explicitly by positive functions
+`Fin a → ℕ` with total `≤ j`; construct the inverse subset from reverse prefix sums to finish the
+gap-coordinate bijection.  The trailing geometric factor is `(1-p)^(j-T_a) ≤ 1`.
+
+After the master inequality, prove that `a` is a mode of `binomialSliceWeight j · (a/j)` by the
+adjacent identity `Nat.choose_succ_right_eq`; `sum_binomialSliceWeight = 1` then gives the needed
+`1/(j+1)` lower bound.  Apply the damping hypothesis at exponent `A+2` and absorb `j+1` using
+`j≤5a`.
+
+## Checkpoint 1: slice law and positive gaps
 
 Kickoff step 1 is now formalized through the exact Terras reindexing and the positive-gap
 coordinates, without changing any frozen statement.
@@ -49,7 +125,7 @@ git diff --check
 
 Both pass; the Lean command reports only the pre-existing edge sorry.
 
-## Current blocker and next attack
+## Checkpoint 1 next attack (local pair calculation now completed above)
 
 The route-decisive remaining lemma is the finite pairing inequality.  Starting from
 `sliceChar_eq_subsetChar`, reindex each `u` by `subsetGapNat`; group coordinates

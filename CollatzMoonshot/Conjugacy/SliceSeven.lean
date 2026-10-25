@@ -45,11 +45,60 @@ open Filter Topology CollatzMoonshot.FrontB
 noncomputable def charZ (n : ℕ) (x : ZMod (3 ^ n)) : ℂ :=
   Complex.exp (-(2 * Real.pi * Complex.I * ((x.val : ℕ) : ℂ) / 3 ^ n))
 
+/-- `charZ` is the inverse of mathlib's standard additive character. -/
+theorem charZ_eq_inv_stdAddChar (n : ℕ) (x : ZMod (3 ^ n)) :
+    charZ n x = (ZMod.stdAddChar x)⁻¹ := by
+  unfold charZ
+  rw [ZMod.stdAddChar_apply, ZMod.toCircle_apply]
+  simp only [Complex.exp_neg]
+  push_cast
+  congr 2
+
+@[simp] theorem charZ_zero (n : ℕ) : charZ n 0 = 1 := by
+  rw [charZ_eq_inv_stdAddChar]
+  simp
+
+theorem charZ_add (n : ℕ) (x y : ZMod (3 ^ n)) :
+    charZ n (x + y) = charZ n x * charZ n y := by
+  simp only [charZ_eq_inv_stdAddChar, AddChar.map_add_eq_mul, mul_inv_rev]
+  rw [mul_comm]
+
+theorem charZ_sum {ι : Type*} (n : ℕ) (s : Finset ι) (f : ι → ZMod (3 ^ n)) :
+    charZ n (∑ i ∈ s, f i) = ∏ i ∈ s, charZ n (f i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert i s hi ih => simp [hi, charZ_add, ih]
+
+theorem norm_charZ (n : ℕ) (x : ZMod (3 ^ n)) : ‖charZ n x‖ = 1 := by
+  rw [charZ_eq_inv_stdAddChar, norm_inv, ZMod.stdAddChar_apply]
+  rw [Circle.norm_coe, inv_one]
+
 /-- Tao's pair factor (7.4): `f(x, b) = (b−1)⁻¹ Σ_{a=1}^{b−1} e(−x(2^a + 3)/3^n)`, the conditional
 expectation of the pair's character given its sum `b` (uniform over the `b − 1` splits, for any
 gap law `Geom(p)`). -/
 noncomputable def fPair (n : ℕ) (x : ZMod (3 ^ n)) (b : ℕ) : ℂ :=
   ((b : ℂ) - 1)⁻¹ * ∑ a ∈ Finset.Icc 1 (b - 1), charZ n (x * (2 ^ a + 3))
+
+/-- Clearing the normalising factor in `fPair`.  Every genuine pair sum has `b ≥ 2`, so its
+`b - 1` possible positive splits contribute exactly `(b - 1) * fPair`. -/
+theorem sum_charZ_splits_eq_mul_fPair (n : ℕ) (x : ZMod (3 ^ n)) {b : ℕ} (hb : 2 ≤ b) :
+    ∑ a ∈ Finset.Icc 1 (b - 1), charZ n (x * (2 ^ a + 3)) =
+      ((b : ℂ) - 1) * fPair n x b := by
+  unfold fPair
+  have hne : (b : ℂ) - 1 ≠ 0 := by
+    exact sub_ne_zero.mpr (by exact_mod_cast (show b ≠ 1 by omega))
+  rw [← mul_assoc, mul_inv_cancel₀ hne, one_mul]
+
+theorem norm_sum_charZ_splits (n : ℕ) (x : ZMod (3 ^ n)) {b : ℕ} (hb : 2 ≤ b) :
+    ‖∑ a ∈ Finset.Icc 1 (b - 1), charZ n (x * (2 ^ a + 3))‖ =
+      ((b : ℝ) - 1) * ‖fPair n x b‖ := by
+  rw [sum_charZ_splits_eq_mul_fPair n x hb, norm_mul]
+  congr 1
+  rw [Complex.norm_def, Complex.normSq_apply]
+  simp
+  have : (1 : ℝ) ≤ b := by exact_mod_cast hb.trans' (by omega)
+  rw [← sq, Real.sqrt_sq (sub_nonneg.mpr this)]
 
 /-- The argument `x_j = ξ · 3^{2j} · 2^{−s}` at prefix pair-sum `s` (0-indexed `j`). -/
 noncomputable def xArg (n ξ j s : ℕ) : ZMod (3 ^ n) :=
@@ -59,6 +108,48 @@ noncomputable def xArg (n ξ j s : ℕ) : ZMod (3 ^ n) :=
 `P(b) = (b−1) p² (1−p)^{b−2}` for `b ≥ 2`. -/
 noncomputable def pascalWeight (p : ℝ) (b : ℕ) : ℝ :=
   if 2 ≤ b then ((b : ℝ) - 1) * p ^ 2 * (1 - p) ^ (b - 2) else 0
+
+theorem pascalWeight_of_two_le (p : ℝ) {b : ℕ} (hb : 2 ≤ b) :
+    pascalWeight p b = ((b : ℝ) - 1) * p ^ 2 * (1 - p) ^ (b - 2) := by
+  simp [pascalWeight, hb]
+
+theorem pascalWeight_nonneg {p : ℝ} (hp1 : p ≤ 1) (b : ℕ) :
+    0 ≤ pascalWeight p b := by
+  unfold pascalWeight
+  split_ifs with hb
+  · have hb' : (1 : ℝ) ≤ b := by exact_mod_cast hb.trans' (by omega)
+    have hp' : 0 ≤ 1 - p := sub_nonneg.mpr hp1
+    positivity
+  · exact le_rfl
+
+/-- The unnormalised weight of any positive split of a fixed pair sum is independent of the
+split.  This is the elementary reason conditioning two geometric gaps on their sum is uniform. -/
+theorem geom_split_weight_eq {p : ℝ} {g₀ g₁ b : ℕ} (hg₀ : 1 ≤ g₀) (hg₁ : 1 ≤ g₁)
+    (hadd : g₀ + g₁ = b) :
+    (p * (1 - p) ^ (g₀ - 1)) * (p * (1 - p) ^ (g₁ - 1)) =
+      p ^ 2 * (1 - p) ^ (b - 2) := by
+  have hexp : g₀ - 1 + (g₁ - 1) = g₀ + g₁ - 2 := by omega
+  calc
+    (p * (1 - p) ^ (g₀ - 1)) * (p * (1 - p) ^ (g₁ - 1)) =
+        p ^ 2 * ((1 - p) ^ (g₀ - 1) * (1 - p) ^ (g₁ - 1)) := by ring
+    _ = p ^ 2 * (1 - p) ^ (b - 2) := by rw [← pow_add, hexp, hadd]
+
+/-- The binomial mass of the `a`-slice among `j` geometric trials. -/
+noncomputable def binomialSliceWeight (j a : ℕ) (p : ℝ) : ℝ :=
+  (j.choose a : ℝ) * p ^ a * (1 - p) ^ (j - a)
+
+theorem sum_binomialSliceWeight (j : ℕ) (p : ℝ) :
+    ∑ a ∈ Finset.range (j + 1), binomialSliceWeight j a p = 1 := by
+  calc
+    ∑ a ∈ Finset.range (j + 1), binomialSliceWeight j a p =
+        ∑ a ∈ Finset.range (j + 1),
+          p ^ a * (1 - p) ^ (j - a) * (j.choose a : ℝ) := by
+      apply Finset.sum_congr rfl
+      intro a _
+      unfold binomialSliceWeight
+      ring
+    _ = (p + (1 - p)) ^ j := (add_pow p (1 - p) j).symm
+    _ = 1 := by ring
 
 /-- **Tao's (7.5) damping at `Pascal(p)`**:
 `E_{b ~ Pascal(p)^{⌊n/2⌋}} ∏_j |f(x_j, b_j)|` with `x_j = ξ 3^{2j} 2^{−(b_0 + ⋯ + b_j)}`.
@@ -89,6 +180,31 @@ noncomputable def subsetCharTerm (j a ξ : ℕ) (u : Finset ℕ) : ℂ :=
     (2 * Real.pi * Complex.I *
       ((ξ * (((wordNumer u : ZMod (3 ^ a)) *
         (2 : ZMod (3 ^ a))⁻¹ ^ j).val) : ℕ) : ℂ) / (3 ^ a : ℂ))
+
+/-- `subsetCharTerm` is mathlib's standard positive additive character evaluated at the exact
+slice residue. -/
+theorem subsetCharTerm_eq_stdAddChar (j a ξ : ℕ) (u : Finset ℕ) :
+    subsetCharTerm j a ξ u = ZMod.stdAddChar
+      ((ξ : ZMod (3 ^ a)) *
+        ((wordNumer u : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j)) := by
+  have hcast :
+      ((ξ * (((wordNumer u : ZMod (3 ^ a)) *
+          (2 : ZMod (3 ^ a))⁻¹ ^ j).val) : ℕ) : ZMod (3 ^ a)) =
+        (ξ : ZMod (3 ^ a)) *
+          ((wordNumer u : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j) := by
+    push_cast
+    rw [ZMod.natCast_zmod_val]
+  rw [← hcast, ZMod.stdAddChar_apply, ZMod.toCircle_natCast]
+  unfold subsetCharTerm
+  push_cast
+  rfl
+
+/-- Equivalently, the positive slice character is the inverse of `charZ`. -/
+theorem subsetCharTerm_eq_inv_charZ (j a ξ : ℕ) (u : Finset ℕ) :
+    subsetCharTerm j a ξ u =
+      (charZ a ((ξ : ZMod (3 ^ a)) *
+        ((wordNumer u : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j)))⁻¹ := by
+  rw [subsetCharTerm_eq_stdAddChar, charZ_eq_inv_stdAddChar, inv_inv]
 
 /-- The residue form of the slice character, indexed by `a`-subsets of `[0,j)`. -/
 noncomputable def subsetChar (j a ξ : ℕ) : ℂ :=
@@ -152,6 +268,31 @@ theorem sliceChar_eq_subsetChar (j a ξ : ℕ) : sliceChar j a ξ = subsetChar j
       simpa [ha] using tstep_iterate_lt_three_pow hrange
     unfold subsetCharTerm
     rw [← ZMod.val_natCast_of_lt hlt, tstep_iterate_cast_eq_wordNumer_inv ha]
+
+/-- Terras's bijection also identifies the size of a slice with the corresponding binomial
+coefficient. -/
+theorem card_levelSet_eq_choose (j a : ℕ) : (levelSet j a).card = j.choose a := by
+  calc
+    (levelSet j a).card = ((Finset.range j).powersetCard a).card := by
+      apply Finset.card_bij (fun r _ => onesSet r j)
+      · intro r hr
+        rw [Finset.mem_powersetCard]
+        exact ⟨Finset.mem_powerset.mp (onesSet_mem_powerset r j),
+          card_onesSet r j |>.trans (Finset.mem_filter.mp hr).2⟩
+      · intro r hr s hs hrs
+        exact onesSet_injOn j
+          (Finset.mem_coe.mpr (Finset.mem_filter.mp hr).1)
+          (Finset.mem_coe.mpr (Finset.mem_filter.mp hs).1) hrs
+      · intro u hu
+        rw [Finset.mem_powersetCard] at hu
+        rcases onesSet_surjOn j
+          (Finset.mem_coe.mpr (Finset.mem_powerset.mpr hu.1)) with ⟨r, hr, hru⟩
+        refine ⟨r, ?_, hru⟩
+        rw [levelSet, Finset.mem_filter]
+        refine ⟨Finset.mem_coe.mp hr, ?_⟩
+        change onesSet r j = u at hru
+        rw [← card_onesSet r j, hru, hu.2]
+    _ = j.choose a := by rw [Finset.card_powersetCard, Finset.card_range]
 
 /-- For `u = {t₁ < ⋯ < tₐ} ⊆ [0,j)`, these are the reversed times
 `Tₘ = j - tₐ₋₁₋ₘ`.  They are the partial sums of the positive gaps used in the
@@ -232,6 +373,232 @@ theorem sum_subsetGapNat_le {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.ra
     (hu : u.card = a + 1) : ∑ m ∈ Finset.range (a + 1), subsetGapNat j u hu m ≤ j := by
   rw [sum_subsetGapNat_eq_reverseOddTime hsub hu a (by omega)]
   exact reverseOddTime_le j u hu ⟨a, by omega⟩
+
+/-- Positive gaps are faithful coordinates on a fixed-cardinality slice. -/
+theorem subsetGap_injective {j a : ℕ} {u v : Finset ℕ}
+    (husub : u ⊆ Finset.range j) (hvsub : v ⊆ Finset.range j)
+    (hu : u.card = a + 1) (hv : v.card = a + 1)
+    (hgap : subsetGap j u hu = subsetGap j v hv) : u = v := by
+  have htime : reverseOddTime j u hu = reverseOddTime j v hv := by
+    funext k
+    rw [← sum_subsetGapNat_eq_reverseOddTime husub hu k (by omega),
+      ← sum_subsetGapNat_eq_reverseOddTime hvsub hv k (by omega)]
+    apply Finset.sum_congr rfl
+    intro m hm
+    have hm' : m < a + 1 := by
+      have : m < (k : ℕ) + 1 := Finset.mem_range.mp hm
+      omega
+    rw [subsetGapNat_of_lt hu hm', subsetGapNat_of_lt hv hm', hgap]
+  have hord : u.orderEmbOfFin hu = v.orderEmbOfFin hv := by
+    ext i
+    have hru := congr_fun htime (Fin.rev i)
+    have humem : u.orderEmbOfFin hu i ∈ u := u.orderEmbOfFin_mem hu i
+    have hvmem : v.orderEmbOfFin hv i ∈ v := v.orderEmbOfFin_mem hv i
+    have hult : u.orderEmbOfFin hu i < j := Finset.mem_range.mp (husub humem)
+    have hvlt : v.orderEmbOfFin hv i < j := Finset.mem_range.mp (hvsub hvmem)
+    simp only [reverseOddTime, Fin.rev_rev] at hru
+    omega
+  rw [← u.image_orderEmbOfFin_univ hu, ← v.image_orderEmbOfFin_univ hv, hord]
+
+/-- Cancellation of a positive power of `2` against a longer inverse power modulo `3^a`. -/
+theorem two_pow_mul_inv_pow {a d j : ℕ} (hd : d ≤ j) :
+    (2 : ZMod (3 ^ a)) ^ d * (2 : ZMod (3 ^ a))⁻¹ ^ j =
+      (2 : ZMod (3 ^ a))⁻¹ ^ (j - d) := by
+  obtain ⟨t, rfl⟩ := Nat.exists_eq_add_of_le hd
+  have hcop : Nat.Coprime 2 (3 ^ a) :=
+    Nat.Coprime.pow_right a (by decide : Nat.Coprime 2 3)
+  have hunit : (2 : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ = 1 :=
+    ZMod.coe_mul_inv_eq_one 2 hcop
+  rw [Nat.add_sub_cancel_left, pow_add]
+  calc
+    (2 : ZMod (3 ^ a)) ^ d *
+        ((2 : ZMod (3 ^ a))⁻¹ ^ d * (2 : ZMod (3 ^ a))⁻¹ ^ t) =
+        ((2 : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹) ^ d *
+          (2 : ZMod (3 ^ a))⁻¹ ^ t := by ring
+    _ = (2 : ZMod (3 ^ a))⁻¹ ^ t := by rw [hunit, one_pow, one_mul]
+
+/-- Pair consecutive gaps. -/
+def gapPairSum (g : ℕ → ℕ) (q : ℕ) : ℕ := g (2 * q) + g (2 * q + 1)
+
+/-- Prefix sums of pair sums are the corresponding even-length prefix sums of gaps. -/
+theorem sum_gapPairSum_range (g : ℕ → ℕ) (q : ℕ) :
+    ∑ i ∈ Finset.range q, gapPairSum g i = ∑ m ∈ Finset.range (2 * q), g m := by
+  induction q with
+  | zero => simp
+  | succ q ih =>
+      rw [Finset.sum_range_succ, ih, Nat.mul_add, Nat.mul_one,
+        Finset.sum_range_succ, Finset.sum_range_succ]
+      unfold gapPairSum
+      ring
+
+/-- Algebra behind one paired character factor.  If the two gaps are `g₀,g₁` after an earlier
+prefix of length `s`, the two consecutive residue summands combine into the factor
+`2^g₁ + 3` at the end of the pair. -/
+theorem two_residue_terms_eq_pairFactor (n q s g₀ g₁ : ℕ) :
+    (3 : ZMod (3 ^ n)) ^ (2 * q) *
+          (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀) +
+        (3 : ZMod (3 ^ n)) ^ (2 * q + 1) *
+          (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁) =
+      (3 : ZMod (3 ^ n)) ^ (2 * q) *
+        (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁) *
+          ((2 : ZMod (3 ^ n)) ^ g₁ + 3) := by
+  have hle : g₁ ≤ s + g₀ + g₁ := by omega
+  have hcancel := two_pow_mul_inv_pow (a := n) hle
+  have hsub : s + g₀ + g₁ - g₁ = s + g₀ := by omega
+  rw [hsub] at hcancel
+  rw [pow_succ]
+  calc
+    (3 : ZMod (3 ^ n)) ^ (2 * q) * (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀) +
+        ((3 : ZMod (3 ^ n)) ^ (2 * q) * 3) *
+          (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁) =
+      (3 : ZMod (3 ^ n)) ^ (2 * q) *
+        ((2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀) +
+          3 * (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁)) := by ring
+    _ = (3 : ZMod (3 ^ n)) ^ (2 * q) *
+        ((2 : ZMod (3 ^ n)) ^ g₁ *
+            (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁) +
+          3 * (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁)) := by rw [hcancel]
+    _ = (3 : ZMod (3 ^ n)) ^ (2 * q) *
+        (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁) *
+          ((2 : ZMod (3 ^ n)) ^ g₁ + 3) := by ring
+
+/-- One adjacent pair of gap-character factors is exactly a summand appearing in `fPair`. -/
+theorem charZ_two_gap_terms (n ξ q s g₀ g₁ : ℕ) :
+    charZ n ((ξ : ZMod (3 ^ n)) * (3 : ZMod (3 ^ n)) ^ (2 * q) *
+        (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀)) *
+      charZ n ((ξ : ZMod (3 ^ n)) * (3 : ZMod (3 ^ n)) ^ (2 * q + 1) *
+        (2 : ZMod (3 ^ n))⁻¹ ^ (s + g₀ + g₁)) =
+    charZ n (xArg n ξ q (s + g₀ + g₁) *
+      ((2 : ZMod (3 ^ n)) ^ g₁ + 3)) := by
+  rw [← charZ_add]
+  apply congrArg (charZ n)
+  calc
+    (ξ : ZMod (3 ^ n)) * 3 ^ (2 * q) * 2⁻¹ ^ (s + g₀) +
+        (ξ : ZMod (3 ^ n)) * 3 ^ (2 * q + 1) * 2⁻¹ ^ (s + g₀ + g₁) =
+      (ξ : ZMod (3 ^ n)) *
+        (3 ^ (2 * q) * 2⁻¹ ^ (s + g₀) +
+          3 ^ (2 * q + 1) * 2⁻¹ ^ (s + g₀ + g₁)) := by ring
+    _ = (ξ : ZMod (3 ^ n)) *
+        (3 ^ (2 * q) * 2⁻¹ ^ (s + g₀ + g₁) * (2 ^ g₁ + 3)) := by
+      rw [two_residue_terms_eq_pairFactor]
+    _ = xArg n ξ q (s + g₀ + g₁) * (2 ^ g₁ + 3) := by
+      unfold xArg
+      ring
+
+/-- The pair-sum vector attached to a slice subset. -/
+def subsetPairSum (j : ℕ) (u : Finset ℕ) {a : ℕ} (hu : u.card = a) : Fin (a / 2) → ℕ :=
+  fun q =>
+    have ha : 0 < a := by have := q.isLt; omega
+    gapPairSum (subsetGapNat j u (show u.card = (a - 1) + 1 by omega)) q
+
+theorem subsetPairSum_two_le {j a : ℕ} {u : Finset ℕ} (hsub : u ⊆ Finset.range j)
+    (hu : u.card = a) (q : Fin (a / 2)) : 2 ≤ subsetPairSum j u hu q := by
+  have ha : 0 < a := by have := q.isLt; omega
+  have hcard : u.card = (a - 1) + 1 := by omega
+  have h0 : 2 * (q : ℕ) < a := by omega
+  have h1 : 2 * (q : ℕ) + 1 < a := by omega
+  unfold subsetPairSum gapPairSum
+  change 2 ≤ subsetGapNat j u hcard (2 * (q : ℕ)) +
+    subsetGapNat j u hcard (2 * (q : ℕ) + 1)
+  rw [subsetGapNat_of_lt hcard (by omega), subsetGapNat_of_lt hcard (by omega)]
+  have hp0 := subsetGap_pos hsub hcard ⟨2 * (q : ℕ), by omega⟩
+  have hp1 := subsetGap_pos hsub hcard ⟨2 * (q : ℕ) + 1, by omega⟩
+  omega
+
+/-! ## Reindexing the numerator by reverse times -/
+
+/-- The elements of `u` above its `i`-th ordered element are exactly the images of the
+indices above `i`. -/
+theorem filter_lt_orderEmbOfFin {u : Finset ℕ} {a : ℕ} (hu : u.card = a) (i : Fin a) :
+    u.filter (fun e => u.orderEmbOfFin hu i < e) =
+      (Finset.Ioi i).image (u.orderEmbOfFin hu) := by
+  ext e
+  constructor
+  · intro he
+    have heu : e ∈ u := (Finset.mem_filter.mp he).1
+    obtain ⟨k, hk⟩ := Set.ext_iff.mp (u.range_orderEmbOfFin hu) e |>.mpr heu
+    refine Finset.mem_image.mpr ⟨k, ?_, hk⟩
+    exact Finset.mem_Ioi.mpr ((u.orderEmbOfFin hu).lt_iff_lt.mp (hk ▸ (Finset.mem_filter.mp he).2))
+  · intro he
+    obtain ⟨k, hki, rfl⟩ := Finset.mem_image.mp he
+    exact Finset.mem_filter.mpr ⟨u.orderEmbOfFin_mem hu k,
+      (u.orderEmbOfFin hu).lt_iff_lt.mpr (Finset.mem_Ioi.mp hki)⟩
+
+/-- In ordered coordinates, the exponent of `3` in `wordNumer` is the number of remaining
+elements. -/
+theorem card_filter_orderEmbOfFin_lt {u : Finset ℕ} {a : ℕ} (hu : u.card = a) (i : Fin a) :
+    (u.filter (fun e => u.orderEmbOfFin hu i < e)).card = a - 1 - i := by
+  rw [filter_lt_orderEmbOfFin hu i, Finset.card_image_of_injective _ (u.orderEmbOfFin hu).injective,
+    Fin.card_Ioi]
+
+/-- `wordNumer` written in the increasing enumeration of its support. -/
+theorem wordNumer_eq_sum_orderEmbOfFin {u : Finset ℕ} {a : ℕ} (hu : u.card = a) :
+    wordNumer u = ∑ i : Fin a, 3 ^ (a - 1 - i) * 2 ^ (u.orderEmbOfFin hu i) := by
+  unfold wordNumer
+  calc
+    ∑ d ∈ u, 3 ^ (u.filter (fun e => d < e)).card * 2 ^ d =
+        ∑ d ∈ Finset.image (u.orderEmbOfFin hu) Finset.univ,
+          3 ^ (u.filter (fun e => d < e)).card * 2 ^ d := by
+      rw [u.image_orderEmbOfFin_univ hu]
+    _ = ∑ i : Fin a, 3 ^ (a - 1 - i) * 2 ^ (u.orderEmbOfFin hu i) := by
+      rw [Finset.sum_image (u.orderEmbOfFin hu).injective.injOn]
+      apply Finset.sum_congr rfl
+      intro i _
+      rw [card_filter_orderEmbOfFin_lt hu i]
+
+/-- The exact positive-gap form of the truncated Syracuse residue.  The exponent of `3` is now
+the reverse index, and the exponent of `2⁻¹` is the corresponding reverse odd time. -/
+theorem wordNumer_mul_inv_eq_sum_reverseOddTime {j a : ℕ} {u : Finset ℕ}
+    (hsub : u ⊆ Finset.range j) (hu : u.card = a) :
+    (wordNumer u : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j =
+      ∑ m : Fin a, (3 : ZMod (3 ^ a)) ^ (m : ℕ) *
+        (2 : ZMod (3 ^ a))⁻¹ ^ reverseOddTime j u hu m := by
+  rw [wordNumer_eq_sum_orderEmbOfFin hu]
+  push_cast
+  rw [Finset.sum_mul]
+  apply Fintype.sum_equiv (Fin.revPerm : Equiv.Perm (Fin a)) _ _
+  intro m
+  have hmem : u.orderEmbOfFin hu m ∈ u := u.orderEmbOfFin_mem hu _
+  have hlt : u.orderEmbOfFin hu m < j := Finset.mem_range.mp (hsub hmem)
+  have hrev : a - 1 - (m : ℕ) = (Fin.rev m : ℕ) := by
+    simp only [Fin.rev]
+    omega
+  change (3 : ZMod (3 ^ a)) ^ (a - 1 - (m : ℕ)) *
+      (2 : ZMod (3 ^ a)) ^ (u.orderEmbOfFin hu m) *
+        (2 : ZMod (3 ^ a))⁻¹ ^ j =
+    (3 : ZMod (3 ^ a)) ^ (Fin.rev m : ℕ) *
+      (2 : ZMod (3 ^ a))⁻¹ ^ reverseOddTime j u hu (Fin.rev m)
+  rw [hrev, mul_assoc, two_pow_mul_inv_pow hlt.le]
+  simp [reverseOddTime]
+
+/-- The slice residue in positive-gap coordinates: the exponent of `2⁻¹` in the `m`-th
+summand is the prefix sum through the `m`-th gap. -/
+theorem wordNumer_mul_inv_eq_sum_subsetGap {j a : ℕ} {u : Finset ℕ}
+    (hsub : u ⊆ Finset.range j) (hu : u.card = a + 1) :
+    (wordNumer u : ZMod (3 ^ (a + 1))) * (2 : ZMod (3 ^ (a + 1)))⁻¹ ^ j =
+      ∑ m : Fin (a + 1), (3 : ZMod (3 ^ (a + 1))) ^ (m : ℕ) *
+        (2 : ZMod (3 ^ (a + 1)))⁻¹ ^
+          (∑ k ∈ Finset.range ((m : ℕ) + 1), subsetGapNat j u hu k) := by
+  rw [wordNumer_mul_inv_eq_sum_reverseOddTime hsub hu]
+  apply Finset.sum_congr rfl
+  intro m _
+  rw [sum_subsetGapNat_eq_reverseOddTime hsub hu m (by omega)]
+
+/-- After passing to the negative character, the exact slice residue is a product of one
+unit-modulus factor per gap prefix. -/
+theorem charZ_sliceResidue_eq_prod {j a ξ : ℕ} {u : Finset ℕ}
+    (hsub : u ⊆ Finset.range j) (hu : u.card = a) :
+    charZ a ((ξ : ZMod (3 ^ a)) *
+      ((wordNumer u : ZMod (3 ^ a)) * (2 : ZMod (3 ^ a))⁻¹ ^ j)) =
+      ∏ m : Fin a, charZ a
+        ((ξ : ZMod (3 ^ a)) * (3 : ZMod (3 ^ a)) ^ (m : ℕ) *
+          (2 : ZMod (3 ^ a))⁻¹ ^ reverseOddTime j u hu m) := by
+  rw [wordNumer_mul_inv_eq_sum_reverseOddTime hsub hu, Finset.mul_sum]
+  rw [charZ_sum a Finset.univ]
+  apply Finset.prod_congr rfl
+  intro m _
+  apply congrArg (charZ a)
+  ring
 
 /-- **Edge: the uniform damping bound gives slice character decay.**  Sketch (personal-c5's two
 facts, `SliceDecay.lean`): write the slice law at `(j, a)` as `Σ_k 3^{k−1} 2^{−T_k} mod 3^a` with
