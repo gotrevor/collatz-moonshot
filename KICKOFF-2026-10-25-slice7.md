@@ -1,6 +1,6 @@
 # Kickoff 2026-10-25: prove `sliceCharDecay_of_pascalDampingDecay` (`CollatzMoonshot/Conjugacy/SliceSeven.lean`)
 
-Branch `wip/conjugacy-slice7` (worktree `~/src/collatz-moonshot-fourier`), from `ren/conjugacy-ladder`.  Context: research note §13; the edge's docstring and `SliceDecay.lean`'s module docstring carry the English proof.  `PascalDampingDecay` stays an open hypothesis (its proof is the tao-collatz Sec7P campaign); you prove only the edge.
+Branch `wip/conjugacy-slice7b` (worktree `~/src/collatz-moonshot-fourier`), from `ren/conjugacy-ladder` @ `22a9a7b` (SliceCharDecay carries `1 ≤ j`; its `j = a = 0` counterexample is fixed).  Context: research note §13; the edge's docstring and `SliceDecay.lean`'s module docstring carry the English proof.  `PascalDampingDecay` stays an open hypothesis (its proof is the tao-collatz Sec7P campaign); you prove only the edge.
 
 ## The proof, in steps
 
@@ -16,5 +16,5 @@ Branch `wip/conjugacy-slice7` (worktree `~/src/collatz-moonshot-fourier`), from 
 - **Do not change any frozen statement**: `charZ`, `fPair`, `xArg`, `pascalWeight`, `pascalDamping`, `PascalDampingDecay`, the edge, and everything in `SliceDecay.lean` (personal-c5's file; read-only).  If one is false as stated, stop, write the counterexample into the handoff, and `box stuck`.  Do not weaken it silently.
 - Helpers go in `SliceSeven.lean` or a new `Conjugacy/SliceSevenAux.lean`.  Leave every other module alone.
 - No `axiom`, `native_decide` or `set_option maxHeartbeats` without a justification comment.
-- Commit each green checkpoint on `wip/conjugacy-slice7` with `git-safe`, by explicit path.  Keep `HANDOFF-2026-10-25-slice7.md` current.
+- Commit each green checkpoint on `wip/conjugacy-slice7b` with `git-safe`, by explicit path.  Keep `HANDOFF-2026-10-25-slice7.md` current.
 - Report the mathematics, not the certificate.
