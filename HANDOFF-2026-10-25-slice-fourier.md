@@ -87,11 +87,60 @@ Also checked `lake env lean CollatzMoonshot/Conjugacy/SliceFourier.lean`, `git d
 the scoped `native_decide` / `axiom` / heartbeat hygiene search.  Only the frozen headline sorry
 remains in this file.
 
+## Checkpoint 3: harmonic weight bounds and direct sub-slice concentration
+
+The two quantitative inputs that were still open after Checkpoint 2 are now proved.  The frozen
+headline remains the sole `sorry` in `SliceFourier.lean`; no frozen dependency, owned file, or
+headline statement was changed.
+
+- `norm_gHatZ_le_inv_abs` proves the planned pointwise estimate
+  `‖gHatZ a ξ‖ ≤ 1 / |2 * ξ.val - 3^a|`.  The supporting lemma
+  `abs_two_mul_sub_le_pow_mul_abs_cos` applies Jordan's sine inequality after reflection about the
+  midpoint of the odd modulus.
+- `sum_inv_abs_two_mul_sub_le_two_harmonic` splits the odd denominators into two injective families,
+  one on each side of the midpoint.  Together with `harmonic_le_one_add_log`, this gives
+  `sum_norm_gHatZ_le`: the complete Fourier weight is at most `4 * (a + 1)`.
+- `sum_filter_range_dvd_eq` reindexes multiples by their quotient.  Factoring the denominator then
+  gives `sum_norm_gHatZ_dvd_le`: frequencies divisible by `3^K` have weight at most
+  `3^(-K) * 4 * (a + 1)`.  The statement harmlessly includes frequency zero and is therefore
+  stronger than needed for the high-valuation remainder.
+- `sum_subsliceWeight` obtains the exact total sub-slice mass from the already-proved character
+  decomposition at frequency zero.  This avoids developing a separate Vandermonde identity.
+- `subsliceWeight_succ_le` proves that, once `t ≥ j/32` and `4096*k ≤ j`, each consecutive
+  sub-slice weight contracts by at least `7/8`.  Iteration and the exact total-mass identity yield
+  the required named theorem `subslice_tail_le`:
+  `8^r * tail(j/16) ≤ j * 7^r * choose(j,a)`, where `r = j/16 - j/32`.
+  This direct upper-tail proof replaces the more elaborate partial-Vandermonde route suggested in
+  `SLICE-FOURIER-NEXT.md`.
+
+Exact scoped gate:
+
+```text
+/Users/gotrevor/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-slicefourier \
+  --target CollatzMoonshot.Conjugacy.SliceFourier \
+  --import CollatzMoonshot.Conjugacy.SliceFourier \
+  --axioms CollatzMoonshot.Conjugacy.subslice_tail_le \
+  --axioms CollatzMoonshot.Conjugacy.norm_gHatZ_le_inv_abs \
+  --axioms CollatzMoonshot.Conjugacy.sum_norm_gHatZ_le \
+  --axioms CollatzMoonshot.Conjugacy.sum_norm_gHatZ_dvd_le
+
+Build completed successfully (8726 jobs).
+All four declarations: [Classical.choice, Quot.sound, propext]
+✅ FORMALIZE-TIER GREEN
+```
+
+Also checked `lake env lean CollatzMoonshot/Conjugacy/SliceFourier.lean`, `git diff --check`, and
+the scoped `native_decide` / `axiom` / heartbeat hygiene search.  The direct check reports only the
+original headline-sorry warning.
+
 ## Current blocker and next attack
 
-The pointwise Fourier coefficient is no longer the blocker.  Next prove the planned comparison
-`‖gHatZ a ξ‖ ≤ 1 / |2 * ξ.val - 3^a|` (with the integer/real subtraction represented without
-natural truncation), using `Real.mul_le_sin` after reflecting around `3^a/2`.  Reindex by
-`sum_zmod_eq_sum_range` to derive the total odd-harmonic bound and then the weight bound on nonzero
-frequencies divisible by `3^K`.  After that, state the per-slice estimate with the concentration
-tail isolated and attack `subslice_tail_le`.  Preserve all operator freeze/no-edit constraints.
+The remaining crux is step 7, the uniform per-slice estimate.  First turn `subslice_tail_le` into a
+normalized real bound
+`tail / choose(j,a) ≤ j * (7/8)^(j/16-j/32)` and prove this tends uniformly to zero.  For
+`t < j/16`, verify the `SliceCharDecay` window for `(j-1-t, a-k)` under
+`j ≤ 4a`, `a ≤ 11j/20`, and `4096k ≤ j`, then apply `h 2` termwise in
+`sliceChar_eq_subsliceSum`.  Package this as a good/bad bound for
+`sliceChar j a (3^k*u)` when `3 ∤ u`.  Finally split Fourier frequencies by 3-adic valuation,
+use `sum_norm_gHatZ_dvd_le` for the high-valuation remainder, prove the suggested uniform
+`levelSign` estimate, and copy the Bridge3 slice assembly into the frozen headline theorem.

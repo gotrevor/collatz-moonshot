@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Conjugacy.SliceDecay
+import CollatzMoonshot.Conjugacy.SliceSeven
 
 /-!
 # C1 directly from slice character decay (2026-10-25)
@@ -257,6 +258,180 @@ theorem sliceChar_eq_subsliceSum (j a k u : ℕ) (hk : 1 ≤ k) (hka : k ≤ a) 
                   rw [show j - (t + 1) = j - 1 - t by omega, Nat.choose_succ_succ]
                   push_cast
                   ring
+
+/-! ## Concentration of the sub-slice weights -/
+
+/-- The zero-frequency slice character is the cardinality of its slice. -/
+theorem sliceChar_zero (j a : ℕ) :
+    sliceChar j a 0 = ((levelSet j a).card : ℂ) := by
+  unfold sliceChar
+  simp
+
+/-- The cardinality weight of the sub-slice immediately after the `k`-th odd step at time
+`t+1`. -/
+def subsliceWeight (j a k t : ℕ) : ℕ :=
+  t.choose (k - 1) * (j - 1 - t).choose (a - k)
+
+/-- The sub-slice weights partition the whole level set.  This is Vandermonde's identity in the
+positive-time indexing forced by `sliceChar_eq_subsliceSum`. -/
+theorem sum_subsliceWeight (j a k : ℕ) (hk : 1 ≤ k) (hka : k ≤ a) :
+    ∑ t ∈ Finset.range j, subsliceWeight j a k t = j.choose a := by
+  have hdecomp := sliceChar_eq_subsliceSum j a k 0 hk hka
+  simp only [mul_zero] at hdecomp
+  rw [sliceChar_zero, card_levelSet_eq_choose] at hdecomp
+  unfold subsliceSum at hdecomp
+  simp_rw [sliceChar_zero, card_levelSet_eq_choose] at hdecomp
+  have hcast :
+      ((∑ t ∈ Finset.range j, subsliceWeight j a k t : ℕ) : ℂ) =
+        (j.choose a : ℂ) := by
+    simpa [subsliceWeight, Nat.cast_mul] using hdecomp.symm
+  exact_mod_cast hcast
+
+/-- Well after its mode, the time of the `k`-th odd step has a uniform geometric tail.  The
+generous separation `4096k ≤ j` makes the two binomial consecutive-term ratios at most `9/8`
+and `7/9`, respectively. -/
+theorem subsliceWeight_succ_le {j a k t : ℕ}
+    (hjlow : 4096 * k ≤ j) (hja : j ≤ 4 * a) (hk : 1 ≤ k) (hka : k ≤ a)
+    (htlow : j / 32 ≤ t) (htj : t + 1 < j) :
+    8 * subsliceWeight j a k (t + 1) ≤ 7 * subsliceWeight j a k t := by
+  by_cases hzero : j - 1 - (t + 1) < a - k
+  · rw [subsliceWeight, Nat.choose_eq_zero_of_lt hzero]
+    simp
+  have hrle : a - k ≤ j - 1 - (t + 1) := Nat.le_of_not_gt hzero
+  have hkt : k ≤ t + 1 := by omega
+  have hA := Nat.choose_mul_succ_eq t (k - 1)
+  have hAarg : t + 1 - (k - 1) = t + 2 - k := by omega
+  rw [hAarg] at hA
+  have hB := Nat.choose_mul_succ_eq (j - 1 - (t + 1)) (a - k)
+  have hn : j - 1 - (t + 1) + 1 = j - 1 - t := by omega
+  rw [hn] at hB
+  have hfirst : 9 * k ≤ t + 10 := by omega
+  have hfac1 : 8 * (t + 1) ≤ 9 * (t + 2 - k) := by omega
+  have hk9 : 9 * k ≤ a := by omega
+  have hfac2 : 9 * (j - 1 - t - (a - k)) ≤ 7 * (j - 1 - t) := by omega
+  have hfac :
+      8 * (t + 1) * (j - 1 - t - (a - k)) ≤
+        7 * (t + 2 - k) * (j - 1 - t) := by
+    calc
+      8 * (t + 1) * (j - 1 - t - (a - k)) ≤
+          (9 * (t + 2 - k)) * (j - 1 - t - (a - k)) :=
+        Nat.mul_le_mul_right _ hfac1
+      _ = (t + 2 - k) * (9 * (j - 1 - t - (a - k))) := by ring
+      _ ≤ (t + 2 - k) * (7 * (j - 1 - t)) :=
+        Nat.mul_le_mul_left _ hfac2
+      _ = 7 * (t + 2 - k) * (j - 1 - t) := by ring
+  have hE1 : 0 < t + 2 - k := by omega
+  have hE2 : 0 < j - 1 - t := by omega
+  have hE : 0 < (t + 2 - k) * (j - 1 - t) := Nat.mul_pos hE1 hE2
+  apply Nat.le_of_mul_le_mul_right _ hE
+  calc
+    (8 * subsliceWeight j a k (t + 1)) * ((t + 2 - k) * (j - 1 - t)) =
+        8 * ((t + 1).choose (k - 1) * (t + 2 - k)) *
+          ((j - 1 - (t + 1)).choose (a - k) * (j - 1 - t)) := by
+      simp only [subsliceWeight]
+      ring
+    _ = 8 * (t.choose (k - 1) * (t + 1)) *
+          ((j - 1 - t).choose (a - k) * (j - 1 - t - (a - k))) := by
+      rw [← hA, hB]
+    _ = (t.choose (k - 1) * (j - 1 - t).choose (a - k)) *
+          (8 * (t + 1) * (j - 1 - t - (a - k))) := by ring
+    _ ≤ (t.choose (k - 1) * (j - 1 - t).choose (a - k)) *
+          (7 * (t + 2 - k) * (j - 1 - t)) :=
+      Nat.mul_le_mul_left _ hfac
+    _ = (7 * subsliceWeight j a k t) * ((t + 2 - k) * (j - 1 - t)) := by
+      simp only [subsliceWeight]
+      ring
+
+theorem subsliceWeight_antitone {j a k m t : ℕ}
+    (hjlow : 4096 * k ≤ j) (hja : j ≤ 4 * a) (hk : 1 ≤ k) (hka : k ≤ a)
+    (hmlow : j / 32 ≤ m) (hmt : m ≤ t) (htj : t < j) :
+    subsliceWeight j a k t ≤ subsliceWeight j a k m := by
+  refine Nat.le_induction (fun _ => le_rfl) (fun n hmn ih hn1j => ?_) t hmt htj
+  have hs := subsliceWeight_succ_le hjlow hja hk hka
+    (le_trans hmlow hmn) (by omega : n + 1 < j)
+  have hstep : subsliceWeight j a k (n + 1) ≤ subsliceWeight j a k n := by omega
+  exact hstep.trans (ih (by omega))
+
+/-- Iteration of the `7/8` consecutive-weight contraction. -/
+theorem subsliceWeight_geom (j a k r : ℕ)
+    (hjlow : 4096 * k ≤ j) (hja : j ≤ 4 * a) (hk : 1 ≤ k) (hka : k ≤ a)
+    (hr : j / 32 + r < j) :
+    8 ^ r * subsliceWeight j a k (j / 32 + r) ≤
+      7 ^ r * subsliceWeight j a k (j / 32) := by
+  induction r with
+  | zero => simp
+  | succ r ih =>
+      have hr' : j / 32 + r < j := by omega
+      have hs := subsliceWeight_succ_le hjlow hja hk hka
+        (show j / 32 ≤ j / 32 + r by omega) (by omega : j / 32 + r + 1 < j)
+      calc
+        8 ^ (r + 1) * subsliceWeight j a k (j / 32 + (r + 1)) =
+            8 ^ r * (8 * subsliceWeight j a k (j / 32 + r + 1)) := by
+          simp only [pow_succ, Nat.add_assoc]
+          ring
+        _ ≤ 8 ^ r * (7 * subsliceWeight j a k (j / 32 + r)) :=
+          Nat.mul_le_mul_left _ hs
+        _ = 7 * (8 ^ r * subsliceWeight j a k (j / 32 + r)) := by ring
+        _ ≤ 7 * (7 ^ r * subsliceWeight j a k (j / 32)) :=
+          Nat.mul_le_mul_left _ (ih hr')
+        _ = 7 ^ (r + 1) * subsliceWeight j a k (j / 32) := by
+          rw [pow_succ]
+          ring
+
+/-- The mass of sub-slices whose `k`-th odd step occurs after time `m`. -/
+def subsliceTail (j a k m : ℕ) : ℕ :=
+  ∑ t ∈ (Finset.range j).filter (fun t => m ≤ t), subsliceWeight j a k t
+
+/-- **Sub-slice concentration.**  In the central slice window, every `k` with `4096k ≤ j` has an
+exponentially small late tail.  This direct consecutive-weight proof avoids a separate partial
+Vandermonde identity. -/
+theorem subslice_tail_le (j a k : ℕ) (hj : 32 ≤ j)
+    (hjlow : 4096 * k ≤ j) (hja : j ≤ 4 * a) (hk : 1 ≤ k) (hka : k ≤ a) :
+    8 ^ (j / 16 - j / 32) * subsliceTail j a k (j / 16) ≤
+      j * 7 ^ (j / 16 - j / 32) * j.choose a := by
+  let m := j / 16
+  let t0 := j / 32
+  let r := m - t0
+  have hjpos : 0 < j := lt_of_lt_of_le (by norm_num) hj
+  have ht0m : t0 ≤ m := by dsimp [t0, m]; omega
+  have hmj : m < j := by
+    dsimp [m]
+    exact Nat.div_lt_self hjpos (by norm_num)
+  have ht0j : t0 < j := lt_of_le_of_lt ht0m hmj
+  have htail : subsliceTail j a k m ≤ j * subsliceWeight j a k m := by
+    calc
+      subsliceTail j a k m ≤
+          ∑ _t ∈ (Finset.range j).filter (fun t => m ≤ t), subsliceWeight j a k m := by
+        unfold subsliceTail
+        apply Finset.sum_le_sum
+        intro t ht
+        exact subsliceWeight_antitone hjlow hja hk hka
+          (le_trans (show t0 ≤ m from ht0m) (by rfl))
+          (Finset.mem_filter.mp ht).2
+          (Finset.mem_range.mp (Finset.mem_filter.mp ht).1)
+      _ = ((Finset.range j).filter (fun t => m ≤ t)).card * subsliceWeight j a k m := by
+        simp
+      _ ≤ j * subsliceWeight j a k m := by
+        gcongr
+        exact (Finset.card_le_card (Finset.filter_subset _ _)).trans_eq (Finset.card_range j)
+  have ht0r : t0 + r = m := Nat.add_sub_of_le ht0m
+  have hgeom : 8 ^ r * subsliceWeight j a k m ≤ 7 ^ r * subsliceWeight j a k t0 := by
+    have := subsliceWeight_geom j a k r hjlow hja hk hka
+      (by rw [ht0r]; exact hmj)
+    simpa [t0, ht0r] using this
+  have hterm : subsliceWeight j a k t0 ≤ j.choose a := by
+    have hsingle : subsliceWeight j a k t0 ≤
+        ∑ t ∈ Finset.range j, subsliceWeight j a k t := by
+      exact Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr ht0j)
+    simpa [sum_subsliceWeight j a k hk hka] using hsingle
+  change 8 ^ r * subsliceTail j a k m ≤ j * 7 ^ r * j.choose a
+  calc
+    8 ^ r * subsliceTail j a k m ≤ 8 ^ r * (j * subsliceWeight j a k m) :=
+      Nat.mul_le_mul_left _ htail
+    _ = j * (8 ^ r * subsliceWeight j a k m) := by ring
+    _ ≤ j * (7 ^ r * subsliceWeight j a k t0) := Nat.mul_le_mul_left _ hgeom
+    _ ≤ j * (7 ^ r * j.choose a) := by gcongr
+    _ = j * 7 ^ r * j.choose a := by ring
 
 /-! ## Fourier expansion of least-residue parity -/
 
@@ -524,6 +699,281 @@ theorem gHatZ_zero (a : ℕ) :
   rw [gHatZ_closed]
   simp
   ring
+
+/-- Jordan's inequality bounds the distance from the middle of an odd character group by the
+corresponding cosine denominator. -/
+theorem abs_two_mul_sub_le_pow_mul_abs_cos (a n : ℕ) (hn : n < 3 ^ a) :
+    |(2 * (n : ℝ) - (3 ^ a : ℝ))| ≤
+      (3 ^ a : ℝ) * |Real.cos (Real.pi * n / 3 ^ a)| := by
+  let M : ℝ := (3 ^ a : ℕ)
+  let x : ℝ := Real.pi / 2 - Real.pi * n / M
+  have hM : 0 < M := by positivity
+  have hnle : (n : ℝ) ≤ M := by
+    simpa [M] using (show (n : ℝ) ≤ ((3 ^ a : ℕ) : ℝ) by
+      exact_mod_cast (Nat.le_of_lt hn))
+  have hratio0 : 0 ≤ (n : ℝ) / M := div_nonneg (by positivity) hM.le
+  have hratio1 : (n : ℝ) / M ≤ 1 := (div_le_one hM).2 hnle
+  have hy0 : 0 ≤ Real.pi * (n : ℝ) / M := by positivity
+  have hypi : Real.pi * (n : ℝ) / M ≤ Real.pi := by
+    calc
+      Real.pi * (n : ℝ) / M = Real.pi * ((n : ℝ) / M) := by ring
+      _ ≤ Real.pi * 1 := mul_le_mul_of_nonneg_left hratio1 Real.pi_pos.le
+      _ = Real.pi := mul_one _
+  have hxabs : |x| ≤ Real.pi / 2 := by
+    rw [abs_le]
+    constructor <;> dsimp [x] <;> linarith
+  have hj := Real.mul_abs_le_abs_sin hxabs
+  have hxform : x = Real.pi / (2 * M) * (M - 2 * (n : ℝ)) := by
+    dsimp [x]
+    field_simp [hM.ne', Real.pi_ne_zero]
+  have hleft : M * (2 / Real.pi * |x|) = |2 * (n : ℝ) - M| := by
+    rw [hxform, abs_mul]
+    have hcoef : 0 ≤ Real.pi / (2 * M) := by positivity
+    rw [abs_of_nonneg hcoef, abs_sub_comm]
+    field_simp [hM.ne', Real.pi_ne_zero]
+  have hsin : |Real.sin x| = |Real.cos (Real.pi * n / M)| := by
+    dsimp [x]
+    rw [Real.sin_pi_div_two_sub]
+  have hmain : |2 * (n : ℝ) - M| ≤ M * |Real.cos (Real.pi * n / M)| := by
+    rw [← hleft, ← hsin]
+    exact mul_le_mul_of_nonneg_left hj hM.le
+  simpa [M] using hmain
+
+/-- Pointwise comparison of a parity Fourier weight with its odd harmonic denominator. -/
+theorem norm_gHatZ_le_inv_abs (a : ℕ) (ξ : ZMod (3 ^ a)) :
+    ‖gHatZ a ξ‖ ≤ 1 / |(2 : ℝ) * ξ.val - 3 ^ a| := by
+  rw [norm_gHatZ_cos]
+  apply one_div_le_one_div_of_le
+  · have hne : (2 : ℕ) * ξ.val ≠ 3 ^ a := by
+      intro h
+      rcases (show Odd (3 ^ a) from (show Odd 3 by norm_num).pow) with ⟨k, hk⟩
+      omega
+    have hneR : (2 : ℝ) * ξ.val ≠ (3 ^ a : ℝ) := by exact_mod_cast hne
+    exact abs_pos.mpr (sub_ne_zero.mpr hneR)
+  · exact abs_two_mul_sub_le_pow_mul_abs_cos a ξ.val ξ.val_lt
+
+/-- An injective family of positive integer denominators bounded by `N` has reciprocal sum at
+most the `N`-th harmonic number. -/
+theorem sum_inv_nat_le_harmonic_of_injOn {s : Finset ℕ} {f : ℕ → ℕ} {N : ℕ}
+    (hinj : Set.InjOn f s) (hmem : ∀ n ∈ s, f n ∈ Finset.Icc 1 N) :
+    ∑ n ∈ s, (1 : ℝ) / f n ≤ (harmonic N : ℝ) := by
+  have hsubset : s.image f ⊆ Finset.Icc 1 N := by
+    intro y hy
+    obtain ⟨n, hn, rfl⟩ := Finset.mem_image.mp hy
+    exact hmem n hn
+  calc
+    ∑ n ∈ s, (1 : ℝ) / f n = ∑ y ∈ s.image f, (1 : ℝ) / y :=
+      (Finset.sum_image (f := fun y : ℕ => (1 : ℝ) / y) hinj).symm
+    _ ≤ ∑ y ∈ Finset.Icc 1 N, (1 : ℝ) / y := by
+      exact Finset.sum_le_sum_of_subset_of_nonneg hsubset (fun _ _ _ => by positivity)
+    _ = (harmonic N : ℝ) := by
+      simp only [harmonic_eq_sum_Icc, Rat.cast_sum, Rat.cast_inv, Rat.cast_natCast]
+      simp only [div_eq_mul_inv, one_mul]
+
+/-- For odd `M`, the denominators `|2n-M|` split into two injective families of positive
+integers, so their reciprocal sum is bounded by two harmonic numbers. -/
+theorem sum_inv_abs_two_mul_sub_le_two_harmonic (M : ℕ) (hM : Odd M) :
+    ∑ n ∈ Finset.range M, (1 : ℝ) / |(2 : ℝ) * n - M| ≤
+      2 * (harmonic M : ℝ) := by
+  let L := (Finset.range M).filter (fun n => 2 * n < M)
+  let H := (Finset.range M).filter (fun n => M < 2 * n)
+  have hne (n : ℕ) : 2 * n ≠ M := by
+    rcases hM with ⟨k, hk⟩
+    omega
+  have hnotL : (Finset.range M).filter (fun n => ¬2 * n < M) = H := by
+    ext n
+    simp only [Finset.mem_filter, Finset.mem_range, H]
+    constructor
+    · rintro ⟨hnM, hn⟩
+      exact ⟨hnM, lt_of_le_of_ne (Nat.le_of_not_gt hn) (Ne.symm (hne n))⟩
+    · rintro ⟨hnM, hn⟩
+      exact ⟨hnM, Nat.not_lt.mpr hn.le⟩
+  have hpartition :
+      (∑ n ∈ Finset.range M, (1 : ℝ) / |(2 : ℝ) * n - M|) =
+        (∑ n ∈ L, (1 : ℝ) / |(2 : ℝ) * n - M|) +
+          ∑ n ∈ H, (1 : ℝ) / |(2 : ℝ) * n - M| := by
+    have hs := Finset.sum_filter_add_sum_filter_not (Finset.range M)
+      (fun n => 2 * n < M) (fun n => (1 : ℝ) / |(2 : ℝ) * n - M|)
+    rw [hnotL] at hs
+    exact hs.symm
+  have hL : (∑ n ∈ L, (1 : ℝ) / |(2 : ℝ) * n - M|) ≤ (harmonic M : ℝ) := by
+    calc
+      (∑ n ∈ L, (1 : ℝ) / |(2 : ℝ) * n - M|) =
+          ∑ n ∈ L, (1 : ℝ) / ((M - 2 * n : ℕ) : ℝ) := by
+        apply Finset.sum_congr rfl
+        intro n hn
+        have hlt : 2 * n < M := (Finset.mem_filter.mp hn).2
+        have hneg : (2 : ℝ) * n - M < 0 := by
+          apply sub_neg.mpr
+          exact_mod_cast hlt
+        rw [abs_of_neg hneg]
+        rw [Nat.cast_sub (Nat.le_of_lt hlt)]
+        norm_num
+      _ ≤ (harmonic M : ℝ) := by
+        apply sum_inv_nat_le_harmonic_of_injOn
+        · intro n hn m hm heq
+          change M - 2 * n = M - 2 * m at heq
+          have hnlt : 2 * n < M := (Finset.mem_filter.mp hn).2
+          have hmlt : 2 * m < M := (Finset.mem_filter.mp hm).2
+          have hnsub : M - 2 * n + 2 * n = M := Nat.sub_add_cancel hnlt.le
+          have hmsub : M - 2 * m + 2 * m = M := Nat.sub_add_cancel hmlt.le
+          omega
+        · intro n hn
+          have hnlt : 2 * n < M := (Finset.mem_filter.mp hn).2
+          simp only [Finset.mem_Icc]
+          omega
+  have hH : (∑ n ∈ H, (1 : ℝ) / |(2 : ℝ) * n - M|) ≤ (harmonic M : ℝ) := by
+    calc
+      (∑ n ∈ H, (1 : ℝ) / |(2 : ℝ) * n - M|) =
+          ∑ n ∈ H, (1 : ℝ) / ((2 * n - M : ℕ) : ℝ) := by
+        apply Finset.sum_congr rfl
+        intro n hn
+        have hlt : M < 2 * n := (Finset.mem_filter.mp hn).2
+        have hpos : 0 < (2 : ℝ) * n - M := by
+          apply sub_pos.mpr
+          exact_mod_cast hlt
+        rw [abs_of_pos hpos]
+        rw [Nat.cast_sub hlt.le]
+        norm_num
+      _ ≤ (harmonic M : ℝ) := by
+        apply sum_inv_nat_le_harmonic_of_injOn
+        · intro n hn m hm heq
+          change 2 * n - M = 2 * m - M at heq
+          have hnlt : M < 2 * n := (Finset.mem_filter.mp hn).2
+          have hmlt : M < 2 * m := (Finset.mem_filter.mp hm).2
+          have hnsub : M + (2 * n - M) = 2 * n := Nat.add_sub_of_le hnlt.le
+          have hmsub : M + (2 * m - M) = 2 * m := Nat.add_sub_of_le hmlt.le
+          omega
+        · intro n hn
+          have hnM : n < M := Finset.mem_range.mp (Finset.mem_filter.mp hn).1
+          have hnlt : M < 2 * n := (Finset.mem_filter.mp hn).2
+          simp only [Finset.mem_Icc]
+          omega
+  rw [hpartition]
+  linarith
+
+/-- Reindex the multiples of `d` below `d*N` by their quotient. -/
+theorem sum_filter_range_dvd_eq {R : Type*} [AddCommMonoid R] (f : ℕ → R)
+    (d N : ℕ) (hd : 0 < d) :
+    (∑ n ∈ (Finset.range (d * N)).filter (fun n => d ∣ n), f n) =
+      ∑ u ∈ Finset.range N, f (d * u) := by
+  symm
+  apply Finset.sum_bij (fun u _ => d * u)
+  · intro u hu
+    simp only [Finset.mem_filter, Finset.mem_range]
+    exact ⟨Nat.mul_lt_mul_of_pos_left (Finset.mem_range.mp hu) hd, dvd_mul_right d u⟩
+  · intro u hu v hv huv
+    exact Nat.eq_of_mul_eq_mul_left hd huv
+  · intro n hn
+    obtain ⟨hnrange, hndvd⟩ := Finset.mem_filter.mp hn
+    obtain ⟨u, rfl⟩ := hndvd
+    refine ⟨u, Finset.mem_range.mpr ?_, rfl⟩
+    exact Nat.lt_of_mul_lt_mul_left (Finset.mem_range.mp hnrange)
+  · intro u hu
+    rfl
+
+/-- The odd harmonic denominators modulo `3^b` have total weight at most `4(b+1)`. -/
+theorem sum_inv_abs_three_pow_le (b : ℕ) :
+    ∑ n ∈ Finset.range (3 ^ b),
+        (1 : ℝ) / |(2 : ℝ) * n - ((3 ^ b : ℕ) : ℝ)| ≤ 4 * (b + 1) := by
+  calc
+    _ ≤ 2 * (harmonic (3 ^ b) : ℝ) :=
+      sum_inv_abs_two_mul_sub_le_two_harmonic (3 ^ b) ((show Odd 3 by norm_num).pow)
+    _ ≤ 4 * (b + 1) := by
+      have hh := harmonic_le_one_add_log (3 ^ b)
+      have hlog3 : Real.log (3 : ℝ) ≤ 2 := by
+        have := Real.log_le_sub_one_of_pos (show (0 : ℝ) < 3 by norm_num)
+        norm_num at this ⊢
+        exact this
+      have hlogpow : Real.log ((3 ^ b : ℕ) : ℝ) ≤ 2 * b := by
+        rw [show (((3 ^ b : ℕ) : ℝ)) = (3 : ℝ) ^ b by norm_num, Real.log_pow]
+        have hb : (0 : ℝ) ≤ b := by positivity
+        nlinarith
+      norm_num only [Nat.cast_pow, Nat.cast_ofNat] at hh hlogpow
+      have hh' : (harmonic (3 ^ b) : ℝ) ≤ 1 + 2 * (b : ℝ) := by
+        exact hh.trans (by simpa [add_comm] using add_le_add_left hlogpow 1)
+      nlinarith
+
+/-- The complete family of parity Fourier weights has total mass at most `4(a+1)`. -/
+theorem sum_norm_gHatZ_le (a : ℕ) :
+    (∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ‖) ≤ 4 * (a + 1) := by
+  calc
+    (∑ ξ : ZMod (3 ^ a), ‖gHatZ a ξ‖) =
+        ∑ n ∈ Finset.range (3 ^ a), ‖gHatZ a (n : ZMod (3 ^ a))‖ := by
+      rw [sum_zmod_eq_sum_range]
+    _ ≤ ∑ n ∈ Finset.range (3 ^ a),
+        (1 : ℝ) / |(2 : ℝ) * n - ((3 ^ a : ℕ) : ℝ)| := by
+      apply Finset.sum_le_sum
+      intro n hn
+      have hnlt : n < 3 ^ a := Finset.mem_range.mp hn
+      simpa [ZMod.val_natCast_of_lt hnlt] using
+        norm_gHatZ_le_inv_abs a (n : ZMod (3 ^ a))
+    _ ≤ 4 * (a + 1) := sum_inv_abs_three_pow_le a
+
+/-- Frequencies divisible by `3^K` carry at most a `3^(-K)` fraction of the total harmonic
+weight, uniformly in the ambient modulus. -/
+theorem sum_norm_gHatZ_dvd_le (a K : ℕ) (hKa : K ≤ a) :
+    (∑ ξ : ZMod (3 ^ a), if 3 ^ K ∣ ξ.val then ‖gHatZ a ξ‖ else 0) ≤
+      ((3 : ℝ) ^ K)⁻¹ * (4 * (a + 1)) := by
+  let d := 3 ^ K
+  let N := 3 ^ (a - K)
+  have hd : 0 < d := by positivity
+  have hNodd : Odd N := by
+    exact (show Odd 3 by norm_num).pow
+  have hpow : 3 ^ a = d * N := by
+    dsimp [d, N]
+    rw [← pow_add, Nat.add_sub_of_le hKa]
+  have hreindex :
+      (∑ ξ : ZMod (3 ^ a), if d ∣ ξ.val then ‖gHatZ a ξ‖ else 0) =
+        ∑ n ∈ Finset.range (3 ^ a),
+          if d ∣ n then ‖gHatZ a (n : ZMod (3 ^ a))‖ else 0 := by
+    rw [sum_zmod_eq_sum_range]
+    apply Finset.sum_congr rfl
+    intro n hn
+    rw [ZMod.val_natCast_of_lt (Finset.mem_range.mp hn)]
+  change (∑ ξ : ZMod (3 ^ a), if d ∣ ξ.val then ‖gHatZ a ξ‖ else 0) ≤ _
+  rw [hreindex, ← Finset.sum_filter]
+  calc
+    (∑ n ∈ (Finset.range (3 ^ a)).filter (fun n => d ∣ n),
+        ‖gHatZ a (n : ZMod (3 ^ a))‖) ≤
+        ∑ n ∈ (Finset.range (3 ^ a)).filter (fun n => d ∣ n),
+          (1 : ℝ) / |(2 : ℝ) * n - ((3 ^ a : ℕ) : ℝ)| := by
+      apply Finset.sum_le_sum
+      intro n hn
+      have hnlt : n < 3 ^ a := Finset.mem_range.mp (Finset.mem_filter.mp hn).1
+      simpa [ZMod.val_natCast_of_lt hnlt] using
+        norm_gHatZ_le_inv_abs a (n : ZMod (3 ^ a))
+    _ = ∑ u ∈ Finset.range N,
+          (1 : ℝ) / |(2 : ℝ) * (d * u) - ((d * N : ℕ) : ℝ)| := by
+      rw [hpow, sum_filter_range_dvd_eq _ d N hd]
+      simp only [Nat.cast_mul]
+    _ = ((d : ℕ) : ℝ)⁻¹ *
+          ∑ u ∈ Finset.range N, (1 : ℝ) / |(2 : ℝ) * u - N| := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro u hu
+      have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+      have hneNat : 2 * u ≠ N := by
+        rcases hNodd with ⟨k, hk⟩
+        omega
+      have hneR : (2 : ℝ) * u - N ≠ 0 := by
+        apply sub_ne_zero.mpr
+        exact_mod_cast hneNat
+      rw [show (2 : ℝ) * (d * u) - ((d * N : ℕ) : ℝ) =
+          (d : ℝ) * ((2 : ℝ) * u - N) by push_cast; ring]
+      rw [abs_mul, abs_of_pos hdR]
+      field_simp [hdR.ne', hneR]
+    _ ≤ ((d : ℕ) : ℝ)⁻¹ * (4 * (((a - K) + 1 : ℕ) : ℝ)) := by
+      apply mul_le_mul_of_nonneg_left
+      · simpa [N] using sum_inv_abs_three_pow_le (a - K)
+      · positivity
+    _ ≤ ((3 : ℝ) ^ K)⁻¹ * (4 * (a + 1)) := by
+      norm_num only [d, Nat.cast_pow, Nat.cast_ofNat]
+      have hsub : a - K + 1 ≤ a + 1 := Nat.add_le_add_right (Nat.sub_le a K) 1
+      have hsubR : (((a - K) + 1 : ℕ) : ℝ) ≤ (a : ℝ) + 1 := by
+        exact_mod_cast hsub
+      exact mul_le_mul_of_nonneg_left
+        (mul_le_mul_of_nonneg_left hsubR (by norm_num)) (by positivity)
 
 /-- **Edge: slice character decay gives C1 directly** (no fine-scale mixing, no Tao §6).  Proof owed,
 plan in the module docstring.  With `sliceCharDecay_of_pascalDampingDecay` (SliceSeven.lean) this
