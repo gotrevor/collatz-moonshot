@@ -1,5 +1,61 @@
 # SliceSeven treadmill handoff — 2026-10-25
 
+## Checkpoint 3: edge complete, scoped target sorry-free
+
+The kickoff objective is complete.  `CollatzMoonshot/Conjugacy/SliceSeven.lean` is sorry-free, and
+the frozen theorem
+`sliceCharDecay_of_pascalDampingDecay : PascalDampingDecay → SliceCharDecay` is proved without
+changing any frozen definition or statement.
+
+- `sliceGapEquiv` gives an exact bijection between slice subsets and positive gap vectors with
+  total at most `j`; `negativeSubsetChar_eq_sum_gapVector` reindexes the whole character sum.
+- `gapBlockEquiv`, `splitGapVectorNat`, and `sum_gapFiberFinset_eq_splits` split each fixed
+  pair-sum/tail fiber into independent positive split intervals.  `sum_gapFiberFinset` and
+  `norm_sum_gapFiberFinset` perform all split cancellation exactly and recover the frozen
+  `fPair` product, with the optional terminal factor proved to have norm one.
+- `summable_pascalWeight`, `summable_fin_product_of_nonneg`, and
+  `summable_pascalDampingTerm` prove the frozen infinite damping series is a legitimate majorant;
+  `norm_fPair_le_one` supplies the domination.
+- `weighted_pairFiberNorm_le_pascalDampingTerm` proves the geometric reweighting one admissible
+  fiber at a time.  Summing fibers and overcounting the zero-or-one terminal coordinate gives
+  `weighted_gapCharSum_le_pascalDamping`, with a single harmless factor `j+1`.
+- `binomialSliceWeight_succ_balance` proves the adjacent binomial-mass identity;
+  `one_div_succ_le_binomialSliceWeight_mode` proves that at `p=a/j` the target slice has mass at
+  least `1/(j+1)`.  Thus `norm_sliceChar_le_mode_damping` loses only `(j+1)^2` after normalization.
+- `succ_sq_mul_rpow_neg_add_three` absorbs those two polynomial losses using `j ≤ 5a`.  Applying
+  `PascalDampingDecay` at exponent `A+3` completes the edge with the explicit constant
+  `4 · 5^(A+3) · C`.
+
+Exact completion gate:
+
+```text
+~/personal/bin/lean-green /Users/gotrevor/src/collatz-moonshot-fourier \
+  --target CollatzMoonshot.Conjugacy.SliceSeven \
+  --import CollatzMoonshot.Conjugacy.SliceSeven \
+  --axioms CollatzMoonshot.Conjugacy.sliceCharDecay_of_pascalDampingDecay \
+  --axioms CollatzMoonshot.Conjugacy.weighted_gapCharSum_le_pascalDamping \
+  --axioms CollatzMoonshot.Conjugacy.one_div_succ_le_binomialSliceWeight_mode \
+  --axioms CollatzMoonshot.Conjugacy.sliceGapEquiv
+
+Build completed successfully (8725 jobs).
+All four declarations: [Classical.choice, Quot.sound, propext]
+✅ FORMALIZE-TIER GREEN
+```
+
+Also checked:
+
+```text
+lake env lean CollatzMoonshot/Conjugacy/SliceSeven.lean
+git diff --check
+rg -n '\bsorry\b|axiom|native_decide|set_option maxHeartbeats' \
+  CollatzMoonshot/Conjugacy/SliceSeven.lean
+```
+
+The direct Lean check exits cleanly with no warnings, `git diff --check` passes, and the search has
+no matches.  There is no remaining blocker in the scoped target.  The next campaign-level
+objective, if explicitly assigned, is the open proof of `PascalDampingDecay` itself (the Sec7P
+campaign) or the downstream `SliceDecay.lean` edge; neither was needed for this completed kickoff.
+
 ## Checkpoint 2: exact pair factor and reweighting foundations
 
 The second lap formalized the load-bearing algebra underneath kickoff steps 2–5, without changing
