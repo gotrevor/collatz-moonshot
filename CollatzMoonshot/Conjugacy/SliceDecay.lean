@@ -53,9 +53,11 @@ and `ξ` coprime to `3`, the normalized slice character sum is `O_A(j^{−A})` f
 window is wider than `TruncatedSyracMixing`'s `[1/4, 11/20]`, so the sub-slices met in the §6
 head/tail conditioning stay inside it with overwhelming probability.  Confidence 70% true, 35%
 provable by redoing Tao §7 at `Pascal(p)` (the heuristic above).  Refutation probe:
-`experiments/conjugacy/slice_charfn.py`. -/
+`experiments/conjugacy/slice_charfn.py`.  The binder `1 ≤ j` is needed: without it the node fails
+at `j = a = 0`, where the slice is `{0}` and `C·0^{−A} = 0` (found by personal-2c, 2026-10-25,
+with an axiom-clean `¬ SliceCharDecay`; fixed the same day). -/
 def SliceCharDecay : Prop :=
-  ∀ A > (0 : ℝ), ∃ C > (0 : ℝ), ∀ j a ξ : ℕ, j ≤ 5 * a → 5 * a ≤ 3 * j → ¬ 3 ∣ ξ →
+  ∀ A > (0 : ℝ), ∃ C > (0 : ℝ), ∀ j a ξ : ℕ, 1 ≤ j → j ≤ 5 * a → 5 * a ≤ 3 * j → ¬ 3 ∣ ξ →
     ‖sliceChar j a ξ‖ ≤ C * (j : ℝ) ^ (-A) * (levelSet j a).card
 
 /-- **Edge: the sliced Tao 1.17 ⇒ 1.14.**  Proof owed (moonshot edge, not a treadmill target).
