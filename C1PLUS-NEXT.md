@@ -3,6 +3,11 @@
 **Target:** `CollatzMoonshot/Conjugacy/WeakDecay.lean` sorry-free.  The headline is
 `weakDecayOnZ3 : WeakDecayOnZ3` (already assembled from the two edges below).
 
+**Latest checkpoint (2026-10-26):** the exact class-character expansion and its odd-count slice
+partition are proved sorry-free in `WeakDecayAux.lean`; see
+`HANDOFF-2026-10-26-c1plus-fourier.md`.  The next attack is the per-slice twisted Fourier inversion
+and `v3(zeta) = v3(eta)` normalization described there.  Both frozen edges remain open.
+
 ## Frozen (never change these statements)
 - `WeakDecayOnZ3`, `biasClassPow` (`Recursion.lean`), `BiasDecays`, `bias`, `levelSet`.
 - `overPrecChar`, `OverPrecSliceCharDecay`, and the statements of the three theorems in `WeakDecay.lean`.

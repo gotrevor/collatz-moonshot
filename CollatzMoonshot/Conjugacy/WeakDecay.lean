@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import CollatzMoonshot.Conjugacy.C1
+import CollatzMoonshot.Conjugacy.WeakDecayAux
 
 /-!
 # C1⁺: decay at every 3-adic scale (`WeakDecayOnZ3`), via over-precision slice sums
