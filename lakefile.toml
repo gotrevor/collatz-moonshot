@@ -28,3 +28,11 @@ name = "LeanLedger"
 git = "https://github.com/gotrevor/lean-agent-skills.git"
 rev = "fec556e47718d69a6fa8796c5faab1eeba8974a5"
 subDir = "lean"
+
+# The Sec7P campaign (Tao 2019 §7 at Pascal(p), uniform on [1/5, 3/5]) proves this repo's
+# `PascalDampingDecay` node; its definitions are copied verbatim from `Conjugacy/SliceSeven.lean`.
+# Pinned at a SHA on tao-collatz branch `ren/sec7p-pascal` (required, never vendored).
+[[require]]
+name = "TaoCollatz"
+git = "https://github.com/gotrevor/tao-collatz.git"
+rev = "46475c9d1c53b079447a2e01d71579d5171d55cf"
