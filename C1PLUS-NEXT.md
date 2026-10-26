@@ -3,10 +3,13 @@
 **Target:** `CollatzMoonshot/Conjugacy/WeakDecay.lean` sorry-free.  The headline is
 `weakDecayOnZ3 : WeakDecayOnZ3` (already assembled from the two edges below).
 
-**Latest checkpoint (2026-10-26):** the exact class-character expansion and its odd-count slice
-partition are proved sorry-free in `WeakDecayAux.lean`; see
-`HANDOFF-2026-10-26-c1plus-fourier.md`.  The next attack is the per-slice twisted Fourier inversion
-and `v3(zeta) = v3(eta)` normalization described there.  Both frozen edges remain open.
+**Latest checkpoint (2026-10-26):** the per-slice twisted Fourier inversion and exact frequency
+normalization are proved sorry-free in `WeakDecayTwist.lean`; see
+`HANDOFF-2026-10-26-c1plus-twist.md`.  After the `2^m` frequency permutation, the inner sum is the
+fine-modulus numerator character at `zeta = 3^k*xi - eta`; its chosen natural representative is
+`3^v` times a frequency prime to `3`, with `v = v3(eta) < k`.  The next attack is the shifted
+cosecant-sum bound `sum ‖twistedHat‖ = O(a+k)`, followed by assembly of Edge 1.  Both frozen edges
+remain open.
 
 ## Frozen (never change these statements)
 - `WeakDecayOnZ3`, `biasClassPow` (`Recursion.lean`), `BiasDecays`, `bias`, `levelSet`.

@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.Conjugacy.C1
 import CollatzMoonshot.Conjugacy.WeakDecayAux
+import CollatzMoonshot.Conjugacy.WeakDecayTwist
 
 /-!
 # C1⁺: decay at every 3-adic scale (`WeakDecayOnZ3`), via over-precision slice sums
