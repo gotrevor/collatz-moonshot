@@ -1,5 +1,17 @@
 # PENDING_WORK
 
+## 2026-10-26 — C1⁺ treadmill target: DONE
+
+`CollatzMoonshot/Conjugacy/WeakDecay.lean` is sorry-free and
+`weakDecayOnZ3 : WeakDecayOnZ3` is trust-base clean. Edge 1 uses the corrected fixed-`k`
+Fourier-mass bound `3^k·4(a+k+1)`. Edge 2 is discharged in the new
+`WeakDecaySec7P.lean` by separating slice length from character modulus and padding omitted pair
+sums with `2`, comparing the partial damping to full Sec7P at cost at most `25^k`.
+
+Real gate: 8779 jobs, FORMALIZE-tier green; headline axioms exactly
+`Classical.choice`, `Quot.sound`, `propext`. Nothing remains in the scoped campaign. See
+`HANDOFF-2026-10-26-c1plus-twist.md`; do not reopen without a later operator objective.
+
 ## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: ALL STEPS DONE (k=1..6)
 
 `ArcSolverComputable.lean` is sorry-free.  Trusted hypothesis (c) is now the theorem `stepCode_sound`

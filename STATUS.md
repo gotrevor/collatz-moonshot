@@ -1,5 +1,15 @@
 # STATUS — collatz-moonshot 📊
 
+> **2026-10-26, C1⁺ COMPLETE (`WeakDecayOnZ3`):**
+> `CollatzMoonshot/Conjugacy/WeakDecay.lean` is sorry-free. The shifted Fourier reduction is
+> proved with the necessary fixed-precision coefficient bound
+> `Σ‖twistedHat‖ ≤ 3^k·4(a+k+1)` (correcting the false uniform `O(a+k)` estimate), and the
+> overprecision Sec7P edge is proved by fine-modulus gap pairing plus all-two padding at cost
+> `25^(⌊(a+k)/2⌋-⌊a/2⌋)`. The real 8779-job target gate is FORMALIZE-tier green and
+> `#print axioms weakDecayOnZ3` reports only `Classical.choice`, `Quot.sound`, `propext`.
+> No frozen statement changed, no forbidden file was edited, and no new axiom, `native_decide`,
+> or `sorry` was introduced. See `HANDOFF-2026-10-26-c1plus-twist.md`.
+
 > **2026-10-06, arc-trap edge theorem proved (Benchmark lane, kickoff `KICKOFF-2026-10-06-arc-edge-proofs.md`, done and audited):** no finite-memory construction holds an arc of `{ξ(3/2)^n}` shorter than `2/3`, and the AFS arc `{‖x‖ ≤ 1/3}` attains the edge (`finiteMemory_min_arc_two_thirds`, `finiteMemoryEdgeIsTwoThirds`), plus the near-AFS lifetime bounds (`near_afs_density`, `near_afs_every_floor`, `card_afsUnbroken_le`).  All print only the trust base; no target statement changed since `485ba54`.  Write-up: [`docs/notes/arc-traps-two-thirds-edge.md`](docs/notes/arc-traps-two-thirds-edge.md).  Awaiting the next operator kickoff (`DIRECTION.md` → CURRENT DIRECTIVE).
 
 > **2026-09-29, variable-depth reset audit:** [Full-run results](RESEARCH-2026-09-29-q1-run-macro.md).  The exit, immediate re-entry obstruction, one-halving expansion, and normalized-reset rank calibration are proved in Lean.  Long-phase contraction survives, but resetting that rank still requires size descent; no reusable full-state induction step was found.
