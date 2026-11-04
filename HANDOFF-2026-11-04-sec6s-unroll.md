@@ -24,3 +24,12 @@ theorem: `Nat.le_induction` on `a` from `m + 1`, generalizing `j`.
 * `sliceMixture_offBand_le` (hypergeometric tail leaf) — the remaining named leaf of target 2.
   Route per plan: Bernoulli(1/2) bit representation over all `r < 2^j`, higher moments / Chernoff.
 * Frozen SEC6S targets in `SliceOscCentral.lean` untouched.
+
+## Final checkpoint
+
+HEAD at checkpoint: `5bd335f` on `wip/beyond-words-stretch` (not pushed; host pushes).  Scoped target
+`sorry-free:CollatzMoonshot/Conjugacy/SliceTelescopeUnroll.lean` met; `box done --green` signalled.
+
+Exact next step for the next run: SEC6S-PLAN §4 lap 2, prove `sliceMixture_offBand_le` (the remaining
+leaf of SEC6S target 2) via the Bernoulli(1/2) bit representation over `r < 2^j` with higher moments
+or a Chernoff bound, mirroring `sum_oddDeviation_sq`.  A fresh kickoff should freeze that leaf first.
