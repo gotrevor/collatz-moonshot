@@ -42,3 +42,16 @@ all 16 close.
 
 HEAD after this commit on `wip/orbit-word-law`; no uncommitted Lean edits.  Build:
 `lake build CollatzMoonshot.Conjugacy.OrbitWordLaw` green.  Sorry count of the gated file: 16.
+
+## Lap 2 (2026-11-04, autonomous)
+
+Proved, axioms `propext, Classical.choice, Quot.sound`:
+- `stagePasses` (`OrbitWordLawStage.lean`, `stagePasses_holds`).  `StagePasses` restated with cover
+  `20 (D + 2) + 4H` (roomier than the planted `2⌈6(D+1)⌉ + 4H`).
+- `locGoodPassLoc` (`locGoodPassLoc_holds`, same file).
+- `goodOddOfStages` (`OrbitWordLawReadOff.lean`, `goodOddOfStages_holds`).  `numScales` is now
+  `4000` (`α^(−3999) ≤ 1/50` via `decide +kernel` on `50·1000^3999 ≤ 1001^3999`).
+
+Sorry count of the gated file: 13.  Left: the probabilistic chain (`CardMatchSet` …
+`WinGoodWhp`) and density (`LogDens0OfWindow`, `LogDens0OddPart`, `SummableLargeTwoAdic`,
+`NotBadStartOfGoodOdd`).
