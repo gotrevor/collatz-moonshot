@@ -7,6 +7,7 @@ import Mathlib
 import TaoCollatz.Sec5.Stabilization
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
+import CollatzMoonshot.Conjugacy.OrbitWordLawStage
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -27,9 +28,8 @@ Every open obligation of the target is one of these, stated in the sibling files
 here, so that this file's `sorry` count is the target's.  Proved implications between them live in
 the siblings. -/
 
-/-- **One stage of descent.**  Elementary (height identity, prefix bounds).  Confidence 90%. -/
-theorem stagePasses : StagePasses := by
-  sorry
+/-- **One stage of descent.**  Proved in `OrbitWordLawStage.lean`. -/
+theorem stagePasses : StagePasses := stagePasses_holds
 
 /-- **Reading off the orbit.**  Elementary bookkeeping over `numScales` stages.  Confidence 85%. -/
 theorem goodOddOfStages : GoodOddOfStages := by
