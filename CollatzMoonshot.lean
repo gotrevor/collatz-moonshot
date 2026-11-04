@@ -133,6 +133,7 @@ import CollatzMoonshot.Conjugacy.ChampernowneNear
 import CollatzMoonshot.Conjugacy.ChampernowneThreshold
 import CollatzMoonshot.Conjugacy.ChampernowneDrift
 import CollatzMoonshot.Conjugacy.ChampernowneAveraged
+import CollatzMoonshot.Conjugacy.ChampernowneHeight
 import CollatzMoonshot.Conjugacy.ChampernowneOffsets
 import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Conjugacy.Coalescence
