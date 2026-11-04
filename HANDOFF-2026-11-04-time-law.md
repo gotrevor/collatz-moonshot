@@ -44,3 +44,13 @@ No existing file edited apart from `OrbitTimeLaw.lean`.
 
 - `docs/notes/` write-up: total stopping time `(1/β + o(1)) size n` to below any `f → ∞`, in log density.
 - Numbers: `experiments/conjugacy/time_law.py` was not re-run this lap.
+
+## Final checkpoint (treadmill stop)
+
+Branch `wip/orbit-word-law`, HEAD `3896b94` + this commit.  Working tree clean apart from the
+untracked `CLAUDE.local.md`.  `box done --green` written; scoped gate at 0.  No Aristotle job.
+Exact next steps, for whichever operator kickoff comes next:
+1. Re-verify: `lake build CollatzMoonshot.Conjugacy.OrbitTimeLaw`, then `#print axioms timeLaw_upper`
+   and `timeLaw_lower` (expect `propext, Classical.choice, Quot.sound`).
+2. Optional: re-run `experiments/conjugacy/time_law.py` against the proved constant `1/β`.
+3. Optional: `docs/notes/` note on the time law, pinned at this commit.
