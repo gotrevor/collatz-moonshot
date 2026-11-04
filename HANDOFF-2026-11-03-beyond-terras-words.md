@@ -31,8 +31,7 @@ Frozen statements unchanged (the only removed lines in `BeyondWords.lean` are th
 
 ## Not done / next
 
-* The new modules are not imported from the root `CollatzMoonshot.lean` (kickoff: build only what you
-  touch).  Add `SliceFourierGeneral`, `ResidueIndicator`, `BeyondWords` there on the next full build.
+* Root imports added (`CollatzMoonshot.lean`; full `lake build CollatzMoonshot` green, 8904 jobs).
 * Stretch (kickoff): DONE in `Conjugacy/BeyondWordsLetters.lean`.  `beyondWordCount_tendsto`: for
   every binary word `w` of length `K`, the proportion of `j`-bit starts whose parity letters
   `j, …, j+K−1` spell `w` tends to `2^{−K}` (axioms `propext, Classical.choice, Quot.sound`).  Bridge:

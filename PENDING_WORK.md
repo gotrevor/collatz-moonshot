@@ -6,7 +6,7 @@
 Quot.sound`); `biasDecays_of_beyondWordsUniform` proved.  Advance: the C1 Fourier pipeline is now
 generic in the observable (`SliceFourierGeneral.lean`), and the residue indicator's layered weight is
 `4(a+1)` uniformly in `K`, `c` (`ResidueIndicator.lean: layeredWeight_resInd`).  Stretch word form done
-(`BeyondWordsLetters.lean: beyondWordCount_tendsto`).  Next: root imports.  See `HANDOFF-2026-11-03-beyond-terras-words.md`.
+(`BeyondWordsLetters.lean: beyondWordCount_tendsto`).  Root imports added; nothing open on the kickoff path.  See `HANDOFF-2026-11-03-beyond-terras-words.md`.
 
 ## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: ALL STEPS DONE (k=1..6)
 
