@@ -1,0 +1,25 @@
+beta=0.20752  1/beta=4.8188
+predicted t/k to n^0.5: 2.409
+predicted t/k to n^0.17: 4.000
+predicted t/k to n^0.1: 4.337
+predicted t/k to n^0.05: 4.578
+k=500 S=16 sup/k  tau=4.0: mean 0.0822 max 0.1522 tau=4.5: mean 0.0896 max 0.1854 tau=4.7: mean 0.0921 max 0.1950 tau=5.0: mean 0.0930 max 0.1950
+   t/k to n^0.5: min 2.102 mean 2.449 max 2.982  not reached by 5k: 0
+   t/k to n^0.17: min 3.714 mean 4.143 max 4.826  not reached by 5k: 0
+   t/k to n^0.1: min 4.002 mean 4.412 max 4.960  not reached by 5k: 2
+   t/k to n^0.05: min 4.192 mean 4.617 max 4.988  not reached by 5k: 3
+k=2000 S=16 sup/k  tau=4.0: mean 0.0509 max 0.1066 tau=4.5: mean 0.0536 max 0.1292 tau=4.7: mean 0.0544 max 0.1335 tau=5.0: mean 0.0576 max 0.1395
+   t/k to n^0.5: min 2.213 mean 2.426 max 2.760  not reached by 5k: 0
+   t/k to n^0.17: min 3.718 mean 4.045 max 4.607  not reached by 5k: 0
+   t/k to n^0.1: min 4.095 mean 4.379 max 4.958  not reached by 5k: 0
+   t/k to n^0.05: min 4.331 mean 4.554 max 4.818  not reached by 5k: 2
+k=8000 S=16 sup/k  tau=4.0: mean 0.0196 max 0.0298 tau=4.5: mean 0.0207 max 0.0299 tau=4.7: mean 0.0209 max 0.0299 tau=5.0: mean 0.0378 max 0.0378
+   t/k to n^0.5: min 2.351 mean 2.421 max 2.497  not reached by 5k: 0
+   t/k to n^0.17: min 3.870 mean 4.016 max 4.135  not reached by 5k: 0
+   t/k to n^0.1: min 4.208 mean 4.339 max 4.437  not reached by 5k: 0
+   t/k to n^0.05: min 4.462 mean 4.584 max 4.667  not reached by 5k: 0
+k=20000 S=16 sup/k  tau=4.0: mean 0.0128 max 0.0235 tau=4.5: mean 0.0138 max 0.0244 tau=4.7: mean 0.0144 max 0.0244 tau=5.0: mean 0.0377 max 0.0377
+   t/k to n^0.5: min 2.382 mean 2.429 max 2.480  not reached by 5k: 0
+   t/k to n^0.17: min 3.943 mean 4.018 max 4.088  not reached by 5k: 0
+   t/k to n^0.1: min 4.258 mean 4.353 max 4.437  not reached by 5k: 0
+   t/k to n^0.05: min 4.511 mean 4.592 max 4.691  not reached by 5k: 0
