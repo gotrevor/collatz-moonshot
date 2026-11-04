@@ -22,7 +22,8 @@ is at most `8 δ` plus terms that vanish.  The hypothesis is used uniformly in `
 may be cut anywhere inside a stage.
 
 The converse only returns an average over positions: normality says the average over
-`t ∈ [k, C k)` of the discrepancies vanishes, not each `t`, so it is not stated.
+`t ∈ [k, C k)` of the discrepancies vanishes, not each `t`.  That averaged converse is
+`averagedMixing_of_normal` in `ChampernowneAveraged.lean`.
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -110,27 +111,35 @@ theorem defect_stage_eq (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L k m : ℕ
   push_cast
   ring
 
+/-- The offsets below `k` cost at most `2^k` in all, by Terras. -/
+theorem abs_stage_sum_low_le (C : ℕ) (g : ℕ → Bool) (L k m : ℕ) :
+    |∑ t ∈ ((Finset.range (C * k)).filter (fun t => t + L ≤ C * k)).filter (fun t => t < k),
+        stageError g L k t m| ≤ 2 ^ k := by
+  have hgeom : ∀ T : ℕ, ∑ t ∈ Finset.range T, (2 : ℝ) ^ t + 1 = 2 ^ T := by
+    intro T
+    induction T with
+    | zero => simp
+    | succ T ih => rw [Finset.sum_range_succ, pow_succ]; linarith
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  calc ∑ t ∈ ((Finset.range (C * k)).filter (fun t => t + L ≤ C * k)).filter (fun t => t < k),
+        |stageError g L k t m|
+      ≤ ∑ t ∈ ((Finset.range (C * k)).filter (fun t => t + L ≤ C * k)).filter (fun t => t < k),
+          (2 : ℝ) ^ t :=
+        Finset.sum_le_sum fun t _ => abs_card_Ico_windowMatch_sub_le g L t _ m
+    _ ≤ ∑ t ∈ Finset.range k, (2 : ℝ) ^ t := by
+        refine Finset.sum_le_sum_of_subset_of_nonneg ?_ fun _ _ _ => by positivity
+        intro t ht
+        exact Finset.mem_range.mpr (Finset.mem_filter.mp ht).2
+    _ ≤ 2 ^ k := by linarith [hgeom k]
+
 /-- **One stage.**  Terras below offset `k`, the mixing hypothesis at and above it. -/
 theorem abs_stage_sum_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L k m : ℕ) (δ : ℝ) (hδ : 0 < δ)
     (hmix : ∀ t, k ≤ t → t + L ≤ C * k → |stageError g L k t m| ≤ δ * 2 ^ (k - 1)) :
     |∑ t ∈ (Finset.range (C * k)).filter (fun t => t + L ≤ C * k), stageError g L k t m| ≤
       2 ^ k + δ * (C * k) * 2 ^ (k - 1) := by
   set F := (Finset.range (C * k)).filter (fun t => t + L ≤ C * k) with hF
-  have hgeom : ∀ T : ℕ, ∑ t ∈ Finset.range T, (2 : ℝ) ^ t + 1 = 2 ^ T := by
-    intro T
-    induction T with
-    | zero => simp
-    | succ T ih => rw [Finset.sum_range_succ, pow_succ]; linarith
-  have h1 : |∑ t ∈ F.filter (fun t => t < k), stageError g L k t m| ≤ 2 ^ k := by
-    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-    calc ∑ t ∈ F.filter (fun t => t < k), |stageError g L k t m|
-        ≤ ∑ t ∈ F.filter (fun t => t < k), (2 : ℝ) ^ t :=
-          Finset.sum_le_sum fun t _ => abs_card_Ico_windowMatch_sub_le g L t _ m
-      _ ≤ ∑ t ∈ Finset.range k, (2 : ℝ) ^ t := by
-          refine Finset.sum_le_sum_of_subset_of_nonneg ?_ fun _ _ _ => by positivity
-          intro t ht
-          exact Finset.mem_range.mpr (Finset.mem_filter.mp ht).2
-      _ ≤ 2 ^ k := by linarith [hgeom k]
+  have h1 : |∑ t ∈ F.filter (fun t => t < k), stageError g L k t m| ≤ 2 ^ k :=
+    abs_stage_sum_low_le C g L k m
   have h2 : |∑ t ∈ F.filter (fun t => ¬ t < k), stageError g L k t m| ≤
       δ * (C * k) * 2 ^ (k - 1) := by
     refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
@@ -151,11 +160,12 @@ theorem abs_stage_sum_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L k m : �
   rw [← Finset.sum_filter_add_sum_filter_not F (fun t => t < k)]
   exact (abs_add_le _ _).trans (add_le_add h1 h2)
 
-/-- The defect at the end of stage `k`, summed from stage `K`. -/
-theorem abs_defect_stage_end_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
+/-- The defect at the end of stage `k`, summed from stage `K`, given a bound on each stage sum. -/
+theorem abs_defect_stage_end_le_of_stage (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
     (δ : ℝ) (hδ : 0 < δ)
-    (hmix : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) → ∀ t, k ≤ t → t + L ≤ C * k →
-      |stageError g L k t m| ≤ δ * 2 ^ (k - 1))
+    (hstage : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) →
+      |∑ t ∈ (Finset.range (C * k)).filter (fun t => t + L ≤ C * k), stageError g L k t m| ≤
+        2 ^ k + δ * (C * k) * 2 ^ (k - 1))
     (k : ℕ) (hk : K ≤ k + 1) :
     |defect C g L (2 ^ k - 1)| ≤
       |defect C g L (2 ^ (K - 1) - 1)| + 2 ^ (k + 1) + δ * (C * k) * 2 ^ k := by
@@ -173,20 +183,19 @@ theorem abs_defect_stage_end_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K
       have h2 : (0 : ℝ) ≤ 2 ^ (k + 1 + 1) := by positivity
       linarith
     · have ih' := ih hge
-      have hstage := defect_stage_eq C hC g L (k + 1) (2 ^ k) (by omega) (by simp)
-      have hsum := abs_stage_sum_le C hC g L (k + 1) (2 ^ k) δ hδ
-        (hmix (k + 1) hge (2 ^ k) (by simp))
-      simp only [Nat.add_sub_cancel] at hstage hsum
+      have hstage' := defect_stage_eq C hC g L (k + 1) (2 ^ k) (by omega) (by simp)
+      have hsum := hstage (k + 1) hge (2 ^ k) (by simp)
+      simp only [Nat.add_sub_cancel] at hstage' hsum
       have he : 2 ^ k - 1 + 2 ^ k = 2 ^ (k + 1) - 1 := by
         have : 0 < 2 ^ k := by positivity
         rw [pow_succ]; omega
-      rw [he] at hstage
+      rw [he] at hstage'
       have htri : |defect C g L (2 ^ (k + 1) - 1)| ≤ |defect C g L (2 ^ k - 1)| +
           |defect C g L (2 ^ (k + 1) - 1) - defect C g L (2 ^ k - 1)| := by
         have := abs_add_le (defect C g L (2 ^ k - 1))
           (defect C g L (2 ^ (k + 1) - 1) - defect C g L (2 ^ k - 1))
         simpa using this
-      rw [hstage] at htri
+      rw [hstage'] at htri
       have hX : (0 : ℝ) ≤ δ * C * 2 ^ k := by positivity
       push_cast at hsum ⊢
       have e1 : δ * ((C : ℝ) * k) * 2 ^ k = δ * C * 2 ^ k * k := by ring
@@ -199,11 +208,12 @@ theorem abs_defect_stage_end_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K
       rw [e3, e4]
       linarith
 
-/-- The defect at any word end at or beyond stage `K`. -/
-theorem abs_defect_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
+/-- The defect at any word end at or beyond stage `K`, given a bound on each stage sum. -/
+theorem abs_defect_le_of_stage (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
     (δ : ℝ) (hδ : 0 < δ)
-    (hmix : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) → ∀ t, k ≤ t → t + L ≤ C * k →
-      |stageError g L k t m| ≤ δ * 2 ^ (k - 1))
+    (hstage : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) →
+      |∑ t ∈ (Finset.range (C * k)).filter (fun t => t + L ≤ C * k), stageError g L k t m| ≤
+        2 ^ k + δ * (C * k) * 2 ^ (k - 1))
     (N : ℕ) (hN : K ≤ Nat.size (N + 1)) :
     |defect C g L N| ≤
       |defect C g L (2 ^ (K - 1) - 1)| + 4 * ((N : ℝ) + 1) +
@@ -218,17 +228,16 @@ theorem abs_defect_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (h
   have hdbl : 2 ^ (j + 1) = 2 * 2 ^ j := by ring
   obtain ⟨m, hm⟩ : ∃ m, N = 2 ^ j - 1 + m := ⟨N + 1 - 2 ^ j, by omega⟩
   have hmle : m ≤ 2 ^ j := by omega
-  have hend := abs_defect_stage_end_le C hC g L K hK δ hδ hmix j (by omega)
-  have hstage := defect_stage_eq C hC g L (j + 1) m (by omega) (by simpa using hmle)
-  have hsum := abs_stage_sum_le C hC g L (j + 1) m δ hδ
-    (hmix (j + 1) (by omega) m (by simpa using hmle))
-  simp only [Nat.add_sub_cancel] at hstage hsum
-  rw [← hm] at hstage
+  have hend := abs_defect_stage_end_le_of_stage C hC g L K hK δ hδ hstage j (by omega)
+  have hstage' := defect_stage_eq C hC g L (j + 1) m (by omega) (by simpa using hmle)
+  have hsum := hstage (j + 1) (by omega) m (by simpa using hmle)
+  simp only [Nat.add_sub_cancel] at hstage' hsum
+  rw [← hm] at hstage'
   have htri : |defect C g L N| ≤ |defect C g L (2 ^ j - 1)| +
       |defect C g L N - defect C g L (2 ^ j - 1)| := by
     have := abs_add_le (defect C g L (2 ^ j - 1)) (defect C g L N - defect C g L (2 ^ j - 1))
     simpa using this
-  rw [hstage] at htri
+  rw [hstage'] at htri
   have hpR : (2 : ℝ) ^ j ≤ (N : ℝ) + 1 := by exact_mod_cast hlo
   have e5 : (2 : ℝ) ^ (j + 1) = 2 * 2 ^ j := by ring
   rw [hj]
@@ -244,6 +253,29 @@ theorem abs_defect_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (h
       2 * (δ * (C * ((j : ℝ) + 1)) * ((N : ℝ) + 1)) := by ring
   rw [e8]
   linarith
+
+/-- The defect at the end of stage `k`, summed from stage `K`. -/
+theorem abs_defect_stage_end_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
+    (δ : ℝ) (hδ : 0 < δ)
+    (hmix : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) → ∀ t, k ≤ t → t + L ≤ C * k →
+      |stageError g L k t m| ≤ δ * 2 ^ (k - 1))
+    (k : ℕ) (hk : K ≤ k + 1) :
+    |defect C g L (2 ^ k - 1)| ≤
+      |defect C g L (2 ^ (K - 1) - 1)| + 2 ^ (k + 1) + δ * (C * k) * 2 ^ k :=
+  abs_defect_stage_end_le_of_stage C hC g L K hK δ hδ
+    (fun k hk m hm => abs_stage_sum_le C hC g L k m δ hδ (hmix k hk m hm)) k hk
+
+/-- The defect at any word end at or beyond stage `K`. -/
+theorem abs_defect_le (C : ℕ) (hC : 1 ≤ C) (g : ℕ → Bool) (L K : ℕ) (hK : 1 ≤ K)
+    (δ : ℝ) (hδ : 0 < δ)
+    (hmix : ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) → ∀ t, k ≤ t → t + L ≤ C * k →
+      |stageError g L k t m| ≤ δ * 2 ^ (k - 1))
+    (N : ℕ) (hN : K ≤ Nat.size (N + 1)) :
+    |defect C g L N| ≤
+      |defect C g L (2 ^ (K - 1) - 1)| + 4 * ((N : ℝ) + 1) +
+        2 * δ * (C * Nat.size (N + 1)) * ((N : ℝ) + 1) :=
+  abs_defect_le_of_stage C hC g L K hK δ hδ
+    (fun k hk m hm => abs_stage_sum_le C hC g L k m δ hδ (hmix k hk m hm)) N hN
 
 /-- The `N + 1 − 2^B` integers `n ∈ [2^B, N]` each carry at least `B + 1` bits. -/
 private theorem mul_succ_sub_le_cum (C : ℕ) (hC : 1 ≤ C) (B N : ℕ) :
@@ -297,10 +329,12 @@ theorem stageError_le_of_mixing (C : ℕ) (h : ShortIntervalMixing C) (g : ℕ �
   rw [stageError, hf]
   exact this
 
-/-- **Short-interval mixing makes `𝒞_C` normal.**  The hypothesis is used uniformly in `m`, since
-a prefix may be cut anywhere inside a stage; without that uniformity the block frequencies could
-oscillate within a stage. -/
-theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortIntervalMixing C) :
+/-- A bound on the signed sum over the fitting offsets of each stage segment makes `𝒞_C` normal. -/
+theorem normal_of_stage_bound (C : ℕ) (hC : 1 ≤ C)
+    (hs : ∀ (u : List Bool) (δ : ℝ), 0 < δ → ∃ K : ℕ, 1 ≤ K ∧ ∀ k, K ≤ k → ∀ m, m ≤ 2 ^ (k - 1) →
+      |∑ t ∈ (Finset.range (C * k)).filter (fun t => t + u.length ≤ C * k),
+          stageError (fun s => u.getD s false) u.length k t m| ≤
+        2 ^ k + δ * (C * k) * 2 ^ (k - 1)) :
     Normal (collatzChampernowne C) := by
   intro u
   rcases Nat.eq_zero_or_pos u.length with h0 | hu
@@ -313,7 +347,7 @@ theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortInterva
   intro ε hε
   set g : ℕ → Bool := fun s => u.getD s false with hg
   set L := u.length with hL
-  obtain ⟨K, hK1, hmix⟩ := stageError_le_of_mixing C h g L (ε / 16) (by positivity)
+  obtain ⟨K, hK1, hstage⟩ := hs u (ε / 16) (by positivity)
   set E₀ := |defect C g L (2 ^ (K - 1) - 1)| with hE₀
   have hE0 : 0 ≤ E₀ := abs_nonneg _
   set A : ℝ := E₀ + 2 * L + 4 + 2 * C with hA
@@ -349,7 +383,7 @@ theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortInterva
     omega
   have hkN : k ≤ N + 1 := Nat.size_le.mpr Nat.lt_two_pow_self
   have hlen : champLen C N = C * k := by rw [champLen, max_eq_left hC]
-  have hd := abs_defect_le C hC g L K hK1 (ε / 16) (by positivity) hmix N hkK
+  have hd := abs_defect_le_of_stage C hC g L K hK1 (ε / 16) (by positivity) hstage N hkK
   rw [← hk, ← hE₀] at hd
   obtain ⟨hol, hou⟩ := occ_cum_le C u N
   have hmain := abs_main_sub_cum_le C L N
@@ -409,6 +443,15 @@ theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortInterva
     rw [one_div, inv_pow]; field_simp
   rw [Real.dist_eq, heq, abs_div, abs_of_pos hPpos, div_lt_iff₀ hPpos]
   exact htotal
+
+/-- **Short-interval mixing makes `𝒞_C` normal.**  The hypothesis is used uniformly in `m`, since
+a prefix may be cut anywhere inside a stage; without that uniformity the block frequencies could
+oscillate within a stage. -/
+theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortIntervalMixing C) :
+    Normal (collatzChampernowne C) := by
+  refine normal_of_stage_bound C hC fun u δ hδ => ?_
+  obtain ⟨K, hK, hmix⟩ := stageError_le_of_mixing C h (fun s => u.getD s false) u.length δ hδ
+  exact ⟨K, hK, fun k hk m hm => abs_stage_sum_le C hC _ _ k m δ hδ (hmix k hk m hm)⟩
 
 theorem champernowneNormalBelowThreshold_of_shortIntervalMixing
     (h : ∀ C, 1 ≤ C → C ≤ 4 → ShortIntervalMixing C) : ChampernowneNormalBelowThreshold :=

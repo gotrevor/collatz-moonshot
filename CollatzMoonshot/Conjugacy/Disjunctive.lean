@@ -14,8 +14,8 @@ Terras's bijection realises every word `u` of length `j` as the first `j` letter
 `r < 2^j` (`exists_accWord_eq_get`).  Those letters do not see `+ 2^j`, and `n = r + 2^j` has
 bit length `j + 1`, so its block in `𝒞_C` has at least `j + 1` letters and starts with `u`.
 No Collatz input enters beyond Terras, and the argument is the same for every `C`; above the
-threshold `C*` this is a disjunctive sequence believed non-normal for dynamical reasons
-(`not_normal_of_earlyArrival`, conditional on `EarlyArrival C`).
+threshold `C*` this is a disjunctive sequence that is not normal, for dynamical reasons
+(`not_normal_of_five_le`).
 -/
 
 namespace CollatzMoonshot.Conjugacy

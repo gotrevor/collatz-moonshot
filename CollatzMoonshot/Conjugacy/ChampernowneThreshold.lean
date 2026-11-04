@@ -17,6 +17,8 @@ is a density at least `ρ (C − r) / (4 C)` in the prefix ending with the stage
 (`cum_stage_end_le`), a bound independent of `m`, and normality would force `2^(−2m)`.
 
 Only the prefixes ending with a stage are needed.  No input about the in-flight letters enters.
+Non-normality alone needs no hypothesis at all for `C ≥ 5` (`not_normal_of_five_le`,
+`ChampernowneDrift.lean`); this file gives the density from an arrival rate.
 
 The block `11` is weaker: its tail frequency is `0`, and an in-flight `11`-density above `1/4` could
 compensate, so that route needs in-flight input as well.

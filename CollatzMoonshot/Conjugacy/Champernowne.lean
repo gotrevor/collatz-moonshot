@@ -27,15 +27,16 @@ orbit, not on a residue.
 * **`C ≥ 2`**: normality of `𝒞_C` is read as a **short-interval, beyond-Terras
   equidistribution** of the parity letters of `k`-bit integers, `ShortIntervalMixing C`.  The
   direction `ShortIntervalMixing C → Normal 𝒞_C` is `normal_of_shortIntervalMixing`
-  (`ChampernowneMixing.lean`); the converse only returns an average over positions, so it is
-  not stated.  The single-letter shadow is proved: `ShortIntervalMixing 2` implies the bias-decay
+  (`ChampernowneMixing.lean`); the converse only returns an average over positions, and normality
+  is exactly that average (`normal_iff_averagedMixing`, `ChampernowneAveraged.lean`).  The single-letter shadow is proved: `ShortIntervalMixing 2` implies the bias-decay
   conjecture C1 of `Ladder.lean` (`biasDecays_of_shortIntervalMixing`).
 * **The threshold** `C* = 2 / (2 − log₂ 3) ≈ 4.82` (`threshold_bounds`: `4 < C* < 5`).  Under
   the stochastic model (Lagarias–Weiss 1992, Kontorovich–Lagarias 2009) the total stopping
   time of a typical `n` is `≈ C* · log₂ n`.  For `C > C*` a positive fraction of a typical word
   is the alternating tail `1010…` of the cycle `{1, 2}`, and `𝒞_C` is not normal: the
   alternating block of length `L` then has frequency bounded below independently of `L`
-  (`EarlyArrival`, `not_normal_of_earlyArrival`, `ChampernowneNotNormalAboveThreshold`).  For
+  (`EarlyArrival`, `not_normal_of_earlyArrival`).  Non-normality for `C ≥ 5` itself needs no
+  hypothesis (`not_normal_of_five_le`, `ChampernowneDrift.lean`).  For
   `C < C*` the words are in flight and conjecturally mixing (`ChampernowneNormalBelowThreshold`).
 * **The stop-at-`1` version** (`stopWordLen`, `collatzChampernowneStop`): each word runs to the
   first hit of `1`.  The definition's fallback branch is unused exactly when the Collatz
@@ -47,8 +48,8 @@ orbit, not on a residue.
 | `C` | word of a `k`-bit `n` | status |
 |---|---|---|
 | `1` | the `k` Terras letters | normal (`collatzChampernowne_one_normal`, `ChampernowneOne.lean`) |
-| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal if mixing (`normal_of_shortIntervalMixing`); the converse is not stated |
-| `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal if `EarlyArrival C` (`not_normal_of_earlyArrival`, `ChampernowneThreshold.lean`) |
+| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal iff `AveragedMixing C` (`normal_iff_averagedMixing`); open |
+| `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal (`not_normal_of_five_le`, `ChampernowneDrift.lean`) |
 | stop at `1` | `stopWordLen n` letters, no tail | `ChampernowneStopNormal` (65%) |
 
 The object is the Collatz analogue of Champernowne's constant.
@@ -431,21 +432,19 @@ def EarlyArrival (C : ℕ) : Prop :=
       (Set.ncard {n : ℕ | 2 ^ (k - 1) ≤ n ∧ n < 2 ^ k ∧
         ∃ t : ℕ, (t : ℝ) ≤ r * k ∧ tstep^[t] n = 1} : ℝ)
 
-/-- **Conjecture (the threshold, above).**  `𝒞_C` is not normal for `C ≥ 5`.  Confidence 80%.
+/-- **The threshold, above.**  `𝒞_C` is not normal for `C ≥ 5`.  Proved with no hypothesis:
+`champernowneNotNormalAboveThreshold`, in `ChampernowneDrift.lean`.
 
-This is the new phenomenon: Champernowne-type sequences of parity words change character at
-`C* = 2 / (2 − log₂ 3) ≈ 4.819` (`threshold_bounds`).  Under the stochastic model the total
-stopping time of a typical `k`-bit `n` is `C* k + O(√k)`, so for `C > C*` a density-one set of
-each stage has the cycle tail `1010…` over a `(C − C*) / C` fraction of its word, and the
-alternating block of each even length `L` has frequency `≥ (C − C*) / (2C) − o(1)` instead
-of `2^(−L)` (`not_normal_of_earlyArrival`; under full in-flight mixing the block `11` has
-frequency `C* / (4C) < 1/4` as well).  Conditional on `EarlyArrival C` for `C ≥ 5`
-(`champernowneNotNormalAboveThreshold_of_earlyArrival`, in `ChampernowneThreshold.lean`), which is
-the stopping-time
-concentration at positive density, itself open: Tao 2019 gives almost-bounded values in
-logarithmic density, not total stopping times.  The `80%` is the model's `C* < 5`
-(`threshold_bounds`) plus the margin `5 − C* ≈ 0.18`, which `O(√k)` fluctuations do not
-erase. -/
+Champernowne-type sequences of parity words change character at
+`C* = 2 / (2 − log₂ 3) ≈ 4.819` (`threshold_bounds`), and `5` is the first integer above it.  Under
+the stochastic model the total stopping time of a typical `k`-bit `n` is `C* k + O(√k)`, so for
+`C > C*` a density-one set of each stage has the cycle tail `1010…` over a `(C − C*) / C` fraction
+of its word, and the alternating block of each even length `L` has frequency
+`≥ (C − C*) / (2C) − o(1)` instead of `2^(−L)` (`not_normal_of_earlyArrival`; under full in-flight
+mixing the block `11` has frequency `C* / (4C) < 1/4` as well).  Non-normality itself needs none of
+this: balance of the single letters would force orbits down to the cycle
+(`drift_total`).  `EarlyArrival` still carries the quantitative density, and it remains open: Tao
+2019 gives almost-bounded values in logarithmic density, not total stopping times. -/
 def ChampernowneNotNormalAboveThreshold : Prop :=
   ∀ C, 5 ≤ C → ¬ Normal (collatzChampernowne C)
 

@@ -20,6 +20,7 @@ import CollatzMoonshot.Benchmark.ArcTrap
 import CollatzMoonshot.Benchmark.ArcDelay
 import CollatzMoonshot.Benchmark.FlattoCeiling
 import CollatzMoonshot.Obstructions.ParityWordGenericity
+import CollatzMoonshot.Conjugacy.ChampernowneOffsets
 
 /-!
 # `Maze.lean`: the closed routes, as Lean data
@@ -200,7 +201,10 @@ def register : List Hall := [
    "Obstructions/ParityWordGenericity.lean; FrontA/ParityReconstruction.lean", "2026-09-20"⟩,
   ⟨"transcendence of the parity real via Adamczewski-Bugeaud", .wall,
    "the criterion needs linear factor complexity (the Sturmian end), which nothing about divergence forces",
-   "Obstructions/ParityWordGenericity.lean; DIRECTION.md 2026-09-19", "2026-09-20"⟩]
+   "Obstructions/ParityWordGenericity.lean; DIRECTION.md 2026-09-19", "2026-09-20"⟩,
+  ⟨"second moment over offsets for Collatz-Champernowne normality", .wall,
+   "van der Corput needs pair correlations to average out, but nearby orbits merge in phase at bounded times, and unmerged pairs are functions of the same k bits, so a pair has no more randomness than one orbit",
+   "Conjugacy/ChampernowneOffsets.lean; experiments/conjugacy/pair_correlation.py", "2026-11-04"⟩]
 
 /-! ## 4. The audit -/
 
@@ -274,7 +278,10 @@ def mazeLinks : List Link := [
   ⟨"transcendence of the parity real via Adamczewski-Bugeaud",
    [``Literature.AdamczewskiBugeaud2007,
     ``Obstructions.ParityWord.transcendental_parityReal_of_lowComplexity],
-   [``Obstructions.ParityWord.DivergentWordLowComplexity]⟩]
+   [``Obstructions.ParityWord.DivergentWordLowComplexity]⟩,
+  ⟨"second moment over offsets for Collatz-Champernowne normality",
+   [``Conjugacy.tstep_iterate_three_merge, ``Conjugacy.accWord_eq_of_merge],
+   [``Conjugacy.PairCorrelationsAverageOut]⟩]
 
 /-- Rows whose reasons are still prose only (as of 2026-10-05).  Only shrinks. -/
 def mazeLegacy : List String := [
@@ -287,7 +294,7 @@ def mazeLegacy : List String := [
   "ballot-residue discrepancy",
   "richer matrix interpretations of the rewriting system"]
 
-/-- info: maze audit: 31 rows, 23 cite declarations, 8 legacy (prose only) -/
+/-- info: maze audit: 32 rows, 24 cite declarations, 8 legacy (prose only) -/
 #guard_msgs in
 #maze_audit mazeRows, mazeLinks, mazeLegacy
 
