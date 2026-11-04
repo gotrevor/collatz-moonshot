@@ -6,6 +6,7 @@ Authors: Trevor Morris
 import Mathlib
 import CollatzMoonshot.Conjugacy.OrbitHeightLaw
 import CollatzMoonshot.Conjugacy.OrbitStageLawPull
+import CollatzMoonshot.Conjugacy.OrbitStageLawRate
 
 /-!
 # The orbit word law over one stage, and normality for `C ≤ 4`
@@ -52,8 +53,8 @@ theorem expSparse_preimage_stageMap {B : Set ℕ} (h : ExpSparse B) :
 
 /-- Finite unions of exponentially sparse sets are exponentially sparse. -/
 theorem expSparse_biUnion_range (J : ℕ) (B : ℕ → Set ℕ) (h : ∀ j < J, ExpSparse (B j)) :
-    ExpSparse (⋃ j ∈ Finset.range J, B j) := by
-  sorry
+    ExpSparse (⋃ j ∈ Finset.range J, B j) :=
+  expSparse_biUnion_range' J B h
 
 /-- **P3/P4, the windows.**  For `C ≤ 4`, a start whose first `J` windows are good is not bad. -/
 theorem not_badStart_of_chain (C : ℕ) (hC4 : C ≤ 4) (u : List Bool) {δ : ℝ} (hδ : 0 < δ) :
@@ -67,8 +68,8 @@ stage density `0`. -/
 theorem tendsto_stage_of_expSparse {B : Set ℕ} (hB : ExpSparse B) (P : ℕ → Prop) (k₀ : ℕ)
     (hP : ∀ k ≥ k₀, ∀ n ∈ Finset.Ico (2 ^ (k - 1)) (2 ^ k), P n → n ∈ B) :
     Tendsto (fun k : ℕ => (((Finset.Ico (2 ^ (k - 1)) (2 ^ k)).filter P).card : ℝ) / 2 ^ (k - 1))
-      atTop (𝓝 0) := by
-  sorry
+      atTop (𝓝 0) :=
+  tendsto_stage_of_expSparse' hB P k₀ hP
 
 /-- **The orbit word law over one stage, for `C ≤ 4`.**  Believed, 88%. -/
 theorem stageWordLaw_of_le_four (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) : StageWordLaw C := by
