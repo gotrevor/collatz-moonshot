@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
-import CollatzMoonshot.Conjugacy.OrbitStageLawBasic
+import CollatzMoonshot.Conjugacy.OrbitStageLawRate
 
 /-!
 # The stage word law: the pullback
@@ -289,5 +289,126 @@ theorem card_pull_good_le {B : Set ℕ} {A ρ : ℝ} (hA : 0 ≤ A) (hρ0 : 0 �
     _ ≤ (k + 1) * (4 * A * (W * R : ℕ) * ρ ^ (k / 4)) :=
         mul_le_mul_of_nonneg_right hAset (by positivity)
     _ = 4 * A * (k + 1) * ((W : ℕ) * (R : ℕ)) * ρ ^ (k / 4) := by push_cast; ring
+
+/-! ## The pullback -/
+
+open Classical in
+/-- **Terras tail for suffixes.**  Some suffix of length `≥ ℓ₀` has too many odd letters for at most
+`(k + 1) 2^k τ^ℓ₀` residues `r < 2^k`. -/
+def SufTail : Prop :=
+  ∃ τ : ℝ, 0 < τ ∧ τ < 1 ∧ ∀ k ℓ₀ : ℕ,
+    (((Finset.range (2 ^ k)).filter fun r => ¬ SufGood ℓ₀ k r).card : ℝ) ≤ (k + 1) * 2 ^ k * τ ^ ℓ₀
+
+open Classical in
+/-- **Terras tail for the odd count.**  Fewer than `(1/2 − γ) k` odd letters for at most `2^k τ^k`
+residues `r < 2^k`. -/
+def OddTail : Prop :=
+  ∀ γ : ℝ, 0 < γ → ∃ τ : ℝ, 0 ≤ τ ∧ τ < 1 ∧ ∀ k : ℕ,
+    (((Finset.range (2 ^ k)).filter fun r => ¬ OddLow γ k r).card : ℝ) ≤ 2 ^ k * τ ^ k
+
+/-- A stage count is at most the count over all residues. -/
+theorem card_stage_le_range (P : ℕ → Prop) [DecidablePred P] (k : ℕ) :
+    (((Finset.Ico (2 ^ (k - 1)) (2 ^ k)).filter P).card : ℝ) ≤
+      (((Finset.range (2 ^ k)).filter P).card : ℝ) := by
+  have : (Finset.Ico (2 ^ (k - 1)) (2 ^ k)).filter P ⊆ (Finset.range (2 ^ k)).filter P :=
+    Finset.filter_subset_filter _ fun n hn => Finset.mem_range.mpr (Finset.mem_Ico.mp hn).2
+  exact_mod_cast Finset.card_le_card this
+
+open Classical in
+/-- **P2, the pullback** (Inselmann 2024, Lemma 2.16), from the two Terras tails. -/
+theorem expSparse_preimage_of_tails (hS : SufTail) (hO : OddTail) {B : Set ℕ} (hB : ExpSparse B) :
+    ExpSparse (stageMap ⁻¹' B) := by
+  obtain ⟨A, ρ, hA, hρ34, hρ1, hpre⟩ := prefix_of_expSparse hB
+  have hρ0 : 0 ≤ ρ := by linarith
+  obtain ⟨N', hN'⟩ := exists_pow_lt_of_lt_one (by norm_num : (0 : ℝ) < 1 / 8) hρ1
+  have hN'1 : 1 ≤ N' := by
+    rcases Nat.eq_zero_or_pos N' with h | h
+    · rw [h] at hN'; norm_num at hN'
+    · exact h
+  set N := 4 * N'
+  have hN1 : 1 ≤ N := by omega
+  obtain ⟨τs, hτs0, hτs1, hτs⟩ := hS
+  obtain ⟨σs, hσs0, hσs1, hσs⟩ := exists_pow_div_le hτs0 hτs1 hN1
+  obtain ⟨τo, hτo0, hτo1, hτo⟩ := hO (1 / 4) (by norm_num)
+  obtain ⟨σh, hσh0, hσh1, hσh⟩ := exists_pow_div_le (by norm_num : (0 : ℝ) < 1 / 2)
+    (by norm_num) hN1
+  set σ := max σs (max τo σh)
+  have hσ0 : 0 ≤ σ := le_max_of_le_left hσs0
+  have hσ1 : σ < 1 := max_lt hσs1 (max_lt hτo1 hσh1)
+  refine expSparse_of_poly (τs⁻¹ + 1 + 16 * A) 3 hσ0 hσ1 1 fun k hk => ?_
+  set ℓ₀ := k / N
+  have hℓ : ℓ₀ ≤ k := Nat.div_le_self _ _
+  set I := Finset.Ico (2 ^ (k - 1)) (2 ^ k)
+  have hsub : I.filter (· ∈ stageMap ⁻¹' B) ⊆ (I.filter fun n => ¬ SufGood ℓ₀ k n) ∪
+      (I.filter fun n => ¬ OddLow (1 / 4) k n) ∪
+      (I.filter fun n => SufGood ℓ₀ k n ∧ OddLow (1 / 4) k n ∧ stageMap n ∈ B) := by
+    intro n hn
+    obtain ⟨h1, h2⟩ := Finset.mem_filter.mp hn
+    simp only [Finset.mem_union, Finset.mem_filter, Set.mem_preimage] at h2 ⊢
+    tauto
+  have hc1 := le_trans (card_stage_le_range (fun n => ¬ SufGood ℓ₀ k n) k) (hτs k ℓ₀)
+  have hc2 := le_trans (card_stage_le_range (fun n => ¬ OddLow (1 / 4) k n) k) (hτo k)
+  have hc3 := card_pull_good_le hA hρ0 hρ1.le hpre hk hℓ
+  have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast hk
+  have hpow : ∀ x : ℝ, 0 ≤ x → x ≤ σ → (2 * x) ^ k ≤ (2 * σ) ^ k := fun x hx hxσ =>
+    pow_le_pow_left₀ (by positivity) (by linarith) k
+  have hcub : ((k : ℝ) + 1) ≤ ((k : ℝ) + 1) ^ 3 := by
+    nlinarith [sq_nonneg ((k : ℝ) + 1)]
+  have hcub1 : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 3 := le_trans (by linarith) hcub
+  -- the three terms
+  have t1 : ((k : ℝ) + 1) * 2 ^ k * τs ^ ℓ₀ ≤ τs⁻¹ * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+    calc ((k : ℝ) + 1) * 2 ^ k * τs ^ ℓ₀ ≤ ((k : ℝ) + 1) * 2 ^ k * (τs⁻¹ * σs ^ k) :=
+          mul_le_mul_of_nonneg_left (hσs k) (by positivity)
+      _ = τs⁻¹ * ((k : ℝ) + 1) * (2 * σs) ^ k := by rw [mul_pow]; ring
+      _ ≤ τs⁻¹ * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+          gcongr
+          exact le_max_left _ _
+  have t2 : (2 : ℝ) ^ k * τo ^ k ≤ 1 * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+    rw [← mul_pow, one_mul]
+    calc (2 * τo) ^ k ≤ (2 * σ) ^ k := hpow τo hτo0 (le_trans (le_max_left _ _) (le_max_right _ _))
+      _ ≤ ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := le_mul_of_one_le_left (by positivity) hcub1
+  have hWR : (((1 + k * 2 ^ ℓ₀ : ℕ) : ℝ) * ((k * 2 ^ (k + ℓ₀) : ℕ) : ℝ)) ≤
+      2 * (k : ℝ) ^ 2 * 2 ^ k * 4 ^ ℓ₀ := by
+    push_cast
+    have h2 : (1 : ℝ) ≤ 2 ^ ℓ₀ := one_le_pow₀ (by norm_num)
+    have h4 : (4 : ℝ) ^ ℓ₀ = 2 ^ ℓ₀ * 2 ^ ℓ₀ := by rw [← mul_pow]; norm_num
+    rw [h4, pow_add]
+    have : 1 + (k : ℝ) * 2 ^ ℓ₀ ≤ 2 * k * 2 ^ ℓ₀ := by nlinarith
+    have hpos : (0 : ℝ) ≤ k * (2 ^ k * 2 ^ ℓ₀) := by positivity
+    nlinarith
+  have hρk : (4 : ℝ) ^ ℓ₀ * ρ ^ (k / 4) ≤ (1 / 2) ^ ℓ₀ := by
+    have hNl : N' * ℓ₀ ≤ k / 4 := by
+      have : ℓ₀ = k / 4 / N' := by rw [Nat.div_div_eq_div_mul]
+      rw [this, mul_comm]; exact Nat.div_mul_le_self _ _
+    calc (4 : ℝ) ^ ℓ₀ * ρ ^ (k / 4) ≤ 4 ^ ℓ₀ * ρ ^ (N' * ℓ₀) :=
+          mul_le_mul_of_nonneg_left (pow_le_pow_of_le_one hρ0 hρ1.le hNl) (by positivity)
+      _ = (4 * ρ ^ N') ^ ℓ₀ := by rw [mul_pow, pow_mul]
+      _ ≤ (1 / 2) ^ ℓ₀ := pow_le_pow_left₀ (by positivity) (by linarith) _
+  have t3 : 4 * A * ((k : ℝ) + 1) * (((1 + k * 2 ^ ℓ₀ : ℕ) : ℝ) * ((k * 2 ^ (k + ℓ₀) : ℕ) : ℝ)) *
+      ρ ^ (k / 4) ≤ 16 * A * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+    have hk2 : (k : ℝ) ^ 2 ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith
+    calc 4 * A * ((k : ℝ) + 1) * (((1 + k * 2 ^ ℓ₀ : ℕ) : ℝ) * ((k * 2 ^ (k + ℓ₀) : ℕ) : ℝ)) *
+          ρ ^ (k / 4) ≤ 4 * A * ((k : ℝ) + 1) * (2 * (k : ℝ) ^ 2 * 2 ^ k * 4 ^ ℓ₀) * ρ ^ (k / 4) := by
+          gcongr
+      _ = 8 * A * ((k : ℝ) + 1) * (k : ℝ) ^ 2 * 2 ^ k * (4 ^ ℓ₀ * ρ ^ (k / 4)) := by ring
+      _ ≤ 8 * A * ((k : ℝ) + 1) * (k : ℝ) ^ 2 * 2 ^ k * ((1 / 2)⁻¹ * σh ^ k) := by
+          exact mul_le_mul_of_nonneg_left (le_trans hρk (hσh k)) (by positivity)
+      _ = 16 * A * (((k : ℝ) + 1) * (k : ℝ) ^ 2) * (2 * σh) ^ k := by
+          rw [mul_pow]; ring
+      _ ≤ 16 * A * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+          gcongr
+          · nlinarith
+          · exact le_trans (le_max_right _ _) (le_max_right _ _)
+  calc ((I.filter (· ∈ stageMap ⁻¹' B)).card : ℝ)
+      ≤ ((I.filter fun n => ¬ SufGood ℓ₀ k n).card : ℝ) +
+        ((I.filter fun n => ¬ OddLow (1 / 4) k n).card : ℝ) +
+        ((I.filter fun n => SufGood ℓ₀ k n ∧ OddLow (1 / 4) k n ∧ stageMap n ∈ B).card : ℝ) := by
+        have := le_trans (Finset.card_le_card hsub)
+          (le_trans (Finset.card_union_le _ _) (Nat.add_le_add_right (Finset.card_union_le _ _) _))
+        exact_mod_cast this
+    _ ≤ τs⁻¹ * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k + 1 * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k +
+        16 * A * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by
+        linarith [le_trans hc1 t1, le_trans hc2 t2, le_trans hc3 t3]
+    _ = (τs⁻¹ + 1 + 16 * A) * ((k : ℝ) + 1) ^ 3 * (2 * σ) ^ k := by ring
 
 end CollatzMoonshot.Conjugacy

@@ -46,10 +46,18 @@ theorem expSparse_not_goodZero (u : List Bool) {η γ : ℝ} (hη : 0 < η) (hγ
     ExpSparse {n | ¬ GoodZero u η γ n} := by
   sorry
 
+/-- **Terras tail for suffixes**, by Chernoff on the odd letters of each suffix. -/
+theorem sufTail_holds : SufTail := by
+  sorry
+
+/-- **Terras tail for the odd count**, by Chernoff on the even letters. -/
+theorem oddTail_holds : OddTail := by
+  sorry
+
 /-- **P2, the pullback.**  Pulling back along `stageMap` keeps a set exponentially sparse. -/
 theorem expSparse_preimage_stageMap {B : Set ℕ} (h : ExpSparse B) :
-    ExpSparse (stageMap ⁻¹' B) := by
-  sorry
+    ExpSparse (stageMap ⁻¹' B) :=
+  expSparse_preimage_of_tails sufTail_holds oddTail_holds h
 
 /-- Finite unions of exponentially sparse sets are exponentially sparse. -/
 theorem expSparse_biUnion_range (J : ℕ) (B : ℕ → Set ℕ) (h : ∀ j < J, ExpSparse (B j)) :
