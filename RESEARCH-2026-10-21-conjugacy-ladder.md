@@ -546,17 +546,7 @@ correlation among the non-merged pairs - and the data at `j = 20` give `R^{nc}_j
 for every `d ≤ 256`: **the correlation of beyond-Terras letters across starts is the coalescence
 density, with the non-merged pairs essentially uncorrelated** (`coal_20(d) = 0.402, 0.280, 0.167,
 0.198, 0.182, 0.129, 0.110, 0.140` for `d = 1..8`; `0.063, 0.039, 0.013, 0.003` for `d = 32, 64,
-256, 1024`).  The power law in `d` is the coalescence probability of two orbits started `d`
-apart; the anticorrelation at large scales is the lift identity (`d = 2^j` flips the letter).
-Coalescence of consecutive integers is classical: Garner 1985 (*On heights in the Collatz 3n+1
-problem*, Discrete Math. 55, 57-64; citation verified via OEIS A078417/A006666) gave a sufficient
-condition in terms of parity vectors for `n`, `n+1` to have equal height and conjectured it
-necessary; Elia-Tucker 2015 (Integers 15, arXiv:1511.09141, abstract read) give an infinite family
-of counterexamples to the necessity; Gao 1993 (Discrete Math. 112) is the other reference.  No
-density statement was found in what I could open tonight, so the value `coal_20(1) = 0.40` (merging
-within 20 steps) stands as a measurement to be compared with Garner's paper itself.  The
-identification with the letter autocorrelation is not in print to my knowledge, and the small
-negative `R^{nc}` is a new number.  Lean: `Coalescence.lean` (§10.5).
+256, 1024`).  Lean: `Coalescence.lean` (§10.5).
 
 **Anatomy of `R^{nc}` (`mergenext.py`, `j = 20`, `d = 1, 2, 4, 16`).**  Split the non-merged pairs by
 the step at which they merge later.  Pairs merging at exactly `j+1` have sign product **`−1.000`**
@@ -608,8 +598,8 @@ one solution per pair of traces.  Measured at `j = 20`, every in-window merge ha
 `2-3·10^{−5}` of starts (`D = 1`: none to four decimals; `D = 2, 3, 4, 6, 9, 12`: `0.0001-0.0003`
 of merges).  So `coal_j(D)` is, up to that coincidence term, a function of the residue `s mod 2^j`,
 and every complete residue system gives the same density - the odd-image set `3r+2`, `r < 2^{j−1}`,
-is one mod `2^{j−1}` because `3` is a unit.  That is the four-decimal agreement above, and the
-`≤ 10^{−4}` gap is the coincidence term.  Lean: `GenericCoalesces` (merging with equal odd
+is one mod `2^{j−1}` because `3` is a unit.  That accounts for the four-decimal agreement above, and the
+`≤ 10^{−4}` gap at `j = 20` is consistent with the coincidence term (measured at `j = 20` only).  Lean: `GenericCoalesces` (merging with equal odd
 counts) and its `2^j`-periodicity, status §10.5.
 
 **The generic density is monotone in the window (~04:15).**  Because a generic merge at step `k`
@@ -622,7 +612,7 @@ measured `coal_j` and the generic count differ by the `10^{−5}` coincidence te
 theorem does not say: the value of `L(1)`.  The eventual-fate measurement (`coalfinal.py`,
 `48.95%` of `r ≤ 2^22` merge at *some* step before the cycle) counts merges beyond the window too,
 and orbits of `s ≈ 2^j` take about `j` shortcut steps to reach `1`, so the window genuinely
-truncates; `0.409 ≤ L(1)` at `j = 22`, and `L(1) ≤ 0.49` is expected, not proved.  Lean:
+truncates; `L(1) ≥ 0.409` at `j = 22` up to the `10^{−5}` coincidence term, and `L(1) ≤ 0.49` is expected, not proved.  Lean:
 `two_mul_genericCoalCount_le`, `genericCoalDensity_tendsto` (status §10.5).
 
 **Which constant is `L(1)`?  Not the eventual merge density (`mergetime.py`, ~04:20).**  The
@@ -649,7 +639,7 @@ increments decay slowly and the extrapolation is crude).  Both the in-phase and 
 fractions fall with `j` (`0.306 → 0.252`, `0.298 → 0.258`, decrements `≈ 0.005-0.010` per two
 levels and shrinking), so whether *almost all* consecutive integers share their orbit before
 reaching `1` (`E(1) = 1`) or a positive fraction stays apart is open on this evidence; the data
-favour a positive antiphase limit but not strongly.  Known or new?  Garner 1985 and Gao 1993
+favour a positive antiphase limit but not strongly.  Garner 1985 and Gao 1993
 concern consecutive integers of equal height, which is the in-phase-or-merged event, not the
 window density; I did not find the three-way fate split or the window/eventual distinction in
 what I could open tonight.  Lean (~04:25): `EventuallyMerges s D := ∃ k, T^k s = T^k(s+D)`; the
@@ -680,19 +670,19 @@ density, so "short-interval" statements (`ShortIntervalMixing`, the Champernowne
 walk with long-range positive dependence of a known origin, and the `2^{j/2}` scale at which the
 block variance peaks is where coalescence gives way to the lift-identity anticorrelation.
 
-### 10.3d The Walsh spectrum of the beyond-Terras letter: the √-law at every cylinder depth (`walsh.py`, ~04:28)
+### 10.3d The Walsh spectrum of the beyond-Terras letter: fair coins at the top three scales (`walsh.py`, ~04:28)
+
+*Corrected 2026-11-03.  This section first claimed an exact geometric law "to three decimals, independent of `j`" and "the √-law at every cylinder depth".  The data support neither: agreement holds for the three largest scales, and the ratio is measured only to `m = 8`.*
 
 Read the beyond-Terras letter `g_j(r) = (−1)^{T^j r}` as a function of the parity word
 `v = (v_1, …, v_j)` of `r` (Terras), and expand it in the Walsh basis: `ĝ(S)` = correlation of
 the next letter with the XOR of the letters in `S ⊆ {1..j}`; `ĝ(∅) = E_j/2^j`; Parseval
 `Σ ĝ(S)² = 1`.  Two findings at `j = 12, 16, 20`:
 
-- **The reach is geometric, exactly.**  The energy on sets whose most recent letter is `m`
-  letters back is `2^{−(m+1)}`: `0.500, 0.249, 0.125, 0.061, 0.037, 0.010, 0.007, 0.005, …`
-  (`j = 20`, from position `j` backwards), identical at `j = 16` and `j = 12` to two decimals.
-  Cumulatively, the energy within the last `1, 2, 3, 4, 6, 8` letters is
-  `0.500, 0.749, 0.874, 0.935, 0.982, 0.994` against the fair-coin `1 − 2^{−m}` =
-  `0.5, 0.75, 0.875, 0.9375, 0.984, 0.996`.
+- **The reach is near-geometric at the top scales.**  The energy on sets whose most recent letter is `m`
+  letters back, against `2^{−(m+1)}`, at `j = 20` from position `j` backwards: `0.500, 0.249, 0.125, 0.061`
+  match `0.5, 0.25, 0.125, 0.0625`, while `0.037, 0.010` miss `0.031, 0.016` by a third or more.  The
+  match is weaker at small `j` (`j = 12`: `0.495, 0.239, 0.125, 0.078`).
 - **The degree is high.**  The energy sits at degree `6-10` and beyond (`j = 20`: degree `≤ 8`
   carries `31%`, the rest is higher); the next letter is a high-degree function of the word, with
   no single small set of letters explaining it (largest `|ĝ(S)|` is `0.013` at `j = 20`).
@@ -701,9 +691,9 @@ What the first finding says: by Parseval on the cylinder filtration, the energy 
 `max S ≤ j − m` is the mean square of the conditional bias of the next letter given the first
 `j − m` letters, i.e. `2^{−(j+m)} Σ_{c mod 2^{j−m}} (Σ_{r ≡ c} g_j(r))²` - the normalised variance
 of the sum of the `2^m` beyond-Terras letters in a cylinder (an arithmetic progression of step
-`2^{j−m}`).  The law `= 2^{−m}` says **the beyond-Terras letters in a cylinder sum like fair
-coins**, so the `√`-law `E_j ≈ 2^{j/2}` (`BiasSqrtLaw`, the `m = j` case: `(E_j/2^j)² = 9.8·10^{−7}`
-vs `2^{−20} = 9.5·10^{−7}` at `j = 20`) holds at *every* cylinder depth.  The ratio to the
+`2^{j−m}`).  Agreement with `2^{−m}` says **the beyond-Terras letters in a cylinder sum like fair
+coins at that scale**.  That is established only at the top scales; the `√`-law `E_j ≈ 2^{j/2}` (`BiasSqrtLaw`, the `m = j` case: `(E_j/2^j)² = 9.8·10^{−7}`
+vs `2^{−20} = 9.5·10^{−7}` at `j = 20`) is one data point of this family (`b̃_j²` itself wanders, `0.34..3.2` over `j = 31..40`), not a consequence.  The ratio to the
 fair-coin value, computed directly (`rhocheck.py`, `j = 20`), is `ρ_j(m) = 1.000, 1.004, 1.006,
 1.040, 0.886, 1.160, 1.410, 1.562` at `m = 1..8` - unity within sampling noise (`≈ 0.003`) at the
 three largest scales, then *not* monotone: the exact identity
@@ -837,7 +827,9 @@ Every proved theorem is on `[propext, Classical.choice, Quot.sound]` per the age
 (verified 2026-10-21; the parity-recursion and periodicity theorems re-verified by my own
 `lake env lean` `#print axioms` runs at ~04:05, ~04:13, ~04:18 and ~04:25); no `native_decide` in the Conjugacy modules.
 
-### 10.6 Against Tao 2019: no bridge, an exact mirror, and why the method does not transfer (~07:15)
+### 10.6 Against Tao 2019: an exact mirror, and a verdict that did not survive (~07:15)
+
+*Corrected 2026-11-03.  **The verdict of this section was wrong, and §11-§14 overturn it**: `BiasDecays` and `WeakDecayOnZ3` are theorems, on Tao's §7 re-run at `Geom(p)` gaps.  Only the narrow claim holds, that no lemma-sized bridge exists from the published statement (the campaign was about 19.4k Lean lines).  The error is specific.  This section compared the two statements' shapes and read the sign as a 2-adic function, unreachable from a 3-adic law.  But `T^j r < 3^a`, so `T^j r` is the least residue of Tao's variable at level `a`, and that residue determines its parity (§11).  The mirror recursion (now `fourierCoeff_succ`) and the resonance measurements stand, as facts about the 2-adic Fourier picture.  The "reading for the moonshot" below does not stand.*
 
 **The question.**  Does Tao's fine-scale mixing (Prop 1.14, proved in Lean as `fine_scale_mixing` in
 `gotrevor/tao-collatz`, read from `origin/main` at `95a7172`) give `WeakDecayOnZ3` or `BiasDecays`?
@@ -884,16 +876,15 @@ Measured (`weighted.py`): `W_j = 0.290, 0.173, 0.090, 0.052, 0.029, 0.015, 0.007
 `j = 8, 10, …, 22`, i.e. `W_j ≈ 0.45·j·2^{−j/2}`, with the `3^k` chain carrying about a quarter.
 So `W_j → 0` is a Fourier-side sufficient condition for `BiasDecays` that the data satisfy
 comfortably (node candidate `WeightedCharDecay`, 80%, not yet in Lean).  In the recursion, the
-first branch contracts the weighted sum by exactly `1/√2` per level (pair `ξ, ξ + 2^j`:
-`1/sin x + 1/cos x ≤ 2√2 · 1/sin 2x`), which matches the observed `2^{−j/2}` rate.  The second
+first branch contracts the weighted sum by at most `1/√2` per level, by a hand bound not checked numerically (low frequencies give about `½`) (pair `ξ, ξ + 2^j`:
+`1/sin x + 1/cos x ≤ 2√2 · 1/sin 2x`), which is the same order as the observed `2^{−j/2}` rate.  The second
 branch scrambles the weights through `ξ ↦ 3^{−1}ξ`, and that is where a proof would have to work.
 
 **Reading for the moonshot.**  Collatz is "3 deterministic, 2 random".  Tao works on the side
 where the randomness acts as the multiplier and mixes; the beyond-Terras questions live on the
 mirror side, where the deterministic `×3` makes frequencies resonate.  That is a concrete
-reason the almost-all methods stop short of the per-level bias, not a vague one.  Known or new?
-The 2-adic recursion is elementary and may well be folklore; the resonance measurements and the
-weighted criterion I have not seen.
+reason the almost-all methods stop short of the per-level bias, not a vague one.  (Withdrawn, see
+the banner: they do not stop short.  The resonance is a feature of this basis, not of the problem.)
 
 **What is new tonight, in one list**: the beyond-Terras bias `E_j` and its exact structure (lift
 identity, residue reading, mod-3 recursion, `E_j ≡ 2 (mod 4)`, aligned-window invariance, Terras at
@@ -1064,3 +1055,25 @@ Split agreed with personal-c5: this section and `SliceSeven.lean` are personal-2
 - **Node `OverPrecSliceCharDecay`, proved from Sec7P.**  The over-precision sum is Tao's `(7.5)` damping at level `a + k'` with only `⌊a/2⌋` pair coordinates.  Pad the missing pair sums with the value `2`: each added `fPair` has norm exactly `1` and Pascal weight `p² ≥ 1/25`.  So the partial damping is at most `25^{k'}` times the full level-`(a+k')` damping, which `TaoCollatz.Sec7P.pascal_damping_decay` bounds by `C n^{−A}`.  The slice-to-Pascal step is SliceSeven's argument at modulus `3^{a+k'}`, re-proved in `WeakDecaySec7P.lean`.
 - **Measured** (`experiments/conjugacy/overprec_charfn.py`, exact DP): the over-precision sums decay at the same exponential rate as the ordinary slice sums, with constants about `10^{k'}` worse (`a/j ∈ {0.3, 0.45, 0.55}`, `j ≤ 320`).
 - **Scope:** like C1, an average over all `m`-bit inputs, now resolved along every 3-adic progression of the start.  It is the weak convergence `μ_m/2^m → 0` on `ℤ₃` from §6, the statement the mod-3 recursion closes on.  The next rung of this kind is C2a, `|E_j| ≤ C·2^{j/2}`.
+
+## 15. Terras alone: every `𝒞_C` is disjunctive, and `𝒞_1` should be normal (2026-10-21 in chat, recorded 2026-11-03)
+
+Hand arguments, no Lean yet.  `collatzChampernowne_one_normal` still carries its `sorry`, and no disjunctiveness statement exists in `Conjugacy/`.
+
+**Disjunctive for every `C ≥ 1`, unconditionally** (95%).  Given a word `w` of length `j`, Terras gives the unique `r < 2^j` whose orbit starts with `w`.  Then `n = r + 2^j` has `j + 1` bits, so its block has at least `j + 1` letters, and the first `j` are `w`, since those letters depend only on `n mod 2^j`.  Every word occurs.  This needs no fact about Collatz beyond the bijection (`onesSet_injOn`, `onesSet_surjOn`).  Check: 2000 of 2000 random words, `j ≤ 24` (`terraschamp.py`).
+
+**`𝒞_1` should be normal by Terras plus bookkeeping** (85%).  At level `k`, `n ∈ [2^k, 2^{k+1})`, block `n` has `k + 1` letters.  A subword at offset `i`, length `m`, depends only on `n mod 2^{i+m}`, and the level covers each such residue exactly `2^{k−i−m}` times when `i + m ≤ k`.  By Terras at depth `i + m`, every `m`-word then occurs exactly `2^{k−m}` times at that offset.  Measured with its control at `(k, m) = (12, 3), (14, 4), (16, 4)`: every interior offset is exactly balanced, and only the window ending on the block's last letter is not.  That last letter sums to exactly `−E_k` over the level (`−42, −178, −362`, by the lift identity), so the night's main object enters `𝒞_1` only there.  Two error terms remain, and neither looks hard:
+- Windows straddling a block boundary are a fraction `O(m/k)` of level `k`.
+- A prefix ending inside a level needs a dyadic count.  If `n` runs over `2^{k−t}` values, about `t + m` offsets per block are uncontrolled, for a share `(t + m) 2^{−t}/k` of the prefix, and each controlled offset is off by at most one period.  This is the step the first chat version skipped.  It is a hand count; the probe's partial-level test has no teeth and is not evidence.
+
+Prefix frequencies to `n < 2^20` agree: `sup |freq − 2^{−m}| ≈ 10^{−4}` for `m ≤ 4`.
+
+| `C` | disjunctive | normal |
+|---|---|---|
+| `1` | Terras (hand) | Terras + bookkeeping (hand, 85%) |
+| `1 < C < C*` | Terras (hand) | beyond-Terras mixing, open (70%) |
+| `> C*` | Terras (hand) | no: mixing fails (proved), normality fails (believed, 90%) |
+
+So above `C*` the family gives a disjunctive non-normal sequence whose defect comes from the dynamics.  Normality for `1 < C < C*` is finer than C1 and C1⁺: those are first moments over a level, and normality needs every word's frequency.
+
+**Correction to the fate language in §10.3c and `Coalescence.lean`.**  The negation of `EventuallyMerges` is "antiphase forever" only given Collatz; unconditionally it also covers a divergent orbit or another cycle.  The numerics are unaffected, since every tested pair was decided.

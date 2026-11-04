@@ -1,0 +1,18 @@
+level k=12, m=3: unbalanced offsets [10] (control: only i=10 expected); last-letter sum over the level = -42
+   partial level t=1: offsets beyond one-period error 0 of 11; bound t+m = 4
+   partial level t=3: offsets beyond one-period error 0 of 11; bound t+m = 6
+   partial level t=6: offsets beyond one-period error 0 of 11; bound t+m = 9
+level k=14, m=4: unbalanced offsets [11] (control: only i=11 expected); last-letter sum over the level = -178
+   partial level t=1: offsets beyond one-period error 0 of 12; bound t+m = 5
+   partial level t=3: offsets beyond one-period error 0 of 12; bound t+m = 7
+   partial level t=6: offsets beyond one-period error 0 of 12; bound t+m = 10
+level k=16, m=4: unbalanced offsets [13] (control: only i=13 expected); last-letter sum over the level = -362
+   partial level t=1: offsets beyond one-period error 0 of 14; bound t+m = 5
+   partial level t=3: offsets beyond one-period error 0 of 14; bound t+m = 7
+   partial level t=6: offsets beyond one-period error 0 of 14; bound t+m = 10
+C_1 prefix, n < 2^20: 19922945 letters
+   m=1: sup |freq - 2^-m| = 7.26e-05
+   m=2: sup |freq - 2^-m| = 1.41e-04
+   m=3: sup |freq - 2^-m| = 1.24e-04
+   m=4: sup |freq - 2^-m| = 1.04e-04
+disjunctive construction: 2000/2000 words appear as the block prefix of n = r + 2^j
