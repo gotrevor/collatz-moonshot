@@ -454,7 +454,7 @@ compute next; it is a finite transfer-matrix calculation per `(j, a)`.
    a density bounded below independently of `L` against the required `2^{−L}`, and `𝒞_C` is not
    normal (the agent's correction: a deficit of `11` alone could be compensated by in-flight
    letters, the alternating block cannot; the premise is frozen as `EarlyArrival C`, the
-   implication `not_normal_of_earlyArrival` at 90%); for `C < C*` the beyond-range letters are in flight and (conjecturally)
+   implication `not_normal_of_earlyArrival`, proved 2026-11-04); for `C < C*` the beyond-range letters are in flight and (conjecturally)
    mixing.  Frozen: `ChampernowneNormalBelowThreshold` (`C ≤ 4`, 70%),
    `ChampernowneNotNormalAboveThreshold` (`C ≥ 5`, 80%, conditional on stopping-time concentration,
    itself open - Tao 2019 controls almost-bounded values in logarithmic density, not total stopping
@@ -796,7 +796,7 @@ all wired into the root build (`lake build CollatzMoonshot` green): `Recursion.l
 `Champernowne.lean` (`concat_apply`, `collatzChampernowne_apply`, `threshold_bounds`,
 `biasDecays_of_shortIntervalMixing`, `shortIntervalMixing_mono` proved; three
 believed theorems with `sorry`: `collatzChampernowne_one_normal` 85%, `normal_of_shortIntervalMixing`
-75%, `not_normal_of_earlyArrival` 90%; nodes `ShortIntervalMixing`, `EarlyArrival`,
+75%, `not_normal_of_earlyArrival` 90% (all three proved 2026-11-04, §15); nodes `ShortIntervalMixing`, `EarlyArrival`,
 `ChampernowneNormalBelowThreshold` 70%, `ChampernowneNotNormalAboveThreshold` 80%,
 `ChampernowneStopNormal` 65%), `Coalescence.lean` (all proved: `letterCorr_eq` and the refined
 `letterCorr_eq_refined` - the autocorrelation of the beyond-Terras letter is the coalescence count
