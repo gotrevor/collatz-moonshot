@@ -55,12 +55,43 @@ theorem reach_of_chain {ε : ℝ} (hε : 0 < ε) :
 and `x_J ≤ X^α`. -/
 theorem exists_last_scale {X x : ℝ} (hX : 1 < X) (hx : X ≤ x) :
     ∃ J : ℕ, (∀ j ≤ J, X ≤ scale x j) ∧ scale x J ≤ X ^ alpha := by
-  sorry
+  classical
+  have hx0 : 0 < x := by linarith
+  have hlX : 0 < Real.log X := Real.log_pos hX
+  have hlx : 0 < Real.log x := Real.log_pos (by linarith)
+  have hex : ∃ j : ℕ, scale x (j + 1) < X := by
+    obtain ⟨j, hj⟩ := exists_pow_lt_of_lt_one (div_pos hlX hlx)
+      (show alpha⁻¹ < 1 by rw [alpha_eq]; norm_num)
+    refine ⟨j, ?_⟩
+    have hj' : alpha⁻¹ ^ (j + 1) * Real.log x < Real.log X := by
+      rw [lt_div_iff₀ hlx] at hj
+      have : alpha⁻¹ ^ (j + 1) ≤ alpha⁻¹ ^ j :=
+        pow_le_pow_of_le_one (by rw [alpha_eq]; norm_num) (by rw [alpha_eq]; norm_num) (by omega)
+      nlinarith
+    rw [scale, Real.rpow_def_of_pos hx0, ← Real.lt_log_iff_exp_lt (by linarith)]
+    linarith
+  refine ⟨Nat.find hex, fun j hj => ?_, ?_⟩
+  · rcases j with _ | i
+    · simpa [scale] using hx
+    · exact not_lt.mp (Nat.find_min hex (show i < Nat.find hex by omega))
+  · rw [← scale_succ_rpow hx0.le]
+    exact Real.rpow_le_rpow (Real.rpow_nonneg hx0.le _) (Nat.find_spec hex).le
+      (by norm_num [alpha])
 
 /-- A minorant tending to infinity: `g m ≤ f n` for `m ≤ n`. -/
 theorem exists_minorant {f : ℕ → ℝ} (hf : Tendsto f atTop atTop) :
     ∃ g : ℕ → ℝ, Tendsto g atTop atTop ∧ ∀ m n, m ≤ n → g m ≤ f n := by
-  sorry
+  obtain ⟨b, hb⟩ := bddBelow_range_of_tendsto_atTop_atTop hf
+  have hne : ∀ m : ℕ, Nonempty {n : ℕ // m ≤ n} := fun m => ⟨⟨m, le_rfl⟩⟩
+  have hbdd : ∀ m : ℕ, BddBelow (Set.range fun n : {n : ℕ // m ≤ n} => f n) := fun m =>
+    ⟨b, by rintro _ ⟨n, rfl⟩; exact hb ⟨n, rfl⟩⟩
+  refine ⟨fun m => ⨅ n : {n : ℕ // m ≤ n}, f n, ?_, fun m n hmn => ciInf_le (hbdd m) ⟨n, hmn⟩⟩
+  rw [tendsto_atTop]
+  intro C
+  obtain ⟨N, hN⟩ := eventually_atTop.mp (hf.eventually_ge_atTop C)
+  filter_upwards [eventually_ge_atTop N] with m hm
+  haveI := hne m
+  exact le_ciInf fun n => hN n (le_trans hm n.2)
 
 /-! ## Assembly -/
 
