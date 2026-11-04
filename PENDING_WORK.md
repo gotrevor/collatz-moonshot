@@ -1,5 +1,12 @@
 # PENDING_WORK
 
+## 2026-11-04 — orbit word law (`wip/orbit-word-law`)
+
+Advance on the crux: `orbitWordLaw_of_le_four` is proved from 16 named `Prop` nodes held open in
+`OrbitWordLaw.lean`; the chain of Tao's Proposition 1.11 over 3000 scales (`dTV_chain`) is proved.
+Next attack: `StagePasses` (height identity + prefix bounds), then `LocGoodPassLoc`,
+`GoodOddOfStages`.  See `HANDOFF-2026-11-04-orbit-word-law.md`.
+
 ## 2026-10-26 — C1⁺ treadmill target: DONE
 
 `CollatzMoonshot/Conjugacy/WeakDecay.lean` is sorry-free and

@@ -37,3 +37,8 @@ the glue `goodOdd_whp`, `stage_whp`, `locGood_whp`, `scaleGood_whp`; density hel
 `StagePasses` (then `LocGoodPassLoc` from it), `GoodOddOfStages` (the read-off), then the
 Terras/Chebyshev chain, then density.  `#print axioms orbitWordLaw_of_le_four`: `sorryAx` until
 all 16 close.
+
+## Checkpoint (lap end)
+
+HEAD after this commit on `wip/orbit-word-law`; no uncommitted Lean edits.  Build:
+`lake build CollatzMoonshot.Conjugacy.OrbitWordLaw` green.  Sorry count of the gated file: 16.
