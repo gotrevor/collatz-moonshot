@@ -136,7 +136,7 @@ theorem earlyArrival_mono {C C' : ℕ} (h : C ≤ C') : EarlyArrival C → Early
 reached `1` emit `1010…`, so they never show a non-alternating block; if a fixed fraction `ρ`
 of the `k`-bit integers has arrived by step `r·k < C·k`, the non-alternating blocks of length
 `L` at a beyond-range position are under-represented by `ρ − 2^(1−L)`, which no `o(2^k)` error
-absorbs.  Together with `not_normal_of_earlyArrival` (Champernowne.lean) this is the `C > C*`
+absorbs.  Together with `not_normal_of_earlyArrival` (ChampernowneThreshold.lean) this is the `C > C*`
 side of the threshold: above the stopping-time constant neither `𝒞_C` normal nor the mixing
 hypothesis can hold if early arrival holds.
 

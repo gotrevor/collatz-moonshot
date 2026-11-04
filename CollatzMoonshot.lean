@@ -130,6 +130,7 @@ import CollatzMoonshot.Conjugacy.Disjunctive
 import CollatzMoonshot.Conjugacy.ChampernowneOne
 import CollatzMoonshot.Conjugacy.ChampernowneMixing
 import CollatzMoonshot.Conjugacy.ChampernowneNear
+import CollatzMoonshot.Conjugacy.ChampernowneThreshold
 import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Conjugacy.Coalescence
 import CollatzMoonshot.Conjugacy.Fourier

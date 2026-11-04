@@ -1074,7 +1074,7 @@ Prefix frequencies to `n < 2^20` agree: `sup |freq − 2^{−m}| ≈ 10^{−4}` 
 |---|---|---|
 | `1` | theorem | theorem |
 | `1 < C < C*` | theorem | if mixing (`normal_of_shortIntervalMixing`); mixing open (70%) |
-| `> C*` | theorem | no: mixing fails (proved), normality fails (believed, 90%) |
+| `> C*` | theorem | no, given `EarlyArrival C`: mixing fails and normality fails (both proved) |
 
 So above `C*` the family gives a disjunctive non-normal sequence whose defect comes from the dynamics.  Normality for `1 < C < C*` is finer than C1 and C1⁺: those are first moments over a level, and normality needs every word's frequency.
 

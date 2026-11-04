@@ -48,7 +48,7 @@ orbit, not on a residue.
 |---|---|---|
 | `1` | the `k` Terras letters | normal (`collatzChampernowne_one_normal`, `ChampernowneOne.lean`) |
 | `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal if mixing (`normal_of_shortIntervalMixing`); the converse is not stated |
-| `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal, conditional on `EarlyArrival C` (`not_normal_of_earlyArrival`, 90%) |
+| `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal if `EarlyArrival C` (`not_normal_of_earlyArrival`, `ChampernowneThreshold.lean`) |
 | stop at `1` | `stopWordLen n` letters, no tail | `ChampernowneStopNormal` (65%) |
 
 The object is the Collatz analogue of Champernowne's constant.
@@ -431,27 +431,6 @@ def EarlyArrival (C : ℕ) : Prop :=
       (Set.ncard {n : ℕ | 2 ^ (k - 1) ≤ n ∧ n < 2 ^ k ∧
         ∃ t : ℕ, (t : ℝ) ≤ r * k ∧ tstep^[t] n = 1} : ℝ)
 
-/-- **Theorem (believed, confidence 90%).**  Early arrival at positive density makes `𝒞_C`
-non-normal, with no input about the in-flight letters.
-
-Once `tstep^[t] n = 1` the letters from `t` on are the alternating tail `1010…` of the cycle
-`1 → 2 → 1`.  For `n` in stage `k` with first hitting time `≤ r k`, the tail occupies the
-last `≥ (C − r) k` of the word's `C k` letters, so the alternating block `(10)^(L/2)` (`L`
-even) occurs at every other tail position: at least `((C − r) k − L) / 2` times in the word.
-Over stage `k` this is at least `ρ 2^(k-1) ((C − r) k − L) / 2` occurrences among
-`C k 2^(k-1)` letters, a density `≥ ρ (C − r) / (2C) − o(1)`.  A prefix cut `m` words into
-stage `k` contains all the stages below `k`, which are at least half of its length up to
-`o(1)`, so the lower density of the block along every prefix is at least
-`ρ (C − r) / (4C) > 0`, a bound independent of `L`.  Normality would force the frequency
-`2^(−L)`; take `L` even with `2^(−L) < ρ (C − r) / (4C)`.
-
-The block `11`, which the brief of 2026-10-21 named, is weaker: its tail frequency is `0`, and
-an in-flight `11`-density above `1/4` could compensate, so the `11` route needs in-flight
-input as well; the alternating block needs none. -/
-theorem not_normal_of_earlyArrival (C : ℕ) (h : EarlyArrival C) :
-    ¬ Normal (collatzChampernowne C) := by
-  sorry
-
 /-- **Conjecture (the threshold, above).**  `𝒞_C` is not normal for `C ≥ 5`.  Confidence 80%.
 
 This is the new phenomenon: Champernowne-type sequences of parity words change character at
@@ -461,17 +440,14 @@ each stage has the cycle tail `1010…` over a `(C − C*) / C` fraction of its 
 alternating block of each even length `L` has frequency `≥ (C − C*) / (2C) − o(1)` instead
 of `2^(−L)` (`not_normal_of_earlyArrival`; under full in-flight mixing the block `11` has
 frequency `C* / (4C) < 1/4` as well).  Conditional on `EarlyArrival C` for `C ≥ 5`
-(`champernowneNotNormalAboveThreshold_of_earlyArrival`), which is the stopping-time
+(`champernowneNotNormalAboveThreshold_of_earlyArrival`, in `ChampernowneThreshold.lean`), which is
+the stopping-time
 concentration at positive density, itself open: Tao 2019 gives almost-bounded values in
 logarithmic density, not total stopping times.  The `80%` is the model's `C* < 5`
 (`threshold_bounds`) plus the margin `5 − C* ≈ 0.18`, which `O(√k)` fluctuations do not
 erase. -/
 def ChampernowneNotNormalAboveThreshold : Prop :=
   ∀ C, 5 ≤ C → ¬ Normal (collatzChampernowne C)
-
-theorem champernowneNotNormalAboveThreshold_of_earlyArrival
-    (h : ∀ C, 5 ≤ C → EarlyArrival C) : ChampernowneNotNormalAboveThreshold :=
-  fun C hC => not_normal_of_earlyArrival C (h C hC)
 
 /-- **Conjecture.**  The stop-at-`1` sequence is normal.  Confidence 65%.
 
