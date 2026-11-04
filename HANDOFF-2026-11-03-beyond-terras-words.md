@@ -38,3 +38,14 @@ Frozen statements unchanged (the only removed lines in `BeyondWords.lean` are th
   `mod_two_pow_eq_prefixInt_iff` (first `K` letters of `m` are `w` iff `m ≡ prefixInt w K mod 2^K`,
   Terras at finite length via `letterMap_injective`), so `beyondWordCount_eq`.  Add it to the root
   imports with the others.
+
+## Checkpoint (2026-11-04, final)
+
+* Branch `wip/beyond-terras-words`, HEAD `3091ef7` before this commit; not pushed (host pushes).
+* Commits this run: b4f4fdd (consistency), f4e4b01 (SliceFourierGeneral), 146f19c + e53e4fd
+  (ResidueIndicator), a6ed9cc (main assembly), c76455f (letter form), 3091ef7 (root imports).
+* `lake build CollatzMoonshot` green (8904 jobs); `box done --green` filed; treadmill stopped.
+* Exact next steps (operator): review and open a PR from `wip/beyond-terras-words` into
+  `ren/conjugacy-ladder`; optionally a `docs/notes/beyond-terras-words.md` note citing
+  `beyondWordsUniform` and `beyondWordCount_tendsto` at a pinned commit.  No proof work open on
+  this kickoff's path; remaining `src/` sorries are designated-open and untouched.
