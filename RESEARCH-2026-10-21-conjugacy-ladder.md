@@ -1102,6 +1102,8 @@ Notation: `α = 1.001`, `N_y` log-uniform on odd numbers in `[y, y^α]`, `Pass_x
 
 Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so among integers, `𝒞_C` is normal in logarithmic density exactly for `C ≤ 4` (`logNormal_iff_le_four`).  `C` is a natural number in these statements, so they do not locate `C*` between 4 and 5.
 
+The same control gives orbit shape.  Almost every start in logarithmic density follows the line `log₂ n − β t`, `β = 1 − log₂ 3 / 2`, through `t = 4 size n` (`heightLawUpTo_four`), first passage below `n^θ` for `θ > 1 − 4β` sits at `t ≈ (1 − θ) size n / β` (`firstPassage_law`), and no such law holds past `1 / β` (`not_heightLawUpTo_of_gt`).  Between `4` and `1 / β` it is the open node `HeightLawBelowThreshold`.  One stage at a time, the orbit statement is `StageWordLaw`, which gives normality (`normal_of_stageWordLaw`) and is open.
+
 What this does not touch: it says nothing about any one stage (Tao Remark 1.16 names the mixing that a natural-density version would need), nothing about orbits at bounded height, and nothing about Collatz itself.  A single stage can carry the whole exceptional set, since it has log-weight `≈ 1/(0.001 k)` in a window and the exception is only `k^{−c}`.
 
 Sanity numerics from the referee, not evidence for the chain: 5 random starts at `k = 20000`, frequency of `11` is `0.2486` at `C = 4` against `0.2371` at `C = 5` and `0.1976` at `C = 6`, and `t/k` to height `N^{0.1}` is `4.18–4.42`.
