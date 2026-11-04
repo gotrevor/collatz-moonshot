@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import TaoCollatz.Sec5.Stabilization
+import TaoCollatz.Sec3.Reduction
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.ChampernowneHeight
 
@@ -44,30 +45,60 @@ noncomputable def wdev (u : List Bool) (n a ℓ : ℕ) : ℝ :=
 /-- Window counts add. -/
 theorem wcnt_add (u : List Bool) (n a ℓ₁ ℓ₂ : ℕ) :
     wcnt u n a (ℓ₁ + ℓ₂) = wcnt u n a ℓ₁ + wcnt u n (a + ℓ₁) ℓ₂ := by
-  sorry
+  unfold wcnt
+  rw [← add_assoc, ← Finset.Ico_union_Ico_eq_Ico (Nat.le_add_right a ℓ₁)
+    (Nat.le_add_right (a + ℓ₁) ℓ₂), Finset.filter_union, Finset.card_union_of_disjoint]
+  exact Finset.disjoint_filter_filter (Finset.Ico_disjoint_Ico_consecutive _ _ _)
 
 /-- Window deviations add. -/
 theorem wdev_add (u : List Bool) (n a ℓ₁ ℓ₂ : ℕ) :
     wdev u n a (ℓ₁ + ℓ₂) = wdev u n a ℓ₁ + wdev u n (a + ℓ₁) ℓ₂ := by
-  sorry
+  unfold wdev
+  rw [wcnt_add]
+  push_cast
+  ring
 
 /-- A window of `n` at `b + a` is a window of `tstep^[b] n` at `a`. -/
 theorem wcnt_shift (u : List Bool) (n b a ℓ : ℕ) :
     wcnt u n (b + a) ℓ = wcnt u (tstep^[b] n) a ℓ := by
-  sorry
+  unfold wcnt
+  rw [show b + a + ℓ = b + (a + ℓ) by ring, ← Finset.map_add_left_Ico, Finset.filter_map,
+    Finset.card_map]
+  congr 1
+  refine Finset.filter_congr fun i _ => ?_
+  simp only [Function.comp_apply, addLeftEmbedding_apply, WindowMatch]
+  refine forall₂_congr fun s _ => ?_
+  rw [add_assoc]
+  simp only [accWord]
+  rw [add_comm b, Function.iterate_add_apply]
 
 /-- Deviations shift along the orbit. -/
 theorem wdev_shift (u : List Bool) (n b a ℓ : ℕ) :
     wdev u n (b + a) ℓ = wdev u (tstep^[b] n) a ℓ := by
-  sorry
+  unfold wdev
+  rw [wcnt_shift]
 
 /-- A deviation is at most the window length. -/
 theorem abs_wdev_le (u : List Bool) (n a ℓ : ℕ) : |wdev u n a ℓ| ≤ ℓ := by
-  sorry
+  unfold wdev
+  have hc : (wcnt u n a ℓ : ℝ) ≤ ℓ := by
+    have : wcnt u n a ℓ ≤ ℓ := by
+      unfold wcnt
+      refine le_trans (Finset.card_filter_le _ _) ?_
+      simp
+    exact_mod_cast this
+  have hp0 : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ u.length := by positivity
+  have hp1 : (1 / 2 : ℝ) ^ u.length ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have hl : (0 : ℝ) ≤ ℓ := Nat.cast_nonneg _
+  have hc0 : (0 : ℝ) ≤ wcnt u n a ℓ := Nat.cast_nonneg _
+  rw [abs_le]
+  constructor <;> nlinarith
 
 /-- The prefix of the letter `1` counts odd steps. -/
 theorem wcnt_true_eq_oddCount (n ℓ : ℕ) : wcnt [true] n 0 ℓ = oddCount n ℓ := by
-  sorry
+  rw [oddCount_eq_sum, wcnt, Finset.card_filter, zero_add, ← Finset.range_eq_Ico]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [if_congr (windowMatch_true_iff i n) rfl rfl]
 
 /-! ## Good windows and good prefixes -/
 
@@ -96,24 +127,63 @@ def LocGood (u : List Bool) (δ η x : ℝ) (M : ℕ) : Prop :=
 /-- Windows give prefixes at every offset `b ≤ Λ`. -/
 theorem prefGood_of_winGood {u : List Bool} {δ : ℝ} {H Λ n b : ℕ} (h : WinGood u δ H Λ n)
     (hb : b ≤ Λ) : PrefGood u δ H Λ (tstep^[b] n) := by
-  sorry
+  intro ℓ hH hΛ
+  rw [← wdev_shift, add_zero]
+  exact h b ℓ hb hH hΛ
 
 /-! ## The Syracuse bridge -/
+
+/-- Halving `k` times divides by `2^k`, when `2^k ∣ m`. -/
+theorem tstep_iterate_of_dvd : ∀ (k m : ℕ), 2 ^ k ∣ m → tstep^[k] m = m / 2 ^ k
+  | 0, m, _ => by simp
+  | k + 1, m, h => by
+    have h2 : m % 2 = 0 := Nat.mod_eq_zero_of_dvd (dvd_trans (dvd_pow_self 2 (by omega)) h)
+    have hk : 2 ^ k ∣ m / 2 := Nat.dvd_div_of_mul_dvd (by rwa [← pow_succ'])
+    rw [Function.iterate_succ_apply, show tstep m = m / 2 by simp [tstep, h2],
+      tstep_iterate_of_dvd k (m / 2) hk, Nat.div_div_eq_div_mul, pow_succ, mul_comm]
 
 /-- One Syracuse step is `ν₂(3N+1)` steps of `tstep`, for odd `N`. -/
 theorem syr_eq_tstep_iterate {N : ℕ} (hN : N % 2 = 1) :
     syr N = tstep^[padicValNat 2 (3 * N + 1)] N := by
-  sorry
+  have hfact : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  have hv : 1 ≤ padicValNat 2 (3 * N + 1) :=
+    one_le_padicValNat_of_dvd (by omega) (Nat.dvd_of_mod_eq_zero (by omega))
+  · obtain ⟨v, hv'⟩ : ∃ v, padicValNat 2 (3 * N + 1) = v + 1 := ⟨_, (Nat.sub_add_cancel hv).symm⟩
+    have hdvd : 2 ^ (v + 1) ∣ 3 * N + 1 := hv' ▸ pow_padicValNat_dvd
+    have hdvd' : 2 ^ v ∣ (3 * N + 1) / 2 := Nat.dvd_div_of_mul_dvd (by rwa [← pow_succ'])
+    rw [hv', Function.iterate_succ_apply, show tstep N = (3 * N + 1) / 2 by
+      simp [tstep, show N % 2 ≠ 0 by omega], tstep_iterate_of_dvd v _ hdvd',
+      Nat.div_div_eq_div_mul, ← pow_succ', ← hv']
+    rfl
 
 /-- **The bridge.**  The `k`-th Syracuse iterate of an odd `N` is its `tstep` iterate at the letter
 time `valSum N k`. -/
 theorem syr_iterate_eq_tstep {N : ℕ} (hN : N % 2 = 1) (k : ℕ) :
     syr^[k] N = tstep^[valSum N k] N := by
-  sorry
+  induction k with
+  | zero => simp [valSum]
+  | succ k ih =>
+    rw [Function.iterate_succ_apply', syr_eq_tstep_iterate (syr_iterate_odd N k hN), ih,
+      valSum_succ, ← Function.iterate_add_apply, ih, add_comm]
 
 /-- Letter times add along the orbit. -/
 theorem valSum_add (N a b : ℕ) : valSum N (a + b) = valSum N a + valSum (syr^[a] N) b := by
-  sorry
+  unfold valSum
+  rw [Finset.sum_range_add]
+  congr 1
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [add_comm a i, Function.iterate_add_apply]
+
+/-- After an odd `M`, the orbit halves `3M + 1` until the Syracuse step. -/
+theorem tstep_iterate_odd_eq {M : ℕ} (hM : M % 2 = 1) {e : ℕ} (he : 1 ≤ e)
+    (hev : e ≤ padicValNat 2 (3 * M + 1)) : tstep^[e] M = (3 * M + 1) / 2 ^ e := by
+  obtain ⟨d, rfl⟩ : ∃ d, e = d + 1 := ⟨e - 1, by omega⟩
+  have hdvd : 2 ^ (d + 1) ∣ 3 * M + 1 :=
+    dvd_trans (pow_dvd_pow 2 hev) pow_padicValNat_dvd
+  have hdvd' : 2 ^ d ∣ (3 * M + 1) / 2 := Nat.dvd_div_of_mul_dvd (by rwa [← pow_succ'])
+  rw [Function.iterate_succ_apply, show tstep M = (3 * M + 1) / 2 by
+    simp [tstep, show M % 2 ≠ 0 by omega], tstep_iterate_of_dvd d _ hdvd',
+    Nat.div_div_eq_div_mul, ← pow_succ']
 
 /-- Between consecutive letter times the `tstep` orbit falls: for odd `N` and
 `valSum N k < t ≤ valSum N (k + 1)`, the next Syracuse iterate is at most `tstep^[t] N`, and the
@@ -121,7 +191,28 @@ letters at `t, …, valSum N (k + 1) − 1` are `0`. -/
 theorem tstep_between {N : ℕ} (hN : N % 2 = 1) {k t : ℕ} (h1 : valSum N k < t)
     (h2 : t ≤ valSum N (k + 1)) :
     syr^[k + 1] N ≤ tstep^[t] N ∧ ∀ i, t ≤ i → i < valSum N (k + 1) → accWord N i = false := by
-  sorry
+  set M := syr^[k] N with hMdef
+  have hM : M % 2 = 1 := syr_iterate_odd N k hN
+  have hsM : tstep^[valSum N k] N = M := (syr_iterate_eq_tstep hN k).symm
+  have hv := valSum_succ N k
+  rw [← hMdef] at hv
+  set v := padicValNat 2 (3 * M + 1) with hvdef
+  have hat : ∀ e, 1 ≤ e → e ≤ v → tstep^[valSum N k + e] N = (3 * M + 1) / 2 ^ e := by
+    intro e he hev
+    rw [add_comm, Function.iterate_add_apply, hsM, tstep_iterate_odd_eq hM he hev]
+  have hsyr : syr^[k + 1] N = (3 * M + 1) / 2 ^ v := by
+    rw [Function.iterate_succ_apply', ← hMdef, syr, oddPart]
+  obtain ⟨d, rfl⟩ : ∃ d, t = valSum N k + d := ⟨t - valSum N k, by omega⟩
+  refine ⟨?_, fun i hi1 hi2 => ?_⟩
+  · rw [hsyr, hat d (by omega) (by omega)]
+    exact Nat.div_le_div_left (Nat.pow_le_pow_right (by norm_num) (by omega)) (by positivity)
+  · obtain ⟨e, rfl⟩ : ∃ e, i = valSum N k + e := ⟨i - valSum N k, by omega⟩
+    have hdvd : 2 ^ (e + 1) ∣ 3 * M + 1 :=
+      dvd_trans (pow_dvd_pow 2 (by omega)) pow_padicValNat_dvd
+    obtain ⟨c, hc⟩ := hdvd
+    simp only [accWord, hat e (by omega) (by omega), decide_eq_false_iff_not]
+    rw [hc, pow_succ, mul_assoc, Nat.mul_div_cancel_left _ (by positivity)]
+    omega
 
 /-- The letter time of the first passage below `z`. -/
 noncomputable def ltime (z N : ℕ) : ℕ := valSum N (passTime z N)
@@ -129,7 +220,7 @@ noncomputable def ltime (z N : ℕ) : ℕ := valSum N (passTime z N)
 /-- On passage, the passage location is the `tstep` iterate at the letter time. -/
 theorem passLoc_eq_tstep {z N : ℕ} (hN : N % 2 = 1) (h : passes z N) :
     passLoc z N = tstep^[ltime z N] N := by
-  sorry
+  rw [passLoc, if_pos h, ltime, syr_iterate_eq_tstep hN]
 
 /-! ## Passages compose -/
 
@@ -137,13 +228,45 @@ theorem passLoc_eq_tstep {z N : ℕ} (hN : N % 2 = 1) (h : passes z N) :
 `z'`, including off passage, where `passLoc = 1`. -/
 theorem passLoc_passLoc {z z' : ℕ} (hz' : 1 ≤ z') (hzz : z' ≤ z) (N : ℕ) :
     passLoc z' (passLoc z N) = passLoc z' N := by
-  sorry
+  have hone : passLoc z' 1 = 1 := by
+    have hp : passes z' 1 := ⟨0, by simpa using hz'⟩
+    have ht : passTime z' 1 = 0 := Nat.eq_zero_of_le_zero (Nat.sInf_le (by simpa using hz'))
+    rw [passLoc, if_pos hp, ht]
+    rfl
+  by_cases h : passes z N
+  · by_cases h' : passes z' N
+    · have hT : passTime z N ≤ passTime z' N := passTime_anti hzz h'
+      have := (passTime_stepback z' N (passTime z N) h' hT).2.2
+      rw [show passLoc z N = syr^[passTime z N] N by rw [passLoc, if_pos h]]
+      exact this
+    · have hM : ¬ passes z' (passLoc z N) := by
+        rintro ⟨i, hi⟩
+        apply h'
+        refine ⟨i + passTime z N, ?_⟩
+        rw [show passLoc z N = syr^[passTime z N] N by rw [passLoc, if_pos h]] at hi
+        rwa [Function.iterate_add_apply]
+      rw [show passLoc z' (passLoc z N) = 1 by rw [passLoc, if_neg hM],
+        show passLoc z' N = 1 by rw [passLoc, if_neg h']]
+  · have h' : ¬ passes z' N := fun hp => h (passes_mono hzz hp)
+    rw [show passLoc z N = 1 by rw [passLoc, if_neg h], hone,
+      show passLoc z' N = 1 by rw [passLoc, if_neg h']]
 
 /-- Passage times add: from `N` below `z`, then from the location below `z' ≤ z`. -/
 theorem passes_passLoc {z z' N : ℕ} (hzz : z' ≤ z) (hN : N % 2 = 1) (h : passes z N)
     (h' : passes z' (passLoc z N)) :
     passes z' N ∧ ltime z' N = ltime z N + ltime z' (passLoc z N) := by
-  sorry
+  have hloc : passLoc z N = syr^[passTime z N] N := by rw [passLoc, if_pos h]
+  have hp : passes z' N := by
+    obtain ⟨i, hi⟩ := h'
+    refine ⟨i + passTime z N, ?_⟩
+    rw [hloc] at hi
+    rwa [Function.iterate_add_apply]
+  refine ⟨hp, ?_⟩
+  have hT : passTime z N ≤ passTime z' N := passTime_anti hzz hp
+  have hsb := (passTime_stepback z' N (passTime z N) hp hT).2.1
+  rw [ltime, ltime, ltime, hloc, hsb, ← valSum_add]
+  congr 1
+  omega
 
 /-! ## One stage of descent -/
 
@@ -172,7 +295,8 @@ def numScales : ℕ := 3000
 
 /-- Consecutive scales: `x_(j+1)^α = x_j`. -/
 theorem scale_succ_rpow {x : ℝ} (hx : 0 ≤ x) (j : ℕ) : scale x (j + 1) ^ alpha = scale x j := by
-  sorry
+  have ha : alpha ≠ 0 := by norm_num [alpha]
+  rw [scale, scale, ← Real.rpow_mul hx, pow_succ, mul_assoc, inv_mul_cancel₀ ha, mul_one]
 
 /-! ## Reading off the orbit -/
 
