@@ -35,9 +35,8 @@ theorem stagePasses : StagePasses := stagePasses_holds
 theorem goodOddOfStages : GoodOddOfStages := by
   sorry
 
-/-- **The location event from the start event.**  From `StagePasses`.  Confidence 90%. -/
-theorem locGoodPassLoc : LocGoodPassLoc := by
-  sorry
+/-- **The location event from the start event.**  Proved in `OrbitWordLawStage.lean`. -/
+theorem locGoodPassLoc : LocGoodPassLoc := locGoodPassLoc_holds
 
 /-- **Terras with constraints.**  Induction on `m`, as `card_windowMatch`.  Confidence 95%. -/
 theorem cardMatchSet : CardMatchSet := by

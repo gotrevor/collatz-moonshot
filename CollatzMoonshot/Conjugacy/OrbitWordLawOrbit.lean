@@ -25,7 +25,7 @@ Open nodes are `Prop`s here (`StagePasses`, `GoodOddOfStages`, `LocGoodPassLoc`)
 
 * One stage (`StagePasses`): if the letter `1` has frequency within `1/100` on every prefix of
   length in `[H, Λ]`, the orbit of `M ≤ y` passes below `z` within `Λ` letters, once `Λ` covers
-  about `24 log₂ (y / z)`.
+  about `20 log₂ (y / z)`.
 * Reading off (`GoodOddOfStages`): if the start is good at scale `x` and each passage location is
   good at its own scale, the frequency of `u` is right over the first `4.2 size n` letters.
 -/
@@ -274,7 +274,7 @@ theorem passes_passLoc {z z' N : ℕ} (hzz : z' ≤ z) (hN : N % 2 = 1) (h : pas
 /-! ## One stage of descent -/
 
 /-- **Node: one stage.**  Let `M ≤ y` be odd and let the letter `1` have frequency within `1/100` on
-every prefix of `M` with length in `[H, Λ]`.  If `Λ` covers `24 (log₂ y − log₂ z + 2) + 4 H`
+every prefix of `M` with length in `[H, Λ]`.  If `Λ` covers `20 (log₂ y − log₂ z + 2) + 4 H`
 and `Λ ≤ z`, then the orbit passes below `z` within `Λ` letters.
 
 The descent: at most `0.51` of the letters are odd, so the height falls by `0.19` per letter while
@@ -283,7 +283,7 @@ passage location is the next odd height, which comes after a run of `0`s, and th
 cap that run. -/
 def StagePasses : Prop :=
   ∀ (M H Λ : ℕ) (y z : ℝ), M % 2 = 1 → (M : ℝ) ≤ y → 2 ≤ z → z ≤ y →
-    24 * (Real.logb 2 y - Real.logb 2 z + 2) + 4 * (H : ℝ) ≤ Λ → (Λ : ℝ) ≤ z →
+    20 * (Real.logb 2 y - Real.logb 2 z + 2) + 4 * (H : ℝ) ≤ Λ → (Λ : ℝ) ≤ z →
     PrefGood [true] (1 / 100) H Λ M → passes ⌊z⌋₊ M ∧ ltime ⌊z⌋₊ M ≤ Λ
 
 /-! ## Scales -/

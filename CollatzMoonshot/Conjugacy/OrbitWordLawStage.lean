@@ -129,7 +129,7 @@ theorem stagePasses_holds : StagePasses := by
     have := Real.logb_le_logb_of_le (b := 2) (by norm_num) hz0 hzy
     linarith
   have hH0 : (0 : ℝ) ≤ H := Nat.cast_nonneg _
-  have hΛ48 : (48 : ℝ) ≤ Λ := by nlinarith
+  have hΛ48 : (40 : ℝ) ≤ Λ := by nlinarith
   -- the probe time `t₀ = ⌊9 Λ / 10⌋`
   set t₀ := 9 * Λ / 10 with ht₀def
   have ht₀a : 9 * Λ ≤ 10 * t₀ + 9 := by omega
@@ -214,5 +214,88 @@ theorem stagePasses_holds : StagePasses := by
     rw [Nat.add_sub_cancel' ht₀Λ] at hrun
     have hrunR : (oddCount M Λ : ℝ) = oddCount M t₀ := by exact_mod_cast hrun
     nlinarith
+
+end CollatzMoonshot.Conjugacy
+
+namespace CollatzMoonshot.Conjugacy
+
+open Filter Topology CollatzMoonshot.FrontB CollatzMoonshot.Obstructions.ParityWord
+open TaoCollatz
+
+/-! ## Scale bookkeeping -/
+
+/-- `log₂ (x^r) = r log₂ x`. -/
+theorem logb_rpow_eq {x : ℝ} (hx : 0 < x) (r : ℝ) : Real.logb 2 (x ^ r) = r * Real.logb 2 x := by
+  unfold Real.logb
+  rw [Real.log_rpow hx]
+  ring
+
+/-- The window cap is at least `log₂ x / 20 − 1`. -/
+theorem lam_ge (x : ℝ) : Real.logb 2 x / 20 - 1 ≤ lam x := by
+  unfold lam
+  rcases le_or_gt 0 (Real.logb 2 x / 20) with h | h
+  · exact (Nat.sub_one_lt_floor _).le
+  · linarith [(Nat.cast_nonneg _ : (0 : ℝ) ≤ ⌊Real.logb 2 x / 20⌋₊)]
+
+/-- The window cap is at most `log₂ x / 20`, for `x ≥ 1`. -/
+theorem lam_le {x : ℝ} (hx : 1 ≤ x) : (lam x : ℝ) ≤ Real.logb 2 x / 20 :=
+  Nat.floor_le (div_nonneg (Real.logb_nonneg (by norm_num) hx) (by norm_num))
+
+/-- The shortest window is at most `η log₂ x + 1`. -/
+theorem hgt_le {η x : ℝ} (h : 0 ≤ η * Real.logb 2 x) : (hgt η x : ℝ) ≤ η * Real.logb 2 x + 1 :=
+  (Nat.ceil_lt_add_one h).le
+
+/-- `log₂ x ≤ 2 x`. -/
+theorem logb_le_two_mul {x : ℝ} (hx : 0 < x) : Real.logb 2 x ≤ 2 * x := by
+  have h1 := Real.log_le_sub_one_of_pos hx
+  have h2 : (1 : ℝ) / 2 < Real.log 2 := by linarith [Real.log_two_gt_d9]
+  unfold Real.logb
+  rw [div_le_iff₀ (by linarith)]
+  nlinarith
+
+/-- The window cap is at most `x`, for `x ≥ 1`. -/
+theorem lam_le_self {x : ℝ} (hx : 1 ≤ x) : (lam x : ℝ) ≤ x := by
+  have := lam_le hx
+  have := logb_le_two_mul (by linarith : (0 : ℝ) < x)
+  linarith
+
+/-- `log₂ x ≥ n` from `x ≥ 2^n`. -/
+theorem le_logb_of_two_pow_le {x : ℝ} {n : ℕ} (hx : (2 : ℝ) ^ n ≤ x) : (n : ℝ) ≤ Real.logb 2 x := by
+  have := Real.logb_le_logb_of_le (b := 2) (by norm_num) (by positivity) hx
+  rwa [Real.logb_pow, Real.logb_self_eq_one (by norm_num), mul_one] at this
+
+/-! ## The location event -/
+
+/-- **The location event from the start event** (`LocGoodPassLoc`): the start's windows reach past
+its passage below `x`, since one stage takes at most `lam x` letters. -/
+theorem locGoodPassLoc_holds : LocGoodPassLoc := by
+  intro u δ η hη hη1
+  refine ⟨2 ^ (10000 : ℕ), fun x hx N hN hNx hsg => ?_⟩
+  have hx2 : (2 : ℝ) ≤ x := le_trans (le_self_pow₀ (by norm_num) (by norm_num)) hx
+  have hx0 : 0 < x := lt_of_lt_of_le two_pos hx2
+  have hL := le_logb_of_two_pow_le hx
+  push_cast at hL
+  clear hx
+  have hy := logb_rpow_eq hx0 (alpha ^ 2)
+  have hxy : x ≤ x ^ alpha ^ 2 := by
+    have := Real.rpow_le_rpow_of_exponent_le (x := x) (by linarith)
+      (show (1 : ℝ) ≤ alpha ^ 2 by norm_num [alpha])
+    simpa using this
+  have hlam := lam_ge x
+  have hhgt := hgt_le (η := η) (x := x) (by positivity)
+  have hcov : 20 * (Real.logb 2 (x ^ alpha ^ 2) - Real.logb 2 x + 2) + 4 * (hgt η x : ℝ) ≤
+      lam x := by
+    rw [hy]
+    have ha : alpha ^ 2 = 1.002001 := by norm_num [alpha]
+    rw [ha]
+    have hηL : η * Real.logb 2 x ≤ Real.logb 2 x / 1000 := by nlinarith
+    linarith
+  have hpref : PrefGood [true] (1 / 100) (hgt η x) (lam x) N := by
+    have := prefGood_of_winGood (b := 0) hsg.2 (Nat.zero_le _)
+    rwa [Function.iterate_zero_apply] at this
+  obtain ⟨hp, hlt⟩ := stagePasses_holds N _ _ (x ^ alpha ^ 2) x hN hNx hx2 hxy hcov
+    (lam_le_self (by linarith)) hpref
+  rw [passLoc_eq_tstep hN hp]
+  exact ⟨prefGood_of_winGood hsg.1 hlt, prefGood_of_winGood hsg.2 hlt⟩
 
 end CollatzMoonshot.Conjugacy
