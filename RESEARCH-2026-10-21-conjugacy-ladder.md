@@ -1090,7 +1090,7 @@ Measured (`segment_reach_large.py`, `2·10^5` random starts per `k`, two-letter 
 
 ## 16. Logarithmic density: Tao's stabilisation reaches offsets of order `k` (2026-11-04)
 
-Below the threshold, natural-density normality asks about every stage (`normal_iff_averagedMixing`).  In logarithmic density the question is about single orbits (`OrbitWordLaw`, `logNormal_of_orbitWordLaw`), and it should follow from Tao 2019 Proposition 1.11.  Paper argument only, believed (85%), refereed once against the paper, conditional on (1.20), which `tao-collatz` proves as `stabilization`.  Statement: `orbitWordLaw_of_le_four`.
+Below the threshold, natural-density normality asks about every stage (`normal_iff_averagedMixing`).  In logarithmic density the question is about single orbits (`OrbitWordLaw`, `logNormal_of_orbitWordLaw`), and it follows from Tao 2019 Proposition 1.11, through (1.20), which `tao-collatz` proves as `stabilization`.  In Lean: `orbitWordLaw_of_le_four`, `logNormal_of_le_four` and `logNormal_iff_le_four`.  The sketch below is the paper argument; the Lean runs the chain over 4000 scales down to `N^{1/50}`, and uses Chebyshev on boundedly many blocks where the sketch uses large deviations.
 
 Notation: `α = 1.001`, `N_y` log-uniform on odd numbers in `[y, y^α]`, `Pass_x` the first-passage location, `ν_x = Pass_x(N_{x^α})`.  (1.20) is total variation: `d(Pass_x(N_{x^α}), Pass_x(N_{x^{α²}})) ≪ log^{−c} x`.
 
@@ -1100,7 +1100,7 @@ Notation: `α = 1.001`, `N_y` log-uniform on odd numbers in `[y, y^α]`, `Pass_x
 4. **Reading off the orbit.**  For all but `≪ log^{−c} x_*` of `N`, every `G_{x_j}` holds, and by induction each `M_j > 1` is a true orbit point.  Apply step 1 to `N` itself for the letters before `x₀`.  Stretches shorter than `η log x` cost `∑ H_j ≈ 1000 η log x₀`, so take `η ≲ δ (α − 1)`.  The letter-`1` frequency within `0.011` gives `t ≥ 0.9 k/(β + 0.0175) ≥ 4k` at height `x_*`, which covers `C ≤ 4`.
 5. **Density.**  Cover `[1, X]` by windows `[y, y^α]`.  Starts `2^a m` prepend `a` zeros; `a ≥ ε log₂ N` has log density `0`, and the margin `4.34 > 4` absorbs the rest.
 
-Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so in logarithmic density the threshold would be sharp.
+Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so among integers, `𝒞_C` is normal in logarithmic density exactly for `C ≤ 4` (`logNormal_iff_le_four`).  `C` is a natural number in these statements, so they do not locate `C*` between 4 and 5.
 
 What this does not touch: it says nothing about any one stage (Tao Remark 1.16 names the mixing that a natural-density version would need), nothing about orbits at bounded height, and nothing about Collatz itself.  A single stage can carry the whole exceptional set, since it has log-weight `≈ 1/(0.001 k)` in a window and the exception is only `k^{−c}`.
 

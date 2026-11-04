@@ -5,8 +5,8 @@
 > start in logarithmic density has the right frequency of every word among its first `C log₂ n`
 > parity letters) prints only `propext, Classical.choice, Quot.sound`.  The proof chains Tao 2019
 > Proposition 1.11 (`stabilization_atCX`) over 4000 scales and uses his integral test, both from the
-> `TaoCollatz` dependency.  `logNormal_of_le_four` still rests on the open bridge
-> `logNormal_of_orbitWordLaw` (`ChampernowneLog.lean`).  See `HANDOFF-2026-11-04-orbit-word-law.md`.
+> `TaoCollatz` dependency.  `logNormal_of_le_four` and `logNormal_iff_le_four` are proved too, with
+> the `ChampernowneLog.lean` proofs from `ren/conjugacy-ladder` (`53ee93b`).  See `HANDOFF-2026-11-04-orbit-word-law.md`.
 
 > **2026-10-26, C1⁺ COMPLETE (`WeakDecayOnZ3`):**
 > `CollatzMoonshot/Conjugacy/WeakDecay.lean` is sorry-free. The shifted Fourier reduction is

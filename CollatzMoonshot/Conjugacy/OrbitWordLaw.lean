@@ -137,4 +137,16 @@ theorem logNormal_of_le_four (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) :
     LogNormal (collatzChampernowne C) :=
   logNormal_of_orbitWordLaw C hC (orbitWordLaw_of_le_four C hC hC4)
 
+/-- **Among positive integers, `𝒞_C` is normal in logarithmic density exactly for `C ≤ 4`.** -/
+theorem logNormal_iff_le_four (C : ℕ) (hC : 1 ≤ C) :
+    LogNormal (collatzChampernowne C) ↔ C ≤ 4 :=
+  ⟨fun h => by
+      by_contra hlt
+      exact not_logNormal_of_five_le C (by omega) h,
+    logNormal_of_le_four C hC⟩
+
+/-- The word law fails above the threshold, so `hC4` is doing real work in the target. -/
+theorem not_orbitWordLaw_of_five_le (C : ℕ) (hC : 5 ≤ C) : ¬ OrbitWordLaw C := fun h =>
+  not_logNormal_of_five_le C hC (logNormal_of_orbitWordLaw C (by omega) h)
+
 end CollatzMoonshot.Conjugacy
