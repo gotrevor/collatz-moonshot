@@ -1058,9 +1058,9 @@ Split agreed with personal-c5: this section and `SliceSeven.lean` are personal-2
 
 ## 15. Terras alone: every `𝒞_C` is disjunctive, and `𝒞_1` should be normal (2026-10-21 in chat, recorded 2026-11-03)
 
-Hand arguments, no Lean yet.  `collatzChampernowne_one_normal` still carries its `sorry`, and no disjunctiveness statement exists in `Conjugacy/`.
+Disjunctiveness is a theorem (`collatzChampernowne_disjunctive`, `Conjugacy/Disjunctive.lean`).  Normality of `𝒞_1` is still a hand argument: `collatzChampernowne_one_normal` carries its `sorry`.
 
-**Disjunctive for every `C ≥ 1`, unconditionally** (95%).  Given a word `w` of length `j`, Terras gives the unique `r < 2^j` whose orbit starts with `w`.  Then `n = r + 2^j` has `j + 1` bits, so its block has at least `j + 1` letters, and the first `j` are `w`, since those letters depend only on `n mod 2^j`.  Every word occurs.  This needs no fact about Collatz beyond the bijection (`onesSet_injOn`, `onesSet_surjOn`).  Check: 2000 of 2000 random words, `j ≤ 24` (`terraschamp.py`).
+**Disjunctive for every `C`, unconditionally** (`collatzChampernowne_disjunctive`).  Given a word `w` of length `j`, Terras gives the unique `r < 2^j` whose orbit starts with `w`.  Then `n = r + 2^j` has `j + 1` bits, so its block has at least `j + 1` letters, and the first `j` are `w`, since those letters depend only on `n mod 2^j`.  Every word occurs.  This needs no fact about Collatz beyond the bijection (`onesSet_injOn`, `onesSet_surjOn`).  Check: 2000 of 2000 random words, `j ≤ 24` (`terraschamp.py`).
 
 **`𝒞_1` should be normal by Terras plus bookkeeping** (85%).  At level `k`, `n ∈ [2^k, 2^{k+1})`, block `n` has `k + 1` letters.  A subword at offset `i`, length `m`, depends only on `n mod 2^{i+m}`, and the level covers each such residue exactly `2^{k−i−m}` times when `i + m ≤ k`.  By Terras at depth `i + m`, every `m`-word then occurs exactly `2^{k−m}` times at that offset.  Measured with its control at `(k, m) = (12, 3), (14, 4), (16, 4)`: every interior offset is exactly balanced, and only the window ending on the block's last letter is not.  That last letter sums to exactly `−E_k` over the level (`−42, −178, −362`, by the lift identity), so the night's main object enters `𝒞_1` only there.  Two error terms remain, and neither looks hard:
 - Windows straddling a block boundary are a fraction `O(m/k)` of level `k`.
@@ -1070,9 +1070,9 @@ Prefix frequencies to `n < 2^20` agree: `sup |freq − 2^{−m}| ≈ 10^{−4}` 
 
 | `C` | disjunctive | normal |
 |---|---|---|
-| `1` | Terras (hand) | Terras + bookkeeping (hand, 85%) |
-| `1 < C < C*` | Terras (hand) | beyond-Terras mixing, open (70%) |
-| `> C*` | Terras (hand) | no: mixing fails (proved), normality fails (believed, 90%) |
+| `1` | theorem | Terras + bookkeeping (hand, 85%) |
+| `1 < C < C*` | theorem | beyond-Terras mixing, open (70%) |
+| `> C*` | theorem | no: mixing fails (proved), normality fails (believed, 90%) |
 
 So above `C*` the family gives a disjunctive non-normal sequence whose defect comes from the dynamics.  Normality for `1 < C < C*` is finer than C1 and C1⁺: those are first moments over a level, and normality needs every word's frequency.
 
