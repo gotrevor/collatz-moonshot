@@ -137,6 +137,7 @@ import CollatzMoonshot.Conjugacy.ChampernowneHeight
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitHeightLaw
 import CollatzMoonshot.Conjugacy.OrbitHeightSharp
+import CollatzMoonshot.Conjugacy.OrbitTimeLaw
 import CollatzMoonshot.Conjugacy.OrbitWordLaw
 import CollatzMoonshot.Conjugacy.ChampernowneOffsets
 import CollatzMoonshot.Conjugacy.Bridges

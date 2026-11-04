@@ -1,0 +1,17 @@
+1/beta=4.8188  0.5/beta=2.4094
+k=500 S=16 t/k to n^0.5: min 1.884 mean 2.296 max 2.634
+k=500 S=16 t/k to k: min 4.028 mean 4.576 max 5.316
+k=500 S=16 t/k to 1000: min 4.026 mean 4.573 max 5.314
+k=500 S=16 t/k to 2: min 4.060 mean 4.670 max 5.360
+k=2000 S=16 t/k to n^0.5: min 2.118 mean 2.435 max 2.638
+k=2000 S=16 t/k to k: min 4.391 mean 4.816 max 5.042
+k=2000 S=16 t/k to 1000: min 4.391 mean 4.819 max 5.045
+k=2000 S=16 t/k to 2: min 4.402 mean 4.840 max 5.086
+k=8000 S=16 t/k to n^0.5: min 2.333 mean 2.427 max 2.523
+k=8000 S=16 t/k to k: min 4.628 mean 4.839 max 5.017
+k=8000 S=16 t/k to 1000: min 4.628 mean 4.840 max 5.018
+k=8000 S=16 t/k to 2: min 4.638 mean 4.846 max 5.026
+k=20000 S=16 t/k to n^0.5: min 2.302 mean 2.400 max 2.498
+k=20000 S=16 t/k to k: min 4.713 mean 4.812 max 4.959
+k=20000 S=16 t/k to 1000: min 4.713 mean 4.812 max 4.960
+k=20000 S=16 t/k to 2: min 4.714 mean 4.814 max 4.962
