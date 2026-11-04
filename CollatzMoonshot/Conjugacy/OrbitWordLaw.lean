@@ -47,13 +47,11 @@ theorem cardMatchOne : CardMatchOne := cardMatchOne_holds
 /-- Two disjoint windows, from `CardMatchSet`.  Proved in `OrbitWordLawTerras.lean`. -/
 theorem cardMatchTwo : CardMatchTwo := cardMatchTwo_holds
 
-/-- The second moment over a block, from `CardMatchOne`, `CardMatchTwo`.  Confidence 90%. -/
-theorem sumSqWdevLe : SumSqWdevLe := by
-  sorry
+/-- The second moment over a block.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem sumSqWdevLe : SumSqWdevLe := sumSqWdevLe_holds
 
-/-- Chebyshev on a block, from `SumSqWdevLe`.  Confidence 95%. -/
-theorem cardBadBlockLe : CardBadBlockLe := by
-  sorry
+/-- Chebyshev on a block.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem cardBadBlockLe : CardBadBlockLe := cardBadBlockLe_holds
 
 /-- Blocks give windows: a deviation is `1`-Lipschitz in the end point.  Confidence 90%. -/
 theorem winGoodOfBlocks : WinGoodOfBlocks := by

@@ -162,4 +162,146 @@ theorem cardMatchTwo_holds : CardMatchTwo := by
       simp only
       rw [if_neg (by omega)]
 
+/-! ## The second moment over a block -/
+
+/-- The centred indicator of a match of `u` at `i`. -/
+noncomputable def cind (u : List Bool) (i r : ℕ) : ℝ :=
+  (if WindowMatch (fun s => u.getD s false) u.length i r then 1 else 0) - (1 / 2 : ℝ) ^ u.length
+
+/-- A deviation is the sum of the centred indicators. -/
+theorem wdev_eq_sum_cind (u : List Bool) (r a b : ℕ) :
+    wdev u r a b = ∑ i ∈ Finset.Ico a (a + b), cind u i r := by
+  unfold wdev wcnt cind
+  rw [Finset.card_filter, Finset.sum_sub_distrib]
+  push_cast
+  simp
+
+/-- A centred indicator is at most `1` in size. -/
+theorem abs_cind_le (u : List Bool) (i r : ℕ) : |cind u i r| ≤ 1 := by
+  unfold cind
+  have hp0 : (0 : ℝ) ≤ (1 / 2 : ℝ) ^ u.length := by positivity
+  have hp1 : (1 / 2 : ℝ) ^ u.length ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  rw [abs_le]
+  split_ifs <;> constructor <;> linarith
+
+/-- `2^(m − k) = 2^m 2^(−k)` for `k ≤ m`. -/
+theorem two_pow_sub_eq {m k : ℕ} (h : k ≤ m) :
+    ((2 ^ (m - k) : ℕ) : ℝ) = 2 ^ m * (1 / 2 : ℝ) ^ k := by
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h
+  rw [Nat.add_sub_cancel_left]
+  push_cast
+  rw [pow_add, one_div_pow, mul_comm ((2 : ℝ) ^ k), mul_assoc, mul_one_div_cancel (by positivity),
+    mul_one]
+
+/-- Matches of `u` at `i` number `2^m 2^(−|u|)`. -/
+theorem sum_match_eq (u : List Bool) {m i : ℕ} (h : i + u.length ≤ m) :
+    ∑ r ∈ Finset.range (2 ^ m),
+      (if WindowMatch (fun s => u.getD s false) u.length i r then (1 : ℝ) else 0) =
+      2 ^ m * (1 / 2 : ℝ) ^ u.length := by
+  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_one, cardMatchOne_holds u m i h,
+    two_pow_sub_eq (by omega)]
+
+/-- Disjoint windows are uncorrelated. -/
+theorem sum_cind_mul_eq_zero (u : List Bool) {m i j : ℕ} (hij : i + u.length ≤ j)
+    (hj : j + u.length ≤ m) :
+    ∑ r ∈ Finset.range (2 ^ m), cind u i r * cind u j r = 0 := by
+  have hexp : ∀ r, cind u i r * cind u j r =
+      (if WindowMatch (fun s => u.getD s false) u.length i r ∧
+          WindowMatch (fun s => u.getD s false) u.length j r then (1 : ℝ) else 0) -
+        (1 / 2 : ℝ) ^ u.length *
+          (if WindowMatch (fun s => u.getD s false) u.length i r then (1 : ℝ) else 0) -
+        (1 / 2 : ℝ) ^ u.length *
+          (if WindowMatch (fun s => u.getD s false) u.length j r then (1 : ℝ) else 0) +
+        ((1 / 2 : ℝ) ^ u.length) ^ 2 := by
+    intro r
+    unfold cind
+    by_cases hA : WindowMatch (fun s => u.getD s false) u.length i r <;>
+      by_cases hB : WindowMatch (fun s => u.getD s false) u.length j r <;>
+      simp only [hA, hB, and_self, and_true, and_false, if_true, if_false] <;> ring
+  simp only [hexp]
+  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
+    ← Finset.mul_sum, sum_match_eq u (by omega), sum_match_eq u hj, ← Finset.sum_filter,
+    Finset.sum_const, nsmul_eq_mul, mul_one, cardMatchTwo_holds u m i j hij hj,
+    Finset.sum_const, Finset.card_range, nsmul_eq_mul, two_pow_sub_eq (by omega)]
+  push_cast
+  ring
+
+/-- Each pair of positions contributes at most `2^m`, and nothing when the windows are disjoint. -/
+theorem sum_cind_mul_le (u : List Bool) {m i j : ℕ} (hi : i + u.length ≤ m)
+    (hj : j + u.length ≤ m) :
+    ∑ r ∈ Finset.range (2 ^ m), cind u i r * cind u j r ≤
+      if i < j + u.length ∧ j < i + u.length then (2 : ℝ) ^ m else 0 := by
+  split_ifs with h
+  · refine le_trans (Finset.sum_le_sum (g := fun _ => (1 : ℝ)) fun r _ => ?_) (le_of_eq ?_)
+    · have := abs_mul (cind u i r) (cind u j r)
+      have h1 := abs_cind_le u i r
+      have h2 := abs_cind_le u j r
+      have : |cind u i r| * |cind u j r| ≤ 1 := by
+        nlinarith [abs_nonneg (cind u i r), abs_nonneg (cind u j r)]
+      linarith [le_abs_self (cind u i r * cind u j r)]
+    · simp
+  · rw [not_and_or, not_lt, not_lt] at h
+    rcases h with h | h
+    · rw [show (∑ r ∈ Finset.range (2 ^ m), cind u i r * cind u j r) =
+          ∑ r ∈ Finset.range (2 ^ m), cind u j r * cind u i r from
+          Finset.sum_congr rfl fun r _ => mul_comm _ _, sum_cind_mul_eq_zero u h hi]
+    · rw [sum_cind_mul_eq_zero u h hj]
+
+/-- **The second moment over a block** (`SumSqWdevLe`). -/
+theorem sumSqWdevLe_holds : SumSqWdevLe := by
+  intro u m a b hm
+  have hsq : ∀ r, (wdev u r a b) ^ 2 = ∑ i ∈ Finset.Ico a (a + b), ∑ j ∈ Finset.Ico a (a + b),
+      cind u i r * cind u j r := by
+    intro r
+    rw [wdev_eq_sum_cind, sq, Finset.sum_mul_sum]
+  simp only [hsq]
+  rw [Finset.sum_comm]
+  refine le_trans (Finset.sum_le_sum fun i hi => ?_) (le_of_eq (a := ∑ i ∈ Finset.Ico a (a + b),
+    2 * (u.length : ℝ) * 2 ^ m) ?_)
+  · rw [Finset.sum_comm]
+    have hi' := Finset.mem_Ico.mp hi
+    refine le_trans (Finset.sum_le_sum fun j hj => sum_cind_mul_le u (by omega)
+      (by have := Finset.mem_Ico.mp hj; omega)) ?_
+    rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
+    have hcard : ((Finset.Ico a (a + b)).filter
+        fun j => i < j + u.length ∧ j < i + u.length).card ≤ 2 * u.length := by
+      refine le_trans (Finset.card_le_card (t := Finset.Ico (i + 1 - u.length) (i + u.length))
+        fun j hj => ?_) ?_
+      · rw [Finset.mem_filter] at hj
+        rw [Finset.mem_Ico]
+        omega
+      · rw [Nat.card_Ico]
+        omega
+    have : (((Finset.Ico a (a + b)).filter
+        fun j => i < j + u.length ∧ j < i + u.length).card : ℝ) ≤ 2 * u.length := by
+      exact_mod_cast hcard
+    have h2 : (0 : ℝ) ≤ 2 ^ m := by positivity
+    nlinarith
+  · rw [Finset.sum_const, Nat.card_Ico, Nat.add_sub_cancel_left, nsmul_eq_mul]
+    ring
+
+/-- **Chebyshev on a block** (`CardBadBlockLe`). -/
+theorem cardBadBlockLe_holds : CardBadBlockLe := by
+  intro u m a b ε hm hε hb
+  set bad := (Finset.range (2 ^ m)).filter fun r => ε * b < |wdev u r a b| with hbad
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hεb : 0 < ε * b := by positivity
+  have h1 : (bad.card : ℝ) * (ε * b) ^ 2 ≤ ∑ r ∈ Finset.range (2 ^ m), (wdev u r a b) ^ 2 := by
+    calc (bad.card : ℝ) * (ε * b) ^ 2 = ∑ r ∈ bad, (ε * b) ^ 2 := by
+          rw [Finset.sum_const, nsmul_eq_mul]
+      _ ≤ ∑ r ∈ bad, (wdev u r a b) ^ 2 := by
+          refine Finset.sum_le_sum fun r hr => ?_
+          rw [hbad, Finset.mem_filter] at hr
+          rw [← sq_abs (wdev u r a b)]
+          exact pow_le_pow_left₀ hεb.le hr.2.le 2
+      _ ≤ ∑ r ∈ Finset.range (2 ^ m), (wdev u r a b) ^ 2 :=
+          Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+            fun r _ _ => sq_nonneg _
+  have h2 := sumSqWdevLe_holds u m a b hm
+  rw [le_div_iff₀ (by positivity)]
+  have : (bad.card : ℝ) * (ε * b) ^ 2 = (bad.card : ℝ) * (ε ^ 2 * b) * b := by ring
+  have h3 : (bad.card : ℝ) * (ε ^ 2 * b) * b ≤ 2 * u.length * 2 ^ m * b := by
+    nlinarith
+  exact le_of_mul_le_mul_right h3 hbR
+
 end CollatzMoonshot.Conjugacy
