@@ -127,6 +127,7 @@ import CollatzMoonshot.Conjugacy.Bands
 import CollatzMoonshot.Conjugacy.Champernowne
 import CollatzMoonshot.Conjugacy.Digits
 import CollatzMoonshot.Conjugacy.Disjunctive
+import CollatzMoonshot.Conjugacy.ChampernowneOne
 import CollatzMoonshot.Conjugacy.Bridges
 import CollatzMoonshot.Conjugacy.Coalescence
 import CollatzMoonshot.Conjugacy.Fourier

@@ -22,9 +22,8 @@ orbit, not on a residue.
   concatenation of words of lengths `len` carries letter `i` of word `n`.  Everything is
   computable; the word index is a `Nat.find`.
 * **`C = 1`** (`collatzChampernowne 1`): the word of `n` is its `size n`-letter Terras word.
-  Normality is believed with no new Collatz input (`collatzChampernowne_one_normal`,
-  confidence 85%): Champernowne's counting, with the within-stage order permuted by Terras's
-  bijection.
+  Normality takes no new Collatz input (`ChampernowneOne.lean`,
+  `collatzChampernowne_one_normal`): Terras's bijection and a count.
 * **`C ≥ 2`**: normality of `𝒞_C` is read as a **short-interval, beyond-Terras
   equidistribution** of the parity letters of `k`-bit integers, `ShortIntervalMixing C`.  The
   direction `ShortIntervalMixing C → Normal 𝒞_C` is frozen (`normal_of_shortIntervalMixing`,
@@ -183,30 +182,10 @@ noncomputable def collatzChampernowneStop : ℕ → Bool :=
 
 /-! ## `C = 1`: Champernowne with the order permuted -/
 
-/-- **Theorem (believed, confidence 85%).**  `𝒞_1` is normal.
-
-*Stage `k`* is the `k`-bit integers `n ∈ [2^(k-1), 2^k)`; each contributes its `k`-letter
-Terras word.  By `accWord_congr_mod`, letter `j` depends only on `n mod 2^(j+1)`, so the first
-`k − 1` letters depend only on `n mod 2^(k-1)`, which runs over every residue once as `n` runs
-over the stage; by Terras's bijection (`Qword_bijective` on `natDigits`) the `(k−1)`-letter
-prefix runs bijectively over all `(k−1)`-words.  Hence every block of length `L` whose
-`L` positions lie inside the first `k − 1` letters has frequency exactly `2^(−L)` over the
-stage.  The last letter of each word is feedback-determined (`Qword_eq_xor` with top digit
-`1`), and the `L` positions per word that touch it or straddle a word boundary are an
-`L / k` fraction of the stage's letters.
-
-A prefix ending `m ≤ 2^(k-1)` words into stage `k`: write `m` in binary and cut
-`[2^(k-1), 2^(k-1) + m)` into aligned dyadic blocks, one of length `2^b` per set bit `b`.  In a
-block of length `2^b`, `n mod 2^b` runs over every residue once, so the first `b` letters of
-its words are exactly uniform; the remaining `k − b` letters per word, plus the `L` positions
-touching them, are counted as determined.  Over all blocks the determined positions number at
-most `2m (k − log₂ m + 2) + 2mL`, which is at most `(6 + 2L) · 2^(k-1)` on `m ≤ 2^(k-1)`,
-while the prefix has length at least `(k − 2) · 2^(k-1)` (the stages below `k`).  So the
-determined positions are `o(prefix length)` uniformly in `m`, and every block of length `L`
-has frequency `2^(−L) + o(1)`: Champernowne's argument, with the within-stage order permuted
-by the conjugacy.  No new Collatz input enters for `C = 1`. -/
-theorem collatzChampernowne_one_normal : Normal (collatzChampernowne 1) := by
-  sorry
+/-- `champLen 1` is the bit length: each word of `𝒞_1` is exactly the Terras word.  Normality of
+`𝒞_1` is `collatzChampernowne_one_normal`, in `ChampernowneOne.lean`. -/
+theorem champLen_one (n : ℕ) : champLen 1 n = Nat.size (n + 1) := by
+  simp [champLen]
 
 /-! ## `C ≥ 2`: beyond-Terras short-interval mixing -/
 
