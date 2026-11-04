@@ -78,3 +78,11 @@ Node restatements (sibling defs only; frozen target untouched): `StagePasses` co
 4. `summableLargeTwoAdic`: `∑_a 2^(−a) ∑_{m < 2^(a/ε)} 1/m < ∞`.
 5. `notBadStartOfGoodOdd`: `2^a m` reads `a` zeros then `m`; `T = C(s+a) − a ≤ 4s + 3a`, and
    `5T ≤ 21 s` from `15 a ≤ s`; deviation `≤ (δ/2) s + 2a + |u| ≤ δ s` once `s ≥ 4|u|/δ`.
+
+## Lap 3 (2026-11-04, autonomous) — in progress
+
+Gated file sorry count: **3** (was 5).  Proved: `winGoodWhp_holds` (`OrbitWordLawWhp.lean`; fixed
+number `K = ⌈8/(5δη)⌉ + 1` of blocks of length `2Λ/K + 1`, bound `64 K² |u| / (δ² (2Λ+1))`),
+`logDens0OfWindow_holds` (new `OrbitWordLawWindow.lean`; windows `[y_k^α, y_k^(α²)]`,
+`y_k = X_windowBase^(α^k)`, tile; mass `≤ 4 w_k` by Tao's (5.19); `∑ w_k ≤ α log X`).
+Open: `logDens0OddPart`, `summableLargeTwoAdic`, `notBadStartOfGoodOdd`.
