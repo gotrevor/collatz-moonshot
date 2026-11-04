@@ -1,5 +1,12 @@
 # PENDING_WORK
 
+## 2026-11-04 — the stage word law (`wip/orbit-word-law`): DONE
+
+`stageWordLaw_of_le_four` and `normal_iff_le_four` proved (`propext, Classical.choice, Quot.sound`);
+`OrbitStageLaw.lean` sorry-free.  Last lap: the window chain `not_badStart_of_chain'`
+(`OrbitStageLawChain.lean`), twelve windows at `θ' = 39/50`.  No mixing, no `TaoCollatz`.
+See `HANDOFF-2026-11-04-stage-word-law.md`.
+
 ## 2026-11-04 — the height line to `C*` (`wip/orbit-word-law`): DONE
 
 `heightLawBelowThreshold` and `firstPassage_sharp` proved (`propext, Classical.choice, Quot.sound`);
