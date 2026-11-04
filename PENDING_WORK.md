@@ -1,5 +1,16 @@
 # PENDING_WORK
 
+## 2026-11-04 — beyond-Terras words at growing depth: KICKOFF DONE
+
+`beyondWordsUniformLog` proved unconditionally (log-depth joint uniformity, total variation);
+`beyondWordsUniformLinear_of_sliceOscDecay` (depth `j/8` from the sliced Prop 1.14),
+`truncatedSyracMixing_of_sliceOscDecay`, `beyondWordsUniform_of_log` proved; all four
+`propext, Classical.choice, Quot.sound`.  Advance: the slice pipeline now carries its rate
+(`SliceFourierRate.lean`), and the per-slice residue law is bounded by oscillation plus an exact
+fibre-progression count for every scale `m` (`sum_norm_levelSum_resInd_le`).  Next (stretch):
+`κ < (log₂ 3)/2` from the node, and the `levelOsc` refutation probe.  See
+`HANDOFF-2026-11-04-beyond-words-linear.md`.
+
 ## 2026-11-04 — beyond-Terras words: KICKOFF DONE
 
 `BeyondWordsUniform` proved unconditionally (`beyondWordsUniform`, axioms `propext, Classical.choice,

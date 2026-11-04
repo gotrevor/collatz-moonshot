@@ -35,6 +35,11 @@ that uniformity reaches when `K` grows with `j`, measured in total variation:
   the sliced Proposition 1.17, is the theorem `sliceCharDecay`; the edge
   `SliceCharDecay → SliceOscDecay` is Tao's §6 for the sliced law and is NOT attempted here.
 
+**Status (2026-11-04).**  All four theorems are proved.  The log-depth headline runs through
+`SliceFourierRate.lean` (the pipeline at arbitrary exponent) and `beyondTV_le_of_slice`; the
+linear edge through `sum_norm_levelSum_resInd_le` (oscillation plus the fibre-progression count
+`abs_card_progression_sub_le`).
+
 Both headline theorems are ensemble statements over all `j`-bit starts.  They say nothing about
 any individual orbit, hence nothing about the Collatz conjecture.
 -/
@@ -431,7 +436,79 @@ theorem sum_norm_levelSum_resInd_le (j a m K : ℕ) (hma : m ≤ a) :
 the module docstring, with `m = ⌊a/2⌋` and the `outOddSet` tail). -/
 theorem beyondWordsUniformLinear_of_sliceOscDecay (h : SliceOscDecay) :
     BeyondWordsUniformLinear (1 / 8) := by
-  sorry
+  intro ε hε
+  obtain ⟨C, hCpos, hC⟩ := h 1 one_pos
+  have hdiv : Tendsto (fun j : ℕ => j / 8) atTop atTop := by
+    rw [tendsto_atTop]
+    intro b
+    rw [eventually_atTop]
+    exact ⟨8 * b, fun j hj => by omega⟩
+  have h3pos : (0 : ℝ) < ε / 3 := by positivity
+  have h1 := ((tendsto_const_div_atTop_nhds_zero_nat (2 * C)).comp hdiv).eventually
+    (gt_mem_nhds h3pos)
+  have h2 := ((tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num : (0 : ℝ) ≤ 2 / 3)
+    (by norm_num : (2 : ℝ) / 3 < 1)).comp hdiv).eventually (gt_mem_nhds h3pos)
+  have h3 := (tendsto_const_div_atTop_nhds_zero_nat (200 : ℝ)).eventually (gt_mem_nhds h3pos)
+  filter_upwards [h1, h2, h3, eventually_ge_atTop 16] with j hj1 hj2 hj3 hj
+  have hj1' : 2 * C / ((j / 8 : ℕ) : ℝ) < ε / 3 := hj1
+  have hj2' : ((2 : ℝ) / 3) ^ (j / 8) < ε / 3 := hj2
+  intro K hK
+  have hK8 : 8 * K ≤ j := by
+    have : (8 : ℝ) * K ≤ j := by linarith
+    exact_mod_cast this
+  have hper : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        (2 * ε / 3) * (levelSet j a).card := by
+    intro a hja haj
+    have hb := sum_norm_levelSum_resInd_le j a (a / 2) K (Nat.div_le_self a 2)
+    have hosc := hC j a (a / 2) (by omega) (Nat.div_le_self a 2) (by omega) (by omega)
+    rw [Real.rpow_neg_one] at hosc
+    have hm8 : j / 8 ≤ a / 2 := by omega
+    have hm8R : ((j / 8 : ℕ) : ℝ) ≤ ((a / 2 : ℕ) : ℝ) := by exact_mod_cast hm8
+    have hj8pos : (0 : ℝ) < ((j / 8 : ℕ) : ℝ) := by exact_mod_cast (show 0 < j / 8 by omega)
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    have hCm : 2 * C * (((a / 2 : ℕ) : ℝ))⁻¹ ≤ ε / 3 := by
+      have : 2 * C * (((a / 2 : ℕ) : ℝ))⁻¹ ≤ 2 * C / ((j / 8 : ℕ) : ℝ) := by
+        rw [← div_eq_mul_inv]
+        exact div_le_div_of_nonneg_left (by positivity) hj8pos hm8R
+      linarith
+    have hoscε : 2 * levelOsc j a (a / 2) ≤ ε / 3 * (levelSet j a).card := by
+      calc
+        2 * levelOsc j a (a / 2) ≤ 2 * C * (((a / 2 : ℕ) : ℝ))⁻¹ * (levelSet j a).card := by
+          linarith
+        _ ≤ ε / 3 * (levelSet j a).card := by gcongr
+    have hgeo : (2 : ℝ) ^ K * ((3 : ℝ) ^ (a / 2) / 3 ^ a) ≤ ε / 3 := by
+      have hKa : K ≤ a - a / 2 := by omega
+      have hja8 : j / 8 ≤ a - a / 2 := by omega
+      have hpow : (3 : ℝ) ^ a = 3 ^ (a / 2) * 3 ^ (a - a / 2) := by
+        rw [← pow_add]
+        congr 1
+        omega
+      calc
+        (2 : ℝ) ^ K * ((3 : ℝ) ^ (a / 2) / 3 ^ a) = 2 ^ K / 3 ^ (a - a / 2) := by
+          rw [hpow]
+          field_simp
+        _ ≤ 2 ^ (a - a / 2) / 3 ^ (a - a / 2) := by
+          gcongr
+          norm_num
+        _ = ((2 : ℝ) / 3) ^ (a - a / 2) := by rw [div_pow]
+        _ ≤ ((2 : ℝ) / 3) ^ (j / 8) := pow_le_pow_of_le_one (by norm_num) (by norm_num) hja8
+        _ ≤ ε / 3 := hj2'.le
+    calc
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+          2 * levelOsc j a (a / 2) +
+            2 ^ K * ((3 : ℝ) ^ (a / 2) / 3 ^ a) * (levelSet j a).card := hb
+      _ ≤ ε / 3 * (levelSet j a).card + ε / 3 * (levelSet j a).card := by
+        gcongr
+      _ = (2 * ε / 3) * (levelSet j a).card := by ring
+  have hTV := beyondTV_le_of_slice j K (by positivity) hper
+  have hout := outOddSet_ratio_le j (by omega)
+  have h2out : 2 * ((outOddSet j).card : ℝ) / 2 ^ j ≤ 200 / j := by
+    rw [mul_div_assoc]
+    have : (200 : ℝ) / j = 2 * (100 / j) := by ring
+    rw [this]
+    linarith
+  linarith
 
 /-- **Theorem (unconditional): logarithmic depth.**  The first `C log₂ j` letters past the
 Terras horizon are jointly uniform, for every `C`. -/
