@@ -76,7 +76,7 @@ nonzero class mod 3 holds `n/2 > 2^32`); classes are `uint64` now.
 ## Checkpoint
 
 * Commits: 4ed589a, 7895fff (gate), d4beab0 (handoff), f9e9da4 (bridge), 9fc28c3 (central node,
-  edges, targets), 454d1e2 (probe + mixture check), this commit (plan + handoff).
+  edges, targets), 454d1e2 (probe + mixture check), ff69755 (plan + handoff); HEAD after this checkpoint commit. `box done --green` filed.
 * Root imports: `BeyondWordsAligned`, `SliceOscBridge`, `SliceOscCentral`; `lake build
   CollatzMoonshot` green (8913 jobs).  Not pushed (host pushes).
 * Next (SEC6S lap 1): `levelClass_eq_sum_levelMass` in Lean (the mixture identity), generic levels
