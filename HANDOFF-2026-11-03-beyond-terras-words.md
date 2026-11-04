@@ -33,5 +33,9 @@ Frozen statements unchanged (the only removed lines in `BeyondWords.lean` are th
 
 * The new modules are not imported from the root `CollatzMoonshot.lean` (kickoff: build only what you
   touch).  Add `SliceFourierGeneral`, `ResidueIndicator`, `BeyondWords` there on the next full build.
-* Stretch (kickoff): `BeyondWordsLetters.lean`, the word form via the Terras bijection
-  `m mod 2^K ↔ first K parities` (`accWord_congr_mod`).  Not started.
+* Stretch (kickoff): DONE in `Conjugacy/BeyondWordsLetters.lean`.  `beyondWordCount_tendsto`: for
+  every binary word `w` of length `K`, the proportion of `j`-bit starts whose parity letters
+  `j, …, j+K−1` spell `w` tends to `2^{−K}` (axioms `propext, Classical.choice, Quot.sound`).  Bridge:
+  `mod_two_pow_eq_prefixInt_iff` (first `K` letters of `m` are `w` iff `m ≡ prefixInt w K mod 2^K`,
+  Terras at finite length via `letterMap_injective`), so `beyondWordCount_eq`.  Add it to the root
+  imports with the others.
