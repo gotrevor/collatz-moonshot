@@ -1,5 +1,12 @@
 # PENDING_WORK
 
+## 2026-11-04 — the height line to `C*` (`wip/orbit-word-law`): DONE
+
+`heightLawBelowThreshold` and `firstPassage_sharp` proved (`propext, Classical.choice, Quot.sound`);
+`OrbitHeightSharp.lean` sorry-free, so `heightLawUpTo_iff`: the line holds through `τ size n` iff
+`τβ < 1` (for `τβ ≠ 1`).  No fixed number was structural: the letter-`1` tolerance is the word's own
+`δ`, the scale count is `J` with `α^(−J) ≤ (1 − τβ)/4`.  See `HANDOFF-2026-11-04-height-sharp.md`.
+
 ## 2026-11-04 — orbit word law (`wip/orbit-word-law`)
 
 Advance on the crux: `orbitWordLaw_of_le_four` is proved from 16 named `Prop` nodes held open in
