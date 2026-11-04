@@ -43,15 +43,38 @@ all 16 close.
 HEAD after this commit on `wip/orbit-word-law`; no uncommitted Lean edits.  Build:
 `lake build CollatzMoonshot.Conjugacy.OrbitWordLaw` green.  Sorry count of the gated file: 16.
 
-## Lap 2 (2026-11-04, autonomous)
+## Lap 2 (2026-11-04, autonomous) — checkpoint
 
-Proved, axioms `propext, Classical.choice, Quot.sound`:
-- `stagePasses` (`OrbitWordLawStage.lean`, `stagePasses_holds`).  `StagePasses` restated with cover
-  `20 (D + 2) + 4H` (roomier than the planted `2⌈6(D+1)⌉ + 4H`).
-- `locGoodPassLoc` (`locGoodPassLoc_holds`, same file).
-- `goodOddOfStages` (`OrbitWordLawReadOff.lean`, `goodOddOfStages_holds`).  `numScales` is now
-  `4000` (`α^(−3999) ≤ 1/50` via `decide +kernel` on `50·1000^3999 ≤ 1001^3999`).
+Branch `wip/orbit-word-law`, HEAD `6eb8f70` + this handoff commit.  No uncommitted Lean edits.
+`lake build CollatzMoonshot.Conjugacy.OrbitWordLaw` green.  Gated file sorry count: **5** (was 16).
+`#print axioms orbitWordLaw_of_le_four`: `propext, sorryAx, Classical.choice, Quot.sound`.
 
-Sorry count of the gated file: 13.  Left: the probabilistic chain (`CardMatchSet` …
-`WinGoodWhp`) and density (`LogDens0OfWindow`, `LogDens0OddPart`, `SummableLargeTwoAdic`,
-`NotBadStartOfGoodOdd`).
+Proved this lap (each a `*_holds` theorem cited from `OrbitWordLaw.lean`; all sibling files are
+sorry-free):
+- `OrbitWordLawStage.lean`: `stagePasses_holds`, `locGoodPassLoc_holds` (+ `logb_rpow_eq`,
+  `lam_ge/le`, `hgt_le`, `lam_le_self`, letter-time lemmas `exists_valSum_eq_of_odd` etc.).
+- `OrbitWordLawReadOff.lean`: `goodOddOfStages_holds` (`wdev_chain`, `start_passes`,
+  `next_passes`, numerics `alpha_inv_pow_last` via `decide +kernel`).
+- `OrbitWordLawTerras.lean`: `cardMatchSet/One/Two_holds`, `sumSqWdevLe_holds`,
+  `cardBadBlockLe_holds`, `winGoodOfBlocks_holds`, `winGoodModIff_holds`.
+- `OrbitWordLawWhp.lean`: `probPeriodicLe_holds`.
+
+Node restatements (sibling defs only; frozen target untouched): `StagePasses` cover is now
+`20 (D + 2) + 4H`; `numScales = 4000`.
+
+## Open (5) and the planned attack
+
+1. `winGoodWhp` (put in `OrbitWordLawWhp.lean`).  WLOG `δ ≤ 1/2`, `η ≤ 1/40` (WinGood is
+   monotone: bigger `δ`, bigger `H` easier; `hgt` monotone in `η`).  With `L = log₂ x`,
+   `M = 3 nZero x ≥ 0.3 L − 3`, `H = hgt η x`, `Λ = lam x ≤ L/20`: block `b = ⌊δ H / 8⌋₊`
+   (`≥ δηL/16` for large `L`), `K = 2Λ / b + 1` (so `2Λ < K b ≤ 2Λ + b`).  Periodicity from
+   `winGoodModIff_holds` (needs `2Λ + |u| ≤ M`); `ProbPeriodicLe` bounds the probability by
+   `2 #bad / 2^M + K_int 2^(−M)`; `#bad ≤ ∑_{k<K} #{δ/4 · b < |wdev u r (k b) b|}` (contrapositive
+   of `winGoodOfBlocks_holds`) `≤ K · 32 |u| 2^M / (δ² b)` (`cardBadBlockLe_holds`, needs
+   `k b + b + |u| ≤ M`).  Total `≤ C / L`, `C = 1024 (2/(δη) + 1) |u| / (δ³ η) + 10 K_int`.
+2. `logDens0OfWindow`: cover `[1, X]` by windows `[y, y^α]`, `y_k = y₀^(α^k)`; the odd log-weight
+   in a window is `P · W`, `W ≤ 1 + α² ln x`; Cesàro over geometric `ln y_k`.
+3. `logDens0OddPart`: `n = 2^a m`, `∑_a 2^(−a) S(X / 2^a) ≤ 2 S(X)`.
+4. `summableLargeTwoAdic`: `∑_a 2^(−a) ∑_{m < 2^(a/ε)} 1/m < ∞`.
+5. `notBadStartOfGoodOdd`: `2^a m` reads `a` zeros then `m`; `T = C(s+a) − a ≤ 4s + 3a`, and
+   `5T ≤ 21 s` from `15 a ≤ s`; deviation `≤ (δ/2) s + 2a + |u| ≤ δ s` once `s ≥ 4|u|/δ`.
