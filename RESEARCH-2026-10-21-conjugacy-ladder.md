@@ -1100,7 +1100,7 @@ Notation: `α = 1.001`, `N_y` log-uniform on odd numbers in `[y, y^α]`, `Pass_x
 4. **Reading off the orbit.**  For all but `≪ log^{−c} x_*` of `N`, every `G_{x_j}` holds, and by induction each `M_j > 1` is a true orbit point.  Apply step 1 to `N` itself for the letters before `x₀`.  Stretches shorter than `η log x` cost `∑ H_j ≈ 1000 η log x₀`, so take `η ≲ δ (α − 1)`.  The letter-`1` frequency within `0.011` gives `t ≥ 0.9 k/(β + 0.0175) ≥ 4k` at height `x_*`, which covers `C ≤ 4`.
 5. **Density.**  Cover `[1, X]` by windows `[y, y^α]`.  Starts `2^a m` prepend `a` zeros; `a ≥ ε log₂ N` has log density `0`, and the margin `4.34 > 4` absorbs the rest.
 
-Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so in logarithmic density the threshold would be sharp.
+Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so in logarithmic density the threshold would be sharp.  `logNormal_of_normal`, `logNormal_of_orbitWordLaw` and `not_logNormal_of_five_le` are proved in `ChampernowneLog.lean`; `orbitWordLaw_of_le_four` is the open part.
 
 What this does not touch: it says nothing about any one stage (Tao Remark 1.16 names the mixing that a natural-density version would need), nothing about orbits at bounded height, and nothing about Collatz itself.  A single stage can carry the whole exceptional set, since it has log-weight `≈ 1/(0.001 k)` in a window and the exception is only `k^{−c}`.
 
