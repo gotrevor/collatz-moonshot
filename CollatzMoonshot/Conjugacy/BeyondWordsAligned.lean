@@ -15,6 +15,12 @@ import CollatzMoonshot.FrontA.OrbitPacking
 slice constant; every per-slice residue-sum bound is shift-invariant (reindex `c`), and both
 growing-depth theorems hold verbatim for every aligned window.  Ensemble statements over the
 window's starts; nothing about any individual orbit.
+
+**Status (2026-11-04).**  Proved.  `tstep_iterate_add_mul` (shift identity),
+`sum_norm_sum_resInd_add` (shift invariance, via the bijection `c ↦ c − s` of `ZMod (2^K)`), and
+`beyondTVAt_le_of_band` (the window form of `beyondTV_le_of_band`, same per-slice hypothesis) carry
+the assemblies of `beyondWordsUniformLog` and `beyondWordsUniformLinear_of_sliceOscDecay_sharp` to
+every window, uniformly in `q`.
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -217,7 +223,79 @@ theorem beyondTVAt_le_of_band (q j K : ℕ) (P : ℕ → Prop) [DecidablePred P]
 theorem beyondWordsUniformLogAt :
     ∀ C : ℝ, ∀ ε > (0 : ℝ), ∀ᶠ j : ℕ in atTop, ∀ K : ℕ, (K : ℝ) ≤ C * Real.logb 2 j →
       ∀ q : ℕ, beyondTVAt (q * 2 ^ j) j K ≤ ε := by
-  sorry
+  intro C ε hε
+  have h := sliceCharDecay_of_pascalDampingDecay pascalDampingDecay
+  obtain ⟨C', hC'pos, hslice⟩ := exists_norm_levelSum_le_rate h (⌈C⌉₊ + 2) (by omega)
+  have hsmall := (tendsto_logMajorant C' ⌈C⌉₊).eventually (gt_mem_nhds (half_pos hε))
+  have htail := (tendsto_const_div_atTop_nhds_zero_nat (200 : ℝ)).eventually
+    (gt_mem_nhds (half_pos hε))
+  filter_upwards [hsmall, htail, eventually_ge_atTop 4096] with j hjM hjt hj
+  intro K hK q
+  set N := ⌈C⌉₊ with hN
+  have hjR1 : (1 : ℝ) ≤ j := by exact_mod_cast (show 1 ≤ j by omega)
+  have hjRpos : (0 : ℝ) < j := by linarith
+  have h2K : (2 : ℝ) ^ K ≤ (j : ℝ) ^ N := by
+    have hlog : (K : ℝ) ≤ Real.logb 2 ((j : ℝ) ^ N) := by
+      rw [Real.logb_pow]
+      have h0 : 0 ≤ Real.logb 2 (j : ℝ) := Real.logb_nonneg one_lt_two hjR1
+      have hCN : C ≤ (N : ℝ) := Nat.le_ceil C
+      nlinarith [mul_le_mul_of_nonneg_right hCN h0]
+    rw [Real.le_logb_iff_rpow_le one_lt_two (by positivity), Real.rpow_natCast] at hlog
+    exact hlog
+  have hM0 : 0 ≤ logMajorant C' N j := by unfold logMajorant; positivity
+  have hper : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        logMajorant C' N j * (levelSet j a).card := by
+    intro a hja haj
+    let E : ℝ := (2 ^ (N + 2) * C' / (j : ℝ) ^ (N + 2) +
+        (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (j + 1)) +
+      ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (j + 1))
+    have hE0 : 0 ≤ E := by positivity
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    have hpt : ∀ c ∈ Finset.range (2 ^ K),
+        ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤ E * (levelSet j a).card := by
+      intro c hc
+      have hb := hslice j a hj hja haj (resInd K c) 1
+        (layeredWeight_resInd (Finset.mem_range.mp hc) a)
+      have haj' : (a : ℝ) + 1 ≤ (j : ℝ) + 1 := by
+        have : a ≤ j := by omega
+        have : (a : ℝ) ≤ j := by exact_mod_cast this
+        linarith
+      calc
+        ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤ _ := hb
+        _ ≤ E * (levelSet j a).card := by
+          rw [one_mul]
+          dsimp only [E]
+          gcongr
+    calc
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+          ∑ _c ∈ Finset.range (2 ^ K), E * (levelSet j a).card := Finset.sum_le_sum hpt
+      _ = (2 : ℝ) ^ K * (E * (levelSet j a).card) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        push_cast
+        ring
+      _ ≤ (j : ℝ) ^ N * (E * (levelSet j a).card) := by gcongr
+      _ = logMajorant C' N j * (levelSet j a).card := by
+        simp only [logMajorant, E]
+        ring
+  have hTV := beyondTVAt_le_of_band q j K (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20) hM0
+    (fun a ha => hper a ha.1 ha.2)
+  have hoffcard : ((Finset.range (2 ^ j)).filter
+      (fun r => ¬ (j ≤ 4 * oddCount r j ∧ oddCount r j ≤ 11 * j / 20))).card =
+        (outOddSet j).card := by
+    unfold outOddSet
+    congr 1
+    ext r
+    simp only [Finset.mem_filter, Finset.mem_range]
+    omega
+  rw [hoffcard] at hTV
+  have hout := outOddSet_ratio_le j (by omega)
+  have h2out : 2 * ((outOddSet j).card : ℝ) / 2 ^ j ≤ 200 / j := by
+    rw [mul_div_assoc]
+    have : (200 : ℝ) / j = 2 * (100 / j) := by ring
+    rw [this]
+    linarith
+  linarith
 
 /-- **Frozen (2026-11-04).**  Linear-depth uniformity on every aligned window, every
 `κ < (log₂ 3)/2`, from the sliced Proposition 1.14 node. -/
@@ -225,6 +303,133 @@ theorem beyondWordsUniformLinearAt_of_sliceOscDecay_sharp (h : SliceOscDecay) (�
     (hκ : κ < Real.logb 2 3 / 2) :
     ∀ ε > (0 : ℝ), ∀ᶠ j : ℕ in atTop, ∀ K : ℕ, (K : ℝ) ≤ κ * j →
       ∀ q : ℕ, beyondTVAt (q * 2 ^ j) j K ≤ ε := by
-  sorry
+  classical
+  intro ε hε
+  obtain ⟨C, hCpos, hC⟩ := h 1 one_pos
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hl3 : 0 < Real.log 3 := Real.log_pos (by norm_num)
+  set k := max κ 0 with hkdef
+  have hk0 : 0 ≤ k := le_max_right _ _
+  have hκk : κ ≤ k := le_max_left _ _
+  set t := k * Real.log 2 / Real.log 3 with htdef
+  have ht0 : 0 ≤ t := by positivity
+  have htl : t * Real.log 3 = k * Real.log 2 := by
+    rw [htdef]
+    field_simp
+  have ht : t < 1 / 2 := by
+    have hκ' : κ * Real.log 2 < Real.log 3 / 2 := by
+      rw [Real.logb] at hκ
+      have := (lt_div_iff₀ (by norm_num : (0 : ℝ) < 2)).1 hκ
+      rw [lt_div_iff₀ hl2] at this
+      linarith
+    have hk' : k * Real.log 2 < Real.log 3 / 2 := by
+      rcases le_total κ 0 with h0 | h0
+      · rw [hkdef, max_eq_right h0]
+        linarith
+      · rw [hkdef, max_eq_left h0]
+        exact hκ'
+    rw [htdef, div_lt_iff₀ hl3]
+    linarith
+  set g := 1 / 2 - t with hgdef
+  have hg : 0 < g := by linarith
+  set δ := min (1 / 10 : ℝ) (g / 3) with hδdef
+  have hδpos : 0 < δ := lt_min (by norm_num) (by positivity)
+  have hδ10 : δ ≤ 1 / 10 := min_le_left _ _
+  have hδg : δ ≤ g / 3 := min_le_right _ _
+  set ρ := t + g / 3 with hρdef
+  set η := g / 3 * Real.log 3 with hηdef
+  have hη : 0 < η := by positivity
+  have hηeq : ρ * Real.log 3 - k * Real.log 2 = η := by
+    rw [hρdef, hηdef, ← htl]
+    ring
+  -- the three eventual thresholds
+  have hgeo := (tendsto_pow_atTop_nhds_zero_of_lt_one (Real.exp_pos (-η)).le
+    (Real.exp_lt_one_iff.2 (by linarith))).eventually (gt_mem_nhds (by positivity : 0 < ε / 4))
+  have htail := (tendsto_const_div_atTop_nhds_zero_nat (1 / (2 * δ ^ 2))).eventually
+    (gt_mem_nhds (by positivity : 0 < ε / 2))
+  obtain ⟨N, hN⟩ := exists_nat_gt ((3 / g) * (2 + 8 * C / ε))
+  filter_upwards [hgeo, htail, eventually_ge_atTop (N + 1)] with j hjgeo hjtail hjN
+  intro K hK
+  have hjpos : 0 < j := by omega
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hjpos
+  have hKk : (K : ℝ) ≤ k * j := hK.trans (mul_le_mul_of_nonneg_right hκk hjR.le)
+  have hjN' : (3 / g) * (2 + 8 * C / ε) < j := by
+    have : (N : ℝ) + 1 ≤ j := by exact_mod_cast hjN
+    linarith
+  have hjbig : 2 + 8 * C / ε < g / 3 * j := by
+    rw [div_mul_eq_mul_div, lt_div_iff₀ (by norm_num : (0 : ℝ) < 3)]
+    rw [div_mul_eq_mul_div, div_lt_iff₀ hg] at hjN'
+    linarith
+  set s := ⌈ρ * j⌉₊ with hsdef
+  have hs1 : ρ * j ≤ s := Nat.le_ceil _
+  have hs2 : (s : ℝ) < ρ * j + 1 := Nat.ceil_lt_add_one (by positivity)
+  set P : ℕ → Prop := fun a => |(a : ℝ) - j / 2| ≤ δ * j with hPdef
+  have hper : ∀ a, P a →
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        (ε / 2) * (levelSet j a).card := by
+    intro a ha
+    have ha' := abs_le.1 ha
+    have haR1 : (1 / 2 - δ) * j ≤ a := by linarith [ha'.1]
+    have haR2 : (a : ℝ) ≤ (1 / 2 + δ) * j := by linarith [ha'.2]
+    -- the scale `m = a − s`
+    have hgap : (g / 3) * j - 1 ≤ (a : ℝ) - s := by
+      have h1 : ρ + g / 3 ≤ 1 / 2 - δ := by linarith
+      have : (ρ + g / 3) * j ≤ (1 / 2 - δ) * j := mul_le_mul_of_nonneg_right h1 hjR.le
+      linarith
+    have hsa : s ≤ a := by
+      have : (s : ℝ) ≤ a := by
+        have : 0 ≤ 8 * C / ε := by positivity
+        linarith
+      exact_mod_cast this
+    set m := a - s with hmdef
+    have hmR : (m : ℝ) = a - s := by rw [hmdef, Nat.cast_sub hsa]
+    have hm8 : 8 * C / ε ≤ m := by
+      rw [hmR]
+      linarith
+    have hm1 : 1 ≤ m := by
+      have : (1 : ℝ) ≤ m := by
+        have : 0 ≤ 8 * C / ε := by positivity
+        rw [hmR]
+        linarith
+      exact_mod_cast this
+    have hmpos : (0 : ℝ) < m := by exact_mod_cast hm1
+    have hδj : δ * j ≤ 1 / 10 * j := mul_le_mul_of_nonneg_right hδ10 hjR.le
+    have hw1 : j ≤ 5 * a := by
+      have : (j : ℝ) ≤ 5 * a := by linarith
+      exact_mod_cast this
+    have hw2 : 5 * a ≤ 3 * j := by
+      have : (5 * a : ℝ) ≤ 3 * j := by linarith
+      exact_mod_cast this
+    have hb := sum_norm_levelSum_resInd_le j a m K (Nat.sub_le a s)
+    have hosc := hC j a m hm1 (Nat.sub_le a s) hw1 hw2
+    rw [Real.rpow_neg_one] at hosc
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    have hCm : C * (m : ℝ)⁻¹ ≤ ε / 8 := by
+      rw [← div_eq_mul_inv, div_le_iff₀ hmpos]
+      rw [div_le_iff₀ hε] at hm8
+      linarith
+    have hoscε : 2 * levelOsc j a m ≤ ε / 4 * (levelSet j a).card := by
+      have : C * (m : ℝ)⁻¹ * (levelSet j a).card ≤ ε / 8 * (levelSet j a).card := by gcongr
+      linarith
+    have hgeoε : (2 : ℝ) ^ K * ((3 : ℝ) ^ m / 3 ^ a) ≤ ε / 4 := by
+      have hpow : (3 : ℝ) ^ a = 3 ^ m * 3 ^ s := by
+        rw [← pow_add, hmdef, Nat.sub_add_cancel hsa]
+      have h1 : (2 : ℝ) ^ K * ((3 : ℝ) ^ m / 3 ^ a) = 2 ^ K / 3 ^ s := by
+        rw [hpow]
+        field_simp
+      rw [h1]
+      exact (two_pow_div_three_pow_le j K s hKk hs1 hηeq).trans hjgeo.le
+    calc
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+          2 * levelOsc j a m + 2 ^ K * ((3 : ℝ) ^ m / 3 ^ a) * (levelSet j a).card := hb
+      _ ≤ ε / 4 * (levelSet j a).card + ε / 4 * (levelSet j a).card := by
+        gcongr
+      _ = (ε / 2) * (levelSet j a).card := by ring
+  intro q
+  have hTV := beyondTVAt_le_of_band q j K P (by positivity) hper
+  have hoff := two_mul_card_offBand_div_le j hjpos hδpos
+  have hjtail' : 1 / (2 * δ ^ 2) / j < ε / 2 := hjtail
+  simp only [hPdef] at hTV
+  linarith
 
 end CollatzMoonshot.Conjugacy

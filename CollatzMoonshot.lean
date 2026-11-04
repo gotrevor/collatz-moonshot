@@ -145,5 +145,6 @@ import CollatzMoonshot.Conjugacy.BeyondWordsLetters
 import CollatzMoonshot.Conjugacy.SliceFourierRate
 import CollatzMoonshot.Conjugacy.BeyondWordsLinear
 import CollatzMoonshot.Conjugacy.BeyondWordsLinearSharp
+import CollatzMoonshot.Conjugacy.BeyondWordsAligned
 import CollatzMoonshot.Conjugacy.SliceOscGeometric
 import CollatzMoonshot.Maze
