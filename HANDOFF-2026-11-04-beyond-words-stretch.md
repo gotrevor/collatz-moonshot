@@ -53,3 +53,18 @@ small `m` ≈ 1.4–1.7 there.  Control: `m = a` gives 0.
 Lean home: `Conjugacy/SliceOscGeometric.lean`: the conjecture node `SliceOscGeometric`
 (`levelOsc ≤ C θ^m card` on the window, confidence 55%) and the proved edge
 `sliceOscDecay_of_geometric : SliceOscGeometric → SliceOscDecay`.
+
+## Checkpoint (2026-11-04, final)
+
+* Branch `wip/beyond-words-stretch`, HEAD `df1ae88` before this commit; not pushed (host pushes).
+* Commits this run: 7e42b47 (sharp edge proved, root import), e4eaaea (handoff), df1ae88
+  (levelOsc probe, `SliceOscGeometric` node + edge).
+* `box done --green` filed; treadmill stopped.
+* `#print axioms` (both `[propext, Classical.choice, Quot.sound]`):
+  `beyondWordsUniformLinear_of_sliceOscDecay_sharp`, `sliceOscDecay_of_geometric`.
+* Exact next steps (operator): review/merge into the conjugacy-ladder branch; for a new kickoff,
+  stretch (a) aligned windows (`BeyondWordsAligned.lean`, `beyondTVAt A j K` for `2^j ∣ A`, via
+  `tstep_iterate_identity` and `oddCount (A + r) j = oddCount r j`) or (d) `SEC6S-PLAN.md`
+  (port of `~/src/tao-collatz/TaoCollatz/Sec6/Mixing*.lean` to the sliced law, modelled on
+  `SEC7P-PLAN.md`).  Probe extension: `j ≥ 28` needs a compiled language (node takes ~1 min at
+  `j = 26`, ×4 per two steps).
