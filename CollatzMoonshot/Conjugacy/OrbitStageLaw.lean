@@ -5,7 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Conjugacy.OrbitHeightLaw
-import CollatzMoonshot.Conjugacy.OrbitStageLawBasic
+import CollatzMoonshot.Conjugacy.OrbitStageLawPull
 
 /-!
 # The orbit word law over one stage, and normality for `C ≤ 4`
