@@ -30,4 +30,26 @@ docstring's parameter sketch was updated to the scale actually used).  Root impo
 
 ## Stretch status
 
-(a) aligned windows: not started.  (c) levelOsc probe: next.  (d) SEC6S-PLAN.md: not started.
+(a) aligned windows: not started.  (d) SEC6S-PLAN.md: not started.
+
+(c) **levelOsc probe: done.**  `experiments/conjugacy/levelosc_table.js` (node; the box has no
+numpy, so the `.py` twin is pure Python and only practical to `j ≈ 18`), output
+`experiments/conjugacy/levelosc_table.out`, exact over all `2^j` starts, `j = 16, …, 26` (`j ≤ 14`
+cross-checked between the two scripts).  Ratio `levelOsc j a m / card`, central slice `a = j/2`:
+
+    j \ m   1     2     3     4     5     ... a-3   a-2   a-1
+    16     .816  .659  .534  .431  .338        .265  .188  (m=a-1)
+    20     .828  .680  .562  .466  .384        .254  .200  .144
+    24     .834  .691  .579  .487  .411        .193  .152  .111
+    26     .837  .696  .585  .495  .421        .168  .133  .098
+
+Shape: at fixed co-scale `a − m` the ratio falls with `j` (`a−m = 1`: `.259 → .098` over
+`j = 10 → 26`, ≈ 0.88 per digit); at fixed `m` it RISES with `j` toward a limit (increments
+shrink geometrically; `m = 3` extrapolates to ≈ 0.61), and the extrapolated limits fall roughly
+geometrically in `m` (≈ 0.86 per digit).  Not refuting; consistent with superpolynomial decay.
+Caveat: the window edge `a ≈ 3j/5` is sparse (fewer starts than `3^a`) up to `j ≈ 210`, ratio at
+small `m` ≈ 1.4–1.7 there.  Control: `m = a` gives 0.
+
+Lean home: `Conjugacy/SliceOscGeometric.lean`: the conjecture node `SliceOscGeometric`
+(`levelOsc ≤ C θ^m card` on the window, confidence 55%) and the proved edge
+`sliceOscDecay_of_geometric : SliceOscGeometric → SliceOscDecay`.

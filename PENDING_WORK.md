@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-11-04 — linear edge at its natural limit: GATE MET
+
+`beyondWordsUniformLinear_of_sliceOscDecay_sharp` proved (`BeyondWordsLinearSharp.lean`): from
+`SliceOscDecay`, beyond-Terras uniformity to every depth `κ j`, `κ < (log₂ 3)/2`; axioms
+`propext, Classical.choice, Quot.sound`.  Stretch (c) done: exact `levelOsc` table to `j = 26`
+(`experiments/conjugacy/levelosc_table.{js,out}`), not refuting; recorded as the conjecture node
+`SliceOscGeometric` with the proved edge `sliceOscDecay_of_geometric`.  Open stretch: (a) aligned
+windows, (d) `SEC6S-PLAN.md`.  See `HANDOFF-2026-11-04-beyond-words-stretch.md`.
+
 ## 2026-11-04 — beyond-Terras words at growing depth: KICKOFF DONE
 
 `beyondWordsUniformLog` proved unconditionally (log-depth joint uniformity, total variation);
