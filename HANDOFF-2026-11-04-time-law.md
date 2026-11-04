@@ -2,23 +2,45 @@
 
 Kickoff: `KICKOFF-2026-11-04-time-law.md`.  Gate: `sorry-free:CollatzMoonshot/Conjugacy/OrbitTimeLaw.lean`.
 
-## State
+## TARGET MET
 
-- `timeLaw_lower`: **proved** (`#print axioms`: propext, Classical.choice, Quot.sound).
-  `firstPassage_sharp` at `θ = min (1/2) (β ε / 2)`, `ε/2`; `f n > n^θ` is bounded.
-- `timeLaw_upper`: **assembled** from named leaves, all in `OrbitTimeLaw.lean`:
-  - `timeLaw_odd_window` (proved): window probability of the odd bad set with target `g` tends to 0.
-    For each `X`, `P ≤ P(¬GoodOddUpTo δ τ) + M log(X)^(−κ)`; `x_J ≤ X^α ≤ g m` eventually.
-  - even reduction (proved, inside `timeLaw_upper`): `2^a m` costs `a` halvings, absorbed since
-    `1/β + ε ≥ 1`; no `summableLargeTwoAdic` needed.  `g` from `exists_minorant` (proved).
-  - `exists_last_scale` (proved).
-  - **open** `chainFail_prob_le`: the rate.  Plan: rate version of `winGoodWhp_holds`
-    (`A/(2 lam x+1) + K 2^(−3 n₀) ≤ C / log x`), `dTV_j ≤ ∑_{i<j} C_stab log(x_(i+1))^(−c_stab)`
-    by `dTV_chain_step`, stage `≤ P_(x_j)(¬ScaleGood) + dTV_j` (as `stage_whp`), geometric sums with
-    `κ = min c_stab 1`, `log(x_j)^(−κ) = (α^κ)^j log(x)^(−κ)`.  No non-uniform constant found:
-    every threshold depends on `η = 1/1000` only.
-  - **open** `reach_of_chain`: deterministic.  `θ ≈ ε/60`, `τ = (1 − θ/2)/β`, `δ = θ/16`;
-    height line at `t₁ = ⌊τ s⌋` gives `T^(t₁) m ≤ 2^(θ s)`; run of zeros `d` after `t₁` has
-    `2^d ≤ T^(t₁) m`; `j₀` = first `j` with `j = J` or `x_(j+1) < 2^(θ s)`; stages `j₀..J` cost
-    `≤ ∑ lam x_j ≤ 51 α θ s`.  Chain facts as in `readOff_chain` (`start_passes`, `next_passes`,
-    `passes_passLoc`).
+Both frozen targets are proved; statements byte-identical to the planting commit `09a4012`
+(docstrings only changed).
+
+    #print axioms timeLaw_upper   -- [propext, Classical.choice, Quot.sound]
+    #print axioms timeLaw_lower   -- [propext, Classical.choice, Quot.sound]
+
+Checked from `/tmp/AxTL.lean` with a `sorry` control (`sorryControl` shows `sorryAx`).
+`lake build CollatzMoonshot` green (8945 jobs).  No `native_decide`, `axiom` or `maxHeartbeats`.
+No existing file edited apart from `OrbitTimeLaw.lean`.
+
+## What carried it
+
+1. `timeLaw_lower`: `firstPassage_sharp` at `θ = min (1/2) (βε/2)`, tolerance `ε/2`; `f n > n^θ`
+   is a bounded set.
+2. `timeLaw_upper` = `timeLaw_odd_window` + odd parts + even reduction.  The even reduction needs
+   no 2-adic summability: `2^a m` spends `a ≤ (1/β + ε) a` steps halving.  Target for the odd part is
+   a minorant `g m = ⨅_(n ≥ m) f n` (`exists_minorant`).
+3. `timeLaw_odd_window`: for each `X`, `P ≤ P(¬GoodOddUpTo δ τ) + M log(X)^(−κ)`, with `J` the
+   last scale above `X` (`exists_last_scale`), `x_J ≤ X^α ≤ g m` eventually.
+4. **Rates exist; no non-uniform constant.**  `OrbitTimeLawRate.lean`: `winGood_prob_le_rate`
+   (`O(1/log x)`, from the bound inside `winGoodWhp_holds`, copied as
+   `winGood_prob_eventually_le`), `dTV_chain_le` (`∑_(i<j) C_stab log(x_(i+1))^(−c_stab)`),
+   `stage_prob_le`, `κ = min c_stab 1`, `log(x_j)^(−κ) = (α^κ)^j log(x)^(−κ)` (`log_scale_rpow`),
+   `chainFail_prob_le_holds` with `M = (C + C_stab G) G`, `G = α^κ/(α^κ − 1)`.  Every threshold
+   depends only on `η = 1/1000`.
+5. **The time.**  `OrbitTimeLawChain.lean`: `θ = min (1/4) (ε/60)`, `τ = (1 − θ/2)/β`, `δ = θ/16`.
+   Height line to `T^(t₁) m ≤ 2^(θ s)` (`tstep_floor_le_of_goodOddUpTo`); run of halvings `d` with
+   `2^d ≤ T^(t₁) m` (`ltime_le_add_run`); `j₀` the first `j` with `j = J` or `x_(j+1) < 2^(θ s)`;
+   stages `j₀..J` cost `≤ (1001/20) log₂ x_(j₀) ≤ 51 θ s` (`passChain`, `ltime_le_add_sum`,
+   `sum_lam_Ico_le`).  Total `≤ (τ + 52θ) s ≤ (1/β + ε) s`.
+
+## Files
+
+- `CollatzMoonshot/Conjugacy/OrbitTimeLaw.lean`: targets, leaves, assembly; 0 `sorry`.
+- `CollatzMoonshot/Conjugacy/OrbitTimeLawChain.lean` (new), `OrbitTimeLawRate.lean` (new).
+
+## Next (operator's call)
+
+- `docs/notes/` write-up: total stopping time `(1/β + o(1)) size n` to below any `f → ∞`, in log density.
+- Numbers: `experiments/conjugacy/time_law.py` was not re-run this lap.

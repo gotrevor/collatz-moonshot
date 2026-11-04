@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import Mathlib
 import CollatzMoonshot.Conjugacy.OrbitTimeLawChain
+import CollatzMoonshot.Conjugacy.OrbitTimeLawRate
 
 /-!
 # The time law
@@ -34,8 +35,8 @@ theorem chainFail_prob_le {η : ℝ} (hη : 0 < η) (hη1 : η ≤ 1 / 1000) :
     ∃ κ M X₀ : ℝ, 0 < κ ∧ ∀ X : ℝ, X₀ ≤ X → ∀ (x : ℝ) (J : ℕ), (∀ j ≤ J, X ≤ scale x j) →
       (winLaw x).expect (Set.indicator {n | ¬ (ScaleGood [true] (1 / 100) η x n ∧
         ∀ j < J, LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n))} 1) ≤
-        M * Real.log X ^ (-κ) := by
-  sorry
+        M * Real.log X ^ (-κ) :=
+  chainFail_prob_le_holds hη hη1
 
 /-- **The time along the chain.**  An odd start `m ∈ [x^α, x^(α²)]` on the height line through
 `τ size m`, whose stage events hold along `J` scales, all of them large, is below `x_J` within
@@ -138,7 +139,9 @@ theorem timeLaw_odd_window {g : ℕ → ℝ} (hg : Tendsto g atTop atTop) {ε : 
   exact hbad ⟨t, ht, le_trans htx (le_trans hJ (hN m hmN))⟩
 
 /-- **Within `(1 / β + ε) size n` steps the orbit is below `f n`.**  The chain over a number of scales
-growing with `x`, down to a large constant `X`, with exceptions summing to `g X → 0`.  Believed, 85%. -/
+growing with `x`, down to a large constant `X`, with exceptions summing to `M log(X)^(−κ) → 0`
+(`timeLaw_odd_window`).  The halvings of an even start cost `a ≤ (1 / β + ε) a` steps, and the
+target `g m ≤ f n` is a minorant (`exists_minorant`). -/
 theorem timeLaw_upper {f : ℕ → ℝ} (hf : Tendsto f atTop atTop) {ε : ℝ} (hε : 0 < ε) :
     LogDens0 fun n : ℕ =>
       ¬ ∃ t : ℕ, (t : ℝ) ≤ (1 / heightSlope + ε) * Nat.size n ∧ (tstep^[t] n : ℝ) ≤ f n := by

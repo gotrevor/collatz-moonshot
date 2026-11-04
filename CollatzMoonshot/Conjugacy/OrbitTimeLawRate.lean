@@ -251,4 +251,139 @@ theorem log_scale_rpow {x : ℝ} (hx : 1 < x) (κ : ℝ) (j : ℕ) :
     (Real.log_nonneg hx.le), inv_pow, Real.inv_rpow (pow_nonneg ha.le _),
     Real.rpow_neg (pow_nonneg ha.le _), inv_inv, Real.rpow_pow_comm ha.le]
 
+/-- The union bound over the start event and the `J` location events. -/
+theorem chainFail_union_le {η : ℝ} (x : ℝ) (J : ℕ) :
+    (winLaw x).expect (Set.indicator {n | ¬ (ScaleGood [true] (1 / 100) η x n ∧
+      ∀ j < J, LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n))} 1) ≤
+      (winLaw x).expect (Set.indicator {N | ¬ ScaleGood [true] (1 / 100) η x N} 1) +
+        ∑ j ∈ Finset.range J, (winLaw x).expect (Set.indicator
+          {n | ¬ LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n)} 1) := by
+  refine le_trans (prob_mono_support _ (B := {N | ¬ ScaleGood [true] (1 / 100) η x N} ∪
+    ⋃ j ∈ Finset.range J,
+      {n | ¬ LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n)}) fun n _ hbad => ?_)
+    (le_trans (expect_indicator_union_le _ _ _) (add_le_add le_rfl (prob_biUnion_le (winLaw x)
+      (Finset.range J) fun j =>
+        {n | ¬ LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n)})))
+  by_contra hcon
+  simp only [Set.mem_union, Set.mem_ofPred_eq, Set.mem_iUnion, Finset.mem_range, not_or,
+    not_exists, not_not] at hcon
+  exact hbad ⟨hcon.1, fun j hj => hcon.2 j hj⟩
+
+/-- **The stage events at a rate** (`chainFail_prob_le`). -/
+theorem chainFail_prob_le_holds {η : ℝ} (hη : 0 < η) (hη1 : η ≤ 1 / 1000) :
+    ∃ κ M X₀ : ℝ, 0 < κ ∧ ∀ X : ℝ, X₀ ≤ X → ∀ (x : ℝ) (J : ℕ), (∀ j ≤ J, X ≤ scale x j) →
+      (winLaw x).expect (Set.indicator {n | ¬ (ScaleGood [true] (1 / 100) η x n ∧
+        ∀ j < J, LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n))} 1) ≤
+        M * Real.log X ^ (-κ) := by
+  set κ : ℝ := min c_stab 1 with hκdef
+  have hκ : 0 < κ := lt_min c_stab_pos one_pos
+  have hκ1 : κ ≤ 1 := min_le_right _ _
+  have hκc : κ ≤ c_stab := min_le_left _ _
+  set r : ℝ := alpha ^ κ with hrdef
+  have hr : 1 < r := Real.one_lt_rpow (by norm_num [alpha]) hκ
+  have hr1 : 0 < r - 1 := by linarith
+  obtain ⟨C, hC, hrate⟩ := scaleGood_prob_le_rate [true] (δ := 1 / 100) (by norm_num) hη
+  obtain ⟨X₁, hX₁⟩ := eventually_atTop.mp hrate
+  obtain ⟨X₂, hX₂⟩ := stage_prob_le [true] (δ := 1 / 100) hη hη1
+  set G : ℝ := r / (r - 1) with hGdef
+  have hG : 0 < G := div_pos (by linarith) hr1
+  have hCs := C_stab_pos
+  refine ⟨κ, (C + C_stab * G) * G, max (max X₁ X₂) (max X_stab (Real.exp 1)), hκ,
+    fun X hX x J hJ => ?_⟩
+  have hX1 : X₁ ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hX
+  have hX2 : X₂ ≤ X := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) hX
+  have hXs : X_stab ≤ X := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) hX
+  have hXe : Real.exp 1 ≤ X := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) hX
+  have hX0 : 0 < X := lt_of_lt_of_le (Real.exp_pos 1) hXe
+  have hXone : 1 ≤ X := le_trans (by linarith [Real.add_one_le_exp (1 : ℝ)]) hXe
+  have hlog1 : ∀ y, X ≤ y → 1 ≤ Real.log y := fun y hy => by
+    have := Real.log_le_log (Real.exp_pos 1) (le_trans hXe hy)
+    rwa [Real.log_exp] at this
+  set ρ : ℝ → ℝ := fun y => Real.log y ^ (-κ) with hρdef
+  have hρ0 : ∀ y, X ≤ y → 0 ≤ ρ y := fun y hy =>
+    Real.rpow_nonneg (by linarith [hlog1 y hy]) _
+  have hinv : ∀ y, X ≤ y → C / Real.log y ≤ C * ρ y := fun y hy => by
+    have h1 := hlog1 y hy
+    have : Real.log y ^ (-1 : ℝ) ≤ Real.log y ^ (-κ) :=
+      Real.rpow_le_rpow_of_exponent_le h1 (by linarith)
+    rw [Real.rpow_neg_one] at this
+    rw [div_eq_mul_inv]
+    exact mul_le_mul_of_nonneg_left this hC
+  have hstab : ∀ y, X ≤ y → C_stab * Real.log y ^ (-c_stab) ≤ C_stab * ρ y := fun y hy =>
+    mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (hlog1 y hy) (by linarith))
+      hCs.le
+  have hs0 : scale x 0 = x := by simp [scale]
+  have hxX : X ≤ x := hs0 ▸ hJ 0 (Nat.zero_le _)
+  have hx1 : 1 < x := lt_of_lt_of_le (lt_of_lt_of_le (by linarith [Real.add_one_le_exp 1]) hXe) hxX
+  have hx0 : 0 ≤ x := by linarith
+  have hρ : ∀ j, ρ (scale x j) = r ^ j * ρ x := fun j => log_scale_rpow hx1 κ j
+  have hρx := hρ0 x hxX
+  have hρJ : ρ (scale x J) ≤ ρ X :=
+    Real.rpow_le_rpow_of_nonpos (by linarith [hlog1 X le_rfl])
+      (Real.log_le_log hX0 (hJ J le_rfl)) (by linarith)
+  -- the chain distance
+  have hdTV : ∀ j ≤ J, PMF.dTV ((winLaw x).map (passLoc ⌊scale x j⌋₊))
+      ((winLaw (scale x j)).map (passLoc ⌊scale x j⌋₊)) ≤ C_stab * G * ρ (scale x j) := by
+    intro j hj
+    refine le_trans (dTV_chain_le hx0 j fun i hi =>
+      ⟨le_trans hXone (hJ i (by omega)), le_trans hXs (hJ i (by omega))⟩) ?_
+    calc ∑ i ∈ Finset.range j, C_stab * Real.log (scale x (i + 1)) ^ (-c_stab)
+        ≤ ∑ i ∈ Finset.range j, C_stab * ρ (scale x (i + 1)) :=
+          Finset.sum_le_sum fun i hi => hstab _ (hJ (i + 1) (by simp at hi; omega))
+      _ = C_stab * r * ρ x * ∑ i ∈ Finset.range j, r ^ i := by
+          rw [Finset.mul_sum]
+          refine Finset.sum_congr rfl fun i _ => ?_
+          rw [hρ, pow_succ]
+          ring
+      _ ≤ C_stab * r * ρ x * (r ^ j / (r - 1)) :=
+          mul_le_mul_of_nonneg_left (geom_sum_range_le hr j) (by positivity)
+      _ = C_stab * G * ρ (scale x j) := by
+          rw [hρ, hGdef]
+          field_simp
+  -- each stage
+  have hstage : ∀ j < J, (winLaw x).expect (Set.indicator
+      {n | ¬ LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n)} 1) ≤
+      (C + C_stab * G) * ρ (scale x j) := by
+    intro j hj
+    have h0 := hX₂ x j (le_trans hX2 (hJ j hj.le))
+    have h1 := hX₁ (scale x j) (le_trans hX1 (hJ j hj.le))
+    have h2 := hinv _ (hJ j hj.le)
+    have h3 := hdTV j hj.le
+    have he : (C + C_stab * G) * ρ (scale x j) = C * ρ (scale x j) + C_stab * G * ρ (scale x j) := by
+      ring
+    linarith
+  -- the start
+  have hstart : (winLaw x).expect (Set.indicator {N | ¬ ScaleGood [true] (1 / 100) η x N} 1) ≤
+      C * ρ x := le_trans (hX₁ x (le_trans hX1 hxX)) (hinv x hxX)
+  have hunion := chainFail_union_le (η := η) x J
+  -- the geometric sum
+  have hsumJ : ∑ j ∈ Finset.range J, ρ (scale x j) ≤ ρ (scale x J) / (r - 1) := by
+    calc ∑ j ∈ Finset.range J, ρ (scale x j) = ρ x * ∑ j ∈ Finset.range J, r ^ j := by
+          rw [Finset.mul_sum]
+          exact Finset.sum_congr rfl fun j _ => by rw [hρ]; ring
+      _ ≤ ρ x * (r ^ J / (r - 1)) := mul_le_mul_of_nonneg_left (geom_sum_range_le hr J) hρx
+      _ = ρ (scale x J) / (r - 1) := by rw [hρ]; ring
+  have hxJ : ρ x ≤ ρ (scale x J) := by
+    rw [hρ]
+    exact le_mul_of_one_le_left hρx (one_le_pow₀ hr.le)
+  have hD : 0 ≤ C + C_stab * G := by positivity
+  have hsum2 : ∑ j ∈ Finset.range J, (winLaw x).expect (Set.indicator
+      {n | ¬ LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ n)} 1) ≤
+      (C + C_stab * G) * (ρ (scale x J) / (r - 1)) := by
+    refine le_trans (Finset.sum_le_sum fun j hj => hstage j (Finset.mem_range.mp hj)) ?_
+    rw [← Finset.mul_sum]
+    exact mul_le_mul_of_nonneg_left hsumJ hD
+  have hGe : G = 1 + 1 / (r - 1) := by rw [hGdef]; field_simp; ring
+  have hfin : C * ρ x + (C + C_stab * G) * (ρ (scale x J) / (r - 1)) ≤
+      (C + C_stab * G) * G * ρ (scale x J) := by
+    have h1 : C * ρ x ≤ (C + C_stab * G) * ρ (scale x J) :=
+      mul_le_mul (by linarith [mul_pos hCs hG]) hxJ hρx hD
+    have he : (C + C_stab * G) * G * ρ (scale x J) =
+        (C + C_stab * G) * ρ (scale x J) + (C + C_stab * G) * (ρ (scale x J) / (r - 1)) := by
+      rw [hGe]; ring
+    linarith
+  have hlast : (C + C_stab * G) * G * ρ (scale x J) ≤ (C + C_stab * G) * G * ρ X :=
+    mul_le_mul_of_nonneg_left hρJ (by positivity)
+  linarith
+
 end CollatzMoonshot.Conjugacy
