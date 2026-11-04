@@ -150,4 +150,5 @@ import CollatzMoonshot.Conjugacy.SliceOscBridge
 import CollatzMoonshot.Conjugacy.SliceOscCentral
 import CollatzMoonshot.Conjugacy.SliceOscGeometric
 import CollatzMoonshot.Conjugacy.SliceTelescope
+import CollatzMoonshot.Conjugacy.SliceTelescopeStep
 import CollatzMoonshot.Maze
