@@ -1,5 +1,13 @@
 # PENDING_WORK
 
+## 2026-11-04 — beyond-Terras words: KICKOFF DONE
+
+`BeyondWordsUniform` proved unconditionally (`beyondWordsUniform`, axioms `propext, Classical.choice,
+Quot.sound`); `biasDecays_of_beyondWordsUniform` proved.  Advance: the C1 Fourier pipeline is now
+generic in the observable (`SliceFourierGeneral.lean`), and the residue indicator's layered weight is
+`4(a+1)` uniformly in `K`, `c` (`ResidueIndicator.lean: layeredWeight_resInd`).  Next: the stretch
+word form (`BeyondWordsLetters.lean`), and root imports.  See `HANDOFF-2026-11-03-beyond-terras-words.md`.
+
 ## 2026-10-10 — ARC-SOLVER-COMPUTABLE-DIRECTION: ALL STEPS DONE (k=1..6)
 
 `ArcSolverComputable.lean` is sorry-free.  Trusted hypothesis (c) is now the theorem `stepCode_sound`
