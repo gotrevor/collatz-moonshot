@@ -116,4 +116,14 @@ theorem normal_iff_le_four (C : ℕ) (hC : 1 ≤ C) :
       exact not_normal_of_five_le C (by omega) h,
     normal_of_le_four C hC⟩
 
+/-- The threshold conjecture of `Champernowne.lean`, on its lower side. -/
+theorem champernowneNormalBelowThreshold_holds : ChampernowneNormalBelowThreshold :=
+  fun C hC hC4 => normal_of_le_four C hC hC4
+
+/-- Logarithmic normality for `C ≤ 4`, here with no use of Tao's stabilisation, unlike
+`logNormal_of_le_four`. -/
+theorem logNormal_of_le_four_of_stage (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) :
+    LogNormal (collatzChampernowne C) :=
+  logNormal_of_normal _ (normal_of_le_four C hC hC4)
+
 end CollatzMoonshot.Conjugacy

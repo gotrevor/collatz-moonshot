@@ -946,7 +946,7 @@ decay is fast, `0.018` at `n = 9`.  At `p = 0.6` (mean 1.67, entropy 1.62 bits, 
 
 - **Node `TwistedSyracCharDecay` (prose):** for gap laws in an entropy-safe range,
   `sup_θ |E e(ξ X_n/3^n + θ T_n)| ≪_A n^{−A}` uniformly in `ξ` prime to 3.  Odds: 75% true,
-  35% that Tao's §6-7 proof adapts.  It uses memorylessness, which every geometric law has, and
+   35% that Tao's §6-7 proof adapts [2026-11-04: stale for central `s`; see `RESEARCH-2026-11-04-affine-mixing.md` §3].  It uses memorylessness, which every geometric law has, and
   `|e(θg)| = 1`.
 - **Node `TruncatedSyracMixing` (Lean):** slice fine-scale mixing for `a ≤ 11j/20`.  80% true.
 - **Edges, proofs owed:** `abs_levelSign_le` (elementary), `bias_eq_sum_levelSign` (fiberwise
@@ -1073,10 +1073,12 @@ Prefix frequencies to `n < 2^20` agree: `sup |freq − 2^{−m}| ≈ 10^{−4}` 
 | `C` | disjunctive | normal |
 |---|---|---|
 | `1` | theorem | theorem |
-| `1 < C < C*` | theorem | iff `AveragedMixing C` (`normal_iff_averagedMixing`); open (70%) |
+| `1 < C < C*` (integer, so `C ≤ 4`) | theorem | normal (`normal_of_le_four`, `OrbitStageLaw.lean`) |
 | `> C*` | theorem | no (`not_normal_of_five_le`), and mixing fails (`not_shortIntervalMixing_of_five_le`) |
 
 So above `C*` the family gives a disjunctive non-normal sequence whose defect comes from the dynamics.  Normality for `1 < C < C*` is finer than C1 and C1⁺: those are first moments over a level, and normality needs every word's frequency.
+
+**Superseded later on 2026-11-04.**  Normality for `C ≤ 4` is a theorem (`normal_iff_le_four`), by pullback; see §16 and `RESEARCH-2026-11-04-affine-mixing.md` §7.  The paragraph below is right about slices and residues, and wrong to call that the obstruction to normality: the proof uses the size of `T^k m`, not its residue.
 
 **What mixing still needs (2026-11-04).**  `normal_of_shortIntervalMixing` is now a theorem, so normality for `1 < C < C*` reduces to `ShortIntervalMixing C`.  Initial segments are not the obstruction.  Over a block `[α 2^b, (α+1) 2^b)`, `T^b (r + α 2^b) = T^b r + α 3^s`, a constant shift on each slice, so uniformity over blocks (`BlockWordsUniform`) gives every segment at offsets within a fixed distance of `k` (`shortIntervalMixingNear_of_blockWordsUniform`).  The obstruction is distance from `k`.  Over `n < 2^k` the letters at `t ≥ k` are determined by the `k` bits of `n`, so the slice laws at level `t`, which see those `n` as a `2^{k−t}` fraction of their mass, say nothing once `t − k` passes about `log k` (a heuristic count; node `ShortIntervalMixingLog`, 75%).  `C ≥ 2` needs `t − k ≍ k`.  This is about one stage at a time: in logarithmic density over stages, §16 gets past it.  Bounded offsets are `O(1/k)` of a word, so `ShortIntervalMixingNear` does not bear on normality.
 
@@ -1102,10 +1104,12 @@ Notation: `α = 1.001`, `N_y` log-uniform on odd numbers in `[y, y^α]`, `Pass_x
 
 Above the threshold `not_logNormal_of_five_le` holds by `drift_total` and partial summation, so among integers, `𝒞_C` is normal in logarithmic density exactly for `C ≤ 4` (`logNormal_iff_le_four`).  `C` is a natural number in these statements, so they do not locate `C*` between 4 and 5.
 
-The same control gives orbit shape.  Almost every start in logarithmic density follows the line `log₂ n − β t`, `β = 1 − log₂ 3 / 2`, through `t = 4 size n` (`heightLawUpTo_four`), first passage below `n^θ` sits at `t ≈ (1 − θ) size n / β` (`firstPassage_law`), and no such law holds past `1 / β` (`not_heightLawUpTo_of_gt`).  It holds through every `τ < 1 / β` (`heightLawBelowThreshold`, `heightLawUpTo_iff`), and first passage holds for every `0 < θ < 1` (`firstPassage_sharp`), so `C* = 1 / β` is the sharp end of the line.  One stage at a time, the orbit statement is `StageWordLaw`, which gives normality (`normal_of_stageWordLaw`) and is open.
+The same control gives orbit shape.  Almost every start in logarithmic density follows the line `log₂ n − β t`, `β = 1 − log₂ 3 / 2`, through `t = 4 size n` (`heightLawUpTo_four`), first passage below `n^θ` sits at `t ≈ (1 − θ) size n / β` (`firstPassage_law`), and no such law holds past `1 / β` (`not_heightLawUpTo_of_gt`).  It holds through every `τ < 1 / β` (`heightLawBelowThreshold`, `heightLawUpTo_iff`), and first passage holds for every `0 < θ < 1` (`firstPassage_sharp`), so `C* = 1 / β` is the sharp end of the line.  One stage at a time, the orbit statement is `StageWordLaw`, which gives normality (`normal_of_stageWordLaw`).
 
 The time follows.  For any `f → ∞`, almost every start in logarithmic density is at or below `f n` within `(1 / β + ε) size n` steps of `tstep` (`timeLaw_upper`), and for `f` below every power of `n`, not within `(1 / β − ε) size n` (`timeLaw_lower`).  The chain now runs over a number of scales growing with `x`, down to a large constant `X`, with rates in place of `o(1)`: `dTV_chain_step` at `log(x_j)^(−c)`, one stage at `O(1 / log x_j)`, geometric sums, total `≪ log(X)^(−κ)`.  It stops at `f → ∞`, not at `1`.
 
-What this does not touch: it says nothing about any one stage (Tao Remark 1.16 names the mixing that a natural-density version would need), nothing about orbits at bounded height, and nothing about Collatz itself.  A single stage can carry the whole exceptional set, since it has log-weight `≈ 1/(0.001 k)` in a window and the exception is only `k^{−c}`.
+**One stage at a time, without Tao.**  `stageWordLaw_of_le_four` and `normal_iff_le_four`: among positive integers, `𝒞_C` is normal exactly for `C ≤ 4`.  The proof uses none of `TaoCollatz` (a walk of its constants finds no declaration from that package).  The mechanism is Inselmann 2024 (arXiv:2402.03276, Lemma 2.16): a set of density `≪ X^(−D)` pulls back along `T^(size m)` to a set of the same kind, since `T^k m = 3^a m / 2^k + offset` pins `m` to an interval given `T^k m` and `a`.  Terras events have such density, and windows of `size M_j` letters cover past `4 k`.  Inselmann's Theorem 1.1 and 1.6 are the natural-density height line and odd-letter count through `C*`, of which `heightLawBelowThreshold` is the logarithmic-density form.  The chain in this section is not needed for normality; `timeLaw_upper` still uses it.
+
+What this does not touch: it says nothing about any one stage by this section's chain (Tao Remark 1.16 names the mixing that a natural-density version would need, and the argument above reaches only fixed powers of `n`), nothing about orbits at bounded height, and nothing about Collatz itself.  A single stage can carry the whole exceptional set, since it has log-weight `≈ 1/(0.001 k)` in a window and the exception is only `k^{−c}`.
 
 Sanity numerics from the referee, not evidence for the chain: 5 random starts at `k = 20000`, frequency of `11` is `0.2486` at `C = 4` against `0.2371` at `C = 5` and `0.1976` at `C = 6`, and `t/k` to height `N^{0.1}` is `4.18–4.42`.

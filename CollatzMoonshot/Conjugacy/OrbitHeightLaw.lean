@@ -18,8 +18,7 @@ every start in logarithmic density follows the line `log₂ n − β t`, `β = 1
 The line must end at `1 / β = C*`, where it would go negative (`not_heightLawUpTo_of_gt`).  Reaching
 `C*` from below is the node `HeightLawBelowThreshold`, proved in `OrbitHeightSharp.lean`.
 
-`StageWordLaw` is the same orbit statement over one stage in place of logarithmic density.  It gives
-normality (`normal_of_stageWordLaw`), and it is what logarithmic density does not reach (research note
+`StageWordLaw` is the same orbit statement over one stage in place of logarithmic density.  It givesnormality (`normal_of_stageWordLaw`), and it is what logarithmic density does not reach (research note
 §16).
 
 `experiments/conjugacy/height_line.py` compares the line and the passage times with data out to
@@ -458,7 +457,8 @@ theorem firstPassage_law {θ ε : ℝ} (hθ : 1 - 4 * heightSlope < θ) (hθ1 : 
 open Classical in
 /-- **Node: the orbit word law over one stage.**  For every word `u` and `δ > 0`, the bad starts are a
 vanishing fraction of the `k`-bit integers.  Stronger than `OrbitWordLaw`, which averages stages.
-Open.  False for `C ≥ 5` (`not_stageWordLaw_of_five_le`). -/
+Proved for `C ≤ 4` (`stageWordLaw_of_le_four`, `OrbitStageLaw.lean`).  False for `C ≥ 5`
+(`not_stageWordLaw_of_five_le`). -/
 def StageWordLaw (C : ℕ) : Prop :=
   ∀ (u : List Bool) (δ : ℝ), 0 < δ → Tendsto
     (fun k : ℕ => (((Finset.Ico (2 ^ (k - 1)) (2 ^ k)).filter (BadStart C u δ)).card : ℝ) / 2 ^ (k - 1))

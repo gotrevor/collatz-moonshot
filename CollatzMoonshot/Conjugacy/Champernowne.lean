@@ -37,7 +37,7 @@ orbit, not on a residue.
   alternating block of length `L` then has frequency bounded below independently of `L`
   (`EarlyArrival`, `not_normal_of_earlyArrival`).  Non-normality for `C ≥ 5` itself needs no
   hypothesis (`not_normal_of_five_le`, `ChampernowneDrift.lean`).  For
-  `C < C*` the words are in flight and conjecturally mixing (`ChampernowneNormalBelowThreshold`).
+  `C < C*` the words are in flight and normal (`ChampernowneNormalBelowThreshold`).
 * **The stop-at-`1` version** (`stopWordLen`, `collatzChampernowneStop`): each word runs to the
   first hit of `1`.  The definition's fallback branch is unused exactly when the Collatz
   conjecture holds, and normality (`ChampernowneStopNormal`) is the beyond-Terras mixing
@@ -48,7 +48,7 @@ orbit, not on a residue.
 | `C` | word of a `k`-bit `n` | status |
 |---|---|---|
 | `1` | the `k` Terras letters | normal (`collatzChampernowne_one_normal`, `ChampernowneOne.lean`) |
-| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal iff `AveragedMixing C` (`normal_iff_averagedMixing`); open |
+| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal (`normal_of_le_four`, `OrbitStageLaw.lean`) |
 | `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal (`not_normal_of_five_le`, `ChampernowneDrift.lean`) |
 | stop at `1` | `stopWordLen n` letters, no tail | `ChampernowneStopNormal` (65%) |
 
@@ -405,7 +405,8 @@ theorem threshold_bounds :
   · rw [lt_div_iff₀ hpos]; linarith
   · rw [div_lt_iff₀ hpos]; linarith
 
-/-- **Conjecture (the threshold, below).**  `𝒞_C` is normal for `1 ≤ C ≤ 4`.  Confidence 70%.
+/-- **The threshold, below.**  `𝒞_C` is normal for `1 ≤ C ≤ 4`.  Proved:
+`champernowneNormalBelowThreshold_holds` in `OrbitStageLaw.lean`.
 
 The stochastic model (Lagarias–Weiss 1992, *The 3x+1 problem: two stochastic models*;
 Kontorovich–Lagarias 2009, *Stochastic models for the 3x+1 and 5x+1 problems*) has the
@@ -413,7 +414,7 @@ shortcut orbit of `n` multiply by `1/2` or `3/2` with equal probability, so `log
 `(log₂ 3 − 2) / 2` per step and the total stopping time of a typical `n` is
 `≈ C* · log₂ n` with `C* = 2 / (2 − log₂ 3) ≈ 4.819` (`threshold_bounds`), with `O(√log n)`
 fluctuations.  For `C ≤ 4 < C*` the fraction of stage `k` that has reached `1` by position
-`C k` tends to `0`, so the words are in flight throughout, and the conjecture is that in-flight
+`C k` tends to `0`, so the words are in flight throughout.  One route is that in-flight
 letters mix (`ShortIntervalMixing C`); then `normal_of_shortIntervalMixing` applies
 (`champernowneNormalBelowThreshold_of_shortIntervalMixing`, both in
 `ChampernowneMixing.lean`). -/
