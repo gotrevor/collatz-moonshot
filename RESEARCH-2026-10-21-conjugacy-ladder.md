@@ -681,7 +681,7 @@ the next letter with the XOR of the letters in `S ⊆ {1..j}`; `ĝ(∅) = E_j/2^
 
 - **The reach is near-geometric at the top scales.**  The energy on sets whose most recent letter is `m`
   letters back, against `2^{−(m+1)}`, at `j = 20` from position `j` backwards: `0.500, 0.249, 0.125, 0.061`
-  match `0.5, 0.25, 0.125, 0.0625`, while `0.037, 0.010` miss `0.031, 0.016` by a third or more.  The
+  match `0.5, 0.25, 0.125, 0.0625`, while `0.037, 0.010` miss `0.031, 0.016` by about 18% and 36%.  The
   match is weaker at small `j` (`j = 12`: `0.495, 0.239, 0.125, 0.078`).
 - **The degree is high.**  The energy sits at degree `6-10` and beyond (`j = 20`: degree `≤ 8`
   carries `31%`, the rest is higher); the next letter is a high-degree function of the word, with
