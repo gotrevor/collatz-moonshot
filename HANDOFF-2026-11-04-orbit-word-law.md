@@ -112,3 +112,14 @@ was not edited; the operator kickoff forbids touching `DIRECTION.md` and superse
 
 Possible next kickoffs (operator's call): `logNormal_of_orbitWordLaw` (the bridge from the word law
 to `LogNormal (collatzChampernowne C)`, believed 90%); a `docs/notes/` write-up of the word law.
+
+## Final checkpoint (treadmill stop)
+
+Branch `wip/orbit-word-law`, HEAD `e180047` + this commit.  Working tree clean apart from the
+untracked `CLAUDE.local.md`.  Stop sentinel written via `box done --green`.  Nothing in flight; no
+Aristotle job submitted.  Exact next steps, for whichever operator kickoff comes next:
+1. Re-verify: `lake build CollatzMoonshot.Conjugacy.OrbitWordLaw`, then `#print axioms
+   orbitWordLaw_of_le_four` (expect `propext, Classical.choice, Quot.sound`).
+2. Optional target: `logNormal_of_orbitWordLaw` (`ChampernowneLog.lean:61`), the remaining
+   `sorry` under `logNormal_of_le_four`.
+3. Optional: a `docs/notes/` write-up of the orbit word law (lane rule: neutral note, pinned commit).
