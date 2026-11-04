@@ -33,8 +33,9 @@ def blockCount (b α K c : ℕ) : ℕ :=
   ((Finset.range (2 ^ b)).filter fun r => tstep^[b] (r + α * 2 ^ b) % 2 ^ K = c).card
 
 /-- **Node.**  Over each fixed block, `T^b n mod 2^K` is uniform as `b → ∞`.  At `α = 0` this is
-`BeyondWordsUniform`.  Confidence 90%: on each central slice `a` the shift `α 3^a` is a constant, and
-the slice-wise bound behind `BeyondWordsUniform` is uniform in the residue.
+`BeyondWordsUniform`.  On each central slice `a` the shift `α 3^a` is a constant, and the slice-wise
+bound behind `BeyondWordsUniform` is uniform in the residue.  Proved as `blockWordsUniform` in
+`BlockWords.lean`, which depends on the beyond-Terras words branch and lands with it.
 
 Evidence (`experiments/conjugacy/segment_reach.py`, exhaustive, `L = 1`, supremum over `m`): at
 `t = k + 1, k + 2, k + 4` the error falls from `0.0112, 0.0078, 0.0122` at `k = 14` to `0.0004, 0.0003,
