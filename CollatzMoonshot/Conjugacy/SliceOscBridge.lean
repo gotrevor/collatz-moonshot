@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.Conjugacy.BeyondWordsLinear
 import TaoCollatz.Fourier.ZMod3
+import TaoCollatz.Sec6.MixingCore
 
 /-!
 # The slice oscillation is Tao's oscillation of the slice density
@@ -88,5 +89,22 @@ theorem levelOsc_eq_osc (j a m : ℕ) (hma : m ≤ a) :
   simp only [hfib, hpow]
   exact (sum_zmod_three_pow_eq_sum_range a (fun y =>
     |(levelMass j a y : ℝ) - (3 : ℝ) ^ m / 3 ^ a * levelClass j a m (y % 3 ^ m)|)).symm
+
+/-- The slice oscillation is at most twice the slice size (`TaoCollatz.osc_le_two_mul_l1`
+through the bridge). -/
+theorem levelOsc_le_two_mul_card (j a m : ℕ) (hma : m ≤ a) :
+    levelOsc j a m ≤ 2 * (levelSet j a).card := by
+  rw [levelOsc_eq_osc j a m hma]
+  refine (TaoCollatz.osc_le_two_mul_l1 m a hma _).trans ?_
+  have h := sum_levelSet_eq_sum_mass j a (fun _ => (1 : ℂ))
+  simp only [mul_one, Finset.sum_const, nsmul_eq_mul] at h
+  have hsum : ∑ Y : ZMod (3 ^ a), |sliceDensity j a Y| = (levelSet j a).card := by
+    simp only [sliceDensity, Nat.abs_cast]
+    calc
+      ∑ Y : ZMod (3 ^ a), (levelMass j a Y.val : ℝ) =
+          ∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℝ) :=
+        sum_zmod_three_pow_eq_sum_range a (fun y => (levelMass j a y : ℝ))
+      _ = (levelSet j a).card := by exact_mod_cast h.symm
+  rw [hsum]
 
 end CollatzMoonshot.Conjugacy
