@@ -32,3 +32,12 @@ Frozen statements unchanged (the diff on `OrbitStageLaw.lean` is one import, the
   `u = []` and `C = 0` separately.  No step was structural.
 
 Nothing remains in the gated scope.
+
+## Checkpoint (final, run stopped)
+
+Branch `wip/orbit-word-law`; proof HEAD `e9ed727`, handoff commits after it.  Working tree clean apart
+from untracked `CLAUDE.local.md`.  `box done --green` signalled; the host re-verifies the build.
+
+Next (needs an operator kickoff; nothing is owed in this scope): `logNormal_of_orbitWordLaw` in
+`ChampernowneLog.lean` (see the orbit-word-law handoff), or tightening the chain to the kickoff's
+`J = 9` at `θ = log₂ √3`, which is cosmetic.  Other `src/` sorries are designated-open.
