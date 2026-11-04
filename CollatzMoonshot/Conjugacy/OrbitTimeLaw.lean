@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Trevor Morris
 -/
 import Mathlib
-import CollatzMoonshot.Conjugacy.OrbitHeightSharp
+import CollatzMoonshot.Conjugacy.OrbitTimeLawChain
 
 /-!
 # The time law
@@ -48,8 +48,8 @@ theorem reach_of_chain {ε : ℝ} (hε : 0 < ε) :
       ∀ (x : ℝ) (J : ℕ), (∀ j ≤ J, X₀ ≤ scale x j) → ∀ m : ℕ, m % 2 = 1 → x ^ alpha ≤ m →
         (m : ℝ) ≤ x ^ alpha ^ 2 → GoodOddUpTo δ τ m → ScaleGood [true] (1 / 100) η x m →
         (∀ j < J, LocGood [true] (1 / 100) η (scale x j) (passLoc ⌊scale x j⌋₊ m)) →
-        ∃ t : ℕ, (t : ℝ) ≤ (1 / heightSlope + ε) * Nat.size m ∧ (tstep^[t] m : ℝ) ≤ scale x J := by
-  sorry
+        ∃ t : ℕ, (t : ℝ) ≤ (1 / heightSlope + ε) * Nat.size m ∧ (tstep^[t] m : ℝ) ≤ scale x J :=
+  reach_of_chain_holds hε
 
 /-- **The last scale above `X`.**  For `1 < X ≤ x` there is `J` with every `x_j ≥ X`, `j ≤ J`,
 and `x_J ≤ X^α`. -/
