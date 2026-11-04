@@ -5,8 +5,11 @@
 Advance on the crux: `orbitWordLaw_of_le_four` is proved from 16 named `Prop` nodes held open in
 `OrbitWordLaw.lean`; the chain of Tao's Proposition 1.11 over 3000 scales (`dTV_chain`) is proved.
 Lap 2: 11 of 16 nodes proved (deterministic side, Terras chain, integral-test transfer).
-5 open: `winGoodWhp` (assembly, plan in handoff), then the four density nodes.
-See `HANDOFF-2026-11-04-orbit-word-law.md`.
+Lap 3: the last 5 proved (`winGoodWhp`, `logDens0OfWindow`, `notBadStartOfGoodOdd`,
+`logDens0OddPart`, `summableLargeTwoAdic`).  **DONE**: `orbitWordLaw_of_le_four` prints
+`propext, Classical.choice, Quot.sound`; `OrbitWordLaw.lean` is sorry-free.
+Next (needs an operator kickoff): `logNormal_of_orbitWordLaw` in `ChampernowneLog.lean`, which
+`logNormal_of_le_four` still depends on.  See `HANDOFF-2026-11-04-orbit-word-law.md`.
 
 ## 2026-10-26 — C1⁺ treadmill target: DONE
 

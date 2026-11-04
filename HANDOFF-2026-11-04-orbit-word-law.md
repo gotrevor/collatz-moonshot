@@ -79,10 +79,36 @@ Node restatements (sibling defs only; frozen target untouched): `StagePasses` co
 5. `notBadStartOfGoodOdd`: `2^a m` reads `a` zeros then `m`; `T = C(s+a) − a ≤ 4s + 3a`, and
    `5T ≤ 21 s` from `15 a ≤ s`; deviation `≤ (δ/2) s + 2a + |u| ≤ δ s` once `s ≥ 4|u|/δ`.
 
-## Lap 3 (2026-11-04, autonomous) — in progress
+## Lap 3 (2026-11-04, autonomous) — TARGET MET
 
-Gated file sorry count: **3** (was 5).  Proved: `winGoodWhp_holds` (`OrbitWordLawWhp.lean`; fixed
-number `K = ⌈8/(5δη)⌉ + 1` of blocks of length `2Λ/K + 1`, bound `64 K² |u| / (δ² (2Λ+1))`),
-`logDens0OfWindow_holds` (new `OrbitWordLawWindow.lean`; windows `[y_k^α, y_k^(α²)]`,
-`y_k = X_windowBase^(α^k)`, tile; mass `≤ 4 w_k` by Tao's (5.19); `∑ w_k ≤ α log X`).
-Open: `logDens0OddPart`, `summableLargeTwoAdic`, `notBadStartOfGoodOdd`.
+`orbitWordLaw_of_le_four` is proved.  Gated file `OrbitWordLaw.lean` has **0** `sorry`s (the word
+appears only in its module docstring); all `OrbitWordLaw*.lean` siblings are sorry-free.
+`lake build CollatzMoonshot.Conjugacy.OrbitWordLaw` green (8777 jobs).  Statement line unchanged
+since the planting commit `b543a37`; `ChampernowneLog.lean` (where `OrbitWordLaw`, `BadStart` live)
+untouched.  Only the target's docstring changed ("Believed, 85%" → proved).
+
+    #print axioms orbitWordLaw_of_le_four
+    -- [propext, Classical.choice, Quot.sound]
+
+Proved this lap (5 nodes), each a `*_holds` theorem cited from `OrbitWordLaw.lean`:
+- `winGoodWhp_holds` (`OrbitWordLawWhp.lean`): a fixed number `K = ⌈8/(5δη)⌉ + 1` of blocks of
+  length `2Λ/K + 1` (rather than a fixed block length, so no WLOG on `δ, η`); bad residues
+  `≤ K · 32|u| 2^M/(δ² b)` (`card_not_winGood_le`), probability `≤ 64 K²|u|/(δ²(2Λ+1)) + K 2^(−M)`;
+  `2 lam x ≤ nZero x` (`two_mul_lam_le_nZero`) makes the blocks fit in Tao's period.
+- `logDens0OfWindow_holds` (new `OrbitWordLawWindow.lean`): windows `[y_k^α, y_k^(α²)]`,
+  `y_k = X_windowBase^(α^k)`, tile since `y_k^(α²) = y_(k+1)^α`; window log-weight
+  `≤ windowMass · P` (`sum_window_le`); `windowMass ≤ 4 w_k` from Tao's (5.19)
+  (`windowMass_le`); `∑_{k<m} w_k ≤ α log X` (telescoping `sum_logLength`).
+- `notBadStartOfGoodOdd_holds` (new `OrbitWordLawEven.lean`): `|count(2^a m) − wcnt m 0 (N−a)|`
+  bounded by `a` and `|u|` (`card_badStart_le`, `wcnt_le_card_badStart`).
+- `logDens0OddPart_holds`, `summableLargeTwoAdic_holds` (new `OrbitWordLawOddPart.lean`):
+  injection `(a, m) ↦ 2^a m` on odd `m`; harmonic bound `∑_{k<2^L} 1/(2k+1) ≤ 1 + L`.
+
+Downstream, outside the gated scope: `logNormal_of_le_four` still shows `sorryAx`, through
+`logNormal_of_orbitWordLaw` in `ChampernowneLog.lean` (designated open, not touched).
+
+Review-lap note: `DIRECTION.md` CURRENT DIRECTIVE (2026-10-06, "awaiting a new operator kickoff")
+was not edited; the operator kickoff forbids touching `DIRECTION.md` and supersedes it.
+
+Possible next kickoffs (operator's call): `logNormal_of_orbitWordLaw` (the bridge from the word law
+to `LogNormal (collatzChampernowne C)`, believed 90%); a `docs/notes/` write-up of the word law.
