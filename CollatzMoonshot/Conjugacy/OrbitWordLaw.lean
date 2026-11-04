@@ -9,6 +9,7 @@ import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
 import CollatzMoonshot.Conjugacy.OrbitWordLawReadOff
 import CollatzMoonshot.Conjugacy.OrbitWordLawWhp
+import CollatzMoonshot.Conjugacy.OrbitWordLawWindow
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -65,9 +66,9 @@ theorem probPeriodicLe : ProbPeriodicLe := probPeriodicLe_holds
 /-- **Terras at one scale**, from the nodes above.  Proved in `OrbitWordLawWhp.lean`. -/
 theorem winGoodWhp : WinGoodWhp := winGoodWhp_holds
 
-/-- **Windows give density**: cover `[1, X]` by windows `[y, y^α]`.  Confidence 85%. -/
-theorem logDens0OfWindow : LogDens0OfWindow := by
-  sorry
+/-- **Windows give density**: cover `[1, X]` by windows `[y, y^α]`.  Proved in
+`OrbitWordLawWindow.lean`. -/
+theorem logDens0OfWindow : LogDens0OfWindow := logDens0OfWindow_holds
 
 /-- **Odd parts**: `∑_a 2^(−a) = 2`.  Confidence 90%. -/
 theorem logDens0OddPart : LogDens0OddPart := by
