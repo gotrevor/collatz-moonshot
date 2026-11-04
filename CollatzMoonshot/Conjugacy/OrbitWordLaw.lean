@@ -7,7 +7,7 @@ import Mathlib
 import TaoCollatz.Sec5.Stabilization
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
-import CollatzMoonshot.Conjugacy.OrbitWordLawStage
+import CollatzMoonshot.Conjugacy.OrbitWordLawReadOff
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -15,7 +15,7 @@ import CollatzMoonshot.Conjugacy.OrbitWordLawStage
 For `C ≤ 4`, almost every start in logarithmic density has the right frequency of every word among
 its first `C log₂ n` parity letters (`orbitWordLaw_of_le_four`), so `𝒞_C` is normal in logarithmic
 density (`logNormal_of_le_four`).  The proof chains Tao 2019 Proposition 1.11 (`stabilization_atCX`)
-over scales `x_(j+1) = x_j^(1/α)`, down to `N^(1/10)`.  Research note §16.
+over scales `x_(j+1) = x_j^(1/α)`, down to `N^(1/50)`.  Research note §16.
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -31,9 +31,8 @@ the siblings. -/
 /-- **One stage of descent.**  Proved in `OrbitWordLawStage.lean`. -/
 theorem stagePasses : StagePasses := stagePasses_holds
 
-/-- **Reading off the orbit.**  Elementary bookkeeping over `numScales` stages.  Confidence 85%. -/
-theorem goodOddOfStages : GoodOddOfStages := by
-  sorry
+/-- **Reading off the orbit.**  Proved in `OrbitWordLawReadOff.lean`. -/
+theorem goodOddOfStages : GoodOddOfStages := goodOddOfStages_holds
 
 /-- **The location event from the start event.**  Proved in `OrbitWordLawStage.lean`. -/
 theorem locGoodPassLoc : LocGoodPassLoc := locGoodPassLoc_holds

@@ -291,8 +291,8 @@ def StagePasses : Prop :=
 /-- The scales `x_j = x^(α^(−j))`. -/
 noncomputable def scale (x : ℝ) (j : ℕ) : ℝ := x ^ (alpha⁻¹ ^ j)
 
-/-- The number of scales: `α^(−3000) < 1/20`. -/
-def numScales : ℕ := 3000
+/-- The number of scales: `α^(−3999) < 1/50`. -/
+def numScales : ℕ := 4000
 
 /-- Consecutive scales: `x_(j+1)^α = x_j`. -/
 theorem scale_succ_rpow {x : ℝ} (hx : 0 ≤ x) (j : ℕ) : scale x (j + 1) ^ alpha = scale x j := by
@@ -313,7 +313,7 @@ letters.
 
 The stretches between passages tile the letters, each a prefix of a passage location of length at
 most `Λ`; short stretches cost at most `H` each.  The letter-`1` frequency keeps the height at time
-`t` above `n 2^(−0.224 t)`, so the passage below `x_J ≤ n^(1/20)` comes after `4.25 log₂ n`
+`t` above `n 2^(−0.226 t)`, so the passage below `x_J ≤ n^(1/50)` comes after `4.3 log₂ n`
 letters. -/
 def GoodOddOfStages : Prop :=
   ∀ (u : List Bool) (δ' : ℝ), 0 < δ' →
