@@ -76,8 +76,32 @@ theorem beyondWordsUniform_of_sliceCharDecay (h : SliceCharDecay) : BeyondWordsU
 theorem beyondWordsUniform : BeyondWordsUniform :=
   beyondWordsUniform_of_sliceCharDecay (sliceCharDecay_of_pascalDampingDecay pascalDampingDecay)
 
+/-- The bias is the excess of even over odd `j`-th iterates:
+`bias j = 2 · beyondCount j 1 0 − 2^j`. -/
+theorem bias_eq_two_mul_beyondCount (j : ℕ) :
+    bias j = 2 * (beyondCount j 1 0 : ℤ) - 2 ^ j := by
+  unfold bias beyondCount
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const, pow_one]
+  have h := Finset.card_filter_add_card_filter_not (s := Finset.range (2 ^ j))
+    (fun r => tstep^[j] r % 2 = 0)
+  rw [Finset.card_range] at h
+  simp only [nsmul_eq_mul, mul_one, mul_neg]
+  have h' : (((Finset.range (2 ^ j)).filter (fun r => tstep^[j] r % 2 = 0)).card : ℤ) +
+      (((Finset.range (2 ^ j)).filter (fun r => ¬ tstep^[j] r % 2 = 0)).card : ℤ) = 2 ^ j := by
+    exact_mod_cast h
+  linarith
+
 /-- Consistency: `K = 1`, `c = 0` is `BiasDecays`, since `bias j = 2 · beyondCount j 1 0 − 2^j`. -/
 theorem biasDecays_of_beyondWordsUniform (h : BeyondWordsUniform) : BiasDecays := by
-  sorry
+  have h1 := h 1 0 (by norm_num)
+  have hlim : Tendsto (fun j : ℕ => 2 * ((beyondCount j 1 0 : ℝ) / 2 ^ j) - 1) atTop
+      (𝓝 (2 * (1 / 2 ^ 1) - 1)) := (h1.const_mul 2).sub_const 1
+  norm_num at hlim
+  unfold BiasDecays
+  refine hlim.congr' (Eventually.of_forall fun j => ?_)
+  have hb := congrArg (fun z : ℤ => (z : ℝ)) (bias_eq_two_mul_beyondCount j)
+  simp only [Int.cast_sub, Int.cast_mul, Int.cast_ofNat, Int.cast_natCast, Int.cast_pow] at hb
+  simp only [hb]
+  field_simp
 
 end CollatzMoonshot.Conjugacy
