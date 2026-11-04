@@ -7,6 +7,7 @@ import Mathlib
 import CollatzMoonshot.Conjugacy.OrbitHeightLaw
 import CollatzMoonshot.Conjugacy.OrbitStageLawPull
 import CollatzMoonshot.Conjugacy.OrbitStageLawRate
+import CollatzMoonshot.Conjugacy.OrbitStageLawTerras
 
 /-!
 # The orbit word law over one stage, and normality for `C ≤ 4`
@@ -47,12 +48,10 @@ theorem expSparse_not_goodZero (u : List Bool) {η γ : ℝ} (hη : 0 < η) (hγ
   sorry
 
 /-- **Terras tail for suffixes**, by Chernoff on the odd letters of each suffix. -/
-theorem sufTail_holds : SufTail := by
-  sorry
+theorem sufTail_holds : SufTail := sufTail_holds'
 
 /-- **Terras tail for the odd count**, by Chernoff on the even letters. -/
-theorem oddTail_holds : OddTail := by
-  sorry
+theorem oddTail_holds : OddTail := oddTail_holds'
 
 /-- **P2, the pullback.**  Pulling back along `stageMap` keeps a set exponentially sparse. -/
 theorem expSparse_preimage_stageMap {B : Set ℕ} (h : ExpSparse B) :
