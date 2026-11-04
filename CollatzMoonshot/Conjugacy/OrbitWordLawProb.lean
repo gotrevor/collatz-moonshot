@@ -187,7 +187,61 @@ theorem locGood_whp (u : List Bool) {δ η : ℝ} (hδ : 0 < δ) (hη : 0 < η) 
 
 /-- The scales tend to infinity. -/
 theorem tendsto_scale (j : ℕ) : Tendsto (fun x => scale x j) atTop atTop := by
-  sorry
+  exact tendsto_rpow_atTop (pow_pos (inv_pos.mpr (by norm_num [alpha])) j)
+
+/-- The triangle inequality for `dTV`. -/
+theorem dTV_triangle (p q r : PMF ℕ) : p.dTV r ≤ p.dTV q + q.dTV r := by
+  have hs : ∀ a b : PMF ℕ, Summable fun n => |(a n).toReal - (b n).toReal| := by
+    intro a b
+    have ha : Summable fun n => (a n).toReal := ENNReal.summable_toReal a.tsum_coe_ne_top
+    have hb : Summable fun n => (b n).toReal := ENNReal.summable_toReal b.tsum_coe_ne_top
+    refine Summable.of_nonneg_of_le (fun n => abs_nonneg _) (fun n => ?_) (ha.add hb)
+    have h1 : 0 ≤ (a n).toReal := ENNReal.toReal_nonneg
+    have h2 : 0 ≤ (b n).toReal := ENNReal.toReal_nonneg
+    rw [abs_le]
+    constructor <;> linarith
+  unfold PMF.dTV
+  rw [← Summable.tsum_add (hs p q) (hs q r)]
+  exact Summable.tsum_le_tsum (fun n => abs_sub_le _ _ _) (hs p r) ((hs p q).add (hs q r))
+
+/-- `dTV p p = 0`. -/
+theorem dTV_self (p : PMF ℕ) : p.dTV p = 0 := by
+  simp [PMF.dTV]
+
+/-- One link of the chain: for large `x`, the distance at scale `j + 1` is at most the distance at
+scale `j` plus Proposition 1.11 at `x_(j+1)`. -/
+theorem dTV_chain_step (j : ℕ) {x : ℝ} (hx0 : 0 ≤ x) (hx1 : 1 ≤ scale x (j + 1))
+    (hxs : X_stab ≤ scale x (j + 1)) :
+    PMF.dTV ((winLaw x).map (passLoc ⌊scale x (j + 1)⌋₊))
+        ((winLaw (scale x (j + 1))).map (passLoc ⌊scale x (j + 1)⌋₊)) ≤
+      PMF.dTV ((winLaw x).map (passLoc ⌊scale x j⌋₊))
+        ((winLaw (scale x j)).map (passLoc ⌊scale x j⌋₊)) +
+      C_stab * (Real.log (scale x (j + 1))) ^ (-c_stab) := by
+  set y := scale x (j + 1) with hydef
+  have hy0 : 0 ≤ y := by linarith
+  have hyj : y ^ alpha = scale x j := scale_succ_rpow hx0 j
+  have hyy : y ≤ scale x j := by
+    rw [← hyj]
+    simpa using Real.rpow_le_rpow_of_exponent_le hx1 (show (1 : ℝ) ≤ alpha by norm_num [alpha])
+  have hfl1 : 1 ≤ ⌊y⌋₊ := Nat.le_floor (by simpa using hx1)
+  have hfl : ⌊y⌋₊ ≤ ⌊scale x j⌋₊ := Nat.floor_le_floor hyy
+  set f := passLoc ⌊y⌋₊ with hfdef
+  set g := passLoc ⌊scale x j⌋₊ with hgdef
+  have hfg : f ∘ g = f := funext fun N => passLoc_passLoc hfl1 hfl N
+  have hmap : ∀ p : PMF ℕ, p.map f = (p.map g).map f := fun p => by
+    rw [PMF.map_comp, hfg]
+  have h1 : PMF.dTV ((winLaw x).map f) ((winLaw (scale x j)).map f) ≤
+      PMF.dTV ((winLaw x).map g) ((winLaw (scale x j)).map g) := by
+    rw [hmap (winLaw x), hmap (winLaw (scale x j))]
+    exact PMF.dTV_map_le _ _ _
+  have hw1 : winLaw (scale x j) = logUnifOdd (y ^ alpha ^ 2) (y ^ alpha ^ 3) := by
+    rw [winLaw, ← hyj, ← Real.rpow_mul hy0, ← Real.rpow_mul hy0]
+    congr 2 <;> ring
+  have h2 : PMF.dTV ((winLaw (scale x j)).map f) ((winLaw y).map f) ≤
+      C_stab * (Real.log y) ^ (-c_stab) := by
+    rw [hw1, PMF.dTV_comm]
+    exact (stabilization_atCX y hxs).2
+  exact le_trans (dTV_triangle _ _ _) (add_le_add h1 h2)
 
 /-- **The chain.**  The law of the passage location below `x_j` of a start drawn from `winLaw x` is
 within `o(1)` of `ν_(x_j)`, by induction on `j`: Proposition 1.11 at `x_(j+1)`, data processing,
@@ -195,7 +249,23 @@ and `passLoc_passLoc`. -/
 theorem dTV_chain (j : ℕ) :
     Tendsto (fun x => PMF.dTV ((winLaw x).map (passLoc ⌊scale x j⌋₊))
       ((winLaw (scale x j)).map (passLoc ⌊scale x j⌋₊))) atTop (𝓝 0) := by
-  sorry
+  induction j with
+  | zero =>
+    have : ∀ x, scale x 0 = x := fun x => by simp [scale]
+    simp only [this, dTV_self]
+    exact tendsto_const_nhds
+  | succ j ih =>
+    have hlog : Tendsto (fun x => C_stab * (Real.log (scale x (j + 1))) ^ (-c_stab)) atTop
+        (𝓝 0) := by
+      have := ((tendsto_rpow_neg_atTop c_stab_pos).comp
+        (Real.tendsto_log_atTop.comp (tendsto_scale (j + 1)))).const_mul C_stab
+      simpa using this
+    have hsum := ih.add hlog
+    rw [add_zero] at hsum
+    refine squeeze_zero' (Eventually.of_forall fun x => PMF.dTV_nonneg _ _) ?_ hsum
+    filter_upwards [eventually_ge_atTop 0, (tendsto_scale (j + 1)).eventually_ge_atTop 1,
+      (tendsto_scale (j + 1)).eventually_ge_atTop X_stab] with x hx0 hx1 hxs
+    exact dTV_chain_step j hx0 hx1 hxs
 
 /-- Each stage event holds with probability tending to `1`. -/
 theorem stage_whp (u : List Bool) {δ η : ℝ} (hδ : 0 < δ) (hη : 0 < η) (hη1 : η ≤ 1 / 1000)
