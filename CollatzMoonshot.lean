@@ -142,4 +142,5 @@ import CollatzMoonshot.Conjugacy.SliceFourierGeneral
 import CollatzMoonshot.Conjugacy.ResidueIndicator
 import CollatzMoonshot.Conjugacy.BeyondWords
 import CollatzMoonshot.Conjugacy.BeyondWordsLetters
+import CollatzMoonshot.Conjugacy.BlockWords
 import CollatzMoonshot.Maze
