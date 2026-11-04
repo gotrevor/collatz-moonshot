@@ -47,7 +47,6 @@ Checked from `/tmp/axchk/Ax.lean` with a `sorry` control (`sorryControl` shows `
 ## Next (operator's call)
 
 - `docs/notes/` write-up of the height line and first passage (lane rule: neutral note, pinned commit).
-- `logNormal_of_orbitWordLaw` (`ChampernowneLog.lean`), still open under `logNormal_of_le_four`.
 - `StageWordLaw` (per-stage, not log-density) remains the open node beyond log density.
 
 ## Final checkpoint (treadmill stop)
@@ -59,4 +58,4 @@ Exact next steps, for whichever operator kickoff comes next:
 1. Re-verify: `lake build CollatzMoonshot.Conjugacy.OrbitHeightSharp`, then `#print axioms
    heightLawBelowThreshold` and `firstPassage_sharp` (expect `propext, Classical.choice, Quot.sound`).
 2. Optional: `docs/notes/` note on the height line and first passage, pinned at this commit.
-3. Optional: `logNormal_of_orbitWordLaw` (`ChampernowneLog.lean`); `StageWordLaw`.
+3. Optional: `StageWordLaw`.

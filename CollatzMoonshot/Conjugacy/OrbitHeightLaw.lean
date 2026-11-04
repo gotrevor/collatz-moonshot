@@ -16,7 +16,7 @@ every start in logarithmic density follows the line `log₂ n − β t`, `β = 1
 `t ≈ (1 − θ) size n / β`.
 
 The line must end at `1 / β = C*`, where it would go negative (`not_heightLawUpTo_of_gt`).  Reaching
-`C*` from below is the node `HeightLawBelowThreshold`.
+`C*` from below is the node `HeightLawBelowThreshold`, proved in `OrbitHeightSharp.lean`.
 
 `StageWordLaw` is the same orbit statement over one stage in place of logarithmic density.  It gives
 normality (`normal_of_stageWordLaw`), and it is what logarithmic density does not reach (research note
@@ -356,7 +356,8 @@ theorem not_heightLawUpTo_of_gt {τ : ℝ} (hτ : 1 < τ * heightSlope) : ¬ Hei
     _ = ε * Nat.size n := mul_comm _ _
 
 /-- **Node: the height line all the way to `C*`.**  The chain of `dTV_chain` with a number of scales
-depending on `τ`, in place of the fixed `numScales`.  Believed, 85%. -/
+depending on `τ`, in place of the fixed `numScales`.  Proved in `OrbitHeightSharp.lean`
+(`heightLawBelowThreshold`). -/
 def HeightLawBelowThreshold : Prop :=
   ∀ τ : ℝ, τ * heightSlope < 1 → HeightLawUpTo τ
 
