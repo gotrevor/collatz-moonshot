@@ -8,7 +8,7 @@ import TaoCollatz.Sec5.Stabilization
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
 import CollatzMoonshot.Conjugacy.OrbitWordLawReadOff
-import CollatzMoonshot.Conjugacy.OrbitWordLawTerras
+import CollatzMoonshot.Conjugacy.OrbitWordLawWhp
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -59,9 +59,8 @@ theorem winGoodOfBlocks : WinGoodOfBlocks := winGoodOfBlocks_holds
 /-- A window event sees only `N mod 2^m`.  Proved in `OrbitWordLawTerras.lean`. -/
 theorem winGoodModIff : WinGoodModIff := winGoodModIff_holds
 
-/-- Transfer by Tao's integral test (`integral_test_logUnif_atCX`).  Confidence 90%. -/
-theorem probPeriodicLe : ProbPeriodicLe := by
-  sorry
+/-- Transfer by Tao's integral test.  Proved in `OrbitWordLawWhp.lean`. -/
+theorem probPeriodicLe : ProbPeriodicLe := probPeriodicLe_holds
 
 /-- **Terras at one scale**, from the nodes above.  Confidence 85%. -/
 theorem winGoodWhp : WinGoodWhp := by
