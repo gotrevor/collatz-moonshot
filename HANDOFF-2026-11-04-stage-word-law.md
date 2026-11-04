@@ -11,9 +11,9 @@ Frozen: `StageWordLaw`, `BadStart`, `WindowMatch`, `normal_iff_le_four`, and the
 | leaf | status |
 |---|---|
 | `expSparse_not_goodZero` (P1: one-window good event fails exp-sparsely) | sorry |
-| `sufTail_holds` (Chernoff, suffix odd counts) | sorry |
-| `oddTail_holds` (Chernoff, odd count lower tail) | sorry |
-| `expSparse_preimage_stageMap` (P2, pullback) | **proved** from the two tails (`expSparse_preimage_of_tails`, `OrbitStageLawPull.lean`) |
+| `sufTail_holds` (Chernoff, suffix odd counts) | **proved** (`OrbitStageLawTerras.lean`) |
+| `oddTail_holds` (Chernoff, odd count lower tail) | **proved** |
+| `expSparse_preimage_stageMap` (P2, pullback) | **proved** (`expSparse_preimage_of_tails`, `OrbitStageLawPull.lean`) |
 | `not_badStart_of_chain` (P3/P4, windows, deterministic) | sorry |
 | `expSparse_biUnion_range`, `tendsto_stage_of_expSparse` | proved (`OrbitStageLawRate.lean`) |
 
