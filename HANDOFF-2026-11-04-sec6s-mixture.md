@@ -19,3 +19,15 @@ Branch `wip/beyond-words-stretch`, commit `673d399`.
   `levelOsc_eq_osc`) and the telescope `levelOsc j a m ≤ levelOsc j a (a−1) + Σ_t levelOsc (t−1) (a−1) m`.
   Not started this lap (40-minute cap).
 - Frozen SEC6S targets in `SliceOscCentral.lean` untouched.
+
+## Final checkpoint
+
+- Branch `wip/beyond-words-stretch`; proof commit `673d399`, handoff commit after it.  Run stopped
+  via `box done --green` (scoped target `sorry-free:CollatzMoonshot/Conjugacy/SliceTelescope.lean` met;
+  root `lake build CollatzMoonshot` green).
+- Exact next steps (needs a new kickoff; DIRECTION.md's current directive has no open objective):
+  1. In `SliceTelescope.lean`, state `osc_levels_triangle` for a density on `ZMod (3^a)` and its
+     pushforward to `ZMod (3^{a'})`, porting `TaoCollatz.osc_syracZ_levels_triangle`'s proof.
+  2. Combine with `levelOsc_eq_osc` (`SliceOscBridge.lean`) and `levelClass_eq_sum_levelMass` at
+     `a' = a − 1` (weights `C(j−t, 0) = 1`) to get the telescope bound on `levelOsc j a m`.
+  3. Leave frozen SEC6S targets in `SliceOscCentral.lean` alone unless a kickoff names them.
