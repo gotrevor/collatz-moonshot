@@ -5,6 +5,7 @@ Authors: Trevor Morris
 -/
 import CollatzMoonshot.Conjugacy.BeyondWords
 import CollatzMoonshot.Conjugacy.Bridge3
+import CollatzMoonshot.Conjugacy.SliceFourierRate
 
 /-!
 # Beyond-Terras uniformity at growing depth: logarithmic (unconditional) and linear (one node)
@@ -40,7 +41,7 @@ any individual orbit, hence nothing about the Collatz conjecture.
 
 namespace CollatzMoonshot.Conjugacy
 
-open Filter Topology
+open Filter Topology CollatzMoonshot.FrontB
 
 /-- Total-variation distance, at depth `K`, between the beyond-Terras residues `T^j r mod 2^K`
 over `r < 2^j` and the uniform distribution on `ℤ/2^K`. -/
@@ -67,10 +68,166 @@ def BeyondWordsUniformLog : Prop :=
   ∀ C : ℝ, ∀ ε > (0 : ℝ), ∀ᶠ j : ℕ in atTop, ∀ K : ℕ, (K : ℝ) ≤ C * Real.logb 2 j →
     beyondTV j K ≤ ε
 
+
+/-! ## Total variation from slice-wise residue sums -/
+
+/-- One start carries centred mass at most `2` summed over all residues `c < 2^K`. -/
+theorem sum_norm_resInd_le (K y : ℕ) :
+    ∑ c ∈ Finset.range (2 ^ K), ‖resInd K c y‖ ≤ 2 := by
+  have hpt (c : ℕ) :
+      ‖resInd K c y‖ ≤ (if y % 2 ^ K = c then (1 : ℝ) else 0) + ((2 : ℝ) ^ K)⁻¹ := by
+    unfold resInd
+    refine (norm_sub_le _ _).trans (add_le_add ?_ (le_of_eq ?_))
+    · split_ifs <;> simp
+    · simp
+  have h1 : (2 : ℝ) ^ K * ((2 : ℝ) ^ K)⁻¹ = 1 := mul_inv_cancel₀ (by positivity)
+  calc
+    ∑ c ∈ Finset.range (2 ^ K), ‖resInd K c y‖ ≤
+        ∑ c ∈ Finset.range (2 ^ K),
+          ((if y % 2 ^ K = c then (1 : ℝ) else 0) + ((2 : ℝ) ^ K)⁻¹) :=
+      Finset.sum_le_sum fun c _ => hpt c
+    _ = (if y % 2 ^ K ∈ Finset.range (2 ^ K) then (1 : ℝ) else 0) +
+        (2 : ℝ) ^ K * ((2 : ℝ) ^ K)⁻¹ := by
+      rw [Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.sum_const, Finset.card_range,
+        nsmul_eq_mul]
+      push_cast
+      ring
+    _ ≤ 2 := by
+      rw [h1]
+      split_ifs <;> norm_num
+
+/-- **Total variation from the slices.**  If on every central slice the residue sums of the
+centred indicators total at most `M · #slice` over `c < 2^K`, then `beyondTV j K` is at most
+`M` plus twice the non-central share: those starts are charged once as their counts and once as
+their part of the uniform mass (`sum_norm_resInd_le`). -/
+theorem beyondTV_le_of_slice (j K : ℕ) {M : ℝ} (hM : 0 ≤ M)
+    (hslice : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        M * (levelSet j a).card) :
+    beyondTV j K ≤ M + 2 * ((outOddSet j).card : ℝ) / 2 ^ j := by
+  let I := Finset.range (j + 1)
+  let L := I.filter (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20)
+  let H := I.filter (fun a => 4 * a < j ∨ 11 * j / 20 < a)
+  let S : ℕ → ℕ → ℂ := fun c a => ∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)
+  have hpowpos : (0 : ℝ) < 2 ^ j := by positivity
+  have hterm (c : ℕ) : |(beyondCount j K c : ℝ) / 2 ^ j - 1 / 2 ^ K| =
+      ‖∑ r ∈ Finset.range (2 ^ j), resInd K c (tstep^[j] r)‖ / 2 ^ j := by
+    rw [sum_resInd_eq]
+    have hr := Complex.norm_real ((beyondCount j K c : ℝ) - 2 ^ j * ((2 : ℝ) ^ K)⁻¹)
+    push_cast at hr
+    rw [hr, Real.norm_eq_abs]
+    have heq : (beyondCount j K c : ℝ) / 2 ^ j - 1 / 2 ^ K =
+        ((beyondCount j K c : ℝ) - 2 ^ j * ((2 : ℝ) ^ K)⁻¹) / 2 ^ j := by
+      field_simp
+    rw [heq, abs_div, abs_of_pos hpowpos]
+  have hpartition (c : ℕ) : ∑ r ∈ Finset.range (2 ^ j), resInd K c (tstep^[j] r) =
+      (∑ a ∈ L, S c a) + ∑ a ∈ H, S c a := by
+    rw [sum_range_eq_sum_levelSet j (fun r => resInd K c (tstep^[j] r))]
+    have hs := Finset.sum_filter_add_sum_filter_not I
+      (fun a => j ≤ 4 * a ∧ a ≤ 11 * j / 20) (S c)
+    rw [show I.filter (fun a => ¬(j ≤ 4 * a ∧ a ≤ 11 * j / 20)) = H by
+      ext a
+      simp [H]
+      omega] at hs
+    exact hs.symm
+  have hHnorm (c : ℕ) : ‖∑ a ∈ H, S c a‖ ≤
+      ∑ a ∈ H, ∑ r ∈ levelSet j a, ‖resInd K c (tstep^[j] r)‖ :=
+    (norm_sum_le _ _).trans (Finset.sum_le_sum fun a _ => norm_sum_le _ _)
+  have hLcard : ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤ 2 ^ j := by
+    calc
+      ∑ a ∈ L, ((levelSet j a).card : ℝ) ≤
+          ∑ a ∈ I, ((levelSet j a).card : ℝ) := by
+        exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+          (fun _ _ _ => by positivity)
+      _ = 2 ^ j := by
+        exact_mod_cast sum_levelSet_card j
+  have hHcard : ∑ a ∈ H, ((levelSet j a).card : ℝ) = (outOddSet j).card := by
+    exact_mod_cast sum_out_levelSet_card j
+  have hLsum : ∑ c ∈ Finset.range (2 ^ K), ∑ a ∈ L, ‖S c a‖ ≤ M * 2 ^ j := by
+    rw [Finset.sum_comm]
+    calc
+      ∑ a ∈ L, ∑ c ∈ Finset.range (2 ^ K), ‖S c a‖ ≤
+          ∑ a ∈ L, M * ((levelSet j a).card : ℝ) :=
+        Finset.sum_le_sum fun a ha =>
+          hslice a (Finset.mem_filter.mp ha).2.1 (Finset.mem_filter.mp ha).2.2
+      _ = M * ∑ a ∈ L, ((levelSet j a).card : ℝ) := by rw [Finset.mul_sum]
+      _ ≤ M * 2 ^ j := mul_le_mul_of_nonneg_left hLcard hM
+  have hHsum : ∑ c ∈ Finset.range (2 ^ K),
+      ∑ a ∈ H, ∑ r ∈ levelSet j a, ‖resInd K c (tstep^[j] r)‖ ≤
+        2 * (outOddSet j).card := by
+    rw [Finset.sum_comm]
+    calc
+      ∑ a ∈ H, ∑ c ∈ Finset.range (2 ^ K), ∑ r ∈ levelSet j a, ‖resInd K c (tstep^[j] r)‖ =
+          ∑ a ∈ H, ∑ r ∈ levelSet j a,
+            ∑ c ∈ Finset.range (2 ^ K), ‖resInd K c (tstep^[j] r)‖ := by
+        apply Finset.sum_congr rfl
+        intro a _
+        rw [Finset.sum_comm]
+      _ ≤ ∑ a ∈ H, ∑ _r ∈ levelSet j a, (2 : ℝ) :=
+        Finset.sum_le_sum fun a _ => Finset.sum_le_sum fun r _ => sum_norm_resInd_le K _
+      _ = 2 * ∑ a ∈ H, ((levelSet j a).card : ℝ) := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro a _
+        rw [Finset.sum_const, nsmul_eq_mul]
+        ring
+      _ = 2 * (outOddSet j).card := by rw [hHcard]
+  unfold beyondTV
+  calc
+    ∑ c ∈ Finset.range (2 ^ K), |(beyondCount j K c : ℝ) / 2 ^ j - 1 / 2 ^ K| =
+        (∑ c ∈ Finset.range (2 ^ K),
+          ‖∑ r ∈ Finset.range (2 ^ j), resInd K c (tstep^[j] r)‖) / 2 ^ j := by
+      rw [Finset.sum_div]
+      exact Finset.sum_congr rfl fun c _ => hterm c
+    _ ≤ (∑ c ∈ Finset.range (2 ^ K), ((∑ a ∈ L, ‖S c a‖) +
+          ∑ a ∈ H, ∑ r ∈ levelSet j a, ‖resInd K c (tstep^[j] r)‖)) / 2 ^ j := by
+      gcongr with c hc
+      rw [hpartition c]
+      exact (norm_add_le _ _).trans (add_le_add (norm_sum_le _ _) (hHnorm c))
+    _ ≤ (M * 2 ^ j + 2 * (outOddSet j).card) / 2 ^ j := by
+      gcongr
+      rw [Finset.sum_add_distrib]
+      exact add_le_add hLsum hHsum
+    _ = M + 2 * ((outOddSet j).card : ℝ) / 2 ^ j := by
+      field_simp
+
 /-- **Edge (elementary).**  The sliced Proposition 1.14 gives the truncated mixing node of
 `Bridge3.lean`: take `m = ⌊a/2⌋`. -/
 theorem truncatedSyracMixing_of_sliceOscDecay (h : SliceOscDecay) : TruncatedSyracMixing := by
-  sorry
+  intro ε hε
+  obtain ⟨C, hCpos, hC⟩ := h 1 one_pos
+  obtain ⟨M, hM⟩ := exists_nat_gt ((C + 1) / ε)
+  have hCM : C + 1 < ε * M := by
+    rw [div_lt_iff₀ hε] at hM
+    linarith
+  filter_upwards [eventually_ge_atTop (8 * M + 16)] with j hj
+  intro a hja haj
+  refine ⟨a / 2, Nat.div_le_self a 2, ?_, ?_⟩
+  · have hm1 : 1 ≤ a / 2 := by omega
+    have hb := hC j a (a / 2) hm1 (Nat.div_le_self a 2) (by omega) (by omega)
+    rw [Real.rpow_neg_one] at hb
+    have hmM : (M : ℝ) ≤ ((a / 2 : ℕ) : ℝ) := by exact_mod_cast (show M ≤ a / 2 by omega)
+    have hmpos : (0 : ℝ) < ((a / 2 : ℕ) : ℝ) := by exact_mod_cast hm1
+    have hCm : C * (((a / 2 : ℕ) : ℝ))⁻¹ ≤ ε := by
+      rw [← div_eq_mul_inv, div_le_iff₀ hmpos]
+      nlinarith
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    calc
+      levelOsc j a (a / 2) ≤ C * (((a / 2 : ℕ) : ℝ))⁻¹ * (levelSet j a).card := hb
+      _ ≤ ε * (levelSet j a).card := by gcongr
+  · have hd : a / 2 + (a - a / 2) = a := by omega
+    have hlt : a - a / 2 < 3 ^ (a - a / 2) := Nat.lt_pow_self (by norm_num)
+    have hMd : M ≤ a - a / 2 := by omega
+    have h3 : (M : ℝ) < (3 : ℝ) ^ (a - a / 2) := by
+      exact_mod_cast (lt_of_le_of_lt hMd hlt)
+    have h1 : 1 ≤ ε * (3 : ℝ) ^ (a - a / 2) := by nlinarith
+    have hpow : (3 : ℝ) ^ a = 3 ^ (a / 2) * 3 ^ (a - a / 2) := by
+      rw [← pow_add, hd]
+    rw [hpow]
+    calc
+      (3 : ℝ) ^ (a / 2) = 3 ^ (a / 2) * 1 := by ring
+      _ ≤ 3 ^ (a / 2) * (ε * 3 ^ (a - a / 2)) := by gcongr
+      _ = ε * (3 ^ (a / 2) * 3 ^ (a - a / 2)) := by ring
 
 /-- **Edge: linear depth from the sliced Proposition 1.14** (the fibre-progression argument of
 the module docstring, with `m = ⌊a/2⌋` and the `outOddSet` tail). -/
@@ -81,11 +238,89 @@ theorem beyondWordsUniformLinear_of_sliceOscDecay (h : SliceOscDecay) :
 /-- **Theorem (unconditional): logarithmic depth.**  The first `C log₂ j` letters past the
 Terras horizon are jointly uniform, for every `C`. -/
 theorem beyondWordsUniformLog : BeyondWordsUniformLog := by
-  sorry
+  intro C ε hε
+  have h := sliceCharDecay_of_pascalDampingDecay pascalDampingDecay
+  obtain ⟨C', hC'pos, hslice⟩ := exists_norm_levelSum_le_rate h (⌈C⌉₊ + 2) (by omega)
+  have hsmall := (tendsto_logMajorant C' ⌈C⌉₊).eventually (gt_mem_nhds (half_pos hε))
+  have htail := (tendsto_const_div_atTop_nhds_zero_nat (200 : ℝ)).eventually
+    (gt_mem_nhds (half_pos hε))
+  filter_upwards [hsmall, htail, eventually_ge_atTop 4096] with j hjM hjt hj
+  intro K hK
+  set N := ⌈C⌉₊ with hN
+  have hjR1 : (1 : ℝ) ≤ j := by exact_mod_cast (show 1 ≤ j by omega)
+  have hjRpos : (0 : ℝ) < j := by linarith
+  have h2K : (2 : ℝ) ^ K ≤ (j : ℝ) ^ N := by
+    have hlog : (K : ℝ) ≤ Real.logb 2 ((j : ℝ) ^ N) := by
+      rw [Real.logb_pow]
+      have h0 : 0 ≤ Real.logb 2 (j : ℝ) := Real.logb_nonneg one_lt_two hjR1
+      have hCN : C ≤ (N : ℝ) := Nat.le_ceil C
+      nlinarith [mul_le_mul_of_nonneg_right hCN h0]
+    rw [Real.le_logb_iff_rpow_le one_lt_two (by positivity), Real.rpow_natCast] at hlog
+    exact hlog
+  have hM0 : 0 ≤ logMajorant C' N j := by unfold logMajorant; positivity
+  have hper : ∀ a, j ≤ 4 * a → a ≤ 11 * j / 20 →
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        logMajorant C' N j * (levelSet j a).card := by
+    intro a hja haj
+    let E : ℝ := (2 ^ (N + 2) * C' / (j : ℝ) ^ (N + 2) +
+        (j : ℝ) * ((7 : ℝ) / 8) ^ (j / 16 - j / 32)) * (4 * (j + 1)) +
+      ((3 : ℝ) ^ (j / 4096))⁻¹ * (4 * (j + 1))
+    have hE0 : 0 ≤ E := by positivity
+    have hcard : (0 : ℝ) ≤ (levelSet j a).card := by positivity
+    have hpt : ∀ c ∈ Finset.range (2 ^ K),
+        ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤ E * (levelSet j a).card := by
+      intro c hc
+      have hb := hslice j a hj hja haj (resInd K c) 1
+        (layeredWeight_resInd (Finset.mem_range.mp hc) a)
+      have haj' : (a : ℝ) + 1 ≤ (j : ℝ) + 1 := by
+        have : a ≤ j := by omega
+        have : (a : ℝ) ≤ j := by exact_mod_cast this
+        linarith
+      calc
+        ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤ _ := hb
+        _ ≤ E * (levelSet j a).card := by
+          rw [one_mul]
+          dsimp only [E]
+          gcongr
+    calc
+      ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+          ∑ _c ∈ Finset.range (2 ^ K), E * (levelSet j a).card := Finset.sum_le_sum hpt
+      _ = (2 : ℝ) ^ K * (E * (levelSet j a).card) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        push_cast
+        ring
+      _ ≤ (j : ℝ) ^ N * (E * (levelSet j a).card) := by gcongr
+      _ = logMajorant C' N j * (levelSet j a).card := by
+        simp only [logMajorant, E]
+        ring
+  have hTV := beyondTV_le_of_slice j K hM0 hper
+  have hout := outOddSet_ratio_le j (by omega)
+  have h2out : 2 * ((outOddSet j).card : ℝ) / 2 ^ j ≤ 200 / j := by
+    rw [mul_div_assoc]
+    have : (200 : ℝ) / j = 2 * (100 / j) := by ring
+    rw [this]
+    linarith
+  linarith
 
 /-- Consistency: logarithmic-depth uniformity recovers the fixed-`K` statement of
 `BeyondWords.lean`. -/
 theorem beyondWordsUniform_of_log (h : BeyondWordsUniformLog) : BeyondWordsUniform := by
-  sorry
+  intro K c hc
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  have h1 := h 1 (ε / 2) (half_pos hε)
+  have hlog : ∀ᶠ j : ℕ in atTop, (K : ℝ) ≤ 1 * Real.logb 2 j := by
+    have ht : Tendsto (fun j : ℕ => Real.logb 2 j) atTop atTop :=
+      (Real.tendsto_logb_atTop one_lt_two).comp tendsto_natCast_atTop_atTop
+    simpa using ht.eventually_ge_atTop (K : ℝ)
+  obtain ⟨J, hJ⟩ := eventually_atTop.1 (h1.and hlog)
+  refine ⟨J, fun j hj => ?_⟩
+  obtain ⟨hTV, hK⟩ := hJ j hj
+  have hb := hTV K hK
+  rw [Real.dist_eq]
+  have hle : |(beyondCount j K c : ℝ) / 2 ^ j - 1 / 2 ^ K| ≤ beyondTV j K :=
+    Finset.single_le_sum (f := fun c => |(beyondCount j K c : ℝ) / 2 ^ j - 1 / 2 ^ K|)
+      (fun _ _ => abs_nonneg _) (Finset.mem_range.2 hc)
+  linarith
 
 end CollatzMoonshot.Conjugacy
