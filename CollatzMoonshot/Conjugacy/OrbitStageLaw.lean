@@ -7,7 +7,7 @@ import Mathlib
 import CollatzMoonshot.Conjugacy.OrbitHeightLaw
 import CollatzMoonshot.Conjugacy.OrbitStageLawPull
 import CollatzMoonshot.Conjugacy.OrbitStageLawRate
-import CollatzMoonshot.Conjugacy.OrbitStageLawTerras
+import CollatzMoonshot.Conjugacy.OrbitStageLawWords
 
 /-!
 # The orbit word law over one stage, and normality for `C ≤ 4`
@@ -44,8 +44,8 @@ open Filter Topology CollatzMoonshot.FrontB CollatzMoonshot.Obstructions.ParityW
 
 /-- **P1.**  The one-window good event fails on an exponentially sparse set. -/
 theorem expSparse_not_goodZero (u : List Bool) {η γ : ℝ} (hη : 0 < η) (hγ : 0 < γ) :
-    ExpSparse {n | ¬ GoodZero u η γ n} := by
-  sorry
+    ExpSparse {n | ¬ GoodZero u η γ n} :=
+  expSparse_not_goodZero' u hη hγ
 
 /-- **Terras tail for suffixes**, by Chernoff on the odd letters of each suffix. -/
 theorem sufTail_holds : SufTail := sufTail_holds'
