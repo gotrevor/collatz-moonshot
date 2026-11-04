@@ -191,7 +191,7 @@ most `Λ`; short stretches cost at most `H` each.  The letter-`1` frequency keep
 `t` above `n 2^(−0.224 t)`, so the passage below `x_J ≤ n^(1/20)` comes after `4.25 log₂ n`
 letters. -/
 theorem goodOdd_of_stages (u : List Bool) {δ' : ℝ} (hδ' : 0 < δ') :
-    ∃ δ η X₀ : ℝ, 0 < δ ∧ 0 < η ∧ ∀ x : ℝ, X₀ ≤ x → ∀ n : ℕ, n % 2 = 1 →
+    ∃ δ η X₀ : ℝ, 0 < δ ∧ 0 < η ∧ η ≤ 1 / 1000 ∧ ∀ x : ℝ, X₀ ≤ x → ∀ n : ℕ, n % 2 = 1 →
       x ^ alpha ≤ n → (n : ℝ) ≤ x ^ alpha ^ 2 → ScaleGood u δ η x n →
       (∀ j < numScales, LocGood u δ η (scale x j) (passLoc ⌊scale x j⌋₊ n)) →
       GoodOdd u δ' n := by
