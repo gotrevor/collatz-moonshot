@@ -20,10 +20,13 @@ first passages.
   (`wdev_add`) and shift along the orbit (`wdev_shift`).
 * The bridge: for odd `N`, `syr^[k] N = tstep^[valSum N k] N` (`syr_iterate_eq_tstep`).
 * Passages compose (`passLoc_passLoc`).
-* One stage (`stage_passes`): if the letter `1` has frequency within `1/100` on every prefix of
+Open nodes are `Prop`s here (`StagePasses`, `GoodOddOfStages`, `LocGoodPassLoc`), with their
+`sorry`s in `OrbitWordLaw.lean`, so that the target file carries every open obligation.
+
+* One stage (`StagePasses`): if the letter `1` has frequency within `1/100` on every prefix of
   length in `[H, Λ]`, the orbit of `M ≤ y` passes below `z` within `Λ` letters, once `Λ` covers
   about `12 log₂ (y / z)`.
-* Reading off (`goodOdd_of_stages`): if the start is good at scale `x` and each passage location is
+* Reading off (`GoodOddOfStages`): if the start is good at scale `x` and each passage location is
   good at its own scale, the frequency of `u` is right over the first `4.2 size n` letters.
 -/
 
@@ -270,7 +273,7 @@ theorem passes_passLoc {z z' N : ℕ} (hzz : z' ≤ z) (hN : N % 2 = 1) (h : pas
 
 /-! ## One stage of descent -/
 
-/-- **One stage.**  Let `M ≤ y` be odd and let the letter `1` have frequency within `1/100` on
+/-- **Node: one stage.**  Let `M ≤ y` be odd and let the letter `1` have frequency within `1/100` on
 every prefix of `M` with length in `[H, Λ]`.  If `Λ` covers `2 ⌈6 (log₂ y − log₂ z + 1)⌉ + 4 H`
 and `Λ ≤ z`, then the orbit passes below `z` within `Λ` letters.
 
@@ -278,12 +281,10 @@ The descent: at most `0.51` of the letters are odd, so the height falls by `0.19
 it stays above `z` (the correction of the height identity is at most `Λ / (3 z ln 2) ≤ 1`).  The
 passage location is the next odd height, which comes after a run of `0`s, and the prefix bounds
 cap that run. -/
-theorem stage_passes {M H Λ : ℕ} {y z : ℝ} (hM : M % 2 = 1) (hMy : (M : ℝ) ≤ y)
-    (hz : 2 ≤ z) (hzy : z ≤ y)
-    (hΛ : 2 * ⌈6 * (Real.logb 2 y - Real.logb 2 z + 1)⌉₊ + 4 * H ≤ Λ) (hΛz : (Λ : ℝ) ≤ z)
-    (hgood : PrefGood [true] (1 / 100) H Λ M) :
-    passes ⌊z⌋₊ M ∧ ltime ⌊z⌋₊ M ≤ Λ := by
-  sorry
+def StagePasses : Prop :=
+  ∀ (M H Λ : ℕ) (y z : ℝ), M % 2 = 1 → (M : ℝ) ≤ y → 2 ≤ z → z ≤ y →
+    2 * ⌈6 * (Real.logb 2 y - Real.logb 2 z + 1)⌉₊ + 4 * H ≤ Λ → (Λ : ℝ) ≤ z →
+    PrefGood [true] (1 / 100) H Λ M → passes ⌊z⌋₊ M ∧ ltime ⌊z⌋₊ M ≤ Λ
 
 /-! ## Scales -/
 
@@ -305,7 +306,7 @@ has its count of `u` within `δ size n` of `T 2^(−|u|)`. -/
 def GoodOdd (u : List Bool) (δ : ℝ) (n : ℕ) : Prop :=
   ∀ T : ℕ, 5 * T ≤ 21 * Nat.size n → |wdev u n 0 T| ≤ δ * Nat.size n
 
-/-- **Reading off the orbit.**  For every `u` and `δ' > 0` there are `δ, η > 0` such that, for large
+/-- **Node: reading off the orbit.**  For every `u` and `δ' > 0` there are `δ, η > 0` such that, for large
 `x`, an odd start `n ∈ [x^α, x^(α²)]` that is good at scale `x`, and whose passage locations below
 `x_j` are good at scale `x_j` for every `j < numScales`, is good over its first `4.2 size n`
 letters.
@@ -314,18 +315,18 @@ The stretches between passages tile the letters, each a prefix of a passage loca
 most `Λ`; short stretches cost at most `H` each.  The letter-`1` frequency keeps the height at time
 `t` above `n 2^(−0.224 t)`, so the passage below `x_J ≤ n^(1/20)` comes after `4.25 log₂ n`
 letters. -/
-theorem goodOdd_of_stages (u : List Bool) {δ' : ℝ} (hδ' : 0 < δ') :
+def GoodOddOfStages : Prop :=
+  ∀ (u : List Bool) (δ' : ℝ), 0 < δ' →
     ∃ δ η X₀ : ℝ, 0 < δ ∧ 0 < η ∧ η ≤ 1 / 1000 ∧ ∀ x : ℝ, X₀ ≤ x → ∀ n : ℕ, n % 2 = 1 →
       x ^ alpha ≤ n → (n : ℝ) ≤ x ^ alpha ^ 2 → ScaleGood u δ η x n →
       (∀ j < numScales, LocGood u δ η (scale x j) (passLoc ⌊scale x j⌋₊ n)) →
-      GoodOdd u δ' n := by
-  sorry
+      GoodOdd u δ' n
 
-/-- **The location event from the start event.**  For large `x`, if an odd `N ≤ x^(α²)` is good
+/-- **Node: the location event from the start event.**  For large `x`, if an odd `N ≤ x^(α²)` is good
 at scale `x`, its passage location below `x` is a good location at scale `x`. -/
-theorem locGood_passLoc (u : List Bool) {δ η : ℝ} (hη : 0 < η) (hη1 : η ≤ 1 / 1000) :
+def LocGoodPassLoc : Prop :=
+  ∀ (u : List Bool) (δ η : ℝ), 0 < η → η ≤ 1 / 1000 →
     ∃ X₀ : ℝ, ∀ x : ℝ, X₀ ≤ x → ∀ N : ℕ, N % 2 = 1 → (N : ℝ) ≤ x ^ alpha ^ 2 →
-      ScaleGood u δ η x N → LocGood u δ η x (passLoc ⌊x⌋₊ N) := by
-  sorry
+      ScaleGood u δ η x N → LocGood u δ η x (passLoc ⌊x⌋₊ N)
 
 end CollatzMoonshot.Conjugacy

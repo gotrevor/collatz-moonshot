@@ -21,19 +21,90 @@ namespace CollatzMoonshot.Conjugacy
 
 open Filter Topology CollatzMoonshot.FrontB CollatzMoonshot.Obstructions.ParityWord
 
+/-! ## Open nodes
+
+Every open obligation of the target is one of these, stated in the sibling files and held open
+here, so that this file's `sorry` count is the target's.  Proved implications between them live in
+the siblings. -/
+
+/-- **One stage of descent.**  Elementary (height identity, prefix bounds).  Confidence 90%. -/
+theorem stagePasses : StagePasses := by
+  sorry
+
+/-- **Reading off the orbit.**  Elementary bookkeeping over `numScales` stages.  Confidence 85%. -/
+theorem goodOddOfStages : GoodOddOfStages := by
+  sorry
+
+/-- **The location event from the start event.**  From `StagePasses`.  Confidence 90%. -/
+theorem locGoodPassLoc : LocGoodPassLoc := by
+  sorry
+
+/-- **Terras with constraints.**  Induction on `m`, as `card_windowMatch`.  Confidence 95%. -/
+theorem cardMatchSet : CardMatchSet := by
+  sorry
+
+/-- One window, from `CardMatchSet`.  Confidence 95%. -/
+theorem cardMatchOne : CardMatchOne := by
+  sorry
+
+/-- Two disjoint windows, from `CardMatchSet`.  Confidence 95%. -/
+theorem cardMatchTwo : CardMatchTwo := by
+  sorry
+
+/-- The second moment over a block, from `CardMatchOne`, `CardMatchTwo`.  Confidence 90%. -/
+theorem sumSqWdevLe : SumSqWdevLe := by
+  sorry
+
+/-- Chebyshev on a block, from `SumSqWdevLe`.  Confidence 95%. -/
+theorem cardBadBlockLe : CardBadBlockLe := by
+  sorry
+
+/-- Blocks give windows: a deviation is `1`-Lipschitz in the end point.  Confidence 90%. -/
+theorem winGoodOfBlocks : WinGoodOfBlocks := by
+  sorry
+
+/-- A window event sees only `N mod 2^m`.  Confidence 95%. -/
+theorem winGoodModIff : WinGoodModIff := by
+  sorry
+
+/-- Transfer by Tao's integral test (`integral_test_logUnif_atCX`).  Confidence 90%. -/
+theorem probPeriodicLe : ProbPeriodicLe := by
+  sorry
+
+/-- **Terras at one scale**, from the nodes above.  Confidence 85%. -/
+theorem winGoodWhp : WinGoodWhp := by
+  sorry
+
+/-- **Windows give density**: cover `[1, X]` by windows `[y, y^α]`.  Confidence 85%. -/
+theorem logDens0OfWindow : LogDens0OfWindow := by
+  sorry
+
+/-- **Odd parts**: `∑_a 2^(−a) = 2`.  Confidence 90%. -/
+theorem logDens0OddPart : LogDens0OddPart := by
+  sorry
+
+/-- **Large 2-adic valuation**: `∑_a 2^(−a) (a / ε + 1) < ∞`.  Confidence 90%. -/
+theorem summableLargeTwoAdic : SummableLargeTwoAdic := by
+  sorry
+
+/-- **The even reduction**: `2^a m` reads `a` zeros, then the letters of `m`.  Confidence 85%. -/
+theorem notBadStartOfGoodOdd : NotBadStartOfGoodOdd := by
+  sorry
+
 /-- **Frozen target.  Believed, 85%, given (1.20), which `stabilization_atCX` proves.** -/
 theorem orbitWordLaw_of_le_four (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) : OrbitWordLaw C := by
   rw [orbitWordLaw_iff]
   intro u δ hδ
-  obtain ⟨s₀, hs₀⟩ := not_badStart_of_goodOdd hC4 u hδ
+  obtain ⟨s₀, hs₀⟩ := notBadStartOfGoodOdd C hC4 u δ hδ
   set ε : ℝ := min (1 / 15) (δ / 8) with hεdef
   have hε : 0 < ε := lt_min (by norm_num) (by positivity)
   have h1 : LogDens0 (fun n => ε * Nat.size (TaoCollatz.oddPart n) < padicValNat 2 n) :=
-    logDens0_of_summable (summable_large_twoAdic hε)
+    logDens0_of_summable (summableLargeTwoAdic ε hε)
   have h2 : LogDens0 (fun n => n ≤ 2 ^ (2 * s₀)) := logDens0_of_bdd (fun n h => h)
   have h3 : LogDens0 (fun n => ¬ GoodOdd u (δ / 2) (TaoCollatz.oddPart n)) :=
-    logDens0_oddPart (fun m => ¬ GoodOdd u (δ / 2) m)
-      (logDens0_of_window (fun m => ¬ GoodOdd u (δ / 2) m) (goodOdd_whp u (by positivity)))
+    logDens0OddPart (fun m => ¬ GoodOdd u (δ / 2) m)
+      (logDens0OfWindow (fun m => ¬ GoodOdd u (δ / 2) m)
+        (goodOdd_whp goodOddOfStages winGoodWhp locGoodPassLoc u (by positivity)))
   refine ((h1.or h2).or h3).mono fun n hn => ?_
   by_contra hcon
   simp only [not_or, not_lt, not_le, not_not] at hcon
