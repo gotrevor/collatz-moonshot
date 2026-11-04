@@ -46,13 +46,12 @@ orbit, not on a residue.
 
 | `C` | word of a `k`-bit `n` | status |
 |---|---|---|
-| `1` | the `k` Terras letters | normal, believed (`collatzChampernowne_one_normal`, 85%) |
+| `1` | the `k` Terras letters | normal (`collatzChampernowne_one_normal`, `ChampernowneOne.lean`) |
 | `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal iff mixing; `normal_of_shortIntervalMixing` frozen (75%) |
 | `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal, conditional on `EarlyArrival C` (`not_normal_of_earlyArrival`, 90%) |
 | stop at `1` | `stopWordLen n` letters, no tail | `ChampernowneStopNormal` (65%) |
 
-New (2026-10-21): the object is the Collatz analogue of Champernowne's constant.  As far as this
-repo knows, neither the sequence nor the threshold phenomenon is in print.
+The object is the Collatz analogue of Champernowne's constant.
 -/
 
 namespace CollatzMoonshot.Conjugacy
@@ -214,8 +213,8 @@ def ShortIntervalMixing (C : ℕ) : Prop :=
 /-- **Theorem (believed, confidence 75%).**  Short-interval mixing makes `𝒞_C` normal.
 
 The in-range letters (positions `t` with `t + L ≤ k − 1` in a word of stage `k`) are counted
-exactly as in `collatzChampernowne_one_normal`, by the dyadic decomposition of the partial
-stage.  For the beyond-range positions `k ≤ t ≤ C k − L`, apply the hypothesis to the partial
+exactly as in `collatzChampernowne_one_normal`, by `abs_card_Ico_windowMatch_sub_le` over the
+partial stage.  For the beyond-range positions `k ≤ t ≤ C k − L`, apply the hypothesis to the partial
 stage `[2^(k-1), 2^(k-1) + m)` as a whole, with the same `m` at which the prefix is cut: each
 such `t` contributes `m / 2^L ± δ 2^(k-1)` occurrences, so over the `≤ C k` positions the
 error is `≤ δ C k 2^(k-1)`, against a prefix of length `≥ C (k − 2) 2^(k-1)`; stages below the

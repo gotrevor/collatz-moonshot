@@ -1058,11 +1058,13 @@ Split agreed with personal-c5: this section and `SliceSeven.lean` are personal-2
 
 ## 15. Terras alone: every `𝒞_C` is disjunctive, and `𝒞_1` should be normal (2026-10-21 in chat, recorded 2026-11-03)
 
-Disjunctiveness is a theorem (`collatzChampernowne_disjunctive`, `Conjugacy/Disjunctive.lean`).  Normality of `𝒞_1` is still a hand argument: `collatzChampernowne_one_normal` carries its `sorry`.
+Both are theorems: `collatzChampernowne_disjunctive` (`Conjugacy/Disjunctive.lean`) and `collatzChampernowne_one_normal` (`Conjugacy/ChampernowneOne.lean`).
 
 **Disjunctive for every `C`, unconditionally** (`collatzChampernowne_disjunctive`).  Given a word `w` of length `j`, Terras gives the unique `r < 2^j` whose orbit starts with `w`.  Then `n = r + 2^j` has `j + 1` bits, so its block has at least `j + 1` letters, and the first `j` are `w`, since those letters depend only on `n mod 2^j`.  Every word occurs.  This needs no fact about Collatz beyond the bijection (`onesSet_injOn`, `onesSet_surjOn`).  Check: 2000 of 2000 random words, `j ≤ 24` (`terraschamp.py`).
 
-**`𝒞_1` should be normal by Terras plus bookkeeping** (85%).  At level `k`, `n ∈ [2^k, 2^{k+1})`, block `n` has `k + 1` letters.  A subword at offset `i`, length `m`, depends only on `n mod 2^{i+m}`, and the level covers each such residue exactly `2^{k−i−m}` times when `i + m ≤ k`.  By Terras at depth `i + m`, every `m`-word then occurs exactly `2^{k−m}` times at that offset.  Measured with its control at `(k, m) = (12, 3), (14, 4), (16, 4)`: every interior offset is exactly balanced, and only the window ending on the block's last letter is not.  That last letter sums to exactly `−E_k` over the level (`−42, −178, −362`, by the lift identity), so the night's main object enters `𝒞_1` only there.  Two error terms remain, and neither looks hard:
+**`𝒞_1` is normal by Terras plus a count** (`collatzChampernowne_one_normal`).  The proof counts by offset, not by level.  Letters `t, …, t+L−1` have period `2^(t+L)` in `n`, and one period holds a given word exactly `2^t` times (`card_windowMatch`), so over any `m` consecutive integers the count is `m/2^L` up to `2^t` (`abs_card_Ico_windowMatch_sub_le`).  Summing over offsets gives `|occ(cum N) − cum N/2^L| ≤ (2L+2)N` (`abs_occ_cum_sub_le`), and `cum N/N → ∞` (`tendsto_succ_div_cum`).  This replaces the level-by-level hand argument below, kept for its measurements: the two error terms it lists need no separate treatment, and the last-letter window is just the top offset.
+
+The level-by-level picture: at level `k`, `n ∈ [2^k, 2^{k+1})`, block `n` has `k + 1` letters.  A subword at offset `i`, length `m`, depends only on `n mod 2^{i+m}`, and the level covers each such residue exactly `2^{k−i−m}` times when `i + m ≤ k`.  By Terras at depth `i + m`, every `m`-word then occurs exactly `2^{k−m}` times at that offset.  Measured with its control at `(k, m) = (12, 3), (14, 4), (16, 4)`: every interior offset is exactly balanced, and only the window ending on the block's last letter is not.  That last letter sums to exactly `−E_k` over the level (`−42, −178, −362`, by the lift identity), so the night's main object enters `𝒞_1` only there.  Two error terms remain, and neither looks hard:
 - Windows straddling a block boundary are a fraction `O(m/k)` of level `k`.
 - A prefix ending inside a level needs a dyadic count.  If `n` runs over `2^{k−t}` values, about `t + m` offsets per block are uncontrolled, for a share `(t + m) 2^{−t}/k` of the prefix, and each controlled offset is off by at most one period.  This is the step the first chat version skipped.  It is a hand count; the probe's partial-level test has no teeth and is not evidence.
 
@@ -1070,7 +1072,7 @@ Prefix frequencies to `n < 2^20` agree: `sup |freq − 2^{−m}| ≈ 10^{−4}` 
 
 | `C` | disjunctive | normal |
 |---|---|---|
-| `1` | theorem | Terras + bookkeeping (hand, 85%) |
+| `1` | theorem | theorem |
 | `1 < C < C*` | theorem | beyond-Terras mixing, open (70%) |
 | `> C*` | theorem | no: mixing fails (proved), normality fails (believed, 90%) |
 
