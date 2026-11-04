@@ -1,5 +1,13 @@
 # PENDING_WORK
 
+## 2026-11-04 — SEC6S lap 1b, one-step telescope: GATE MET
+
+`levelOsc_succ_le_telescope` proved (`Conjugacy/SliceTelescopeStep.lean`, axioms `propext,
+Classical.choice, Quot.sound`), via the class-count consistency `levelClass_succ_eq_sum_levelClass`
+and the lift count `sum_range_mul_mod`.  Advance on the SEC6S crux: Tao's (6.1) now holds for the
+slice oscillations in Lean.  Next attack: unroll it to the multi-scale bound with binomial weights
+(induction on `a` from `levelOsc j m m = 0`).  See `HANDOFF-2026-11-04-sec6s-telescope.md`.
+
 ## 2026-11-04 — aligned windows: GATE MET
 
 `beyondWordsUniformLogAt` (unconditional) and `beyondWordsUniformLinearAt_of_sliceOscDecay_sharp`
