@@ -229,6 +229,204 @@ theorem truncatedSyracMixing_of_sliceOscDecay (h : SliceOscDecay) : TruncatedSyr
       _ ≤ 3 ^ (a / 2) * (ε * 3 ^ (a - a / 2)) := by gcongr
       _ = ε * (3 ^ (a / 2) * 3 ^ (a - a / 2)) := by ring
 
+/-! ## Linear depth: the fibre-progression bound -/
+
+/-- Reindex `[0, Q·T)` as `d + Q t` with `d < Q`, `t < T`. -/
+theorem sum_range_mul_eq_sum_sum {M : Type*} [AddCommMonoid M] (F : ℕ → M) (Q T : ℕ) :
+    ∑ y ∈ Finset.range (Q * T), F y =
+      ∑ d ∈ Finset.range Q, ∑ t ∈ Finset.range T, F (d + Q * t) := by
+  induction T with
+  | zero => simp
+  | succ T ih =>
+    rw [Nat.mul_succ, Finset.sum_range_add, ih]
+    simp only [Finset.sum_range_succ, Finset.sum_add_distrib]
+    congr 1
+    apply Finset.sum_congr rfl
+    intro d _
+    rw [add_comm]
+
+/-- **An odd-step progression is equidistributed mod `2^K` up to one point.**  For `q` odd,
+`#{t < T : d + q t ≡ c (mod 2^K)}` is within `1` of `T / 2^K`: the condition is a single residue
+class of `t` (`q` is a unit mod `2^K`), counted by `Nat.count_modEq_card`. -/
+theorem abs_card_progression_sub_le {q : ℕ} (hq : Nat.Coprime q 2) (K d c T : ℕ)
+    (hc : c < 2 ^ K) :
+    |(((Finset.range T).filter (fun t => (d + q * t) % 2 ^ K = c)).card : ℝ) - T / 2 ^ K| ≤ 1 := by
+  have : NeZero (2 ^ K) := ⟨by positivity⟩
+  have hcop : Nat.Coprime q (2 ^ K) := Nat.Coprime.pow_right K hq
+  let u := ZMod.unitOfCoprime q hcop
+  let t0 : ℕ := ((↑u⁻¹ * ((c : ZMod (2 ^ K)) - d)) : ZMod (2 ^ K)).val
+  have hiff : ∀ t, (d + q * t) % 2 ^ K = c ↔ t ≡ t0 [MOD 2 ^ K] := by
+    intro t
+    have e1 : (d + q * t) % 2 ^ K = c ↔
+        ((d + q * t : ℕ) : ZMod (2 ^ K)) = (c : ZMod (2 ^ K)) := by
+      rw [ZMod.natCast_eq_natCast_iff', Nat.mod_eq_of_lt hc]
+    have e2 : t ≡ t0 [MOD 2 ^ K] ↔
+        (t : ZMod (2 ^ K)) = ↑u⁻¹ * ((c : ZMod (2 ^ K)) - d) := by
+      rw [← ZMod.natCast_eq_natCast_iff, ZMod.natCast_zmod_val]
+    rw [e1, e2, Units.eq_inv_mul_iff_mul_eq, ZMod.coe_unitOfCoprime]
+    push_cast
+    constructor <;> intro h <;> linear_combination h
+  have hcard : ((Finset.range T).filter (fun t => (d + q * t) % 2 ^ K = c)).card =
+      T / 2 ^ K + if t0 % 2 ^ K < T % 2 ^ K then 1 else 0 := by
+    rw [← Nat.count_modEq_card T (by positivity) t0, Nat.count_eq_card_filter_range]
+    congr 1
+    exact Finset.filter_congr fun t _ => hiff t
+  rw [hcard]
+  have hdm := Nat.div_add_mod T (2 ^ K)
+  have hmod := Nat.mod_lt T (show 0 < 2 ^ K by positivity)
+  have hTR : (T : ℝ) = 2 ^ K * ((T / 2 ^ K : ℕ) : ℝ) + ((T % 2 ^ K : ℕ) : ℝ) := by
+    exact_mod_cast hdm.symm
+  have hmodR : ((T % 2 ^ K : ℕ) : ℝ) < 2 ^ K := by exact_mod_cast hmod
+  have hp : (0 : ℝ) < 2 ^ K := by positivity
+  have hdiv : (T : ℝ) / 2 ^ K = ((T / 2 ^ K : ℕ) : ℝ) + ((T % 2 ^ K : ℕ) : ℝ) / 2 ^ K := by
+    rw [hTR]
+    field_simp
+  have hfrac0 : 0 ≤ ((T % 2 ^ K : ℕ) : ℝ) / 2 ^ K := by positivity
+  have hfrac1 : ((T % 2 ^ K : ℕ) : ℝ) / 2 ^ K < 1 := by
+    rw [div_lt_one hp]
+    exact hmodR
+  rw [hdiv, abs_le]
+  split_ifs <;> push_cast <;> constructor <;> linarith
+
+/-- The centred indicator summed along an odd-step progression is at most `1`. -/
+theorem norm_sum_resInd_progression_le {q : ℕ} (hq : Nat.Coprime q 2) (K d c T : ℕ)
+    (hc : c < 2 ^ K) :
+    ‖∑ t ∈ Finset.range T, resInd K c (d + q * t)‖ ≤ 1 := by
+  have h := abs_card_progression_sub_le hq K d c T hc
+  have heq : ∑ t ∈ Finset.range T, resInd K c (d + q * t) =
+      (((((Finset.range T).filter (fun t => (d + q * t) % 2 ^ K = c)).card : ℝ) -
+        T / 2 ^ K : ℝ) : ℂ) := by
+    unfold resInd
+    rw [Finset.sum_sub_distrib, Finset.sum_boole, Finset.sum_const, Finset.card_range,
+      nsmul_eq_mul]
+    push_cast
+    ring
+  rw [heq, Complex.norm_real, Real.norm_eq_abs]
+  exact h
+
+/-- A slice sum of an observable of the iterate is the observable against the slice masses. -/
+theorem sum_levelSet_eq_sum_mass (j a : ℕ) (g : ℕ → ℂ) :
+    ∑ r ∈ levelSet j a, g (tstep^[j] r) =
+      ∑ y ∈ Finset.range (3 ^ a), (levelMass j a y : ℂ) * g y := by
+  have hfiber := Finset.sum_fiberwise_of_maps_to
+    (s := levelSet j a) (t := Finset.range (3 ^ a)) (g := fun r => tstep^[j] r)
+    (fun r hr => Finset.mem_range.2 (by
+      have hlt := tstep_iterate_lt_three_pow
+        (Finset.mem_range.1 (Finset.mem_filter.1 hr).1)
+      simpa [(Finset.mem_filter.1 hr).2] using hlt))
+    (fun r => g (tstep^[j] r))
+  rw [← hfiber]
+  apply Finset.sum_congr rfl
+  intro y _
+  rw [levelMass, Finset.sum_congr rfl (fun r hr => congrArg g (Finset.mem_filter.1 hr).2),
+    Finset.sum_const, nsmul_eq_mul]
+
+/-- The classes mod `3^m` partition the slice. -/
+theorem sum_levelClass_eq_card (j a m : ℕ) :
+    ∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) = (levelSet j a).card := by
+  have hfiber := Finset.sum_fiberwise_of_maps_to
+    (s := levelSet j a) (t := Finset.range (3 ^ m))
+    (g := fun r => tstep^[j] r % 3 ^ m)
+    (fun r _ => Finset.mem_range.2 (Nat.mod_lt _ (pow_pos (by omega) _)))
+    (fun _ => (1 : ℝ))
+  calc
+    ∑ c ∈ Finset.range (3 ^ m), (levelClass j a m c : ℝ) =
+        ∑ c ∈ Finset.range (3 ^ m),
+          ∑ r ∈ (levelSet j a).filter (fun r => tstep^[j] r % 3 ^ m = c), (1 : ℝ) := by
+      simp [levelClass]
+    _ = ∑ _r ∈ levelSet j a, (1 : ℝ) := hfiber
+    _ = (levelSet j a).card := by simp
+
+/-- **The slice-wise residue bound.**  For every scale `m ≤ a`, the residue sums of a slice total
+at most twice its oscillation above scale `m`, plus `2^K · 3^{m−a}` per start: the fibrewise
+uniform law is uniform mod `2^K` up to one point per fibre and residue
+(`norm_sum_resInd_progression_le`). -/
+theorem sum_norm_levelSum_resInd_le (j a m K : ℕ) (hma : m ≤ a) :
+    ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+      2 * levelOsc j a m + 2 ^ K * ((3 : ℝ) ^ m / 3 ^ a) * (levelSet j a).card := by
+  let lam : ℕ → ℝ := fun y => (3 : ℝ) ^ m / 3 ^ a * levelClass j a m (y % 3 ^ m)
+  let D : ℕ → ℝ := fun y => (levelMass j a y : ℝ) - lam y
+  have hodd : Nat.Coprime (3 ^ m) 2 := Nat.Coprime.pow_left m (by norm_num)
+  have hsplit (c : ℕ) : ∑ r ∈ levelSet j a, resInd K c (tstep^[j] r) =
+      ∑ y ∈ Finset.range (3 ^ a), ((D y : ℝ) : ℂ) * resInd K c y +
+        ∑ y ∈ Finset.range (3 ^ a), ((lam y : ℝ) : ℂ) * resInd K c y := by
+    rw [sum_levelSet_eq_sum_mass, ← Finset.sum_add_distrib]
+    apply Finset.sum_congr rfl
+    intro y _
+    simp only [D]
+    push_cast
+    ring
+  have hlam (c : ℕ) (hc : c < 2 ^ K) :
+      ‖∑ y ∈ Finset.range (3 ^ a), ((lam y : ℝ) : ℂ) * resInd K c y‖ ≤
+        (3 : ℝ) ^ m / 3 ^ a * (levelSet j a).card := by
+    have hpow : 3 ^ a = 3 ^ m * 3 ^ (a - m) := by rw [← pow_add, Nat.add_sub_of_le hma]
+    rw [hpow, sum_range_mul_eq_sum_sum]
+    have hinner (d : ℕ) (hd : d ∈ Finset.range (3 ^ m)) :
+        ∑ t ∈ Finset.range (3 ^ (a - m)),
+            ((lam (d + 3 ^ m * t) : ℝ) : ℂ) * resInd K c (d + 3 ^ m * t) =
+          (((3 : ℝ) ^ m / 3 ^ a * levelClass j a m d : ℝ) : ℂ) *
+            ∑ t ∈ Finset.range (3 ^ (a - m)), resInd K c (d + 3 ^ m * t) := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro t _
+      have hmod : (d + 3 ^ m * t) % 3 ^ m = d := by
+        rw [Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt (Finset.mem_range.1 hd)]
+      simp only [lam, hmod]
+    rw [Finset.sum_congr rfl hinner]
+    calc
+      ‖∑ d ∈ Finset.range (3 ^ m),
+          (((3 : ℝ) ^ m / 3 ^ a * levelClass j a m d : ℝ) : ℂ) *
+            ∑ t ∈ Finset.range (3 ^ (a - m)), resInd K c (d + 3 ^ m * t)‖ ≤
+          ∑ d ∈ Finset.range (3 ^ m),
+            ‖(((3 : ℝ) ^ m / 3 ^ a * levelClass j a m d : ℝ) : ℂ) *
+              ∑ t ∈ Finset.range (3 ^ (a - m)), resInd K c (d + 3 ^ m * t)‖ :=
+        norm_sum_le _ _
+      _ ≤ ∑ d ∈ Finset.range (3 ^ m), (3 : ℝ) ^ m / 3 ^ a * levelClass j a m d := by
+        apply Finset.sum_le_sum
+        intro d _
+        rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+        have hb := norm_sum_resInd_progression_le hodd K d c (3 ^ (a - m)) hc
+        calc
+          (3 : ℝ) ^ m / 3 ^ a * levelClass j a m d *
+              ‖∑ t ∈ Finset.range (3 ^ (a - m)), resInd K c (d + 3 ^ m * t)‖ ≤
+              (3 : ℝ) ^ m / 3 ^ a * levelClass j a m d * 1 := by gcongr
+          _ = (3 : ℝ) ^ m / 3 ^ a * levelClass j a m d := mul_one _
+      _ = (3 : ℝ) ^ m / 3 ^ a * (levelSet j a).card := by
+        rw [← Finset.mul_sum, sum_levelClass_eq_card]
+  have hD (c : ℕ) :
+      ‖∑ y ∈ Finset.range (3 ^ a), ((D y : ℝ) : ℂ) * resInd K c y‖ ≤
+        ∑ y ∈ Finset.range (3 ^ a), |D y| * ‖resInd K c y‖ := by
+    refine (norm_sum_le _ _).trans (le_of_eq ?_)
+    apply Finset.sum_congr rfl
+    intro y _
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
+  have hosc : levelOsc j a m = ∑ y ∈ Finset.range (3 ^ a), |D y| := rfl
+  have hDsum : ∑ c ∈ Finset.range (2 ^ K),
+      ∑ y ∈ Finset.range (3 ^ a), |D y| * ‖resInd K c y‖ ≤ 2 * levelOsc j a m := by
+    rw [Finset.sum_comm, hosc, Finset.mul_sum]
+    apply Finset.sum_le_sum
+    intro y _
+    rw [← Finset.mul_sum]
+    have := sum_norm_resInd_le K y
+    have hDy : 0 ≤ |D y| := abs_nonneg _
+    nlinarith
+  calc
+    ∑ c ∈ Finset.range (2 ^ K), ‖∑ r ∈ levelSet j a, resInd K c (tstep^[j] r)‖ ≤
+        ∑ c ∈ Finset.range (2 ^ K),
+          (∑ y ∈ Finset.range (3 ^ a), |D y| * ‖resInd K c y‖ +
+            (3 : ℝ) ^ m / 3 ^ a * (levelSet j a).card) := by
+      apply Finset.sum_le_sum
+      intro c hc
+      rw [hsplit c]
+      exact (norm_add_le _ _).trans (add_le_add (hD c) (hlam c (Finset.mem_range.1 hc)))
+    _ = ∑ c ∈ Finset.range (2 ^ K), ∑ y ∈ Finset.range (3 ^ a), |D y| * ‖resInd K c y‖ +
+          2 ^ K * ((3 : ℝ) ^ m / 3 ^ a) * (levelSet j a).card := by
+      rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+      push_cast
+      ring
+    _ ≤ 2 * levelOsc j a m + 2 ^ K * ((3 : ℝ) ^ m / 3 ^ a) * (levelSet j a).card := by
+      linarith
+
 /-- **Edge: linear depth from the sliced Proposition 1.14** (the fibre-progression argument of
 the module docstring, with `m = ⌊a/2⌋` and the `outOddSet` tail). -/
 theorem beyondWordsUniformLinear_of_sliceOscDecay (h : SliceOscDecay) :
