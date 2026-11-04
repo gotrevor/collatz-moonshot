@@ -1,5 +1,14 @@
 # PENDING_WORK
 
+## 2026-11-04 — aligned windows: GATE MET
+
+`beyondWordsUniformLogAt` (unconditional) and `beyondWordsUniformLinearAt_of_sliceOscDecay_sharp`
+proved in `Conjugacy/BeyondWordsAligned.lean`: both growing-depth theorems hold on every aligned
+window `[q 2^j, (q+1) 2^j)`, uniformly in `q`; axioms `propext, Classical.choice, Quot.sound`.
+Advance: the shift identity `tstep_iterate_add_mul` and shift invariance `sum_norm_sum_resInd_add`
+make every per-slice residue bound window-independent (`beyondTVAt_le_of_band`).  Open on this
+branch: probe `j ≥ 28`, `SEC6S-PLAN.md`.  See `HANDOFF-2026-11-04-beyond-words-aligned.md`.
+
 ## 2026-11-04 — linear edge at its natural limit: GATE MET
 
 `beyondWordsUniformLinear_of_sliceOscDecay_sharp` proved (`BeyondWordsLinearSharp.lean`): from
