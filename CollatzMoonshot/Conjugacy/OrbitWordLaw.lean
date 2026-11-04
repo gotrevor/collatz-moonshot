@@ -8,6 +8,7 @@ import TaoCollatz.Sec5.Stabilization
 import CollatzMoonshot.Conjugacy.ChampernowneLog
 import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
 import CollatzMoonshot.Conjugacy.OrbitWordLawReadOff
+import CollatzMoonshot.Conjugacy.OrbitWordLawTerras
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -37,17 +38,14 @@ theorem goodOddOfStages : GoodOddOfStages := goodOddOfStages_holds
 /-- **The location event from the start event.**  Proved in `OrbitWordLawStage.lean`. -/
 theorem locGoodPassLoc : LocGoodPassLoc := locGoodPassLoc_holds
 
-/-- **Terras with constraints.**  Induction on `m`, as `card_windowMatch`.  Confidence 95%. -/
-theorem cardMatchSet : CardMatchSet := by
-  sorry
+/-- **Terras with constraints.**  Proved in `OrbitWordLawTerras.lean`. -/
+theorem cardMatchSet : CardMatchSet := cardMatchSet_holds
 
-/-- One window, from `CardMatchSet`.  Confidence 95%. -/
-theorem cardMatchOne : CardMatchOne := by
-  sorry
+/-- One window, from `CardMatchSet`.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem cardMatchOne : CardMatchOne := cardMatchOne_holds
 
-/-- Two disjoint windows, from `CardMatchSet`.  Confidence 95%. -/
-theorem cardMatchTwo : CardMatchTwo := by
-  sorry
+/-- Two disjoint windows, from `CardMatchSet`.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem cardMatchTwo : CardMatchTwo := cardMatchTwo_holds
 
 /-- The second moment over a block, from `CardMatchOne`, `CardMatchTwo`.  Confidence 90%. -/
 theorem sumSqWdevLe : SumSqWdevLe := by
