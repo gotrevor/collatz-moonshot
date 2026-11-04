@@ -10,7 +10,7 @@ Frozen: `StageWordLaw`, `BadStart`, `WindowMatch`, `normal_iff_le_four`, and the
 
 | leaf | status |
 |---|---|
-| `expSparse_not_goodZero` (P1: one-window good event fails exp-sparsely) | sorry |
+| `expSparse_not_goodZero` (P1) | **proved** (`OrbitStageLawWords.lean`) |
 | `sufTail_holds` (Chernoff, suffix odd counts) | **proved** (`OrbitStageLawTerras.lean`) |
 | `oddTail_holds` (Chernoff, odd count lower tail) | **proved** |
 | `expSparse_preimage_stageMap` (P2, pullback) | **proved** (`expSparse_preimage_of_tails`, `OrbitStageLawPull.lean`) |
