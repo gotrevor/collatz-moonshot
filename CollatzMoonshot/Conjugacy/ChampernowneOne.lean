@@ -149,17 +149,17 @@ theorem abs_card_Ico_windowMatch_sub_le (g : ℕ → Bool) (L t a m : ℕ) :
   rw [abs_le]
   constructor <;> linarith
 
-/-! ## Reading occurrences in `𝒞_1` -/
+/-! ## Reading occurrences in `𝒞_C` -/
 
-/-- A window inside the word of `n + 1` is an occurrence in `𝒞_1`. -/
-theorem occursAt_cum_iff (u : List Bool) (n i : ℕ) (hi : i + u.length ≤ Nat.size (n + 1)) :
-    OccursAt (collatzChampernowne 1) u (cum (champLen 1) n + i) ↔
+/-- A window inside the word of `n + 1` is an occurrence in `𝒞_C`. -/
+theorem occursAt_cum_iff (C : ℕ) (u : List Bool) (n i : ℕ) (hi : i + u.length ≤ champLen C n) :
+    OccursAt (collatzChampernowne C) u (cum (champLen C) n + i) ↔
       WindowMatch (fun s => u.getD s false) u.length i (n + 1) := by
   have key : ∀ s, s < u.length →
-      collatzChampernowne 1 (cum (champLen 1) n + i + s) = accWord (n + 1) (i + s) := by
+      collatzChampernowne C (cum (champLen C) n + i + s) = accWord (n + 1) (i + s) := by
     intro s hs
     rw [add_assoc]
-    exact collatzChampernowne_apply 1 n (i + s) (by simp; omega)
+    exact collatzChampernowne_apply C n (i + s) (show i + s < champLen C n by omega)
   constructor
   · intro h s hs
     have := h ⟨s, hs⟩
@@ -181,59 +181,59 @@ theorem occ_add (w : ℕ → Bool) (u : List Bool) (a b : ℕ) :
   simp only [occ, Finset.card_filter, Finset.sum_range_add]
 
 /-- The occurrences whose window lies inside a word of `n + 1 ≤ N`. -/
-def interior (g : ℕ → Bool) (L N : ℕ) : ℕ :=
-  ∑ n ∈ Finset.range N, ((Finset.range (Nat.size (n + 1))).filter
-    fun i => i + L ≤ Nat.size (n + 1) ∧ WindowMatch g L i (n + 1)).card
+def interior (C : ℕ) (g : ℕ → Bool) (L N : ℕ) : ℕ :=
+  ∑ n ∈ Finset.range N, ((Finset.range (champLen C n)).filter
+    fun i => i + L ≤ champLen C n ∧ WindowMatch g L i (n + 1)).card
 
 /-- The number of offsets whose window fits in the word of `n + 1 ≤ N`. -/
-def windowCount (L N : ℕ) : ℕ :=
-  ∑ n ∈ Finset.range N, ((Finset.range (Nat.size (n + 1))).filter
-    fun i => i + L ≤ Nat.size (n + 1)).card
+def windowCount (C L N : ℕ) : ℕ :=
+  ∑ n ∈ Finset.range N, ((Finset.range (champLen C n)).filter
+    fun i => i + L ≤ champLen C n).card
 
 /-- The occurrences starting in the word of `N + 1`, compared with its interior windows. -/
-private theorem word_occ_bounds (u : List Bool) (N : ℕ) :
-    ((Finset.range (Nat.size (N + 1))).filter fun i => i + u.length ≤ Nat.size (N + 1) ∧
+private theorem word_occ_bounds (C : ℕ) (u : List Bool) (N : ℕ) :
+    ((Finset.range (champLen C N)).filter fun i => i + u.length ≤ champLen C N ∧
         WindowMatch (fun s => u.getD s false) u.length i (N + 1)).card ≤
-      ((Finset.range (Nat.size (N + 1))).filter fun i =>
-        OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i)).card ∧
-    ((Finset.range (Nat.size (N + 1))).filter fun i =>
-        OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i)).card ≤
-      ((Finset.range (Nat.size (N + 1))).filter fun i => i + u.length ≤ Nat.size (N + 1) ∧
+      ((Finset.range (champLen C N)).filter fun i =>
+        OccursAt (collatzChampernowne C) u (cum (champLen C) N + i)).card ∧
+    ((Finset.range (champLen C N)).filter fun i =>
+        OccursAt (collatzChampernowne C) u (cum (champLen C) N + i)).card ≤
+      ((Finset.range (champLen C N)).filter fun i => i + u.length ≤ champLen C N ∧
         WindowMatch (fun s => u.getD s false) u.length i (N + 1)).card + u.length := by
-  set z := Nat.size (N + 1) with hz
+  set z := champLen C N with hz
   constructor
   · refine Finset.card_le_card fun i hi => ?_
     simp only [Finset.mem_filter] at hi ⊢
-    exact ⟨hi.1, (occursAt_cum_iff u N i hi.2.1).mpr hi.2.2⟩
+    exact ⟨hi.1, (occursAt_cum_iff C u N i hi.2.1).mpr hi.2.2⟩
   · have hsub : ((Finset.range z).filter fun i =>
-        OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i)) ⊆
+        OccursAt (collatzChampernowne C) u (cum (champLen C) N + i)) ⊆
         ((Finset.range z).filter fun i => i + u.length ≤ z ∧
           WindowMatch (fun s => u.getD s false) u.length i (N + 1)) ∪
         Finset.Ico (z - u.length) z := by
       intro i hi
       simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_union, Finset.mem_Ico] at hi ⊢
       by_cases h : i + u.length ≤ z
-      · exact Or.inl ⟨hi.1, h, (occursAt_cum_iff u N i h).mp hi.2⟩
+      · exact Or.inl ⟨hi.1, h, (occursAt_cum_iff C u N i h).mp hi.2⟩
       · exact Or.inr ⟨by omega, hi.1⟩
     refine (Finset.card_le_card hsub).trans ((Finset.card_union_le _ _).trans ?_)
     rw [Nat.card_Ico]
     omega
 
 /-- Interior windows are occurrences, and at most `L` positions per word straddle its end. -/
-theorem occ_cum_le (u : List Bool) (N : ℕ) :
-    interior (fun s => u.getD s false) u.length N ≤
-        occ (collatzChampernowne 1) u (cum (champLen 1) N) ∧
-      occ (collatzChampernowne 1) u (cum (champLen 1) N) ≤
-        interior (fun s => u.getD s false) u.length N + u.length * N := by
+theorem occ_cum_le (C : ℕ) (u : List Bool) (N : ℕ) :
+    interior C (fun s => u.getD s false) u.length N ≤
+        occ (collatzChampernowne C) u (cum (champLen C) N) ∧
+      occ (collatzChampernowne C) u (cum (champLen C) N) ≤
+        interior C (fun s => u.getD s false) u.length N + u.length * N := by
   induction N with
   | zero => simp [interior, occ]
   | succ N ih =>
-    have hb := word_occ_bounds u N
-    rw [cum_succ, champLen_one, occ_add]
-    have hi : interior (fun s => u.getD s false) u.length (N + 1) =
-        interior (fun s => u.getD s false) u.length N +
-        ((Finset.range (Nat.size (N + 1))).filter fun i =>
-          i + u.length ≤ Nat.size (N + 1) ∧
+    have hb := word_occ_bounds C u N
+    rw [cum_succ, occ_add]
+    have hi : interior C (fun s => u.getD s false) u.length (N + 1) =
+        interior C (fun s => u.getD s false) u.length N +
+        ((Finset.range (champLen C N)).filter fun i =>
+          i + u.length ≤ champLen C N ∧
             WindowMatch (fun s => u.getD s false) u.length i (N + 1)).card := by
       simp only [interior, Finset.sum_range_succ]
     rw [hi, mul_add, mul_one]
@@ -293,16 +293,18 @@ private theorem offset_bound (g : ℕ → Bool) (L N t : ℕ) (hL : 1 ≤ L) :
 /-- **All offsets.**  Swap the sums; offset `t` runs over the interval `[2^(t+L−1), N]`, with error
 `2^t` (`abs_card_Ico_windowMatch_sub_le`), and `∑_{t < size N} 2^t ≤ 2N`. -/
 theorem abs_interior_sub_main_le (g : ℕ → Bool) (L N : ℕ) (hL : 1 ≤ L) :
-    |(interior g L N : ℝ) - (windowCount L N : ℝ) / 2 ^ L| ≤ 2 * N := by
+    |(interior 1 g L N : ℝ) - (windowCount 1 L N : ℝ) / 2 ^ L| ≤ 2 * N := by
   have hs : ∀ n < N, Nat.size (n + 1) ≤ Nat.size N := fun n hn => Nat.size_le_size hn
-  have hI : interior g L N = ∑ t ∈ Finset.range (Nat.size N),
-      ((Finset.range N).filter fun n => t + L ≤ Nat.size (n + 1) ∧ WindowMatch g L t (n + 1)).card :=
-    sum_card_filter_swap N (Nat.size N) (fun n => Nat.size (n + 1)) hs
+  have hI : interior 1 g L N = ∑ t ∈ Finset.range (Nat.size N),
+      ((Finset.range N).filter fun n => t + L ≤ Nat.size (n + 1) ∧ WindowMatch g L t (n + 1)).card := by
+    simp only [interior, champLen_one]
+    exact sum_card_filter_swap N (Nat.size N) (fun n => Nat.size (n + 1)) hs
       (fun n i => i + L ≤ Nat.size (n + 1) ∧ WindowMatch g L i (n + 1))
       (fun n i h => by have := h.1; omega)
-  have hW : windowCount L N = ∑ t ∈ Finset.range (Nat.size N),
-      ((Finset.range N).filter fun n => t + L ≤ Nat.size (n + 1)).card :=
-    sum_card_filter_swap N (Nat.size N) (fun n => Nat.size (n + 1)) hs
+  have hW : windowCount 1 L N = ∑ t ∈ Finset.range (Nat.size N),
+      ((Finset.range N).filter fun n => t + L ≤ Nat.size (n + 1)).card := by
+    simp only [windowCount, champLen_one]
+    exact sum_card_filter_swap N (Nat.size N) (fun n => Nat.size (n + 1)) hs
       (fun n i => i + L ≤ Nat.size (n + 1))
       (fun n i h => by omega)
   have hsum : ∀ T : ℕ, ∑ t ∈ Finset.range T, (2 : ℝ) ^ t + 1 = 2 ^ T := by
@@ -330,36 +332,36 @@ theorem abs_interior_sub_main_le (g : ℕ → Bool) (L N : ℕ) (hL : 1 ≤ L) :
     linarith
 
 /-- Each word loses at most `L` offsets to its end. -/
-theorem abs_main_sub_cum_le (L N : ℕ) :
-    |(windowCount L N : ℝ) / 2 ^ L - (cum (champLen 1) N : ℝ) / 2 ^ L| ≤ L * N := by
-  have hb : windowCount L N ≤ cum (champLen 1) N ∧
-      cum (champLen 1) N ≤ windowCount L N + L * N := by
+theorem abs_main_sub_cum_le (C L N : ℕ) :
+    |(windowCount C L N : ℝ) / 2 ^ L - (cum (champLen C) N : ℝ) / 2 ^ L| ≤ L * N := by
+  have hb : windowCount C L N ≤ cum (champLen C) N ∧
+      cum (champLen C) N ≤ windowCount C L N + L * N := by
     induction N with
     | zero => simp [windowCount]
     | succ N ih =>
-      have hc : Nat.size (N + 1) - L ≤
-          ((Finset.range (Nat.size (N + 1))).filter fun i => i + L ≤ Nat.size (N + 1)).card := by
-        have : Finset.range (Nat.size (N + 1) - L) ⊆
-            (Finset.range (Nat.size (N + 1))).filter fun i => i + L ≤ Nat.size (N + 1) := by
+      have hc : champLen C N - L ≤
+          ((Finset.range (champLen C N)).filter fun i => i + L ≤ champLen C N).card := by
+        have : Finset.range (champLen C N - L) ⊆
+            (Finset.range (champLen C N)).filter fun i => i + L ≤ champLen C N := by
           intro i hi
           simp only [Finset.mem_range, Finset.mem_filter] at hi ⊢
           omega
         simpa using Finset.card_le_card this
-      have hd : ((Finset.range (Nat.size (N + 1))).filter fun i =>
-          i + L ≤ Nat.size (N + 1)).card ≤ Nat.size (N + 1) := by
-        simpa using Finset.card_filter_le (Finset.range (Nat.size (N + 1)))
-          (fun i => i + L ≤ Nat.size (N + 1))
-      have hW : windowCount L (N + 1) = windowCount L N +
-          ((Finset.range (Nat.size (N + 1))).filter fun i => i + L ≤ Nat.size (N + 1)).card := by
+      have hd : ((Finset.range (champLen C N)).filter fun i =>
+          i + L ≤ champLen C N).card ≤ champLen C N := by
+        simpa using Finset.card_filter_le (Finset.range (champLen C N))
+          (fun i => i + L ≤ champLen C N)
+      have hW : windowCount C L (N + 1) = windowCount C L N +
+          ((Finset.range (champLen C N)).filter fun i => i + L ≤ champLen C N).card := by
         simp only [windowCount, Finset.sum_range_succ]
-      rw [hW, cum_succ, champLen_one, mul_add, mul_one]
+      rw [hW, cum_succ, mul_add, mul_one]
       constructor <;> omega
-  have h1 : (windowCount L N : ℝ) ≤ cum (champLen 1) N := by exact_mod_cast hb.1
-  have h2 : (cum (champLen 1) N : ℝ) ≤ windowCount L N + L * N := by exact_mod_cast hb.2
+  have h1 : (windowCount C L N : ℝ) ≤ cum (champLen C) N := by exact_mod_cast hb.1
+  have h2 : (cum (champLen C) N : ℝ) ≤ windowCount C L N + L * N := by exact_mod_cast hb.2
   have h2L : (1 : ℝ) ≤ 2 ^ L := one_le_pow₀ (by norm_num)
   rw [← sub_div, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 2 ^ L), div_le_iff₀ (by positivity)]
   have hLN : (0 : ℝ) ≤ L * N := by positivity
-  have : |(windowCount L N : ℝ) - cum (champLen 1) N| ≤ L * N := by
+  have : |(windowCount C L N : ℝ) - cum (champLen C) N| ≤ L * N := by
     rw [abs_le]; constructor <;> linarith
   nlinarith
 
@@ -367,76 +369,80 @@ theorem abs_main_sub_cum_le (L N : ℕ) :
 theorem abs_occ_cum_sub_le (u : List Bool) (hu : 1 ≤ u.length) (N : ℕ) :
     |(occ (collatzChampernowne 1) u (cum (champLen 1) N) : ℝ) -
         (cum (champLen 1) N : ℝ) / 2 ^ u.length| ≤ (2 * u.length + 2) * N := by
-  obtain ⟨hl, hu'⟩ := occ_cum_le u N
+  obtain ⟨hl, hu'⟩ := occ_cum_le 1 u N
   have h1 := abs_interior_sub_main_le (fun s => u.getD s false) u.length N hu
-  have h3 := abs_main_sub_cum_le u.length N
-  have hlR : (interior (fun s => u.getD s false) u.length N : ℝ) ≤
+  have h3 := abs_main_sub_cum_le 1 u.length N
+  have hlR : (interior 1 (fun s => u.getD s false) u.length N : ℝ) ≤
       occ (collatzChampernowne 1) u (cum (champLen 1) N) := by exact_mod_cast hl
   have huR : (occ (collatzChampernowne 1) u (cum (champLen 1) N) : ℝ) ≤
-      interior (fun s => u.getD s false) u.length N + u.length * N := by exact_mod_cast hu'
+      interior 1 (fun s => u.getD s false) u.length N + u.length * N := by exact_mod_cast hu'
   rw [abs_le] at h1 h3 ⊢
   have hLN : (0 : ℝ) ≤ u.length * N := by positivity
   constructor <;> nlinarith [h1.1, h1.2, h3.1, h3.2]
 
 /-! ## Passing to every prefix -/
 
+/-- Each word of `𝒞_C` has at least its bit length. -/
+private theorem size_le_champLen (C n : ℕ) : Nat.size (n + 1) ≤ champLen C n :=
+  Nat.le_mul_of_pos_left _ (lt_of_lt_of_le one_pos (le_max_right C 1))
+
 /-- Only `2^B` integers have fewer than `B` bits: `B N ≤ cum N + B 2^B`. -/
-private theorem mul_le_cum_add (B N : ℕ) : B * N ≤ cum (champLen 1) N + B * 2 ^ B := by
+private theorem mul_le_cum_add (C B N : ℕ) : B * N ≤ cum (champLen C) N + B * 2 ^ B := by
   induction N with
   | zero => simp
   | succ N ih =>
     rcases Nat.lt_or_ge (2 ^ B) (N + 1) with h | h
     · have hsize : B ≤ Nat.size (N + 1) := (Nat.lt_size.mpr h.le).le
-      rw [cum_succ, champLen_one, mul_add, mul_one]
+      have := size_le_champLen C N
+      rw [cum_succ, mul_add, mul_one]
       omega
     · have := Nat.mul_le_mul_left B h
       omega
 
 /-- The word ends grow faster than the word count: `cum N ≥ B (N − 2^B)` for every `B`. -/
-theorem tendsto_succ_div_cum :
-    Tendsto (fun N : ℕ => ((N : ℝ) + 1) / (cum (champLen 1) N : ℝ)) atTop (𝓝 0) := by
+theorem tendsto_succ_div_cum (C : ℕ) :
+    Tendsto (fun N : ℕ => ((N : ℝ) + 1) / (cum (champLen C) N : ℝ)) atTop (𝓝 0) := by
   rw [Metric.tendsto_atTop]
   intro ε hε
   obtain ⟨B, hB⟩ := exists_nat_gt (4 / ε)
   have hB' : 4 < ε * B := by rwa [div_lt_iff₀' hε] at hB
   refine ⟨2 ^ (B + 1) + 1, fun N hN => ?_⟩
   have hN1 : 1 ≤ N := le_trans (Nat.le_add_left 1 _) hN
-  have hcpos : (0 : ℝ) < cum (champLen 1) N := by
-    have := le_cum (champLen 1) (one_le_champLen 1) N
-    exact_mod_cast (show 0 < cum (champLen 1) N by omega)
-  have hmain : (B : ℝ) * N ≤ cum (champLen 1) N + B * 2 ^ B := by
-    exact_mod_cast mul_le_cum_add B N
+  have hcpos : (0 : ℝ) < cum (champLen C) N := by
+    have := le_cum (champLen C) (one_le_champLen C) N
+    exact_mod_cast (show 0 < cum (champLen C) N by omega)
+  have hmain : (B : ℝ) * N ≤ cum (champLen C) N + B * 2 ^ B := by
+    exact_mod_cast mul_le_cum_add C B N
   have hpow : (2 : ℝ) * 2 ^ B ≤ N := by
     have : 2 * 2 ^ B ≤ N := by rw [pow_succ] at hN; omega
     exact_mod_cast this
   have hB0 : (0 : ℝ) ≤ B := Nat.cast_nonneg _
-  have hc2 : (B : ℝ) * N ≤ 2 * cum (champLen 1) N := by nlinarith
+  have hc2 : (B : ℝ) * N ≤ 2 * cum (champLen C) N := by nlinarith
   have hNR : (1 : ℝ) ≤ N := by exact_mod_cast hN1
   rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity), div_lt_iff₀ hcpos]
   have h4 : 4 * (N : ℝ) < ε * B * N := by nlinarith
-  have h5 : ε * (B * N) ≤ ε * (2 * cum (champLen 1) N) := by
+  have h5 : ε * (B * N) ≤ ε * (2 * cum (champLen C) N) := by
     exact mul_le_mul_of_nonneg_left hc2 hε.le
   nlinarith
 
-/-- A prefix ending inside word `N` costs at most `N + 1` more, on each side. -/
-theorem abs_occ_sub_le (u : List Bool) (hu : 1 ≤ u.length) (N K : ℕ)
-    (h₁ : cum (champLen 1) N ≤ K) (h₂ : K < cum (champLen 1) (N + 1)) :
-    |(occ (collatzChampernowne 1) u K : ℝ) - (K : ℝ) / 2 ^ u.length| ≤
-      (2 * u.length + 4) * ((N : ℝ) + 1) := by
+/-- A prefix ending inside word `N` costs at most that word's length, on each side. -/
+theorem abs_occ_sub_le_of_cum (C : ℕ) (u : List Bool) (N K : ℕ)
+    (h₁ : cum (champLen C) N ≤ K) (h₂ : K < cum (champLen C) (N + 1)) :
+    |(occ (collatzChampernowne C) u K : ℝ) - (K : ℝ) / 2 ^ u.length| ≤
+      |(occ (collatzChampernowne C) u (cum (champLen C) N) : ℝ) -
+        (cum (champLen C) N : ℝ) / 2 ^ u.length| + 2 * champLen C N := by
   obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le h₁
-  have hd : d < Nat.size (N + 1) := by
-    rw [cum_succ, champLen_one] at h₂; omega
-  have hsize : Nat.size (N + 1) ≤ N + 1 := Nat.size_le.mpr Nat.lt_two_pow_self
-  have hb := abs_occ_cum_sub_le u hu N
+  have hd : d < champLen C N := by
+    rw [cum_succ] at h₂; omega
   have he : ((Finset.range d).filter fun i =>
-      OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i)).card ≤ d := by
+      OccursAt (collatzChampernowne C) u (cum (champLen C) N + i)).card ≤ d := by
     simpa using Finset.card_filter_le (Finset.range d)
-      (fun i => OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i))
+      (fun i => OccursAt (collatzChampernowne C) u (cum (champLen C) N + i))
   rw [occ_add]
   set e := ((Finset.range d).filter fun i =>
-      OccursAt (collatzChampernowne 1) u (cum (champLen 1) N + i)).card
+      OccursAt (collatzChampernowne C) u (cum (champLen C) N + i)).card
   have heR : (e : ℝ) ≤ d := by exact_mod_cast he
-  have hdR : (d : ℝ) ≤ N + 1 := by exact_mod_cast (show d ≤ N + 1 by omega)
+  have hdR : (d : ℝ) ≤ champLen C N := by exact_mod_cast hd.le
   have he0 : (0 : ℝ) ≤ e := Nat.cast_nonneg _
   have hd0 : (0 : ℝ) ≤ d := Nat.cast_nonneg _
   have h2L : (1 : ℝ) ≤ 2 ^ u.length := one_le_pow₀ (by norm_num)
@@ -444,23 +450,46 @@ theorem abs_occ_sub_le (u : List Bool) (hu : 1 ≤ u.length) (N K : ℕ)
   have hdiv0 : (0 : ℝ) ≤ (d : ℝ) / 2 ^ u.length := by positivity
   push_cast
   rw [add_div]
-  rw [abs_le] at hb ⊢
+  set x := (occ (collatzChampernowne C) u (cum (champLen C) N) : ℝ) -
+    (cum (champLen C) N : ℝ) / 2 ^ u.length with hx
+  have hxa := le_abs_self x
+  have hxb := neg_abs_le x
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- A prefix ending inside word `N` costs at most `N + 1` more, on each side. -/
+theorem abs_occ_sub_le (u : List Bool) (hu : 1 ≤ u.length) (N K : ℕ)
+    (h₁ : cum (champLen 1) N ≤ K) (h₂ : K < cum (champLen 1) (N + 1)) :
+    |(occ (collatzChampernowne 1) u K : ℝ) - (K : ℝ) / 2 ^ u.length| ≤
+      (2 * u.length + 4) * ((N : ℝ) + 1) := by
+  have h := abs_occ_sub_le_of_cum 1 u N K h₁ h₂
+  have hb := abs_occ_cum_sub_le u hu N
+  have hsize : champLen 1 N ≤ N + 1 := by
+    rw [champLen_one]; exact Nat.size_le.mpr Nat.lt_two_pow_self
+  have hsR : (champLen 1 N : ℝ) ≤ N + 1 := by exact_mod_cast hsize
   have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg _
-  have hLN : (0 : ℝ) ≤ u.length * N := by positivity
   have hL0 : (0 : ℝ) ≤ u.length := Nat.cast_nonneg _
-  constructor <;> nlinarith [hb.1, hb.2]
+  nlinarith
 
 /-- Position `K` lies in word `wordIndex K`. -/
-private theorem cum_le_wordIndex (K : ℕ) :
-    cum (champLen 1) (wordIndex (champLen 1) (one_le_champLen 1) K) ≤ K ∧
-      K < cum (champLen 1) (wordIndex (champLen 1) (one_le_champLen 1) K + 1) := by
-  have hex := exists_lt_cum_succ (champLen 1) (one_le_champLen 1) K
+theorem cum_le_wordIndex (C K : ℕ) :
+    cum (champLen C) (wordIndex (champLen C) (one_le_champLen C) K) ≤ K ∧
+      K < cum (champLen C) (wordIndex (champLen C) (one_le_champLen C) K + 1) := by
+  have hex := exists_lt_cum_succ (champLen C) (one_le_champLen C) K
   refine ⟨?_, Nat.find_spec hex⟩
-  show cum (champLen 1) (Nat.find hex) ≤ K
+  show cum (champLen C) (Nat.find hex) ≤ K
   rcases hm : Nat.find hex with _ | m
   · simp
   · have := Nat.find_min hex (m := m) (by omega)
     omega
+
+/-- Every position holds the empty word. -/
+theorem occ_nil (w : ℕ → Bool) (k : ℕ) : occ w [] k = k := by
+  have : (Finset.range k).filter (fun i => OccursAt w [] i) = Finset.range k := by
+    apply Finset.filter_true_of_mem
+    intro i _ j
+    exact j.elim0
+  rw [occ, this, Finset.card_range]
 
 /-- **`𝒞_1` is normal**: Terras's bijection and a count, with no further Collatz input. -/
 theorem collatzChampernowne_one_normal : Normal (collatzChampernowne 1) := by
@@ -468,32 +497,24 @@ theorem collatzChampernowne_one_normal : Normal (collatzChampernowne 1) := by
   rcases Nat.eq_zero_or_pos u.length with h0 | hu
   · have hu0 : u = [] := List.length_eq_zero_iff.mp h0
     subst hu0
-    have hocc : ∀ k, occ (collatzChampernowne 1) [] k = k := by
-      intro k
-      have : (Finset.range k).filter (fun i => OccursAt (collatzChampernowne 1) [] i) =
-          Finset.range k := by
-        apply Finset.filter_true_of_mem
-        intro i _ j
-        exact j.elim0
-      rw [occ, this, Finset.card_range]
     refine (tendsto_const_nhds (x := (1 : ℝ))).congr' ?_ |>.trans (by simp)
     filter_upwards [eventually_gt_atTop 0] with k hk
-    rw [hocc, div_self (by exact_mod_cast hk.ne')]
+    rw [occ_nil, div_self (by exact_mod_cast hk.ne')]
   · set W := wordIndex (champLen 1) (one_le_champLen 1) with hW
     have hWtend : Tendsto W atTop atTop := by
       refine tendsto_atTop.mpr fun b => ?_
       filter_upwards [eventually_ge_atTop (cum (champLen 1) b)] with K hK
       by_contra hlt
-      have h2 : K < cum (champLen 1) (W K + 1) := (cum_le_wordIndex K).2
+      have h2 : K < cum (champLen 1) (W K + 1) := (cum_le_wordIndex 1 K).2
       have := cum_mono (champLen 1) (show W K + 1 ≤ b by omega)
       omega
     have hg : Tendsto (fun K => (2 * (u.length : ℝ) + 4) *
         (((W K : ℝ) + 1) / (cum (champLen 1) (W K) : ℝ))) atTop (𝓝 0) := by
-      simpa using (tendsto_succ_div_cum.comp hWtend).const_mul (2 * (u.length : ℝ) + 4)
+      simpa using ((tendsto_succ_div_cum 1).comp hWtend).const_mul (2 * (u.length : ℝ) + 4)
     rw [tendsto_iff_dist_tendsto_zero]
     refine squeeze_zero' (Eventually.of_forall fun _ => dist_nonneg) ?_ hg
     filter_upwards [hWtend.eventually_ge_atTop 1] with K hK1
-    have hbr : cum (champLen 1) (W K) ≤ K ∧ K < cum (champLen 1) (W K + 1) := cum_le_wordIndex K
+    have hbr : cum (champLen 1) (W K) ≤ K ∧ K < cum (champLen 1) (W K + 1) := cum_le_wordIndex 1 K
     obtain ⟨h₁, h₂⟩ := hbr
     have hcpos : 0 < cum (champLen 1) (W K) := by
       have := le_cum (champLen 1) (one_le_champLen 1) (W K)

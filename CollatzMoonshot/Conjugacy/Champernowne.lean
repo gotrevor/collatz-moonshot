@@ -26,10 +26,10 @@ orbit, not on a residue.
   `collatzChampernowne_one_normal`): Terras's bijection and a count.
 * **`C ≥ 2`**: normality of `𝒞_C` is read as a **short-interval, beyond-Terras
   equidistribution** of the parity letters of `k`-bit integers, `ShortIntervalMixing C`.  The
-  direction `ShortIntervalMixing C → Normal 𝒞_C` is frozen (`normal_of_shortIntervalMixing`,
-  75%); the converse only returns an average over positions, so it is not stated.  The
-  single-letter shadow is proved: `ShortIntervalMixing 2` implies the bias-decay conjecture
-  C1 of `Ladder.lean` (`biasDecays_of_shortIntervalMixing`).
+  direction `ShortIntervalMixing C → Normal 𝒞_C` is `normal_of_shortIntervalMixing`
+  (`ChampernowneMixing.lean`); the converse only returns an average over positions, so it is
+  not stated.  The single-letter shadow is proved: `ShortIntervalMixing 2` implies the bias-decay
+  conjecture C1 of `Ladder.lean` (`biasDecays_of_shortIntervalMixing`).
 * **The threshold** `C* = 2 / (2 − log₂ 3) ≈ 4.82` (`threshold_bounds`: `4 < C* < 5`).  Under
   the stochastic model (Lagarias–Weiss 1992, Kontorovich–Lagarias 2009) the total stopping
   time of a typical `n` is `≈ C* · log₂ n`.  For `C > C*` a positive fraction of a typical word
@@ -47,7 +47,7 @@ orbit, not on a residue.
 | `C` | word of a `k`-bit `n` | status |
 |---|---|---|
 | `1` | the `k` Terras letters | normal (`collatzChampernowne_one_normal`, `ChampernowneOne.lean`) |
-| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal iff mixing; `normal_of_shortIntervalMixing` frozen (75%) |
+| `2 … 4` | `k` Terras letters, then `(C − 1) k` letters in flight | normal if mixing (`normal_of_shortIntervalMixing`); the converse is not stated |
 | `≥ 5` | in flight, then the cycle tail `1010…` for a positive fraction | not normal, conditional on `EarlyArrival C` (`not_normal_of_earlyArrival`, 90%) |
 | stop at `1` | `stopWordLen n` letters, no tail | `ChampernowneStopNormal` (65%) |
 
@@ -202,33 +202,20 @@ reached the cycle `{1, 2}` and the starts still in flight show a survivorship bi
 letters of the same size.  The first beyond-range letter has bias `≍ 2^(−k/2)` (`bias j` and
 `BiasDecays` in `Ladder.lean`; the measured `+0.00099` at `k = 20` is `2^(−10)`).  Whether the
 biases at fixed `t / k < C*` vanish as `k → ∞` is the content of the conjecture; `k = 20` is
-too small to separate the `O(√k)` arrival fluctuations from a genuine bias. -/
+too small to separate the `O(√k)` arrival fluctuations from a genuine bias.
+
+Evidence (2026-11-04, `experiments/conjugacy/segment_reach_large.py`, `2·10^5` random starts per
+`k`, two-letter words, stage and four top-digit bins, noise `≈ 0.001`): the deviation is about a
+quarter of the fraction `f` of starts already on `{1, 2}`, since the cycle tail has no `00` or `11`.
+At `t = 3k`, `f` and the deviation vanish together (`0.0514`, `0.0146`, `0.0027`, `0.0012`, `0.0015` at
+`k = 24, 50, 100, 200, 400`); at `t = 4k` they fall to `0.0065`; at `t = 5k`, past `C*`, they stay at
+`0.17`.  The bins stand in for the supremum over `m` and do not replace it. -/
 def ShortIntervalMixing (C : ℕ) : Prop :=
   ∀ (L : ℕ) (p : Fin L → Bool) (δ : ℝ), 0 < δ → ∃ K : ℕ, ∀ k : ℕ, K ≤ k → ∀ m : ℕ, m ≤ 2 ^ (k - 1) →
     ∀ t : ℕ, k ≤ t → t + L ≤ C * k →
       |(((Finset.Ico (2 ^ (k - 1)) (2 ^ (k - 1) + m)).filter
           fun n => ∀ s : Fin L, accWord n (t + s) = p s).card : ℝ) - (m : ℝ) / 2 ^ L| ≤
         δ * 2 ^ (k - 1)
-
-/-- **Theorem (believed, confidence 75%).**  Short-interval mixing makes `𝒞_C` normal.
-
-The in-range letters (positions `t` with `t + L ≤ k − 1` in a word of stage `k`) are counted
-exactly as in `collatzChampernowne_one_normal`, by `abs_card_Ico_windowMatch_sub_le` over the
-partial stage.  For the beyond-range positions `k ≤ t ≤ C k − L`, apply the hypothesis to the partial
-stage `[2^(k-1), 2^(k-1) + m)` as a whole, with the same `m` at which the prefix is cut: each
-such `t` contributes `m / 2^L ± δ 2^(k-1)` occurrences, so over the `≤ C k` positions the
-error is `≤ δ C k 2^(k-1)`, against a prefix of length `≥ C (k − 2) 2^(k-1)`; stages below the
-threshold `K` of the hypothesis are finitely many.  The positions per word that straddle
-`k − 1` or the word end are `2L`, a `2L / (C k)` fraction.  Then `δ → 0`.
-
-What most needs checking: the hypothesis is used *uniformly in `m`*, since the prefix may be
-cut anywhere inside a stage; without that uniformity the partial stage is uncontrolled and the
-block frequencies could oscillate within a stage.  The converse (normality implies mixing)
-yields only that the average over `t ∈ [k, C k)` of the discrepancies vanishes, not each `t`,
-which is why only this direction is frozen. -/
-theorem normal_of_shortIntervalMixing (C : ℕ) (hC : 1 ≤ C) (h : ShortIntervalMixing C) :
-    Normal (collatzChampernowne C) := by
-  sorry
 
 /-! ## The edge to the bias conjecture C1 -/
 
@@ -427,13 +414,10 @@ shortcut orbit of `n` multiply by `1/2` or `3/2` with equal probability, so `log
 fluctuations.  For `C ≤ 4 < C*` the fraction of stage `k` that has reached `1` by position
 `C k` tends to `0`, so the words are in flight throughout, and the conjecture is that in-flight
 letters mix (`ShortIntervalMixing C`); then `normal_of_shortIntervalMixing` applies
-(`champernowneNormalBelowThreshold_of_shortIntervalMixing`). -/
+(`champernowneNormalBelowThreshold_of_shortIntervalMixing`, both in
+`ChampernowneMixing.lean`). -/
 def ChampernowneNormalBelowThreshold : Prop :=
   ∀ C, 1 ≤ C → C ≤ 4 → Normal (collatzChampernowne C)
-
-theorem champernowneNormalBelowThreshold_of_shortIntervalMixing
-    (h : ∀ C, 1 ≤ C → C ≤ 4 → ShortIntervalMixing C) : ChampernowneNormalBelowThreshold :=
-  fun C h1 h4 => normal_of_shortIntervalMixing C h1 (h C h1 h4)
 
 /-- **Early arrival at positive density.**  Some rate `r < C` and some density `ρ > 0` such
 that, for all large `k`, at least `ρ · 2^(k-1)` of the `k`-bit integers reach `1` within `r k`
