@@ -304,4 +304,103 @@ theorem cardBadBlockLe_holds : CardBadBlockLe := by
     nlinarith
   exact le_of_mul_le_mul_right h3 hbR
 
+/-! ## Blocks give windows -/
+
+/-- Good blocks give a good run of consecutive blocks. -/
+theorem abs_wdev_blocks_le (u : List Bool) (n k b : ℕ) {ε : ℝ} :
+    ∀ d : ℕ, (∀ i < d, |wdev u n ((k + i) * b) b| ≤ ε) → |wdev u n (k * b) (d * b)| ≤ d * ε
+  | 0, _ => by simp [wdev, wcnt]
+  | d + 1, h => by
+    rw [add_mul, one_mul, wdev_add, show k * b + d * b = (k + d) * b by ring]
+    have h1 := abs_wdev_blocks_le u n k b d fun i hi => h i (by omega)
+    have h2 := h d (by omega)
+    have := abs_add_le (wdev u n (k * b) (d * b)) (wdev u n ((k + d) * b) b)
+    push_cast
+    linarith
+
+/-- **Blocks give windows** (`WinGoodOfBlocks`). -/
+theorem winGoodOfBlocks_holds : WinGoodOfBlocks := by
+  intro u δ H Λ K b n hδ hb hKb hbH hblk a ℓ ha hHℓ hℓΛ
+  rcases le_or_gt 1 δ with hδ1 | hδ1
+  · have := abs_wdev_le u n a ℓ
+    have : (ℓ : ℝ) ≤ δ * ℓ := le_mul_of_one_le_left (Nat.cast_nonneg _) hδ1
+    linarith
+  have hbR : (0 : ℝ) < b := by exact_mod_cast hb
+  have hbℓR : 8 * (b : ℝ) ≤ ℓ := by
+    have : (H : ℝ) ≤ ℓ := by exact_mod_cast hHℓ
+    nlinarith
+  have hbℓ : 8 * b ≤ ℓ := by exact_mod_cast hbℓR
+  -- the first and last block boundaries inside the window
+  obtain ⟨q₁, r₁, hqr₁, hr₁⟩ : ∃ q r, b * q + r = a + b - 1 ∧ r < b :=
+    ⟨_, _, Nat.div_add_mod (a + b - 1) b, Nat.mod_lt _ hb⟩
+  obtain ⟨q₂, r₂, hqr₂, hr₂⟩ : ∃ q r, b * q + r = a + ℓ ∧ r < b :=
+    ⟨_, _, Nat.div_add_mod (a + ℓ) b, Nat.mod_lt _ hb⟩
+  obtain ⟨c₁, hc₁⟩ : ∃ c, c = b * q₁ := ⟨_, rfl⟩
+  obtain ⟨c₂, hc₂⟩ : ∃ c, c = b * q₂ := ⟨_, rfl⟩
+  rw [← hc₁] at hqr₁
+  rw [← hc₂] at hqr₂
+  have hlt : c₁ < c₂ := by omega
+  have hq : q₁ < q₂ := by
+    rw [hc₁, hc₂] at hlt
+    exact Nat.lt_of_mul_lt_mul_left hlt
+  have hqK : q₂ ≤ K := by
+    have : b * q₂ ≤ b * K := by rw [← hc₂, mul_comm b K]; omega
+    exact Nat.le_of_mul_le_mul_left this hb
+  have hmid : c₂ - c₁ = (q₂ - q₁) * b := by
+    rw [hc₁, hc₂, Nat.sub_mul, mul_comm q₂, mul_comm q₁]
+  -- split the window
+  have e : wdev u n a ℓ = wdev u n a (c₁ - a) + wdev u n c₁ (c₂ - c₁) +
+      wdev u n c₂ (a + ℓ - c₂) := by
+    have h1 := wdev_add u n a (c₁ - a) ((c₂ - c₁) + (a + ℓ - c₂))
+    rw [show c₁ - a + (c₂ - c₁ + (a + ℓ - c₂)) = ℓ by omega, show a + (c₁ - a) = c₁ by omega]
+      at h1
+    rw [h1, wdev_add, show c₁ + (c₂ - c₁) = c₂ by omega, add_assoc]
+  have hA := abs_wdev_le u n a (c₁ - a)
+  have hC := abs_wdev_le u n c₂ (a + ℓ - c₂)
+  have hAl : ((c₁ - a : ℕ) : ℝ) ≤ b := by exact_mod_cast (show c₁ - a ≤ b by omega)
+  have hCl : ((a + ℓ - c₂ : ℕ) : ℝ) ≤ b := by exact_mod_cast (show a + ℓ - c₂ ≤ b by omega)
+  have hB : |wdev u n c₁ (c₂ - c₁)| ≤ (q₂ - q₁ : ℕ) * (δ / 4 * b) := by
+    rw [hmid, hc₁, mul_comm b q₁]
+    refine abs_wdev_blocks_le u n q₁ b (q₂ - q₁) fun i hi => hblk (q₁ + i) (by omega)
+  have hBl : ((q₂ - q₁ : ℕ) : ℝ) * b ≤ ℓ := by
+    have : (q₂ - q₁) * b ≤ ℓ := by omega
+    exact_mod_cast this
+  have hB' : |wdev u n c₁ (c₂ - c₁)| ≤ δ / 4 * ℓ := by
+    refine le_trans hB ?_
+    have : ((q₂ - q₁ : ℕ) : ℝ) * (δ / 4 * b) = δ / 4 * (((q₂ - q₁ : ℕ) : ℝ) * b) := by ring
+    rw [this]
+    exact mul_le_mul_of_nonneg_left hBl (by positivity)
+  rw [e]
+  have := abs_add_le (wdev u n a (c₁ - a) + wdev u n c₁ (c₂ - c₁)) (wdev u n c₂ (a + ℓ - c₂))
+  have := abs_add_le (wdev u n a (c₁ - a)) (wdev u n c₁ (c₂ - c₁))
+  have : 2 * (b : ℝ) ≤ δ * ℓ / 4 := by
+    have : (H : ℝ) ≤ ℓ := by exact_mod_cast hHℓ
+    nlinarith
+  linarith
+
+/-! ## Window events are periodic -/
+
+/-- **A window event sees only `n mod 2^m`** (`WinGoodModIff`). -/
+theorem winGoodModIff_holds : WinGoodModIff := by
+  intro u δ H Λ m hm n
+  have hcnt : ∀ a ℓ, a ≤ Λ → ℓ ≤ Λ → wcnt u (n % 2 ^ m) a ℓ = wcnt u n a ℓ := by
+    intro a ℓ ha hℓ
+    unfold wcnt
+    congr 1
+    refine Finset.filter_congr fun i hi => ?_
+    rw [Finset.mem_Ico] at hi
+    refine forall₂_congr fun s hs => ?_
+    rw [accWord_congr_mod (i + s) (s := n)
+      (Nat.mod_mod_of_dvd n (pow_dvd_pow 2 (by omega)))]
+  have hdev : ∀ a ℓ, a ≤ Λ → ℓ ≤ Λ → wdev u (n % 2 ^ m) a ℓ = wdev u n a ℓ := by
+    intro a ℓ ha hℓ
+    rw [wdev, wdev, hcnt a ℓ ha hℓ]
+  constructor
+  · intro h a ℓ ha hH hℓ
+    rw [← hdev a ℓ ha hℓ]
+    exact h a ℓ ha hH hℓ
+  · intro h a ℓ ha hH hℓ
+    rw [hdev a ℓ ha hℓ]
+    exact h a ℓ ha hH hℓ
+
 end CollatzMoonshot.Conjugacy

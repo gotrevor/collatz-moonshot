@@ -53,13 +53,11 @@ theorem sumSqWdevLe : SumSqWdevLe := sumSqWdevLe_holds
 /-- Chebyshev on a block.  Proved in `OrbitWordLawTerras.lean`. -/
 theorem cardBadBlockLe : CardBadBlockLe := cardBadBlockLe_holds
 
-/-- Blocks give windows: a deviation is `1`-Lipschitz in the end point.  Confidence 90%. -/
-theorem winGoodOfBlocks : WinGoodOfBlocks := by
-  sorry
+/-- Blocks give windows.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem winGoodOfBlocks : WinGoodOfBlocks := winGoodOfBlocks_holds
 
-/-- A window event sees only `N mod 2^m`.  Confidence 95%. -/
-theorem winGoodModIff : WinGoodModIff := by
-  sorry
+/-- A window event sees only `N mod 2^m`.  Proved in `OrbitWordLawTerras.lean`. -/
+theorem winGoodModIff : WinGoodModIff := winGoodModIff_holds
 
 /-- Transfer by Tao's integral test (`integral_test_logUnif_atCX`).  Confidence 90%. -/
 theorem probPeriodicLe : ProbPeriodicLe := by
