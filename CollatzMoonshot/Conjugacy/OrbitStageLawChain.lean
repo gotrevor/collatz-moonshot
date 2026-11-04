@@ -249,4 +249,213 @@ theorem size_stageMap_le {M : ℕ} (hs : 70 ≤ Nat.size M)
     exact Nat.lt_of_mul_lt_mul_left hlt
   exact Nat.size_le.mpr hX
 
+/-! ## The chain of windows -/
+
+/-- The letters read by the first `j` windows: `∑_(i<j) size (stageMap^[i] m)`. -/
+def chainLen (m j : ℕ) : ℕ := ∑ i ∈ Finset.range j, Nat.size (stageMap^[i] m)
+
+/-- After the first `j` windows the orbit is at `stageMap^[j] m`. -/
+theorem iterate_chainLen (m : ℕ) : ∀ j, tstep^[chainLen m j] m = stageMap^[j] m
+  | 0 => rfl
+  | j + 1 => by
+    rw [chainLen, Finset.sum_range_succ, ← chainLen, add_comm, Function.iterate_add_apply,
+      iterate_chainLen m j, Function.iterate_succ_apply']
+    rfl
+
+/-- **The deviation along the chain.**  If the first `J` windows are class-good and at most `k`
+letters long, every prefix inside the first `j ≤ J` windows deviates by at most
+`j (|u| η k + 2|u|)`. -/
+theorem abs_wdev_chain {u : List Bool} {η : ℝ} (hL : 1 ≤ u.length) (hη : 0 ≤ η) (m k J : ℕ)
+    (hgood : ∀ j < J, ClassGood u η (Nat.size (stageMap^[j] m)) (stageMap^[j] m))
+    (hsz : ∀ j < J, Nat.size (stageMap^[j] m) ≤ k) :
+    ∀ j ≤ J, ∀ ℓ ≤ chainLen m j, |wdev u m 0 ℓ| ≤ j * (u.length * η * k + 2 * u.length) := by
+  have hB : 0 ≤ (u.length : ℝ) * η * k + 2 * u.length := by positivity
+  intro j
+  induction j with
+  | zero =>
+    intro _ ℓ hℓ
+    have : ℓ = 0 := by simpa [chainLen] using hℓ
+    subst this
+    simp [wdev, wcnt]
+  | succ j ih =>
+    intro hj ℓ hℓ
+    by_cases hle : ℓ ≤ chainLen m j
+    · refine le_trans (ih (by omega) ℓ hle) ?_
+      push_cast
+      nlinarith
+    · push Not at hle
+      have hℓ' : ℓ - chainLen m j ≤ Nat.size (stageMap^[j] m) := by
+        rw [chainLen, Finset.sum_range_succ, ← chainLen] at hℓ
+        omega
+      rw [show ℓ = chainLen m j + (ℓ - chainLen m j) by omega, wdev_add, zero_add,
+        ← add_zero (chainLen m j), wdev_shift, iterate_chainLen, add_zero]
+      have e1 := ih (by omega) (chainLen m j) le_rfl
+      have e2 := abs_wdev_le_of_classGood hL hη (hgood j (by omega)) hℓ'
+      have hs : (Nat.size (stageMap^[j] m) : ℝ) ≤ k := by exact_mod_cast hsz j (by omega)
+      have hLη : 0 ≤ (u.length : ℝ) * η := by positivity
+      have e3 : (u.length : ℝ) * η * Nat.size (stageMap^[j] m) ≤ u.length * η * k :=
+        mul_le_mul_of_nonneg_left hs hLη
+      calc |wdev u m 0 (chainLen m j) + wdev u (stageMap^[j] m) 0 (ℓ - chainLen m j)|
+          ≤ |wdev u m 0 (chainLen m j)| + |wdev u (stageMap^[j] m) 0 (ℓ - chainLen m j)| :=
+            abs_add_le _ _
+        _ ≤ j * (u.length * η * k + 2 * u.length) + (u.length * η * k + 2 * u.length) := by
+            linarith
+        _ = ((j + 1 : ℕ) : ℝ) * (u.length * η * k + 2 * u.length) := by push_cast; ring
+
+/-- `(39/50)^j ≥ 1/16` for `j ≤ 11`. -/
+theorem theta_pow_ge {j : ℕ} (hj : j ≤ 11) : (1 / 16 : ℝ) ≤ (39 / 50 : ℝ) ^ j :=
+  le_trans (by norm_num) (pow_le_pow_of_le_one (by norm_num) (by norm_num) hj)
+
+/-- **The sizes along the chain.**  If the first `J ≤ 12` windows are good and `size m ≥ 1200`, then
+for `j ≤ J` the `j`-th window is at most `size m` letters and at least `(39/50)^j size m − 5`. -/
+theorem chain_sizes {u : List Bool} {η : ℝ} {m : ℕ} (hm : 1 ≤ m) (hk : 1200 ≤ Nat.size m)
+    {J : ℕ} (hJ : J ≤ 12) (hgood : ∀ j < J, GoodZero u η (1 / 200) (stageMap^[j] m)) :
+    ∀ j ≤ J, 1 ≤ stageMap^[j] m ∧ Nat.size (stageMap^[j] m) ≤ Nat.size m ∧
+      (39 / 50 : ℝ) ^ j * Nat.size m - 5 ≤ Nat.size (stageMap^[j] m) := by
+  intro j
+  induction j with
+  | zero => intro _; simp [hm]
+  | succ j ih =>
+    intro hj
+    obtain ⟨h1, hle, hge⟩ := ih (by omega)
+    obtain ⟨_, hodd, hsuf⟩ := hgood j (by omega)
+    have hkr : (1200 : ℝ) ≤ Nat.size m := by exact_mod_cast hk
+    have hθ := theta_pow_ge (j := j) (by omega)
+    have h70 : 70 ≤ Nat.size (stageMap^[j] m) := by
+      have : (70 : ℝ) ≤ Nat.size (stageMap^[j] m) := by nlinarith
+      exact_mod_cast this
+    have hnext := size_stageMap_ge h1 hodd
+    have hup := size_stageMap_le h70 hsuf
+    rw [Function.iterate_succ_apply']
+    refine ⟨one_le_stageMap h1, le_trans hup hle, ?_⟩
+    rw [pow_succ]
+    nlinarith
+
+/-- **Twelve windows cover `4.3 k − 60` letters.** -/
+theorem chainLen_ge {u : List Bool} {η : ℝ} {m : ℕ} (hm : 1 ≤ m) (hk : 1200 ≤ Nat.size m)
+    (hgood : ∀ j < 12, GoodZero u η (1 / 200) (stageMap^[j] m)) :
+    (43 / 10 : ℝ) * Nat.size m - 60 ≤ chainLen m 12 := by
+  have hs := chain_sizes hm hk le_rfl hgood
+  have hsum : ∑ j ∈ Finset.range 12, ((39 / 50 : ℝ) ^ j * Nat.size m - 5) ≤
+      ∑ j ∈ Finset.range 12, (Nat.size (stageMap^[j] m) : ℝ) :=
+    Finset.sum_le_sum fun j hj => (hs j (by have := Finset.mem_range.mp hj; omega)).2.2
+  have hgeo : (43 / 10 : ℝ) ≤ ∑ j ∈ Finset.range 12, (39 / 50 : ℝ) ^ j := by
+    norm_num [Finset.sum_range_succ]
+  rw [Finset.sum_sub_distrib, ← Finset.sum_mul] at hsum
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hsum
+  have hk0 : (0 : ℝ) ≤ Nat.size m := Nat.cast_nonneg _
+  rw [chainLen]
+  push_cast
+  nlinarith
+
+/-! ## Assembly -/
+
+/-- The interior occurrences in the first `N` letters are a window count. -/
+theorem card_interior_eq_wcnt (u : List Bool) (n N : ℕ) (hL : 1 ≤ u.length) :
+    ((Finset.range N).filter fun i =>
+      i + u.length ≤ N ∧ WindowMatch (fun s => u.getD s false) u.length i n).card =
+      wcnt u n 0 (N + 1 - u.length) := by
+  unfold wcnt
+  congr 1
+  ext i
+  simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico, zero_add]
+  constructor
+  · rintro ⟨_, h2, h3⟩
+    exact ⟨⟨Nat.zero_le _, by omega⟩, h3⟩
+  · rintro ⟨⟨_, h2⟩, h3⟩
+    exact ⟨by omega, by omega, h3⟩
+
+theorem abs_one_sub_mul_le {x p : ℝ} (hx : 1 ≤ x) (hp0 : 0 ≤ p) (hp1 : p ≤ 1) :
+    |(1 - x) * p| ≤ x := by
+  rw [abs_le]
+  constructor <;> nlinarith
+
+/-- The empty word is never bad. -/
+theorem not_badStart_of_length_zero (C : ℕ) {u : List Bool} (hu : u.length = 0) {δ : ℝ}
+    (hδ : 0 ≤ δ) (n : ℕ) : ¬ BadStart C u δ n := by
+  unfold BadStart
+  push Not
+  have hW : ∀ i, WindowMatch (fun s => u.getD s false) u.length i n := fun i s hs => by omega
+  have hcard : ((Finset.range (C * Nat.size n)).filter fun i =>
+      i + u.length ≤ C * Nat.size n ∧ WindowMatch (fun s => u.getD s false) u.length i n).card =
+      C * Nat.size n := by
+    rw [Finset.filter_true_of_mem fun i hi => ⟨by rw [hu]; simpa using (Finset.mem_range.mp hi).le,
+      hW i⟩, Finset.card_range]
+  rw [hcard, hu]
+  simp only [pow_zero, mul_one, sub_self, abs_zero]
+  positivity
+
+/-- **P3/P4, the windows.**  For `C ≤ 4`, a start whose first twelve windows are good is not bad. -/
+theorem not_badStart_of_chain' (C : ℕ) (hC4 : C ≤ 4) (u : List Bool) {δ : ℝ} (hδ : 0 < δ) :
+    ∃ (η γ : ℝ) (J k₀ : ℕ), 0 < η ∧ 0 < γ ∧ ∀ m : ℕ, 1 ≤ m → k₀ ≤ Nat.size m →
+      (∀ j < J, GoodZero u η γ (stageMap^[j] m)) → ¬ BadStart C u δ m := by
+  rcases Nat.eq_zero_or_pos u.length with hL0 | hL
+  · exact ⟨1, 1, 0, 0, one_pos, one_pos, fun m _ _ _ =>
+      not_badStart_of_length_zero C hL0 hδ.le m⟩
+  refine ⟨δ / (48 * u.length), 1 / 200, 12, max 1200 (⌈50 * u.length / δ⌉₊ + u.length),
+    by positivity, by norm_num, ?_⟩
+  intro m hm hk hgood
+  have hk1 : 1200 ≤ Nat.size m := le_trans (le_max_left _ _) hk
+  have hk2 : ⌈50 * u.length / δ⌉₊ + u.length ≤ Nat.size m := le_trans (le_max_right _ _) hk
+  have hLr : (1 : ℝ) ≤ u.length := by exact_mod_cast hL
+  have hkr : (1200 : ℝ) ≤ Nat.size m := by exact_mod_cast hk1
+  have hkδ : 50 * (u.length : ℝ) / δ ≤ Nat.size m := by
+    have h1 := Nat.le_ceil (50 * (u.length : ℝ) / δ)
+    have h2 : ((⌈50 * u.length / δ⌉₊ : ℕ) : ℝ) ≤ Nat.size m := by
+      exact_mod_cast (by omega : ⌈50 * u.length / δ⌉₊ ≤ Nat.size m)
+    linarith
+  have hkδ' : 50 * (u.length : ℝ) ≤ δ * Nat.size m := by
+    rw [div_le_iff₀ hδ] at hkδ
+    linarith
+  set k := Nat.size m with hkdef
+  set η := δ / (48 * u.length) with hηdef
+  have hη : 0 ≤ η := by positivity
+  have hLη : (u.length : ℝ) * η = δ / 48 := by
+    rw [hηdef]
+    field_simp
+  -- the deviation over any prefix inside the twelve windows
+  have hs := chain_sizes hm hk1 le_rfl hgood
+  have hdev := abs_wdev_chain hL hη m k 12 (fun j hj => (hgood j hj).1)
+    (fun j hj => (hs j hj.le).2.1) 12 le_rfl
+  have hcov := chainLen_ge hm hk1 hgood
+  unfold BadStart
+  push Not
+  rcases Nat.eq_zero_or_pos C with hC0 | hC
+  · subst hC0
+    simp only [zero_mul, Finset.range_zero, Finset.filter_empty, Finset.card_empty, Nat.cast_zero,
+      zero_mul, sub_zero, abs_zero]
+    positivity
+  have hLN : u.length ≤ C * k := le_trans (by omega) (Nat.le_mul_of_pos_left k hC)
+  rw [card_interior_eq_wcnt u m (C * k) hL]
+  set ℓ := C * k + 1 - u.length with hℓdef
+  have hℓ : ℓ ≤ chainLen m 12 := by
+    have h1 : ((C * k : ℕ) : ℝ) ≤ 4 * k := by
+      push_cast
+      have : (C : ℝ) ≤ 4 := by exact_mod_cast hC4
+      nlinarith
+    have h2 : ((C * k : ℕ) : ℝ) ≤ chainLen m 12 := by linarith
+    have h3 : C * k ≤ chainLen m 12 := by exact_mod_cast h2
+    omega
+  have hw := hdev ℓ hℓ
+  have hcast : (ℓ : ℝ) = ((C * k : ℕ) : ℝ) + 1 - u.length := by
+    rw [hℓdef, Nat.cast_sub (by omega)]
+    push_cast
+    ring
+  set p : ℝ := (1 / 2 : ℝ) ^ u.length with hp
+  have hp0 : 0 ≤ p := by positivity
+  have hp1 : p ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+  have heq : (wcnt u m 0 ℓ : ℝ) - ((C * k : ℕ) : ℝ) * p = wdev u m 0 ℓ + (1 - u.length) * p := by
+    unfold wdev
+    rw [hcast]
+    ring
+  rw [heq]
+  have hb : |(1 - (u.length : ℝ)) * p| ≤ u.length := abs_one_sub_mul_le hLr hp0 hp1
+  calc |wdev u m 0 ℓ + (1 - u.length) * p| ≤ |wdev u m 0 ℓ| + |(1 - (u.length : ℝ)) * p| :=
+        abs_add_le _ _
+    _ ≤ (12 : ℕ) * (u.length * η * k + 2 * u.length) + u.length := by linarith
+    _ = δ / 4 * k + 25 * u.length := by rw [hLη]; push_cast; ring
+    _ ≤ δ * k := by
+        have : 0 ≤ δ * k := by positivity
+        linarith
+
 end CollatzMoonshot.Conjugacy

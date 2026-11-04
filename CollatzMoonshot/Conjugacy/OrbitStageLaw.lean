@@ -8,6 +8,7 @@ import CollatzMoonshot.Conjugacy.OrbitHeightLaw
 import CollatzMoonshot.Conjugacy.OrbitStageLawPull
 import CollatzMoonshot.Conjugacy.OrbitStageLawRate
 import CollatzMoonshot.Conjugacy.OrbitStageLawWords
+import CollatzMoonshot.Conjugacy.OrbitStageLawChain
 
 /-!
 # The orbit word law over one stage, and normality for `C ≤ 4`
@@ -16,8 +17,10 @@ import CollatzMoonshot.Conjugacy.OrbitStageLawWords
 `≪ X^(−D)`, and a set of that density pulls back along `T^(size m)` to a set of the same kind
 (Inselmann 2024, arXiv:2402.03276, Lemma 2.16): `M = T^k m = 3^a m / 2^k + offset` pins `m` to an
 interval once `M` and `a` are known, so the argument uses the size of `M`, not its residue.  Windows of
-`size M_j` letters of `M_j` then cover `(1 + θ + θ² + …) size m` letters, `θ = log₂ √3`, and nine of them
-cover `4.225 size m`.  With `not_normal_of_five_le` this gives `normal_iff_le_four`.
+`size M_j` letters of `M_j` then cover `(1 + θ + θ² + …) size m` letters, `θ = log₂ √3`; nine of them
+cover `4.225 size m`.  The proof uses the cruder `θ' = 39/50` (from `log₂ 3 ≥ 1.58` and an odd-letter
+tolerance of `1/200`) and twelve windows, which cover `4.3 size m − 60` letters
+(`OrbitStageLawChain.lean`).  With `not_normal_of_five_le` this gives `normal_iff_le_four`.
 
 `RESEARCH-2026-11-04-affine-mixing.md` §7 is the argument.
 -/
@@ -66,8 +69,8 @@ theorem expSparse_biUnion_range (J : ℕ) (B : ℕ → Set ℕ) (h : ∀ j < J, 
 /-- **P3/P4, the windows.**  For `C ≤ 4`, a start whose first `J` windows are good is not bad. -/
 theorem not_badStart_of_chain (C : ℕ) (hC4 : C ≤ 4) (u : List Bool) {δ : ℝ} (hδ : 0 < δ) :
     ∃ (η γ : ℝ) (J k₀ : ℕ), 0 < η ∧ 0 < γ ∧ ∀ m : ℕ, 1 ≤ m → k₀ ≤ Nat.size m →
-      (∀ j < J, GoodZero u η γ (stageMap^[j] m)) → ¬ BadStart C u δ m := by
-  sorry
+      (∀ j < J, GoodZero u η γ (stageMap^[j] m)) → ¬ BadStart C u δ m :=
+  not_badStart_of_chain' C hC4 u hδ
 
 open Classical in
 /-- **Density.**  A property that eventually forces membership in an exponentially sparse set has
@@ -78,7 +81,7 @@ theorem tendsto_stage_of_expSparse {B : Set ℕ} (hB : ExpSparse B) (P : ℕ →
       atTop (𝓝 0) :=
   tendsto_stage_of_expSparse' hB P k₀ hP
 
-/-- **The orbit word law over one stage, for `C ≤ 4`.**  Believed, 88%. -/
+/-- **The orbit word law over one stage, for `C ≤ 4`.** -/
 theorem stageWordLaw_of_le_four (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) : StageWordLaw C := by
   classical
   intro u δ hδ
