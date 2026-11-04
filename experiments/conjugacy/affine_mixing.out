@@ -1,0 +1,241 @@
+== A. Known answers ==
+n=1: law on Z/3 = [0.         0.33333333 0.66666667]  Tao: 0, 1/3, 2/3
+n=2: max |law - Tao table| = 0.00e+00  (table has denominator 63)
+Sup char, repo twisted_charfn.py theta=0 values: n=5 0.129, n=8 0.061, n=10 0.038, n=11 0.032
+  n= 5  sup_(3 !| xi) |E chi(F_n)| = 0.1293
+  n= 8  sup_(3 !| xi) |E chi(F_n)| = 0.0609
+  n=10  sup_(3 !| xi) |E chi(F_n)| = 0.0383
+  n=11  sup_(3 !| xi) |E chi(F_n)| = 0.0319
+  n=12  sup_(3 !| xi) |E chi(F_n)| = 0.0265
+  n=13  sup_(3 !| xi) |E chi(F_n)| = 0.0221
+
+== B. Control: unconditioned Osc_{m,n}, Prop 1.14 predicts decay in m, uniform in n >= m ==
+  n\m      1      2      3      4      5      6      7      8      9     10     11     12
+    4  0.701  0.535  0.343                                                               
+    5  0.727  0.580  0.443  0.297                                                        
+    6  0.754  0.611  0.489  0.380  0.263                                                 
+    7  0.776  0.638  0.523  0.425  0.334  0.235                                          
+    8  0.791  0.658  0.551  0.459  0.378  0.299  0.213                                   
+    9  0.803  0.674  0.571  0.486  0.411  0.341  0.271  0.194                            
+   10  0.813  0.687  0.587  0.506  0.436  0.372  0.310  0.248  0.178                     
+   11  0.822  0.698  0.601  0.522  0.455  0.396  0.339  0.284  0.228  0.164              
+   12  0.829  0.707  0.612  0.536  0.471  0.414  0.362  0.311  0.261  0.210  0.151       
+   13  0.835  0.715  0.621  0.547  0.484  0.429  0.379  0.332  0.287  0.241  0.194  0.140
+
+== F. Renewal node: R(u) = sum_k E psi(2^(|a_k| - k theta - D + u)), psi(t) = 2t on [1,2) ==
+   limit 2/((2-theta) log 2) as D -> infinity iff theta irrational.  Printed: R normalised to limit 1, min and max over u in [0,1).
+   theta=log2 3       D=   20  min 0.99417  max 1.00666
+   theta=log2 3       D=   40  min 0.99553  max 1.00501
+   theta=log2 3       D=   80  min 0.99649  max 1.00409
+   theta=log2 3       D=  160  min 0.99729  max 1.00292
+   theta=log2 3       D=  320  min 0.99814  max 1.00175
+   theta=log2 3       D=  640  min 0.99897  max 1.00100
+   theta=log2 3       D= 1280  min 0.99930  max 1.00070
+   theta=3/2 control  D=   20  min 0.83670  max 1.17476
+   theta=3/2 control  D=   40  min 0.83670  max 1.17476
+   theta=3/2 control  D=   80  min 0.83670  max 1.17476
+   theta=3/2 control  D=  160  min 0.83670  max 1.17476
+   theta=3/2 control  D=  320  min 0.83670  max 1.17476
+   theta=3/2 control  D=  640  min 0.83670  max 1.17476
+   theta=3/2 control  D= 1280  min 0.83670  max 1.17476
+   theta=8/5 control  D=   20  min 0.93225  max 1.06933
+   theta=8/5 control  D=   40  min 0.93228  max 1.06937
+   theta=8/5 control  D=   80  min 0.93229  max 1.06937
+   theta=8/5 control  D=  160  min 0.93229  max 1.06937
+   theta=8/5 control  D=  320  min 0.93229  max 1.06937
+   theta=8/5 control  D=  640  min 0.93229  max 1.06937
+   theta=8/5 control  D= 1280  min 0.93229  max 1.06937
+
+== G. Direct probe: Pass_x, x = 2^12, 20000000 samples per law, full L1 ==
+   columns: L1 on all odd locations; L1 of location mod 81; L1 of bit-length of location.
+   null: reference vs independent reference: 0.0087 0.0021 0.0003
+   control, near log window 2^(x_bits+3) .. 2^(x_bits+12) vs reference: 0.0327 0.0070 0.0007
+   'dropped' counts orbits passing 2^62 (excluded): a selection effect of at most that fraction of samples.
+   y/x = 2^d, d:
+   d=  0.25  0.5391 0.2028 0.0272
+   d=  0.50  0.4860 0.1724 0.0183
+   d=  1.00  0.3810 0.1076 0.0140
+   d=  1.50  0.3084 0.0871 0.0107
+   d=  2.00  0.2587 0.0734 0.0115
+   d=  3.00  0.1630 0.0411 0.0059
+   d=  4.00  0.1168 0.0309 0.0048
+   d=  5.00  0.0802 0.0187 0.0036
+   d=  6.00  0.0550 0.0117 0.0032
+   d=  8.00  0.0298 0.0076 0.0015
+   d= 10.00  0.0165 0.0034 0.0009
+   d= 12.00  0.0119 0.0025 0.0006
+   d= 14.00  0.0097 0.0020 0.0004
+   d= 16.00  0.0096 0.0020 0.0002
+   d= 18.00  0.0091 0.0019 0.0004
+   d= 20.00  0.0091 0.0019 0.0005  dropped 1
+   d= 20.10  0.0090 0.0018 0.0005
+   d= 20.20  0.0088 0.0019 0.0006
+   d= 20.30  0.0087 0.0017 0.0004
+   d= 20.40  0.0091 0.0022 0.0004
+   d= 20.50  0.0093 0.0021 0.0004
+   d= 20.60  0.0089 0.0019 0.0004
+   d= 20.70  0.0090 0.0022 0.0004
+   d= 20.80  0.0088 0.0017 0.0007
+   d= 20.90  0.0091 0.0019 0.0003
+   d= 24.00  0.0089 0.0020 0.0005  dropped 1
+   d= 28.00  0.0089 0.0019 0.0003  dropped 2
+   d= 32.00  0.0090 0.0017 0.0007  dropped 106
+   d= 36.00  0.0088 0.0018 0.0004  dropped 1584
+   d= 40.00  0.0086 0.0017 0.0006  dropped 24433
+   d= 44.00  0.0088 0.0020 0.0004  dropped 391381
+   y=3^20, log2(y/x)= 19.70  0.0087 0.0019 0.0005
+   y=3^25, log2(y/x)= 27.62  0.0090 0.0017 0.0003  dropped 1
+   y=3^30, log2(y/x)= 35.55  0.0088 0.0019 0.0003  dropped 1105
+   y=3^35, log2(y/x)= 43.47  0.0089 0.0016 0.0002  dropped 271510
+
+== C. Conditioned Osc_(m,n)(F | |a|=s) with random-map null, smax = 42 ==
+  'meas' is exact.  'null' is one draw of the random-map model with the same coarse law.
+  atoms/cell = C(s-1,n-1)/3^n.  Below about 1 the law cannot be flat at any scale: the row has too few atoms.
+  meas below null at fine scales means the true map spreads more evenly than a random map.
+-- n = 8
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null 
+  2n-1sd    12  8.06e-02        0.05   1.823/ 1.828    1.727/ 1.748    1.594/ 1.631    1.419/ 1.492    1.012/ 1.197    sup|E[chi|s]| 0.3062 (random-phase floor 0.1632)
+  2n+0sd    16  9.82e-02        0.98   0.690/ 0.635    0.580/ 0.639    0.465/ 0.602    0.396/ 0.599    0.305/ 0.555    sup|E[chi|s]| 0.0442 (random-phase floor 0.0370)
+  2n+1sd    20  4.81e-02        7.68   0.403/ 0.232    0.243/ 0.228    0.156/ 0.225    0.115/ 0.219    0.090/ 0.212    sup|E[chi|s]| 0.0155 (random-phase floor 0.0132)
+  2n+2sd    24  1.46e-02       37.37   0.295/ 0.106    0.138/ 0.106    0.071/ 0.105    0.045/ 0.103    0.034/ 0.097    sup|E[chi|s]| 0.0036 (random-phase floor 0.0060)
+  2.5n      20  4.81e-02        7.68   0.403/ 0.230    0.243/ 0.230    0.156/ 0.227    0.115/ 0.226    0.090/ 0.213    sup|E[chi|s]| 0.0155 (random-phase floor 0.0132)
+  3n        24  1.46e-02       37.37   0.295/ 0.106    0.138/ 0.104    0.071/ 0.104    0.045/ 0.103    0.034/ 0.100    sup|E[chi|s]| 0.0036 (random-phase floor 0.0060)
+  JointOsc (sum over s):  1.001  0.863  0.749  0.663  0.506   lost mass s>42: 7.55e-06
+  uncond   Osc         :  0.791  0.658  0.551  0.459  0.299
+  D. n=8: inequality check, xi: max_s |E chi 1(|a|=s)| <= max_theta |E chi e^(i theta|a|)| <= E prod|f|  (last term truncated to a lower estimate, so a violation would still be visible)
+     xi=   6049  0.02815  <=  0.06619  <=  0.35935
+     xi=    512  0.02815  <=  0.06619  <=  0.35935
+     xi=   5537  0.02467  <=  0.05796  <=  0.38401
+     xi=      1  0.00688  <=  0.01406  <=  0.13327
+     xi=      2  0.00492  <=  0.01447  <=  0.09588
+     xi=      4  0.00422  <=  0.01244  <=  0.14187
+     xi=      5  0.00897  <=  0.02524  <=  0.14707
+     sup over xi: fixed-s numerator 0.02815; sup_(xi,theta) twist 0.06619 (n<=10; repo table n=10: 0.048); untwisted 0.06089
+  [0s]
+-- n = 9
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null    m=8 meas/null 
+  2n-1sd    14  7.86e-02        0.07   1.782/ 1.782    1.677/ 1.688    1.540/ 1.575    1.374/ 1.449    1.066/ 1.244    0.655/ 0.900    sup|E[chi|s]| 0.2057 (random-phase floor 0.0877)
+  2n+0sd    18  9.27e-02        1.24   0.729/ 0.595    0.580/ 0.560    0.475/ 0.547    0.391/ 0.535    0.301/ 0.520    0.226/ 0.420    sup|E[chi|s]| 0.0287 (random-phase floor 0.0202)
+  2n+1sd    22  4.85e-02       10.34   0.430/ 0.200    0.272/ 0.197    0.179/ 0.196    0.124/ 0.192    0.084/ 0.189    0.070/ 0.156    sup|E[chi|s]| 0.0108 (random-phase floor 0.0070)
+  2n+2sd    26  1.61e-02       54.95   0.318/ 0.088    0.161/ 0.086    0.087/ 0.087    0.051/ 0.086    0.031/ 0.084    0.026/ 0.069    sup|E[chi|s]| 0.0025 (random-phase floor 0.0030)
+  2.5n      22  4.85e-02       10.34   0.430/ 0.200    0.272/ 0.197    0.179/ 0.195    0.124/ 0.194    0.084/ 0.192    0.070/ 0.160    sup|E[chi|s]| 0.0108 (random-phase floor 0.0070)
+  3n        27  1.16e-02       79.37   0.301/ 0.073    0.145/ 0.072    0.075/ 0.071    0.042/ 0.071    0.025/ 0.071    0.021/ 0.059    sup|E[chi|s]| 0.0024 (random-phase floor 0.0025)
+  JointOsc (sum over s):  1.007  0.863  0.761  0.670  0.537  0.353   lost mass s>42: 3.44e-05
+  uncond   Osc         :  0.803  0.674  0.571  0.486  0.341  0.194
+  [0s]
+-- n = 10
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null    m=8 meas/null 
+  2n-1sd    16  7.64e-02        0.08   1.738/ 1.726    1.622/ 1.616    1.480/ 1.497    1.320/ 1.372    1.061/ 1.223    0.813/ 1.055    sup|E[chi|s]| 0.1883 (random-phase floor 0.0469)
+  2n+0sd    20  8.81e-02        1.56   0.732/ 0.514    0.586/ 0.493    0.479/ 0.479    0.397/ 0.475    0.293/ 0.464    0.238/ 0.432    sup|E[chi|s]| 0.0229 (random-phase floor 0.0109)
+  2n+1sd    24  4.87e-02       13.84   0.455/ 0.175    0.297/ 0.171    0.201/ 0.168    0.140/ 0.167    0.084/ 0.166    0.068/ 0.157    sup|E[chi|s]| 0.0070 (random-phase floor 0.0037)
+  2n+2sd    29  1.29e-02      116.97   0.321/ 0.060    0.166/ 0.059    0.091/ 0.059    0.051/ 0.059    0.025/ 0.059    0.019/ 0.056    sup|E[chi|s]| 0.0020 (random-phase floor 0.0013)
+  2.5n      25  3.90e-02       22.14   0.418/ 0.138    0.260/ 0.135    0.168/ 0.133    0.112/ 0.133    0.064/ 0.132    0.051/ 0.126    sup|E[chi|s]| 0.0041 (random-phase floor 0.0029)
+  3n        30  9.33e-03      169.60   0.306/ 0.050    0.151/ 0.049    0.079/ 0.049    0.043/ 0.049    0.020/ 0.048    0.016/ 0.046    sup|E[chi|s]| 0.0014 (random-phase floor 0.0010)
+  JointOsc (sum over s):  1.003  0.866  0.763  0.682  0.549  0.428   lost mass s>42: 1.36e-04
+  uncond   Osc         :  0.813  0.687  0.587  0.506  0.372  0.248
+  D. n=10: inequality check, xi: max_s |E chi 1(|a|=s)| <= max_theta |E chi e^(i theta|a|)| <= E prod|f|  (last term truncated to a lower estimate, so a violation would still be visible)
+     xi=  54953  0.01680  <=  0.04765  <=  0.32016
+     xi=   4096  0.01680  <=  0.04765  <=  0.32016
+     xi=  57001  0.01464  <=  0.04617  <=  0.28797
+     xi=      1  0.00115  <=  0.00312  <=  0.08999
+     xi=      2  0.00111  <=  0.00362  <=  0.06213
+     xi=      4  0.00159  <=  0.00351  <=  0.09982
+     xi=      5  0.00192  <=  0.00596  <=  0.07879
+     sup over xi: fixed-s numerator 0.01680; sup_(xi,theta) twist 0.04765 (n<=10; repo table n=10: 0.048); untwisted 0.03828
+  [1s]
+-- n = 11
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null    m=8 meas/null    m=10meas/null 
+  2n-1sd    17  6.11e-02        0.05   1.853/ 1.845    1.781/ 1.772    1.684/ 1.681    1.562/ 1.576    1.289/ 1.382    1.050/ 1.225    0.659/ 0.892    sup|E[chi|s]| 0.2096 (random-phase floor 0.0388)
+  2n+0sd    22  8.41e-02        1.99   0.737/ 0.450    0.599/ 0.441    0.486/ 0.424    0.407/ 0.420    0.291/ 0.411    0.230/ 0.401    0.178/ 0.329    sup|E[chi|s]| 0.0161 (random-phase floor 0.0059)
+  2n+1sd    27  3.96e-02       29.98   0.441/ 0.118    0.283/ 0.116    0.189/ 0.114    0.129/ 0.114    0.068/ 0.114    0.048/ 0.111    0.040/ 0.093    sup|E[chi|s]| 0.0027 (random-phase floor 0.0015)
+  2n+2sd    31  1.40e-02      169.60   0.341/ 0.050    0.186/ 0.049    0.107/ 0.049    0.063/ 0.049    0.027/ 0.049    0.018/ 0.048    0.015/ 0.040    sup|E[chi|s]| 0.0014 (random-phase floor 0.0006)
+  2.5n      27  3.96e-02       29.98   0.441/ 0.118    0.283/ 0.116    0.189/ 0.115    0.129/ 0.114    0.068/ 0.113    0.048/ 0.112    0.040/ 0.093    sup|E[chi|s]| 0.0027 (random-phase floor 0.0015)
+  3n        33  7.51e-03      364.17   0.310/ 0.034    0.156/ 0.034    0.084/ 0.033    0.046/ 0.033    0.018/ 0.033    0.011/ 0.033    0.010/ 0.027    sup|E[chi|s]| 0.0006 (random-phase floor 0.0004)
+  JointOsc (sum over s):  0.999  0.870  0.766  0.686  0.557  0.455  0.303   lost mass s>42: 4.70e-04
+  uncond   Osc         :  0.822  0.698  0.601  0.522  0.396  0.284  0.164
+  [0s]
+-- n = 12
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null    m=8 meas/null    m=10meas/null 
+  2n-1sd    19  6.07e-02        0.06   1.819/ 1.799    1.736/ 1.713    1.631/ 1.610    1.506/ 1.500    1.275/ 1.337    1.060/ 1.206    0.819/ 1.046    sup|E[chi|s]| 0.1828 (random-phase floor 0.0204)
+  2n+0sd    24  8.06e-02        2.54   0.748/ 0.402    0.604/ 0.386    0.497/ 0.377    0.413/ 0.371    0.296/ 0.364    0.223/ 0.359    0.183/ 0.338    sup|E[chi|s]| 0.0113 (random-phase floor 0.0031)
+  2n+1sd    29  4.00e-02       40.41   0.462/ 0.102    0.305/ 0.099    0.209/ 0.098    0.146/ 0.098    0.076/ 0.098    0.047/ 0.097    0.038/ 0.092    sup|E[chi|s]| 0.0022 (random-phase floor 0.0008)
+  2n+2sd    34  1.13e-02      364.17   0.342/ 0.034    0.189/ 0.033    0.110/ 0.033    0.065/ 0.033    0.026/ 0.033    0.014/ 0.033    0.011/ 0.031    sup|E[chi|s]| 0.0005 (random-phase floor 0.0003)
+  2.5n      30  3.22e-02       65.10   0.431/ 0.080    0.274/ 0.078    0.181/ 0.078    0.122/ 0.078    0.060/ 0.077    0.036/ 0.077    0.029/ 0.073    sup|E[chi|s]| 0.0015 (random-phase floor 0.0006)
+  3n        36  6.07e-03      785.08   0.313/ 0.023    0.161/ 0.023    0.088/ 0.023    0.049/ 0.023    0.018/ 0.023    0.009/ 0.023    0.007/ 0.021    sup|E[chi|s]| 0.0005 (random-phase floor 0.0002)
+  JointOsc (sum over s):  1.002  0.868  0.772  0.689  0.568  0.466  0.368   lost mass s>42: 1.44e-03
+  uncond   Osc         :  0.829  0.707  0.612  0.536  0.414  0.311  0.210
+  D. n=12: inequality check, xi: max_s |E chi 1(|a|=s)| <= max_theta |E chi e^(i theta|a|)| <= E prod|f|  (last term truncated to a lower estimate, so a violation would still be visible)
+     xi=  32768  0.01110  <=  0.03512  <=  0.28580
+     xi= 498673  0.01110  <=  0.03512  <=  0.28580
+     xi=  16384  0.01085  <=  0.03518  <=  0.25866
+     xi=      1  0.00049  <=  0.00123  <=  0.04156
+     xi=      2  0.00029  <=  0.00080  <=  0.03285
+     xi=      4  0.00046  <=  0.00097  <=  0.05261
+     xi=      5  0.00064  <=  0.00229  <=  0.08413
+     sup over xi: fixed-s numerator 0.01110; sup_(xi,theta) twist 0.00000 (n<=10; repo table n=10: 0.048); untwisted 0.02646
+  [2s]
+-- n = 13
+  s-label    s  P(|a|=s)  atoms/cell    m=1 meas/null    m=2 meas/null    m=3 meas/null    m=4 meas/null    m=6 meas/null    m=8 meas/null    m=10meas/null    m=12meas/null 
+  2n-1sd    21  6.01e-02        0.08   1.779/ 1.742    1.685/ 1.638    1.571/ 1.523    1.442/ 1.407    1.234/ 1.262    1.046/ 1.160    0.862/ 1.053    0.558/ 0.778    sup|E[chi|s]| 0.1506 (random-phase floor 0.0106)
+  2n+0sd    26  7.75e-02        3.26   0.756/ 0.359    0.608/ 0.337    0.503/ 0.333    0.419/ 0.327    0.300/ 0.322    0.221/ 0.317    0.176/ 0.310    0.138/ 0.256    sup|E[chi|s]| 0.0090 (random-phase floor 0.0017)
+  2n+1sd    31  4.03e-02       54.25   0.481/ 0.088    0.326/ 0.085    0.228/ 0.085    0.162/ 0.084    0.086/ 0.084    0.049/ 0.084    0.036/ 0.082    0.030/ 0.068    sup|E[chi|s]| 0.0016 (random-phase floor 0.0004)
+  2n+2sd    36  1.21e-02      523.39   0.359/ 0.028    0.206/ 0.028    0.125/ 0.028    0.077/ 0.028    0.032/ 0.028    0.015/ 0.028    0.010/ 0.027    0.009/ 0.023    sup|E[chi|s]| 0.0004 (random-phase floor 0.0001)
+  2.5n      32  3.29e-02       88.51   0.450/ 0.069    0.295/ 0.067    0.200/ 0.067    0.138/ 0.066    0.069/ 0.066    0.038/ 0.066    0.027/ 0.065    0.023/ 0.054    sup|E[chi|s]| 0.0011 (random-phase floor 0.0003)
+  3n        39  4.92e-03     1698.20   0.316/ 0.016    0.164/ 0.016    0.092/ 0.015    0.052/ 0.015    0.019/ 0.015    0.008/ 0.015    0.005/ 0.015    0.004/ 0.013    sup|E[chi|s]| 0.0003 (random-phase floor 0.0001)
+  JointOsc (sum over s):  0.997  0.867  0.771  0.695  0.573  0.475  0.391  0.263   lost mass s>42: 3.96e-03
+  uncond   Osc         :  0.835  0.715  0.621  0.547  0.429  0.332  0.241  0.140
+  [3s]
+
+== E. Coarse correlation: TV(law(F mod 3^k | s), Syrac(3^k)), full L1, s = 2n + off*sd ==
+   real and non-zero; a conserved quantity would keep this bounded below as n grows.
+  k=2 off=-1  n=6:0.230 n=7:0.286 n=8:0.226 n=9:0.190 n=10:0.163 n=11:0.205 n=12:0.179 n=13:0.159
+  k=2 off=+0  n=6:0.114 n=7:0.096 n=8:0.083 n=9:0.073 n=10:0.065 n=11:0.059 n=12:0.054 n=13:0.049
+  k=2 off=+1  n=6:0.228 n=7:0.228 n=8:0.206 n=9:0.188 n=10:0.174 n=11:0.179 n=12:0.168 n=13:0.158
+  k=3 off=-1  n=6:0.391 n=7:0.488 n=8:0.383 n=9:0.313 n=10:0.264 n=11:0.336 n=12:0.294 n=13:0.261
+  k=3 off=+0  n=6:0.192 n=7:0.154 n=8:0.129 n=9:0.111 n=10:0.098 n=11:0.087 n=12:0.079 n=13:0.072
+  k=3 off=+1  n=6:0.374 n=7:0.367 n=8:0.333 n=9:0.304 n=10:0.279 n=11:0.288 n=12:0.269 n=13:0.252
+  k=4 off=-1  n=6:0.547 n=7:0.663 n=8:0.507 n=9:0.407 n=10:0.339 n=11:0.425 n=12:0.370 n=13:0.327
+  k=4 off=+0  n=6:0.284 n=7:0.218 n=8:0.181 n=9:0.155 n=10:0.137 n=11:0.122 n=12:0.110 n=13:0.101
+  k=4 off=+1  n=6:0.463 n=7:0.448 n=8:0.407 n=9:0.372 n=10:0.342 n=11:0.351 n=12:0.328 n=13:0.308
+
+Total 243s
+
+== H. The pullback mechanism (Inselmann arXiv:2402.03276 Lemma 2.16), no mixing used ==
+   T^k m = 3^a m / 2^k + offset.  Given M = T^k m and a, m lies in an interval of length (offset+1) 2^k / 3^a.
+   So the law of M has density at most about k max(offset) / range against uniform, hence
+   P_m(T^k m in B) <= k 2^(eps k) 3^(-D k/2)-style bounds for any B of power-saving density X^(-D).
+ k=24: offset = T^k m - 3^a m/2^k: median 1.9, 99.9% 272.7, max 16833.1;  log2(max)/k = 0.585
+   a/k: mean 0.5000, min 0.042, max 1.000;  M/2^(k log2 sqrt3): log2 M / k mean 0.7741
+   max preimages of one M: 410  (reference (2/sqrt3)^k = 31.6);  distinct M: 1606815;  mass of the top 0.1% of M: 0.0519
+   B = letters of M off by > 0.10 of size(M): P_m(T^k m in B) = 3.733e-01, P_uniform(B) = 3.721e-01, amplification 1.00
+   B = letters of M off by > 0.15 of size(M): P_m(T^k m in B) = 1.926e-01, P_uniform(B) = 1.922e-01, amplification 1.00
+   B = letters of M off by > 0.20 of size(M): P_m(T^k m in B) = 8.359e-02, P_uniform(B) = 8.328e-02, amplification 1.00
+   B = letters of M off by > 0.25 of size(M): P_m(T^k m in B) = 2.796e-02, P_uniform(B) = 2.781e-02, amplification 1.01
+   B = letters of M off by > 0.30 of size(M): P_m(T^k m in B) = 1.071e-02, P_uniform(B) = 1.085e-02, amplification 0.99
+   control, B = multiples of 3 (density 1/3): P_m(T^k m in B) = 0.00e+00
+ k=32: offset = T^k m - 3^a m/2^k: median 2.0, 99.9% 480.0, max 54250.5;  log2(max)/k = 0.491
+   a/k: mean 0.5000, min 0.094, max 0.938;  M/2^(k log2 sqrt3): log2 M / k mean 0.7786
+   B = letters of M off by > 0.10 of size(M): P_m(T^k m in B) = 2.935e-01, P_uniform(B) = 2.931e-01, amplification 1.00
+   B = letters of M off by > 0.15 of size(M): P_m(T^k m in B) = 1.410e-01, P_uniform(B) = 1.406e-01, amplification 1.00
+   B = letters of M off by > 0.20 of size(M): P_m(T^k m in B) = 4.678e-02, P_uniform(B) = 4.665e-02, amplification 1.00
+   B = letters of M off by > 0.25 of size(M): P_m(T^k m in B) = 1.151e-02, P_uniform(B) = 1.143e-02, amplification 1.01
+   B = letters of M off by > 0.30 of size(M): P_m(T^k m in B) = 3.080e-03, P_uniform(B) = 3.028e-03, amplification 1.02
+   control, B = multiples of 3 (density 1/3): P_m(T^k m in B) = 0.00e+00
+ k=40: offset = T^k m - 3^a m/2^k: median 2.1, 99.9% 696.3, max 165012.0;  log2(max)/k = 0.433
+   a/k: mean 0.5000, min 0.100, max 0.875;  M/2^(k log2 sqrt3): log2 M / k mean 0.7814
+   B = letters of M off by > 0.10 of size(M): P_m(T^k m in B) = 2.426e-01, P_uniform(B) = 2.429e-01, amplification 1.00
+   B = letters of M off by > 0.15 of size(M): P_m(T^k m in B) = 9.757e-02, P_uniform(B) = 9.771e-02, amplification 1.00
+   B = letters of M off by > 0.20 of size(M): P_m(T^k m in B) = 2.514e-02, P_uniform(B) = 2.523e-02, amplification 1.00
+   B = letters of M off by > 0.25 of size(M): P_m(T^k m in B) = 4.764e-03, P_uniform(B) = 4.780e-03, amplification 1.00
+   B = letters of M off by > 0.30 of size(M): P_m(T^k m in B) = 9.024e-04, P_uniform(B) = 9.190e-04, amplification 0.98
+   control, B = multiples of 3 (density 1/3): P_m(T^k m in B) = 0.00e+00
+
+ Word frequency over one stage, first C k letters of uniform k-bit starts.
+ Fraction of starts with |#(11)/(C k) - 1/4| > 0.02, 500 starts each; C=5,6 are the above-threshold controls.
+  k=  100  C=1: 0.728  C=2: 0.590  C=3: 0.482  C=4: 0.490  C=5: 0.678  C=6: 0.842
+  k=  400  C=1: 0.464  C=2: 0.276  C=3: 0.244  C=4: 0.158  C=5: 0.452  C=6: 0.874
+  k= 1600  C=1: 0.174  C=2: 0.040  C=3: 0.008  C=4: 0.002  C=5: 0.230  C=6: 0.986
+
+ Window chain of section 7: t_(j+1) = t_j + size(T^(t_j) m).  Mean of t_J / k over 40 k-bit starts; prediction sum_(i<J) theta^i.
+  k=1000: J=1: 1.000 (pred 1.000)  J=2: 1.794 (pred 1.792)  J=4: 2.934 (pred 2.918)  J=6: 3.636 (pred 3.625)  J=8: 4.069 (pred 4.069)  J=9: 4.218 (pred 4.225)
+  k=4000: J=1: 1.000 (pred 1.000)  J=2: 1.790 (pred 1.792)  J=4: 2.917 (pred 2.918)  J=6: 3.627 (pred 3.625)  J=8: 4.074 (pred 4.069)  J=9: 4.231 (pred 4.225)
