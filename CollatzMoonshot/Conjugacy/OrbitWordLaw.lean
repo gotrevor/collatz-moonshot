@@ -62,9 +62,8 @@ theorem winGoodModIff : WinGoodModIff := winGoodModIff_holds
 /-- Transfer by Tao's integral test.  Proved in `OrbitWordLawWhp.lean`. -/
 theorem probPeriodicLe : ProbPeriodicLe := probPeriodicLe_holds
 
-/-- **Terras at one scale**, from the nodes above.  Confidence 85%. -/
-theorem winGoodWhp : WinGoodWhp := by
-  sorry
+/-- **Terras at one scale**, from the nodes above.  Proved in `OrbitWordLawWhp.lean`. -/
+theorem winGoodWhp : WinGoodWhp := winGoodWhp_holds
 
 /-- **Windows give density**: cover `[1, X]` by windows `[y, y^α]`.  Confidence 85%. -/
 theorem logDens0OfWindow : LogDens0OfWindow := by
