@@ -49,3 +49,14 @@ Root imports added (`SliceFourierRate`, `BeyondWordsLinear`); `lake build Collat
 better choice of `m`; the per-slice bound is already general in `m`); (c) the `levelOsc` table
 probe for the `m^{−A}` shape of `SliceOscDecay`; (d) `SEC6S-PLAN.md` for
 `SliceCharDecay → SliceOscDecay`.
+
+## Checkpoint (2026-11-04, final)
+
+* Branch `wip/beyond-words-linear`, HEAD `2697a74` before this commit; not pushed (host pushes).
+* Commits this run: 02eee9f (SliceFourierRate), 2e28bdb (log headline + TV assembly + two edges),
+  994a914 (fibre-progression bound), 2697a74 (linear edge, root imports, handoff).
+* `box done --green` filed; treadmill stopped.
+* Exact next steps (operator): review and merge `wip/beyond-words-linear` into the conjugacy
+  ladder branch; optionally a `docs/notes/beyond-terras-growing-depth.md` note citing
+  `beyondWordsUniformLog` at a pinned commit; pick a stretch item (b: `κ < (log₂ 3)/2`, or c: the
+  `levelOsc` probe) for a new kickoff.
