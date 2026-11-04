@@ -10,6 +10,7 @@ import CollatzMoonshot.Conjugacy.OrbitWordLawDensity
 import CollatzMoonshot.Conjugacy.OrbitWordLawReadOff
 import CollatzMoonshot.Conjugacy.OrbitWordLawWhp
 import CollatzMoonshot.Conjugacy.OrbitWordLawWindow
+import CollatzMoonshot.Conjugacy.OrbitWordLawEven
 
 /-!
 # The orbit word law, from Tao's stabilisation
@@ -78,9 +79,9 @@ theorem logDens0OddPart : LogDens0OddPart := by
 theorem summableLargeTwoAdic : SummableLargeTwoAdic := by
   sorry
 
-/-- **The even reduction**: `2^a m` reads `a` zeros, then the letters of `m`.  Confidence 85%. -/
-theorem notBadStartOfGoodOdd : NotBadStartOfGoodOdd := by
-  sorry
+/-- **The even reduction**: `2^a m` reads `a` zeros, then the letters of `m`.  Proved in
+`OrbitWordLawEven.lean`. -/
+theorem notBadStartOfGoodOdd : NotBadStartOfGoodOdd := notBadStartOfGoodOdd_holds
 
 /-- **Frozen target.  Believed, 85%, given (1.20), which `stabilization_atCX` proves.** -/
 theorem orbitWordLaw_of_le_four (C : ℕ) (hC : 1 ≤ C) (hC4 : C ≤ 4) : OrbitWordLaw C := by
