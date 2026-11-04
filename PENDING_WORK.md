@@ -6,8 +6,13 @@
 proved in `Conjugacy/BeyondWordsAligned.lean`: both growing-depth theorems hold on every aligned
 window `[q 2^j, (q+1) 2^j)`, uniformly in `q`; axioms `propext, Classical.choice, Quot.sound`.
 Advance: the shift identity `tstep_iterate_add_mul` and shift invariance `sum_norm_sum_resInd_add`
-make every per-slice residue bound window-independent (`beyondTVAt_le_of_band`).  Open on this
-branch: probe `j ≥ 28`, `SEC6S-PLAN.md`.  See `HANDOFF-2026-11-04-beyond-words-aligned.md`.
+make every per-slice residue bound window-independent (`beyondTVAt_le_of_band`).  Stretch done:
+probe to `j = 36` (C; refutes the `j = 26` fixed-`m` extrapolation, not the nodes) and
+`SEC6S-PLAN.md`.  Advance on the SEC6S crux: Tao §6 transfers only to the CLT band
+(`tail_budgets_incompatible`); the consumer is re-derived from the central node
+(`beyondWordsUniformLinear_of_sliceOscDecayCentral`), and the edge is frozen as two targets in
+`SliceOscCentral.lean`.  Next attack: SEC6S lap 1 (mixture identity `levelClass_eq_sum_levelMass`
+in Lean; target 2 to one hypergeometric leaf).  See `HANDOFF-2026-11-04-beyond-words-aligned.md`.
 
 ## 2026-11-04 — linear edge at its natural limit: GATE MET
 
